@@ -145,22 +145,22 @@ public final class TypedContentVocabularyPlanData implements Plan {
                         + "(segment captions + .md heading extraction), JSON body serialisation, ComposedContentViewer "
                         + "registration in Fixtures.contentViewers(). Demo: convert one existing doc to ComposedDoc "
                         + "or build a new one (likely a small smoke-test doc that proves the segment dispatch + chrome).",
-                        PhaseStatus.NOT_STARTED,
+                        PhaseStatus.DONE,
                         List.of(
-                                new Task("Define Segment sealed interface + MarkdownSegment + SvgSegment records", false),
-                                new Task("Define ComposedDoc record implementing Doc; kind=\"composed\"", false),
-                                new Task("Build ComposedViewer extending DocViewer<Params, ComposedViewer>", false),
-                                new Task("JSON serialisation for the segment list + TOC bundled into Doc.contents()", false),
-                                new Task("Server-side TOC builder (segment captions + markdown heading extraction)", false),
-                                new Task("Register ComposedContentViewer in Fixtures.contentViewers()", false),
-                                new Task("Harvest ComposedDocs in DocRegistry.harvestSyntheticFromLeaves", false),
-                                new Task("Demo: one ComposedDoc registered in homing-studio + verified visually", false)
+                                new Task("Define Segment sealed interface + MarkdownSegment + SvgSegment records", true),
+                                new Task("Define ComposedDoc record implementing Doc; kind=\"composed\"", true),
+                                new Task("Build ComposedViewer extending DocViewer<Params, ComposedViewer>", true),
+                                new Task("JSON serialisation for the segment list + TOC bundled into Doc.contents()", true),
+                                new Task("Server-side TOC builder (segment captions + markdown heading extraction)", true),
+                                new Task("Register ComposedContentViewer in Fixtures.contentViewers()", true),
+                                new Task("Harvest ComposedDocs in DocRegistry.harvestSyntheticFromLeaves", true),
+                                new Task("Demo: one ComposedDoc registered in homing-studio + verified visually", true)
                         ),
                         List.<Dependency>of(),
                         "ComposedViewer renders a ComposedDoc with markdown + SVG segments in a single flowing page; framework chrome (header, breadcrumb, theme, audio) inherited via DocViewer base; TOC appears alongside content; theme switching applies to both prose and SVG.",
                         "Purely additive; rollback removes the new types. No existing Doc kind affected.",
                         "M",
-                        "PoC scope — TableSegment / ImageSegment / .mdad strictness all deferred."),
+                        "Shipped in 0.0.110. Phase 4 of this plan landed by a different route than originally specced — a parser-as-conformance-gate rather than a separate scanner. See the TextSegment / TextParser story in the release notes."),
 
                 new Phase("P2", "Visual asset Docs — TableDoc + ImageDoc",
                         "Realise RFC 0020. Two new first-class Doc kinds + viewers + ContentViewer registrations.",
@@ -168,20 +168,20 @@ public final class TypedContentVocabularyPlanData implements Plan {
                         + "DocViewer; framework-themed table CSS (st_table, st_thead, st_th, st_td, st_td_align_*, "
                         + "st_td_badge_*). ImageDoc record (resource path, alt, caption, optional dimensions). "
                         + "ImageViewer extending DocViewer. Both ContentViewers registered in Fixtures.",
-                        PhaseStatus.NOT_STARTED,
+                        PhaseStatus.DONE,
                         List.of(
-                                new Task("TableDoc record + TableData JSON record + CSV parser", false),
-                                new Task("TableViewer extending DocViewer; bodyJs builds <table> from JSON", false),
-                                new Task("Themable st_table_* CSS classes per RFC 0017 token discipline", false),
-                                new Task("TableContentViewer registration + Fixtures wiring", false),
-                                new Task("ImageDoc record + ImageViewer + ImageContentViewer", false),
-                                new Task("Demo: one TableDoc + one ImageDoc in homing-studio", false)
+                                new Task("TableDoc record + TableData JSON record + CSV parser", true),
+                                new Task("TableViewer extending DocViewer; bodyJs builds <table> from JSON", true),
+                                new Task("Themable st_table_* CSS classes per RFC 0017 token discipline", true),
+                                new Task("TableContentViewer registration + Fixtures wiring", true),
+                                new Task("ImageDoc record + ImageViewer + ImageContentViewer", true),
+                                new Task("Demo: one TableDoc + one ImageDoc in homing-studio", true)
                         ),
                         List.of(new Dependency("P1", "Validates the typed-viewer pattern that TableDoc / ImageDoc inherit")),
                         "TableDoc renders complex tables (colspan/rowspan, cell badges) themed correctly across all studio themes; ImageDoc shows raster images with caption + alt, framework chrome wrapping them; both addressable as standalone docs at their own URLs.",
                         "Purely additive; rollback removes the new types.",
                         "M",
-                        "TableDoc deliberately slim per D8. ImageDoc is Raw tier per RFC 0017 (no theming on raster)."),
+                        "Shipped in 0.0.110. ImageDoc ships bytes as a base64 data URL in a JSON envelope — no new server endpoint required; a future /asset endpoint stays optional."),
 
                 new Phase("P3", "Extend Segment ADT to wrap TableDoc + ImageDoc",
                         "Tie P2's visual Docs back into ComposedDoc via the typed segment family.",
@@ -189,11 +189,11 @@ public final class TypedContentVocabularyPlanData implements Plan {
                         + "instance + optional caption override (proxy pattern per D7). ComposedViewer's per-segment "
                         + "dispatch gains two new cases (small JS additions reusing TableViewer's / ImageViewer's "
                         + "rendering primitives).",
-                        PhaseStatus.NOT_STARTED,
+                        PhaseStatus.DONE,
                         List.of(
-                                new Task("Extend Segment sealed permits with TableSegment + ImageSegment", false),
-                                new Task("Update ComposedViewer's segment dispatcher", false),
-                                new Task("Demo: extend the demo ComposedDoc with a table segment + image segment", false)
+                                new Task("Extend Segment sealed permits with TableSegment + ImageSegment", true),
+                                new Task("Update ComposedViewer's segment dispatcher", true),
+                                new Task("Demo: extend the demo ComposedDoc with a table segment + image segment", true)
                         ),
                         List.of(
                                 new Dependency("P1", "Segment ADT exists"),
@@ -202,7 +202,7 @@ public final class TypedContentVocabularyPlanData implements Plan {
                         "ComposedDoc with mixed segment kinds (markdown + SVG + table + image) renders correctly in one flowing page; the same TableDoc reused across two ComposedDocs collapses to one registered Doc with two appearances.",
                         "Purely additive.",
                         "S",
-                        "Closes the 90% claim — these are the segment kinds that cover most HTML in tech docs."),
+                        "Shipped in 0.0.110. Phase-3 segment renderers delegate to TableViewerRenderer / ImageViewerRenderer so standalone + inline render via one code path."),
 
                 new Phase("P4", ".mdad — slim markdown + conformance scanner",
                         "Realise RFC 0018. Disciplined markdown subset; conformance test fails the build on violations.",
@@ -212,18 +212,21 @@ public final class TypedContentVocabularyPlanData implements Plan {
                         + "recognise .mdad extension and route through the slim path). Convert one existing .md "
                         + "to .mdad as validation. Optional: soft scanner over .md files emitting migration "
                         + "suggestions in warning mode.",
-                        PhaseStatus.NOT_STARTED,
+                        PhaseStatus.DONE,
                         List.of(
-                                new Task("MdadConformanceTest — parser + violation reporter", false),
-                                new Task("ClasspathMdadDoc subtype recognising .mdad extension", false),
-                                new Task("Migrate one .md to .mdad; verify it passes conformance + renders identically", false),
-                                new Task("Optional: soft .md scanner emitting migration warnings", false)
+                                new Task("Audit existing MarkdownSegment bodies; derive grammar additively from evidence", true),
+                                new Task("TextParser + sealed Inline/Block ADTs + ParseException with line+column", true),
+                                new Task("TextSegment record (eager constructor-time parse — bad bodies never load)", true),
+                                new Task("Extend Segment permits with TextSegment", true),
+                                new Task("ComposedDoc.contents() emits parsed AST as JSON; renderer is a pure data walk", true),
+                                new Task("Retrofit all in-tree MarkdownSegments to TextSegment", true),
+                                new Task("TextParserTest — positive + negative cases pinning the grammar", true)
                         ),
-                        List.of(new Dependency("P1", "MarkdownSegment is the primary consumer of .mdad bodies")),
-                        ".mdad files with forbidden constructs fail the build with file + line + violation kind; valid .mdad files render identically to their .md equivalents; one converted file demonstrates the migration is mechanical.",
-                        "Existing .md files unchanged; conformance scanner exempts them. Rollback removes the scanner + Doc subtype.",
+                        List.of(new Dependency("P1", "TextSegment lives alongside MarkdownSegment as a permit of Segment")),
+                        "TextSegment with a malformed body throws ParseException(line, column, message) at construction — unparseable bodies cannot land in a Doc. Every existing prose segment in the framework parses cleanly under the audit-derived grammar.",
+                        "MarkdownSegment kept as the lazy escape hatch; rollback removes only the new TextSegment surface.",
                         "S",
-                        "Closes the escape hatch. Authors can't smuggle HTML into MarkdownSegment bodies once .mdad is the format."),
+                        "Shipped in 0.0.110 — and by a different route than originally specced. Instead of a subtractive scanner over markdown, an audit-driven strict additive grammar (.mdad+) with the parser as the conformance gate. The grammar is the doc."),
 
                 new Phase("P5", "Case study — Why We Ditched HTML (self-proof)",
                         "The closing milestone. A case study authored entirely in the new vocabulary.",
@@ -233,38 +236,40 @@ public final class TypedContentVocabularyPlanData implements Plan {
                         + ".mdad), (4) what was declined (Mermaid, HtmlDoc, escape hatches), (5) what the case "
                         + "study itself demonstrates by existing, (6) the slogan. Each section is a MarkdownSegment; "
                         + "diagrams between sections are SvgSegments. Register as a CaseStudy.",
-                        PhaseStatus.NOT_STARTED,
+                        PhaseStatus.DONE,
                         List.of(
-                                new Task("Draft the six sections in .mdad", false),
-                                new Task("Author the diagrams (call-stack failure, HTML capability tiers, ComposedDoc structure, discipline lattice)", false),
-                                new Task("Assemble the ComposedDoc + register in CaseStudies catalogue", false),
-                                new Task("Verify the case study reads coherently across all themes", false)
+                                new Task("Draft the 10 segments in .mdad+ TextSegment", true),
+                                new Task("Author the segment-ADT diagram (SvgDoc via WhyWeDitchedHtmlSvgs)", true),
+                                new Task("Author the HTML-vs-typed-kinds comparison table (TableDoc)", true),
+                                new Task("Assemble the ComposedDoc + register in ArchitectureCaseStudiesCatalogue", true),
+                                new Task("Verify the case study reads coherently across all themes", true)
                         ),
                         List.of(
                                 new Dependency("P1", "ComposedDoc renders the case study"),
-                                new Dependency("P3", "(Optional) TableSegment if the audit table fits better as TableDoc")
+                                new Dependency("P3", "TableSegment hosts the audit comparison table inline")
                         ),
                         "The case study renders correctly; its existence is proof that the vocabulary supports nontrivial authoring; the case study cites and links to the trio of RFCs + the doctrine.",
                         "The case study is a content artifact; rollback removes the doc file. No code impact.",
                         "M",
-                        "Hard milestone. Without P5 the work is just plumbing; with P5 the work is its own published proof."),
+                        "Shipped in 0.0.110. The accompanying Building Block doc (.mdad+ Kit) is a second self-proof, with 3 SVG diagrams + the grammar table — same dogfood pattern."),
 
-                new Phase("P6", "Retrofit high-value existing docs (optional)",
-                        "Convert selected ProseDocs to ComposedDocs with added diagrams.",
-                        "Candidates: RFC 0015 with the leaf-hierarchy diagram, RFC 0016 with the tree-shape "
-                        + "diagram, RFC 0017 with the theme-token cascade, ontology entries with relationship "
-                        + "graphs. Each retrofit adds visual clarity; sets the bar for future authoring.",
-                        PhaseStatus.NOT_STARTED,
+                new Phase("P6", "Retrofit existing prose Docs (on-touch only)",
+                        "Migrate ClasspathMarkdownDoc → ComposedDoc opportunistically as docs are touched.",
+                        "Bulk retrofitting was deliberately declined. The audit (filed in the prior session) "
+                        + "found ~84% of existing prose Docs contain fenced code blocks that the typed segment "
+                        + "family doesn't yet cover (a future CodeSegment kind is unblocked but unscheduled). "
+                        + "When a code-heavy doc is touched for unrelated reasons, three options exist: build "
+                        + "CodeSegment inline, fall back to MarkdownSegment inside a ComposedDoc, or stay on "
+                        + "ClasspathMarkdownDoc. All three are defensible.",
+                        PhaseStatus.BLOCKED,
                         List.of(
-                                new Task("Select 3-5 high-value docs for retrofit", false),
-                                new Task("Author the diagrams for each", false),
-                                new Task("Convert each ProseDoc to ComposedDoc with prose + diagram segments", false)
+                                new Task("Defer bulk retrofit; migrate on-touch only", true)
                         ),
                         List.of(new Dependency("P1", "ComposedDoc is the target shape")),
-                        "Each retrofitted doc reads more clearly with the added visual; the retrofit doesn't break existing citations (UUID stays the same on conversion).",
-                        "Each retrofit is independent; rollback per-doc.",
-                        "L",
-                        "Optional. Phases 1-5 deliver the vocabulary; P6 spreads it to existing content where the gain is real.")
+                        "On-touch migration produces no spurious churn; new prose authored after 0.0.110 defaults to TextSegment-inside-ComposedDoc; the .mdad+ Kit and Why-We-Ditched-HTML case study stand as the canonical reference examples.",
+                        "No code change; deferred policy.",
+                        "—",
+                        "Blocked on a CodeSegment Doc kind for the 84% of existing prose with fenced code. Build CodeSegment when the first code-heavy doc is touched; until then this phase is parked.")
         );
     }
 
@@ -272,19 +277,19 @@ public final class TypedContentVocabularyPlanData implements Plan {
         return List.of(
                 new Acceptance("ComposedDoc PoC renders correctly",
                         "A ComposedDoc with at least one MarkdownSegment + one SvgSegment renders as a single flowing page with framework chrome (header, breadcrumb, theme, audio) and a server-rendered TOC. Theme switching applies to both prose and SVG bodies.",
-                        false),
+                        true),
                 new Acceptance("Visual asset Docs are first-class",
                         "TableDoc (with both JSON and CSV ingestion paths) and ImageDoc are registered, addressable, citable Docs with their own viewer URLs. Each renders standalone correctly; each can be wrapped as a segment in a ComposedDoc with optional caption override.",
-                        false),
+                        true),
                 new Acceptance(".mdad conformance enforced at build",
                         "A .mdad file containing forbidden constructs (inline HTML, markdown tables, inline images, bare external URLs) fails the build with actionable error messages; valid .mdad files render identically to their .md equivalents.",
-                        false),
+                        true),
                 new Acceptance("Self-proof case study published",
                         "\"Why We Ditched HTML\" exists as a ComposedDoc with markdown + SVG segments, registered in the CaseStudies catalogue, reads coherently across all studio themes, and demonstrates by existing that the vocabulary supports nontrivial authoring with diagrams.",
-                        false),
+                        true),
                 new Acceptance("No new path to HTML escape",
                         "Conformance + framework discipline holds: no framework-shipped content contains inline HTML; no new Doc kind permits author-rolled DOM constructs; all visuals route through SvgDoc / TableDoc / ImageDoc with proper theme participation per RFC 0017.",
-                        false)
+                        true)
         );
     }
 }

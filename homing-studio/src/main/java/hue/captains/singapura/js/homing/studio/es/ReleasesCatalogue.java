@@ -6,6 +6,7 @@ import hue.captains.singapura.js.homing.studio.base.app.Entry;
 import hue.captains.singapura.js.homing.studio.base.app.L1_Catalogue;
 import hue.captains.singapura.js.homing.studio.docs.releases.Release0_0_100Doc;
 import hue.captains.singapura.js.homing.studio.docs.releases.Release0_0_101Doc;
+import hue.captains.singapura.js.homing.studio.docs.releases.Release0_0_110Doc;
 import hue.captains.singapura.js.homing.studio.docs.releases.Release0_0_11Doc;
 
 import java.util.List;
@@ -37,6 +38,7 @@ public record ReleasesCatalogue()
     @Override public List<Entry<ReleasesCatalogue>> leaves() {
         // Newest first. Prepend new releases here.
         return List.of(
+                Entry.of(this, Release0_0_110Doc.INSTANCE),
                 Entry.of(this, Release0_0_101Doc.INSTANCE),
                 Entry.of(this, Release0_0_100Doc.INSTANCE),
                 Entry.of(this, Release0_0_11Doc.INSTANCE)
@@ -47,6 +49,7 @@ public record ReleasesCatalogue()
      *  the studio's DocRegistry so DocReader can serve them by UUID. */
     @Override public List<Doc> docs() {
         return List.of(
+                Release0_0_110Doc.INSTANCE,
                 Release0_0_101Doc.INSTANCE,
                 Release0_0_100Doc.INSTANCE,
                 Release0_0_11Doc.INSTANCE
