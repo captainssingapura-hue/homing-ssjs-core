@@ -238,11 +238,15 @@ function _renderSvgSegment(seg, bodyEl) {
     css.addClass(section, st_section);
     section.id = seg.anchor;
 
+    // Fill the main column width (st_main = 1280px max minus padding ≈ 1216px),
+    // with a soft cap so on very wide viewports the figure doesn't go absurd.
+    // Side padding keeps the SVG from kissing the prose-column boundary.
     var figure = document.createElement("figure");
-    figure.style.cssText = "margin:24px 0;display:flex;flex-direction:column;align-items:center;";
+    figure.style.cssText = "margin:24px 0;padding:0 16px;"
+                         + "display:flex;flex-direction:column;align-items:center;";
 
     var host = document.createElement("div");
-    host.style.cssText = "max-width:100%;display:flex;justify-content:center;";
+    host.style.cssText = "width:100%;max-width:1100px;display:flex;justify-content:center;";
     var loading = document.createElement("div");
     css.addClass(loading, st_loading);
     loading.textContent = "Loading SVG…";
@@ -270,8 +274,8 @@ function _renderSvgSegment(seg, bodyEl) {
             host.replaceChildren(range.createContextualFragment(svg));
             var svgEl = host.querySelector("svg");
             if (svgEl) {
-                svgEl.style.maxWidth = "600px";
-                svgEl.style.maxHeight = "600px";
+                // Fill the host (which carries the max-width); let aspect
+                // ratio (viewBox) drive the height.
                 svgEl.style.width = "100%";
                 svgEl.style.height = "auto";
             }

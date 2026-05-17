@@ -50,6 +50,8 @@ import hue.captains.singapura.js.homing.studio.docs.ontology.ViewerOntologyDoc;
 import hue.captains.singapura.js.homing.studio.docs.guides.ReleaseChecklistDoc;
 import hue.captains.singapura.js.homing.studio.docs.guides.UserGuideDoc;
 import hue.captains.singapura.js.homing.studio.docs.releases.Release0_0_100Doc;
+import hue.captains.singapura.js.homing.studio.docs.releases.Release0_0_101Doc;
+import hue.captains.singapura.js.homing.studio.docs.releases.Release0_0_110Doc;
 import hue.captains.singapura.js.homing.studio.docs.releases.Release0_0_11Doc;
 import hue.captains.singapura.js.homing.studio.docs.rename.RenameExecutionPlanDoc;
 import hue.captains.singapura.js.homing.studio.docs.rfcs.Rfc0001Doc;
@@ -152,6 +154,8 @@ public record DocBrowser() implements DocBrowserAppModule<DocBrowser>, DocProvid
             entry(LiveTrackerPatternDoc.INSTANCE, "Guides", StudioStyles.st_badge_reference.class),
             entry(ReleaseChecklistDoc.INSTANCE,   "Guides", StudioStyles.st_badge_reference.class),
 
+            entry(Release0_0_110Doc.INSTANCE,  "Releases", StudioStyles.st_badge_reference.class),
+            entry(Release0_0_101Doc.INSTANCE,  "Releases", StudioStyles.st_badge_reference.class),
             entry(Release0_0_100Doc.INSTANCE,  "Releases", StudioStyles.st_badge_reference.class),
             entry(Release0_0_11Doc.INSTANCE,   "Releases", StudioStyles.st_badge_reference.class),
 
