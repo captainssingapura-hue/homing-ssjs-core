@@ -14,9 +14,6 @@
         <module>homing-libs</module>
         <module>homing-studio-base</module>
         <module>homing-conformance</module>
-        <module>homing-demo</module>
-        <module>homing-studio</module>
-        <module>homing-skills</module>
     </modules>
 
     <properties>
