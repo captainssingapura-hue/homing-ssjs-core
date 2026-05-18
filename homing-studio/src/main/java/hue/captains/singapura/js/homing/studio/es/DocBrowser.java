@@ -78,6 +78,7 @@ import hue.captains.singapura.js.homing.studio.docs.rfcs.Rfc0017Doc;
 import hue.captains.singapura.js.homing.studio.docs.rfcs.Rfc0018Doc;
 import hue.captains.singapura.js.homing.studio.docs.rfcs.Rfc0019Doc;
 import hue.captains.singapura.js.homing.studio.docs.rfcs.Rfc0020Doc;
+import hue.captains.singapura.js.homing.studio.docs.rfcs.Rfc0021Doc;
 import hue.captains.singapura.js.homing.studio.docs.doctrines.TypedContentVocabularyDoc;
 import hue.captains.singapura.js.homing.studio.docs.whitepaper.HomingShellFlexibilityWhitepaperDoc;
 import hue.captains.singapura.js.homing.studio.docs.whitepaper.HomingWhitepaperDoc;
@@ -137,6 +138,7 @@ public record DocBrowser() implements DocBrowserAppModule<DocBrowser>, DocProvid
             entry(Rfc0018Doc.INSTANCE,         "RFCs", StudioStyles.st_badge_rfc.class),
             entry(Rfc0019Doc.INSTANCE,         "RFCs", StudioStyles.st_badge_rfc.class),
             entry(Rfc0020Doc.INSTANCE,         "RFCs", StudioStyles.st_badge_rfc.class),
+            entry(Rfc0021Doc.INSTANCE,         "RFCs", StudioStyles.st_badge_rfc.class),
 
             entry(TypedContentVocabularyDoc.INSTANCE, "Doctrines", StudioStyles.st_badge_reference.class),
 

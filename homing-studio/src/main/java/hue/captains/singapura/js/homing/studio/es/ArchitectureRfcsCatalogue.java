@@ -14,6 +14,7 @@ import hue.captains.singapura.js.homing.studio.docs.rfcs.Rfc0013Doc;
 import hue.captains.singapura.js.homing.studio.docs.rfcs.Rfc0014Doc;
 import hue.captains.singapura.js.homing.studio.docs.rfcs.Rfc0015Doc;
 import hue.captains.singapura.js.homing.studio.docs.rfcs.Rfc0016Doc;
+import hue.captains.singapura.js.homing.studio.docs.rfcs.Rfc0021Doc;
 
 import java.util.List;
 
@@ -43,7 +44,8 @@ public record ArchitectureRfcsCatalogue()
                 Entry.of(this, Rfc0013Doc.INSTANCE),
                 Entry.of(this, Rfc0014Doc.INSTANCE),
                 Entry.of(this, Rfc0015Doc.INSTANCE),
-                Entry.of(this, Rfc0016Doc.INSTANCE)
+                Entry.of(this, Rfc0016Doc.INSTANCE),
+                Entry.of(this, Rfc0021Doc.INSTANCE)
         );
     }
 }

@@ -3,7 +3,6 @@ package hue.captains.singapura.js.homing.conformance;
 import hue.captains.singapura.js.homing.demo.studio.DemoBaseStudio;
 import hue.captains.singapura.js.homing.demo.studio.multi.MultiStudio;
 import hue.captains.singapura.js.homing.skills.SkillsStudio;
-import hue.captains.singapura.js.homing.studio.HomingStudio;
 import hue.captains.singapura.js.homing.studio.base.Studio;
 
 import java.util.List;
@@ -21,8 +20,7 @@ class DemoPlanRegistrationConformanceTest extends PlanRegistrationConformanceTes
         return List.of(
                 MultiStudio.INSTANCE,
                 DemoBaseStudio.INSTANCE,
-                SkillsStudio.INSTANCE,
-                HomingStudio.INSTANCE
+                SkillsStudio.INSTANCE
         );
     }
 }

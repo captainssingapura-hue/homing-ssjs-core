@@ -4,7 +4,6 @@ import hue.captains.singapura.js.homing.demo.studio.multi.MultiStudio;
 import hue.captains.singapura.js.homing.skills.MigrateFrom0_0_100SkillDoc;
 import hue.captains.singapura.js.homing.skills.SkillsAboutDoc;
 import hue.captains.singapura.js.homing.skills.SkillsStudio;
-import hue.captains.singapura.js.homing.studio.HomingStudio;
 import hue.captains.singapura.js.homing.studio.base.Bootstrap;
 import hue.captains.singapura.js.homing.studio.base.DefaultFixtures;
 import hue.captains.singapura.js.homing.studio.base.DefaultRuntimeParams;
@@ -15,7 +14,6 @@ import hue.captains.singapura.js.homing.studio.base.DocRegistry;
 import hue.captains.singapura.js.homing.studio.base.Reference;
 import hue.captains.singapura.js.homing.studio.base.Studio;
 import hue.captains.singapura.js.homing.studio.base.Umbrella;
-import hue.captains.singapura.js.homing.studio.docs.rfcs.Rfc0012Doc;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -40,12 +38,21 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *       UUID lookup, with no studio-awareness in the reference path.</li>
  *   <li>The only constraint is compile-time: module A must depend on module B
  *       to import {@code OtherStudio.SomeDoc.INSTANCE}. This test lives in
- *       {@code homing-demo} which depends on all three source modules and
- *       therefore can express any cross-studio reference.</li>
+ *       {@code homing-demo} which depends on both source demo modules
+ *       ({@code homing-skills} for {@link SkillsStudio}, and the local
+ *       {@code DemoStudio}), so any cross-studio reference between them is
+ *       expressible here.</li>
  * </ol>
  *
  * <p>The test mirrors the {@code DemoStudioServer.main()} umbrella exactly,
  * so any regression in real-world cross-studio resolution surfaces here.</p>
+ *
+ * <p><b>Note on cross-module pair:</b> the demo umbrella deliberately
+ * composes only the demo studios that ship in this repo. The cross-studio
+ * pair under test is therefore <code>homing-skills × homing-demo</code> —
+ * {@link SkillsAboutDoc} (skills) referenced against {@link DemoIntroDoc}
+ * (demo). The framework's own self-documentation studio is not part of
+ * this umbrella; framework-side cross-studio coverage lives upstream.</p>
  */
 class BootstrapCrossStudioRefTest {
 
@@ -53,12 +60,11 @@ class BootstrapCrossStudioRefTest {
     private static Umbrella<Studio<?>> demoUmbrella() {
         return new Umbrella.Group<>(
                 "Homing Multi-Studio Demo",
-                "Three source studios composed onto one server.",
+                "Two source studios composed onto one server.",
                 List.of(
                         new Umbrella.Solo<>(MultiStudio.INSTANCE),
                         new Umbrella.Solo<>(DemoBaseStudio.INSTANCE),
-                        new Umbrella.Solo<>(SkillsStudio.INSTANCE),
-                        new Umbrella.Solo<>(HomingStudio.INSTANCE)
+                        new Umbrella.Solo<>(SkillsStudio.INSTANCE)
                 ));
     }
 
@@ -91,9 +97,9 @@ class BootstrapCrossStudioRefTest {
     void composed_registry_contains_docs_from_every_studio() {
         var registry = composeDocRegistry(demoUmbrella());
 
-        // homing-studio contributes Rfc0012Doc via its RFC catalogue chain.
-        assertSame(Rfc0012Doc.INSTANCE, registry.resolve(Rfc0012Doc.INSTANCE.uuid()),
-                "homing-studio's Rfc0012Doc must be in the composed DocRegistry");
+        // homing-demo contributes DemoIntroDoc via DemoStudio's home catalogue.
+        assertSame(DemoIntroDoc.INSTANCE, registry.resolve(DemoIntroDoc.INSTANCE.uuid()),
+                "homing-demo's DemoIntroDoc must be in the composed DocRegistry");
 
         // homing-skills contributes SkillsAboutDoc + every shipped skill via SkillsHome.
         assertSame(SkillsAboutDoc.INSTANCE, registry.resolve(SkillsAboutDoc.INSTANCE.uuid()),
@@ -107,11 +113,11 @@ class BootstrapCrossStudioRefTest {
     void cross_studio_doc_reference_resolves_through_registry() {
         var registry = composeDocRegistry(demoUmbrella());
 
-        // The canonical cross-studio case: a hypothetical Doc shipped by
-        // homing-skills (module A) declares a typed reference to RFC 0012
-        // (module B = homing-studio). Construct the reference here — this
-        // compiles because the test module depends on both source modules.
-        DocReference ref = new DocReference("rfc-12", Rfc0012Doc.INSTANCE);
+        // The canonical cross-studio case: a doc in module A (homing-skills)
+        // declares a typed reference to a Doc in module B (homing-demo).
+        // Construct the reference here — this compiles because the test
+        // module depends on both source modules.
+        DocReference ref = new DocReference("demo-intro", DemoIntroDoc.INSTANCE);
 
         // The runtime path: serialize the reference, extract the UUID,
         // resolve through the registry. No studio-of-origin checks.
@@ -120,9 +126,9 @@ class BootstrapCrossStudioRefTest {
 
         assertNotNull(resolved,
                 "Cross-studio DocReference target UUID must resolve in the composed DocRegistry");
-        assertSame(Rfc0012Doc.INSTANCE, resolved,
+        assertSame(DemoIntroDoc.INSTANCE, resolved,
                 "Resolved Doc must be the original instance the reference points at");
-        assertEquals("RFC 0012 — Typed Studio Composition", resolved.title(),
+        assertEquals(DemoIntroDoc.INSTANCE.title(), resolved.title(),
                 "Resolved Doc must carry its full metadata across the studio boundary");
     }
 
@@ -152,13 +158,13 @@ class BootstrapCrossStudioRefTest {
         // cross-studio reference, the carried UUID is exactly the target's
         // UUID — the frontend uses this UUID alone to construct the next
         // doc-reader URL, with no module-of-origin metadata required.
-        Reference ref = new DocReference("rfc-12", Rfc0012Doc.INSTANCE);
+        Reference ref = new DocReference("demo-intro", DemoIntroDoc.INSTANCE);
         assertTrue(ref instanceof DocReference);
         DocReference dr = (DocReference) ref;
-        assertEquals(Rfc0012Doc.INSTANCE.uuid(), dr.target().uuid(),
+        assertEquals(DemoIntroDoc.INSTANCE.uuid(), dr.target().uuid(),
                 "DocReference.target().uuid() must be the exact source-of-truth UUID");
         // The composed registry confirms the round-trip: same UUID → same Doc instance.
         var registry = composeDocRegistry(demoUmbrella());
-        assertSame(Rfc0012Doc.INSTANCE, registry.resolve(dr.target().uuid()));
+        assertSame(DemoIntroDoc.INSTANCE, registry.resolve(dr.target().uuid()));
     }
 }
