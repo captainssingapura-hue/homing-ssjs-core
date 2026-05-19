@@ -6,7 +6,7 @@
     <parent>
         <groupId>io.github.captainssingapura-hue.homing.js</groupId>
         <artifactId>homing.js</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>VOID-SNAPSHOT</version>
     </parent>
 
     <artifactId>homing-conformance</artifactId>

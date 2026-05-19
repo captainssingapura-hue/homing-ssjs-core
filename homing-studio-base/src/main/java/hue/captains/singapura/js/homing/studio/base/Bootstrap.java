@@ -142,8 +142,12 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
         var catalogues = new ArrayList<Catalogue<?>>(unionCataloguesByClass(studios));
         if (params.diagnosticsEnabled()) catalogues.add(DiagnosticsCatalogue.INSTANCE);
 
-        // --- Union plans: each studio's plans(). Dedup by class.
-        var plans = unionPlansByClass(studios);
+        // --- Union plans: each studio's plans() PLUS every Plan reachable as
+        // a catalogue-leaf (Entry.OfDoc(PlanDoc(plan))). Defect 0005 resolution:
+        // catalogue-leaf is the canonical registration site; Studio.plans() is
+        // an additional explicit channel for URL-only plans (no catalogue tile).
+        // Dedup by class so either registration path — or both — works.
+        var plans = unionPlansByClass(studios, catalogues);
 
         // --- Brand: from fixtures (default is first studio's standaloneBrand).
         StudioBrand brand = fixtures.brand();
@@ -318,12 +322,22 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
         return List.copyOf(byClass.values());
     }
 
-    private List<Plan> unionPlansByClass(List<? extends Studio<?>> studios) {
+    /**
+     * Union of Plans from every studio's {@code Studio.plans()} (URL-only
+     * channel) and every {@code Entry.OfDoc(PlanDoc(plan))} leaf reachable
+     * across the catalogue closure (the catalogue-leaf channel). Either path
+     * — or both — registers a plan. Dedup is by class. Defect 0005 resolution.
+     */
+    private List<Plan> unionPlansByClass(List<? extends Studio<?>> studios,
+                                         List<Catalogue<?>> catalogues) {
         var byClass = new LinkedHashMap<Class<?>, Plan>();
         for (var studio : studios) {
             for (Plan p : studio.plans()) {
                 byClass.putIfAbsent(p.getClass(), p);
             }
+        }
+        for (Plan p : PlanRegistry.harvestFromLeaves(catalogues)) {
+            byClass.putIfAbsent(p.getClass(), p);
         }
         return List.copyOf(byClass.values());
     }
