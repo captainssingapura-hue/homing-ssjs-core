@@ -1,11 +1,15 @@
 package hue.captains.singapura.js.homing.studio.base.tracker;
 
 import hue.captains.singapura.js.homing.studio.base.DocRegistry;
+import hue.captains.singapura.js.homing.studio.base.app.Catalogue;
+import hue.captains.singapura.js.homing.studio.base.app.Entry;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -153,6 +157,36 @@ public final class PlanRegistry {
                     "Plan " + p.getClass().getName() + " " + which + " UUID " + id
                   + " is not in the DocRegistry");
         }
+    }
+
+    /**
+     * Defect 0005 fix — harvest every {@link Plan} reachable as a
+     * {@code Entry.OfDoc(PlanDoc(plan))} catalogue leaf, across the supplied
+     * catalogue closure. {@link Bootstrap} unions this with each studio's
+     * {@code Studio.plans()} when constructing the registry, so a plan
+     * registered only via {@code Entry.of(catalogue, plan)} is reachable at
+     * {@code /plan?id=&lt;fqn&gt;} automatically. Catalogue-leaf is the
+     * canonical registration site; {@code Studio.plans()} remains as an
+     * escape hatch for URL-only plans that aren't surfaced as tiles.
+     *
+     * <p>The caller is expected to pass the full closure (per
+     * {@link hue.captains.singapura.js.homing.studio.base.Studio#catalogues()},
+     * which BFS-walks {@code subCatalogues()} from the home catalogue).
+     * Sub-catalogues that this method receives directly are only walked one
+     * level deep — recursion happens at the caller's closure-building step.</p>
+     *
+     * @since Defect 0005 resolution
+     */
+    public static List<Plan> harvestFromLeaves(Collection<? extends Catalogue<?>> catalogues) {
+        var out = new ArrayList<Plan>();
+        for (var c : catalogues) {
+            for (var e : c.leaves()) {
+                if (e instanceof Entry.OfDoc<?, ?> ofDoc && ofDoc.doc() instanceof PlanDoc pd) {
+                    out.add(pd.plan());
+                }
+            }
+        }
+        return out;
     }
 
     /** Resolve a Plan by its implementing class, or null if not registered. */

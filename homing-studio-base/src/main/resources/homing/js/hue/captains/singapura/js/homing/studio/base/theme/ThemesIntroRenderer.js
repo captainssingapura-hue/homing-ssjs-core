@@ -47,7 +47,7 @@ function _draw(root, data, brand) {
 
     children.push(Header({
         brand:  { href: brand.homeUrl, label: brand.label, logo: brand.logo },
-        crumbs: [ { text: "Studio", href: brand.homeUrl }, { text: "Themes" } ]
+        crumbs: [ { text: brand.label, href: brand.homeUrl }, { text: "Themes" } ]
     }));
 
     var main = document.createElement("div");

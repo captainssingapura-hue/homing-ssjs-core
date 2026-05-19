@@ -209,6 +209,120 @@ function _renderTableSegment(seg, bodyEl) {
     renderTable({ docId: seg.tableDocId, host: host });
 }
 
+// =============================================================================
+// DocumentaryWidget — embed a typed AppModule's interactive render output
+// in a sub-region of the composed page. Per the "Thin HTML, Typed JS"
+// doctrine, the browser's native ES module loader handles transitive
+// dep resolution; we just dynamic-import the typed module URL and call
+// its appMain on a host element.
+//
+// The widget is an isolated island — no shared state with siblings,
+// no event bus, per the Typed Content Vocabulary doctrine.
+// =============================================================================
+
+function _renderDocumentaryWidget(seg, bodyEl) {
+    var section = document.createElement("section");
+    css.addClass(section, st_section);
+    section.id = seg.anchor;
+
+    var figure = document.createElement("figure");
+    figure.style.cssText = "margin:24px 0;padding:0 16px;"
+                         + "display:flex;flex-direction:column;align-items:center;";
+
+    var host = document.createElement("div");
+    host.style.cssText = "width:100%;max-width:1100px;min-height:480px;"
+                       + "border:1px solid var(--color-border,#C8C2A8);"
+                       + "border-radius:4px;overflow:hidden;"
+                       + "background:var(--color-surface-base,#fff);"
+                       + "position:relative;";
+
+    var loading = document.createElement("div");
+    css.addClass(loading, st_loading);
+    loading.textContent = "Loading widget…";
+    loading.style.cssText += "position:absolute;inset:0;display:flex;align-items:center;justify-content:center;";
+    host.appendChild(loading);
+
+    figure.appendChild(host);
+
+    if (seg.caption) {
+        var caption = document.createElement("figcaption");
+        caption.style.cssText = "margin-top:8px;font-size:13px;color:var(--st-gray-mid,#666);text-align:center;";
+        caption.textContent = seg.caption;
+        figure.appendChild(caption);
+    }
+
+    section.appendChild(figure);
+    bodyEl.appendChild(section);
+
+    // Dynamic import — the browser handles the wrapped AppModule's typed
+    // imports transitively. The widget's appMain takes the host element
+    // (not document.body) AND a typed params override so the same EsModule
+    // (cached once by URL) can render different per-instance content
+    // without query-string variation.
+    import(seg.moduleUrl)
+        .then(function(mod) {
+            host.removeChild(loading);
+            if (typeof mod.appMain === "function") {
+                // Pass params as second arg — widget JS uses it when present,
+                // falls back to URL-derived params when called standalone.
+                mod.appMain(host, seg.params || {});
+            } else {
+                var err = document.createElement("div");
+                css.addClass(err, st_error);
+                err.textContent = "Widget module missing appMain export: " + seg.moduleUrl;
+                host.appendChild(err);
+            }
+        })
+        .catch(function(e) {
+            if (host.contains(loading)) host.removeChild(loading);
+            var err = document.createElement("div");
+            css.addClass(err, st_error);
+            err.textContent = "Failed to load widget: " + (e && e.message ? e.message : String(e));
+            host.appendChild(err);
+        });
+}
+
+// =============================================================================
+// RFC 0019 §2.1 future kind — CodeSegment renderer. Verbatim code listing
+// inside <pre><code>. Theme already styles .st-doc pre / .st-doc pre code
+// (surface-inverted background, monospace font, horizontal overflow). The
+// segment puts the article inside an .st-doc-classed wrapper so those rules
+// apply without per-segment CSS.
+// =============================================================================
+
+function _renderCodeSegment(seg, bodyEl) {
+    var section = document.createElement("section");
+    css.addClass(section, st_section);
+    section.id = seg.anchor;
+
+    if (seg.title) {
+        var h = document.createElement("h2");
+        css.addClass(h, st_section_title);
+        h.textContent = seg.title;
+        section.appendChild(h);
+    }
+
+    var article = document.createElement("article");
+    css.addClass(article, st_doc);
+
+    var pre = document.createElement("pre");
+    var code = document.createElement("code");
+    if (seg.language) {
+        // language-X is the highlight-library convention. The framework
+        // ships no highlighter; the class is still useful for any consumer
+        // that wants to attach one downstream.
+        code.className = "language-" + seg.language;
+    }
+    // textContent is the safe path — the source code is data, not markup.
+    // Whitespace + entities preserved verbatim by the browser.
+    code.textContent = seg.body;
+    pre.appendChild(code);
+    article.appendChild(pre);
+
+    section.appendChild(article);
+    bodyEl.appendChild(section);
+}
+
 function _renderImageSegment(seg, bodyEl) {
     var section = document.createElement("section");
     css.addClass(section, st_section);
@@ -364,12 +478,16 @@ function renderComposed(props) {
                     _renderTextSegment(seg, bodyEl);
                 } else if (seg.kind === "markdown") {
                     _renderMarkdownSegment(seg, bodyEl);
+                } else if (seg.kind === "code") {
+                    _renderCodeSegment(seg, bodyEl);
                 } else if (seg.kind === "svg") {
                     _renderSvgSegment(seg, bodyEl);
                 } else if (seg.kind === "table") {
                     _renderTableSegment(seg, bodyEl);
                 } else if (seg.kind === "image") {
                     _renderImageSegment(seg, bodyEl);
+                } else if (seg.kind === "documentary-widget") {
+                    _renderDocumentaryWidget(seg, bodyEl);
                 } else {
                     var unk = document.createElement("div");
                     css.addClass(unk, st_error);

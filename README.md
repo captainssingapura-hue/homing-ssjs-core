@@ -2,6 +2,8 @@
 
 A Java library for declaratively defining ES6 module structure — imports, exports, and inter-module dependencies — and generating valid JavaScript ES modules from that definition. You write the module logic in `.js` files; Homing wires them together with correct `import`/`export` statements based on a dependency graph you define in Java.
 
+**Latest release: [0.0.111 — Post-Split Consolidation](https://github.com/captainssingapura-hue/japjs/releases/tag/0.0.111).** First post-split release; `homing-doc-plus-demo` (dogfood) and `homing-self-studio` (framework's own docs) are now separate repos. RFC 0022 validated and collapsed — `homing-studio-base` already supports the Site-in-a-Jar shape (apps + docs as catalogue siblings under one chrome). `CodeSegment` and `DocumentaryWidget` join the segment ADT; Defect 0005's Plan-arm closed via catalogue-leaf harvest. Public skills module retired — the demo studio is the canonical worked example.
+
 ## Why?
 
 ES module graphs are easy to get wrong at scale: circular imports, missing exports, mismatched paths. Homing moves the module wiring into Java, where you get compile-time type safety, IDE refactoring support, and a single source of truth for your JS dependency graph. The actual JavaScript logic stays in plain `.js` files — Homing only generates the glue.
@@ -413,10 +415,15 @@ var host = new VertxActionHost(registry, 8080);
 host.start();
 ```
 
+The framework's dogfood server lives in the [`homing-doc-plus-demo`](https://github.com/captainssingapura-hue/homing-doc-plus-demo) repo (a separate repo after 0.0.111's split):
+
 ```bash
+# In a clone of homing-doc-plus-demo:
 mvn -pl homing-demo -am compile exec:java \
-  -Dexec.mainClass="hue.captains.singapura.js.homing.demo.WonderlandDemoServer"
+  -Dexec.mainClass="hue.captains.singapura.js.homing.demo.studio.DemoStudioServer"
 ```
+
+Listens on port 8082; the home catalogue mixes three animal-game SPAs with documentation tiles under one shared chrome — the Site-in-a-Jar dogfood proof.
 
 ### Live Reload
 
@@ -430,33 +437,25 @@ mvn compile exec:java \
 
 Edit JS/CSS/SVG files and refresh — no restart needed. Java declaration changes still require a recompile.
 
-## Demo Applications
+## Demos
 
-The `homing-demo` module includes several interactive demos:
+As of 0.0.111, demos live in their own repo — [`homing-doc-plus-demo`](https://github.com/captainssingapura-hue/homing-doc-plus-demo) — and are the framework's dogfood proof. The demo studio is a single-jar Site-in-a-Jar: catalogue of SPAs + documentation tiles under one chrome, served by `DemoStudioServer` on port 8082.
 
-| App | URL | Description |
-|-----|-----|-------------|
-| DemoCatalogue | `/app?app=demo-catalogue` | Launcher — start here. Lists every demo. |
-| PitchDeck | `/app?app=pitch-deck` | 13-slide interactive executive deck with BGM |
-| WonderlandDemo | `/app?app=wonderland-demo` | Simple intro — imports from Alice and SVG groups |
-| DancingAnimals | `/app?app=dancing-animals` | 5x5 grid of animals, keyboard-controlled direction flipping |
-| SpinningAnimals | `/app?app=spinning-animals` | Grid animation with pause/resume controls |
-| MovingAnimal | `/app?app=moving-animal` | Platformer game with physics, sound, and theme switching |
-| TurtleDemo | `/app?app=turtle-demo` | 3D turtle visualization with Three.js |
+| Surface | URL | Kind |
+|---|---|---|
+| Demo home catalogue | `/app?app=catalogue&id=…DemoStudio` | Catalogue (docs + apps siblings) |
+| Moving Animal (top-level + Animal Games sub-catalogue) | `/app?app=moving-animal` | AppModule — platform game |
+| Dancing Animals | `/app?app=dancing-animals` | AppModule — 5×5 keyboard grid |
+| Spinning Animals | `/app?app=spinning-animals` | AppModule — auto-rotating gallery |
+| Composed-doc demo | (catalogue tile) | `ComposedDoc` mixing text/svg/table/image/code segments |
+| Interactive animals tree | `/app?app=tree&id=interactive-animals` | RFC 0016 ContentTree of per-animal `ComposedDoc`s |
+| Themes | `/app?app=themes` | Theme picker for the four bundled themes |
 
 ### Themes
 
-The MovingAnimal platformer supports theme switching via URL parameter:
+The framework ships four themes: Default, Forest, Sunset, Bauhaus. Each defines the standard `--color-*` token surface (`--color-surface`, `--color-text-primary`, `--color-accent`, `--color-border`, etc.) that every typed CSS record references. Switching themes flips the entire studio chrome plus every app's playground without app-side code.
 
-| Theme | Description |
-|-------|-------------|
-| `light` | Default light theme |
-| `dark` | Dark mode |
-| `beach` | Tropical sand and ocean |
-| `dracula` | Dracula's castle, dark and eerie |
-| `alpine` | Alpine mountain with forest and snow peaks |
-
-Each theme has its own CSS (`PlaygroundStyles.<theme>.css`) and BGM (`PlatformerBgm.<theme>.js`).
+Apps drop the `--color-*` tokens into their typed `CssClass.body()` returns; the framework's `CssGroupImpl` machinery handles the `:root { --color-…: … }` emission per theme. No per-theme CSS files in app code — one set of typed CSS records covers every theme.
 
 ## Conformance Testing
 
@@ -482,11 +481,18 @@ The `@TestFactory` generates a dynamic test per DomModule with CSS imports, scan
 ## Project Structure
 
 ```
-Homing/
+japjs/                  ← this repo (framework, versioned releases)
   homing-core/          Core library — module interfaces, writers, resolvers
+  homing-libs/          BundledExternalModule wrappers (Three.js, Tone.js, marked.js)
   homing-server/        Server module — HTTP hosting, CssClassManager, content providers
-  homing-conformance/   Test framework — CSS conformance base class
-  homing-demo/          Demo apps — WonderlandDemo, DancingAnimals, MovingAnimal, etc.
+  homing-studio-base/   Studio kernel — Doc / ComposedDoc / Segment ADT, Catalogue, Bootstrap, chrome
+  homing-conformance/   Test framework — conformance base classes (CSS, doctrine, href, plan-registration, …)
+
+homing-doc-plus-demo/   ← separate repo (Site-in-a-Jar dogfood; VOID-SNAPSHOT)
+  homing-demo/          Worked example: animal-game SPAs + doc tiles in one jar
+
+homing-self-studio/     ← separate repo (framework's own documentation site; private)
+  homing-studio/        RFCs, doctrines, defects, journeys, ontology, release notes
 ```
 
 ### External Dependencies
