@@ -148,6 +148,16 @@ public record ComposedDoc(
                     sb.append("\"caption\":")   .append(jstr(im.resolvedCaption())).append(',');
                     sb.append("\"imageDocId\":").append(jstr(im.doc().uuid().toString()));
                 }
+                case ComposedSegment cd -> {
+                    // RFC 0024 P1c — recursive composedDoc reference.
+                    // The renderer fetches /doc?id=<composedDocId> (this same
+                    // endpoint, polymorphic) and mounts a fresh ComposedWidget
+                    // into a sub-branch under this segment.
+                    sb.append("\"kind\":\"composed\",");
+                    sb.append("\"anchor\":")       .append(jstr("seg-" + segIndex)).append(',');
+                    sb.append("\"caption\":")      .append(jstr(cd.resolvedCaption())).append(',');
+                    sb.append("\"composedDocId\":").append(jstr(cd.doc().uuid().toString()));
+                }
                 case DocumentaryWidget<?, ?> w -> {
                     sb.append("\"kind\":\"documentary-widget\",");
                     sb.append("\"anchor\":")    .append(jstr("seg-" + segIndex)).append(',');
@@ -236,6 +246,21 @@ public record ComposedDoc(
                     if (!cap.isBlank()) {
                         out.add(new TocEntry(2, cap, anchor));
                     }
+                }
+                case ComposedSegment cd -> {
+                    // RFC 0024 P1c — recursive composed segment. TOC entry uses
+                    // the resolved caption (the segment's caption-override
+                    // takes precedence over the embedded doc's title).
+                    String cap = cd.resolvedCaption();
+                    if (!cap.isBlank()) {
+                        out.add(new TocEntry(2, cap, anchor));
+                    }
+                    // Note: we do NOT recursively expand the embedded doc's
+                    // TOC into the parent's TOC. Each ComposedDoc owns its
+                    // own TOC; the embedded doc renders its TOC inside its
+                    // own sub-tree when mounted. Flattening would
+                    // structurally conflict with the recursive mount model
+                    // (each level's TOC sidebar lives next to its own body).
                 }
                 case DocumentaryWidget<?, ?> w -> {
                     String cap = w.resolvedCaption();

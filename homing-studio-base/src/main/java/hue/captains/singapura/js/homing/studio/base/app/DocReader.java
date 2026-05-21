@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.core.AppLink;
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
+import hue.captains.singapura.js.homing.core.LegacyAppMain;
 import hue.captains.singapura.js.homing.core.ModuleImports;
 import hue.captains.singapura.js.homing.core.ModuleNameResolver;
 import hue.captains.singapura.js.homing.core.SelfContent;
@@ -24,6 +25,7 @@ import java.util.List;
  * that wants a custom brand can subclass and override {@link #brandLabel()};
  * the typical case is just to use the shared instance.</p>
  */
+@LegacyAppMain(reason = "Markdown body + References renderer; already informs the DocViewer chrome pattern (DocViewer.java back-ported this body in 0.0.111). Clean migration candidate.")
 public record DocReader() implements AppModule<DocReader.Params, DocReader>, SelfContent {
 
     record appMain() implements AppModule._AppMain<DocReader.Params, DocReader> {}

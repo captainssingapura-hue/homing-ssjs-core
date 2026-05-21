@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.core.AppLink;
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
+import hue.captains.singapura.js.homing.core.LegacyAppMain;
 import hue.captains.singapura.js.homing.core.ModuleImports;
 import hue.captains.singapura.js.homing.core.ModuleNameResolver;
 import hue.captains.singapura.js.homing.core.SelfContent;
@@ -26,6 +27,7 @@ import java.util.List;
  *
  * @since RFC 0005-ext1
  */
+@LegacyAppMain(reason = "Multi-view tracker (phases / decisions / acceptance). PlanHostRenderer is 344 lines — Modest File Size split candidate; pairs with Component migration.")
 public record PlanAppHost() implements AppModule<PlanAppHost.Params, PlanAppHost>, SelfContent {
 
     record appMain() implements AppModule._AppMain<PlanAppHost.Params, PlanAppHost> {}

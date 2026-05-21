@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.core.AppLink;
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
+import hue.captains.singapura.js.homing.core.LegacyAppMain;
 import hue.captains.singapura.js.homing.core.ModuleImports;
 import hue.captains.singapura.js.homing.core.ModuleNameResolver;
 import hue.captains.singapura.js.homing.core.SelfContent;
@@ -27,6 +28,7 @@ import java.util.List;
  * page. No fetched data is held server-side after the request — the graph is
  * built once at boot and reused.</p>
  */
+@LegacyAppMain(reason = "Diagnostics viewer; framework-author scope. Low pressure; may move to homing-diagnostics module per RFC 0023 D7.")
 public record StudioGraphInspector()
         implements AppModule<StudioGraphInspector.Params, StudioGraphInspector>, SelfContent {
 

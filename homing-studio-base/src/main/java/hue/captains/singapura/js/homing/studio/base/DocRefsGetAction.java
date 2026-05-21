@@ -5,12 +5,14 @@ import hue.captains.singapura.js.homing.server.ResourceNotFound;
 import hue.captains.singapura.js.homing.studio.base.app.Catalogue;
 import hue.captains.singapura.js.homing.studio.base.app.CatalogueAppHost;
 import hue.captains.singapura.js.homing.studio.base.app.CatalogueRegistry;
+import hue.captains.singapura.js.homing.studio.base.app.Crumb;
 import hue.captains.singapura.tao.http.action.GetAction;
 import hue.captains.singapura.tao.http.action.Param;
 import hue.captains.singapura.tao.http.action.ParamMarshaller;
 import io.vertx.ext.web.RoutingContext;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -46,21 +48,40 @@ public class DocRefsGetAction
 
     private final DocRegistry registry;
     private final CatalogueRegistry catalogueRegistry;   // nullable
+    /** RFC 0016 → tree-leaf doc enriched breadcrumbs. For a tree-leaf
+     *  doc (an SvgDoc / etc. wrapped by a {@code TreeLeaf}), the trail
+     *  here pre-merges the catalogue chain to the tree's host AND the
+     *  tree-internal chain from the tree root to the leaf's parent.
+     *  When present, it takes precedence over the plain catalogue chain
+     *  derived from {@link CatalogueRegistry#breadcrumbsForDoc}. */
+    private final Map<UUID, List<Crumb>> treeLeafTrails;
 
     public DocRefsGetAction(DocRegistry registry) {
-        this(registry, null);
+        this(registry, null, Map.of());
     }
 
     /**
      * RFC 0005-ext2: the catalogue registry powers the {@code breadcrumbs}
-     * field of the response, enabling DocReader to render a typed chain
-     * (root → ... → containing catalogue) above the doc title rather than
-     * a flat "Home" stub. May be {@code null} for studios with no catalogues
-     * configured — in that case the breadcrumbs array is empty.
+     * field of the response. May be {@code null} for studios with no
+     * catalogues configured.
      */
     public DocRefsGetAction(DocRegistry registry, CatalogueRegistry catalogueRegistry) {
+        this(registry, catalogueRegistry, Map.of());
+    }
+
+    /**
+     * RFC 0016 → tree-breadcrumb bridge. {@code treeLeafTrails} carries
+     * the enriched trail (catalogue chain + tree-internal chain) for
+     * tree-leaf docs. Computed at boot time by {@code Bootstrap} from the
+     * fixtures' trees and the resolved catalogue registry. Empty map for
+     * studios with no trees or no tree-hosting catalogue leaves.
+     */
+    public DocRefsGetAction(DocRegistry registry,
+                            CatalogueRegistry catalogueRegistry,
+                            Map<UUID, List<Crumb>> treeLeafTrails) {
         this.registry = Objects.requireNonNull(registry, "registry");
         this.catalogueRegistry = catalogueRegistry;
+        this.treeLeafTrails = (treeLeafTrails == null) ? Map.of() : Map.copyOf(treeLeafTrails);
     }
 
     @Override
@@ -90,11 +111,41 @@ public class DocRefsGetAction
             return CompletableFuture.failedFuture(notFound(raw, "No Doc registered with this UUID"));
         }
         try {
-            String body = serialize(doc, catalogueRegistry);
+            // RFC 0016 — prefer enriched tree-leaf trail when present.
+            List<Crumb> trail = treeLeafTrails.get(id);
+            String body = (trail != null)
+                    ? serializeWithTrail(doc, trail)
+                    : serialize(doc, catalogueRegistry);
             return CompletableFuture.completedFuture(new DocContent(body, "application/json; charset=utf-8"));
         } catch (Exception e) {
             return CompletableFuture.failedFuture(notFound(raw, "Failed to serialise references: " + e.getMessage()));
         }
+    }
+
+    /**
+     * Serialise the Doc with a pre-computed breadcrumb trail. Used when
+     * the doc is a tree leaf whose enriched trail (catalogue chain +
+     * tree-internal chain) was computed at boot time.
+     */
+    static String serializeWithTrail(Doc doc, List<Crumb> trail) {
+        StringBuilder sb = new StringBuilder("{");
+        sb.append("\"title\":")    .append(jstr(doc.title())).append(',');
+        sb.append("\"summary\":")  .append(jstr(doc.summary())).append(',');
+        sb.append("\"category\":") .append(jstr(doc.category())).append(',');
+        sb.append("\"breadcrumbs\":[");
+        boolean first = true;
+        for (Crumb c : trail) {
+            if (!first) sb.append(',');
+            first = false;
+            sb.append("{\"text\":").append(jstr(c.text()))
+              .append(",\"href\":").append(jstr(c.href()))
+              .append('}');
+        }
+        sb.append("],");
+        sb.append("\"references\":");
+        sb.append(serializeReferences(doc.references()));
+        sb.append('}');
+        return sb.toString();
     }
 
     /**

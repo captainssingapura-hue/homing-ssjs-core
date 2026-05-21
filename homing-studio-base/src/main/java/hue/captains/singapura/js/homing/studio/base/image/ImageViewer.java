@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.studio.base.image;
 import hue.captains.singapura.js.homing.core.AppLink;
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.Importable;
+import hue.captains.singapura.js.homing.core.LegacyAppMain;
 import hue.captains.singapura.js.homing.core.ModuleImports;
 import hue.captains.singapura.js.homing.studio.base.app.DocViewer;
 
@@ -20,6 +21,7 @@ import java.util.List;
  *
  * @since RFC 0020
  */
+@LegacyAppMain(reason = "Chrome via DocViewer; tiny body (60 JS lines). Clean migration candidate.")
 public final class ImageViewer extends DocViewer<ImageViewer.Params, ImageViewer> {
 
     public static final ImageViewer INSTANCE = new ImageViewer();

@@ -23,8 +23,19 @@ public record SingleModuleImportWriter<M extends EsModule<M>>(
 
         final String moduleName = resolver.resolve(imports.from())
                 .withTheme(theme).withLocale(locale).basePath();
+
+        // RFC 0024 Phase P1a — aliasing support. If the import declaration
+        // carries an entry in ModuleImports.aliases() keyed by the export's
+        // runtime class, emit `OriginalName as AliasName`. Otherwise emit
+        // the bare original name (the historical behaviour, preserved for
+        // every non-aliased import).
+        var aliases = imports.aliases();
         return "import {"
-                + emittable.stream().map(x -> x.getClass().getSimpleName()).collect(Collectors.joining(", "))
+                + emittable.stream().map(x -> {
+                    String original = x.getClass().getSimpleName();
+                    String alias = aliases.get(x.getClass());
+                    return alias == null ? original : original + " as " + alias;
+                }).collect(Collectors.joining(", "))
                 + "} from \"" + moduleName + "\";";
     }
 }

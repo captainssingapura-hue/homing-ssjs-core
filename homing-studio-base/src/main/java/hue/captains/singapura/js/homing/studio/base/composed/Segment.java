@@ -35,5 +35,6 @@ import hue.captains.singapura.tao.ontology.ValueObject;
 public sealed interface Segment extends ValueObject
         permits MarkdownSegment, TextSegment, CodeSegment,
                 SvgSegment, TableSegment, ImageSegment,
+                ComposedSegment,
                 DocumentaryWidget {
 }

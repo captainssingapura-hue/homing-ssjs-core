@@ -6,10 +6,11 @@
 
     <groupId>io.github.captainssingapura-hue.homing.js</groupId>
     <artifactId>homing.js</artifactId>
-    <version>VOID-SNAPSHOT</version>
+    <version>LOCAL-SNAPSHOT</version>
     <packaging>pom</packaging>
     <modules>
         <module>homing-core</module>
+        <module>homing-core-js</module>
         <module>homing-server</module>
         <module>homing-libs</module>
         <module>homing-studio-base</module>

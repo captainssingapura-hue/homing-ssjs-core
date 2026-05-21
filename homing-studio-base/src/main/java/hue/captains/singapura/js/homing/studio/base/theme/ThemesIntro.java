@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.core.AppLink;
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
+import hue.captains.singapura.js.homing.core.LegacyAppMain;
 import hue.captains.singapura.js.homing.core.ModuleImports;
 import hue.captains.singapura.js.homing.core.ModuleNameResolver;
 import hue.captains.singapura.js.homing.core.SelfContent;
@@ -21,6 +22,7 @@ import java.util.List;
  * header) and the page's own activator links both flow through {@code href},
  * so the user's chosen theme is sticky across navigation.</p>
  */
+@LegacyAppMain(reason = "Theme picker page; tiny body; opportunistic migration.")
 public record ThemesIntro() implements AppModule<AppModule._None, ThemesIntro>, SelfContent {
 
     record appMain() implements AppModule._AppMain<AppModule._None, ThemesIntro> {}
