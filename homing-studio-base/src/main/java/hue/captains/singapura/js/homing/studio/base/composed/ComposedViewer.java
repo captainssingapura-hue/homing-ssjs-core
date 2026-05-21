@@ -2,33 +2,43 @@ package hue.captains.singapura.js.homing.studio.base.composed;
 
 import hue.captains.singapura.js.homing.core.AppLink;
 import hue.captains.singapura.js.homing.core.AppModule;
-import hue.captains.singapura.js.homing.core.Importable;
-import hue.captains.singapura.js.homing.core.ModuleImports;
-import hue.captains.singapura.js.homing.studio.base.app.DocViewer;
-
-import java.util.List;
+import hue.captains.singapura.js.homing.core.Widget;
+import hue.captains.singapura.js.homing.studio.base.widget.SingleWidgetMPA;
 
 /**
- * RFC 0019 — viewer AppModule for {@link ComposedDoc}. URL contract:
+ * RFC 0019 → RFC 0024 — viewer AppModule for {@link ComposedDoc}.
+ * URL contract:
  *
  * <pre>/app?app=composed-viewer&id=&lt;composeddoc-uuid&gt;</pre>
  *
- * <p>Extends {@link DocViewer} so the framework's standard chrome
- * (Header + brand + breadcrumb + theme picker + audio runtime) is
- * composed automatically (V11 axiom). The body delegates to
- * {@link ComposedViewerRenderer}'s {@code renderComposed} JS function,
- * which fetches the composed-doc JSON payload via {@code /doc?id=<uuid>}
- * and dispatches per segment kind.</p>
+ * <p>Originally landed (RFC 0019) as a {@code DocViewer<P, M>} subclass
+ * with inline body delegating to the legacy 528-line
+ * {@code ComposedViewerRenderer.js}. Reborn under RFC 0024 Phase P1c as
+ * a "fake AppModule" — a {@link SingleWidgetMPA} thin shell hosting
+ * {@link ComposedWidget}. The URL grammar, typed Params, {@link AppLink},
+ * and {@link ComposedContentViewer} routing are unchanged; what's
+ * underneath is now the new contract:</p>
  *
- * <p>Phase 1 segment kinds: {@code markdown} (marked.js) +
- * {@code svg} (proxy fetch to the referenced SvgDoc). Phase 2+
- * extends the dispatch (TableSegment, ImageSegment, etc.); no
- * change to this viewer needed — the renderer module switches on
- * the {@code kind} field.</p>
+ * <ul>
+ *   <li>Chrome via DomOpsParty branches (header + main + footer at L1
+ *       under root, framework-owned).</li>
+ *   <li>Body is {@code ComposedWidget.mountInto(branch, parent, params)}
+ *       — orchestrator dispatches to per-segment renderer EsModules,
+ *       each its own file (Modest File Size compliance — the legacy
+ *       528-line renderer split into 9 focused modules).</li>
+ *   <li>Recursive ComposedDoc embedding via the new {@link ComposedSegment}
+ *       variant + {@link ComposedSegmentRenderer} — the orchestrator's
+ *       mount function is self-callable, threading a renderingStack
+ *       parameter forward for cycle detection.</li>
+ *   <li>No {@code @LegacyAppMain} — this viewer IS the contract now.</li>
+ * </ul>
  *
- * @since RFC 0019 Phase 1
+ * @since RFC 0019 (original) — RFC 0024 Phase P1c (reborn as widget shell
+ *        + 9-file split + recursive composedDoc support)
+ * @see ComposedWidget — the widget this shell hosts
+ * @see SingleWidgetMPA — the abstract base for fake-AppModule shells
  */
-public final class ComposedViewer extends DocViewer<ComposedViewer.Params, ComposedViewer> {
+public final class ComposedViewer extends SingleWidgetMPA<ComposedViewer.Params, ComposedViewer> {
 
     public static final ComposedViewer INSTANCE = new ComposedViewer();
 
@@ -37,7 +47,7 @@ public final class ComposedViewer extends DocViewer<ComposedViewer.Params, Compo
     /** @param id UUID of the ComposedDoc to render. */
     public record Params(String id) implements AppModule._Param {}
 
-    private record appMain() implements AppModule._AppMain<Params, ComposedViewer> {}
+    public record appMain() implements AppModule._AppMain<Params, ComposedViewer> {}
     public record link() implements AppLink<ComposedViewer> {}
 
     @Override public String simpleName() { return "composed-viewer"; }
@@ -50,28 +60,7 @@ public final class ComposedViewer extends DocViewer<ComposedViewer.Params, Compo
     }
 
     @Override
-    protected List<ModuleImports<? extends Importable>> bodyImports() {
-        return List.of(
-                new ModuleImports<>(
-                        List.of(new ComposedViewerRenderer.renderComposed()),
-                        ComposedViewerRenderer.INSTANCE)
-        );
-    }
-
-    @Override
-    protected List<String> bodyJs() {
-        // Chrome already populated `main`; we hand it off to the renderer,
-        // which manages the 2-column layout, TOC sidebar, and per-segment
-        // dispatch.
-        return List.of(
-                "    if (!params.id) {",
-                "        var errMsg = document.createElement('div');",
-                "        css.addClass(errMsg, st_error);",
-                "        errMsg.textContent = 'No composed-doc id supplied. Use ?id=<uuid>.';",
-                "        main.replaceChildren(errMsg);",
-                "        return;",
-                "    }",
-                "    renderComposed({ docId: params.id, main: main });"
-        );
+    protected Widget<?, ?> widget() {
+        return ComposedWidget.INSTANCE;
     }
 }

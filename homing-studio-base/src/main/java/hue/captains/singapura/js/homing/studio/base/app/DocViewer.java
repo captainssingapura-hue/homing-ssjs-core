@@ -152,7 +152,13 @@ public abstract class DocViewer<P extends AppModule._Param, M extends DocViewer<
         lines.add("");
         lines.add("    var resolvedTitle = " + jsString(title()) + ";");
         lines.add("    var resolvedBrand = brandFallback;");
-        lines.add("    var headerEl = Header({ brand: brandForHeader(brandFallback), crumbs: [{ text: resolvedTitle }] });");
+        // RFC 0005-ext2 — `/doc-refs?id=…` returns a `breadcrumbs` array carrying
+        // the typed catalogue chain (root → … → containing catalogue) the server
+        // pre-built from the CatalogueRegistry. Mirrors DocReader's pattern:
+        // start with a single-crumb fallback (just the doc title), upgrade to
+        // the full chain (catalogue crumbs prepended) once the fetch resolves.
+        lines.add("    var resolvedCrumbs = [{ text: resolvedTitle }];");
+        lines.add("    var headerEl = Header({ brand: brandForHeader(brandFallback), crumbs: resolvedCrumbs });");
         lines.add("    root.appendChild(headerEl);");
         lines.add("");
         lines.add("    var main = document.createElement('div');");
@@ -160,7 +166,7 @@ public abstract class DocViewer<P extends AppModule._Param, M extends DocViewer<
         lines.add("    root.appendChild(main);");
         lines.add("");
         lines.add("    function refreshHeader() {");
-        lines.add("        var newHeader = Header({ brand: brandForHeader(resolvedBrand), crumbs: [{ text: resolvedTitle }] });");
+        lines.add("        var newHeader = Header({ brand: brandForHeader(resolvedBrand), crumbs: resolvedCrumbs });");
         lines.add("        root.replaceChild(newHeader, headerEl);");
         lines.add("        headerEl = newHeader;");
         lines.add("    }");
@@ -173,6 +179,15 @@ public abstract class DocViewer<P extends AppModule._Param, M extends DocViewer<
         lines.add("            .then(function(info){");
         lines.add("                if (info && info.title) {");
         lines.add("                    resolvedTitle = info.title;");
+        lines.add("                    // Rebuild the crumb chain: server-supplied catalogue chain");
+        lines.add("                    // (when present) prepended to the leaf-crumb-with-doc-title.");
+        lines.add("                    var leaf = { text: resolvedTitle };");
+        lines.add("                    if (info.breadcrumbs && info.breadcrumbs.length > 0) {");
+        lines.add("                        resolvedCrumbs = info.breadcrumbs.slice();");
+        lines.add("                        resolvedCrumbs.push(leaf);");
+        lines.add("                    } else {");
+        lines.add("                        resolvedCrumbs = [leaf];");
+        lines.add("                    }");
         lines.add("                    refreshHeader();");
         lines.add("                    document.title = info.title + (resolvedBrand && resolvedBrand.label ? ' \\u00b7 ' + resolvedBrand.label : '');");
         lines.add("                }");

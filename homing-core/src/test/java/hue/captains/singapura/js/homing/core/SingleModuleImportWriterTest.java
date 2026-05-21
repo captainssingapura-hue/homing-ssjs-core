@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.core;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -79,6 +80,38 @@ class SingleModuleImportWriterTest {
         var writer = new SingleModuleImportWriter<>(MixedSource.INSTANCE, resolver);
         var imports = new ModuleImports<>(List.of(new MixedSource.helper()), MixedSource.INSTANCE);
         assertTrue(writer.writeImports(imports).contains("helper"));
+    }
+
+    @Test
+    void writeImports_emitsAliasWhenDeclared() {
+        // RFC 0024 Phase P1a — aliased imports. When ModuleImports.aliases()
+        // maps an Exportable's runtime class to an alias name, the writer
+        // emits `OriginalName as AliasName`.
+        ModuleNameResolver resolver = m -> new PartialModulePath("/m/" + m.getClass().getSimpleName(), false);
+        var writer = new SingleModuleImportWriter<>(TestModule.INSTANCE, resolver);
+        var imports = new ModuleImports<>(
+                List.of(new TestModule.Foo(), new TestModule.Bar()),
+                TestModule.INSTANCE,
+                Map.of(TestModule.Foo.class, "AliasedFoo")
+        );
+        String result = writer.writeImports(imports);
+        assertEquals("import {Foo as AliasedFoo, Bar} from \"/m/TestModule\";", result,
+                "Aliased export emits `Original as Alias`; non-aliased export emits bare original");
+    }
+
+    @Test
+    void writeImports_aliasesMultipleExportsFromSameSource() {
+        ModuleNameResolver resolver = m -> new PartialModulePath("/m/" + m.getClass().getSimpleName(), false);
+        var writer = new SingleModuleImportWriter<>(TestModule.INSTANCE, resolver);
+        var imports = new ModuleImports<>(
+                List.of(new TestModule.Foo(), new TestModule.Bar()),
+                TestModule.INSTANCE,
+                Map.of(
+                        TestModule.Foo.class, "AliasedFoo",
+                        TestModule.Bar.class, "AliasedBar")
+        );
+        assertEquals("import {Foo as AliasedFoo, Bar as AliasedBar} from \"/m/TestModule\";",
+                writer.writeImports(imports));
     }
 
     @Test

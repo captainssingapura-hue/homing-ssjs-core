@@ -3,6 +3,9 @@ package hue.captains.singapura.js.homing.studio.base.app.tree;
 import hue.captains.singapura.js.homing.server.EmptyParam;
 import hue.captains.singapura.js.homing.server.ResourceNotFound;
 import hue.captains.singapura.js.homing.studio.base.DocContent;
+import hue.captains.singapura.js.homing.studio.base.app.Catalogue;
+import hue.captains.singapura.js.homing.studio.base.app.CatalogueAppHost;
+import hue.captains.singapura.js.homing.studio.base.app.CatalogueRegistry;
 import hue.captains.singapura.js.homing.studio.base.app.StudioBrand;
 import hue.captains.singapura.tao.http.action.GetAction;
 import hue.captains.singapura.tao.http.action.Param;
@@ -10,6 +13,7 @@ import hue.captains.singapura.tao.http.action.ParamMarshaller;
 import io.vertx.ext.web.RoutingContext;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
@@ -49,10 +53,31 @@ public final class TreeGetAction
 
     private final TreeRegistry registry;
     private final StudioBrand  brand;
+    /** RFC 0016 → tree-breadcrumb bridge. When non-null, the catalogue
+     *  chain hosting each tree is prepended to the tree-internal chain in
+     *  the breadcrumb response, so a tree page's breadcrumb spans both
+     *  the catalogue context (multi-studio · demo · …) AND the tree-internal
+     *  path. Without this, the breadcrumb of the tree root shows only the
+     *  root node — a known gap addressed mid-RFC-0024-P1b. */
+    private final CatalogueRegistry catalogueRegistry;
+    /** Tree id → the catalogue that contains the {@code TreeAppHost} navigable
+     *  leaf for this tree. Computed by {@code Bootstrap} via scanning catalogue
+     *  leaves. Empty when no catalogue hosts the tree (e.g. trees registered
+     *  in fixtures but not surfaced via any catalogue leaf). */
+    private final Map<String, Catalogue<?>> hostOfTree;
 
     public TreeGetAction(TreeRegistry registry, StudioBrand brand) {
+        this(registry, brand, null, Map.of());
+    }
+
+    public TreeGetAction(TreeRegistry registry,
+                         StudioBrand brand,
+                         CatalogueRegistry catalogueRegistry,
+                         Map<String, Catalogue<?>> hostOfTree) {
         this.registry = Objects.requireNonNull(registry, "registry");
         this.brand    = brand;  // nullable when no brand is configured
+        this.catalogueRegistry = catalogueRegistry;  // nullable
+        this.hostOfTree = (hostOfTree == null) ? Map.of() : Map.copyOf(hostOfTree);
     }
 
     @Override
@@ -115,19 +140,49 @@ public final class TreeGetAction
               .append("},");
         }
 
-        // Breadcrumbs (root → current branch).
-        List<TreeNode> chain = registry.breadcrumbs(tree.id(), currentPath);
+        // Breadcrumbs. RFC 0016 → tree-breadcrumb bridge: when this tree
+        // is hosted by a catalogue (a catalogue contains a TreeAppHost
+        // navigable leaf for this tree id), prepend that catalogue's
+        // chain (root → ... → host) BEFORE the tree-internal chain
+        // (root TreeBranch → ... → addressed node). The host's own leaf
+        // (the TreeAppHost navigable) is NOT included — the tree's root
+        // node serves as the corresponding crumb.
+        List<TreeNode> treeChain = registry.breadcrumbs(tree.id(), currentPath);
         sb.append("\"breadcrumbs\":[");
+
+        // -- Catalogue prelude --
+        boolean firstCrumb = true;
+        Catalogue<?> host = (catalogueRegistry != null) ? hostOfTree.get(tree.id()) : null;
+        if (host != null) {
+            List<Catalogue<?>> catChain = catalogueRegistry.breadcrumbs(host);
+            for (Catalogue<?> c : catChain) {
+                if (!firstCrumb) sb.append(',');
+                firstCrumb = false;
+                // All catalogue prelude crumbs link back; even the host
+                // (the catalogue we'd normally render here) gets a link
+                // because the current page is the tree, not the host.
+                @SuppressWarnings("unchecked")
+                Class<? extends Catalogue<?>> cClass = (Class<? extends Catalogue<?>>) c.getClass();
+                String icon = c.icon();
+                String text = (icon == null || icon.isEmpty()) ? c.name() : icon + " " + c.name();
+                sb.append("{\"name\":").append(jstr(text))
+                  .append(",\"url\":") .append(jstr(CatalogueAppHost.urlFor(cClass)))
+                  .append('}');
+            }
+        }
+
+        // -- Tree-internal chain --
         StringBuilder cumulative = new StringBuilder();
-        for (int i = 0; i < chain.size(); i++) {
-            TreeNode n = chain.get(i);
-            if (i > 0) sb.append(',');
+        for (int i = 0; i < treeChain.size(); i++) {
+            TreeNode n = treeChain.get(i);
+            if (!firstCrumb) sb.append(',');
+            firstCrumb = false;
             // i==0 is the root; subsequent nodes append their segment to the path.
             if (i > 0) {
                 if (cumulative.length() > 0) cumulative.append('/');
                 cumulative.append(n.segment());
             }
-            String url = (i == chain.size() - 1) ? "" : treeUrl(tree.id(), cumulative.toString());
+            String url = (i == treeChain.size() - 1) ? "" : treeUrl(tree.id(), cumulative.toString());
             sb.append("{\"name\":").append(jstr(n.name()))
               .append(",\"url\":") .append(jstr(url))
               .append('}');

@@ -39,6 +39,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * RFC 0012 — the typed studio bootstrap. Construct with a {@link Fixtures}
@@ -211,11 +212,22 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
                 ? RootRedirectGetAction.toUrl(CatalogueAppHost.urlFor(brand.homeApp()))
                 : new RootRedirectGetAction(rootApp.simpleName());
 
+        // --- RFC 0016 — bridge tree breadcrumbs to catalogue chains.
+        // Scan catalogue leaves for navigables wrapping TreeAppHost; for each,
+        // record the tree's host catalogue. Also pre-compute the tree-leaf
+        // doc → host catalogue map so /doc-refs returns the catalogue chain
+        // for tree-leaf SvgDocs. Both maps are empty when no trees are
+        // registered or when no catalogue surfaces a TreeAppHost leaf.
+        Map<String, Catalogue<?>> hostOfTree = new HashMap<>();
+        Map<UUID, Catalogue<?>> extraDocHomes = new HashMap<>();
+        scanTreeHosts(catalogues, fixtures.trees(), hostOfTree, extraDocHomes);
+
         // --- Catalogue registry + action (RFC 0005), only when catalogues registered.
         final CatalogueGetAction catalogueAction;
         final CatalogueRegistry catalogueRegistry;
         if (!catalogues.isEmpty()) {
-            catalogueRegistry = new CatalogueRegistry(brand, docRegistry, catalogues);
+            catalogueRegistry = new CatalogueRegistry(brand, docRegistry, catalogues,
+                    null, extraDocHomes);
             // RFC 0014: when diagnostics is enabled the framework injects a
             // three-tier tile pyramid via the augmentation map — Diagnostics
             // tile on the home L0; per-studio parent tiles (or direct view
@@ -232,8 +244,19 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
             catalogueAction   = null;
         }
 
+        // --- RFC 0016 — pre-compute enriched breadcrumb trails for tree-leaf
+        // docs. Each tree-leaf doc's trail = catalogue chain from root to
+        // the tree's host catalogue + tree-internal chain from tree root
+        // to the leaf's parent branch. The leaf's own title is appended by
+        // the consumer (DocReader / SvgViewer chrome). Empty map when no
+        // trees or no tree-hosting catalogue leaves.
+        Map<UUID, List<hue.captains.singapura.js.homing.studio.base.app.Crumb>> treeLeafTrails =
+                (catalogueRegistry != null)
+                        ? buildTreeLeafTrails(fixtures.trees(), hostOfTree, catalogueRegistry)
+                        : Map.of();
+
         // --- Doc-refs action (RFC 0004-ext1 / RFC 0005-ext2 — carries breadcrumb chain).
-        var docRefsAction = new DocRefsGetAction(docRegistry, catalogueRegistry);
+        var docRefsAction = new DocRefsGetAction(docRegistry, catalogueRegistry, treeLeafTrails);
 
         // --- Plan action (RFC 0005-ext1), only when plans registered.
         final PlanGetAction planAction;
@@ -253,7 +276,11 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
         final hue.captains.singapura.js.homing.studio.base.app.tree.TreeGetAction treeAction;
         if (!fixtures.trees().isEmpty()) {
             var treeRegistry = new hue.captains.singapura.js.homing.studio.base.app.tree.TreeRegistry(fixtures.trees());
-            treeAction = new hue.captains.singapura.js.homing.studio.base.app.tree.TreeGetAction(treeRegistry, brand);
+            // Pass the host-of-tree map + catalogueRegistry so the tree's
+            // breadcrumb response spans the catalogue chain (multi-studio · demo · …)
+            // plus the tree-internal chain (root → … → addressed node).
+            treeAction = new hue.captains.singapura.js.homing.studio.base.app.tree.TreeGetAction(
+                    treeRegistry, brand, catalogueRegistry, hostOfTree);
         } else {
             treeAction = null;
         }
@@ -340,5 +367,187 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
             byClass.putIfAbsent(p.getClass(), p);
         }
         return List.copyOf(byClass.values());
+    }
+
+    /**
+     * RFC 0016 → tree-breadcrumb bridge. Walks every catalogue's leaves;
+     * for each {@code Entry.OfDoc(AppDoc(Navigable(TreeAppHost, params)))}
+     * encountered, records the (tree id → containing catalogue) linkage in
+     * {@code hostOfTree}, and walks the matching ContentTree's leaves to
+     * register their wrapped Docs in {@code extraDocHomes} under the same
+     * host catalogue. The two maps drive breadcrumb-rendering for the tree
+     * page and for tree-leaf SvgDoc pages respectively.
+     *
+     * <p>If a tree is registered in {@code Fixtures.trees()} but no catalogue
+     * leaf surfaces it via {@code TreeAppHost}, the tree is simply absent
+     * from both maps — breadcrumbs fall back to the tree-internal-only
+     * shape (the pre-RFC-0016-bridge default).</p>
+     */
+    private void scanTreeHosts(
+            List<Catalogue<?>> catalogues,
+            List<? extends hue.captains.singapura.js.homing.studio.base.app.tree.ContentTree> trees,
+            Map<String, Catalogue<?>> hostOfTree,
+            Map<UUID, Catalogue<?>> extraDocHomes) {
+        if (catalogues.isEmpty() || trees.isEmpty()) return;
+        // Index trees by id for the leaf-doc walk after host detection.
+        var treesById = new HashMap<String,
+                hue.captains.singapura.js.homing.studio.base.app.tree.ContentTree>();
+        for (var t : trees) treesById.put(t.id(), t);
+
+        for (Catalogue<?> parent : catalogues) {
+            for (var entry : parent.leaves()) {
+                if (!(entry instanceof hue.captains.singapura.js.homing.studio.base.app.Entry.OfDoc<?, ?> ofDoc)) continue;
+                if (!(ofDoc.doc() instanceof hue.captains.singapura.js.homing.studio.base.app.AppDoc<?, ?> appDoc)) continue;
+                var nav = appDoc.nav();
+                if (nav.app() != hue.captains.singapura.js.homing.studio.base.app.tree.TreeAppHost.INSTANCE) continue;
+                // Navigable wraps TreeAppHost. Extract tree id from params.
+                if (!(nav.params() instanceof hue.captains.singapura.js.homing.studio.base.app.tree.TreeAppHost.Params treeParams)) continue;
+                String treeId = treeParams.id();
+                if (treeId == null) continue;
+                // First catalogue wins (per docHome-conflict precedent).
+                hostOfTree.putIfAbsent(treeId, parent);
+                // Augment extraDocHomes with this tree's leaf docs.
+                var tree = treesById.get(treeId);
+                if (tree != null) {
+                    walkTreeLeaves(tree.root(), parent, extraDocHomes);
+                }
+            }
+        }
+    }
+
+    /** Depth-first walk of a tree's leaves; each leaf's wrapped Doc UUID
+     *  is registered with the given host catalogue (first-write wins). */
+    private void walkTreeLeaves(
+            hue.captains.singapura.js.homing.studio.base.app.tree.TreeBranch branch,
+            Catalogue<?> host,
+            Map<UUID, Catalogue<?>> extraDocHomes) {
+        for (var child : branch.children()) {
+            switch (child) {
+                case hue.captains.singapura.js.homing.studio.base.app.tree.TreeBranch sub ->
+                        walkTreeLeaves(sub, host, extraDocHomes);
+                case hue.captains.singapura.js.homing.studio.base.app.tree.TreeLeaf leaf -> {
+                    UUID id = leaf.doc().uuid();
+                    if (id != null) extraDocHomes.putIfAbsent(id, host);
+                }
+            }
+        }
+    }
+
+    /**
+     * RFC 0016 → tree-leaf doc breadcrumb trails. For each tree-leaf doc
+     * across all registered trees, build a pre-merged trail that the
+     * DocRefsGetAction emits when {@code /doc-refs?id=<leaf-uuid>} is
+     * requested. The trail is the user-visible breadcrumb chain that
+     * leads back to the studio root via both the tree-internal path AND
+     * the catalogue chain above the tree.
+     *
+     * <p>Trail composition (root → leaf):</p>
+     * <ol>
+     *   <li>Host catalogue's breadcrumb chain (root catalogue → ... →
+     *       tree's host catalogue), each crumb's text icon-prefixed,
+     *       URL = {@code CatalogueAppHost.urlFor(class)}.</li>
+     *   <li>Tree-internal chain — every TreeBranch ancestor from the
+     *       tree root down to (and including) the leaf's immediate
+     *       parent branch. Each crumb's URL = {@code /app?app=tree&id=<treeId>&path=<...>}
+     *       (omits the path query for the tree root). Branch names are
+     *       NOT icon-prefixed today (TreeBranch.icon is rendered in
+     *       catalogue host pages but not in URLs).</li>
+     *   <li>The leaf's own title is NOT included here — the consumer
+     *       (DocReader / SvgViewer chrome) appends it as the final
+     *       no-link crumb.</li>
+     * </ol>
+     */
+    private Map<UUID, List<hue.captains.singapura.js.homing.studio.base.app.Crumb>> buildTreeLeafTrails(
+            List<? extends hue.captains.singapura.js.homing.studio.base.app.tree.ContentTree> trees,
+            Map<String, Catalogue<?>> hostOfTree,
+            CatalogueRegistry catalogueRegistry) {
+        if (trees.isEmpty() || hostOfTree.isEmpty()) return Map.of();
+        var out = new HashMap<UUID, List<hue.captains.singapura.js.homing.studio.base.app.Crumb>>();
+        for (var tree : trees) {
+            Catalogue<?> host = hostOfTree.get(tree.id());
+            if (host == null) continue;
+            // Pre-compute the catalogue prelude (same for every leaf of this tree).
+            var preludeCrumbs = new ArrayList<hue.captains.singapura.js.homing.studio.base.app.Crumb>();
+            for (Catalogue<?> c : catalogueRegistry.breadcrumbs(host)) {
+                @SuppressWarnings("unchecked")
+                Class<? extends Catalogue<?>> cClass = (Class<? extends Catalogue<?>>) c.getClass();
+                String icon = c.icon();
+                String text = (icon == null || icon.isEmpty()) ? c.name() : icon + " " + c.name();
+                preludeCrumbs.add(new hue.captains.singapura.js.homing.studio.base.app.Crumb(
+                        text, CatalogueAppHost.urlFor(cClass)));
+            }
+            // Walk the tree, accumulating the branch path; at each leaf,
+            // build trail = prelude + (root → ... → leaf's parent).
+            walkLeavesForTrails(tree.id(), tree.root(),
+                    new ArrayList<>(), new ArrayList<>(),
+                    preludeCrumbs, out);
+        }
+        return Map.copyOf(out);
+    }
+
+    /**
+     * Depth-first walk of {@code branch}, threading the ancestor-stack
+     * ({@code ancestorBranches} + {@code cumulativePathSegments}). At each
+     * {@link hue.captains.singapura.js.homing.studio.base.app.tree.TreeLeaf TreeLeaf},
+     * emits a trail = prelude + tree-internal crumbs.
+     */
+    private void walkLeavesForTrails(
+            String treeId,
+            hue.captains.singapura.js.homing.studio.base.app.tree.TreeBranch currentBranch,
+            List<hue.captains.singapura.js.homing.studio.base.app.tree.TreeBranch> ancestorBranches,
+            List<String> cumulativePathSegments,
+            List<hue.captains.singapura.js.homing.studio.base.app.Crumb> preludeCrumbs,
+            Map<UUID, List<hue.captains.singapura.js.homing.studio.base.app.Crumb>> out) {
+        // Push current branch onto the ancestor stack.
+        ancestorBranches.add(currentBranch);
+        // currentBranch's segment becomes part of the path EXCEPT for the
+        // tree root (whose segment is "" by convention — see AnimalsTree.java).
+        // We add to cumulativePathSegments only for non-root branches.
+        boolean isRoot = ancestorBranches.size() == 1;
+        if (!isRoot && !currentBranch.segment().isEmpty()) {
+            cumulativePathSegments.add(currentBranch.segment());
+        }
+
+        for (var child : currentBranch.children()) {
+            switch (child) {
+                case hue.captains.singapura.js.homing.studio.base.app.tree.TreeBranch sub ->
+                        walkLeavesForTrails(treeId, sub, ancestorBranches, cumulativePathSegments,
+                                preludeCrumbs, out);
+                case hue.captains.singapura.js.homing.studio.base.app.tree.TreeLeaf leaf -> {
+                    UUID id = leaf.doc().uuid();
+                    if (id == null) break;
+                    var trail = new ArrayList<>(preludeCrumbs);
+                    // Tree-internal: every branch from root down to current
+                    // (the leaf's immediate parent). The root branch's URL
+                    // is /app?app=tree&id=<treeId>; subsequent branches add
+                    // their path segments.
+                    var pathSoFar = new StringBuilder();
+                    for (int i = 0; i < ancestorBranches.size(); i++) {
+                        var b = ancestorBranches.get(i);
+                        if (i > 0 && !b.segment().isEmpty()) {
+                            if (pathSoFar.length() > 0) pathSoFar.append('/');
+                            pathSoFar.append(b.segment());
+                        }
+                        String href = (pathSoFar.length() == 0)
+                                ? "/app?app=tree&id=" + treeId
+                                : "/app?app=tree&id=" + treeId + "&path=" + pathSoFar;
+                        // Icon-prefix branch name when present, matching the
+                        // tree page chrome's breadcrumb format (TreeGetAction.serialize).
+                        String text = (b.icon() == null || b.icon().isEmpty())
+                                ? b.name()
+                                : b.icon() + " " + b.name();
+                        trail.add(new hue.captains.singapura.js.homing.studio.base.app.Crumb(
+                                text, href));
+                    }
+                    out.putIfAbsent(id, List.copyOf(trail));
+                }
+            }
+        }
+
+        // Pop.
+        ancestorBranches.remove(ancestorBranches.size() - 1);
+        if (!isRoot && !currentBranch.segment().isEmpty()) {
+            cumulativePathSegments.remove(cumulativePathSegments.size() - 1);
+        }
     }
 }

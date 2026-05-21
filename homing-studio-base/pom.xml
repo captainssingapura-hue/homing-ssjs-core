@@ -6,7 +6,7 @@
     <parent>
         <groupId>io.github.captainssingapura-hue.homing.js</groupId>
         <artifactId>homing.js</artifactId>
-        <version>VOID-SNAPSHOT</version>
+        <version>LOCAL-SNAPSHOT</version>
     </parent>
 
     <artifactId>homing-studio-base</artifactId>
@@ -37,6 +37,14 @@
         <dependency>
             <groupId>io.github.captainssingapura-hue.homing.js</groupId>
             <artifactId>homing-libs</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <!-- RFC 0024: DomOpsParty is the unified component substrate. Studios
+             that extend homing-studio-base get it transitively so their apps
+             can build on the branch-tree DOM-ownership contract. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-core-js</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>

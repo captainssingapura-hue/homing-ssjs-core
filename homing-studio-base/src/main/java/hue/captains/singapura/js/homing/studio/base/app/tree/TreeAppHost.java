@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.core.AppLink;
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
+import hue.captains.singapura.js.homing.core.LegacyAppMain;
 import hue.captains.singapura.js.homing.core.ModuleImports;
 import hue.captains.singapura.js.homing.core.ModuleNameResolver;
 import hue.captains.singapura.js.homing.core.SelfContent;
@@ -25,6 +26,7 @@ import java.util.List;
  *
  * @since RFC 0016
  */
+@LegacyAppMain(reason = "Reuses CatalogueHostRenderer; migrates as CatalogueAppHost does.")
 public record TreeAppHost() implements AppModule<TreeAppHost.Params, TreeAppHost>, SelfContent {
 
     record appMain() implements AppModule._AppMain<TreeAppHost.Params, TreeAppHost> {}

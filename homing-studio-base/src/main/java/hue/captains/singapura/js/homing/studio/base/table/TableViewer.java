@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.studio.base.table;
 import hue.captains.singapura.js.homing.core.AppLink;
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.Importable;
+import hue.captains.singapura.js.homing.core.LegacyAppMain;
 import hue.captains.singapura.js.homing.core.ModuleImports;
 import hue.captains.singapura.js.homing.studio.base.app.DocViewer;
 
@@ -21,6 +22,7 @@ import java.util.List;
  *
  * @since RFC 0020
  */
+@LegacyAppMain(reason = "Chrome via DocViewer; body (113 JS lines) builds <table> from typed cells. Clean migration candidate.")
 public final class TableViewer extends DocViewer<TableViewer.Params, TableViewer> {
 
     public static final TableViewer INSTANCE = new TableViewer();

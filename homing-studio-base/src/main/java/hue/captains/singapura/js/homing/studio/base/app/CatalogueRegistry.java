@@ -48,16 +48,37 @@ public final class CatalogueRegistry {
     public CatalogueRegistry(StudioBrand brand,
                              DocRegistry docRegistry,
                              Collection<? extends Catalogue<?>> catalogues) {
-        this(brand, docRegistry, catalogues, null);
+        this(brand, docRegistry, catalogues, null, Map.of());
     }
 
     /** RFC 0011 — accepts an explicit {@link StudioProxyManager}; when null,
      *  the manager is auto-scanned from the registered catalogues' OfStudio leaves. */
-    @SuppressWarnings("unchecked")
     public CatalogueRegistry(StudioBrand brand,
                              DocRegistry docRegistry,
                              Collection<? extends Catalogue<?>> catalogues,
                              StudioProxyManager proxyManager) {
+        this(brand, docRegistry, catalogues, proxyManager, Map.of());
+    }
+
+    /**
+     * RFC 0016 — accepts an {@code extraDocHomes} map that augments the
+     * doc-home reverse index after the catalogue-leaf scan. Used by
+     * {@code Bootstrap} to register tree-leaf docs against the catalogue
+     * that hosts their tree (the catalogue containing the {@code TreeAppHost}
+     * navigable leaf for that tree). Without this, tree-leaf docs would
+     * not appear in {@link #breadcrumbsForDoc} and their {@code /doc-refs}
+     * response would carry an empty breadcrumb chain.
+     *
+     * <p>Catalogue-leaf docs still take precedence — entries explicitly
+     * declared as catalogue leaves win over any conflicting entry in
+     * {@code extraDocHomes}.</p>
+     */
+    @SuppressWarnings("unchecked")
+    public CatalogueRegistry(StudioBrand brand,
+                             DocRegistry docRegistry,
+                             Collection<? extends Catalogue<?>> catalogues,
+                             StudioProxyManager proxyManager,
+                             Map<UUID, Catalogue<?>> extraDocHomes) {
         this.brand = Objects.requireNonNull(brand, "brand");
         Objects.requireNonNull(docRegistry, "docRegistry");
         Objects.requireNonNull(catalogues,  "catalogues");
@@ -192,6 +213,15 @@ public final class CatalogueRegistry {
                         }
                     }
                 }
+            }
+        }
+
+        // RFC 0016 — fold in extra docHome entries (e.g. tree-leaf docs
+        // registered under their tree's host catalogue). Catalogue-leaf
+        // entries already in docHomeMap take precedence.
+        if (extraDocHomes != null) {
+            for (var entry : extraDocHomes.entrySet()) {
+                docHomeMap.putIfAbsent(entry.getKey(), entry.getValue());
             }
         }
 

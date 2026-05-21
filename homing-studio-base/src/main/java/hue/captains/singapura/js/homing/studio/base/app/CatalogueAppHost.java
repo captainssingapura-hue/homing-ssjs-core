@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.core.AppLink;
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
+import hue.captains.singapura.js.homing.core.LegacyAppMain;
 import hue.captains.singapura.js.homing.core.ModuleImports;
 import hue.captains.singapura.js.homing.core.ModuleNameResolver;
 import hue.captains.singapura.js.homing.core.SelfContent;
@@ -26,6 +27,7 @@ import java.util.List;
  *
  * @since RFC 0005
  */
+@LegacyAppMain(reason = "Studio chrome / catalogue tile-grid; migration tracked as RFC 0024 successor work to the canonical spike.")
 public record CatalogueAppHost() implements AppModule<CatalogueAppHost.Params, CatalogueAppHost>, SelfContent {
 
     record appMain() implements AppModule._AppMain<CatalogueAppHost.Params, CatalogueAppHost> {}
