@@ -10,6 +10,7 @@ import hue.captains.singapura.js.homing.core.NoiseCue;
 import hue.captains.singapura.js.homing.core.NoteHit;
 import hue.captains.singapura.js.homing.core.OscCue;
 import hue.captains.singapura.js.homing.core.SimpleAppResolver;
+import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.ThemeAudio;
 import hue.captains.singapura.js.homing.core.ToneNotation;
 import hue.captains.singapura.tao.http.action.GetAction;
@@ -132,6 +133,24 @@ public class AppHtmlGetAction
         String backdropHtml    = renderBackdrop(effectiveTheme);
         String audioHtml       = renderAudioRuntime(effectiveTheme);
 
+        // Backdrop-interactivity opt-out body class. When the active theme
+        // installs page-wide pointer-events handling (Maple Bridge / Jazz
+        // Drums / Retro 90s) but the app has opted out (workspace-style
+        // apps that own the viewport), add a class the theme respects
+        // to disable its universal pointer-events restriction for this
+        // app's body. The visual backdrop stays — only event handling
+        // is suppressed.
+        String bodyClass = "";
+        if (!app.acceptsBackdropInteractivity()) {
+            final String themeSlug = effectiveTheme;
+            Theme themeObj = themeRegistry.themes().stream()
+                    .filter(t -> t.slug().equals(themeSlug))
+                    .findFirst().orElse(null);
+            if (themeObj != null && themeObj.backdropInteractivity()) {
+                bodyClass = " class=\"homing-bg-passive\"";
+            }
+        }
+
         String html = """
                 <!DOCTYPE html>
                 <html lang="en">
@@ -162,7 +181,7 @@ public class AppHtmlGetAction
                             .catch(function () { /* fetch failed — keep the default */ });
                     </script>
                 </head>
-                <body>
+                <body%s>
                     %s
                     <div id="app"></div>
                     %s
@@ -183,6 +202,7 @@ public class AppHtmlGetAction
                 </body>
                 </html>
                 """.formatted(htmlEscape(app.title() + " · " + meta.label()),
+                              bodyClass,
                               backdropHtml, themePickerHtml, audioHtml, themeJs, localeJs, baseModuleUrl);
 
         return CompletableFuture.completedFuture(new HtmlPageContent(html));

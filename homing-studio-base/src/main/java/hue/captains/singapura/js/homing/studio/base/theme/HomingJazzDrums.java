@@ -47,6 +47,10 @@ public record HomingJazzDrums() implements Theme {
     public static final HomingJazzDrums INSTANCE = new HomingJazzDrums();
 
     @Override public String slug()  { return "jazz-drums"; }
+    /** Installs universal pointer-events:none + whitelist so drum/instrument
+     *  clicks reach the backdrop. Workspace-style apps opt out via
+     *  {@link AppModule#acceptsBackdropInteractivity()}. */
+    @Override public boolean backdropInteractivity() { return true; }
     @Override public String label() { return "Jazz Drum Kit"; }
 
     /** Drum kit backdrop — the kit is the visible surface and the
@@ -356,11 +360,26 @@ public record HomingJazzDrums() implements Theme {
                  * user-interactive surfaces. Audio-bound classes get
                  * pointer-events restored by the runtime; see
                  * AppHtmlGetAction.renderAudioRuntime. */
-                body, body * { pointer-events: none; }
-                a, button, input, select, textarea, label,
-                .st-header, .st-card, .st-list-item, .st-toc-item,
-                .st-doc, .st-doc *, .st-sidebar, .st-sidebar *,
-                .st-doc-meta, .st-doc-meta * { pointer-events: auto; }
+                /* Gated by :not(.homing-bg-passive) — workspace-style apps
+                 * opt out and reclaim event surface. See AppModule.acceptsBackdropInteractivity. */
+                body:not(.homing-bg-passive),
+                body:not(.homing-bg-passive) * { pointer-events: none; }
+                body:not(.homing-bg-passive) a,
+                body:not(.homing-bg-passive) button,
+                body:not(.homing-bg-passive) input,
+                body:not(.homing-bg-passive) select,
+                body:not(.homing-bg-passive) textarea,
+                body:not(.homing-bg-passive) label,
+                body:not(.homing-bg-passive) .st-header,
+                body:not(.homing-bg-passive) .st-card,
+                body:not(.homing-bg-passive) .st-list-item,
+                body:not(.homing-bg-passive) .st-toc-item,
+                body:not(.homing-bg-passive) .st-doc,
+                body:not(.homing-bg-passive) .st-doc *,
+                body:not(.homing-bg-passive) .st-sidebar,
+                body:not(.homing-bg-passive) .st-sidebar *,
+                body:not(.homing-bg-passive) .st-doc-meta,
+                body:not(.homing-bg-passive) .st-doc-meta * { pointer-events: auto; }
 
                 /* RFC 0008 ext — auto-play guitar (Telecaster, far-left,
                  * resting on floor, leaning slightly left).

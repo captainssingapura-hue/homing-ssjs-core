@@ -84,6 +84,9 @@ public record MultiTabPaneModule() implements DomModule<MultiTabPaneModule> {
                 .add(new ModuleImports<>(
                         List.of(new SplitPaneModule.SplitPane()),
                         SplitPaneModule.INSTANCE))
+                .add(new ModuleImports<>(
+                        List.of(new MultiTabPaneDragModule.TabDragController()),
+                        MultiTabPaneDragModule.INSTANCE))
                 .build();
     }
 
