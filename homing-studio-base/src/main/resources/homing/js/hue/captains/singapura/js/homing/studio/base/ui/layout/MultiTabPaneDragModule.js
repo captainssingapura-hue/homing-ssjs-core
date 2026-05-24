@@ -308,25 +308,54 @@ class TabDragController {
         if (!tab) return;
         var srcSlot = this._srcSlot;
 
-        // Remove from source and refresh.
-        this._mt._removeTabFromState(srcSlot, this._srcTabId);
-        this._mt._refresh();
-
-        // Build modal content by invoking the tab's render fn.
+        // ─── b.2i contract: tab.render(el) is one-shot. The tab's persistent
+        //     _contentEl already holds the widget DOM. Moving it into the
+        //     modal body via a single sync appendChild between two attached
+        //     parents preserves the widget's scroll/focus/animation/audio
+        //     state — the widget doesn't notice the detach-to-modal at all.
+        //
+        //     Wrap the existing _contentEl in a modal-body div so the modal's
+        //     padding contract is preserved. The wrapper is the actual
+        //     content given to the Modal; the _contentEl lives inside it.
         var contentEl = document.createElement("div");
-        contentEl.style.cssText = "padding:8px;height:100%;box-sizing:border-box;";
-        if (typeof tab.render === "function") {
-            try { tab.render(contentEl); } catch (err) { console.error(err); }
+        contentEl.style.cssText = "padding:8px;height:100%;box-sizing:border-box;position:relative;";
+        if (tab._contentEl) {
+            // tab._contentEl is currently a child of the source slot's content
+            // wrapper. appendChild here is a single move between two attached
+            // parents (slot content → modal body, both in document at this
+            // instant since we haven't removed/refreshed the slot yet).
+            contentEl.appendChild(tab._contentEl);
+            // tab._contentEl uses position:absolute inset:0 by default
+            // (.hmtp-tab-content) — overrides for modal context.
+            tab._contentEl.style.position = "relative";
+            tab._contentEl.style.inset    = "auto";
+            tab._contentEl.style.display  = "block";
+            tab._contentEl.style.height   = "100%";
         }
+
+        // Modal size: ~25% of viewport, with sensible floors so it's still
+        // usable on small screens.
+        var vw = window.innerWidth  || document.documentElement.clientWidth;
+        var vh = window.innerHeight || document.documentElement.clientHeight;
+        var modalW = Math.max(380, Math.round(vw * 0.5));
+        var modalH = Math.max(260, Math.round(vh * 0.5));
 
         var modal = new Modal({
             container: document.body,
             title: tab.title,
             content: contentEl,
-            x: e.clientX - this._offsetX,
-            y: e.clientY - 14,
-            width: 360, height: 240
+            x: Math.max(0, Math.round((vw - modalW) / 2)),
+            y: Math.max(0, Math.round((vh - modalH) / 2)),
+            width: modalW, height: modalH
         });
+
+        // Remove tab from source state AFTER the move (so MultiTabPane's
+        // slot re-render doesn't try to prune the _contentEl while it's
+        // mid-flight — we've already moved it out of the slot's content
+        // wrapper). _renderSlotLocal will see tab._contentEl.parentNode !==
+        // slot's content and skip touching it.
+        this._mt._removeTabFromState(srcSlot, this._srcTabId);
+        this._mt._renderSlotLocal(srcSlot);
 
         this._modal    = modal;
         this._modalTab = tab;
@@ -335,6 +364,29 @@ class TabDragController {
         // Ghost + indicator no longer needed (modal is the visual now).
         if (this._ghost) { this._ghost.remove(); this._ghost = null; }
         this._hideIndicator();
+    }
+
+    /**
+     * Public — attach an externally-created Modal as a "floating tab
+     * waiting to dock." Used by the WidgetPicker (Ext1b Mechanism 2):
+     * once the user picks a widget tile, the picker modal stays open
+     * with the freshly-constructed widget as its body, and this method
+     * makes the modal's title bar a drag handle that — on release over
+     * a pane strip — docks the widget as a new tab.
+     *
+     * The {@code tab} argument is a tab descriptor matching what
+     * MultiTabPane consumes via {@code addTab()}: {@code {id, title,
+     * render(contentEl)}}. The picker passes a {@code render} closure
+     * that re-parents the already-mounted widget root into the new tab's
+     * content element (the widget keeps its branch + state across the
+     * modal → tab transition).
+     *
+     * Mirror of the detach flow's {@code _armModalRedock}: same gesture,
+     * opposite direction. Modal close = cancel = consumer destroys the
+     * widget branch via the modal's {@code onClose}.
+     */
+    attachFloatingTabModal(modal, tab) {
+        this._armModalRedock(modal, tab);
     }
 
     /**
@@ -375,10 +427,35 @@ class TabDragController {
                 self._modalRedockHandlers = self._modalRedockHandlers.filter(
                         function (H) { return H[1] !== onDown; });
                 var idx = self._findInsertIndex(strip.slotId, upEv.clientX);
+
+                // ─── b.2i discipline: move tab._contentEl from the modal body
+                //     INTO the dest slot's content wrapper BEFORE destroying
+                //     the modal. Single sync appendChild between two attached
+                //     parents (modal body → slot content) preserves the
+                //     widget's UI state. Then restore the .hmtp-tab-content
+                //     position styles overridden in _detachToModal.
+                var destWrappers = self._mt._wrappersBySlot.get(strip.slotId);
+                if (tab._contentEl && destWrappers) {
+                    destWrappers.content.appendChild(tab._contentEl);
+                    tab._contentEl.style.position = "";
+                    tab._contentEl.style.inset    = "";
+                    tab._contentEl.style.height   = "";
+                    // display will be set by _renderContentContents based on
+                    // activeTabId — switchTab below makes this tab active.
+                }
+
                 try { modal.destroy(); } catch (e) {}
                 self._mt._insertTabIntoState(strip.slotId, tab, idx);
+                // _renderSlotLocal happens inside switchTab → toggles display
+                // on the now-attached _contentEl to "block". Widget DOM never
+                // left the document during the modal→tab transition.
                 self._mt.switchTab(strip.slotId, tab.id);
-                self._mt._refresh();
+
+                // Clean up detach state on the controller so the next drag
+                // starts fresh.
+                self._detached = false;
+                self._modal    = null;
+                self._modalTab = null;
             };
             document.addEventListener("mousemove", onMove);
             document.addEventListener("mouseup",   onUp);

@@ -29,7 +29,13 @@ var _STYLE_TAG_ID = "homing-modal-style";
 // active theme. Box-shadow stays a fixed dark tint — it's depth feedback
 // (the modal floats above content) and reads consistently across themes.
 var _STYLE_CSS = [
-    ".hmd-panel{position:absolute;display:flex;flex-direction:column;",
+    // z-index 10000 — modals are top-level floating UI, must stack above any
+    // in-pane z-indexed chrome (MultiTabPane's .hmtp-corner uses z-index:6,
+    // SplitPane dividers use z-index:1, etc.). Workspace fullscreen uses
+    // z-index 9000 (WorkspaceLayoutStyles.wl_root_fullscreen) — modal sits
+    // above that too so a modal opened inside a fullscreen workspace still
+    // floats correctly.
+    ".hmd-panel{position:absolute;display:flex;flex-direction:column;z-index:10000;",
     "  background:var(--color-surface);color:var(--color-text-primary);",
     "  border:1px solid var(--color-border);border-radius:6px;",
     "  box-shadow:0 8px 24px rgba(0,0,0,0.32),0 2px 6px rgba(0,0,0,0.20);",
