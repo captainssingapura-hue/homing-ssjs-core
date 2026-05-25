@@ -13,8 +13,19 @@
         <module>homing-core-js</module>
         <module>homing-server</module>
         <module>homing-libs</module>
-        <module>homing-studio-base</module>
+        <!-- homing-conformance builds BEFORE homing-studio-base (b.2j cleanup):
+             it provides cross-cutting test bases that studio-base hosts its own
+             substrate-typed conformance subclasses on top of. Conformance
+             depends only on homing-core; studio-base depends on conformance. -->
         <module>homing-conformance</module>
+        <module>homing-studio-base</module>
+        <module>homing-workspace</module>
+        <!-- Pure-JS test fixtures (GraalVM Polyglot + JUnit harness). Lives
+             at the substrate position so japjs's own tests and every
+             downstream consumer (homing-demo, homing-self-studio, public
+             projects) can depend on it as an ordinary Maven artifact —
+             no test-jar classifier ceremony. -->
+        <module>homing-ssjs-test-fixtures</module>
     </modules>
 
     <properties>
@@ -24,6 +35,8 @@
         <ja-http.version>0.0.1</ja-http.version>
         <junit.version>5.11.3</junit.version>
         <jacoco.version>0.8.12</jacoco.version>
+        <!-- RFC 0028 cycle 6 phase 2 — GraalVM Polyglot for JS Secretary testing. -->
+        <graalvm.version>24.1.1</graalvm.version>
     </properties>
 
     <build>

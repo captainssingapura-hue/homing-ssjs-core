@@ -57,6 +57,10 @@ public record HomingRetro90s() implements Theme {
     public static final HomingRetro90s INSTANCE = new HomingRetro90s();
 
     @Override public String slug()  { return "retro-90s"; }
+    /** Installs universal pointer-events:none + whitelist so the desktop
+     *  icons (.w95-icon) receive hover/click. Workspace-style apps opt
+     *  out via {@link AppModule#acceptsBackdropInteractivity()}. */
+    @Override public boolean backdropInteractivity() { return true; }
     @Override public String label() { return "Retro 90s"; }
 
     /** Win95 desktop backdrop — rendered as inline DOM so the iconic icons
@@ -310,14 +314,32 @@ public record HomingRetro90s() implements Theme {
                    the icons themselves. Same trade-off as Maple Bridge:
                    text selection in prose is impaired; clicks/links/keyboard
                    nav all work. */
-                body, body * { pointer-events: none; }
-                a, button, input, select, textarea, label,
-                .st-header, .st-card, .st-list-item, .st-toc-item,
+                /* Gated by :not(.homing-bg-passive) — workspace-style apps
+                 * opt out and reclaim event surface. The backdrop icons
+                 * (.w95-icon) stay interactive regardless because the
+                 * .theme-backdrop tree is unaffected by the body-class
+                 * gate. See AppModule.acceptsBackdropInteractivity. */
+                body:not(.homing-bg-passive),
+                body:not(.homing-bg-passive) * { pointer-events: none; }
+                body:not(.homing-bg-passive) a,
+                body:not(.homing-bg-passive) button,
+                body:not(.homing-bg-passive) input,
+                body:not(.homing-bg-passive) select,
+                body:not(.homing-bg-passive) textarea,
+                body:not(.homing-bg-passive) label,
+                body:not(.homing-bg-passive) .st-header,
+                body:not(.homing-bg-passive) .st-card,
+                body:not(.homing-bg-passive) .st-list-item,
+                body:not(.homing-bg-passive) .st-toc-item,
                 /* Reading panes get pointer-events so text inside the Notepad-
                  * style windows can be selected and scrolled normally.
                  * Universal descendants of these panes are also re-enabled. */
-                .st-doc, .st-doc *, .st-sidebar, .st-sidebar *,
-                .st-doc-meta, .st-doc-meta *,
+                body:not(.homing-bg-passive) .st-doc,
+                body:not(.homing-bg-passive) .st-doc *,
+                body:not(.homing-bg-passive) .st-sidebar,
+                body:not(.homing-bg-passive) .st-sidebar *,
+                body:not(.homing-bg-passive) .st-doc-meta,
+                body:not(.homing-bg-passive) .st-doc-meta *,
                 /* The icon group AND every descendant must be hover-targetable.
                    `body *` directly hits each <rect>/<text>/<path> inside the
                    icon, pinning their pointer-events to none and breaking the

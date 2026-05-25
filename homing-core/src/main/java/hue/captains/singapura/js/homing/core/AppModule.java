@@ -76,4 +76,29 @@ public non-sealed interface AppModule<P extends AppModule._Param, M extends AppM
      * Use the record name {@code appMain} so the JS identifier matches.
      */
     interface _AppMain<P extends AppModule._Param, M extends AppModule<P, M>> extends Exportable._Constant<M> {}
+
+    /**
+     * Whether this app accepts the active theme's backdrop event handling.
+     * Default {@code true} — most apps (catalogue browsers, doc readers,
+     * SVG viewers) coexist fine with a theme that gates pointer-events to
+     * forms + framework chrome + the backdrop's own clickable parts.
+     *
+     * <p>Workspace-style apps that own the full viewport with their own
+     * interactive elements (MultiTabPane, future {@code WorkspaceShell})
+     * override to {@code false}. The framework then adds a
+     * {@code homing-bg-passive} class to {@code <body>}, which themes that
+     * declare {@link Theme#backdropInteractivity()} respect by gating
+     * their universal {@code body, body * { pointer-events: none }} rule
+     * with a {@code :not(.homing-bg-passive)} selector. Net effect: the
+     * workspace gets the theme's <i>look</i> (palette + backdrop SVG)
+     * without fighting it for <i>event handling</i>.</p>
+     *
+     * <p>See the case study "Universal Pointer-Events Off Doesn't
+     * Compose" for why this opt-out exists and what the deeper fix
+     * (deferred) would look like.</p>
+     *
+     * @since RFC 0025 L2.2 — added when MultiTabPane drag handlers were
+     *        blocked by Maple Bridge's universal pointer-events rule
+     */
+    default boolean acceptsBackdropInteractivity() { return true; }
 }

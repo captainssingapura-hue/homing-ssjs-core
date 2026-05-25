@@ -47,6 +47,13 @@ public record HomingMapleBridge() implements Theme {
     @Override public String slug()  { return "maple-bridge"; }
     @Override public String label() { return "Maple Bridge"; }
 
+    /** Installs universal {@code pointer-events: none} + whitelist so the
+     *  nocturne's moon receives hover-grow. Workspace-style apps opt out
+     *  via {@link AppModule#acceptsBackdropInteractivity()}; the framework
+     *  then adds the {@code homing-bg-passive} body class which this
+     *  theme's CSS respects below. */
+    @Override public boolean backdropInteractivity() { return true; }
+
     /** The atmospheric nocturne — rendered as inline DOM, per-element-interactive. */
     @Override
     public SvgRef<?> backdrop() {
@@ -305,11 +312,25 @@ public record HomingMapleBridge() implements Theme {
 
                    Trade-off: in-article text selection is impaired; cards
                    and links still click; keyboard nav unaffected. */
-                body, body * {
+                /* Gated by :not(.homing-bg-passive) so workspace-style apps
+                 * (MultiTabPane / WorkspaceShell) that opt out of theme
+                 * pointer-events management get their own event surface
+                 * back. The framework adds the body class when the active
+                 * app's AppModule.acceptsBackdropInteractivity() = false. */
+                body:not(.homing-bg-passive),
+                body:not(.homing-bg-passive) * {
                     pointer-events: none;
                 }
-                a, button, input, select, textarea, label,
-                .st-header, .st-card, .st-list-item, .st-toc-item,
+                body:not(.homing-bg-passive) a,
+                body:not(.homing-bg-passive) button,
+                body:not(.homing-bg-passive) input,
+                body:not(.homing-bg-passive) select,
+                body:not(.homing-bg-passive) textarea,
+                body:not(.homing-bg-passive) label,
+                body:not(.homing-bg-passive) .st-header,
+                body:not(.homing-bg-passive) .st-card,
+                body:not(.homing-bg-passive) .st-list-item,
+                body:not(.homing-bg-passive) .st-toc-item,
                 .theme-backdrop .mb-moon {
                     pointer-events: auto;
                 }

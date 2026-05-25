@@ -258,6 +258,13 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
         // --- Doc-refs action (RFC 0004-ext1 / RFC 0005-ext2 — carries breadcrumb chain).
         var docRefsAction = new DocRefsGetAction(docRegistry, catalogueRegistry, treeLeafTrails);
 
+        // --- App-refs action (RFC 0025 L2.2 — breadcrumb chain for AppModule
+        // launches via Navigable entries, where the URL has no ?id=<uuid>).
+        // Resolves the AppDoc by AppModule simpleName, serialises the chain
+        // through the same shape as /doc-refs so the StandardMPA chrome can
+        // use a uniform code path.
+        var appRefsAction = new AppRefsGetAction(docRegistry, catalogueRegistry);
+
         // --- Plan action (RFC 0005-ext1), only when plans registered.
         final PlanGetAction planAction;
         if (!plans.isEmpty()) {
@@ -296,6 +303,7 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
                 all.put("/css-content", cssContentAction);
                 all.put("/doc",         docAction);
                 all.put("/doc-refs",    docRefsAction);
+                all.put("/app-refs",    appRefsAction);
                 all.put("/themes",      themesAction);
                 all.put("/brand",       brandAction);
                 if (catalogueAction != null) all.put("/catalogue", catalogueAction);

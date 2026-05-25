@@ -47,10 +47,28 @@
             <artifactId>homing-core-js</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+        <!-- Cross-cutting conformance bases (NoDomDestructionConformanceTest,
+             CssConformanceTest, etc.) live in homing-conformance, depending only
+             on homing-core. studio-base depends on them at compile scope because
+             it HOSTS its own substrate-typed conformance bases (DocConformanceTest,
+             ContentViewerConformanceTest, PlanRegistrationConformanceTest) — those
+             bases use the cross-cutting ones' patterns and helpers, and studio-base
+             test subclasses use both. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-conformance</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <!-- JUnit at COMPILE scope (overriding parent dependencyManagement's
+             test-scope default) — main-classpath conformance bases here
+             (DocConformanceTest, ContentViewerConformanceTest,
+             PlanRegistrationConformanceTest) reference @TestFactory and
+             DynamicTest directly. -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <scope>test</scope>
+            <version>${junit.version}</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 

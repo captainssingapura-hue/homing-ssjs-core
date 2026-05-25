@@ -1,4 +1,4 @@
-package hue.captains.singapura.js.homing.conformance;
+package hue.captains.singapura.js.homing.studio.base.conformance;
 
 import hue.captains.singapura.js.homing.studio.base.Doc;
 import hue.captains.singapura.js.homing.studio.base.DocProvider;
@@ -38,7 +38,17 @@ import static org.junit.jupiter.api.Assertions.*;
  *       (relative paths, http://, https://, mailto:, etc.) fail the scan.</li>
  * </ol>
  *
- * @since RFC 0004 (extended in RFC 0004-ext1; reshaped in RFC 0005)
+ * <p><b>Why this base lives in {@code homing-studio-base}, not in
+ * {@code homing-conformance}.</b> It references {@code Doc} / {@code DocProvider}
+ * / {@code DocRegistry} / {@code Reference} — substrate types that belong to
+ * studio-base. Hosting this base in {@code homing-conformance} would have forced
+ * conformance to depend on studio-base, a layering inversion (conformance is
+ * cross-cutting, sits below substrate concepts). Studio-base hosting its own
+ * conformance base keeps the layering clean: {@code homing-conformance} depends
+ * only on {@code homing-core}; studio-base provides bases for its own types.</p>
+ *
+ * @since RFC 0004 (extended in RFC 0004-ext1; reshaped in RFC 0005; relocated
+ *        in b.2j cleanup to fix the conformance-on-substrate inversion)
  */
 public abstract class DocConformanceTest {
 

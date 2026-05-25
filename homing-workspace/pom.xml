@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+        <artifactId>homing.js</artifactId>
+        <version>LOCAL-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>homing-workspace</artifactId>
+
+    <description>
+        RFC 0025 — Workspace + Dynamic Widget Management. A strict downstream
+        of homing-studio-base providing the workspace shell pattern: a
+        per-page registry of WorkspaceWidget types, a controller that
+        dynamically loads modules on user pick, a picker UI, and the
+        WorkspaceShell AppModule base that ties it together.
+
+        Studios that don't need workspace capabilities (catalogue browsers,
+        doc readers, single-widget viewers) leave this dependency off and pay
+        nothing for the machinery. Studios that want workspace add this dep.
+
+        The WorkspaceWidget contract is distinct from RFC 0024's Widget — see
+        the Rfc0025Ext1Doc for the design and the rationale. Both contracts
+        coexist; a WorkspaceWidget can be hosted in a non-workspace context
+        by wrapping it in a degenerate mini-workspace (one widget, no picker,
+        no layout management).
+    </description>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-studio-base</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- RFC 0028 cycle 6 phase 2 — pure-JS test fixtures (GraalVM-backed
+             SecretaryTestBase + JsModuleTestBase). Shipped as an ordinary
+             Maven artifact so we and any public downstream consumer wire it
+             in with a one-liner; no test-jar classifier ceremony. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-ssjs-test-fixtures</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>

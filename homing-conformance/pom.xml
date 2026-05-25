@@ -18,22 +18,29 @@
     </properties>
 
     <dependencies>
+        <!-- homing-conformance is a pure cross-cutting layer — it depends only
+             on homing-core (DomModule, ResourceReader, AppModule, CssGroup) and
+             JUnit. Conformance bases that need substrate types (Doc, Studio,
+             Plan, ContentViewer) live in homing-studio-base/conformance instead
+             — see DocConformanceTest, ContentViewerConformanceTest,
+             PlanRegistrationConformanceTest there. The split keeps the
+             layering clean: conformance below substrate, substrate above
+             conformance for the bases that need substrate types. -->
         <dependency>
             <groupId>io.github.captainssingapura-hue.homing.js</groupId>
             <artifactId>homing-core</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
-        <!-- RFC 0004: DocConformanceTest references Doc / DocProvider / DocRegistry from studio-base.
-             Every downstream studio that subclasses any conformance base also depends on studio-base,
-             so this dependency is not net-new at the deployment level. -->
-        <dependency>
-            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
-            <artifactId>homing-studio-base</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
+        <!-- JUnit is needed at COMPILE scope here (not test) because this
+             module's main-classpath classes are abstract conformance bases
+             that subclasses extend in test code — the bases themselves
+             reference @TestFactory, DynamicTest, etc. Parent
+             dependencyManagement defaults junit-jupiter to test-scope; we
+             override here by re-declaring version + scope explicitly. -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>

@@ -15,6 +15,12 @@ import hue.captains.singapura.tao.ontology.ValueObject;
  * <ul>
  *   <li>{@link MarkdownSegment} — prose body ({@code .mdad} once RFC
  *       0018 phases in; plain markdown for now).</li>
+ *   <li>{@link TextSegment} — typed mdad+ prose (Para / Bullets / Numbered
+ *       / Quote; no GFM escape hatch).</li>
+ *   <li>{@link CodeSegment} — verbatim code listing in {@code <pre><code>}.</li>
+ *   <li>{@link RelationSegment} — typed inline table; schema declared as a
+ *       {@code List<Column<T>>}, rows derived at construction time, rendered
+ *       as {@code <table>} in pure JS.</li>
  *   <li>{@link SvgSegment} — proxy reference to a registered
  *       {@code SvgDoc} + optional per-appearance caption override.</li>
  *   <li>{@link TableSegment} — proxy reference to a registered
@@ -34,6 +40,7 @@ import hue.captains.singapura.tao.ontology.ValueObject;
  */
 public sealed interface Segment extends ValueObject
         permits MarkdownSegment, TextSegment, CodeSegment,
+                RelationSegment,
                 SvgSegment, TableSegment, ImageSegment,
                 ComposedSegment,
                 DocumentaryWidget {

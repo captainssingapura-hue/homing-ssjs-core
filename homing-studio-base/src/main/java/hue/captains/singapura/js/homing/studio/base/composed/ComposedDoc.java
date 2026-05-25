@@ -148,6 +148,21 @@ public record ComposedDoc(
                     sb.append("\"caption\":")   .append(jstr(im.resolvedCaption())).append(',');
                     sb.append("\"imageDocId\":").append(jstr(im.doc().uuid().toString()));
                 }
+                case RelationSegment rs -> {
+                    sb.append("\"kind\":\"relation\",");
+                    sb.append("\"anchor\":") .append(jstr("seg-" + segIndex)).append(',');
+                    sb.append("\"caption\":").append(jstr(rs.caption().orElse(""))).append(',');
+                    sb.append("\"headers\":");
+                    appendStringList(sb, rs.headers());
+                    sb.append(",\"rows\":[");
+                    boolean firstRow = true;
+                    for (List<String> row : rs.rows()) {
+                        if (!firstRow) sb.append(',');
+                        firstRow = false;
+                        appendStringList(sb, row);
+                    }
+                    sb.append(']');
+                }
                 case ComposedSegment cd -> {
                     // RFC 0024 P1c — recursive composedDoc reference.
                     // The renderer fetches /doc?id=<composedDocId> (this same
@@ -261,6 +276,9 @@ public record ComposedDoc(
                     // own sub-tree when mounted. Flattening would
                     // structurally conflict with the recursive mount model
                     // (each level's TOC sidebar lives next to its own body).
+                }
+                case RelationSegment rs -> {
+                    rs.caption().ifPresent(cap -> out.add(new TocEntry(2, cap, anchor)));
                 }
                 case DocumentaryWidget<?, ?> w -> {
                     String cap = w.resolvedCaption();
@@ -429,6 +447,15 @@ public record ComposedDoc(
         throw new IllegalStateException(
                 "Unsupported DocumentaryWidget param value type: "
                         + v.getClass().getName() + " (value=" + v + ")");
+    }
+
+    private static void appendStringList(StringBuilder sb, List<String> items) {
+        sb.append('[');
+        for (int i = 0; i < items.size(); i++) {
+            if (i > 0) sb.append(',');
+            sb.append(jstr(items.get(i)));
+        }
+        sb.append(']');
     }
 
     private static String jstr(String v) {

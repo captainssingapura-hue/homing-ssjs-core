@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+        <artifactId>homing.js</artifactId>
+        <version>LOCAL-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>homing-ssjs-test-fixtures</artifactId>
+
+    <description>
+        Test fixtures for pure-JavaScript code authored under the homing
+        ssjs (server-side-JS) substrate.
+
+        Vends a GraalVM-Polyglot-backed JUnit harness so any pure JS module
+        — Secretaries (RFC 0028), client-side reducers, validators,
+        serialisation helpers — can be unit-tested on the JVM against a real
+        ECMAScript runtime, without spinning up a browser or transpiling.
+
+        The harness is split into two layers:
+
+          - JsModuleTestBase — generic. Boots a JS context, loads a module
+            from the classpath, looks up named exports, ships an envelope()
+            helper that marshals Java Maps into native JS objects via
+            ProxyObject, and tears the context down on @AfterEach.
+
+          - SecretaryTestBase — Diligent-Secretaries-doctrine layer. Adds
+            the Step contract — initial(), dispatch(state, env) — and terse
+            assertions over { newState, actions }.
+
+        Dependencies (GraalVM Polyglot + js-community) are exposed at
+        compile scope intentionally: this module IS test fixtures, so a
+        downstream test module pulling it in (typically at test scope from
+        its own pom) automatically gets a working runtime with no further
+        config.
+
+        Public downstream projects can depend on this module identically to
+        any homing artifact; the test-fixtures naming makes the intent
+        legible at the dependency-graph level (vs. opaque test-jar
+        classifiers, which the dependency-as-test-jar refactor explicitly
+        replaced).
+    </description>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <!-- JUnit Jupiter at compile scope: the base classes implement
+             lifecycle hooks (@AfterEach) and assertion calls, so consumers
+             need the API on their compile classpath. They'll already have
+             junit-jupiter at test scope themselves; Maven dedupes the
+             classpath cleanly. -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- GraalVM Polyglot + JavaScript (community edition). Compile
+             scope so downstream test modules need only declare this one
+             dependency to get a working JS runtime. -->
+        <dependency>
+            <groupId>org.graalvm.polyglot</groupId>
+            <artifactId>polyglot</artifactId>
+            <version>${graalvm.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.graalvm.polyglot</groupId>
+            <artifactId>js-community</artifactId>
+            <version>${graalvm.version}</version>
+            <type>pom</type>
+        </dependency>
+    </dependencies>
+</project>

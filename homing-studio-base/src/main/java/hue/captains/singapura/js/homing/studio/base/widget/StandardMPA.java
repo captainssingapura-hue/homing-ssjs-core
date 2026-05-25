@@ -92,6 +92,28 @@ public abstract class StandardMPA<P extends AppModule._Param, M extends Standard
     protected abstract List<? extends Widget<?, ?>> widgets();
 
     /**
+     * Whether the shell's {@code main} slot should fill the viewport
+     * edge-to-edge — drop {@code max-width}, drop padding, become a flex
+     * container — instead of the default centred-column reading chrome.
+     *
+     * <p>Default {@code false}: {@code .st-main} keeps its 1280px max-width
+     * and the 36/32/64 padding suited for doc / catalogue / form pages.
+     * Workspace-style apps (full-viewport interactive surfaces — see
+     * {@link WorkspaceMPA}) override to {@code true} so a single
+     * SplitPane / MultiTabPane / Modal-hosting widget fills the available
+     * area cleanly.</p>
+     *
+     * <p>Lives on StandardMPA (not just WorkspaceMPA) so the chrome
+     * bootstrap can read it via the same generated-JS path; WorkspaceMPA's
+     * override is the canonical opt-in.</p>
+     *
+     * @since RFC 0025 L cleanup — extracts the 4-line incantation that
+     *        every workspace-style demo widget was repeating in its
+     *        {@code bodyJs()}.
+     */
+    protected boolean fullbleedMain() { return false; }
+
+    /**
      * The root party tree. Default: three L1 siblings under root, both
      * symmetric chrome ({@code header}, {@code footer}) framework-owned,
      * plus the {@code main} widget slot shell-owned. Each branch holds
@@ -216,6 +238,16 @@ public abstract class StandardMPA<P extends AppModule._Param, M extends Standard
         lines.add("    // Anchor branch hosts into the DOM tree (header → main → footer).");
         lines.add("    rootEl.appendChild(headerHost);");
         lines.add("    css.addClass(mainHost, st_main);");
+        if (fullbleedMain()) {
+            lines.add("    // fullbleedMain() = true — neutralise .st-main's max-width + padding");
+            lines.add("    // and turn the slot into a flex container so the widget's host can");
+            lines.add("    // stretch via flex:1. WorkspaceMPA subclasses opt in. Replaces the");
+            lines.add("    // 4-line incantation every workspace-style demo widget used to repeat.");
+            lines.add("    mainHost.style.maxWidth = 'none';");
+            lines.add("    mainHost.style.width    = '100%';");
+            lines.add("    mainHost.style.padding  = '0';");
+            lines.add("    mainHost.style.display  = 'flex';");
+        }
         lines.add("    rootEl.appendChild(mainHost);");
         lines.add("    rootEl.appendChild(footerHost);");
         lines.add("");
@@ -265,28 +297,36 @@ public abstract class StandardMPA<P extends AppModule._Param, M extends Standard
         lines.add("    var widgetParams = {};");
         lines.add("    sp.forEach(function(v, k){ widgetParams[k] = v; });");
         lines.add("");
-        lines.add("    // Breadcrumb fetch — mirrors DocViewer1's behaviour. The widget's");
-        lines.add("    // id param drives /doc-refs lookup; the resolved title + catalogue chain");
-        lines.add("    // are written into the header.");
-        lines.add("    if (widgetParams.id) {");
-        lines.add("        fetch('/doc-refs?id=' + encodeURIComponent(widgetParams.id))");
-        lines.add("            .then(function(r){ return r.ok ? r.json() : null; })");
-        lines.add("            .then(function(info){");
-        lines.add("                if (info && info.title) {");
-        lines.add("                    resolvedTitle = info.title;");
-        lines.add("                    var leaf = { text: resolvedTitle };");
-        lines.add("                    if (info.breadcrumbs && info.breadcrumbs.length > 0) {");
-        lines.add("                        resolvedCrumbs = info.breadcrumbs.slice();");
-        lines.add("                        resolvedCrumbs.push(leaf);");
-        lines.add("                    } else {");
-        lines.add("                        resolvedCrumbs = [leaf];");
-        lines.add("                    }");
-        lines.add("                    refreshHeader();");
-        lines.add("                    document.title = info.title + (resolvedBrand && resolvedBrand.label ? ' \\u00b7 ' + resolvedBrand.label : '');");
+        lines.add("    // Breadcrumb fetch — uniform handling across two cases.");
+        lines.add("    //   1. URL has ?id=<doc-uuid> (legacy DocViewer1 contract):");
+        lines.add("    //      fetch /doc-refs?id=... — the chain resolves through");
+        lines.add("    //      CatalogueRegistry.breadcrumbsForDoc.");
+        lines.add("    //   2. URL has no ?id= (AppModule-launched via Navigable):");
+        lines.add("    //      fetch /app-refs?app=<simpleName> — the studio's");
+        lines.add("    //      Bootstrap pre-indexed AppDoc UUIDs by simpleName so");
+        lines.add("    //      this resolves to the same shape as case (1).");
+        lines.add("    // Both endpoints return { title, breadcrumbs, references };");
+        lines.add("    // we use the same handler for either.");
+        lines.add("    var crumbUrl = widgetParams.id");
+        lines.add("        ? '/doc-refs?id=' + encodeURIComponent(widgetParams.id)");
+        lines.add("        : '/app-refs?app=' + encodeURIComponent(sp.get('app') || '');");
+        lines.add("    fetch(crumbUrl)");
+        lines.add("        .then(function(r){ return r.ok ? r.json() : null; })");
+        lines.add("        .then(function(info){");
+        lines.add("            if (info && info.title) {");
+        lines.add("                resolvedTitle = info.title;");
+        lines.add("                var leaf = { text: resolvedTitle };");
+        lines.add("                if (info.breadcrumbs && info.breadcrumbs.length > 0) {");
+        lines.add("                    resolvedCrumbs = info.breadcrumbs.slice();");
+        lines.add("                    resolvedCrumbs.push(leaf);");
+        lines.add("                } else {");
+        lines.add("                    resolvedCrumbs = [leaf];");
         lines.add("                }");
-        lines.add("            })");
-        lines.add("            .catch(function(){});");
-        lines.add("    }");
+        lines.add("                refreshHeader();");
+        lines.add("                document.title = info.title + (resolvedBrand && resolvedBrand.label ? ' \\u00b7 ' + resolvedBrand.label : '');");
+        lines.add("            }");
+        lines.add("        })");
+        lines.add("        .catch(function(){});");
         lines.add("");
         lines.add("    if (!widgetName) {");
         lines.add("        var noWidgetEl = document.createElement('div');");

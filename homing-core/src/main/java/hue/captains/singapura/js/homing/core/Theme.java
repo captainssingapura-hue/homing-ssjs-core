@@ -77,4 +77,30 @@ public interface Theme extends StatelessFunctionalObject {
      * page bundle entirely on audio-less themes.</p>
      */
     default ThemeAudio<?> audio() { return null; }
+
+    /**
+     * Whether this theme installs <i>backdrop event handlers</i> — typically
+     * implemented as universal {@code body, body * { pointer-events: none }}
+     * with a selective whitelist of interactive elements (forms, framework
+     * chrome classes) plus the backdrop's own clickable parts (e.g.
+     * {@code .mb-moon} on Maple Bridge, drum/instrument classes on
+     * Jazz Drums, retro icons on Retro 90s).
+     *
+     * <p>Themes returning {@code true} <b>must wrap</b> their universal
+     * pointer-events restriction in a {@code body:not(.homing-bg-passive)}
+     * selector. Apps that opt out via
+     * {@link AppModule#acceptsBackdropInteractivity()} get the
+     * {@code homing-bg-passive} body class added by the framework, which
+     * disables the restriction for that app's body. The backdrop SVG stays
+     * visible — only its event handling is suppressed.</p>
+     *
+     * <p>Default {@code false} → theme doesn't manage page-wide
+     * pointer-events; the {@code homing-bg-passive} class has no effect
+     * because there's no rule referencing it.</p>
+     *
+     * @since RFC 0025 L2.2 — added when MultiTabPane's drag handlers ran
+     *        into Maple Bridge's universal {@code pointer-events: none}
+     *        whitelist (which didn't include the new primitive's classes)
+     */
+    default boolean backdropInteractivity() { return false; }
 }
