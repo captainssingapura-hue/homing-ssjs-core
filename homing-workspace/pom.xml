@@ -46,6 +46,17 @@
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- RFC 0028 cycle 6 phase 2 — pure-JS test fixtures (GraalVM-backed
+             SecretaryTestBase + JsModuleTestBase). Shipped as an ordinary
+             Maven artifact so we and any public downstream consumer wire it
+             in with a one-liner; no test-jar classifier ceremony. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-ssjs-test-fixtures</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 </project>

@@ -99,6 +99,23 @@ public final class WorkspaceLayoutJson {
                 appendKV(sb, "text", l.text());
                 sb.append('}');
             }
+            case RibbonItem.Choice c -> {
+                sb.append('{');
+                appendKV(sb, "kind", "Choice"); sb.append(',');
+                appendKV(sb, "label", c.label()); sb.append(',');
+                appendKV(sb, "actionId", c.actionId()); sb.append(',');
+                sb.append("\"options\":[");
+                var opts = c.options();
+                for (int i = 0; i < opts.size(); i++) {
+                    if (i > 0) sb.append(',');
+                    sb.append('{');
+                    appendKV(sb, "label", opts.get(i).label()); sb.append(',');
+                    appendKV(sb, "value", opts.get(i).value());
+                    sb.append('}');
+                }
+                sb.append(']');
+                sb.append('}');
+            }
         }
     }
 

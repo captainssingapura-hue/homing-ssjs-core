@@ -334,11 +334,22 @@ class MultiTabPane {
             if (state.tabs[i].id === tabId) { idx = i; break; }
         }
         if (idx < 0) return this;
-        // Fire the tab's own onClose hook BEFORE splicing — this is the
+        // Fire the tab's lifecycle hooks BEFORE splicing — this is the
         // "real close" signal (× click). Internal transient removals during
         // drag detach go through _removeTabFromState which deliberately
-        // skips onClose so the tab can be re-docked without disposing.
+        // skips both hooks so the tab can be re-docked without disposing.
+        //
+        // Order per RFC 0028 lifecycle: partyDeregister FIRST (widget leaves
+        // every Party it joined; no more incoming messages), then onClose
+        // (general cleanup — dispose timers, dissolve DomOpsParty branches).
+        // Reverse order would leave a window during which the widget could
+        // receive messages with its DOM already torn down. Both hooks run
+        // under try/catch; either throwing does not block the other.
         var tab = state.tabs[idx];
+        if (typeof tab.partyDeregister === "function") {
+            try { tab.partyDeregister(); }
+            catch (e) { console.error("[MultiTabPane] tab.partyDeregister threw:", e); }
+        }
         if (typeof tab.onClose === "function") {
             try { tab.onClose(); } catch (e) { console.error("[MultiTabPane] tab.onClose threw:", e); }
         }

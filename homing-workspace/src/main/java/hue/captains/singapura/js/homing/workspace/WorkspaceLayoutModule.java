@@ -5,6 +5,8 @@ import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
+import hue.captains.singapura.js.homing.workspace.party.LayoutSecretaryModule;
+import hue.captains.singapura.js.homing.workspace.party.PartyModule;
 
 import java.util.List;
 
@@ -82,6 +84,19 @@ public record WorkspaceLayoutModule() implements DomModule<WorkspaceLayoutModule
                                 new WorkspaceLayoutStyles.wl_root_fullscreen(),
                                 new WorkspaceLayoutStyles.wl_chrome_hidden()),
                         WorkspaceLayoutStyles.INSTANCE))
+                // RFC 0028 cycle 3 — WorkspaceLayout routes its fullscreen flow
+                // through a LayoutParty: the fullscreen toggle Actor sends a
+                // FullscreenToggleRequested message; the LayoutSecretary owns
+                // authoritative state; on toggle it broadcasts FullscreenChanged;
+                // the layout body Actor reacts by performing the DOM class
+                // toggle; the toggle Actor reacts by updating its icon glyph.
+                .add(new ModuleImports<>(List.of(new PartyModule.Party()), PartyModule.INSTANCE))
+                // RFC 0028 cycle 6 phase 1 — LayoutSecretary as a standalone module,
+                // imported here so the WorkspaceLayout chrome can pass its initial
+                // state and behavior to the Party constructor.
+                .add(new ModuleImports<>(
+                        List.of(new LayoutSecretaryModule.LayoutSecretary()),
+                        LayoutSecretaryModule.INSTANCE))
                 .build();
     }
 

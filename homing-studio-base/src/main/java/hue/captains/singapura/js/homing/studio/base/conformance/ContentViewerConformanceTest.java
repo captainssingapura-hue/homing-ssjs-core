@@ -1,4 +1,4 @@
-package hue.captains.singapura.js.homing.conformance;
+package hue.captains.singapura.js.homing.studio.base.conformance;
 
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.studio.base.Fixtures;
@@ -51,7 +51,8 @@ import static org.junit.jupiter.api.Assertions.fail;
  * provide the inputs via {@link #fixtures()} and {@link #studios()};
  * the test factory does the rest.</p>
  *
- * @since RFC 0015 Phase 5
+ * @since RFC 0015 Phase 5 (relocated in b.2j cleanup — see
+ *        {@link DocConformanceTest} for the layering rationale)
  */
 public abstract class ContentViewerConformanceTest {
 

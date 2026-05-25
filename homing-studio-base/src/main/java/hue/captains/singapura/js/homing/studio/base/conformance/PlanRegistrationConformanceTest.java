@@ -1,4 +1,4 @@
-package hue.captains.singapura.js.homing.conformance;
+package hue.captains.singapura.js.homing.studio.base.conformance;
 
 import hue.captains.singapura.js.homing.studio.base.Studio;
 import hue.captains.singapura.js.homing.studio.base.app.Catalogue;
@@ -45,11 +45,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * isn't checked here; that's a navigation choice (a plan could
  * intentionally be reachable only by URL), not a 404 hazard.</p>
  *
- * <p>Per the abstract-base pattern shared with {@code DocConformanceTest}
- * and {@code ContentViewerConformanceTest}, downstream subclasses
+ * <p>Per the abstract-base pattern shared with {@link DocConformanceTest}
+ * and {@link ContentViewerConformanceTest}, downstream subclasses
  * provide the inputs via {@link #studios()}.</p>
  *
- * @since Defect 0005
+ * @since Defect 0005 (relocated in b.2j cleanup — see
+ *        {@link DocConformanceTest} for the layering rationale)
  */
 public abstract class PlanRegistrationConformanceTest {
 

@@ -209,7 +209,12 @@ public abstract class WorkspaceWidget<P extends WorkspaceWidget._Param, W extend
     @Override
     public final List<String> selfContent(ModuleNameResolver resolver) {
         var lines = new ArrayList<String>();
-        lines.add("function construct(branch, params) {");
+        // RFC 0028 cycle 4 — third arg `workspaceCtx` carries workspace-
+        // provided messaging Parties (and any future per-workspace handles).
+        // Widgets that don't need messaging ignore the arg; existing
+        // implementations are forward-compatible (extra args are silently
+        // dropped by JavaScript function calls).
+        lines.add("function construct(branch, params, workspaceCtx) {");
         lines.add("    try {");
         lines.addAll(constructBodyJs());
         lines.add("    } catch (e) {");

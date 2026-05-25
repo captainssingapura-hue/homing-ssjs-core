@@ -40,9 +40,68 @@ class WorkspaceLayout {
         this._ribbonItems = Array.isArray(opts.ribbonItems) ? opts.ribbonItems : [];
         this._footerItems = Array.isArray(opts.footerItems) ? opts.footerItems : [];
         this._onAction    = opts.onAction || null;
-        this._fullScreen  = false;
         this._escHandler  = null;
+        this._buildParty();
         this._build();
+        this._joinPartyActors();
+    }
+
+    // ─── RFC 0028 cycle 3 — LayoutParty setup ───────────────────────────────
+    //
+    // The fullscreen flow goes through a Party rather than direct method
+    // calls. Three pieces:
+    //
+    //   1. The LayoutSecretary (the only Secretary in this Party) is the
+    //      single authoritative owner of fullscreen state. Pure function:
+    //      Requested → flip state, emit Changed.
+    //   2. The fullscreenToggle Actor lives on the ribbon button. It sends
+    //      FullscreenToggleRequested on click; reacts to FullscreenChanged
+    //      by swapping its icon glyph.
+    //   3. The body Actor reacts to FullscreenChanged by performing the
+    //      DOM mutations (body classes, root class, .st-header hiding,
+    //      Escape-key listener attach/detach).
+    //
+    // No piece owns authoritative state except the Secretary. No Actor
+    // touches another Actor's DOM. The Secretary touches nothing.
+    _buildParty() {
+        // RFC 0028 cycle 6 phase 1 — Secretary extracted to LayoutSecretaryModule.js
+        // for unit-testability in isolation. The chrome wires the imported
+        // initial state and behavior into the Party; the Party's runtime is
+        // unchanged. Behavior is pure; state is the only authoritative
+        // record of fullscreen status.
+        this._party = new Party({
+            name: "layout",
+            root: {
+                path     : "layout",
+                initial  : LayoutSecretary.initial,
+                behavior : LayoutSecretary.behavior
+            }
+        });
+    }
+
+    _joinPartyActors() {
+        var self = this;
+        // Toggle Actor — sender on click, reactor for icon update.
+        this._party.joinActor({
+            id: "layout/fullscreenToggle",
+            parentSecretary: "layout",
+            reactors: {
+                FullscreenChanged: function (msg) {
+                    self._fsBtn.textContent = msg.on ? "⤢" : "⛶";
+                }
+            }
+        });
+        // Body Actor — sender on Escape (via _applyFullscreenDom's handler),
+        // reactor for the actual DOM toggling.
+        this._party.joinActor({
+            id: "layout/body",
+            parentSecretary: "layout",
+            reactors: {
+                FullscreenChanged: function (msg) {
+                    self._applyFullscreenDom(msg.on);
+                }
+            }
+        });
     }
 
     _build() {
@@ -84,7 +143,15 @@ class WorkspaceLayout {
         fsBtn.title = "Toggle full-screen (Esc to exit)";
         fsBtn.textContent = "⛶";   // ⛶ — fullscreen glyph
         var self = this;
-        fsBtn.addEventListener("click", function () { self.toggleFullScreen(); });
+        // Click sends FullscreenToggleRequested into the LayoutParty rather
+        // than calling toggleFullScreen directly — the Secretary owns the
+        // authoritative state, the body Actor performs the DOM mutation,
+        // and the toggle Actor itself updates its own icon via the
+        // FullscreenChanged broadcast it receives back.
+        fsBtn.addEventListener("click", function () {
+            self._party.tellFrom("layout/fullscreenToggle",
+                                  { kind: "FullscreenToggleRequested" });
+        });
         ribbon.appendChild(fsBtn);
         this._fsBtn = fsBtn;
         root.appendChild(ribbon);
@@ -137,6 +204,30 @@ class WorkspaceLayout {
                 lbl.textContent = item.text;
                 return lbl;
             }
+            case "Choice": {
+                // Typed dropdown: label + <select>. Change event emits
+                // onAction(actionId, value) — the value is the selected
+                // option's wire value (the workspace's onAction
+                // interprets it). Note this extends the onAction
+                // signature from (actionId) to (actionId, value); existing
+                // handlers ignore the second arg, new ones use it.
+                var container = document.createElement("label");
+                css.setClass(container, wl_ribbon_label);
+                container.textContent = item.label + " ";
+                var sel = document.createElement("select");
+                for (var k = 0; k < item.options.length; k++) {
+                    var opt = document.createElement("option");
+                    opt.value = item.options[k].value;
+                    opt.textContent = item.options[k].label;
+                    sel.appendChild(opt);
+                }
+                sel.addEventListener("change", function () {
+                    if (self._onAction) try { self._onAction(item.actionId, sel.value); }
+                    catch (e) { console.error("[WorkspaceLayout] onAction threw:", e); }
+                });
+                container.appendChild(sel);
+                return container;
+            }
             default: {
                 var unknown = document.createElement("span");
                 unknown.textContent = "?";
@@ -179,34 +270,60 @@ class WorkspaceLayout {
     // ─── Fullscreen ────────────────────────────────────────────────────────
 
     /**
-     * Toggle fullscreen state. Body gets wl-fullscreen-active class; the
-     * workspace's own root gets wl-root-fullscreen; studio chrome surfaces
-     * (.st-header) get wl-chrome-hidden. Escape exits.
+     * Public toggle — re-published as a message into LayoutParty so the
+     * Secretary stays the single source of truth. External callers (and
+     * the ribbon button) all funnel through the same routing.
      */
-    toggleFullScreen() { this.setFullScreen(!this._fullScreen); }
+    toggleFullScreen() {
+        this._party.tellFrom("layout/fullscreenToggle",
+                              { kind: "FullscreenToggleRequested" });
+    }
 
+    /**
+     * Public set-to-specific-value — sends FullscreenSetRequested(on) so
+     * the Secretary can decide whether to no-op (already at this value) or
+     * broadcast the FullscreenChanged fact.
+     */
     setFullScreen(on) {
-        if (on === this._fullScreen) return;
-        this._fullScreen = !!on;
+        this._party.tellFrom("layout/fullscreenToggle",
+                              { kind: "FullscreenSetRequested", on: !!on });
+    }
+
+    /**
+     * Read-only accessor. The Party snapshot is the authoritative source;
+     * we read the layout Secretary's state directly via inspect().
+     */
+    isFullScreen() {
+        var snap = this._party.inspect();
+        var root = snap.secretaries.find(function (s) { return s.path === "layout"; });
+        return !!(root && root.state && root.state.fullscreen);
+    }
+
+    // ─── DOM-side effect, invoked from the body Actor's reactor ────────────
+    //
+    // This is the ONLY place that touches DOM for fullscreen. Secretary
+    // never reaches here; toggle Actor never reaches here. The body Actor's
+    // FullscreenChanged reactor calls this with the new state, and the
+    // method performs both DOM class toggling and Escape-handler attach /
+    // detach. The Escape handler itself bounces back into LayoutParty via
+    // setFullScreen(false), keeping all state transitions routed through
+    // the Secretary.
+    _applyFullscreenDom(on) {
         var self = this;
-        if (this._fullScreen) {
+        if (on) {
             document.body.classList.add(_bodyFullscreenClassName());
             css.addClass(this._rootEl, wl_root_fullscreen);
-            // Hide studio chrome — the studio's Header lives at .st-header.
-            // Future studio surfaces (footer, sidebar) tag with the same
-            // class via their own CSS or are hidden by extending this list.
             var header = document.querySelector(".st-header");
             if (header) css.addClass(header, wl_chrome_hidden);
-            this._fsBtn.textContent = "⤢";   // ⤢ — exit-fullscreen glyph
-            // Escape exits.
-            this._escHandler = function (e) { if (e.key === "Escape") self.setFullScreen(false); };
+            this._escHandler = function (e) {
+                if (e.key === "Escape") self.setFullScreen(false);
+            };
             document.addEventListener("keydown", this._escHandler);
         } else {
             document.body.classList.remove(_bodyFullscreenClassName());
             css.removeClass(this._rootEl, wl_root_fullscreen);
             var header2 = document.querySelector(".st-header");
             if (header2) css.removeClass(header2, wl_chrome_hidden);
-            this._fsBtn.textContent = "⛶";   // ⛶
             if (this._escHandler) {
                 document.removeEventListener("keydown", this._escHandler);
                 this._escHandler = null;
@@ -214,12 +331,19 @@ class WorkspaceLayout {
         }
     }
 
-    isFullScreen() { return this._fullScreen; }
-
     destroy() {
+        // Ensure fullscreen is exited (so global classes get removed),
+        // routed through the Party as everything else is.
+        if (this.isFullScreen()) this.setFullScreen(false);
         if (this._escHandler) document.removeEventListener("keydown", this._escHandler);
         this._escHandler = null;
-        if (this._fullScreen) this.setFullScreen(false);
+        // Drop Party Actors. The Party itself is workspace-local; its
+        // Secretary state dies with this layout instance.
+        if (this._party) {
+            try { this._party.leave("layout/fullscreenToggle"); } catch (e) {}
+            try { this._party.leave("layout/body"); } catch (e) {}
+            this._party = null;
+        }
         // Restore html + body + .st-root to their base styles so non-workspace
         // pages that follow get normal page scroll behaviour back.
         document.body.classList.remove(_workspaceActiveClassName());
