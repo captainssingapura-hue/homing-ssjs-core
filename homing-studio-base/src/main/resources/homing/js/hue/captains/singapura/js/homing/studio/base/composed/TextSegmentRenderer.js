@@ -35,6 +35,11 @@ function _renderInlines(inlines, hostEl) {
         } else if (n.kind === 'ref') {
             var aEl = document.createElement('a');
             href.set(aEl, '#ref:' + n.anchor);
+            // MHTML-survival: Chrome rewrites page-local fragment hrefs on export
+            // but preserves inline onclick attributes. Scroll to the ref card
+            // directly; return false prevents the rewritten href from firing.
+            aEl.setAttribute('onclick',
+                "var el=document.getElementById('ref:" + n.anchor + "');if(el){el.scrollIntoView({behavior:'smooth'});}return false;");
             aEl.textContent = n.label;
             hostEl.appendChild(aEl);
         } else {
