@@ -24,7 +24,23 @@ import java.util.List;
  * <p>The auto-generated body uses the studio brand by default. Downstream
  * that wants a custom brand can subclass and override {@link #brandLabel()};
  * the typical case is just to use the shared instance.</p>
+ *
+ * <h2>Deprecated — prefer the {@code ComposedDoc} viewer</h2>
+ *
+ * <p>This app serves the {@code "doc"} content kind — every {@code ClasspathMarkdownDoc},
+ * {@code ResourceMarkdownDoc}, and {@code InlineDoc}. Those Doc kinds are themselves
+ * deprecated in favour of {@code ComposedDoc}, which is served by {@code ComposedWidget}
+ * (its own dedicated viewer with typed-segment rendering, TOC, References, and the
+ * floating HTML export pill). The two paths will coexist for the foreseeable future
+ * — every existing .md-backed Doc continues to render through this viewer — but new
+ * docs should be authored as {@code ComposedDoc}s and served via the {@code ComposedWidget}
+ * path.</p>
+ *
+ * @deprecated Prefer the {@code ComposedDoc} / {@code ComposedWidget} viewer pair for
+ *             new docs. This app remains supported for the existing .md-backed Doc
+ *             kinds; no removal date.
  */
+@Deprecated
 @LegacyAppMain(reason = "Markdown body + References renderer; already informs the DocViewer chrome pattern (DocViewer.java back-ported this body in 0.0.111). Clean migration candidate.")
 public record DocReader() implements AppModule<DocReader.Params, DocReader>, SelfContent {
 

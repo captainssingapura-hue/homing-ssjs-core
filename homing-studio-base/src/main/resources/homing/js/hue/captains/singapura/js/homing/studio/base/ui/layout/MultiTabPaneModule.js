@@ -196,6 +196,35 @@ class MultiTabPane {
         // knowledge — the host decides what "add" means (open a picker,
         // create a default tab, prompt, …).
         this._onAddTab = opts.onAddTab || null;
+        // ─── RFC 0032 — typed mutation callbacks. ────────────────────────────
+        // Each fires at the site of its specific mutation, BEFORE the omnibus
+        // onChange. Each is optional; absent callbacks are no-ops. The pane
+        // publishes its own structural events so downstream chromes (e.g. an
+        // event-recording chrome under RFC 0030) don't have to reverse-engineer
+        // them from a before/after onChange diff.
+        //
+        // Callback shapes:
+        //   onTabAdded(slotId, tab, tabIndex)
+        //   onTabRemoved(slotId, tab, fromIndex)
+        //   onTabMoved(srcSlotId, destSlotId, tab, fromIndex, toIndex)
+        //   onTabActivated(slotId, tabId)           — strip-chip click / programmatic switchTab
+        //   onWorkspaceActiveChanged(fromTabId, toTabId)
+        //   onSplit(sourceSlotId, orientation, newSlotId)
+        //   onMerge(keptSlotId, removedSlotId)
+        //
+        // onRatioChanged is NOT in P1 — ratio drags live in SplitPane, which
+        // doesn't (yet) expose a typed callback. A follow-up will widen
+        // SplitPane the same way; until then, callers wanting ratio change
+        // notification must subscribe to SplitPane.onChange directly or
+        // continue using MTP's omnibus onChange.
+        this._cbTabAdded         = opts.onTabAdded         || null;
+        this._cbTabRemoved       = opts.onTabRemoved       || null;
+        this._cbTabMoved         = opts.onTabMoved         || null;
+        this._cbTabActivated     = opts.onTabActivated     || null;
+        this._cbTabAttached      = opts.onTabAttached      || null;
+        this._cbWsActiveChanged  = opts.onWorkspaceActiveChanged || null;
+        this._cbSplit            = opts.onSplit            || null;
+        this._cbMerge            = opts.onMerge            || null;
         // ─── Workspace-active state. ────────────────────────────────────────
         // At most ONE tab across the whole pane is "workspace-active" — the
         // tab the user is currently with. This is distinct from per-slot
@@ -254,6 +283,78 @@ class MultiTabPane {
     /** Layout source of truth — SplitPane after construction, boot layout during. */
     _layout() {
         return this._sp ? this._sp.getLayout() : this._bootLayout;
+    }
+
+    // ─── RFC 0032 P2 — pane-path identity. ─────────────────────────────────
+    //
+    //   Every pane in the split tree has a unique structural path:
+    //     root           = "_"
+    //     first child    = parent + "_1"
+    //     second child   = parent + "_2"
+    //
+    //   Paths are intrinsic to the tree shape (not minted): two MTP instances
+    //   with the same split tree have the same paths, regardless of internal
+    //   slot id minting. Stable across sessions when callers reconstruct the
+    //   same split sequence.
+    //
+    //   Mtp-minted slot ids stay the public handle for live operations
+    //   (addTab/removeTab/moveTab/split/merge); paths are the durable handle
+    //   for recording + replay across sessions. paneIdOf(slotId) and
+    //   slotIdOfPaneId(paneId) bridge the two namespaces.
+
+    /** Return the structural paneId path for a live mtp slot id, or null. */
+    paneIdOf(slotId) {
+        var found = null;
+        (function walk(node, path) {
+            if (found || !node) return;
+            if (node.kind === "leaf") {
+                if (node.slotId === slotId) found = path || "_";
+                return;
+            }
+            walk(node.children[0].pane, path + "_1");
+            walk(node.children[1].pane, path + "_2");
+        })(this._layout(), "");
+        return found;
+    }
+
+    /** Return the live mtp slot id at a structural paneId path, or null. */
+    slotIdOfPaneId(paneId) {
+        if (paneId == null) return null;
+        var node = this._layout();
+        if (paneId === "_" || paneId === "") {
+            return (node && node.kind === "leaf") ? node.slotId : null;
+        }
+        var parts = paneId.split("_");
+        for (var i = 0; i < parts.length; i++) {
+            if (parts[i].length === 0) continue;   // leading "_" splits to empty string
+            if (!node || node.kind === "leaf") return null;
+            var idx = parts[i] === "1" ? 0 : parts[i] === "2" ? 1 : -1;
+            if (idx < 0) return null;
+            node = node.children[idx].pane;
+        }
+        return (node && node.kind === "leaf") ? node.slotId : null;
+    }
+
+    /** Return the split-node descriptor (orientation, ratio) at a paneId path, or null. */
+    splitAtPaneId(paneId) {
+        var node = this._layout();
+        if (paneId == null || paneId === "_" || paneId === "") {
+            // root — only meaningful if root is a split node
+            return (node && node.kind === "split")
+                ? { orientation: node.orientation, ratio: node.children[0].ratio }
+                : null;
+        }
+        var parts = paneId.split("_");
+        for (var i = 0; i < parts.length; i++) {
+            if (parts[i].length === 0) continue;
+            if (!node || node.kind === "leaf") return null;
+            var idx = parts[i] === "1" ? 0 : parts[i] === "2" ? 1 : -1;
+            if (idx < 0) return null;
+            node = node.children[idx].pane;
+        }
+        return (node && node.kind === "split")
+            ? { orientation: node.orientation, ratio: node.children[0].ratio }
+            : null;
     }
 
     // Default 2x2 (depth 2, capacity 4 per pane). Slot ids are stable.
@@ -319,10 +420,12 @@ class MultiTabPane {
             throw new Error("[MultiTabPane] pane " + slotId + " at capacity " + cap);
         }
         state.tabs.push(tab);
+        var addedIndex = state.tabs.length - 1;
         if (state.activeTabId == null) state.activeTabId = tab.id;
         // Tab-only change → local per-slot re-render. No SplitPane push, no
         // cross-slot DOM disturbance, no widget DOM detach.
         this._renderSlotLocal(slotId);
+        this._fire(this._cbTabAdded, "onTabAdded", [slotId, tab, addedIndex]);
         if (this._onChange) this._onChange(this.getState());
         return this;
     }
@@ -366,6 +469,7 @@ class MultiTabPane {
         // Local re-render — the slot's persistent wrapper drops the closed
         // tab's _contentEl. Other slots are untouched.
         this._renderSlotLocal(slotId);
+        this._fire(this._cbTabRemoved, "onTabRemoved", [slotId, tab, idx]);
         if (this._onChange) this._onChange(this.getState());
         return this;
     }
@@ -402,6 +506,7 @@ class MultiTabPane {
         // all slots locally — cheap, no SplitPane involvement.
         var self2 = this;
         this._wrappersBySlot.forEach(function (_, slotId) { self2._renderSlotLocal(slotId); });
+        this._fire(this._cbWsActiveChanged, "onWorkspaceActiveChanged", [prevId, tabId]);
         if (this._onChange) this._onChange(this.getState());
         return this;
     }
@@ -428,6 +533,7 @@ class MultiTabPane {
                 // corner enable state. NO SplitPane involvement → no DOM
                 // detach anywhere → scroll position preserved on every tab.
                 this._renderSlotLocal(slotId);
+                this._fire(this._cbTabActivated, "onTabActivated", [slotId, tabId]);
                 if (this._onChange) this._onChange(this.getState());
                 return this;
             }
@@ -477,6 +583,44 @@ class MultiTabPane {
         // scrollable descendants.
         this._renderSlotLocal(srcSlotId);
         if (destSlotId !== srcSlotId) this._renderSlotLocal(destSlotId);
+        // adjustedIndex is destIndex normalized for the post-remove array;
+        // it's the index where the tab now lives in destState.tabs.
+        this._fire(this._cbTabMoved, "onTabMoved",
+                   [srcSlotId, destSlotId, tab, idx, adjustedIndex]);
+        if (this._onChange) this._onChange(this.getState());
+        return this;
+    }
+
+    /**
+     * Public attach for tabs that come back from "outside" — modal redock,
+     * picker-modal docking, programmatic re-parenting. Wraps
+     * _insertTabIntoState + _renderSlotLocal + switchTab so the dock site
+     * publishes its mutation as a typed onTabAttached callback instead of
+     * mutating internals directly (which would bypass recording — RFC 0032).
+     *
+     * Tab is becoming workspace-visible at (slotId, index); the tab object
+     * MAY already have a _contentEl re-parented into the destination wrapper
+     * (drag controller does this to preserve UI state across the transition).
+     * If so, this method's render path won't disturb it.
+     *
+     * Fires onTabAttached(slotId, tab, tabIndex), then the omnibus onChange.
+     */
+    attachTab(slotId, tab, index) {
+        this._requireSlot(slotId);
+        this._insertTabIntoState(slotId, tab, index);
+        var state = this._tabsBySlot.get(slotId);
+        var attachedIndex = -1;
+        for (var i = 0; i < state.tabs.length; i++) {
+            if (state.tabs[i].id === tab.id) { attachedIndex = i; break; }
+        }
+        // switchTab handles the local re-render + sets activeTabId; we still
+        // want our own typed callback (and the omnibus onChange) to fire
+        // even when switchTab fires its own onTabActivated + onChange. Order:
+        // onTabAttached first (the structural event), then switchTab's
+        // notifications. Suppress switchTab's omnibus by inlining the render.
+        state.activeTabId = tab.id;
+        this._renderSlotLocal(slotId);
+        this._fire(this._cbTabAttached, "onTabAttached", [slotId, tab, attachedIndex]);
         if (this._onChange) this._onChange(this.getState());
         return this;
     }
@@ -528,6 +672,7 @@ class MultiTabPane {
         // wrappers from _renderLeaf and a local refresh is harmless.
         this._renderSlotLocal(slotId);
         this._renderSlotLocal(newSlotId);
+        this._fire(this._cbSplit, "onSplit", [slotId, orientation, newSlotId]);
         if (this._onChange) this._onChange(this.getState());
         return this;
     }
@@ -569,6 +714,7 @@ class MultiTabPane {
         // Refresh strip (new chips) + content (display toggles for migrated
         // tabs) + corner (merge availability may have changed).
         this._renderSlotLocal(slotId);
+        this._fire(this._cbMerge, "onMerge", [slotId, siblingSlotId]);
         if (this._onChange) this._onChange(this.getState());
         return this;
     }
@@ -598,6 +744,18 @@ class MultiTabPane {
         var s = this._tabsBySlot.get(slotId);
         if (!s) throw new Error("[MultiTabPane] no such slot: " + slotId);
         return s;
+    }
+
+    /**
+     * RFC 0032 — invoke a typed callback safely. Each typed callback runs
+     * BEFORE the omnibus onChange, wrapped in try/catch so a misbehaving
+     * subscriber can't block the mutation or block the omnibus call.
+     * Mirrors the discipline already used for tab.onClose / tab.setActive.
+     */
+    _fire(cb, ctx, args) {
+        if (!cb) return;
+        try { cb.apply(null, args); }
+        catch (e) { console.error("[MultiTabPane] " + ctx + " threw:", e); }
     }
 
     _mintSlotId() {

@@ -8,6 +8,7 @@ import hue.captains.singapura.js.homing.core.ModuleImports;
 import hue.captains.singapura.js.homing.libs.MarkedJs;
 import hue.captains.singapura.js.homing.server.HrefManager;
 import hue.captains.singapura.js.homing.studio.base.css.StudioStyles;
+import hue.captains.singapura.js.homing.studio.base.export.HtmlExportModule;
 import hue.captains.singapura.js.homing.studio.base.ui.StudioElements;
 
 import java.util.List;
@@ -18,7 +19,11 @@ import java.util.List;
  * (RFC 0004-ext1), renders with marked.js, builds a TOC sidebar from the document's headings,
  * and emits a "References" section beneath the body with stable {@code id="ref:<name>"}
  * anchors so markdown citations like {@code [label](#ref:<name>)} navigate natively.
+ *
+ * @deprecated Renderer for the deprecated {@link DocReader} app. Prefer
+ *             {@code ComposedWidget}'s renderer for new docs.
  */
+@Deprecated
 public record DocReaderRenderer() implements DomModule<DocReaderRenderer> {
 
     public record renderDocReader() implements Exportable._Constant<DocReaderRenderer> {}
@@ -31,6 +36,8 @@ public record DocReaderRenderer() implements DomModule<DocReaderRenderer> {
                 .add(new ModuleImports<>(List.of(new HrefManager.HrefManagerInstance()),
                         HrefManager.INSTANCE))
                 .add(new ModuleImports<>(List.of(new MarkedJs.marked()), MarkedJs.INSTANCE))
+                .add(new ModuleImports<>(List.of(new HtmlExportModule.exportPageAsHtml()),
+                        HtmlExportModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new StudioElements.Header()
                 ), StudioElements.INSTANCE))

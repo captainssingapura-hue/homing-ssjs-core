@@ -24,8 +24,42 @@ import java.nio.charset.StandardCharsets;
  * {@link ResourceMarkdownDoc} is usually the right interface to implement instead — it makes
  * the explicit-path nature visible at the type level.</p>
  *
+ * <h2>Deprecated — prefer {@code ComposedDoc}</h2>
+ *
+ * <p>{@code ComposedDoc} (introduced alongside RFC 0024 and matured through the segment
+ * ontology — {@code TextSegment}, {@code MarkdownSegment}, {@code CodeSegment},
+ * {@code SvgSegment}, {@code TableSegment}, {@code ComposedSegment}) supersedes the
+ * prose-only doc kinds. It addresses the structural limits this interface carries:</p>
+ *
+ * <ul>
+ *   <li><b>Typed References resolve at compile time.</b> Citations like
+ *       {@code [label](#ref:doc-foo)} flow through the {@code References} list on the
+ *       containing record; the compiler refuses references to missing docs. The .md path
+ *       is anchor-string-typed; broken references surface only at runtime when the user
+ *       clicks.</li>
+ *   <li><b>Segments compose.</b> SVG diagrams, code blocks with language tags, embedded
+ *       tables, and nested doc references are first-class segment kinds — not
+ *       reflow-prone HTML escapes scattered through a prose body.</li>
+ *   <li><b>The doc is its own data.</b> A ComposedDoc record IS the document — no
+ *       sidecar file to drift out of sync, no resource-loading path to forget. Tests
+ *       can assert against doc structure as typed values.</li>
+ *   <li><b>The export, navigation, and TOC paths converge.</b> The {@code ComposedWidget}
+ *       chrome owns the export pill, fragment-correct hrefs, and TOC sidebar; per-Doc
+ *       behaviour stays declarative.</li>
+ * </ul>
+ *
+ * <p>The .md-based doc kinds remain supported for existing content and for cases where
+ * external markdown sources are the natural form. New docs should be authored as
+ * {@code ComposedDoc} records; existing .md docs may migrate at the author's discretion.
+ * The framework will not remove these interfaces in the foreseeable future.</p>
+ *
  * @since RFC 0004
+ * @deprecated Prefer {@code ComposedDoc} for new docs.
+ *             {@code ComposedDoc} carries typed references, segment composition,
+ *             and a single source of truth (the record itself, not record + .md file).
+ *             This interface remains supported for existing content; no removal date.
  */
+@Deprecated
 public interface ClasspathMarkdownDoc extends Doc {
 
     /**

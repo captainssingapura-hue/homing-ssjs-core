@@ -65,6 +65,41 @@ function renderDocReader(props) {
     var headerEl = Header({ brand: brand, crumbs: crumbs });
     root.appendChild(headerEl);
 
+    // Export button — floating pill, position:fixed bottom-right. Same shape as
+    // the one ComposedWidget installs; mirrored here so plain-markdown DocReader
+    // pages (RFC, doctrine, case-study .md sources, etc.) get the same offline-
+    // friendly export the ComposedDoc pages already have.
+    //
+    // data-export-exclude: stripped by exportPageAsHtml before download so the
+    // button does not appear in the saved file.
+    //
+    // The filename slug starts as "doc" and is replaced with a title-derived
+    // slug once /doc-refs returns info.title (see the .then handler below).
+    var _exportSlug = "doc";
+    var exportBtn = document.createElement("button");
+    exportBtn.textContent = "Export HTML";
+    exportBtn.setAttribute("data-export-exclude", "");
+    exportBtn.style.cssText = "position:fixed;bottom:24px;right:24px;z-index:200;"
+        + "cursor:pointer;font:13px system-ui,sans-serif;padding:6px 16px;"
+        + "border:1px solid var(--color-border,rgba(0,0,0,.2));border-radius:20px;"
+        + "background:var(--color-surface,#fff);color:inherit;"
+        + "box-shadow:0 2px 8px rgba(0,0,0,.15);opacity:0.85;";
+    exportBtn.addEventListener("click", function () {
+        exportBtn.disabled = true;
+        exportBtn.textContent = "Exporting…";
+        exportPageAsHtml(_exportSlug + ".html")
+            .then(function () {
+                exportBtn.textContent = "Export HTML";
+                exportBtn.disabled = false;
+            })
+            .catch(function (err) {
+                exportBtn.textContent = "Export failed";
+                exportBtn.disabled = false;
+                console.error("exportPageAsHtml failed:", err);
+            });
+    });
+    document.body.appendChild(exportBtn);
+
     var main = document.createElement("div");
     css.addClass(main, st_main);
 
@@ -149,6 +184,9 @@ function renderDocReader(props) {
             // section from info.references.
             if (info && info.title) {
                 leafCrumb.text = info.title;
+                // Update the export filename to a title-derived slug now that
+                // the title is known. Same _slugify rules ComposedWidget uses.
+                _exportSlug = _slugify(info.title) || "doc";
                 // RFC 0005-ext2: when the server returned a typed breadcrumb chain
                 // (catalogue root → ... → containing catalogue), use it instead of
                 // whatever crumbsAbove the caller supplied. The leaf crumb (this
