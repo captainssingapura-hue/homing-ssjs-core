@@ -1,8 +1,10 @@
 // =============================================================================
-// EventLogStore — IndexedDB wrapper for the per-workspace event log.
+// EventLogStore — IndexedDB substrate for the workspace event log.
 //
-// RFC 0030 Phase 1. Record-only — events are appended, never replayed yet.
-// Recovery still uses RFC 0029 snapshots through Phase 2.
+// RFC 0035 P2 — refactored from top-level-const + factory to class form so
+// the constants live as static class fields (no script-scope pollution; no
+// _DB_NAME collisions). The public method shape is unchanged; downstream
+// callers see the same (kind, workspaceId)-keyed append / query / clear.
 //
 // Schema:
 //   database name : "homing.eventlog"
@@ -10,144 +12,151 @@
 //                   each row: { seq, kind, workspaceId, name, payload, t }
 //                   indexed by composite key (kind, workspaceId, seq)
 //
-// Per-workspace scoping — every API call carries (kind, workspaceId) so a
-// single store can hold events for many workspace instances without bleed.
-// Matches the RFC 0031 multi-workspace storage shape from day one; single-
-// workspace use today simply passes the deterministic placeholder UUID the
-// chrome computes for its (single) instance.
+// This class is the LOW-LEVEL multi-tenant store. The per-workspace facade
+// is {@link WorkspaceEventLog} (also refactored to class form) which binds
+// (kind, workspaceId) at construction and conforms to the Java EventLog<P>
+// contract from the RFC 0035 contract package.
 //
 // Async by design — IndexedDB has no synchronous API. Callers either await
-// the promises or fire-and-forget; the recording path uses fire-and-forget
-// (we don't block widget mutations on storage writes). Errors are logged
-// via console.warn; we never throw out of append().
+// the promises or fire-and-forget; the recording path uses fire-and-forget.
 // =============================================================================
 
-const _DB_NAME      = "homing.eventlog";
-const _STORE_NAME   = "events";
-const _DB_VERSION   = 1;
+class EventLogStore {
 
-function _openDb() {
-    return new Promise(function (resolve, reject) {
-        if (typeof indexedDB === "undefined") {
-            reject(new Error("EventLogStore: IndexedDB not available in this environment"));
-            return;
-        }
-        const req = indexedDB.open(_DB_NAME, _DB_VERSION);
-        req.onupgradeneeded = function (e) {
-            const db = e.target.result;
-            if (!db.objectStoreNames.contains(_STORE_NAME)) {
-                const store = db.createObjectStore(_STORE_NAME, { keyPath: "seq", autoIncrement: true });
-                // Composite index for per-workspace range queries.
-                store.createIndex("by_workspace", ["kind", "workspaceId", "seq"], { unique: true });
-            }
-        };
-        req.onsuccess = function (e) { resolve(e.target.result); };
-        req.onerror   = function (e) { reject(e.target.error); };
-    });
-}
+    static DB_NAME    = "homing.eventlog";
+    static STORE_NAME = "events";
+    static DB_VERSION = 1;
 
-function createEventLogStore() {
-    let _dbPromise = null;
-    function _db() {
-        if (_dbPromise === null) _dbPromise = _openDb();
-        return _dbPromise;
+    constructor() {
+        this._dbPromise = null;
     }
 
-    return Object.freeze({
-        /**
-         * Append one event. Returns a Promise that resolves to the assigned
-         * seq number. Fire-and-forget is the expected call style on the
-         * recording path; the promise is there for tests + diagnostics.
-         */
-        append(kind, workspaceId, name, payload) {
-            if (typeof kind !== "string" || kind.length === 0) {
-                return Promise.reject(new TypeError("EventLogStore.append: kind must be non-empty string"));
+    /** Lazy-opened singleton IDB connection for this instance. */
+    _db() {
+        if (this._dbPromise === null) this._dbPromise = this._openDb();
+        return this._dbPromise;
+    }
+
+    _openDb() {
+        return new Promise((resolve, reject) => {
+            if (typeof indexedDB === "undefined") {
+                reject(new Error("EventLogStore: IndexedDB not available in this environment"));
+                return;
             }
-            if (typeof workspaceId !== "string" || workspaceId.length === 0) {
-                return Promise.reject(new TypeError("EventLogStore.append: workspaceId must be non-empty string"));
-            }
-            if (typeof name !== "string" || name.length === 0) {
-                return Promise.reject(new TypeError("EventLogStore.append: name must be non-empty string"));
-            }
-            const row = {
-                kind:        kind,
-                workspaceId: workspaceId,
-                name:        name,
-                payload:     payload == null ? {} : payload,
-                t:           Date.now()
-                // seq filled by autoIncrement; available on the request's result
+            const req = indexedDB.open(EventLogStore.DB_NAME, EventLogStore.DB_VERSION);
+            req.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains(EventLogStore.STORE_NAME)) {
+                    const store = db.createObjectStore(EventLogStore.STORE_NAME, { keyPath: "seq", autoIncrement: true });
+                    // Composite index for per-workspace range queries.
+                    store.createIndex("by_workspace", ["kind", "workspaceId", "seq"], { unique: true });
+                }
             };
-            return _db().then(function (db) {
-                return new Promise(function (resolve, reject) {
-                    const tx    = db.transaction(_STORE_NAME, "readwrite");
-                    const store = tx.objectStore(_STORE_NAME);
-                    const req   = store.add(row);
-                    req.onsuccess = function () { resolve(req.result); };
-                    req.onerror   = function () { reject(req.error); };
-                });
-            });
-        },
+            req.onsuccess = (e) => resolve(e.target.result);
+            req.onerror   = (e) => reject(e.target.error);
+        });
+    }
 
-        /**
-         * Range-query events for one workspace instance. Optional options:
-         *   { fromSeq?: number, limit?: number }
-         * fromSeq is exclusive (returns events with seq > fromSeq).
-         * Returns a Promise<Array> sorted by seq ascending.
-         */
-        query(kind, workspaceId, opts) {
-            const fromSeq = opts && typeof opts.fromSeq === "number" ? opts.fromSeq : 0;
-            const limit   = opts && typeof opts.limit   === "number" ? opts.limit   : Number.POSITIVE_INFINITY;
-            return _db().then(function (db) {
-                return new Promise(function (resolve, reject) {
-                    const out   = [];
-                    const tx    = db.transaction(_STORE_NAME, "readonly");
-                    const store = tx.objectStore(_STORE_NAME);
-                    // We use the composite index but bounded by exact (kind,
-                    // workspaceId) and seq > fromSeq. IDBKeyRange.bound on a
-                    // composite key gives us this directly.
-                    const idx   = store.index("by_workspace");
-                    const lower = [kind, workspaceId, fromSeq + 1];
-                    const upper = [kind, workspaceId, Number.MAX_SAFE_INTEGER];
-                    const range = IDBKeyRange.bound(lower, upper, false, false);
-                    const req   = idx.openCursor(range);
-                    req.onsuccess = function (e) {
-                        const cursor = e.target.result;
-                        if (cursor && out.length < limit) {
-                            out.push(cursor.value);
-                            cursor.continue();
-                        } else {
-                            resolve(out);
-                        }
-                    };
-                    req.onerror = function () { reject(req.error); };
-                });
-            });
-        },
+    /** Run `fn(store)` inside a transaction of the named mode. */
+    _tx(mode, fn) {
+        return this._db().then(db => new Promise((resolve, reject) => {
+            const tx    = db.transaction(EventLogStore.STORE_NAME, mode);
+            const store = tx.objectStore(EventLogStore.STORE_NAME);
+            const req   = fn(store);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror   = () => reject(req.error);
+        }));
+    }
 
-        /**
-         * Drop every event for a workspace instance. Used by reset / migration
-         * affordances. Returns a Promise<number> resolving to the count
-         * deleted.
-         */
-        clear(kind, workspaceId) {
-            return _db().then(function (db) {
-                return new Promise(function (resolve, reject) {
-                    let count = 0;
-                    const tx    = db.transaction(_STORE_NAME, "readwrite");
-                    const store = tx.objectStore(_STORE_NAME);
-                    const idx   = store.index("by_workspace");
-                    const lower = [kind, workspaceId, Number.MIN_SAFE_INTEGER];
-                    const upper = [kind, workspaceId, Number.MAX_SAFE_INTEGER];
-                    const range = IDBKeyRange.bound(lower, upper, false, false);
-                    const req   = idx.openCursor(range);
-                    req.onsuccess = function (e) {
-                        const cursor = e.target.result;
-                        if (cursor) { cursor.delete(); count++; cursor.continue(); }
-                        else        { resolve(count); }
-                    };
-                    req.onerror = function () { reject(req.error); };
-                });
-            });
+    /**
+     * Append one event. Returns a Promise that resolves to the assigned
+     * seq number. Fire-and-forget is the expected call style on the
+     * recording path; the promise is there for tests + diagnostics.
+     */
+    append(kind, workspaceId, name, payload) {
+        EventLogStore._requireScope(kind, workspaceId);
+        if (typeof name !== "string" || name.length === 0) {
+            return Promise.reject(new TypeError("EventLogStore.append: name must be non-empty string"));
         }
-    });
+        const row = {
+            kind, workspaceId, name,
+            payload: payload == null ? {} : payload,
+            t: Date.now()
+            // seq filled by autoIncrement; available on the request's result
+        };
+        return this._tx("readwrite", store => store.add(row));
+    }
+
+    /**
+     * Range-query events for one workspace instance. Optional options:
+     *   { fromSeq?: number, limit?: number }
+     * fromSeq is exclusive (returns events with seq > fromSeq).
+     */
+    query(kind, workspaceId, opts) {
+        EventLogStore._requireScope(kind, workspaceId);
+        const fromSeq = opts && typeof opts.fromSeq === "number" ? opts.fromSeq : 0;
+        const limit   = opts && typeof opts.limit   === "number" ? opts.limit   : Number.POSITIVE_INFINITY;
+        return this._db().then(db => new Promise((resolve, reject) => {
+            const out   = [];
+            const tx    = db.transaction(EventLogStore.STORE_NAME, "readonly");
+            const store = tx.objectStore(EventLogStore.STORE_NAME);
+            const idx   = store.index("by_workspace");
+            const lower = [kind, workspaceId, fromSeq + 1];
+            const upper = [kind, workspaceId, Number.MAX_SAFE_INTEGER];
+            const range = IDBKeyRange.bound(lower, upper, false, false);
+            const req   = idx.openCursor(range);
+            req.onsuccess = (e) => {
+                const cursor = e.target.result;
+                if (cursor && out.length < limit) {
+                    out.push(cursor.value);
+                    cursor.continue();
+                } else {
+                    resolve(out);
+                }
+            };
+            req.onerror = () => reject(req.error);
+        }));
+    }
+
+    /**
+     * Drop every event for a workspace instance. Resolves to the count
+     * deleted. Used by Reset State + future RFC 0034 P3 pruning.
+     */
+    clear(kind, workspaceId) {
+        EventLogStore._requireScope(kind, workspaceId);
+        return this._db().then(db => new Promise((resolve, reject) => {
+            let count = 0;
+            const tx    = db.transaction(EventLogStore.STORE_NAME, "readwrite");
+            const store = tx.objectStore(EventLogStore.STORE_NAME);
+            const idx   = store.index("by_workspace");
+            const lower = [kind, workspaceId, Number.MIN_SAFE_INTEGER];
+            const upper = [kind, workspaceId, Number.MAX_SAFE_INTEGER];
+            const range = IDBKeyRange.bound(lower, upper, false, false);
+            const req   = idx.openCursor(range);
+            req.onsuccess = (e) => {
+                const cursor = e.target.result;
+                if (cursor) { cursor.delete(); count++; cursor.continue(); }
+                else        { resolve(count); }
+            };
+            req.onerror = () => reject(req.error);
+        }));
+    }
+
+    static _requireScope(kind, workspaceId) {
+        if (typeof kind !== "string" || kind.length === 0) {
+            throw new TypeError("EventLogStore: kind must be non-empty string");
+        }
+        if (typeof workspaceId !== "string" || workspaceId.length === 0) {
+            throw new TypeError("EventLogStore: workspaceId must be non-empty string");
+        }
+    }
+}
+
+/**
+ * Factory — matches the createX() naming convention so chrome call sites
+ * read uniformly. Returns a fresh EventLogStore instance with its own
+ * lazy IDB connection.
+ */
+function createEventLogStore() {
+    return new EventLogStore();
 }

@@ -70,6 +70,14 @@
             <version>${junit.version}</version>
             <scope>compile</scope>
         </dependency>
+        <!-- RFC 0035 — Truffle JS for structural conformance tests against
+             the substrate-free Java contracts (MultiTabPaneConformanceTest). -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-ssjs-test-fixtures</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 </project>

@@ -5,6 +5,11 @@
 // the WidgetInstance codec looks up the right codec by the kind
 // discriminator on encode + decode paths.
 //
+// RFC 0035 P3 — refactored from `Object.freeze({...})` IIFE to class form
+// with static methods. The registry is logically a singleton; expressing
+// it as a class with static members keeps the storage encapsulated as a
+// static class field (no top-level `const codecs` to collide).
+//
 // The registration step is the Java→JS analog of "the workspace declares
 // what widget kinds it knows about" — a downstream consumer registers its
 // own widget kinds explicitly. The framework refuses implicit discovery
@@ -23,58 +28,63 @@
 //     widgetsById serialisation.)
 // =============================================================================
 
-const WidgetParamsCodecRegistry = (function() {
-    const codecs = new Map();    // widgetKind.value (string) → { transformTo, transformFrom }
+class WidgetParamsCodecRegistry {
 
-    return Object.freeze({
-        /**
-         * Register a Params codec under the given widget kind value.
-         * The codec must satisfy the TransformationFunctions contract:
-         * an object with transformTo(value) and transformFrom(wire).
-         * Subsequent registrations under the same kind value overwrite.
-         */
-        register(widgetKindValue, codec) {
-            if (typeof widgetKindValue !== 'string' || widgetKindValue.length === 0) {
-                throw new TypeError(
-                    "WidgetParamsCodecRegistry.register: widgetKindValue must be a non-empty string");
-            }
-            if (!codec
-                || typeof codec.transformTo !== 'function'
-                || typeof codec.transformFrom !== 'function') {
-                throw new TypeError(
-                    "WidgetParamsCodecRegistry.register: codec must have transformTo + transformFrom methods");
-            }
-            codecs.set(widgetKindValue, codec);
-        },
+    /** widgetKind.value (string) → { transformTo, transformFrom } */
+    static #codecs = new Map();
 
-        /**
-         * Look up the codec for the given widget kind value. Throws if
-         * no codec is registered — fails loudly rather than silently
-         * dropping a widget's params at save time.
-         */
-        get(widgetKindValue) {
-            const c = codecs.get(widgetKindValue);
-            if (!c) {
-                throw new Error(
-                    "WidgetParamsCodecRegistry: no codec registered for widget kind '"
-                    + widgetKindValue + "'");
-            }
-            return c;
-        },
+    /** Singletons-by-static — no instances. */
+    constructor() {
+        throw new TypeError("WidgetParamsCodecRegistry is a singleton — use static methods");
+    }
 
-        /**
-         * True if a codec is registered for the given widget kind.
-         * Used by tests and by the future MissingWidgetPlaceholder
-         * (RFC 0029 Cycle 7) to dispatch on whether a saved widget's
-         * kind is still known.
-         */
-        has(widgetKindValue) {
-            return codecs.has(widgetKindValue);
-        },
-
-        /** Reset — for tests; not exposed in production wiring. */
-        _clear() {
-            codecs.clear();
+    /**
+     * Register a Params codec under the given widget kind value.
+     * The codec must satisfy the TransformationFunctions contract:
+     * an object with transformTo(value) and transformFrom(wire).
+     * Subsequent registrations under the same kind value overwrite.
+     */
+    static register(widgetKindValue, codec) {
+        if (typeof widgetKindValue !== "string" || widgetKindValue.length === 0) {
+            throw new TypeError(
+                "WidgetParamsCodecRegistry.register: widgetKindValue must be a non-empty string");
         }
-    });
-})();
+        if (!codec
+            || typeof codec.transformTo   !== "function"
+            || typeof codec.transformFrom !== "function") {
+            throw new TypeError(
+                "WidgetParamsCodecRegistry.register: codec must have transformTo + transformFrom methods");
+        }
+        WidgetParamsCodecRegistry.#codecs.set(widgetKindValue, codec);
+    }
+
+    /**
+     * Look up the codec for the given widget kind value. Throws if
+     * no codec is registered — fails loudly rather than silently
+     * dropping a widget's params at save time.
+     */
+    static get(widgetKindValue) {
+        const c = WidgetParamsCodecRegistry.#codecs.get(widgetKindValue);
+        if (!c) {
+            throw new Error(
+                "WidgetParamsCodecRegistry: no codec registered for widget kind '"
+                + widgetKindValue + "'");
+        }
+        return c;
+    }
+
+    /**
+     * True if a codec is registered for the given widget kind.
+     * Used by tests and by the future MissingWidgetPlaceholder
+     * (RFC 0029 Cycle 7) to dispatch on whether a saved widget's
+     * kind is still known.
+     */
+    static has(widgetKindValue) {
+        return WidgetParamsCodecRegistry.#codecs.has(widgetKindValue);
+    }
+
+    /** Reset — for tests; not exposed in production wiring. */
+    static _clear() {
+        WidgetParamsCodecRegistry.#codecs.clear();
+    }
+}
