@@ -127,7 +127,7 @@ class WorkspaceCatalogueConformanceTest {
                 "var indexedDB = undefined;" +
                 "var IDBKeyRange = undefined;");
         js.eval("js", readJs(
-                "/homing/js/hue/captains/singapura/js/homing/workspace/catalogue/WorkspaceCatalogueStore.js"));
+                "/homing/js/hue/captains/singapura/js/homing/workspace/catalogue/WorkspaceCatalogueModule.js"));
     }
 
     private String readJs(String classpathPath) {

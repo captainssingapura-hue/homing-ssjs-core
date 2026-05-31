@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+        <artifactId>homing.js</artifactId>
+        <version>LOCAL-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>homing-codec-ecma</artifactId>
+
+    <description>
+        Concrete codegen implementations targeting ECMAScript (ES module
+        classes). Provides:
+
+        - EcmaDefinitionCodeGen — emits a JS class declaration mirroring a
+          Java record (or sealed-of-records) ObjectDefinition.
+        - EcmaFunctionsCodeGen — emits a JS TransformationFunctions
+          implementation (transformTo / transformFrom) for the same.
+
+        Stateless FunctionalObject implementations. The "Codegen as
+        Functions" doctrine — same code runs at build time (Maven exec
+        plugin) and could run at request time if a downstream consumer
+        ever wants runtime generation.
+
+        Pure-Java module; produces JS source as String values. The build-
+        time invocation lives in the consumer module (e.g.,
+        homing-workspace-codecs), not here.
+    </description>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-codec</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <!-- For StatelessFunctionalObject — the Functional Objects doctrine
+             marker interface from lang.ontology. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.lang.ontology</groupId>
+            <artifactId>core</artifactId>
+            <version>0.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>

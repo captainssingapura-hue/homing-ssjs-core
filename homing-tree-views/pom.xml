@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+        <artifactId>homing.js</artifactId>
+        <version>LOCAL-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>homing-tree-views</artifactId>
+
+    <description>
+        Rigid tree substrate — typed leveled TreeNode value objects + a
+        canonical JSON serialiser that becomes the universal contract for
+        rendering any tree-shaped artifact on JS without a single line of
+        per-tree-kind JS code.
+
+        Borrows DomOpsParty's leveled-types pattern: TreeLevel is a sealed
+        sum (L0..L8); TreeNode&lt;L extends TreeLevel&gt; is parameterised on
+        its depth. Per-tree-kind adapter records (in studio-base and
+        downstream modules) map native shapes (catalogues, ComposedDoc
+        segments, future tree-shaped doc kinds) to TreeNode&lt;L&gt; — a
+        thin String-to-typed-wrapping boundary.
+
+        Substrate vocabulary:
+        - Dimension(key, value)      — typed metadata pair
+        - DimensionKey               — sealed; small substrate vocabulary
+        - DimensionValue             — non-sealed; extension point
+        - DisplayLabel / LevelDepth  — bundled DimensionKey constants
+        - NameValue / DepthValue     — bundled DimensionValue records
+        - TreeNodeJsonWriter         — canonical JSON serialiser
+
+        Doctrinal anchors: Names Are Types (no raw strings on the contract
+        surface), Make It Impossible Not Forbidden (level type enforces
+        per-depth shape), One Stone Two Birds (substrate consolidation +
+        future pivot/grid/outline transforms compound on the same shape).
+    </description>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>

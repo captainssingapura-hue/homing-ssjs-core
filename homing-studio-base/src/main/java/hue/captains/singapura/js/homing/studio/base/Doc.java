@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.studio.base;
 import hue.captains.singapura.js.homing.studio.base.app.CatalogueLeaf;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -122,4 +123,46 @@ public interface Doc extends CatalogueLeaf {
      * <p>Default: empty.</p>
      */
     default List<Reference> references() { return List.of(); }
+
+    /**
+     * Resolve a child Doc by its local-to-this-doc level identifier — the
+     * primitive used by the framework's generic tree walker at
+     * {@code GET /doc?id=<root>&l1=...&l2=...&l3=...}. Each {@code lN} value
+     * is passed to the resolver for the doc at that depth; what counts as a
+     * valid identifier is doc-kind-local (ComposedDoc parses int indices;
+     * a hypothetical named-children doc kind would dispatch by name).
+     *
+     * <p>Default: this doc has no children — return empty.</p>
+     *
+     * <p>The shape lets the framework address embedded sub-docs <em>by
+     * containment path</em> instead of by their own UUID; embedded docs
+     * don't need separate registration. The act of being referenced in
+     * a parent's content IS their addressability.</p>
+     *
+     * @since RFC 0004 ext — leveled-tree addressing
+     */
+    default Optional<Doc> resolveChild(String levelId) { return Optional.empty(); }
+
+    /**
+     * Render contents with URLs rooted at the given context — used by the
+     * {@code /doc} handler after walking a path. Sub-doc URLs emitted in
+     * the returned content carry the {@code rootId + pathPrefix} prefix so
+     * the client can navigate further without losing the containment root.
+     *
+     * <p>Default delegates to {@link #contents()} (no leveled-URL emission
+     * needed for leaf docs). ComposedDoc overrides to thread the prefix
+     * through embedded segment URLs.</p>
+     *
+     * @param rootId     the {@code id} parameter of the originating request
+     *                   (the root of the containment tree the client is
+     *                   navigating in)
+     * @param pathPrefix the sequence of level identifiers consumed so far
+     *                   to reach this doc (a list of {@code lN} values, in
+     *                   order — {@code [l1, l2, l3, …]})
+     *
+     * @since RFC 0004 ext — leveled-tree addressing
+     */
+    default String contents(String rootId, List<String> pathPrefix) {
+        return contents();
+    }
 }

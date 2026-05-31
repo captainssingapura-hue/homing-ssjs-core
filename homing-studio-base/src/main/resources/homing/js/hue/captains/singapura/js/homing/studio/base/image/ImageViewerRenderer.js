@@ -9,13 +9,19 @@
 // =============================================================================
 
 function renderImage(props) {
-    var docId = props.docId;
-    var host  = props.host;
+    var docUrl = props.docUrl;
+    var docId  = props.docId;
+    var host   = props.host;
 
-    if (!docId) {
+    var fetchUrl;
+    if (docUrl) {
+        fetchUrl = docUrl;
+    } else if (docId) {
+        fetchUrl = "/doc?id=" + encodeURIComponent(docId);
+    } else {
         var errMsg = document.createElement("div");
         css.addClass(errMsg, st_error);
-        errMsg.textContent = "No image id supplied. Use ?id=<uuid>.";
+        errMsg.textContent = "No image reference supplied. Use docUrl or docId.";
         host.replaceChildren(errMsg);
         return;
     }
@@ -25,7 +31,7 @@ function renderImage(props) {
     loading.textContent = "Loading…";
     host.replaceChildren(loading);
 
-    fetch("/doc?id=" + encodeURIComponent(docId))
+    fetch(fetchUrl)
         .then(function(r) {
             if (!r.ok) throw new Error("HTTP " + r.status);
             return r.json();

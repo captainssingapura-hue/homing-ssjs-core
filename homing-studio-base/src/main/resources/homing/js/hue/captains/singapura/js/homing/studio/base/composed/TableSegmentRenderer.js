@@ -4,7 +4,11 @@
 //
 // renderTableSegment(branch, parent, seg, ctx) → void
 //
-// seg shape: { anchor, caption?, tableDocId }
+// seg shape: { anchor, caption?, tableUrl }
+//
+// The tableUrl is a server-emitted leveled URL — typically
+// /doc?id=<rootUuid>&l1=...&l2=...&l<N>=<segIndex>. The embedded table doc
+// doesn't need separate UUID registration; its addressability is the path.
 // =============================================================================
 
 function renderTableSegment(branch, parent, seg, ctx) {
@@ -28,6 +32,8 @@ function renderTableSegment(branch, parent, seg, ctx) {
     section.appendChild(figure);
     parent.appendChild(section);
 
-    // Delegate to the shared TableViewer renderer.
-    renderTable({ docId: seg.tableDocId, host: host });
+    // Delegate to the shared TableViewer renderer. Prefer the leveled URL
+    // (the new shape); fall back to the legacy docId field during the
+    // transition so older ComposedDoc emissions keep rendering.
+    renderTable({ docUrl: seg.tableUrl, docId: seg.tableDocId, host: host });
 }

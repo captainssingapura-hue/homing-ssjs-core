@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.workspace.events.contract;
 
-import hue.captains.singapura.js.homing.workspace.events.CheckpointStore;
-import hue.captains.singapura.js.homing.workspace.events.WorkspaceEventLog;
+import hue.captains.singapura.js.homing.workspace.events.CheckpointStoreModule;
+import hue.captains.singapura.js.homing.workspace.events.WorkspaceEventLogModule;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
 import org.junit.jupiter.api.AfterEach;
@@ -201,22 +201,29 @@ class EventManagementConformanceTest {
     // ─── Helpers ─────────────────────────────────────────────────────────
 
     private void loadEventLogStore() {
-        js.eval("js",
-                "var indexedDB = undefined;" +
-                "var IDBKeyRange = undefined;");
-        js.eval("js", readJs("/homing/js/hue/captains/singapura/js/homing/workspace/events/EventLogStore.js"));
+        // The WorkspaceEventLogModule resource concatenates EventLogStore +
+        // WorkspaceEventLog. Either loader trigger loads the same single file.
+        loadWorkspaceEventLogModule();
     }
 
     private void loadWorkspaceEventLog() {
-        // WorkspaceEventLog depends on createEventLogStore() being defined.
-        loadEventLogStore();
-        js.eval("js", readJs("/homing/js/hue/captains/singapura/js/homing/workspace/events/WorkspaceEventLog.js"));
+        loadWorkspaceEventLogModule();
+    }
+
+    private boolean _eventModuleLoaded = false;
+    private void loadWorkspaceEventLogModule() {
+        if (_eventModuleLoaded) return;
+        js.eval("js",
+                "var indexedDB = undefined;" +
+                "var IDBKeyRange = undefined;");
+        js.eval("js", readJs("/homing/js/hue/captains/singapura/js/homing/workspace/events/WorkspaceEventLogModule.js"));
+        _eventModuleLoaded = true;
     }
 
     private void loadCheckpointStore() {
         js.eval("js",
                 "var indexedDB = undefined;");
-        js.eval("js", readJs("/homing/js/hue/captains/singapura/js/homing/workspace/events/CheckpointStore.js"));
+        js.eval("js", readJs("/homing/js/hue/captains/singapura/js/homing/workspace/events/CheckpointStoreModule.js"));
     }
 
     private String readJs(String classpathPath) {
@@ -240,10 +247,10 @@ class EventManagementConformanceTest {
                 className + "." + methodName + " arity mismatch — declared in Java contract");
     }
 
-    /** Reference the Java contract types so dependency wiring is visible. */
+    /** Reference the Java DomModule types so dependency wiring is visible. */
     @SuppressWarnings("unused")
     private static final Class<?>[] CONTRACT_REFERENCES = {
-            WorkspaceEventLog.class,    // bundler
-            CheckpointStore.class       // bundler
+            WorkspaceEventLogModule.class,
+            CheckpointStoreModule.class
     };
 }

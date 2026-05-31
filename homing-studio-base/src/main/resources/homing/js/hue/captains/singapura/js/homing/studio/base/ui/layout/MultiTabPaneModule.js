@@ -225,6 +225,11 @@ class MultiTabPane {
         this._cbWsActiveChanged  = opts.onWorkspaceActiveChanged || null;
         this._cbSplit            = opts.onSplit            || null;
         this._cbMerge            = opts.onMerge            || null;
+        // RFC 0032 P5 — fired once per divider-drag (on stop). Receives
+        // the new layout; consumer diffs against its model to find which
+        // split ratios changed. Per-mousemove repaint sync stays on the
+        // internal SplitPane callback; this one is for journaling.
+        this._cbRatioChanged     = opts.onRatioChanged     || null;
         // ─── Workspace-active state. ────────────────────────────────────────
         // At most ONE tab across the whole pane is "workspace-active" — the
         // tab the user is currently with. This is distinct from per-slot
@@ -272,7 +277,10 @@ class MultiTabPane {
         this._sp = new SplitPane({
             container : opts.container,
             layout    : layout,
-            renderSlot: function (slotId, el) { self._renderLeaf(slotId, el); }
+            renderSlot: function (slotId, el) { self._renderLeaf(slotId, el); },
+            onRatioChanged: function (newLayout) {
+                self._fire(self._cbRatioChanged, "onRatioChanged", [newLayout]);
+            }
         });
         this._bootLayout = null;
 

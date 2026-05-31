@@ -31,7 +31,7 @@ class DocGetActionTest {
     @Test
     void execute_returnsBytesForRegisteredUuid() throws Exception {
         var result = action.execute(
-                new DocGetAction.Query(SENTINEL_ID.toString()),
+                new DocGetAction.Query(SENTINEL_ID.toString(), java.util.List.of()),
                 new EmptyParam.NoHeaders()).get();
 
         assertNotNull(result);
@@ -43,7 +43,7 @@ class DocGetActionTest {
     @Test
     void execute_failsOnUnknownUuid() {
         var future = action.execute(
-                new DocGetAction.Query(UUID.randomUUID().toString()),
+                new DocGetAction.Query(UUID.randomUUID().toString(), java.util.List.of()),
                 new EmptyParam.NoHeaders());
         var ex = assertThrows(ExecutionException.class, future::get);
         assertInstanceOf(ResourceNotFound.class, ex.getCause());
@@ -52,7 +52,7 @@ class DocGetActionTest {
     @Test
     void execute_failsOnMalformedUuid() {
         var future = action.execute(
-                new DocGetAction.Query("not-a-uuid"),
+                new DocGetAction.Query("not-a-uuid", java.util.List.of()),
                 new EmptyParam.NoHeaders());
         var ex = assertThrows(ExecutionException.class, future::get);
         assertInstanceOf(ResourceNotFound.class, ex.getCause());
@@ -61,7 +61,7 @@ class DocGetActionTest {
     @Test
     void execute_failsOnBlankId() {
         var future = action.execute(
-                new DocGetAction.Query(""),
+                new DocGetAction.Query("", java.util.List.of()),
                 new EmptyParam.NoHeaders());
         var ex = assertThrows(ExecutionException.class, future::get);
         assertInstanceOf(ResourceNotFound.class, ex.getCause());
@@ -70,7 +70,7 @@ class DocGetActionTest {
     @Test
     void execute_failsOnNullId() {
         var future = action.execute(
-                new DocGetAction.Query(null),
+                new DocGetAction.Query(null, java.util.List.of()),
                 new EmptyParam.NoHeaders());
         var ex = assertThrows(ExecutionException.class, future::get);
         assertInstanceOf(ResourceNotFound.class, ex.getCause());
