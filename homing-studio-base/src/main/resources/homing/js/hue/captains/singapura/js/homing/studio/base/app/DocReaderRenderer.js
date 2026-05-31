@@ -63,6 +63,10 @@ function renderDocReader(props) {
     var leafCrumb = { text: docId ? "Loading…" : "(no document)" };
     crumbs.push(leafCrumb);
     var headerEl = Header({ brand: brand, crumbs: crumbs });
+    // data-export-chrome: stripped by exportPageAsHtml when the user picks
+    // "content only" — the brand bar + breadcrumb chain is page chrome, not
+    // document content.
+    headerEl.setAttribute("data-export-chrome", "");
     root.appendChild(headerEl);
 
     // Export button — floating pill, position:fixed bottom-right. Same shape as
@@ -76,18 +80,40 @@ function renderDocReader(props) {
     // The filename slug starts as "doc" and is replaced with a title-derived
     // slug once /doc-refs returns info.title (see the .then handler below).
     var _exportSlug = "doc";
+
+    // Floating export pill — wraps a chrome-include checkbox and the button
+    // together so the toggle travels with the action. data-export-exclude on
+    // the wrapper strips the whole control from the saved file.
+    var exportBar = document.createElement("div");
+    exportBar.setAttribute("data-export-exclude", "");
+    exportBar.style.cssText = "position:fixed;bottom:24px;right:24px;z-index:200;"
+        + "display:flex;align-items:center;gap:8px;font:13px system-ui,sans-serif;"
+        + "padding:6px 12px;border:1px solid var(--color-border,rgba(0,0,0,.2));"
+        + "border-radius:20px;background:var(--color-surface,#fff);color:inherit;"
+        + "box-shadow:0 2px 8px rgba(0,0,0,.15);opacity:0.9;";
+
+    var chromeLabel  = document.createElement("label");
+    chromeLabel.style.cssText = "display:flex;align-items:center;gap:4px;cursor:pointer;user-select:none;";
+    var chromeChk = document.createElement("input");
+    chromeChk.type = "checkbox";
+    chromeChk.checked = true; // default: include chrome (current behaviour)
+    chromeChk.style.cssText = "margin:0;";
+    var chromeTxt = document.createElement("span");
+    chromeTxt.textContent = "Include page chrome";
+    chromeLabel.appendChild(chromeChk);
+    chromeLabel.appendChild(chromeTxt);
+
     var exportBtn = document.createElement("button");
     exportBtn.textContent = "Export HTML";
-    exportBtn.setAttribute("data-export-exclude", "");
-    exportBtn.style.cssText = "position:fixed;bottom:24px;right:24px;z-index:200;"
-        + "cursor:pointer;font:13px system-ui,sans-serif;padding:6px 16px;"
-        + "border:1px solid var(--color-border,rgba(0,0,0,.2));border-radius:20px;"
-        + "background:var(--color-surface,#fff);color:inherit;"
-        + "box-shadow:0 2px 8px rgba(0,0,0,.15);opacity:0.85;";
+    exportBtn.style.cssText = "cursor:pointer;font:inherit;padding:4px 12px;"
+        + "border:1px solid var(--color-border,rgba(0,0,0,.2));border-radius:14px;"
+        + "background:transparent;color:inherit;";
     exportBtn.addEventListener("click", function () {
+        var includeChrome = chromeChk.checked;
         exportBtn.disabled = true;
         exportBtn.textContent = "Exporting…";
-        exportPageAsHtml(_exportSlug + ".html")
+        var suffix = includeChrome ? "" : "-content";
+        exportPageAsHtml(_exportSlug + suffix + ".html", { includeChrome: includeChrome })
             .then(function () {
                 exportBtn.textContent = "Export HTML";
                 exportBtn.disabled = false;
@@ -98,13 +124,19 @@ function renderDocReader(props) {
                 console.error("exportPageAsHtml failed:", err);
             });
     });
-    document.body.appendChild(exportBtn);
+
+    exportBar.appendChild(chromeLabel);
+    exportBar.appendChild(exportBtn);
+    document.body.appendChild(exportBar);
 
     var main = document.createElement("div");
     css.addClass(main, st_main);
 
     var meta = document.createElement("div");
     css.addClass(meta, st_doc_meta);
+    // data-export-content: kept (and lifted out of layout wrappers) by
+    // exportPageAsHtml when the user picks "content only".
+    meta.setAttribute("data-export-content", "");
     var titleEl = document.createElement("span");
     titleEl.textContent = docId ? "" : "—";
     meta.appendChild(titleEl);
@@ -115,6 +147,9 @@ function renderDocReader(props) {
 
     var sidebar = document.createElement("aside");
     css.addClass(sidebar, st_sidebar);
+    // TOC sidebar is page chrome (navigation aid), not document content —
+    // exclude from "content only" exports.
+    sidebar.setAttribute("data-export-chrome", "");
     var sidebarTitle = document.createElement("div");
     css.addClass(sidebarTitle, st_sidebar_title);
     sidebarTitle.textContent = "In this document";
@@ -125,6 +160,7 @@ function renderDocReader(props) {
 
     var bodyEl = document.createElement("article");
     css.addClass(bodyEl, st_doc);
+    bodyEl.setAttribute("data-export-content", "");
     var loading = document.createElement("div");
     css.addClass(loading, st_loading);
     loading.textContent = "Loading…";
@@ -140,6 +176,7 @@ function renderDocReader(props) {
     var refsEl = document.createElement("section");
     css.addClass(refsEl, st_section);
     refsEl.style.cssText = "display:none;";
+    refsEl.setAttribute("data-export-content", "");
     main.appendChild(refsEl);
 
     root.appendChild(main);
