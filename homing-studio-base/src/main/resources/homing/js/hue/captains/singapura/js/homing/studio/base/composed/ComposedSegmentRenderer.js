@@ -3,8 +3,12 @@
 //
 // renderComposedSegment(branch, parent, seg, ctx) → void
 //
-// seg shape: { anchor, caption?, composedDocId }
+// seg shape: { anchor, caption?, composedUrl, composedDocId }
 // ctx shape: { renderingStack: [docId, ...], mountComposed: function }
+//
+// composedUrl is the leveled URL for fetching the embedded ComposedDoc's
+// contents — eliminates the embedded-doc registration requirement.
+// composedDocId is retained for cycle detection across the rendering stack.
 //
 // The new value RFC 0024 P1c adds: a ComposedDoc can embed another
 // ComposedDoc inline. The recursion threads ctx.renderingStack forward;
@@ -97,7 +101,8 @@ function renderComposedSegment(branch, parent, seg, ctx) {
     nestedBranch.activate(nestedOwner);
 
     ctx.mountComposed(nestedBranch, host, {
-        id: seg.composedDocId,
+        url: seg.composedUrl,
+        id:  seg.composedDocId,   // retained for cycle-stack tracking
         __renderingStack: stack
     });
 }

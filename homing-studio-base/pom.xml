@@ -47,6 +47,15 @@
             <artifactId>homing-core-js</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+        <!-- Rigid tree substrate (homing-tree-views): studio-base supplies the
+             catalogue -> TreeNode adapter that turns the catalogue tree into the
+             canonical TreeNode JSON the nav/detail views consume. Depends only on
+             homing-codec; builds before studio-base in the reactor. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-tree-views</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
         <!-- Cross-cutting conformance bases (NoDomDestructionConformanceTest,
              CssConformanceTest, etc.) live in homing-conformance, depending only
              on homing-core. studio-base depends on them at compile scope because
@@ -69,6 +78,14 @@
             <artifactId>junit-jupiter</artifactId>
             <version>${junit.version}</version>
             <scope>compile</scope>
+        </dependency>
+        <!-- RFC 0035 — Truffle JS for structural conformance tests against
+             the substrate-free Java contracts (MultiTabPaneConformanceTest). -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-ssjs-test-fixtures</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

@@ -29,7 +29,13 @@
 // will not resolve offline — accepted limitation for v1.
 // =============================================================================
 
-function exportPageAsHtml(filename) {
+// opts.includeChrome (default true) — when false, elements marked
+//   `data-export-chrome` are stripped from the clone. Use this to export
+//   document content without page header / breadcrumbs / TOC sidebar /
+//   floating action buttons.
+function exportPageAsHtml(filename, opts) {
+    opts = opts || {};
+    var includeChrome = opts.includeChrome !== false;
 
     // ── 1. Collect stylesheet <link> hrefs ──────────────────────────────────
     var linkEls = document.querySelectorAll('link[rel="stylesheet"]');
@@ -69,7 +75,9 @@ function exportPageAsHtml(filename) {
         // data-export-exclude: convention for interactive controls (export
         // button, theme picker actions, etc.) that have no meaning in a
         // static offline file.
-        var scripts = clone.querySelectorAll('script, [data-export-exclude]');
+        var stripSel = 'script, [data-export-exclude]';
+        if (!includeChrome) stripSel += ', [data-export-chrome]';
+        var scripts = clone.querySelectorAll(stripSel);
         for (var si = 0; si < scripts.length; si++) {
             scripts[si].remove();
         }
@@ -83,6 +91,35 @@ function exportPageAsHtml(filename) {
             var styleEl = document.createElement('style');
             styleEl.textContent = cssText;
             cloneHead.insertBefore(styleEl, cloneHead.firstChild);
+        }
+
+        // ── 5b. Content-only mode: lift content roots out of layout wrappers ──
+        // When chrome is excluded, simply removing the header + sidebar would
+        // leave the article inside whatever grid/flex column its layout used —
+        // producing a narrow strip of text instead of a standalone document.
+        // Instead we collect every element marked `data-export-content`,
+        // discard everything else in <body>, and re-host them in a centred
+        // <main> so the file reads like a self-contained doc.
+        if (!includeChrome && cloneBody) {
+            var contentRoots = cloneBody.querySelectorAll('[data-export-content]');
+            if (contentRoots.length > 0) {
+                var keep = [];
+                for (var ki = 0; ki < contentRoots.length; ki++) {
+                    keep.push(contentRoots[ki]);
+                }
+                // Detach first (so they don't get wiped by replaceChildren).
+                for (var di = 0; di < keep.length; di++) {
+                    if (keep[di].parentNode) keep[di].parentNode.removeChild(keep[di]);
+                }
+                cloneBody.replaceChildren();
+                var standalone = document.createElement('main');
+                standalone.style.cssText = 'max-width:820px;margin:0 auto;'
+                    + 'padding:32px 24px;box-sizing:border-box;';
+                for (var ai = 0; ai < keep.length; ai++) {
+                    standalone.appendChild(keep[ai]);
+                }
+                cloneBody.appendChild(standalone);
+            }
         }
 
         // ── 6. Serialize ──────────────────────────────────────────────────────

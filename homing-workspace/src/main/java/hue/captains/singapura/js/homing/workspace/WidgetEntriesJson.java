@@ -107,9 +107,31 @@ public final class WidgetEntriesJson {
         }
     }
 
+    /**
+     * Render the picker form schema for {@code paramsType}.
+     *
+     * <p>Three outcomes:</p>
+     * <ul>
+     *   <li>{@code _None.class} — empty array, picker auto-delivers with
+     *       {@code {}}.</li>
+     *   <li>Record with a {@code public static final DEFAULTS} field of
+     *       its own type — empty array. The presence of {@code DEFAULTS}
+     *       is the widget author's signal that "the framework knows how
+     *       to start me fresh"; the picker skips its form, the chrome
+     *       constructs with {@code {}}, and the widget's JS-side defaults
+     *       (mirroring {@code DEFAULTS}) apply. Aligns with the
+     *       <i>Widgets Are State Functions</i> doctrine — persistable
+     *       Params is a distinct shape from "what the user picks at
+     *       creation time"; the latter is empty for state-rich widgets.</li>
+     *   <li>Record without {@code DEFAULTS} — one form row per record
+     *       component (legacy behaviour; suits docId-style params).</li>
+     * </ul>
+     */
     private static void appendParamsFields(StringBuilder sb, Class<?> paramsType) {
         sb.append('[');
-        if (!WorkspaceWidget._None.class.equals(paramsType) && paramsType.isRecord()) {
+        if (!WorkspaceWidget._None.class.equals(paramsType)
+                && paramsType.isRecord()
+                && !hasDefaultsConstant(paramsType)) {
             RecordComponent[] comps = paramsType.getRecordComponents();
             for (int i = 0; i < comps.length; i++) {
                 if (i > 0) sb.append(',');
@@ -120,6 +142,23 @@ public final class WidgetEntriesJson {
             }
         }
         sb.append(']');
+    }
+
+    /**
+     * True iff the Params record declares {@code public static final DEFAULTS}
+     * of its own type. The convention's meaning: the widget can start fresh
+     * without picker input.
+     */
+    private static boolean hasDefaultsConstant(Class<?> paramsType) {
+        try {
+            Field f = paramsType.getField("DEFAULTS");
+            int m = f.getModifiers();
+            return java.lang.reflect.Modifier.isStatic(m)
+                && java.lang.reflect.Modifier.isFinal(m)
+                && paramsType.isAssignableFrom(f.getType());
+        } catch (NoSuchFieldException ex) {
+            return false;
+        }
     }
 
     private static void appendKV(StringBuilder sb, String key, String value) {

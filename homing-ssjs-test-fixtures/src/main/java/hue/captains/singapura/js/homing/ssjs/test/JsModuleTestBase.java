@@ -39,6 +39,25 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  * contract — Secretary-shaped tests extend
  * {@link SecretaryTestBase}, which adds the Step assertions on top.</p>
  *
+ * <h2>Authoring discipline: Java manages, JS specifies</h2>
+ *
+ * <p>Java's role in these tests is <i>lifecycle</i> (load modules, build
+ * the context), the <i>polyglot interop boundary</i> (read {@code Value}
+ * members, marshal results back), and <i>assertions</i>. The test
+ * fixtures themselves — the input data, the expected shapes — should be
+ * written as <b>JS literals</b> via {@code js.eval("js", "({...})")},
+ * not assembled out of Java {@code Map}/{@code List} structures.</p>
+ *
+ * <p>Rationale: JS test content kept in JS reads exactly like the shape
+ * it represents (the same as a native JS test would). Java-side
+ * {@code Map.of} pyramids invariably grow Java-to-JS marshalling
+ * concerns (which types recurse? which arrays unwrap?) that distract
+ * from the test's actual claim. The {@link #obj(java.util.Map) obj} and
+ * {@link #envelope(String, java.util.Map, String) envelope} helpers
+ * remain available for the small-flat-payload case (notably envelope
+ * shapes in Secretary tests where the envelope contract earns its
+ * helper) but a rich nested fixture should always be a JS literal.</p>
+ *
  * <h2>Usage</h2>
  *
  * <pre>{@code

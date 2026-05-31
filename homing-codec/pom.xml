@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+        <artifactId>homing.js</artifactId>
+        <version>LOCAL-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>homing-codec</artifactId>
+
+    <description>
+        Meta-Function ontology — the higher-level interface layer that names
+        the typed objects involved in moving data across language seams via
+        generated code rather than runtime reflection.
+
+        Four ontology objects:
+
+        1. ObjectDefinition&lt;T&gt; — typed source-of-truth
+        2. TransformationFunctions&lt;T, W&gt; — pure encode/decode pair
+        3. FunctionsCodeGen — produces source code of TransformationFunctions
+        4. DefinitionCodeGen — translates ObjectDefinition across languages
+
+        Pure-interface module — no implementations. Concrete codecs live
+        with their Value Objects in the modules that own those records
+        (Names Are Types in action: each Object Definition's codec is
+        co-located with the Object Definition itself).
+
+        Doctrinal anchor: CodeGen as Functions. Hand-written, automated,
+        and AI-assisted implementations all conform to the same interface;
+        provenance is invisible at the contract boundary.
+
+        Deferred: a Java-side JSON parser (for the day data flows back
+        from JS to Java). Not needed yet — only Java→JS direction is in
+        scope for the early consumers.
+    </description>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>

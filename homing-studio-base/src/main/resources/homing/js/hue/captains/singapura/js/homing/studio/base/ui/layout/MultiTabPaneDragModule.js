@@ -200,9 +200,9 @@ class TabDragController {
             if (dropStrip && this._canDropOn(dropStrip.slotId)) {
                 var dockIdx = this._findInsertIndex(dropStrip.slotId, e.clientX);
                 try { modal.destroy(); } catch (err) {}
-                this._mt._insertTabIntoState(dropStrip.slotId, tab, dockIdx);
-                this._mt.switchTab(dropStrip.slotId, tab.id);
-                this._mt._refresh();
+                // RFC 0032 P4 — public attach publishes the typed onTabAttached
+                // callback so the chrome's recorder can emit a TabMoved event.
+                this._mt.attachTab(dropStrip.slotId, tab, dockIdx);
             } else {
                 this._armModalRedock(modal, tab);
             }
@@ -445,11 +445,9 @@ class TabDragController {
                 }
 
                 try { modal.destroy(); } catch (e) {}
-                self._mt._insertTabIntoState(strip.slotId, tab, idx);
-                // _renderSlotLocal happens inside switchTab → toggles display
-                // on the now-attached _contentEl to "block". Widget DOM never
-                // left the document during the modal→tab transition.
-                self._mt.switchTab(strip.slotId, tab.id);
+                // RFC 0032 P4 — public attach publishes onTabAttached so the
+                // chrome's recorder sees this redock as a typed event.
+                self._mt.attachTab(strip.slotId, tab, idx);
 
                 // Clean up detach state on the controller so the next drag
                 // starts fresh.

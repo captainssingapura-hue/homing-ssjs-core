@@ -42,13 +42,21 @@ function _renderCellContent(el, cell) {
 }
 
 function renderTable(props) {
-    var docId = props.docId;
-    var host  = props.host;
+    var docUrl = props.docUrl;             // leveled URL — preferred
+    var docId  = props.docId;              // legacy — kept for direct-fetch callers
+    var host   = props.host;
 
-    if (!docId) {
+    // Build fetch URL: prefer the server-supplied leveled URL; fall back to
+    // constructing /doc?id=<docId> for direct-navigation callers.
+    var fetchUrl;
+    if (docUrl) {
+        fetchUrl = docUrl;
+    } else if (docId) {
+        fetchUrl = "/doc?id=" + encodeURIComponent(docId);
+    } else {
         var errMsg = document.createElement("div");
         css.addClass(errMsg, st_error);
-        errMsg.textContent = "No table id supplied. Use ?id=<uuid>.";
+        errMsg.textContent = "No table reference supplied. Use docUrl or docId.";
         host.replaceChildren(errMsg);
         return;
     }
@@ -58,7 +66,7 @@ function renderTable(props) {
     loading.textContent = "Loading…";
     host.replaceChildren(loading);
 
-    fetch("/doc?id=" + encodeURIComponent(docId))
+    fetch(fetchUrl)
         .then(function(r) {
             if (!r.ok) throw new Error("HTTP " + r.status);
             return r.json();

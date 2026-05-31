@@ -37,6 +37,13 @@ class WorkspaceLayout {
         if (!opts || !opts.container) throw new Error("WorkspaceLayout: container required");
         this._container   = opts.container;
         this._title       = opts.title || "";
+        // Optional subtitle — V2 uses this to show `kind :: name` after
+        // the title. Empty string → no separator/subtitle rendered.
+        this._subtitle    = opts.subtitle || "";
+        // Optional click handler — V2 makes the title clickable to open
+        // the WorkspaceControl modal. When null/absent the title is a
+        // plain span (V1 behaviour).
+        this._onTitleClick = opts.onTitleClick || null;
         this._ribbonItems = Array.isArray(opts.ribbonItems) ? opts.ribbonItems : [];
         this._footerItems = Array.isArray(opts.footerItems) ? opts.footerItems : [];
         this._onAction    = opts.onAction || null;
@@ -44,6 +51,22 @@ class WorkspaceLayout {
         this._buildParty();
         this._build();
         this._joinPartyActors();
+    }
+
+    /**
+     * Update the subtitle text shown after the title separator. V2 calls
+     * this once identity resolves async; safe to call before/after mount.
+     * Empty string → hide separator + subtitle.
+     */
+    setSubtitle(s) {
+        this._subtitle = s || "";
+        if (this._subtitleEl)  this._subtitleEl.textContent = this._subtitle;
+        if (this._separatorEl) {
+            this._separatorEl.style.display = this._subtitle ? "" : "none";
+        }
+        if (this._subtitleEl)  {
+            this._subtitleEl.style.display  = this._subtitle ? "" : "none";
+        }
     }
 
     // ─── RFC 0028 cycle 3 — LayoutParty setup ───────────────────────────────
@@ -127,7 +150,39 @@ class WorkspaceLayout {
 
         var titleEl = document.createElement("span");
         css.setClass(titleEl, wl_ribbon_title);
-        titleEl.textContent = this._title;
+        // Title + optional `:: subtitle` for V2 identity display.
+        // Subtitle elements always created so setSubtitle() can update
+        // them later — visibility toggled by display:none when empty.
+        var titleText = document.createElement("span");
+        titleText.textContent = this._title;
+        titleEl.appendChild(titleText);
+        var separatorEl = document.createElement("span");
+        separatorEl.textContent = " :: ";
+        separatorEl.style.opacity = "0.55";
+        separatorEl.style.margin  = "0 4px";
+        if (!this._subtitle) separatorEl.style.display = "none";
+        titleEl.appendChild(separatorEl);
+        var subtitleEl = document.createElement("span");
+        subtitleEl.textContent = this._subtitle;
+        if (!this._subtitle) subtitleEl.style.display = "none";
+        titleEl.appendChild(subtitleEl);
+        this._separatorEl = separatorEl;
+        this._subtitleEl  = subtitleEl;
+        // V2: make the whole title clickable when onTitleClick supplied.
+        // Visual cue is cursor:pointer + subtle hover; no chrome change so
+        // V1 (no onTitleClick) keeps its plain title look.
+        if (this._onTitleClick) {
+            titleEl.style.cursor = "pointer";
+            var clickSelf = this;
+            titleEl.addEventListener("mouseenter", function () { titleEl.style.opacity = "0.85"; });
+            titleEl.addEventListener("mouseleave", function () { titleEl.style.opacity = "1"; });
+            titleEl.addEventListener("click", function (ev) {
+                ev.stopPropagation();
+                try { clickSelf._onTitleClick(); }
+                catch (e) { console.error("[WorkspaceLayout] onTitleClick threw:", e); }
+            });
+            titleEl.title = "Open workspace controls";
+        }
         ribbon.appendChild(titleEl);
 
         var itemsEl = document.createElement("span");

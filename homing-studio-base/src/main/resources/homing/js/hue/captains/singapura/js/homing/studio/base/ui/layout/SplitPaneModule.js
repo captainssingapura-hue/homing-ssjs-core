@@ -122,6 +122,10 @@ class SplitPane {
         this._renderSlot = opts.renderSlot;
         this._minPanePx  = opts.minPanePx != null ? opts.minPanePx : 40;
         this._onChange   = opts.onChange || null;
+        // Fired once on divider drag-stop (mouseup/touchend), not per-
+        // mousemove. Callers that want to journal ratio changes hook
+        // here; _onChange is high-frequency and meant for repaint sync.
+        this._onRatioChanged = opts.onRatioChanged || null;
 
         this._listeners = [];
         this._resizeObserver = null;
@@ -580,6 +584,12 @@ class SplitPane {
                 document.removeEventListener("touchmove", move);
                 document.removeEventListener("mouseup",   stop);
                 document.removeEventListener("touchend",  stop);
+                // Notify journaling callers exactly once per drag —
+                // _notify already fired per-mousemove for repaint sync.
+                if (self._onRatioChanged) {
+                    try { self._onRatioChanged(self.getLayout()); }
+                    catch (e) { console.error("[SplitPane] onRatioChanged threw:", e); }
+                }
             };
             document.addEventListener("mousemove", move);
             document.addEventListener("touchmove", move, { passive: false });

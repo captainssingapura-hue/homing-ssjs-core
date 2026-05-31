@@ -12,8 +12,15 @@ import java.nio.charset.StandardCharsets;
  * e.g. third-party content shipped under a specific path, or generated content placed by
  * a build step.</p>
  *
+ * <p>See the {@link ClasspathMarkdownDoc} Javadoc for the rationale behind preferring
+ * {@code ComposedDoc} for new docs.</p>
+ *
  * @since RFC 0004
+ * @deprecated Prefer {@code ComposedDoc} for new docs. This interface remains supported
+ *             for cases where the markdown bytes genuinely live at an external-fixed
+ *             path; no removal date.
  */
+@Deprecated
 public interface ResourceMarkdownDoc extends Doc {
 
     /** Explicit classpath path for this Doc's bytes. */

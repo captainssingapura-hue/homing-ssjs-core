@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+        <artifactId>homing.js</artifactId>
+        <version>LOCAL-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>homing-workspace-shell</artifactId>
+
+    <description>
+        Universal workspace chrome substrate — the orchestrator and its
+        sub-classes that every WorkspaceShell-derived AppModule shares.
+
+        Born from a refactor: prior to this module, the entire workspace
+        boot sequence (WorkspaceLayout mount, MTP wiring, picker plumbing,
+        persistence attach, identity resolution, event-log + replay,
+        checkpoint store, Web Lock + read-only fence) lived as ~2,100 lines
+        of JS-as-Java-string-literals inside per-workspace chrome widgets
+        (e.g. AnimalsPlaygroundChrome.bodyJs() in homing-demo). This
+        module promotes that mass into proper ES modules — one class per
+        responsibility, each independently testable.
+
+        Doctrines made concrete:
+
+        - Modest File Size: every class sits comfortably under the cap.
+        - Generated and Hand-Written Live Apart: JS lives in .js files,
+          not Java string-literal lists.
+        - Functional Objects: each JS class has explicit state, pure
+          behaviour, inspect() output (extended from the Java doctrine).
+        - Diligent Secretaries: every component is testable in isolation
+          via the GraalVM harness without a DOM.
+
+        Position in the dep graph: sits above homing-workspace-persistence
+        (the highest workspace utility module) so it can compose every
+        substrate piece below.
+    </description>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-workspace</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-workspace-codecs</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-workspace-persistence</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- GraalVM-backed JS test harness — each shell sub-class gets a
+             Diligent-Secretaries-style unit test in isolation, no DOM. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-ssjs-test-fixtures</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>

@@ -17,7 +17,12 @@ import hue.captains.singapura.js.homing.core.AppModule;
  * if needed.</p>
  *
  * @since RFC 0015 Phase 5
+ * @deprecated Bound to the deprecated {@link DocReader} viewer for the {@code "doc"}
+ *             kind. Remains registered as the framework default for existing .md-backed
+ *             Docs. New docs should be authored as {@code ComposedDoc}s, which use a
+ *             different content kind and viewer ({@code ComposedWidget}).
  */
+@Deprecated
 public record ProseContentViewer() implements ContentViewer {
 
     public static final ProseContentViewer INSTANCE = new ProseContentViewer();

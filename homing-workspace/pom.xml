@@ -41,6 +41,14 @@
             <artifactId>homing-studio-base</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+        <!-- Meta-Function ontology — interfaces for code-generated codecs.
+             Value-Object-specific codec implementations co-located with the
+             records they serve (e.g. state/codec/PaneIdJsDefinition). -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-codec</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>

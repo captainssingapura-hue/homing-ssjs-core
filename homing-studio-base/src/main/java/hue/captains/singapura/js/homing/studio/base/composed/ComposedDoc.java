@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,19 +36,21 @@ import java.util.regex.Pattern;
  * into themed HTML; SvgSegment inherits theme via RFC 0017's
  * currentColor / var(--color-*) discipline.</p>
  *
- * @param uuid       durable UUID (per Doc A1)
- * @param title      display title
- * @param summary    one-line summary
- * @param category   badge category (e.g. "RFC", "CASE STUDY", "DOCTRINE")
- * @param segments   ordered list of typed segments
- * @param references typed cross-references; standard {@code [label](#ref:name)} grammar
+ * @param uuid         durable UUID (per Doc A1)
+ * @param title        display title
+ * @param summary      short one-line summary; shown in catalogue outer cards. Keep brief — 1-2 sentences.
+ * @param abstractText longer prose describing the doc; shown on the detail view alongside the doc content. Defaults to {@code summary} when not separately authored, preserving today's behavior.
+ * @param category     badge category (e.g. "RFC", "CASE STUDY", "DOCTRINE")
+ * @param segments     ordered list of typed segments
+ * @param references   typed cross-references; standard {@code [label](#ref:name)} grammar
  *
- * @since RFC 0019 Phase 1
+ * @since RFC 0019 Phase 1; abstract/summary split added post-RFC-0034 session.
  */
 public record ComposedDoc(
         UUID            uuid,
         String          title,
         String          summary,
+        String          abstractText,
         String          category,
         List<Segment>   segments,
         List<Reference> references
@@ -61,10 +64,23 @@ public record ComposedDoc(
         if (title.isBlank()) {
             throw new IllegalArgumentException("ComposedDoc.title must not be blank");
         }
-        if (summary  == null) summary  = "";
-        if (category == null) category = "DOC";
+        if (summary      == null) summary      = "";
+        if (abstractText == null) abstractText = summary;
+        if (category     == null) category     = "DOC";
         segments   = List.copyOf(segments);
         references = List.copyOf(references);
+    }
+
+    /**
+     * Backward-compatible constructor — every pre-split ComposedDoc passed
+     * one summary string. That single string becomes both summary AND
+     * abstractText; the visual behavior of every existing doc is identical
+     * to today. Authors who want the split provide both via the canonical
+     * 7-arg constructor.
+     */
+    public ComposedDoc(UUID uuid, String title, String summary, String category,
+                       List<Segment> segments, List<Reference> references) {
+        this(uuid, title, summary, summary, category, segments, references);
     }
 
     // -----------------------------------------------------------------------
@@ -81,12 +97,35 @@ public record ComposedDoc(
      * JSON payload — bundles the segments and the server-derived TOC. The
      * ComposedViewer fetches this via {@code /doc?id=<uuid>} and dispatches
      * per segment kind on the client side.
+     *
+     * <p>This top-level call uses the doc's own UUID as the URL root with
+     * no level prefix — appropriate for direct navigation requests like
+     * {@code /doc?id=<thisUuid>}. The leveled-URL emission goes through
+     * {@link #contents(String, List)} which threads the {@code (rootId,
+     * pathPrefix)} context for nested ComposedDoc emission.</p>
      */
     @Override public String contents() {
+        return contents(uuid.toString(), List.of());
+    }
+
+    /**
+     * Render the JSON payload with URLs rooted at {@code rootId} prefixed
+     * by {@code pathPrefix}. Each embedded sub-doc emits a URL of shape
+     * {@code /doc?id=<rootId>&l1=<p[0]>&l2=<p[1]>&...&l<N+1>=<localIndex>}
+     * — the local index of the segment within this doc appended one level
+     * deeper than the prefix the request walked to reach here.
+     *
+     * <p>The framework's leveled-tree URL scheme means the embedded doc's
+     * URL identifies its <em>containment path from the root</em>, not its
+     * own UUID. The embedded doc never needs separate UUID registration;
+     * its addressability is its position inside its parent.</p>
+     */
+    @Override public String contents(String rootId, List<String> pathPrefix) {
         var sb = new StringBuilder("{");
-        sb.append("\"title\":")   .append(jstr(title)).append(',');
-        sb.append("\"summary\":") .append(jstr(summary)).append(',');
-        sb.append("\"category\":").append(jstr(category)).append(',');
+        sb.append("\"title\":")        .append(jstr(title)).append(',');
+        sb.append("\"summary\":")      .append(jstr(summary)).append(',');
+        sb.append("\"abstractText\":") .append(jstr(abstractText)).append(',');
+        sb.append("\"category\":")     .append(jstr(category)).append(',');
 
         // ---- TOC ----
         sb.append("\"toc\":[");
@@ -134,19 +173,19 @@ public record ComposedDoc(
                     sb.append("\"kind\":\"svg\",");
                     sb.append("\"anchor\":")  .append(jstr("seg-" + segIndex)).append(',');
                     sb.append("\"caption\":") .append(jstr(v.resolvedCaption())).append(',');
-                    sb.append("\"svgUrl\":")  .append(jstr("/doc?id=" + v.doc().uuid()));
+                    sb.append("\"svgUrl\":")  .append(jstr(buildLeveledUrl(rootId, pathPrefix, segIndex)));
                 }
                 case TableSegment t -> {
                     sb.append("\"kind\":\"table\",");
-                    sb.append("\"anchor\":")    .append(jstr("seg-" + segIndex)).append(',');
-                    sb.append("\"caption\":")   .append(jstr(t.resolvedCaption())).append(',');
-                    sb.append("\"tableDocId\":").append(jstr(t.doc().uuid().toString()));
+                    sb.append("\"anchor\":")   .append(jstr("seg-" + segIndex)).append(',');
+                    sb.append("\"caption\":")  .append(jstr(t.resolvedCaption())).append(',');
+                    sb.append("\"tableUrl\":") .append(jstr(buildLeveledUrl(rootId, pathPrefix, segIndex)));
                 }
                 case ImageSegment im -> {
                     sb.append("\"kind\":\"image\",");
-                    sb.append("\"anchor\":")    .append(jstr("seg-" + segIndex)).append(',');
-                    sb.append("\"caption\":")   .append(jstr(im.resolvedCaption())).append(',');
-                    sb.append("\"imageDocId\":").append(jstr(im.doc().uuid().toString()));
+                    sb.append("\"anchor\":")   .append(jstr("seg-" + segIndex)).append(',');
+                    sb.append("\"caption\":")  .append(jstr(im.resolvedCaption())).append(',');
+                    sb.append("\"imageUrl\":") .append(jstr(buildLeveledUrl(rootId, pathPrefix, segIndex)));
                 }
                 case RelationSegment rs -> {
                     sb.append("\"kind\":\"relation\",");
@@ -165,12 +204,13 @@ public record ComposedDoc(
                 }
                 case ComposedSegment cd -> {
                     // RFC 0024 P1c — recursive composedDoc reference.
-                    // The renderer fetches /doc?id=<composedDocId> (this same
-                    // endpoint, polymorphic) and mounts a fresh ComposedWidget
-                    // into a sub-branch under this segment.
+                    // The renderer fetches the leveled URL and mounts a fresh
+                    // ComposedWidget into a sub-branch. The embedded doc's UUID
+                    // is also emitted for the client's cycle-detection stack.
                     sb.append("\"kind\":\"composed\",");
                     sb.append("\"anchor\":")       .append(jstr("seg-" + segIndex)).append(',');
                     sb.append("\"caption\":")      .append(jstr(cd.resolvedCaption())).append(',');
+                    sb.append("\"composedUrl\":")  .append(jstr(buildLeveledUrl(rootId, pathPrefix, segIndex))).append(',');
                     sb.append("\"composedDocId\":").append(jstr(cd.doc().uuid().toString()));
                 }
                 case DocumentaryWidget<?, ?> w -> {
@@ -198,6 +238,48 @@ public record ComposedDoc(
     }
 
     @Override public List<Reference> references() { return references; }
+
+    /**
+     * Leveled-tree descent — given the local identifier for the next level
+     * (a string parsed as an integer segment index), return the embedded
+     * sub-doc at that segment. Markdown / Text / Code / Relation /
+     * DocumentaryWidget segments have no embedded Doc and yield empty.
+     *
+     * <p>The framework's {@code /doc?id=<root>&l1=...&l2=...} walker calls
+     * this for each {@code lN} value in sequence. ComposedSegment yields
+     * its embedded ComposedDoc (which can be descended further via
+     * {@code lN+1}); SvgSegment / TableSegment / ImageSegment yield their
+     * terminal docs (further descent fails cleanly because those doc
+     * kinds inherit the default {@code resolveChild} returning empty).</p>
+     */
+    @Override
+    public Optional<Doc> resolveChild(String levelId) {
+        int idx;
+        try { idx = Integer.parseInt(levelId); }
+        catch (NumberFormatException e) { return Optional.empty(); }
+        if (idx < 0 || idx >= segments.size()) return Optional.empty();
+        return switch (segments.get(idx)) {
+            case SvgSegment v       -> Optional.of(v.doc());
+            case TableSegment t     -> Optional.of(t.doc());
+            case ImageSegment im    -> Optional.of(im.doc());
+            case ComposedSegment cs -> Optional.of(cs.doc());
+            default -> Optional.empty();
+        };
+    }
+
+    /**
+     * Build the URL for an embedded segment at the given local index. The
+     * URL carries {@code rootId} plus the existing {@code pathPrefix} levels,
+     * with the local index appended one level deeper.
+     */
+    private static String buildLeveledUrl(String rootId, List<String> pathPrefix, int segIndex) {
+        var sb = new StringBuilder("/doc?id=").append(rootId);
+        for (int i = 0; i < pathPrefix.size(); i++) {
+            sb.append("&l").append(i + 1).append('=').append(pathPrefix.get(i));
+        }
+        sb.append("&l").append(pathPrefix.size() + 1).append('=').append(segIndex);
+        return sb.toString();
+    }
 
     // -----------------------------------------------------------------------
     // TOC builder — segment captions + markdown heading extraction.
@@ -303,7 +385,13 @@ public record ComposedDoc(
 
     /** Build a ComposedDoc with no references — common case. */
     public static ComposedDoc of(UUID uuid, String title, String summary, String category, List<Segment> segments) {
-        return new ComposedDoc(uuid, title, summary, category, segments, List.of());
+        return new ComposedDoc(uuid, title, summary, summary, category, segments, List.of());
+    }
+
+    /** Build a ComposedDoc with a separate abstract and no references. */
+    public static ComposedDoc of(UUID uuid, String title, String summary, String abstractText,
+                                 String category, List<Segment> segments) {
+        return new ComposedDoc(uuid, title, summary, abstractText, category, segments, List.of());
     }
 
     // -----------------------------------------------------------------------
