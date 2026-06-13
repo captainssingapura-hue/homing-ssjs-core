@@ -63,6 +63,11 @@
              upward from workspace-persistence so it can compose every
              substrate piece below. -->
         <module>homing-workspace-shell</module>
+        <!-- The Studio Workspace — a reusable WorkspaceSpec (kind "studio")
+             that browses a studio's catalogues in the V2 shell. First widget
+             is the tree view (TreeWidget over the generic TreeRenderer);
+             served by CatalogueTreeGetAction. Builds above workspace-shell. -->
+        <module>homing-studio-workspace</module>
         <!-- Pure-JS test fixtures (GraalVM Polyglot + JUnit harness). Lives
              at the substrate position so japjs's own tests and every
              downstream consumer (homing-demo, homing-self-studio, public

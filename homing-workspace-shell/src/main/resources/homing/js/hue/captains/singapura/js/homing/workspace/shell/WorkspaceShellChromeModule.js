@@ -769,6 +769,7 @@ class WorkspaceShellChrome {
         this._workspaceControlModal = new this._WorkspaceControlModalCtor({
             workspaceKind:   this._spec.kind,
             workspaceTitle:  this._spec.title,
+            availableKinds:  this._spec.availableKinds || [],
             identity:        this._identity,
             catalogueStore:  this._workspaceDirectory._catalogueStore,
             eventLog:        this._eventRecorder

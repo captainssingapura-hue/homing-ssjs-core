@@ -51,6 +51,12 @@ class WorkspaceControlModal {
         this._workspaceKind   = opts.workspaceKind;
         this._identity        = opts.identity;
         this._workspaceTitle  = opts.workspaceTitle || opts.workspaceKind;
+        // Cross-kind catalogue: [{ kind, title }] of every registered
+        // WorkspaceSpec. Lets the panel switch the workspace TYPE (Studio,
+        // Animals Playground, …), not just the instance. Empty/one-entry →
+        // the Types section is hidden (nothing to switch to).
+        this._availableKinds  = Array.isArray(opts.availableKinds)
+                              ? opts.availableKinds : [];
         this._modal           = null;
     }
 
@@ -70,6 +76,7 @@ class WorkspaceControlModal {
                            + 'color:inherit;background:inherit;'
                            + 'height:100%;overflow:auto;box-sizing:border-box;';
         this._renderIdentity(body);
+        this._renderKinds(body);
         this._renderSwitcher(body);
         this._renderActions(body);
 
@@ -126,6 +133,61 @@ class WorkspaceControlModal {
         sub.style.cssText = 'font:11px/1.4 monospace;color:'+COLOR_TEXT_MUTED+';';
         sub.textContent = 'UUID: ' + (this._identity.id || '?');
         section.appendChild(sub);
+    }
+
+    _renderKinds(parent) {
+        const kinds = this._availableKinds || [];
+        // Nothing to switch to (a single registered kind, or an older chrome
+        // that didn't pass the catalogue) → hide the section entirely.
+        if (kinds.length <= 1) return;
+        const self = this;
+        const section = this._section(parent, 'Workspace Types');
+        const list = this._document.createElement('div');
+        list.style.cssText = 'border:1px solid '+COLOR_BORDER+';border-radius:4px;'
+                           + 'background:'+COLOR_SURFACE_RECESSED+';'
+                           + 'padding:4px 0;max-height:160px;overflow:auto;';
+        section.appendChild(list);
+        for (const k of kinds) {
+            list.appendChild(this._renderKindRow(k));
+        }
+        const note = this._document.createElement('div');
+        note.style.cssText = 'font-size:11px;color:'+COLOR_TEXT_MUTED+';margin-top:6px;';
+        note.textContent = 'Switching type opens that workspace kind’s own '
+                         + 'default instance.';
+        section.appendChild(note);
+    }
+
+    _renderKindRow(k) {
+        const self = this;
+        const isCurrent = (k.kind === this._workspaceKind);
+        const row = this._document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;gap:8px;'
+                          + 'padding:6px 10px;'
+                          + 'border-bottom:1px solid '+COLOR_BORDER+';';
+
+        const dot = this._document.createElement('span');
+        dot.textContent = isCurrent ? '●' : '○';
+        dot.style.cssText = 'width:10px;color:'
+                          + (isCurrent ? COLOR_ACCENT_EMPHASIS : COLOR_TEXT_MUTED) + ';';
+        row.appendChild(dot);
+
+        const name = this._document.createElement('span');
+        name.textContent = k.title || k.kind;
+        name.style.cssText = 'flex:1;color:'
+                           + (isCurrent ? COLOR_TEXT_PRIMARY : COLOR_TEXT_MUTED) + ';';
+        row.appendChild(name);
+
+        if (isCurrent) {
+            const open = this._document.createElement('span');
+            open.style.cssText = 'font-size:11px;color:'+COLOR_TEXT_MUTED+';';
+            open.textContent = '(current)';
+            row.appendChild(open);
+        } else {
+            row.appendChild(this._button('Open', function () {
+                self._navigateWithKind(k.kind);
+            }));
+        }
+        return row;
     }
 
     _renderSwitcher(parent) {
@@ -338,6 +400,24 @@ class WorkspaceControlModal {
      * touched. Mutually-exclusive params (workspace vs name) are
      * cleared in the right combinations.
      */
+    /**
+     * Switch the workspace TYPE: set ?ws_kind=<kind> and reload. Instances
+     * (workspace / name) and slowmo are scoped to a single kind, so they are
+     * cleared — the target kind opens its own default instance.
+     */
+    _navigateWithKind(kind) {
+        if (!this._window || !this._window.location) return;
+        const loc = this._window.location;
+        let params;
+        try { params = new URLSearchParams(loc.search); }
+        catch (e) { params = new URLSearchParams(''); }
+        params.set('ws_kind', kind);
+        params.delete('workspace');
+        params.delete('name');
+        params.delete('slowmo');
+        loc.search = '?' + params.toString();
+    }
+
     _navigateWithParam(key, value) {
         if (!this._window || !this._window.location) return;
         const loc = this._window.location;
