@@ -101,11 +101,11 @@ public record ComposedDoc(
      * <p>This top-level call uses the doc's own UUID as the URL root with
      * no level prefix — appropriate for direct navigation requests like
      * {@code /doc?id=<thisUuid>}. The leveled-URL emission goes through
-     * {@link #contents(String, List)} which threads the {@code (rootId,
+     * {@link #contentsRootedAt(String, List)} which threads the {@code (rootId,
      * pathPrefix)} context for nested ComposedDoc emission.</p>
      */
     @Override public String contents() {
-        return contents(uuid.toString(), List.of());
+        return contentsRootedAt(uuid.toString(), List.of());
     }
 
     /**
@@ -120,7 +120,7 @@ public record ComposedDoc(
      * own UUID. The embedded doc never needs separate UUID registration;
      * its addressability is its position inside its parent.</p>
      */
-    @Override public String contents(String rootId, List<String> pathPrefix) {
+    @Override public String contentsRootedAt(String rootId, List<String> pathPrefix) {
         var sb = new StringBuilder("{");
         sb.append("\"title\":")        .append(jstr(title)).append(',');
         sb.append("\"summary\":")      .append(jstr(summary)).append(',');

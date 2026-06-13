@@ -103,7 +103,7 @@ public class DocGetAction
             current = next.get();
         }
         try {
-            String body = current.contents(raw, query.path());
+            String body = current.contentsRootedAt(raw, query.path());
             return CompletableFuture.completedFuture(new DocContent(body, current.contentType()));
         } catch (Exception e) {
             return CompletableFuture.failedFuture(notFound(raw,
