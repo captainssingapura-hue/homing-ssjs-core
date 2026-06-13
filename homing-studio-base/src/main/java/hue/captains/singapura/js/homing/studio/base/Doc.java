@@ -149,6 +149,13 @@ public interface Doc extends CatalogueLeaf {
      * the returned content carry the {@code rootId + pathPrefix} prefix so
      * the client can navigate further without losing the containment root.
      *
+     * <p>Deliberately <em>not</em> named {@code contents} — it is a distinct,
+     * leveled variant, not an overload of {@link #contents()}. The single
+     * no-arg {@code contents()} stays the unambiguous "bytes of this Doc"
+     * accessor that test fakes and callers implement; this method is the
+     * leveled-addressing extension (RFC 0004-ext, slated for retirement by
+     * RFC 0039).</p>
+     *
      * <p>Default delegates to {@link #contents()} (no leveled-URL emission
      * needed for leaf docs). ComposedDoc overrides to thread the prefix
      * through embedded segment URLs.</p>
@@ -162,7 +169,7 @@ public interface Doc extends CatalogueLeaf {
      *
      * @since RFC 0004 ext — leveled-tree addressing
      */
-    default String contents(String rootId, List<String> pathPrefix) {
+    default String contentsRootedAt(String rootId, List<String> pathPrefix) {
         return contents();
     }
 }
