@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+        <artifactId>homing.js</artifactId>
+        <version>LOCAL-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>homing-studio-workspace</artifactId>
+
+    <description>
+        The Studio Workspace — a reusable, spec-driven workspace for browsing
+        a studio's catalogues inside the V2 workspace shell. Composes existing
+        substrate pieces with zero new chrome JS:
+
+        - TreeWidget          — a WorkspaceWidget that fetches a catalogue
+                                 subtree as canonical TreeNode JSON and renders
+                                 it with the generic TreeRenderer (homing-core-js).
+        - CatalogueTreeGetAction — GET /catalogue-tree?id=&lt;slug&gt; — serializes
+                                 a Catalogue subtree via CatalogueTreeAdapter +
+                                 TreeNodeJsonWriter. Wired downstream via
+                                 Fixtures.harnessGetActions() with the studio's
+                                 root catalogue.
+        - StudioWorkspaceSpec — a WorkspaceSpec (kind "studio") that pins the
+                                 TreeWidget; mounted by GenericWorkspace at
+                                 ?app=genericWorkspace&amp;ws_kind=studio.
+
+        First widget is the tree view; a studio-navigation Party (tree
+        selection -> open doc in a tab) lands in a follow-up.
+
+        Doctrinal anchors: A Good Design Doesn't Pick Up Its Substrate (the
+        spec declares only what's studio-specific), Make It Impossible Not
+        Forbidden (no hand-written chrome JS — only the declarative surface).
+    </description>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <!-- The V2 workspace shell brings the whole substrate transitively:
+             homing-workspace (WorkspaceWidget / WorkspaceSpec types),
+             homing-studio-base (Catalogue + CatalogueTreeAdapter + DocContent +
+             GetAction wiring), homing-tree-views (TreeNode + TreeNodeJsonWriter),
+             homing-core-js (TreeRenderer). -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-workspace-shell</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>

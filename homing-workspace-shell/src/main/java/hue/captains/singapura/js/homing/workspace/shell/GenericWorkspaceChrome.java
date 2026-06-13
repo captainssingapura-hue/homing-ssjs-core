@@ -74,6 +74,13 @@ public final class GenericWorkspaceChrome
                 "        parent.appendChild(err);",
                 "        return;",
                 "    }",
+                "    // Carry the full kinds catalogue on the selected spec so the",
+                "    // workspace control modal can offer cross-kind switching",
+                "    // (Studio, Animals Playground, …). Only the registry here knows",
+                "    // every kind; the shell sees a single spec.",
+                "    spec.availableKinds = Object.keys(SPECS).map(function (k) {",
+                "        return { kind: k, title: SPECS[k].title };",
+                "    });",
                 "    mountWorkspaceShell(branch, parent, spec);"
         );
     }

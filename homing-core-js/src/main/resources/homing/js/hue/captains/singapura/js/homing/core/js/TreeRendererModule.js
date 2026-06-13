@@ -14,10 +14,25 @@
 //
 //   new TreeRenderer({ branch, container, data, onSelect, expandDepth })
 //   renderer.setData(treeJson)        // (re)load a tree
-//   renderer.selectById(id) -> bool   // programmatic selection
+//   renderer.handleKeydown(event)     // arrow-key navigation; returns true
+//                                     //   if the key was consumed
+//
+// Selection is tracked by ROW-ENTRY REFERENCE, never by node id: the renderer
+// builds every row, so it holds the row's entry object directly. Two nodes may
+// share an id string (e.g. two catalogues with the same display name) and
+// selection still resolves to the clicked row — there is no id-keyed map to
+// collide in. The renderer is otherwise identity-agnostic; node.id is only
+// passed through in the selection payload for the caller's use.
 //
 // onSelect receives a flattened selection object:
 //   { id, level, kind, label, summary, hasChildren }
+//
+// Keyboard (handleKeydown): ArrowDown/ArrowUp move the selection through the
+// VISIBLE rows (live-follow — each move fires onSelect); ArrowRight expands the
+// focused branch one level, ArrowLeft folds it. The host widget owns WHEN keys
+// flow (it forwards keydown only while workspace-active); the renderer owns the
+// key semantics. Returns true when it consumed the key so the host can
+// preventDefault (stop page scroll).
 // =============================================================================
 
 class TreeRenderer {
@@ -29,9 +44,9 @@ class TreeRenderer {
         this._container = opts.container;
         this._onSelect  = opts.onSelect || function () {};
         this._expandDepth = (typeof opts.expandDepth === 'number') ? opts.expandDepth : 1;
-        this._n          = 0;
-        this._rowsById   = {};      // id -> { rowEl, node }
-        this._selectedId = null;
+        this._n            = 0;
+        this._flat         = [];    // row entries in pre-order (for keyboard nav)
+        this._selectedEntry = null; // the currently-selected row entry (by ref)
         if (opts.data) this.setData(opts.data);
     }
 
@@ -59,8 +74,8 @@ class TreeRenderer {
 
     setData(data) {
         while (this._container.firstChild) this._container.removeChild(this._container.firstChild);
-        this._rowsById   = {};
-        this._selectedId = null;
+        this._flat          = [];
+        this._selectedEntry = null;
         var rootWrap = this._el('div');
         this._container.appendChild(rootWrap);
         this._renderNode(data, rootWrap, 0);
@@ -86,53 +101,124 @@ class TreeRenderer {
         row.appendChild(label);
 
         parentEl.appendChild(row);
-        this._rowsById[node.id] = { rowEl: row, node: node };
+        // Record before recursing so _flat lands in pre-order (parent then
+        // its subtree) — the natural top-to-bottom visual order arrow nav walks.
+        var entry = {
+            rowEl: row, node: node, caretEl: caret,
+            kidsEl: null, hasChildren: isBranch, depth: depth
+        };
+        this._flat.push(entry);
 
         var kids = null;
         if (isBranch) {
             kids = this._el('div');
+            entry.kidsEl = kids;
             parentEl.appendChild(kids);
             for (var i = 0; i < node.children.length; i++) {
                 this._renderNode(node.children[i], kids, depth + 1);
             }
-            var expanded = depth < this._expandDepth;
-            kids.style.display = expanded ? 'block' : 'none';
-            caret.textContent  = expanded ? '▾' : '▸';   // ▾ / ▸
+            this._setExpanded(entry, depth < this._expandDepth);
         }
 
         row.addEventListener('click', function (e) {
             e.stopPropagation();
-            if (isBranch && kids) {
-                var nowHidden = kids.style.display === 'none';
-                kids.style.display = nowHidden ? 'block' : 'none';
-                caret.textContent  = nowHidden ? '▾' : '▸';
-            }
-            self._markSelected(node.id);
+            if (isBranch) self._setExpanded(entry, !self._isExpanded(entry));
+            self._markSelected(entry);
             self._onSelect(self._toSelection(node));
         });
         row.addEventListener('mouseenter', function () {
-            if (self._selectedId !== node.id) row.style.background = 'rgba(0,0,0,0.05)';
+            if (self._selectedEntry !== entry) row.style.background = 'rgba(0,0,0,0.05)';
         });
         row.addEventListener('mouseleave', function () {
-            if (self._selectedId !== node.id) row.style.background = '';
+            if (self._selectedEntry !== entry) row.style.background = '';
         });
     }
 
-    _markSelected(id) {
-        if (this._selectedId && this._rowsById[this._selectedId]) {
-            this._rowsById[this._selectedId].rowEl.style.background = '';
+    _markSelected(entry) {
+        if (this._selectedEntry) {
+            this._selectedEntry.rowEl.style.background = '';
         }
-        this._selectedId = id;
-        if (this._rowsById[id]) {
-            this._rowsById[id].rowEl.style.background = 'rgba(59,130,246,0.20)';
+        this._selectedEntry = entry;
+        if (entry) {
+            entry.rowEl.style.background = 'rgba(59,130,246,0.20)';
         }
     }
 
-    selectById(id) {
-        var entry = this._rowsById[id];
-        if (!entry) return false;
-        this._markSelected(id);
+    // ── Expand / collapse (shared by click + keyboard) ──────────────────────
+
+    _isExpanded(entry) {
+        return !!(entry && entry.kidsEl && entry.kidsEl.style.display !== 'none');
+    }
+
+    _setExpanded(entry, expanded) {
+        if (!entry || !entry.hasChildren || !entry.kidsEl) return;
+        entry.kidsEl.style.display = expanded ? 'block' : 'none';
+        entry.caretEl.textContent  = expanded ? '▾' : '▸';   // ▾ / ▸
+    }
+
+    // ── Keyboard navigation ─────────────────────────────────────────────────
+
+    // Visible row entries in top-to-bottom order: walk the pre-order _flat list,
+    // skipping any row deeper than a collapsed ancestor.
+    _visibleEntries() {
+        var out = [];
+        var hideDepth = Infinity;   // rows deeper than this are hidden
+        for (var i = 0; i < this._flat.length; i++) {
+            var e = this._flat[i];
+            if (e.depth > hideDepth) continue;       // under a collapsed node
+            hideDepth = Infinity;                    // back in a visible region
+            out.push(e);
+            if (e.hasChildren && !this._isExpanded(e)) {
+                hideDepth = e.depth;                 // hide this node's subtree
+            }
+        }
+        return out;
+    }
+
+    // Move selection to a row entry: highlight, scroll into view, fire onSelect.
+    _focusTo(entry) {
+        if (!entry) return;
+        this._markSelected(entry);
+        if (entry.rowEl.scrollIntoView) {
+            try { entry.rowEl.scrollIntoView({ block: 'nearest' }); }
+            catch (x) { entry.rowEl.scrollIntoView(); }
+        }
         this._onSelect(this._toSelection(entry.node));
+    }
+
+    // Arrow-key handler. Returns true iff the key was consumed.
+    handleKeydown(ev) {
+        var key = ev && ev.key;
+        if (key !== 'ArrowDown' && key !== 'ArrowUp'
+            && key !== 'ArrowRight' && key !== 'ArrowLeft') {
+            return false;
+        }
+        var vis = this._visibleEntries();
+        if (vis.length === 0) return false;
+        var idx = this._selectedEntry ? vis.indexOf(this._selectedEntry) : -1;
+
+        if (key === 'ArrowDown') {
+            this._focusTo(vis[idx < 0 ? 0 : Math.min(idx + 1, vis.length - 1)]);
+            return true;
+        }
+        if (key === 'ArrowUp') {
+            this._focusTo(vis[idx < 0 ? 0 : Math.max(idx - 1, 0)]);
+            return true;
+        }
+        // Right / Left: act on the focused branch; if nothing is focused yet,
+        // the first key just lands focus on the first row.
+        if (idx < 0) { this._focusTo(vis[0]); return true; }
+        var e = this._selectedEntry;
+        if (key === 'ArrowRight') {
+            if (e && e.hasChildren && !this._isExpanded(e)) {
+                this._setExpanded(e, true);
+            }
+            return true;
+        }
+        // ArrowLeft
+        if (e && e.hasChildren && this._isExpanded(e)) {
+            this._setExpanded(e, false);
+        }
         return true;
     }
 }
