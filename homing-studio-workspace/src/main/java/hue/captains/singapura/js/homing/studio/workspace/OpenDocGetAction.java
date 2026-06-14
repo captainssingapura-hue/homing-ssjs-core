@@ -10,65 +10,62 @@ import hue.captains.singapura.tao.http.action.Param;
 import hue.captains.singapura.tao.http.action.ParamMarshaller;
 import io.vertx.ext.web.RoutingContext;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * {@code GET /open?id=<doc-uuid>} — resolves a doc UUID to its <i>own</i>
- * authoritative viewer URL ({@code Doc.url()}, per-kind) and redirects there
- * in regular MPA mode.
+ * {@code GET /open?l0=<i>&l1=<i>&…} — resolves a node's <b>leveled tree path</b>
+ * (its structural position, a sequence of child indices from the root) to the
+ * target doc's own authoritative viewer URL ({@code Doc.url()}, per-kind) and
+ * redirects there in regular MPA mode.
  *
- * <p>The point of this endpoint is to keep the URL-resolution concern on the
- * studio side, where {@code Doc.url()} lives, instead of leaking it into the
- * generic tree substrate or re-deriving per-kind URL grammar in JS. The
- * Studio Workspace's tree only carries the node's {@code id} (the doc UUID);
- * the detail pane's "Open" button just hits {@code /open?id=<id>} and lets
- * the studio name the destination.</p>
+ * <p>RFC 0040: the Navigator carries <i>no stamped node id</i> — the client
+ * derives each node's path from the rendered tree's structure and encodes it as
+ * {@code l0,l1,…}. This action walks the same forest by that path and returns
+ * the doc's url(), so identity is positional and the resolver follows exactly
+ * the tree the Navigator shows (including {@code OfStudio} portals, descended
+ * here as the forest does). No uuid index to keep in sync.</p>
  *
- * <p>The UUID → URL index is built once at construction by walking the root
- * {@link Catalogue}'s subtree (sub-catalogues + {@code OfDoc} leaves) — the
- * same traversal {@code CatalogueTreeGetAction} uses to serve the tree.
- * Wired downstream via {@code Fixtures.harnessGetActions()} with the studio's
- * root catalogue.</p>
+ * <p>Child ordering matches every tree builder (the legacy
+ * {@code CatalogueTreeAdapter} and the {@code CatalogueNormalizer}):
+ * sub-catalogues first, then {@code OfDoc} / {@code OfStudio} leaves in order;
+ * {@code OfIllustration} is skipped. A {@code treeId} query parameter is
+ * reserved for future multi-tree addressing.</p>
  *
  * <p>Redirect mechanism mirrors {@code RootRedirectGetAction}: an HTML
- * meta-refresh + {@code location.replace} page (the action pipeline serves
- * {@code TypedContent} bodies, not 302 status codes). An unknown id redirects
- * to {@code /}.</p>
+ * meta-refresh + {@code location.replace} page. An unresolvable path → {@code /}.</p>
  *
  * @since homing-studio-workspace — Studio Workspace, leaf "Open" action
  */
 public final class OpenDocGetAction
         implements GetAction<RoutingContext, OpenDocGetAction.Query, EmptyParam.NoHeaders, HtmlPageContent> {
 
-    /** @param id the doc UUID (a tree leaf's node id). */
-    public record Query(String id) implements Param._QueryString {}
+    /** Defensive cap on path depth (mirrors {@code DocGetAction}'s MAX_LEVELS). */
+    private static final int MAX_LEVELS = 32;
 
-    private final Map<String, String> urlByUuid;
+    /** @param path the leveled child-index path ({@code [l0, l1, …]}). */
+    public record Query(List<Integer> path) implements Param._QueryString {}
+
+    private final Catalogue<?> root;
 
     public OpenDocGetAction(Catalogue<?> root) {
-        Objects.requireNonNull(root, "root catalogue");
-        var m = new HashMap<String, String>();
-        index(root, m);
-        this.urlByUuid = Map.copyOf(m);
-    }
-
-    /** Walk the catalogue subtree, mapping each leaf doc's UUID to its url(). */
-    private static void index(Catalogue<?> cat, Map<String, String> out) {
-        for (Catalogue<?> sub : cat.subCatalogues()) index(sub, out);
-        for (Entry<?> entry : cat.leaves()) {
-            if (entry instanceof Entry.OfDoc<?, ?> od) {
-                Doc doc = od.doc();
-                if (doc.url() != null) out.put(doc.uuid().toString(), doc.url());
-            }
-        }
+        this.root = Objects.requireNonNull(root, "root catalogue");
     }
 
     @Override
     public ParamMarshaller._QueryString<RoutingContext, Query> queryStrMarshaller() {
-        return ctx -> new Query(ctx.request().getParam("id"));
+        return ctx -> {
+            var path = new ArrayList<Integer>();
+            for (int n = 0; n < MAX_LEVELS; n++) {
+                String v = ctx.request().getParam("l" + n);
+                if (v == null) break;
+                try { path.add(Integer.parseInt(v)); }
+                catch (NumberFormatException e) { break; }
+            }
+            return new Query(path);
+        };
     }
 
     @Override
@@ -78,9 +75,8 @@ public final class OpenDocGetAction
 
     @Override
     public CompletableFuture<HtmlPageContent> execute(Query query, EmptyParam.NoHeaders headers) {
-        String id     = (query == null) ? null : query.id();
-        String target = (id != null) ? urlByUuid.get(id) : null;
-        if (target == null) target = "/";   // unknown id → home
+        String target = (query == null) ? null : resolve(root, query.path());
+        if (target == null) target = "/";   // unresolvable path → home
         String html = """
                 <!DOCTYPE html>
                 <html lang="en">
@@ -96,6 +92,50 @@ public final class OpenDocGetAction
                 """.formatted(htmlAttrEscape(target), "\"" + jsStringEscape(target) + "\"");
         return CompletableFuture.completedFuture(new HtmlPageContent(html));
     }
+
+    // ── leveled path resolution ──────────────────────────────────────────────
+
+    /** Walk the forest by the child-index path to a doc's {@code url()}, or
+     *  {@code null} if the path is out of range or doesn't land on a doc.
+     *  Package-private for testing. */
+    static String resolve(Catalogue<?> root, List<Integer> path) {
+        if (path == null || path.isEmpty()) return null;
+        Catalogue<?> cat = root;
+        for (int i = 0; i < path.size(); i++) {
+            List<NavChild> children = orderedNavChildren(cat);
+            int idx = path.get(i);
+            if (idx < 0 || idx >= children.size()) return null;
+            NavChild child = children.get(idx);
+            boolean last = (i == path.size() - 1);
+            switch (child) {
+                case NavSub ns    -> cat = ns.catalogue();          // descend a sub-catalogue
+                case NavPortal np -> cat = np.source();             // descend an OfStudio portal
+                case NavDoc nd    -> { return last ? nd.doc().url() : null; }
+            }
+        }
+        return null;   // path ended on a branch (catalogue/portal) — no doc page
+    }
+
+    /** The nav children of a catalogue, in the exact order every tree builder
+     *  emits them: sub-catalogues, then OfDoc/OfStudio leaves. */
+    private static List<NavChild> orderedNavChildren(Catalogue<?> cat) {
+        var out = new ArrayList<NavChild>();
+        for (Catalogue<?> sub : cat.subCatalogues()) out.add(new NavSub(sub));
+        for (Entry<?> entry : cat.leaves()) {
+            if (entry instanceof Entry.OfDoc<?, ?> od) {
+                out.add(new NavDoc(od.doc()));
+            } else if (entry instanceof Entry.OfStudio<?, ?> os) {
+                out.add(new NavPortal(os.proxy().source()));
+            }
+            // OfIllustration — skipped, matching the tree builders.
+        }
+        return out;
+    }
+
+    private sealed interface NavChild permits NavSub, NavDoc, NavPortal {}
+    private record NavSub(Catalogue<?> catalogue) implements NavChild {}
+    private record NavDoc(Doc doc) implements NavChild {}
+    private record NavPortal(Catalogue<?> source) implements NavChild {}
 
     private static String htmlAttrEscape(String s) {
         return s.replace("&", "&amp;").replace("\"", "&quot;");

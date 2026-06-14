@@ -13,13 +13,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TreeNodeJsonWriterTest {
 
-    private record L0Node(String id, Map<DimensionKey, DimensionValue> dimensions,
+    private record L0Node(Map<DimensionKey, DimensionValue> dimensions,
                           List<? extends TreeNode<?>> children)
             implements TreeNode<TreeLevel.L0> {
         @Override public TreeLevel.L0 level() { return TreeLevel.L0.INSTANCE; }
     }
 
-    private record L1Node(String id, Map<DimensionKey, DimensionValue> dimensions,
+    private record L1Node(Map<DimensionKey, DimensionValue> dimensions,
                           List<? extends TreeNode<?>> children)
             implements TreeNode<TreeLevel.L1> {
         @Override public TreeLevel.L1 level() { return TreeLevel.L1.INSTANCE; }
@@ -34,10 +34,10 @@ class TreeNodeJsonWriterTest {
 
     @Test
     void leafRoundTrip() {
-        var leaf = new L1Node("a", dims("Alpha", 1), List.of());
+        var leaf = new L1Node(dims("Alpha", 1), List.of());
         var json = new TreeNodeJsonWriter().write(leaf);
         assertEquals(
-                "{\"level\":\"L1\",\"id\":\"a\",\"dimensions\":["
+                "{\"level\":\"L1\",\"dimensions\":["
                         + "{\"key\":\"displayLabel\",\"valueTag\":\"name\",\"text\":\"Alpha\"},"
                         + "{\"key\":\"levelDepth\",\"valueTag\":\"depth\",\"text\":\"1\"}"
                         + "],\"children\":[]}",
@@ -46,19 +46,19 @@ class TreeNodeJsonWriterTest {
 
     @Test
     void nestedTwoLevels() {
-        var leafA = new L1Node("a", dims("Alpha", 1), List.of());
-        var leafB = new L1Node("b", dims("Beta",  1), List.of());
-        var root  = new L0Node("r", dims("Root",  0), List.of(leafA, leafB));
+        var leafA = new L1Node(dims("Alpha", 1), List.of());
+        var leafB = new L1Node(dims("Beta",  1), List.of());
+        var root  = new L0Node(dims("Root",  0), List.of(leafA, leafB));
         var json  = new TreeNodeJsonWriter().write(root);
         assertTrue(json.startsWith("{\"level\":\"L0\""), json);
-        assertTrue(json.contains("\"id\":\"a\""));
-        assertTrue(json.contains("\"id\":\"b\""));
+        assertTrue(json.contains("\"text\":\"Alpha\""));
+        assertTrue(json.contains("\"text\":\"Beta\""));
         assertTrue(json.contains("\"text\":\"Root\""));
     }
 
     @Test
     void stringEscapingHandlesQuotesAndControls() {
-        var node = new L1Node("x", dims("He said \"hi\"\n", 1), List.of());
+        var node = new L1Node(dims("He said \"hi\"\n", 1), List.of());
         var json = new TreeNodeJsonWriter().write(node);
         assertTrue(json.contains("\\\"hi\\\""), json);
         assertTrue(json.contains("\\n"),        json);
@@ -68,6 +68,8 @@ class TreeNodeJsonWriterTest {
     void levelChainBelowResolvesCorrectly() {
         assertEquals(TreeLevel.L1.INSTANCE, TreeLevel.L0.INSTANCE.below().orElseThrow());
         assertEquals(TreeLevel.L8.INSTANCE, TreeLevel.L7.INSTANCE.below().orElseThrow());
-        assertTrue(TreeLevel.L8.INSTANCE.below().isEmpty());
+        // RFC 0040: the cap moved from L8 to L18 — L8 now has a level below it.
+        assertEquals(TreeLevel.L9.INSTANCE, TreeLevel.L8.INSTANCE.below().orElseThrow());
+        assertTrue(TreeLevel.L18.INSTANCE.below().isEmpty());
     }
 }

@@ -19,13 +19,14 @@
 //
 // Selection is tracked by ROW-ENTRY REFERENCE, never by node id: the renderer
 // builds every row, so it holds the row's entry object directly. Two nodes may
-// share an id string (e.g. two catalogues with the same display name) and
-// selection still resolves to the clicked row — there is no id-keyed map to
-// collide in. The renderer is otherwise identity-agnostic; node.id is only
-// passed through in the selection payload for the caller's use.
+// share a display label (e.g. two catalogues with the same name) and selection
+// still resolves to the clicked row — there is no id-keyed map to collide in.
+// Node identity is purely positional: each row carries its child-index `path`
+// (RFC 0040), which the caller uses to address the node (e.g. the leveled
+// /open?l0=..&l1=.. URL). Nodes carry no id.
 //
 // onSelect receives a flattened selection object:
-//   { id, level, kind, label, summary, hasChildren }
+//   { path, level, kind, label, summary, hasChildren }
 //
 // Keyboard (handleKeydown): ArrowDown/ArrowUp move the selection through the
 // VISIBLE rows (live-follow — each move fires onSelect); ArrowRight expands the
@@ -61,9 +62,11 @@ class TreeRenderer {
         return '';
     }
 
+    // No node id is surfaced to the UI — identity is the structural `path`
+    // added by _emitSelection. (The wire JSON may still carry an id field;
+    // the UI simply doesn't read it.)
     _toSelection(node) {
         return {
-            id:          node.id,
             level:       node.level,
             kind:        this._dim(node, 'kind'),
             label:       this._dim(node, 'displayLabel'),
@@ -72,16 +75,28 @@ class TreeRenderer {
         };
     }
 
+    // Emit the selection for a row entry, carrying its leveled child-index
+    // `path` (the structural position) alongside the node's display fields.
+    // Consumers address the node by path, not by any stamped id.
+    _emitSelection(entry) {
+        var sel = this._toSelection(entry.node);
+        sel.path = entry.path;
+        this._onSelect(sel);
+    }
+
     setData(data) {
         while (this._container.firstChild) this._container.removeChild(this._container.firstChild);
         this._flat          = [];
         this._selectedEntry = null;
         var rootWrap = this._el('div');
         this._container.appendChild(rootWrap);
-        this._renderNode(data, rootWrap, 0);
+        this._renderNode(data, rootWrap, 0, []);
     }
 
-    _renderNode(node, parentEl, depth) {
+    // `path` is the leveled child-index path from the root ([] at the root,
+    // parent.path.concat([childIndex]) below). It is purely structural — the
+    // node carries no id — and is what the leveled "open" URL encodes.
+    _renderNode(node, parentEl, depth, path) {
         var sel      = this._toSelection(node);
         var isBranch = sel.hasChildren;
         var self     = this;
@@ -96,7 +111,7 @@ class TreeRenderer {
         row.appendChild(caret);
 
         var label = this._el('span');
-        label.textContent = sel.label || sel.id;
+        label.textContent = sel.label || '';
         label.style.cssText = 'flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
         row.appendChild(label);
 
@@ -105,7 +120,7 @@ class TreeRenderer {
         // its subtree) — the natural top-to-bottom visual order arrow nav walks.
         var entry = {
             rowEl: row, node: node, caretEl: caret,
-            kidsEl: null, hasChildren: isBranch, depth: depth
+            kidsEl: null, hasChildren: isBranch, depth: depth, path: path
         };
         this._flat.push(entry);
 
@@ -115,7 +130,7 @@ class TreeRenderer {
             entry.kidsEl = kids;
             parentEl.appendChild(kids);
             for (var i = 0; i < node.children.length; i++) {
-                this._renderNode(node.children[i], kids, depth + 1);
+                this._renderNode(node.children[i], kids, depth + 1, path.concat([i]));
             }
             this._setExpanded(entry, depth < this._expandDepth);
         }
@@ -124,7 +139,7 @@ class TreeRenderer {
             e.stopPropagation();
             if (isBranch) self._setExpanded(entry, !self._isExpanded(entry));
             self._markSelected(entry);
-            self._onSelect(self._toSelection(node));
+            self._emitSelection(entry);
         });
         row.addEventListener('mouseenter', function () {
             if (self._selectedEntry !== entry) row.style.background = 'rgba(0,0,0,0.05)';
@@ -183,7 +198,7 @@ class TreeRenderer {
             try { entry.rowEl.scrollIntoView({ block: 'nearest' }); }
             catch (x) { entry.rowEl.scrollIntoView(); }
         }
-        this._onSelect(this._toSelection(entry.node));
+        this._emitSelection(entry);
     }
 
     // Arrow-key handler. Returns true iff the key was consumed.

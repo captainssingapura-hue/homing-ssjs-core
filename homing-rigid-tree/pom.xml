@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+        <artifactId>homing.js</artifactId>
+        <version>LOCAL-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>homing-rigid-tree</artifactId>
+
+    <description>
+        The normalized rigid tree — RFC 0040. A dedicated, substrate-free
+        module holding only the definition and arithmetic of a leveled
+        rigid tree: pure values and functions, zero framework dependencies.
+
+        Borrows DomOpsParty's leveled-types pattern, capped at 18 levels
+        (L0..L18) to retain rigidity. Contents:
+        - TreeLevel              — sealed sum L0..L18 + atDepth/shifted/above
+        - TreeNode&lt;L&gt;       — typed leveled node contract
+        - NormalizedNode         — the one canonical node every source maps to
+        - Dimension / DimensionKey / DimensionValue + the bundled keys/values
+        - RigidTrees.shift(...)  — graft: a pure recursive level shift
+        - TreeNormalizer&lt;SPEC&gt; — the per-source-encoding seam
+
+        Everything else (TreeNodeJsonWriter serialization in
+        homing-tree-views, the studio-base normalizers, the JS TreeRenderer)
+        depends ON this module — never the reverse. Substrate doctrine made
+        physical: the tree value algebra cannot pick up serialization,
+        rendering, or any source encoding.
+    </description>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>

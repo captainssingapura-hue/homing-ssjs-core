@@ -23,16 +23,12 @@ import java.util.Map;
  * substrate for the authors who can use it.</p>
  *
  * @param level    the runtime level singleton (L0 at the root, L1 below, …)
- * @param id        opaque, URL-safe node identifier (doc uuid, or synthetic
- *                  catalogue path) — the substrate stays addressing-agnostic;
- *                  the consumer maps id+Kind to a fetch URL
  * @param dimensions ordered typed metadata (LinkedHashMap for stable JSON)
  * @param kids      children, one level below; empty for leaves
  * @since homing-tree-views v1
  */
 public record CatalogueTreeNode(
         TreeLevel level,
-        String id,
         Map<DimensionKey, DimensionValue> dimensions,
         List<CatalogueTreeNode> kids
 ) implements TreeNode<TreeLevel> {

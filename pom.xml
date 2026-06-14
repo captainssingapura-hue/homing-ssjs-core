@@ -34,6 +34,12 @@
              Borrows DomOpsParty's leveled-types pattern (L0..L8 sealed sum).
              Depends only on homing-codec; builds before studio-base, which
              supplies the catalogue + ComposedDoc adapters. -->
+        <!-- homing-rigid-tree (RFC 0040): the substrate-free definition +
+             arithmetic of the normalized rigid tree (TreeLevel L0..L18 +
+             atDepth/shifted, NormalizedNode, graft/shift). Zero framework
+             deps. tree-views (serialization) + the studio normalizers depend
+             ON it; builds first. -->
+        <module>homing-rigid-tree</module>
         <module>homing-tree-views</module>
         <!-- homing-conformance builds BEFORE homing-studio-base (b.2j cleanup):
              it provides cross-cutting test bases that studio-base hosts its own
