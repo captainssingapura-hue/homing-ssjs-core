@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+        <artifactId>homing.js</artifactId>
+        <version>LOCAL-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>homing-studio-starter</artifactId>
+
+    <description>
+        Batteries-included entry point for downstream studios (RFC 0040). The
+        workspace stack (homing-workspace / -shell / -studio-workspace) is a
+        strict downstream of homing-studio-base, so the "studio + workspace
+        out of the box" wiring cannot live in studio-base itself (it would
+        close a dependency cycle). This module sits ABOVE the whole stack and
+        ties it together:
+
+        - StudioStarterFixtures — a Fixtures that IS DefaultFixtures plus the
+          Studio Workspace pre-wired: GenericWorkspace served, StudioWorkspaceSpec
+          registered, and GET /catalogue-tree rooted at the studio forest.
+
+        A downstream studio depends on THIS module only, constructs
+        `new StudioStarterFixtures&lt;&gt;(umbrella)` instead of
+        `new DefaultFixtures&lt;&gt;(umbrella)`, and the catalogue Navigator,
+        tree feed, and leveled Open all light up with no per-studio wiring.
+
+        Doctrinal anchor: A Good Design Doesn't Pick Up Its Substrate — the
+        starter is the one place the application-assembly defaults are
+        composed; nothing below it knows the workspace exists.
+    </description>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <!-- The Studio Workspace module brings the whole stack transitively:
+             homing-studio-workspace -> homing-workspace-shell -> homing-workspace
+             -> homing-studio-base (Fixtures/DefaultFixtures/Bootstrap), plus the
+             studio nav classes (StudioWorkspaceSpec, CatalogueForestGetAction). -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-studio-workspace</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>

@@ -23,6 +23,7 @@ import hue.captains.singapura.js.homing.studio.base.app.CatalogueRegistry;
 import hue.captains.singapura.js.homing.studio.base.app.StudioBrand;
 import hue.captains.singapura.js.homing.studio.base.theme.CssGroupImplRegistry;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemesGetAction;
+import hue.captains.singapura.js.homing.studio.base.widget.SingleWidgetWorkspace;
 import hue.captains.singapura.js.homing.studio.base.tracker.Plan;
 import hue.captains.singapura.js.homing.studio.base.tracker.PlanGetAction;
 import hue.captains.singapura.js.homing.studio.base.tracker.PlanRegistry;
@@ -124,6 +125,11 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
         // --- Union apps: each studio's intrinsic apps + harness apps + (when
         // diagnostics is enabled) the StudioGraphInspector. Dedup by class.
         var harnessApps = new ArrayList<>(fixtures.harnessApps());
+        // RFC 0040 — the leveled-Open shell is a framework default: every
+        // studio gets ?app=singleWidgetWorkspace (+ the /open-content,
+        // /open-refs endpoints below) with zero downstream wiring, so opening
+        // a Navigator leaf stays in the leveled world (path URL, no uuid).
+        harnessApps.add(SingleWidgetWorkspace.INSTANCE);
         if (params.diagnosticsEnabled()) harnessApps.add(StudioGraphInspector.INSTANCE);
         // RFC 0016: when downstream has registered ContentTrees, the TreeAppHost
         // joins the app set so /app?app=tree&id=… resolves.
@@ -265,6 +271,16 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
         // use a uniform code path.
         var appRefsAction = new AppRefsGetAction(docRegistry, catalogueRegistry);
 
+        // --- RFC 0040 — leveled Open endpoints. Rooted at the primary studio's
+        // home() (the forest root — the synthetic launcher in a multi-studio
+        // umbrella, per the "primary studio = first" convention). The
+        // SingleWidgetWorkspace shell fetches doc bytes from /open-content and
+        // its breadcrumb from /open-refs by the same child-index path it was
+        // opened by — no uuid, URL and breadcrumb share one source of truth.
+        final Catalogue<?> openRoot = studios.get(0).home();
+        final OpenContentGetAction openContentAction = new OpenContentGetAction(openRoot);
+        final OpenRefsGetAction openRefsAction = new OpenRefsGetAction(openRoot);
+
         // --- Plan action (RFC 0005-ext1), only when plans registered.
         final PlanGetAction planAction;
         if (!plans.isEmpty()) {
@@ -304,6 +320,8 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
                 all.put("/doc",         docAction);
                 all.put("/doc-refs",    docRefsAction);
                 all.put("/app-refs",    appRefsAction);
+                all.put("/open-content", openContentAction);
+                all.put("/open-refs",    openRefsAction);
                 all.put("/themes",      themesAction);
                 all.put("/brand",       brandAction);
                 if (catalogueAction != null) all.put("/catalogue", catalogueAction);
