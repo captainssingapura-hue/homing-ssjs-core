@@ -29,9 +29,6 @@ public interface TreeNode<L extends TreeLevel> {
     /** The level singleton this node sits at — pins {@code L} at runtime. */
     L level();
 
-    /** Stable identifier for the node within its tree (URL-safe). */
-    String id();
-
     /**
      * Typed metadata, including {@code DisplayLabel} (the human-readable
      * label) and any per-tree-kind dimensions (e.g. category, kind, depth).

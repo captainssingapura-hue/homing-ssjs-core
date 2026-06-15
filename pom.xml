@@ -34,6 +34,12 @@
              Borrows DomOpsParty's leveled-types pattern (L0..L8 sealed sum).
              Depends only on homing-codec; builds before studio-base, which
              supplies the catalogue + ComposedDoc adapters. -->
+        <!-- homing-rigid-tree (RFC 0040): the substrate-free definition +
+             arithmetic of the normalized rigid tree (TreeLevel L0..L18 +
+             atDepth/shifted, NormalizedNode, graft/shift). Zero framework
+             deps. tree-views (serialization) + the studio normalizers depend
+             ON it; builds first. -->
+        <module>homing-rigid-tree</module>
         <module>homing-tree-views</module>
         <!-- homing-conformance builds BEFORE homing-studio-base (b.2j cleanup):
              it provides cross-cutting test bases that studio-base hosts its own
@@ -64,10 +70,18 @@
              substrate piece below. -->
         <module>homing-workspace-shell</module>
         <!-- The Studio Workspace — a reusable WorkspaceSpec (kind "studio")
-             that browses a studio's catalogues in the V2 shell. First widget
-             is the tree view (TreeWidget over the generic TreeRenderer);
-             served by CatalogueTreeGetAction. Builds above workspace-shell. -->
+             that browses a studio's catalogues in the V2 shell, plus the
+             zero-config StudioWorkspaceFixtures downstream studios extend to
+             get the workspace out of the box. Sits ABOVE studio-base AND
+             workspace-shell (the workspace stack is a strict downstream of
+             studio-base, so the wiring cannot live in studio-base itself). -->
         <module>homing-studio-workspace</module>
+        <!-- RFC 0040 — batteries-included entry point: StudioStarterFixtures =
+             DefaultFixtures + the Studio Workspace pre-wired. Downstream studios
+             depend on this one module to get the workspace out of the box.
+             Sits ABOVE the workspace stack (which is a strict downstream of
+             studio-base), so it's the correct home for the assembly defaults. -->
+        <module>homing-studio-starter</module>
         <!-- Pure-JS test fixtures (GraalVM Polyglot + JUnit harness). Lives
              at the substrate position so japjs's own tests and every
              downstream consumer (homing-demo, homing-self-studio, public

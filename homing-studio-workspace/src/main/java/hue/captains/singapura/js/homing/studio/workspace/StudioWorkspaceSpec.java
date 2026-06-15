@@ -6,7 +6,6 @@ import hue.captains.singapura.js.homing.workspace.WidgetIcon;
 import hue.captains.singapura.js.homing.workspace.WidgetLabel;
 import hue.captains.singapura.js.homing.workspace.shell.PartyDecl;
 import hue.captains.singapura.js.homing.workspace.shell.WorkspaceSpec;
-import hue.captains.singapura.js.homing.workspace.shell.WorkspaceSpecRegistry;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -31,22 +30,16 @@ import java.util.Map;
  * navigation Party land in follow-ups; the spec surface already supports
  * them ({@code parties()}, {@code actionDispatch()}).</p>
  *
- * <p>Registration is class-load: a static initializer registers the
- * singleton on first reference to {@link #INSTANCE}. The hosting studio's
- * {@code apps()} (or a dedicated {@code SPEC_INIT} field) references
- * {@link #INSTANCE} during bootstrap so the spec is registered before any
- * request can hit the chrome.</p>
+ * <p>Registration is explicit, not class-load: {@code StudioStarterFixtures}
+ * registers this spec into the {@code WorkspaceSpecRegistry} (RFC 0040), so a
+ * downstream studio on the starter gets it with no wiring. This is a plain
+ * value — the old class-init "touch" ({@code SPEC_INIT} field) is retired.</p>
  *
  * @since homing-studio-workspace — Studio Workspace, first widget (tree view)
  */
 public final class StudioWorkspaceSpec implements WorkspaceSpec {
 
-    public static final StudioWorkspaceSpec INSTANCE;
-
-    static {
-        INSTANCE = new StudioWorkspaceSpec();
-        WorkspaceSpecRegistry.INSTANCE.register(INSTANCE);
-    }
+    public static final StudioWorkspaceSpec INSTANCE = new StudioWorkspaceSpec();
 
     private StudioWorkspaceSpec() {}
 

@@ -45,6 +45,15 @@
     </properties>
 
     <dependencies>
+        <!-- RFC 0040: the rigid-tree definition + arithmetic (TreeLevel,
+             TreeNode, NormalizedNode, dimensions, graft) now live in their
+             own substrate-free module. tree-views is the serialization layer
+             (TreeNodeJsonWriter) on top of it. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-rigid-tree</artifactId>
+            <version>LOCAL-SNAPSHOT</version>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>

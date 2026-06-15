@@ -28,8 +28,8 @@ import java.util.Map;
  * <p>Branch nodes (catalogues) carry {@code Kind = "catalogue"} and their
  * {@code Summary} inline, so a detail view can render a branch without a
  * server round-trip. Leaf nodes (docs) carry {@code Kind = doc.kind()}
- * ({@code "doc"}/{@code "composed"}/{@code "svg"}) and {@code id = uuid}, so
- * the consumer can build the fetch URL and pick the content widget.</p>
+ * ({@code "doc"}/{@code "composed"}/{@code "svg"}); identity is purely
+ * positional (the child-index path), so a node carries no id.</p>
  *
  * <p>v1 handles {@code subCatalogues()} + {@link Entry.OfDoc} leaves —
  * the primary hierarchy. {@code OfStudio} portals and {@code OfIllustration}
@@ -72,9 +72,7 @@ public final class CatalogueTreeAdapter {
             if (leaf != null) kids.add(leaf);
         }
 
-        // Synthetic, stable, URL-safe id for a branch (no uuid of its own).
-        String id = "cat:" + slug(cat.name()) + "@" + depth;
-        return new CatalogueTreeNode(levelAtDepth(depth), id, dims, kids);
+        return new CatalogueTreeNode(levelAtDepth(depth), dims, kids);
     }
 
     // ── Leaf (doc) ────────────────────────────────────────────────────────
@@ -84,8 +82,7 @@ public final class CatalogueTreeAdapter {
         if (entry instanceof Entry.OfDoc<?, ?> od) {
             Doc doc = od.doc();
             var dims = baseDims(doc.title(), doc.summary(), doc.category(), doc.kind(), depth);
-            return new CatalogueTreeNode(
-                    levelAtDepth(depth), doc.uuid().toString(), dims, List.of());
+            return new CatalogueTreeNode(levelAtDepth(depth), dims, List.of());
         }
         // OfStudio / OfIllustration — deferred.
         return null;
@@ -121,15 +118,4 @@ public final class CatalogueTreeAdapter {
         };
     }
 
-    /** Lowercase, URL-safe slug from a display name (for synthetic ids). */
-    private String slug(String name) {
-        if (name == null || name.isBlank()) return "node";
-        var sb = new StringBuilder(name.length());
-        for (int i = 0; i < name.length(); i++) {
-            char c = Character.toLowerCase(name.charAt(i));
-            if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')) sb.append(c);
-            else if (c == ' ' || c == '-' || c == '_') sb.append('-');
-        }
-        return sb.isEmpty() ? "node" : sb.toString();
-    }
 }

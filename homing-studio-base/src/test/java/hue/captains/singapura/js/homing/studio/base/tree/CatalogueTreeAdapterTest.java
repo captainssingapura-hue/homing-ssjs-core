@@ -63,7 +63,6 @@ class CatalogueTreeAdapterTest {
 
         CatalogueTreeNode leaf = child.kids().get(0);
         assertEquals(TreeLevel.L2.INSTANCE, leaf.level());
-        assertEquals(DOC_UUID.toString(), leaf.id());
         assertTrue(leaf.kids().isEmpty());
     }
 
@@ -79,6 +78,5 @@ class CatalogueTreeAdapterTest {
         // Leaf carries doc kind + title.
         assertTrue(json.contains("\"text\":\"composed\""), json);
         assertTrue(json.contains("\"text\":\"Alpha Doc\""), json);
-        assertTrue(json.contains("\"id\":\"" + DOC_UUID + "\""), json);
     }
 }

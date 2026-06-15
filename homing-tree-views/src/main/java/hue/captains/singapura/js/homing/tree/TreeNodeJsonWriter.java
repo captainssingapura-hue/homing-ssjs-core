@@ -13,7 +13,6 @@ import java.util.Map;
  * <pre>{@code
  * {
  *   "level": "L1",
- *   "id":    "<node-id>",
  *   "dimensions": [
  *     { "key": "displayLabel", "valueTag": "name",  "text":  "Animals" },
  *     { "key": "levelDepth",   "valueTag": "depth", "depth": 1 }
@@ -42,8 +41,6 @@ public final class TreeNodeJsonWriter {
     private void writeNode(TreeNode<?> node, StringBuilder out) {
         out.append('{');
         out.append("\"level\":\"").append(node.level().tag()).append('"');
-        out.append(",\"id\":");
-        writeString(node.id(), out);
         out.append(",\"dimensions\":[");
         boolean first = true;
         for (Map.Entry<DimensionKey, DimensionValue> e : node.dimensions().entrySet()) {
