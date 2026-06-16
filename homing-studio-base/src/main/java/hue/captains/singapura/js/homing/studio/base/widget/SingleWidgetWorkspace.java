@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.core.AppLink;
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.Widget;
 import hue.captains.singapura.js.homing.studio.base.composed.ComposedWidget;
+import hue.captains.singapura.js.homing.studio.base.composed.DocTreeWidget;
 
 import java.util.List;
 
@@ -30,12 +31,13 @@ import java.util.List;
  *
  * <p><b>Every</b> catalogue leaf opens through this one shell. The kinds the
  * tree-based doc effort is converging on render in place — {@link SvgWidget}
- * (svg) and {@link ComposedWidget} (composed). Every other kind (plain
- * {@code doc}, {@code plan}, {@code app}, …) is routed to
- * {@link LegacyRedirectWidget}, which client-redirects to the doc's own
- * {@code url()} (its existing per-kind viewer). That uniformity is what lets
- * the legacy server-side {@code /open} redirect retire completely — there is
- * no longer any server endpoint that resolves a path to a redirect.</p>
+ * (svg) and {@code DocTreeWidget} (composed, the RFC 0039 rigid-tree renderer;
+ * the legacy {@link ComposedWidget} stays hosted as a parallel fallback during
+ * migration). Every other kind (plain {@code doc}, {@code plan}, {@code app},
+ * …) is routed to {@link LegacyRedirectWidget}, which client-redirects to the
+ * doc's own {@code url()} (its existing per-kind viewer). That uniformity is
+ * what lets the legacy server-side {@code /open} redirect retire completely —
+ * there is no longer any server endpoint that resolves a path to a redirect.</p>
  *
  * @since homing-studio-base — RFC 0040 leveled Open
  */
@@ -59,6 +61,7 @@ public final class SingleWidgetWorkspace
 
     @Override
     protected List<? extends Widget<?, ?>> widgets() {
-        return List.of(SvgWidget.INSTANCE, ComposedWidget.INSTANCE, LegacyRedirectWidget.INSTANCE);
+        return List.of(SvgWidget.INSTANCE, ComposedWidget.INSTANCE,
+                DocTreeWidget.INSTANCE, LegacyRedirectWidget.INSTANCE);
     }
 }

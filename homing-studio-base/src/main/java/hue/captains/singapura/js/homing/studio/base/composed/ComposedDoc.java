@@ -399,7 +399,7 @@ public record ComposedDoc(
     // client renderer is a pure data walk (no second parser).
     // -----------------------------------------------------------------------
 
-    private static void appendBlocks(StringBuilder sb, List<Block> blocks) {
+    static void appendBlocks(StringBuilder sb, List<Block> blocks) {
         sb.append('[');
         for (int i = 0; i < blocks.size(); i++) {
             if (i > 0) sb.append(',');
@@ -483,7 +483,7 @@ public record ComposedDoc(
     // anyway, so the failure is loud and immediate.
     // -----------------------------------------------------------------------
 
-    private static void appendParamsJson(StringBuilder sb, Object params) {
+    static void appendParamsJson(StringBuilder sb, Object params) {
         if (params == null) { sb.append("null"); return; }
         var cls = params.getClass();
         if (cls.getRecordComponents() == null) {
@@ -537,7 +537,7 @@ public record ComposedDoc(
                         + v.getClass().getName() + " (value=" + v + ")");
     }
 
-    private static void appendStringList(StringBuilder sb, List<String> items) {
+    static void appendStringList(StringBuilder sb, List<String> items) {
         sb.append('[');
         for (int i = 0; i < items.size(); i++) {
             if (i > 0) sb.append(',');
@@ -546,7 +546,7 @@ public record ComposedDoc(
         sb.append(']');
     }
 
-    private static String jstr(String v) {
+    static String jstr(String v) {
         if (v == null) return "null";
         StringBuilder sb = new StringBuilder("\"");
         for (int i = 0; i < v.length(); i++) {
