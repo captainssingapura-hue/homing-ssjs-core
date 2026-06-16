@@ -74,7 +74,7 @@ public final class SummaryWidget extends WorkspaceWidget<WorkspaceWidget._None, 
                 "    // doc's own url(). No server-side /open redirect remains.",
                 "    // (treeId is reserved for future multi-tree addressing.)",
                 "    // Branch nodes (kind 'catalogue') have no doc page → button hidden.",
-                "    var WIDGET_FOR_KIND = { svg: 'svg-widget', composed: 'composed-widget' };",
+                "    var WIDGET_FOR_KIND = { svg: 'svg-widget', composed: 'doc-tree-widget' };",
                 "    var openBtn = branch.createElement('openBtn', 'button');",
                 "    openBtn.textContent = 'Open \\u2197';",  // ↗
                 "    openBtn.style.cssText = 'margin-top:14px;cursor:pointer;font:13px system-ui;'",

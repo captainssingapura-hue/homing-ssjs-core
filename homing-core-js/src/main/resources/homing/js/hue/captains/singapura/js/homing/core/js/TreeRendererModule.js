@@ -12,10 +12,15 @@
 // Ownership: the caller passes a DomOpsParty branch; every element is created
 // through it, so dissolving the caller's branch tears the tree down cleanly.
 //
-//   new TreeRenderer({ branch, container, data, onSelect, expandDepth })
+//   new TreeRenderer({ branch, container, data, onSelect, onToggle, expandDepth })
 //   renderer.setData(treeJson)        // (re)load a tree
 //   renderer.handleKeydown(event)     // arrow-key navigation; returns true
 //                                     //   if the key was consumed
+//
+// onToggle({ path, expanded }) fires when the USER expands/collapses a branch
+// (caret click or ArrowRight/Left), never during the initial expandDepth build.
+// A host uses it to keep a second view (e.g. renderDocTree's body) folded in
+// sync with the TOC. Optional — omit it and expand/collapse is TOC-local.
 //
 // Selection is tracked by ROW-ENTRY REFERENCE, never by node id: the renderer
 // builds every row, so it holds the row's entry object directly. Two nodes may
@@ -44,6 +49,17 @@ class TreeRenderer {
         this._branch    = opts.branch;
         this._container = opts.container;
         this._onSelect  = opts.onSelect || function () {};
+        // Fired when the USER expands/collapses a branch (caret click or
+        // ArrowRight/Left) — NOT during the initial expandDepth build. Carries
+        // { path, expanded } so a host (e.g. renderDocTree) can fold the body
+        // in sync with the TOC. Initial render stays silent so the host's body
+        // starts in the matching all-expanded state without a toggle storm.
+        this._onToggle  = opts.onToggle || function () {};
+        // Optional: path -> href string. When set, each row's label is an <a>
+        // anchor with that href, so TOC navigation survives a static HTML export
+        // (no JS) via the fragment link. Live, the row handler preventDefaults
+        // and uses onSelect (smooth scroll) instead of the raw anchor jump.
+        this._hrefForPath = opts.hrefForPath || null;
         this._expandDepth = (typeof opts.expandDepth === 'number') ? opts.expandDepth : 1;
         this._n            = 0;
         this._flat         = [];    // row entries in pre-order (for keyboard nav)
@@ -110,9 +126,19 @@ class TreeRenderer {
         caret.style.cssText = 'width:12px;display:inline-block;color:#888;font-size:10px;flex:0 0 auto;';
         row.appendChild(caret);
 
-        var label = this._el('span');
+        var label;
+        if (this._hrefForPath) {
+            // Anchor label — clicking jumps to the target's id via the fragment
+            // href, which works in a static HTML export with no JavaScript.
+            label = this._el('a');
+            label.setAttribute('href', this._hrefForPath(path) || '#');
+            label.style.cssText = 'flex:1;white-space:nowrap;overflow:hidden;'
+                + 'text-overflow:ellipsis;color:inherit;text-decoration:none;';
+        } else {
+            label = this._el('span');
+            label.style.cssText = 'flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+        }
         label.textContent = sel.label || '';
-        label.style.cssText = 'flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
         row.appendChild(label);
 
         parentEl.appendChild(row);
@@ -137,7 +163,11 @@ class TreeRenderer {
 
         row.addEventListener('click', function (e) {
             e.stopPropagation();
-            if (isBranch) self._setExpanded(entry, !self._isExpanded(entry));
+            // Live: suppress the anchor's native fragment jump in favour of the
+            // smooth scroll + highlight onSelect drives. (In a static export the
+            // handler is gone, so the anchor href navigates natively.)
+            if (self._hrefForPath) e.preventDefault();
+            if (isBranch) self._userSetExpanded(entry, !self._isExpanded(entry));
             self._markSelected(entry);
             self._emitSelection(entry);
         });
@@ -169,6 +199,14 @@ class TreeRenderer {
         if (!entry || !entry.hasChildren || !entry.kidsEl) return;
         entry.kidsEl.style.display = expanded ? 'block' : 'none';
         entry.caretEl.textContent  = expanded ? '▾' : '▸';   // ▾ / ▸
+    }
+
+    // User-initiated expand/collapse — toggles the TOC row AND notifies the
+    // host (onToggle), so the body folds in sync. The silent _setExpanded is
+    // reserved for the initial expandDepth build.
+    _userSetExpanded(entry, expanded) {
+        this._setExpanded(entry, expanded);
+        if (entry) this._onToggle({ path: entry.path, expanded: !!expanded });
     }
 
     // ── Keyboard navigation ─────────────────────────────────────────────────
@@ -226,13 +264,13 @@ class TreeRenderer {
         var e = this._selectedEntry;
         if (key === 'ArrowRight') {
             if (e && e.hasChildren && !this._isExpanded(e)) {
-                this._setExpanded(e, true);
+                this._userSetExpanded(e, true);
             }
             return true;
         }
         // ArrowLeft
         if (e && e.hasChildren && this._isExpanded(e)) {
-            this._setExpanded(e, false);
+            this._userSetExpanded(e, false);
         }
         return true;
     }

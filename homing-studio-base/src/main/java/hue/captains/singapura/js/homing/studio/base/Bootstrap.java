@@ -23,6 +23,8 @@ import hue.captains.singapura.js.homing.studio.base.app.CatalogueRegistry;
 import hue.captains.singapura.js.homing.studio.base.app.StudioBrand;
 import hue.captains.singapura.js.homing.studio.base.theme.CssGroupImplRegistry;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemesGetAction;
+import hue.captains.singapura.js.homing.studio.base.app.DocTreeViewer;
+import hue.captains.singapura.js.homing.studio.base.composed.DocTreeGetAction;
 import hue.captains.singapura.js.homing.studio.base.widget.SingleWidgetWorkspace;
 import hue.captains.singapura.js.homing.studio.base.tracker.Plan;
 import hue.captains.singapura.js.homing.studio.base.tracker.PlanGetAction;
@@ -130,6 +132,10 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
         // /open-refs endpoints below) with zero downstream wiring, so opening
         // a Navigator leaf stays in the leveled world (path URL, no uuid).
         harnessApps.add(SingleWidgetWorkspace.INSTANCE);
+        // RFC 0039 — the rigid-tree ComposedDoc viewer (parallel to the legacy
+        // ComposedViewer): ?app=doc-tree-viewer&id=<uuid> serves the two-part
+        // doc-tree payload via /doc-tree (registered below).
+        harnessApps.add(DocTreeViewer.INSTANCE);
         if (params.diagnosticsEnabled()) harnessApps.add(StudioGraphInspector.INSTANCE);
         // RFC 0016: when downstream has registered ContentTrees, the TreeAppHost
         // joins the app set so /app?app=tree&id=… resolves.
@@ -318,6 +324,7 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
                 all.put("/",            rootRedirect);
                 all.put("/css-content", cssContentAction);
                 all.put("/doc",         docAction);
+                all.put("/doc-tree",    new DocTreeGetAction(docRegistry, openRoot));
                 all.put("/doc-refs",    docRefsAction);
                 all.put("/app-refs",    appRefsAction);
                 all.put("/open-content", openContentAction);
