@@ -543,6 +543,30 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             """;
         }
     }
+    // A scrollable doc-content pane host — used by the studio workspace's
+    // DocContentWidget to mount an opened doc inside a workspace pane (the pane
+    // host doesn't scroll on its own, so the widget root owns overflow).
+    public record st_doc_pane() implements CssClass<StudioStyles> {
+        @Override public String body() { return """
+            height: 100%;
+            overflow: auto;
+            box-sizing: border-box;
+            padding: 16px 20px;
+            """;
+        }
+    }
+    // The muted "nothing opened yet" notice for a doc-content pane — a readable,
+    // left-aligned hint (distinct from st_loading's centered transient notice).
+    public record st_doc_empty() implements CssClass<StudioStyles> {
+        @Override public String body() { return """
+            color: var(--color-text-muted);
+            font-style: italic;
+            line-height: 1.5;
+            padding: 24px 8px;
+            max-width: 640px;
+            """;
+        }
+    }
     // -----------------------------------------------------------------------
     // RFC 0020 — TableDoc rendering.
     // Slim table primitives: th/td borders + padding via RFC 0017 tokens.
@@ -1029,7 +1053,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
                 new st_layout(), new st_sidebar(), new st_sidebar_title(),
                 new st_toc(), new st_toc_item(), new st_toc_h1(), new st_toc_h2(), new st_toc_h3(), new st_toc_active(),
                 new st_doc(), new st_doc_meta(),
-                new st_loading(), new st_error(), new st_footer(),
+                new st_loading(), new st_error(), new st_doc_pane(), new st_doc_empty(), new st_footer(),
                 new st_app_pill(), new st_app_pill_dark(),
                 new st_app_pill_icon(), new st_app_pill_label(), new st_app_pill_desc(),
                 // rfc tracker

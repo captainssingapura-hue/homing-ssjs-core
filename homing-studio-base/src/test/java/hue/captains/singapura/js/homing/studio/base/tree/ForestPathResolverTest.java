@@ -69,7 +69,10 @@ class ForestPathResolverTest {
                 ForestPathResolver.INSTANCE.resolve(Root.INSTANCE, List.of(0, 0));
         assertTrue(r.isPresent());
         assertEquals(DOC_UUID, r.get().doc().uuid());
-        assertEquals(List.of("Root Cat", "Child Cat"), r.get().trail());
+        // trail crumbs carry the catalogue label + a clickable browse URL.
+        assertEquals(List.of("Root Cat", "Child Cat"),
+                r.get().trail().stream().map(c -> c.text()).toList());
+        assertTrue(r.get().trail().get(0).href().startsWith("/app?app=catalogue&id="));
     }
 
     @Test
@@ -79,7 +82,8 @@ class ForestPathResolverTest {
                 ForestPathResolver.INSTANCE.resolve(ForestHost.INSTANCE, List.of(0, 0));
         assertTrue(r.isPresent());
         assertEquals(DOC_UUID, r.get().doc().uuid());
-        assertEquals(List.of("Forest", "Source Studio"), r.get().trail());
+        assertEquals(List.of("Forest", "Source Studio"),
+                r.get().trail().stream().map(c -> c.text()).toList());
     }
 
     @Test

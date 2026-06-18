@@ -2,6 +2,8 @@ package hue.captains.singapura.js.homing.studio.base.tree;
 
 import hue.captains.singapura.js.homing.studio.base.Doc;
 import hue.captains.singapura.js.homing.studio.base.app.Catalogue;
+import hue.captains.singapura.js.homing.studio.base.app.CatalogueAppHost;
+import hue.captains.singapura.js.homing.studio.base.app.Crumb;
 import hue.captains.singapura.js.homing.studio.base.app.Entry;
 
 import java.util.ArrayList;
@@ -40,10 +42,12 @@ public final class ForestPathResolver {
 
     /**
      * The result of a successful walk: the {@link Doc} at the path, and the
-     * ordered display labels of every catalogue descended to reach it (the
-     * breadcrumb prelude — the leaf's own title is the consumer's to append).
+     * ordered {@link Crumb}s for every catalogue descended to reach it (the
+     * breadcrumb prelude — each crumb carries its label <i>and</i> its catalogue
+     * browse URL, so the chrome renders them as links; the leaf's own title is
+     * the consumer's to append as the final, no-link crumb).
      */
-    public record Resolved(Doc doc, List<String> trail) {}
+    public record Resolved(Doc doc, List<Crumb> trail) {}
 
     /**
      * Walk {@code root}'s forest by the child-index {@code path} to the
@@ -53,9 +57,9 @@ public final class ForestPathResolver {
     public Optional<Resolved> resolve(Catalogue<?> root, List<Integer> path) {
         if (root == null || path == null || path.isEmpty()) return Optional.empty();
         Catalogue<?> cat = root;
-        var trail = new ArrayList<String>();
+        var trail = new ArrayList<Crumb>();
         for (int i = 0; i < path.size(); i++) {
-            trail.add(cat.name());                       // every catalogue descended is a crumb
+            trail.add(crumbFor(cat));                    // every catalogue descended is a clickable crumb
             List<NavChild> children = orderedNavChildren(cat);
             int idx = path.get(i);
             if (idx < 0 || idx >= children.size()) return Optional.empty();
@@ -71,6 +75,21 @@ public final class ForestPathResolver {
             }
         }
         return Optional.empty();                          // path ended on a branch
+    }
+
+    /**
+     * A clickable breadcrumb for a descended catalogue — its icon-prefixed
+     * label (matching the catalogue page's own breadcrumb format) plus the
+     * catalogue browse URL ({@code /app?app=catalogue&id=<fqn>}), so the chrome
+     * renders it as a link. Same {@code CatalogueAppHost.urlFor} the catalogue
+     * registry's doc-trail crumbs use, so leveled-open and uuid-open breadcrumbs
+     * are link-for-link consistent.
+     */
+    @SuppressWarnings("unchecked")
+    private static Crumb crumbFor(Catalogue<?> cat) {
+        String icon = cat.icon();
+        String text = (icon == null || icon.isEmpty()) ? cat.name() : icon + " " + cat.name();
+        return new Crumb(text, CatalogueAppHost.urlFor((Class<? extends Catalogue<?>>) cat.getClass()));
     }
 
     /** The nav children of a catalogue, in canonical tree-builder order. */

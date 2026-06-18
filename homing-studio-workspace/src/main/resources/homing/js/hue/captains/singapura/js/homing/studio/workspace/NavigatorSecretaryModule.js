@@ -8,15 +8,20 @@
 // no DOM, no console, no captures.
 //
 // "Just redirects": an incoming NodeSelected (from the tree) is rebroadcast
-// to every Party member as NavigateTo. The Secretary names no consumer — any
-// widget that joins receives the redirect. Diligence: it remembers the last
-// selection and bounds a recentUnknown ring for observability via inspect().
+// to every Party member as NavigateTo; an incoming NodeOpened (Enter /
+// double-click — the intentional open) is rebroadcast as OpenDoc. Two tiers,
+// same redirect shape: select is cheap + frequent (panes that re-label), open
+// is expensive + deliberate (the content pane that fetches + renders). The
+// Secretary names no consumer — any widget that joins receives the redirect.
+// Diligence: it remembers the last selection AND the last open, and bounds a
+// recentUnknown ring for observability via inspect().
 // =============================================================================
 
 var NavigatorSecretary = {
 
     initial: {
         lastSelected:  null,
+        lastOpened:    null,
         recentUnknown: []
     },
 
@@ -30,15 +35,34 @@ var NavigatorSecretary = {
         switch (msg.kind) {
 
             case "NodeSelected": {
-                // Redirect: relay the tree's selection to all members.
+                // Redirect: relay the tree's selection to all members. Cheap,
+                // high-frequency — fires on every arrow-move / single click.
                 return {
                     newState: {
                         lastSelected:  msg.node,
+                        lastOpened:    state.lastOpened,
                         recentUnknown: state.recentUnknown
                     },
                     actions: [{
                         kind:    "BroadcastToMembers",
                         message: { kind: "NavigateTo", node: msg.node }
+                    }]
+                };
+            }
+
+            case "NodeOpened": {
+                // Redirect: relay an INTENTIONAL open (Enter / double-click) to
+                // all members as OpenDoc. The content pane reacts to this — and
+                // only this — so the expensive doc render is paid on intent.
+                return {
+                    newState: {
+                        lastSelected:  state.lastSelected,
+                        lastOpened:    msg.node,
+                        recentUnknown: state.recentUnknown
+                    },
+                    actions: [{
+                        kind:    "BroadcastToMembers",
+                        message: { kind: "OpenDoc", node: msg.node }
                     }]
                 };
             }
@@ -54,6 +78,7 @@ var NavigatorSecretary = {
                 return {
                     newState: {
                         lastSelected:  state.lastSelected,
+                        lastOpened:    state.lastOpened,
                         recentUnknown: recent
                     },
                     actions: []
