@@ -87,10 +87,13 @@ public final class OpenRefsGetAction
         sb.append(jsonString(doc.url()));
         sb.append(",\"breadcrumbs\":[");
         boolean first = true;
-        for (String label : resolved.get().trail()) {
+        for (var crumb : resolved.get().trail()) {
             if (!first) sb.append(',');
             first = false;
-            sb.append("{\"text\":").append(jsonString(label)).append('}');
+            // Each ancestor crumb carries its catalogue browse URL, so the chrome
+            // renders it as a clickable link (the leaf title is appended no-link).
+            sb.append("{\"text\":").append(jsonString(crumb.text()))
+              .append(",\"href\":").append(jsonString(crumb.href())).append('}');
         }
         sb.append("],\"references\":[]}");
         return CompletableFuture.completedFuture(json(sb.toString()));

@@ -39,6 +39,10 @@ function renderDocTree(opts) {
     // layout (so the navigable TOC survives) and strips only the app shell; the
     // TOC here is part of the document, not page chrome.
     layout.setAttribute('data-export-content', '');
+    // The two-pane needs more than the single-column default: TOC (260) + gap
+    // (28) + body (820) + the export <main>'s padding. Without this the sidebar
+    // crushes the body in the exported file.
+    layout.setAttribute('data-export-width', '1180px');
     layout.appendChild(tocHost);
     layout.appendChild(bodyHost);
     container.appendChild(layout);

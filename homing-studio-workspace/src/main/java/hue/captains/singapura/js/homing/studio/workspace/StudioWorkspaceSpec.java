@@ -17,18 +17,25 @@ import java.util.Map;
  * {@code GenericWorkspace} at
  * {@code ?app=genericWorkspace&ws_kind=studio}.
  *
- * <p>Pure declarations — no body JS, no chrome wiring. This milestone
- * declares a single widget, the {@link TreeWidget}, pinned at boot so the
- * studio navigation tree is always visible. The tree's data comes from
- * {@code GET /catalogue-tree} ({@link CatalogueTreeGetAction}), which the
- * hosting studio wires with its own root catalogue via
- * {@code Fixtures.harnessGetActions()}.</p>
+ * <p>Pure declarations — no body JS, no chrome wiring. Three widgets, all
+ * pickable, joined by the studio navigation {@code Party}:</p>
+ * <ul>
+ *   <li>{@link TreeWidget} (Navigator) — the catalogue tree. Publishes the two
+ *       navigation tiers: {@code NodeSelected} on browse (every arrow / click)
+ *       and {@code NodeOpened} on intent (Enter / double-click).</li>
+ *   <li>{@link SummaryWidget} (Summary) — the cheap detail card. Reacts to the
+ *       redirected {@code NavigateTo} on every selection.</li>
+ *   <li>{@link DocContentWidget} (Document) — the expensive content pane. Reacts
+ *       to the redirected {@code OpenDoc} only, rendering the opened doc in place
+ *       (foldable TOC + body) so the costly fetch is paid on intent, not browse.</li>
+ * </ul>
  *
- * <p>The pinned {@code TreeWidget} uses a blank {@code catalogueId}, so the
- * endpoint serves the whole studio forest. Additional widgets (a doc
- * viewer opened from tree selection, a search panel, …) and the studio
- * navigation Party land in follow-ups; the spec surface already supports
- * them ({@code parties()}, {@code actionDispatch()}).</p>
+ * <p>The Navigator uses a blank {@code catalogueId}, so {@code GET
+ * /catalogue-tree} ({@link CatalogueTreeGetAction}) serves the whole studio
+ * forest. The content pane fetches {@code /doc-tree} by the selected node's
+ * leveled path. The {@code NavigatorSecretary} redirects both tiers
+ * ({@code NodeSelected→NavigateTo}, {@code NodeOpened→OpenDoc}); the spec also
+ * supports {@code actionDispatch()} for future wiring.</p>
  *
  * <p>Registration is explicit, not class-load: {@code StudioStarterFixtures}
  * registers this spec into the {@code WorkspaceSpecRegistry} (RFC 0040), so a
@@ -55,6 +62,9 @@ public final class StudioWorkspaceSpec implements WorkspaceSpec {
                         .withDefaults(navigatorDefaults()),
                 WidgetEntry.of(SummaryWidget.class, WidgetLabel.of("Summary"))
                         .withIcon(new WidgetIcon.Emoji("📄")) // 📄
+                        .withGroup(WidgetGroup.of("Navigation")),
+                WidgetEntry.of(DocContentWidget.class, WidgetLabel.of("Document"))
+                        .withIcon(new WidgetIcon.Emoji("📖")) // 📖
                         .withGroup(WidgetGroup.of("Navigation"))
         );
     }
@@ -62,8 +72,8 @@ public final class StudioWorkspaceSpec implements WorkspaceSpec {
     @Override
     public List<PartyDecl> parties() {
         // The navigation message bus. No pre-declared actors — the TreeWidget
-        // joins dynamically as the source; future content/detail panes join as
-        // consumers. Exposed to widgets as workspaceCtx.navParty.
+        // joins dynamically as the source; the Summary (NavigateTo) and Document
+        // (OpenDoc) panes join as consumers. Exposed as workspaceCtx.navParty.
         return List.of(
                 PartyDecl.of("navigation",
                              NavigatorSecretaryModule.INSTANCE, "NavigatorSecretary")

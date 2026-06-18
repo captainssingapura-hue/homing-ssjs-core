@@ -20,14 +20,20 @@ import java.util.List;
  * blank means the whole studio forest (the endpoint's default). For the
  * pinned use in {@link StudioWorkspaceSpec} the default is blank.</p>
  *
- * <p>Tree selections are published to the {@code NavigatorParty} (exposed
- * as {@code workspaceCtx.navParty}): on select the widget sends a
- * {@code NodeSelected} message; the {@code NavigatorSecretary} redirects it
- * as a {@code NavigateTo} broadcast to every member. This widget also joins
- * as a member and logs the redirect it receives, so the round-trip is
- * observable with just the tree present; a future content/detail pane joins
- * the same Party to render the selection. When the workspace provides no
- * Party, selection falls back to a console log.</p>
+ * <p>Tree interactions are published to the {@code NavigatorParty} (exposed
+ * as {@code workspaceCtx.navParty}) at two tiers. <b>Select</b> (every
+ * arrow-move / single click) sends {@code NodeSelected}; the
+ * {@code NavigatorSecretary} redirects it as a {@code NavigateTo} broadcast —
+ * cheap, high-frequency, for panes like {@code SummaryWidget} that just
+ * re-label. <b>Open</b> (Enter on the selection or a double-click, via the
+ * renderer's {@code onActivate}) sends {@code NodeOpened}, redirected as an
+ * {@code OpenDoc} broadcast — the intentional, expensive signal a content
+ * pane ({@code DocContentWidget}) reacts to by fetching + rendering the doc.
+ * Separating the two means the costly render happens only when the user means
+ * to open, never merely to browse. This widget also joins as a member and
+ * logs the redirects it receives, so the round-trip is observable with just
+ * the tree present. When the workspace provides no Party, both fall back to a
+ * console log.</p>
  *
  * <p>Nothing to gate on workspace-active transitions (no document
  * listeners, no audio) — {@code setActive} is a required no-op.</p>
@@ -130,9 +136,22 @@ public final class TreeWidget extends WorkspaceWidget<TreeWidget.Params, TreeWid
                 "                onSelect:    function (sel) {",
                 "                    console.log('[TreeWidget] selected', sel);",
                 "                    // Publish the selection; the Secretary redirects it.",
+                "                    // Cheap + high-frequency (every arrow-move / click):",
+                "                    // detail panes that re-render must NOT react to this.",
                 "                    if (__navParty && __actorId) {",
                 "                        __navParty.tellFrom(__actorId,",
                 "                            { kind: 'NodeSelected', node: sel });",
+                "                    }",
+                "                },",
+                "                onActivate:  function (sel) {",
+                "                    console.log('[TreeWidget] opened', sel);",
+                "                    // INTENTIONAL open (Enter / double-click). Distinct",
+                "                    // message so an expensive consumer (the doc content",
+                "                    // pane) renders only on real intent, not on browse.",
+                "                    // The Secretary redirects NodeOpened as OpenDoc.",
+                "                    if (__navParty && __actorId) {",
+                "                        __navParty.tellFrom(__actorId,",
+                "                            { kind: 'NodeOpened', node: sel });",
                 "                    }",
                 "                }",
                 "            });",

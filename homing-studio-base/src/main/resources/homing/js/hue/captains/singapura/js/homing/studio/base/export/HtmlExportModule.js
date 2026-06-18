@@ -112,8 +112,17 @@ function exportPageAsHtml(filename, opts) {
                     if (keep[di].parentNode) keep[di].parentNode.removeChild(keep[di]);
                 }
                 cloneBody.replaceChildren();
+                // The standalone <main> defaults to 820px (single-column reading
+                // width). Content that needs more room — e.g. a two-pane doc with
+                // a TOC sidebar — declares it via data-export-width on its content
+                // root, so the sidebar doesn't crush the body.
+                var exportWidth = '820px';
+                for (var wi = 0; wi < keep.length; wi++) {
+                    var hint = keep[wi].getAttribute && keep[wi].getAttribute('data-export-width');
+                    if (hint) { exportWidth = hint; break; }
+                }
                 var standalone = document.createElement('main');
-                standalone.style.cssText = 'max-width:820px;margin:0 auto;'
+                standalone.style.cssText = 'max-width:' + exportWidth + ';margin:0 auto;'
                     + 'padding:32px 24px;box-sizing:border-box;';
                 for (var ai = 0; ai < keep.length; ai++) {
                     standalone.appendChild(keep[ai]);

@@ -12,7 +12,7 @@
 // Ownership: the caller passes a DomOpsParty branch; every element is created
 // through it, so dissolving the caller's branch tears the tree down cleanly.
 //
-//   new TreeRenderer({ branch, container, data, onSelect, onToggle, expandDepth })
+//   new TreeRenderer({ branch, container, data, onSelect, onActivate, onToggle, expandDepth })
 //   renderer.setData(treeJson)        // (re)load a tree
 //   renderer.handleKeydown(event)     // arrow-key navigation; returns true
 //                                     //   if the key was consumed
@@ -21,6 +21,13 @@
 // (caret click or ArrowRight/Left), never during the initial expandDepth build.
 // A host uses it to keep a second view (e.g. renderDocTree's body) folded in
 // sync with the TOC. Optional — omit it and expand/collapse is TOC-local.
+//
+// onActivate(selection) fires on an INTENTIONAL open — Enter on the selected
+// row, or a double-click — distinct from the high-frequency onSelect that fires
+// on every arrow-move / single click. A host wires onActivate to an expensive
+// "open this node" action (e.g. render the selected doc in a detail pane) so
+// that cost is paid only when the user means to open, not merely to browse.
+// Optional — omit it and Enter / double-click are no-ops beyond selection.
 //
 // Selection is tracked by ROW-ENTRY REFERENCE, never by node id: the renderer
 // builds every row, so it holds the row's entry object directly. Two nodes may
@@ -35,10 +42,11 @@
 //
 // Keyboard (handleKeydown): ArrowDown/ArrowUp move the selection through the
 // VISIBLE rows (live-follow — each move fires onSelect); ArrowRight expands the
-// focused branch one level, ArrowLeft folds it. The host widget owns WHEN keys
-// flow (it forwards keydown only while workspace-active); the renderer owns the
-// key semantics. Returns true when it consumed the key so the host can
-// preventDefault (stop page scroll).
+// focused branch one level, ArrowLeft folds it; Enter opens the current
+// selection (fires onActivate). The host widget owns WHEN keys flow (it forwards
+// keydown only while workspace-active); the renderer owns the key semantics.
+// Returns true when it consumed the key so the host can preventDefault (stop
+// page scroll).
 // =============================================================================
 
 class TreeRenderer {
@@ -49,6 +57,12 @@ class TreeRenderer {
         this._branch    = opts.branch;
         this._container = opts.container;
         this._onSelect  = opts.onSelect || function () {};
+        // Fired on an INTENTIONAL open — Enter on the selected row or a
+        // double-click — NOT on every selection move. The host pays the
+        // expensive open cost (e.g. rendering the doc) only when the user
+        // means to open. Optional; default no-op leaves Enter/dblclick as
+        // pure selection.
+        this._onActivate = opts.onActivate || function () {};
         // Fired when the USER expands/collapses a branch (caret click or
         // ArrowRight/Left) — NOT during the initial expandDepth build. Carries
         // { path, expanded } so a host (e.g. renderDocTree) can fold the body
@@ -98,6 +112,24 @@ class TreeRenderer {
         var sel = this._toSelection(entry.node);
         sel.path = entry.path;
         this._onSelect(sel);
+    }
+
+    // Emit an ACTIVATION (intentional open) for a row entry — same flattened
+    // shape as selection, carrying the node's leveled `path`. Distinct callback
+    // from onSelect so a host can gate the expensive open on real intent.
+    _emitActivation(entry) {
+        var sel = this._toSelection(entry.node);
+        sel.path = entry.path;
+        this._onActivate(sel);
+    }
+
+    // Activate a row (Enter / double-click): make sure it's the selection, then
+    // fire onActivate. Selection is emitted by the originating click/keymove, so
+    // here we only ensure the highlight and raise the open intent.
+    _activate(entry) {
+        if (!entry) return;
+        this._markSelected(entry);
+        this._emitActivation(entry);
     }
 
     setData(data) {
@@ -171,6 +203,15 @@ class TreeRenderer {
             self._markSelected(entry);
             self._emitSelection(entry);
         });
+        // Double-click = intentional open. The two underlying single-clicks
+        // already selected this row (so a detail/summary pane updated cheaply);
+        // the dblclick raises onActivate so the host opens it. preventDefault
+        // suppresses the anchor's native jump / text selection on the gesture.
+        row.addEventListener('dblclick', function (e) {
+            e.stopPropagation();
+            if (self._hrefForPath) e.preventDefault();
+            self._activate(entry);
+        });
         row.addEventListener('mouseenter', function () {
             if (self._selectedEntry !== entry) row.style.background = 'rgba(0,0,0,0.05)';
         });
@@ -243,8 +284,14 @@ class TreeRenderer {
     handleKeydown(ev) {
         var key = ev && ev.key;
         if (key !== 'ArrowDown' && key !== 'ArrowUp'
-            && key !== 'ArrowRight' && key !== 'ArrowLeft') {
+            && key !== 'ArrowRight' && key !== 'ArrowLeft'
+            && key !== 'Enter') {
             return false;
+        }
+        // Enter = intentional open of the current selection (no list walk).
+        if (key === 'Enter') {
+            if (this._selectedEntry) this._activate(this._selectedEntry);
+            return true;
         }
         var vis = this._visibleEntries();
         if (vis.length === 0) return false;
