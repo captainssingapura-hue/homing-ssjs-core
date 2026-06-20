@@ -5,6 +5,8 @@ description: Use this skill when the user wants to render an arbitrary tree-shap
 
 # Transform an arbitrary tree into the Homing tree view
 
+**Written for: Homing 0.5.1** (the rigid-tree substrate — RFC 0040 `NormalizedNode` / `TreeNormalizer` / `TreeNodeJsonWriter`, RFC 0039/0040 renderer + leveled Open). Verify against your framework version if older.
+
 The rigid tree substrate (RFC 0040) has one headline promise: **any conforming tree renders through the single `TreeRenderer` with zero bespoke JS.** Adapting your tree is therefore *one function* — a `TreeNormalizer<SPEC>` that maps your native node shape onto the canonical `NormalizedNode`. Everything downstream (serializer, renderer, fold/keyboard/selection) is off-the-shelf.
 
 > **Design boundary — read first.** The tree view carries **structure + navigation only**. It draws a label per node and emits selection/open events. It is *not* a data grid. Multi-column, pivots, per-node content bodies, drill-downs, unbounded depth → **compose a complementing workspace widget** wired to the navigation Party (RFC 0028), never extend `TreeRenderer`/`NormalizedNode`. If you're tempted to add a second visible column to a tree node, you've left this skill.
