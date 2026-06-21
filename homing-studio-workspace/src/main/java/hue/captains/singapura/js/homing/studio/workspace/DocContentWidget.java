@@ -45,8 +45,10 @@ import java.util.List;
  * experience (foldable TOC, synced highlight) inline in the pane. No export pill:
  * that floating control belongs to the standalone doc page, not a workspace pane.</p>
  *
- * <p><b>Kind-gated.</b> Only {@code composed} docs (ComposedDoc + RigidDoc)
- * resolve through {@code /doc-tree}; other kinds (svg / plan / app) and branch
+ * <p><b>Kind-gated.</b> The kinds {@code /doc-tree} can transform render here:
+ * {@code composed} (ComposedDoc + RigidDoc) and {@code doc} / {@code markdown}
+ * (legacy markdown docs, rendered flat as one node so the existing corpus reads
+ * in the workspace without migration). Other kinds (svg / plan / app) and branch
  * catalogue nodes can't render here, so the pane degrades to a hint pointing at
  * the Summary pane's Open button rather than erroring.</p>
  *
@@ -170,15 +172,17 @@ public final class DocContentWidget extends WorkspaceWidget<WorkspaceWidget._Non
                 "        }",
                 "    }",
                 "",
-                "    // Open a node IN PLACE. Only composed docs resolve via /doc-tree;",
-                "    // other kinds + branch catalogues degrade to a hint (use Summary's",
-                "    // Open button). The node carries its leveled tree path + kind.",
+                "    // Open a node IN PLACE. The kinds /doc-tree can transform render",
+                "    // here: 'composed' (ComposedDoc + RigidDoc) and 'doc'/'markdown'",
+                "    // (legacy markdown docs, rendered flat). Other kinds (svg / plan /",
+                "    // app) + branch catalogues degrade to a hint (use Summary's Open).",
+                "    var RENDERABLE = { composed: 1, doc: 1, markdown: 1 };",
                 "    function openNode(node) {",
                 "        if (!node || !node.path || node.kind === 'catalogue') {",
                 "            showHint('That item has no readable document.');",
                 "            return;",
                 "        }",
-                "        if (node.kind !== 'composed') {",
+                "        if (!RENDERABLE[node.kind]) {",
                 "            showHint('\\u201c' + (node.label || 'This item') + '\\u201d is a '",
                 "                + node.kind + ' document \\u2014 open it from the Summary pane.');",
                 "            return;",
