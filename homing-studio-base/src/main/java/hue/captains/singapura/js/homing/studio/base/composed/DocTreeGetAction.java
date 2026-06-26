@@ -129,10 +129,14 @@ public final class DocTreeGetAction
             } else if (doc instanceof hue.captains.singapura.js.homing.studio.base.rigid.RigidDoc rd) {
                 json = DocTreeJsonWriter.INSTANCE.write(
                         hue.captains.singapura.js.homing.studio.base.rigid.RigidDocNormalizer.INSTANCE.toDocTree(rd));
+            } else if ("doc".equals(doc.kind()) || "markdown".equals(doc.kind())) {
+                // Legacy markdown-bodied Doc (ClasspathMarkdownDoc, MarkdownDoc, …):
+                // render its raw markdown as one flat node — no migration needed.
+                json = DocTreeJsonWriter.INSTANCE.write(MarkdownDocNormalizer.INSTANCE.toDocTree(doc));
             } else {
                 return CompletableFuture.failedFuture(notFound(locator,
-                        "Doc is not a ComposedDoc or RigidDoc (kind '" + doc.kind() + "') — "
-                      + "the rigid-tree transform supports those two kinds"));
+                        "Doc kind '" + doc.kind() + "' has no rigid-tree transform — supported: "
+                      + "ComposedDoc, RigidDoc, and markdown docs (kind 'doc'/'markdown')"));
             }
             return CompletableFuture.completedFuture(new DocContent(json, "application/json; charset=utf-8"));
         } catch (Exception e) {
