@@ -6,7 +6,7 @@
 
     <groupId>io.github.captainssingapura-hue.homing.js</groupId>
     <artifactId>homing.js</artifactId>
-    <version>0.5.1</version>
+    <version>0.5.2</version>
     <packaging>pom</packaging>
     <modules>
         <module>homing-core</module>
