@@ -94,7 +94,7 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <ja-http.version>0.0.1</ja-http.version>
+        <ja-http.version>LOCAL-SNAPSHOT</ja-http.version>
         <junit.version>5.11.3</junit.version>
         <jacoco.version>0.8.14</jacoco.version>
         <!-- RFC 0028 cycle 6 phase 2 — GraalVM Polyglot for JS Secretary testing. -->
