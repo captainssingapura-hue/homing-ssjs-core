@@ -2,7 +2,6 @@ package hue.captains.singapura.js.homing.studio.base;
 
 import hue.captains.singapura.tao.http.config.ResolvedTlsCredential;
 import hue.captains.singapura.tao.http.config.TlsConfigResolver;
-import hue.captains.singapura.tao.http.config.TlsResolvers;
 import hue.captains.singapura.tao.http.config.TlsValidationException;
 import hue.captains.singapura.tao.http.config.TlsValidationReport;
 import hue.captains.singapura.tao.http.config.TlsValidator;
@@ -17,10 +16,9 @@ import java.util.Optional;
  * configuration at boot, in a CLI, or in a test and surface a clear error instead of a
  * Vert.x stack trace at bind time.
  *
- * <p>Runs the two ja-http stages — {@link TlsConfigResolver} then {@link TlsValidator} —
- * against {@link TlsResolvers#defaults()}, the same resolvers the live host uses, so a
- * passing preflight reflects what the server will load. The downstream never touches
- * keystore loading itself.</p>
+ * <p>Runs the two ja-http stages — {@link TlsConfigResolver} then {@link TlsValidator} — by
+ * invoking the credential's own provider functions, so a passing preflight reflects exactly
+ * what the server will load. The downstream never touches keystore loading itself.</p>
  *
  * <pre>{@code
  * var params = HttpsRuntimeParams.jks(8443, "certs/server.jks", "changeit");
@@ -45,7 +43,7 @@ public final class TlsPreflight implements StatelessFunctionalObject {
         }
         ResolvedTlsCredential resolved;
         try {
-            resolved = new TlsConfigResolver().resolve(tls.get().credential(), TlsResolvers.defaults());
+            resolved = new TlsConfigResolver().resolve(tls.get().credential());
         } catch (IOException e) {
             throw new TlsValidationException(TlsValidationException.Kind.MATERIAL_UNRESOLVABLE,
                     "Could not resolve TLS material: " + e.getMessage(), e);

@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.studio.base;
 
 import hue.captains.singapura.tao.http.config.TlsConfig;
 import hue.captains.singapura.tao.http.config.TlsCredential;
+import hue.captains.singapura.tao.http.config.TlsResolvers;
 import hue.captains.singapura.tao.http.config.builtin.FileByteSource;
 import hue.captains.singapura.tao.http.config.builtin.LiteralPassword;
 import hue.captains.singapura.tao.ontology.ValueObject;
@@ -39,9 +40,11 @@ public record HttpsRuntimeParams(int port, TlsConfig tlsConfig)
      * @param password     the keystore password
      */
     public static HttpsRuntimeParams jks(int port, String keystorePath, String password) {
+        // Use the spec/resolver utility suite to build the credential's provider functions.
+        var resolvers = TlsResolvers.defaults();
         var credential = new TlsCredential.Jks(
-                new FileByteSource(keystorePath),
-                LiteralPassword.of(password));
+                resolvers.byteSourceProvider(new FileByteSource(keystorePath)),
+                resolvers.passwordProvider(LiteralPassword.of(password)));
         return new HttpsRuntimeParams(port, new TlsConfig(credential));
     }
 
