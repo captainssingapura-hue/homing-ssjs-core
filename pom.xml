@@ -41,6 +41,23 @@
              ON it; builds first. -->
         <module>homing-rigid-tree</module>
         <module>homing-tree-views</module>
+        <!-- homing-problem-realm: the typed, single-parent taxonomy of the
+             problems the studio's PRESENTATION solves (SitePresentation +
+             the four S0 surfaces + PresentationCommons/Status), modelled on
+             rebar's problem-realm-core (L0_Domain … LeafDomain). Concrete
+             domain instances only; the level-ladder abstraction is rebar's.
+             The prerequisite for Expression Intents — a domain-bound intent
+             (feedback.status.error) references a node here. Depends only on
+             rebar problem-realm-core (external, com.hominglabs.rebar). -->
+        <module>homing-problem-realm</module>
+        <!-- homing-expression-intent: the ui.expression Facet's vocabulary.
+             An Expression Intent names something to be expressed in the UI,
+             decoupled from physical form; a domain-bound intent is a
+             (usage × problem-concept × value) cell referencing homing-problem-realm.
+             First family: glance.phase-status.* — the Glance usage referencing
+             realm.plan.Status / PhaseState. The Realizer that projects intents to
+             per-substrate form is a later module. -->
+        <module>homing-expression-intent</module>
         <!-- homing-conformance builds BEFORE homing-studio-base (b.2j cleanup):
              it provides cross-cutting test bases that studio-base hosts its own
              substrate-typed conformance subclasses on top of. Conformance

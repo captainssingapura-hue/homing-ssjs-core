@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+        <artifactId>homing.js</artifactId>
+        <version>LOCAL-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>homing-expression-intent</artifactId>
+
+    <description>
+        UI Expression Intents — the ui.expression Facet's vocabulary. An
+        Expression Intent describes something intended to be expressed in the UI,
+        decoupled from any physical realization (colour, shape, sound). It is the
+        portable core: application code names an intent; a Realizer (a later
+        module) projects it to per-substrate form.
+
+        An intent is a (usage x problem-concept x value) cell, so this module
+        depends on homing-problem-realm: a domain-bound intent references a
+        domain node there. The first family is glance.phase-status.* — the
+        Glance usage's phase-status family — binding to realm.plan.Status and
+        referencing the canonical realm.plan.PhaseState. The Facet-native branch
+        (emphasis / surface, and the presentation-role layer) is deferred until
+        its first family is built.
+    </description>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-problem-realm</artifactId>
+            <version>LOCAL-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>

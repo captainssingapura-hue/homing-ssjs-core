@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+        <artifactId>homing.js</artifactId>
+        <version>LOCAL-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>homing-problem-realm</artifactId>
+
+    <description>
+        Homing's Problem Realm — the typed, single-parent taxonomy of the
+        problems the studio's presentation actually solves, modelled on rebar's
+        rigid-levels problem-realm-core (L0_Domain / L1_Domain / L2_Domain /
+        LeafDomain). Concrete instances live here; the abstraction (the level
+        ladder, the DomainNode contract, Desc) is rebar's job — this module
+        never redefines it.
+
+        Two areas. (1) Presentation surfaces (realm.presentation, from the S0
+        audit): SiteChrome / CatalogueOrganization / DocumentPresentation /
+        ProgressTracking. (2) Subject domains (realm.plan): PlanTracking with its
+        functional aspects (Objectives / Phases / OpenQuestions / Acceptance /
+        Progress / Tasks / Dependencies / Metrics), plus the parked canonical
+        Status dimension + PhaseState value set — the genuinely domain-bound
+        status the pilot expresses (distinct from the borrowed generic status
+        vocabulary, which was retired).
+
+        This module is the PREREQUISITE for Expression Intents: an intent is a
+        (usage x problem-concept x value) cell, so the problem nodes must exist
+        and be typed before the intents that bind to them can be authored.
+        Depends only on rebar problem-realm-core (which brings rigid-levels-core
+        transitively); a clean leaf, nothing framework-specific.
+    </description>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.hominglabs.rebar</groupId>
+            <artifactId>problem-realm-core</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>
