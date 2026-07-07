@@ -88,6 +88,18 @@
              projects) can depend on it as an ordinary Maven artifact —
              no test-jar classifier ceremony. -->
         <module>homing-ssjs-test-fixtures</module>
+        <!-- Semantic Colours (RFC 0037 seam) — a substrate-free taxonomy of
+             SemanticColors grouped into a ColorGroup tree, plus the
+             SemanticColorResolver seam (Degree -> PhysicalColor). Zero
+             framework deps beyond rebar's rigid-levels; the Color Studio
+             below realises it against theme roles. -->
+        <module>homing-semantic-color</module>
+        <!-- The Color Studio — a standalone V2 workspace (kind "color") that
+             browses the ColorGroup taxonomy and renders each colour as a
+             theme-aware swatch, with a palette selector to inspect any
+             registered theme's values. Depends on homing-semantic-color and
+             the studio/workspace stack above. -->
+        <module>homing-color-studio</module>
     </modules>
 
     <properties>
