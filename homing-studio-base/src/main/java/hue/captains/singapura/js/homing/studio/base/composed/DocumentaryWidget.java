@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.studio.base.composed;
 
 import hue.captains.singapura.js.homing.core.AppModule;
+import hue.captains.singapura.js.homing.studio.base.composed.text.Line;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -37,7 +38,7 @@ public record DocumentaryWidget<P extends AppModule._Param,
                                 M extends AppModule<P, M>>(
         M widget,
         P params,
-        Optional<String> captionOverride
+        Optional<Line.Plain> captionOverride
 ) implements Segment {
 
     public DocumentaryWidget {
@@ -51,8 +52,13 @@ public record DocumentaryWidget<P extends AppModule._Param,
         this(widget, params, Optional.empty());
     }
 
+    /** Convenience — caption from a raw string (blank becomes no override). */
+    public DocumentaryWidget(M widget, P params, String caption) {
+        this(widget, params, Line.optionalPlain(caption));
+    }
+
     /** The caption to render — explicit override, or the widget's title when not provided. */
     public String resolvedCaption() {
-        return captionOverride.orElse(widget.title());
+        return captionOverride.map(Line.Plain::raw).orElse(widget.title());
     }
 }

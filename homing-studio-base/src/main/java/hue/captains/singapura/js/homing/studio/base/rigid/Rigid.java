@@ -1,15 +1,20 @@
 package hue.captains.singapura.js.homing.studio.base.rigid;
 
+import hue.captains.singapura.js.homing.studio.base.SvgDoc;
 import hue.captains.singapura.js.homing.studio.base.composed.CodeSegment;
+import hue.captains.singapura.js.homing.studio.base.composed.ImageSegment;
 import hue.captains.singapura.js.homing.studio.base.composed.MarkdownSegment;
 import hue.captains.singapura.js.homing.studio.base.composed.RelationSegment;
-import hue.captains.singapura.js.homing.studio.base.composed.Segment;
+import hue.captains.singapura.js.homing.studio.base.composed.RigidSegment;
+import hue.captains.singapura.js.homing.studio.base.composed.SvgSegment;
 import hue.captains.singapura.js.homing.studio.base.composed.TextSegment;
+import hue.captains.singapura.js.homing.studio.base.composed.text.Line;
+import hue.captains.singapura.js.homing.studio.base.composed.text.Title;
+import hue.captains.singapura.js.homing.studio.base.image.ImageDoc;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -32,8 +37,8 @@ import java.util.UUID;
  *
  * <ul>
  *   <li>{@code .lN(title)} opens a node one level down (the number IS the level).</li>
- *   <li>{@code text/markdown/code/relation/segment} attach content to the
- *       <i>current</i> node and return the same builder, so content chains.</li>
+ *   <li>{@code text/markdown/code/relation/svg/image/segment} attach content to
+ *       the <i>current</i> node and return the same builder, so content chains.</li>
  *   <li>{@code .lNbuild()} closes the current node and returns its parent; the
  *       chain must close level-by-level.</li>
  *   <li>{@code .build()} exists only on {@link L0} — an unclosed level can't
@@ -56,15 +61,14 @@ public final class Rigid {
      */
     public abstract static class Level<SELF extends Level<SELF>> {
 
-        private final String        title;
-        private final List<Segment> content  = new ArrayList<>();
+        private final Title         title;
+        private final List<RigidSegment> content  = new ArrayList<>();
         private final List<DocNode> children = new ArrayList<>();
 
         Level(String title) {
-            if (title == null || title.isBlank()) {
-                throw new IllegalArgumentException("node title must not be blank — every node is a heading");
-            }
-            this.title = title;
+            // Wrap the authoring String into a typed Title at the boundary
+            // (non-blank + ≤ Title.MAX_CHARS is enforced here).
+            this.title = new Title(title);
         }
 
         abstract SELF self();
@@ -80,13 +84,24 @@ public final class Rigid {
 
         /** Attach a typed table (header row + body rows + optional caption). */
         public SELF relation(List<String> headers, List<List<String>> rows, String caption) {
-            content.add(new RelationSegment(headers, rows,
-                    (caption == null || caption.isBlank()) ? Optional.empty() : Optional.of(caption)));
+            content.add(new RelationSegment(headers, rows, Line.optionalPlain(caption)));
             return self();
         }
 
-        /** Attach any pre-built {@link Segment} (the full constructor surface). */
-        public SELF segment(Segment s) { content.add(Objects.requireNonNull(s, "segment")); return self(); }
+        /** Attach a registered {@link SvgDoc} inline; caption falls through to the doc's title. */
+        public SELF svg(SvgDoc<?> doc) { content.add(new SvgSegment(doc)); return self(); }
+
+        /** Attach a registered {@link SvgDoc} inline with a per-appearance caption override. */
+        public SELF svg(SvgDoc<?> doc, String caption) { content.add(new SvgSegment(doc, caption)); return self(); }
+
+        /** Attach a registered {@link ImageDoc} inline; caption falls through to the doc's caption/alt. */
+        public SELF image(ImageDoc doc) { content.add(new ImageSegment(doc)); return self(); }
+
+        /** Attach a registered {@link ImageDoc} inline with a per-appearance caption override. */
+        public SELF image(ImageDoc doc, String caption) { content.add(new ImageSegment(doc, caption)); return self(); }
+
+        /** Attach any pre-built {@link RigidSegment} (the full constructor surface). */
+        public SELF segment(RigidSegment s) { content.add(Objects.requireNonNull(s, "segment")); return self(); }
 
         void addChild(DocNode n) { children.add(n); }
 

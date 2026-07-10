@@ -22,8 +22,14 @@ import java.util.Optional;
  * @param title optional segment title; contributes to TOC when present
  *
  * @since RFC 0019 Phase 1
+ * @deprecated Signpost only (no removal yet): the raw-CommonMark escape hatch is
+ *     being superseded by strict, directly-constructed block segments built on
+ *     {@link hue.captains.singapura.js.homing.studio.base.composed.text.Line} —
+ *     as {@link SimpleListSegment} already is for lists. Prefer the typed building
+ *     blocks (and {@link RelationSegment} over a GFM table). Still fully functional.
  */
-public record MarkdownSegment(String body, Optional<String> title) implements Segment {
+@Deprecated
+public record MarkdownSegment(String body, Optional<String> title) implements Listable {
     public MarkdownSegment {
         Objects.requireNonNull(body,  "MarkdownSegment.body");
         Objects.requireNonNull(title, "MarkdownSegment.title (use Optional.empty)");

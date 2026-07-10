@@ -4,7 +4,6 @@ import hue.captains.singapura.js.homing.tree.TreeNodeJsonWriter;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 
 /**
  * RFC 0039 — serialises a {@link DocTree} to the doc rigid-tree wire payload.
@@ -31,7 +30,11 @@ import java.util.function.Function;
  * the same positional identity the renderer derives while walking the structure,
  * so it joins the two parts with no stamped id. Each value is the segment's
  * content object ({@link SegmentJson}); resource-backed kinds (svg/table/image)
- * carry their <i>own stable {@code url()}</i> rather than a leveled URL.</p>
+ * carry a {@code /doc-tree-content?id=<root>&path=<key>&seg=<i>} URL — served by
+ * {@link DocTreeContentGetAction}, which returns the embedded doc's <i>own
+ * bytes</i> so the composed doc loads it as a regular resource and applies its
+ * own figure/caption styling (rather than the resource's standalone viewer app,
+ * whose {@code url()} would serve an HTML page the renderers can't consume).</p>
  *
  * <p>Functional Object: stateless, one {@code INSTANCE}.</p>
  *
@@ -45,16 +48,23 @@ public final class DocTreeJsonWriter {
 
     private static final TreeNodeJsonWriter STRUCTURE = new TreeNodeJsonWriter();
 
-    /** Resource-backed segments inline their own stable resource URL (RFC 0039). */
-    private static final Function<Segment, String> STABLE_URL = s -> switch (s) {
-        case SvgSegment v    -> v.doc().url();
-        case TableSegment t  -> t.doc().url();
-        case ImageSegment im -> im.doc().url();
-        default              -> "";   // text-shaped kinds inline; no resource URL
-    };
-
-    /** Render the two-part payload: structure tree + content-by-path map. */
+    /**
+     * Render the two-part payload with no root id — resource-backed segments get
+     * an unrooted content URL. Retained for callers (and tests) that have no root
+     * uuid; production callers use {@link #write(DocTree, String)} so inline
+     * resources resolve.
+     */
     public String write(DocTree tree) {
+        return write(tree, "");
+    }
+
+    /**
+     * Render the two-part payload rooted at {@code rootId} — the registered uuid
+     * of the doc being served. Resource-backed segments (svg/table/image) carry a
+     * {@code /doc-tree-content?id=<rootId>&path=<key>&seg=<i>} URL so the client
+     * fetches the embedded doc's own bytes ({@link DocTreeContentGetAction}).
+     */
+    public String write(DocTree tree, String rootId) {
         if (tree == null) throw new IllegalArgumentException("tree");
         var sb = new StringBuilder(512);
         sb.append("{\"structure\":");
@@ -66,7 +76,7 @@ public final class DocTreeJsonWriter {
             first = false;
             String key = pathKey(e.getKey());
             sb.append(ComposedDoc.jstr(key)).append(':');
-            writeLeafContent(sb, e.getValue().content(), key);
+            writeLeafContent(sb, e.getValue().content(), key, rootId);
         }
         sb.append("}}");
         return sb.toString();
@@ -78,18 +88,42 @@ public final class DocTreeJsonWriter {
      * shape being chosen here (and a matching client renderer added). Today the
      * only kind is {@link ComposedLeaf}, emitted as an array of segment objects.
      */
-    private static void writeLeafContent(StringBuilder sb, LeafContent content, String key) {
+    private static void writeLeafContent(StringBuilder sb, LeafContent content, String key, String rootId) {
         switch (content) {
             case ComposedLeaf bundle -> {
-                sb.append('[');
-                List<Segment> segs = bundle.contents();
-                for (int i = 0; i < segs.size(); i++) {
-                    if (i > 0) sb.append(',');
-                    SegmentJson.write(sb, segs.get(i), "seg-" + key + "-" + i, STABLE_URL);
+                var caption = bundle.caption();
+                if (caption.isPresent()) {
+                    // Object form (only when a caption is set): { caption, segments }.
+                    // Caption-less nodes keep the legacy array form — the extra field
+                    // is optional, so the front-end supports both.
+                    sb.append("{\"caption\":").append(ComposedDoc.jstr(caption.get().raw()))
+                      .append(",\"segments\":");
+                    writeSegments(sb, bundle.contents(), key, rootId);
+                    sb.append('}');
+                } else {
+                    writeSegments(sb, bundle.contents(), key, rootId);
                 }
-                sb.append(']');
             }
         }
+    }
+
+    private static void writeSegments(StringBuilder sb, List<Segment> segs, String key, String rootId) {
+        sb.append('[');
+        for (int i = 0; i < segs.size(); i++) {
+            if (i > 0) sb.append(',');
+            final int segIndex = i;
+            // Resource-backed segments (svg/table/image) resolve to the embedded
+            // doc's own bytes via /doc-tree-content; the closure is invoked by
+            // SegmentJson only for those kinds.
+            SegmentJson.write(sb, segs.get(i), "seg-" + key + "-" + i,
+                    s -> inlineResourceUrl(rootId, key, segIndex));
+        }
+        sb.append(']');
+    }
+
+    /** The raw-content URL for a resource-backed inline segment (svg / table / image). */
+    private static String inlineResourceUrl(String rootId, String pathKey, int seg) {
+        return "/doc-tree-content?id=" + rootId + "&path=" + pathKey + "&seg=" + seg;
     }
 
     /** Canonical path key: child-index path joined by {@code '/'} ({@code ""} for root). */

@@ -46,8 +46,15 @@ import java.util.Optional;
  * @param title optional segment title; contributes to TOC when present
  *
  * @since RFC 0018 Phase 4
+ * @deprecated Signpost only (no removal yet): free-form prose segments are being
+ *     superseded by strict, directly-constructed block segments built on
+ *     {@link hue.captains.singapura.js.homing.studio.base.composed.text.Line} —
+ *     as {@link SimpleListSegment} already is for lists. A paragraph/quote
+ *     successor is planned; prefer the typed building blocks going forward.
+ *     Still fully functional in the meantime.
  */
-public record TextSegment(String body, Optional<String> title) implements Segment {
+@Deprecated
+public record TextSegment(String body, Optional<String> title) implements Listable {
 
     public TextSegment {
         Objects.requireNonNull(body,  "TextSegment.body");

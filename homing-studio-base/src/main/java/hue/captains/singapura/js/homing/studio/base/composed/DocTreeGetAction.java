@@ -124,15 +124,20 @@ public final class DocTreeGetAction
     private CompletableFuture<DocContent> treePayload(Doc doc, String locator) {
         try {
             String json;
-            if (doc instanceof ComposedDoc cd) {
-                json = DocTreeJsonWriter.INSTANCE.write(ComposedDocNormalizer.INSTANCE.toDocTree(cd));
+            String rootId = doc.uuid().toString();
+            if (doc instanceof DocTreeSource dts) {
+                // A Doc that computes its own tree (e.g. a catalogue-mirror),
+                // possibly lazily — takes precedence over the kind dispatch.
+                json = DocTreeJsonWriter.INSTANCE.write(dts.toDocTree(), rootId);
+            } else if (doc instanceof ComposedDoc cd) {
+                json = DocTreeJsonWriter.INSTANCE.write(ComposedDocNormalizer.INSTANCE.toDocTree(cd), rootId);
             } else if (doc instanceof hue.captains.singapura.js.homing.studio.base.rigid.RigidDoc rd) {
                 json = DocTreeJsonWriter.INSTANCE.write(
-                        hue.captains.singapura.js.homing.studio.base.rigid.RigidDocNormalizer.INSTANCE.toDocTree(rd));
+                        hue.captains.singapura.js.homing.studio.base.rigid.RigidDocNormalizer.INSTANCE.toDocTree(rd), rootId);
             } else if ("doc".equals(doc.kind()) || "markdown".equals(doc.kind())) {
                 // Legacy markdown-bodied Doc (ClasspathMarkdownDoc, MarkdownDoc, …):
                 // render its raw markdown as one flat node — no migration needed.
-                json = DocTreeJsonWriter.INSTANCE.write(MarkdownDocNormalizer.INSTANCE.toDocTree(doc));
+                json = DocTreeJsonWriter.INSTANCE.write(MarkdownDocNormalizer.INSTANCE.toDocTree(doc), rootId);
             } else {
                 return CompletableFuture.failedFuture(notFound(locator,
                         "Doc kind '" + doc.kind() + "' has no rigid-tree transform — supported: "

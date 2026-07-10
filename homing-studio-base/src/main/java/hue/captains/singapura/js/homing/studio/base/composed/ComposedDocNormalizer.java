@@ -7,6 +7,7 @@ import hue.captains.singapura.js.homing.tree.NormalizedNode;
 import hue.captains.singapura.js.homing.tree.RigidTrees;
 import hue.captains.singapura.js.homing.tree.TreeLevel;
 import hue.captains.singapura.js.homing.tree.TreeNormalizer;
+import hue.captains.singapura.js.homing.studio.base.composed.text.Line;
 import hue.captains.singapura.js.homing.tree.dims.NameValue;
 
 import java.util.ArrayList;
@@ -134,7 +135,10 @@ public final class ComposedDocNormalizer implements TreeNormalizer<ComposedDoc> 
             case MarkdownSegment m -> m.title().orElse("");
             case TextSegment t     -> t.title().orElse("");
             case CodeSegment c     -> c.title().orElse("");
-            case RelationSegment r -> r.caption().orElse("");
+            case RelationSegment r -> r.caption().map(Line.Plain::raw).orElse("");
+            case UnorderedListSegment ul -> "";
+            case OrderedListSegment ol -> "";
+            case ParagraphSegment p -> "";
             case SvgSegment sv     -> sv.resolvedCaption();
             case TableSegment tb   -> tb.resolvedCaption();
             case ImageSegment im   -> im.resolvedCaption();
@@ -150,6 +154,9 @@ public final class ComposedDocNormalizer implements TreeNormalizer<ComposedDoc> 
             case TextSegment t     -> "text";
             case CodeSegment c     -> "code";
             case RelationSegment r -> "relation";
+            case UnorderedListSegment ul -> "ulist";
+            case OrderedListSegment ol -> "olist";
+            case ParagraphSegment p -> "paragraph";
             case SvgSegment sv     -> "svg";
             case TableSegment tb   -> "table";
             case ImageSegment im   -> "image";

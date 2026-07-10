@@ -48,13 +48,24 @@ public final class RigidDoc implements Doc {
         return new Rigid.L0(uuid, title, summary, category);
     }
 
+    /**
+     * Build a {@code RigidDoc} directly from a pre-assembled {@link DocNode} tree.
+     * The leveled DSL ({@link Rigid}) is a convenience over this; a caller that
+     * already has an arbitrary tree (e.g. transformed from another source) builds
+     * the {@link DocNode}s itself and wraps them here. The doc title is the root
+     * node's title.
+     */
+    public static RigidDoc fromNode(UUID uuid, String summary, String category, DocNode root) {
+        return new RigidDoc(uuid, summary, category, root);
+    }
+
     /** The root structure node (its title is the doc title). */
     public DocNode root() { return root; }
 
     // ── Doc protocol ──────────────────────────────────────────────────────
     @Override public UUID    uuid()        { return uuid; }
     @Override public DocId   id()          { return new DocId.ByUuid(uuid); }
-    @Override public String  title()       { return root.title(); }
+    @Override public String  title()       { return root.title().text(); }
     @Override public String  summary()     { return summary; }
     @Override public String  category()    { return category; }
     @Override public String  kind()        { return "composed"; }   // reuses the doc-tree route
@@ -69,6 +80,7 @@ public final class RigidDoc implements Doc {
      * parse-clean byte source for any generic caller.
      */
     @Override public String contents() {
-        return DocTreeJsonWriter.INSTANCE.write(RigidDocNormalizer.INSTANCE.toDocTree(this));
+        return DocTreeJsonWriter.INSTANCE.write(
+                RigidDocNormalizer.INSTANCE.toDocTree(this), uuid.toString());
     }
 }

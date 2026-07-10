@@ -39,6 +39,8 @@ public record DocTreeRendererModule() implements DomModule<DocTreeRendererModule
         return ImportsFor.<DocTreeRendererModule>builder()
                 .add(new ModuleImports<>(List.of(new TreeRendererModule.TreeRenderer()),
                         TreeRendererModule.INSTANCE))
+                .add(new ModuleImports<>(List.of(new NodeContentModule.NodeContent()),
+                        NodeContentModule.INSTANCE))
                 .build();
     }
 

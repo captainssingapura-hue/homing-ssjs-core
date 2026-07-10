@@ -6,6 +6,7 @@ import hue.captains.singapura.js.homing.studio.base.Reference;
 import hue.captains.singapura.js.homing.studio.base.SvgDoc;
 import hue.captains.singapura.js.homing.studio.base.composed.text.Block;
 import hue.captains.singapura.js.homing.studio.base.composed.text.Inline;
+import hue.captains.singapura.js.homing.studio.base.composed.text.Line;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -190,7 +191,7 @@ public record ComposedDoc(
                 case RelationSegment rs -> {
                     sb.append("\"kind\":\"relation\",");
                     sb.append("\"anchor\":") .append(jstr("seg-" + segIndex)).append(',');
-                    sb.append("\"caption\":").append(jstr(rs.caption().orElse(""))).append(',');
+                    sb.append("\"caption\":").append(jstr(rs.caption().map(Line.Plain::raw).orElse(""))).append(',');
                     sb.append("\"headers\":");
                     appendStringList(sb, rs.headers());
                     sb.append(",\"rows\":[");
@@ -199,6 +200,20 @@ public record ComposedDoc(
                         if (!firstRow) sb.append(',');
                         firstRow = false;
                         appendStringList(sb, row);
+                    }
+                    sb.append(']');
+                }
+                case UnorderedListSegment ul -> appendListSegment(sb, "ulist", segIndex, ul.items(), rootId, pathPrefix);
+                case OrderedListSegment ol -> appendListSegment(sb, "olist", segIndex, ol.items(), rootId, pathPrefix);
+                case ParagraphSegment p -> {
+                    sb.append("\"kind\":\"paragraph\",");
+                    sb.append("\"anchor\":").append(jstr("seg-" + segIndex)).append(',');
+                    sb.append("\"lines\":[");
+                    boolean firstLine = true;
+                    for (Line.Plain ln : p.lines()) {
+                        if (!firstLine) sb.append(',');
+                        firstLine = false;
+                        sb.append(jstr(ln.raw()));
                     }
                     sb.append(']');
                 }
@@ -281,6 +296,25 @@ public record ComposedDoc(
         return sb.toString();
     }
 
+    /**
+     * Serialize a list segment ({@code ulist}/{@code olist}) in the flat path.
+     * Delegates each {@link Listable} item to {@link SegmentJson}; nested resource
+     * items reuse the list's own leveled URL (best-effort — flat composed docs
+     * don't author lists; the rigid-tree path is the supported one).
+     */
+    private static void appendListSegment(StringBuilder sb, String kind, int segIndex,
+            List<? extends Segment> items, String rootId, List<String> pathPrefix) {
+        sb.append("\"kind\":\"").append(kind).append("\",");
+        sb.append("\"anchor\":").append(jstr("seg-" + segIndex)).append(',');
+        sb.append("\"items\":[");
+        for (int j = 0; j < items.size(); j++) {
+            if (j > 0) sb.append(',');
+            SegmentJson.write(sb, items.get(j), "seg-" + segIndex + "-" + j,
+                    s -> buildLeveledUrl(rootId, pathPrefix, segIndex));
+        }
+        sb.append(']');
+    }
+
     // -----------------------------------------------------------------------
     // TOC builder — segment captions + markdown heading extraction.
     // -----------------------------------------------------------------------
@@ -344,6 +378,11 @@ public record ComposedDoc(
                         out.add(new TocEntry(2, cap, anchor));
                     }
                 }
+                case UnorderedListSegment ul -> { /* list body — no TOC contribution */ }
+                case OrderedListSegment ol -> { /* list body — no TOC contribution */ }
+                case ParagraphSegment p -> {
+                    // A plain paragraph is body only — no title, no TOC contribution.
+                }
                 case ComposedSegment cd -> {
                     // RFC 0024 P1c — recursive composed segment. TOC entry uses
                     // the resolved caption (the segment's caption-override
@@ -360,7 +399,7 @@ public record ComposedDoc(
                     // (each level's TOC sidebar lives next to its own body).
                 }
                 case RelationSegment rs -> {
-                    rs.caption().ifPresent(cap -> out.add(new TocEntry(2, cap, anchor)));
+                    rs.caption().ifPresent(cap -> out.add(new TocEntry(2, cap.raw(), anchor)));
                 }
                 case DocumentaryWidget<?, ?> w -> {
                     String cap = w.resolvedCaption();

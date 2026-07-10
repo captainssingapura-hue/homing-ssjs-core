@@ -64,6 +64,9 @@ public final class DocTreeWidget extends DocWidget<DocTreeWidget.Params, DocTree
                 // The doc-tree renderer (TOC + body + selection→navigate).
                 new ModuleImports<>(List.of(new DocTreeRendererModule.renderDocTree()),
                         DocTreeRendererModule.INSTANCE),
+                // Node caption (the highlighted header) — injected as renderCaption.
+                new ModuleImports<>(List.of(new CaptionRenderer.renderCaption()),
+                        CaptionRenderer.INSTANCE),
                 // Standalone HTML export (DocReader export) — same pill as ComposedWidget.
                 new ModuleImports<>(List.of(new HtmlExportModule.exportPageAsHtml()),
                         HtmlExportModule.INSTANCE),
@@ -82,6 +85,12 @@ public final class DocTreeWidget extends DocWidget<DocTreeWidget.Params, DocTree
                         ImageSegmentRenderer.INSTANCE),
                 new ModuleImports<>(List.of(new RelationSegmentRenderer.renderRelationSegment()),
                         RelationSegmentRenderer.INSTANCE),
+                new ModuleImports<>(List.of(
+                        new ListSegmentRenderer.renderUnorderedListSegment(),
+                        new ListSegmentRenderer.renderOrderedListSegment()),
+                        ListSegmentRenderer.INSTANCE),
+                new ModuleImports<>(List.of(new ParagraphSegmentRenderer.renderParagraphSegment()),
+                        ParagraphSegmentRenderer.INSTANCE),
                 new ModuleImports<>(List.of(new DocumentaryWidgetSegmentRenderer.renderDocumentaryWidgetSegment()),
                         DocumentaryWidgetSegmentRenderer.INSTANCE),
                 new ModuleImports<>(List.of(
@@ -144,6 +153,9 @@ public final class DocTreeWidget extends DocWidget<DocTreeWidget.Params, DocTree
                 "            case 'table':    renderTableSegment(segBranch, host, seg, ctx); break;",
                 "            case 'image':    renderImageSegment(segBranch, host, seg, ctx); break;",
                 "            case 'relation': renderRelationSegment(segBranch, host, seg, ctx); break;",
+                "            case 'ulist':    renderUnorderedListSegment(segBranch, host, seg, ctx); break;",
+                "            case 'olist':    renderOrderedListSegment(segBranch, host, seg, ctx); break;",
+                "            case 'paragraph': renderParagraphSegment(segBranch, host, seg, ctx); break;",
                 "            case 'documentary-widget':",
                 "                             renderDocumentaryWidgetSegment(segBranch, host, seg, ctx); break;",
                 "            default:",
@@ -153,6 +165,8 @@ public final class DocTreeWidget extends DocWidget<DocTreeWidget.Params, DocTree
                 "                host.appendChild(unk);",
                 "        }",
                 "    }",
+                "    // Expose the dispatcher so list segments can render their items recursively.",
+                "    ctx.renderContent = renderContent;",
                 "",
                 "    fetch(fetchUrl)",
                 "        .then(function(r){ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })",
@@ -163,6 +177,7 @@ public final class DocTreeWidget extends DocWidget<DocTreeWidget.Params, DocTree
                 "                container:     bodyHost,",
                 "                payload:       payload,",
                 "                renderContent: renderContent,",
+                "                renderCaption: renderCaption,",
                 "                expandDepth:   99",
                 "            });",
                 "",

@@ -25,6 +25,7 @@ function renderDocTree(opts) {
     var structure     = payload.structure || null;
     var content       = payload.content || {};
     var renderContent = opts.renderContent || function () {};
+    var renderCaption = opts.renderCaption || function () {};
 
     // ── two-pane layout: TOC | body ──
     var layout = branch.createElement('docTreeLayout', 'div');
@@ -81,13 +82,16 @@ function renderDocTree(opts) {
         // an array of segments rendered into the node's body, in order. A node
         // with both content and children shows this as a lead-in above its
         // (foldable) children.
-        var bundle = content[key];
-        if (bundle && bundle.length) {
+        var nc = new NodeContent(content[key]);
+        if (nc.caption || (nc.segments && nc.segments.length)) {
             var contentHost = branch.createElement('docContent_' + nk, 'div');
             section.appendChild(contentHost);
-            for (var ci = 0; ci < bundle.length; ci++) {
+            if (nc.caption) {
+                renderCaption(nc.caption, contentHost);
+            }
+            for (var ci = 0; ci < nc.segments.length; ci++) {
                 var segBranch = branch.createBranch('docSeg_' + nk + '_' + ci);
-                renderContent(bundle[ci], contentHost, segBranch, key + ':' + ci);
+                renderContent(nc.segments[ci], contentHost, segBranch, key + ':' + ci);
             }
         }
 

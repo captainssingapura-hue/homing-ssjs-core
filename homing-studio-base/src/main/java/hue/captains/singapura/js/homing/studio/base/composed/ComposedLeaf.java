@@ -1,7 +1,10 @@
 package hue.captains.singapura.js.homing.studio.base.composed;
 
+import hue.captains.singapura.js.homing.studio.base.composed.text.Line;
+
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * RFC 0041 — a leaf's content: a flat, ordered bundle of {@link Segment}s. The
@@ -22,13 +25,20 @@ import java.util.Objects;
  * content payloads — the flat-bundle case. Other kinds (an external SVG, a bare
  * image) bind through the same provider seam without being a bundle.</p>
  *
+ * @param caption  optional highlighted header rendered above the body (one plain line)
  * @param contents the ordered segments rendered in this node's body
  * @since homing-studio-base — RFC 0041 structure vs content
  */
-public record ComposedLeaf(List<Segment> contents) implements LeafContent {
+public record ComposedLeaf(Optional<Line.Plain> caption, List<Segment> contents) implements LeafContent {
 
     public ComposedLeaf {
+        Objects.requireNonNull(caption,  "ComposedLeaf.caption (use Optional.empty)");
         Objects.requireNonNull(contents, "ComposedLeaf.contents");
         contents = List.copyOf(contents);
+    }
+
+    /** Convenience — no caption. */
+    public ComposedLeaf(List<Segment> contents) {
+        this(Optional.empty(), contents);
     }
 }

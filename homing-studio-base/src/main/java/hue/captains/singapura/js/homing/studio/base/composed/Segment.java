@@ -36,12 +36,16 @@ import hue.captains.singapura.tao.ontology.ValueObject;
  * §3.4). Citation works across segments because it targets Docs, not
  * segments.</p>
  *
+ * <p><b>Sub-hierarchy:</b> the inline content kinds are grouped under
+ * {@link RigidSegment} (the subset a {@code RigidDoc} node may hold);
+ * {@link ComposedSegment} (doc-in-doc graft) and {@link DocumentaryWidget}
+ * (embedded interactive widget) sit directly under {@code Segment} and are
+ * valid only in a flat {@link ComposedDoc}, not a RigidDoc.</p>
+ *
  * @since RFC 0019 Phase 1 (extended Phase 3 with table + image variants)
  */
 public sealed interface Segment extends ValueObject
-        permits MarkdownSegment, TextSegment, CodeSegment,
-                RelationSegment,
-                SvgSegment, TableSegment, ImageSegment,
+        permits RigidSegment,
                 ComposedSegment,
                 DocumentaryWidget {
 }

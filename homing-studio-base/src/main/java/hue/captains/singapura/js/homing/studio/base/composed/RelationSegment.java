@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.studio.base.composed;
 
+import hue.captains.singapura.js.homing.studio.base.composed.text.Line;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -37,10 +39,10 @@ import java.util.function.Function;
  * @since RFC 0019 (RelationSegment — typed table addition)
  */
 public record RelationSegment(
-        List<String>       headers,
-        List<List<String>> rows,
-        Optional<String>   caption
-) implements Segment {
+        List<String>        headers,
+        List<List<String>>  rows,
+        Optional<Line.Plain> caption
+) implements Listable {
 
     /**
      * Typed column definition. The header label and the value extractor are
@@ -75,13 +77,13 @@ public record RelationSegment(
         return build(columns, data, Optional.empty());
     }
 
-    /** Convenience — with caption (contributes to TOC). */
+    /** Convenience — with caption (contributes to TOC; blank becomes no caption). */
     public static <T> RelationSegment of(List<Column<T>> columns, List<T> data, String caption) {
-        return build(columns, data, Optional.of(caption));
+        return build(columns, data, Line.optionalPlain(caption));
     }
 
     private static <T> RelationSegment build(
-            List<Column<T>> columns, List<T> data, Optional<String> caption) {
+            List<Column<T>> columns, List<T> data, Optional<Line.Plain> caption) {
         Objects.requireNonNull(columns, "RelationSegment.of: columns");
         Objects.requireNonNull(data,    "RelationSegment.of: data");
         var headers = columns.stream().map(Column::header).toList();

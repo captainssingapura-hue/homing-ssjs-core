@@ -10,6 +10,9 @@ import hue.captains.singapura.js.homing.studio.base.composed.DocumentaryWidgetSe
 import hue.captains.singapura.js.homing.studio.base.composed.ImageSegmentRenderer;
 import hue.captains.singapura.js.homing.studio.base.composed.MarkdownSegmentRenderer;
 import hue.captains.singapura.js.homing.studio.base.composed.RelationSegmentRenderer;
+import hue.captains.singapura.js.homing.studio.base.composed.ListSegmentRenderer;
+import hue.captains.singapura.js.homing.studio.base.composed.CaptionRenderer;
+import hue.captains.singapura.js.homing.studio.base.composed.ParagraphSegmentRenderer;
 import hue.captains.singapura.js.homing.studio.base.composed.SvgSegmentRenderer;
 import hue.captains.singapura.js.homing.studio.base.composed.TableSegmentRenderer;
 import hue.captains.singapura.js.homing.studio.base.composed.TextSegmentRenderer;
@@ -96,6 +99,8 @@ public final class DocContentWidget extends WorkspaceWidget<WorkspaceWidget._Non
                 new ModuleImports<>(List.of(new ImageViewerRenderer.renderImage()), ImageViewerRenderer.INSTANCE),
                 new ModuleImports<>(List.of(new DocTreeRendererModule.renderDocTree()),
                         DocTreeRendererModule.INSTANCE),
+                new ModuleImports<>(List.of(new CaptionRenderer.renderCaption()),
+                        CaptionRenderer.INSTANCE),
                 new ModuleImports<>(List.of(new TextSegmentRenderer.renderTextSegment()),
                         TextSegmentRenderer.INSTANCE),
                 new ModuleImports<>(List.of(new MarkdownSegmentRenderer.renderMarkdownSegment()),
@@ -110,6 +115,12 @@ public final class DocContentWidget extends WorkspaceWidget<WorkspaceWidget._Non
                         ImageSegmentRenderer.INSTANCE),
                 new ModuleImports<>(List.of(new RelationSegmentRenderer.renderRelationSegment()),
                         RelationSegmentRenderer.INSTANCE),
+                new ModuleImports<>(List.of(
+                        new ListSegmentRenderer.renderUnorderedListSegment(),
+                        new ListSegmentRenderer.renderOrderedListSegment()),
+                        ListSegmentRenderer.INSTANCE),
+                new ModuleImports<>(List.of(new ParagraphSegmentRenderer.renderParagraphSegment()),
+                        ParagraphSegmentRenderer.INSTANCE),
                 new ModuleImports<>(List.of(new DocumentaryWidgetSegmentRenderer.renderDocumentaryWidgetSegment()),
                         DocumentaryWidgetSegmentRenderer.INSTANCE));
     }
@@ -162,6 +173,9 @@ public final class DocContentWidget extends WorkspaceWidget<WorkspaceWidget._Non
                 "            case 'table':    renderTableSegment(segBranch, host, seg, ctx); break;",
                 "            case 'image':    renderImageSegment(segBranch, host, seg, ctx); break;",
                 "            case 'relation': renderRelationSegment(segBranch, host, seg, ctx); break;",
+                "            case 'ulist':    renderUnorderedListSegment(segBranch, host, seg, ctx); break;",
+                "            case 'olist':    renderOrderedListSegment(segBranch, host, seg, ctx); break;",
+                "            case 'paragraph': renderParagraphSegment(segBranch, host, seg, ctx); break;",
                 "            case 'documentary-widget':",
                 "                             renderDocumentaryWidgetSegment(segBranch, host, seg, ctx); break;",
                 "            default:",
@@ -171,6 +185,8 @@ public final class DocContentWidget extends WorkspaceWidget<WorkspaceWidget._Non
                 "                host.appendChild(unk);",
                 "        }",
                 "    }",
+                "    // Expose the dispatcher so list segments can render their items recursively.",
+                "    ctx.renderContent = renderContent;",
                 "",
                 "    // Open a node IN PLACE. The kinds /doc-tree can transform render",
                 "    // here: 'composed' (ComposedDoc + RigidDoc) and 'doc'/'markdown'",
@@ -212,6 +228,7 @@ public final class DocContentWidget extends WorkspaceWidget<WorkspaceWidget._Non
                 "                    container:     host,",
                 "                    payload:       payload,",
                 "                    renderContent: renderContent,",
+                "                    renderCaption: renderCaption,",
                 "                    expandDepth:   99",
                 "                });",
                 "            })",

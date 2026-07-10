@@ -39,7 +39,7 @@ import java.util.Optional;
  *
  * @since RFC 0019 §2.1 — future kind landed
  */
-public record CodeSegment(String body, String language, Optional<String> title) implements Segment {
+public record CodeSegment(String body, String language, Optional<String> title) implements Listable {
 
     public CodeSegment {
         Objects.requireNonNull(body,     "CodeSegment.body");
