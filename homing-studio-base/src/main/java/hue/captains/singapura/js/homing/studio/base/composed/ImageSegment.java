@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.composed;
 
+import hue.captains.singapura.js.homing.studio.base.composed.text.Line;
 import hue.captains.singapura.js.homing.studio.base.image.ImageDoc;
 
 import java.util.Objects;
@@ -28,7 +29,7 @@ import java.util.Optional;
  *
  * @since RFC 0019 Phase 3
  */
-public record ImageSegment(ImageDoc doc, Optional<String> captionOverride) implements Segment {
+public record ImageSegment(ImageDoc doc, Optional<Line.Plain> captionOverride) implements Listable {
     public ImageSegment {
         Objects.requireNonNull(doc,             "ImageSegment.doc");
         Objects.requireNonNull(captionOverride, "ImageSegment.captionOverride (use Optional.empty)");
@@ -39,9 +40,14 @@ public record ImageSegment(ImageDoc doc, Optional<String> captionOverride) imple
         this(doc, Optional.empty());
     }
 
+    /** Convenience — caption from a raw string (blank becomes no override). */
+    public ImageSegment(ImageDoc doc, String caption) {
+        this(doc, Line.optionalPlain(caption));
+    }
+
     /** The caption to render — explicit override, or doc.summary() (its caption), or alt. */
     public String resolvedCaption() {
-        return captionOverride.orElseGet(() -> {
+        return captionOverride.map(Line.Plain::raw).orElseGet(() -> {
             String cap = doc.summary();
             return (cap == null || cap.isBlank()) ? doc.alt() : cap;
         });

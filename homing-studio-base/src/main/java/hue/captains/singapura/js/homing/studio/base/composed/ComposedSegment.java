@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.studio.base.composed;
 
+import hue.captains.singapura.js.homing.studio.base.composed.text.Line;
+
 import java.util.Objects;
 import java.util.Optional;
 
@@ -35,7 +37,7 @@ import java.util.Optional;
  *
  * @since RFC 0024 Phase P1c — recursive composedDoc support
  */
-public record ComposedSegment(ComposedDoc doc, Optional<String> captionOverride) implements Segment {
+public record ComposedSegment(ComposedDoc doc, Optional<Line.Plain> captionOverride) implements Segment {
     public ComposedSegment {
         Objects.requireNonNull(doc,             "ComposedSegment.doc");
         Objects.requireNonNull(captionOverride, "ComposedSegment.captionOverride (use Optional.empty)");
@@ -46,8 +48,13 @@ public record ComposedSegment(ComposedDoc doc, Optional<String> captionOverride)
         this(doc, Optional.empty());
     }
 
+    /** Convenience — caption from a raw string (blank becomes no override). */
+    public ComposedSegment(ComposedDoc doc, String caption) {
+        this(doc, Line.optionalPlain(caption));
+    }
+
     /** The caption to render — explicit override, or doc.title() when blank. */
     public String resolvedCaption() {
-        return captionOverride.orElse(doc.title());
+        return captionOverride.map(Line.Plain::raw).orElse(doc.title());
     }
 }

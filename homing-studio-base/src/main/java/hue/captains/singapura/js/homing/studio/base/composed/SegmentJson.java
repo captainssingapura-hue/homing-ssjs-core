@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.studio.base.composed;
 
+import hue.captains.singapura.js.homing.studio.base.composed.text.Line;
+
 import java.util.List;
 import java.util.function.Function;
 
@@ -78,10 +80,24 @@ final class SegmentJson {
                 sb.append("\"caption\":")  .append(ComposedDoc.jstr(im.resolvedCaption())).append(',');
                 sb.append("\"imageUrl\":") .append(ComposedDoc.jstr(resourceUrl.apply(s)));
             }
+            case UnorderedListSegment ul -> writeList(sb, "ulist", anchor, ul.items(), resourceUrl);
+            case OrderedListSegment ol -> writeList(sb, "olist", anchor, ol.items(), resourceUrl);
+            case ParagraphSegment p -> {
+                sb.append("\"kind\":\"paragraph\",");
+                sb.append("\"anchor\":").append(ComposedDoc.jstr(anchor)).append(',');
+                sb.append("\"lines\":[");
+                boolean firstLine = true;
+                for (Line.Plain ln : p.lines()) {
+                    if (!firstLine) sb.append(',');
+                    firstLine = false;
+                    sb.append(ComposedDoc.jstr(ln.raw()));
+                }
+                sb.append(']');
+            }
             case RelationSegment rs -> {
                 sb.append("\"kind\":\"relation\",");
                 sb.append("\"anchor\":") .append(ComposedDoc.jstr(anchor)).append(',');
-                sb.append("\"caption\":").append(ComposedDoc.jstr(rs.caption().orElse(""))).append(',');
+                sb.append("\"caption\":").append(ComposedDoc.jstr(rs.caption().map(Line.Plain::raw).orElse(""))).append(',');
                 sb.append("\"headers\":");
                 ComposedDoc.appendStringList(sb, rs.headers());
                 sb.append(",\"rows\":[");
@@ -114,5 +130,23 @@ final class SegmentJson {
             }
         }
         sb.append('}');
+    }
+
+    /**
+     * Serialize a list segment ({@code ulist}/{@code olist}) — its items are
+     * {@link Listable} segments, written recursively with a nested anchor
+     * ({@code <anchor>-<i>}). Items are never lists (compile-time), so recursion
+     * is depth-1.
+     */
+    private static void writeList(StringBuilder sb, String kind, String anchor,
+                                  List<Listable> items, Function<Segment, String> resourceUrl) {
+        sb.append("\"kind\":\"").append(kind).append("\",");
+        sb.append("\"anchor\":").append(ComposedDoc.jstr(anchor)).append(',');
+        sb.append("\"items\":[");
+        for (int i = 0; i < items.size(); i++) {
+            if (i > 0) sb.append(',');
+            write(sb, items.get(i), anchor + "-" + i, resourceUrl);
+        }
+        sb.append(']');
     }
 }

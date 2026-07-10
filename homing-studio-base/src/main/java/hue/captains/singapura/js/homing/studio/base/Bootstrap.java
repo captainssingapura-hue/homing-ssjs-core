@@ -24,6 +24,7 @@ import hue.captains.singapura.js.homing.studio.base.app.StudioBrand;
 import hue.captains.singapura.js.homing.studio.base.theme.CssGroupImplRegistry;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemesGetAction;
 import hue.captains.singapura.js.homing.studio.base.app.DocTreeViewer;
+import hue.captains.singapura.js.homing.studio.base.composed.DocTreeContentGetAction;
 import hue.captains.singapura.js.homing.studio.base.composed.DocTreeGetAction;
 import hue.captains.singapura.js.homing.studio.base.widget.SingleWidgetWorkspace;
 import hue.captains.singapura.js.homing.studio.base.tracker.Plan;
@@ -325,6 +326,7 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
                 all.put("/css-content", cssContentAction);
                 all.put("/doc",         docAction);
                 all.put("/doc-tree",    new DocTreeGetAction(docRegistry, openRoot));
+                all.put("/doc-tree-content", new DocTreeContentGetAction(docRegistry));
                 all.put("/doc-refs",    docRefsAction);
                 all.put("/app-refs",    appRefsAction);
                 all.put("/open-content", openContentAction);

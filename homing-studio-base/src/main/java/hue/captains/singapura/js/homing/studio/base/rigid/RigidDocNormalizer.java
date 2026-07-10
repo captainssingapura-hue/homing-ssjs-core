@@ -50,7 +50,9 @@ public final class RigidDocNormalizer {
                                  Map<List<Integer>, ContentProvider> providers) {
         // Content (if any) is this node's bundle, bound at this node's path.
         if (!node.content().isEmpty()) {
-            final ComposedLeaf leaf = new ComposedLeaf(node.content());
+            // Widen List<RigidSegment> → List<Segment> for the general content seam;
+            // carry the node's optional caption onto the leaf.
+            final ComposedLeaf leaf = new ComposedLeaf(node.caption(), List.copyOf(node.content()));
             providers.put(path, () -> leaf);
         }
 
@@ -63,7 +65,7 @@ public final class RigidDocNormalizer {
                 kids.add(build(children.get(i), childLevel, append(path, i), providers));
             }
         }
-        return new NormalizedNode(level, labelDims(node.title()), kids);
+        return new NormalizedNode(level, labelDims(node.title().text()), kids);
     }
 
     private static List<Integer> append(List<Integer> prefix, int idx) {

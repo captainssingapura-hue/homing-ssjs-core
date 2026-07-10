@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.studio.base.composed;
 
 import hue.captains.singapura.js.homing.studio.base.SvgDoc;
+import hue.captains.singapura.js.homing.studio.base.composed.text.Line;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -31,7 +32,7 @@ import java.util.Optional;
  *
  * @since RFC 0019 Phase 1
  */
-public record SvgSegment(SvgDoc<?> doc, Optional<String> captionOverride) implements Segment {
+public record SvgSegment(SvgDoc<?> doc, Optional<Line.Plain> captionOverride) implements Listable {
     public SvgSegment {
         Objects.requireNonNull(doc,             "SvgSegment.doc");
         Objects.requireNonNull(captionOverride, "SvgSegment.captionOverride (use Optional.empty)");
@@ -42,8 +43,13 @@ public record SvgSegment(SvgDoc<?> doc, Optional<String> captionOverride) implem
         this(doc, Optional.empty());
     }
 
+    /** Convenience — caption from a raw string (blank becomes no override). */
+    public SvgSegment(SvgDoc<?> doc, String caption) {
+        this(doc, Line.optionalPlain(caption));
+    }
+
     /** The caption to render — explicit override, or doc.title() when blank, or empty. */
     public String resolvedCaption() {
-        return captionOverride.orElse(doc.title());
+        return captionOverride.map(Line.Plain::raw).orElse(doc.title());
     }
 }
