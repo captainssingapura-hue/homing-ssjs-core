@@ -16,11 +16,11 @@ import java.util.function.Supplier;
 
 /**
  * The name-path successor to {@link RigidDoc} (RFC 0039): a {@link Doc} whose
- * structure and content come from a "bring your own tree" {@link TreeGraph} —
- * a flat set of nodes + edges the {@link TreeGraphNormalizer} assembles and
- * validates into a {@link DocTreeV2}. Content is addressed by <b>name-path</b>
- * (a stable nodeName-chain), not the fragile child-index path {@code RigidDoc}
- * serves.
+ * structure and content come from a "bring your own tree" flat list of
+ * {@link RigidNode}s — the {@link RigidNodeNormalizer} inverts the parent pointers
+ * and validates them into a {@link DocTreeV2}. Content is addressed by
+ * <b>name-path</b> (a stable nodeName-chain), not the fragile child-index path
+ * {@code RigidDoc} serves.
  *
  * <p>The tree is built <b>lazily</b> (first request, cached) via a supplier, so a
  * doc that mirrors a source it also belongs to can defer the walk to request time
