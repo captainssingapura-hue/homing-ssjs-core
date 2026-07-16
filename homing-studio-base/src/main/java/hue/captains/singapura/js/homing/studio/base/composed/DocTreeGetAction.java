@@ -125,7 +125,11 @@ public final class DocTreeGetAction
         try {
             String json;
             String rootId = doc.uuid().toString();
-            if (doc instanceof DocTreeSource dts) {
+            if (doc instanceof DocTreeV2Source v2) {
+                // A name-path doc (RigidDocV2) — content keyed by nodeName-chain,
+                // stable across reordering. Checked first, before the index-path forms.
+                json = DocTreeV2JsonWriter.INSTANCE.write(v2.toDocTreeV2(), rootId);
+            } else if (doc instanceof DocTreeSource dts) {
                 // A Doc that computes its own tree (e.g. a catalogue-mirror),
                 // possibly lazily — takes precedence over the kind dispatch.
                 json = DocTreeJsonWriter.INSTANCE.write(dts.toDocTree(), rootId);

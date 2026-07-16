@@ -50,15 +50,30 @@ function renderDocTree(opts) {
 
     // ── body: one <section> per structure node, NESTED so each node's whole
     // subtree sits in its own container the TOC can fold in sync. ──
-    var sectionsByKey = {};   // path key -> the node's own <section> (scroll nav)
-    var kidsWrapByKey = {};   // path key -> the node's children container (fold)
-    function keyOf(path) { return path.join('/'); }              // canonical path key
+    var sectionsByKey = {};   // INDEX path key -> the node's own <section> (TOC scroll nav)
+    var kidsWrapByKey = {};   // INDEX path key -> the node's children container (fold)
+    var contentKeyByIdx = {}; // INDEX path key -> CONTENT key (name-path in V2, index in V1)
+    function keyOf(path) { return path.join('/'); }              // canonical child-index key
     function idOf(key)   { return 'doc-node-' + (key === '' ? 'root' : key.replace(/\//g, '_')); }
+    // The stable, URL-safe node id every node carries in a name-path doc
+    // (RigidDocV2). Present -> content is addressed by the '/'-joined chain of
+    // these ids (stable across sibling reordering); absent (V1) -> by child-index.
+    function nameOf(node) {
+        var dims = (node && node.dimensions) || [];
+        for (var i = 0; i < dims.length; i++) {
+            if (dims[i] && dims[i].key === 'nodeName') return (dims[i].text || null);
+        }
+        return null;
+    }
 
-    function walk(node, parentEl, path, depth) {
-        var key = keyOf(path);
-        // DomOpsParty branch/element names allow only [A-Za-z0-9_-]; the path key
-        // ('1/0', '') is not safe, so derive a sanitized suffix for names.
+    function walk(node, parentEl, idxPath, namePath, depth) {
+        var idxKey = keyOf(idxPath);
+        // Content key: the name-path chain when the substrate carries node ids
+        // (V2, stable across sibling reordering), else the child-index path (V1).
+        var key = (namePath !== null) ? namePath.join('/') : idxKey;
+        contentKeyByIdx[idxKey] = key;
+        // DomOpsParty branch/element names allow only [A-Za-z0-9_-]; the key
+        // ('animals/turtle', '1/0', '') is not safe, so sanitize a name suffix.
         var nk = (key === '') ? 'root' : key.replace(/[^0-9A-Za-z_-]/g, '_');
         var section = branch.createElement('docSection_' + nk, 'section');
         section.id = idOf(key);
@@ -67,7 +82,10 @@ function renderDocTree(opts) {
         // shift when it toggles.
         section.style.cssText = 'scroll-margin-top:12px;padding-left:12px;border-radius:4px;'
             + 'transition:background-color .25s ease, box-shadow .25s ease;';
-        sectionsByKey[key] = section;
+        // Keyed by the INDEX path — the TOC's TreeRenderer addresses nodes
+        // positionally, so nav callbacks resolve through this map regardless of
+        // whether content is keyed by name (V2) or index (V1).
+        sectionsByKey[idxKey] = section;
 
         // heading from the node's universal displayLabel dimension
         var label = labelOf(node);
@@ -78,10 +96,9 @@ function renderDocTree(opts) {
             section.appendChild(heading);
         }
 
-        // content for THIS node's position: a ComposedLeaf bundle (RFC 0041) —
-        // an array of segments rendered into the node's body, in order. A node
-        // with both content and children shows this as a lead-in above its
-        // (foldable) children.
+        // content for THIS node: a ComposedLeaf bundle (RFC 0041) — an array of
+        // segments rendered into the node's body, in order. A node with both
+        // content and children shows this as a lead-in above its (foldable) kids.
         var nc = new NodeContent(content[key]);
         if (nc.caption || (nc.segments && nc.segments.length)) {
             var contentHost = branch.createElement('docContent_' + nk, 'div');
@@ -106,13 +123,20 @@ function renderDocTree(opts) {
             // re-expands (its container is simply revealed, still display:none).
             var kidsWrap = branch.createElement('docKids_' + nk, 'div');
             parentEl.appendChild(kidsWrap);
-            kidsWrapByKey[key] = kidsWrap;
+            kidsWrapByKey[idxKey] = kidsWrap;
             for (var i = 0; i < kids.length; i++) {
-                walk(kids[i], kidsWrap, path.concat([i]), depth + 1);
+                // Extend the name-path with the child's node id; a missing id
+                // (V1, or a partial tree) drops the whole branch to index keys.
+                var childName = nameOf(kids[i]);
+                var childNamePath = (namePath !== null && childName !== null)
+                    ? namePath.concat([childName]) : null;
+                walk(kids[i], kidsWrap, idxPath.concat([i]), childNamePath, depth + 1);
             }
         }
     }
-    if (structure) walk(structure, bodyHost, [], 0);
+    // Seed the name-path with [] when the root carries a node id (V2); null makes
+    // the whole doc fall back to child-index keys (V1) — feature detection, no flag.
+    if (structure) walk(structure, bodyHost, [], (nameOf(structure) !== null ? [] : null), 0);
 
     // ── TOC: the substrate TreeRenderer; selection navigates the body (scroll
     // + highlight), and expand/collapse folds the body subtree in sync. ──
@@ -153,8 +177,14 @@ function renderDocTree(opts) {
         onToggle:    function (ev)  { setFold(ev && ev.path, ev && ev.expanded); },
         // Anchor hrefs to each node's body section id — live nav still uses the
         // smooth-scroll onSelect (the row handler preventDefaults), but the href
-        // makes the TOC navigable in a static HTML export with no JS.
-        hrefForPath: function (path) { return '#' + idOf(keyOf(path || [])); }
+        // makes the TOC navigable in a static HTML export with no JS. The TOC
+        // hands us a child-index path; map it to the node's CONTENT key (the
+        // name-path in V2) so the anchor matches the body section's id.
+        hrefForPath: function (path) {
+            var idxKey = keyOf(path || []);
+            var ck = contentKeyByIdx.hasOwnProperty(idxKey) ? contentKeyByIdx[idxKey] : idxKey;
+            return '#' + idOf(ck);
+        }
     });
 
     // Keyboard navigation. renderDocTree is the host of this TreeRenderer, so it

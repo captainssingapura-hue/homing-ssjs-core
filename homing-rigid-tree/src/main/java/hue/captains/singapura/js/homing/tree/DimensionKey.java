@@ -21,6 +21,9 @@ package hue.captains.singapura.js.homing.tree;
  *   <li>{@link Kind} — kind/type discriminator (value per tree-kind, e.g.
  *       studio-base's {@code KindValue}); doubles as the detail view's
  *       widget-registry dispatch key.</li>
+ *   <li>{@link NodeKey} — the stable, URL-safe node identity (value typically
+ *       {@code NameValue}); the segment from which a name-path address is
+ *       built, distinct from the human {@link DisplayLabel}.</li>
  * </ul>
  *
  * <p>All permitted keys live in this same package so the sealed permits
@@ -36,7 +39,7 @@ package hue.captains.singapura.js.homing.tree;
  * @since homing-tree-views v1
  */
 public sealed interface DimensionKey
-        permits DisplayLabel, Summary, LevelDepth, Category, Kind {
+        permits DisplayLabel, Summary, LevelDepth, Category, Kind, NodeKey {
 
     /** Stable wire tag for JSON serialisation (also the key name in JS). */
     String tag();
