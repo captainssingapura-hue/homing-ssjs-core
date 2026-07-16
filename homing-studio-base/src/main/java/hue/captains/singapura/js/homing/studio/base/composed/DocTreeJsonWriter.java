@@ -88,7 +88,12 @@ public final class DocTreeJsonWriter {
      * shape being chosen here (and a matching client renderer added). Today the
      * only kind is {@link ComposedLeaf}, emitted as an array of segment objects.
      */
-    private static void writeLeafContent(StringBuilder sb, LeafContent content, String key, String rootId) {
+    /**
+     * Package-visible so {@link DocTreeV2JsonWriter} (the name-path variant) reuses
+     * the exact same leaf/segment wire shape — only the content <b>key</b> differs
+     * (name-path vs child-index), never the value.
+     */
+    static void writeLeafContent(StringBuilder sb, LeafContent content, String key, String rootId) {
         switch (content) {
             case ComposedLeaf bundle -> {
                 var caption = bundle.caption();

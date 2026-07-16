@@ -55,11 +55,13 @@ public final class DocTreeContentGetAction
     private static final int MAX_LEVELS = 32;
 
     /**
-     * @param id   registered root doc uuid
-     * @param path the content node's child-index path ({@code []} = root)
-     * @param seg  the segment index within that node's bundle
+     * @param id      registered root doc uuid
+     * @param rawPath the raw {@code path} param verbatim — a name-path (V2,
+     *                {@code "a/b/c"}) or child-index path (V1); {@code ""} = root
+     * @param path    the child-index path parsed from {@code rawPath} (V1 only)
+     * @param seg     the segment index within that node's bundle
      */
-    public record Query(String id, List<Integer> path, int seg) implements Param._QueryString {}
+    public record Query(String id, String rawPath, List<Integer> path, int seg) implements Param._QueryString {}
 
     private final DocRegistry registry;
 
@@ -84,7 +86,7 @@ public final class DocTreeContentGetAction
             int seg;
             try { seg = (rawSeg == null) ? -1 : Integer.parseInt(rawSeg.trim()); }
             catch (NumberFormatException e) { seg = -1; }
-            return new Query(id, path, seg);
+            return new Query(id, rawPath == null ? "" : rawPath, path, seg);
         };
     }
 
@@ -108,18 +110,28 @@ public final class DocTreeContentGetAction
             return CompletableFuture.failedFuture(notFound(rawId, "No Doc registered with this UUID"));
         }
 
-        DocTree tree = toDocTree(root);
-        if (tree == null) {
-            return CompletableFuture.failedFuture(notFound(rawId,
-                    "Doc kind '" + root.kind() + "' has no rigid-tree transform"));
+        // A name-path doc (RigidDocV2) addresses content by nodeName-chain; the
+        // index-path kinds by child-index path. Same segment extraction after.
+        String locator;
+        Optional<ContentProvider> provider;
+        if (root instanceof DocTreeV2Source v2) {
+            String namePath = (query.rawPath() == null) ? "" : query.rawPath();
+            locator = namePath.isEmpty() ? "(root)" : namePath;
+            provider = v2.toDocTreeV2().providerAt(namePath);
+        } else {
+            DocTree tree = toDocTree(root);
+            if (tree == null) {
+                return CompletableFuture.failedFuture(notFound(rawId,
+                        "Doc kind '" + root.kind() + "' has no rigid-tree transform"));
+            }
+            locator = pathStr(query.path());
+            provider = tree.providerAt(query.path());
         }
-
-        Optional<ContentProvider> provider = tree.providerAt(query.path());
         if (provider.isEmpty()) {
-            return CompletableFuture.failedFuture(notFound(pathStr(query.path()), "No content at this doc-tree path"));
+            return CompletableFuture.failedFuture(notFound(locator, "No content at this doc-tree path"));
         }
         if (!(provider.get().content() instanceof ComposedLeaf leaf)) {
-            return CompletableFuture.failedFuture(notFound(pathStr(query.path()), "Node content is not a segment bundle"));
+            return CompletableFuture.failedFuture(notFound(locator, "Node content is not a segment bundle"));
         }
         List<Segment> segs = leaf.contents();
         if (query.seg() < 0 || query.seg() >= segs.size()) {
