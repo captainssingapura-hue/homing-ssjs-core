@@ -1,7 +1,10 @@
 package hue.captains.singapura.js.homing.studio.base;
 
 import hue.captains.singapura.js.homing.core.util.ResourceReader;
+import hue.captains.singapura.tao.http.config.TlsConfig;
 import hue.captains.singapura.tao.ontology.Immutable;
+
+import java.util.Optional;
 
 /**
  * RFC 0012 — deployment knobs. Port + environment-derived defaults.
@@ -21,6 +24,19 @@ public interface RuntimeParams extends Immutable {
 
     /** Port to bind. */
     int port();
+
+    /**
+     * TLS configuration for this deployment. When present, the bootstrap serves
+     * HTTPS on {@link #port()}; when empty (the default) it serves plain HTTP.
+     *
+     * <p>This is the on/off switch for HTTPS: a downstream app keeps
+     * {@code new DefaultRuntimeParams(port)} for HTTP, or supplies
+     * {@link HttpsRuntimeParams#jks(int, String, String)} to switch HTTPS on
+     * without touching any transport-level types.</p>
+     */
+    default Optional<TlsConfig> tls() {
+        return Optional.empty();
+    }
 
     /** Resource reader for classpath / disk lookups. Default: {@link ResourceReader#fromSystemProperty()}. */
     default ResourceReader resourceReader() {

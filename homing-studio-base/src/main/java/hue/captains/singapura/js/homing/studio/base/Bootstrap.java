@@ -24,7 +24,6 @@ import hue.captains.singapura.js.homing.studio.base.app.StudioBrand;
 import hue.captains.singapura.js.homing.studio.base.theme.CssGroupImplRegistry;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemesGetAction;
 import hue.captains.singapura.js.homing.studio.base.app.DocTreeViewer;
-import hue.captains.singapura.js.homing.studio.base.composed.DocTreeContentGetAction;
 import hue.captains.singapura.js.homing.studio.base.composed.DocTreeGetAction;
 import hue.captains.singapura.js.homing.studio.base.widget.SingleWidgetWorkspace;
 import hue.captains.singapura.js.homing.studio.base.tracker.Plan;
@@ -33,6 +32,7 @@ import hue.captains.singapura.js.homing.studio.base.tracker.PlanRegistry;
 import hue.captains.singapura.tao.http.action.ActionRegistry;
 import hue.captains.singapura.tao.http.action.GetAction;
 import hue.captains.singapura.tao.http.action.PostAction;
+import hue.captains.singapura.tao.http.config.HostConfig;
 import hue.captains.singapura.tao.http.vertx.VertxActionHost;
 import hue.captains.singapura.tao.ontology.ValueObject;
 import io.vertx.ext.web.RoutingContext;
@@ -86,10 +86,15 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
      */
     public void start() {
         var registry = compose();
-        var host = new VertxActionHost(registry, params.port());
+        // The on/off HTTPS switch: TLS present -> https, absent -> plain http.
+        var config = params.tls()
+                .map(tls -> HostConfig.https(params.port(), tls))
+                .orElseGet(() -> HostConfig.http(params.port()));
+        var host = new VertxActionHost(registry, config);
         host.start().onSuccess(server -> {
             int actualPort = server.actualPort();
-            System.out.println("Studio listening on port " + actualPort);
+            String scheme = params.tls().isPresent() ? "https" : "http";
+            System.out.println("Studio listening on " + scheme + " port " + actualPort);
             for (var studio : fixtures.umbrella().studios()) {
                 System.out.println("  · " + studio.getClass().getSimpleName()
                         + " (home: " + studio.home().getClass().getSimpleName() + ")");
@@ -326,7 +331,6 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
                 all.put("/css-content", cssContentAction);
                 all.put("/doc",         docAction);
                 all.put("/doc-tree",    new DocTreeGetAction(docRegistry, openRoot));
-                all.put("/doc-tree-content", new DocTreeContentGetAction(docRegistry));
                 all.put("/doc-refs",    docRefsAction);
                 all.put("/app-refs",    appRefsAction);
                 all.put("/open-content", openContentAction);
