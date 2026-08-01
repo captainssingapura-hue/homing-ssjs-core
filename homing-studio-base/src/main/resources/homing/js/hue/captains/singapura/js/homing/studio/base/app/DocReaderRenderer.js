@@ -316,6 +316,59 @@ function _renderReferences(refs, container) {
     }
 }
 
+// =============================================================================
+// _renderMermaidBlocks — turn ```mermaid fences into live SVG.
+//
+// marked renders a ```mermaid fence as <pre><code class="language-mermaid">.
+// We LAZILY dynamic-import the same-origin MermaidProxyModule only when such a
+// block exists — so diagram-free docs never touch the network. The proxy itself
+// imports the real Mermaid ESM from its (deployment-overridable) URL. On any
+// failure (offline, blocked CDN, malformed diagram) the original code fence is
+// kept and a small note is shown; the deployment can point the proxy at a
+// reachable mirror via ExternalModuleUrlRegistry.override(...).
+// =============================================================================
+var MERMAID_PROXY_URL = "/module?class=hue.captains.singapura.js.homing.libs.MermaidProxyModule";
+
+function _mermaidNote(pre, msg) {
+    if (!pre || !pre.parentNode) return;
+    var note = document.createElement("div");
+    note.style.cssText = "color:var(--color-text-muted,#888);font-size:12px;"
+        + "font-style:italic;margin:6px 0 16px;";
+    note.textContent = msg;
+    pre.parentNode.insertBefore(note, pre.nextSibling);
+}
+
+function _renderMermaidBlocks(bodyEl) {
+    var blocks = bodyEl.querySelectorAll("code.language-mermaid");
+    if (!blocks.length) return;
+    import(MERMAID_PROXY_URL).then(function (mod) {
+        for (var i = 0; i < blocks.length; i++) {
+            (function (codeEl, idx) {
+                var pre = codeEl.parentNode;
+                var src = codeEl.textContent;
+                var id = "mermaid-" + idx + "-" + Math.floor(Math.random() * 1e9);
+                mod.renderMermaid(id, src).then(function (svg) {
+                    if (!pre || !pre.parentNode) return;
+                    var wrap = document.createElement("div");
+                    wrap.setAttribute("data-mermaid", "");
+                    wrap.style.cssText = "margin:16px 0;overflow-x:auto;text-align:center;";
+                    wrap.appendChild(document.createRange().createContextualFragment(svg));
+                    pre.parentNode.replaceChild(wrap, pre);
+                }).catch(function (err) {
+                    console.error("[mermaid] render failed:", err);
+                    _mermaidNote(pre, "Diagram failed to render: "
+                        + (err && err.message ? err.message : String(err)));
+                });
+            })(blocks[i], i);
+        }
+    }).catch(function (err) {
+        console.error("[mermaid] proxy load failed:", err);
+        if (blocks[0]) _mermaidNote(blocks[0].parentNode,
+            "Mermaid library could not be loaded (offline or blocked CDN). Point the proxy "
+            + "at a reachable URL via ExternalModuleUrlRegistry.override(MermaidProxyModule.class, ...).");
+    });
+}
+
 function _renderDoc(md, bodyEl, tocEl) {
     if (marked && marked.use) marked.use({ gfm: true, breaks: false });
 
@@ -323,6 +376,8 @@ function _renderDoc(md, bodyEl, tocEl) {
     range.selectNodeContents(bodyEl);
     var fragment = range.createContextualFragment(marked.parse(md));
     bodyEl.replaceChildren(fragment);
+
+    _renderMermaidBlocks(bodyEl);
 
     var headings = _collectHeadings(bodyEl);
     var slugs = {};
