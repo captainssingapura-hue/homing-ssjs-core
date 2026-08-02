@@ -230,6 +230,40 @@ class TreeRenderer {
         }
     }
 
+    // Move the visual selection to the row at `path` WITHOUT firing onSelect
+    // (RFC 0043). This is the silent counterpart to a click / _focusTo: the
+    // renderer can only otherwise select by EMITTING (which a host wires to a
+    // scroll), so a scroll-spy that re-selected via onSelect would re-scroll and
+    // form a feedback loop. selectPath breaks that — highlight + set
+    // _selectedEntry, never _emitSelection. `reveal` scrolls the row into view
+    // inside the sticky TOC pane only (block:'nearest'), never the body. Because
+    // _markSelected also updates _selectedEntry, a subsequent ArrowDown/Up
+    // resumes from the scrolled-to node, so click and scroll share one cursor.
+    // `silent` is accepted for symmetry with other callers but is redundant —
+    // selectPath never emits. Returns true iff a row matched the path.
+    selectPath(path, opts) {
+        opts = opts || {};
+        var entry = null;
+        for (var i = 0; i < this._flat.length; i++) {
+            if (this._samePath(this._flat[i].path, path)) { entry = this._flat[i]; break; }
+        }
+        if (!entry) return false;
+        this._markSelected(entry);
+        if (opts.reveal && entry.rowEl.scrollIntoView) {
+            try { entry.rowEl.scrollIntoView({ block: 'nearest' }); }
+            catch (x) { entry.rowEl.scrollIntoView(); }
+        }
+        return true;
+    }
+
+    // Structural path equality over leveled child-index arrays ([] at the root,
+    // parent.path.concat([i]) below). Selection is positional — nodes carry no id.
+    _samePath(a, b) {
+        if (!a || !b || a.length !== b.length) return false;
+        for (var i = 0; i < a.length; i++) { if (a[i] !== b[i]) return false; }
+        return true;
+    }
+
     // ── Expand / collapse (shared by click + keyboard) ──────────────────────
 
     _isExpanded(entry) {
