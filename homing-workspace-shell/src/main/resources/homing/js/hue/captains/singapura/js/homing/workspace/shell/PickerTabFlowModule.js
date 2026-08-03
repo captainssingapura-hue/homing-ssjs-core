@@ -199,12 +199,19 @@ class PickerTabFlow {
             // ALSO apply to model (when supplied) so virtual-replay state
             // stays in sync with the live MTP. Apply before emit so model
             // is consistent before any onAfterEmit cadence fires.
+            // Record the REAL destination: the structural path of the pane the
+            // widget was spawned into (paneIdOf), and its live position in that
+            // pane's strip (tabIndexOf). Previously this hardcoded '_' / 0, so a
+            // widget opened in any pane but the first restored into the first pane
+            // (paneId '_' resolves to no leaf → the model falls back to pane one).
+            const toPaneId  = (self._mtp.paneIdOf && self._mtp.paneIdOf(slotId)) || '_';
+            const rawIdx    = self._mtp.tabIndexOf ? self._mtp.tabIndexOf(slotId, tabId) : -1;
             const spawnPayload = {
                 widgetInstanceId: tab.widgetInstanceUuid,
                 widgetKind:       entry.simpleName,
                 title:            entry.label,
                 params:           params,
-                to: { paneId: '_', tabIndex: 0 }
+                to: { paneId: toPaneId, tabIndex: rawIdx < 0 ? 0 : rawIdx }
             };
             if (self._model && typeof self._model.apply === 'function') {
                 try { self._model.apply({ name: 'WidgetSpawnedFromPicker',

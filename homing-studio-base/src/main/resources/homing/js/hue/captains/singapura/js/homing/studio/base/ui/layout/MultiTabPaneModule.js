@@ -325,6 +325,23 @@ class MultiTabPane {
         return found;
     }
 
+    /**
+     * Index of a tab within its slot's strip, or -1 if the slot or tab is
+     * unknown. The tab-strip counterpart to paneIdOf: recording code pairs
+     * paneIdOf(slotId) (which pane) with tabIndexOf(slotId, tabId) (where in
+     * that pane's strip) to persist a widget's full Location. A freshly-added
+     * tab reports its live position (the strip end), so replay restores it in
+     * the same order it was spawned.
+     */
+    tabIndexOf(slotId, tabId) {
+        var s = this._tabsBySlot.get(slotId);
+        if (!s || !s.tabs) return -1;
+        for (var i = 0; i < s.tabs.length; i++) {
+            if (s.tabs[i].id === tabId) return i;
+        }
+        return -1;
+    }
+
     /** Return the live mtp slot id at a structural paneId path, or null. */
     slotIdOfPaneId(paneId) {
         if (paneId == null) return null;
