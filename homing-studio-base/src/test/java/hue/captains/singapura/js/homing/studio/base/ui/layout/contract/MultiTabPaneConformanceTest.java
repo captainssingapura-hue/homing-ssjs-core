@@ -73,6 +73,7 @@ class MultiTabPaneConformanceTest {
     void mtpReadOnlyMethodsExist() {
         assertMethod("getWorkspaceActiveTab", 0);
         assertMethod("paneIdOf",              1);
+        assertMethod("tabIndexOf",            2);
         assertMethod("slotIdOfPaneId",        1);
         assertMethod("splitAtPaneId",         1);
         assertMethod("capacityOf",            1);

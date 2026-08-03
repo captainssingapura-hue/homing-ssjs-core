@@ -45,6 +45,7 @@ public interface MultiTabPaneContract {
 
     Optional<TabId>  getWorkspaceActiveTab();
     String           paneIdOf(SlotId slotId);             // V1 compromise — String
+    int              tabIndexOf(SlotId slotId, TabId tabId);
     Optional<SlotId> slotIdOfPaneId(String paneId);       // V1 compromise — String
     int              capacityOf(SlotId slotId);
 

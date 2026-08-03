@@ -118,16 +118,18 @@ class PinnedTabSpawner {
                 }
             }
             // Phase 6 — emit so Phase 9 replay can re-spawn this widget.
-            //   paneId is the pane-tree path the layout codec speaks;
-            //   slot 'tl' is the default top-left pane (paneId '_'). Real
-            //   path resolution lands when MTP exposes a slot→paneId
-            //   bridge; for now we record the leaf assumption.
+            //   paneId is the pane-tree path the layout codec speaks; resolve the
+            //   real destination via the MTP slot→paneId / tab-index bridges
+            //   (paneIdOf / tabIndexOf), same as the picker + move paths, so a
+            //   pinned widget restores into the pane it was actually spawned in.
             if (recorder && typeof recorder.emit === 'function') {
+                const toPaneId = (mtp.paneIdOf && mtp.paneIdOf(slotId)) || '_';
+                const rawIdx   = mtp.tabIndexOf ? mtp.tabIndexOf(slotId, tabId) : -1;
                 recorder.emit('WidgetSpawnedPinned', {
                     widgetInstanceId: tab.widgetInstanceUuid,
                     widgetKind:       entry.simpleName,
                     title:            entry.label,
-                    to: { paneId: '_', tabIndex: 0 }
+                    to: { paneId: toPaneId, tabIndex: rawIdx < 0 ? 0 : rawIdx }
                 });
             }
             if (mtp.getWorkspaceActiveTab && mtp.getWorkspaceActiveTab() === tabId) {
