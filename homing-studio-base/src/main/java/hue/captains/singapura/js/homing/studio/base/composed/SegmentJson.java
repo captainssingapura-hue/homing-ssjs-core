@@ -108,6 +108,25 @@ final class SegmentJson {
                     ComposedDoc.appendStringList(sb, row);
                 }
                 sb.append(']');
+                // Sparse articulation side-car — emitted only when present, so a
+                // plain relation's wire shape (kind/anchor/caption/headers/rows)
+                // is byte-for-byte unchanged. Each entry names a cell coordinate
+                // (row -1 = header) plus whichever marks it carries.
+                if (!rs.articulations().isEmpty()) {
+                    sb.append(",\"articulations\":[");
+                    boolean firstArt = true;
+                    for (ArticulatedCell ac : rs.articulations().cells()) {
+                        if (!firstArt) sb.append(',');
+                        firstArt = false;
+                        Articulation art = ac.articulation();
+                        sb.append("{\"row\":").append(ac.row()).append(",\"col\":").append(ac.col());
+                        art.badge()   .ifPresent(b -> sb.append(",\"badge\":")   .append(ComposedDoc.jstr(b.name().toLowerCase())));
+                        art.align()   .ifPresent(a -> sb.append(",\"align\":")   .append(ComposedDoc.jstr(a.name().toLowerCase())));
+                        art.emphasis().ifPresent(e -> sb.append(",\"emphasis\":").append(ComposedDoc.jstr(e.name().toLowerCase())));
+                        sb.append('}');
+                    }
+                    sb.append(']');
+                }
             }
             case ComposedSegment cd -> {
                 // In the rigid-tree model a ComposedSegment is STRUCTURE (a graft),

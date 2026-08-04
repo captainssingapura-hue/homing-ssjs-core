@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.studio.base.SvgDoc;
 import hue.captains.singapura.js.homing.studio.base.composed.CodeSegment;
 import hue.captains.singapura.js.homing.studio.base.composed.ImageSegment;
 import hue.captains.singapura.js.homing.studio.base.composed.MarkdownSegment;
+import hue.captains.singapura.js.homing.studio.base.composed.RelationCell;
 import hue.captains.singapura.js.homing.studio.base.composed.RelationSegment;
 import hue.captains.singapura.js.homing.studio.base.composed.RigidSegment;
 import hue.captains.singapura.js.homing.studio.base.composed.SvgSegment;
@@ -85,6 +86,21 @@ public final class Rigid {
         /** Attach a typed table (header row + body rows + optional caption). */
         public SELF relation(List<String> headers, List<List<String>> rows, String caption) {
             content.add(new RelationSegment(headers, rows, Line.optionalPlain(caption)));
+            return self();
+        }
+
+        /**
+         * Attach a typed table whose cells carry their visual articulation
+         * <i>in place</i> — each cell is a {@link RelationCell} ({@code cell("x")}
+         * with chained marks: {@code .success()}, {@code .right()}, {@code
+         * .strong()}, …). The builder derives the sparse
+         * {@link RelationArticulations} side-car from each cell's position, so the
+         * author never tracks {@code (row, col)}. A cell with no marks is a plain
+         * cell; a header cell may be articulated too.
+         */
+        public SELF articulatedRelation(List<RelationCell> headers,
+                                        List<List<RelationCell>> rows, String caption) {
+            content.add(RelationSegment.articulated(headers, rows, Line.optionalPlain(caption)));
             return self();
         }
 

@@ -660,6 +660,13 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             """;
         }
     }
+    // Cell emphasis marks for an articulated relation (Articulation.Emphasis).
+    public record st_td_strong() implements CssClass<StudioStyles> {
+        @Override public String body() { return "font-weight: 700;"; }
+    }
+    public record st_td_muted() implements CssClass<StudioStyles> {
+        @Override public String body() { return "opacity: 0.62; font-style: italic;"; }
+    }
 
     // -----------------------------------------------------------------------
     // RFC 0020 — ImageDoc rendering (Raw tier; no theming on the raster
@@ -1070,6 +1077,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
                 new st_table(), new st_thead(), new st_th(), new st_td(),
                 new st_td_align_left(), new st_td_align_center(), new st_td_align_right(),
                 new st_td_badge_success(), new st_td_badge_warning(), new st_td_badge_error(),
+                new st_td_strong(), new st_td_muted(),
                 new st_image_figure(), new st_image_img(), new st_image_caption()
         );
     }
