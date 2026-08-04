@@ -20,7 +20,10 @@ import java.util.List;
  * all render without any extra processing.</p>
  *
  * <p>CSS tokens reused from the existing table rendering vocabulary:
- * {@code st_table}, {@code st_thead}, {@code st_th}, {@code st_td}.</p>
+ * {@code st_table}, {@code st_thead}, {@code st_th}, {@code st_td}. When the
+ * segment carries a {@code RelationArticulations} side-car, per-cell marks reuse
+ * the typed cell tokens {@code st_td_align_*}, {@code st_td_badge_*}, and the
+ * emphasis tokens {@code st_td_strong} / {@code st_td_muted}.</p>
  *
  * <p>Extracted as its own module per the Modest File Size doctrine.</p>
  *
@@ -43,7 +46,16 @@ public record RelationSegmentRenderer() implements DomModule<RelationSegmentRend
                         new StudioStyles.st_table(),
                         new StudioStyles.st_thead(),
                         new StudioStyles.st_th(),
-                        new StudioStyles.st_td()
+                        new StudioStyles.st_td(),
+                        // Articulation marks (RelationArticulations side-car).
+                        new StudioStyles.st_td_align_left(),
+                        new StudioStyles.st_td_align_center(),
+                        new StudioStyles.st_td_align_right(),
+                        new StudioStyles.st_td_badge_success(),
+                        new StudioStyles.st_td_badge_warning(),
+                        new StudioStyles.st_td_badge_error(),
+                        new StudioStyles.st_td_strong(),
+                        new StudioStyles.st_td_muted()
                 ), StudioStyles.INSTANCE))
                 .build();
     }
