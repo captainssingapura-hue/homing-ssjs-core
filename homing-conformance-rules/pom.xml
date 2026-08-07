@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+        <artifactId>homing.js</artifactId>
+        <version>LOCAL-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>homing-conformance-rules</artifactId>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <!-- RFC 0044 — the junit-FREE home for the conformance rule model, policy,
+         and module enumeration. Split out of homing-conformance (which carries
+         junit at COMPILE scope for its @TestFactory bases) so the reusable
+         conformance-studio base and any downstream can depend on the rules
+         without dragging junit onto their classpath. Depends only on
+         homing-core (the EsModule marker types); junit is test-scope here. -->
+    <dependencies>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-core</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>

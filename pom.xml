@@ -45,6 +45,7 @@
              it provides cross-cutting test bases that studio-base hosts its own
              substrate-typed conformance subclasses on top of. Conformance
              depends only on homing-core; studio-base depends on conformance. -->
+        <module>homing-conformance-rules</module>
         <module>homing-conformance</module>
         <module>homing-studio-base</module>
         <module>homing-workspace</module>
@@ -82,6 +83,7 @@
              Sits ABOVE the workspace stack (which is a strict downstream of
              studio-base), so it's the correct home for the assembly defaults. -->
         <module>homing-studio-starter</module>
+        <module>homing-conformance-studio</module>
         <!-- Pure-JS test fixtures (GraalVM Polyglot + JUnit harness). Lives
              at the substrate position so japjs's own tests and every
              downstream consumer (homing-demo, homing-self-studio, public
