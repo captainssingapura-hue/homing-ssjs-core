@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.conformance.engine;
 
 import hue.captains.singapura.js.homing.conformance.rules.Finding;
-import hue.captains.singapura.js.homing.conformance.rules.JsModuleType;
+import hue.captains.singapura.js.homing.core.JsModuleType;
 import hue.captains.singapura.js.homing.core.DomModule;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;

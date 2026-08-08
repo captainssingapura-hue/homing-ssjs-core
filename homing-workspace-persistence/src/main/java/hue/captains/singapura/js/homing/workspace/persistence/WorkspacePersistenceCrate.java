@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.workspace.persistence;
 
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
+import hue.captains.singapura.js.homing.core.JsModuleType;
 import hue.captains.singapura.js.homing.workspace.WorkspaceCrate;
 import hue.captains.singapura.js.homing.workspace.codecs.WorkspaceCodecsCrate;
 
@@ -27,6 +28,6 @@ public final class WorkspacePersistenceCrate implements Crate {
     @Override
     public List<CrateEntry> entries() {
         return List.of(
-                CrateEntry.of(WorkspaceStatePersistenceModule.INSTANCE));
+                CrateEntry.of(WorkspaceStatePersistenceModule.INSTANCE, JsModuleType.PURE_LOGIC));
     }
 }

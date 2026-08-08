@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.workspace.codecs;
 
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
+import hue.captains.singapura.js.homing.core.JsModuleType;
 import hue.captains.singapura.js.homing.workspace.WorkspaceCrate;
 
 import java.util.List;
@@ -26,6 +27,6 @@ public final class WorkspaceCodecsCrate implements Crate {
     @Override
     public List<CrateEntry> entries() {
         return List.of(
-                CrateEntry.of(WorkspaceStateCodecsModule.INSTANCE));
+                CrateEntry.of(WorkspaceStateCodecsModule.INSTANCE, JsModuleType.PURE_LOGIC));
     }
 }

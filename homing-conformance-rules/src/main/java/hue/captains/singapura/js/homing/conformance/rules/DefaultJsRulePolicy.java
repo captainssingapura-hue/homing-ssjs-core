@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.conformance.rules;
 
+import hue.captains.singapura.js.homing.core.JsModuleType;
+
 import java.util.List;
 
 /**
@@ -8,26 +10,44 @@ import java.util.List;
  * surface: a downstream with different needs authors its own policy from the
  * same constructs and runs it alongside, never a patch to this one.
  *
- * <p>Seed state (this is filled out in Phase 5 as the scanners are ported). For
- * now every non-bundled type carries the CDN-free rule; a bundled external is
- * exempt — enough to make the polymorphism real and visible in the studio.
- * Functional Object: one {@code INSTANCE}.</p>
+ * <p>The polymorphism is now real, not cosmetic. Every non-bundled module still
+ * carries the CDN-free {@link #BASE} rule, but the DOM rules split by type:</p>
+ * <ul>
+ *   <li><b>DOM owners</b> ({@link JsModuleType#CONSUMER}, {@link
+ *       JsModuleType#PRIMITIVE}) may touch the DOM but must never <em>wipe</em>
+ *       branch-owned DOM — {@link NoDomDestructionRule}.</li>
+ *   <li><b>No-DOM modules</b> ({@link JsModuleType#SECRETARY}, {@link
+ *       JsModuleType#PURE_LOGIC}) must touch <em>no</em> DOM at all — the
+ *       stricter {@link NoDomAccessRule}.</li>
+ *   <li>Managers and generated CSS carry the base only; a bundled external is
+ *       exempt.</li>
+ * </ul>
+ * <p>Functional Object: one {@code INSTANCE}.</p>
  */
 public record DefaultJsRulePolicy() implements JsRulePolicy {
 
     public static final DefaultJsRulePolicy INSTANCE = new DefaultJsRulePolicy();
 
-    // Shared base — rules every non-exempt module is held to (grows in Phase 5).
+    /** Shared base — rules every non-exempt module is held to, whatever its type. */
     private static final List<JsRule> BASE = List.of(
-            NoCdnImportRule.INSTANCE,
+            NoCdnImportRule.INSTANCE);
+
+    /** DOM owners: base + may-not-wipe branch-owned DOM. */
+    private static final List<JsRule> DOM_DISCIPLINE = concat(BASE,
             NoDomDestructionRule.INSTANCE);
 
+    /** No-DOM modules: base + may-not-touch-the-DOM-at-all. */
+    private static final List<JsRule> NO_DOM = concat(BASE,
+            NoDomAccessRule.INSTANCE);
+
     private static final JsRuleSet CONSUMER =
-            new JsRuleSet(new RuleSetId("consumer"), "Consumer", BASE);
+            new JsRuleSet(new RuleSetId("consumer"), "Consumer", DOM_DISCIPLINE);
     private static final JsRuleSet PRIMITIVE =
-            new JsRuleSet(new RuleSetId("primitive"), "Primitive", BASE);
+            new JsRuleSet(new RuleSetId("primitive"), "Primitive", DOM_DISCIPLINE);
     private static final JsRuleSet SECRETARY =
-            new JsRuleSet(new RuleSetId("secretary"), "Secretary", BASE);
+            new JsRuleSet(new RuleSetId("secretary"), "Secretary", NO_DOM);
+    private static final JsRuleSet PURE_LOGIC =
+            new JsRuleSet(new RuleSetId("pure-logic"), "Pure logic", NO_DOM);
     private static final JsRuleSet MANAGER_INJECTOR =
             new JsRuleSet(new RuleSetId("manager-injector"), "ManagerInjector", BASE);
     private static final JsRuleSet GENERATED_CSS =
@@ -41,9 +61,16 @@ public record DefaultJsRulePolicy() implements JsRulePolicy {
             case CONSUMER         -> CONSUMER;
             case PRIMITIVE        -> PRIMITIVE;
             case SECRETARY        -> SECRETARY;
+            case PURE_LOGIC       -> PURE_LOGIC;
             case MANAGER_INJECTOR -> MANAGER_INJECTOR;
             case GENERATED_CSS    -> GENERATED_CSS;
             case BUNDLED_EXTERNAL -> BUNDLED_EXTERNAL;
         };
+    }
+
+    private static List<JsRule> concat(List<JsRule> base, JsRule extra) {
+        var out = new java.util.ArrayList<JsRule>(base);
+        out.add(extra);
+        return List.copyOf(out);
     }
 }

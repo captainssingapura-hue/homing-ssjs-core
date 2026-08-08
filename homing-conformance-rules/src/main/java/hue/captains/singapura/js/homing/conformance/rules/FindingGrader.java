@@ -20,12 +20,16 @@ import java.util.Set;
 public record FindingGrader(Set<RuleId> errorRules, List<Allowance> allowlist) {
 
     /**
-     * The framework default: only the proven {@code no-cdn-import} rule fails the
-     * build; every other (newly-ported) rule warns until promoted. No exceptions
-     * yet. Grows as rules are cleaned + promoted and justified exceptions added.
+     * The framework default — the rules proven clean across the codebase and so
+     * promoted to build-failing: {@code no-cdn-import} and {@code no-dom-access}
+     * (a module declared no-DOM touching the DOM is a broken promise, not a
+     * warning). Newly-ported rules still under triage — e.g. {@code
+     * no-dom-destruction} — warn until they too are clean and promoted. No
+     * exceptions yet; grows as rules are cleaned + promoted and justified
+     * exceptions added.
      */
     public static final FindingGrader DEFAULT = new FindingGrader(
-            Set.of(new RuleId("no-cdn-import")),
+            Set.of(new RuleId("no-cdn-import"), new RuleId("no-dom-access")),
             List.of());
 
     public FindingGrader {

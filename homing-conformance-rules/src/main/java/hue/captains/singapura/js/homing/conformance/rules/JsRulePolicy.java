@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.conformance.rules;
 
+import hue.captains.singapura.js.homing.core.JsModuleType;
+
 /**
  * The polymorphism, as a value: which {@link JsRuleSet} applies to each {@link
  * JsModuleType}. This is <b>the</b> framework opinion — a fixed, exhaustive

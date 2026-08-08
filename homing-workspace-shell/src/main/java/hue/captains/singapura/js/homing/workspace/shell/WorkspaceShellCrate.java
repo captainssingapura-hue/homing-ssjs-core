@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.workspace.shell;
 
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
+import hue.captains.singapura.js.homing.core.JsModuleType;
 import hue.captains.singapura.js.homing.core.js.CoreJsCrate;
 import hue.captains.singapura.js.homing.server.ServerCrate;
 import hue.captains.singapura.js.homing.studio.base.StudioBaseCrate;
@@ -38,23 +39,23 @@ public final class WorkspaceShellCrate implements Crate {
     @Override
     public List<CrateEntry> entries() {
         return List.of(
-                CrateEntry.of(CheckpointServiceModule.INSTANCE),
-                CrateEntry.of(CodecRegistrarModule.INSTANCE),
-                CrateEntry.of(EventEmitterModule.INSTANCE),
+                CrateEntry.of(CheckpointServiceModule.INSTANCE, JsModuleType.PURE_LOGIC),
+                CrateEntry.of(CodecRegistrarModule.INSTANCE, JsModuleType.PURE_LOGIC),
+                CrateEntry.of(EventEmitterModule.INSTANCE, JsModuleType.PURE_LOGIC),
                 CrateEntry.of(GenericWorkspace.INSTANCE),
                 CrateEntry.of(GenericWorkspaceChrome.INSTANCE),
-                CrateEntry.of(LayoutCodecModule.INSTANCE),
-                CrateEntry.of(PartyBootstrapModule.INSTANCE),
-                CrateEntry.of(PersistenceAttacherModule.INSTANCE),
+                CrateEntry.of(LayoutCodecModule.INSTANCE, JsModuleType.PURE_LOGIC),
+                CrateEntry.of(PartyBootstrapModule.INSTANCE, JsModuleType.PURE_LOGIC),
+                CrateEntry.of(PersistenceAttacherModule.INSTANCE, JsModuleType.PURE_LOGIC),
                 CrateEntry.of(PickerTabFlowModule.INSTANCE),
                 CrateEntry.of(PinnedTabSpawnerModule.INSTANCE),
-                CrateEntry.of(ReplayEngineModule.INSTANCE),
-                CrateEntry.of(TabRegistryModule.INSTANCE),
+                CrateEntry.of(ReplayEngineModule.INSTANCE, JsModuleType.PURE_LOGIC),
+                CrateEntry.of(TabRegistryModule.INSTANCE, JsModuleType.PURE_LOGIC),
                 CrateEntry.of(WidgetMounterModule.INSTANCE),
                 CrateEntry.of(WorkspaceControlModalModule.INSTANCE),
-                CrateEntry.of(WorkspaceDirectoryModule.INSTANCE),
+                CrateEntry.of(WorkspaceDirectoryModule.INSTANCE, JsModuleType.PURE_LOGIC),
                 CrateEntry.of(WorkspaceShellChromeModule.INSTANCE),
-                CrateEntry.of(WorkspaceStateModelModule.INSTANCE),
+                CrateEntry.of(WorkspaceStateModelModule.INSTANCE, JsModuleType.PURE_LOGIC),
                 CrateEntry.of(WriteLockGuardModule.INSTANCE));
     }
 }

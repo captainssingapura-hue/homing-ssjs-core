@@ -50,12 +50,22 @@ public final class ConformanceEngine {
         return List.copyOf(all);
     }
 
-    /** Findings across the modules of the given crates — the enumeration path. */
+    /**
+     * Findings across the modules of the given crates — the enumeration path.
+     * Each entry is classified with its <b>declared</b> domain role honoured
+     * (falling back to structural inference), so the policy applies the right
+     * rule set — a module marked {@code PURE_LOGIC} is held to no-DOM, not the
+     * consumer default.
+     */
     public List<Finding> checkCrates(Collection<? extends Crate> crates) {
-        var modules = new ArrayList<EsModule<?>>();
+        var all = new ArrayList<Finding>();
         for (Crate c : crates) {
-            for (CrateEntry e : c.entries()) modules.add(e.module());
+            for (CrateEntry e : c.entries()) {
+                var type = ModuleClassifier.classify(e);
+                ServedModule served = renderer.render(e.module(), type);
+                all.addAll(policy.rulesFor(type).checkAll(served));
+            }
         }
-        return checkAll(modules);
+        return List.copyOf(all);
     }
 }

@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.conformance.engine;
 
 import hue.captains.singapura.js.homing.conformance.rules.ServedModule;
 import hue.captains.singapura.js.homing.core.EsModule;
+import hue.captains.singapura.js.homing.core.JsModuleType;
 import hue.captains.singapura.js.homing.server.EsModuleGetAction;
 import hue.captains.singapura.js.homing.server.QueryParamResolver;
 
@@ -29,8 +30,14 @@ public final class ServedModuleRenderer {
         this.serving = Objects.requireNonNull(serving, "serving");
     }
 
+    /** Render + structurally classify — the standalone path (no crate context). */
     public ServedModule render(EsModule<?> module) {
+        return render(module, ModuleClassifier.classify(module));
+    }
+
+    /** Render with an already-decided type — the crate path, where the entry's declared role wins. */
+    public ServedModule render(EsModule<?> module, JsModuleType type) {
         String served = serving.render(module);
-        return ServedModule.of(module.getClass().getName(), ModuleClassifier.classify(module), served);
+        return ServedModule.of(module.getClass().getName(), type, served);
     }
 }

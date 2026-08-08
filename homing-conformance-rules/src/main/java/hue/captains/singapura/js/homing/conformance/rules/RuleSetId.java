@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.conformance.rules;
 
+import hue.captains.singapura.js.homing.core.JsModuleType;
+
 import java.util.Objects;
 
 /**
