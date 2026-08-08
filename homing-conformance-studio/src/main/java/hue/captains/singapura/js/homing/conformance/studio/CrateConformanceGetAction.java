@@ -1,8 +1,11 @@
 package hue.captains.singapura.js.homing.conformance.studio;
 
+import hue.captains.singapura.js.homing.conformance.engine.ConformanceEngine;
 import hue.captains.singapura.js.homing.conformance.rules.CrateClosure;
 import hue.captains.singapura.js.homing.conformance.rules.CrateConformance;
+import hue.captains.singapura.js.homing.conformance.rules.Finding;
 import hue.captains.singapura.js.homing.core.Crate;
+import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.server.EmptyParam;
 import hue.captains.singapura.js.homing.server.ResourceNotFound;
 import hue.captains.singapura.js.homing.studio.base.DocContent;
@@ -11,18 +14,21 @@ import hue.captains.singapura.tao.http.action.Param;
 import hue.captains.singapura.tao.http.action.ParamMarshaller;
 import io.vertx.ext.web.RoutingContext;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * RFC 0044 — the Crate-Studio conformance feed: runs {@link CrateConformance}
- * over the closure and serves the structured result as JSON at
- * {@code GET /crate-conformance}. Both Conformance panes fetch this once; the
- * crate pane reads {@code crates[...]} (aggregate) and the module pane reads
- * {@code modules[...]} (per-module, which also resolves module → crate). The
- * evaluation is memoised — the checks scan the classpath, so there is no reason
- * to redo them per request.
+ * RFC 0044 — the Crate-Studio conformance feed. Combines the two conformance
+ * dimensions for the studio panes: <b>crate integrity</b> ({@link CrateConformance}
+ * — orphans + layering) and <b>rule conformance</b> ({@link ConformanceEngine}
+ * — the served-artifact rule findings). Served as JSON at
+ * {@code GET /crate-conformance}, memoised (both scan/render the whole set).
+ * Per-module {@code findings} merge layering + rule findings; the crate is the
+ * aggregation point.
  */
 public final class CrateConformanceGetAction
         implements GetAction<RoutingContext, CrateConformanceGetAction.Query, EmptyParam.NoHeaders, DocContent> {
@@ -61,42 +67,66 @@ public final class CrateConformanceGetAction
         String local = cached;
         if (local != null) return local;
         synchronized (this) {
-            if (cached == null) cached = serialize(CrateConformance.evaluate(CrateClosure.of(topLevel)));
+            if (cached == null) cached = compute();
             return cached;
         }
     }
 
-    private static String serialize(CrateConformance.Result r) {
-        var sb = new StringBuilder();
-        sb.append("{\"ok\":").append(r.ok());
-        sb.append(",\"crates\":{");
-        boolean first = true;
-        for (var c : r.crates().values()) {
-            if (!first) sb.append(',');
-            first = false;
-            sb.append(jstr(c.name())).append(":{")
-              .append("\"name\":").append(jstr(c.name()))
-              .append(",\"modules\":").append(c.modules())
-              .append(",\"ok\":").append(c.ok())
-              .append(",\"orphans\":").append(jarr(c.orphans()))
-              .append(",\"illegalImports\":").append(jarr(c.illegalImports()))
-              .append('}');
+    private String compute() {
+        List<Crate> closure = CrateClosure.of(topLevel);
+        CrateConformance.Result base = CrateConformance.evaluate(closure);
+
+        // Engine rule findings, grouped by module class.
+        Map<String, List<String>> ruleByModule = new LinkedHashMap<>();
+        for (Finding f : new ConformanceEngine().checkCrates(closure)) {
+            ruleByModule.computeIfAbsent(f.moduleClass(), k -> new ArrayList<>())
+                    .add(f.rule().value() + ": " + f.message());
         }
-        sb.append("},\"modules\":{");
-        first = true;
-        for (var m : r.modules().values()) {
-            if (!first) sb.append(',');
-            first = false;
-            sb.append(jstr(m.moduleClass())).append(":{")
-              .append("\"moduleClass\":").append(jstr(m.moduleClass()))
-              .append(",\"crate\":").append(jstr(m.crate()))
-              .append(",\"form\":").append(jstr(m.form()))
-              .append(",\"ok\":").append(m.ok())
-              .append(",\"findings\":").append(jarr(m.findings()))
-              .append('}');
+
+        var crates = new StringBuilder("{");
+        var modules = new StringBuilder("{");
+        boolean firstC = true, firstM = true, allOk = true;
+
+        for (Crate c : closure) {
+            CrateConformance.CrateResult cr = base.crates().get(c.name());
+            var crateRuleFindings = new ArrayList<String>();
+
+            for (CrateEntry entry : c.entries()) {
+                String fqcn = entry.moduleClass();
+                CrateConformance.ModuleResult mr = base.modules().get(fqcn);
+                var findings = new ArrayList<>(mr == null ? List.<String>of() : mr.findings());
+                List<String> rules = ruleByModule.getOrDefault(fqcn, List.of());
+                findings.addAll(rules);
+                crateRuleFindings.addAll(rules);
+                boolean mok = findings.isEmpty();
+
+                if (!firstM) modules.append(',');
+                firstM = false;
+                modules.append(jstr(fqcn)).append(":{")
+                       .append("\"moduleClass\":").append(jstr(fqcn))
+                       .append(",\"crate\":").append(jstr(c.name()))
+                       .append(",\"form\":").append(jstr(mr == null ? "" : mr.form()))
+                       .append(",\"ok\":").append(mok)
+                       .append(",\"findings\":").append(jarr(findings))
+                       .append('}');
+            }
+
+            boolean cok = cr != null && cr.ok() && crateRuleFindings.isEmpty();
+            allOk &= cok;
+            if (!firstC) crates.append(',');
+            firstC = false;
+            crates.append(jstr(c.name())).append(":{")
+                  .append("\"name\":").append(jstr(c.name()))
+                  .append(",\"modules\":").append(c.entries().size())
+                  .append(",\"ok\":").append(cok)
+                  .append(",\"orphans\":").append(jarr(cr == null ? List.of() : cr.orphans()))
+                  .append(",\"illegalImports\":").append(jarr(cr == null ? List.of() : cr.illegalImports()))
+                  .append(",\"ruleFindings\":").append(jarr(crateRuleFindings))
+                  .append('}');
         }
-        sb.append("}}");
-        return sb.toString();
+        crates.append('}');
+        modules.append('}');
+        return "{\"ok\":" + allOk + ",\"crates\":" + crates + ",\"modules\":" + modules + "}";
     }
 
     private static String jarr(List<String> items) {
