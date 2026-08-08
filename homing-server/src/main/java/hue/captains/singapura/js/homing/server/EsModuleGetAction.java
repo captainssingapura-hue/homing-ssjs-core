@@ -49,20 +49,41 @@ public class EsModuleGetAction
         }
         try {
             EsModule<?> module = resolveModule(query.className());
-            // BundledExternalModule short-circuit: a 3rd-party library bundled at
-            // build time. Ship the classpath bytes verbatim — no imports prefix,
-            // no exports suffix, no css/href injection. The bundled JS file has
-            // its own native export declarations.
-            if (module instanceof BundledExternalModule<?> bundled) {
-                String body = String.join("\n", bundled.content());
-                return CompletableFuture.completedFuture(new JsModuleContent(body));
-            }
-            EsModuleWriter<?> writer = createWriter(module, query.theme(), query.locale());
-            String js = String.join("\n", writer.writeModule());
-            return CompletableFuture.completedFuture(new JsModuleContent(js));
+            return CompletableFuture.completedFuture(
+                    new JsModuleContent(render(module, query.theme(), query.locale())));
         } catch (Exception e) {
             return CompletableFuture.failedFuture(ResourceNotFound.forClass(query.className(), e));
         }
+    }
+
+    /**
+     * The complete served JavaScript for a module, produced in-process by the
+     * SAME assembly the HTTP path uses — so a build-time consumer (conformance)
+     * validates exactly what is served. {@code theme}/{@code locale} are the
+     * request values (both {@code null} for a plain {@code /module?class=}
+     * fetch — see {@link #render(EsModule)}).
+     *
+     * <p>BundledExternalModule short-circuit: a 3rd-party library bundled at
+     * build time — ship the classpath bytes verbatim (no imports prefix, no
+     * exports suffix, no css/href injection); the bundled file has its own
+     * native exports.</p>
+     */
+    public String render(EsModule<?> module, String theme, String locale) {
+        try {
+            if (module instanceof BundledExternalModule<?> bundled) {
+                return String.join("\n", bundled.content());
+            }
+            return String.join("\n", createWriter(module, theme, locale).writeModule());
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IllegalStateException("render failed: " + module.getClass().getName(), e);
+        }
+    }
+
+    /** In-process render with default (null) theme/locale — a plain served module. */
+    public String render(EsModule<?> module) {
+        return render(module, null, null);
     }
 
     @SuppressWarnings("unchecked")

@@ -4,13 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * No JS import may target an {@code http(s)://} URL — every third-party module
- * is bundled (the CDN-free discipline). Reads the {@link JsRegion#WHOLE} served
- * text, since an import can appear in the authored body or a generated header.
- *
- * <p>The first concrete rule — it proves the model end-to-end (a pure check over
- * a {@link ServedModule}) and seeds the Phase 5 port of {@code
- * CdnFreeConformanceTest}. Functional Object: one {@code INSTANCE}.</p>
+ * RFC 0044 — the seed rule: no JS {@code import} may target an {@code http(s)://}
+ * URL. Third-party libraries must be bundled ({@code BundledExternalModule}), so
+ * the served graph is CDN-free and deterministic. Scans the complete served text
+ * — a CDN import anywhere is a violation, however it got there.
  */
 public record NoCdnImportRule() implements JsRule {
 
@@ -23,12 +20,12 @@ public record NoCdnImportRule() implements JsRule {
     @Override
     public List<Finding> check(ServedModule module) {
         var findings = new ArrayList<Finding>();
-        List<String> lines = module.segment(JsRegion.WHOLE).lines();
+        List<String> lines = module.lines();
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i);
             if (line.contains("import") && (line.contains("from \"http://") || line.contains("from \"https://"))) {
                 findings.add(new Finding(module.moduleClass(), id(),
-                        "CDN import — bundle it instead: " + line.trim(), JsRegion.WHOLE, i));
+                        "CDN import — bundle it instead: " + line.trim(), i));
             }
         }
         return List.copyOf(findings);

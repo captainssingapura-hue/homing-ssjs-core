@@ -1,49 +1,37 @@
 package hue.captains.singapura.js.homing.conformance.rules;
 
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
- * The artifact a {@link JsRule} inspects — one module's <b>final served JS</b>,
- * exactly as the browser receives it, segmented by how each part was produced
- * (RFC 0044). Phase 2 renders real instances through the serving facility; the
- * value type exists now so rules are pure and unit-testable against a
- * synthesized module, with no server.
+ * RFC 0044 — a module's served JavaScript as the browser receives it: the
+ * <b>complete, final artifact</b>. Conformance deliberately ignores how each
+ * line was produced (authored {@code .js}, {@code SelfContent}, injected
+ * managers, generated exports) — it validates the whole served module, so a
+ * violation is caught no matter how it was introduced. The complete text MUST
+ * be produced by the same code path the server serves from (see the engine's
+ * renderer), so the validated bytes equal the served bytes.
  *
- * @param moduleClass the fully-qualified class name of the served module (its identity)
- * @param type        the module's classification — selects which rules apply
- * @param prologue    generated: the injected {@code css} / {@code href} manager imports
- * @param body        authored: the {@code .js} file or the {@code SelfContent} output
- * @param epilogue    generated: the exports
+ * @param moduleClass the module's fully-qualified class name
+ * @param type        its classification (drives which rule set applies)
+ * @param content     the complete served JS
  */
-public record ServedModule(String moduleClass, JsModuleType type,
-                           JsSource prologue, JsSource body, JsSource epilogue) {
+public record ServedModule(String moduleClass, JsModuleType type, JsSource content) {
 
     public ServedModule {
         Objects.requireNonNull(moduleClass, "ServedModule.moduleClass");
         Objects.requireNonNull(type,        "ServedModule.type");
-        prologue = (prologue == null) ? JsSource.EMPTY : prologue;
-        body     = (body     == null) ? JsSource.EMPTY : body;
-        epilogue = (epilogue == null) ? JsSource.EMPTY : epilogue;
+        content = (content == null) ? JsSource.EMPTY : content;
     }
 
-    /** The whole served text — prologue + body + epilogue, in order. Empty segments
-     *  contribute no line, so an absent header doesn't shift the body's line numbers. */
-    public String served() {
-        var parts = new ArrayList<String>(3);
-        if (!prologue.isEmpty()) parts.add(prologue.text());
-        if (!body.isEmpty())     parts.add(body.text());
-        if (!epilogue.isEmpty()) parts.add(epilogue.text());
-        return String.join("\n", parts);
+    /** Build from the complete served JS text. */
+    public static ServedModule of(String moduleClass, JsModuleType type, String servedText) {
+        return new ServedModule(moduleClass, type, JsSource.ofText(servedText));
     }
 
-    /** The source segment for a region ({@link JsRegion#WHOLE} joins all three). */
-    public JsSource segment(JsRegion region) {
-        return switch (region) {
-            case PROLOGUE -> prologue;
-            case BODY     -> body;
-            case EPILOGUE -> epilogue;
-            case WHOLE    -> JsSource.ofText(served());
-        };
-    }
+    /** The complete served text. */
+    public String text() { return content.text(); }
+
+    /** The complete served text, line by line. */
+    public List<String> lines() { return content.lines(); }
 }

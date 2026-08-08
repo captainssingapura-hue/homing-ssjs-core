@@ -47,6 +47,7 @@
              depends only on homing-core; studio-base depends on conformance. -->
         <module>homing-conformance-rules</module>
         <module>homing-conformance</module>
+        <module>homing-conformance-engine</module>
         <module>homing-studio-base</module>
         <module>homing-workspace</module>
         <!-- Generated JS codecs for the workspace's typed records. Empty
