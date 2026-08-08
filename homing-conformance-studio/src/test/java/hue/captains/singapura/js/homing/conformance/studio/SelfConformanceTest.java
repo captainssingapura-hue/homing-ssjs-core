@@ -1,10 +1,12 @@
 package hue.captains.singapura.js.homing.conformance.studio;
 
 import hue.captains.singapura.js.homing.conformance.engine.ConformanceEngine;
+import hue.captains.singapura.js.homing.conformance.rules.Allowance;
 import hue.captains.singapura.js.homing.conformance.rules.CrateClosure;
 import hue.captains.singapura.js.homing.conformance.rules.Finding;
 import hue.captains.singapura.js.homing.conformance.rules.FindingGrader;
 import hue.captains.singapura.js.homing.conformance.rules.GradedFinding;
+import hue.captains.singapura.js.homing.conformance.rules.RuleId;
 import hue.captains.singapura.js.homing.conformance.rules.Severity;
 import org.junit.jupiter.api.Test;
 
@@ -23,10 +25,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 class SelfConformanceTest {
 
+    /** The framework baseline plus homing-ssjs-core's own accepted exceptions. */
+    private static final FindingGrader HOMING_GRADER = FindingGrader.DEFAULT.withAllowlist(List.of(
+            new Allowance(
+                    "hue.captains.singapura.js.homing.studio.base.ui.layout.ModalModule",
+                    new RuleId("no-dom-destruction"),
+                    "Modal.setContent is a wholesale-body-swap API; the drag-to-modal flow never "
+                            + "wipes widget DOM (MultiTabPaneDragModule moves content out first).")));
+
     @Test
     void everyServedModuleIsConformant() {
         List<Finding> raw = new ConformanceEngine().checkCrates(CrateClosure.of(TopLevelCrates.ALL));
-        List<GradedFinding> graded = FindingGrader.DEFAULT.grade(raw);
+        List<GradedFinding> graded = HOMING_GRADER.grade(raw);
 
         List<GradedFinding> warnings = graded.stream()
                 .filter(g -> g.severity() == Severity.WARNING).toList();

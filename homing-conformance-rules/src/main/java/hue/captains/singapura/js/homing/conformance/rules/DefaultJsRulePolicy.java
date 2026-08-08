@@ -18,7 +18,9 @@ public record DefaultJsRulePolicy() implements JsRulePolicy {
     public static final DefaultJsRulePolicy INSTANCE = new DefaultJsRulePolicy();
 
     // Shared base — rules every non-exempt module is held to (grows in Phase 5).
-    private static final List<JsRule> BASE = List.of(NoCdnImportRule.INSTANCE);
+    private static final List<JsRule> BASE = List.of(
+            NoCdnImportRule.INSTANCE,
+            NoDomDestructionRule.INSTANCE);
 
     private static final JsRuleSet CONSUMER =
             new JsRuleSet(new RuleSetId("consumer"), "Consumer", BASE);

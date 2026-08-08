@@ -33,6 +33,13 @@ public record FindingGrader(Set<RuleId> errorRules, List<Allowance> allowlist) {
         allowlist  = List.copyOf(allowlist);
     }
 
+    /** This grader plus extra allowances (e.g. an app's own accepted exceptions). */
+    public FindingGrader withAllowlist(List<Allowance> more) {
+        var combined = new java.util.ArrayList<>(allowlist);
+        combined.addAll(more);
+        return new FindingGrader(errorRules, combined);
+    }
+
     public GradedFinding grade(Finding finding) {
         for (Allowance a : allowlist) {
             if (a.matches(finding)) return new GradedFinding(finding, Severity.WARNING, a.reason());
