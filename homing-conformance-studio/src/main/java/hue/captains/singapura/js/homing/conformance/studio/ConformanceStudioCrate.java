@@ -33,6 +33,7 @@ public final class ConformanceStudioCrate implements Crate {
                 CrateEntry.of(CrateGraphWidget.INSTANCE),
                 CrateEntry.of(ModuleSummaryWidget.INSTANCE),
                 CrateEntry.of(ModuleContentWidget.INSTANCE),
+                CrateEntry.of(CrateConformanceWidget.INSTANCE),
                 CrateEntry.of(ModuleConformanceWidget.INSTANCE));
     }
 

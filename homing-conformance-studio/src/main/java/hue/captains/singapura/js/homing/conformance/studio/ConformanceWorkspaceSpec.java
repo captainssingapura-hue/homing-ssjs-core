@@ -49,7 +49,10 @@ public final class ConformanceWorkspaceSpec implements WorkspaceSpec {
             WidgetEntry.of(ModuleContentWidget.class, WidgetLabel.of("Full Content"))
                     .withIcon(new WidgetIcon.Emoji("📜"))   // 📜
                     .withGroup(details),
-            WidgetEntry.of(ModuleConformanceWidget.class, WidgetLabel.of("Conformance"))
+            WidgetEntry.of(CrateConformanceWidget.class, WidgetLabel.of("Crate Conformance"))
+                    .withIcon(new WidgetIcon.Emoji("🧩"))         // 🧩
+                    .withGroup(details),
+            WidgetEntry.of(ModuleConformanceWidget.class, WidgetLabel.of("Module Conformance"))
                     .withIcon(new WidgetIcon.Emoji("✅"))         // ✅
                     .withGroup(details)
         );
