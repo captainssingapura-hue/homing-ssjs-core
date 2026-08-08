@@ -30,6 +30,7 @@ public final class ConformanceStudioCrate implements Crate {
     public List<CrateEntry> entries() {
         return List.of(
                 CrateEntry.of(ModuleTreeWidget.INSTANCE),
+                CrateEntry.of(CrateGraphWidget.INSTANCE),
                 CrateEntry.of(ModuleSummaryWidget.INSTANCE),
                 CrateEntry.of(ModuleContentWidget.INSTANCE),
                 CrateEntry.of(ModuleConformanceWidget.INSTANCE));

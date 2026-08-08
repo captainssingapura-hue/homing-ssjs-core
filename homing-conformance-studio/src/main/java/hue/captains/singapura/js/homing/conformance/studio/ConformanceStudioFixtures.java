@@ -64,6 +64,7 @@ public record ConformanceStudioFixtures(Umbrella<ConformanceStudio> umbrella, Li
     public Map<String, GetAction<RoutingContext, ?, ?, ?>> harnessGetActions() {
         var actions = new LinkedHashMap<>(defaults().harnessGetActions());
         actions.put("/crate-tree", new CrateTreeGetAction(topLevel));
+        actions.put("/crate-graph", new CrateGraphGetAction(topLevel));
         return Map.copyOf(actions);
     }
 

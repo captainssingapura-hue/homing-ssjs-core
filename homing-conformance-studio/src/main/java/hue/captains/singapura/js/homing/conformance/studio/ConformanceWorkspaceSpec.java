@@ -40,6 +40,9 @@ public final class ConformanceWorkspaceSpec implements WorkspaceSpec {
             WidgetEntry.of(ModuleTreeWidget.class, WidgetLabel.of("Crates"))
                     .withIcon(new WidgetIcon.Emoji("🧩"))   // 🧩
                     .withGroup(nav),
+            WidgetEntry.of(CrateGraphWidget.class, WidgetLabel.of("Dependency Graph"))
+                    .withIcon(new WidgetIcon.Emoji("🕸"))    // 🕸
+                    .withGroup(nav),
             WidgetEntry.of(ModuleSummaryWidget.class, WidgetLabel.of("Summary"))
                     .withIcon(new WidgetIcon.Emoji("📄"))   // 📄
                     .withGroup(details),
