@@ -21,6 +21,6 @@ public record ConformanceStudio() implements Studio<ConformanceLandingCatalogue>
 
     @Override
     public StudioBrand standaloneBrand() {
-        return new StudioBrand("Conformance · JS Modules", ConformanceLandingCatalogue.class);
+        return new StudioBrand("Crate-Studio", ConformanceLandingCatalogue.class);
     }
 }

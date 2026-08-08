@@ -54,7 +54,7 @@ public final class ModuleConformanceWidget extends WorkspaceWidget<WorkspaceWidg
                 "    root.appendChild(pill);",
                 "",
                 "    function render(node) {",
-                "        if (node && node.kind === 'module') {",
+                "        if (node && !node.hasChildren && node.summary) {",
                 "            note.innerHTML = 'Selected module: <code>' + (node.summary || node.label) + '</code>.<br>'",
                 "                + 'The rule engine that produces findings for this module lands in a later phase '",
                 "                + '(served-artifact hook, then engine + default rule sets).';",

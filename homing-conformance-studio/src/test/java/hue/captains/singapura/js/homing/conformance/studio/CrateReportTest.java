@@ -1,11 +1,14 @@
 package hue.captains.singapura.js.homing.conformance.studio;
 
+import hue.captains.singapura.js.homing.conformance.rules.CrateClosure;
+import hue.captains.singapura.js.homing.core.Crate;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -18,14 +21,16 @@ class CrateReportTest {
 
     @Test
     void crateSetIsConformantAndReportIsWritten() throws IOException {
-        String report = CrateReport.render(KnownCrates.ALL);
+        // The report covers the full closure of the top-level crates (owned + external).
+        List<Crate> all = CrateClosure.of(TopLevelCrates.ALL);
+        String report = CrateReport.render(all);
 
         Path out = Path.of("target", "crate-report.txt");
         Files.createDirectories(out.getParent());
         Files.writeString(out, report, StandardCharsets.UTF_8);
         System.out.println(report);
 
-        assertTrue(CrateReport.isGreen(KnownCrates.ALL),
+        assertTrue(CrateReport.isGreen(all),
                 "every crate must be conformant — see report:\n" + report);
     }
 }

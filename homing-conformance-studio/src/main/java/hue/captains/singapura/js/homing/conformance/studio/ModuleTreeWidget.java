@@ -33,7 +33,7 @@ public final class ModuleTreeWidget extends WorkspaceWidget<WorkspaceWidget._Non
 
     @Override protected _Construct<_None, ModuleTreeWidget> construct() { return new construct(); }
     @Override public Class<_None> paramsType() { return _None.class; }
-    @Override public String title() { return "Modules"; }
+    @Override public String title() { return "Crates"; }
     @Override public LifecycleHint lifecycleHint() { return LifecycleHint.MULTI; }
 
     @Override
@@ -54,7 +54,7 @@ public final class ModuleTreeWidget extends WorkspaceWidget<WorkspaceWidget._Non
                 "",
                 "    var status = branch.createElement('status', 'div');",
                 "    status.style.cssText = 'padding:6px 8px;color:#888;font-size:12px;';",
-                "    status.textContent = 'Loading modules\\u2026';",
+                "    status.textContent = 'Loading crates\\u2026';",
                 "    container.appendChild(status);",
                 "",
                 "    var __actorId  = null;",
@@ -78,7 +78,7 @@ public final class ModuleTreeWidget extends WorkspaceWidget<WorkspaceWidget._Non
                 "        if (__renderer && __renderer.handleKeydown(ev)) ev.preventDefault();",
                 "    };",
                 "",
-                "    fetch('/module-tree')",
+                "    fetch('/crate-tree')",
                 "        .then(function (r) {",
                 "            if (!r.ok) throw new Error('HTTP ' + r.status);",
                 "            return r.json();",
@@ -89,7 +89,7 @@ public final class ModuleTreeWidget extends WorkspaceWidget<WorkspaceWidget._Non
                 "                branch:      branch,",
                 "                container:   container,",
                 "                data:        treeJson,",
-                "                expandDepth: 2,",
+                "                expandDepth: 1,",
                 "                onSelect:    function (sel) {",
                 "                    if (__navParty && __actorId) {",
                 "                        __navParty.tellFrom(__actorId,",

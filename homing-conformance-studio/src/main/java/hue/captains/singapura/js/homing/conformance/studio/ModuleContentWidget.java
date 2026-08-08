@@ -55,7 +55,7 @@ public final class ModuleContentWidget extends WorkspaceWidget<WorkspaceWidget._
                 "",
                 "    var __seq = 0;",
                 "    function openNode(node) {",
-                "        if (!node || node.kind !== 'module' || !node.summary) return;",
+                "        if (!node || node.hasChildren || !node.summary) return;  // modules are leaves",
                 "        var fqcn = node.summary;",
                 "        var mine = ++__seq;",
                 "        header.textContent = fqcn;",

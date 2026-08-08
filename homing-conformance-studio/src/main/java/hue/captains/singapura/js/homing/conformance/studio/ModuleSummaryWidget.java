@@ -66,7 +66,7 @@ public final class ModuleSummaryWidget extends WorkspaceWidget<WorkspaceWidget._
                 "        badge.textContent = node.kind || '';",
                 "        titleEl.textContent = node.label || '(unnamed)';",
                 "        // For a module leaf the summary IS the FQCN; for branches it's a count.",
-                "        var isModule = node.kind === 'module';",
+                "        var isModule = !node.hasChildren;",
                 "        fqcnEl.textContent = (node.summary && node.summary.length) ? node.summary : '(no summary)';",
                 "        fqcnEl.style.fontStyle = (node.summary && node.summary.length) ? 'normal' : 'italic';",
                 "        fqcnEl.style.fontFamily = isModule ? 'ui-monospace,Menlo,Consolas,monospace' : 'inherit';",

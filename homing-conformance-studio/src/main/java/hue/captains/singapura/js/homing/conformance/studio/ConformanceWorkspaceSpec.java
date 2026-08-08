@@ -37,7 +37,7 @@ public final class ConformanceWorkspaceSpec implements WorkspaceSpec {
         WidgetGroup nav     = WidgetGroup.of("Navigation");
         WidgetGroup details = WidgetGroup.of("Details");
         return List.of(
-            WidgetEntry.of(ModuleTreeWidget.class, WidgetLabel.of("Modules"))
+            WidgetEntry.of(ModuleTreeWidget.class, WidgetLabel.of("Crates"))
                     .withIcon(new WidgetIcon.Emoji("🧩"))   // 🧩
                     .withGroup(nav),
             WidgetEntry.of(ModuleSummaryWidget.class, WidgetLabel.of("Summary"))
