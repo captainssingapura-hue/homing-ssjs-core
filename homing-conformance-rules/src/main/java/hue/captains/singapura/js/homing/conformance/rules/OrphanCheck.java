@@ -63,24 +63,33 @@ public final class OrphanCheck {
 
     /** Fully-qualified names of concrete {@link EsModule} classes in the crate's own build output. */
     static Set<String> concreteEsModulesIn(Crate crate) {
-        Path root = codeSourceRoot(crate);
+        return servedModuleClassesInModuleOf(crate.getClass());
+    }
+
+    /**
+     * Fully-qualified names of the concrete {@link EsModule} classes in the
+     * Maven-module build output that {@code anchorInModule} lives in. Shared by
+     * the check and the {@code CrateSeed} authoring aid.
+     */
+    public static Set<String> servedModuleClassesInModuleOf(Class<?> anchorInModule) {
+        Path root = codeSourceRoot(anchorInModule);
         var names = new TreeSet<String>();
-        ClassLoader loader = crate.getClass().getClassLoader();
+        ClassLoader loader = anchorInModule.getClassLoader();
         for (String fqcn : classNamesUnder(root)) {
             if (isConcreteEsModule(fqcn, loader)) names.add(fqcn);
         }
         return names;
     }
 
-    private static Path codeSourceRoot(Crate crate) {
+    private static Path codeSourceRoot(Class<?> anchor) {
         try {
-            var cs = crate.getClass().getProtectionDomain().getCodeSource();
+            var cs = anchor.getProtectionDomain().getCodeSource();
             if (cs == null || cs.getLocation() == null) {
-                throw new IllegalStateException("no code source for crate " + crate.getClass().getName());
+                throw new IllegalStateException("no code source for " + anchor.getName());
             }
             return Path.of(cs.getLocation().toURI());
         } catch (URISyntaxException e) {
-            throw new IllegalStateException("bad code source URI for crate " + crate.getClass().getName(), e);
+            throw new IllegalStateException("bad code source URI for " + anchor.getName(), e);
         }
     }
 
