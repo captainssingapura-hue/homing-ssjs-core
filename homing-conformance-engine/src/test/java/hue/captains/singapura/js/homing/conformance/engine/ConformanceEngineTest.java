@@ -7,7 +7,6 @@ import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleNameResolver;
 import hue.captains.singapura.js.homing.core.SelfContent;
-import hue.captains.singapura.js.homing.server.CssClassManager;
 import hue.captains.singapura.js.homing.server.HrefManager;
 import org.junit.jupiter.api.Test;
 
@@ -29,10 +28,28 @@ class ConformanceEngineTest {
 
     @Test
     void realModuleRendersAndPassesEndToEnd() {
-        List<Finding> findings = engine.check(CssClassManager.INSTANCE);
+        // A clean consumer renders through the real server path and validates
+        // with zero findings — render → classify(CONSUMER) → run → collect.
+        assertEquals(JsModuleType.CONSUMER, ModuleClassifier.classify(CleanModule.INSTANCE));
+        List<Finding> findings = engine.check(CleanModule.INSTANCE);
         assertEquals(List.of(), findings,
-                () -> "CssClassManager renders + validates clean, got: " + findings);
+                () -> "a clean consumer must render + validate clean, got: " + findings);
+        // classify(EsModule) is the structural fallback — no crate declaration in view here.
         assertEquals(JsModuleType.CONSUMER, ModuleClassifier.classify(HrefManager.INSTANCE));
+    }
+
+    /** A rule-clean consumer — renders through the real path with no violations. */
+    record CleanModule() implements DomModule<CleanModule>, SelfContent {
+        static final CleanModule INSTANCE = new CleanModule();
+
+        @Override public ImportsFor<CleanModule> imports() { return ImportsFor.noImports(); }
+        @Override public ExportsOf<CleanModule> exports() { return new ExportsOf<>(INSTANCE, List.of()); }
+
+        @Override
+        public List<String> selfContent(ModuleNameResolver nameResolver) {
+            return List.of("export const greeting = 'hello';",
+                    "export function render(host) { return host; }");
+        }
     }
 
     @Test

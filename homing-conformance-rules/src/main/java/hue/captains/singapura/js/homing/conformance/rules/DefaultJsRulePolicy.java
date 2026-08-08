@@ -36,12 +36,23 @@ public record DefaultJsRulePolicy() implements JsRulePolicy {
     private static final List<JsRule> DOM_DISCIPLINE = concat(BASE,
             NoDomDestructionRule.INSTANCE);
 
+    /**
+     * The full consumer discipline: DOM ownership plus the ported view/manager
+     * scanners — typed css, the href manager, no import redeclaration, and the
+     * pure-view doctrines.
+     */
+    private static final List<JsRule> CONSUMER_DISCIPLINE = concat(DOM_DISCIPLINE,
+            NoRawCssRule.INSTANCE,
+            NoRawHrefRule.INSTANCE,
+            NoManagerRedeclarationRule.INSTANCE,
+            ViewDoctrineRule.INSTANCE);
+
     /** No-DOM modules: base + may-not-touch-the-DOM-at-all. */
     private static final List<JsRule> NO_DOM = concat(BASE,
             NoDomAccessRule.INSTANCE);
 
     private static final JsRuleSet CONSUMER =
-            new JsRuleSet(new RuleSetId("consumer"), "Consumer", DOM_DISCIPLINE);
+            new JsRuleSet(new RuleSetId("consumer"), "Consumer", CONSUMER_DISCIPLINE);
     private static final JsRuleSet PRIMITIVE =
             new JsRuleSet(new RuleSetId("primitive"), "Primitive", DOM_DISCIPLINE);
     private static final JsRuleSet SECRETARY =
@@ -68,9 +79,9 @@ public record DefaultJsRulePolicy() implements JsRulePolicy {
         };
     }
 
-    private static List<JsRule> concat(List<JsRule> base, JsRule extra) {
+    private static List<JsRule> concat(List<JsRule> base, JsRule... extra) {
         var out = new java.util.ArrayList<JsRule>(base);
-        out.add(extra);
+        java.util.Collections.addAll(out, extra);
         return List.copyOf(out);
     }
 }

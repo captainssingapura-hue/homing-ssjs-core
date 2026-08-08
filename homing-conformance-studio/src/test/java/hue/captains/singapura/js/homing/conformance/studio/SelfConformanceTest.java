@@ -31,7 +31,18 @@ class SelfConformanceTest {
                     "hue.captains.singapura.js.homing.studio.base.ui.layout.ModalModule",
                     new RuleId("no-dom-destruction"),
                     "Modal.setContent is a wholesale-body-swap API; the drag-to-modal flow never "
-                            + "wipes widget DOM (MultiTabPaneDragModule moves content out first).")));
+                            + "wipes widget DOM (MultiTabPaneDragModule moves content out first)."),
+            new Allowance(
+                    "hue.captains.singapura.js.homing.server.HrefManager",
+                    new RuleId("no-raw-href"),
+                    "HrefManager IS the href-manager implementation — it defines the href.* API "
+                            + "the rule redirects consumers to; window.location/setAttribute('href') "
+                            + "here are the sanctioned primitives, not a bypass."),
+            new Allowance(
+                    "hue.captains.singapura.js.homing.server.CssClassManager",
+                    new RuleId("no-raw-href"),
+                    "CssClassManager builds its own stylesheet <link> href — framework "
+                            + "infrastructure that emits the served CSS, not a consumer view.")));
 
     @Test
     void everyServedModuleIsConformant() {

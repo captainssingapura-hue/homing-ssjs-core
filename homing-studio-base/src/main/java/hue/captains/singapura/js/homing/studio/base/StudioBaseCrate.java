@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.studio.base;
 
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
+import hue.captains.singapura.js.homing.core.JsModuleType;
 import hue.captains.singapura.js.homing.core.js.CoreJsCrate;
 import hue.captains.singapura.js.homing.libs.LibsCrate;
 import hue.captains.singapura.js.homing.server.ServerCrate;
@@ -126,10 +127,10 @@ public final class StudioBaseCrate implements Crate {
                 CrateEntry.of(PlanAppHost.INSTANCE),
                 CrateEntry.of(PlanHostRenderer.INSTANCE),
                 CrateEntry.of(StudioElements.INSTANCE),
-                CrateEntry.of(ModalModule.INSTANCE),
-                CrateEntry.of(MultiTabPaneDragModule.INSTANCE),
-                CrateEntry.of(MultiTabPaneModule.INSTANCE),
-                CrateEntry.of(SplitPaneModule.INSTANCE),
+                CrateEntry.of(ModalModule.INSTANCE, JsModuleType.PRIMITIVE),
+                CrateEntry.of(MultiTabPaneDragModule.INSTANCE, JsModuleType.PRIMITIVE),
+                CrateEntry.of(MultiTabPaneModule.INSTANCE, JsModuleType.PRIMITIVE),
+                CrateEntry.of(SplitPaneModule.INSTANCE, JsModuleType.PRIMITIVE),
                 CrateEntry.of(LegacyRedirectWidget.INSTANCE),
                 CrateEntry.of(SingleWidgetWorkspace.INSTANCE),
                 CrateEntry.of(SvgWidget.INSTANCE));
