@@ -54,6 +54,9 @@ public final class ConformanceWorkspaceSpec implements WorkspaceSpec {
                     .withGroup(details),
             WidgetEntry.of(ModuleConformanceWidget.class, WidgetLabel.of("Module Conformance"))
                     .withIcon(new WidgetIcon.Emoji("✅"))         // ✅
+                    .withGroup(details),
+            WidgetEntry.of(ConformanceReportWidget.class, WidgetLabel.of("Conformance Report"))
+                    .withIcon(new WidgetIcon.Emoji("📊"))         // 📊
                     .withGroup(details)
         );
     }

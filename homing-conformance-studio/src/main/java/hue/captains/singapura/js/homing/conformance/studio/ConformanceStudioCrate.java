@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.conformance.studio;
 
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
+import hue.captains.singapura.js.homing.core.JsModuleType;
 import hue.captains.singapura.js.homing.core.js.CoreJsCrate;
 
 import java.util.List;
@@ -34,7 +35,10 @@ public final class ConformanceStudioCrate implements Crate {
                 CrateEntry.of(ModuleSummaryWidget.INSTANCE),
                 CrateEntry.of(ModuleContentWidget.INSTANCE),
                 CrateEntry.of(CrateConformanceWidget.INSTANCE),
-                CrateEntry.of(ModuleConformanceWidget.INSTANCE));
+                CrateEntry.of(ModuleConformanceWidget.INSTANCE),
+                CrateEntry.of(ConformanceReportWidget.INSTANCE),
+                // The generated JS codec — headless, no DOM.
+                CrateEntry.of(ReportCodecsModule.INSTANCE, JsModuleType.PURE_LOGIC));
     }
 
     @Override
