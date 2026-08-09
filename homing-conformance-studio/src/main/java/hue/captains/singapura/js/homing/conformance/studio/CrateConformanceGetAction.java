@@ -1,9 +1,9 @@
 package hue.captains.singapura.js.homing.conformance.studio;
 
-import hue.captains.singapura.js.homing.conformance.engine.ConformanceEngine;
+import hue.captains.singapura.js.homing.conformance.export.ConformanceReportSource;
 import hue.captains.singapura.js.homing.conformance.rules.CrateClosure;
 import hue.captains.singapura.js.homing.conformance.rules.CrateConformance;
-import hue.captains.singapura.js.homing.conformance.rules.Finding;
+import hue.captains.singapura.js.homing.conformance.rules.report.FindingReport;
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.server.EmptyParam;
@@ -14,6 +14,8 @@ import hue.captains.singapura.tao.http.action.Param;
 import hue.captains.singapura.tao.http.action.ParamMarshaller;
 import io.vertx.ext.web.RoutingContext;
 
+import java.net.URL;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -76,11 +78,21 @@ public final class CrateConformanceGetAction
         List<Crate> closure = CrateClosure.of(topLevel);
         CrateConformance.Result base = CrateConformance.evaluate(closure);
 
-        // Engine rule findings, grouped by module class.
+        // Rule findings from the BUILD-EXPORTED report (read via the ResultSource),
+        // grouped by module class — the studio reads the report the build produced
+        // rather than re-running the engine in-process (Phase 8 decoupling).
+        ConformanceReportSource report = exportedReport();
         Map<String, List<String>> ruleByModule = new LinkedHashMap<>();
-        for (Finding f : new ConformanceEngine().checkCrates(closure)) {
-            ruleByModule.computeIfAbsent(f.moduleClass(), k -> new ArrayList<>())
-                    .add(f.rule().value() + ": " + f.message());
+        for (Crate c : closure) {
+            for (CrateEntry entry : c.entries()) {
+                String fqcn = entry.moduleClass();
+                report.module(fqcn).ifPresent(mr -> {
+                    for (FindingReport f : mr.findings()) {
+                        ruleByModule.computeIfAbsent(fqcn, k -> new ArrayList<>())
+                                .add(f.rule() + ": " + f.message());
+                    }
+                });
+            }
         }
 
         var crates = new StringBuilder("{");
@@ -127,6 +139,20 @@ public final class CrateConformanceGetAction
         crates.append('}');
         modules.append('}');
         return "{\"ok\":" + allOk + ",\"crates\":" + crates + ",\"modules\":" + modules + "}";
+    }
+
+    /** Locate the build-exported report on the classpath (target/classes/conformance-report). */
+    private static ConformanceReportSource exportedReport() {
+        URL url = CrateConformanceGetAction.class.getResource("/conformance-report/report.json");
+        if (url == null) {
+            throw new IllegalStateException(
+                    "no exported conformance report on the classpath — the build export must run first");
+        }
+        try {
+            return new ConformanceReportSource(Path.of(url.toURI()).getParent());
+        } catch (java.net.URISyntaxException e) {
+            throw new IllegalStateException("bad conformance-report resource URL: " + url, e);
+        }
     }
 
     private static String jarr(List<String> items) {

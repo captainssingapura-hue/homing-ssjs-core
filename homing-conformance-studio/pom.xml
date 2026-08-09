@@ -46,6 +46,18 @@
             <artifactId>homing-conformance-export</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+        <!-- Polyglot codec JS target: the ECMA generators + the shared report
+             codec manifest, for generating the report codecs' JS body. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-codec-ecma</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-conformance-report-gen</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
