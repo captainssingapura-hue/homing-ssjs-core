@@ -60,6 +60,9 @@
              never committed) that downstream export + ResultSource depend on. -->
         <module>homing-conformance-report-gen</module>
         <module>homing-conformance-report-codec</module>
+        <!-- Report I/O: assemble (engine) → write via the generated codec →
+             read back through the ResultSource. Depends on engine + report-codec. -->
+        <module>homing-conformance-export</module>
         <module>homing-studio-base</module>
         <module>homing-workspace</module>
         <!-- Generated JS codecs for the workspace's typed records. Empty

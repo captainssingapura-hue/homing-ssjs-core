@@ -1,6 +1,12 @@
 package hue.captains.singapura.js.homing.conformance.engine;
 
 import hue.captains.singapura.js.homing.conformance.rules.Finding;
+import hue.captains.singapura.js.homing.conformance.rules.FindingGrader;
+import hue.captains.singapura.js.homing.conformance.rules.report.ConformanceRun;
+import hue.captains.singapura.js.homing.conformance.rules.report.CrateReport;
+import hue.captains.singapura.js.homing.conformance.rules.report.ModuleResult;
+import hue.captains.singapura.js.homing.core.Crate;
+import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.core.JsModuleType;
 import hue.captains.singapura.js.homing.core.DomModule;
 import hue.captains.singapura.js.homing.core.ExportsOf;
@@ -36,6 +42,40 @@ class ConformanceEngineTest {
                 () -> "a clean consumer must render + validate clean, got: " + findings);
         // classify(EsModule) is the structural fallback — no crate declaration in view here.
         assertEquals(JsModuleType.CONSUMER, ModuleClassifier.classify(HrefManager.INSTANCE));
+    }
+
+    @Test
+    void assembleProducesAStructuredGradedReport() {
+        // STRICT: no allowlist, no baseline — every finding is an error.
+        ConformanceRun run = engine.assemble(List.of(new TestCrate()), FindingGrader.STRICT);
+
+        assertEquals(1, run.summary().crates().size());
+        CrateReport crate = run.summary().crates().get(0);
+        assertEquals("test-crate", crate.crate());
+        assertEquals(2, crate.moduleCount());
+        assertEquals(2, run.modules().size());
+
+        ModuleResult clean = moduleNamed(run, "CleanModule");
+        ModuleResult cdn   = moduleNamed(run, "CdnModule");
+        assertTrue(clean.pass(), "clean consumer passes");
+        assertFalse(cdn.pass(), "a CDN import is a NEW violation under STRICT → fails");
+
+        assertEquals(1, run.summary().errorCount(), "one CDN error across the crate");
+        assertFalse(run.summary().pass());
+    }
+
+    private static ModuleResult moduleNamed(ConformanceRun run, String simpleName) {
+        return run.modules().stream().filter(m -> m.moduleClass().contains(simpleName))
+                .findFirst().orElseThrow();
+    }
+
+    /** A one-crate fixture packing the clean + CDN modules. */
+    record TestCrate() implements Crate {
+        @Override public String name() { return "test-crate"; }
+        @Override public List<Crate> requires() { return List.of(); }
+        @Override public List<CrateEntry> entries() {
+            return List.of(CrateEntry.of(CleanModule.INSTANCE), CrateEntry.of(CdnModule.INSTANCE));
+        }
     }
 
     /** A rule-clean consumer — renders through the real path with no violations. */

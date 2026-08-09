@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+        <artifactId>homing.js</artifactId>
+        <version>LOCAL-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>homing-conformance-export</artifactId>
+
+    <description>
+        RFC 0044 Phase 8 report I/O: ConformanceReportWriter serializes an
+        assembled ConformanceRun to files via the generated Java codec (one
+        summary + one file per module), and ConformanceReportSource reads them
+        back, mapping a module result by class id. Depends on the engine (to
+        assemble) and the output-only report-codec (to serialize). The studio
+        runs the export at build and reads via the source at runtime.
+    </description>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-conformance-engine</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-conformance-report-codec</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>
