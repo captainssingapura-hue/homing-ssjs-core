@@ -34,6 +34,7 @@ class FindingGraderTest {
         assertEquals(Severity.WARNING, grader(true).grade(ALLOWED).severity());
         assertEquals(Severity.WARNING, grader(false).grade(ALLOWED).severity(),
                 "an intentional allowance stays a warning even in strict mode");
+        assertEquals(Disposition.ALLOWED, grader(false).grade(ALLOWED).disposition());
     }
 
     @Test
@@ -41,12 +42,14 @@ class FindingGraderTest {
         assertEquals(Severity.WARNING, grader(true).grade(PRE_EXISTING).severity());
         assertEquals(Severity.ERROR,   grader(false).grade(PRE_EXISTING).severity(),
                 "disallowing pre-existing makes the baseline build-failing");
+        assertEquals(Disposition.PRE_EXISTING, grader(true).grade(PRE_EXISTING).disposition());
     }
 
     @Test
     void aNewViolationAlwaysFails() {
         assertEquals(Severity.ERROR, grader(true).grade(NEW).severity());
         assertEquals(Severity.ERROR, grader(false).grade(NEW).severity());
+        assertEquals(Disposition.NEW, grader(true).grade(NEW).disposition());
     }
 
     @Test

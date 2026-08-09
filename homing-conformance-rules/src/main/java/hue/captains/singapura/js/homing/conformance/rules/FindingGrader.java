@@ -55,14 +55,14 @@ public record FindingGrader(List<Allowance> allowlist, Baseline baseline, boolea
 
     public GradedFinding grade(Finding finding) {
         for (Allowance a : allowlist) {
-            if (a.matches(finding)) return new GradedFinding(finding, Severity.WARNING, a.reason());
+            if (a.matches(finding)) return new GradedFinding(finding, Severity.WARNING, Disposition.ALLOWED, a.reason());
         }
         if (baseline.contains(finding)) {
             return allowPreExisting
-                    ? new GradedFinding(finding, Severity.WARNING, "pre-existing (baselined)")
-                    : new GradedFinding(finding, Severity.ERROR, "pre-existing violation (disallowed)");
+                    ? new GradedFinding(finding, Severity.WARNING, Disposition.PRE_EXISTING, "pre-existing (baselined)")
+                    : new GradedFinding(finding, Severity.ERROR, Disposition.PRE_EXISTING, "pre-existing violation (disallowed)");
         }
-        return new GradedFinding(finding, Severity.ERROR, "new violation");
+        return new GradedFinding(finding, Severity.ERROR, Disposition.NEW, "new violation");
     }
 
     public List<GradedFinding> grade(List<Finding> findings) {
