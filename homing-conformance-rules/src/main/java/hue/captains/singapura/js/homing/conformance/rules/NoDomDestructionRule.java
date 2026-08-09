@@ -5,8 +5,9 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 /**
- * RFC 0044 Phase 7 — ported from {@code NoDomDestructionConformanceTest}:
- * branch-owned DOM must never be detached via a <b>wholesale wipe</b>. Flags
+ * RFC 0044 — branch-owned DOM must never be detached via a <b>wholesale wipe</b>.
+ * The sole enforcement of this doctrine since Phase 9 retired the standalone
+ * {@code NoDomDestructionConformanceTest} scanner (parity verified). Flags
  * {@code .innerHTML = ""}, {@code .textContent = ""}, and zero-arg
  * {@code .replaceChildren()} in the served text (comments stripped first). A
  * module with a legitimate wipe (e.g. {@code Modal.setContent}) is allowlisted
