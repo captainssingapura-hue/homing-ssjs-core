@@ -29,12 +29,16 @@ public record DefaultJsRulePolicy() implements JsRulePolicy {
 
     public static final DefaultJsRulePolicy INSTANCE = new DefaultJsRulePolicy();
 
-    /** Shared base — rules every non-exempt module is held to, whatever its type. */
-    private static final List<JsRule> BASE = List.of(
-            NoCdnImportRule.INSTANCE);
+    /**
+     * The <b>global</b> layer — rules every non-exempt module is held to, whatever
+     * its type. This is the shared root every type's rule set is composed from.
+     */
+    private static final List<JsRule> GLOBAL = List.of(
+            NoCdnImportRule.INSTANCE,
+            MaxEffectiveLinesRule.INSTANCE);
 
-    /** DOM owners: base + may-not-wipe branch-owned DOM. */
-    private static final List<JsRule> DOM_DISCIPLINE = concat(BASE,
+    /** DOM owners: global + may-not-wipe branch-owned DOM. */
+    private static final List<JsRule> DOM_DISCIPLINE = concat(GLOBAL,
             NoDomDestructionRule.INSTANCE);
 
     /**
@@ -48,8 +52,8 @@ public record DefaultJsRulePolicy() implements JsRulePolicy {
             NoManagerRedeclarationRule.INSTANCE,
             ViewDoctrineRule.INSTANCE);
 
-    /** No-DOM modules: base + may-not-touch-the-DOM-at-all. */
-    private static final List<JsRule> NO_DOM = concat(BASE,
+    /** No-DOM modules: global + may-not-touch-the-DOM-at-all. */
+    private static final List<JsRule> NO_DOM = concat(GLOBAL,
             NoDomAccessRule.INSTANCE);
 
     private static final JsRuleSet CONSUMER =
@@ -61,9 +65,9 @@ public record DefaultJsRulePolicy() implements JsRulePolicy {
     private static final JsRuleSet PURE_LOGIC =
             new JsRuleSet(new RuleSetId("pure-logic"), "Pure logic", NO_DOM);
     private static final JsRuleSet MANAGER_INJECTOR =
-            new JsRuleSet(new RuleSetId("manager-injector"), "ManagerInjector", BASE);
+            new JsRuleSet(new RuleSetId("manager-injector"), "ManagerInjector", GLOBAL);
     private static final JsRuleSet GENERATED_CSS =
-            new JsRuleSet(new RuleSetId("generated-css"), "Generated CSS", BASE);
+            new JsRuleSet(new RuleSetId("generated-css"), "Generated CSS", GLOBAL);
     private static final JsRuleSet BUNDLED_EXTERNAL =
             JsRuleSet.empty(new RuleSetId("bundled-external"), "Bundled external");
 
