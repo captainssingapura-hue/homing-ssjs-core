@@ -106,7 +106,7 @@ public final class ConformanceEngine {
                     if (g.isError()) mErr++; else cWarn++;
                 }
                 cErr += mErr;
-                modules.add(new ModuleResult(e.moduleClass(), type, set.id().value(), mErr == 0, findings));
+                modules.add(new ModuleResult(e.moduleClass(), type.slug(), set.id().value(), mErr == 0, findings));
                 memberIds.add(e.moduleClass());
             }
             var requires = c.requires().stream().map(Crate::name).toList();

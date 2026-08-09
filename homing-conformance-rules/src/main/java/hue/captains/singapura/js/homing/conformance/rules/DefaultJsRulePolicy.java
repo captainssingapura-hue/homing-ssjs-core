@@ -1,28 +1,29 @@
 package hue.captains.singapura.js.homing.conformance.rules;
 
 import hue.captains.singapura.js.homing.core.JsModuleType;
+import hue.captains.singapura.js.homing.core.StandardJsModuleType;
 
 import java.util.List;
+import java.util.Map;
 
 /**
- * <b>The</b> framework policy — one fixed, opinionated mapping from {@link
- * JsModuleType} to its {@link JsRuleSet} (RFC 0044). Not a configuration
- * surface: a downstream with different needs authors its own policy from the
- * same constructs and runs it alongside, never a patch to this one.
+ * <b>The</b> framework policy — the fixed, opinionated mapping from each {@link
+ * StandardJsModuleType} to its {@link JsRuleSet} (RFC 0044). Because the standard
+ * types are a sealed set (an enum), this dispatch is an exhaustive {@code switch}
+ * — the compiler flags a missing case when a standard type is added.
  *
- * <p>The polymorphism is now real, not cosmetic. Every non-bundled module still
- * carries the CDN-free {@link #BASE} rule, but the DOM rules split by type:</p>
- * <ul>
- *   <li><b>DOM owners</b> ({@link JsModuleType#CONSUMER}, {@link
- *       JsModuleType#PRIMITIVE}) may touch the DOM but must never <em>wipe</em>
- *       branch-owned DOM — {@link NoDomDestructionRule}.</li>
- *   <li><b>No-DOM modules</b> ({@link JsModuleType#SECRETARY}, {@link
- *       JsModuleType#PURE_LOGIC}) must touch <em>no</em> DOM at all — the
- *       stricter {@link NoDomAccessRule}.</li>
- *   <li>Managers and generated CSS carry the base only; a bundled external is
- *       exempt.</li>
- * </ul>
- * <p>Functional Object: one {@code INSTANCE}.</p>
+ * <p>The DOM rules split by type: <b>DOM owners</b> ({@code CONSUMER} /
+ * {@code PRIMITIVE}) may touch the DOM but never <em>wipe</em> branch-owned DOM
+ * ({@link NoDomDestructionRule}); <b>no-DOM modules</b> ({@code SECRETARY} /
+ * {@code PURE_LOGIC}) must touch no DOM at all ({@link NoDomAccessRule}); managers
+ * and generated CSS carry the base only; a bundled external is exempt.</p>
+ *
+ * <p><b>Extend, don't patch.</b> This policy is not a configuration surface — a
+ * downstream never edits the framework's types or rules. Instead it defines its
+ * own {@link JsModuleType}s (implementing the interface) with their own rule
+ * sets and composes them on top via {@link #extendedWith}: standard types keep
+ * dispatching through this switch, downstream types through a dictionary lookup
+ * ({@link CompositeJsRulePolicy}). Functional Object: one {@code INSTANCE}.</p>
  */
 public record DefaultJsRulePolicy() implements JsRulePolicy {
 
@@ -68,15 +69,29 @@ public record DefaultJsRulePolicy() implements JsRulePolicy {
 
     @Override
     public JsRuleSet rulesFor(JsModuleType type) {
-        return switch (type) {
-            case CONSUMER         -> CONSUMER;
-            case PRIMITIVE        -> PRIMITIVE;
-            case SECRETARY        -> SECRETARY;
-            case PURE_LOGIC       -> PURE_LOGIC;
-            case MANAGER_INJECTOR -> MANAGER_INJECTOR;
-            case GENERATED_CSS    -> GENERATED_CSS;
-            case BUNDLED_EXTERNAL -> BUNDLED_EXTERNAL;
-        };
+        if (type instanceof StandardJsModuleType std) {
+            return switch (std) {
+                case CONSUMER         -> CONSUMER;
+                case PRIMITIVE        -> PRIMITIVE;
+                case SECRETARY        -> SECRETARY;
+                case PURE_LOGIC       -> PURE_LOGIC;
+                case MANAGER_INJECTOR -> MANAGER_INJECTOR;
+                case GENERATED_CSS    -> GENERATED_CSS;
+                case BUNDLED_EXTERNAL -> BUNDLED_EXTERNAL;
+            };
+        }
+        throw new IllegalArgumentException(
+                "DefaultJsRulePolicy governs only the framework's standard types; got extension type '"
+                        + type.slug() + "'. Register it with DefaultJsRulePolicy.INSTANCE.extendedWith(...).");
+    }
+
+    /**
+     * This framework policy plus a downstream's own types → rule sets. Standard
+     * types keep their exhaustive-switch dispatch here; the {@code extensions}
+     * are dispatched by lookup. A downstream may not remap a standard type.
+     */
+    public JsRulePolicy extendedWith(Map<JsModuleType, JsRuleSet> extensions) {
+        return new CompositeJsRulePolicy(this, extensions);
     }
 
     private static List<JsRule> concat(List<JsRule> base, JsRule... extra) {

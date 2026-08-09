@@ -5,6 +5,7 @@ import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.core.EsModule;
 import hue.captains.singapura.js.homing.core.ExternalModule;
 import hue.captains.singapura.js.homing.core.JsModuleType;
+import hue.captains.singapura.js.homing.core.StandardJsModuleType;
 import hue.captains.singapura.js.homing.core.ManagerInjector;
 import hue.captains.singapura.js.homing.core.ModuleForm;
 
@@ -35,15 +36,15 @@ public final class ModuleClassifier {
 
     public static JsModuleType classify(EsModule<?> module) {
         if (module instanceof BundledExternalModule<?> || module instanceof ExternalModule<?>) {
-            return JsModuleType.BUNDLED_EXTERNAL;
+            return StandardJsModuleType.BUNDLED_EXTERNAL;
         }
         if (module instanceof ManagerInjector) {
-            return JsModuleType.MANAGER_INJECTOR;
+            return StandardJsModuleType.MANAGER_INJECTOR;
         }
         return switch (ModuleForm.of(module)) {
-            case CSS_GROUP -> JsModuleType.GENERATED_CSS;
-            case SVG_GROUP, SELF_CONTENT, RESOURCE_BACKED -> JsModuleType.CONSUMER;
-            case BUNDLED_EXTERNAL -> JsModuleType.BUNDLED_EXTERNAL; // (already handled above)
+            case CSS_GROUP -> StandardJsModuleType.GENERATED_CSS;
+            case SVG_GROUP, SELF_CONTENT, RESOURCE_BACKED -> StandardJsModuleType.CONSUMER;
+            case BUNDLED_EXTERNAL -> StandardJsModuleType.BUNDLED_EXTERNAL; // (already handled above)
         };
     }
 }

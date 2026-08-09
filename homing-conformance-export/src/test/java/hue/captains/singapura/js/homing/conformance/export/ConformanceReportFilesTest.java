@@ -7,7 +7,6 @@ import hue.captains.singapura.js.homing.conformance.rules.report.ConformanceRun;
 import hue.captains.singapura.js.homing.conformance.rules.report.CrateReport;
 import hue.captains.singapura.js.homing.conformance.rules.report.FindingReport;
 import hue.captains.singapura.js.homing.conformance.rules.report.ModuleResult;
-import hue.captains.singapura.js.homing.core.JsModuleType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -28,7 +27,7 @@ class ConformanceReportFilesTest {
 
     private static ConformanceRun sampleRun() {
         var module = new ModuleResult(
-                "hue.demo.Widget", JsModuleType.CONSUMER, "consumer", false,
+                "hue.demo.Widget", "consumer", "consumer", false,
                 List.of(new FindingReport("no-raw-href", "raw href: a.href = x", 42,
                         Severity.WARNING, Disposition.PRE_EXISTING, "pre-existing (baselined)")));
         var summary = new ConformanceReport("1", true, 69, 1, 0, 1, List.of(

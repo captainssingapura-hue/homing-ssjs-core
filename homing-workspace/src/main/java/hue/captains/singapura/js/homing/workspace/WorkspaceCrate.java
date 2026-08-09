@@ -2,7 +2,7 @@ package hue.captains.singapura.js.homing.workspace;
 
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
-import hue.captains.singapura.js.homing.core.JsModuleType;
+import hue.captains.singapura.js.homing.core.StandardJsModuleType;
 import hue.captains.singapura.js.homing.core.js.CoreJsCrate;
 import hue.captains.singapura.js.homing.studio.base.StudioBaseCrate;
 import hue.captains.singapura.js.homing.workspace.catalogue.WorkspaceCatalogueModule;
@@ -40,12 +40,12 @@ public final class WorkspaceCrate implements Crate {
                 CrateEntry.of(WidgetPickerStyles.INSTANCE),
                 CrateEntry.of(WorkspaceLayoutModule.INSTANCE),
                 CrateEntry.of(WorkspaceLayoutStyles.INSTANCE),
-                CrateEntry.of(WorkspaceCatalogueModule.INSTANCE, JsModuleType.PURE_LOGIC),
-                CrateEntry.of(CheckpointStoreModule.INSTANCE, JsModuleType.PURE_LOGIC),
-                CrateEntry.of(CheckpointWorkerModule.INSTANCE, JsModuleType.PURE_LOGIC),
-                CrateEntry.of(WorkspaceEventLogModule.INSTANCE, JsModuleType.PURE_LOGIC),
-                CrateEntry.of(LayoutSecretaryModule.INSTANCE, JsModuleType.SECRETARY),
-                CrateEntry.of(PartyModule.INSTANCE, JsModuleType.PURE_LOGIC),
-                CrateEntry.of(WidgetParamsCodecRegistryModule.INSTANCE, JsModuleType.PURE_LOGIC));
+                CrateEntry.of(WorkspaceCatalogueModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
+                CrateEntry.of(CheckpointStoreModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
+                CrateEntry.of(CheckpointWorkerModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
+                CrateEntry.of(WorkspaceEventLogModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
+                CrateEntry.of(LayoutSecretaryModule.INSTANCE, StandardJsModuleType.SECRETARY),
+                CrateEntry.of(PartyModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
+                CrateEntry.of(WidgetParamsCodecRegistryModule.INSTANCE, StandardJsModuleType.PURE_LOGIC));
     }
 }

@@ -6,7 +6,6 @@ import hue.captains.singapura.js.homing.conformance.rules.report.ConformanceRepo
 import hue.captains.singapura.js.homing.conformance.rules.report.CrateReport;
 import hue.captains.singapura.js.homing.conformance.rules.report.FindingReport;
 import hue.captains.singapura.js.homing.conformance.rules.report.ModuleResult;
-import hue.captains.singapura.js.homing.core.JsModuleType;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -24,7 +23,7 @@ class ReportCodecRoundTripTest {
     @Test
     void moduleResultWithFindingsRoundTrips() {
         var m = new ModuleResult(
-                "hue.demo.Widget", JsModuleType.CONSUMER, "consumer", false,
+                "hue.demo.Widget", "consumer", "consumer", false,
                 List.of(
                         new FindingReport("no-raw-href", "raw href: a.href = x", 42,
                                 Severity.WARNING, Disposition.PRE_EXISTING, "pre-existing (baselined)"),

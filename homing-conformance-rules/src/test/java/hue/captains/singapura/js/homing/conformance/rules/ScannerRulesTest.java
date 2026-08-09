@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.conformance.rules;
 
-import hue.captains.singapura.js.homing.core.JsModuleType;
+import hue.captains.singapura.js.homing.core.StandardJsModuleType;
 
 import org.junit.jupiter.api.Test;
 
@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ScannerRulesTest {
 
     private static ServedModule served(String... lines) {
-        return new ServedModule("demo.Widget", JsModuleType.CONSUMER, JsSource.of(lines));
+        return new ServedModule("demo.Widget", StandardJsModuleType.CONSUMER, JsSource.of(lines));
     }
 
     @Test

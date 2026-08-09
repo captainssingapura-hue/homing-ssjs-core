@@ -2,7 +2,7 @@ package hue.captains.singapura.js.homing.studio.workspace;
 
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
-import hue.captains.singapura.js.homing.core.JsModuleType;
+import hue.captains.singapura.js.homing.core.StandardJsModuleType;
 import hue.captains.singapura.js.homing.core.js.CoreJsCrate;
 import hue.captains.singapura.js.homing.libs.LibsCrate;
 import hue.captains.singapura.js.homing.server.ServerCrate;
@@ -33,7 +33,7 @@ public final class StudioWorkspaceCrate implements Crate {
     public List<CrateEntry> entries() {
         return List.of(
                 CrateEntry.of(DocContentWidget.INSTANCE),
-                CrateEntry.of(NavigatorSecretaryModule.INSTANCE, JsModuleType.SECRETARY),
+                CrateEntry.of(NavigatorSecretaryModule.INSTANCE, StandardJsModuleType.SECRETARY),
                 CrateEntry.of(SummaryWidget.INSTANCE),
                 CrateEntry.of(TreeWidget.INSTANCE));
     }

@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.conformance.rules;
 
 import hue.captains.singapura.js.homing.core.JsModuleType;
+import hue.captains.singapura.js.homing.core.StandardJsModuleType;
 
 import org.junit.jupiter.api.Test;
 
@@ -25,7 +26,7 @@ class RuleModelTest {
 
     @Test
     void ruleFlagsACdnImport() {
-        var m = served("demo.Widget", JsModuleType.CONSUMER,
+        var m = served("demo.Widget", StandardJsModuleType.CONSUMER,
                 "import mermaid from \"https://cdn.jsdelivr.net/npm/mermaid@11/x.mjs\";",
                 "function render(){}");
         List<Finding> findings = NoCdnImportRule.INSTANCE.check(m);
@@ -39,7 +40,7 @@ class RuleModelTest {
     @Test
     void cleanModuleAndSanctionedManagerImportAreCompliant() {
         // A relative (in-app) manager import is NOT a CDN import.
-        var m = served("demo.Widget", JsModuleType.CONSUMER,
+        var m = served("demo.Widget", StandardJsModuleType.CONSUMER,
                 "import { HrefManagerInstance as href } from \"/module?class=…HrefManager\";",
                 "function render(){ href.set(a, '/x'); }",
                 "export { mountInto };");
@@ -50,32 +51,32 @@ class RuleModelTest {
     @Test
     void ruleSetAggregatesFindings() {
         var set = new JsRuleSet(new RuleSetId("consumer"), "Consumer", List.of(NoCdnImportRule.INSTANCE));
-        var offending = served("demo.Bad", JsModuleType.CONSUMER,
+        var offending = served("demo.Bad", StandardJsModuleType.CONSUMER,
                 "import a from \"http://evil/a.mjs\";",
                 "import b from \"https://evil/b.mjs\";");
         assertEquals(2, set.checkAll(offending).size());
-        assertTrue(set.checkAll(served("demo.Ok", JsModuleType.CONSUMER, "const x = 1;")).isEmpty());
+        assertTrue(set.checkAll(served("demo.Ok", StandardJsModuleType.CONSUMER, "const x = 1;")).isEmpty());
     }
 
     @Test
     void policyDispatchesByModuleType() {
         var consumerSet = new JsRuleSet(new RuleSetId("consumer"), "Consumer", List.of(NoCdnImportRule.INSTANCE));
         var exempt      = JsRuleSet.empty(new RuleSetId("bundled-external"), "Bundled external");
-        JsRulePolicy policy = type -> type == JsModuleType.BUNDLED_EXTERNAL ? exempt : consumerSet;
+        JsRulePolicy policy = type -> type == StandardJsModuleType.BUNDLED_EXTERNAL ? exempt : consumerSet;
 
-        assertSame(consumerSet, policy.rulesFor(JsModuleType.CONSUMER));
+        assertSame(consumerSet, policy.rulesFor(StandardJsModuleType.CONSUMER));
         // A bundle is exempt — its CDN-looking imports are not policed.
-        var bundle = served("vendor.Three", JsModuleType.BUNDLED_EXTERNAL,
+        var bundle = served("vendor.Three", StandardJsModuleType.BUNDLED_EXTERNAL,
                 "import x from \"https://unpkg.com/three\";");
         assertTrue(policy.rulesFor(bundle.type()).checkAll(bundle).isEmpty());
-        assertFalse(policy.rulesFor(JsModuleType.CONSUMER).checkAll(bundle).isEmpty());
+        assertFalse(policy.rulesFor(StandardJsModuleType.CONSUMER).checkAll(bundle).isEmpty());
     }
 
     @Test
     void servedModuleCarriesTheCompleteText() {
-        var m = ServedModule.of("demo.X", JsModuleType.CONSUMER, "line1\nline2\nline3");
+        var m = ServedModule.of("demo.X", StandardJsModuleType.CONSUMER, "line1\nline2\nline3");
         assertEquals("line1\nline2\nline3", m.text());
         assertEquals(3, m.lines().size());
-        assertSame(JsSource.EMPTY, new ServedModule("demo.Y", JsModuleType.CONSUMER, null).content());
+        assertSame(JsSource.EMPTY, new ServedModule("demo.Y", StandardJsModuleType.CONSUMER, null).content());
     }
 }
