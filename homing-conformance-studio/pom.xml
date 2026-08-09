@@ -40,11 +40,45 @@
             <artifactId>homing-conformance-engine</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+        <!-- Assemble + write the report (and read it back via the ResultSource). -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-conformance-export</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Export homing-ssjs-core's own conformance report at build time.
+                 process-classes (like WorkspaceCodecGen): the export main must be
+                 compiled first, and its output is a served resource under
+                 target/classes — regenerated every build, never committed. -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>export-self-conformance-report</id>
+                        <phase>process-classes</phase>
+                        <goals><goal>java</goal></goals>
+                        <configuration>
+                            <mainClass>hue.captains.singapura.js.homing.conformance.studio.SelfConformanceExport</mainClass>
+                            <arguments>
+                                <argument>${project.build.outputDirectory}/conformance-report</argument>
+                            </arguments>
+                            <classpathScope>compile</classpathScope>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>
