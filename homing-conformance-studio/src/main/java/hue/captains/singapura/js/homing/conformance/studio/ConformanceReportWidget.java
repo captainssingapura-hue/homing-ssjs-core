@@ -14,9 +14,11 @@ import java.util.List;
  *
  * <p>The view is <b>polymorphic over module type</b>, mirroring how the policy
  * gives each {@code JsModuleType} its own rule set: modules are grouped into a
- * per-type section, each with its own accent + the rule-set id it is held to,
- * and each finding is coloured by severity and disposition (error / allowed /
- * pre-existing).</p>
+ * per-type section, each with its own accent and a <b>foldable rule set</b> —
+ * click it to reveal the rules (id + intent) every module in that section is
+ * held to, joined from the report's shared {@code ruleSets}. Every module is
+ * listed (clean ones compactly); each finding is coloured by severity and
+ * disposition (error / allowed / pre-existing).</p>
  */
 public final class ConformanceReportWidget extends WorkspaceWidget<WorkspaceWidget._None, ConformanceReportWidget> {
 
@@ -101,6 +103,10 @@ public final class ConformanceReportWidget extends WorkspaceWidget<WorkspaceWidg
                 "            report.moduleCount + ' modules \\u00b7 ' + report.warningCount + ' warning(s) \\u00b7 '",
                 "            + report.baselineSize + ' baselined \\u00b7 allowPreExisting=' + report.allowPreExisting));",
                 "",
+                "        // Rule sets are shared reference data (report.ruleSets): id -> {title, rules}.",
+                "        var ruleSetsById = {};",
+                "        (report.ruleSets || []).forEach(function (rs) { ruleSetsById[rs.id] = rs; });",
+                "",
                 "        var byType = {};",
                 "        modules.forEach(function (m) { (byType[m.type] = byType[m.type] || []).push(m); });",
                 "        // Standard types first (fixed order), then any downstream types present.",
@@ -117,10 +123,37 @@ public final class ConformanceReportWidget extends WorkspaceWidget<WorkspaceWidg
                 "            var sh = el('div', 'font-weight:600;font-size:13px;color:' + meta.color + ';',",
                 "                meta.label + '  (' + ms.length + ' module' + (ms.length !== 1 ? 's' : '') + ')');",
                 "            sec.appendChild(sh);",
-                "            sec.appendChild(el('div', 'color:var(--st-gray-mid,#888);font-size:11px;margin:1px 0 4px;',",
-                "                'rule set: ' + ms[0].ruleSet + '  \\u00b7  ' + (ms.length - withFindings.length)",
-                "                + ' clean / ' + withFindings.length + ' with findings'));",
-                "            withFindings.forEach(function (m) { sec.appendChild(renderModule(m)); });",
+                "",
+                "            // Foldable rule set — the rules every module in this section is held to.",
+                "            var setId = ms[0].ruleSet;",
+                "            var rs = ruleSetsById[setId];",
+                "            var ruleCount = (rs && rs.rules) ? rs.rules.length : 0;",
+                "            var open = false;",
+                "            var rulesBox = el('div', 'display:none;margin:3px 0 3px 16px;');",
+                "            if (rs && rs.rules) rs.rules.forEach(function (r) {",
+                "                var rr = el('div', 'font-size:11px;line-height:1.5;margin:1px 0;');",
+                "                rr.appendChild(el('code', 'font-family:ui-monospace,Menlo,Consolas,monospace;'",
+                "                    + 'color:' + meta.color + ';', r.id));",
+                "                rr.appendChild(el('span', 'color:var(--st-gray-mid,#777);', '  \\u2014  ' + r.intent));",
+                "                rulesBox.appendChild(rr);",
+                "            });",
+                "            function foldLabel() {",
+                "                return (open ? '\\u25be' : '\\u25b8') + ' rule set: ' + setId",
+                "                    + '  (' + ruleCount + ' rule' + (ruleCount !== 1 ? 's' : '') + ')  \\u00b7  '",
+                "                    + (ms.length - withFindings.length) + ' clean / ' + withFindings.length + ' with findings';",
+                "            }",
+                "            var toggle = el('div', 'cursor:pointer;user-select:none;color:var(--st-gray-mid,#888);'",
+                "                + 'font-size:11px;margin:1px 0 2px;', foldLabel());",
+                "            toggle.title = ruleCount ? 'Show the rules applied to these modules' : '';",
+                "            toggle.onclick = function () {",
+                "                open = !open; rulesBox.style.display = open ? 'block' : 'none';",
+                "                toggle.textContent = foldLabel();",
+                "            };",
+                "            sec.appendChild(toggle);",
+                "            sec.appendChild(rulesBox);",
+                "",
+                "            // Every module in the section (clean ones too), findings inline.",
+                "            ms.forEach(function (m) { sec.appendChild(renderModule(m)); });",
                 "            body.appendChild(sec);",
                 "        });",
                 "    }",

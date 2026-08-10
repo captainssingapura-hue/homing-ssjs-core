@@ -5,6 +5,8 @@ import hue.captains.singapura.js.homing.conformance.rules.report.ConformanceRepo
 import hue.captains.singapura.js.homing.conformance.rules.report.CrateReport;
 import hue.captains.singapura.js.homing.conformance.rules.report.FindingReport;
 import hue.captains.singapura.js.homing.conformance.rules.report.ModuleResult;
+import hue.captains.singapura.js.homing.conformance.rules.report.RuleReport;
+import hue.captains.singapura.js.homing.conformance.rules.report.RuleSetReport;
 
 import java.util.List;
 
@@ -22,5 +24,7 @@ public final class ReportCodecManifest {
             ObjectDefinition.of(FindingReport.class),
             ObjectDefinition.of(CrateReport.class),
             ObjectDefinition.of(ModuleResult.class),
+            ObjectDefinition.of(RuleReport.class),
+            ObjectDefinition.of(RuleSetReport.class),
             ObjectDefinition.of(ConformanceReport.class));
 }

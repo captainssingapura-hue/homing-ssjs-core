@@ -6,6 +6,8 @@ import hue.captains.singapura.js.homing.conformance.rules.report.ConformanceRepo
 import hue.captains.singapura.js.homing.conformance.rules.report.CrateReport;
 import hue.captains.singapura.js.homing.conformance.rules.report.FindingReport;
 import hue.captains.singapura.js.homing.conformance.rules.report.ModuleResult;
+import hue.captains.singapura.js.homing.conformance.rules.report.RuleReport;
+import hue.captains.singapura.js.homing.conformance.rules.report.RuleSetReport;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -42,7 +44,13 @@ class ReportCodecRoundTripTest {
                 List.of(
                         new CrateReport("homing-core", List.of(), List.of("a.B", "a.C"), 2, 0, 1, true),
                         new CrateReport("homing-studio-base", List.of("homing-core"),
-                                List.of("s.X"), 1, 0, 6, true)));
+                                List.of("s.X"), 1, 0, 6, true)),
+                List.of(
+                        new RuleSetReport("consumer", "Consumer", List.of(
+                                new RuleReport("no-cdn-import", "No CDN imports."),
+                                new RuleReport("no-raw-href", "Use the href.* API."))),
+                        new RuleSetReport("pure-logic", "Pure logic", List.of(
+                                new RuleReport("no-dom-access", "A headless module must not touch the DOM.")))));
 
         String wire = ConformanceReportCodec.INSTANCE.transformTo(r);
         ConformanceReport back = ConformanceReportCodec.INSTANCE.transformFrom(wire);

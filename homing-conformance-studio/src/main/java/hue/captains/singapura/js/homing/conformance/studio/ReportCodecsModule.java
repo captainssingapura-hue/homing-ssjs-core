@@ -28,11 +28,15 @@ public record ReportCodecsModule() implements DomModule<ReportCodecsModule> {
     public record CrateReport()       implements Exportable._Class<ReportCodecsModule> {}
     public record ModuleResult()      implements Exportable._Class<ReportCodecsModule> {}
     public record FindingReport()     implements Exportable._Class<ReportCodecsModule> {}
+    public record RuleSetReport()     implements Exportable._Class<ReportCodecsModule> {}
+    public record RuleReport()        implements Exportable._Class<ReportCodecsModule> {}
     // Codecs — one per class.
     public record ConformanceReportCodec() implements Exportable._Class<ReportCodecsModule> {}
     public record CrateReportCodec()       implements Exportable._Class<ReportCodecsModule> {}
     public record ModuleResultCodec()      implements Exportable._Class<ReportCodecsModule> {}
     public record FindingReportCodec()     implements Exportable._Class<ReportCodecsModule> {}
+    public record RuleSetReportCodec()     implements Exportable._Class<ReportCodecsModule> {}
+    public record RuleReportCodec()        implements Exportable._Class<ReportCodecsModule> {}
 
     @Override
     public ImportsFor<ReportCodecsModule> imports() {
@@ -45,6 +49,8 @@ public record ReportCodecsModule() implements DomModule<ReportCodecsModule> {
                 new ConformanceReport(), new ConformanceReportCodec(),
                 new CrateReport(),       new CrateReportCodec(),
                 new ModuleResult(),      new ModuleResultCodec(),
-                new FindingReport(),     new FindingReportCodec()));
+                new FindingReport(),     new FindingReportCodec(),
+                new RuleSetReport(),     new RuleSetReportCodec(),
+                new RuleReport(),        new RuleReportCodec()));
     }
 }

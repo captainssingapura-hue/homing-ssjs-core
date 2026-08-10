@@ -12,6 +12,8 @@ import hue.captains.singapura.js.homing.conformance.rules.report.ConformanceRun;
 import hue.captains.singapura.js.homing.conformance.rules.report.CrateReport;
 import hue.captains.singapura.js.homing.conformance.rules.report.FindingReport;
 import hue.captains.singapura.js.homing.conformance.rules.report.ModuleResult;
+import hue.captains.singapura.js.homing.conformance.rules.report.RuleReport;
+import hue.captains.singapura.js.homing.conformance.rules.report.RuleSetReport;
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.core.EsModule;
@@ -19,7 +21,9 @@ import hue.captains.singapura.js.homing.core.JsModuleType;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -89,6 +93,9 @@ public final class ConformanceEngine {
     public ConformanceRun assemble(Collection<? extends Crate> crates, FindingGrader grader) {
         var modules = new ArrayList<ModuleResult>();
         var crateReports = new ArrayList<CrateReport>();
+        // The distinct rule sets applied, in first-seen order — shared reference
+        // data the report carries once (rather than on every module).
+        var ruleSets = new LinkedHashMap<String, RuleSetReport>();
         int totErr = 0, totWarn = 0, totModules = 0;
 
         for (Crate c : crates) {
@@ -98,6 +105,7 @@ public final class ConformanceEngine {
                 JsModuleType type = ModuleClassifier.classify(e);
                 ServedModule served = renderer.render(e.module(), type);
                 JsRuleSet set = policy.rulesFor(type);
+                ruleSets.computeIfAbsent(set.id().value(), k -> ruleSetReport(set));
 
                 var findings = new ArrayList<FindingReport>();
                 int mErr = 0;
@@ -119,7 +127,14 @@ public final class ConformanceEngine {
 
         var summary = new ConformanceReport(ConformanceReport.SCHEMA_VERSION,
                 grader.allowPreExisting(), grader.baseline().size(),
-                totModules, totErr, totWarn, crateReports);
+                totModules, totErr, totWarn, crateReports, List.copyOf(ruleSets.values()));
         return new ConformanceRun(summary, modules);
+    }
+
+    /** A rule set in exportable form — its id, title, and its rules' id + intent. */
+    private static RuleSetReport ruleSetReport(JsRuleSet set) {
+        var rules = new ArrayList<RuleReport>();
+        set.rules().forEach(r -> rules.add(new RuleReport(r.id().value(), r.intent())));
+        return new RuleSetReport(set.id().value(), set.title(), rules);
     }
 }

@@ -7,6 +7,8 @@ import hue.captains.singapura.js.homing.conformance.rules.report.ConformanceRun;
 import hue.captains.singapura.js.homing.conformance.rules.report.CrateReport;
 import hue.captains.singapura.js.homing.conformance.rules.report.FindingReport;
 import hue.captains.singapura.js.homing.conformance.rules.report.ModuleResult;
+import hue.captains.singapura.js.homing.conformance.rules.report.RuleReport;
+import hue.captains.singapura.js.homing.conformance.rules.report.RuleSetReport;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -32,7 +34,9 @@ class ConformanceReportFilesTest {
                         Severity.WARNING, Disposition.PRE_EXISTING, "pre-existing (baselined)")));
         var summary = new ConformanceReport("1", true, 69, 1, 0, 1, List.of(
                 new CrateReport("homing-demo", List.of("homing-core"),
-                        List.of("hue.demo.Widget"), 1, 0, 1, true)));
+                        List.of("hue.demo.Widget"), 1, 0, 1, true)),
+                List.of(new RuleSetReport("consumer", "Consumer",
+                        List.of(new RuleReport("no-raw-href", "Use the href.* API.")))));
         return new ConformanceRun(summary, List.of(module));
     }
 
