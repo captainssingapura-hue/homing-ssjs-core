@@ -36,6 +36,15 @@
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- RFC 0044 — the Crate conformance checks (junit-free), used by this
+             module's own crate test. Test scope: the crate declaration itself
+             (CoreJsCrate) needs only homing-core. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-conformance-rules</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 </project>

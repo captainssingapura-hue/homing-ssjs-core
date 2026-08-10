@@ -1,0 +1,87 @@
+# RFC 0044 conformance baseline — pre-existing violations, grandfathered to warnings.
+# One finding fingerprint per line: '<moduleClass> [<rule>] <message>' (line-number-independent).
+# The rules are strict: anything NOT here (or allowlisted) is a NEW violation and fails the build.
+# Regenerate deliberately (never to silence a fresh violation); the list should only shrink.
+#
+hue.captains.singapura.js.homing.conformance.studio.CrateConformanceWidget [no-dom-destruction] wholesale DOM wipe: body.textContent = '';
+hue.captains.singapura.js.homing.conformance.studio.ModuleConformanceWidget [no-dom-destruction] wholesale DOM wipe: body.textContent = '';
+hue.captains.singapura.js.homing.conformance.studio.ModuleSummaryWidget [no-dom-destruction] wholesale DOM wipe: badge.textContent = '';
+hue.captains.singapura.js.homing.core.js.TreeRendererModule [no-raw-href] raw href operation (use href.* API): label.setAttribute('href', this._hrefForPath(path) || '#');
+hue.captains.singapura.js.homing.studio.base.app.CatalogueAppHost [no-raw-href] raw href operation (use href.* API): var sp = new URLSearchParams(window.location.search);
+hue.captains.singapura.js.homing.studio.base.app.CatalogueHostRenderer [no-raw-href] raw href operation (use href.* API): var href = HrefManagerInstance;
+hue.captains.singapura.js.homing.studio.base.app.DocBrowserRenderer [no-raw-href] raw href operation (use href.* API): return c.href ? { text: c.text, href: c.href } : { text: c.text };
+hue.captains.singapura.js.homing.studio.base.app.DocBrowserRenderer [no-raw-href] raw href operation (use href.* API): var href = HrefManagerInstance;
+hue.captains.singapura.js.homing.studio.base.app.DocReader [no-raw-href] raw href operation (use href.* API): var sp = new URLSearchParams(window.location.search);
+hue.captains.singapura.js.homing.studio.base.app.DocReaderRenderer [max-effective-lines] module exceeds the 250 effective-line limit — split it
+hue.captains.singapura.js.homing.studio.base.app.DocReaderRenderer [no-raw-href] raw href operation (use href.* API): var href = HrefManagerInstance;
+hue.captains.singapura.js.homing.studio.base.app.DocReaderRenderer [view-doctrine] DOM lookup (Owned References): return "document.getElementById('" + slug
+hue.captains.singapura.js.homing.studio.base.app.DocReaderRenderer [view-doctrine] DOM lookup (Owned References): var blocks = bodyEl.querySelectorAll("code.language-mermaid");
+hue.captains.singapura.js.homing.studio.base.app.DocTreeViewer [no-raw-href] raw href operation (use href.* API): var sp = new URLSearchParams(window.location.search);
+hue.captains.singapura.js.homing.studio.base.app.SvgViewer [no-raw-href] raw href operation (use href.* API): var sp = new URLSearchParams(window.location.search);
+hue.captains.singapura.js.homing.studio.base.app.tree.TreeAppHost [no-raw-href] raw href operation (use href.* API): var sp = new URLSearchParams(window.location.search);
+hue.captains.singapura.js.homing.studio.base.composed.CodeSegmentRenderer [no-raw-css] raw CSS operation (use css.* API): code.className = 'language-' + seg.language;
+hue.captains.singapura.js.homing.studio.base.composed.ComposedViewer [no-raw-href] raw href operation (use href.* API): var sp = new URLSearchParams(window.location.search);
+hue.captains.singapura.js.homing.studio.base.composed.ComposedWidget [view-doctrine] DOM lookup (Owned References): var anchored = bodyHost.querySelectorAll('[id]');
+hue.captains.singapura.js.homing.studio.base.composed.ComposedWidget [view-doctrine] DOM lookup (Owned References): var tocLinks = tocEl.querySelectorAll('a[data-anchor]');
+hue.captains.singapura.js.homing.studio.base.composed.SvgSegmentRenderer [view-doctrine] DOM lookup (Owned References): var svgEl = host.querySelector('svg');
+hue.captains.singapura.js.homing.studio.base.composed.TextSegmentRenderer [no-raw-href] raw href operation (use href.* API): var href = HrefManagerInstance;
+hue.captains.singapura.js.homing.studio.base.composed.TextSegmentRenderer [view-doctrine] DOM lookup (Owned References): "var el=document.getElementById('ref:" + n.anchor + "');if(el){el.scrollIntoView({behavior:'smooth'});}return false;");
+hue.captains.singapura.js.homing.studio.base.composed.TocSidebarRenderer [no-raw-href] raw href operation (use href.* API): var href = HrefManagerInstance;
+hue.captains.singapura.js.homing.studio.base.composed.TocSidebarRenderer [view-doctrine] DOM lookup (Owned References): return "var el=document.getElementById('" + anchor
+hue.captains.singapura.js.homing.studio.base.export.HtmlExportModule [no-dom-destruction] wholesale DOM wipe: cloneBody.replaceChildren();
+hue.captains.singapura.js.homing.studio.base.export.HtmlExportModule [no-raw-href] raw href operation (use href.* API): dlEl.href     = blobUrl;
+hue.captains.singapura.js.homing.studio.base.export.HtmlExportModule [no-raw-href] raw href operation (use href.* API): var linkHref = linkEls[li].href; // resolved absolute URL
+hue.captains.singapura.js.homing.studio.base.export.HtmlExportModule [view-doctrine] DOM lookup (Owned References): var cloneBody = clone.querySelector('body');
+hue.captains.singapura.js.homing.studio.base.export.HtmlExportModule [view-doctrine] DOM lookup (Owned References): var cloneHead = clone.querySelector('head');
+hue.captains.singapura.js.homing.studio.base.export.HtmlExportModule [view-doctrine] DOM lookup (Owned References): var contentRoots = cloneBody.querySelectorAll('[data-export-content]');
+hue.captains.singapura.js.homing.studio.base.export.HtmlExportModule [view-doctrine] DOM lookup (Owned References): var linkEls = document.querySelectorAll('link[rel="stylesheet"]');
+hue.captains.singapura.js.homing.studio.base.export.HtmlExportModule [view-doctrine] DOM lookup (Owned References): var scripts = clone.querySelectorAll(stripSel);
+hue.captains.singapura.js.homing.studio.base.export.HtmlExportModule [view-doctrine] DOM lookup (Owned References): var styleLinks = clone.querySelectorAll('link[rel="stylesheet"]');
+hue.captains.singapura.js.homing.studio.base.export.HtmlExportModule [view-doctrine] HTML tag literal (Pure-Component Views): + '<body>' + bodyHtml + '</body>\n'
+hue.captains.singapura.js.homing.studio.base.export.HtmlExportModule [view-doctrine] HTML tag literal (Pure-Component Views): + '<head>' + headHtml + '</head>\n'
+hue.captains.singapura.js.homing.studio.base.export.HtmlExportModule [view-doctrine] HTML tag literal (Pure-Component Views): + '<html lang="' + lang + '">\n'
+hue.captains.singapura.js.homing.studio.base.export.HtmlExportModule [view-doctrine] HTML tag literal (Pure-Component Views): var html = '<!DOCTYPE html>\n'
+hue.captains.singapura.js.homing.studio.base.graph.StudioGraphInspector [no-raw-href] raw href operation (use href.* API): var sp = new URLSearchParams(window.location.search);
+hue.captains.singapura.js.homing.studio.base.graph.StudioGraphInspectorRenderer [no-raw-href] raw href operation (use href.* API): var qs = new URLSearchParams(window.location.search);
+hue.captains.singapura.js.homing.studio.base.image.ImageViewer [no-raw-href] raw href operation (use href.* API): var sp = new URLSearchParams(window.location.search);
+hue.captains.singapura.js.homing.studio.base.table.TableViewer [no-raw-href] raw href operation (use href.* API): var sp = new URLSearchParams(window.location.search);
+hue.captains.singapura.js.homing.studio.base.theme.HomingJazzDrumsBg [max-effective-lines] module exceeds the 250 effective-line limit — split it
+hue.captains.singapura.js.homing.studio.base.theme.ThemesIntroRenderer [no-raw-href] raw href operation (use href.* API): params = new URLSearchParams(window.location.search);
+hue.captains.singapura.js.homing.studio.base.theme.ThemesIntroRenderer [no-raw-href] raw href operation (use href.* API): return new URLSearchParams(window.location.search).get("theme");
+hue.captains.singapura.js.homing.studio.base.theme.ThemesIntroRenderer [no-raw-href] raw href operation (use href.* API): return window.location.pathname + "?" + params.toString();
+hue.captains.singapura.js.homing.studio.base.tracker.PlanAppHost [no-raw-href] raw href operation (use href.* API): var here = new URLSearchParams(window.location.search);
+hue.captains.singapura.js.homing.studio.base.tracker.PlanAppHost [no-raw-href] raw href operation (use href.* API): var sp = new URLSearchParams(window.location.search);
+hue.captains.singapura.js.homing.studio.base.tracker.PlanHostRenderer [max-effective-lines] module exceeds the 250 effective-line limit — split it
+hue.captains.singapura.js.homing.studio.base.tracker.PlanHostRenderer [no-raw-href] raw href operation (use href.* API): crumbs[crumbs.length - 1].href = crumbsAfter[0].selfUrl;
+hue.captains.singapura.js.homing.studio.base.tracker.PlanHostRenderer [no-raw-href] raw href operation (use href.* API): var here = new URLSearchParams(window.location.search);
+hue.captains.singapura.js.homing.studio.base.ui.StudioElements [max-effective-lines] module exceeds the 250 effective-line limit — split it
+hue.captains.singapura.js.homing.studio.base.ui.StudioElements [no-raw-href] raw href operation (use href.* API): href.set(a, props.href);
+hue.captains.singapura.js.homing.studio.base.ui.StudioElements [no-raw-href] raw href operation (use href.* API): href.set(node, c.href);
+hue.captains.singapura.js.homing.studio.base.ui.StudioElements [no-raw-href] raw href operation (use href.* API): href.set(row, props.href);
+hue.captains.singapura.js.homing.studio.base.ui.StudioElements [no-raw-href] raw href operation (use href.* API): if (c.href) {
+hue.captains.singapura.js.homing.studio.base.ui.StudioElements [no-raw-href] raw href operation (use href.* API): if (props.href) {
+hue.captains.singapura.js.homing.studio.base.ui.StudioElements [no-raw-href] raw href operation (use href.* API): var href = HrefManagerInstance;
+hue.captains.singapura.js.homing.studio.base.ui.StudioElements [view-doctrine] DOM lookup (Owned References): var pickerSlot = document.getElementById("__theme_picker_slot__");
+hue.captains.singapura.js.homing.studio.base.ui.layout.MultiTabPaneDragModule [max-effective-lines] module exceeds the 250 effective-line limit — split it
+hue.captains.singapura.js.homing.studio.base.ui.layout.MultiTabPaneModule [max-effective-lines] module exceeds the 250 effective-line limit — split it
+hue.captains.singapura.js.homing.studio.base.ui.layout.SplitPaneModule [max-effective-lines] module exceeds the 250 effective-line limit — split it
+hue.captains.singapura.js.homing.studio.base.widget.LegacyRedirectWidget [no-raw-href] raw href operation (use href.* API): if (info && info.url) { window.location.replace(info.url); }
+hue.captains.singapura.js.homing.studio.base.widget.SingleWidgetWorkspace [no-raw-href] raw href operation (use href.* API): var sp = new URLSearchParams(window.location.search);
+hue.captains.singapura.js.homing.studio.base.widget.SvgWidget [view-doctrine] DOM lookup (Owned References): var svgEl = inner.querySelector('svg');
+hue.captains.singapura.js.homing.studio.workspace.SummaryWidget [no-dom-destruction] wholesale DOM wipe: badge.textContent = '';
+hue.captains.singapura.js.homing.studio.workspace.SummaryWidget [no-raw-href] raw href operation (use href.* API): window.open(url, '_blank', 'noopener');
+hue.captains.singapura.js.homing.workspace.WorkspaceLayoutModule [max-effective-lines] module exceeds the 250 effective-line limit — split it
+hue.captains.singapura.js.homing.workspace.WorkspaceLayoutModule [no-raw-css] raw CSS operation (use css.* API): document.body.classList.add(_bodyFullscreenClassName());
+hue.captains.singapura.js.homing.workspace.WorkspaceLayoutModule [no-raw-css] raw CSS operation (use css.* API): document.body.classList.add(_workspaceActiveClassName());
+hue.captains.singapura.js.homing.workspace.WorkspaceLayoutModule [no-raw-css] raw CSS operation (use css.* API): document.body.classList.remove(_bodyFullscreenClassName());
+hue.captains.singapura.js.homing.workspace.WorkspaceLayoutModule [no-raw-css] raw CSS operation (use css.* API): document.body.classList.remove(_workspaceActiveClassName());
+hue.captains.singapura.js.homing.workspace.WorkspaceLayoutModule [view-doctrine] DOM lookup (Owned References): var header = document.querySelector(".st-header");
+hue.captains.singapura.js.homing.workspace.WorkspaceLayoutModule [view-doctrine] DOM lookup (Owned References): var header2 = document.querySelector(".st-header");
+hue.captains.singapura.js.homing.workspace.WorkspaceLayoutModule [view-doctrine] DOM lookup (Owned References): var stRoot = document.querySelector(".st-root");
+hue.captains.singapura.js.homing.workspace.codecs.WorkspaceStateCodecsModule [max-effective-lines] module exceeds the 250 effective-line limit — split it
+hue.captains.singapura.js.homing.workspace.shell.CheckpointServiceModule [max-effective-lines] module exceeds the 250 effective-line limit — split it
+hue.captains.singapura.js.homing.workspace.shell.GenericWorkspace [no-raw-href] raw href operation (use href.* API): var sp = new URLSearchParams(window.location.search);
+hue.captains.singapura.js.homing.workspace.shell.WorkspaceControlModalModule [max-effective-lines] module exceeds the 250 effective-line limit — split it
+hue.captains.singapura.js.homing.workspace.shell.WorkspaceShellChromeModule [max-effective-lines] module exceeds the 250 effective-line limit — split it
+hue.captains.singapura.js.homing.workspace.shell.WorkspaceShellChromeModule [view-doctrine] HTML tag literal (Pure-Component Views): if (typeof v === 'function')        return 'class ' + (v.name || '<anonymous>');
+hue.captains.singapura.js.homing.workspace.shell.WorkspaceStateModelModule [max-effective-lines] module exceeds the 250 effective-line limit — split it

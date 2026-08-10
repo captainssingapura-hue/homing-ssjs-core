@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+        <artifactId>homing.js</artifactId>
+        <version>LOCAL-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>homing-conformance-report-codec</artifactId>
+
+    <description>
+        Output-only module: hosts NOTHING but the generated Java report codec.
+        At generate-sources the ReportCodecGen driver (from
+        homing-conformance-report-gen) emits the codec source into
+        target/generated-sources/codec, which is this module's sourceDirectory
+        — so the "data" (generated code) never lives in src/, only in target/.
+        Downstream (the exporter + ResultSource) depend on this module normally.
+    </description>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <codec.gen.dir>${project.build.directory}/generated-sources/codec</codec.gen.dir>
+    </properties>
+
+    <dependencies>
+        <!-- The record types the generated codec references. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-conformance-rules</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <!-- TransformationFunctions, the interface the codec implements. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-codec</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <!-- Provides ReportCodecGen (+ the generator) on the exec classpath. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-conformance-report-gen</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <!-- JsonObject / JsonArray used by the generated codec. -->
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-core</artifactId>
+            <version>4.5.11</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <!-- Output-only: the module's sole source root IS the generated directory. -->
+        <sourceDirectory>${codec.gen.dir}</sourceDirectory>
+        <plugins>
+            <!-- Emit the codec source at generate-sources (BEFORE compile) — Java
+                 output must reach javac, unlike the JS codec (a post-compile
+                 resource). The driver is on the compile classpath via the
+                 report-gen dependency. -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>generate-report-codec</id>
+                        <phase>generate-sources</phase>
+                        <goals><goal>java</goal></goals>
+                        <configuration>
+                            <mainClass>hue.captains.singapura.js.homing.conformance.report.gen.ReportCodecGen</mainClass>
+                            <arguments>
+                                <argument>${codec.gen.dir}</argument>
+                            </arguments>
+                            <classpathScope>compile</classpathScope>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

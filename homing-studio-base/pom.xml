@@ -87,6 +87,13 @@
             <version>${project.parent.version}</version>
             <scope>test</scope>
         </dependency>
+        <!-- RFC 0044 — Crate conformance checks, for this module's crate test. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-conformance-rules</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 </project>

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+        <artifactId>homing.js</artifactId>
+        <version>LOCAL-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>homing-conformance-studio</artifactId>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- Where the generated report-codecs JS body lands — the classpath
+             layout the framework serves module bodies from. -->
+        <report.codec.js.dir>${project.build.outputDirectory}/homing/js/hue/captains/singapura/js/homing/conformance/studio</report.codec.js.dir>
+    </properties>
+
+    <!-- RFC 0044 — the REUSABLE conformance-studio base: a Studio-Workspace-shaped
+         studio (Navigator module tree + detail widgets), parameterized by a
+         ModuleRegistry so a downstream instantiates it over its own modules.
+         Depends on homing-studio-starter — the batteries-included fixtures that
+         pre-wire GenericWorkspace + the catalogue Navigator + Bootstrap (and
+         bring the whole workspace + studio-base stack transitively). No shell
+         fork: the module tree rides the stock catalogue pipeline. -->
+    <dependencies>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-studio-starter</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-conformance-rules</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-conformance-engine</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <!-- Assemble + write the report (and read it back via the ResultSource). -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-conformance-export</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <!-- Polyglot codec JS target: the ECMA generators + the shared report
+             codec manifest, for generating the report codecs' JS body. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-codec-ecma</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-conformance-report-gen</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Export homing-ssjs-core's own conformance report at build time.
+                 process-classes (like WorkspaceCodecGen): the export main must be
+                 compiled first, and its output is a served resource under
+                 target/classes — regenerated every build, never committed. -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <!-- Generate the report codecs' JS body FIRST — the export below
+                         renders every closure module including ReportCodecsModule, so
+                         its JS must already be on disk. -->
+                    <execution>
+                        <id>generate-report-js-codec</id>
+                        <phase>process-classes</phase>
+                        <goals><goal>java</goal></goals>
+                        <configuration>
+                            <mainClass>hue.captains.singapura.js.homing.conformance.studio.ReportJsCodecGen</mainClass>
+                            <arguments>
+                                <argument>${report.codec.js.dir}</argument>
+                            </arguments>
+                            <classpathScope>compile</classpathScope>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>export-self-conformance-report</id>
+                        <phase>process-classes</phase>
+                        <goals><goal>java</goal></goals>
+                        <configuration>
+                            <mainClass>hue.captains.singapura.js.homing.conformance.studio.SelfConformanceExport</mainClass>
+                            <arguments>
+                                <argument>${project.build.outputDirectory}/conformance-report</argument>
+                            </arguments>
+                            <classpathScope>compile</classpathScope>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

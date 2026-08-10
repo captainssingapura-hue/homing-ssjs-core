@@ -24,6 +24,12 @@
              Functional Objects; same code runs at build time (Maven exec in a
              consumer module) and could run at request time if needed. -->
         <module>homing-codec-ecma</module>
+        <!-- Concrete Java-target implementation of the homing-codec ontology —
+             JavaFunctionsCodeGen emits a Java TransformationFunctions (JSON
+             codec) for a record ObjectDefinition. Sibling to homing-codec-ecma;
+             the host-language target (no DefinitionCodeGen — the record is the
+             type). -->
+        <module>homing-codec-java</module>
         <!-- Rigid tree substrate — typed leveled TreeNode value objects +
              canonical JSON serialiser. Substrate for "any tree renders on
              JS without a single line of JS code". Studio-base and downstream
@@ -45,7 +51,18 @@
              it provides cross-cutting test bases that studio-base hosts its own
              substrate-typed conformance subclasses on top of. Conformance
              depends only on homing-core; studio-base depends on conformance. -->
+        <module>homing-conformance-rules</module>
         <module>homing-conformance</module>
+        <module>homing-conformance-engine</module>
+        <!-- Phase 8 polyglot report codec. -gen holds the managed Functions (the
+             ReportCodecManifest + ReportCodecGen driver); -codec is output-only,
+             hosting nothing but the generated Java codec (target/generated-sources,
+             never committed) that downstream export + ResultSource depend on. -->
+        <module>homing-conformance-report-gen</module>
+        <module>homing-conformance-report-codec</module>
+        <!-- Report I/O: assemble (engine) → write via the generated codec →
+             read back through the ResultSource. Depends on engine + report-codec. -->
+        <module>homing-conformance-export</module>
         <module>homing-studio-base</module>
         <module>homing-workspace</module>
         <!-- Generated JS codecs for the workspace's typed records. Empty
@@ -82,6 +99,7 @@
              Sits ABOVE the workspace stack (which is a strict downstream of
              studio-base), so it's the correct home for the assembly defaults. -->
         <module>homing-studio-starter</module>
+        <module>homing-conformance-studio</module>
         <!-- Pure-JS test fixtures (GraalVM Polyglot + JUnit harness). Lives
              at the substrate position so japjs's own tests and every
              downstream consumer (homing-demo, homing-self-studio, public
