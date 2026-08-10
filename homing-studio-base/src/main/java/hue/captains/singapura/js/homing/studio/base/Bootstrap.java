@@ -191,7 +191,7 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
                 : AppMeta.DEFAULT;
         var inner = new HomingActionRegistry(
                 nameResolver, appResolver, params.resourceReader(),
-                themeRegistry, appMeta);
+                themeRegistry, appMeta, fixtures.servableModuleClasses());
 
         // --- Doc registry — walk DocProviders from apps AND catalogues (RFC 0004 + RFC 0005).
         var docProviders = new ArrayList<DocProvider>();
