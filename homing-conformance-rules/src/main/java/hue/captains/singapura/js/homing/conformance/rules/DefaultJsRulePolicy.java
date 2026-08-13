@@ -49,6 +49,8 @@ public record DefaultJsRulePolicy() implements JsRulePolicy {
     private static final List<JsRule> CONSUMER_DISCIPLINE = concat(DOM_DISCIPLINE,
             NoRawCssRule.INSTANCE,
             NoInlineStyleRule.INSTANCE,
+            NoLiteralColorRule.INSTANCE,
+            NoPresentationAttributeRule.INSTANCE,
             UseDomOpsPartyRule.INSTANCE,
             NoRawHrefRule.INSTANCE,
             NoManagerRedeclarationRule.INSTANCE,

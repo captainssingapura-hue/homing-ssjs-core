@@ -36,6 +36,12 @@ public record NoInlineStyleRule() implements JsRule {
     // setAttribute('style', …) / setAttribute("style", …)
     private static final Pattern SET_ATTR_STYLE =
             Pattern.compile("\\.setAttribute\\(\\s*['\"]style['\"]");
+    // RFC 0045 — the setProperty escape hatch is for CUSTOM properties only.
+    // element.style.setProperty('color', …) is a raw inline write in disguise;
+    // element.style.setProperty('--x', v) (a custom prop a typed class consumes
+    // as var(--x)) is the sanctioned dynamic path and is NOT matched.
+    private static final Pattern SET_PROPERTY_NON_VAR =
+            Pattern.compile("\\.style\\.setProperty\\(\\s*['\"](?!--)");
 
     @Override public RuleId      id()     { return new RuleId("no-inline-style"); }
     @Override public String      intent() { return "A view must style via typed CSS classes (css.addClass + a CssGroup), not inline element.style / setAttribute('style') - so themes and the shared visual language apply."; }
@@ -49,7 +55,9 @@ public record NoInlineStyleRule() implements JsRule {
         List<String> lines = JsText.stripComments(module.lines());
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i);
-            if (STYLE_ASSIGN.matcher(line).find() || SET_ATTR_STYLE.matcher(line).find()) {
+            if (STYLE_ASSIGN.matcher(line).find()
+                    || SET_ATTR_STYLE.matcher(line).find()
+                    || SET_PROPERTY_NON_VAR.matcher(line).find()) {
                 findings.add(new Finding(module.moduleClass(), id(),
                         "inline style write (use a typed css class via css.addClass, not element.style): "
                                 + line.trim(), i));
