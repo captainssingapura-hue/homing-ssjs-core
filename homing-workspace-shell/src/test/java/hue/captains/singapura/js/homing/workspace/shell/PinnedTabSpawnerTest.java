@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Unit test for {@code PinnedTabSpawner}. Exercises the synchronous core
@@ -186,8 +187,11 @@ class PinnedTabSpawnerTest extends JsModuleTestBase {
 
         Value addedTabs = setup.getMember("mtp").getMember("addedTabs");
         assertEquals(2, addedTabs.getArraySize());
-        assertEquals("A:pinned",
-                     setup.getMember("mtp").getMember("workspaceActiveTabId").asString());
+        // RFC 0048 decision #2 — boot is SHALLOW: the pinned spawner adds tabs but
+        // does not enter/activate one, so workspace-active stays null. A pane is
+        // entered only by a deliberate deep-select (enterDeep).
+        assertTrue(setup.getMember("mtp").getMember("workspaceActiveTabId").isNull(),
+                   "pinned spawn should leave the workspace shallow (no active tab)");
     }
 
     @Test

@@ -592,15 +592,6 @@ class MultiTabPane {
         var self2 = this;
         this._wrappersBySlot.forEach(function (_, slotId) { self2._renderSlotLocal(slotId); });
         this._renderRings();   // RFC 0048 — entered/selected rings track workspace-active
-        // RFC 0048 — the give-up wrapper is tied to the workspace-active STATE, not
-        // to one entry method, so EVERY activation path gets one and Escape releases
-        // the pane: enterDeep, the "+" picker (openInSlot → setWorkspaceActiveTab),
-        // a pinned spawn, a drag redock. On document because focus can land outside
-        // the pane content (a non-focusable "Loading…"/launcher area drops it to <body>).
-        if (tabId != null) {
-            this._focusScope = new FocusScope(document, function () { self2.releaseToShallow(); });
-            this._focusScope.attach();
-        }
         this._fire(this._cbWsActiveChanged, "onWorkspaceActiveChanged", [prevId, tabId]);
         if (this._onChange) this._onChange(this.getState());
         return this;
@@ -673,12 +664,19 @@ class MultiTabPane {
         var state = this._tabsBySlot.get(slot);
         if (!state || !state.activeTabId) return this;   // empty pane — host handles add
         this._selectedSlot = slot;
-        // setWorkspaceActiveTab attaches the give-up wrapper (it is tied to the
-        // active state, so every activation path gets one). Here we only move DOM
-        // focus into the pane so keystrokes reach the widget.
-        this.setWorkspaceActiveTab(state.activeTabId);
+        this.setWorkspaceActiveTab(state.activeTabId);   // deep; disposes any prior wrapper
         var w = this._wrappersBySlot.get(slot);
-        if (w && w.content) { try { w.content.focus(); } catch (e) {} }
+        if (w && w.content) {
+            try { w.content.focus(); } catch (e) {}
+            // RFC 0048 — enterDeep is the SINGLE deep-select entry (the picker and
+            // the singleton-focus path route through it too), so the give-up wrapper
+            // lives here, where the pane's content element is in scope. Host is
+            // `document` for now; it moves to `w.content` once every content state is
+            // focusable so focus can't escape the pane (Wish 0002).
+            var self = this;
+            this._focusScope = new FocusScope(document, function () { self.releaseToShallow(); });
+            this._focusScope.attach();
+        }
         return this;
     }
 

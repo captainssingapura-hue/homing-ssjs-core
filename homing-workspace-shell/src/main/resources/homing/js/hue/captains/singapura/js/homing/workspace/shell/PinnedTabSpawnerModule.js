@@ -59,9 +59,9 @@ class PinnedTabSpawner {
                     opts.recorder || null));
         }
 
-        if (startedSpawns.length > 0 && opts.mtp.setWorkspaceActiveTab) {
-            opts.mtp.setWorkspaceActiveTab(startedSpawns[0].tab.id);
-        }
+        // RFC 0048 decision #2 — boot is SHALLOW: pinned tabs are added but no pane
+        // is entered/activated. (The shell's _restoreWorkspaceActive keeps it null.)
+        // A pane becomes active only via a deliberate deep-select (enterDeep).
 
         return Promise.all(startedSpawns.map(s => s.controllerReady.catch(_ => null)))
                       .then(_ => startedSpawns.map(s => s.tab));

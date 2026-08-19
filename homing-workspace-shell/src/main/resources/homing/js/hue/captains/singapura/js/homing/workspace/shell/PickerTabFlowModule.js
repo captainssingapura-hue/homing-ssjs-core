@@ -93,8 +93,13 @@ class PickerTabFlow {
         };
 
         this._mtp.addTab(slotId, tab);
-        if (this._mtp.switchTab)              this._mtp.switchTab(slotId, tabId);
-        if (this._mtp.setWorkspaceActiveTab)  this._mtp.setWorkspaceActiveTab(tabId);
+        if (this._mtp.switchTab) this._mtp.switchTab(slotId, tabId);
+        // RFC 0048 — opening the picker ENTERS the pane (a deep-select), so route
+        // through enterDeep: it activates the picker tab AND attaches the give-up
+        // wrapper, so Escape releases. (Was a bare setWorkspaceActiveTab, which
+        // activated the pane without a wrapper — Escape did nothing.)
+        if (this._mtp.enterDeep)                   this._mtp.enterDeep(slotId);
+        else if (this._mtp.setWorkspaceActiveTab)  this._mtp.setWorkspaceActiveTab(tabId);
 
         const pickerEntries = this.filterPickable(
                 this._spec.entries || [],
@@ -132,12 +137,16 @@ class PickerTabFlow {
     /** SINGLETON focus-existing path: dispose picker tab, focus the live one. */
     _focusExistingSingleton(entry, slotId, tabId) {
         const existingId = this._singletonsByKind[entry.simpleName];
-        if (existingId && this._mtp.setWorkspaceActiveTab) {
+        if (existingId) {
             const liveSlot = this.findSlotForTab(existingId);
             if (liveSlot && this._mtp.switchTab) {
                 this._mtp.switchTab(liveSlot, existingId);
+                // Deep-select the existing instance's pane (attaches the wrapper).
+                if (this._mtp.enterDeep)                   this._mtp.enterDeep(liveSlot);
+                else if (this._mtp.setWorkspaceActiveTab)  this._mtp.setWorkspaceActiveTab(existingId);
+            } else if (this._mtp.setWorkspaceActiveTab) {
+                this._mtp.setWorkspaceActiveTab(existingId);
             }
-            this._mtp.setWorkspaceActiveTab(existingId);
         }
         this._mtp.removeTab(slotId, tabId);
     }
