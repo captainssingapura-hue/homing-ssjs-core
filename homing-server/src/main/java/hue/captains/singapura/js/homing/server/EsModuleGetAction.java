@@ -11,6 +11,7 @@ import io.vertx.ext.web.RoutingContext;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 public class EsModuleGetAction
@@ -19,13 +20,30 @@ public class EsModuleGetAction
     private final ModuleNameResolver nameResolver;
     private final ResourceReader resourceReader;
 
+    /**
+     * RFC 0044 — the set of module classes this server is allowed to serve (the
+     * registered crate closure's declared modules), or {@code null} for the legacy
+     * permissive mode (serve any class on the classpath). When non‑null, the HTTP
+     * {@code /module} path refuses a class not in the set — so a module cannot be
+     * served without being registered in a crate, closing the conformance leak.
+     * The in‑process {@link #render(EsModule)} path is never gated (conformance
+     * renders modules it already holds).
+     */
+    private final Set<String> servable;
+
     public EsModuleGetAction(ModuleNameResolver nameResolver) {
         this(nameResolver, ResourceReader.INSTANCE);
     }
 
     public EsModuleGetAction(ModuleNameResolver nameResolver, ResourceReader resourceReader) {
+        this(nameResolver, resourceReader, null);
+    }
+
+    /** With a crate‑closure allow‑list ({@code servable}); {@code null} = permissive. */
+    public EsModuleGetAction(ModuleNameResolver nameResolver, ResourceReader resourceReader, Set<String> servable) {
         this.nameResolver = nameResolver;
         this.resourceReader = resourceReader;
+        this.servable = (servable == null) ? null : Set.copyOf(servable);
     }
 
     @Override
@@ -46,6 +64,13 @@ public class EsModuleGetAction
     public CompletableFuture<JsModuleContent> execute(ModuleQuery query, EmptyParam.NoHeaders headers) {
         if (query.className() == null || query.className().isBlank()) {
             return CompletableFuture.failedFuture(ResourceNotFound.missingClass());
+        }
+        if (servable != null && !servable.contains(query.className())) {
+            // Registered-crate enforcement: refuse to serve a module no crate declares.
+            return CompletableFuture.failedFuture(ResourceNotFound.forClass(query.className(),
+                    new IllegalStateException("module '" + query.className()
+                            + "' is not declared in any registered crate — refusing to serve"
+                            + " (a served module must be crated, so conformance cannot be bypassed)")));
         }
         try {
             EsModule<?> module = resolveModule(query.className());

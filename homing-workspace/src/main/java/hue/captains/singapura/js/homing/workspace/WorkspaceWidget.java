@@ -219,9 +219,12 @@ public abstract class WorkspaceWidget<P extends WorkspaceWidget._Param, W extend
         lines.addAll(constructBodyJs());
         lines.add("    } catch (e) {");
         lines.add("        console.error('WorkspaceWidget construct failed:', e);");
-        lines.add("        var err = document.createElement('div');");
-        lines.add("        err.style.cssText = 'padding:12px;color:#c00;font-family:sans-serif;';");
-        lines.add("        err.textContent = 'Widget failed to construct: ' + (e && e.message ? e.message : String(e));");
+        // RFC 0045: the error card is served into EVERY widget's JS, so it must be
+        // conformant itself — build it through the DomOpsParty branch, with no
+        // inline style or literal colour (a class would need a CssGroup this base
+        // doesn't own; the fallback stays unstyled, which is fine for an error).
+        lines.add("        var err = branch.createElement('__widgetError', 'div');");
+        lines.add("        err.textContent = '\\u26a0 Widget failed to construct: ' + (e && e.message ? e.message : String(e));");
         lines.add("        // Return the controller shape the chrome expects; setActive is a no-op");
         lines.add("        // — the error widget has nothing to gate.");
         lines.add("        return { root: err, setActive: function (active) {} };");

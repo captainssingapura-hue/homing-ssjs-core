@@ -41,16 +41,18 @@ class NoDomRulesTest {
     void policyHoldsNoDomModulesToNoDomAccessButDomOwnersOnlyToNoWipe() {
         var policy = DefaultJsRulePolicy.INSTANCE;
         String[] domBody = {
-                "const el = document.createElement('div');",
+                "const el = branch.createElement('box', 'div');",
                 "host.appendChild(el);"
         };
 
-        // A consumer legitimately builds DOM — the no-wipe rule does not object.
+        // A consumer legitimately builds DOM through the DomOpsParty branch — no
+        // inline style, no wipe, no raw document.create*, so it is compliant.
         var consumer = served("demo.Widget", StandardJsModuleType.CONSUMER, domBody);
         assertTrue(policy.rulesFor(StandardJsModuleType.CONSUMER).checkAll(consumer).isEmpty(),
-                "a consumer building DOM (no wipe) must be compliant");
+                "a consumer building DOM via the branch (no wipe) must be compliant");
 
-        // The same body in a pure-logic module is a broken no-DOM promise.
+        // The same body in a pure-logic module is a broken no-DOM promise
+        // (NoDomAccessRule flags createElement/appendChild whatever the receiver).
         var logic = served("demo.Store", StandardJsModuleType.PURE_LOGIC, domBody);
         assertFalse(policy.rulesFor(StandardJsModuleType.PURE_LOGIC).checkAll(logic).isEmpty(),
                 "the same DOM code in a no-DOM module must be flagged");

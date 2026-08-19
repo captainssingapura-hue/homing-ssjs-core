@@ -53,6 +53,19 @@ public interface Fixtures<S extends Studio<?>> extends Immutable {
         return Map.of();
     }
 
+    /**
+     * RFC 0044 — the set of module class names this server is allowed to serve
+     * (the registered crate closure's declared modules). When non‑{@code null},
+     * {@code /module} refuses to serve a class outside it, so a JS module cannot
+     * be served without being registered in a crate (closing the "serve without
+     * conformance" leak). Default {@code null} keeps the legacy permissive mode —
+     * a downstream that governs its modules with crates overrides this to return
+     * its served closure.
+     */
+    default java.util.Set<String> servableModuleClasses() {
+        return null;
+    }
+
     /** Raw POST actions the harness contributes. Empty by default. */
     default Map<String, PostAction<RoutingContext, ?, ?, ?>> harnessPostActions() {
         return Map.of();

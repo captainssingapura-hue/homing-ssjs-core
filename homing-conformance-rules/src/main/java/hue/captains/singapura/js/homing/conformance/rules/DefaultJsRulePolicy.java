@@ -13,8 +13,13 @@ import java.util.Map;
  * — the compiler flags a missing case when a standard type is added.
  *
  * <p>The DOM rules split by type: <b>DOM owners</b> ({@code CONSUMER} /
- * {@code PRIMITIVE}) may touch the DOM but never <em>wipe</em> branch-owned DOM
- * ({@link NoDomDestructionRule}); <b>no-DOM modules</b> ({@code SECRETARY} /
+ * {@code PRIMITIVE}) share the full DOM-owner discipline — they may touch the DOM
+ * but must style through typed CSS (no inline styling / literal colour / SVG
+ * presentation attributes), build via the DomOpsParty branch, use owned
+ * references, and never <em>wipe</em> branch-owned DOM. A consumer and a
+ * structural primitive both build + style DOM, so the same static rules apply to
+ * both (a primitive's extra "publish every mutation" obligation is behavioural,
+ * not statically checked). <b>No-DOM modules</b> ({@code SECRETARY} /
  * {@code PURE_LOGIC}) must touch no DOM at all ({@link NoDomAccessRule}); managers
  * and generated CSS carry the base only; a bundled external is exempt.</p>
  *
@@ -42,12 +47,24 @@ public record DefaultJsRulePolicy() implements JsRulePolicy {
             NoDomDestructionRule.INSTANCE);
 
     /**
-     * The full consumer discipline: DOM ownership plus the ported view/manager
-     * scanners — typed css, the href manager, no import redeclaration, and the
-     * pure-view doctrines.
+     * The full <b>DOM-owner</b> discipline, shared by {@code CONSUMER} and
+     * {@code PRIMITIVE}: DOM ownership plus typed css, no inline styling / literal
+     * colour / SVG presentation attributes, owned DOM construction (DomOpsParty),
+     * the href manager, no import redeclaration, and the pure-view doctrines.
+     *
+     * <p>A consumer view and a structural primitive both <b>build and style
+     * DOM</b>, so both owe the same static discipline — otherwise styling simply
+     * sinks from a "converted" consumer into an unchecked primitive and escapes.
+     * A primitive's <em>additional</em> obligation — "publish its every mutation"
+     * — is about runtime behaviour, not a pattern a line scan can validate, so it
+     * is doctrine rather than a rule.</p>
      */
-    private static final List<JsRule> CONSUMER_DISCIPLINE = concat(DOM_DISCIPLINE,
+    private static final List<JsRule> DOM_OWNER_DISCIPLINE = concat(DOM_DISCIPLINE,
             NoRawCssRule.INSTANCE,
+            NoInlineStyleRule.INSTANCE,
+            NoLiteralColorRule.INSTANCE,
+            NoPresentationAttributeRule.INSTANCE,
+            UseDomOpsPartyRule.INSTANCE,
             NoRawHrefRule.INSTANCE,
             NoManagerRedeclarationRule.INSTANCE,
             ViewDoctrineRule.INSTANCE);
@@ -57,9 +74,9 @@ public record DefaultJsRulePolicy() implements JsRulePolicy {
             NoDomAccessRule.INSTANCE);
 
     private static final JsRuleSet CONSUMER =
-            new JsRuleSet(new RuleSetId("consumer"), "Consumer", CONSUMER_DISCIPLINE);
+            new JsRuleSet(new RuleSetId("consumer"), "Consumer", DOM_OWNER_DISCIPLINE);
     private static final JsRuleSet PRIMITIVE =
-            new JsRuleSet(new RuleSetId("primitive"), "Primitive", DOM_DISCIPLINE);
+            new JsRuleSet(new RuleSetId("primitive"), "Primitive", DOM_OWNER_DISCIPLINE);
     private static final JsRuleSet SECRETARY =
             new JsRuleSet(new RuleSetId("secretary"), "Secretary", NO_DOM);
     private static final JsRuleSet PURE_LOGIC =

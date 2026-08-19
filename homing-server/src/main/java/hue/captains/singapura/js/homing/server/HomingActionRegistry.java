@@ -50,10 +50,19 @@ public class HomingActionRegistry implements ActionRegistry<RoutingContext> {
     public HomingActionRegistry(ModuleNameResolver nameResolver, SimpleAppResolver appResolver,
                                 ResourceReader resourceReader, ThemeRegistry themeRegistry,
                                 AppMeta meta) {
+        this(nameResolver, appResolver, resourceReader, themeRegistry, meta, null);
+    }
+
+    /** RFC 0044: {@code servable} is the registered crate closure's module classes —
+     *  when non‑null, {@code /module} refuses to serve a class outside it (a served
+     *  module must be crated). {@code null} keeps the legacy permissive behaviour. */
+    public HomingActionRegistry(ModuleNameResolver nameResolver, SimpleAppResolver appResolver,
+                                ResourceReader resourceReader, ThemeRegistry themeRegistry,
+                                AppMeta meta, java.util.Set<String> servable) {
         if (themeRegistry == null) themeRegistry = ThemeRegistry.EMPTY;
         if (meta == null) meta = AppMeta.DEFAULT;
         this.appAction = new AppHtmlGetAction(nameResolver, appResolver, themeRegistry, meta);
-        this.moduleAction = new EsModuleGetAction(nameResolver, resourceReader);
+        this.moduleAction = new EsModuleGetAction(nameResolver, resourceReader, servable);
         // Base registry serves a typed-only CssContentGetAction with no impls
         // and no default theme — every /css-content request 404s unless an
         // outer registry (e.g. StudioActionRegistry) overrides this route with
