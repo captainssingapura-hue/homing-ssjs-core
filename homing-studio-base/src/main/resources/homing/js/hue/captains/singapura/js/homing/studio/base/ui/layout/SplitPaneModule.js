@@ -54,10 +54,21 @@ var _STYLE_CSS = [
     // so children's position:absolute is anchored to it.
     ".hsp-root{position:relative;overflow:hidden;}",
     ".hsp-leaf{position:absolute;overflow:hidden;}",
-    ".hsp-divider{position:absolute;background:rgba(0,0,0,0.08);z-index:1;}",
+    // The divider ELEMENT is a transparent, comfortable-to-grab hit target
+    // (_DIV_PX wide, set inline by _applySizes). The VISIBLE edge is painted
+    // by ::before as a thin hairline centred in that target — so the grab
+    // area stays generous while the line reads like an ordinary 1px edge at
+    // rest, then thickens + highlights on hover ("edge at rest, handle in
+    // action"). Colours come from the theme border tokens (var), never a
+    // baked literal; currentColor is the drop-in fallback for unthemed hosts.
+    ".hsp-divider{position:absolute;background:transparent;z-index:1;}",
     ".hsp-divider.hsp-h-div{cursor:col-resize;}",
     ".hsp-divider.hsp-v-div{cursor:row-resize;}",
-    ".hsp-divider:hover,.hsp-divider.hsp-active{background:rgba(0,0,0,0.22);}",
+    ".hsp-divider::before{content:'';position:absolute;background:var(--color-border, currentColor);transition:width 100ms ease, height 100ms ease, background-color 100ms ease;}",
+    ".hsp-h-div::before{top:0;bottom:0;left:50%;width:1px;transform:translateX(-50%);}",
+    ".hsp-v-div::before{left:0;right:0;top:50%;height:1px;transform:translateY(-50%);}",
+    ".hsp-h-div:hover::before,.hsp-h-div.hsp-active::before{width:3px;background:var(--color-border-emphasis, currentColor);}",
+    ".hsp-v-div:hover::before,.hsp-v-div.hsp-active::before{height:3px;background:var(--color-border-emphasis, currentColor);}",
     "body.hsp-dragging{user-select:none;-webkit-user-select:none;cursor:inherit;}"
 ].join("\n");
 
