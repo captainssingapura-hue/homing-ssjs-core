@@ -65,8 +65,13 @@ var _STYLE_CSS = [
     ".hmtp-leaf::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:7;",
     "  box-sizing:border-box;border:2px solid transparent;box-shadow:inset 0 0 0 transparent;",
     "  transition:box-shadow 160ms ease, border-color 120ms ease;}",
-    ".hmtp-leaf-selected::after{border-color:var(--color-border-emphasis);border-style:dashed;}",
-    ".hmtp-leaf-entered::after{border-color:var(--color-accent);border-style:solid;",
+    // Selected (shallow) and entered (deep) share ONE visual language — an accent
+    // border + inset glow — differing only in INTENSITY. Shallow is a half-strength
+    // accent border with a faint glow; deep is the full accent border with a strong
+    // glow. Same look, just shallower; the transition deepens it on enter.
+    ".hmtp-leaf-selected::after{border-color:color-mix(in srgb, var(--color-accent) 50%, transparent);",
+    "  box-shadow:inset 0 0 8px color-mix(in srgb, var(--color-accent) 18%, transparent);}",
+    ".hmtp-leaf-entered::after{border-color:var(--color-accent);",
     "  box-shadow:inset 0 0 18px color-mix(in srgb, var(--color-accent) 45%, transparent);}",
     // The entered pane's content takes DOM focus (tabindex -1); suppress its own
     // focus outline — the pane ring above is the focus affordance.
