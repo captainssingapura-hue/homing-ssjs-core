@@ -260,6 +260,7 @@ class MultiTabPane {
         // state is the cursor and the leaf-element index.
         this._leafBySlot   = new Map();
         this._selectedSlot = null;
+        this._focusScope   = null;   // RFC 0048 — the entered pane's give-up-focus wrapper (deep mode)
         // ─── Persistent per-slot DOM wrappers. Created once per slot in
         //     _renderLeaf (when SplitPane mints the leaf el); reused on every
         //     subsequent _renderSlotLocal call so tab content DOM is never
@@ -551,6 +552,9 @@ class MultiTabPane {
      */
     setWorkspaceActiveTab(tabId) {
         if (this._workspaceActiveTabId === tabId) return this;
+        // RFC 0048 — leaving or changing the entered pane drops its give-up-focus
+        // wrapper; enterDeep re-creates one for the newly entered pane.
+        this._disposeFocusScope();
         var prevId = this._workspaceActiveTabId;
         var prev = prevId ? this._findTab(prevId) : null;
         var next = tabId  ? this._findTab(tabId)  : null;
@@ -640,17 +644,31 @@ class MultiTabPane {
         var state = this._tabsBySlot.get(slot);
         if (!state || !state.activeTabId) return this;   // empty pane — host handles add
         this._selectedSlot = slot;
-        this.setWorkspaceActiveTab(state.activeTabId);    // deep; also paints rings
+        this.setWorkspaceActiveTab(state.activeTabId);    // deep; paints rings (+ disposes any prior scope)
         var w = this._wrappersBySlot.get(slot);
-        if (w && w.content) { try { w.content.focus(); } catch (e) {} }
+        if (w && w.content) {
+            try { w.content.focus(); } catch (e) {}
+            // RFC 0048 — wrap the entered pane: an un-consumed Escape or a
+            // homing-focus release event hands focus back to shallow.
+            var self = this;
+            this._focusScope = new FocusScope(w.content, function () { self.releaseToShallow(); });
+            this._focusScope.attach();
+        }
         return this;
     }
 
     /** Return to shallow: no pane entered, cursor unchanged. */
     releaseToShallow() {
-        this.setWorkspaceActiveTab(null);   // paints rings if a pane was entered
+        this.setWorkspaceActiveTab(null);   // disposes the scope + paints rings (leaving deep)
         this._renderRings();
         return this;
+    }
+
+    _disposeFocusScope() {
+        if (this._focusScope) {
+            try { this._focusScope.dispose(); } catch (e) {}
+            this._focusScope = null;
+        }
     }
 
     _firstSlot() {
@@ -928,6 +946,7 @@ class MultiTabPane {
     }
 
     destroy() {
+        this._disposeFocusScope();   // RFC 0048 — drop any entered-pane wrapper
         if (this._drag) { this._drag.destroy(); this._drag = null; }
         if (this._sp) { this._sp.destroy(); this._sp = null; }
         this._tabsBySlot.clear();
