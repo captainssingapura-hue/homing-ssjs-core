@@ -55,19 +55,18 @@ var _STYLE_TAG_ID = "homing-multitabpane-style";
 var _STYLE_CSS = [
     ".hmtp-leaf{display:flex;flex-direction:column;height:100%;position:relative;",
     "  background:var(--color-surface);color:var(--color-text-primary);}",
-    // RFC 0048 — focus rings. The SELECTED pane (shallow cursor) gets a dashed
-    // ring; the ENTERED pane (deep) gets a solid accent ring. Drawn with outline
-    // (no layout shift), inset so it stays within the pane; themed tokens only.
-    ".hmtp-leaf-selected{outline:2px dashed var(--color-border-emphasis);outline-offset:-2px;}",
-    ".hmtp-leaf-entered{outline:2px solid var(--color-accent);outline-offset:-2px;}",
-    // The entered pane also GLOWS — a soft inset accent halo. It's an ::after
-    // overlay because the parent clips outer shadows, and an inset shadow on the
-    // leaf itself would sit behind the pane's opaque strip/content. Always
-    // present but transparent until entered, so it fades in; pointer-events:none
-    // so it never intercepts clicks.
+    // RFC 0048 — focus rings + glow, drawn on an ::after OVERLAY (z-index above
+    // the pane's content). An inset outline on the leaf itself is painted UNDER
+    // the pane's z-indexed children (content / cover z5 / corner z6 / widget), so
+    // on a filled pane the ring is invisible — which made shallow selection look
+    // broken. The overlay sits above all of it. pointer-events:none so it never
+    // intercepts clicks. Selected = dashed emphasis border; entered = solid
+    // accent border + soft inset glow. Themed tokens only; fades between states.
     ".hmtp-leaf::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:7;",
-    "  box-shadow:inset 0 0 0 transparent;transition:box-shadow 160ms ease;}",
-    ".hmtp-leaf-entered::after{",
+    "  box-sizing:border-box;border:2px solid transparent;box-shadow:inset 0 0 0 transparent;",
+    "  transition:box-shadow 160ms ease, border-color 120ms ease;}",
+    ".hmtp-leaf-selected::after{border-color:var(--color-border-emphasis);border-style:dashed;}",
+    ".hmtp-leaf-entered::after{border-color:var(--color-accent);border-style:solid;",
     "  box-shadow:inset 0 0 18px color-mix(in srgb, var(--color-accent) 45%, transparent);}",
     // The entered pane's content takes DOM focus (tabindex -1); suppress its own
     // focus outline — the pane ring above is the focus affordance.
