@@ -81,6 +81,8 @@ class PinnedTabSpawner {
         const loading = document.createElement('div');
         loading.style.cssText = 'padding:20px;color:#666;font-family:sans-serif;';
         loading.textContent   = 'Loading ' + entry.label + '…';
+        loading.setAttribute('tabindex', '0');   // focusable: keep focus in the pane + announce
+        loading.setAttribute('role', 'status');
 
         const holder = { contentEl: null };
         const tab = {

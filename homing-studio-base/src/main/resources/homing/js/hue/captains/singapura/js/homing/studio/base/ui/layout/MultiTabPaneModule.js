@@ -1218,6 +1218,7 @@ class MultiTabPane {
         if (state.tabs.length === 0) {
             var empty = document.createElement("div");
             empty.className = "hmtp-empty";
+            empty.setAttribute("tabindex", "0");   // focusable so entering an empty pane keeps focus in it
             empty.textContent = "(empty pane)";
             content.appendChild(empty);
             return;

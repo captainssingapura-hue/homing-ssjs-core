@@ -647,6 +647,8 @@ class WorkspaceShellChrome {
         const holder  = { contentEl: null };
         const loading = document.createElement('div');
         loading.textContent = 'Loading ' + (descriptor.title || entry.label) + '…';
+        loading.setAttribute('tabindex', '0');   // focusable: keep focus in the pane + announce
+        loading.setAttribute('role', 'status');
         const tab = {
             id:                 uuid,
             title:              descriptor.title || entry.label,

@@ -49,8 +49,9 @@ class PinnedTabSpawnerTest extends JsModuleTestBase {
             }
             globalThis.document = {
                 createElement(tag) {
-                    return { tag, style: { cssText: '' }, textContent: '',
-                             children: [], appendChild(c) { this.children.push(c); } };
+                    return { tag, style: { cssText: '' }, textContent: '', attrs: {},
+                             children: [], appendChild(c) { this.children.push(c); },
+                             setAttribute(k, v) { this.attrs[k] = v; } };
                 }
             };
             // Stub mounter — sync resolveCalls capture, async mount/attach
