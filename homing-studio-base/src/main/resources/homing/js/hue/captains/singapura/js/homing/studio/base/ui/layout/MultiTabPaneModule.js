@@ -60,6 +60,15 @@ var _STYLE_CSS = [
     // (no layout shift), inset so it stays within the pane; themed tokens only.
     ".hmtp-leaf-selected{outline:2px dashed var(--color-border-emphasis);outline-offset:-2px;}",
     ".hmtp-leaf-entered{outline:2px solid var(--color-accent);outline-offset:-2px;}",
+    // The entered pane also GLOWS — a soft inset accent halo. It's an ::after
+    // overlay because the parent clips outer shadows, and an inset shadow on the
+    // leaf itself would sit behind the pane's opaque strip/content. Always
+    // present but transparent until entered, so it fades in; pointer-events:none
+    // so it never intercepts clicks.
+    ".hmtp-leaf::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:7;",
+    "  box-shadow:inset 0 0 0 transparent;transition:box-shadow 160ms ease;}",
+    ".hmtp-leaf-entered::after{",
+    "  box-shadow:inset 0 0 18px color-mix(in srgb, var(--color-accent) 45%, transparent);}",
     // The entered pane's content takes DOM focus (tabindex -1); suppress its own
     // focus outline — the pane ring above is the focus affordance.
     ".hmtp-content:focus{outline:none;}",
