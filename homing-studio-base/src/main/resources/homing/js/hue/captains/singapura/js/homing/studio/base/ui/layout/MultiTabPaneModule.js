@@ -531,7 +531,13 @@ class MultiTabPane {
         // If the closed tab was workspace-active, clear it. Per b.2d spec, no
         // automatic successor inheritance — workspace-active just goes null
         // until the user clicks another tab.
-        if (this._workspaceActiveTabId === tabId) this._workspaceActiveTabId = null;
+        // If the closed tab was workspace-active, clear it (no successor
+        // inheritance) and drop its give-up wrapper — this bypasses
+        // setWorkspaceActiveTab, so dispose the scope here.
+        if (this._workspaceActiveTabId === tabId) {
+            this._workspaceActiveTabId = null;
+            this._disposeFocusScope();
+        }
         state.tabs.splice(idx, 1);
         if (state.activeTabId === tabId) {
             state.activeTabId = state.tabs.length > 0
@@ -544,6 +550,7 @@ class MultiTabPane {
         // RFC 0047 — the workspace total fell, so every OTHER strip's "+"/pill
         // must refresh (a pool that was full may now have room again).
         this._refreshAllStrips();
+        this._renderRings();   // RFC 0048 — a closed workspace-active tab drops to shallow
         this._fire(this._cbTabRemoved, "onTabRemoved", [slotId, tab, idx]);
         if (this._onChange) this._onChange(this.getState());
         return this;
@@ -585,6 +592,15 @@ class MultiTabPane {
         var self2 = this;
         this._wrappersBySlot.forEach(function (_, slotId) { self2._renderSlotLocal(slotId); });
         this._renderRings();   // RFC 0048 — entered/selected rings track workspace-active
+        // RFC 0048 — the give-up wrapper is tied to the workspace-active STATE, not
+        // to one entry method, so EVERY activation path gets one and Escape releases
+        // the pane: enterDeep, the "+" picker (openInSlot → setWorkspaceActiveTab),
+        // a pinned spawn, a drag redock. On document because focus can land outside
+        // the pane content (a non-focusable "Loading…"/launcher area drops it to <body>).
+        if (tabId != null) {
+            this._focusScope = new FocusScope(document, function () { self2.releaseToShallow(); });
+            this._focusScope.attach();
+        }
         this._fire(this._cbWsActiveChanged, "onWorkspaceActiveChanged", [prevId, tabId]);
         if (this._onChange) this._onChange(this.getState());
         return this;
@@ -657,19 +673,12 @@ class MultiTabPane {
         var state = this._tabsBySlot.get(slot);
         if (!state || !state.activeTabId) return this;   // empty pane — host handles add
         this._selectedSlot = slot;
-        this.setWorkspaceActiveTab(state.activeTabId);    // deep; paints rings (+ disposes any prior scope)
+        // setWorkspaceActiveTab attaches the give-up wrapper (it is tied to the
+        // active state, so every activation path gets one). Here we only move DOM
+        // focus into the pane so keystrokes reach the widget.
+        this.setWorkspaceActiveTab(state.activeTabId);
         var w = this._wrappersBySlot.get(slot);
         if (w && w.content) { try { w.content.focus(); } catch (e) {} }
-        // RFC 0048 — the give-up wrapper listens on `document`, not the pane
-        // content. A double-click landing on non-focusable content (a "Loading…"
-        // placeholder, a launcher's blank area) drops focus to <body>, outside
-        // the pane, so an Escape there would never reach a content-scoped wrapper.
-        // Document-level catches the un-consumed Escape (or homing-focus event)
-        // wherever focus landed; a widget that USES Escape still keeps it, because
-        // its stopPropagation halts the event before it reaches document.
-        var self = this;
-        this._focusScope = new FocusScope(document, function () { self.releaseToShallow(); });
-        this._focusScope.attach();
         return this;
     }
 
