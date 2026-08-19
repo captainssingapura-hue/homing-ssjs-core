@@ -659,14 +659,17 @@ class MultiTabPane {
         this._selectedSlot = slot;
         this.setWorkspaceActiveTab(state.activeTabId);    // deep; paints rings (+ disposes any prior scope)
         var w = this._wrappersBySlot.get(slot);
-        if (w && w.content) {
-            try { w.content.focus(); } catch (e) {}
-            // RFC 0048 — wrap the entered pane: an un-consumed Escape or a
-            // homing-focus release event hands focus back to shallow.
-            var self = this;
-            this._focusScope = new FocusScope(w.content, function () { self.releaseToShallow(); });
-            this._focusScope.attach();
-        }
+        if (w && w.content) { try { w.content.focus(); } catch (e) {} }
+        // RFC 0048 — the give-up wrapper listens on `document`, not the pane
+        // content. A double-click landing on non-focusable content (a "Loading…"
+        // placeholder, a launcher's blank area) drops focus to <body>, outside
+        // the pane, so an Escape there would never reach a content-scoped wrapper.
+        // Document-level catches the un-consumed Escape (or homing-focus event)
+        // wherever focus landed; a widget that USES Escape still keeps it, because
+        // its stopPropagation halts the event before it reaches document.
+        var self = this;
+        this._focusScope = new FocusScope(document, function () { self.releaseToShallow(); });
+        this._focusScope.attach();
         return this;
     }
 
