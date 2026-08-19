@@ -1048,6 +1048,10 @@ class MultiTabPane {
         if (this._selectedSlot === null) this._selectedSlot = slotId;   // first pane is the initial cursor
 
         this._renderSlotLocal(slotId);
+        // RFC 0048 — paint the rings now that this leaf (and the initial cursor)
+        // exists, so the boot-shallow selection ring is visible without waiting
+        // for the first interaction.
+        this._renderRings();
     }
 
     /**
