@@ -67,6 +67,12 @@ class MultiTabPaneConformanceTest {
         assertMethod("setWorkspaceActiveTab", 1);
         assertMethod("split",                 2);
         assertMethod("merge",                 1);
+        // RFC 0048 — modal keyboard pane navigation.
+        assertMethod("selectPane",            1);
+        assertMethod("focusPane",             1);
+        assertMethod("cycleTabInPane",        1);
+        assertMethod("enterDeep",             1);
+        assertMethod("releaseToShallow",      0);
     }
 
     @Test
@@ -81,6 +87,8 @@ class MultiTabPaneConformanceTest {
         assertMethod("budget",                0);
         assertMethod("atCapacity",            0);
         assertMethod("canAdd",                0);
+        assertMethod("mode",                  0);
+        assertMethod("selectedSlot",          0);
         assertMethod("canSplit",              1);
         assertMethod("canMerge",              1);
     }

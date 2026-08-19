@@ -41,6 +41,16 @@ public interface MultiTabPaneContract {
     void split(SlotId slotId, String orientation);   // V1 compromise — String
     void merge(SlotId slotId);
 
+    // RFC 0048 — modal keyboard pane navigation. Shallow: a pane cursor moves
+    // with the arrows (selectPane / focusPane), Tab cycles tabs within it
+    // (cycleTabInPane). Deep: the cursor pane is entered (enterDeep) and released
+    // (releaseToShallow). "deep" is derived from the workspace-active tab.
+    void selectPane(SlotId slotId);
+    void focusPane(String direction);   // 'left' | 'right' | 'up' | 'down' — V1 String
+    void cycleTabInPane(int delta);
+    void enterDeep(SlotId slotId);
+    void releaseToShallow();
+
     // ─── Read-only public methods ────────────────────────────────────────
 
     Optional<TabId>  getWorkspaceActiveTab();
@@ -55,6 +65,10 @@ public interface MultiTabPaneContract {
     int              budget();         // the conserved workspace ceiling
     boolean          atCapacity();     // pool exhausted — no pane may add
     boolean          canAdd();         // room for one more, anywhere
+
+    // RFC 0048 — focus-navigation read model.
+    String           mode();           // 'shallow' | 'deep'
+    Optional<SlotId> selectedSlot();   // the shallow-mode pane cursor
 
     /**
      * Name of the JS class implementing this contract. Used by the
