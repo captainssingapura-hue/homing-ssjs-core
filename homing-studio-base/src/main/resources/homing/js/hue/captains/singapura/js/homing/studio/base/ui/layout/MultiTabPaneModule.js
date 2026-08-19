@@ -670,11 +670,12 @@ class MultiTabPane {
             try { w.content.focus(); } catch (e) {}
             // RFC 0048 — enterDeep is the SINGLE deep-select entry (the picker and
             // the singleton-focus path route through it too), so the give-up wrapper
-            // lives here, where the pane's content element is in scope. Host is
-            // `document` for now; it moves to `w.content` once every content state is
-            // focusable so focus can't escape the pane (Wish 0002).
+            // lives here, where the pane's content element is in scope. The host is
+            // the pane's own content: every content state is now focusable (Wish 0002
+            // piece 3) and content itself is tabindex=-1, so an un-consumed Escape
+            // always bubbles to this element and never escapes the pane to <body>.
             var self = this;
-            this._focusScope = new FocusScope(document, function () { self.releaseToShallow(); });
+            this._focusScope = new FocusScope(w.content, function () { self.releaseToShallow(); });
             this._focusScope.attach();
         }
         return this;
