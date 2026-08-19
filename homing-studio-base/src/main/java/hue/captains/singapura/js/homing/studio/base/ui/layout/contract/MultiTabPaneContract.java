@@ -47,7 +47,14 @@ public interface MultiTabPaneContract {
     String           paneIdOf(SlotId slotId);             // V1 compromise — String
     int              tabIndexOf(SlotId slotId, TabId tabId);
     Optional<SlotId> slotIdOfPaneId(String paneId);       // V1 compromise — String
-    int              capacityOf(SlotId slotId);
+
+    // RFC 0047 — the global tab budget as one shared pool. Replaces the
+    // per-pane depth-rationed capacityOf(slotId): the limit is a workspace
+    // total, so these predicates are pane-independent.
+    int              totalTabs();      // tabs across every slot
+    int              budget();         // the conserved workspace ceiling
+    boolean          atCapacity();     // pool exhausted — no pane may add
+    boolean          canAdd();         // room for one more, anywhere
 
     /**
      * Name of the JS class implementing this contract. Used by the

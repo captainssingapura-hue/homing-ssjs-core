@@ -55,10 +55,12 @@ import java.util.List;
  *   <li>{@code addTab(slotId, tab)} — append a tab to a pane; throws if at capacity.</li>
  *   <li>{@code removeTab(slotId, tabId)} — close a tab; if pane empties, it stays empty.</li>
  *   <li>{@code switchTab(slotId, tabId)} — make a tab active.</li>
- *   <li>{@code split(slotId, orientation)} — split a leaf pane; gated by budget rule.</li>
+ *   <li>{@code split(slotId, orientation)} — split a leaf pane (adds no tabs).</li>
  *   <li>{@code merge(slotId)} — merge a leaf pane with its leaf sibling; tabs concatenate.</li>
  *   <li>{@code canSplit(slotId)} / {@code canMerge(slotId)} — predicate forms for UI gating.</li>
- *   <li>{@code capacityOf(slotId)} — depth-derived capacity number.</li>
+ *   <li>{@code totalTabs()} / {@code budget()} / {@code atCapacity()} / {@code canAdd()} —
+ *       RFC 0047 global tab budget: one shared pool across the whole pane tree,
+ *       replacing the per-pane depth-rationed {@code capacityOf(slotId)}.</li>
  * </ul>
  *
  * <p>The two operations are mathematical inverses; together with

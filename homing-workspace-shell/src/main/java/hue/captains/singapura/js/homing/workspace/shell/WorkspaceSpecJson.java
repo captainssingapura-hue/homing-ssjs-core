@@ -24,7 +24,8 @@ import java.util.Map;
  *   "parties":        [ {name, secretaryModuleUrl, secretaryExportName,
  *                        actors: [{id, parentSecretary}], exposedAs }, ... ],
  *   "actionDispatch": { "animal-selected": {kind:"tellParty", ...}, ... },
- *   "widgetCodecs":   [ {widgetKind, moduleUrl, exportName}, ... ]
+ *   "widgetCodecs":   [ {widgetKind, moduleUrl, exportName}, ... ],
+ *   "maxTabs":        16    // RFC 0047 — global tab budget (shared pool)
  * }
  * }</pre>
  *
@@ -61,6 +62,7 @@ public final class WorkspaceSpecJson {
         sb.append(",\"actionDispatch\":").append(actionDispatch(spec.actionDispatch()));
         sb.append(",\"widgetCodecs\":").append(widgetCodecs(spec.widgetCodecs()));
         sb.append(",\"pinnedSpawns\":").append(pinnedSpawns(spec.pinnedSpawns()));
+        sb.append(",\"maxTabs\":").append(spec.maxTabs());   // RFC 0047 — global tab budget
         sb.append('}');
         return sb.toString();
     }

@@ -1,15 +1,19 @@
 // =============================================================================
 // MultiTabPaneModule — second workspace primitive. Layers tabs on top of
-// SplitPane with a conserved tab budget (default 16).
+// SplitPane with a conserved GLOBAL tab budget (default 16).
 //
-// Capacity per pane = floor(budget / 2^depth). Splitting halves it;
-// merging doubles it. Total budget is conserved across any layout.
+// RFC 0047 — the budget is a single shared pool across the whole pane tree:
+// an add is allowed iff the total tab count across every slot is below the
+// budget. Splitting adds no tabs, so it never changes what's available; the
+// "+" affordance disables on every strip together when the pool is full.
+// (Was rationed per-pane by split depth, floor(budget / 2^depth).)
 //
 // API:
 //   new MultiTabPane({ container, budget?, initialLayout?, onChange?, onAddTab? })
-//     onAddTab(slotId): optional. When provided, each strip with capacity
-//     renders a "+" button; click fires onAddTab(slotId). The host decides
-//     what "add" means (open a picker, add a default tab, prompt the user).
+//     onAddTab(slotId): optional. When provided, each strip renders a "+"
+//     button while the workspace is below its tab budget; click fires
+//     onAddTab(slotId). The host decides what "add" means (open a picker,
+//     add a default tab, prompt the user).
 //     .addTab(slotId, { id, title, render, onClose?, setActive?, pinned? })
 //        - onClose() fires only on real close (× click via removeTab).
 //          Internal transient removals during drag detach do NOT fire it,
@@ -30,7 +34,7 @@
 //     .split(slotId, orientation)                  // 'horizontal' | 'vertical'
 //     .merge(slotId)                               // merges with sibling
 //     .canSplit(slotId) / .canMerge(slotId)        // { allowed, reason }
-//     .capacityOf(slotId)
+//     .totalTabs() / .budget() / .atCapacity() / .canAdd()   // RFC 0047 global pool
 //     .getState()
 //     .destroy()
 //
@@ -406,23 +410,34 @@ class MultiTabPane {
     }
 
     // ─── Capacity + predicates ───────────────────────────────────────────────
+    // RFC 0047 — one shared pool. The budget is a workspace total, not a
+    // per-pane ration: an add anywhere is gated on the sum of tabs across
+    // every slot, so the "+" and the pill read the same number on every strip.
 
-    capacityOf(slotId) {
-        var d = _depthOf(this._layout(), slotId);
-        if (d < 0) throw new Error("[MultiTabPane] unknown slot: " + slotId);
-        return Math.floor(this._budget / Math.pow(2, d));
+    /** Total tabs across every slot in this workspace. */
+    totalTabs() {
+        var n = 0;
+        this._tabsBySlot.forEach(function (state) { n += state.tabs.length; });
+        return n;
     }
 
+    /** The budget ceiling — the conserved workspace tab total. */
+    budget() { return this._budget; }
+
+    /** True when the shared pool is exhausted: no pane may add a tab. */
+    atCapacity() { return this.totalTabs() >= this._budget; }
+
+    /** True while the shared pool has room for one more tab, anywhere. */
+    canAdd() { return this.totalTabs() < this._budget; }
+
     canSplit(slotId) {
-        // Splits are gated only by minimum-capacity (children must get cap ≥ 1).
-        // Tab count is NOT a gate — existing tabs stay in the originating child
-        // even when that puts it over its new capacity. The pill turns red to
-        // surface this; the user can close tabs to clear it. addTab() remains
-        // gated by capacity, so the budget invariant (no growth by reshuffle)
-        // survives where it matters.
-        var cap = this.capacityOf(slotId);
-        if (cap < 2) {
-            return { allowed: false, reason: "Minimum capacity reached (already at depth max)" };
+        // RFC 0047 — a split adds no tabs, so it never touches the budget;
+        // there is nothing to gate here. (Tabs stay in the originating child;
+        // the shared-pool invariant "no growth by reshuffle" holds for free
+        // because the total is unchanged.) Kept for API symmetry with
+        // canMerge and any future structural (e.g. min-pane-size) check.
+        if (_depthOf(this._layout(), slotId) < 0) {
+            throw new Error("[MultiTabPane] unknown slot: " + slotId);
         }
         return { allowed: true, reason: "" };
     }
@@ -440,9 +455,9 @@ class MultiTabPane {
 
     addTab(slotId, tab) {
         var state = this._requireSlot(slotId);
-        var cap = this.capacityOf(slotId);
-        if (state.tabs.length >= cap) {
-            throw new Error("[MultiTabPane] pane " + slotId + " at capacity " + cap);
+        // RFC 0047 — global gate: the shared pool, not this pane, is the limit.
+        if (this.atCapacity()) {
+            throw new Error("[MultiTabPane] workspace tab budget reached (" + this._budget + ")");
         }
         state.tabs.push(tab);
         var addedIndex = state.tabs.length - 1;
@@ -450,6 +465,9 @@ class MultiTabPane {
         // Tab-only change → local per-slot re-render. No SplitPane push, no
         // cross-slot DOM disturbance, no widget DOM detach.
         this._renderSlotLocal(slotId);
+        // RFC 0047 — the workspace total rose, so every OTHER strip's "+"/pill
+        // (which read the global pool) must refresh, not just this slot's.
+        this._refreshAllStrips();
         this._fire(this._cbTabAdded, "onTabAdded", [slotId, tab, addedIndex]);
         if (this._onChange) this._onChange(this.getState());
         return this;
@@ -492,8 +510,11 @@ class MultiTabPane {
                 : null;
         }
         // Local re-render — the slot's persistent wrapper drops the closed
-        // tab's _contentEl. Other slots are untouched.
+        // tab's _contentEl.
         this._renderSlotLocal(slotId);
+        // RFC 0047 — the workspace total fell, so every OTHER strip's "+"/pill
+        // must refresh (a pool that was full may now have room again).
+        this._refreshAllStrips();
         this._fire(this._cbTabRemoved, "onTabRemoved", [slotId, tab, idx]);
         if (this._onChange) this._onChange(this.getState());
         return this;
@@ -580,15 +601,10 @@ class MultiTabPane {
         }
         if (idx < 0) throw new Error("[MultiTabPane.moveTab] tab not found: " + tabId);
 
-        // Capacity gate (cross-pane only — same-pane reorder never grows the pane).
-        if (srcSlotId !== destSlotId) {
-            var dest = this._requireSlot(destSlotId);
-            var cap = this.capacityOf(destSlotId);
-            if (dest.tabs.length >= cap) {
-                throw new Error("[MultiTabPane.moveTab] destination at capacity: "
-                              + destSlotId + " (" + cap + ")");
-            }
-        }
+        // RFC 0047 — no capacity gate on move: relocating an existing tab is
+        // net-zero for the shared pool (removed from src, added to dest), so it
+        // is always allowed, even at capacity. Still validate the dest slot.
+        if (srcSlotId !== destSlotId) this._requireSlot(destSlotId);
 
         // Same-pane reorder — adjust destIndex if it would land after the
         // hole left by removal.
@@ -872,6 +888,20 @@ class MultiTabPane {
     }
 
     /**
+     * RFC 0047 — re-render every slot's STRIP only (chips + "+" + pill),
+     * leaving content and corners untouched. The "+" and pill read the global
+     * tab pool, so a change to the workspace total in any one pane must update
+     * the affordance on all of them. Cheap: a strip is a handful of nodes.
+     */
+    _refreshAllStrips() {
+        var self = this;
+        this._wrappersBySlot.forEach(function (wrappers, slotId) {
+            var state = self._tabsBySlot.get(slotId) || { tabs: [], activeTabId: null };
+            self._renderStripContents(slotId, wrappers.strip, state);
+        });
+    }
+
+    /**
      * Strip rebuild — clear + re-add chips, "+", pill. Chips have no inner
      * state to preserve (no scroll, no focus past the close button) so a
      * full rebuild is fine and keeps the code simple.
@@ -907,13 +937,18 @@ class MultiTabPane {
             strip.appendChild(chip);
         });
 
-        var cap = this.capacityOf(slotId);
+        // RFC 0047 — the "+" and the pill read the GLOBAL pool, so every strip
+        // shows the same workspace used/max and the "+" disables on all panes
+        // together the moment the pool is full.
+        var used = this.totalTabs();
+        var max  = this._budget;
+        var full = used >= max;
 
-        if (this._onAddTab && state.tabs.length < cap) {
+        if (this._onAddTab && !full) {
             var addBtn = document.createElement("button");
             addBtn.className = "hmtp-strip-add";
             addBtn.textContent = "+";
-            addBtn.title = "Add a tab to this pane";
+            addBtn.title = "Add a tab";
             addBtn.addEventListener("mousedown", function (ev) { ev.stopPropagation(); });
             addBtn.addEventListener("click", function (ev) {
                 ev.stopPropagation();
@@ -923,10 +958,9 @@ class MultiTabPane {
         }
 
         var pill = document.createElement("span");
-        pill.className = "hmtp-pill" + (state.tabs.length >= cap ? " hmtp-pill-full" : "");
-        pill.textContent = state.tabs.length + " / " + cap;
-        pill.title = "Tab budget: " + state.tabs.length + " used of " + cap + " (depth "
-                   + _depthOf(this._layout(), slotId) + ", total workspace budget " + this._budget + ")";
+        pill.className = "hmtp-pill" + (full ? " hmtp-pill-full" : "");
+        pill.textContent = used + " / " + max;
+        pill.title = "Workspace tab budget: " + used + " used of " + max;
         strip.appendChild(pill);
     }
 

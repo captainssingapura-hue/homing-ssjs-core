@@ -76,7 +76,11 @@ class MultiTabPaneConformanceTest {
         assertMethod("tabIndexOf",            2);
         assertMethod("slotIdOfPaneId",        1);
         assertMethod("splitAtPaneId",         1);
-        assertMethod("capacityOf",            1);
+        // RFC 0047 — global tab budget (replaced per-pane capacityOf).
+        assertMethod("totalTabs",             0);
+        assertMethod("budget",                0);
+        assertMethod("atCapacity",            0);
+        assertMethod("canAdd",                0);
         assertMethod("canSplit",              1);
         assertMethod("canMerge",              1);
     }

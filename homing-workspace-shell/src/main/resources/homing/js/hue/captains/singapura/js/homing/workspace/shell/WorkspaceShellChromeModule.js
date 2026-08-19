@@ -453,7 +453,11 @@ class WorkspaceShellChrome {
         const initialLayout = this._model.layout();
         this._mtp = new this._MultiTabPaneCtor({
             container:     this._layout.contentEl,
-            budget:        16,
+            // RFC 0047 — the global tab budget comes from the WorkspaceSpec
+            // (WorkspaceSpec.maxTabs(), serialized into the spec JSON), so a
+            // dense workspace can raise it and a focused one lower it. Falls
+            // back to the substrate default 16 for a spec that predates the knob.
+            budget:        this._spec.maxTabs || 16,
             initialLayout: initialLayout,
             onAddTab: function (slotId) {
                 if (!self._pickerFlow) {
