@@ -76,6 +76,12 @@ public record WorkspaceShellChromeModule() implements DomModule<WorkspaceShellCh
                 .add(new ModuleImports<>(List.of(
                         new MultiTabPaneModule.MultiTabPane()),
                         MultiTabPaneModule.INSTANCE))
+                // RFC 0048 — PaneFocusNav: shallow-mode keyboard pane navigation
+                // (arrows move the cursor, Tab cycles tabs, Enter enters deep).
+                // Composed over the MTP, disposed on teardown.
+                .add(new ModuleImports<>(List.of(
+                        new PaneFocusNavModule.PaneFocusNav()),
+                        PaneFocusNavModule.INSTANCE))
                 // Phase 2 — PartyBootstrap walks spec.parties and constructs
                 // each Party + initial actors; result populates
                 // {parties, workspaceCtx} the orchestrator threads through.
