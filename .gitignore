@@ -16,6 +16,9 @@ target/
 *.ipr
 .idea
 
+### Maven ###
+pom.xml.versionsBackup
+
 ### Local ###
 .docs
 .claude
