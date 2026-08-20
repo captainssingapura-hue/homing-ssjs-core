@@ -488,10 +488,10 @@ class TabDragController {
     }
 
     _canDropOn(destSlot) {
-        if (destSlot === this._srcSlot && !this._detached) return true; // same-pane reorder
-        var cap = this._mt.capacityOf(destSlot);
-        var state = this._mt._tabsBySlot.get(destSlot);
-        return state.tabs.length < cap;
+        // RFC 0047 — a drag relocates an existing tab; it never adds one to the
+        // workspace, so it is net-zero for the shared pool and always allowed.
+        // The destination only needs to be a real slot.
+        return this._mt._tabsBySlot.has(destSlot);
     }
 
     // ─── Lookups ─────────────────────────────────────────────────────────

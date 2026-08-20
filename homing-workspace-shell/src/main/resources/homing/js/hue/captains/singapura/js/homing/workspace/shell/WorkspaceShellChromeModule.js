@@ -73,6 +73,7 @@ class WorkspaceShellChrome {
         this._pinnedTabSpawner    = deps.pinnedTabSpawner    || PinnedTabSpawner.INSTANCE;
         this._WorkspaceLayoutCtor = deps.WorkspaceLayoutCtor || WorkspaceLayout;
         this._MultiTabPaneCtor    = deps.MultiTabPaneCtor    || MultiTabPane;
+        this._PaneFocusNavCtor    = deps.PaneFocusNavCtor    || PaneFocusNav;   // RFC 0048
         this._PickerTabFlowCtor   = deps.PickerTabFlowCtor   || PickerTabFlow;
         this._TabRegistryCtor     = deps.TabRegistryCtor     || TabRegistry;
         this._WorkspaceStateModelCtor =
@@ -453,7 +454,11 @@ class WorkspaceShellChrome {
         const initialLayout = this._model.layout();
         this._mtp = new this._MultiTabPaneCtor({
             container:     this._layout.contentEl,
-            budget:        16,
+            // RFC 0047 — the global tab budget comes from the WorkspaceSpec
+            // (WorkspaceSpec.maxTabs(), serialized into the spec JSON), so a
+            // dense workspace can raise it and a focused one lower it. Falls
+            // back to the substrate default 16 for a spec that predates the knob.
+            budget:        this._spec.maxTabs || 16,
             initialLayout: initialLayout,
             onAddTab: function (slotId) {
                 if (!self._pickerFlow) {
@@ -549,6 +554,14 @@ class WorkspaceShellChrome {
         console.log('[WorkspaceShellChrome] MTP constructed with',
                     Object.keys(this._model.tabsBySlot ? {} : {}).length,
                     'replayed slot(s)');
+
+        // RFC 0048 — attach the keyboard pane-navigation layer over the MTP.
+        // Shallow-mode arrows move the pane cursor, Tab cycles tabs, Enter enters
+        // deep; inert in deep mode. Scoped to this workspace's content element.
+        this._paneNav = new this._PaneFocusNavCtor({
+            mtp:  this._mtp,
+            host: this._layout.contentEl
+        }).attach();
     }
 
     /**
@@ -634,6 +647,8 @@ class WorkspaceShellChrome {
         const holder  = { contentEl: null };
         const loading = document.createElement('div');
         loading.textContent = 'Loading ' + (descriptor.title || entry.label) + '…';
+        loading.setAttribute('tabindex', '0');   // focusable: keep focus in the pane + announce
+        loading.setAttribute('role', 'status');
         const tab = {
             id:                 uuid,
             title:              descriptor.title || entry.label,
@@ -680,30 +695,19 @@ class WorkspaceShellChrome {
     }
 
     /**
-     * After projection: set workspace-active from the model. If the model
-     * has no active uuid (e.g., first fresh boot), pick the first
-     * projected tab so MTP's click-to-activate cover doesn't sit on
-     * the strip-active tab.
+     * After projection: put the workspace in RFC 0048 SHALLOW mode — no pane
+     * entered, so no tab is workspace-active. A pane is entered only by the user
+     * (double-click / Enter). Because this runs after projection it
+     * deterministically overrides any boot-time activation (e.g. the pinned
+     * spawner). The MTP starts with its first pane as the shallow cursor.
+     *
+     * <p>Persisting + restoring the entered pane across reloads is a later
+     * extension (decision #2): when added, this re-enters deep from the model's
+     * activeUuid instead of forcing null.</p>
      */
     _restoreWorkspaceActive() {
-        if (!this._mtp || !this._mtp.setWorkspaceActiveTab) return;
-        const activeUuid = this._model.activeUuid();
-        if (activeUuid) {
-            const live = this._tabRegistry.lookup(activeUuid);
-            if (live && live.tab) {
-                try { this._mtp.setWorkspaceActiveTab(live.tab.id); }
-                catch (e) {}
-                return;
-            }
-        }
-        // Fallback: first registered uuid.
-        const uuids = this._tabRegistry.uuids();
-        if (uuids.length > 0) {
-            const live = this._tabRegistry.lookup(uuids[0]);
-            if (live && live.tab) {
-                try { this._mtp.setWorkspaceActiveTab(live.tab.id); }
-                catch (e) {}
-            }
+        if (this._mtp && this._mtp.setWorkspaceActiveTab) {
+            try { this._mtp.setWorkspaceActiveTab(null); } catch (e) {}
         }
     }
 

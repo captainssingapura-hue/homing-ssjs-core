@@ -83,9 +83,15 @@ class WidgetPicker {
     _buildTile(entry) {
         var tile = document.createElement("div");
         css.setClass(tile, hwp_tile);
+        // Focusable so a click lands focus INSIDE the pane (not on <body>), which
+        // keeps the RFC 0048 give-up wrapper working via the pane, and makes tiles
+        // keyboard-reachable. (Full arrow/Enter keyboard nav is Wish 0002 piece 4.)
+        tile.setAttribute("tabindex", "0");
+        tile.setAttribute("role", "button");
         var disabled = !!this._disabledIds[entry.simpleName];
         if (disabled) {
             css.addClass(tile, hwp_tile_disabled);
+            tile.setAttribute("aria-disabled", "true");
             tile.title = "Already open";
         }
 

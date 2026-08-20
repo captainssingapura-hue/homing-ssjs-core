@@ -109,4 +109,14 @@ public interface WorkspaceSpec {
      * and setting the first as workspace-active.</p>
      */
     default List<String> pinnedSpawns() { return List.of(); }
+
+    /**
+     * RFC 0047 — the workspace's <b>global tab budget</b>: the maximum number
+     * of tabs that may exist across every pane at once. It is a single shared
+     * pool, not a per-pane ration — splitting a pane never changes it, and when
+     * it is reached the "+" affordance disables on every pane together. Default
+     * 16; a dense workspace (many widgets on screen) can raise it, a focused one
+     * lower it.
+     */
+    default int maxTabs() { return 16; }
 }
