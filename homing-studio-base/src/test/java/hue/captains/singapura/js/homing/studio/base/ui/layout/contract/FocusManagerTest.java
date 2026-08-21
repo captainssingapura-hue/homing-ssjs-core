@@ -61,6 +61,15 @@ class FocusManagerTest {
             globalThis.document = {};
             document.body = makeEl('body');
             document.activeElement = document.body;
+            // Issue 0003 drift-watch stub — records instances; tests fire the
+            // callback manually to simulate a subtree mutation batch.
+            globalThis.MutationObserver = function (cb) {
+                this._cb = cb; this._target = null;
+                this.observe    = function (t, o) { this._target = t; };
+                this.disconnect = function ()     { this._target = null; };
+                MutationObserver._instances.push(this);
+            };
+            MutationObserver._instances = [];
 
             // Build a tab: content with a child input, a spy tab descriptor.
             function scenario(tabOpts) {
@@ -175,6 +184,38 @@ class FocusManagerTest {
                 s.input.dispatchEvent(makeEvent('keydown', { key: 'Escape' }));  // deep → give up
                 before === 0 && s.log.gaveUp === 1;
                 """), "give-up (un-consumed Escape) fires onGiveUp only while deep");
+    }
+
+    @Test
+    void driftWatchReconcilesAfterAMutationStrandsFocus() {
+        // Issue 0003 — removing a focused node fires NO focus event; the
+        // drift watch (a MutationObserver live only while deep) turns the
+        // subtree change into a reconcile that pulls focus back.
+        assertTrue(evalBool("""
+                var s = scenario();
+                s.fm.enter(function () { s.input.focus(); });
+                var mo = MutationObserver._instances[MutationObserver._instances.length - 1];
+                var observing = mo._target === s.content;
+                document.activeElement = document.body;   // a re-render dropped focus, silently
+                mo._cb([]);                               // the mutation batch arrives
+                observing && document.activeElement === s.content;
+                """), "drift watch: a mutation while deep reconciles stranded focus back into the tab");
+    }
+
+    @Test
+    void driftWatchStopsOnReleaseAndNoopsWhenFocusInside() {
+        assertTrue(evalBool("""
+                var s = scenario();
+                s.fm.enter(function () { s.input.focus(); });
+                var mo = MutationObserver._instances[MutationObserver._instances.length - 1];
+                mo._cb([]);                               // focus still inside → no move
+                var a1 = document.activeElement === s.input;
+                s.fm.release();
+                var a2 = mo._target === null;             // disconnected on release
+                document.activeElement = document.body;
+                mo._cb([]);                               // stale batch after release → no-op
+                a1 && a2 && document.activeElement === document.body;
+                """), "drift watch: no-op when focus is inside; disconnected + inert after release");
     }
 
     @Test

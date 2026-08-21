@@ -41,6 +41,7 @@ class FocusManager {
         this._onIntendedFocus = typeof opts.onIntendedFocus === "function" ? opts.onIntendedFocus : null;
         this._deep            = false;   // is THIS tab currently the deep-selected one
         this._reconciling     = false;   // set while we move focus programmatically
+        this._mo              = null;    // Issue 0003 drift watch — live only while deep
         this._attached        = false;
 
         // The content must be programmatically focusable for the default landing,
@@ -81,11 +82,36 @@ class FocusManager {
 
     dispose() {
         if (!this._attached) return this;
+        this._stopDriftWatch();
         this._content.removeEventListener("keydown", this._onKey);
         this._content.removeEventListener("homing-focus", this._onRelease);
         this._content.removeEventListener("intendedFocusIn", this._onIntended);
         this._attached = false;
         return this;
+    }
+
+    // ── Issue 0003 — the drift watch ─────────────────────────────────────────
+    // Removing a focused node fires NO focus event (verified: browsers drop
+    // focus to <body> silently — the one drift `inert` cannot prevent and no
+    // listener can hear). So while deep — and ONLY while deep; one observer,
+    // one tab, disconnected on release — a MutationObserver on the content
+    // turns any subtree change into a reconcile(), which no-ops when focus is
+    // still inside and pulls it back when a re-render stranded it.
+
+    _startDriftWatch() {
+        if (this._mo || typeof MutationObserver === "undefined") return;
+        var self = this;
+        this._mo = new MutationObserver(function () {
+            if (self._deep && !self._reconciling) self.reconcile();
+        });
+        try { this._mo.observe(this._content, { childList: true, subtree: true }); }
+        catch (e) { this._mo = null; }
+    }
+
+    _stopDriftWatch() {
+        if (!this._mo) return;
+        try { this._mo.disconnect(); } catch (e) {}
+        this._mo = null;
     }
 
     /** Whether this tab is currently the deep-selected one. */
@@ -119,6 +145,7 @@ class FocusManager {
     enter(activationFn) {
         this._deep = true;
         this._content.inert = false;
+        this._startDriftWatch();
         this._setActive(true);
         this._reconciling = true;
         try {
@@ -146,6 +173,7 @@ class FocusManager {
      */
     release() {
         this._deep = false;
+        this._stopDriftWatch();
         this._reconciling = true;
         try {
             this._content.inert = true;   // making a focused subtree inert blurs it
