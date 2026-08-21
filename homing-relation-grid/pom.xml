@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+        <artifactId>homing.js</artifactId>
+        <version>LOCAL-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>homing-relation-grid</artifactId>
+
+    <description>
+        The Relation Grid (RFC 0050) — the generic Excel-like table primitive
+        family. Two DomOpsParty branches merged visually (a layout branch owning
+        the td CellSlots; a cells branch owning every ActualCell for its whole
+        life), a Relation data model with typed primary keys, and a
+        placement-only (i,j) -&gt; (PK, columnName) lookup so view operations are
+        pure remaps. Selection re-instantiates the workspace's RFC 0049
+        recompute model one level down.
+
+        This module is deliberately its own Maven module (one Crate per module):
+        the grid is a reusable primitive family, consumable by any downstream
+        without the studio or workspace shells. Phase 1 content: the typed
+        contracts (RelationGridContract / GridCellContract /
+        RelationAdapterContract) and GridViewMaps — the pure identity/position
+        seam, the ONLY place (i,j) meets (PK, columnName).
+    </description>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-core</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-conformance-rules</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- One dependency = a working JS test runtime (GraalVM polyglot
+             rides along compile-scoped from the fixtures module). -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-ssjs-test-fixtures</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>
