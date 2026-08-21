@@ -134,9 +134,9 @@ class PinnedTabSpawner {
                     to: { paneId: toPaneId, tabIndex: rawIdx < 0 ? 0 : rawIdx }
                 });
             }
-            if (mtp.getWorkspaceActiveTab && mtp.getWorkspaceActiveTab() === tabId) {
-                try { controller.setActive(true); } catch (e) {}
-            }
+            // RFC 0049 — no boot-time activation check: boot is shallow, and
+            // setActive(true) is fired by the tab's FocusManager when the
+            // coordinator enters the pane, never here.
             return controller;
         }).catch(function (err) {
             console.error('[PinnedTabSpawner] mount failed for', entry.simpleName, ':', err);

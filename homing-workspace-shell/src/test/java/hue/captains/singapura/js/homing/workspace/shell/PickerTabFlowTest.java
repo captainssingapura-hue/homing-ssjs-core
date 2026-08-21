@@ -147,8 +147,10 @@ class PickerTabFlowTest extends JsModuleTestBase {
         assertEquals("tr", addedTabs.getArrayElement(0).getMember("slotId").asString());
         assertEquals("picker:1",
                      addedTabs.getArrayElement(0).getMember("tab").getMember("id").asString());
-        // Workspace-active set to the picker tab.
-        assertEquals("picker:1", mtp.getMember("workspaceActiveTabId").asString());
+        // RFC 0049 — the deep-select went through the focus coordinator.
+        Value entered = setup.getMember("focus").getMember("enteredDeep");
+        assertEquals(1, entered.getArraySize());
+        assertEquals("tr", entered.getArrayElement(0).asString());
         // switchTab fired too.
         Value switched = mtp.getMember("switchedTo");
         assertEquals(1, switched.getArraySize());
@@ -224,11 +226,18 @@ class PickerTabFlowTest extends JsModuleTestBase {
                         mount:   function (mod, b, e) { return mod.construct(b, {}, {}); },
                         attach:  function (c, tab) { tab.controller = c; }
                     };
+                    // RFC 0049 — deep-selects go through the focus coordinator;
+                    // a spy stands in for it.
+                    const focus = {
+                        enteredDeep: [],
+                        enterDeep: function (slotId) { this.enteredDeep.push(slotId); },
+                        deepTabId: function () { return null; }
+                    };
                     const flow = new PickerTabFlow({
-                        mtp, widgetsBranch: wB, spec,
+                        mtp, focus, widgetsBranch: wB, spec,
                         workspaceCtx: {}, WidgetPickerCtor: StubPicker, mounter: stubMounter
                     });
-                    return { mtp, wB, spec, flow };
+                    return { mtp, wB, spec, flow, focus };
                 })()""");
     }
 }
