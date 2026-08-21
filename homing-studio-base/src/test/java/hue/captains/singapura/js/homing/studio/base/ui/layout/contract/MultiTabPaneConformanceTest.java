@@ -64,31 +64,28 @@ class MultiTabPaneConformanceTest {
         assertMethod("moveTab",               4);
         assertMethod("attachTab",             3);
         assertMethod("switchTab",             2);
-        assertMethod("setWorkspaceActiveTab", 1);
         assertMethod("split",                 2);
         assertMethod("merge",                 1);
-        // RFC 0048 — modal keyboard pane navigation.
-        assertMethod("selectPane",            1);
-        assertMethod("focusPane",             1);
-        assertMethod("cycleTabInPane",        1);
-        assertMethod("enterDeep",             1);
-        assertMethod("releaseToShallow",      0);
+        // RFC 0049 — the renderer facet (the RFC 0048 focus API is gone: the
+        // shell's focus coordinator decides; MTP paints).
+        assertMethod("paintSelection",        2);
+        assertMethod("setAddEnabled",         1);
     }
 
     @Test
     void mtpReadOnlyMethodsExist() {
-        assertMethod("getWorkspaceActiveTab", 0);
         assertMethod("paneIdOf",              1);
         assertMethod("tabIndexOf",            2);
         assertMethod("slotIdOfPaneId",        1);
         assertMethod("splitAtPaneId",         1);
-        // RFC 0047 — global tab budget (replaced per-pane capacityOf).
+        // RFC 0047/0049 — the two-tier tab budget (local static + global verdict).
         assertMethod("totalTabs",             0);
         assertMethod("budget",                0);
         assertMethod("atCapacity",            0);
         assertMethod("canAdd",                0);
-        assertMethod("mode",                  0);
-        assertMethod("selectedSlot",          0);
+        // RFC 0049 — the access facet for the shell coordinator.
+        assertMethod("contentElOf",           1);
+        assertMethod("neighbourOf",           2);
         assertMethod("canSplit",              1);
         assertMethod("canMerge",              1);
     }
@@ -124,7 +121,7 @@ class MultiTabPaneConformanceTest {
 
                 var cb = {};
                 ["onTabActivated","onTabAdded","onTabRemoved","onTabMoved","onTabAttached",
-                 "onWorkspaceActiveChanged","onSplit","onMerge","onChange","onAddTab"].forEach(function (n) {
+                 "onChromeInteract","onSplit","onMerge","onChange","onAddTab"].forEach(function (n) {
                     cb[n] = function () {};
                 });
 
@@ -153,7 +150,7 @@ class MultiTabPaneConformanceTest {
         // Inspect each callback field — _cbTabAdded etc. — should hold a function.
         String[] cbFields = {
                 "_cbTabActivated", "_cbTabAdded", "_cbTabRemoved", "_cbTabMoved",
-                "_cbTabAttached", "_cbWsActiveChanged", "_cbSplit", "_cbMerge"
+                "_cbTabAttached", "_cbChromeInteract", "_cbSplit", "_cbMerge"
         };
         for (String field : cbFields) {
             Value v = mtp.getMember(field);

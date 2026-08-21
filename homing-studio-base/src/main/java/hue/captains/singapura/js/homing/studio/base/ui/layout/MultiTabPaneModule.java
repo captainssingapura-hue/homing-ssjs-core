@@ -89,11 +89,9 @@ public record MultiTabPaneModule() implements DomModule<MultiTabPaneModule> {
                 .add(new ModuleImports<>(
                         List.of(new MultiTabPaneDragModule.TabDragController()),
                         MultiTabPaneDragModule.INSTANCE))
-                // RFC 0048 — FocusScope wraps the entered pane so an un-consumed
-                // Escape or a homing-focus release event returns focus to shallow.
-                .add(new ModuleImports<>(
-                        List.of(new FocusScopeModule.FocusScope()),
-                        FocusScopeModule.INSTANCE))
+                // RFC 0049 — MTP is focus-agnostic: no FocusScope/FocusManager
+                // import. The shell's focus coordinator owns focus and drives
+                // MTP's renderer facet (paintSelection / setAddEnabled).
                 .build();
     }
 

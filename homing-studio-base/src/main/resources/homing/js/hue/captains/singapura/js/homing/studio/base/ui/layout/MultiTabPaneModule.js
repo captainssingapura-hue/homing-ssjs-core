@@ -19,22 +19,16 @@
 //          Internal transient removals during drag detach do NOT fire it,
 //          so the same tab can be re-docked elsewhere without disposing
 //          caller-owned resources (DomOpsParty branches, timers, etc.).
-//        - setActive(boolean) fires on workspace-active transitions —
-//          old.setActive(false) then new.setActive(true). Optional; widgets
-//          with nothing to gate (or that rely entirely on the overlay
-//          mouse gate) omit it.
-//     .setWorkspaceActiveTab(tabId) / .getWorkspaceActiveTab()
-//        - Workspace-wide focus: at most one tab is workspace-active across
-//          the whole pane. The active tab's content overlay is removed
-//          (mouse passes through); every other pane-active tab gets an
-//          invisible mouse-event cover. Click anywhere on a cover activates
-//          that tab.
+//        - setActive(boolean) is a pure LIFECYCLE hook fired by the shell's
+//          focus machinery (RFC 0049), never by MTP itself. Optional.
 //     .removeTab(slotId, tabId)
 //     .switchTab(slotId, tabId)
 //     .split(slotId, orientation)                  // 'horizontal' | 'vertical'
 //     .merge(slotId)                               // merges with sibling
 //     .canSplit(slotId) / .canMerge(slotId)        // { allowed, reason }
-//     .totalTabs() / .budget() / .atCapacity() / .canAdd()   // RFC 0047 global pool
+//     .totalTabs() / .budget() / .atCapacity() / .canAdd()   // RFC 0047/0049 two-tier budget
+//     .paintSelection(slotId, mode) / .setAddEnabled(b)      // RFC 0049 renderer facet
+//     .contentElOf(tabId) / .neighbourOf(slotId, dir)        // RFC 0049 access facet
 //     .getState()
 //     .destroy()
 //
@@ -233,7 +227,7 @@ class MultiTabPane {
         //   onTabRemoved(slotId, tab, fromIndex)
         //   onTabMoved(srcSlotId, destSlotId, tab, fromIndex, toIndex)
         //   onTabActivated(slotId, tabId)           — strip-chip click / programmatic switchTab
-        //   onWorkspaceActiveChanged(fromTabId, toTabId)
+        //   onChromeInteract({ kind, slotId })      — RFC 0049: cover-click / cover-dblclick
         //   onSplit(sourceSlotId, orientation, newSlotId)
         //   onMerge(keptSlotId, removedSlotId)
         //
@@ -247,7 +241,10 @@ class MultiTabPane {
         this._cbTabMoved         = opts.onTabMoved         || null;
         this._cbTabActivated     = opts.onTabActivated     || null;
         this._cbTabAttached      = opts.onTabAttached      || null;
-        this._cbWsActiveChanged  = opts.onWorkspaceActiveChanged || null;
+        // RFC 0049 — chrome-input reporting: cover clicks land on MTP's DOM, but
+        // the DECISION (select / enter / downgrade) is the shell coordinator's.
+        // MTP reports { kind, slotId } and does nothing else.
+        this._cbChromeInteract   = opts.onChromeInteract   || null;
         this._cbSplit            = opts.onSplit            || null;
         this._cbMerge            = opts.onMerge            || null;
         // RFC 0032 P5 — fired once per divider-drag (on stop). Receives
@@ -255,25 +252,19 @@ class MultiTabPane {
         // split ratios changed. Per-mousemove repaint sync stays on the
         // internal SplitPane callback; this one is for journaling.
         this._cbRatioChanged     = opts.onRatioChanged     || null;
-        // ─── Workspace-active state. ────────────────────────────────────────
-        // At most ONE tab across the whole pane is "workspace-active" — the
-        // tab the user is currently with. This is distinct from per-slot
-        // `activeTabId` (which tab is shown in each pane). The workspace-
-        // active tab is always pane-active in its pane (the only way to see
-        // it). Switching workspace-active calls tab.setActive(false) on the
-        // old and tab.setActive(true) on the new — widgets opt in by
-        // providing setActive in their tab descriptor.
-        this._workspaceActiveTabId = null;
+        // ─── Painted-selection state (RFC 0049 — MTP is a RENDERER). ────────
+        // MTP holds NO focus/selection logic. The shell's focus coordinator
+        // decides which pane is selected and how (shallow/deep); MTP records
+        // only what it was last told to PAINT (paintSelection) and renders the
+        // ring / cover / chip-accent from it. Distinct from per-slot
+        // `activeTabId` (which tab is shown in each pane).
+        this._painted    = { slotId: null, mode: null };   // mode: "shallow" | "deep" | null
+        this._addEnabled = true;   // global-budget verdict (shell policy) → the "+" affordance
         this._tabsBySlot = new Map();   // slotId → { tabs: [], activeTabId }
         this._stripEls   = new Map();   // slotId → strip DOM element (tracked for drag hit-testing)
-        // RFC 0048 — keyboard focus navigation. _leafBySlot maps each slot to its
-        // .hmtp-leaf element (for rect geometry + the focus ring); _selectedSlot is
-        // the shallow-mode pane cursor. "deep" mode is derived — a pane is entered
-        // exactly when its active tab is the workspace-active tab — so the only new
-        // state is the cursor and the leaf-element index.
+        // _leafBySlot maps each slot to its .hmtp-leaf element (rect geometry for
+        // neighbourOf + the ring overlay).
         this._leafBySlot   = new Map();
-        this._selectedSlot = null;
-        this._focusScope   = null;   // RFC 0048 — the entered pane's give-up-focus wrapper (deep mode)
         // ─── Persistent per-slot DOM wrappers. Created once per slot in
         //     _renderLeaf (when SplitPane mints the leaf el); reused on every
         //     subsequent _renderSlotLocal call so tab content DOM is never
@@ -457,7 +448,7 @@ class MultiTabPane {
     atCapacity() { return this.totalTabs() >= this._budget; }
 
     /** True while the shared pool has room for one more tab, anywhere. */
-    canAdd() { return this.totalTabs() < this._budget; }
+    canAdd() { return this.totalTabs() < this._budget && this._addEnabled; }
 
     canSplit(slotId) {
         // RFC 0047 — a split adds no tabs, so it never touches the budget;
@@ -528,16 +519,8 @@ class MultiTabPane {
         if (typeof tab.onClose === "function") {
             try { tab.onClose(); } catch (e) { console.error("[MultiTabPane] tab.onClose threw:", e); }
         }
-        // If the closed tab was workspace-active, clear it. Per b.2d spec, no
-        // automatic successor inheritance — workspace-active just goes null
-        // until the user clicks another tab.
-        // If the closed tab was workspace-active, clear it (no successor
-        // inheritance) and drop its give-up wrapper — this bypasses
-        // setWorkspaceActiveTab, so dispose the scope here.
-        if (this._workspaceActiveTabId === tabId) {
-            this._workspaceActiveTabId = null;
-            this._disposeFocusScope();
-        }
+        // Selection is the shell coordinator's concern (RFC 0049): it hears
+        // onTabRemoved and repaints/reselects. MTP only splices + re-renders.
         state.tabs.splice(idx, 1);
         if (state.activeTabId === tabId) {
             state.activeTabId = state.tabs.length > 0
@@ -550,155 +533,47 @@ class MultiTabPane {
         // RFC 0047 — the workspace total fell, so every OTHER strip's "+"/pill
         // must refresh (a pool that was full may now have room again).
         this._refreshAllStrips();
-        this._renderRings();   // RFC 0048 — a closed workspace-active tab drops to shallow
         this._fire(this._cbTabRemoved, "onTabRemoved", [slotId, tab, idx]);
         if (this._onChange) this._onChange(this.getState());
         return this;
     }
 
-    /**
-     * Get the workspace-active tab id, or null if no tab is active.
-     */
-    getWorkspaceActiveTab() { return this._workspaceActiveTabId; }
+    // ─── RFC 0049 — the renderer/access facet ────────────────────────────────
+    // MTP holds no focus/selection logic (that is the shell coordinator's).
+    // It paints what it is told, reports chrome input, and answers geometry /
+    // element queries.
 
     /**
-     * Mark a tab as workspace-active. Calls tab.setActive(false) on the
-     * previously active tab (if any) and tab.setActive(true) on the new
-     * one. Both wrapped in try/catch so a misbehaving widget doesn't
-     * block the transition. Triggers a re-render so the chip accent and
-     * per-content overlays update.
-     *
-     * Pass null to clear the workspace-active state (no tab is active).
+     * Paint the selection visual: mode "shallow" (dashed cursor ring), "deep"
+     * (solid ring + cover off + chip accent on that pane's active tab), or
+     * null/undefined to clear. Pure rendering — no focus, no setActive, no
+     * events fired.
      */
-    setWorkspaceActiveTab(tabId) {
-        if (this._workspaceActiveTabId === tabId) return this;
-        // RFC 0048 — leaving or changing the entered pane drops its give-up-focus
-        // wrapper; enterDeep re-creates one for the newly entered pane.
-        this._disposeFocusScope();
-        var prevId = this._workspaceActiveTabId;
-        var prev = prevId ? this._findTab(prevId) : null;
-        var next = tabId  ? this._findTab(tabId)  : null;
-        if (tabId && !next) return this;   // unknown tab id — refuse silently
-        this._workspaceActiveTabId = tabId;
-        if (prev && typeof prev.setActive === "function") {
-            try { prev.setActive(false); } catch (e) { console.error("[MultiTabPane] prev tab.setActive(false) threw:", e); }
-        }
-        if (next && typeof next.setActive === "function") {
-            try { next.setActive(true); } catch (e) { console.error("[MultiTabPane] next tab.setActive(true) threw:", e); }
-        }
-        // The cover overlay depends on workspace-active state. Affects every
-        // slot (one slot loses cover; previous active's slot may gain one). Render
-        // all slots locally — cheap, no SplitPane involvement.
-        var self2 = this;
-        this._wrappersBySlot.forEach(function (_, slotId) { self2._renderSlotLocal(slotId); });
-        this._renderRings();   // RFC 0048 — entered/selected rings track workspace-active
-        this._fire(this._cbWsActiveChanged, "onWorkspaceActiveChanged", [prevId, tabId]);
-        if (this._onChange) this._onChange(this.getState());
-        return this;
-    }
-
-    // ─── RFC 0048 — keyboard focus navigation (shallow / deep) ───────────────
-    // Shallow: a pane CURSOR (_selectedSlot) moves with the arrows; the pane is
-    // highlighted but its widget stays covered. Deep: the cursor pane is ENTERED
-    // — its active tab becomes workspace-active (cover off), so keys reach the
-    // widget. "deep" is derived — a pane is entered exactly when its active tab
-    // is the workspace-active tab — so there is no separate mode flag to drift.
-
-    /** 'shallow' (navigate) or 'deep' (a pane is entered). */
-    mode() { return this._workspaceActiveTabId ? "deep" : "shallow"; }
-
-    /** The shallow-mode pane cursor slot id, or null. */
-    selectedSlot() { return this._selectedSlot; }
-
-    /**
-     * Shallow-select a pane (the cursor) without entering it. Drops out of deep
-     * mode if a pane was entered — every pane's cover returns.
-     */
-    selectPane(slotId) {
-        if (!this._leafBySlot.has(slotId)) return this;
-        this.setWorkspaceActiveTab(null);   // leave deep → all panes covered (no-op if already shallow)
-        this._selectedSlot = slotId;
+    paintSelection(slotId, mode) {
+        this._painted = (mode === "shallow" || mode === "deep")
+            ? { slotId: slotId, mode: mode }
+            : { slotId: null, mode: null };
+        var self = this;
+        this._wrappersBySlot.forEach(function (_, sid) { self._renderSlotLocal(sid); });
         this._renderRings();
         return this;
     }
 
     /**
-     * Move the cursor one pane in a direction ('left'|'right'|'up'|'down') via
-     * the RFC 0048 shared-edge algorithm. No-op at an outer edge.
+     * The shell's global-budget verdict (RFC 0049 two-tier budget): drives the
+     * "+" affordance on every strip. MTP's own budget stays the LOCAL static
+     * invariant; the "+" lights only when local AND global both allow.
      */
-    focusPane(direction) {
-        var from = this._selectedSlot || this._firstSlot();
-        if (from == null) return this;
-        var next = this._neighborSlot(from, direction);
-        if (next != null) this.selectPane(next);
+    setAddEnabled(enabled) {
+        this._addEnabled = !!enabled;
+        this._refreshAllStrips();
         return this;
     }
 
-    /**
-     * Cycle the active tab WITHIN the selected pane (+1 / -1), wrapping. Never
-     * leaves the pane (Tab stays in the pane — RFC 0048 decision).
-     */
-    cycleTabInPane(delta) {
-        var slot = this._selectedSlot;
-        if (slot == null) return this;
-        var state = this._tabsBySlot.get(slot);
-        if (!state || state.tabs.length < 2) return this;
-        var i = 0;
-        for (var k = 0; k < state.tabs.length; k++) {
-            if (state.tabs[k].id === state.activeTabId) { i = k; break; }
-        }
-        var n = state.tabs.length;
-        var j = ((i + delta) % n + n) % n;
-        this.switchTab(slot, state.tabs[j].id);
-        return this;
-    }
-
-    /**
-     * Enter deep on the selected (or given) pane: its active tab becomes
-     * workspace-active (cover off) and DOM focus moves into the pane so keys
-     * reach the widget. No-op on an empty pane (the host opens the picker).
-     */
-    enterDeep(slotId) {
-        var slot = slotId || this._selectedSlot;
-        if (slot == null) return this;
-        var state = this._tabsBySlot.get(slot);
-        if (!state || !state.activeTabId) return this;   // empty pane — host handles add
-        this._selectedSlot = slot;
-        this.setWorkspaceActiveTab(state.activeTabId);   // deep; disposes any prior wrapper
-        var w = this._wrappersBySlot.get(slot);
-        if (w && w.content) {
-            try { w.content.focus(); } catch (e) {}
-            // RFC 0048 — enterDeep is the SINGLE deep-select entry (the picker and
-            // the singleton-focus path route through it too), so the give-up wrapper
-            // lives here, where the pane's content element is in scope. The host is
-            // the pane's own content: every content state is now focusable (Wish 0002
-            // piece 3) and content itself is tabindex=-1, so an un-consumed Escape
-            // always bubbles to this element and never escapes the pane to <body>.
-            var self = this;
-            this._focusScope = new FocusScope(w.content, function () { self.releaseToShallow(); });
-            this._focusScope.attach();
-        }
-        return this;
-    }
-
-    /** Return to shallow: no pane entered, cursor unchanged. */
-    releaseToShallow() {
-        this.setWorkspaceActiveTab(null);   // disposes the scope + paints rings (leaving deep)
-        this._renderRings();
-        return this;
-    }
-
-    _disposeFocusScope() {
-        if (this._focusScope) {
-            try { this._focusScope.dispose(); } catch (e) {}
-            this._focusScope = null;
-        }
-    }
-
-    _firstSlot() {
-        var first = null;
-        this._leafBySlot.forEach(function (_, slot) { if (first === null) first = slot; });
-        return first;
+    /** The tab's persistent content element (where its FocusManager mounts), or null. */
+    contentElOf(tabId) {
+        var t = this._findTab(tabId);
+        return (t && t._contentEl) ? t._contentEl : null;
     }
 
     _axisOverlap(a0, a1, b0, b1) {
@@ -706,12 +581,13 @@ class MultiTabPane {
     }
 
     /**
-     * The neighbouring pane across the pressed edge (RFC 0048 shared-edge
-     * algorithm). Collect panes on that side sharing the divider (nearest gap)
-     * with positive perpendicular overlap; pick nearest divider, then max
-     * overlap. Returns a slot id, or null at an outer edge.
+     * The neighbouring pane across the pressed edge (the RFC 0048 shared-edge
+     * algorithm, surfaced for the shell coordinator's arrow navigation).
+     * Collect panes on that side sharing the divider (nearest gap) with
+     * positive perpendicular overlap; pick nearest divider, then max overlap.
+     * Returns a slot id, or null at an outer edge.
      */
-    _neighborSlot(fromSlot, direction) {
+    neighbourOf(fromSlot, direction) {
         var fromEl = this._leafBySlot.get(fromSlot);
         if (!fromEl) return null;
         var P = fromEl.getBoundingClientRect();
@@ -736,19 +612,15 @@ class MultiTabPane {
     }
 
     /**
-     * Paint the focus rings: the ENTERED pane (its active tab is workspace-
-     * active) gets the solid accent ring; otherwise the SELECTED cursor pane
-     * gets the dashed selection ring. At most one of each.
+     * Paint the focus rings from the painted-selection record: the painted deep
+     * slot gets the solid accent ring, a painted shallow slot the dashed
+     * selection ring. At most one ring in the whole workspace.
      */
     _renderRings() {
-        var self = this;
-        var waid = this._workspaceActiveTabId;
+        var p = this._painted;
         this._leafBySlot.forEach(function (el, slot) {
-            var state = self._tabsBySlot.get(slot);
-            var entered = !!(state && state.activeTabId && state.activeTabId === waid);
-            var selected = (slot === self._selectedSlot) && !entered;
-            el.classList.toggle("hmtp-leaf-entered", entered);
-            el.classList.toggle("hmtp-leaf-selected", selected);
+            el.classList.toggle("hmtp-leaf-entered",  p.mode === "deep"    && slot === p.slotId);
+            el.classList.toggle("hmtp-leaf-selected", p.mode === "shallow" && slot === p.slotId);
         });
     }
 
@@ -940,9 +812,10 @@ class MultiTabPane {
         this._tabsBySlot.delete(siblingSlotId);
         this._wrappersBySlot.delete(siblingSlotId);
         this._stripEls.delete(siblingSlotId);
-        this._leafBySlot.delete(siblingSlotId);   // RFC 0048 — drop the merged-away pane's el
-        // If the cursor was on the pane that just merged away, move it to the survivor.
-        if (this._selectedSlot === siblingSlotId) this._selectedSlot = slotId;
+        this._leafBySlot.delete(siblingSlotId);   // drop the merged-away pane's el
+        // If the painted selection pointed at the merged-away pane, repoint the
+        // paint at the survivor until the coordinator repaints (it hears onMerge).
+        if (this._painted.slotId === siblingSlotId) this._painted.slotId = slotId;
 
         // Structural DOM mutation — sibling's now-empty wrappers + leaf el go
         // away; my leaf el moves up to the grandparent's position via a
@@ -970,7 +843,6 @@ class MultiTabPane {
     }
 
     destroy() {
-        this._disposeFocusScope();   // RFC 0048 — drop any entered-pane wrapper
         if (this._drag) { this._drag.destroy(); this._drag = null; }
         if (this._sp) { this._sp.destroy(); this._sp = null; }
         this._tabsBySlot.clear();
@@ -1068,14 +940,10 @@ class MultiTabPane {
 
         this._wrappersBySlot.set(slotId, { strip: strip, content: content, corner: corner });
         this._stripEls.set(slotId, strip);   // back-compat for drag controller
-        this._leafBySlot.set(slotId, el);    // RFC 0048 — pane el for rect geometry + focus ring
-        if (this._selectedSlot === null) this._selectedSlot = slotId;   // first pane is the initial cursor
+        this._leafBySlot.set(slotId, el);    // pane el for rect geometry + the ring overlay
 
         this._renderSlotLocal(slotId);
-        // RFC 0048 — paint the rings now that this leaf (and the initial cursor)
-        // exists, so the boot-shallow selection ring is visible without waiting
-        // for the first interaction.
-        this._renderRings();
+        this._renderRings();   // re-apply the painted selection to the new leaf set
     }
 
     /**
@@ -1116,12 +984,13 @@ class MultiTabPane {
         var self = this;
         while (strip.firstChild) strip.removeChild(strip.firstChild);
 
-        var workspaceActiveId = this._workspaceActiveTabId;
+        // Chip accent — the painted-deep pane's shown tab (renderer state only).
+        var deepHere = this._painted.mode === "deep" && this._painted.slotId === slotId;
         state.tabs.forEach(function (tab) {
             var chip = document.createElement("div");
             var cls = "hmtp-chip";
             if (tab.id === state.activeTabId) cls += " hmtp-chip-active";
-            if (tab.id === workspaceActiveId) cls += " hmtp-chip-workspace-active";
+            if (deepHere && tab.id === state.activeTabId) cls += " hmtp-chip-workspace-active";
             chip.className = cls;
             chip.setAttribute("data-tab-id", tab.id);
             chip.style.cursor = "grab";
@@ -1225,21 +1094,23 @@ class MultiTabPane {
             return;
         }
 
-        // Cover overlay — sits above the active tab's content when the pane
-        // isn't entered (workspace-active). RFC 0048: a single click SELECTS the
-        // pane (shallow cursor); a double click ENTERS it (deep). Keyboard /
-        // non-mouse interactions are gated by the widget's own setActive(false).
-        if (state.activeTabId && state.activeTabId !== this._workspaceActiveTabId) {
+        // Cover overlay — sits above the active tab's content on every pane
+        // except the painted-deep one. RFC 0049: MTP owns the cover DOM (it owns
+        // the chrome) but DECIDES NOTHING — clicks are REPORTED via
+        // onChromeInteract for the shell coordinator to interpret (single click
+        // → select shallow; double click → select deep; per click routing).
+        var deepPane = this._painted.mode === "deep" && this._painted.slotId === slotId;
+        if (state.activeTabId && !deepPane) {
             var cover = document.createElement("div");
             cover.className = "hmtp-inactive-cover";
             cover.addEventListener("mousedown", function (ev) { ev.stopPropagation(); });
             cover.addEventListener("click", function (ev) {
                 ev.stopPropagation();
-                self.selectPane(slotId);
+                self._fire(self._cbChromeInteract, "onChromeInteract", [{ kind: "cover-click", slotId: slotId }]);
             });
             cover.addEventListener("dblclick", function (ev) {
                 ev.stopPropagation();
-                self.enterDeep(slotId);
+                self._fire(self._cbChromeInteract, "onChromeInteract", [{ kind: "cover-dblclick", slotId: slotId }]);
             });
             content.appendChild(cover);
         }
