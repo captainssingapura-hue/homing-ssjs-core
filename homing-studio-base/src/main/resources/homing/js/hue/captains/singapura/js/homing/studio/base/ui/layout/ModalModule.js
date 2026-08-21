@@ -212,6 +212,9 @@ class Modal {
 
     _onDragStart(e) {
         if (e.button !== 0) return;
+        // preventDefault also suppresses the default focus move on mousedown:
+        // dragging the modal never steals focus from a deep-selected widget
+        // (RFC 0049 — window management stays deep). Load-bearing.
         e.preventDefault();
         var self = this;
         var rect = this._el.getBoundingClientRect();
@@ -243,6 +246,9 @@ class Modal {
 
     _onResizeStart(e, pos) {
         if (e.button !== 0) return;
+        // preventDefault also suppresses the default focus move on mousedown:
+        // resizing the modal never steals focus from a deep-selected widget
+        // (RFC 0049 — window management stays deep). Load-bearing.
         e.preventDefault();
         e.stopPropagation();
         var self = this;
