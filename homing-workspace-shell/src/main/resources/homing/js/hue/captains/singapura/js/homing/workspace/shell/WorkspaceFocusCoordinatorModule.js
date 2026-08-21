@@ -179,6 +179,10 @@ class WorkspaceFocusCoordinator {
 
     /** The shown tab of a pane changed (chip click / programmatic switch). */
     onTabActivated(slotId, tabId) {
+        // Dock-path activation of a tab still in transport is machinery, not a
+        // user chip-click — the tab-docked report that follows finishes the
+        // landing with the transported selection intact. Skip it.
+        if (this._transport && this._transport.tabId === tabId) return;
         // A chip click is an outside-active interaction → at least downgrade;
         // the switched pane becomes the shallow cursor (rule: click routing).
         this.selectShallow(slotId);
@@ -225,21 +229,26 @@ class WorkspaceFocusCoordinator {
     }
 
     /**
-     * The transport modal docked into a strip. Transport ends; per click
-     * routing a completed positional change lands SHALLOW at the destination
-     * (same rule as a strip-to-strip move).
+     * The transport modal docked into a strip. THE GLOW FOLLOWS: the
+     * transported deep selection lands still deep at the destination — the
+     * user carried the focused thing and set it down; that is not a demotion.
+     * (This differs from a strip-to-strip chip drag, which downgrades: that
+     * gesture never carried the selection.) The FM stayed entered through the
+     * re-parent (a single appendChild preserves the widget's focus), so only
+     * the positional side updates: the slot and the deep paint.
      */
     _onTabDocked(ev) {
+        var carriedDeep = this._transport && this._transport.tabId === ev.tabId
+                       && this._selectedTab === ev.tabId && this._deep;
         this._clearTransport();
-        if (this._selectedTab !== ev.tabId) return;
-        if (this._deep) {
-            var prevDeep = this._selectedTab;
-            var fm = this._fms.get(prevDeep);
-            if (fm) fm.release();
-            this._deep = false;
-            this._fireDeepChanged(prevDeep, null);
+        if (!carriedDeep) {
+            if (this._selectedTab === ev.tabId) this.selectShallow(ev.slotId);
+            return;
         }
-        this.selectShallow(ev.slotId);
+        this._selectedSlot = ev.slotId;
+        this._mtp.paintSelection(ev.slotId, "deep");
+        var fm = this._fms.get(ev.tabId);
+        if (fm) fm.reconcile();   // restore focus if the re-parent disturbed it
     }
 
     _clearTransport() {

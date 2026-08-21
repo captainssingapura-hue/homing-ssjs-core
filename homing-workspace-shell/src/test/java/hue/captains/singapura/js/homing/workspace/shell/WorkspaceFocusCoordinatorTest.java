@@ -288,7 +288,10 @@ class WorkspaceFocusCoordinatorTest extends JsModuleTestBase {
     }
 
     @Test
-    void dockEndsTransportShallowAtDestination() {
+    void dockKeepsTheCarriedDeepSelectionAtDestination() {
+        // THE GLOW FOLLOWS: docking the transported deep tab lands still deep
+        // at the destination (the dock-path onTabActivated is ignored for a
+        // tab in transport), with the modal accent removed.
         assertTrue(js.eval("js", """
                 (() => {
                     var s = scenario();
@@ -299,15 +302,17 @@ class WorkspaceFocusCoordinatorTest extends JsModuleTestBase {
                     var st = s.mtp._tabsBySlot.get('tr');
                     var tabB = st.tabs[0]; st.tabs = []; st.activeTabId = null;
                     s.fc.onChromeInteract({ kind: 'tab-detached', slotId: 'tr', tabId: 'B', modalEl: modalEl });
-                    // Dock into tl: MTP re-adds the tab, then reports.
+                    // Dock into tl: MTP re-adds the tab, activates it (machinery,
+                    // must be ignored for a transported tab), then reports docked.
                     s.mtp._tabsBySlot.get('tl').tabs.push(tabB);
                     s.mtp._tabsBySlot.get('tl').activeTabId = 'B';
+                    s.fc.onTabActivated('tl', 'B');   // dock-path switch — ignored
                     s.fc.onChromeInteract({ kind: 'tab-docked', slotId: 'tl', tabId: 'B' });
                     var last = s.mtp.paints[s.mtp.paints.length - 1];
-                    return s.fc.mode() === 'shallow'
-                        && s.contentB.inert === true             // released on landing
-                        && last.slotId === 'tl' && last.mode === 'shallow'
+                    return s.fc.deepTabId() === 'B'              // still deep
+                        && s.contentB.inert === false            // still entered
+                        && last.slotId === 'tl' && last.mode === 'deep'
                         && modalEl.classList._c['hmtp-modal-entered'] === undefined;
-                })()""").asBoolean(), "dock: transport ends shallow at the destination, accent removed");
+                })()""").asBoolean(), "dock: the carried deep selection lands deep at the destination");
     }
 }
