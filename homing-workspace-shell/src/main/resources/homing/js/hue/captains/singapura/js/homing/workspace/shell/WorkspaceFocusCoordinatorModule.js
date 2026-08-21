@@ -39,6 +39,7 @@ class WorkspaceFocusCoordinator {
         this._selectedSlot = null;        // the cursor pane (may be an empty pane)
         this._selectedTab  = null;        // the cursor pane's active tab id, or null
         this._deep         = false;       // is the selection entered?
+        this._transport    = null;        // { tabId, modalEl } — a detached tab in the transport modal
         this._attached     = false;
 
         var self = this;
@@ -120,6 +121,18 @@ class WorkspaceFocusCoordinator {
         var fm = this._fms.get(this._selectedTab);
         if (fm) fm.release();
         this._deep = false;
+        // Escape while in transport: the modal goes dormant (inert content,
+        // accent off) and the cursor returns to a pane — the first one, since
+        // the tab is in no pane to shallow-select.
+        if (this._transport && this._transport.tabId === prevDeep) {
+            this._clearTransport();
+            this._fireDeepChanged(prevDeep, null);
+            var f = this._firstSlot();
+            if (f != null) return this.selectShallow(f);
+            this._selectedSlot = null; this._selectedTab = null;
+            this._mtp.paintSelection(null, null);
+            return this;
+        }
         // Hat: shallow-select the same tab, at its CURRENT pane.
         var slot = this._slotOf(prevDeep);
         this._selectedSlot = (slot != null) ? slot : this._selectedSlot;
@@ -175,8 +188,60 @@ class WorkspaceFocusCoordinator {
     /** MTP reported a chrome interaction — the coordinator decides. */
     onChromeInteract(ev) {
         if (!ev) return;
-        if (ev.kind === "cover-click")        this.selectShallow(ev.slotId);
+        if (ev.kind === "cover-click")         this.selectShallow(ev.slotId);
         else if (ev.kind === "cover-dblclick") this.enterDeep(ev.slotId);
+        else if (ev.kind === "tab-detached")   this._onTabDetached(ev);
+        else if (ev.kind === "tab-docked")     this._onTabDocked(ev);
+    }
+
+    /**
+     * A tab detached into the transport modal. Decided policy: grabbing a tab
+     * out is a deliberate act on THAT tab, so the selection FOLLOWS it — the
+     * tab becomes the deep selection in transit (releasing any other), the
+     * emptied pane loses its ring (paint cleared), and the modal wears the
+     * entered accent. Entering also un-inerts the content, which matters for a
+     * previously-covered tab: without it the modal body would arrive inert —
+     * unclickable and hidden from AT (a dead modal). The tab's FM travelled
+     * with the content, so deep keyboard keeps working inside the modal.
+     */
+    _onTabDetached(ev) {
+        var prevDeep = this.deepTabId();
+        this._invalidate();
+        this._selectedTab  = ev.tabId;
+        this._selectedSlot = null;           // in transport — no pane holds it
+        this._deep         = true;
+        this._transport    = { tabId: ev.tabId, modalEl: ev.modalEl || null };
+        this._mtp.paintSelection(null, null);   // no pane wears a ring
+        if (ev.modalEl) { try { ev.modalEl.classList.add("hmtp-modal-entered"); } catch (e) {} }
+        var fm = this._fms.get(ev.tabId);
+        if (fm) fm.enter();
+        this._fireDeepChanged(prevDeep, ev.tabId);
+    }
+
+    /**
+     * The transport modal docked into a strip. Transport ends; per click
+     * routing a completed positional change lands SHALLOW at the destination
+     * (same rule as a strip-to-strip move).
+     */
+    _onTabDocked(ev) {
+        this._clearTransport();
+        if (this._selectedTab !== ev.tabId) return;
+        if (this._deep) {
+            var prevDeep = this._selectedTab;
+            var fm = this._fms.get(prevDeep);
+            if (fm) fm.release();
+            this._deep = false;
+            this._fireDeepChanged(prevDeep, null);
+        }
+        this.selectShallow(ev.slotId);
+    }
+
+    _clearTransport() {
+        if (!this._transport) return;
+        if (this._transport.modalEl) {
+            try { this._transport.modalEl.classList.remove("hmtp-modal-entered"); } catch (e) {}
+        }
+        this._transport = null;
     }
 
     // ── internals ────────────────────────────────────────────────────────────
@@ -186,6 +251,9 @@ class WorkspaceFocusCoordinator {
         if (this._deep && this._selectedTab != null) {
             var fm = this._fms.get(this._selectedTab);
             if (fm) fm.release();
+            // Selecting away from a tab in transport leaves its modal dormant
+            // (inert content) — drop the entered accent with it.
+            if (this._transport && this._transport.tabId === this._selectedTab) this._clearTransport();
             this._fireDeepChanged(this._selectedTab, null);
         }
         this._deep = false;

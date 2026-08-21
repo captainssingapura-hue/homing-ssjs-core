@@ -257,4 +257,54 @@ class WorkspaceFocusCoordinatorTest extends JsModuleTestBase {
                         && s.contentA.inert === true;
                 })()""").asBoolean(), "a positional change downgrades the selection to shallow at the new pane");
     }
+
+    @Test
+    void detachToTransportMakesTheTabDeepAndClearsPanePaint() {
+        // A previously COVERED (inert) tab detaches into the transport modal:
+        // it becomes the deep selection (un-inerted — no dead modal), no pane
+        // wears a ring, and the modal carries the entered accent class.
+        assertTrue(js.eval("js", """
+                (() => {
+                    var s = scenario();
+                    s.fc.enterDeep('tl');                       // A is deep; B covered/inert
+                    var modalEl = makeEl('modal');
+                    modalEl.classList = { _c: {},
+                        add: function (k) { this._c[k] = 1; },
+                        remove: function (k) { delete this._c[k]; } };
+                    // Simulate MTP's detach: B leaves its slot, then the report.
+                    var st = s.mtp._tabsBySlot.get('tr');
+                    st.tabs = []; st.activeTabId = null;
+                    s.fc.onChromeInteract({ kind: 'tab-detached', slotId: 'tr', tabId: 'B', modalEl: modalEl });
+                    var last = s.mtp.paints[s.mtp.paints.length - 1];
+                    return s.fc.deepTabId() === 'B'
+                        && s.contentB.inert === false            // un-inerted — modal is live
+                        && s.contentA.inert === true             // prior deep released
+                        && last.mode === null                    // no pane ring
+                        && modalEl.classList._c['hmtp-modal-entered'] === 1;
+                })()""").asBoolean(), "detach: tab becomes deep in transport, pane paint clears, modal wears accent");
+    }
+
+    @Test
+    void dockEndsTransportShallowAtDestination() {
+        assertTrue(js.eval("js", """
+                (() => {
+                    var s = scenario();
+                    var modalEl = makeEl('modal');
+                    modalEl.classList = { _c: {},
+                        add: function (k) { this._c[k] = 1; },
+                        remove: function (k) { delete this._c[k]; } };
+                    var st = s.mtp._tabsBySlot.get('tr');
+                    var tabB = st.tabs[0]; st.tabs = []; st.activeTabId = null;
+                    s.fc.onChromeInteract({ kind: 'tab-detached', slotId: 'tr', tabId: 'B', modalEl: modalEl });
+                    // Dock into tl: MTP re-adds the tab, then reports.
+                    s.mtp._tabsBySlot.get('tl').tabs.push(tabB);
+                    s.mtp._tabsBySlot.get('tl').activeTabId = 'B';
+                    s.fc.onChromeInteract({ kind: 'tab-docked', slotId: 'tl', tabId: 'B' });
+                    var last = s.mtp.paints[s.mtp.paints.length - 1];
+                    return s.fc.mode() === 'shallow'
+                        && s.contentB.inert === true             // released on landing
+                        && last.slotId === 'tl' && last.mode === 'shallow'
+                        && modalEl.classList._c['hmtp-modal-entered'] === undefined;
+                })()""").asBoolean(), "dock: transport ends shallow at the destination, accent removed");
+    }
 }

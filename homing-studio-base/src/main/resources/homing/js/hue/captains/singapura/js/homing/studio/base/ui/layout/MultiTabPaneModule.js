@@ -119,6 +119,10 @@ var _STYLE_CSS = [
     "  background:transparent;}",
     ".hmtp-empty{display:flex;align-items:center;justify-content:center;",
     "  color:var(--color-text-muted);font:14px sans-serif;height:100%;}",
+    // RFC 0049 — the transport modal wearing the deep selection (a detached tab
+    // in transit). Same visual language as the entered ring, on the modal frame.
+    ".hmtp-modal-entered{outline:2px solid var(--color-accent);outline-offset:-2px;",
+    "  box-shadow:0 0 14px color-mix(in srgb, var(--color-accent) 35%, transparent);}",
     ".hmtp-corner{position:absolute;top:4px;right:4px;display:flex;gap:2px;z-index:6;",
     "  background:color-mix(in srgb, var(--color-surface) 90%, transparent);",
     "  border:1px solid var(--color-border);border-radius:3px;padding:1px;}",
@@ -227,7 +231,8 @@ class MultiTabPane {
         //   onTabRemoved(slotId, tab, fromIndex)
         //   onTabMoved(srcSlotId, destSlotId, tab, fromIndex, toIndex)
         //   onTabActivated(slotId, tabId)           — strip-chip click / programmatic switchTab
-        //   onChromeInteract({ kind, slotId })      — RFC 0049: cover-click / cover-dblclick
+        //   onChromeInteract({ kind, slotId, ... }) — RFC 0049: cover-click / cover-dblclick /
+        //       tab-detached { tabId, modalEl } / tab-docked { tabId } (transport)
         //   onSplit(sourceSlotId, orientation, newSlotId)
         //   onMerge(keptSlotId, removedSlotId)
         //
