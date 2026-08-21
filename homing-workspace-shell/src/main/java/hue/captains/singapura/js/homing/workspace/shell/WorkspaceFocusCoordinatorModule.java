@@ -52,6 +52,11 @@ public record WorkspaceFocusCoordinatorModule() implements DomModule<WorkspaceFo
                 .add(new ModuleImports<>(
                         List.of(new FocusManagerModule.FocusManager()),
                         FocusManagerModule.INSTANCE))
+                // The shallow-mode keyboard — the coordinator's keyboard half,
+                // split per Modest File Size; composed in attach().
+                .add(new ModuleImports<>(
+                        List.of(new WorkspaceShallowKeyboardModule.ShallowKeyboard()),
+                        WorkspaceShallowKeyboardModule.INSTANCE))
                 .build();
     }
 

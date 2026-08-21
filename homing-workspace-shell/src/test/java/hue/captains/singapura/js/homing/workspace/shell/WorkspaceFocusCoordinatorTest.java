@@ -18,6 +18,8 @@ class WorkspaceFocusCoordinatorTest extends JsModuleTestBase {
 
     private static final String FM_MODULE =
             "/homing/js/hue/captains/singapura/js/homing/studio/base/ui/layout/FocusManagerModule.js";
+    private static final String KB_MODULE =
+            "/homing/js/hue/captains/singapura/js/homing/workspace/shell/WorkspaceShallowKeyboardModule.js";
     private static final String MODULE =
             "/homing/js/hue/captains/singapura/js/homing/workspace/shell/WorkspaceFocusCoordinatorModule.js";
 
@@ -130,6 +132,7 @@ class WorkspaceFocusCoordinatorTest extends JsModuleTestBase {
         js = buildContext();
         js.eval(Source.newBuilder("js", STUBS, "stubs.js").buildLiteral());
         loadModule(FM_MODULE);
+        loadModule(KB_MODULE);
         loadModule(MODULE);
     }
 
@@ -210,7 +213,7 @@ class WorkspaceFocusCoordinatorTest extends JsModuleTestBase {
         assertTrue(js.eval("js", """
                 (() => {
                     var s = scenario();
-                    s.fc._handleKey(makeEvent('keydown', { key: 'ArrowRight', target: document.body }));
+                    s.fc._keyboard._handleKey(makeEvent('keydown', { key: 'ArrowRight', target: document.body }));
                     var last = s.mtp.paints[s.mtp.paints.length - 1];
                     return last.slotId === 'tr' && last.mode === 'shallow' && s.fc.selectedSlotId() === 'tr';
                 })()""").asBoolean(), "arrow: cursor moves to the neighbour pane, shallow");
@@ -221,7 +224,7 @@ class WorkspaceFocusCoordinatorTest extends JsModuleTestBase {
         assertTrue(js.eval("js", """
                 (() => {
                     var s = scenario();
-                    s.fc._handleKey(makeEvent('keydown', { key: 'Enter', target: document.body }));
+                    s.fc._keyboard._handleKey(makeEvent('keydown', { key: 'Enter', target: document.body }));
                     return s.fc.deepTabId() === 'A' && s.contentA.inert === false;
                 })()""").asBoolean(), "Enter in shallow upgrades the cursor pane to deep");
     }

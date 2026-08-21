@@ -10,8 +10,8 @@
 //     disposed with their tabs),
 //   · click routing (MTP reports cover clicks via onChromeInteract; the
 //     coordinator decides: single = select shallow, double = select deep),
-//   · the shallow keyboard (arrows = cursor via mtp.neighbourOf, Tab = cycle
-//     tabs within the pane, Enter = upgrade to deep),
+//   · the shallow keyboard — composed as its own module (ShallowKeyboard,
+//     the descendant of RFC 0048's PaneFocusNav),
 //   · the unified release: the FM does the immutable work; the coordinator's
 //     follow-up is its intent (give-up → shallow-select same; select-other →
 //     continue; reposition/removal → shallow-select at the new place).
@@ -41,14 +41,20 @@ class WorkspaceFocusCoordinator {
         this._deep         = false;       // is the selection entered?
         this._transport    = null;        // { tabId, modalEl } — a detached tab in the transport modal
         this._attached     = false;
-
-        var self = this;
-        this._onKeyDown = function (e) { self._handleKey(e); };
+        // The shallow-mode keyboard is its own module (ShallowKeyboard — the
+        // descendant of RFC 0048's PaneFocusNav); composed in attach().
+        this._Keyboard = opts.ShallowKeyboardCtor
+                       || (typeof ShallowKeyboard !== "undefined" ? ShallowKeyboard : null);
+        this._keyboard = null;
     }
 
     attach() {
         if (this._attached) return this;
-        document.addEventListener("keydown", this._onKeyDown, true);
+        if (this._Keyboard) {
+            this._keyboard = new this._Keyboard({
+                coordinator: this, mtp: this._mtp, host: this._host
+            }).attach();
+        }
         this._attached = true;
         // Adopt any tabs that already exist, then boot shallow on the first pane.
         this._adoptExistingTabs();
@@ -61,7 +67,7 @@ class WorkspaceFocusCoordinator {
 
     dispose() {
         if (!this._attached) return this;
-        document.removeEventListener("keydown", this._onKeyDown, true);
+        if (this._keyboard) { try { this._keyboard.dispose(); } catch (e) {} this._keyboard = null; }
         this._fms.forEach(function (fm) { try { fm.dispose(); } catch (e) {} });
         this._fms.clear();
         this._attached = false;
@@ -331,59 +337,4 @@ class WorkspaceFocusCoordinator {
         return found;
     }
 
-    // ── the shallow keyboard (from RFC 0048's PaneFocusNav) ──────────────────
-
-    _isEditable(t) {
-        if (!t || !t.tagName) return false;
-        var tag = t.tagName;
-        return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || t.isContentEditable === true;
-    }
-
-    /** True when the keystroke belongs to this workspace (focus here or nowhere). */
-    _inScope(e) {
-        if (!this._host) return true;
-        var a = document.activeElement;
-        if (a == null || a === document.body) return true;
-        return this._host.contains(a) || this._host.contains(e.target);
-    }
-
-    _handleKey(e) {
-        // Deep → the widget owns the keyboard (the FM handles give-up).
-        if (this._deep) return;
-        if (e.ctrlKey || e.metaKey || e.altKey) return;
-        if (this._isEditable(e.target)) return;
-        if (!this._inScope(e)) return;
-
-        var slot = this._selectedSlot != null ? this._selectedSlot : this._firstSlot();
-        if (slot == null) return;
-        switch (e.key) {
-            case "ArrowLeft":  this._moveCursor(slot, "left");  break;
-            case "ArrowRight": this._moveCursor(slot, "right"); break;
-            case "ArrowUp":    this._moveCursor(slot, "up");    break;
-            case "ArrowDown":  this._moveCursor(slot, "down");  break;
-            case "Tab":        this._cycleTab(slot, e.shiftKey ? -1 : 1); break;
-            case "Enter":      this.enterDeep(slot); break;   // empty pane degrades to shallow
-            default:           return;                        // not ours — leave it for the browser
-        }
-        e.preventDefault();
-        e.stopPropagation();
-    }
-
-    _moveCursor(fromSlot, direction) {
-        var next = this._mtp.neighbourOf ? this._mtp.neighbourOf(fromSlot, direction) : null;
-        if (next != null) this.selectShallow(next);
-    }
-
-    /** Cycle the shown tab WITHIN the cursor pane (never leaves the pane). */
-    _cycleTab(slot, delta) {
-        var s = this._state().tabs[slot];
-        if (!s || !s.tabs || s.tabs.length < 2) return;
-        var i = 0;
-        for (var k = 0; k < s.tabs.length; k++) {
-            if (s.tabs[k].id === s.activeTabId) { i = k; break; }
-        }
-        var n = s.tabs.length;
-        var j = ((i + delta) % n + n) % n;
-        this._mtp.switchTab(slot, s.tabs[j].id);   // fires onTabActivated → reselect shallow here
-    }
 }
