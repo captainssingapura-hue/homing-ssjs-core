@@ -90,6 +90,22 @@ class FocusManager {
 
     /** Whether this tab is currently the deep-selected one. */
     isDeep()        { return this._deep; }
+
+    /**
+     * RFC 0049 selection resolution — the IDEMPOTENT reconciler primitive: set
+     * this tab's applied deep-state. A no-op when already in that state (so the
+     * reconciler can sweep every tab cheaply; the FM's own state gives the
+     * transition edges — setActive fires exactly once per change). While deep
+     * and unchanged it runs reconcile(), so every redundant sweep doubles as
+     * drift repair.
+     */
+    applyDeep(deep, activationFn) {
+        if (!!deep === this._deep) {
+            if (this._deep) this.reconcile();
+            return this;
+        }
+        return deep ? this.enter(activationFn) : this.release();
+    }
     /** True while the manager is moving focus programmatically (loop guard). */
     isReconciling() { return this._reconciling; }
 

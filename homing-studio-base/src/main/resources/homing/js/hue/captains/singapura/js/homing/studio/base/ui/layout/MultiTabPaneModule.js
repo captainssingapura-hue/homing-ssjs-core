@@ -555,11 +555,21 @@ class MultiTabPane {
      * events fired.
      */
     paintSelection(slotId, mode) {
-        this._painted = (mode === "shallow" || mode === "deep")
+        var prev = this._painted;
+        var next = (mode === "shallow" || mode === "deep")
             ? { slotId: slotId, mode: mode }
             : { slotId: null, mode: null };
+        if (prev.slotId === next.slotId && prev.mode === next.mode) return this;   // idempotent no-op
+        this._painted = next;
+        // The effective diff (RFC 0049): only the slots whose visuals can differ
+        // — the previously painted one and the newly painted one — re-render;
+        // every other pane's cover/strip is unaffected by a selection change.
         var self = this;
-        this._wrappersBySlot.forEach(function (_, sid) { self._renderSlotLocal(sid); });
+        [prev.slotId, next.slotId].forEach(function (sid, i, arr) {
+            if (sid != null && arr.indexOf(sid) === i && self._wrappersBySlot.has(sid)) {
+                self._renderSlotLocal(sid);
+            }
+        });
         this._renderRings();
         return this;
     }

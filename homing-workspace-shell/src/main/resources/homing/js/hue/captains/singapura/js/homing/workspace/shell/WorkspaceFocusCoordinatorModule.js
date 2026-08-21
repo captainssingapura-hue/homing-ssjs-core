@@ -1,26 +1,34 @@
 // =============================================================================
-// WorkspaceFocusCoordinatorModule — RFC 0049 workspace focus coordinator.
+// WorkspaceFocusCoordinatorModule — RFC 0049 workspace focus coordinator,
+// SELECTION-RESOLUTION edition: recompute, don't track.
 //
-// THE owner of the deep/shallow selection logic, generalising RFC 0048's
-// PaneFocusNav. SplitPane and MultiTabPane are focus-agnostic primitives; this
-// coordinator (shell layer) owns everything positional / mutable:
+// Events update INTENT (the one remembered fact — single-writer, here); a
+// TOTAL resolver derives the definitive selection from intent + the live
+// world; a reconciler enforces it. Missed events degrade to staleness (cured
+// by the next trigger), never to corruption: a two-glow state is
+// unrepresentable because every trigger repaints from one resolved answer.
 //
-//   · the ONE selection { slotId, tabId, deep } (exclusivity),
-//   · the per-tab FocusManagers (created on MTP's tab-content elements,
-//     disposed with their tabs),
-//   · click routing (MTP reports cover clicks via onChromeInteract; the
-//     coordinator decides: single = select shallow, double = select deep),
-//   · the shallow keyboard — composed as its own module (ShallowKeyboard,
-//     the descendant of RFC 0048's PaneFocusNav),
-//   · the unified release: the FM does the immutable work; the coordinator's
-//     follow-up is its intent (give-up → shallow-select same; select-other →
-//     continue; reposition/removal → shallow-select at the new place).
+//   intent   { kind: 'tab', id }   — deep on that tab (deep ⇒ widget)
+//            { kind: 'slot', id }  — shallow cursor on that pane
+//            { kind: null }        — no act yet (boot) → resolver floor
 //
-// MTP is driven purely through its renderer facet (paintSelection /
-// setAddEnabled) and access facet (contentElOf / neighbourOf / getState). The
-// chrome fans MTP's structural events into the on*() handlers here.
+//   resolve  1. intent tab in a slot        → that tab, deep, there
+//            2. intent tab alive, NO slot   → that tab, deep, IN TRANSPORT
+//            3. intent tab gone             → floor
+//            4. intent slot exists          → its active tab (or none), shallow
+//            5. floor                       → first pane, shallow
 //
-//   new WorkspaceFocusCoordinator({ mtp, host, onDeepChanged? }).attach();
+//   apply    diff vs the last-applied memo: equal → drift-repair only;
+//            changed → FM sweep (idempotent applyDeep — the FM's own state
+//            gives the setActive edges), one paintSelection (MTP diffs
+//            internally), modal accents, onDeepChanged from the same diff.
+//
+// Invariant, by construction: exactly ONE selection target at all times; at
+// most one selected widget; mode ∈ {shallow, deep}; deep ⇒ widget.
+//
+// The shallow keyboard lives in its own module (ShallowKeyboard); the per-tab
+// FocusManagers own the immutable mechanics. MTP is driven only through its
+// renderer/access facet.
 // =============================================================================
 
 class WorkspaceFocusCoordinator {
@@ -29,20 +37,18 @@ class WorkspaceFocusCoordinator {
         opts = opts || {};
         if (!opts.mtp) throw new Error("[WorkspaceFocusCoordinator] opts.mtp is required");
         this._mtp   = opts.mtp;
-        this._host  = opts.host || null;             // workspace content element, for key scoping
+        this._host  = opts.host || null;
         this._FM    = opts.FocusManagerCtor || (typeof FocusManager !== "undefined" ? FocusManager : null);
-        // Fired when the DEEP tab changes (prevTabId, nextTabId — either null).
-        // The chrome wires this to replay/persistence (WorkspaceActiveChanged).
-        this._cbDeepChanged = opts.onDeepChanged || null;
+        this._cbDeepChanged = opts.onDeepChanged || null;   // (prevTabId, nextTabId) → replay/persistence
 
-        this._fms          = new Map();   // tabId → FocusManager
-        this._selectedSlot = null;        // the cursor pane (may be an empty pane)
-        this._selectedTab  = null;        // the cursor pane's active tab id, or null
-        this._deep         = false;       // is the selection entered?
-        this._transport    = null;        // { tabId, modalEl } — a detached tab in the transport modal
-        this._attached     = false;
-        // The shallow-mode keyboard is its own module (ShallowKeyboard — the
-        // descendant of RFC 0048's PaneFocusNav); composed in attach().
+        this._intent  = { kind: null, id: null };
+        this._applied = null;             // last-applied resolution — diff basis + lifecycle edges
+        this._fms     = new Map();        // tabId → FocusManager (world fact: alive tabs)
+        this._transportModals = new Map();// tabId → modal el (accent registry; state never depends on it)
+        this._pendingActivationFn = null; // per-request activation fn for the next deep apply
+        this._applying = false;           // re-entrancy guard: notifications during apply re-run once
+        this._dirty    = false;
+        this._attached = false;
         this._Keyboard = opts.ShallowKeyboardCtor
                        || (typeof ShallowKeyboard !== "undefined" ? ShallowKeyboard : null);
         this._keyboard = null;
@@ -51,17 +57,11 @@ class WorkspaceFocusCoordinator {
     attach() {
         if (this._attached) return this;
         if (this._Keyboard) {
-            this._keyboard = new this._Keyboard({
-                coordinator: this, mtp: this._mtp, host: this._host
-            }).attach();
+            this._keyboard = new this._Keyboard({ coordinator: this, mtp: this._mtp, host: this._host }).attach();
         }
         this._attached = true;
-        // Adopt any tabs that already exist, then boot shallow on the first pane.
         this._adoptExistingTabs();
-        if (this._selectedSlot == null) {
-            var first = this._firstSlot();
-            if (first != null) this.selectShallow(first);
-        }
+        this._refresh();                  // empty intent hits the resolver floor → boot shallow
         return this;
     }
 
@@ -70,129 +70,83 @@ class WorkspaceFocusCoordinator {
         if (this._keyboard) { try { this._keyboard.dispose(); } catch (e) {} this._keyboard = null; }
         this._fms.forEach(function (fm) { try { fm.dispose(); } catch (e) {} });
         this._fms.clear();
+        this._transportModals.clear();
         this._attached = false;
         return this;
     }
 
-    // ── selection queries (the shell contract PaneFocusNav-era code read off MTP) ──
+    // ── selection queries (read the APPLIED resolution) ──────────────────────
 
-    mode()            { return this._deep ? "deep" : "shallow"; }
-    selectedSlotId()  { return this._selectedSlot; }
-    /** The deep-selected tab id, or null when shallow. */
-    deepTabId()       { return this._deep ? this._selectedTab : null; }
+    mode()           { return (this._applied && this._applied.mode === "deep") ? "deep" : "shallow"; }
+    selectedSlotId() { return this._applied ? this._applied.slotId : null; }
+    deepTabId()      { return (this._applied && this._applied.mode === "deep") ? this._applied.tabId : null; }
 
-    // ── the selection ops ────────────────────────────────────────────────────
+    // ── intent updates (the ONLY writers) ────────────────────────────────────
 
-    /** Select a pane shallow (the cursor). Invalidates any current selection. */
+    /** Shallow-select a pane (the cursor). */
     selectShallow(slotId) {
-        this._invalidate();
-        this._selectedSlot = slotId;
-        this._selectedTab  = this._activeTabOf(slotId);
-        this._deep         = false;
-        this._mtp.paintSelection(slotId, "shallow");
-        return this;
+        this._intent = { kind: "slot", id: slotId };
+        return this._refresh();
     }
 
-    /**
-     * Select a pane deep (enter its active tab). Invalidates any current
-     * selection first; an empty pane degrades to a shallow select. The optional
-     * activationFn is the per-request focus function (from intendedFocusIn).
-     */
+    /** Deep-select a pane's active tab; an empty pane degrades to the cursor. */
     enterDeep(slotId, activationFn) {
         var tabId = this._activeTabOf(slotId);
-        if (tabId == null) return this.selectShallow(slotId);   // empty pane — cursor only
-        var prevDeep = this.deepTabId();
-        this._invalidate();
-        this._selectedSlot = slotId;
-        this._selectedTab  = tabId;
-        this._deep         = true;
-        this._mtp.paintSelection(slotId, "deep");
-        var fm = this._fms.get(tabId);
-        if (fm) fm.enter(activationFn);
-        this._fireDeepChanged(prevDeep, tabId);
-        return this;
+        if (tabId == null) return this.selectShallow(slotId);
+        this._intent = { kind: "tab", id: tabId };
+        this._pendingActivationFn = (typeof activationFn === "function") ? activationFn : null;
+        return this._refresh();
     }
 
-    /** Enter deep on the pane that owns the given tab (intendedFocusIn path). */
+    /** Deep-select a specific tab wherever it lives (intendedFocusIn path). */
     enterDeepForTab(tabId, activationFn) {
-        var slot = this._slotOf(tabId);
-        if (slot != null) this.enterDeep(slot, activationFn);
-        return this;
+        this._intent = { kind: "tab", id: tabId };
+        this._pendingActivationFn = (typeof activationFn === "function") ? activationFn : null;
+        return this._refresh();
     }
 
-    /** Downgrade the current selection to shallow (give-up / programmatic). */
+    /** Downgrade to shallow — the cursor lands on the deep tab's pane (or first). */
     releaseToShallow() {
-        if (!this._deep) return this;
-        var prevDeep = this._selectedTab;
-        var fm = this._fms.get(this._selectedTab);
-        if (fm) fm.release();
-        this._deep = false;
-        // Escape while in transport: the modal goes dormant (inert content,
-        // accent off) and the cursor returns to a pane — the first one, since
-        // the tab is in no pane to shallow-select.
-        if (this._transport && this._transport.tabId === prevDeep) {
-            this._clearTransport();
-            this._fireDeepChanged(prevDeep, null);
-            var f = this._firstSlot();
-            if (f != null) return this.selectShallow(f);
-            this._selectedSlot = null; this._selectedTab = null;
-            this._mtp.paintSelection(null, null);
-            return this;
-        }
-        // Hat: shallow-select the same tab, at its CURRENT pane.
-        var slot = this._slotOf(prevDeep);
-        this._selectedSlot = (slot != null) ? slot : this._selectedSlot;
-        this._mtp.paintSelection(this._selectedSlot, "shallow");
-        this._fireDeepChanged(prevDeep, null);
-        return this;
+        var deepTab = this.deepTabId();
+        if (deepTab == null) return this;
+        var slot = this._slotOf(deepTab);
+        this._intent = { kind: "slot", id: (slot != null) ? slot : this._firstSlot() };
+        return this._refresh();
     }
 
-    // ── structural-event handlers (fanned out by the chrome) ─────────────────
+    // ── structural-event handlers (fanned out by the chrome) — triggers ──────
 
-    /** A tab was added — adopt it (create + attach its FocusManager). */
-    onTabAdded(slotId, tab) { this._ensureFm(tab); }
+    onTabAdded(slotId, tab)    { this._ensureFm(tab); this._refresh(); }
+    onTabAttached(slotId, tab) { this._ensureFm(tab); this._refresh(); }
 
-    /** A dragged tab re-docked — its FM travelled with the content; just ensure. */
-    onTabAttached(slotId, tab) { this._ensureFm(tab); }
-
-    /** A tab was removed — dispose its FM; reselect if it was the selection. */
     onTabRemoved(slotId, tab) {
         if (!tab) return;
         var fm = this._fms.get(tab.id);
         if (fm) { try { fm.dispose(); } catch (e) {} this._fms.delete(tab.id); }
-        if (this._selectedTab === tab.id) {
-            var prevDeep = this.deepTabId();
-            this._deep = false;
-            if (prevDeep) this._fireDeepChanged(prevDeep, null);
-            // The pane survives the close — keep the cursor there, shallow.
-            var slot = this._slotExists(slotId) ? slotId : this._firstSlot();
-            if (slot != null) this.selectShallow(slot); else { this._selectedSlot = null; this._selectedTab = null; }
+        this._dropTransportModal(tab.id);
+        // A dead tab can't be intent — keep the cursor at its pane.
+        if (this._intent.kind === "tab" && this._intent.id === tab.id) {
+            this._intent = { kind: "slot", id: slotId };
         }
+        this._refresh();
     }
 
-    /** A tab moved panes — a positional change downgrades to shallow (click routing). */
+    /** A strip-to-strip chip drag (no transit) downgrades at the destination. */
     onTabMoved(srcSlot, destSlot, tab) {
-        if (!tab || this._selectedTab !== tab.id) return;
-        if (this._deep) this.releaseToShallow();
-        this.selectShallow(destSlot);
+        if (tab && this._intent.kind === "tab" && this._intent.id === tab.id) {
+            this._intent = { kind: "slot", id: destSlot };
+        }
+        this._refresh();
     }
 
-    /** The shown tab of a pane changed (chip click / programmatic switch). */
-    onTabActivated(slotId, tabId) {
-        // Dock-path activation of a tab still in transport is machinery, not a
-        // user chip-click — the tab-docked report that follows finishes the
-        // landing with the transported selection intact. Skip it.
-        if (this._transport && this._transport.tabId === tabId) return;
-        // A chip click is an outside-active interaction → at least downgrade;
-        // the switched pane becomes the shallow cursor (rule: click routing).
-        this.selectShallow(slotId);
-    }
+    /** Chip click / keyboard cycle — an outside-active act: shallow cursor there. */
+    onTabActivated(slotId, tabId) { this.selectShallow(slotId); }
 
-    onSplit(srcSlot, orientation, newSlot) { this._repaint(); }
+    onSplit(srcSlot, orientation, newSlot) { this._refresh(); }
 
     onMerge(keptSlot, removedSlot) {
-        if (this._selectedSlot === removedSlot) this.selectShallow(keptSlot);
-        else this._repaint();
+        if (this._intent.kind === "slot" && this._intent.id === removedSlot) this._intent.id = keptSlot;
+        this._refresh();
     }
 
     /** MTP reported a chrome interaction — the coordinator decides. */
@@ -200,79 +154,96 @@ class WorkspaceFocusCoordinator {
         if (!ev) return;
         if (ev.kind === "cover-click")         this.selectShallow(ev.slotId);
         else if (ev.kind === "cover-dblclick") this.enterDeep(ev.slotId);
-        else if (ev.kind === "tab-detached")   this._onTabDetached(ev);
-        else if (ev.kind === "tab-docked")     this._onTabDocked(ev);
+        else if (ev.kind === "tab-detached") {
+            // Transport policy: grabbing a tab out is a deliberate act on THAT
+            // tab — the selection follows it. The resolver derives "in
+            // transport" (alive FM, no slot); the modal el is only registered
+            // for the accent.
+            if (ev.modalEl) this._transportModals.set(ev.tabId, ev.modalEl);
+            this.enterDeepForTab(ev.tabId);
+        } else if (ev.kind === "tab-docked") {
+            // Pure trigger: intent is unchanged; the resolver now finds the
+            // tab in a slot again, so the glow lands there — still deep.
+            this._dropTransportModal(ev.tabId);
+            this._refresh();
+        }
     }
 
-    /**
-     * A tab detached into the transport modal. Decided policy: grabbing a tab
-     * out is a deliberate act on THAT tab, so the selection FOLLOWS it — the
-     * tab becomes the deep selection in transit (releasing any other), the
-     * emptied pane loses its ring (paint cleared), and the modal wears the
-     * entered accent. Entering also un-inerts the content, which matters for a
-     * previously-covered tab: without it the modal body would arrive inert —
-     * unclickable and hidden from AT (a dead modal). The tab's FM travelled
-     * with the content, so deep keyboard keeps working inside the modal.
-     */
-    _onTabDetached(ev) {
-        var prevDeep = this.deepTabId();
-        this._invalidate();
-        this._selectedTab  = ev.tabId;
-        this._selectedSlot = null;           // in transport — no pane holds it
-        this._deep         = true;
-        this._transport    = { tabId: ev.tabId, modalEl: ev.modalEl || null };
-        this._mtp.paintSelection(null, null);   // no pane wears a ring
-        if (ev.modalEl) { try { ev.modalEl.classList.add("hmtp-modal-entered"); } catch (e) {} }
-        var fm = this._fms.get(ev.tabId);
-        if (fm) fm.enter();
-        this._fireDeepChanged(prevDeep, ev.tabId);
+    /** Un-accent + unregister a transport modal (dock / close). */
+    _dropTransportModal(tabId) {
+        var el = this._transportModals.get(tabId);
+        if (el) { try { el.classList.remove("hmtp-modal-entered"); } catch (e) {} }
+        this._transportModals.delete(tabId);
     }
 
-    /**
-     * The transport modal docked into a strip. THE GLOW FOLLOWS: the
-     * transported deep selection lands still deep at the destination — the
-     * user carried the focused thing and set it down; that is not a demotion.
-     * (This differs from a strip-to-strip chip drag, which downgrades: that
-     * gesture never carried the selection.) The FM stayed entered through the
-     * re-parent (a single appendChild preserves the widget's focus), so only
-     * the positional side updates: the slot and the deep paint.
-     */
-    _onTabDocked(ev) {
-        var carriedDeep = this._transport && this._transport.tabId === ev.tabId
-                       && this._selectedTab === ev.tabId && this._deep;
-        this._clearTransport();
-        if (!carriedDeep) {
-            if (this._selectedTab === ev.tabId) this.selectShallow(ev.slotId);
+    // ── resolve + apply ──────────────────────────────────────────────────────
+
+    _resolve() {
+        var it = this._intent;
+        if (it.kind === "tab" && it.id != null) {
+            var slot = this._slotOf(it.id);
+            if (slot != null)        return { tabId: it.id, slotId: slot, mode: "deep", transport: false };
+            if (this._fms.has(it.id)) return { tabId: it.id, slotId: null, mode: "deep", transport: true };
+        }
+        if (it.kind === "slot" && it.id != null && this._slotExists(it.id)) {
+            return { tabId: this._activeTabOf(it.id), slotId: it.id, mode: "shallow", transport: false };
+        }
+        var f = this._firstSlot();   // the floor — a workspace always has a pane
+        return { tabId: (f != null) ? this._activeTabOf(f) : null, slotId: f, mode: "shallow", transport: false };
+    }
+
+    _refresh() {
+        if (this._applying) { this._dirty = true; return this; }
+        this._applying = true;
+        try {
+            var guard = 0;
+            do { this._dirty = false; this._apply(this._resolve()); } while (this._dirty && ++guard < 4);
+        } finally { this._applying = false; }
+        return this;
+    }
+
+    _apply(next) {
+        var prev = this._applied || { tabId: null, slotId: null, mode: null, transport: false };
+        var same = prev.tabId === next.tabId && prev.slotId === next.slotId
+                && prev.mode === next.mode && prev.transport === next.transport;
+        var nextDeep = (next.mode === "deep") ? next.tabId : null;
+        if (same) {
+            // Redundant trigger — drift repair only (focus back into the deep tab).
+            var f0 = nextDeep != null ? this._fms.get(nextDeep) : null;
+            if (f0) f0.reconcile();
             return;
         }
-        this._selectedSlot = ev.slotId;
-        this._mtp.paintSelection(ev.slotId, "deep");
-        var fm = this._fms.get(ev.tabId);
-        if (fm) fm.reconcile();   // restore focus if the re-parent disturbed it
-    }
-
-    _clearTransport() {
-        if (!this._transport) return;
-        if (this._transport.modalEl) {
-            try { this._transport.modalEl.classList.remove("hmtp-modal-entered"); } catch (e) {}
+        var prevDeep = (prev.mode === "deep") ? prev.tabId : null;
+        var self = this;
+        // FM sweep — idempotent per tab; the FM's own state yields the
+        // setActive edges (fires exactly once per change), release before enter.
+        this._fms.forEach(function (fm, tabId) { if (tabId !== nextDeep) fm.applyDeep(false); });
+        this._mtp.paintSelection(next.transport ? null : next.slotId,
+                                 next.transport ? null : next.mode);
+        this._transportModals.forEach(function (el, tabId) {
+            var on = next.transport && tabId === nextDeep;
+            try { el.classList[on ? "add" : "remove"]("hmtp-modal-entered"); } catch (e) {}
+        });
+        if (nextDeep != null) {
+            var fm = this._fms.get(nextDeep);
+            // Self-heal: a resolved deep tab without an FM means an adoption was
+            // missed (or a tab arrived through an unwired path) — adopt now.
+            if (!fm) { this._adoptExistingTabs(); fm = this._fms.get(nextDeep); }
+            if (fm) {
+                fm.applyDeep(true, this._pendingActivationFn);
+                // Same deep tab, new place (dock / structural churn) — restore focus.
+                if (prevDeep === nextDeep) fm.reconcile();
+            }
         }
-        this._transport = null;
-    }
-
-    // ── internals ────────────────────────────────────────────────────────────
-
-    /** Release the current selection, whatever it is (select-other intent). */
-    _invalidate() {
-        if (this._deep && this._selectedTab != null) {
-            var fm = this._fms.get(this._selectedTab);
-            if (fm) fm.release();
-            // Selecting away from a tab in transport leaves its modal dormant
-            // (inert content) — drop the entered accent with it.
-            if (this._transport && this._transport.tabId === this._selectedTab) this._clearTransport();
-            this._fireDeepChanged(this._selectedTab, null);
+        this._pendingActivationFn = null;
+        this._applied = next;
+        if (prevDeep !== nextDeep && this._cbDeepChanged) {
+            try { this._cbDeepChanged(prevDeep, nextDeep); }
+            catch (e) { console.error("[WorkspaceFocusCoordinator] onDeepChanged threw:", e); }
         }
-        this._deep = false;
     }
+
+    // ── FM lifecycle + world queries ─────────────────────────────────────────
 
     _ensureFm(tab) {
         if (!tab || tab.id == null || this._fms.has(tab.id) || !this._FM) return;
@@ -281,6 +252,7 @@ class WorkspaceFocusCoordinator {
         var self = this;
         var fm = new this._FM(content, {
             tab: tab,
+            // Notifications, not commands: guarded by the CURRENT resolution.
             onGiveUp:        function ()   { if (self.deepTabId() === tab.id) self.releaseToShallow(); },
             onIntendedFocus: function (fn) { self.enterDeepForTab(tab.id, fn); }
         }).attach();
@@ -288,9 +260,8 @@ class WorkspaceFocusCoordinator {
     }
 
     _adoptExistingTabs() {
-        // getState returns flattened copies; the FM needs the LIVE tab object
-        // (setActive / defaultActivation), so reach through _tabsBySlot — the
-        // same precedent PickerTabFlow.findTabObj uses.
+        // The FM needs the LIVE tab object (setActive / defaultActivation) —
+        // reach through _tabsBySlot, the PickerTabFlow.findTabObj precedent.
         var self = this;
         if (!this._mtp._tabsBySlot) return;
         this._mtp._tabsBySlot.forEach(function (s) {
@@ -298,22 +269,10 @@ class WorkspaceFocusCoordinator {
         });
     }
 
-    _repaint() {
-        if (this._selectedSlot == null) return;
-        if (!this._slotExists(this._selectedSlot)) { var f = this._firstSlot(); if (f != null) this.selectShallow(f); return; }
-        this._mtp.paintSelection(this._selectedSlot, this._deep ? "deep" : "shallow");
-    }
+    _state() { return this._mtp.getState ? this._mtp.getState() : { tabs: {} }; }
 
-    _fireDeepChanged(prevTabId, nextTabId) {
-        if (prevTabId === nextTabId || !this._cbDeepChanged) return;
-        try { this._cbDeepChanged(prevTabId || null, nextTabId || null); }
-        catch (e) { console.error("[WorkspaceFocusCoordinator] onDeepChanged threw:", e); }
-    }
-
-    _state()          { return this._mtp.getState ? this._mtp.getState() : { tabs: {} }; }
-    _slotExists(slot) { return !!this._state().tabs[slot] || this._layoutHasSlot(slot); }
-    _layoutHasSlot(slot) {
-        // Empty panes exist in the layout but may have no tabs entry.
+    _slotExists(slot) {
+        if (this._state().tabs[slot]) return true;
         var found = false;
         (function walk(n) {
             if (!n || found) return;
@@ -322,6 +281,7 @@ class WorkspaceFocusCoordinator {
         })(this._state().layout);
         return found;
     }
+
     _firstSlot() {
         var keys = Object.keys(this._state().tabs);
         if (keys.length > 0) return keys[0];
@@ -333,10 +293,12 @@ class WorkspaceFocusCoordinator {
         })(this._state().layout);
         return first;
     }
+
     _activeTabOf(slot) {
         var s = this._state().tabs[slot];
         return (s && s.activeTabId) ? s.activeTabId : null;
     }
+
     _slotOf(tabId) {
         var tabs = this._state().tabs, found = null;
         Object.keys(tabs).forEach(function (slot) {
@@ -345,5 +307,4 @@ class WorkspaceFocusCoordinator {
         });
         return found;
     }
-
 }

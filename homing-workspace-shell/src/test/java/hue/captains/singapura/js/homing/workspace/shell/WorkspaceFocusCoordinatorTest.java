@@ -302,11 +302,11 @@ class WorkspaceFocusCoordinatorTest extends JsModuleTestBase {
                     var st = s.mtp._tabsBySlot.get('tr');
                     var tabB = st.tabs[0]; st.tabs = []; st.activeTabId = null;
                     s.fc.onChromeInteract({ kind: 'tab-detached', slotId: 'tr', tabId: 'B', modalEl: modalEl });
-                    // Dock into tl: MTP re-adds the tab, activates it (machinery,
-                    // must be ignored for a transported tab), then reports docked.
+                    // Dock into tl: MTP re-adds the tab, then reports. Under
+                    // selection resolution the report is a pure TRIGGER — the
+                    // resolver finds the tab in a slot again, so the glow lands.
                     s.mtp._tabsBySlot.get('tl').tabs.push(tabB);
                     s.mtp._tabsBySlot.get('tl').activeTabId = 'B';
-                    s.fc.onTabActivated('tl', 'B');   // dock-path switch — ignored
                     s.fc.onChromeInteract({ kind: 'tab-docked', slotId: 'tl', tabId: 'B' });
                     var last = s.mtp.paints[s.mtp.paints.length - 1];
                     return s.fc.deepTabId() === 'B'              // still deep
@@ -314,5 +314,61 @@ class WorkspaceFocusCoordinatorTest extends JsModuleTestBase {
                         && last.slotId === 'tl' && last.mode === 'deep'
                         && modalEl.classList._c['hmtp-modal-entered'] === undefined;
                 })()""").asBoolean(), "dock: the carried deep selection lands deep at the destination");
+    }
+
+    @Test
+    void invariantHoldsAfterEveryStepOfAnEventStorm() {
+        // RFC 0049 selection resolution — the reconciler's postcondition IS the
+        // invariant: exactly one selection target; at most one selected widget
+        // (exactly one non-inert tab iff deep, zero iff shallow); deep ⇒ widget.
+        // Run a storm of inputs in an order the stateful ledger used to get
+        // wrong, asserting the postcondition after every single step.
+        assertTrue(js.eval("js", """
+                (() => {
+                    var s = scenario();
+                    function post(label) {
+                        var mode = s.fc.mode();
+                        var deep = s.fc.deepTabId();
+                        var slot = s.fc.selectedSlotId();
+                        var nonInert = 0;
+                        Object.keys(s.mtp._contentByTab).forEach(function (id) {
+                            if (s.mtp._contentByTab[id] && s.mtp._contentByTab[id].inert === false) nonInert++;
+                        });
+                        if (mode === 'deep' && (deep == null || nonInert !== 1))
+                            throw new Error(label + ': deep must mean exactly one live widget');
+                        if (mode === 'shallow' && nonInert !== 0)
+                            throw new Error(label + ': shallow must mean zero live widgets');
+                        if (mode === 'shallow' && slot == null)
+                            throw new Error(label + ': there must always be a selection target');
+                        return true;
+                    }
+                    var modalEl = makeEl('modal');
+                    modalEl.classList = { _c: {},
+                        add: function (k) { this._c[k] = 1; },
+                        remove: function (k) { delete this._c[k]; } };
+                    post('boot');
+                    s.fc.enterDeep('tl');                                          post('enter tl');
+                    s.fc.onChromeInteract({ kind: 'cover-click', slotId: 'tr' });  post('cover-click tr');
+                    s.fc.enterDeep('tr');                                          post('enter tr');
+                    // detach B mid-deep, WITHOUT reporting (the silent path):
+                    var st = s.mtp._tabsBySlot.get('tr');
+                    var tabB = st.tabs[0]; st.tabs = []; st.activeTabId = null;
+                    // …the next unrelated trigger self-heals into transport:
+                    s.fc.onSplit('tl', 'horizontal', 'x');                         post('silent detach + split trigger');
+                    // dock back WITHOUT a docked report — attach trigger suffices:
+                    s.mtp._tabsBySlot.get('tl').tabs.push(tabB);
+                    s.mtp._tabsBySlot.get('tl').activeTabId = 'B';
+                    s.fc.onTabAttached('tl', tabB);                                post('silent dock via attach');
+                    if (s.fc.deepTabId() !== 'B') throw new Error('glow must follow the silent dock');
+                    s.fc.releaseToShallow();                                       post('escape');
+                    // Close B — the world changes first, then the event (as MTP does).
+                    var st2 = s.mtp._tabsBySlot.get('tl');
+                    st2.tabs = st2.tabs.filter(function (t) { return t.id !== 'B'; });
+                    st2.activeTabId = 'A';
+                    delete s.mtp._contentByTab['B'];
+                    s.fc.onTabRemoved('tl', tabB);                                 post('close B');
+                    s.fc.enterDeep('tl');                                          post('enter tl again');
+                    return true;
+                })()""").asBoolean(), "the invariant postcondition holds after every event, including silent paths");
     }
 }
