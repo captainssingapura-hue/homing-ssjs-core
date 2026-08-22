@@ -60,21 +60,24 @@ class RelationGrid {
             selection: this._selection,
             onCopy: this._cbCopy ? function () { self._cbCopy(self.copySelection()); } : null
         });
+        this._bulk = new GridBulkOps({ cells: this._cells, maps: this._maps,
+            selection: this._selection, adapter: this._adapter, host: this });
         this._edit = new GridEditController({
             cells: this._cells, selection: this._selection, adapter: this._adapter,
-            keyboard: this._keyboard,
+            keyboard: this._keyboard, bulk: this._bulk,
             editable: opts.editable !== false,
             onAction: opts.onAction || null,
             onEditStarted: opts.onEditStarted || null,
             onEditCommitted: opts.onEditCommitted || null,
-            onReleaseRequested: opts.onReleaseRequested || null
+            onReleaseRequested: opts.onReleaseRequested || null,
+            // Ending an edit removes the focused editor input — native focus
+            // would silently fall to body (the RFC 0049 finding). Re-arm here.
+            onEditEnded: function () { self.focus(); }
         });
         // ONE keydown dispatch point: the edit controller owns the keyboard
         // while editing; idle keys flow through it to the shallow keyboard.
         this._keydown = function (e) { self._edit.routeKey(e); };
         this._layout.el().addEventListener("keydown", this._keydown);
-        this._bulk = new GridBulkOps({ cells: this._cells, maps: this._maps,
-            selection: this._selection, adapter: this._adapter, host: this });
 
         // View-command state — the views are always RECOMPUTED from this (the
         // RFC 0049 lesson applied to remaps: held intent, derived view):

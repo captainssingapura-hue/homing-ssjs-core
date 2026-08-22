@@ -50,7 +50,8 @@ class RelationGridBulkOpsTest {
                     },
                     setAttribute: function (k, v) { this.attrs[k] = String(v); },
                     getAttribute: function (k) { return (k in this.attrs) ? this.attrs[k] : null; },
-                    focus: function () {},
+                    focusCount: 0,
+                    focus: function () { this.focusCount++; },
                     get firstChild() { return this.children[0] || null; }
                 };
             }
@@ -88,6 +89,7 @@ class RelationGridBulkOpsTest {
                         data[pk][col] = v;
                         subs.forEach(function (fn) { fn(pk, col, v); });
                     },
+                    update: function (pk, col, v) { this.push(pk, col, v); },
                     deleteRows: function (pks) {
                         deleted.push(pks.join(','));
                         pks.forEach(function (pk) { delete data[pk]; });
@@ -210,6 +212,79 @@ class RelationGridBulkOpsTest {
                     f.key('c');                           // plain c: NOT a copy
                     return f.copies.length === 1 && f.copies[0] === 'German';
                 })()"""), "Ctrl+C hands the TSV to onCopy; plain c does nothing");
+    }
+
+    @Test
+    void endingAnEditRestoresGridFocus() {
+        assertTrue(evalBool("""
+                (() => {
+                    var f = fixture();
+                    var table = f.grid._layout.el();
+                    f.click(0, 0);
+                    f.key('Enter');                       // editing: the INPUT holds focus
+                    var before = table.focusCount;
+                    f.key('Enter');                       // commit removes the input
+                    var afterCommit = table.focusCount;
+                    f.key('Enter');
+                    f.key('Escape');                      // cancel too
+                    return afterCommit === before + 1
+                        && table.focusCount === before + 2
+                        && !f.grid.isEditing();
+                })()"""), "commit AND cancel re-arm native focus on the table (issue 1)");
+    }
+
+    @Test
+    void deleteKeyClearsTheSelectedCellsContents() {
+        assertTrue(evalBool("""
+                (() => {
+                    var f = fixture();
+                    f.click(0, 2);                        // mapo/calories
+                    f.click(1, 3, { shift: true });       // rect: 4 cells
+                    f.key('Delete');
+                    f.grid.flushNow();
+                    return f.data.mapo.calories === null && f.data.mapo.price === null
+                        && f.data.coq.calories === null && f.data.coq.price === null
+                        && f.data.mapo.ingredient === 'tofu'          // outside the rect: untouched
+                        && f.tdAt(0, 3).children[0].textContent === ''
+                        && JSON.parse(f.grid.cursor()) !== null;      // selection intact
+                })()"""), "issue 2a: Delete clears the selected cells' contents, Excel-style");
+    }
+
+    @Test
+    void bulkEditFansOutOverAHomogeneousSelection() {
+        assertTrue(evalBool("""
+                (() => {
+                    var f = fixture();
+                    f.click(0, 2);                        // mapo/calories (NumberCell)
+                    f.click(2, 3, { shift: true });       // 3x2 rect: all NumberCells
+                    f.key('Enter');                       // ONE editor, at the cursor
+                    var editing = f.grid.isEditing();
+                    f.tdAt(0, 2).children[0].children[0].value = '500';
+                    f.key('Enter');                       // commit fans out
+                    f.grid.flushNow();
+                    return editing
+                        && f.data.mapo.calories === 500 && f.data.mapo.price === 500
+                        && f.data.coq.calories === 500 && f.data.coq.price === 500
+                        && f.data.fish.calories === 500 && f.data.fish.price === 500
+                        && f.data.sauer.calories === 650;             // outside: untouched
+                })()"""), "issue 2b: a homogeneous selection commits through a single editor");
+    }
+
+    @Test
+    void heterogeneousSelectionEditsTheCursorCellOnly() {
+        assertTrue(evalBool("""
+                (() => {
+                    var f = fixture();
+                    f.click(0, 0);                        // mapo/ingredient (TextCell)
+                    f.click(1, 3, { shift: true });       // rect mixes TextCell + NumberCell
+                    f.key('Enter');
+                    f.tdAt(0, 0).children[0].children[0].value = 'doufu';
+                    f.key('Enter');
+                    f.grid.flushNow();
+                    return f.data.mapo.ingredient === 'doufu'
+                        && f.data.mapo.price === 9.5                  // NOT fanned out
+                        && f.data.coq.ingredient === 'chicken';
+                })()"""), "a mixed selection never bulk-applies — single-cell edit");
     }
 
     @Test
