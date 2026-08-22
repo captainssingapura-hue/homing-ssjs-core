@@ -15,9 +15,10 @@
 //       onViewChanged?      // ('rows' | 'columns' | 'base') — after re-place
 //   });
 //
-// Phase 2 surface: static render + refresh + the direct update path. View
-// commands (sort/filter/hide/reorder), selection, editing, and bulk ops land
-// in Phases 3–6 per the journey.
+// Phase 3 surface: static render + view commands (sortBy / filterRows /
+// clearFilter / hideColumn / showColumn / reorderColumn — all pure remaps
+// recomputed from held command state) + the rAF-batched direct update path.
+// Selection, editing, and bulk ops land in Phases 4–6 per the journey.
 // =============================================================================
 
 class RelationGrid {
@@ -34,13 +35,25 @@ class RelationGrid {
         };
 
         var self = this;
+        this._squelch = false;   // suppresses interim refreshes inside atomic commands
         this._maps = new GridViewMaps({
             pks:     this._adapter.pks(),
             columns: this._adapter.columns(),
-            onViewChanged: function (kind) { self._refresh(kind); }
+            onViewChanged: function (kind) { if (!self._squelch) self._refresh(kind); }
         });
         this._layout = new GridLayout({ container: opts.container });
         this._cells  = new GridCells({ branch: opts.branch });
+
+        // View-command state — the views are always RECOMPUTED from this (the
+        // RFC 0049 lesson applied to remaps: held intent, derived view).
+        this._sort        = null;         // { column, direction: 'asc'|'desc' }
+        this._filterPred  = null;         // (pk, get) → boolean
+        this._hidden      = new Set();    // hidden column names
+        this._columnOrder = null;         // full column order incl. hidden, or null = base
+
+        // rAF batch for the direct update path (last write per cell wins).
+        this._pendingUpdates = new Map(); // key → { pk, col, value }
+        this._flushScheduled = false;
 
         // The domain's push channel — identity-addressed, straight to the cell.
         this._onCellChanged = function (pk, col, newValue) { self.updateCell(pk, col, newValue); };
@@ -69,16 +82,123 @@ class RelationGrid {
                 this._cells.place(id.pk, id.column, this._layout.slotAt(i, j));
             }
         }
+        // Filter DETACHES, never destroys: whatever the view no longer shows
+        // leaves the tree with element, instance, and state intact.
+        this._cells.detachInvisible(function (pk, col) { return maps.locate(pk, col) !== null; });
         if (this._cbViewChanged) {
             try { this._cbViewChanged(kind); }
             catch (e) { console.error("[RelationGrid] onViewChanged threw:", e); }
         }
     }
 
+    // ── view commands: held intent → recomputed views (pure remaps) ─────────
+
+    /**
+     * Recompute the row view from base + filter + sort. Filter first (a
+     * subset), then a STABLE sort over the survivors — equal keys keep their
+     * base order, and the tiebreak is never direction-flipped.
+     */
+    _applyRowView() {
+        var self = this;
+        var pks = this._maps.basePks().slice();
+        if (this._filterPred) {
+            pks = pks.filter(function (pk) {
+                return !!self._filterPred(pk, function (col) { return self._adapter.get(pk, col); });
+            });
+        }
+        if (this._sort) {
+            var col = this._sort.column, desc = this._sort.direction === "desc";
+            var baseIdx = new Map();
+            pks.forEach(function (pk, i) { baseIdx.set(pk, i); });
+            pks.sort(function (a, b) {
+                var va = self._adapter.get(a, col), vb = self._adapter.get(b, col);
+                if (va === vb) return baseIdx.get(a) - baseIdx.get(b);
+                var c = (va < vb) ? -1 : 1;
+                return desc ? -c : c;
+            });
+        }
+        this._maps.setRowView(pks);
+        return this;
+    }
+
+    /** Recompute the column view: the held order (or base), minus hidden. */
+    _applyColumnView() {
+        var self = this;
+        var order = this._columnOrder || this._maps.baseColumns().slice();
+        this._maps.setColumnView(order.filter(function (c) { return !self._hidden.has(c); }));
+        return this;
+    }
+
+    /** Sort by a column ('asc' | 'desc'); sortBy(null) restores base order. */
+    sortBy(column, direction) {
+        this._sort = column ? { column: column, direction: direction || "asc" } : null;
+        return this._applyRowView();
+    }
+
+    /** Filter to rows where predicate(pk, get) is truthy — cells detach, never die. */
+    filterRows(predicate) {
+        if (typeof predicate !== "function") throw new Error("[RelationGrid] filterRows needs a function");
+        this._filterPred = predicate;
+        return this._applyRowView();
+    }
+
+    clearFilter() {
+        this._filterPred = null;
+        return this._applyRowView();
+    }
+
+    hideColumn(column) {
+        this._hidden.add(column);
+        return this._applyColumnView();
+    }
+
+    /** Un-hide: the column returns at its place in the HELD order. */
+    showColumn(column) {
+        this._hidden.delete(column);
+        return this._applyColumnView();
+    }
+
+    /** Move a column to toIndex within the full (hidden-inclusive) order. */
+    reorderColumn(column, toIndex) {
+        var order = (this._columnOrder || this._maps.baseColumns().slice()).slice();
+        var from = order.indexOf(column);
+        if (from < 0) throw new Error("[RelationGrid] unknown column: " + column);
+        order.splice(from, 1);
+        order.splice(toIndex, 0, column);
+        this._columnOrder = order;
+        return this._applyColumnView();
+    }
+
     // ── the direct update path (domain → cell; no layout, no lookup) ────────
 
+    /**
+     * Batched per animation frame, LAST WRITE PER CELL WINS — a hot feed (the
+     * popularity tick) collapses to one cell.update() per frame. Without a
+     * requestAnimationFrame (headless), the flush runs synchronously.
+     */
     updateCell(pk, col, newValue) {
-        return this._cells.update(pk, col, newValue);
+        if (!this._cells.get(pk, col)) return false;
+        this._pendingUpdates.set(pk + " " + col, { pk: pk, col: col, value: newValue });
+        this._scheduleFlush();
+        return true;
+    }
+
+    _scheduleFlush() {
+        if (this._flushScheduled) return;
+        this._flushScheduled = true;
+        var self = this;
+        var raf = (typeof requestAnimationFrame === "function")
+                ? requestAnimationFrame
+                : function (fn) { fn(); };
+        raf(function () { self._flushScheduled = false; self._flushUpdates(); });
+    }
+
+    _flushUpdates() {
+        var self = this;
+        var pending = this._pendingUpdates;
+        this._pendingUpdates = new Map();
+        pending.forEach(function (u) { self._cells.update(u.pk, u.col, u.value); });
+        return this;
     }
 
     // ── access for the phases above (commands land in Phase 3+) ─────────────
@@ -93,9 +213,16 @@ class RelationGrid {
         return this;
     }
 
-    /** A row entered the Relation (appended to base + view; cells mint on place). */
+    /**
+     * A row entered the Relation — ATOMICALLY obeying any held filter/sort:
+     * the interim state where the base append reaches the view unfiltered is
+     * squelched, so a row the filter rejects is never rendered (nor minted).
+     */
     addRow(pk) {
-        this._maps.addPk(pk);
+        this._squelch = true;
+        try { this._maps.addPk(pk); } finally { this._squelch = false; }
+        if (this._sort || this._filterPred) this._applyRowView();
+        else this._refresh("base");
         return this;
     }
 
