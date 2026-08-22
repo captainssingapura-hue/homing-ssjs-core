@@ -51,6 +51,12 @@ class RelationGrid {
             onColResize: function (j, px) {                  // staged commit lands here
                 var c = self._maps.columnAt(j);
                 if (c !== undefined && c !== -1 && c !== null) self.setColumnWidth(c, px);
+            },
+            onColReorder: function (fromJ, toJ) {            // drag-reorder (ext1 row 17)
+                var c = self._maps.columnAt(fromJ);
+                if (c === undefined || c === -1 || c === null) return;
+                if (self._edit && self._edit.defer(function () { self._vs.reorderVisible(c, toJ); })) return;
+                self._vs.reorderVisible(c, toJ);             // D7: defers while editing
             }
         });
         this._cells  = new GridCells({ branch: opts.branch });

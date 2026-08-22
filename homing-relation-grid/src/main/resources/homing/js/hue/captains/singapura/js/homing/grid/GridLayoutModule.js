@@ -39,6 +39,10 @@ var _HGR_STYLE_CSS = [
     // (sticky is a positioned ancestor, so absolute resolves against the th).
     ".hgr-resize-handle{position:absolute;top:0;right:0;width:8px;height:100%;",
     "  cursor:col-resize;}",
+    // ext1 drag-reorder: grab affordance on the header body; the dragged
+    // header dims while its drop position rides the guide line.
+    ".hgr-th{cursor:grab;}",
+    ".hgr-th.hgr-dragging{opacity:0.45;}",
     ".hgr-td{padding:0;border-bottom:1px solid var(--color-border);",
     "  border-right:1px solid color-mix(in srgb, var(--color-border) 50%, transparent);",
     "  vertical-align:middle;}",
@@ -85,11 +89,16 @@ class GridLayout {
         _hgrEnsureStyles();
         this._container = opts.container;
         this._onCellClick = opts.onCellClick || null;   // (i, j, {shift, ctrl})
-        this._onColResize = opts.onColResize || null;   // (j, px) — staged commit
         this._painted = { cursorTd: null, selTds: [] }; // paint memo (diff target)
         this._table = document.createElement("table");
         this._table.className = "hgr-table";
         this._table.setAttribute("tabindex", "0");      // the keyboard host
+        // the header gestures live in GridHeaderDrag (split by the ratchet)
+        this._drag = (opts.onColResize || opts.onColReorder)
+                   ? new GridHeaderDrag({ table: this._table,
+                                          onColResize: opts.onColResize || null,
+                                          onColReorder: opts.onColReorder || null })
+                   : null;
         this._colgroup = document.createElement("colgroup");
         this._table.appendChild(this._colgroup);
         this._thead = document.createElement("thead");
@@ -119,7 +128,7 @@ class GridLayout {
             var th = document.createElement("th");
             th.className = "hgr-th";
             th.textContent = headers[h];
-            this._wireResize(th, h);
+            if (this._drag) this._drag.wire(th, h);
             this._headerRow.appendChild(th);
         }
 
@@ -201,55 +210,6 @@ class GridLayout {
         else _hgrRemoveClass(this._table, "hgr-fixed");
         return this;
     }
-
-    /** ext2 — the resize handle: a real element on the header's right edge
-     *  (hover shows col-resize; mousedown arms the STAGED drag — nothing
-     *  moves until release, D7 structural). */
-    _wireResize(th, j) {
-        if (!this._onColResize) return;
-        var self = this;
-        var handle = document.createElement("span");
-        handle.className = "hgr-resize-handle";
-        th.appendChild(handle);
-        handle.addEventListener("mousedown", function (e) {
-            var rect = th.getBoundingClientRect ? th.getBoundingClientRect() : null;
-            if (!rect || e.clientX == null) return;
-            if (e.preventDefault) e.preventDefault();
-            if (e.stopPropagation) e.stopPropagation();
-            self._startColDrag(j, rect.right - rect.left, e.clientX);
-        });
-    }
-
-    _startColDrag(j, startW, startX) {
-        var self = this, lastX = startX, guide = null;
-        var rect = this._table.getBoundingClientRect ? this._table.getBoundingClientRect() : null;
-        if (document.body && rect) {
-            guide = document.createElement("div");
-            guide.className = "hgr-resize-guide";
-            guide.style.setProperty("--hgr-guide-top", rect.top + "px");
-            guide.style.setProperty("--hgr-guide-h", rect.height + "px");
-            guide.style.setProperty("--hgr-guide-x", startX + "px");
-            document.body.appendChild(guide);
-        }
-        function onMove(e) {
-            lastX = e.clientX;
-            if (guide) guide.style.setProperty("--hgr-guide-x", lastX + "px");
-        }
-        function teardown() {
-            document.removeEventListener("mousemove", onMove);
-            document.removeEventListener("mouseup", onUp);
-            document.removeEventListener("keydown", onKey, true);
-            if (guide && guide.parentNode) guide.parentNode.removeChild(guide);
-        }
-        function onUp() { teardown(); self._onColResize(j, startW + (lastX - startX)); }
-        function onKey(e) {   // Escape ABANDONS — nothing was applied yet
-            if (e.key === "Escape") { teardown(); if (e.stopPropagation) e.stopPropagation(); }
-        }
-        document.addEventListener("mousemove", onMove);
-        document.addEventListener("mouseup", onUp);
-        document.addEventListener("keydown", onKey, true);
-    }
-
     /** The focusable table element — the keyboard attaches here. */
     el() { return this._table; }
 

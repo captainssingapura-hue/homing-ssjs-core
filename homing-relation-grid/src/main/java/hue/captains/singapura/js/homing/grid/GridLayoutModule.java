@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.core.DomModule;
 import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
+import hue.captains.singapura.js.homing.core.ModuleImports;
 
 import java.util.List;
 
@@ -28,7 +29,11 @@ public record GridLayoutModule() implements DomModule<GridLayoutModule> {
 
     @Override
     public ImportsFor<GridLayoutModule> imports() {
-        return ImportsFor.noImports();
+        return ImportsFor.<GridLayoutModule>builder()
+                .add(new ModuleImports<>(
+                        List.of(new GridHeaderDragModule.GridHeaderDrag()),
+                        GridHeaderDragModule.INSTANCE))
+                .build();
     }
 
     @Override

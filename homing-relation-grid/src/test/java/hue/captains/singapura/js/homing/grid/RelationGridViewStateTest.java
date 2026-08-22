@@ -146,7 +146,7 @@ class RelationGridViewStateTest {
                 .option("js.ecmascript-version", "2022").build();
         eval(DOM_STUB);
         for (String module : new String[]{
-                "GridViewMapsModule.js", "GridLayoutModule.js", "GridCellsModule.js",
+                "GridViewMapsModule.js", "GridHeaderDragModule.js", "GridLayoutModule.js", "GridCellsModule.js",
                 "GridCellTypesModule.js", "StockCellsModule.js", "GridSelectionModule.js",
                 "GridKeyboardModule.js", "GridEditControllerModule.js", "GridBulkOpsModule.js",
                 "GridBulkEditSessionModule.js", "GridViewStateModule.js", "RelationGridModule.js"}) {
@@ -298,6 +298,41 @@ class RelationGridViewStateTest {
                     return grew && back
                         && JSON.parse(f.grid.cursor()).column === 'style';   // cursor DID NOT move
                 })()"""), "Alt+arrows are the pointer-free resize path, cursor unmoved");
+    }
+
+    @Test
+    void dragReorderCommitsOnReleaseAndRespectsThresholdAndEscape() {
+        assertTrue(evalBool("""
+                (() => {
+                    var f = fixture(), g = f.grid;
+                    for (var k = 0; k < 4; k++) {                 // th rects: 100px lanes
+                        f.thAt(k)._rl = k * 100; f.thAt(k)._rr = (k + 1) * 100;
+                    }
+                    var th0 = f.thAt(0);                          // ingredient
+                    th0.fire('mousedown', { clientX: 50 });
+                    document.fire('mousemove', { clientX: 260 }); // past calories' midpoint
+                    var dimmed = th0.className.indexOf('hgr-dragging') >= 0;
+                    document.fire('mouseup', {});                 // insert before j=3 (price)
+                    var reordered = f.headerTexts().join(',') === 'style,calories,ingredient,price'
+                        && th0.className.indexOf('hgr-dragging') < 0;
+                    // widths ride identity through a DRAG reorder too
+                    g.setColumnWidth('ingredient', 150);
+                    var w = f.colWidth(2) === '150px';
+                    // threshold: a 3px wiggle is a press, not a drag
+                    var th = f.thAt(0);
+                    for (var k2 = 0; k2 < 4; k2++) { f.thAt(k2)._rl = k2 * 100; f.thAt(k2)._rr = (k2 + 1) * 100; }
+                    th.fire('mousedown', { clientX: 50 });
+                    document.fire('mousemove', { clientX: 52 });
+                    document.fire('mouseup', {});
+                    var pressed = f.headerTexts().join(',') === 'style,calories,ingredient,price';
+                    // Escape abandons a real drag
+                    th.fire('mousedown', { clientX: 50 });
+                    document.fire('mousemove', { clientX: 260 });
+                    document.fire('keydown', { key: 'Escape' });
+                    document.fire('mouseup', {});
+                    return dimmed && reordered && w && pressed
+                        && f.headerTexts().join(',') === 'style,calories,ingredient,price';
+                })()"""), "drag reorders on release; wiggles and Escapes change nothing");
     }
 
     // ── helpers ──────────────────────────────────────────────────────────

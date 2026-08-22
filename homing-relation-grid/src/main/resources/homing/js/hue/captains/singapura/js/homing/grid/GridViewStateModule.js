@@ -129,6 +129,27 @@ class GridViewState {
         return this.applyColumnView();
     }
 
+    /**
+     * ext1 drag-reorder's seam: move a column so it lands BEFORE the column
+     * currently at VISIBLE index t (t == cols() → after the last visible).
+     * The held order includes hidden columns, so the visible index is
+     * translated through an anchor column — hidden neighbours keep their
+     * places relative to the anchor.
+     */
+    reorderVisible(column, visIndex) {
+        var m = this._maps;
+        var anchor = (visIndex < m.cols()) ? m.columnAt(visIndex) : null;
+        if (anchor === column) return this;               // dropped onto itself
+        var order = (this._order || m.baseColumns().slice()).slice();
+        var from = order.indexOf(column);
+        if (from < 0) return this;
+        order.splice(from, 1);
+        var at = (anchor === null) ? order.length : order.indexOf(anchor);
+        order.splice(at, 0, column);
+        this._order = order;
+        return this.applyColumnView();
+    }
+
     // ── widths (identity-keyed; the layout consumes the positional form) ────
 
     setWidth(column, px) {
