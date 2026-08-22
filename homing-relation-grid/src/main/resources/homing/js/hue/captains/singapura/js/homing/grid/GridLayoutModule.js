@@ -60,7 +60,16 @@ var _HGR_STYLE_CSS = [
     ".hgr-table.hgr-fixed{table-layout:fixed;}",
     ".hgr-table col{width:var(--hgr-col-w,auto);}",
     ".hgr-resize-guide{position:fixed;top:var(--hgr-guide-top);height:var(--hgr-guide-h);",
+    "  pointer-events:none;",
     "  left:var(--hgr-guide-x);width:2px;background:var(--color-accent);z-index:99;}",
+    // ext1 drag-reorder: the LANDING SLOT as a band the dragged column's
+    // width — both edges drawn, so the destination reads the same whether
+    // the drag came from the left or the right.
+    ".hgr-drop-band{position:fixed;top:var(--hgr-guide-top);height:var(--hgr-guide-h);",
+    "  left:var(--hgr-guide-x);width:var(--hgr-band-w);box-sizing:border-box;",
+    "  border-left:2px solid var(--color-accent);border-right:2px solid var(--color-accent);",
+    "  background:color-mix(in srgb, var(--color-accent) 12%, transparent);",
+    "  pointer-events:none;z-index:99;}",
     ""
 ].join("\n");
 

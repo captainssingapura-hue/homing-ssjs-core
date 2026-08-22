@@ -8,8 +8,10 @@
 //     cell tree is touched mid-gesture.
 //   · REORDER (ext1 row 17): mousedown on the header BODY (the handle stops
 //     propagation, so the gestures cannot collide), a 4px threshold separates
-//     a drag from a stray press, the dragged header dims, the drop boundary
-//     rides the same guide line, commit on release, Escape abandons.
+//     a drag from a stray press, the dragged header dims, and the LANDING
+//     SLOT shows as a band the dragged column's width — both edges drawn,
+//     so the destination reads the same from either direction. Commit on
+//     release, Escape abandons.
 //
 // Positional only — emits (j, …); the facade translates to identity.
 //
@@ -117,6 +119,11 @@ class GridHeaderDrag {
                 moved = true;
                 _hgdAddClass(th, "hgr-dragging");
                 guide = self._makeGuide(e.clientX);
+                if (guide) {                       // the LANDING SLOT, not a line:
+                    guide.className = "hgr-drop-band";   // both edges drawn, the
+                    guide.style.setProperty("--hgr-band-w",   // dragged column wide
+                        (rects[j].right - rects[j].left) + "px");
+                }
             }
             target = computeTarget(e.clientX);
             if (guide) guide.style.setProperty("--hgr-guide-x", boundaryX(target) + "px");
