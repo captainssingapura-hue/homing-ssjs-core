@@ -21,9 +21,19 @@ var _HGR_STYLE_CSS = [
     ".hgr-table{border-collapse:collapse;width:100%;",
     "  background:var(--color-surface);color:var(--color-text-primary);",
     "  font:13px sans-serif;}",
+    // Header borders as INSET BOX-SHADOW, not border: with border-collapse,
+    // Chromium drops cell borders on position:sticky headers while scrolling —
+    // shadows ride the cell, so the separators stay visible.
     ".hgr-th{position:sticky;top:0;text-align:left;padding:6px 10px;",
     "  background:var(--color-surface-raised);color:var(--color-text-muted);",
-    "  border-bottom:2px solid var(--color-border);white-space:nowrap;}",
+    "  white-space:nowrap;",
+    "  box-shadow:inset -1px 0 0 var(--color-border),",
+    "             inset 0 -2px 0 var(--color-border);}",
+    // ext2 — the resize HANDLE: a real element on the header's right edge, so
+    // the pointer shows col-resize on hover and the drag has a reliable target
+    // (sticky is a positioned ancestor, so absolute resolves against the th).
+    ".hgr-resize-handle{position:absolute;top:0;right:0;width:8px;height:100%;",
+    "  cursor:col-resize;}",
     ".hgr-td{padding:0;border-bottom:1px solid var(--color-border);",
     "  border-right:1px solid color-mix(in srgb, var(--color-border) 50%, transparent);",
     "  vertical-align:middle;}",
@@ -187,16 +197,20 @@ class GridLayout {
         return this;
     }
 
-    /** ext2 — the header-edge hot zone. STAGED: nothing moves during the
-     *  drag; a guide line tracks the pointer and the width commits once, on
-     *  release (D7 is structural — no cell is touched mid-gesture). */
+    /** ext2 — the resize handle: a real element on the header's right edge
+     *  (hover shows col-resize; mousedown arms the STAGED drag — nothing
+     *  moves until release, D7 structural). */
     _wireResize(th, j) {
         if (!this._onColResize) return;
         var self = this;
-        th.addEventListener("mousedown", function (e) {
+        var handle = document.createElement("span");
+        handle.className = "hgr-resize-handle";
+        th.appendChild(handle);
+        handle.addEventListener("mousedown", function (e) {
             var rect = th.getBoundingClientRect ? th.getBoundingClientRect() : null;
-            if (!rect || e.clientX == null || Math.abs(e.clientX - rect.right) > 6) return;
+            if (!rect || e.clientX == null) return;
             if (e.preventDefault) e.preventDefault();
+            if (e.stopPropagation) e.stopPropagation();
             self._startColDrag(j, rect.right - rect.left, e.clientX);
         });
     }

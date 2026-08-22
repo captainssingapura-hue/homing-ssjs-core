@@ -265,21 +265,23 @@ class RelationGridViewStateTest {
                 (() => {
                     var f = fixture(), g = f.grid;
                     var th = f.thAt(3);                          // price header
-                    th._rl = 300; th._rr = 400;                  // rect: width 100, edge at 400
-                    th.fire('mousedown', { clientX: 398, preventDefault: function () {} });
+                    th._rl = 300; th._rr = 400;                  // rect: width 100
+                    var handle = th.children[th.children.length - 1];   // the resize handle
+                    var isHandle = handle.className === 'hgr-resize-handle';
+                    handle.fire('mousedown', { clientX: 398, preventDefault: function () {} });
                     document.fire('mousemove', { clientX: 448 });
                     document.fire('mouseup', {});                // commit: 100 + 50
                     var committed = f.colWidth(3) === '150px';
-                    th.fire('mousedown', { clientX: 399, preventDefault: function () {} });
+                    handle.fire('mousedown', { clientX: 399, preventDefault: function () {} });
                     document.fire('mousemove', { clientX: 500 });
                     document.fire('keydown', { key: 'Escape' }); // ABANDON
                     document.fire('mouseup', {});                // stale mouseup: listeners gone
                     var abandoned = f.colWidth(3) === '150px';
                     th.fire('mousedown', { clientX: 350, preventDefault: function () {} });
                     document.fire('mouseup', {});
-                    return committed && abandoned
-                        && f.colWidth(3) === '150px';            // mid-header press: no drag at all
-                })()"""), "staged: release commits once; Escape abandons; only the edge arms");
+                    return isHandle && committed && abandoned
+                        && f.colWidth(3) === '150px';            // the th itself arms nothing
+                })()"""), "staged: release commits once; Escape abandons; only the handle arms");
     }
 
     @Test
