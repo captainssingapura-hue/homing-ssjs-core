@@ -15,12 +15,12 @@
 //       onViewChanged?      // ('rows' | 'columns' | 'base') — after re-place
 //   });
 //
-// Phase 4 surface: static render + view commands (pure remaps recomputed from
-// held command state) + the rAF-batched direct update path + selection
-// (GridSelection intent/resolve/reconcile in identity space, GridKeyboard on
-// the focusable table, click routing at the position→identity seam; extra
-// callback opts: onCursorMoved(pk, column), onSelectionChanged(rangeList)).
-// Editing and bulk ops land in Phases 5–6 per the journey.
+// Phase 5 surface: render + view commands (D7: deferred while an edit is
+// active) + the rAF-batched direct path + selection + deep edit. Options:
+// editable (default true; false turns Enter/keys into onAction dispatch),
+// onAction(key, pk, column), onEditStarted / onEditCommitted(pk, column, v),
+// onReleaseRequested (idle Escape — RFC 0049 citizenship), onCursorMoved,
+// onSelectionChanged, onViewChanged. Bulk ops land in Phase 6.
 // =============================================================================
 
 class RelationGrid {
@@ -55,7 +55,19 @@ class RelationGrid {
             onSelectionChanged: opts.onSelectionChanged || null
         });
         this._keyboard = new GridKeyboard({ selection: this._selection });
-        this._keyboard.attach(this._layout.el());
+        this._edit = new GridEditController({
+            cells: this._cells, selection: this._selection, adapter: this._adapter,
+            keyboard: this._keyboard,
+            editable: opts.editable !== false,
+            onAction: opts.onAction || null,
+            onEditStarted: opts.onEditStarted || null,
+            onEditCommitted: opts.onEditCommitted || null,
+            onReleaseRequested: opts.onReleaseRequested || null
+        });
+        // ONE keydown dispatch point: the edit controller owns the keyboard
+        // while editing; idle keys flow through it to the shallow keyboard.
+        this._keydown = function (e) { self._edit.routeKey(e); };
+        this._layout.el().addEventListener("keydown", this._keydown);
 
         // View-command state — the views are always RECOMPUTED from this (the
         // RFC 0049 lesson applied to remaps: held intent, derived view).
@@ -146,6 +158,7 @@ class RelationGrid {
 
     /** Sort by a column ('asc' | 'desc'); sortBy(null) restores base order. */
     sortBy(column, direction) {
+        if (this._edit && this._edit.defer(() => this.sortBy(column, direction))) return this;   // D7
         this._sort = column ? { column: column, direction: direction || "asc" } : null;
         return this._applyRowView();
     }
@@ -153,28 +166,33 @@ class RelationGrid {
     /** Filter to rows where predicate(pk, get) is truthy — cells detach, never die. */
     filterRows(predicate) {
         if (typeof predicate !== "function") throw new Error("[RelationGrid] filterRows needs a function");
+        if (this._edit && this._edit.defer(() => this.filterRows(predicate))) return this;       // D7
         this._filterPred = predicate;
         return this._applyRowView();
     }
 
     clearFilter() {
+        if (this._edit && this._edit.defer(() => this.clearFilter())) return this;               // D7
         this._filterPred = null;
         return this._applyRowView();
     }
 
     hideColumn(column) {
+        if (this._edit && this._edit.defer(() => this.hideColumn(column))) return this;          // D7
         this._hidden.add(column);
         return this._applyColumnView();
     }
 
     /** Un-hide: the column returns at its place in the HELD order. */
     showColumn(column) {
+        if (this._edit && this._edit.defer(() => this.showColumn(column))) return this;          // D7
         this._hidden.delete(column);
         return this._applyColumnView();
     }
 
     /** Move a column to toIndex within the full (hidden-inclusive) order. */
     reorderColumn(column, toIndex) {
+        if (this._edit && this._edit.defer(() => this.reorderColumn(column, toIndex))) return this;
         var order = (this._columnOrder || this._maps.baseColumns().slice()).slice();
         var from = order.indexOf(column);
         if (from < 0) throw new Error("[RelationGrid] unknown column: " + column);
@@ -231,6 +249,11 @@ class RelationGrid {
     _onCellClick(i, j, mods) {
         var id = this._maps.resolve(i, j);
         if (!id || !this._selection) return;
+        if (this._edit.isEditing()) {
+            var ed = this._edit.editingAt();
+            if (ed && ed.pk === id.pk && ed.col === id.column) return;   // the editor's own cell
+            this._edit.commit();                                         // clicking away commits
+        }
         if (mods && mods.ctrl)       this._selection.addRange(id.pk, id.column);
         else if (mods && mods.shift) this._selection.extendTo(id.pk, id.column);
         else                         this._selection.setCursor(id.pk, id.column);
@@ -239,6 +262,17 @@ class RelationGrid {
     /** Programmatic shallow cursor (the contract's selectCell). */
     selectCell(pk, column) {
         this._selection.setCursor(pk, column);
+        return this;
+    }
+
+    /** Deep mode: begin editing at the cursor (editable grids only). */
+    beginEditAtCursor() { return this._edit.beginEditAtCursor(); }
+    isEditing()         { return this._edit.isEditing(); }
+
+    /** Citizenship: the default activation target (RFC 0049 hands focus here). */
+    focus() {
+        var el = this._layout.el();
+        if (el.focus) el.focus();
         return this;
     }
 
@@ -277,7 +311,8 @@ class RelationGrid {
         if (typeof this._adapter.unsubscribe === "function") {
             try { this._adapter.unsubscribe(this._onCellChanged); } catch (e) {}
         }
-        this._keyboard.detach();
+        if (this._edit.isEditing()) this._edit.cancel();
+        this._layout.el().removeEventListener("keydown", this._keydown);
         this._cells.destroy();
         this._layout.destroy();
     }

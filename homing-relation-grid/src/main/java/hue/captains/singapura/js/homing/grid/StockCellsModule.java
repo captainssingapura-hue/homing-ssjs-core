@@ -23,6 +23,9 @@ public record StockCellsModule() implements DomModule<StockCellsModule> {
     /** {@code NumberCell} — numeric cell with optional display formatter. */
     public record NumberCell() implements Exportable._Constant<StockCellsModule> {}
 
+    /** {@code EnumCell} — closed value set; the editor is a select over it. */
+    public record EnumCell() implements Exportable._Constant<StockCellsModule> {}
+
     public static final StockCellsModule INSTANCE = new StockCellsModule();
 
     @Override
@@ -32,6 +35,6 @@ public record StockCellsModule() implements DomModule<StockCellsModule> {
 
     @Override
     public ExportsOf<StockCellsModule> exports() {
-        return new ExportsOf<>(INSTANCE, List.of(new TextCell(), new NumberCell()));
+        return new ExportsOf<>(INSTANCE, List.of(new TextCell(), new NumberCell(), new EnumCell()));
     }
 }

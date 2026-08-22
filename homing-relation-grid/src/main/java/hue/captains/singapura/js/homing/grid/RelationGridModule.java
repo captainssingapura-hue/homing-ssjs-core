@@ -42,7 +42,8 @@ public record RelationGridModule() implements DomModule<RelationGridModule> {
                         GridCellsModule.INSTANCE))
                 .add(new ModuleImports<>(
                         List.of(new StockCellsModule.TextCell(),
-                                new StockCellsModule.NumberCell()),
+                                new StockCellsModule.NumberCell(),
+                                new StockCellsModule.EnumCell()),
                         StockCellsModule.INSTANCE))
                 .add(new ModuleImports<>(
                         List.of(new GridSelectionModule.GridSelection()),
@@ -50,6 +51,9 @@ public record RelationGridModule() implements DomModule<RelationGridModule> {
                 .add(new ModuleImports<>(
                         List.of(new GridKeyboardModule.GridKeyboard()),
                         GridKeyboardModule.INSTANCE))
+                .add(new ModuleImports<>(
+                        List.of(new GridEditControllerModule.GridEditController()),
+                        GridEditControllerModule.INSTANCE))
                 .build();
     }
 
