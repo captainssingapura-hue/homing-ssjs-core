@@ -31,6 +31,9 @@ var _HGR_STYLE_CSS = [
     // direction (the td is the CellSlot host — the FocusManager-wrapper pattern).
     ".hgr-td.hgr-sel{background:color-mix(in srgb, var(--color-accent) 18%, transparent);}",
     ".hgr-td.hgr-cursor{outline:2px solid var(--color-accent);outline-offset:-2px;}",
+    // Invalid bulk-edit buffer: dashed = the error affordance (no danger token
+    // exists in the theme surface yet; emphasis carries it until one does).
+    ".hgr-td.hgr-invalid{outline:2px dashed var(--color-accent-emphasis);outline-offset:-2px;}",
     ".hgr-table:focus{outline:none;}",
     ""
 ].join("\n");
@@ -141,6 +144,19 @@ class GridLayout {
                      ? this.slotAt(resolved.cursorIJ.i, resolved.cursorIJ.j) : null;
         if (cursorTd) _hgrAddClass(cursorTd, "hgr-cursor");
         this._painted = { cursorTd: cursorTd, selTds: selTds };
+        return this;
+    }
+
+    /** Error paint for the virtual session: hgr-invalid on the given view
+     *  cells, diffed against the previous set; null clears. */
+    paintInvalid(cellsIJ) {
+        var self = this;
+        (this._invalidTds || []).forEach(function (td) { _hgrRemoveClass(td, "hgr-invalid"); });
+        this._invalidTds = [];
+        (cellsIJ || []).forEach(function (c) {
+            var td = self.slotAt(c.i, c.j);
+            if (td) { _hgrAddClass(td, "hgr-invalid"); self._invalidTds.push(td); }
+        });
         return this;
     }
 

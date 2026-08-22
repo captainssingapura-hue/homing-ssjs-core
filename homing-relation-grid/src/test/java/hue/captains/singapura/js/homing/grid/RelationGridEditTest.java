@@ -141,8 +141,8 @@ class RelationGridEditTest {
         eval(DOM_STUB);
         for (String module : new String[]{
                 "GridViewMapsModule.js", "GridLayoutModule.js", "GridCellsModule.js",
-                "StockCellsModule.js", "GridSelectionModule.js", "GridKeyboardModule.js",
-                "GridEditControllerModule.js", "GridBulkOpsModule.js", "RelationGridModule.js"}) {
+                "GridCellTypesModule.js", "StockCellsModule.js", "GridSelectionModule.js", "GridKeyboardModule.js",
+                "GridEditControllerModule.js", "GridBulkOpsModule.js", "GridBulkEditSessionModule.js", "RelationGridModule.js"}) {
             eval(readJs("/homing/js/hue/captains/singapura/js/homing/grid/" + module));
         }
         eval(FIXTURE);
@@ -249,21 +249,21 @@ class RelationGridEditTest {
     }
 
     @Test
-    void actionGridDispatchesInsteadOfEditingAndIdleEscapeReleases() {
+    void editableFalseIsHardReadOnlyAndIdleEscapeReleases() {
         assertTrue(evalBool("""
                 (() => {
                     var f = fixture({ editable: false });
-                    f.key('Enter');                               // NOT an edit — an ACTION
-                    f.key('f');                                   // a letter action
-                    var noEditor = !f.grid.isEditing() && f.cellDiv(0, 0).children.length === 0;
+                    f.key('Enter');                               // no classic editor
+                    f.key('f');                                   // no virtual session either
+                    var noEditor = !f.grid.isEditing() && f.cellDiv(0, 0).children.length === 0
+                        && f.updates.length === 0;
                     f.key('Escape');                              // idle Escape -> release request
                     var editable = fixture();
                     editable.key('Escape');                       // same on an editable grid, idle
                     return noEditor
-                        && f.events.actions.join(',') === 'Enter@mapo:ingredient,f@mapo:ingredient'
                         && f.events.releases === 1
                         && editable.events.releases === 1;
-                })()"""), "editing-disabled grids dispatch onAction; idle Escape asks the host to release");
+                })()"""), "editable:false blocks BOTH edit paths; idle Escape asks the host to release");
     }
 
     @Test

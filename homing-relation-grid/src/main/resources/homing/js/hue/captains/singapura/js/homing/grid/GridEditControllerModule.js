@@ -15,11 +15,12 @@
 //     this widget). Ending an edit fires onEditEnded so the host can restore
 //     native focus to the grid (the editor input WAS the focus — removing it
 //     silently drops focus to body otherwise);
-//   · the Excel BULK EDIT: when the selection at beginEdit is multi-cell and
-//     homogeneous (every cell the same editor type), the committed value
-//     fans out to every selected cell; heterogeneous → single-cell edit;
-//   · with editing DISABLED, unconsumed action keys dispatch onAction(key,
-//     pk, column) and return to shallow — the Minesweeper variant.
+//   · BULK value replacement is the VIRTUAL SESSION's job (GridBulkEditSession,
+//     routed first): an EffectiveType's opening char — or Enter over a
+//     multi-cell homogeneous selection — opens it; while active it owns the
+//     keyboard. Instantaneous types (mine tiles) commit on the opening
+//     keystroke, which is how action-style grids work with the SAME
+//     primitives — no onAction side-channel, the adapter is the move seam.
 //
 // D7: view ops arriving during an edit DEFER (the re-sort rule) — they queue
 // through defer() and drain on commit/cancel, so the editor is never torn
@@ -39,17 +40,19 @@ class GridEditController {
         this._keyboard  = opts.keyboard || null;
         this._editable  = opts.editable !== false;
         this._bulk      = opts.bulk || null;
-        this._cbAction    = opts.onAction || null;
+        this._session   = opts.session || null;         // the virtual bulk-edit session
         this._cbStarted   = opts.onEditStarted || null;
         this._cbCommitted = opts.onEditCommitted || null;
         this._cbRelease   = opts.onReleaseRequested || null;
         this._cbEnded     = opts.onEditEnded || null;   // fired after commit/cancel
         this._editing  = null;    // { pk, col } | null — at most ONE (deep ⇒ cell)
-        this._bulkTargets = null; // homogeneous selection captured at beginEdit
         this._deferred = [];      // view ops queued during an edit (D7)
     }
 
-    isEditing() { return this._editing !== null; }
+    /** An editing SESSION is live: a classic cell edit OR a virtual bulk one. */
+    isEditing() {
+        return this._editing !== null || (this._session !== null && this._session.isActive());
+    }
     editingAt() { return this._editing ? { pk: this._editing.pk, col: this._editing.col } : null; }
 
     beginEditAtCursor() {
@@ -64,46 +67,19 @@ class GridEditController {
         if (!entry || typeof entry.cell.beginEdit !== "function") return false;
         entry.cell.beginEdit(this._adapter.get(pk, col));   // adapter = source of truth
         this._editing = { pk: pk, col: col };
-        this._bulkTargets = this._homogeneousSelection(entry);
         if (this._cbStarted) this._cbStarted(pk, col);
         return true;
     }
 
-    /**
-     * The Excel bulk-edit precondition: the multi-cell selection captured at
-     * beginEdit, but ONLY when every selected cell shares the edited cell's
-     * editor type (same constructor). Heterogeneous → null → single-cell edit.
-     */
-    _homogeneousSelection(baseEntry) {
-        if (!this._bulk) return null;
-        var ids = this._bulk.selectedCellIds();
-        if (ids.length < 2) return null;
-        var proto = baseEntry.cell.constructor, cells = this._cells;
-        for (var k = 0; k < ids.length; k++) {
-            var e = cells.get(ids[k].pk, ids[k].column);
-            if (!e || e.cell.constructor !== proto) return null;
-        }
-        return ids;
-    }
-
-    /**
-     * Commit: the cell yields its edited value; the ADAPTER gets the write —
-     * fanned out to every captured homogeneous target (the Excel bulk edit).
-     */
+    /** Commit: the cell yields its edited value; the ADAPTER gets the write.
+     *  (Bulk value replacement is the virtual session's job, not this one's.) */
     commit() {
         var ed = this._editing;
         if (!ed) return this;
         var entry = this._cells.get(ed.pk, ed.col);
-        var targets = this._bulkTargets;
-        this._editing = null; this._bulkTargets = null;
+        this._editing = null;
         var v = entry ? entry.cell.commitEdit() : undefined;
-        if (entry && typeof this._adapter.update === "function") {
-            var self = this;
-            this._adapter.update(ed.pk, ed.col, v);
-            if (targets) targets.forEach(function (t) {
-                if (t.pk !== ed.pk || t.column !== ed.col) self._adapter.update(t.pk, t.column, v);
-            });
-        }
+        if (entry && typeof this._adapter.update === "function") this._adapter.update(ed.pk, ed.col, v);
         if (this._cbCommitted) this._cbCommitted(ed.pk, ed.col, v);
         this._drain();
         if (this._cbEnded) this._cbEnded();     // the host restores grid focus
@@ -114,7 +90,7 @@ class GridEditController {
         var ed = this._editing;
         if (!ed) return this;
         var entry = this._cells.get(ed.pk, ed.col);
-        this._editing = null; this._bulkTargets = null;
+        this._editing = null;
         if (entry) entry.cell.cancelEdit();
         this._drain();
         if (this._cbEnded) this._cbEnded();
@@ -123,9 +99,16 @@ class GridEditController {
 
     /** D7 guard: true = the op was queued for after the edit; run nothing now. */
     defer(thunk) {
-        if (!this._editing) return false;
+        if (!this.isEditing()) return false;
         this._deferred.push(thunk);
         return true;
+    }
+
+    /** The session settles (commit/cancel): drain D7 + re-arm the host. */
+    onSessionSettled() {
+        this._drain();
+        if (this._cbEnded) this._cbEnded();
+        return this;
     }
 
     _drain() {
@@ -136,12 +119,22 @@ class GridEditController {
 
     /** The single keydown dispatch point. Returns true when the key is owned. */
     routeKey(e) {
+        if (this._session && this._session.isActive()) return this._session.handleKey(e);
         if (this._editing) {
             if (e.key === "Enter")  { if (e.preventDefault) e.preventDefault(); this.commit(); return true; }
             if (e.key === "Escape") { if (e.preventDefault) e.preventDefault(); this.cancel(); return true; }
             return true;    // owned: shallow keys are blocked; the editor input keeps the event
         }
         if (this._keyboard && this._keyboard.handleKey(e)) return true;
+        // The virtual session sees opening keys FIRST: an EffectiveType's
+        // opening char, or Enter over a multi-cell homogeneous selection
+        // (single-cell Enter falls through to the classic cell editor below).
+        // editable:false is a HARD read-only switch — it blocks this too.
+        if (this._editable && !e.ctrlKey && !e.metaKey
+                && this._session && this._session.tryOpen(e.key)) {
+            if (e.preventDefault) e.preventDefault();
+            return true;
+        }
         if ((e.key === "Enter" || e.key === "F2") && this._editable) {
             if (e.preventDefault) e.preventDefault();
             this.beginEditAtCursor();
@@ -155,15 +148,6 @@ class GridEditController {
         if (e.key === "Escape") {
             if (this._cbRelease) this._cbRelease();     // idle Escape releases the pane
             return true;
-        }
-        if (!this._editable && this._cbAction && !e.ctrlKey && !e.metaKey
-                && (e.key === "Enter" || e.key === " " || e.key.length === 1)) {
-            var cur = this._selection.cursorId();
-            if (cur) {
-                if (e.preventDefault) e.preventDefault();
-                this._cbAction(e.key, cur.pk, cur.column);   // fire and RETURN TO SHALLOW
-                return true;
-            }
         }
         return false;
     }

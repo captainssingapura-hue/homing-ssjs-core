@@ -15,13 +15,15 @@
 //       onViewChanged?      // ('rows' | 'columns' | 'base') — after re-place
 //   });
 //
-// Phase 6 surface: render + view commands (D7: deferred while editing) + the
-// rAF-batched direct path + selection + deep edit + bulk ops (copySelection
-// as raw-value TSV over the active rect, deleteSelectedRows by PK set through
-// the adapter; Ctrl+C fires onCopy(tsv) when provided). Options: editable
-// (false turns action keys into onAction dispatch), onAction(key, pk, column),
-// onEditStarted / onEditCommitted(pk, column, v), onReleaseRequested (idle
-// Escape), onCopy(tsv), onCursorMoved, onSelectionChanged, onViewChanged.
+// Surface: render + view commands (D7: deferred while editing) + the
+// rAF-batched direct path + selection + single-cell deep edit + bulk ops
+// (raw-value TSV copy, delete by PK set, Delete-clears) + the VIRTUAL bulk
+// edit session (EffectiveType-gated value replacement, buffer + caret, live
+// preview, instantaneous types for game grids — the adapter is the move
+// seam; onAction is gone). Options: editable, onEditStarted /
+// onEditCommitted(pk, column, v), onBulkEditRejected({reason, names}),
+// onBulkEditCommitted(ids, value), onReleaseRequested (idle Escape),
+// onCopy(tsv), onCursorMoved, onSelectionChanged, onViewChanged.
 // =============================================================================
 
 class RelationGrid {
@@ -34,8 +36,7 @@ class RelationGrid {
         this._adapter = opts.adapter;
         this._cbViewChanged = opts.onViewChanged || null;
         this._factory = opts.cellFactory || function (column, value) {
-            return (typeof value === "number") ? new NumberCell() : new TextCell();
-        };
+            return (typeof value === "number") ? new NumberCell() : new TextCell(); };
 
         var self = this;
         this._squelch = false;   // suppresses interim refreshes inside atomic commands
@@ -62,11 +63,21 @@ class RelationGrid {
         });
         this._bulk = new GridBulkOps({ cells: this._cells, maps: this._maps,
             selection: this._selection, adapter: this._adapter, host: this });
+        this._session = new GridBulkEditSession({
+            cells: this._cells, adapter: this._adapter, bulk: this._bulk,
+            // ids → view positions at the seam; the layout paints the error
+            onPaintInvalid: function (ids) {
+                self._layout.paintInvalid(ids ? ids.map(function (id) {
+                    return self._maps.locate(id.pk, id.column); }).filter(Boolean) : null);
+            },
+            onRejected: opts.onBulkEditRejected || null,
+            onCommitted: opts.onBulkEditCommitted || null,
+            onSettled: function () { self._edit.onSessionSettled(); }
+        });
         this._edit = new GridEditController({
             cells: this._cells, selection: this._selection, adapter: this._adapter,
-            keyboard: this._keyboard, bulk: this._bulk,
+            keyboard: this._keyboard, bulk: this._bulk, session: this._session,
             editable: opts.editable !== false,
-            onAction: opts.onAction || null,
             onEditStarted: opts.onEditStarted || null,
             onEditCommitted: opts.onEditCommitted || null,
             onReleaseRequested: opts.onReleaseRequested || null,
@@ -221,23 +232,20 @@ class RelationGrid {
     updateCell(pk, col, newValue) {
         if (!this._cells.get(pk, col)) return false;
         this._pendingUpdates.set(pk + " " + col, { pk: pk, col: col, value: newValue });
-        this._scheduleFlush();
-        return true;
+        this._scheduleFlush(); return true;
     }
 
     _scheduleFlush() {
         if (this._flushScheduled) return;
         this._flushScheduled = true;
         var self = this;
-        var raf = (typeof requestAnimationFrame === "function")
-                ? requestAnimationFrame
+        var raf = (typeof requestAnimationFrame === "function") ? requestAnimationFrame
                 : function (fn) { fn(); };
         raf(function () { self._flushScheduled = false; self._flushUpdates(); });
     }
 
     _flushUpdates() {
-        var self = this;
-        var pending = this._pendingUpdates;
+        var self = this, pending = this._pendingUpdates;
         this._pendingUpdates = new Map();
         pending.forEach(function (u) { self._cells.update(u.pk, u.col, u.value); });
         return this;
@@ -258,6 +266,7 @@ class RelationGrid {
     _onCellClick(i, j, mods) {
         var id = this._maps.resolve(i, j);
         if (!id || !this._selection) return;
+        if (this._session.isActive()) this._session.settle();   // valid commits, invalid cancels
         if (this._edit.isEditing()) {
             var ed = this._edit.editingAt();
             if (ed && ed.pk === id.pk && ed.col === id.column) return;   // the editor's own cell
@@ -276,29 +285,21 @@ class RelationGrid {
 
     /** Deep mode: begin editing at the cursor (editable grids only). */
     beginEditAtCursor() { return this._edit.beginEditAtCursor(); }
-    isEditing()         { return this._edit.isEditing(); }
+    isEditing() { return this._edit.isEditing(); }
 
     /** Citizenship: the default activation target (RFC 0049 hands focus here). */
-    focus() {
-        var el = this._layout.el();
-        if (el.focus) el.focus();
-        return this;
-    }
+    focus() { var el = this._layout.el(); if (el.focus) el.focus(); return this; }
 
-    /** Bulk ops (Phase 6) — the active rect as raw-value TSV; rows by PK set. */
-    copySelection()      { return this._bulk.copyTsv(); }
+    /** Bulk ops — the active rect as raw-value TSV; rows retired by PK set. */
+    copySelection() { return this._bulk.copyTsv(); }
     deleteSelectedRows() { return this._bulk.deleteSelectedRows(); }
+    viewMaps() { return this._maps; }
 
     /** The cursor as { pk, column } JSON, or "null". */
     cursor() { return JSON.stringify(this._selection.cursorId()); }
 
     /** The identity-anchored range list as JSON (D5: reset on remap). */
     selection() { return JSON.stringify(this._selection.rangeList()); }
-
-    // ── access for the phases above (commands land in Phase 3+) ─────────────
-
-    /** The identity/position seam — Phase 3's view commands drive it. */
-    viewMaps() { return this._maps; }
 
     /** The row left the Relation: base out, view out, cells DIE (the only death). */
     removeRow(pk) {
@@ -324,6 +325,7 @@ class RelationGrid {
         if (typeof this._adapter.unsubscribe === "function") {
             try { this._adapter.unsubscribe(this._onCellChanged); } catch (e) {}
         }
+        if (this._session.isActive()) this._session.cancel();
         if (this._edit.isEditing()) this._edit.cancel();
         this._layout.el().removeEventListener("keydown", this._keydown);
         this._cells.destroy();

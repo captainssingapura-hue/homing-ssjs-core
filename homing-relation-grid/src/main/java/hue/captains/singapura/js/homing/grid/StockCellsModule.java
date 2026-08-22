@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.core.DomModule;
 import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
+import hue.captains.singapura.js.homing.core.ModuleImports;
 
 import java.util.List;
 
@@ -30,7 +31,13 @@ public record StockCellsModule() implements DomModule<StockCellsModule> {
 
     @Override
     public ImportsFor<StockCellsModule> imports() {
-        return ImportsFor.noImports();
+        return ImportsFor.<StockCellsModule>builder()
+                .add(new ModuleImports<>(
+                        List.of(new GridCellTypesModule.textType(),
+                                new GridCellTypesModule.numberType(),
+                                new GridCellTypesModule.enumType()),
+                        GridCellTypesModule.INSTANCE))
+                .build();
     }
 
     @Override

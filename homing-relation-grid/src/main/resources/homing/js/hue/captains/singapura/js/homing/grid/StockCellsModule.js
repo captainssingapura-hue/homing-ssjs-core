@@ -17,7 +17,12 @@
 
 class TextCell {
 
-    constructor() { this._el = null; this._value = null; this._editing = false; this._input = null; }
+    /** opts.type — the EffectiveType gating bulk edit (default textType()). */
+    constructor(opts) {
+        this._type = (opts && opts.type) || textType("text");
+        this._el = null; this._value = null;
+        this._editing = false; this._input = null; this._previewing = false;
+    }
 
     _paint() { if (this._el) this._el.textContent = (this._value == null) ? "" : String(this._value); }
 
@@ -25,11 +30,20 @@ class TextCell {
 
     update(value) {
         this._value = value;
-        if (!this._editing) this._paint();
+        if (!this._editing && !this._previewing) this._paint();
         return this;
     }
 
     onSelect(mode) { /* pure lifecycle — visuals are the layout's, focus is placed for us */ }
+
+    effectiveType() { return this._type; }
+
+    /** Virtual-session preview: raw text (caret included); null restores. */
+    preview(text) {
+        this._previewing = text !== null;
+        if (this._el) { if (text !== null) this._el.textContent = text; else this._paint(); }
+        return this;
+    }
 
     beginEdit(current) {
         if (!this._el || this._editing) return;
@@ -67,10 +81,13 @@ class TextCell {
 
 class NumberCell {
 
-    /** opts.format — optional (rawNumber) → display string. */
+    /** opts.format — optional (rawNumber) → display string;
+     *  opts.type — the EffectiveType (default numberType()). */
     constructor(opts) {
         this._format = (opts && typeof opts.format === "function") ? opts.format : null;
-        this._el = null; this._value = null; this._editing = false; this._input = null;
+        this._type = (opts && opts.type) || numberType("number");
+        this._el = null; this._value = null;
+        this._editing = false; this._input = null; this._previewing = false;
     }
 
     _display(value) {
@@ -84,11 +101,19 @@ class NumberCell {
 
     update(value) {
         this._value = value;
-        if (!this._editing) this._paint();
+        if (!this._editing && !this._previewing) this._paint();
         return this;
     }
 
     onSelect(mode) { /* pure lifecycle */ }
+
+    effectiveType() { return this._type; }
+
+    preview(text) {
+        this._previewing = text !== null;
+        if (this._el) { if (text !== null) this._el.textContent = text; else this._paint(); }
+        return this;
+    }
 
     /** The editor shows the RAW number (getEditValue form), not the display. */
     beginEdit(current) {
@@ -130,10 +155,13 @@ class NumberCell {
 
 class EnumCell {
 
-    /** opts.options — the closed value set; the editor is a <select> over it. */
+    /** opts.options — the closed value set; the editor is a <select> over it.
+     *  opts.type — the EffectiveType (default enumType over the options). */
     constructor(opts) {
         this._options = (opts && opts.options) || [];
-        this._el = null; this._value = null; this._editing = false; this._select = null;
+        this._type = (opts && opts.type) || enumType(null, this._options);
+        this._el = null; this._value = null;
+        this._editing = false; this._select = null; this._previewing = false;
     }
 
     _paint() { if (this._el) this._el.textContent = (this._value == null) ? "" : String(this._value); }
@@ -142,11 +170,19 @@ class EnumCell {
 
     update(value) {
         this._value = value;
-        if (!this._editing) this._paint();
+        if (!this._editing && !this._previewing) this._paint();
         return this;
     }
 
     onSelect(mode) { /* pure lifecycle */ }
+
+    effectiveType() { return this._type; }
+
+    preview(text) {
+        this._previewing = text !== null;
+        if (this._el) { if (text !== null) this._el.textContent = text; else this._paint(); }
+        return this;
+    }
 
     beginEdit(current) {
         if (!this._el || this._editing) return;

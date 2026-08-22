@@ -57,6 +57,9 @@ public record RelationGridModule() implements DomModule<RelationGridModule> {
                 .add(new ModuleImports<>(
                         List.of(new GridBulkOpsModule.GridBulkOps()),
                         GridBulkOpsModule.INSTANCE))
+                .add(new ModuleImports<>(
+                        List.of(new GridBulkEditSessionModule.GridBulkEditSession()),
+                        GridBulkEditSessionModule.INSTANCE))
                 .build();
     }
 

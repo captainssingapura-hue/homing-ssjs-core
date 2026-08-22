@@ -35,8 +35,18 @@ public interface GridCellContract {
     void commitEdit();                                     // → bubbles valueChanged(newValue)
     void cancelEdit();                                     // discard; back to shallow
 
-    // ─── The action variant (editing-disabled grids; Minesweeper appendix) ─
-    void onAction(String key);                             // momentary — fires and stays shallow
+    // ─── Bulk editing (the virtual session; all optional) ────────────────
+    // effectiveType() returns the cell's EffectiveType ({name, opens(ch),
+    // instantaneous, parse(buffer)} — see GridCellTypesModule): identity by
+    // NAME gates homogeneity ('price' ≠ 'calories'); opens() names the
+    // session-opening chars; instantaneous types (mine tiles) commit on the
+    // opening keystroke — game grids ride the same primitive, the adapter is
+    // the move seam (this replaced the old onAction side-channel).
+    Object effectiveType();
+    // preview(text) displays raw session text (caret marker included) without
+    // touching the cell's value; preview(null) restores the cell's own
+    // display. Domain ticks arriving mid-preview update state, not paint.
+    void preview(String text);
 
     // ─── The three value forms ───────────────────────────────────────────
     Object getValue();                                     // raw domain value
@@ -51,6 +61,6 @@ public interface GridCellContract {
 
     /** The full method set, for the stock-cell conformance test (Phase 2). */
     String[] ALL_METHODS = { "render", "update", "onSelect", "beginEdit", "commitEdit",
-                             "cancelEdit", "onAction", "getValue", "getValueToCopy",
-                             "getEditValue", "dispose" };
+                             "cancelEdit", "effectiveType", "preview", "getValue",
+                             "getValueToCopy", "getEditValue", "dispose" };
 }

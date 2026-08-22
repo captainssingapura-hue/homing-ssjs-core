@@ -139,8 +139,8 @@ class RelationGridBulkOpsTest {
         eval(DOM_STUB);
         for (String module : new String[]{
                 "GridViewMapsModule.js", "GridLayoutModule.js", "GridCellsModule.js",
-                "StockCellsModule.js", "GridSelectionModule.js", "GridKeyboardModule.js",
-                "GridEditControllerModule.js", "GridBulkOpsModule.js", "RelationGridModule.js"}) {
+                "GridCellTypesModule.js", "StockCellsModule.js", "GridSelectionModule.js", "GridKeyboardModule.js",
+                "GridEditControllerModule.js", "GridBulkOpsModule.js", "GridBulkEditSessionModule.js", "RelationGridModule.js"}) {
             eval(readJs("/homing/js/hue/captains/singapura/js/homing/grid/" + module));
         }
         eval(FIXTURE);
@@ -248,43 +248,6 @@ class RelationGridBulkOpsTest {
                         && f.tdAt(0, 3).children[0].textContent === ''
                         && JSON.parse(f.grid.cursor()) !== null;      // selection intact
                 })()"""), "issue 2a: Delete clears the selected cells' contents, Excel-style");
-    }
-
-    @Test
-    void bulkEditFansOutOverAHomogeneousSelection() {
-        assertTrue(evalBool("""
-                (() => {
-                    var f = fixture();
-                    f.click(0, 2);                        // mapo/calories (NumberCell)
-                    f.click(2, 3, { shift: true });       // 3x2 rect: all NumberCells
-                    f.key('Enter');                       // ONE editor, at the cursor
-                    var editing = f.grid.isEditing();
-                    f.tdAt(0, 2).children[0].children[0].value = '500';
-                    f.key('Enter');                       // commit fans out
-                    f.grid.flushNow();
-                    return editing
-                        && f.data.mapo.calories === 500 && f.data.mapo.price === 500
-                        && f.data.coq.calories === 500 && f.data.coq.price === 500
-                        && f.data.fish.calories === 500 && f.data.fish.price === 500
-                        && f.data.sauer.calories === 650;             // outside: untouched
-                })()"""), "issue 2b: a homogeneous selection commits through a single editor");
-    }
-
-    @Test
-    void heterogeneousSelectionEditsTheCursorCellOnly() {
-        assertTrue(evalBool("""
-                (() => {
-                    var f = fixture();
-                    f.click(0, 0);                        // mapo/ingredient (TextCell)
-                    f.click(1, 3, { shift: true });       // rect mixes TextCell + NumberCell
-                    f.key('Enter');
-                    f.tdAt(0, 0).children[0].children[0].value = 'doufu';
-                    f.key('Enter');
-                    f.grid.flushNow();
-                    return f.data.mapo.ingredient === 'doufu'
-                        && f.data.mapo.price === 9.5                  // NOT fanned out
-                        && f.data.coq.ingredient === 'chicken';
-                })()"""), "a mixed selection never bulk-applies — single-cell edit");
     }
 
     @Test

@@ -46,10 +46,14 @@ public interface RelationGridContract {
      * single-consumer, host fans out (the RFC 0032 / workspace-chrome pattern).
      */
     String[] CALLBACK_OPTION_NAMES = {
-            "onCursorMoved",       // (pk, column)
-            "onSelectionChanged",  // (rangeList)
-            "onEditStarted",       // (pk, column)
-            "onEditCommitted",     // (pk, column, newValue)
-            "onViewChanged"        // ('rows' | 'columns' | 'base')
+            "onCursorMoved",         // (pk, column)
+            "onSelectionChanged",    // (rangeList)
+            "onEditStarted",         // (pk, column)
+            "onEditCommitted",       // (pk, column, newValue)
+            "onBulkEditRejected",    // ({reason: 'mixed-types', names}) — the table reports the error
+            "onBulkEditCommitted",   // (targetIds, value) — one virtual-session commit
+            "onCopy",                // (tsv) — Ctrl+C payload
+            "onReleaseRequested",    // idle Escape — RFC 0049 citizenship
+            "onViewChanged"          // ('rows' | 'columns' | 'base')
     };
 }
