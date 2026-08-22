@@ -109,7 +109,7 @@ class RelationGridBulkOpsTest {
                     },
                     onCopy: function (tsv) { copies.push(tsv); }
                 });
-                function tdAt(i, j) { return container.children[0].children[1].children[i].children[j]; }
+                function tdAt(i, j) { return container.children[0].children[2].children[i].children[j]; }
                 function key(k, mods) {
                     mods = mods || {};
                     container.children[0].fire('keydown', {
@@ -140,7 +140,7 @@ class RelationGridBulkOpsTest {
         for (String module : new String[]{
                 "GridViewMapsModule.js", "GridLayoutModule.js", "GridCellsModule.js",
                 "GridCellTypesModule.js", "StockCellsModule.js", "GridSelectionModule.js", "GridKeyboardModule.js",
-                "GridEditControllerModule.js", "GridBulkOpsModule.js", "GridBulkEditSessionModule.js", "RelationGridModule.js"}) {
+                "GridEditControllerModule.js", "GridBulkOpsModule.js", "GridBulkEditSessionModule.js", "GridViewStateModule.js", "RelationGridModule.js"}) {
             eval(readJs("/homing/js/hue/captains/singapura/js/homing/grid/" + module));
         }
         eval(FIXTURE);

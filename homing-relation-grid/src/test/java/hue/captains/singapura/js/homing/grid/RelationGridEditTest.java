@@ -110,7 +110,7 @@ class RelationGridEditTest {
                     onEditCommitted: function (pk, col, v) { events.committed.push(pk + ':' + col + '=' + v); },
                     onReleaseRequested: function () { events.releases++; }
                 });
-                function tdAt(i, j) { return container.children[0].children[1].children[i].children[j]; }
+                function tdAt(i, j) { return container.children[0].children[2].children[i].children[j]; }
                 function cellDiv(i, j) { return tdAt(i, j).children[0]; }
                 function key(k, mods) {
                     mods = mods || {};
@@ -142,7 +142,7 @@ class RelationGridEditTest {
         for (String module : new String[]{
                 "GridViewMapsModule.js", "GridLayoutModule.js", "GridCellsModule.js",
                 "GridCellTypesModule.js", "StockCellsModule.js", "GridSelectionModule.js", "GridKeyboardModule.js",
-                "GridEditControllerModule.js", "GridBulkOpsModule.js", "GridBulkEditSessionModule.js", "RelationGridModule.js"}) {
+                "GridEditControllerModule.js", "GridBulkOpsModule.js", "GridBulkEditSessionModule.js", "GridViewStateModule.js", "RelationGridModule.js"}) {
             eval(readJs("/homing/js/hue/captains/singapura/js/homing/grid/" + module));
         }
         eval(FIXTURE);

@@ -94,7 +94,7 @@ class RelationGridSelectionTest {
                     onCursorMoved: function (pk, col) { events.cursor.push(pk + ':' + col); },
                     onSelectionChanged: function (ranges) { events.selection.push(ranges.length); }
                 });
-                function tdAt(i, j) { return container.children[0].children[1].children[i].children[j]; }
+                function tdAt(i, j) { return container.children[0].children[2].children[i].children[j]; }
                 function has(td, c) { return td.className.split(' ').indexOf(c) >= 0; }
                 function key(k, mods) {
                     mods = mods || {};
@@ -127,7 +127,7 @@ class RelationGridSelectionTest {
         eval(DOM_STUB);
         for (String module : new String[]{
                 "GridViewMapsModule.js", "GridLayoutModule.js", "GridCellsModule.js",
-                "GridCellTypesModule.js", "StockCellsModule.js", "GridSelectionModule.js", "GridKeyboardModule.js", "GridEditControllerModule.js", "GridBulkOpsModule.js", "GridBulkEditSessionModule.js",
+                "GridCellTypesModule.js", "StockCellsModule.js", "GridSelectionModule.js", "GridKeyboardModule.js", "GridEditControllerModule.js", "GridBulkOpsModule.js", "GridBulkEditSessionModule.js", "GridViewStateModule.js",
                 "RelationGridModule.js"}) {
             eval(readJs("/homing/js/hue/captains/singapura/js/homing/grid/" + module));
         }

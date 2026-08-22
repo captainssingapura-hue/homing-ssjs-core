@@ -99,7 +99,7 @@ class RelationGridStaticTest {
         eval(DOM_STUB);
         for (String module : new String[]{
                 "GridViewMapsModule.js", "GridLayoutModule.js", "GridCellsModule.js",
-                "GridCellTypesModule.js", "StockCellsModule.js", "GridSelectionModule.js", "GridKeyboardModule.js", "GridEditControllerModule.js", "GridBulkOpsModule.js", "GridBulkEditSessionModule.js",
+                "GridCellTypesModule.js", "StockCellsModule.js", "GridSelectionModule.js", "GridKeyboardModule.js", "GridEditControllerModule.js", "GridBulkOpsModule.js", "GridBulkEditSessionModule.js", "GridViewStateModule.js",
                 "RelationGridModule.js"}) {
             eval(readJs("/homing/js/hue/captains/singapura/js/homing/grid/" + module));
         }
@@ -115,10 +115,10 @@ class RelationGridStaticTest {
                 (() => {
                     var f = fixture(), g = f.grid, maps = g.viewMaps();
                     var table = f.container.children[0];
-                    var headerRow = table.children[0].children[0];
+                    var headerRow = table.children[1].children[0];
                     if (headerRow.children.length !== 4) return false;
                     if (headerRow.children[0].textContent !== 'ingredient') return false;
-                    var tbody = table.children[1];
+                    var tbody = table.children[2];
                     if (tbody.children.length !== 6) return false;
                     for (var i = 0; i < maps.rows(); i++) for (var j = 0; j < maps.cols(); j++) {
                         var td = tbody.children[i].children[j];
@@ -137,11 +137,11 @@ class RelationGridStaticTest {
                 (() => {
                     var f = fixture(), g = f.grid, maps = g.viewMaps();
                     var at = maps.locate('carbo', 'price');
-                    var el = f.container.children[0].children[1]
+                    var el = f.container.children[0].children[2]
                                 .children[at.i].children[at.j].children[0];
                     maps.setRowView(['carbo', 'burger', 'sauer', 'fish', 'coq', 'mapo']);
                     var at2 = maps.locate('carbo', 'price');
-                    var el2 = f.container.children[0].children[1]
+                    var el2 = f.container.children[0].children[2]
                                 .children[at2.i].children[at2.j].children[0];
                     return at.i === 5 && at2.i === 0     // the row really moved
                         && el === el2                    // ...but the cell ELEMENT is the same object
@@ -155,11 +155,11 @@ class RelationGridStaticTest {
                 (() => {
                     var f = fixture(), g = f.grid, maps = g.viewMaps();
                     maps.setRowView(['mapo']);                        // filter to one row
-                    var visibleRows = f.container.children[0].children[1].children.length;
+                    var visibleRows = f.container.children[0].children[2].children.length;
                     f.adapter.push('coq', 'price', 21);               // update a FILTERED-OUT cell
                     maps.resetRowView();                              // unfilter
                     var at = maps.locate('coq', 'price');
-                    var el = f.container.children[0].children[1]
+                    var el = f.container.children[0].children[2]
                                 .children[at.i].children[at.j].children[0];
                     return visibleRows === 1
                         && el.textContent === '21'      // the detached cell updated while hidden
@@ -173,11 +173,11 @@ class RelationGridStaticTest {
                 (() => {
                     var f = fixture(), g = f.grid, maps = g.viewMaps();
                     var at = maps.locate('mapo', 'price');
-                    var tbody = f.container.children[0].children[1];
+                    var tbody = f.container.children[0].children[2];
                     var el = tbody.children[at.i].children[at.j].children[0];
                     f.adapter.push('mapo', 'price', 10.5);
                     return el.textContent === '10.5'
-                        && tbody === f.container.children[0].children[1];   // no structural re-render
+                        && tbody === f.container.children[0].children[2];   // no structural re-render
                 })()"""), "a domain push must land in the cell directly, no layout work");
     }
 
@@ -202,7 +202,7 @@ class RelationGridStaticTest {
                     var f = fixture(), g = f.grid, maps = g.viewMaps();
                     maps.setRowView(['fish', 'mapo']);        // sorted, filtered view
                     g.removeRow('mapo');                      // the row leaves the Relation
-                    var tbody = f.container.children[0].children[1];
+                    var tbody = f.container.children[0].children[2];
                     return g._cells.size() === 20             // 24 - 4: only mapo's cells died
                         && g._cells.get('mapo', 'price') === null
                         && maps.rowOf('mapo') === -1

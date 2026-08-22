@@ -23,6 +23,7 @@ class GridKeyboard {
         if (!opts.selection) throw new Error("[GridKeyboard] opts.selection is required");
         this._selection = opts.selection;
         this._onCopy = opts.onCopy || null;
+        this._onColResize = opts.onColumnResize || null;   // ext2: Alt+arrows, cursor column
         this._el = null;
         var self = this;
         this._handler = function (e) { self.handleKey(e); };
@@ -44,6 +45,13 @@ class GridKeyboard {
     handleKey(e) {
         var s = this._selection, ext = !!e.shiftKey;
         var consumed = true;
+        // ext2 — Alt+Left/Right resizes the CURSOR's column (keyboard path).
+        if (e.altKey && this._onColResize
+                && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
+            this._onColResize(e.key === "ArrowRight" ? 1 : -1);
+            if (e.preventDefault) e.preventDefault();
+            return true;
+        }
         switch (e.key) {
             case "ArrowUp":    s.move(-1,  0, ext); break;
             case "ArrowDown":  s.move( 1,  0, ext); break;

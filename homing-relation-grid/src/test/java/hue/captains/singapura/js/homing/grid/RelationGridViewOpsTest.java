@@ -92,7 +92,7 @@ class RelationGridViewOpsTest {
                     return out;
                 }
                 function headerTexts() {
-                    return container.children[0].children[0].children[0].children
+                    return container.children[0].children[1].children[0].children
                             .map(function (th) { return th.textContent; });
                 }
                 function cellEl(pk, col) {
@@ -112,7 +112,7 @@ class RelationGridViewOpsTest {
         eval(DOM_STUB);
         for (String module : new String[]{
                 "GridViewMapsModule.js", "GridLayoutModule.js", "GridCellsModule.js",
-                "GridCellTypesModule.js", "StockCellsModule.js", "GridSelectionModule.js", "GridKeyboardModule.js", "GridEditControllerModule.js", "GridBulkOpsModule.js", "GridBulkEditSessionModule.js",
+                "GridCellTypesModule.js", "StockCellsModule.js", "GridSelectionModule.js", "GridKeyboardModule.js", "GridEditControllerModule.js", "GridBulkOpsModule.js", "GridBulkEditSessionModule.js", "GridViewStateModule.js",
                 "RelationGridModule.js"}) {
             eval(readJs("/homing/js/hue/captains/singapura/js/homing/grid/" + module));
         }

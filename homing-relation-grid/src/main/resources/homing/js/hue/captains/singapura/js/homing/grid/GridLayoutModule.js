@@ -35,6 +35,13 @@ var _HGR_STYLE_CSS = [
     // exists in the theme surface yet; emphasis carries it until one does).
     ".hgr-td.hgr-invalid{outline:2px dashed var(--color-accent-emphasis);outline-offset:-2px;}",
     ".hgr-table:focus{outline:none;}",
+    // ext2 — column sizing: widths ride a custom property per <col> (the
+    // sanctioned dynamic-value hatch), consumed here; hgr-fixed engages
+    // deterministic layout once any explicit width exists.
+    ".hgr-table.hgr-fixed{table-layout:fixed;}",
+    ".hgr-table col{width:var(--hgr-col-w,auto);}",
+    ".hgr-resize-guide{position:fixed;top:var(--hgr-guide-top);height:var(--hgr-guide-h);",
+    "  left:var(--hgr-guide-x);width:2px;background:var(--color-accent);z-index:99;}",
     ""
 ].join("\n");
 
@@ -63,10 +70,13 @@ class GridLayout {
         _hgrEnsureStyles();
         this._container = opts.container;
         this._onCellClick = opts.onCellClick || null;   // (i, j, {shift, ctrl})
+        this._onColResize = opts.onColResize || null;   // (j, px) — staged commit
         this._painted = { cursorTd: null, selTds: [] }; // paint memo (diff target)
         this._table = document.createElement("table");
         this._table.className = "hgr-table";
         this._table.setAttribute("tabindex", "0");      // the keyboard host
+        this._colgroup = document.createElement("colgroup");
+        this._table.appendChild(this._colgroup);
         this._thead = document.createElement("thead");
         this._headerRow = document.createElement("tr");
         this._thead.appendChild(this._headerRow);
@@ -88,10 +98,13 @@ class GridLayout {
         var rows = (shape && shape.rows) || 0;
 
         while (this._headerRow.firstChild) this._headerRow.removeChild(this._headerRow.firstChild);
+        while (this._colgroup.firstChild) this._colgroup.removeChild(this._colgroup.firstChild);
         for (var h = 0; h < headers.length; h++) {
+            this._colgroup.appendChild(document.createElement("col"));
             var th = document.createElement("th");
             th.className = "hgr-th";
             th.textContent = headers[h];
+            this._wireResize(th, h);
             this._headerRow.appendChild(th);
         }
 
@@ -158,6 +171,64 @@ class GridLayout {
             if (td) { _hgrAddClass(td, "hgr-invalid"); self._invalidTds.push(td); }
         });
         return this;
+    }
+
+    /** ext2 — apply per-visible-column widths (px | null), via the custom-
+     *  property hatch; hgr-fixed engages once any explicit width exists. */
+    setColWidths(widths) {
+        var any = false, cols = this._colgroup.children;
+        for (var j = 0; j < cols.length; j++) {
+            var w = widths ? widths[j] : null, st = cols[j].style;
+            if (w != null) { any = true; if (st && st.setProperty) st.setProperty("--hgr-col-w", w + "px"); }
+            else if (st && st.removeProperty) st.removeProperty("--hgr-col-w");
+        }
+        if (any) _hgrAddClass(this._table, "hgr-fixed");
+        else _hgrRemoveClass(this._table, "hgr-fixed");
+        return this;
+    }
+
+    /** ext2 — the header-edge hot zone. STAGED: nothing moves during the
+     *  drag; a guide line tracks the pointer and the width commits once, on
+     *  release (D7 is structural — no cell is touched mid-gesture). */
+    _wireResize(th, j) {
+        if (!this._onColResize) return;
+        var self = this;
+        th.addEventListener("mousedown", function (e) {
+            var rect = th.getBoundingClientRect ? th.getBoundingClientRect() : null;
+            if (!rect || e.clientX == null || Math.abs(e.clientX - rect.right) > 6) return;
+            if (e.preventDefault) e.preventDefault();
+            self._startColDrag(j, rect.right - rect.left, e.clientX);
+        });
+    }
+
+    _startColDrag(j, startW, startX) {
+        var self = this, lastX = startX, guide = null;
+        var rect = this._table.getBoundingClientRect ? this._table.getBoundingClientRect() : null;
+        if (document.body && rect) {
+            guide = document.createElement("div");
+            guide.className = "hgr-resize-guide";
+            guide.style.setProperty("--hgr-guide-top", rect.top + "px");
+            guide.style.setProperty("--hgr-guide-h", rect.height + "px");
+            guide.style.setProperty("--hgr-guide-x", startX + "px");
+            document.body.appendChild(guide);
+        }
+        function onMove(e) {
+            lastX = e.clientX;
+            if (guide) guide.style.setProperty("--hgr-guide-x", lastX + "px");
+        }
+        function teardown() {
+            document.removeEventListener("mousemove", onMove);
+            document.removeEventListener("mouseup", onUp);
+            document.removeEventListener("keydown", onKey, true);
+            if (guide && guide.parentNode) guide.parentNode.removeChild(guide);
+        }
+        function onUp() { teardown(); self._onColResize(j, startW + (lastX - startX)); }
+        function onKey(e) {   // Escape ABANDONS — nothing was applied yet
+            if (e.key === "Escape") { teardown(); if (e.stopPropagation) e.stopPropagation(); }
+        }
+        document.addEventListener("mousemove", onMove);
+        document.addEventListener("mouseup", onUp);
+        document.addEventListener("keydown", onKey, true);
     }
 
     /** The focusable table element — the keyboard attaches here. */

@@ -116,7 +116,7 @@ class RelationGridVirtualEditTest {
                     onBulkEditRejected:  function (r) { rejected.push(r.reason + ':' + r.names.join('|')); },
                     onBulkEditCommitted: function (ids, v) { bulk.push(ids.length + '=' + v); }
                 });
-                function tdAt(i, j) { return container.children[0].children[1].children[i].children[j]; }
+                function tdAt(i, j) { return container.children[0].children[2].children[i].children[j]; }
                 function cellText(i, j) { return tdAt(i, j).children[0].textContent; }
                 function hasClass(td, c) { return td.className.split(' ').indexOf(c) >= 0; }
                 function key(k, mods) {
@@ -146,7 +146,7 @@ class RelationGridVirtualEditTest {
                 "GridViewMapsModule.js", "GridLayoutModule.js", "GridCellsModule.js",
                 "GridCellTypesModule.js", "StockCellsModule.js", "GridSelectionModule.js",
                 "GridKeyboardModule.js", "GridEditControllerModule.js", "GridBulkOpsModule.js",
-                "GridBulkEditSessionModule.js", "RelationGridModule.js"}) {
+                "GridBulkEditSessionModule.js", "GridViewStateModule.js", "RelationGridModule.js"}) {
             eval(readJs("/homing/js/hue/captains/singapura/js/homing/grid/" + module));
         }
         eval(FIXTURE);
