@@ -20,7 +20,12 @@ var _HGR_STYLE_ID = "homing-relation-grid-style";
 var _HGR_STYLE_CSS = [
     ".hgr-table{border-collapse:collapse;width:100%;",
     "  background:var(--color-surface);color:var(--color-text-primary);",
-    "  font:13px sans-serif;}",
+    "  font:13px sans-serif;",
+    // The grid is a CONTROL, not prose: native text selection only fights the
+    // cell-selection model (and any header drag turns into blue smears).
+    // Copy is Ctrl+C via the grid's own clipboard path. Editors re-enable it.
+    "  user-select:none;-webkit-user-select:none;}",
+    ".hgr-table input,.hgr-table select{user-select:text;-webkit-user-select:text;}",
     // Header borders as INSET BOX-SHADOW, not border: with border-collapse,
     // Chromium drops cell borders on position:sticky headers while scrolling —
     // shadows ride the cell, so the separators stay visible.
