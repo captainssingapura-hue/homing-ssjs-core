@@ -201,6 +201,15 @@ class RelationGrid {
         return this;
     }
 
+    /**
+     * Drain the batch NOW. A hidden page gets no animation frames, so pending
+     * updates can sit until the next reveal — harmless for painting (the map
+     * is bounded, one entry per cell, last write wins), but any read-path
+     * that goes through cell state (copySelection, getValue sweeps) MUST call
+     * this first or it reads stale values.
+     */
+    flushNow() { return this._flushUpdates(); }
+
     // ── access for the phases above (commands land in Phase 3+) ─────────────
 
     /** The identity/position seam — Phase 3's view commands drive it. */
