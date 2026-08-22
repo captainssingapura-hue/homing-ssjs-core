@@ -36,6 +36,8 @@ public final class RelationGridCrate implements Crate {
     public List<CrateEntry> entries() {
         return List.of(
                 CrateEntry.of(GridViewMapsModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
+                CrateEntry.of(GridSelectionModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
+                CrateEntry.of(GridKeyboardModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(GridLayoutModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
                 CrateEntry.of(GridCellsModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
                 CrateEntry.of(StockCellsModule.INSTANCE, StandardJsModuleType.PRIMITIVE),

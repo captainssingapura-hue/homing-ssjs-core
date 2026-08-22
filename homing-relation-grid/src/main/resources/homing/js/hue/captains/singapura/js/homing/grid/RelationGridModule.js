@@ -15,10 +15,12 @@
 //       onViewChanged?      // ('rows' | 'columns' | 'base') — after re-place
 //   });
 //
-// Phase 3 surface: static render + view commands (sortBy / filterRows /
-// clearFilter / hideColumn / showColumn / reorderColumn — all pure remaps
-// recomputed from held command state) + the rAF-batched direct update path.
-// Selection, editing, and bulk ops land in Phases 4–6 per the journey.
+// Phase 4 surface: static render + view commands (pure remaps recomputed from
+// held command state) + the rAF-batched direct update path + selection
+// (GridSelection intent/resolve/reconcile in identity space, GridKeyboard on
+// the focusable table, click routing at the position→identity seam; extra
+// callback opts: onCursorMoved(pk, column), onSelectionChanged(rangeList)).
+// Editing and bulk ops land in Phases 5–6 per the journey.
 // =============================================================================
 
 class RelationGrid {
@@ -41,8 +43,19 @@ class RelationGrid {
             columns: this._adapter.columns(),
             onViewChanged: function (kind) { if (!self._squelch) self._refresh(kind); }
         });
-        this._layout = new GridLayout({ container: opts.container });
+        this._layout = new GridLayout({
+            container: opts.container,
+            onCellClick: function (i, j, mods) { self._onCellClick(i, j, mods); }
+        });
         this._cells  = new GridCells({ branch: opts.branch });
+        this._selection = new GridSelection({
+            maps: this._maps,
+            onPaint: function (resolved) { self._layout.paintSelection(resolved); },
+            onCursorMoved: opts.onCursorMoved || null,
+            onSelectionChanged: opts.onSelectionChanged || null
+        });
+        this._keyboard = new GridKeyboard({ selection: this._selection });
+        this._keyboard.attach(this._layout.el());
 
         // View-command state — the views are always RECOMPUTED from this (the
         // RFC 0049 lesson applied to remaps: held intent, derived view).
@@ -85,6 +98,8 @@ class RelationGrid {
         // Filter DETACHES, never destroys: whatever the view no longer shows
         // leaves the tree with element, instance, and state intact.
         this._cells.detachInvisible(function (pk, col) { return maps.locate(pk, col) !== null; });
+        // Selection recomputes over the fresh slots (D5: remaps reset ranges).
+        if (this._selection) this._selection.onViewChanged(kind);
         if (this._cbViewChanged) {
             try { this._cbViewChanged(kind); }
             catch (e) { console.error("[RelationGrid] onViewChanged threw:", e); }
@@ -210,6 +225,29 @@ class RelationGrid {
      */
     flushNow() { return this._flushUpdates(); }
 
+    // ── selection (identity-space; Phase 4) ─────────────────────────────────
+
+    /** Click routing: position → identity at the seam, then intent. */
+    _onCellClick(i, j, mods) {
+        var id = this._maps.resolve(i, j);
+        if (!id || !this._selection) return;
+        if (mods && mods.ctrl)       this._selection.addRange(id.pk, id.column);
+        else if (mods && mods.shift) this._selection.extendTo(id.pk, id.column);
+        else                         this._selection.setCursor(id.pk, id.column);
+    }
+
+    /** Programmatic shallow cursor (the contract's selectCell). */
+    selectCell(pk, column) {
+        this._selection.setCursor(pk, column);
+        return this;
+    }
+
+    /** The cursor as { pk, column } JSON, or "null". */
+    cursor() { return JSON.stringify(this._selection.cursorId()); }
+
+    /** The identity-anchored range list as JSON (D5: reset on remap). */
+    selection() { return JSON.stringify(this._selection.rangeList()); }
+
     // ── access for the phases above (commands land in Phase 3+) ─────────────
 
     /** The identity/position seam — Phase 3's view commands drive it. */
@@ -239,6 +277,7 @@ class RelationGrid {
         if (typeof this._adapter.unsubscribe === "function") {
             try { this._adapter.unsubscribe(this._onCellChanged); } catch (e) {}
         }
+        this._keyboard.detach();
         this._cells.destroy();
         this._layout.destroy();
     }

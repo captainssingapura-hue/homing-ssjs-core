@@ -39,6 +39,8 @@ class RelationGridViewOpsTest {
                         this.children[i] = nu; old.parentNode = null;
                         nu.parentNode = this; return old;
                     },
+                    addEventListener: function () {}, removeEventListener: function () {},
+                    setAttribute: function () {}, getAttribute: function () { return null; },
                     get firstChild() { return this.children[0] || null; }
                 };
             }
@@ -110,7 +112,8 @@ class RelationGridViewOpsTest {
         eval(DOM_STUB);
         for (String module : new String[]{
                 "GridViewMapsModule.js", "GridLayoutModule.js", "GridCellsModule.js",
-                "StockCellsModule.js", "RelationGridModule.js"}) {
+                "StockCellsModule.js", "GridSelectionModule.js", "GridKeyboardModule.js",
+                "RelationGridModule.js"}) {
             eval(readJs("/homing/js/hue/captains/singapura/js/homing/grid/" + module));
         }
         eval(FIXTURE);
