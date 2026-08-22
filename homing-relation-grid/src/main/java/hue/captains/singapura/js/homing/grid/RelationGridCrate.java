@@ -13,9 +13,12 @@ import java.util.List;
  * the first line</b> — strict-for-new gates each module on the build that
  * introduces it (the RFC 0050 journey's Phase 0 standing constraint).
  *
- * <p>Phase 1 content: {@code GridViewMaps} (PURE_LOGIC — the identity/position
- * seam). The layout / cells / selection / keyboard / edit / bulk-ops modules
- * land here phase by phase, each as a typed entry.</p>
+ * <p>Phase 1: {@code GridViewMaps} (PURE_LOGIC — the identity/position seam).
+ * Phase 2: the two-branch render family — {@code GridLayout} (layout branch),
+ * {@code GridCells} (cells branch), {@code StockCells}, and the
+ * {@code RelationGrid} facade, all PRIMITIVE (raw DOM internally, like
+ * MultiTabPane / SplitPane; the cells branch object is handed in at runtime).
+ * Selection / keyboard / edit / bulk-ops modules land phase by phase.</p>
  */
 public final class RelationGridCrate implements Crate {
 
@@ -32,6 +35,10 @@ public final class RelationGridCrate implements Crate {
     @Override
     public List<CrateEntry> entries() {
         return List.of(
-                CrateEntry.of(GridViewMapsModule.INSTANCE, StandardJsModuleType.PURE_LOGIC));
+                CrateEntry.of(GridViewMapsModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
+                CrateEntry.of(GridLayoutModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
+                CrateEntry.of(GridCellsModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
+                CrateEntry.of(StockCellsModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
+                CrateEntry.of(RelationGridModule.INSTANCE, StandardJsModuleType.PRIMITIVE));
     }
 }
