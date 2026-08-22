@@ -11,8 +11,9 @@
 //   Tab / Shift+Tab   move right / left
 //   Home / End        first / last column of the cursor's row
 //   Ctrl+A            select the whole view
+//   Ctrl+C            fire the onCopy callback (bound only when provided)
 //
-//   new GridKeyboard({ selection }).attach(el);
+//   new GridKeyboard({ selection, onCopy? }).attach(el);
 // =============================================================================
 
 class GridKeyboard {
@@ -21,6 +22,7 @@ class GridKeyboard {
         opts = opts || {};
         if (!opts.selection) throw new Error("[GridKeyboard] opts.selection is required");
         this._selection = opts.selection;
+        this._onCopy = opts.onCopy || null;
         this._el = null;
         var self = this;
         this._handler = function (e) { self.handleKey(e); };
@@ -52,6 +54,10 @@ class GridKeyboard {
             case "End":        s.move( 0,  Infinity, ext); break;
             case "a": case "A":
                 if (e.ctrlKey || e.metaKey) s.selectAll(); else consumed = false;
+                break;
+            case "c": case "C":
+                if ((e.ctrlKey || e.metaKey) && this._onCopy) this._onCopy();
+                else consumed = false;
                 break;
             default:
                 consumed = false;

@@ -111,7 +111,7 @@ class GridEditController {
             if (this._cbRelease) this._cbRelease();     // idle Escape releases the pane
             return true;
         }
-        if (!this._editable && this._cbAction
+        if (!this._editable && this._cbAction && !e.ctrlKey && !e.metaKey
                 && (e.key === "Enter" || e.key === " " || e.key.length === 1)) {
             var cur = this._selection.cursorId();
             if (cur) {

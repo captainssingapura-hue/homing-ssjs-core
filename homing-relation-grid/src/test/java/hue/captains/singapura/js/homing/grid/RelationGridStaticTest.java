@@ -99,7 +99,7 @@ class RelationGridStaticTest {
         eval(DOM_STUB);
         for (String module : new String[]{
                 "GridViewMapsModule.js", "GridLayoutModule.js", "GridCellsModule.js",
-                "StockCellsModule.js", "GridSelectionModule.js", "GridKeyboardModule.js", "GridEditControllerModule.js",
+                "StockCellsModule.js", "GridSelectionModule.js", "GridKeyboardModule.js", "GridEditControllerModule.js", "GridBulkOpsModule.js",
                 "RelationGridModule.js"}) {
             eval(readJs("/homing/js/hue/captains/singapura/js/homing/grid/" + module));
         }

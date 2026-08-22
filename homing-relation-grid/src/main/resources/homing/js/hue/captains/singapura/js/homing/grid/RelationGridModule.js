@@ -15,12 +15,13 @@
 //       onViewChanged?      // ('rows' | 'columns' | 'base') — after re-place
 //   });
 //
-// Phase 5 surface: render + view commands (D7: deferred while an edit is
-// active) + the rAF-batched direct path + selection + deep edit. Options:
-// editable (default true; false turns Enter/keys into onAction dispatch),
-// onAction(key, pk, column), onEditStarted / onEditCommitted(pk, column, v),
-// onReleaseRequested (idle Escape — RFC 0049 citizenship), onCursorMoved,
-// onSelectionChanged, onViewChanged. Bulk ops land in Phase 6.
+// Phase 6 surface: render + view commands (D7: deferred while editing) + the
+// rAF-batched direct path + selection + deep edit + bulk ops (copySelection
+// as raw-value TSV over the active rect, deleteSelectedRows by PK set through
+// the adapter; Ctrl+C fires onCopy(tsv) when provided). Options: editable
+// (false turns action keys into onAction dispatch), onAction(key, pk, column),
+// onEditStarted / onEditCommitted(pk, column, v), onReleaseRequested (idle
+// Escape), onCopy(tsv), onCursorMoved, onSelectionChanged, onViewChanged.
 // =============================================================================
 
 class RelationGrid {
@@ -54,7 +55,11 @@ class RelationGrid {
             onCursorMoved: opts.onCursorMoved || null,
             onSelectionChanged: opts.onSelectionChanged || null
         });
-        this._keyboard = new GridKeyboard({ selection: this._selection });
+        this._cbCopy = opts.onCopy || null;
+        this._keyboard = new GridKeyboard({
+            selection: this._selection,
+            onCopy: this._cbCopy ? function () { self._cbCopy(self.copySelection()); } : null
+        });
         this._edit = new GridEditController({
             cells: this._cells, selection: this._selection, adapter: this._adapter,
             keyboard: this._keyboard,
@@ -68,17 +73,18 @@ class RelationGrid {
         // while editing; idle keys flow through it to the shallow keyboard.
         this._keydown = function (e) { self._edit.routeKey(e); };
         this._layout.el().addEventListener("keydown", this._keydown);
+        this._bulk = new GridBulkOps({ cells: this._cells, maps: this._maps,
+            selection: this._selection, adapter: this._adapter, host: this });
 
         // View-command state — the views are always RECOMPUTED from this (the
-        // RFC 0049 lesson applied to remaps: held intent, derived view).
-        this._sort        = null;         // { column, direction: 'asc'|'desc' }
-        this._filterPred  = null;         // (pk, get) → boolean
-        this._hidden      = new Set();    // hidden column names
-        this._columnOrder = null;         // full column order incl. hidden, or null = base
+        // RFC 0049 lesson applied to remaps: held intent, derived view):
+        // sort {column, direction} | null; filter predicate (pk, get) → bool;
+        // hidden column names; held full column order (null = base order).
+        this._sort = null; this._filterPred = null;
+        this._hidden = new Set(); this._columnOrder = null;
 
         // rAF batch for the direct update path (last write per cell wins).
-        this._pendingUpdates = new Map(); // key → { pk, col, value }
-        this._flushScheduled = false;
+        this._pendingUpdates = new Map(); this._flushScheduled = false;
 
         // The domain's push channel — identity-addressed, straight to the cell.
         this._onCellChanged = function (pk, col, newValue) { self.updateCell(pk, col, newValue); };
@@ -275,6 +281,10 @@ class RelationGrid {
         if (el.focus) el.focus();
         return this;
     }
+
+    /** Bulk ops (Phase 6) — the active rect as raw-value TSV; rows by PK set. */
+    copySelection()      { return this._bulk.copyTsv(); }
+    deleteSelectedRows() { return this._bulk.deleteSelectedRows(); }
 
     /** The cursor as { pk, column } JSON, or "null". */
     cursor() { return JSON.stringify(this._selection.cursorId()); }
