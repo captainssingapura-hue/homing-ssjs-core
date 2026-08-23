@@ -29,6 +29,43 @@ public final class HomingConformance {
 
     /** homing-ssjs-core's documented, intentional exceptions (not debt). */
     public static final List<Allowance> ALLOWANCES = List.of(
+            // ── RFC 0050 — the Relation Grid family ──────────────────────
+            // Deliberate design decisions recorded in the RFC, not debt: they
+            // are ALLOWANCES (reasoned, permanent) rather than baseline entries
+            // (grandfathered, meant to shrink). MTP/SplitPane carry the same
+            // findings as baselined debt because they predate the rules; the
+            // grid chose this posture knowingly, so it says so.
+            new Allowance(
+                    "hue.captains.singapura.js.homing.grid.GridLayoutModule",
+                    new RuleId("use-dom-ops-party"),
+                    "The layout branch is a PRIMITIVE that owns the <table> skeleton itself, on "
+                            + "the MultiTabPane / SplitPane precedent: raw DOM internally keeps it "
+                            + "portable and free of a DomOpsParty dependency. The party discipline "
+                            + "applies to the CELLS branch, which does mint through a handed-in "
+                            + "branch — that is the ownership boundary RFC 0050 is built on."),
+            new Allowance(
+                    "hue.captains.singapura.js.homing.grid.GridLayoutModule",
+                    new RuleId("view-doctrine"),
+                    "The single lookup is getElementById on the grid's own injected <style> tag — "
+                            + "the idempotence check that keeps N grids from injecting N stylesheets. "
+                            + "It reads infrastructure this module authored, never view content."),
+            new Allowance(
+                    "hue.captains.singapura.js.homing.grid.GridHeaderDragModule",
+                    new RuleId("use-dom-ops-party"),
+                    "Split out of GridLayout by the line ratchet; it mints the same layout-branch "
+                            + "chrome (resize handle, drop band) and inherits the same posture."),
+            new Allowance(
+                    "hue.captains.singapura.js.homing.grid.StockCellsModule",
+                    new RuleId("use-dom-ops-party"),
+                    "A cell mints its OWN editor (input / select) inside its own element. The cell "
+                            + "element itself came from the cells branch; the editor is a sub-life of "
+                            + "that cell, created and removed within one edit."),
+            new Allowance(
+                    "hue.captains.singapura.js.homing.grid.StockCellsModule",
+                    new RuleId("no-dom-destruction"),
+                    "textContent = \"\" clears the cell's OWN text before mounting its editor, and "
+                            + "restores it after — the narrowest possible scope, on an element the "
+                            + "cell owns outright. Not a wholesale wipe of anything foreign."),
             new Allowance(
                     "hue.captains.singapura.js.homing.studio.base.ui.layout.ModalModule",
                     new RuleId("no-dom-destruction"),

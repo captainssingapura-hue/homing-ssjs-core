@@ -33,6 +33,14 @@
             <artifactId>homing-studio-starter</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+
+        <!-- RFC 0050 - the Relation Grid family, so the self-conformance gate
+             grades its modules like every other first-party crate. -->
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>homing-relation-grid</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>io.github.captainssingapura-hue.homing.js</groupId>
             <artifactId>homing-conformance-rules</artifactId>
