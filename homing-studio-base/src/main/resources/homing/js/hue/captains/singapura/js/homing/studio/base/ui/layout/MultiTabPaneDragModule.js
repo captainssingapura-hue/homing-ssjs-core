@@ -199,10 +199,27 @@ class TabDragController {
             var dropStrip = this._findStripAt(e.clientX, e.clientY);
             if (dropStrip && this._canDropOn(dropStrip.slotId)) {
                 var dockIdx = this._findInsertIndex(dropStrip.slotId, e.clientX);
+                // b.2i — mirror of _armModalRedock's dock: move the content back
+                // into the dest slot BEFORE destroying the modal (single
+                // attached-parent appendChild preserves widget state), and undo
+                // the modal-context style overrides from _detachToModal.
+                var destWrappers = this._mt._wrappersBySlot.get(dropStrip.slotId);
+                if (tab._contentEl && destWrappers) {
+                    destWrappers.content.appendChild(tab._contentEl);
+                    tab._contentEl.style.position = "";
+                    tab._contentEl.style.inset    = "";
+                    tab._contentEl.style.height   = "";
+                }
                 try { modal.destroy(); } catch (err) {}
                 // RFC 0032 P4 — public attach publishes the typed onTabAttached
                 // callback so the chrome's recorder can emit a TabMoved event.
                 this._mt.attachTab(dropStrip.slotId, tab, dockIdx);
+                // RFC 0049 — transport end (the ONE-GESTURE dock path): report so
+                // the coordinator lands the carried deep selection at the
+                // destination. The two-gesture path (_armModalRedock) reports the
+                // same kind.
+                this._mt._fire(this._mt._cbChromeInteract, "onChromeInteract",
+                        [{ kind: "tab-docked", slotId: dropStrip.slotId, tabId: tab.id }]);
             } else {
                 this._armModalRedock(modal, tab);
             }
@@ -361,6 +378,14 @@ class TabDragController {
         this._modalTab = tab;
         this._detached = true;
 
+        // RFC 0049 — report the transport transition (decide-nothing): the shell
+        // coordinator moves the selection to the modal (the tab becomes the deep
+        // selection in transport; the emptied pane loses its ring; the modal
+        // wears the entered accent). Without this the pane kept a stale ring and
+        // a covered tab's content arrived in the modal still inert (dead modal).
+        this._mt._fire(this._mt._cbChromeInteract, "onChromeInteract",
+                [{ kind: "tab-detached", slotId: srcSlot, tabId: this._srcTabId, modalEl: modal.el }]);
+
         // Ghost + indicator no longer needed (modal is the visual now).
         if (this._ghost) { this._ghost.remove(); this._ghost = null; }
         this._hideIndicator();
@@ -448,6 +473,11 @@ class TabDragController {
                 // RFC 0032 P4 — public attach publishes onTabAttached so the
                 // chrome's recorder sees this redock as a typed event.
                 self._mt.attachTab(strip.slotId, tab, idx);
+                // RFC 0049 — report transport end AFTER attachTab (so the
+                // coordinator's FM adoption ran); the coordinator finishes the
+                // move per click routing: shallow-select at the destination.
+                self._mt._fire(self._mt._cbChromeInteract, "onChromeInteract",
+                        [{ kind: "tab-docked", slotId: strip.slotId, tabId: tab.id }]);
 
                 // Clean up detach state on the controller so the next drag
                 // starts fresh.

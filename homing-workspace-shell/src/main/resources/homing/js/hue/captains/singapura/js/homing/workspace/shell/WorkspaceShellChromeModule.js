@@ -73,7 +73,7 @@ class WorkspaceShellChrome {
         this._pinnedTabSpawner    = deps.pinnedTabSpawner    || PinnedTabSpawner.INSTANCE;
         this._WorkspaceLayoutCtor = deps.WorkspaceLayoutCtor || WorkspaceLayout;
         this._MultiTabPaneCtor    = deps.MultiTabPaneCtor    || MultiTabPane;
-        this._PaneFocusNavCtor    = deps.PaneFocusNavCtor    || PaneFocusNav;   // RFC 0048
+        this._FocusCoordinatorCtor = deps.FocusCoordinatorCtor || WorkspaceFocusCoordinator;   // RFC 0049
         this._PickerTabFlowCtor   = deps.PickerTabFlowCtor   || PickerTabFlow;
         this._TabRegistryCtor     = deps.TabRegistryCtor     || TabRegistry;
         this._WorkspaceStateModelCtor =
@@ -468,7 +468,20 @@ class WorkspaceShellChrome {
                 }
                 self._pickerFlow.openInSlot(slotId);
             },
+            // RFC 0049 fan-out — MTP's typed callbacks are single-consumer; the
+            // chrome distributes each to its consumers (recorder/model + the
+            // focus coordinator).
+            onTabAdded: function (slotId, tab, _idx) {
+                if (self._focusCoordinator) self._focusCoordinator.onTabAdded(slotId, tab);
+            },
+            onTabActivated: function (slotId, tabId) {
+                if (self._focusCoordinator) self._focusCoordinator.onTabActivated(slotId, tabId);
+            },
+            onChromeInteract: function (ev) {
+                if (self._focusCoordinator) self._focusCoordinator.onChromeInteract(ev);
+            },
             onTabMoved: function (srcSlot, destSlot, tab, _fromIdx, toIdx) {
+                if (self._focusCoordinator) self._focusCoordinator.onTabMoved(srcSlot, destSlot, tab);
                 if (!tab || !tab.widgetInstanceUuid) return;
                 const uuid = tab.widgetInstanceUuid;
                 if (self._tabRegistry) self._tabRegistry.updateSlot(uuid, destSlot);
@@ -483,6 +496,7 @@ class WorkspaceShellChrome {
                 if (self._eventRecorder) self._eventRecorder.emit('TabMoved', payload);
             },
             onTabRemoved: function (slotId, tab, _fromIdx) {
+                if (self._focusCoordinator) self._focusCoordinator.onTabRemoved(slotId, tab);
                 if (!tab || !tab.widgetInstanceUuid) return;
                 const uuid = tab.widgetInstanceUuid;
                 if (self._tabRegistry) self._tabRegistry.unregister(uuid);
@@ -495,6 +509,7 @@ class WorkspaceShellChrome {
                 if (self._eventRecorder) self._eventRecorder.emit('TabClosed', payload);
             },
             onTabAttached: function (destSlot, tab, toIdx) {
+                if (self._focusCoordinator) self._focusCoordinator.onTabAttached(destSlot, tab);
                 if (!tab || !tab.widgetInstanceUuid) return;
                 const uuid     = tab.widgetInstanceUuid;
                 const prior    = self._tabRegistry && self._tabRegistry.lookup(uuid);
@@ -514,6 +529,7 @@ class WorkspaceShellChrome {
                 if (self._eventRecorder) self._eventRecorder.emit('TabMoved', payload);
             },
             onSplit: function (srcSlot, orientation, _newSlot) {
+                if (self._focusCoordinator) self._focusCoordinator.onSplit(srcSlot, orientation, _newSlot);
                 const childPath  = self._mtp.paneIdOf(srcSlot) || '_';
                 const parentPath = childPath.replace(/_[12]$/, '') || '_';
                 const payload = { paneId: parentPath, orientation: orientation };
@@ -521,20 +537,11 @@ class WorkspaceShellChrome {
                 if (self._eventRecorder) self._eventRecorder.emit('SplitCreated', payload);
             },
             onMerge: function (keptSlot, _removedSlot) {
+                if (self._focusCoordinator) self._focusCoordinator.onMerge(keptSlot, _removedSlot);
                 const parentPath = self._mtp.paneIdOf(keptSlot) || '_';
                 const payload = { paneId: parentPath };
                 self._applyToModel('SplitMerged', payload);
                 if (self._eventRecorder) self._eventRecorder.emit('SplitMerged', payload);
-            },
-            onWorkspaceActiveChanged: function (prevTabId, nextTabId) {
-                const prevHit = prevTabId && self._tabRegistry.findByTabId(prevTabId);
-                const nextHit = nextTabId && self._tabRegistry.findByTabId(nextTabId);
-                const payload = {
-                    from: prevHit ? { widgetInstanceId: prevHit.widgetInstanceUuid } : null,
-                    to:   nextHit ? { widgetInstanceId: nextHit.widgetInstanceUuid } : null
-                };
-                self._applyToModel('WorkspaceActiveChanged', payload);
-                if (self._eventRecorder) self._eventRecorder.emit('WorkspaceActiveChanged', payload);
             },
             // Divider-drag stop — diff new layout vs model and emit one
             // SplitRatioChanged per changed split. Most drags only touch
@@ -555,12 +562,24 @@ class WorkspaceShellChrome {
                     Object.keys(this._model.tabsBySlot ? {} : {}).length,
                     'replayed slot(s)');
 
-        // RFC 0048 — attach the keyboard pane-navigation layer over the MTP.
-        // Shallow-mode arrows move the pane cursor, Tab cycles tabs, Enter enters
-        // deep; inert in deep mode. Scoped to this workspace's content element.
-        this._paneNav = new this._PaneFocusNavCtor({
+        // RFC 0049 — the workspace focus coordinator, composed over the MTP.
+        // Owns the deep/shallow selection, the per-tab FocusManagers, click
+        // routing, and the shallow keyboard; MTP is driven via its renderer
+        // facet only. onDeepChanged carries what onWorkspaceActiveChanged used
+        // to (the entered-tab transition) into replay/persistence.
+        this._focusCoordinator = new this._FocusCoordinatorCtor({
             mtp:  this._mtp,
-            host: this._layout.contentEl
+            host: this._layout.contentEl,
+            onDeepChanged: function (prevTabId, nextTabId) {
+                const prevHit = prevTabId && self._tabRegistry && self._tabRegistry.findByTabId(prevTabId);
+                const nextHit = nextTabId && self._tabRegistry && self._tabRegistry.findByTabId(nextTabId);
+                const payload = {
+                    from: prevHit ? { widgetInstanceId: prevHit.widgetInstanceUuid } : null,
+                    to:   nextHit ? { widgetInstanceId: nextHit.widgetInstanceUuid } : null
+                };
+                self._applyToModel('WorkspaceActiveChanged', payload);
+                if (self._eventRecorder) self._eventRecorder.emit('WorkspaceActiveChanged', payload);
+            }
         }).attach();
     }
 
@@ -706,8 +725,10 @@ class WorkspaceShellChrome {
      * activeUuid instead of forcing null.</p>
      */
     _restoreWorkspaceActive() {
-        if (this._mtp && this._mtp.setWorkspaceActiveTab) {
-            try { this._mtp.setWorkspaceActiveTab(null); } catch (e) {}
+        // RFC 0049 — selection lives in the focus coordinator, which boots
+        // shallow; after projection just make sure nothing is left entered.
+        if (this._focusCoordinator) {
+            try { this._focusCoordinator.releaseToShallow(); } catch (e) {}
         }
     }
 
@@ -756,6 +777,7 @@ class WorkspaceShellChrome {
     _buildPickerFlow() {
         this._pickerFlow = new this._PickerTabFlowCtor({
             mtp:           this._mtp,
+            focus:         this._focusCoordinator,   // RFC 0049 — deep-select via the coordinator
             widgetsBranch: this._widgetsBranch,
             spec:          this._spec,
             workspaceCtx:  this._workspaceCtx,

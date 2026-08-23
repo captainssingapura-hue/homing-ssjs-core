@@ -563,6 +563,10 @@ class SplitPane {
         var self = this;
         var isHorizontal = splitNode.orientation === "horizontal";
         var start = function (e) {
+            // preventDefault is LOAD-BEARING beyond anti-text-selection: it also
+            // suppresses the browser's default focus move on mousedown, so a
+            // divider drag never steals focus from a deep-selected widget
+            // (RFC 0049 — window management stays deep).
             e.preventDefault();
             divider.classList.add("hsp-active");
             document.body.classList.add("hsp-dragging");

@@ -37,38 +37,34 @@ public interface MultiTabPaneContract {
     void moveTab(SlotId srcSlotId, TabId tabId, SlotId destSlotId, int destIndex);
     void attachTab(SlotId slotId, TabDescriptor tab, int index);
     void switchTab(SlotId slotId, TabId tabId);
-    void setWorkspaceActiveTab(Optional<TabId> tabId);
     void split(SlotId slotId, String orientation);   // V1 compromise — String
     void merge(SlotId slotId);
 
-    // RFC 0048 — modal keyboard pane navigation. Shallow: a pane cursor moves
-    // with the arrows (selectPane / focusPane), Tab cycles tabs within it
-    // (cycleTabInPane). Deep: the cursor pane is entered (enterDeep) and released
-    // (releaseToShallow). "deep" is derived from the workspace-active tab.
-    void selectPane(SlotId slotId);
-    void focusPane(String direction);   // 'left' | 'right' | 'up' | 'down' — V1 String
-    void cycleTabInPane(int delta);
-    void enterDeep(SlotId slotId);
-    void releaseToShallow();
+    // RFC 0049 — the renderer facet. MTP is focus-agnostic: the shell's focus
+    // coordinator decides the selection and MTP merely paints it. The RFC 0048
+    // focus API (selectPane / focusPane / cycleTabInPane / enterDeep /
+    // releaseToShallow / setWorkspaceActiveTab / mode / selectedSlot) is
+    // REMOVED — that logic now lives in the shell coordinator.
+    void paintSelection(SlotId slotId, String mode);   // "shallow" | "deep" | null — V1 String
+    void setAddEnabled(boolean enabled);               // global-budget verdict → "+" affordance
 
     // ─── Read-only public methods ────────────────────────────────────────
 
-    Optional<TabId>  getWorkspaceActiveTab();
     String           paneIdOf(SlotId slotId);             // V1 compromise — String
     int              tabIndexOf(SlotId slotId, TabId tabId);
     Optional<SlotId> slotIdOfPaneId(String paneId);       // V1 compromise — String
 
-    // RFC 0047 — the global tab budget as one shared pool. Replaces the
-    // per-pane depth-rationed capacityOf(slotId): the limit is a workspace
-    // total, so these predicates are pane-independent.
+    // RFC 0047/0049 — the two-tier tab budget. budget() is the LOCAL static
+    // invariant (fixed at construction); canAdd() = local room AND the shell's
+    // global-budget verdict (setAddEnabled).
     int              totalTabs();      // tabs across every slot
-    int              budget();         // the conserved workspace ceiling
-    boolean          atCapacity();     // pool exhausted — no pane may add
-    boolean          canAdd();         // room for one more, anywhere
+    int              budget();         // the local static ceiling
+    boolean          atCapacity();     // local ceiling reached — no pane may add
+    boolean          canAdd();         // local room AND the global verdict
 
-    // RFC 0048 — focus-navigation read model.
-    String           mode();           // 'shallow' | 'deep'
-    Optional<SlotId> selectedSlot();   // the shallow-mode pane cursor
+    // RFC 0049 — the access facet, for the shell coordinator.
+    Object           contentElOf(TabId tabId);            // the tab's content element, or null
+    Optional<SlotId> neighbourOf(SlotId slotId, String direction);   // shared-edge adjacency
 
     /**
      * Name of the JS class implementing this contract. Used by the
@@ -88,7 +84,7 @@ public interface MultiTabPaneContract {
             "onTabRemoved",
             "onTabMoved",
             "onTabAttached",
-            "onWorkspaceActiveChanged",
+            "onChromeInteract",   // RFC 0049 — replaces onWorkspaceActiveChanged
             "onSplit",
             "onMerge"
     };
