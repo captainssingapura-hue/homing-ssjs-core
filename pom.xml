@@ -93,6 +93,10 @@
              workspace-shell (the workspace stack is a strict downstream of
              studio-base, so the wiring cannot live in studio-base itself). -->
         <module>homing-studio-workspace</module>
+        <!-- RFC 0050 — the Relation Grid: the generic Excel-like table
+             primitive family, its own Maven module (one Crate per module) so
+             any downstream can consume it without the studio/workspace shells. -->
+        <module>homing-relation-grid</module>
         <!-- RFC 0040 — batteries-included entry point: StudioStarterFixtures =
              DefaultFixtures + the Studio Workspace pre-wired. Downstream studios
              depend on this one module to get the workspace out of the box.
