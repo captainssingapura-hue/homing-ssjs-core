@@ -73,7 +73,19 @@ var _STYLE_CSS = [
     ".hmtp-strip{display:flex;align-items:center;gap:2px;padding:4px;",
     "  background:var(--color-surface-raised);",
     "  border-bottom:1px solid var(--color-border);",
-    "  overflow-x:auto;flex-shrink:0;position:relative;}",
+    "  overflow-x:auto;flex-shrink:0;position:relative;",
+    "  transition:background-color 160ms ease, border-color 120ms ease;}",
+    // The selected/entered pane's TAB BAR joins the ring's visual language —
+    // an accent wash + accent underline at the same two intensities as the
+    // leaf ring (shallow = half strength, deep = full). Without this the strip
+    // reads as chrome outside the selection, and a maximized or busy pane
+    // gives no top-edge hint of where the user is.
+    ".hmtp-leaf-selected .hmtp-strip{",
+    "  background:color-mix(in srgb, var(--color-accent) 7%, var(--color-surface-raised));",
+    "  border-bottom-color:color-mix(in srgb, var(--color-accent) 50%, var(--color-border));}",
+    ".hmtp-leaf-entered .hmtp-strip{",
+    "  background:color-mix(in srgb, var(--color-accent) 14%, var(--color-surface-raised));",
+    "  border-bottom-color:var(--color-accent);}",
     ".hmtp-chip{display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:3px;",
     "  font:13px sans-serif;cursor:pointer;border:1px solid transparent;flex-shrink:0;",
     "  color:var(--color-text-muted);}",
