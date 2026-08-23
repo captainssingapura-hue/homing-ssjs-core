@@ -179,6 +179,42 @@ class WorkspaceFocusCoordinatorTest extends JsModuleTestBase {
     }
 
     @Test
+    void mouseCoverClickEntersDeepDirectlyAndOneEscapeYieldsShallow() {
+        assertTrue(js.eval("js", """
+                (() => {
+                    var s = scenario();
+                    // A single mouse click on a covered pane is a deliberate
+                    // entry: straight to deep — no dblclick required.
+                    s.fc.onChromeInteract({ kind: 'cover-click', slotId: 'tl' });
+                    var deepIn = s.fc.mode() === 'deep'
+                        && s.fc.deepTabId() === 'A'
+                        && s.contentA.inert === false
+                        && document.activeElement === s.contentA;
+                    // ...and ONE un-consumed Escape yields back to shallow.
+                    s.contentA.dispatchEvent(makeEvent('keydown', { key: 'Escape' }));
+                    return deepIn
+                        && s.fc.mode() === 'shallow'
+                        && s.fc.selectedSlotId() === 'tl'
+                        && s.contentA.inert === true;
+                })()""").asBoolean(), "mouse select enters deep directly; a single Escape yields shallow");
+    }
+
+    @Test
+    void chipActivationStaysShallowSoKeyboardCyclingNeverEntersDeep() {
+        assertTrue(js.eval("js", """
+                (() => {
+                    var s = scenario();
+                    // onTabActivated serves BOTH the strip-chip click and the
+                    // keyboard tab-cycle (switchTab) — it must stay shallow, or
+                    // Tab-cycling in shallow mode would silently enter a widget.
+                    s.fc.onTabActivated('tr', 'B');
+                    return s.fc.mode() === 'shallow'
+                        && s.fc.selectedSlotId() === 'tr'
+                        && s.contentB.inert === true;
+                })()""").asBoolean(), "tab activation is an outside-active act: shallow cursor, never deep");
+    }
+
+    @Test
     void escapeGiveUpDowngradesToShallowSameSlot() {
         assertTrue(js.eval("js", """
                 (() => {

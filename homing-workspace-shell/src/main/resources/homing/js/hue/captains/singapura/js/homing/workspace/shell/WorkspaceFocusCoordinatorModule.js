@@ -152,7 +152,11 @@ class WorkspaceFocusCoordinator {
     /** MTP reported a chrome interaction — the coordinator decides. */
     onChromeInteract(ev) {
         if (!ev) return;
-        if (ev.kind === "cover-click")         this.selectShallow(ev.slotId);
+        // A mouse act on a pane is a deliberate entry: straight to deep (a
+        // dblclick's first click already entered — the second is idempotent).
+        // Shallow stays the KEYBOARD's mode (arrows/Tab cursor; Escape yields
+        // back down), so the two input worlds never fight over one gesture.
+        if (ev.kind === "cover-click")         this.enterDeep(ev.slotId);
         else if (ev.kind === "cover-dblclick") this.enterDeep(ev.slotId);
         else if (ev.kind === "tab-detached") {
             // Transport policy: grabbing a tab out is a deliberate act on THAT
