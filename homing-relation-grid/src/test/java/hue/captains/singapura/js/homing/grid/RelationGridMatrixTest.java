@@ -202,7 +202,7 @@ class RelationGridMatrixTest {
                 "GridViewMapsModule.js", "GridHeaderDragModule.js", "GridLayoutModule.js",
                 "GridCellsModule.js", "GridCellTypesModule.js", "StockCellsModule.js",
                 "GridSelectionModule.js", "GridKeyboardModule.js", "GridEditControllerModule.js",
-                "GridBulkOpsModule.js", "GridBulkEditSessionModule.js", "GridViewStateModule.js",
+                "GridBulkOpsModule.js", "GridUpdateBatchModule.js", "GridBulkEditSessionModule.js", "GridViewStateModule.js",
                 "RelationGridModule.js"}) {
             eval(readJs("/homing/js/hue/captains/singapura/js/homing/grid/" + module));
         }

@@ -148,7 +148,7 @@ class RelationGridViewStateTest {
         for (String module : new String[]{
                 "GridViewMapsModule.js", "GridHeaderDragModule.js", "GridLayoutModule.js", "GridCellsModule.js",
                 "GridCellTypesModule.js", "StockCellsModule.js", "GridSelectionModule.js",
-                "GridKeyboardModule.js", "GridEditControllerModule.js", "GridBulkOpsModule.js",
+                "GridKeyboardModule.js", "GridEditControllerModule.js", "GridBulkOpsModule.js", "GridUpdateBatchModule.js",
                 "GridBulkEditSessionModule.js", "GridViewStateModule.js", "RelationGridModule.js"}) {
             eval(readJs("/homing/js/hue/captains/singapura/js/homing/grid/" + module));
         }

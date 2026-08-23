@@ -23,7 +23,9 @@
 // seam; onAction is gone). Options: editable, onEditStarted /
 // onEditCommitted(pk, column, v), onBulkEditRejected({reason, names}),
 // onBulkEditCommitted(ids, value), onReleaseRequested (idle Escape),
-// onCopy(tsv), onCursorMoved, onSelectionChanged, onViewChanged.
+// onCopy(tsv), onCursorMoved, onSelectionChanged, onViewChanged, and
+// header: { show, sticky, includeInCopy, labels } — the header DISPLAY
+// options, so a headerless or unfrozen grid needs no CSS trick downstream.
 // =============================================================================
 
 class RelationGrid {
@@ -39,6 +41,18 @@ class RelationGrid {
             return (typeof value === "number") ? new NumberCell() : new TextCell(); };
 
         var self = this;
+        // Header DISPLAY options — the downstream's call, not a CSS trick:
+        //   show          render the band at all (false = no thead is built)
+        //   sticky        freeze it while the body scrolls
+        //   includeInCopy lead a copied block with the column labels
+        //   labels        columnName → display text (identity stays the name)
+        var head = opts.header || {};
+        this._head = { show: head.show !== false, sticky: head.sticky !== false,
+                       includeInCopy: !!head.includeInCopy, labels: head.labels || {} };
+        this._labelOf = function (c) {
+            return Object.prototype.hasOwnProperty.call(self._head.labels, c)
+                 ? self._head.labels[c] : c;
+        };
         this._squelch = false;   // suppresses interim refreshes inside atomic commands
         this._maps = new GridViewMaps({
             pks:     this._adapter.pks(),
@@ -48,6 +62,8 @@ class RelationGrid {
         this._layout = new GridLayout({
             container: opts.container,
             label: opts.label || null,
+            showHeader: this._head.show,
+            stickyHeader: this._head.sticky,
             readOnly: opts.editable === false,
             onCellClick: function (i, j, mods) { self._onCellClick(i, j, mods); },
             onColResize: function (j, px) {                  // staged commit lands here
@@ -83,7 +99,8 @@ class RelationGrid {
             }
         });
         this._bulk = new GridBulkOps({ cells: this._cells, maps: this._maps,
-            selection: this._selection, adapter: this._adapter, host: this });
+            selection: this._selection, adapter: this._adapter, host: this,
+            headerInCopy: this._head.includeInCopy, labelOf: this._labelOf });
         this._session = new GridBulkEditSession({
             cells: this._cells, adapter: this._adapter, bulk: this._bulk,
             // ids → view positions at the seam; the layout paints the error
@@ -113,7 +130,7 @@ class RelationGrid {
 
 
         // rAF batch for the direct update path (last write per cell wins).
-        this._pendingUpdates = new Map(); this._flushScheduled = false;
+        this._batch = new GridUpdateBatch({ cells: this._cells });
 
         // The domain's push channel — identity-addressed, straight to the cell.
         this._onCellChanged = function (pk, col, newValue) { self.updateCell(pk, col, newValue); };
@@ -127,7 +144,7 @@ class RelationGrid {
     _refresh(kind) {
         var maps = this._maps;
         var headers = [];
-        for (var j0 = 0; j0 < maps.cols(); j0++) headers.push(maps.columnAt(j0));
+        for (var j0 = 0; j0 < maps.cols(); j0++) headers.push(this._labelOf(maps.columnAt(j0)));
         this._layout.render({ headers: headers, rows: maps.rows() });
         if (this._vs) this._layout.setColWidths(this._vs.widthsPositional());   // widths ride identity
 
@@ -228,42 +245,14 @@ class RelationGrid {
     }
 
     // ── the direct update path (domain → cell; no layout, no lookup) ────────
+    // The queue itself is GridUpdateBatch; the facade just exposes it.
 
-    /**
-     * Batched per animation frame, LAST WRITE PER CELL WINS — a hot feed (the
-     * popularity tick) collapses to one cell.update() per frame. Without a
-     * requestAnimationFrame (headless), the flush runs synchronously.
-     */
-    updateCell(pk, col, newValue) {
-        if (!this._cells.get(pk, col)) return false;
-        this._pendingUpdates.set(pk + " " + col, { pk: pk, col: col, value: newValue });
-        this._scheduleFlush(); return true;
-    }
+    /** Queue a domain-pushed value; coalesced per frame, last write wins. */
+    updateCell(pk, col, newValue) { return this._batch.push(pk, col, newValue); }
 
-    _scheduleFlush() {
-        if (this._flushScheduled) return;
-        this._flushScheduled = true;
-        var self = this;
-        var raf = (typeof requestAnimationFrame === "function") ? requestAnimationFrame
-                : function (fn) { fn(); };
-        raf(function () { self._flushScheduled = false; self._flushUpdates(); });
-    }
-
-    _flushUpdates() {
-        var self = this, pending = this._pendingUpdates;
-        this._pendingUpdates = new Map();
-        pending.forEach(function (u) { self._cells.update(u.pk, u.col, u.value); });
-        return this;
-    }
-
-    /**
-     * Drain the batch NOW. A hidden page gets no animation frames, so pending
-     * updates can sit until the next reveal — harmless for painting (the map
-     * is bounded, one entry per cell, last write wins), but any read-path
-     * that goes through cell state (copySelection, getValue sweeps) MUST call
-     * this first or it reads stale values.
-     */
-    flushNow() { return this._flushUpdates(); }
+    /** Drain the batch NOW — every read-path (copy, export) must, because a
+     *  hidden page gets no frames and would otherwise read stale cell state. */
+    flushNow() { this._batch.drain(); return this; }
 
     // ── selection (identity-space; Phase 4) ─────────────────────────────────
 

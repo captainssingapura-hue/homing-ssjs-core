@@ -40,6 +40,7 @@ public final class RelationGridCrate implements Crate {
                 CrateEntry.of(GridKeyboardModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(GridEditControllerModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(GridBulkOpsModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
+                CrateEntry.of(GridUpdateBatchModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(GridCellTypesModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(GridBulkEditSessionModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(GridViewStateModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),

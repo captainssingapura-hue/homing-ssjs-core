@@ -30,6 +30,8 @@ class GridBulkOps {
         this._selection = deps.selection;
         this._adapter = deps.adapter;
         this._host = deps.host;
+        this._headerInCopy = !!deps.headerInCopy;      // header.includeInCopy
+        this._labelOf = deps.labelOf || function (c) { return c; };
     }
 
     /**
@@ -60,12 +62,19 @@ class GridBulkOps {
         return (v == null) ? "" : String(v);
     }
 
-    /** The active rect as TSV, raw values, view order. "" when empty. */
+    /** The active rect as TSV, raw values, view order. "" when empty.
+     *  With header.includeInCopy, a label row leads — the pasted block then
+     *  carries its own column names, which is what a spreadsheet expects. */
     copyTsv() {
         this._host.flushNow();                       // a read-path drains first
         var rect = this._activeRect();
         if (!rect) return "";
         var m = this._maps, rows = [];
+        if (this._headerInCopy) {
+            var head = [];
+            for (var jh = rect.j0; jh <= rect.j1; jh++) head.push(this._labelOf(m.columnAt(jh)));
+            rows.push(head.join("\t"));
+        }
         for (var i = rect.i0; i <= rect.i1; i++) {
             var cols = [];
             for (var j = rect.j0; j <= rect.j1; j++) {

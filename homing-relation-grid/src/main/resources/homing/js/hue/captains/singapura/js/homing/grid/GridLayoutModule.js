@@ -29,11 +29,14 @@ var _HGR_STYLE_CSS = [
     // Header borders as INSET BOX-SHADOW, not border: with border-collapse,
     // Chromium drops cell borders on position:sticky headers while scrolling —
     // shadows ride the cell, so the separators stay visible.
-    ".hgr-th{position:sticky;top:0;text-align:left;padding:6px 10px;",
+    // Stickiness is OPTIONAL (header.sticky) — the class carries it, so a
+    // downstream that scrolls its own container can turn it off.
+    ".hgr-th{text-align:left;padding:6px 10px;",
     "  background:var(--color-surface-raised);color:var(--color-text-muted);",
     "  white-space:nowrap;",
     "  box-shadow:inset -1px 0 0 var(--color-border),",
     "             inset 0 -2px 0 var(--color-border);}",
+    ".hgr-table.hgr-sticky-head .hgr-th{position:sticky;top:0;z-index:2;}",
     // ext2 — the resize HANDLE: a real element on the header's right edge, so
     // the pointer shows col-resize on hover and the drag has a reliable target
     // (sticky is a positioned ancestor, so absolute resolves against the th).
@@ -117,11 +120,20 @@ class GridLayout {
                    : null;
         this._colgroup = document.createElement("colgroup");
         this._table.appendChild(this._colgroup);
-        this._thead = document.createElement("thead");
-        this._headerRow = document.createElement("tr");
-        this._thead.appendChild(this._headerRow);
+        // header.show=false builds NO thead at all — not display:none. Nothing
+        // to mint, nothing to wire gestures onto, nothing for a reader to
+        // announce. (Minesweeper used to need a CSS trick for this.)
+        this._showHead = opts.showHeader !== false;
+        if (this._showHead) {
+            if (opts.stickyHeader !== false) _hgrAddClass(this._table, "hgr-sticky-head");
+            this._thead = document.createElement("thead");
+            this._headerRow = document.createElement("tr");
+            this._thead.appendChild(this._headerRow);
+            this._table.appendChild(this._thead);
+        } else {
+            this._thead = null; this._headerRow = null;
+        }
         this._tbody = document.createElement("tbody");
-        this._table.appendChild(this._thead);
         this._table.appendChild(this._tbody);
         this._container.appendChild(this._table);
         this._slots = [];    // [i][j] → td (the CellSlot hosts)
@@ -137,10 +149,12 @@ class GridLayout {
         var headers = (shape && shape.headers) || [];
         var rows = (shape && shape.rows) || 0;
 
-        while (this._headerRow.firstChild) this._headerRow.removeChild(this._headerRow.firstChild);
+        if (this._headerRow)
+            while (this._headerRow.firstChild) this._headerRow.removeChild(this._headerRow.firstChild);
         while (this._colgroup.firstChild) this._colgroup.removeChild(this._colgroup.firstChild);
         for (var h = 0; h < headers.length; h++) {
-            this._colgroup.appendChild(document.createElement("col"));
+            this._colgroup.appendChild(document.createElement("col"));   // widths need cols regardless
+            if (!this._headerRow) continue;
             var th = document.createElement("th");
             th.className = "hgr-th";
             th.textContent = headers[h];
