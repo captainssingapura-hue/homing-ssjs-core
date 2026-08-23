@@ -335,6 +335,40 @@ class RelationGridViewStateTest {
                 })()"""), "drag reorders on release; wiggles and Escapes change nothing");
     }
 
+    @Test
+    void dragTargetsTheHoveredSlotInBothDirectionsIncludingTheLast() {
+        assertTrue(evalBool("""
+                (() => {
+                    var f = fixture();
+                    function lanes() {                            // 4 x 100px lanes
+                        for (var k = 0; k < 4; k++) {
+                            f.thAt(k)._rl = k * 100; f.thAt(k)._rr = (k + 1) * 100;
+                        }
+                    }
+                    function drag(from, toX) {
+                        lanes();
+                        var th = f.thAt(from);
+                        th.fire('mousedown', { clientX: from * 100 + 50 });
+                        document.fire('mousemove', { clientX: toX });
+                        document.fire('mouseup', {});
+                        return f.headerTexts().join(',');
+                    }
+                    // RIGHTWARD onto the LAST column: just inside its left border
+                    // is enough — no midpoint crossing, no off-by-one.
+                    var toLast = drag(0, 310);
+                    var f2 = fixture();
+                    f = f2;
+                    // LEFTWARD onto the first column, symmetric
+                    var toFirst = drag(3, 90);
+                    var f3 = fixture(); f = f3;
+                    // hovering your OWN slot is a no-move
+                    var same = drag(1, 150);
+                    return toLast  === 'style,calories,price,ingredient'
+                        && toFirst === 'price,ingredient,style,calories'
+                        && same    === 'ingredient,style,calories,price';
+                })()"""), "crossing into column x lands in x's slot, both directions, last included");
+    }
+
     // ── helpers ──────────────────────────────────────────────────────────
     private void eval(String src) { js.eval("js", src); }
     private boolean evalBool(String expr) { return js.eval("js", expr).asBoolean(); }

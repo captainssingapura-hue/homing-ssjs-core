@@ -104,14 +104,15 @@ class GridHeaderDrag {
             if (!r) return;                               // no geometry: inert (headless)
             rects.push(r);
         }
-        function computeTarget(x) {
-            var t = 0;
+        // The pointer's column: crossing INTO column x targets x's slot, in
+        // both directions. (Midpoint-with-insertion-boundary was off by one
+        // rightward — removing the dragged column shifts the rest down — and
+        // made the last column reachable only past its midpoint, with the
+        // indicator flying off the table edge.)
+        function hoverIndex(x) {
             for (var k = 0; k < rects.length; k++)
-                if (x > (rects[k].left + rects[k].right) / 2) t = k + 1;
-            return t;
-        }
-        function boundaryX(t) {
-            return t < rects.length ? rects[t].left : rects[rects.length - 1].right;
+                if (x < rects[k].right) return k;
+            return rects.length - 1;
         }
         function onMove(e) {
             if (!moved) {
@@ -119,14 +120,14 @@ class GridHeaderDrag {
                 moved = true;
                 _hgdAddClass(th, "hgr-dragging");
                 guide = self._makeGuide(e.clientX);
-                if (guide) {                       // the LANDING SLOT, not a line:
-                    guide.className = "hgr-drop-band";   // both edges drawn, the
-                    guide.style.setProperty("--hgr-band-w",   // dragged column wide
-                        (rects[j].right - rects[j].left) + "px");
-                }
+                if (guide) guide.className = "hgr-drop-band";     // the LANDING SLOT
             }
-            target = computeTarget(e.clientX);
-            if (guide) guide.style.setProperty("--hgr-guide-x", boundaryX(target) + "px");
+            target = hoverIndex(e.clientX);
+            if (guide) {                    // the band IS the target column's slot
+                guide.style.setProperty("--hgr-guide-x", rects[target].left + "px");
+                guide.style.setProperty("--hgr-band-w",
+                    (rects[target].right - rects[target].left) + "px");
+            }
         }
         function teardown() {
             document.removeEventListener("mousemove", onMove);
@@ -137,8 +138,11 @@ class GridHeaderDrag {
         }
         function onUp() {
             teardown();
-            // before-itself and after-itself are both "no move"
-            if (moved && target !== j && target !== j + 1) self._onColReorder(j, target);
+            if (!moved || target === j) return;          // no slot change
+            // hovered SLOT → insertion index: landing right of home means
+            // inserting after the hovered column, because removing the dragged
+            // column first shifts everything beyond it down by one.
+            self._onColReorder(j, target > j ? target + 1 : target);
         }
         function onKey(e) {
             if (e.key === "Escape") { teardown(); if (e.stopPropagation) e.stopPropagation(); }
