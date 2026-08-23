@@ -716,7 +716,7 @@ class WorkspaceShellChrome {
     /**
      * After projection: put the workspace in RFC 0048 SHALLOW mode — no pane
      * entered, so no tab is workspace-active. A pane is entered only by the user
-     * (double-click / Enter). Because this runs after projection it
+     * (click / Enter). Because this runs after projection it
      * deterministically overrides any boot-time activation (e.g. the pinned
      * spawner). The MTP starts with its first pane as the shallow cursor.
      *

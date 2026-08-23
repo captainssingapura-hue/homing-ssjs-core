@@ -1112,8 +1112,8 @@ class MultiTabPane {
         // Cover overlay — sits above the active tab's content on every pane
         // except the painted-deep one. RFC 0049: MTP owns the cover DOM (it owns
         // the chrome) but DECIDES NOTHING — clicks are REPORTED via
-        // onChromeInteract for the shell coordinator to interpret (single click
-        // → select shallow; double click → select deep; per click routing).
+        // onChromeInteract for the shell coordinator to interpret (a click is a
+        // deliberate entry → deep; Escape yields back to shallow).
         var deepPane = this._painted.mode === "deep" && this._painted.slotId === slotId;
         if (state.activeTabId && !deepPane) {
             var cover = document.createElement("div");
