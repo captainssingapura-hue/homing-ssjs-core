@@ -102,6 +102,13 @@ class GridLayout {
         this._table = document.createElement("table");
         this._table.className = "hgr-table";
         this._table.setAttribute("tabindex", "0");      // the keyboard host
+        // RFC 0050 D9 — the STATIC reading path only: no role=grid (a real
+        // <table> with <th> already maps to role=table, and declaring grid
+        // would flip readers out of browse mode without the interactive layer
+        // to back it). The baseline: name the focusable table, and say plainly
+        // when nothing in it can be edited.
+        if (opts.label) this._table.setAttribute("aria-label", opts.label);
+        if (opts.readOnly) this._table.setAttribute("aria-readonly", "true");
         // the header gestures live in GridHeaderDrag (split by the ratchet)
         this._drag = (opts.onColResize || opts.onColReorder)
                    ? new GridHeaderDrag({ table: this._table,

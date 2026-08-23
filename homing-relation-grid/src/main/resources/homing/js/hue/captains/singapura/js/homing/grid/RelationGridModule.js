@@ -47,6 +47,8 @@ class RelationGrid {
         });
         this._layout = new GridLayout({
             container: opts.container,
+            label: opts.label || null,
+            readOnly: opts.editable === false,
             onCellClick: function (i, j, mods) { self._onCellClick(i, j, mods); },
             onColResize: function (j, px) {                  // staged commit lands here
                 var c = self._maps.columnAt(j);
