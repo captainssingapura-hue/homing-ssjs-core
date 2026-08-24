@@ -66,7 +66,7 @@ var _STYLE_CSS = [
     // set the same properties at equal specificity, declared weakest-first, so
     // when classes co-occur (selected+hover, entered+hover) the higher degree
     // wins with no blend. Keyboard-OWNERSHIP is not encoded here at all — it
-    // rides the orthogonal strip ::after glyph below, never the ring.
+    // rides the orthogonal keyboard tab below (content::before), never the ring.
     ".hmtp-leaf-selected::after{border-color:color-mix(in srgb, var(--color-accent) 50%, transparent);",
     "  box-shadow:inset 0 0 8px color-mix(in srgb, var(--color-accent) 18%, transparent);}",
     ".hmtp-leaf-hover::after{border-color:color-mix(in srgb, var(--color-accent) 75%, transparent);",
@@ -103,12 +103,24 @@ var _STYLE_CSS = [
     // element to mint (MTP is raw-DOM by decision, and a new document.create*
     // would be a fresh use-dom-ops-party violation), no map to keep, no
     // cleanup on merge. \2328 is U+2328 KEYBOARD, escaped so the source stays
-    // ASCII. Chrome-only (in the strip, never over content), pointer-events
-    // :none — this RFC removed an interception layer; the glyph must never
-    // become a new one.
-    ".hmtp-leaf-selected .hmtp-strip::after,",
-    ".hmtp-leaf-entered .hmtp-strip::after{content:'\\2328';margin-left:6px;flex-shrink:0;",
-    "  font:12px sans-serif;color:var(--color-accent);pointer-events:none;user-select:none;}",
+    // ASCII.
+    //
+    // It rides its own half-transparent TAB — a small band pinned under the tab
+    // bar at the content's LEADING edge — rather than sitting inside the strip
+    // itself. Two reasons: the strip is overflow-x:auto, so a trailing glyph
+    // could scroll out of view on a busy pane; and the trailing edge is
+    // already claimed by the corner split/merge buttons (absolute, top-right,
+    // z-index 6). Absolutely positioned, so appearing and disappearing costs
+    // no reflow of the widget below. pointer-events:none — this RFC removed an
+    // interception layer; the mark must never become a new one.
+    ".hmtp-leaf-selected .hmtp-content::before,",
+    ".hmtp-leaf-entered .hmtp-content::before{content:'\\2328';",
+    "  position:absolute;top:0;left:0;z-index:6;pointer-events:none;user-select:none;",
+    "  padding:1px 7px 2px;font:12px sans-serif;line-height:1.25;",
+    "  color:var(--color-accent);border-bottom-right-radius:4px;",
+    "  background:color-mix(in srgb, var(--color-surface-raised) 55%, transparent);",
+    "  border-right:1px solid color-mix(in srgb, var(--color-border) 50%, transparent);",
+    "  border-bottom:1px solid color-mix(in srgb, var(--color-border) 50%, transparent);}",
     ".hmtp-chip{display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:3px;",
     "  font:13px sans-serif;cursor:pointer;border:1px solid transparent;flex-shrink:0;",
     "  color:var(--color-text-muted);}",
