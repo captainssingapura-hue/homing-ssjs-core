@@ -66,7 +66,7 @@ var _STYLE_CSS = [
     // set the same properties at equal specificity, declared weakest-first, so
     // when classes co-occur (selected+hover, entered+hover) the higher degree
     // wins with no blend. Keyboard-OWNERSHIP is not encoded here at all — it
-    // rides the orthogonal strip glyph (.hmtp-kbd-glyph), never the ring.
+    // rides the orthogonal strip ::after glyph below, never the ring.
     ".hmtp-leaf-selected::after{border-color:color-mix(in srgb, var(--color-accent) 50%, transparent);",
     "  box-shadow:inset 0 0 8px color-mix(in srgb, var(--color-accent) 18%, transparent);}",
     ".hmtp-leaf-hover::after{border-color:color-mix(in srgb, var(--color-accent) 75%, transparent);",
@@ -97,13 +97,18 @@ var _STYLE_CSS = [
     "  border-bottom-color:var(--color-accent);}",
     // RFC 0052 — the keyboard-locus glyph: the ORTHOGONAL channel marking the
     // one pane that owns the keyboard (the cursor pane or the entered widget).
-    // Exactly one shows at any moment, toggled by the same paint that moves
-    // the keyboard rings. Chrome-only (in the strip, never over content) and
-    // pointer-events:none — this RFC removed an interception layer; the glyph
-    // must never become a new one.
-    ".hmtp-kbd-glyph{display:none;margin-left:6px;flex-shrink:0;font:12px sans-serif;",
-    "  color:var(--color-accent);pointer-events:none;user-select:none;}",
-    ".hmtp-kbd-glyph.hmtp-kbd-glyph-on{display:inline;}",
+    // A PSEUDO-ELEMENT, not a node: the two keyboard degree classes are its
+    // only trigger, so "exactly one glyph on screen" is not maintained — it is
+    // structural, inherited from "exactly one painted keyboard slot". No
+    // element to mint (MTP is raw-DOM by decision, and a new document.create*
+    // would be a fresh use-dom-ops-party violation), no map to keep, no
+    // cleanup on merge. \2328 is U+2328 KEYBOARD, escaped so the source stays
+    // ASCII. Chrome-only (in the strip, never over content), pointer-events
+    // :none — this RFC removed an interception layer; the glyph must never
+    // become a new one.
+    ".hmtp-leaf-selected .hmtp-strip::after,",
+    ".hmtp-leaf-entered .hmtp-strip::after{content:'\\2328';margin-left:6px;flex-shrink:0;",
+    "  font:12px sans-serif;color:var(--color-accent);pointer-events:none;user-select:none;}",
     ".hmtp-chip{display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:3px;",
     "  font:13px sans-serif;cursor:pointer;border:1px solid transparent;flex-shrink:0;",
     "  color:var(--color-text-muted);}",
@@ -294,7 +299,6 @@ class MultiTabPane {
         this._painted    = { slotId: null, mode: null };   // mode: "shallow" | "deep" | null (the KEYBOARD axis)
         this._hoverPainted = null;   // RFC 0052 — the painted hover (pointer-liveness) slot
         this._hoverSlot    = null;   // last reported pane-hover slot (reporting side)
-        this._glyphBySlot  = new Map();   // slotId → the strip's keyboard-locus glyph el
         this._addEnabled = true;   // global-budget verdict (shell policy) → the "+" affordance
         this._tabsBySlot = new Map();   // slotId → { tabs: [], activeTabId }
         this._stripEls   = new Map();   // slotId → strip DOM element (tracked for drag hit-testing)
@@ -689,13 +693,10 @@ class MultiTabPane {
     _renderRings() {
         var p = this._painted;
         var hover = (this._hoverPainted != null) ? this._hoverPainted : null;
-        var glyphs = this._glyphBySlot;
         this._leafBySlot.forEach(function (el, slot) {
             el.classList.toggle("hmtp-leaf-entered",  p.mode === "deep"    && slot === p.slotId);
             el.classList.toggle("hmtp-leaf-selected", p.mode === "shallow" && slot === p.slotId);
             el.classList.toggle("hmtp-leaf-hover",    slot === hover);
-            var g = glyphs ? glyphs.get(slot) : null;
-            if (g) g.classList.toggle("hmtp-kbd-glyph-on", slot === p.slotId && p.mode != null);
         });
     }
 
@@ -887,7 +888,6 @@ class MultiTabPane {
         this._tabsBySlot.delete(siblingSlotId);
         this._wrappersBySlot.delete(siblingSlotId);
         this._stripEls.delete(siblingSlotId);
-        this._glyphBySlot.delete(siblingSlotId);   // RFC 0052 — drop the merged-away glyph
         this._leafBySlot.delete(siblingSlotId);   // drop the merged-away pane's el
         // If the painted selection pointed at the merged-away pane, repoint the
         // paint at the survivor until the coordinator repaints (it hears onMerge).
@@ -1170,17 +1170,8 @@ class MultiTabPane {
         pill.textContent = used + " / " + max;
         pill.title = "Workspace tab budget: " + used + " used of " + max;
         strip.appendChild(pill);
-
-        // RFC 0052 — the keyboard-locus glyph (trailing edge, after the pill).
-        // Rendered on every strip, shown on exactly one by _renderRings.
-        var glyph = document.createElement("span");
-        glyph.className = "hmtp-kbd-glyph";
-        glyph.textContent = "⌨";              // ⌨
-        glyph.title = "Keyboard focus is here";
-        glyph.setAttribute("aria-hidden", "true"); // decorative; AT reads focus itself
-        strip.appendChild(glyph);
-        this._glyphBySlot.set(slotId, glyph);
-        this._renderRings();                       // re-apply glyph state to the fresh strip
+        // RFC 0052 — the keyboard-locus glyph rides the strip's ::after,
+        // triggered by the leaf's keyboard degree class. Nothing to append.
     }
 
     /**
