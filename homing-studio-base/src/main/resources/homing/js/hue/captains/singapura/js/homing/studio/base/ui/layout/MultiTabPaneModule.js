@@ -51,7 +51,7 @@ var _STYLE_CSS = [
     "  background:var(--color-surface);color:var(--color-text-primary);}",
     // RFC 0048 — focus rings + glow, drawn on an ::after OVERLAY (z-index above
     // the pane's content). An inset outline on the leaf itself is painted UNDER
-    // the pane's z-indexed children (content / cover z5 / corner z6 / widget), so
+    // the pane's z-indexed children (content / corner z6 / widget), so
     // on a filled pane the ring is invisible — which made shallow selection look
     // broken. The overlay sits above all of it. pointer-events:none so it never
     // intercepts clicks. Selected = dashed emphasis border; entered = solid
@@ -59,12 +59,18 @@ var _STYLE_CSS = [
     ".hmtp-leaf::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:7;",
     "  box-sizing:border-box;border:2px solid transparent;box-shadow:inset 0 0 0 transparent;",
     "  transition:box-shadow 160ms ease, border-color 120ms ease;}",
-    // Selected (shallow) and entered (deep) share ONE visual language — an accent
-    // border + inset glow — differing only in INTENSITY. Shallow is a half-strength
-    // accent border with a faint glow; deep is the full accent border with a strong
-    // glow. Same look, just shallower; the transition deepens it on enter.
+    // RFC 0052 — the DEGREE ladder: three states, one visual language (accent
+    // ring + inset glow), intensity ordered by how LIVE the pane is:
+    //   keyboard cursor (selected, inert)  <  hover (live)  <  entered (deep).
+    // The max-wins paint law is implemented by CASCADE ORDER: the three rules
+    // set the same properties at equal specificity, declared weakest-first, so
+    // when classes co-occur (selected+hover, entered+hover) the higher degree
+    // wins with no blend. Keyboard-OWNERSHIP is not encoded here at all — it
+    // rides the orthogonal keyboard tab below (content::before), never the ring.
     ".hmtp-leaf-selected::after{border-color:color-mix(in srgb, var(--color-accent) 50%, transparent);",
     "  box-shadow:inset 0 0 8px color-mix(in srgb, var(--color-accent) 18%, transparent);}",
+    ".hmtp-leaf-hover::after{border-color:color-mix(in srgb, var(--color-accent) 75%, transparent);",
+    "  box-shadow:inset 0 0 12px color-mix(in srgb, var(--color-accent) 30%, transparent);}",
     ".hmtp-leaf-entered::after{border-color:var(--color-accent);",
     "  box-shadow:inset 0 0 18px color-mix(in srgb, var(--color-accent) 45%, transparent);}",
     // The entered pane's content takes DOM focus (tabindex -1); suppress its own
@@ -83,9 +89,55 @@ var _STYLE_CSS = [
     ".hmtp-leaf-selected .hmtp-strip{",
     "  background:color-mix(in srgb, var(--color-accent) 7%, var(--color-surface-raised));",
     "  border-bottom-color:color-mix(in srgb, var(--color-accent) 50%, var(--color-border));}",
+    ".hmtp-leaf-hover .hmtp-strip{",
+    "  background:color-mix(in srgb, var(--color-accent) 10%, var(--color-surface-raised));",
+    "  border-bottom-color:color-mix(in srgb, var(--color-accent) 75%, var(--color-border));}",
     ".hmtp-leaf-entered .hmtp-strip{",
     "  background:color-mix(in srgb, var(--color-accent) 14%, var(--color-surface-raised));",
     "  border-bottom-color:var(--color-accent);}",
+    // RFC 0052 — the keyboard-locus glyph: the ORTHOGONAL channel marking the
+    // one pane that owns the keyboard (the cursor pane or the entered widget).
+    // A PSEUDO-ELEMENT, not a node: the two keyboard degree classes are its
+    // only trigger, so "exactly one glyph on screen" is not maintained — it is
+    // structural, inherited from "exactly one painted keyboard slot". No
+    // element to mint (MTP is raw-DOM by decision, and a new document.create*
+    // would be a fresh use-dom-ops-party violation), no map to keep, no
+    // cleanup on merge. \2328 is U+2328 KEYBOARD, escaped so the source stays
+    // ASCII.
+    //
+    // It rides its own opaque TAB — a small band pinned under the tab
+    // bar at the content's TRAILING (top-right) corner — rather than sitting
+    // inside the strip itself. Three reasons: the strip is overflow-x:auto, so
+    // a glyph in it could scroll out of view on a busy pane; the top-right of
+    // the CONTENT is clear of the corner split/merge buttons, which sit in the
+    // strip's band (absolute at the leaf's top:4px, above content's top edge);
+    // and widget content flows from the top-LEFT, so the right corner is the
+    // margin least likely to cover anything. Absolutely positioned, so
+    // appearing and disappearing costs no reflow of the widget below.
+    // pointer-events:none — this RFC removed an interception layer; the mark
+    // must never become a new one.
+    //
+    // Gated on .hmtp-kbd-scope: the mark shows only while the WORKSPACE
+    // actually owns the keyboard (see paintKeyboardScope). It is a truthful
+    // "keystrokes land here", not merely "this pane is the cursor" — so it
+    // goes dark whenever focus escapes to page chrome, and the invariant is
+    // AT MOST one on screen: exactly one while the workspace has the
+    // keyboard, none while it does not.
+    ".hmtp-kbd-scope .hmtp-leaf-selected .hmtp-content::before,",
+    ".hmtp-kbd-scope .hmtp-leaf-entered .hmtp-content::before{content:'\\2328';",
+    "  position:absolute;top:0;right:0;z-index:6;pointer-events:none;user-select:none;",
+    "  padding:1px 7px 2px;font:12px sans-serif;line-height:1.25;",
+    "  color:var(--color-accent);border-bottom-left-radius:4px;",
+    // OPAQUE, on the strip's own ground: the mark sits at the content's
+    // top-right, which is exactly where a vertical scrollbar starts. A
+    // translucent ground let the scrollbar track show through and read as a
+    // smudge; solid --color-surface-raised makes it read as a continuation of
+    // the tab bar hanging over the corner. (The alternative — detecting the
+    // scrollbar and shifting left by its width — costs JS measurement per
+    // resize for the same result.)
+    "  background:var(--color-surface-raised);",
+    "  border-left:1px solid var(--color-border);",
+    "  border-bottom:1px solid var(--color-border);}",
     ".hmtp-chip{display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:3px;",
     "  font:13px sans-serif;cursor:pointer;border:1px solid transparent;flex-shrink:0;",
     "  color:var(--color-text-muted);}",
@@ -120,15 +172,12 @@ var _STYLE_CSS = [
     // ─── Per-tab persistent content host. Created once per tab; widget's",
     // ─── render(el) is called once into it; never detached on tab switch.",
     // ─── Switching tabs flips display:block/none on this element.",
-    ".hmtp-tab-content{position:absolute;inset:0;overflow:auto;}",
-    // Invisible mouse-event capture layer rendered over every tab content",
-    // EXCEPT the workspace-active one. Click anywhere on it → that tab",
-    // becomes workspace-active. Sits above content; doesn't tint, doesn't",
-    // change layout. The widget below stops receiving mouse events while",
-    // inactive — its setActive(false) handles non-mouse cleanup (keyboard",
-    // listeners, audio, animations).",
-    ".hmtp-inactive-cover{position:absolute;inset:0;z-index:5;cursor:pointer;",
-    "  background:transparent;}",
+    // overscroll-behavior:contain — a pane's native scroll never chains
+    // outward: hitting a scroller's end must not start scrolling an ancestor.
+    // RFC 0052: scrolling is fully native (the pane under the pointer is
+    // live), so containment is the only scroll rule the framework keeps.
+    ".hmtp-tab-content{position:absolute;inset:0;overflow:auto;overscroll-behavior:contain;}",
+    ".hmtp-tab-content:focus{outline:none;}",   // the ring is the affordance, as on .hmtp-content
     ".hmtp-empty{display:flex;align-items:center;justify-content:center;",
     "  color:var(--color-text-muted);font:14px sans-serif;height:100%;}",
     // RFC 0049 — the transport modal wearing the deep selection (a detached tab
@@ -243,7 +292,8 @@ class MultiTabPane {
         //   onTabRemoved(slotId, tab, fromIndex)
         //   onTabMoved(srcSlotId, destSlotId, tab, fromIndex, toIndex)
         //   onTabActivated(slotId, tabId)           — strip-chip click / programmatic switchTab
-        //   onChromeInteract({ kind, slotId, ... }) — RFC 0049: cover-click / cover-dblclick /
+        //   onChromeInteract({ kind, slotId, ... }) — RFC 0049/0052: pane-hover { slotId or null } /
+        //       pane-press { slotId } / chip-click { slotId, tabId } /
         //       tab-detached { tabId, modalEl } / tab-docked { tabId } (transport)
         //   onSplit(sourceSlotId, orientation, newSlotId)
         //   onMerge(keptSlotId, removedSlotId)
@@ -258,7 +308,7 @@ class MultiTabPane {
         this._cbTabMoved         = opts.onTabMoved         || null;
         this._cbTabActivated     = opts.onTabActivated     || null;
         this._cbTabAttached      = opts.onTabAttached      || null;
-        // RFC 0049 — chrome-input reporting: cover clicks land on MTP's DOM, but
+        // RFC 0049 — chrome-input reporting: pointer input lands on MTP's DOM, but
         // the DECISION (select / enter / downgrade) is the shell coordinator's.
         // MTP reports { kind, slotId } and does nothing else.
         this._cbChromeInteract   = opts.onChromeInteract   || null;
@@ -273,9 +323,11 @@ class MultiTabPane {
         // MTP holds NO focus/selection logic. The shell's focus coordinator
         // decides which pane is selected and how (shallow/deep); MTP records
         // only what it was last told to PAINT (paintSelection) and renders the
-        // ring / cover / chip-accent from it. Distinct from per-slot
+        // ring / chip-accent from it. Distinct from per-slot
         // `activeTabId` (which tab is shown in each pane).
-        this._painted    = { slotId: null, mode: null };   // mode: "shallow" | "deep" | null
+        this._painted    = { slotId: null, mode: null };   // mode: "shallow" | "deep" | null (the KEYBOARD axis)
+        this._hoverPainted = null;   // RFC 0052 — the painted hover (pointer-liveness) slot
+        this._hoverSlot    = null;   // last reported pane-hover slot (reporting side)
         this._addEnabled = true;   // global-budget verdict (shell policy) → the "+" affordance
         this._tabsBySlot = new Map();   // slotId → { tabs: [], activeTabId }
         this._stripEls   = new Map();   // slotId → strip DOM element (tracked for drag hit-testing)
@@ -327,6 +379,26 @@ class MultiTabPane {
 
         // Drag controller — instantiated last so all state is in place.
         this._drag = new TabDragController(this);
+
+        // RFC 0052 — cover-free pointer reporting. Two delegated listeners on
+        // the container replace the per-pane cover overlay; MTP still decides
+        // NOTHING — it reports, the shell coordinator interprets.
+        //   pane-hover  — the pane whose CONTENT the pointer is over (null when
+        //                 none): pointerover recomputes, pointerleave clears.
+        //                 The strip and corners do not count — hovering chrome
+        //                 must not wake the widget.
+        //   pane-press  — capture-phase mousedown in a pane's content: fired
+        //                 BEFORE the browser's focus step and WITHOUT consuming
+        //                 the event, so the same click that enters also acts.
+        this._container   = opts.container;
+        this._hoverSlot   = null;    // last reported pane-hover slot
+        this._hoverPainted = null;   // renderer-facet hover paint (paintHover)
+        this._onPointerOverBound  = this._onPointerOver.bind(this);
+        this._onPointerLeaveBound = this._onPointerLeave.bind(this);
+        this._onPanePressBound    = this._onPanePress.bind(this);
+        this._container.addEventListener("pointerover", this._onPointerOverBound);
+        this._container.addEventListener("pointerleave", this._onPointerLeaveBound);
+        this._container.addEventListener("mousedown", this._onPanePressBound, true);
     }
 
     /** Layout source of truth — SplitPane after construction, boot layout during. */
@@ -562,7 +634,7 @@ class MultiTabPane {
 
     /**
      * Paint the selection visual: mode "shallow" (dashed cursor ring), "deep"
-     * (solid ring + cover off + chip accent on that pane's active tab), or
+     * (solid ring + chip accent on that pane's active tab), or
      * null/undefined to clear. Pure rendering — no focus, no setActive, no
      * events fired.
      */
@@ -575,7 +647,7 @@ class MultiTabPane {
         this._painted = next;
         // The effective diff (RFC 0049): only the slots whose visuals can differ
         // — the previously painted one and the newly painted one — re-render;
-        // every other pane's cover/strip is unaffected by a selection change.
+        // every other pane's strip is unaffected by a selection change.
         var self = this;
         [prev.slotId, next.slotId].forEach(function (sid, i, arr) {
             if (sid != null && arr.indexOf(sid) === i && self._wrappersBySlot.has(sid)) {
@@ -639,15 +711,21 @@ class MultiTabPane {
     }
 
     /**
-     * Paint the focus rings from the painted-selection record: the painted deep
-     * slot gets the solid accent ring, a painted shallow slot the dashed
-     * selection ring. At most one ring in the whole workspace.
+     * Paint the two channels from the painted records (RFC 0052):
+     *   DEGREE — the keyboard classes (selected = cursor, entered = deep) plus
+     *   the hover class; a pane may carry a keyboard class AND the hover class,
+     *   and the CSS cascade order resolves them max-wins with no blend.
+     *   KEYBOARD LOCUS — the strip glyph on the one pane that owns the
+     *   keyboard (cursor or entered): exactly one on screen, by construction,
+     *   because there is exactly one painted keyboard slot.
      */
     _renderRings() {
         var p = this._painted;
+        var hover = (this._hoverPainted != null) ? this._hoverPainted : null;
         this._leafBySlot.forEach(function (el, slot) {
             el.classList.toggle("hmtp-leaf-entered",  p.mode === "deep"    && slot === p.slotId);
             el.classList.toggle("hmtp-leaf-selected", p.mode === "shallow" && slot === p.slotId);
+            el.classList.toggle("hmtp-leaf-hover",    slot === hover);
         });
     }
 
@@ -872,9 +950,79 @@ class MultiTabPane {
     destroy() {
         if (this._drag) { this._drag.destroy(); this._drag = null; }
         if (this._sp) { this._sp.destroy(); this._sp = null; }
+        if (this._container) {
+            if (this._onPointerOverBound)  this._container.removeEventListener("pointerover",  this._onPointerOverBound);
+            if (this._onPointerLeaveBound) this._container.removeEventListener("pointerleave", this._onPointerLeaveBound);
+            if (this._onPanePressBound)    this._container.removeEventListener("mousedown",    this._onPanePressBound, true);
+            this._onPointerOverBound = this._onPointerLeaveBound = this._onPanePressBound = null;
+        }
         this._tabsBySlot.clear();
         this._stripEls.clear();
         this._wrappersBySlot.clear();
+    }
+
+    // ── RFC 0052: cover-free pointer reporting ───────────────────────────────
+
+    /** The slotId whose CONTENT contains the given event target, or null. */
+    _slotOfContentTarget(t) {
+        if (!t || typeof t.closest !== "function") return null;
+        var content = t.closest(".hmtp-content");
+        if (!content) return null;                 // strip / corner / outside
+        var leaf = content.closest(".hmtp-leaf");
+        if (!leaf) return null;
+        var slotId = null;
+        this._leafBySlot.forEach(function (el, slot) { if (el === leaf) slotId = slot; });
+        return slotId;
+    }
+
+    _onPointerOver(ev) {
+        var slot = this._slotOfContentTarget(ev.target);
+        if (slot === this._hoverSlot) return;      // no change — no report
+        this._hoverSlot = slot;
+        this._fire(this._cbChromeInteract, "onChromeInteract", [{ kind: "pane-hover", slotId: slot }]);
+    }
+
+    _onPointerLeave(ev) {
+        if (this._hoverSlot == null) return;
+        this._hoverSlot = null;
+        this._fire(this._cbChromeInteract, "onChromeInteract", [{ kind: "pane-hover", slotId: null }]);
+    }
+
+    /**
+     * Capture-phase mousedown: reported before the browser's own focus step
+     * (the default action of mousedown), which is what makes the coordinator's
+     * entry precede focus movement — the exactness the RFC 0052 focusin-bounce
+     * rule rests on. Never consumed: the widget receives the same event.
+     */
+    _onPanePress(ev) {
+        var slot = this._slotOfContentTarget(ev.target);
+        if (slot == null) return;                  // strip/corner clicks are their own gestures
+        this._fire(this._cbChromeInteract, "onChromeInteract", [{ kind: "pane-press", slotId: slot }]);
+    }
+
+    /**
+     * RFC 0052 renderer facet — paint the pointer-liveness (hover) degree on a
+     * pane, or clear it (null). Orthogonal to paintSelection: the coordinator
+     * drives both; the max-wins law is enforced by CSS cascade order, so a
+     * pane carrying both a keyboard class and the hover class shows the higher
+     * degree with no blend.
+     */
+    paintHover(slotId) {
+        this._hoverPainted = (slotId != null) ? slotId : null;
+        this._renderRings();
+    }
+
+    /**
+     * RFC 0052 renderer facet — does the WORKSPACE currently own the keyboard?
+     * Gates the keyboard-locus mark, so it states a fact the ring cannot: the
+     * cursor pane is still the cursor pane while focus sits in page chrome,
+     * but keystrokes do NOT land there, and an always-on mark would be lying.
+     * The coordinator computes the fact; MTP just renders it.
+     */
+    paintKeyboardScope(on) {
+        if (!this._container || !this._container.classList) return this;
+        this._container.classList.toggle("hmtp-kbd-scope", !!on);
+        return this;
     }
 
     // ─── Internals ───────────────────────────────────────────────────────────
@@ -1064,11 +1212,13 @@ class MultiTabPane {
         pill.textContent = used + " / " + max;
         pill.title = "Workspace tab budget: " + used + " used of " + max;
         strip.appendChild(pill);
+        // RFC 0052 — the keyboard-locus glyph rides the strip's ::after,
+        // triggered by the leaf's keyboard degree class. Nothing to append.
     }
 
     /**
      * Content area surgical update. Walks the existing children and removes
-     * only what no longer belongs (empty-state node, stale cover, dead tab
+     * only what no longer belongs (empty-state node, dead tab
      * contents); keeps still-current tab contents attached; appends new tab
      * contents the first time they're seen; toggles display per active.
      */
@@ -1087,7 +1237,7 @@ class MultiTabPane {
                 if (currentIds[tabId]) { i++; continue; }
                 // stale tab content — drop
             }
-            // empty-state messages and covers are always re-created — drop them
+            // empty-state messages are always re-created — drop them
             content.removeChild(ch);
         }
 
@@ -1098,6 +1248,7 @@ class MultiTabPane {
             if (!tab._contentEl) {
                 tab._contentEl = document.createElement("div");
                 tab._contentEl.className = "hmtp-tab-content";
+                tab._contentEl.setAttribute("tabindex", "-1");   // RFC 0052: click-focus fallback target
                 tab._contentEl.setAttribute("data-tab-id", tab.id);
                 if (typeof tab.render === "function") {
                     try { tab.render(tab._contentEl); }
@@ -1121,26 +1272,13 @@ class MultiTabPane {
             return;
         }
 
-        // Cover overlay — sits above the active tab's content on every pane
-        // except the painted-deep one. RFC 0049: MTP owns the cover DOM (it owns
-        // the chrome) but DECIDES NOTHING — clicks are REPORTED via
-        // onChromeInteract for the shell coordinator to interpret (a click is a
-        // deliberate entry → deep; Escape yields back to shallow).
-        var deepPane = this._painted.mode === "deep" && this._painted.slotId === slotId;
-        if (state.activeTabId && !deepPane) {
-            var cover = document.createElement("div");
-            cover.className = "hmtp-inactive-cover";
-            cover.addEventListener("mousedown", function (ev) { ev.stopPropagation(); });
-            cover.addEventListener("click", function (ev) {
-                ev.stopPropagation();
-                self._fire(self._cbChromeInteract, "onChromeInteract", [{ kind: "cover-click", slotId: slotId }]);
-            });
-            cover.addEventListener("dblclick", function (ev) {
-                ev.stopPropagation();
-                self._fire(self._cbChromeInteract, "onChromeInteract", [{ kind: "cover-dblclick", slotId: slotId }]);
-            });
-            content.appendChild(cover);
-        }
+        // RFC 0052 — no cover. The old interception overlay cost a dead click
+        // on every pane switch and made hover-scrolling impossible (a sibling
+        // of the scroller over inert content). Its two jobs moved: mouse
+        // shielding is `inert` (lifted per-pane by pointer liveness), and the
+        // click report is the delegated capture-phase mousedown on the
+        // container (_onPanePress) — which does NOT consume the event, so the
+        // same click that enters the pane also acts on the widget.
     }
 
     /**

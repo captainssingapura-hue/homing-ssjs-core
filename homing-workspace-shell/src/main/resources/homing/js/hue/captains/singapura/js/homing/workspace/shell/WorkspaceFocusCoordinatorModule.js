@@ -23,8 +23,11 @@
 //            gives the setActive edges), one paintSelection (MTP diffs
 //            internally), modal accents, onDeepChanged from the same diff.
 //
-// Invariant, by construction: exactly ONE selection target at all times; at
-// most one selected widget; mode ∈ {shallow, deep}; deep ⇒ widget.
+// Invariant (amended by RFC 0052 to ONE LOCUS PER INPUT DEVICE): the KEYBOARD
+// axis keeps exactly ONE selection target at all times; at
+// most one selected widget; mode ∈ {shallow, deep}; deep ⇒ widget. The
+// POINTER axis (RFC 0052) holds at most one pointer-live pane, synced by
+// _syncPointerLive — so at most TWO widgets are un-firewalled at any moment.
 //
 // The shallow keyboard lives in its own module (ShallowKeyboard); the per-tab
 // FocusManagers own the immutable mechanics. MTP is driven only through its
@@ -46,18 +49,30 @@ class WorkspaceFocusCoordinator {
         this._fms     = new Map();        // tabId → FocusManager (world fact: alive tabs)
         this._transportModals = new Map();// tabId → modal el (accent registry; state never depends on it)
         this._pendingActivationFn = null; // per-request activation fn for the next deep apply
+        this._hoverSlot = null;           // RFC 0052 — the pointer axis: pane under the pointer
         this._applying = false;           // re-entrancy guard: notifications during apply re-run once
         this._dirty    = false;
         this._attached = false;
         this._Keyboard = opts.ShallowKeyboardCtor
                        || (typeof ShallowKeyboard !== "undefined" ? ShallowKeyboard : null);
         this._keyboard = null;
+        this._Scope    = opts.KeyboardScopeCtor
+                       || (typeof KeyboardScope !== "undefined" ? KeyboardScope : null);
+        this._scope    = null;
     }
 
     attach() {
         if (this._attached) return this;
         if (this._Keyboard) {
             this._keyboard = new this._Keyboard({ coordinator: this, mtp: this._mtp, host: this._host }).attach();
+        }
+        // RFC 0052 — the keyboard-scope watcher owns its own fact and reports
+        // changes; the coordinator only forwards them to the renderer.
+        var self = this;
+        if (this._Scope) {
+            this._scope = new this._Scope({ host: this._host,
+                onChange: function (on) { if (self._mtp.paintKeyboardScope) self._mtp.paintKeyboardScope(on); }
+            }).attach();
         }
         this._attached = true;
         this._adoptExistingTabs();
@@ -67,6 +82,7 @@ class WorkspaceFocusCoordinator {
 
     dispose() {
         if (!this._attached) return this;
+        if (this._scope) { try { this._scope.dispose(); } catch (e) {} this._scope = null; }
         if (this._keyboard) { try { this._keyboard.dispose(); } catch (e) {} this._keyboard = null; }
         this._fms.forEach(function (fm) { try { fm.dispose(); } catch (e) {} });
         this._fms.clear();
@@ -139,7 +155,10 @@ class WorkspaceFocusCoordinator {
         this._refresh();
     }
 
-    /** Chip click / keyboard cycle — an outside-active act: shallow cursor there. */
+    /** Tab activation (chip click or keyboard cycle) — a pure STATE event:
+     *  shallow cursor there. A chip CLICK additionally reports chip-click,
+     *  which arrives after this and upgrades to deep (RFC 0052) — while the
+     *  keyboard tab-cycle, sharing this fire site, stays shallow. */
     onTabActivated(slotId, tabId) { this.selectShallow(slotId); }
 
     onSplit(srcSlot, orientation, newSlot) { this._refresh(); }
@@ -152,12 +171,18 @@ class WorkspaceFocusCoordinator {
     /** MTP reported a chrome interaction — the coordinator decides. */
     onChromeInteract(ev) {
         if (!ev) return;
-        // A mouse act on a pane is a deliberate entry: straight to deep (a
-        // dblclick's first click already entered — the second is idempotent).
-        // Shallow stays the KEYBOARD's mode (arrows/Tab cursor; Escape yields
-        // back down), so the two input worlds never fight over one gesture.
-        if (ev.kind === "cover-click")         this.enterDeep(ev.slotId);
-        else if (ev.kind === "cover-dblclick") this.enterDeep(ev.slotId);
+        // RFC 0052 — cover-free interpretation. The pointer is a declaration
+        // of intent: pane-hover drives the POINTER axis only (liveness + the
+        // hover degree paint — never the keyboard locus, so typing can never
+        // follow mouse drift); pane-press (capture-phase, before the browser's
+        // focus step) and chip-click are deliberate entries: straight to deep.
+        // The keyboard keeps shallow for its cursor; Escape yields back down.
+        if (ev.kind === "pane-press" || ev.kind === "chip-click") this.enterDeep(ev.slotId);
+        else if (ev.kind === "pane-hover") {
+            this._hoverSlot = (ev.slotId != null) ? ev.slotId : null;
+            this._syncPointerLive();
+            if (this._mtp.paintHover) this._mtp.paintHover(this._hoverSlot);
+        }
         else if (ev.kind === "tab-detached") {
             // Transport policy: grabbing a tab out is a deliberate act on THAT
             // tab — the selection follows it. The resolver derives "in
@@ -203,30 +228,39 @@ class WorkspaceFocusCoordinator {
             var guard = 0;
             do { this._dirty = false; this._apply(this._resolve()); } while (this._dirty && ++guard < 4);
         } finally { this._applying = false; }
+        // RFC 0052 — the pointer axis re-syncs after every keyboard-axis apply:
+        // structural changes (tab switch, close, move) can change WHICH tab is
+        // the hovered pane's active one without any pointer event firing.
+        this._syncPointerLive();
         return this;
+    }
+
+    /**
+     * RFC 0052 — enforce the pointer axis: the hovered pane's ACTIVE tab is
+     * pointer-live; every other FM is not. At most one FM is pointer-live, so
+     * with the keyboard axis at most TWO widgets are un-firewalled at any
+     * moment (the entered one and the pointed one) — the amended envelope.
+     */
+    _syncPointerLive() {
+        if (this._scope) this._scope.resync();   // cure any missed focus event
+        var live = (this._hoverSlot != null) ? this._activeTabOf(this._hoverSlot) : null;
+        this._fms.forEach(function (fm, tabId) { if (fm.setPointerLive) fm.setPointerLive(tabId === live); });
     }
 
     _apply(next) {
         var prev = this._applied || { tabId: null, slotId: null, mode: null, transport: false };
-        var same = prev.tabId === next.tabId && prev.slotId === next.slotId
-                && prev.mode === next.mode && prev.transport === next.transport;
+        var same = prev.tabId === next.tabId && prev.slotId === next.slotId && prev.mode === next.mode && prev.transport === next.transport;
         var nextDeep = (next.mode === "deep") ? next.tabId : null;
-        if (same) {
-            // Redundant trigger — drift repair only (focus back into the deep tab).
-            var f0 = nextDeep != null ? this._fms.get(nextDeep) : null;
-            if (f0) f0.reconcile();
-            return;
-        }
+        // Redundant trigger — drift repair only (focus back into the deep tab).
+        if (same) { var f0 = nextDeep != null ? this._fms.get(nextDeep) : null; if (f0) f0.reconcile(); return; }
         var prevDeep = (prev.mode === "deep") ? prev.tabId : null;
         var self = this;
         // FM sweep — idempotent per tab; the FM's own state yields the
         // setActive edges (fires exactly once per change), release before enter.
         this._fms.forEach(function (fm, tabId) { if (tabId !== nextDeep) fm.applyDeep(false); });
-        this._mtp.paintSelection(next.transport ? null : next.slotId,
-                                 next.transport ? null : next.mode);
+        this._mtp.paintSelection(next.transport ? null : next.slotId, next.transport ? null : next.mode);
         this._transportModals.forEach(function (el, tabId) {
-            var on = next.transport && tabId === nextDeep;
-            try { el.classList[on ? "add" : "remove"]("hmtp-modal-entered"); } catch (e) {}
+            try { el.classList[(next.transport && tabId === nextDeep) ? "add" : "remove"]("hmtp-modal-entered"); } catch (e) {}
         });
         if (nextDeep != null) {
             var fm = this._fms.get(nextDeep);

@@ -40,16 +40,17 @@ class FocusManager {
         this._onGiveUp        = typeof opts.onGiveUp === "function" ? opts.onGiveUp : null;
         this._onIntendedFocus = typeof opts.onIntendedFocus === "function" ? opts.onIntendedFocus : null;
         this._deep            = false;   // is THIS tab currently the deep-selected one
+        this._pointerLive     = false;   // RFC 0052 — the pointer rests on this pane
         this._reconciling     = false;   // set while we move focus programmatically
         this._mo              = null;    // Issue 0003 drift watch — live only while deep
         this._attached        = false;
 
         // The content must be programmatically focusable for the default landing,
-        // and starts inert — a tab is not deep until the workspace enters it.
+        // and starts inert — a tab is dormant until entered or pointed at.
         if (!this._content.hasAttribute || !this._content.hasAttribute("tabindex")) {
             try { this._content.setAttribute("tabindex", "-1"); } catch (e) {}
         }
-        this._content.inert = true;
+        this._syncInert();
 
         var self = this;
         // give-up — only meaningful while deep (an inert tab holds no focus).
@@ -60,7 +61,7 @@ class FocusManager {
             var d = e && e.detail;
             if (self._deep && d && d.intent === "release") self._give(e);
         };
-        // take-focus request — a covered (inert) widget cannot .focus() itself, so
+        // take-focus request — a dormant (inert) widget cannot .focus() itself, so
         // it dispatches intendedFocusIn, optionally carrying its activation function.
         this._onIntended = function (e) {
             if (!self._onIntendedFocus) return;
@@ -69,6 +70,22 @@ class FocusManager {
             try { self._onIntendedFocus(fn); }
             catch (err) { console.error("[FocusManager] onIntendedFocus threw:", err); }
         };
+        // RFC 0052 — the focusin bounce. With a live-but-not-entered pane a
+        // widget could take focus without being asked. The rule is exact and
+        // heuristic-free: pane entry happens in the CAPTURE phase of mousedown,
+        // BEFORE the browser's focus step — so any focusin arriving while this
+        // tab is still not deep is, by construction, not click-driven. Bounce
+        // it. Legitimate click focus is never bounced (the tab is deep by the
+        // time focusin fires); autofocus / timer / async-render grabs are.
+        // intendedFocusIn remains the sanctioned way for a widget to ASK.
+        this._onFocusIn = function (e) {
+            if (self._deep || self._reconciling) return;
+            self._reconciling = true;
+            try {
+                if (e && e.target && typeof e.target.blur === "function") e.target.blur();
+            } catch (err) {}
+            finally { self._reconciling = false; }
+        };
     }
 
     attach() {
@@ -76,6 +93,7 @@ class FocusManager {
         this._content.addEventListener("keydown", this._onKey);
         this._content.addEventListener("homing-focus", this._onRelease);
         this._content.addEventListener("intendedFocusIn", this._onIntended);
+        this._content.addEventListener("focusin", this._onFocusIn);
         this._attached = true;
         return this;
     }
@@ -86,8 +104,30 @@ class FocusManager {
         this._content.removeEventListener("keydown", this._onKey);
         this._content.removeEventListener("homing-focus", this._onRelease);
         this._content.removeEventListener("intendedFocusIn", this._onIntended);
+        this._content.removeEventListener("focusin", this._onFocusIn);
         this._attached = false;
         return this;
+    }
+
+    // ── RFC 0052 — pointer liveness ──────────────────────────────────────────
+    // inert has ONE writer: this manager, via _syncInert. Two facts feed it —
+    // the keyboard axis (deep) and the pointer axis (pointerLive) — and the
+    // pane is dormant only when neither holds:  inert = !(deep || pointerLive).
+
+    /** The pointer rests on (or left) this tab's pane. Liveness only — never
+     *  touches the keyboard axis, setActive, or focus. */
+    setPointerLive(live) {
+        live = !!live;
+        if (live === this._pointerLive) return this;
+        this._pointerLive = live;
+        this._syncInert();
+        return this;
+    }
+
+    isPointerLive() { return this._pointerLive; }
+
+    _syncInert() {
+        this._content.inert = !(this._deep || this._pointerLive);
     }
 
     // ── Issue 0003 — the drift watch ─────────────────────────────────────────
@@ -144,7 +184,7 @@ class FocusManager {
      */
     enter(activationFn) {
         this._deep = true;
-        this._content.inert = false;
+        this._syncInert();               // deep ⇒ live (single-writer inert)
         this._startDriftWatch();
         this._setActive(true);
         this._reconciling = true;
@@ -176,12 +216,16 @@ class FocusManager {
         this._stopDriftWatch();
         this._reconciling = true;
         try {
-            this._content.inert = true;   // making a focused subtree inert blurs it
+            // Momentarily force inert — making a focused subtree inert blurs it —
+            // then let _syncInert restore liveness if the pointer still rests here
+            // (releasing the keyboard must not deaden a pane the mouse is on).
+            this._content.inert = true;
             var a = this._active();
             if (a && this._contains(a) && typeof a.blur === "function") {
                 try { a.blur(); } catch (e) {}
             }
         } finally { this._reconciling = false; }
+        this._syncInert();
         this._setActive(false);
         return this;
     }

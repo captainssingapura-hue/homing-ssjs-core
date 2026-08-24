@@ -184,8 +184,16 @@ class TabDragController {
         this._upFn   = null;
 
         if (!this._active) {
-            // Click — no drag past threshold. Switch tab.
-            this._mt.switchTab(this._srcSlot, this._srcTabId);
+            // Click — no drag past threshold. Switch tab, then report the
+            // chip-click as its own chrome interaction (RFC 0052): the tab bar
+            // is the explicit activation surface, so a chip click may enter
+            // deep — but that decision is the coordinator's, and it must be
+            // DISTINGUISHABLE from the keyboard tab-cycle, which reaches
+            // switchTab (and thus onTabActivated) through the same fire site.
+            var slot = this._srcSlot, tabId = this._srcTabId;
+            this._mt.switchTab(slot, tabId);
+            this._mt._fire(this._mt._cbChromeInteract, "onChromeInteract",
+                    [{ kind: "chip-click", slotId: slot, tabId: tabId }]);
             this._reset();
             return;
         }
