@@ -106,20 +106,30 @@ var _STYLE_CSS = [
     // ASCII.
     //
     // It rides its own half-transparent TAB — a small band pinned under the tab
-    // bar at the content's LEADING edge — rather than sitting inside the strip
-    // itself. Two reasons: the strip is overflow-x:auto, so a trailing glyph
-    // could scroll out of view on a busy pane; and the trailing edge is
-    // already claimed by the corner split/merge buttons (absolute, top-right,
-    // z-index 6). Absolutely positioned, so appearing and disappearing costs
-    // no reflow of the widget below. pointer-events:none — this RFC removed an
-    // interception layer; the mark must never become a new one.
-    ".hmtp-leaf-selected .hmtp-content::before,",
-    ".hmtp-leaf-entered .hmtp-content::before{content:'\\2328';",
-    "  position:absolute;top:0;left:0;z-index:6;pointer-events:none;user-select:none;",
+    // bar at the content's TRAILING (top-right) corner — rather than sitting
+    // inside the strip itself. Three reasons: the strip is overflow-x:auto, so
+    // a glyph in it could scroll out of view on a busy pane; the top-right of
+    // the CONTENT is clear of the corner split/merge buttons, which sit in the
+    // strip's band (absolute at the leaf's top:4px, above content's top edge);
+    // and widget content flows from the top-LEFT, so the right corner is the
+    // margin least likely to cover anything. Absolutely positioned, so
+    // appearing and disappearing costs no reflow of the widget below.
+    // pointer-events:none — this RFC removed an interception layer; the mark
+    // must never become a new one.
+    //
+    // Gated on .hmtp-kbd-scope: the mark shows only while the WORKSPACE
+    // actually owns the keyboard (see paintKeyboardScope). It is a truthful
+    // "keystrokes land here", not merely "this pane is the cursor" — so it
+    // goes dark whenever focus escapes to page chrome, and the invariant is
+    // AT MOST one on screen: exactly one while the workspace has the
+    // keyboard, none while it does not.
+    ".hmtp-kbd-scope .hmtp-leaf-selected .hmtp-content::before,",
+    ".hmtp-kbd-scope .hmtp-leaf-entered .hmtp-content::before{content:'\\2328';",
+    "  position:absolute;top:0;right:0;z-index:6;pointer-events:none;user-select:none;",
     "  padding:1px 7px 2px;font:12px sans-serif;line-height:1.25;",
-    "  color:var(--color-accent);border-bottom-right-radius:4px;",
+    "  color:var(--color-accent);border-bottom-left-radius:4px;",
     "  background:color-mix(in srgb, var(--color-surface-raised) 55%, transparent);",
-    "  border-right:1px solid color-mix(in srgb, var(--color-border) 50%, transparent);",
+    "  border-left:1px solid color-mix(in srgb, var(--color-border) 50%, transparent);",
     "  border-bottom:1px solid color-mix(in srgb, var(--color-border) 50%, transparent);}",
     ".hmtp-chip{display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:3px;",
     "  font:13px sans-serif;cursor:pointer;border:1px solid transparent;flex-shrink:0;",
@@ -993,6 +1003,19 @@ class MultiTabPane {
     paintHover(slotId) {
         this._hoverPainted = (slotId != null) ? slotId : null;
         this._renderRings();
+    }
+
+    /**
+     * RFC 0052 renderer facet — does the WORKSPACE currently own the keyboard?
+     * Gates the keyboard-locus mark, so it states a fact the ring cannot: the
+     * cursor pane is still the cursor pane while focus sits in page chrome,
+     * but keystrokes do NOT land there, and an always-on mark would be lying.
+     * The coordinator computes the fact; MTP just renders it.
+     */
+    paintKeyboardScope(on) {
+        if (!this._container || !this._container.classList) return this;
+        this._container.classList.toggle("hmtp-kbd-scope", !!on);
+        return this;
     }
 
     // ─── Internals ───────────────────────────────────────────────────────────

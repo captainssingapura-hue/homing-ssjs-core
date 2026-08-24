@@ -57,6 +57,12 @@ public record WorkspaceFocusCoordinatorModule() implements DomModule<WorkspaceFo
                 .add(new ModuleImports<>(
                         List.of(new WorkspaceShallowKeyboardModule.ShallowKeyboard()),
                         WorkspaceShallowKeyboardModule.INSTANCE))
+                // RFC 0052 — the keyboard-SCOPE watcher: does this workspace own
+                // the keyboard right now? Gates the keyboard-locus mark, so it
+                // states a fact the ring cannot. Also composed in attach().
+                .add(new ModuleImports<>(
+                        List.of(new WorkspaceKeyboardScopeModule.KeyboardScope()),
+                        WorkspaceKeyboardScopeModule.INSTANCE))
                 .build();
     }
 

@@ -56,12 +56,23 @@ class WorkspaceFocusCoordinator {
         this._Keyboard = opts.ShallowKeyboardCtor
                        || (typeof ShallowKeyboard !== "undefined" ? ShallowKeyboard : null);
         this._keyboard = null;
+        this._Scope    = opts.KeyboardScopeCtor
+                       || (typeof KeyboardScope !== "undefined" ? KeyboardScope : null);
+        this._scope    = null;
     }
 
     attach() {
         if (this._attached) return this;
         if (this._Keyboard) {
             this._keyboard = new this._Keyboard({ coordinator: this, mtp: this._mtp, host: this._host }).attach();
+        }
+        // RFC 0052 — the keyboard-scope watcher owns its own fact and reports
+        // changes; the coordinator only forwards them to the renderer.
+        var self = this;
+        if (this._Scope) {
+            this._scope = new this._Scope({ host: this._host,
+                onChange: function (on) { if (self._mtp.paintKeyboardScope) self._mtp.paintKeyboardScope(on); }
+            }).attach();
         }
         this._attached = true;
         this._adoptExistingTabs();
@@ -71,6 +82,7 @@ class WorkspaceFocusCoordinator {
 
     dispose() {
         if (!this._attached) return this;
+        if (this._scope) { try { this._scope.dispose(); } catch (e) {} this._scope = null; }
         if (this._keyboard) { try { this._keyboard.dispose(); } catch (e) {} this._keyboard = null; }
         this._fms.forEach(function (fm) { try { fm.dispose(); } catch (e) {} });
         this._fms.clear();
@@ -165,8 +177,7 @@ class WorkspaceFocusCoordinator {
         // follow mouse drift); pane-press (capture-phase, before the browser's
         // focus step) and chip-click are deliberate entries: straight to deep.
         // The keyboard keeps shallow for its cursor; Escape yields back down.
-        if (ev.kind === "pane-press")          this.enterDeep(ev.slotId);
-        else if (ev.kind === "chip-click")     this.enterDeep(ev.slotId);
+        if (ev.kind === "pane-press" || ev.kind === "chip-click") this.enterDeep(ev.slotId);
         else if (ev.kind === "pane-hover") {
             this._hoverSlot = (ev.slotId != null) ? ev.slotId : null;
             this._syncPointerLive();
@@ -231,34 +242,25 @@ class WorkspaceFocusCoordinator {
      * moment (the entered one and the pointed one) — the amended envelope.
      */
     _syncPointerLive() {
-        var liveTab = null;
-        if (this._hoverSlot != null) liveTab = this._activeTabOf(this._hoverSlot);
-        this._fms.forEach(function (fm, tabId) {
-            if (fm.setPointerLive) fm.setPointerLive(tabId === liveTab);
-        });
+        if (this._scope) this._scope.resync();   // cure any missed focus event
+        var live = (this._hoverSlot != null) ? this._activeTabOf(this._hoverSlot) : null;
+        this._fms.forEach(function (fm, tabId) { if (fm.setPointerLive) fm.setPointerLive(tabId === live); });
     }
 
     _apply(next) {
         var prev = this._applied || { tabId: null, slotId: null, mode: null, transport: false };
-        var same = prev.tabId === next.tabId && prev.slotId === next.slotId
-                && prev.mode === next.mode && prev.transport === next.transport;
+        var same = prev.tabId === next.tabId && prev.slotId === next.slotId && prev.mode === next.mode && prev.transport === next.transport;
         var nextDeep = (next.mode === "deep") ? next.tabId : null;
-        if (same) {
-            // Redundant trigger — drift repair only (focus back into the deep tab).
-            var f0 = nextDeep != null ? this._fms.get(nextDeep) : null;
-            if (f0) f0.reconcile();
-            return;
-        }
+        // Redundant trigger — drift repair only (focus back into the deep tab).
+        if (same) { var f0 = nextDeep != null ? this._fms.get(nextDeep) : null; if (f0) f0.reconcile(); return; }
         var prevDeep = (prev.mode === "deep") ? prev.tabId : null;
         var self = this;
         // FM sweep — idempotent per tab; the FM's own state yields the
         // setActive edges (fires exactly once per change), release before enter.
         this._fms.forEach(function (fm, tabId) { if (tabId !== nextDeep) fm.applyDeep(false); });
-        this._mtp.paintSelection(next.transport ? null : next.slotId,
-                                 next.transport ? null : next.mode);
+        this._mtp.paintSelection(next.transport ? null : next.slotId, next.transport ? null : next.mode);
         this._transportModals.forEach(function (el, tabId) {
-            var on = next.transport && tabId === nextDeep;
-            try { el.classList[on ? "add" : "remove"]("hmtp-modal-entered"); } catch (e) {}
+            try { el.classList[(next.transport && tabId === nextDeep) ? "add" : "remove"]("hmtp-modal-entered"); } catch (e) {}
         });
         if (nextDeep != null) {
             var fm = this._fms.get(nextDeep);

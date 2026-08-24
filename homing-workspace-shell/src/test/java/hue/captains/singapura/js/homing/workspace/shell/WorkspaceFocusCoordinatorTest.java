@@ -20,6 +20,8 @@ class WorkspaceFocusCoordinatorTest extends JsModuleTestBase {
             "/homing/js/hue/captains/singapura/js/homing/studio/base/ui/layout/FocusManagerModule.js";
     private static final String KB_MODULE =
             "/homing/js/hue/captains/singapura/js/homing/workspace/shell/WorkspaceShallowKeyboardModule.js";
+    private static final String SCOPE_MODULE =
+            "/homing/js/hue/captains/singapura/js/homing/workspace/shell/WorkspaceKeyboardScopeModule.js";
     private static final String MODULE =
             "/homing/js/hue/captains/singapura/js/homing/workspace/shell/WorkspaceFocusCoordinatorModule.js";
 
@@ -67,6 +69,11 @@ class WorkspaceFocusCoordinatorTest extends JsModuleTestBase {
                 addEventListener: function (t, fn) { (this._listeners[t] = this._listeners[t] || []).push(fn); },
                 removeEventListener: function (t, fn) {
                     var a = this._listeners[t]; if (!a) return; var i = a.indexOf(fn); if (i >= 0) a.splice(i, 1);
+                },
+                dispatchEvent: function (ev) {
+                    var a = this._listeners[ev.type];
+                    if (a) { var cp = a.slice(); for (var i = 0; i < cp.length; i++) cp[i].call(this, ev); }
+                    return !ev._prevented;
                 }
             };
             document.body = makeEl('body');
@@ -98,6 +105,8 @@ class WorkspaceFocusCoordinatorTest extends JsModuleTestBase {
                     paintSelection: function (slotId, mode) { this.paints.push({ slotId: slotId, mode: mode }); },
                     hoverPaints: [],
                     paintHover: function (slotId) { this.hoverPaints.push(slotId); },
+                    kbdScopes: [],
+                    paintKeyboardScope: function (on) { this.kbdScopes.push(on); },
                     neighbourOf: function (slot, dir) {
                         if (slot === 'tl' && dir === 'right') return 'tr';
                         if (slot === 'tr' && dir === 'left')  return 'tl';
@@ -135,6 +144,7 @@ class WorkspaceFocusCoordinatorTest extends JsModuleTestBase {
         js.eval(Source.newBuilder("js", STUBS, "stubs.js").buildLiteral());
         loadModule(FM_MODULE);
         loadModule(KB_MODULE);
+        loadModule(SCOPE_MODULE);
         loadModule(MODULE);
     }
 
@@ -267,6 +277,32 @@ class WorkspaceFocusCoordinatorTest extends JsModuleTestBase {
                         && s.fc.deepTabId() === 'B'
                         && s.contentB.inert === false;
                 })()""").asBoolean(), "the tab bar activates deliberately; keyboard cycling never enters");
+    }
+
+    @Test
+    void theKeyboardMarkTellsTheTruthAboutWhoOwnsTheKeyboard() {
+        assertTrue(js.eval("js", """
+                (() => {
+                    var host = makeEl('host');
+                    var outside = makeEl('chrome-select');       // page chrome, outside the workspace
+                    document.body.appendChild(host);
+                    document.body.appendChild(outside);
+                    var mtp = makeMtp();
+                    mtp.addStubTab('tl', { id: 'A' });
+                    host.appendChild(mtp.contentElOf('A'));      // the pane lives inside the host
+                    var fc = new WorkspaceFocusCoordinator({ mtp: mtp, host: host }).attach();
+                    var atBoot = mtp.kbdScopes[mtp.kbdScopes.length - 1] === true;   // focus nowhere ⇒ ours
+                    // Focus escapes to page chrome: the locus is unchanged but DEAF.
+                    document.activeElement = outside;                     // the world moved…
+                    document.dispatchEvent(makeEvent("focusin", { target: outside }));
+                    var escaped = mtp.kbdScopes[mtp.kbdScopes.length - 1] === false
+                               && fc.selectedSlotId() === 'tl';          // keyboard axis untouched
+                    // Focus returns into the workspace: the mark lights again.
+                    document.activeElement = mtp.contentElOf("A");
+                    document.dispatchEvent(makeEvent("focusin", { target: mtp.contentElOf("A") }));
+                    return atBoot && escaped
+                        && mtp.kbdScopes[mtp.kbdScopes.length - 1] === true;
+                })()""").asBoolean(), "the mark shows iff the workspace actually owns the keyboard");
     }
 
     @Test
