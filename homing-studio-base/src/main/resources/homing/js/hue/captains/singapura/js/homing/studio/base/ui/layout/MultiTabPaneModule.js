@@ -105,7 +105,7 @@ var _STYLE_CSS = [
     // cleanup on merge. \2328 is U+2328 KEYBOARD, escaped so the source stays
     // ASCII.
     //
-    // It rides its own half-transparent TAB — a small band pinned under the tab
+    // It rides its own opaque TAB — a small band pinned under the tab
     // bar at the content's TRAILING (top-right) corner — rather than sitting
     // inside the strip itself. Three reasons: the strip is overflow-x:auto, so
     // a glyph in it could scroll out of view on a busy pane; the top-right of
@@ -128,9 +128,16 @@ var _STYLE_CSS = [
     "  position:absolute;top:0;right:0;z-index:6;pointer-events:none;user-select:none;",
     "  padding:1px 7px 2px;font:12px sans-serif;line-height:1.25;",
     "  color:var(--color-accent);border-bottom-left-radius:4px;",
-    "  background:color-mix(in srgb, var(--color-surface-raised) 55%, transparent);",
-    "  border-left:1px solid color-mix(in srgb, var(--color-border) 50%, transparent);",
-    "  border-bottom:1px solid color-mix(in srgb, var(--color-border) 50%, transparent);}",
+    // OPAQUE, on the strip's own ground: the mark sits at the content's
+    // top-right, which is exactly where a vertical scrollbar starts. A
+    // translucent ground let the scrollbar track show through and read as a
+    // smudge; solid --color-surface-raised makes it read as a continuation of
+    // the tab bar hanging over the corner. (The alternative — detecting the
+    // scrollbar and shifting left by its width — costs JS measurement per
+    // resize for the same result.)
+    "  background:var(--color-surface-raised);",
+    "  border-left:1px solid var(--color-border);",
+    "  border-bottom:1px solid var(--color-border);}",
     ".hmtp-chip{display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:3px;",
     "  font:13px sans-serif;cursor:pointer;border:1px solid transparent;flex-shrink:0;",
     "  color:var(--color-text-muted);}",
