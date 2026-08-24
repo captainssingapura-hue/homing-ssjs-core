@@ -96,6 +96,8 @@ class WorkspaceFocusCoordinatorTest extends JsModuleTestBase {
                     },
                     contentElOf: function (tabId) { return this._contentByTab[tabId] || null; },
                     paintSelection: function (slotId, mode) { this.paints.push({ slotId: slotId, mode: mode }); },
+                    hoverPaints: [],
+                    paintHover: function (slotId) { this.hoverPaints.push(slotId); },
                     neighbourOf: function (slot, dir) {
                         if (slot === 'tl' && dir === 'right') return 'tr';
                         if (slot === 'tr' && dir === 'left')  return 'tl';
@@ -170,7 +172,7 @@ class WorkspaceFocusCoordinatorTest extends JsModuleTestBase {
                 (() => {
                     var s = scenario();
                     s.fc.enterDeep('tl');
-                    s.fc.onChromeInteract({ kind: 'cover-dblclick', slotId: 'tr' });   // enter B
+                    s.fc.onChromeInteract({ kind: 'pane-press', slotId: 'tr' });   // enter B
                     return s.contentA.inert === true                       // A released
                         && s.contentB.inert === false                      // B entered
                         && s.fc.deepTabId() === 'B'
@@ -179,13 +181,13 @@ class WorkspaceFocusCoordinatorTest extends JsModuleTestBase {
     }
 
     @Test
-    void mouseCoverClickEntersDeepDirectlyAndOneEscapeYieldsShallow() {
+    void panePressEntersDeepDirectlyAndOneEscapeYieldsShallow() {
         assertTrue(js.eval("js", """
                 (() => {
                     var s = scenario();
-                    // A single mouse click on a covered pane is a deliberate
-                    // entry: straight to deep — no dblclick required.
-                    s.fc.onChromeInteract({ kind: 'cover-click', slotId: 'tl' });
+                    // A single mouse press in a pane's content is a deliberate
+                    // entry: straight to deep — reported capture-phase (pane-press).
+                    s.fc.onChromeInteract({ kind: 'pane-press', slotId: 'tl' });
                     var deepIn = s.fc.mode() === 'deep'
                         && s.fc.deepTabId() === 'A'
                         && s.contentA.inert === false
@@ -212,6 +214,77 @@ class WorkspaceFocusCoordinatorTest extends JsModuleTestBase {
                         && s.fc.selectedSlotId() === 'tr'
                         && s.contentB.inert === true;
                 })()""").asBoolean(), "tab activation is an outside-active act: shallow cursor, never deep");
+    }
+
+    @Test
+    void hoverMakesThePaneLiveWithoutMovingTheKeyboardLocus() {
+        assertTrue(js.eval("js", """
+                (() => {
+                    var s = scenario();                     // boots shallow, cursor on tl
+                    s.fc.onChromeInteract({ kind: 'pane-hover', slotId: 'tr' });
+                    var hovered = s.contentB.inert === false            // pointer axis: live
+                        && s.fc.mode() === 'shallow'                    // keyboard axis: untouched
+                        && s.fc.selectedSlotId() === 'tl'               // cursor did NOT follow
+                        && s.contentA.inert === true                    // the cursor pane stays dormant
+                        && s.mtp.hoverPaints[s.mtp.hoverPaints.length - 1] === 'tr';
+                    s.fc.onChromeInteract({ kind: 'pane-hover', slotId: null });
+                    return hovered
+                        && s.contentB.inert === true                    // leave ⇒ dormant again
+                        && s.mtp.hoverPaints[s.mtp.hoverPaints.length - 1] === null;
+                })()""").asBoolean(), "hover drives the pointer axis only: live pane, unmoved cursor");
+    }
+
+    @Test
+    void deepSurvivesThePointerWanderingAndTheEnvelopeIsAtMostTwo() {
+        assertTrue(js.eval("js", """
+                (() => {
+                    var s = scenario();
+                    s.fc.enterDeep('tl');                               // keyboard axis: A entered
+                    s.fc.onChromeInteract({ kind: 'pane-hover', slotId: 'tr' });
+                    var both = s.fc.deepTabId() === 'A'                 // deep SURVIVED the wander
+                        && document.activeElement === s.contentA        // typing still goes to A
+                        && s.contentA.inert === false                   // entered: live
+                        && s.contentB.inert === false;                  // pointed: live — the envelope's two
+                    s.fc.onChromeInteract({ kind: 'pane-hover', slotId: 'tl' });
+                    return both
+                        && s.contentB.inert === true                    // pointer moved on: B dormant again
+                        && s.fc.deepTabId() === 'A';
+                })()""").asBoolean(), "one locus per input device: deep persists; at most two un-firewalled");
+    }
+
+    @Test
+    void chipClickEntersDeepWhileTabActivatedAloneStaysShallow() {
+        assertTrue(js.eval("js", """
+                (() => {
+                    var s = scenario();
+                    // The keyboard tab-cycle path: switchTab -> onTabActivated only.
+                    s.fc.onTabActivated('tr', 'B');
+                    var cycled = s.fc.mode() === 'shallow';
+                    // The chip CLICK path: same state event, then the chip-click report.
+                    s.fc.onTabActivated('tr', 'B');
+                    s.fc.onChromeInteract({ kind: 'chip-click', slotId: 'tr', tabId: 'B' });
+                    return cycled
+                        && s.fc.deepTabId() === 'B'
+                        && s.contentB.inert === false;
+                })()""").asBoolean(), "the tab bar activates deliberately; keyboard cycling never enters");
+    }
+
+    @Test
+    void focusinOnAMerelyLivePaneIsBouncedButNeverOnTheDeepOne() {
+        assertTrue(js.eval("js", """
+                (() => {
+                    var s = scenario();
+                    s.fc.onChromeInteract({ kind: 'pane-hover', slotId: 'tr' });   // B live, NOT deep
+                    // An uninvited grab (autofocus / timer): focus lands, focusin fires.
+                    s.contentB.focus();
+                    s.contentB.dispatchEvent(makeEvent('focusin', { target: s.contentB }));
+                    var bounced = document.activeElement === document.body;        // bounced off
+                    // The deep pane keeps focus: enter A, then the same sequence.
+                    s.fc.enterDeep('tl');
+                    s.contentA.dispatchEvent(makeEvent('focusin', { target: s.contentA }));
+                    return bounced
+                        && document.activeElement === s.contentA;                  // never bounced while deep
+                })()""").asBoolean(), "not deep ⇒ not click-driven ⇒ bounced; deep focus is never bounced");
     }
 
     @Test
@@ -384,7 +457,7 @@ class WorkspaceFocusCoordinatorTest extends JsModuleTestBase {
                         remove: function (k) { delete this._c[k]; } };
                     post('boot');
                     s.fc.enterDeep('tl');                                          post('enter tl');
-                    s.fc.onChromeInteract({ kind: 'cover-click', slotId: 'tr' });  post('cover-click tr');
+                    s.fc.onChromeInteract({ kind: 'pane-press', slotId: 'tr' });  post('pane-press tr');
                     s.fc.enterDeep('tr');                                          post('enter tr');
                     // detach B mid-deep, WITHOUT reporting (the silent path):
                     var st = s.mtp._tabsBySlot.get('tr');
