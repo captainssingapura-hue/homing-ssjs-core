@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.rigid;
 
+import hue.captains.singapura.js.homing.studio.base.composed.text.NodeName;
 import hue.captains.singapura.js.homing.studio.base.Doc;
 import hue.captains.singapura.js.homing.studio.base.DocId;
 import hue.captains.singapura.js.homing.studio.base.composed.DocTreeJsonWriter;
@@ -66,6 +67,11 @@ public final class RigidDoc implements Doc {
     @Override public UUID    uuid()        { return uuid; }
     @Override public DocId   id()          { return new DocId.ByUuid(uuid); }
     @Override public String  title()       { return root.title().text(); }
+    /** RFC 0051 Law 2 — a value-Doc: every instance shares this class, so the
+     *  class-derived default would give every RigidDoc the segment "rigid".
+     *  The title is the per-instance datum, and siblings already need
+     *  distinguishable titles to be usable in a tile grid. */
+    @Override public NodeName slug()       { return NodeName.conciseSlug(title()); }
     @Override public String  summary()     { return summary; }
     @Override public String  category()    { return category; }
     @Override public String  kind()        { return "composed"; }   // reuses the doc-tree route

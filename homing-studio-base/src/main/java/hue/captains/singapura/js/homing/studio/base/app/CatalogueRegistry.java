@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.app;
 
+import hue.captains.singapura.js.homing.studio.base.composed.text.NodeName;
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.studio.base.Doc;
 import hue.captains.singapura.js.homing.studio.base.DocRegistry;
@@ -149,6 +150,28 @@ public final class CatalogueRegistry {
                           + " in subCatalogues(), but the latter's parent() returns "
                           + (declaredParent == null ? "null" : declaredParent.getClass().getName())
                           + " — must return the containing catalogue's INSTANCE.");
+                }
+            }
+
+            // ---- RFC 0051 Law 2: siblings have distinct slugs ----
+            // A path segment picks exactly one child, so sub-catalogues and
+            // addressable leaves share ONE namespace under a parent — a
+            // sub-catalogue named the same as a leaf is just as ambiguous as
+            // two leaves named alike. Illustrations sit out: they are
+            // decoration, never a path segment, so they cannot be ambiguous.
+            var slugOwner = new HashMap<NodeName, Object>();
+            for (Catalogue<?> child : subs) {
+                claimSlug(slugOwner, child.slug(), child, parent);
+            }
+            for (Entry<?> e : parent.leaves() == null ? List.<Entry<?>>of() : parent.leaves()) {
+                CatalogueLeaf leaf = switch (e) {
+                    case Entry.OfDoc<?, ?>(Doc d)              -> d;
+                    case Entry.OfStudio<?, ?>(StudioProxy<?> p) -> p;
+                    case Entry.OfIllustration<?> ignored        -> null;
+                    case null                                   -> null;
+                };
+                if (leaf != null) {
+                    claimSlug(slugOwner, leaf.slug(), leaf, parent);
                 }
             }
 
@@ -401,6 +424,47 @@ public final class CatalogueRegistry {
 
     public int size() {
         return byClass.size();
+    }
+
+    /**
+     * RFC 0051 Law 2 — record one sibling's claim on a slug, or fail.
+     *
+     * <p>The claimant compared is the child VALUE, not its description: several
+     * distinct {@code ComposedDoc}s under one catalogue share a class and would
+     * describe identically, so comparing descriptions would wave through exactly
+     * the collisions this law exists to catch. Records give value equality, so
+     * the same leaf listed twice still passes while two different leaves that
+     * happen to derive the same segment do not.</p>
+     */
+    private static void claimSlug(Map<NodeName, Object> owner,
+                                  NodeName slug,
+                                  Object claimant,
+                                  Catalogue<?> parent) {
+        if (slug == null) {
+            throw new IllegalStateException(
+                    describe(claimant) + " under " + parent.getClass().getName()
+                  + " has a null slug()");
+        }
+        Object prior = owner.put(slug, claimant);
+        if (prior != null && !prior.equals(claimant)) {
+            throw new IllegalStateException(
+                    "Two children of " + parent.getClass().getName()
+                  + " claim the path segment '" + slug + "': "
+                  + describe(prior) + " and " + describe(claimant)
+                  + ". A segment must pick exactly one child (RFC 0051 - Law 2);"
+                  + " override slug() on one of them.");
+        }
+    }
+
+    /** A child's name for error messages — its class, plus a display label for
+     *  value-children where the class alone would not say which one. */
+    private static String describe(Object child) {
+        if (child == null) return "null";
+        String cls = child.getClass().getName();
+        if (child instanceof AppDoc<?, ?> ad)  return cls + "(" + ad.nav().name() + ")";
+        if (child instanceof StudioProxy<?> p) return cls + "(" + p.name() + ")";
+        if (child instanceof Doc d)            return cls + "(" + d.title() + ")";
+        return cls;
     }
 
     /**

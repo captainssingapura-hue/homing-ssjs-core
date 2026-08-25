@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.app;
 
+import hue.captains.singapura.js.homing.studio.base.composed.text.NodeName;
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.studio.base.Doc;
 import hue.captains.singapura.js.homing.studio.base.DocId;
@@ -55,6 +56,19 @@ public record AppDoc<P extends AppModule._Param, M extends AppModule<P, M>>(
         // collapse harmlessly via DocRegistry's record-equality collision check.
         return UUID.nameUUIDFromBytes(
                 ("appdoc:" + nav.toString()).getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * RFC 0051 Law 2. Every AppDoc shares this one class, so the inherited
+     * class-derived slug would collide the moment a catalogue holds two app
+     * tiles. The app's {@code simpleName} is closer, but still collides when
+     * one catalogue mounts the same app twice under different params — which
+     * the demo does with {@code TreeAppHost}. The tile's display name is the
+     * only per-tile datum, and it is already required to be distinct enough
+     * for a human to tell the tiles apart.
+     */
+    @Override public NodeName slug() {
+        return NodeName.conciseSlug(nav.name());
     }
 
     @Override public DocId id() {

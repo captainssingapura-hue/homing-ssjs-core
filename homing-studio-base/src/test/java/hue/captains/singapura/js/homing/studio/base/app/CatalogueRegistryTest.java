@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.app;
 
+import hue.captains.singapura.js.homing.studio.base.composed.text.NodeName;
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
@@ -241,6 +242,82 @@ class CatalogueRegistryTest {
         assertTrue(ex.getMessage().contains("identified by (app, args)"),
                 "expected the app-half Law 1 message, got: " + ex.getMessage());
     }
+
+    // ----- RFC 0051 Law 2: siblings claim distinct path segments -----
+
+    /** Two docs that derive the same segment — the shape every value-Doc
+     *  (ComposedDoc, RigidDoc, PlanDoc) has by default, since they share a
+     *  class. Modelled here with an explicit override so the test says what
+     *  it means rather than depending on those classes' derivations. */
+    record TwinDoc(UUID uuid, String heading) implements Doc {
+        @Override public UUID   uuid()     { return uuid; }
+        @Override public String title()    { return heading; }
+        @Override public String contents() { return ""; }
+        @Override public NodeName slug()   { return new NodeName("twin"); }
+    }
+
+    static final TwinDoc TWIN_A = new TwinDoc(UUID.randomUUID(), "First Twin");
+    static final TwinDoc TWIN_B = new TwinDoc(UUID.randomUUID(), "Second Twin");
+
+    record TwinCatalogue() implements L0_Catalogue<TwinCatalogue> {
+        public static final TwinCatalogue INSTANCE = new TwinCatalogue();
+        @Override public String name() { return "Twin-Cat"; }
+        @Override public List<Entry<TwinCatalogue>> leaves() {
+            return List.of(Entry.of(this, TWIN_A), Entry.of(this, TWIN_B));
+        }
+    }
+
+    /** A sub-catalogue and a leaf colliding — the cross-kind case. One path
+     *  segment cannot mean both "descend here" and "open this". */
+    record ClashRoot() implements L0_Catalogue<ClashRoot> {
+        public static final ClashRoot INSTANCE = new ClashRoot();
+        @Override public String name() { return "Clash-Root"; }
+        @Override public List<Entry<ClashRoot>> leaves() {
+            return List.of(Entry.of(this, new TwinDoc(UUID.randomUUID(), "Leaf")));
+        }
+        @Override public List<? extends L1_Catalogue<ClashRoot, ?>> subCatalogues() {
+            return List.of(TwinChild.INSTANCE);
+        }
+    }
+
+    record TwinChild() implements L1_Catalogue<ClashRoot, TwinChild> {
+        public static final TwinChild INSTANCE = new TwinChild();
+        @Override public ClashRoot parent() { return ClashRoot.INSTANCE; }
+        @Override public String name()      { return "Twin-Child"; }
+        @Override public NodeName slug()    { return new NodeName("twin"); }
+    }
+
+    @Test
+    void law2_rejects_twoLeavesClaimingOneSegment() {
+        var brand = new StudioBrand("Test", TwinCatalogue.class);
+        var reg = new DocRegistry(List.of(TWIN_A, TWIN_B));
+        var ex = assertThrows(IllegalStateException.class,
+                () -> new CatalogueRegistry(brand, reg, List.of(TwinCatalogue.INSTANCE)));
+        assertTrue(ex.getMessage().contains("claim the path segment 'twin'"), ex.getMessage());
+    }
+
+    @Test
+    void law2_rejects_subCatalogueClashingWithLeaf() {
+        var brand = new StudioBrand("Test", ClashRoot.class);
+        var reg = new DocRegistry(List.of(ClashRoot.INSTANCE.leaves().stream()
+                .map(e -> ((Entry.OfDoc<?, ?>) e).doc()).findFirst().orElseThrow()));
+        var ex = assertThrows(IllegalStateException.class,
+                () -> new CatalogueRegistry(brand, reg,
+                        List.of(ClashRoot.INSTANCE, TwinChild.INSTANCE)));
+        assertTrue(ex.getMessage().contains("claim the path segment 'twin'"), ex.getMessage());
+    }
+
+    @Test
+    void law2_derivesReadableSegmentsFromClassNames() {
+        // The derivation is the reason no catalogue in either studio needed a
+        // manual slug: camel humps become word breaks, the role suffix goes.
+        assertEquals("leaf", LeafCatalogue.INSTANCE.slug().value());
+        assertEquals("doc-tree-ontology",
+                NodeName.ofType(DocTreeOntologyDoc.class, "Doc").value());
+    }
+
+    /** Name-only stand-in for a real studio doc class, to pin the derivation. */
+    private static final class DocTreeOntologyDoc {}
 
     // RFC 0011 note: the previous "rejects_staleParentReference" test
     // (a child whose parent() returns a different L0 INSTANCE than its

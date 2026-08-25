@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.composed;
 
+import hue.captains.singapura.js.homing.studio.base.composed.text.NodeName;
 import hue.captains.singapura.js.homing.studio.base.Doc;
 import hue.captains.singapura.js.homing.studio.base.DocId;
 import hue.captains.singapura.js.homing.studio.base.Reference;
@@ -56,6 +57,11 @@ public record ComposedDoc(
         List<Segment>   segments,
         List<Reference> references
 ) implements Doc {
+
+    /** RFC 0051 Law 2 — value-Doc; the title is the per-instance datum, since
+     *  every ComposedDoc shares this class and would otherwise all claim the
+     *  segment "composed". */
+    @Override public NodeName slug() { return NodeName.conciseSlug(title); }
 
     public ComposedDoc {
         Objects.requireNonNull(uuid,       "ComposedDoc.uuid");

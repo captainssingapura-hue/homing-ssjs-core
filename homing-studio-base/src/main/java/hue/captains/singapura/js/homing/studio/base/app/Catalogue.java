@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.app;
 
+import hue.captains.singapura.js.homing.studio.base.composed.text.NodeName;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.util.List;
@@ -64,6 +65,19 @@ public sealed interface Catalogue<Self extends Catalogue<Self>>
      * in tile listings by parent catalogues.
      */
     String name();
+
+    /**
+     * RFC 0051 Law 2 — this catalogue's URL path segment, unique among its
+     * siblings. Derived from the class minus a trailing {@code "Catalogue"}
+     * ({@code DoctrineCatalogue} becomes {@code "doctrine"}), so rewording
+     * {@link #name()} never moves a page.
+     *
+     * <p>Override when the derived segment is long or unhelpful; the boot
+     * check only requires that siblings differ.</p>
+     */
+    default NodeName slug() {
+        return NodeName.ofType(getClass(), "Catalogue");
+    }
 
     default String summary() { return ""; }
 
