@@ -64,7 +64,10 @@ public class AppHtmlGetAction
                 ctx.request().getParam("app"),
                 ctx.request().getParam("class"),
                 ctx.request().getParam("theme"),
-                ctx.request().getParam("locale")
+                ctx.request().getParam("locale"),
+                // RFC 0051 — the app's own params travel as the raw map; the
+                // resolved app's codec is what turns them into a typed value.
+                hue.captains.singapura.js.homing.core.QueryString.parse(ctx.request().query())
         );
     }
 
@@ -125,6 +128,13 @@ public class AppHtmlGetAction
         if (effectiveTheme == null && !themeRegistry.themes().isEmpty()) {
             effectiveTheme = themeRegistry.themes().get(0).slug();
         }
+
+        // RFC 0051 — stamp the app's params into the page, so the client does
+        // not re-parse a URL the server has already interpreted. Only apps
+        // that declare a codec are stamped; the rest keep today's behaviour
+        // exactly, including their generated client-side params const, so the
+        // migration is per-app rather than a flag day.
+        String stampedParams = stampParams(app, query.all());
 
         String baseModuleUrl = nameResolver.resolve(app).basePath();
         String themeJs  = effectiveTheme != null ? "\"" + effectiveTheme + "\"" : "null";
@@ -196,14 +206,17 @@ public class AppHtmlGetAction
                         if (theme) document.documentElement.style.colorScheme = theme;
                         let moduleUrl = "%s" + "&locale=" + encodeURIComponent(locale);
                         if (theme) moduleUrl += "&theme=" + encodeURIComponent(theme);
+                        %s
                         const { appMain } = await import(moduleUrl);
-                        appMain(document.getElementById("app"));
+                        appMain(document.getElementById("app")%s);
                     </script>
                 </body>
                 </html>
                 """.formatted(htmlEscape(app.title() + " · " + meta.label()),
                               bodyClass,
-                              backdropHtml, themePickerHtml, audioHtml, themeJs, localeJs, baseModuleUrl);
+                              backdropHtml, themePickerHtml, audioHtml, themeJs, localeJs, baseModuleUrl,
+                              stampedParams == null ? "" : "const params = " + stampedParams + ";",
+                              stampedParams == null ? "" : ", params");
 
         return CompletableFuture.completedFuture(new HtmlPageContent(html));
     }
@@ -1209,5 +1222,32 @@ public class AppHtmlGetAction
                 new ResourceNotFound._InternalError(null, reason + ": " + resource),
                 new ResourceNotFound._ExternalError(resource, reason)
         );
+    }
+
+    /**
+     * RFC 0051 — the app's params as a stamped JS value, or null when this app
+     * has no codec and should keep today's client-side parsing.
+     *
+     * <p>Params go through the codec in both directions rather than being
+     * copied from the query: {@code from} drops keys the app does not claim
+     * (the action's own theme and locale among them) and {@code to} writes
+     * back only what the record holds, so the page receives the app's params
+     * and nothing else that happened to be in the URL.</p>
+     *
+     * <p>A decode failure stamps nothing rather than failing the request.
+     * Turning malformed params into a 400 is the right end state and what the
+     * Decoded ADT exists for, but it changes the response for every app at
+     * once; that belongs with the route work, not with adding a stamp.</p>
+     */
+    private static <P extends hue.captains.singapura.js.homing.core.AppModule._Param>
+            String stampParams(hue.captains.singapura.js.homing.core.AppModule<P, ?> app,
+                               java.util.Map<String, java.util.List<String>> query) {
+        var codec = app.paramCodec();
+        if (codec == hue.captains.singapura.js.homing.core.ParamCodec.None.INSTANCE) return null;
+        var decoded = codec.from(query);
+        if (decoded instanceof hue.captains.singapura.js.homing.core.ParamCodec.Decoded.Ok<P>(P p)) {
+            return hue.captains.singapura.js.homing.core.StampedParams.jsObject(codec.to(p));
+        }
+        return null;
     }
 }
