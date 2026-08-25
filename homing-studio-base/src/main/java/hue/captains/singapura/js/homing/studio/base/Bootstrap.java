@@ -19,6 +19,7 @@ import hue.captains.singapura.js.homing.studio.base.graph.StudioGraphInspector;
 import hue.captains.singapura.js.homing.studio.base.graph.StudioGraphMarkdownAction;
 import hue.captains.singapura.js.homing.studio.base.app.CatalogueAppHost;
 import hue.captains.singapura.js.homing.studio.base.app.CatalogueGetAction;
+import hue.captains.singapura.js.homing.studio.base.app.CataloguePathGetAction;
 import hue.captains.singapura.js.homing.studio.base.app.CatalogueRegistry;
 import hue.captains.singapura.js.homing.studio.base.app.StudioBrand;
 import hue.captains.singapura.js.homing.studio.base.theme.CssGroupImplRegistry;
@@ -333,6 +334,10 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
         }
 
         // --- Compose final ActionRegistry.
+        // RFC 0051 — only meaningful when there are catalogues to address.
+        final CataloguePathGetAction pathAction = (catalogueRegistry == null) ? null
+                : new CataloguePathGetAction(catalogueRegistry, inner.appAction());
+
         final var harnessGetActions  = fixtures.harnessGetActions();
         final var harnessPostActions = fixtures.harnessPostActions();
         return new ActionRegistry<>() {
@@ -340,6 +345,14 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
             public Map<String, GetAction<RoutingContext, ?, ?, ?>> getActions() {
                 Map<String, GetAction<RoutingContext, ?, ?, ?>> all = new HashMap<>(inner.getActions());
                 all.put("/",            rootRedirect);
+                // RFC 0051 — the authentic address. Mounted on both the
+                // wildcard and the bare root, because a Vert.x /cat/* route
+                // does not match /cat itself, and /cat is the studio's front
+                // door (the empty path resolves to the root catalogue).
+                if (pathAction != null) {
+                    all.put(CataloguePathGetAction.ROUTE,      pathAction);
+                    all.put(CataloguePathGetAction.ROOT_ROUTE, pathAction);
+                }
                 all.put("/css-content", cssContentAction);
                 all.put("/doc",         docAction);
                 all.put("/doc-tree",    new DocTreeGetAction(docRegistry, openRoot));

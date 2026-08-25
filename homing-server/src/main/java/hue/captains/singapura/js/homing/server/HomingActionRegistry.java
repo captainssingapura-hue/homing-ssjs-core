@@ -77,6 +77,10 @@ public class HomingActionRegistry implements ActionRegistry<RoutingContext> {
         this(nameResolver, null, resourceReader);
     }
 
+    /** RFC 0051 — the page renderer, so the catalogue-path route can render by
+     *  delegation rather than growing a second one. */
+    public AppHtmlGetAction appAction() { return appAction; }
+
     @Override
     public Map<String, GetAction<RoutingContext, ?, ?, ?>> getActions() {
         return Map.of(

@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.studio.base.app;
 
+import hue.captains.singapura.js.homing.core.ParamCodec;
+import hue.captains.singapura.js.homing.core.QueryString;
 import hue.captains.singapura.js.homing.core.AppLink;
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.ExportsOf;
@@ -59,7 +61,27 @@ public record DocReader() implements AppModule<DocReader.Params, DocReader>, Sel
 
     public static final DocReader INSTANCE = new DocReader();
 
+    /**
+     * RFC 0051 - the doc id, read and written together. Most catalogue leaves
+     * open through this app, so without a codec every /cat path ending at a
+     * doc renders "(no document)": a path URL has no query string for the
+     * client-side parse to read.
+     */
+    public static final ParamCodec<Params> CODEC = new ParamCodec<>() {
+
+        @Override public Decoded<Params> from(java.util.Map<String, java.util.List<String>> query) {
+            String doc = QueryString.first(query, "doc");
+            if (doc == null || doc.isBlank()) return Decoded.missing("doc");
+            return Decoded.ok(new Params(doc));
+        }
+
+        @Override public java.util.Map<String, java.util.List<String>> to(Params params) {
+            return QueryString.of("doc", params.doc());
+        }
+    };
+
     @Override public Class<Params> paramsType() { return Params.class; }
+    @Override public ParamCodec<Params> paramCodec() { return CODEC; }
 
     /** Generic page-kind label. {@code AppHtmlGetAction} appends the downstream
      *  studio's brand label from {@code AppMeta}, producing {@code "doc · <brand>"}.
@@ -107,7 +129,8 @@ public record DocReader() implements AppModule<DocReader.Params, DocReader>, Sel
         // arrives. Studios with no catalogues registered get no chain (legacy
         // behaviour — the brand link in the header is the only nav).
         return List.of(
-                "function appMain(rootElement) {",
+                // RFC 0051 - params arrive from the server; a /cat path has no query.
+                "function appMain(rootElement, params) {",
                 "    fetch(\"/brand\").then(function(r) { return r.json(); }).then(function(brand) {",
                 "        rootElement.replaceChildren(renderDocReader({",
                 "            docId:       params.doc,",

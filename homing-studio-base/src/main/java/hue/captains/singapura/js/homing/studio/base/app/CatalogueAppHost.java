@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.studio.base.app;
 
+import hue.captains.singapura.js.homing.core.ParamCodec;
+import hue.captains.singapura.js.homing.core.QueryString;
 import hue.captains.singapura.js.homing.core.AppLink;
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.ExportsOf;
@@ -56,7 +58,35 @@ public record CatalogueAppHost() implements AppModule<CatalogueAppHost.Params, C
         return "/app?app=" + INSTANCE.simpleName() + "&id=" + catalogueClass.getName();
     }
 
+    /**
+     * RFC 0051 — the catalogue page's params, read and written together.
+     *
+     * <p>This app is what a {@code /cat/...} path renders, and a path URL
+     * carries no query string at all — so without a codec the page would have
+     * nothing to read and would render "no catalogue specified". Stamping is
+     * not an optimisation here; it is what makes the path route possible.</p>
+     *
+     * <p>{@code context} is optional: it selects a diagnostics variant of the
+     * same catalogue, and its absence is the ordinary case.</p>
+     */
+    public static final ParamCodec<Params> CODEC = new ParamCodec<>() {
+
+        @Override public Decoded<Params> from(java.util.Map<String, java.util.List<String>> query) {
+            String id = QueryString.first(query, "id");
+            if (id == null || id.isBlank()) return Decoded.missing("id");
+            return Decoded.ok(new Params(id, QueryString.first(query, "context")));
+        }
+
+        @Override public java.util.Map<String, java.util.List<String>> to(Params params) {
+            var out = QueryString.params();
+            QueryString.put(out, "id", params.id());
+            QueryString.put(out, "context", params.context());
+            return out;
+        }
+    };
+
     @Override public Class<Params> paramsType() { return Params.class; }
+    @Override public ParamCodec<Params> paramCodec() { return CODEC; }
 
     @Override public String simpleName() { return "catalogue"; }
 
@@ -80,7 +110,10 @@ public record CatalogueAppHost() implements AppModule<CatalogueAppHost.Params, C
     @Override
     public List<String> selfContent(ModuleNameResolver nameResolver) {
         return List.of(
-                "function appMain(rootElement) {",
+                // RFC 0051 - params arrive from the server. Required here, not
+                // merely preferred: a /cat path URL has no query string for a
+                // client-side parse to read.
+                "function appMain(rootElement, params) {",
                 "    rootElement.replaceChildren(renderCatalogueHost({",
                 "        catalogueId: params.id,",
                 "        context:     params.context",
