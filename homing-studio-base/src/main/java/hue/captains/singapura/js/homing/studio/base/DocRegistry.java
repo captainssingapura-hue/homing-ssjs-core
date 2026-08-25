@@ -107,9 +107,21 @@ public final class DocRegistry {
      * leaf-validation step would reject the catalogue because the synthetic
      * Doc isn't registered.</p>
      *
-     * <p>Identification of "synthetic" is by type — PlanDoc, AppDoc (and
-     * future synthetic Doc kinds added here). Prose Docs (ClasspathMarkdownDoc,
-     * InlineDoc, etc.) are skipped because they come from DocProviders.</p>
+     * <p><b>RFC 0051 — now harvests EVERY {@code Entry.OfDoc} leaf, not just
+     * the synthetic kinds.</b> The type filter said prose Docs "come from
+     * DocProviders", which was true only as long as somebody remembered to
+     * write one. In the self-studio a browsing app happened to list them, so
+     * removing that app unregistered docs its catalogues still referenced and
+     * the boot failed — the app had been holding up registrations that had
+     * nothing to do with browsing.</p>
+     *
+     * <p>Positioning a doc in a catalogue is already the strongest statement
+     * anyone makes about it, so it is a strange thing to then need to declare
+     * separately. Registering by position removes the second declaration and
+     * the whole class of "forgot the DocProvider" boot failures with it.
+     * Re-registering the same Doc is harmless — {@link DocRegistry} only
+     * objects when one UUID names two DIFFERENT docs — so a doc that is both
+     * positioned and listed by a provider still resolves to one entry.</p>
      */
     public static List<Doc> harvestSyntheticFromLeaves(
             java.util.Collection<? extends hue.captains.singapura.js.homing.studio.base.app.Catalogue<?>> catalogues) {
@@ -117,14 +129,7 @@ public final class DocRegistry {
         for (var c : catalogues) {
             for (var e : c.leaves()) {
                 if (e instanceof hue.captains.singapura.js.homing.studio.base.app.Entry.OfDoc<?, ?>(Doc d)) {
-                    if (d instanceof hue.captains.singapura.js.homing.studio.base.tracker.PlanDoc
-                            || d instanceof hue.captains.singapura.js.homing.studio.base.app.AppDoc<?, ?>
-                            || d instanceof ProxyDoc
-                            || d instanceof hue.captains.singapura.js.homing.studio.base.composed.ComposedDoc
-                            || d instanceof hue.captains.singapura.js.homing.studio.base.table.TableDoc
-                            || d instanceof hue.captains.singapura.js.homing.studio.base.image.ImageDoc) {
-                        out.add(d);
-                    }
+                    out.add(d);
                 }
             }
         }
