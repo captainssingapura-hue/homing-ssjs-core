@@ -187,13 +187,13 @@ function _renderIndex(root, data, planId) {
     var footerChildren = [];
     if (data.executionDoc) {
         var execA = document.createElement("a");
-        href.set(execA, "/ref?doc=" + encodeURIComponent(data.executionDoc));
+        href.set(execA, data.executionUrl || ("/app?app=doc-reader&doc=" + encodeURIComponent(data.executionDoc)));
         execA.textContent = "Execution Plan (prose)";
         footerChildren.push(execA);
     }
     if (data.dossierDoc) {
         var dosA = document.createElement("a");
-        href.set(dosA, "/ref?doc=" + encodeURIComponent(data.dossierDoc));
+        href.set(dosA, data.dossierUrl || ("/app?app=doc-reader&doc=" + encodeURIComponent(data.dossierDoc)));
         dosA.textContent = "Dossier";
         if (footerChildren.length) footerChildren.push(document.createTextNode(" · "));
         footerChildren.push(dosA);

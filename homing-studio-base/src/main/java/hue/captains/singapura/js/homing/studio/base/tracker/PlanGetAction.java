@@ -34,10 +34,34 @@ public class PlanGetAction
 
     private final PlanRegistry planRegistry;
     private final CatalogueRegistry catalogueRegistry;   // optional; may be null
+    private final hue.captains.singapura.js.homing.studio.base.DocRegistry docRegistry; // optional
 
     public PlanGetAction(PlanRegistry planRegistry, CatalogueRegistry catalogueRegistry) {
+        this(planRegistry, catalogueRegistry, null);
+    }
+
+    /**
+     * RFC 0051 — with a {@link hue.captains.singapura.js.homing.studio.base.DocRegistry},
+     * the plan's companion-doc links can be emitted as the target's own
+     * {@code (app, args)} instead of the renderer guessing {@code doc-reader}
+     * from a bare UUID.
+     */
+    public PlanGetAction(PlanRegistry planRegistry, CatalogueRegistry catalogueRegistry,
+                         hue.captains.singapura.js.homing.studio.base.DocRegistry docRegistry) {
         this.planRegistry      = Objects.requireNonNull(planRegistry, "planRegistry");
         this.catalogueRegistry = catalogueRegistry;   // may be null when no catalogues registered
+        this.docRegistry       = docRegistry;         // may be null; links fall back to the UUID form
+    }
+
+    /** Resolve a companion-doc UUID to the target's own address, or null. */
+    private String docUrl(String uuid) {
+        if (uuid == null || uuid.isBlank() || docRegistry == null) return null;
+        try {
+            var d = docRegistry.resolve(java.util.UUID.fromString(uuid.trim()));
+            return d == null ? null : d.url();
+        } catch (IllegalArgumentException notAUuid) {
+            return null;
+        }
     }
 
     @Override
@@ -91,6 +115,10 @@ public class PlanGetAction
         sb.append("\"acceptanceMet\":").append(p.acceptanceMet()).append(',');
         sb.append("\"executionDoc\":").append(jstr(p.executionDoc())).append(',');
         sb.append("\"dossierDoc\":") .append(jstr(p.dossierDoc())).append(',');
+        // RFC 0051 - the companion docs' own (app, args), so the footer links
+        // do not guess a viewer from a UUID.
+        sb.append("\"executionUrl\":").append(jstr(docUrl(p.executionDoc()))).append(',');
+        sb.append("\"dossierUrl\":")  .append(jstr(docUrl(p.dossierDoc()))).append(',');
         // RFC 0051 — the plan's own address, so the renderer builds its phase
         // links from a path rather than re-deriving /app?app=plan&id=. Null
         // when the plan has no position; the renderer keeps its flat fallback.

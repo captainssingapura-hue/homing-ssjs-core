@@ -285,7 +285,9 @@ function _renderReferences(refs, container) {
         if (r.kind === "doc") {
             var titleLink = document.createElement("a");
             css.addClass(titleLink, st_card_link);
-            href.set(titleLink, "/ref?doc=" + encodeURIComponent(r.uuid));
+            // RFC 0051 - the server supplies the target's (app, args); /app is the
+            // generic redirect that turns it into the authentic path.
+            href.set(titleLink, r.url || ("/app?app=doc-reader&doc=" + encodeURIComponent(r.uuid)));
             titleLink.textContent = r.title;
             title.appendChild(titleLink);
             summary.textContent = r.summary || "";

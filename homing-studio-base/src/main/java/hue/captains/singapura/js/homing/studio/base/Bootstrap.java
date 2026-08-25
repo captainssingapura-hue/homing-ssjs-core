@@ -22,7 +22,6 @@ import hue.captains.singapura.js.homing.studio.base.app.CatalogueGetAction;
 import hue.captains.singapura.js.homing.studio.base.app.CataloguePathGetAction;
 import hue.captains.singapura.js.homing.studio.base.app.FlatToPathRedirectGetAction;
 import hue.captains.singapura.js.homing.studio.base.app.CatalogueRegistry;
-import hue.captains.singapura.js.homing.studio.base.app.RefRedirectGetAction;
 import hue.captains.singapura.js.homing.studio.base.app.StudioBrand;
 import hue.captains.singapura.js.homing.studio.base.theme.CssGroupImplRegistry;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemesGetAction;
@@ -312,7 +311,7 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
         final PlanGetAction planAction;
         if (!plans.isEmpty()) {
             var planRegistry = new PlanRegistry(plans, docRegistry);
-            planAction = new PlanGetAction(planRegistry, catalogueRegistry);
+            planAction = new PlanGetAction(planRegistry, catalogueRegistry, docRegistry);
         } else {
             planAction = null;
         }
@@ -365,12 +364,6 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
                 }
                 all.put("/css-content", cssContentAction);
                 all.put("/doc",         docAction);
-                // RFC 0051 - resolve a reference by UUID. A cross-reference knows
-                // only the id, so the server names the address; before this,
-                // every client emitter guessed doc-reader and opened composed
-                // docs in the markdown viewer.
-                all.put(RefRedirectGetAction.ROUTE,
-                        new RefRedirectGetAction(docRegistry, catalogueRegistry));
                 all.put("/doc-tree",    new DocTreeGetAction(docRegistry, openRoot));
                 // The raw-bytes endpoint for resource-backed inline segments
                 // (svg / table / image) embedded in a rigid-tree doc. Sibling of

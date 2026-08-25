@@ -226,6 +226,18 @@ public class DocRefsGetAction
                     sb.append("\"kind\":\"doc\",");
                     sb.append("\"name\":")    .append(jstr(dr.name())).append(',');
                     sb.append("\"uuid\":")    .append(jstr(dr.target().uuid().toString())).append(',');
+                    // RFC 0051 — the reference's address as (app, args), taken
+                    // from the TARGET's own url(). A client holds only a UUID
+                    // and a UUID carries no kind, so every emitter that built
+                    // this itself guessed doc-reader and opened composed docs
+                    // in the markdown viewer. The target knows its viewer; the
+                    // client should never have been deciding.
+                    //
+                    // Emitted as the flat form on purpose rather than as a
+                    // path: /app is the generic redirect, so one mechanism
+                    // resolves every (app, args) to its authentic address, and
+                    // this payload needs no opinion about the tree.
+                    sb.append("\"url\":")     .append(jstr(dr.target().url())).append(',');
                     sb.append("\"title\":")   .append(jstr(dr.target().title())).append(',');
                     sb.append("\"summary\":") .append(jstr(dr.target().summary()));
                 }
