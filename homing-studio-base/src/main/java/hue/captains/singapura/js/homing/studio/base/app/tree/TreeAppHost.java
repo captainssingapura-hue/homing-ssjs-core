@@ -99,7 +99,13 @@ public record TreeAppHost() implements AppModule<TreeAppHost.Params, TreeAppHost
         // The renderer takes apiUrl to override the default /catalogue endpoint.
         // We construct the /tree URL from the typed Params and hand it through.
         return List.of(
-                "function appMain(rootElement) {",
+                // RFC 0051 — params arrive as an argument. The server resolved
+                // them to answer this request at all, so re-deriving them from
+                // window.location here was a second implementation of a
+                // decision already made, run against a string already parsed.
+                // The generated URL-reading const is suppressed for apps with a
+                // codec, so this is the only params in scope.
+                "function appMain(rootElement, params) {",
                 "    var apiUrl = '/tree?id=' + encodeURIComponent(params.id);",
                 "    if (params.path) apiUrl += '&path=' + encodeURIComponent(params.path);",
                 "    rootElement.replaceChildren(renderCatalogueHost({",

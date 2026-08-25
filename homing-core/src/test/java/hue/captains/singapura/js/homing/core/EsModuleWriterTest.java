@@ -90,4 +90,70 @@ class EsModuleWriterTest {
         assertEquals(4, lines.size());
         assertEquals("export {Greet};", lines.getLast());
     }
+
+    // ----- RFC 0051: a coded app is handed its params, not left to parse -----
+
+    record Coded(String id) implements AppModule._Param {}
+
+    /** An app with a ParamCodec — the server stamps its params into the page. */
+    record CodedApp() implements AppModule<Coded, CodedApp> {
+        static final CodedApp INSTANCE = new CodedApp();
+        record appMain() implements AppModule._AppMain<Coded, CodedApp> {}
+        @Override public String simpleName() { return "coded"; }
+        @Override public String title()      { return "Coded"; }
+        @Override public Class<Coded> paramsType() { return Coded.class; }
+        @Override public ParamCodec<Coded> paramCodec() {
+            return new ParamCodec<>() {
+                @Override public Decoded<Coded> from(java.util.Map<String, List<String>> q) {
+                    return Decoded.ok(new Coded(QueryString.first(q, "id")));
+                }
+                @Override public java.util.Map<String, List<String>> to(Coded p) {
+                    return QueryString.of("id", p.id());
+                }
+            };
+        }
+        @Override public ImportsFor<CodedApp> imports() { return ImportsFor.noImports(); }
+        @Override public ExportsOf<CodedApp> exports() {
+            return new ExportsOf<>(INSTANCE, List.<Exportable<CodedApp>>of(new appMain()));
+        }
+    }
+
+    /** Same params, no codec — keeps deriving them from the URL. */
+    record UncodedApp() implements AppModule<Coded, UncodedApp> {
+        static final UncodedApp INSTANCE = new UncodedApp();
+        record appMain() implements AppModule._AppMain<Coded, UncodedApp> {}
+        @Override public String simpleName() { return "uncoded"; }
+        @Override public String title()      { return "Uncoded"; }
+        @Override public Class<Coded> paramsType() { return Coded.class; }
+        @Override public ImportsFor<UncodedApp> imports() { return ImportsFor.noImports(); }
+        @Override public ExportsOf<UncodedApp> exports() {
+            return new ExportsOf<>(INSTANCE, List.<Exportable<UncodedApp>>of(new appMain()));
+        }
+    }
+
+    @Test
+    void codedApp_doesNotAlsoDeriveParamsFromTheUrl() {
+        ContentProvider<CodedApp> content = () -> List.of("function appMain(el, params) {}");
+        var lines = new EsModuleWriter<>(CodedApp.INSTANCE, content, resolver,
+                ExportWriter.INSTANCE, importsResolver).writeModule();
+
+        // Two answers in one module is the failure being prevented: a const
+        // built from window.location and an argument built from the server's
+        // typed value, with which one wins decided by whether appMain happened
+        // to declare a second parameter.
+        assertTrue(lines.stream().noneMatch(l -> l.contains("const params")),
+                "coded app still derives params from the URL: " + lines);
+        assertTrue(lines.stream().noneMatch(l -> l.contains("URLSearchParams")), lines.toString());
+    }
+
+    @Test
+    void uncodedApp_keepsDerivingParamsFromTheUrl() {
+        // The migration is per-app; an app without a codec is untouched.
+        ContentProvider<UncodedApp> content = () -> List.of("function appMain(el) {}");
+        var lines = new EsModuleWriter<>(UncodedApp.INSTANCE, content, resolver,
+                ExportWriter.INSTANCE, importsResolver).writeModule();
+
+        assertTrue(lines.stream().anyMatch(l -> l.contains("const params")), lines.toString());
+        assertTrue(lines.stream().anyMatch(l -> l.contains("URLSearchParams")), lines.toString());
+    }
 }
