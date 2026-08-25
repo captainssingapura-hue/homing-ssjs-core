@@ -319,6 +319,60 @@ class CatalogueRegistryTest {
     /** Name-only stand-in for a real studio doc class, to pin the derivation. */
     private static final class DocTreeOntologyDoc {}
 
+    // ----- RFC 0051 Laws 3 and 4: resolvable positions, one root -----
+
+    /** An L1 that is registered and holds a doc, but which no parent lists in
+     *  subCatalogues(). Nothing else notices — the closure check only walks
+     *  DOWN from parents, so a child nobody claims is never visited. Its doc
+     *  therefore has a position that cannot be walked back to a root. */
+    record UnclaimedChild() implements L1_Catalogue<RootCatalogue, UnclaimedChild> {
+        public static final UnclaimedChild INSTANCE = new UnclaimedChild();
+        @Override public RootCatalogue parent() { return RootCatalogue.INSTANCE; }
+        @Override public String name()          { return "Unclaimed-Child"; }
+        @Override public List<Entry<UnclaimedChild>> leaves() {
+            return List.of(Entry.of(this, ORPHANED_DOC));
+        }
+    }
+
+    static final UUID ORPHANED_ID = UUID.fromString("99999999-8888-7777-6666-555555555555");
+    static final Doc ORPHANED_DOC = new Doc() {
+        @Override public UUID   uuid()     { return ORPHANED_ID; }
+        @Override public String title()    { return "Orphaned"; }
+        @Override public String contents() { return ""; }
+        @Override public NodeName slug()   { return new NodeName("orphaned"); }
+    };
+
+    @Test
+    void law3_rejects_positionThatDoesNotResolveToARoot() {
+        var brand = new StudioBrand("Test", RootCatalogue.class);
+        var reg = new DocRegistry(List.of(TEST_DOC, ORPHANED_DOC));
+        var ex = assertThrows(IllegalStateException.class,
+                () -> new CatalogueRegistry(brand, reg,
+                        List.of(RootCatalogue.INSTANCE, LeafCatalogue.INSTANCE,
+                                UnclaimedChild.INSTANCE)));
+        assertTrue(ex.getMessage().contains("no parent lists it in subCatalogues()"), ex.getMessage());
+    }
+
+    /** A second, entirely unremarkable L0 — no leaves, nothing wrong with it
+     *  except that nothing hosts it. */
+    record LoneRoot() implements L0_Catalogue<LoneRoot> {
+        public static final LoneRoot INSTANCE = new LoneRoot();
+        @Override public String name() { return "Lone-Root"; }
+    }
+
+    @Test
+    void law4_rejects_secondUnhostedRoot() {
+        // LoneRoot is a perfectly valid L0 on its own; the violation is
+        // only that nothing hosts it, so the tree would have two entrances.
+        var brand = new StudioBrand("Test", RootCatalogue.class);
+        var reg = new DocRegistry(List.of(TEST_DOC));
+        var ex = assertThrows(IllegalStateException.class,
+                () -> new CatalogueRegistry(brand, reg,
+                        List.of(RootCatalogue.INSTANCE, LeafCatalogue.INSTANCE,
+                                LoneRoot.INSTANCE)));
+        assertTrue(ex.getMessage().contains("Expected exactly one un-hosted L0"), ex.getMessage());
+    }
+
     // RFC 0011 note: the previous "rejects_staleParentReference" test
     // (a child whose parent() returns a different L0 INSTANCE than its
     // container) is no longer expressible in this codebase — the CRTP

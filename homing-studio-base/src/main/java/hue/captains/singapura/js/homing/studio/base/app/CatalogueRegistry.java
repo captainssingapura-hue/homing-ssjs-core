@@ -300,6 +300,93 @@ public final class CatalogueRegistry {
         this.planHome = Map.copyOf(planHomeMap);
         this.proxyManager = (proxyManager != null) ? proxyManager
                                                    : StudioProxyManager.scan(byClass.values());
+
+        requirePositionedAreResolvable();
+        requireSingleUnhostedRoot();
+    }
+
+    /**
+     * RFC 0051 Law 3 — POSITIONED IMPLIES RESOLVABLE: the upward chain and the
+     * downward tree describe the same tree.
+     *
+     * <p>Breadcrumbs walk UP through {@code parent()}, and the CRTP level types
+     * already guarantee that walk ends at an L0 — checking for it would be
+     * vacuous. The forward path resolver walks DOWN through
+     * {@code subCatalogues()}, and nothing guaranteed the two agree. The
+     * existing parent-match check verifies one direction: a child that a parent
+     * lists must name that parent back. The converse was never checked, so a
+     * registered catalogue that its declared parent does not list is invisible
+     * going down while still producing a confident breadcrumb going up — a URL
+     * the crumb trail shows and the resolver cannot walk.</p>
+     *
+     * <p>A hosted L0 is claimed by its {@link StudioProxy} rather than by a
+     * {@code subCatalogues()} entry, which is the same fact in the umbrella's
+     * vocabulary; the root is claimed by being the root.</p>
+     */
+    private void requirePositionedAreResolvable() {
+        var claimed = new HashMap<Class<?>, Catalogue<?>>();
+        for (Catalogue<?> parent : byClass.values()) {
+            for (Catalogue<?> child : parent.subCatalogues()) {
+                claimed.put(child.getClass(), parent);
+            }
+        }
+        for (Catalogue<?> c : byClass.values()) {
+            // L0s are out of scope here: the level types forbid an L0 from
+            // appearing in any subCatalogues(), so "claimed by a parent" is not
+            // a question that can be asked of one. Roots are Law 4's business.
+            if (c instanceof L0_Catalogue<?>) continue;
+            if (claimed.containsKey(c.getClass())) continue;
+            Catalogue<?> declared = declaredParentOf(c);
+            throw new IllegalStateException(
+                    "Catalogue " + c.getClass().getName() + " is registered and names "
+                  + (declared == null ? "no parent" : declared.getClass().getName() + " as its parent")
+                  + ", but no parent lists it in subCatalogues()."
+                  + " Its breadcrumbs would resolve while the path to it could not be walked"
+                  + " (RFC 0051 - Law 3, positioned implies resolvable).");
+        }
+    }
+
+    /**
+     * RFC 0051 Law 4 — ONE ROOT. Every path needs a place to start, and an
+     * L0 that no umbrella hosts is by definition a place someone can start.
+     * Two such roots means a path prefix is ambiguous; none means the tree
+     * has no entrance at all.
+     *
+     * <p>The brand's home-app is the root. This checks that the structure
+     * agrees with the brand rather than merely that the brand names something
+     * registered — an umbrella deployment that forgets one proxy leaves a
+     * second reachable root, and the URL scheme would have no way to say
+     * which studio a bare path belongs to.</p>
+     */
+    private void requireSingleUnhostedRoot() {
+        var unhosted = new ArrayList<Catalogue<?>>();
+        for (Catalogue<?> c : byClass.values()) {
+            if (c instanceof L0_Catalogue<?> && !proxyManager.isHosted(asL0Class(c))) {
+                unhosted.add(c);
+            }
+        }
+        if (unhosted.size() != 1) {
+            throw new IllegalStateException(
+                    "Expected exactly one un-hosted L0 catalogue (the root every path"
+                  + " starts from), found " + unhosted.size() + ": "
+                  + unhosted.stream().map(c -> c.getClass().getName()).toList()
+                  + " (RFC 0051 - Law 4). An L0 no umbrella hosts is a second entrance;"
+                  + " wrap it in a StudioProxy under the umbrella, or drop it.");
+        }
+        Catalogue<?> root = unhosted.get(0);
+        if (root.getClass() != brand.homeApp()) {
+            throw new IllegalStateException(
+                    "The un-hosted root is " + root.getClass().getName()
+                  + " but StudioBrand.homeApp names " + brand.homeApp().getName()
+                  + ". The brand's home and the structural root must be the same"
+                  + " catalogue (RFC 0051 - Law 4), or a path and the home button"
+                  + " would disagree about where the tree begins.");
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Class<? extends L0_Catalogue<?>> asL0Class(Catalogue<?> c) {
+        return (Class<? extends L0_Catalogue<?>>) c.getClass();
     }
 
     private static void requireValid(Catalogue<?> c) {
