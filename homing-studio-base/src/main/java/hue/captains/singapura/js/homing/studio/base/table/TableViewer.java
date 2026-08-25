@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.table;
 
+import hue.captains.singapura.js.homing.core.ParamCodec;
 import hue.captains.singapura.js.homing.core.AppLink;
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.Importable;
@@ -36,7 +37,12 @@ public final class TableViewer extends DocViewer<TableViewer.Params, TableViewer
     public record link() implements AppLink<TableViewer> {}
 
     @Override public String simpleName() { return "table-viewer"; }
+    /** RFC 0051 - one required id; same shape as the other viewers. */
+    public static final ParamCodec<Params> CODEC =
+            ParamCodec.ofSingle("id", Params::new, Params::id);
+
     @Override public Class<Params> paramsType() { return Params.class; }
+    @Override public ParamCodec<Params> paramCodec() { return CODEC; }
     @Override public String title() { return "table"; }
 
     @Override

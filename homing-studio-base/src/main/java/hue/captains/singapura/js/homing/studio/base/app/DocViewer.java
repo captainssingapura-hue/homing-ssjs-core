@@ -135,7 +135,12 @@ public abstract class DocViewer<P extends AppModule._Param, M extends DocViewer<
     public final List<String> selfContent(ModuleNameResolver resolver) {
         var lines = new ArrayList<String>();
         // ---- Chrome open ----
-        lines.add("function appMain(rootElement) {");
+        // RFC 0051 — params arrive as an argument for any subclass that
+        // declares a codec, and the generated URL-reading const is suppressed
+        // for exactly those. The body below refers to `params` throughout, so
+        // this signature is what keeps it defined: adding a codec without this
+        // turns the whole page into "params is not defined".
+        lines.add("function appMain(rootElement, params) {");
         // Defensive try/catch — surfaces failures inline + to console so a
         // broken viewer doesn't render as an empty page (the failure mode that
         // motivated the chrome-in-type-system refactor).

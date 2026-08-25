@@ -132,7 +132,7 @@ public class CatalogueGetAction
         sb.append("\"brand\":{")
           .append("\"label\":")  .append(jstr(brand.label())).append(',')
           .append("\"logo\":")   .append(jstr(logoSvg)).append(',')
-          .append("\"homeUrl\":").append(jstr(catalogueUrl(brand.homeApp().getName())))
+          .append("\"homeUrl\":").append(jstr(homeUrl()))
           .append("},");
 
         // Breadcrumbs (root → leaf). RFC 0009: prefix the visible text with
@@ -145,7 +145,7 @@ public class CatalogueGetAction
         for (Catalogue<?> ck : crumbs) {
             if (!firstCrumb) sb.append(',');
             firstCrumb = false;
-            String url = (ck.getClass() == c.getClass()) ? "" : catalogueUrl(ck.getClass().getName());
+            String url = (ck.getClass() == c.getClass()) ? "" : pathUrl(ck);
             sb.append("{\"name\":").append(jstr(crumbTextOf(ck)))
               .append(",\"url\":") .append(jstr(url))
               .append('}');
@@ -178,7 +178,7 @@ public class CatalogueGetAction
               .append("\"name\":")    .append(jstr(child.name())).append(',')
               .append("\"summary\":") .append(jstr(child.summary())).append(',')
               .append("\"category\":").append(jstr(child.badge())).append(',')
-              .append("\"url\":")     .append(jstr(catalogueUrl(child.getClass().getName())))
+              .append("\"url\":")     .append(jstr(pathUrl(child)))
               .append('}');
         }
 
@@ -200,7 +200,7 @@ public class CatalogueGetAction
                       .append(titleKey)       .append(':').append(jstr(d.title())).append(',')
                       .append("\"summary\":") .append(jstr(d.summary())).append(',')
                       .append("\"category\":").append(jstr(d.category())).append(',')
-                      .append("\"url\":")     .append(jstr(d.url()))
+                      .append("\"url\":")     .append(jstr(pathUrl(d)))
                       .append('}');
                 }
                 // RFC 0015 Phase 6: OfApp / OfPlan branches removed. Plans
@@ -226,7 +226,7 @@ public class CatalogueGetAction
                                                       : proxy.icon() + " " + proxy.name())).append(',')
                       .append("\"summary\":") .append(jstr(proxy.summary())).append(',')
                       .append("\"category\":").append(jstr(proxy.badge())).append(',')
-                      .append("\"url\":")     .append(jstr(catalogueUrl(proxy.source().getClass().getName())))
+                      .append("\"url\":")     .append(jstr(pathUrl(proxy.source())))
                       .append('}');
                 }
             }
@@ -256,6 +256,41 @@ public class CatalogueGetAction
 
     private static String catalogueUrl(String fqn) {
         return "/app?app=catalogue&id=" + fqn;
+    }
+
+    /**
+     * RFC 0051 — the address of a catalogue node, as a path.
+     *
+     * <p>Every tile and crumb this action emits goes through here, so
+     * catalogue navigation shows the authentic address rather than the flat
+     * {@code (app, args)} form. The path comes from
+     * {@link CatalogueRegistry#pathOf}, which derives it from the same
+     * breadcrumb walk the crumb trail is built from — the URL and the crumb
+     * cannot disagree because they are one derivation.</p>
+     */
+    /** RFC 0051 - the brand home link is the tree root, which is /cat. */
+    private String homeUrl() {
+        Catalogue<?> root = registry.root();
+        return root == null ? catalogueUrl(registry.brand().homeApp().getName()) : pathUrl(root);
+    }
+
+    private String pathUrl(Catalogue<?> node) {
+        CataloguePath path = registry.pathOf(node);
+        return path == null ? catalogueUrl(node.getClass().getName()) : path.toUrl();
+    }
+
+    /**
+     * The address of a leaf, as a path — falling back to the doc's own flat
+     * URL when it has no position.
+     *
+     * <p>The fallback is not dead code: Law 1 gives a doc AT MOST one
+     * position, not necessarily one. Docs harvested from content trees are
+     * reachable and viewable without sitting in the catalogue tree, and they
+     * keep their flat address.</p>
+     */
+    private String pathUrl(hue.captains.singapura.js.homing.studio.base.Doc doc) {
+        CataloguePath path = registry.pathOf(doc);
+        return path == null ? doc.url() : path.toUrl();
     }
 
     /** RFC 0009: breadcrumb crumb text — icon glyph prefix + name. */

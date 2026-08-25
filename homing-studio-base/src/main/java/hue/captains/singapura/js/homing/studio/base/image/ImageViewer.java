@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.image;
 
+import hue.captains.singapura.js.homing.core.ParamCodec;
 import hue.captains.singapura.js.homing.core.AppLink;
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.Importable;
@@ -35,7 +36,12 @@ public final class ImageViewer extends DocViewer<ImageViewer.Params, ImageViewer
     public record link() implements AppLink<ImageViewer> {}
 
     @Override public String simpleName() { return "image-viewer"; }
+    /** RFC 0051 - one required id; same shape as the other viewers. */
+    public static final ParamCodec<Params> CODEC =
+            ParamCodec.ofSingle("id", Params::new, Params::id);
+
     @Override public Class<Params> paramsType() { return Params.class; }
+    @Override public ParamCodec<Params> paramCodec() { return CODEC; }
     @Override public String title() { return "image"; }
 
     @Override
