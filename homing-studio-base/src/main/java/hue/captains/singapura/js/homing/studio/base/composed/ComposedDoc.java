@@ -55,13 +55,9 @@ public record ComposedDoc(
         String          abstractText,
         String          category,
         List<Segment>   segments,
-        List<Reference> references
+        List<Reference> references,
+        NodeName        slug
 ) implements Doc {
-
-    /** RFC 0051 Law 2 — value-Doc; the title is the per-instance datum, since
-     *  every ComposedDoc shares this class and would otherwise all claim the
-     *  segment "composed". */
-    @Override public NodeName slug() { return NodeName.conciseSlug(title); }
 
     public ComposedDoc {
         Objects.requireNonNull(uuid,       "ComposedDoc.uuid");
@@ -74,8 +70,39 @@ public record ComposedDoc(
         if (summary      == null) summary      = "";
         if (abstractText == null) abstractText = summary;
         if (category     == null) category     = "DOC";
+        // RFC 0051 Law 2 — every ComposedDoc shares this class, so the
+        // class-derived default would have them all claim the segment
+        // "composed". The title is the only per-instance datum available by
+        // default; an author who wants a segment that survives re-wording
+        // supplies one through withSlug.
+        if (slug         == null) slug         = NodeName.conciseSlug(title);
         segments   = List.copyOf(segments);
         references = List.copyOf(references);
+    }
+
+    /**
+     * The canonical shape before RFC 0051 — same doc, slug derived from the
+     * title. Kept so no existing construction site has to change.
+     */
+    public ComposedDoc(UUID uuid, String title, String summary, String abstractText,
+                       String category, List<Segment> segments, List<Reference> references) {
+        this(uuid, title, summary, abstractText, category, segments, references, null);
+    }
+
+    /**
+     * RFC 0051 — this doc with an authored path segment, replacing the
+     * title-derived default.
+     *
+     * <p>A wither rather than a wrapper: the framework's viewers and the
+     * doc harvest dispatch on the concrete type ({@code instanceof
+     * ComposedDoc}), so a delegating wrapper would keep the Doc protocol
+     * intact and still blank the page. Identity has to be attached without
+     * changing what the value <i>is</i>.</p>
+     */
+    public ComposedDoc withSlug(NodeName authored) {
+        Objects.requireNonNull(authored, "ComposedDoc.withSlug(authored)");
+        return new ComposedDoc(uuid, title, summary, abstractText, category,
+                               segments, references, authored);
     }
 
     /**

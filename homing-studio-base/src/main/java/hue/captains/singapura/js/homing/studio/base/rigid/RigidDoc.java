@@ -32,16 +32,33 @@ import java.util.UUID;
  */
 public final class RigidDoc implements Doc {
 
-    private final UUID    uuid;
-    private final String  summary;
-    private final String  category;
-    private final DocNode root;
+    private final UUID     uuid;
+    private final String   summary;
+    private final String   category;
+    private final DocNode  root;
+    private final NodeName slug;
 
     RigidDoc(UUID uuid, String summary, String category, DocNode root) {
+        this(uuid, summary, category, root, null);
+    }
+
+    private RigidDoc(UUID uuid, String summary, String category, DocNode root, NodeName slug) {
         this.uuid     = Objects.requireNonNull(uuid, "RigidDoc.uuid");
         this.summary  = (summary  == null) ? "" : summary;
         this.category = (category == null) ? "DOC" : category;
         this.root     = Objects.requireNonNull(root, "RigidDoc.root");
+        this.slug     = slug;
+    }
+
+    /**
+     * RFC 0051 — this doc with an authored path segment. A wither rather than
+     * a wrapper, for the same reason as {@code ComposedDoc.withSlug}: the
+     * viewers dispatch on the concrete type, so identity has to be attached
+     * without changing what the value is.
+     */
+    public RigidDoc withSlug(NodeName authored) {
+        Objects.requireNonNull(authored, "RigidDoc.withSlug(authored)");
+        return new RigidDoc(uuid, summary, category, root, authored);
     }
 
     /** Open the leveled builder at the document root (L0). */
@@ -67,11 +84,10 @@ public final class RigidDoc implements Doc {
     @Override public UUID    uuid()        { return uuid; }
     @Override public DocId   id()          { return new DocId.ByUuid(uuid); }
     @Override public String  title()       { return root.title().text(); }
-    /** RFC 0051 Law 2 — a value-Doc: every instance shares this class, so the
-     *  class-derived default would give every RigidDoc the segment "rigid".
-     *  The title is the per-instance datum, and siblings already need
-     *  distinguishable titles to be usable in a tile grid. */
-    @Override public NodeName slug()       { return NodeName.conciseSlug(title()); }
+    /** RFC 0051 Law 2 — the authored segment when one was supplied, else the
+     *  title: every RigidDoc shares this class, so the class-derived default
+     *  would give them all the segment "rigid". */
+    @Override public NodeName slug()       { return slug != null ? slug : NodeName.conciseSlug(title()); }
     @Override public String  summary()     { return summary; }
     @Override public String  category()    { return category; }
     @Override public String  kind()        { return "composed"; }   // reuses the doc-tree route
