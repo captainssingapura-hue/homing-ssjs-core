@@ -67,8 +67,15 @@ function renderPlanHost(props) {
     return root;
 }
 
-function _planUrl(planId)               { return "/app?app=plan&id=" + encodeURIComponent(planId); }
-function _phaseUrl(planId, phaseId)     { return _planUrl(planId) + "&phase=" + encodeURIComponent(phaseId); }
+// RFC 0051 — the server supplies the plan's own address; these fall back to
+// the flat form only when the plan has no position in the catalogue.
+function _planUrl(data, planId) {
+    return (data && data.selfUrl) || ("/app?app=plan&id=" + encodeURIComponent(planId));
+}
+function _phaseUrl(data, planId, phaseId) {
+    var base = _planUrl(data, planId);
+    return base + (base.indexOf("?") >= 0 ? "&" : "?") + "phase=" + encodeURIComponent(phaseId);
+}
 
 function _brandHeader(data, crumbsAfter) {
     var brand = data.brand || { label: "studio", homeUrl: "/" };
@@ -167,7 +174,7 @@ function _renderIndex(root, data, planId) {
     // column beneath the badge.
     var phaseItems = data.phases.map(function(p) {
         return ListItem({
-            href:        _phaseUrl(planId, p.id),
+            href:        _phaseUrl(data, planId, p.id),
             marker:      _phaseMarker(p),
             met:         (p.status || "").toLowerCase() === "done",
             label:       p.id + " — " + p.label,
@@ -247,7 +254,7 @@ function _renderStep(root, data, planId, phaseId) {
     }
 
     var children = [];
-    children.push(_brandHeader(data, [{ selfUrl: _planUrl(planId), text: "Phase " + phase.id }]));
+    children.push(_brandHeader(data, [{ selfUrl: _planUrl(data, planId), text: "Phase " + phase.id }]));
 
     var main = document.createElement("div");
     css.addClass(main, st_main);
@@ -292,7 +299,7 @@ function _renderStep(root, data, planId, phaseId) {
             var d = phase.dependsOn[di];
             var li = document.createElement("li");
             var a = document.createElement("a");
-            href.set(a, _phaseUrl(planId, d.phaseId));
+            href.set(a, _phaseUrl(data, planId, d.phaseId));
             a.textContent = "Phase " + d.phaseId;
             li.appendChild(a);
             li.appendChild(document.createTextNode(" — " + d.reason));
@@ -325,7 +332,7 @@ function _renderStep(root, data, planId, phaseId) {
     navRow.style.cssText = "display:flex; justify-content:space-between; margin-top:24px;";
     if (phaseIdx > 0) {
         var prev = document.createElement("a");
-        href.set(prev, _phaseUrl(planId, data.phases[phaseIdx - 1].id));
+        href.set(prev, _phaseUrl(data, planId, data.phases[phaseIdx - 1].id));
         prev.textContent = "← Phase " + data.phases[phaseIdx - 1].id;
         navRow.appendChild(prev);
     } else {
@@ -333,7 +340,7 @@ function _renderStep(root, data, planId, phaseId) {
     }
     if (phaseIdx < data.phases.length - 1) {
         var next = document.createElement("a");
-        href.set(next, _phaseUrl(planId, data.phases[phaseIdx + 1].id));
+        href.set(next, _phaseUrl(data, planId, data.phases[phaseIdx + 1].id));
         next.textContent = "Phase " + data.phases[phaseIdx + 1].id + " →";
         navRow.appendChild(next);
     }

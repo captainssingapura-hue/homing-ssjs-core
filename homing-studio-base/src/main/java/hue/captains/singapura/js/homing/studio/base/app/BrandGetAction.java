@@ -59,8 +59,12 @@ public class BrandGetAction
         String logo    = (brand != null && brand.logo() != null)
                 ? brand.logo().resolve().orElse("")
                 : "";
+        // RFC 0051 — the brand link is the tree root, and the root's path is
+        // the bare "/cat". This is the last flat URL a doc page showed: crumbs
+        // come from /doc-refs and tiles from /catalogue, but the brand comes
+        // from here, so converting those two left this one behind.
         String homeUrl = (brand != null && hasCatalogues)
-                ? "/app?app=catalogue&id=" + brand.homeApp().getName()
+                ? "/" + CataloguePath.ROOT
                 : "/";
 
         String json = "{"

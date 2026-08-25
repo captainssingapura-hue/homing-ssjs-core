@@ -195,9 +195,17 @@ public class DocRefsGetAction
                 String text = (icon == null || icon.isEmpty()) ? c.name() : icon + " " + c.name();
                 @SuppressWarnings("unchecked")
                 Class<? extends Catalogue<?>> cClass = (Class<? extends Catalogue<?>>) c.getClass();
+                // RFC 0051 — a doc page's crumbs are built here, NOT by
+                // CatalogueGetAction, which is why converting that action left
+                // these still showing /app?app=catalogue&id=<fqn>. They worked,
+                // because the redirect corrects them on click, but a link that
+                // has to be corrected is not the authentic address — and the
+                // whole point is that only one form is ever displayed.
+                var path = catalogueRegistry.pathOf(c);
                 sb.append('{')
                   .append("\"text\":").append(jstr(text)).append(',')
-                  .append("\"href\":").append(jstr(CatalogueAppHost.urlFor(cClass)))
+                  .append("\"href\":").append(jstr(path != null ? path.toUrl()
+                                                                : CatalogueAppHost.urlFor(cClass)))
                   .append('}');
             }
         }

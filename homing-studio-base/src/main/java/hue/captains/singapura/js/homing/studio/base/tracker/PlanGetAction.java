@@ -91,6 +91,10 @@ public class PlanGetAction
         sb.append("\"acceptanceMet\":").append(p.acceptanceMet()).append(',');
         sb.append("\"executionDoc\":").append(jstr(p.executionDoc())).append(',');
         sb.append("\"dossierDoc\":") .append(jstr(p.dossierDoc())).append(',');
+        // RFC 0051 — the plan's own address, so the renderer builds its phase
+        // links from a path rather than re-deriving /app?app=plan&id=. Null
+        // when the plan has no position; the renderer keeps its flat fallback.
+        sb.append("\"selfUrl\":")    .append(jstr(selfUrl(p))).append(',');
 
         // Brand + breadcrumbs (when CatalogueRegistry is available).
         if (catalogueRegistry != null) {
@@ -99,7 +103,7 @@ public class PlanGetAction
             sb.append("\"brand\":{")
               .append("\"label\":")  .append(jstr(brand.label())).append(',')
               .append("\"logo\":")   .append(jstr(logoSvg)).append(',')
-              .append("\"homeUrl\":").append(jstr("/app?app=catalogue&id=" + brand.homeApp().getName()))
+              .append("\"homeUrl\":").append(jstr(homeUrl(brand)))
               .append("},");
             // RFC 0005-ext2: typed catalogue chain from root → containing
             // catalogue (typically Journeys). Renderer appends the plan name
@@ -115,9 +119,13 @@ public class PlanGetAction
                 String text = (icon == null || icon.isEmpty()) ? c.name() : icon + " " + c.name();
                 @SuppressWarnings("unchecked")
                 Class<? extends Catalogue<?>> cClass = (Class<? extends Catalogue<?>>) c.getClass();
+                // RFC 0051 — same as /doc-refs: a plan page builds its own
+                // crumbs, so converting CatalogueGetAction did not reach them.
+                var path = catalogueRegistry.pathOf(c);
                 sb.append('{')
                   .append("\"text\":").append(jstr(text)).append(',')
-                  .append("\"href\":").append(jstr(CatalogueAppHost.urlFor(cClass)))
+                  .append("\"href\":").append(jstr(path != null ? path.toUrl()
+                                                                : CatalogueAppHost.urlFor(cClass)))
                   .append('}');
             }
             sb.append("],");
@@ -237,6 +245,21 @@ public class PlanGetAction
         sb.append("\"rationale\":")     .append(jstr(d.rationale())).append(',');
         sb.append("\"notes\":")         .append(jstr(d.notes()));
         sb.append('}');
+    }
+
+    /** RFC 0051 - the plan's own path, via its PlanDoc position. */
+    private String selfUrl(Plan p) {
+        if (catalogueRegistry == null) return null;
+        var path = catalogueRegistry.pathOf(new PlanDoc(p));
+        return path == null ? null : path.toUrl();
+    }
+
+    /** RFC 0051 - the brand link is the tree root, whose path is "/cat". */
+    private String homeUrl(hue.captains.singapura.js.homing.studio.base.app.StudioBrand brand) {
+        if (catalogueRegistry == null) return "/app?app=catalogue&id=" + brand.homeApp().getName();
+        var root = catalogueRegistry.root();
+        return root == null ? "/app?app=catalogue&id=" + brand.homeApp().getName()
+                            : catalogueRegistry.pathOf(root).toUrl();
     }
 
     private static String jstr(String v) {
