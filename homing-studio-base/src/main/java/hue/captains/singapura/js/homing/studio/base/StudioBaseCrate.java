@@ -8,7 +8,6 @@ import hue.captains.singapura.js.homing.libs.LibsCrate;
 import hue.captains.singapura.js.homing.server.ServerCrate;
 import hue.captains.singapura.js.homing.studio.base.app.CatalogueAppHost;
 import hue.captains.singapura.js.homing.studio.base.app.CatalogueHostRenderer;
-import hue.captains.singapura.js.homing.studio.base.app.DocBrowserRenderer;
 import hue.captains.singapura.js.homing.studio.base.app.DocReader;
 import hue.captains.singapura.js.homing.studio.base.app.DocReaderRenderer;
 import hue.captains.singapura.js.homing.studio.base.app.DocTreeViewer;
@@ -88,7 +87,6 @@ public final class StudioBaseCrate implements Crate {
         return List.of(
                 CrateEntry.of(CatalogueAppHost.INSTANCE),
                 CrateEntry.of(CatalogueHostRenderer.INSTANCE),
-                CrateEntry.of(DocBrowserRenderer.INSTANCE),
                 CrateEntry.of(DocReader.INSTANCE),
                 CrateEntry.of(DocReaderRenderer.INSTANCE),
                 CrateEntry.of(DocTreeViewer.INSTANCE),
