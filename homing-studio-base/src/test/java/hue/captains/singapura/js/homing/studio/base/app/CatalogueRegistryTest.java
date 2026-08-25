@@ -1,5 +1,9 @@
 package hue.captains.singapura.js.homing.studio.base.app;
 
+import hue.captains.singapura.js.homing.core.AppModule;
+import hue.captains.singapura.js.homing.core.Exportable;
+import hue.captains.singapura.js.homing.core.ExportsOf;
+import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.studio.base.Doc;
 import hue.captains.singapura.js.homing.studio.base.DocRegistry;
 import org.junit.jupiter.api.Test;
@@ -171,6 +175,71 @@ class CatalogueRegistryTest {
                 () -> new CatalogueRegistry(brand, docs,
                         List.of(RootCatalogue.INSTANCE, NonL0AsHomeApp.INSTANCE)));
         assertTrue(ex.getMessage().contains("must be an L0_Catalogue"));
+    }
+
+    // ----- RFC 0051 Law 1, app half: identity is (app, args), not the framing -----
+
+    /** Minimal AppModule so a Navigable can exist in this test. */
+    public static final class DemoApp implements AppModule<AppModule._None, DemoApp> {
+        public static final DemoApp INSTANCE = new DemoApp();
+        private DemoApp() {}
+        record appMain() implements AppModule._AppMain<AppModule._None, DemoApp> {}
+        @Override public String simpleName() { return "demo-app"; }
+        @Override public String title()      { return "Demo App"; }
+        @Override public ImportsFor<DemoApp> imports() { return ImportsFor.noImports(); }
+        @Override public ExportsOf<DemoApp> exports() {
+            return new ExportsOf<>(this, List.<Exportable<DemoApp>>of(new appMain()));
+        }
+    }
+
+    private static AppDoc<AppModule._None, DemoApp> tile(String name, String summary) {
+        return new AppDoc<>(new Navigable<>(
+                DemoApp.INSTANCE, AppModule._None.INSTANCE, name, summary));
+    }
+
+    /** The canonical tile, one level down. */
+    static final AppDoc<AppModule._None, DemoApp> CANON =
+            tile("Demo App", "The canonical entry.");
+    /** The same (app, args) dressed as a featured tile — a DIFFERENT AppDoc
+     *  uuid, because AppDoc seeds identity from the whole Navigable. This is
+     *  precisely what the doc-uuid half of Law 1 cannot see. */
+    static final AppDoc<AppModule._None, DemoApp> ECHO =
+            tile("Featured: Demo App", "Same app, same args, different framing.");
+
+    record FramingRoot() implements L0_Catalogue<FramingRoot> {
+        public static final FramingRoot INSTANCE = new FramingRoot();
+        @Override public String name() { return "Framing-Root"; }
+        @Override public List<Entry<FramingRoot>> leaves() {
+            return List.of(Entry.of(this, ECHO));
+        }
+        @Override public List<? extends L1_Catalogue<FramingRoot, ?>> subCatalogues() {
+            return List.of(FramingChild.INSTANCE);
+        }
+    }
+
+    record FramingChild() implements L1_Catalogue<FramingRoot, FramingChild> {
+        public static final FramingChild INSTANCE = new FramingChild();
+        @Override public FramingRoot parent() { return FramingRoot.INSTANCE; }
+        @Override public String name()        { return "Framing-Child"; }
+        @Override public List<Entry<FramingChild>> leaves() {
+            return List.of(Entry.of(this, CANON));
+        }
+    }
+
+    @Test
+    void law1_rejects_sameAppAndArgsFramedTwice() {
+        // Guard the premise: the two tiles really are distinct to the doc-uuid
+        // check, so this test exercises the (app, args) half and not the other.
+        assertNotEquals(CANON.uuid(), ECHO.uuid(),
+                "premise broken: the framings would already collide on uuid");
+
+        var brand = new StudioBrand("Test", FramingRoot.class);
+        var registry = new DocRegistry(List.of(CANON, ECHO));
+        var ex = assertThrows(IllegalStateException.class,
+                () -> new CatalogueRegistry(brand, registry,
+                        List.of(FramingRoot.INSTANCE, FramingChild.INSTANCE)));
+        assertTrue(ex.getMessage().contains("identified by (app, args)"),
+                "expected the app-half Law 1 message, got: " + ex.getMessage());
     }
 
     // RFC 0011 note: the previous "rejects_staleParentReference" test

@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.app;
 
+import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.studio.base.Doc;
 import hue.captains.singapura.js.homing.studio.base.DocRegistry;
 import hue.captains.singapura.js.homing.studio.base.tracker.Plan;
@@ -114,6 +115,7 @@ public final class CatalogueRegistry {
         // Validate sub-catalogues + leaves and build reverse indices.
         var docHomeMap  = new HashMap<UUID, Catalogue<?>>();
         var planHomeMap = new HashMap<Class<? extends Plan>, Catalogue<?>>();
+        var navHomeMap  = new HashMap<NavKey, Catalogue<?>>();
         for (Catalogue<?> parent : byClass.values()) {
             // ---- Sub-catalogue children ----
             List<? extends Catalogue<?>> subs = parent.subCatalogues();
@@ -176,7 +178,52 @@ public final class CatalogueRegistry {
                                   + " references Doc " + d.getClass().getName()
                                   + " (uuid=" + id + ") which is not in the DocRegistry");
                         }
-                        docHomeMap.putIfAbsent(id, parent);
+                        // RFC 0051 Law 1 — AT MOST ONE POSITION. A being may be
+                        // reached from anywhere, but it SITS in exactly one place:
+                        // that is what makes its tree path well-defined, and so
+                        // deterministic rather than an artifact of scan order.
+                        // This was putIfAbsent, which silently kept whichever
+                        // placement the boot scan reached first. The rule already
+                        // holds one level up — StudioProxyManager rejects a source
+                        // L0 hosted twice, and DocRegistry rejects a UUID used by
+                        // two Docs — so leaves were the level that never got it.
+                        //
+                        // Re-registering the SAME position is fine: a value-Doc
+                        // (e.g. PlanDoc(MyPlan.INSTANCE)) can be harvested more
+                        // than once from one catalogue. Two DIFFERENT homes is the
+                        // violation.
+                        Catalogue<?> priorHome = docHomeMap.put(id, parent);
+                        if (priorHome != null && priorHome != parent) {
+                            throw new IllegalStateException(
+                                    "Doc " + d.getClass().getName() + " (uuid=" + id + ")"
+                                  + " is positioned in two catalogues: "
+                                  + priorHome.getClass().getName() + " and "
+                                  + parent.getClass().getName()
+                                  + ". A navigable has at most ONE position (RFC 0051 - the path axiom);"
+                                  + " keep the canonical entry and drop the echo.");
+                        }
+                        // RFC 0051 Law 1, app half. AppDoc.uuid() seeds from the
+                        // WHOLE Navigable — name and summary included — so two
+                        // tiles for the same (app, args) with different display
+                        // framings get different UUIDs and slide past the check
+                        // above. That is exactly the "multiple framings of one
+                        // navigable" the axiom rules out: identity is (app, args),
+                        // and the framing is only how one position is dressed.
+                        // So key this check on (app class, params) alone.
+                        if (d instanceof AppDoc<?, ?> ad) {
+                            var key = new NavKey(ad.nav().app().getClass(), ad.nav().params());
+                            Catalogue<?> priorNavHome = navHomeMap.put(key, parent);
+                            if (priorNavHome != null && priorNavHome != parent) {
+                                throw new IllegalStateException(
+                                        "App " + key.app().getName() + " with params " + key.params()
+                                      + " is positioned in two catalogues: "
+                                      + priorNavHome.getClass().getName() + " and "
+                                      + parent.getClass().getName()
+                                      + ". A navigable is identified by (app, args) and has at most ONE"
+                                      + " position (RFC 0051 - the path axiom). A differing tile name or"
+                                      + " summary does not make it a second being; keep the canonical entry.");
+                            }
+                        }
                         // RFC 0015 Phase 6: when the doc is a PlanDoc, register the
                         // wrapped Plan's class in planHomeMap so the existing
                         // breadcrumbsForPlan(class) API continues to work for
@@ -355,4 +402,16 @@ public final class CatalogueRegistry {
     public int size() {
         return byClass.size();
     }
+
+    /**
+     * RFC 0051 — the identity of a navigable, and nothing else. An app class
+     * plus its typed params record; the params record's own {@code equals}
+     * carries the args comparison, which is why {@code AppModule._Param}
+     * implementations are records.
+     *
+     * <p>Deliberately excludes the tile's display {@code name}/{@code summary}:
+     * those are framing, and the path axiom says one {@code (app, args)} has
+     * at most one position regardless of how that position is dressed.</p>
+     */
+    private record NavKey(Class<?> app, AppModule._Param params) {}
 }
