@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.studio.base.app.tree;
 
+import hue.captains.singapura.js.homing.core.ParamCodec;
+import hue.captains.singapura.js.homing.core.QueryString;
 import hue.captains.singapura.js.homing.core.AppLink;
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.ExportsOf;
@@ -40,13 +42,42 @@ public record TreeAppHost() implements AppModule<TreeAppHost.Params, TreeAppHost
 
     public static final TreeAppHost INSTANCE = new TreeAppHost();
 
-    /** Canonical URL for a tree at a given path (or root if path is null/empty). */
+    /**
+     * RFC 0051 — this app's params, read and written together.
+     *
+     * <p>{@code path} is optional: a tree opened at its root has none, so its
+     * absence is a value rather than an error. {@code id} is required — a
+     * tree host without a tree is not a page that can be rendered.</p>
+     */
+    public static final ParamCodec<Params> CODEC = new ParamCodec<>() {
+
+        @Override public Decoded<Params> from(java.util.Map<String, java.util.List<String>> query) {
+            String id = QueryString.first(query, "id");
+            if (id == null || id.isBlank()) return Decoded.missing("id");
+            return Decoded.ok(new Params(id, QueryString.first(query, "path")));
+        }
+
+        @Override public java.util.Map<String, java.util.List<String>> to(Params params) {
+            var out = QueryString.params();
+            QueryString.put(out, "id", params.id());
+            QueryString.put(out, "path", params.path());   // null is simply omitted
+            return out;
+        }
+    };
+
+    /** Canonical URL for a tree at a given path (or root if path is null/empty).
+     *
+     *  <p>Goes through {@link #CODEC} so the values are escaped: this built the
+     *  query by concatenation, which produced a broken URL for any tree path
+     *  containing a space or an {@code &} — silently, since nothing decoded it
+     *  back to compare.</p> */
     public static String urlFor(String treeId, String path) {
-        String base = "/app?app=" + INSTANCE.simpleName() + "&id=" + treeId;
-        return (path == null || path.isEmpty()) ? base : base + "&path=" + path;
+        return "/app?app=" + INSTANCE.simpleName() + "&"
+             + CODEC.toQueryString(new Params(treeId, (path == null || path.isEmpty()) ? null : path));
     }
 
     @Override public Class<Params> paramsType() { return Params.class; }
+    @Override public ParamCodec<Params> paramCodec() { return CODEC; }
     @Override public String simpleName() { return "tree"; }
     @Override public String title()      { return "tree"; }
 
