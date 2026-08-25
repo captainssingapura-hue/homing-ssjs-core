@@ -46,8 +46,14 @@ public final class CataloguePathGetAction
      * @param theme carried through so a themed link keeps its theme
      * @param locale likewise
      */
-    public record PathQuery(CataloguePath path, String theme, String locale)
-            implements Param._QueryString {}
+    public record PathQuery(CataloguePath path, String theme, String locale,
+                            Map<String, List<String>> query)
+            implements Param._QueryString {
+
+        public PathQuery {
+            query = (query == null) ? Map.of() : query;
+        }
+    }
 
     private final CatalogueRegistry registry;
     private final AppHtmlGetAction pageAction;
@@ -62,7 +68,8 @@ public final class CataloguePathGetAction
         return ctx -> new PathQuery(
                 CataloguePath.parse(ctx.request().path()),
                 ctx.request().getParam("theme"),
-                ctx.request().getParam("locale"));
+                ctx.request().getParam("locale"),
+                QueryString.parse(ctx.request().query()));
     }
 
     @Override
@@ -113,12 +120,31 @@ public final class CataloguePathGetAction
                 new ResourceNotFound._ExternalError(resource, why));
     }
 
-    /** Hand the resolved node to the page action as a flat (app, args). */
+    /**
+     * Hand the resolved node to the page action as a flat (app, args).
+     *
+     * <p>The request's own query is merged in UNDER the node's args, and the
+     * order is the whole point. A path names the node; the query only refines
+     * how that node is shown — {@code ?phase=2} on a plan, {@code ?context=}
+     * on a catalogue. Without the merge those are silently dropped, which is
+     * how {@code /cat/.../rfc0051-plan-data?phase=2} rendered the wrong phase
+     * while the flat URL rendered the right one.</p>
+     *
+     * <p>The node's args win on conflict, so a request cannot smuggle in a
+     * different {@code id} and make one path serve another node's content.
+     * The path is the identity; the query is decoration.</p>
+     */
     private CompletableFuture<HtmlPageContent> render(
             String app, Map<String, List<String>> args, PathQuery query) {
 
+        var merged = QueryString.params();
+        query.query().forEach((k, values) -> values.forEach(v -> QueryString.put(merged, k, v)));
+        args.forEach((k, values) -> {
+            merged.remove(k);
+            values.forEach(v -> QueryString.put(merged, k, v));
+        });
         return pageAction.execute(
-                new AppQuery(app, null, query.theme(), query.locale(), args),
+                new AppQuery(app, null, query.theme(), query.locale(), merged),
                 new EmptyParam.NoHeaders());
     }
 }

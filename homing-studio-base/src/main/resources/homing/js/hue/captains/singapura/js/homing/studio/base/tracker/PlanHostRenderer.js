@@ -279,7 +279,7 @@ function _renderStep(root, data, planId, phaseId) {
     }
 
     if (phase.tasks && phase.tasks.length) {
-        main.appendChild(Panel({ title: "Tasks", children: [TodoList({ items: phase.tasks })] }));
+        main.appendChild(Panel({ title: "Tasks", children: [TodoList({ tasks: phase.tasks })] }));
     }
 
     if (phase.metrics && phase.metrics.length) {
