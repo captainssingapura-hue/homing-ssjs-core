@@ -35,6 +35,23 @@ import java.util.UUID;
  *   <li><b>One hosting per source L0</b> — built by
  *       {@link StudioProxyManager#scan}.</li>
  * </ol>
+ *
+ * <p>RFC 0051 adds four more, which together make "the path of a being" a
+ * total, deterministic function — the precondition for URL/breadcrumb
+ * parity:</p>
+ *
+ * <ol>
+ *   <li><b>Law 1, at most one position</b> — no {@code (app, args)} and no
+ *       doc sits in two catalogues. Differing tile framing does not make a
+ *       second being.</li>
+ *   <li><b>Law 2, distinct sibling segments</b> — a parent's sub-catalogues
+ *       and addressable leaves share one {@link NodeName} namespace.</li>
+ *   <li><b>Law 3, positioned implies resolvable</b> — every registered
+ *       non-root catalogue is claimed by a parent, so the downward walk
+ *       reaches everything the upward walk describes.</li>
+ *   <li><b>Law 4, one root</b> — exactly one un-hosted L0, and it is the
+ *       brand's home.</li>
+ * </ol>
  */
 public final class CatalogueRegistry {
 
