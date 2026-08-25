@@ -20,6 +20,7 @@ import hue.captains.singapura.js.homing.studio.base.graph.StudioGraphMarkdownAct
 import hue.captains.singapura.js.homing.studio.base.app.CatalogueAppHost;
 import hue.captains.singapura.js.homing.studio.base.app.CatalogueGetAction;
 import hue.captains.singapura.js.homing.studio.base.app.CataloguePathGetAction;
+import hue.captains.singapura.js.homing.studio.base.app.FlatToPathRedirectGetAction;
 import hue.captains.singapura.js.homing.studio.base.app.CatalogueRegistry;
 import hue.captains.singapura.js.homing.studio.base.app.StudioBrand;
 import hue.captains.singapura.js.homing.studio.base.theme.CssGroupImplRegistry;
@@ -338,6 +339,9 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
         final CataloguePathGetAction pathAction = (catalogueRegistry == null) ? null
                 : new CataloguePathGetAction(catalogueRegistry, inner.appAction());
 
+        final FlatToPathRedirectGetAction flatRedirect = (catalogueRegistry == null) ? null
+                : new FlatToPathRedirectGetAction(catalogueRegistry, inner.appAction());
+
         final var harnessGetActions  = fixtures.harnessGetActions();
         final var harnessPostActions = fixtures.harnessPostActions();
         return new ActionRegistry<>() {
@@ -352,6 +356,11 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
                 if (pathAction != null) {
                     all.put(CataloguePathGetAction.ROUTE,      pathAction);
                     all.put(CataloguePathGetAction.ROOT_ROUTE, pathAction);
+                    // RFC 0051 D4 — /app self-corrects to the path when what it
+                    // names is positioned. Registered over the inner action, so
+                    // a flat URL is still SERVED (permalinks keep working) but
+                    // is never what stays in the address bar.
+                    all.put("/app", flatRedirect);
                 }
                 all.put("/css-content", cssContentAction);
                 all.put("/doc",         docAction);

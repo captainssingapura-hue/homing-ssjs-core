@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.studio.base.app;
 
 import hue.captains.singapura.js.homing.studio.base.composed.text.NodeName;
 import hue.captains.singapura.js.homing.core.AppModule;
+import hue.captains.singapura.js.homing.core.QueryString;
 import hue.captains.singapura.js.homing.studio.base.Doc;
 import hue.captains.singapura.js.homing.studio.base.DocRegistry;
 import hue.captains.singapura.js.homing.studio.base.tracker.Plan;
@@ -65,6 +66,12 @@ public final class CatalogueRegistry {
     private final StudioProxyManager proxyManager;
     /** RFC 0051 — per-catalogue slug → child (Catalogue, Doc or StudioProxy). */
     private final Map<Class<?>, Map<NodeName, Object>> childIndex;
+    /** RFC 0051 D4 — catalogue FQN → instance, for redirecting flat catalogue URLs. */
+    private final Map<String, Catalogue<?>> byClassName;
+    /** RFC 0051 D4 — which query keys identify a node, per app. */
+    private final Map<String, java.util.Set<String>> flatIdentityKeys;
+    /** RFC 0051 D4 — canonical flat address → path. */
+    private final Map<String, CataloguePath> flatToPath;
 
     public CatalogueRegistry(StudioBrand brand,
                              DocRegistry docRegistry,
@@ -329,6 +336,33 @@ public final class CatalogueRegistry {
 
         requirePositionedAreResolvable();
         requireSingleUnhostedRoot();
+
+        // RFC 0051 D4 — invert each positioned doc's own flat URL, so a raw
+        // (app, args) can be redirected to its path.
+        var byName = new HashMap<String, Catalogue<?>>();
+        for (Catalogue<?> c : byClass.values()) byName.put(c.getClass().getName(), c);
+        this.byClassName = Map.copyOf(byName);
+
+        var keysByApp = new HashMap<String, java.util.Set<String>>();
+        var flat      = new HashMap<String, CataloguePath>();
+        for (UUID id : docHome.keySet()) {
+            Doc d = docRegistry.resolve(id);
+            if (d == null) continue;
+            String url = d.url();
+            if (url == null) continue;
+            Map<String, List<String>> args = QueryString.parse(url);
+            String app = QueryString.first(args, "app");
+            if (app == null) continue;
+            // The doc's own URL defines which keys identify it. "app" is the
+            // dispatch, not an argument.
+            var identity = new java.util.TreeSet<>(args.keySet());
+            identity.remove("app");
+            keysByApp.computeIfAbsent(app, k -> new java.util.TreeSet<>()).addAll(identity);
+            CataloguePath path = pathOf(d);
+            if (path != null) flat.put(flatKey(app, args, identity), path);
+        }
+        this.flatIdentityKeys = Map.copyOf(keysByApp);
+        this.flatToPath       = Map.copyOf(flat);
     }
 
     /**
@@ -554,6 +588,62 @@ public final class CatalogueRegistry {
     /** The root every path starts from — the single un-hosted L0 (Law 4). */
     public Catalogue<?> root() {
         return byClass.get(brand.homeApp());
+    }
+
+    /**
+     * RFC 0051 D4 — the path a flat {@code (app, args)} address belongs to,
+     * or null when it names nothing positioned.
+     *
+     * <p>This is what lets a raw URL self-correct without every emitter having
+     * to learn about paths. Q3 settled that emitters keep minting
+     * {@code (app, args)} and the server owns positions — cross-references in
+     * doc content are the case that makes it worth it: they are authored
+     * against a UUID, and a UUID has no idea where its doc sits.</p>
+     *
+     * <p>The index is built from each positioned doc's OWN {@code url()}, so
+     * the flat form it is keyed by is the same string that doc would emit.
+     * Nothing here re-derives how a doc kind is addressed; it reads what the
+     * doc says and inverts it.</p>
+     *
+     * <p>Only the identity keys participate. A request carrying
+     * {@code ?phase=2} still matches the plan it names, because {@code phase}
+     * was never part of any doc's canonical URL — which is also why the
+     * redirect can carry it across.</p>
+     */
+    public CataloguePath pathForFlat(String app, Map<String, List<String>> args) {
+        if (app == null) return null;
+        // A catalogue names its node directly by class, not through a doc.
+        if (CatalogueAppHost.INSTANCE.simpleName().equals(app)) {
+            List<String> ids = args == null ? null : args.get("id");
+            if (ids == null || ids.isEmpty()) return null;
+            Catalogue<?> node = byClassName.get(ids.get(0));
+            return node == null ? null : pathOf(node);
+        }
+        java.util.Set<String> keys = flatIdentityKeys.get(app);
+        if (keys == null) return null;
+        return flatToPath.get(flatKey(app, args, keys));
+    }
+
+    /** Which query keys identify a node for this app — the rest are refinements
+     *  a redirect should carry across rather than absorb. */
+    public java.util.Set<String> flatIdentityKeysFor(String app) {
+        var keys = (app == null) ? null : flatIdentityKeys.get(app);
+        if (keys != null) return keys;
+        // A catalogue is addressed by class rather than through a doc, so it
+        // has no entry in the doc-derived index.
+        return CatalogueAppHost.INSTANCE.simpleName().equals(app)
+                ? java.util.Set.of("id") : java.util.Set.of();
+    }
+
+    /** The lookup key: the app plus only the args that identify a node. */
+    private static String flatKey(String app, Map<String, List<String>> args,
+                                  java.util.Collection<String> identityKeys) {
+        var sb = new StringBuilder(app);
+        for (String k : new java.util.TreeSet<>(identityKeys)) {
+            String v = (args == null) ? null : QueryString.first(args, k);
+            sb.append('|').append(k).append('=').append(v == null ? "" : v);
+        }
+        return sb.toString();
     }
 
     /**
