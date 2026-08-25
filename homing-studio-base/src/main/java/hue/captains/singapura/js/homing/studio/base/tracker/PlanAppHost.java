@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.studio.base.tracker;
 
+import hue.captains.singapura.js.homing.core.ParamCodec;
+import hue.captains.singapura.js.homing.core.QueryString;
 import hue.captains.singapura.js.homing.core.AppLink;
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.ExportsOf;
@@ -49,7 +51,26 @@ public record PlanAppHost() implements AppModule<PlanAppHost.Params, PlanAppHost
         return urlFor(planClass) + "&phase=" + phaseId;
     }
 
+    /** RFC 0051 - plan id required, phase optional (a plan opens at its
+     *  overview when no phase is named). */
+    public static final ParamCodec<Params> CODEC = new ParamCodec<>() {
+
+        @Override public Decoded<Params> from(java.util.Map<String, java.util.List<String>> query) {
+            String id = QueryString.first(query, "id");
+            if (id == null || id.isBlank()) return Decoded.missing("id");
+            return Decoded.ok(new Params(id, QueryString.first(query, "phase")));
+        }
+
+        @Override public java.util.Map<String, java.util.List<String>> to(Params params) {
+            var out = QueryString.params();
+            QueryString.put(out, "id", params.id());
+            QueryString.put(out, "phase", params.phase());
+            return out;
+        }
+    };
+
     @Override public Class<Params> paramsType() { return Params.class; }
+    @Override public ParamCodec<Params> paramCodec() { return CODEC; }
 
     @Override public String simpleName() { return "plan"; }
 
@@ -73,7 +94,8 @@ public record PlanAppHost() implements AppModule<PlanAppHost.Params, PlanAppHost
     @Override
     public List<String> selfContent(ModuleNameResolver nameResolver) {
         return List.of(
-                "function appMain(rootElement) {",
+                // RFC 0051 - params from the server; a /cat path has no query.
+                "function appMain(rootElement, params) {",
                 "    rootElement.replaceChildren(renderPlanHost({",
                 "        planId: params.id,",
                 "        phase:  params.phase",

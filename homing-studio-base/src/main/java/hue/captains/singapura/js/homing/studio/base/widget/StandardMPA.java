@@ -222,7 +222,11 @@ public abstract class StandardMPA<P extends AppModule._Param, M extends Standard
     @Override
     public final List<String> selfContent(ModuleNameResolver resolver) {
         var lines = new ArrayList<String>();
-        lines.add("function appMain(rootElement) {");
+        // RFC 0051 — params arrive as an argument when the app declares a
+        // codec. Every MPA subclass shares this one generated body, so this is
+        // the single edit that makes composed-viewer, doc-tree-viewer,
+        // svg-viewer and the workspace shells addressable by path.
+        lines.add("function appMain(rootElement, params) {");
         lines.add("    try {");
         lines.add("");
         lines.add("    // ── Root DOM container ──");
@@ -289,13 +293,24 @@ public abstract class StandardMPA<P extends AppModule._Param, M extends Standard
         // URL grammar: /app?app=svg-viewer&id=<uuid> still routes correctly.
         // Multi-widget shells (DemoStandardMPA) require explicit ?widget=.
         if (widgets().size() == 1) {
-            lines.add("    var widgetName = sp.get('widget') || '"
+            lines.add("    var widgetName = (params && params.widget) || sp.get('widget') || '"
                     + widgets().get(0).simpleName() + "';");
         } else {
-            lines.add("    var widgetName = sp.get('widget');");
+            lines.add("    var widgetName = (params && params.widget) || sp.get('widget');");
         }
         lines.add("    var widgetParams = {};");
+        // RFC 0051 — the URL first, then the server's typed answer over the
+        // top. Union rather than either/or, and deliberately so: a path URL
+        // carries no query at all, so on that route the stamp is the only
+        // source; on the flat route this shell forwards EVERY query key to its
+        // widget (backlog B2), and taking only the stamped keys would silently
+        // drop the ones the app's record does not name. Overlaying keeps the
+        // pass-through intact while letting the typed value win where both
+        // speak.
         lines.add("    sp.forEach(function(v, k){ widgetParams[k] = v; });");
+        lines.add("    if (params) {");
+        lines.add("        Object.keys(params).forEach(function(k){ widgetParams[k] = params[k]; });");
+        lines.add("    }");
         lines.add("");
         lines.add("    // Breadcrumb fetch — uniform handling across two cases.");
         lines.add("    //   1. URL has ?id=<doc-uuid> (legacy DocViewer1 contract):");

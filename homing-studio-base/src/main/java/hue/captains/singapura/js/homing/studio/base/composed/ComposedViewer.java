@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.composed;
 
+import hue.captains.singapura.js.homing.core.ParamCodec;
 import hue.captains.singapura.js.homing.core.AppLink;
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.Widget;
@@ -51,7 +52,13 @@ public final class ComposedViewer extends SingleWidgetMPA<ComposedViewer.Params,
     public record link() implements AppLink<ComposedViewer> {}
 
     @Override public String simpleName() { return "composed-viewer"; }
+    /** RFC 0051 - one required id. Shared shape across the viewers, so the
+     *  codec is built from the same helper rather than copied three times. */
+    public static final ParamCodec<Params> CODEC =
+            ParamCodec.ofSingle("id", Params::new, Params::id);
+
     @Override public Class<Params> paramsType() { return Params.class; }
+    @Override public ParamCodec<Params> paramCodec() { return CODEC; }
     @Override public String title() { return "doc"; }
 
     @Override

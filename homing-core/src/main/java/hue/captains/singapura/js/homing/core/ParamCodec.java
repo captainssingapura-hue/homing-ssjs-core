@@ -137,4 +137,33 @@ public interface ParamCodec<P extends AppModule._Param> {
         List<String> v = query == null ? null : query.get(key);
         return v == null ? List.of() : v;
     }
+
+    /**
+     * A codec for the common shape: one required key, one single-component
+     * record. The viewers all have it — {@code Params(String id)} — and
+     * writing the same eight lines per app would be copying, not authoring.
+     *
+     * <p>Still hand-written in the doctrinal sense: the caller supplies the
+     * constructor and the accessor as method references, so the runtime path
+     * is straight-line calls with nothing introspected.</p>
+     *
+     * @param key    the query key
+     * @param read   builds the record from the key's value
+     * @param write  reads the value back out of the record
+     */
+    static <P extends AppModule._Param> ParamCodec<P> ofSingle(
+            String key, java.util.function.Function<String, P> read,
+            java.util.function.Function<P, String> write) {
+
+        return new ParamCodec<>() {
+            @Override public Decoded<P> from(Map<String, List<String>> query) {
+                String value = QueryString.first(query, key);
+                if (value == null || value.isBlank()) return Decoded.missing(key);
+                return Decoded.ok(read.apply(value));
+            }
+            @Override public Map<String, List<String>> to(P params) {
+                return QueryString.of(key, write.apply(params));
+            }
+        };
+    }
 }
