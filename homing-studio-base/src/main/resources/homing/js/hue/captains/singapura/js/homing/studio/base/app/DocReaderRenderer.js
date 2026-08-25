@@ -285,7 +285,7 @@ function _renderReferences(refs, container) {
         if (r.kind === "doc") {
             var titleLink = document.createElement("a");
             css.addClass(titleLink, st_card_link);
-            href.set(titleLink, "/app?app=doc-reader&doc=" + encodeURIComponent(r.uuid));
+            href.set(titleLink, "/ref?doc=" + encodeURIComponent(r.uuid));
             titleLink.textContent = r.title;
             title.appendChild(titleLink);
             summary.textContent = r.summary || "";
