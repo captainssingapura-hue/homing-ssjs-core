@@ -33,6 +33,15 @@ public record NodeName(String value) implements ValueObject {
         if (value.isBlank()) {
             throw new IllegalArgumentException("NodeName.value must not be blank");
         }
+        // "." and ".." are legal under the charset below — dots are allowed —
+        // but they mean "here" and "up" in every path notation a reader knows,
+        // and a name chain is a path. A node called ".." would make a
+        // name-path ambiguous to a human and traversal-shaped to a machine,
+        // for no expressive gain: no real node wants that name.
+        if (value.equals(".") || value.equals("..")) {
+            throw new IllegalArgumentException(
+                    "NodeName.value must not be '" + value + "' — reserved by path notation");
+        }
         if (value.length() > MAX_CHARS) {
             throw new IllegalArgumentException(
                     "NodeName.value exceeds " + MAX_CHARS + " chars (was " + value.length() + "): " + value);

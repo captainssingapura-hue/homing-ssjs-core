@@ -247,6 +247,17 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
         if (!catalogues.isEmpty()) {
             catalogueRegistry = new CatalogueRegistry(brand, docRegistry, catalogues,
                     null, extraDocHomes);
+            // RFC 0051 Phase 2 — every position must survive the round trip
+            // through its own URL. This follows from the boot laws, but Phase 1
+            // is exactly where "follows from" proved untrustworthy twice: one
+            // law was vacuous under the type system and another compared the
+            // wrong thing, both while passing. The check is a few hundred map
+            // lookups over the whole tree, so it costs nothing to stop
+            // trusting the derivation and simply verify it — for every studio,
+            // downstream ones included, at the moment a break is cheapest to
+            // find.
+            hue.captains.singapura.js.homing.studio.base.app.CataloguePathConformance
+                    .assertPathBijection(catalogueRegistry);
             // RFC 0014: when diagnostics is enabled the framework injects a
             // three-tier tile pyramid via the augmentation map — Diagnostics
             // tile on the home L0; per-studio parent tiles (or direct view

@@ -63,6 +63,8 @@ public final class CatalogueRegistry {
     private final Map<Class<? extends Plan>, Catalogue<?>> planHome;
     /** RFC 0011 — typed reverse-ref for source-L0-hosted-by-umbrella relationships. */
     private final StudioProxyManager proxyManager;
+    /** RFC 0051 — per-catalogue slug → child (Catalogue, Doc or StudioProxy). */
+    private final Map<Class<?>, Map<NodeName, Object>> childIndex;
 
     public CatalogueRegistry(StudioBrand brand,
                              DocRegistry docRegistry,
@@ -134,6 +136,7 @@ public final class CatalogueRegistry {
         var docHomeMap  = new HashMap<UUID, Catalogue<?>>();
         var planHomeMap = new HashMap<Class<? extends Plan>, Catalogue<?>>();
         var navHomeMap  = new HashMap<NavKey, Catalogue<?>>();
+        var childIndexMap = new HashMap<Class<?>, Map<NodeName, Object>>();
         for (Catalogue<?> parent : byClass.values()) {
             // ---- Sub-catalogue children ----
             List<? extends Catalogue<?>> subs = parent.subCatalogues();
@@ -176,7 +179,7 @@ public final class CatalogueRegistry {
             // sub-catalogue named the same as a leaf is just as ambiguous as
             // two leaves named alike. Illustrations sit out: they are
             // decoration, never a path segment, so they cannot be ambiguous.
-            var slugOwner = new HashMap<NodeName, Object>();
+            var slugOwner = new LinkedHashMap<NodeName, Object>();
             for (Catalogue<?> child : subs) {
                 claimSlug(slugOwner, child.slug(), child, parent);
             }
@@ -191,6 +194,11 @@ public final class CatalogueRegistry {
                     claimSlug(slugOwner, leaf.slug(), leaf, parent);
                 }
             }
+            // RFC 0051 Phase 2 — the scan that proves segments unique is the
+            // one that builds the downward index, so the map the resolver
+            // walks is by construction the map the law checked. Building it
+            // separately would let the two drift.
+            childIndexMap.put(parent.getClass(), Map.copyOf(slugOwner));
 
             // ---- Leaves ----
             List<? extends Entry<?>> leaves = parent.leaves();
@@ -315,6 +323,7 @@ public final class CatalogueRegistry {
         this.byClass  = Map.copyOf(byClass);
         this.docHome  = Map.copyOf(docHomeMap);
         this.planHome = Map.copyOf(planHomeMap);
+        this.childIndex = Map.copyOf(childIndexMap);
         this.proxyManager = (proxyManager != null) ? proxyManager
                                                    : StudioProxyManager.scan(byClass.values());
 
@@ -528,6 +537,98 @@ public final class CatalogueRegistry {
 
     public int size() {
         return byClass.size();
+    }
+
+    // ---------------------------------------------------------------------
+    // RFC 0051 Phase 2 — the path/node bijection.
+    //
+    // The registry already held byClass (FQN → catalogue) and docHome (UUID →
+    // catalogue). Neither is a position: both answer "which node" without
+    // saying where the node sits, so neither can produce a URL or read one.
+    // The two methods below are inverses, and the laws are what make them so —
+    // Law 2 gives the downward step exactly one candidate per segment, Law 1
+    // gives the upward walk exactly one answer, and Laws 3 and 4 make the two
+    // walks meet at the same root.
+    // ---------------------------------------------------------------------
+
+    /** The root every path starts from — the single un-hosted L0 (Law 4). */
+    public Catalogue<?> root() {
+        return byClass.get(brand.homeApp());
+    }
+
+    /**
+     * Walk a path down the tree.
+     *
+     * <p>An empty path is the root itself, so {@code /cat} is the studio's
+     * front door rather than a miss.</p>
+     */
+    public PathResolution resolve(CataloguePath path) {
+        Objects.requireNonNull(path, "path");
+        Catalogue<?> at = root();
+        for (int i = 0; i < path.depth(); i++) {
+            NodeName segment = path.segments().get(i);
+            Object child = childIndex.getOrDefault(at.getClass(), Map.of()).get(segment);
+            if (child == null) {
+                return new PathResolution.Miss(path, i, PathResolution.Reason.NO_SUCH_CHILD);
+            }
+            switch (child) {
+                // A proxy stands for the studio it wraps, so descending through
+                // an umbrella tile continues into the source tree — the same
+                // rung the breadcrumb shows (RFC 0011).
+                case StudioProxy<?> proxy -> at = proxy.source();
+                case Catalogue<?> c       -> at = c;
+                case Doc d -> {
+                    if (i < path.depth() - 1) {
+                        return new PathResolution.Miss(path, i + 1, PathResolution.Reason.PAST_A_LEAF);
+                    }
+                    return new PathResolution.ToLeaf(path, at, d);
+                }
+                default -> throw new IllegalStateException(
+                        "Unexpected child kind in the path index: " + child.getClass().getName());
+            }
+        }
+        return new PathResolution.ToCatalogue(path, at);
+    }
+
+    /** Convenience: resolve straight from a URL. A URL that is not a catalogue
+     *  path at all is a miss at segment 0, not an exception. */
+    public PathResolution resolveUrl(String url) {
+        CataloguePath path = CataloguePath.parse(url);
+        return path == null
+                ? new PathResolution.Miss(new CataloguePath(List.of()), 0,
+                                          PathResolution.Reason.NO_SUCH_CHILD)
+                : resolve(path);
+    }
+
+    /**
+     * The path of a catalogue node — the inverse of {@link #resolve}.
+     *
+     * <p>Derived from {@link #breadcrumbs(Catalogue)}, so the URL and the crumb
+     * trail are not merely consistent: they are the same walk rendered two
+     * ways. That is the parity RFC 0051 is named for, and deriving the path
+     * from anywhere else is precisely how the two would drift apart.</p>
+     *
+     * <p>The leading rung is dropped — it is the root, which the {@code cat}
+     * prefix already stands for.</p>
+     */
+    public CataloguePath pathOf(Catalogue<?> at) {
+        Objects.requireNonNull(at, "at");
+        List<Catalogue<?>> chain = breadcrumbs(at);
+        var segments = new ArrayList<NodeName>();
+        for (int i = 1; i < chain.size(); i++) segments.add(chain.get(i).slug());
+        return new CataloguePath(segments);
+    }
+
+    /**
+     * The path of a positioned doc: its home catalogue's path plus its own
+     * segment. Null when the doc has no position — Law 1 allows at most one,
+     * it does not require any, and docs harvested from content trees have
+     * none.
+     */
+    public CataloguePath pathOf(Doc doc) {
+        Objects.requireNonNull(doc, "doc");
+        Catalogue<?> home = docHome.get(doc.uuid());
+        return home == null ? null : pathOf(home).then(doc.slug());
     }
 
     /**
