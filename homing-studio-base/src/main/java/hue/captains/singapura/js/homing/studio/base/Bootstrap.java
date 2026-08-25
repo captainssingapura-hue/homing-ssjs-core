@@ -22,6 +22,7 @@ import hue.captains.singapura.js.homing.studio.base.app.CatalogueGetAction;
 import hue.captains.singapura.js.homing.studio.base.app.CataloguePathGetAction;
 import hue.captains.singapura.js.homing.studio.base.app.FlatToPathRedirectGetAction;
 import hue.captains.singapura.js.homing.studio.base.app.CatalogueRegistry;
+import hue.captains.singapura.js.homing.studio.base.app.GotoNavigableGetAction;
 import hue.captains.singapura.js.homing.studio.base.app.StudioBrand;
 import hue.captains.singapura.js.homing.studio.base.theme.CssGroupImplRegistry;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemesGetAction;
@@ -364,6 +365,13 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
                 }
                 all.put("/css-content", cssContentAction);
                 all.put("/doc",         docAction);
+                // RFC 0051 - "go to this navigable", for the whole (app, args)
+                // space. Separate from /app on purpose: /app renders, and its
+                // self-correcting redirect is a property of the render route,
+                // not something a managed reference should lean on.
+                if (catalogueRegistry != null) {
+                    all.put(GotoNavigableGetAction.ROUTE, new GotoNavigableGetAction(catalogueRegistry));
+                }
                 all.put("/doc-tree",    new DocTreeGetAction(docRegistry, openRoot));
                 // The raw-bytes endpoint for resource-backed inline segments
                 // (svg / table / image) embedded in a rigid-tree doc. Sibling of

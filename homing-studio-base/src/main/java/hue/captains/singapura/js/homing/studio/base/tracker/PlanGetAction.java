@@ -58,7 +58,8 @@ public class PlanGetAction
         if (uuid == null || uuid.isBlank() || docRegistry == null) return null;
         try {
             var d = docRegistry.resolve(java.util.UUID.fromString(uuid.trim()));
-            return d == null ? null : d.url();
+            return d == null ? null
+                    : hue.captains.singapura.js.homing.studio.base.app.GotoNavigableGetAction.hrefFor(d.url());
         } catch (IllegalArgumentException notAUuid) {
             return null;
         }

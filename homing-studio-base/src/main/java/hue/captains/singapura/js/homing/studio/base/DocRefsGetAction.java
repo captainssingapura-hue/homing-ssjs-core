@@ -237,7 +237,7 @@ public class DocRefsGetAction
                     // path: /app is the generic redirect, so one mechanism
                     // resolves every (app, args) to its authentic address, and
                     // this payload needs no opinion about the tree.
-                    sb.append("\"url\":")     .append(jstr(dr.target().url())).append(',');
+                    sb.append("\"url\":")     .append(jstr(hue.captains.singapura.js.homing.studio.base.app.GotoNavigableGetAction.hrefFor(dr.target().url()))).append(',');
                     sb.append("\"title\":")   .append(jstr(dr.target().title())).append(',');
                     sb.append("\"summary\":") .append(jstr(dr.target().summary()));
                 }
