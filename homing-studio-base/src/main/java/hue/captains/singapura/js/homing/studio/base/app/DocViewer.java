@@ -177,10 +177,11 @@ public abstract class DocViewer<P extends AppModule._Param, M extends DocViewer<
         lines.add("    fetch('/brand').then(function(r){ return r.ok ? r.json() : null; })");
         lines.add("        .then(function(b){ if (b) { resolvedBrand = b; refreshHeader(); } })");
         lines.add("        .catch(function(){});");
-        // RFC 0051 Phase 5 — the stamped trail, when the page carries one.
-        // This shell is the third crumb consumer (after DocReader and
-        // StandardMPA); missing it is why table and image pages were still
-        // popping in after the other two stopped.
+        // RFC 0051 — the stamped trail, and now the ONLY source of one. The
+        // /doc-refs title fallback that used to sit here is gone: a crawl of
+        // both studios found 264 of 264 navigable pages carry a stamp, so it
+        // fired for nothing reachable, while costing every table, image and
+        // svg page a fetch to re-ask for a title already in the page.
         lines.add("    if (chrome && chrome.crumbs && chrome.crumbs.length) {");
         lines.add("        resolvedCrumbs = chrome.crumbs.slice();");
         lines.add("        var stampedLeaf = resolvedCrumbs[resolvedCrumbs.length - 1];");
@@ -189,20 +190,6 @@ public abstract class DocViewer<P extends AppModule._Param, M extends DocViewer<
         lines.add("            document.title = resolvedTitle + (resolvedBrand && resolvedBrand.label ? ' \\u00b7 ' + resolvedBrand.label : '');");
         lines.add("        }");
         lines.add("        refreshHeader();");
-        lines.add("    } else if (params && params.id) {");
-        lines.add("        fetch('/doc-refs?id=' + encodeURIComponent(params.id))");
-        lines.add("            .then(function(r){ return r.ok ? r.json() : null; })");
-        lines.add("            .then(function(info){");
-        lines.add("                if (info && info.title) {");
-        lines.add("                    resolvedTitle = info.title;");
-        lines.add("                    // No position to recover — an unstamped page is one");
-        lines.add("                    // the tree doesn't hold, so the title is the whole trail.");
-        lines.add("                    resolvedCrumbs = [{ text: resolvedTitle }];");
-        lines.add("                    refreshHeader();");
-        lines.add("                    document.title = info.title + (resolvedBrand && resolvedBrand.label ? ' \\u00b7 ' + resolvedBrand.label : '');");
-        lines.add("                }");
-        lines.add("            })");
-        lines.add("            .catch(function(){});");
         lines.add("    }");
         lines.add("");
         lines.add("    // === Body (subclass-supplied, kind-specific) ===");

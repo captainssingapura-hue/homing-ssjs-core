@@ -83,19 +83,27 @@ public class DocRefsGetAction
 
     /**
      * Serialise the Doc's metadata + references as JSON.
-     * Shape: {@code { "title": "...", "summary": "...", "category": "...",
-     *                "references": [...] }}.
+     * Shape: {@code { "title": "...", "category": "...", "references": [...] }}.
      *
-     * <p>RFC 0051 Phase 5 — this payload used to carry a {@code breadcrumbs}
-     * array too (RFC 0005-ext2, later enriched with tree-internal chains per
-     * RFC 0016). It no longer does: the trail is stamped into the page by the
-     * server that rendered it, so no client asks for its own position any
-     * more. What remains here is what only the doc can answer.</p>
+     * <p>Two fields have left this payload, each for its own reason, and the
+     * inventory (RFC 0015 appendix) records both:</p>
+     * <ul>
+     *   <li>{@code breadcrumbs} — the trail is stamped into the page by the
+     *       server that rendered it, so no client asks for its own position.</li>
+     *   <li>{@code summary} — measured to have zero readers in any of the three
+     *       repos. It was emitted on every response and consumed by nobody.
+     *       (The {@code summary} inside each doc REFERENCE stays: that one is
+     *       rendered on the reference card.)</li>
+     * </ul>
+     *
+     * <p>What is left is what only the doc can answer. {@code title} still
+     * duplicates the stamped leaf crumb, and {@code category} is placement
+     * framing rather than doc data — both move under phase 6, after which
+     * this is a references endpoint and nothing else.</p>
      */
     static String serialize(Doc doc) {
         StringBuilder sb = new StringBuilder("{");
         sb.append("\"title\":")    .append(jstr(doc.title())).append(',');
-        sb.append("\"summary\":")  .append(jstr(doc.summary())).append(',');
         sb.append("\"category\":") .append(jstr(doc.category())).append(',');
         sb.append("\"references\":");
         sb.append(serializeReferences(doc.references()));

@@ -312,30 +312,29 @@ public abstract class StandardMPA<P extends AppModule._Param, M extends Standard
         lines.add("        Object.keys(params).forEach(function(k){ widgetParams[k] = params[k]; });");
         lines.add("    }");
         lines.add("");
-        lines.add("    // Un-stamped fallback — two cases left after RFC 0051.");
-        lines.add("    //   1. URL has ?id=<doc-uuid>: fetch /doc-refs?id=... for the");
-        lines.add("    //      title. That payload no longer carries a trail; the");
-        lines.add("    //      title is all an unpositioned doc page can honestly show.");
-        lines.add("    //   2. URL has a leveled tree path (?l0=..&l1=.., RFC 0040):");
-        lines.add("    //      fetch /open-refs?l0=.. — still the one endpoint that");
-        lines.add("    //      returns a chain, because the tree path is a different");
-        lines.add("    //      addressing scheme that RFC 0051 has not absorbed.");
-        // RFC 0051 Phase 5 — when the server stamped the trail, take it and
-        // fetch nothing. The fallback below re-derives server-side knowledge
-        // over the wire; the stamp is that knowledge, already here.
+        lines.add("    // Un-stamped fallback — ONE case left after RFC 0051.");
+        lines.add("    //   A leveled tree path (?treeId=..&l0=..&l1=.., RFC 0040):");
+        lines.add("    //   fetch /open-refs?l0=.. — still the one endpoint that returns");
+        lines.add("    //   a chain, because a tree path is a different addressing scheme");
+        lines.add("    //   and D9 leaves it to that RFC.");
+        lines.add("    //");
+        lines.add("    //   The ?id=<doc-uuid> case is GONE. It fetched /doc-refs to");
+        lines.add("    //   recover a title, and a crawl of both studios found 264 of 264");
+        lines.add("    //   navigable pages already carry a stamped one.");
+        // RFC 0051 — when the server stamped the trail, take it and fetch
+        // nothing. The fallback below re-derives server-side knowledge over
+        // the wire; the stamp is that knowledge, already here.
         lines.add("    if (chrome && chrome.crumbs && chrome.crumbs.length) {");
         lines.add("        resolvedCrumbs = chrome.crumbs.slice();");
         lines.add("        var stampedLeaf = resolvedCrumbs[resolvedCrumbs.length - 1];");
         lines.add("        if (stampedLeaf && stampedLeaf.text) {");
         lines.add("            resolvedTitle = stampedLeaf.text;");
-        lines.add("            document.title = resolvedTitle + (resolvedBrand && resolvedBrand.label ? ' \\u00b7 ' + resolvedBrand.label : '');");
+        lines.add("            document.title = resolvedTitle + (resolvedBrand && resolvedBrand.label ? ' \u00b7 ' + resolvedBrand.label : '');");
         lines.add("        }");
         lines.add("        refreshHeader();");
         lines.add("    } else {");
         lines.add("    var crumbUrl;");
-        lines.add("    if (widgetParams.id) {");
-        lines.add("        crumbUrl = '/doc-refs?id=' + encodeURIComponent(widgetParams.id);");
-        lines.add("    } else if (widgetParams.treeId !== undefined || widgetParams.l0 !== undefined) {");
+        lines.add("    if (widgetParams.treeId !== undefined || widgetParams.l0 !== undefined) {");
         lines.add("        var crumbPq = [];");
         lines.add("        if (widgetParams.treeId) crumbPq.push('treeId=' + encodeURIComponent(widgetParams.treeId));");
         lines.add("        for (var ci = 0; widgetParams['l' + ci] !== undefined; ci++) {");
