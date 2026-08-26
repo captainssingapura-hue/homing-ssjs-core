@@ -130,11 +130,15 @@ public record DocReader() implements AppModule<DocReader.Params, DocReader>, Sel
         // behaviour — the brand link in the header is the only nav).
         return List.of(
                 // RFC 0051 - params arrive from the server; a /cat path has no query.
-                "function appMain(rootElement, params) {",
+                "function appMain(rootElement, params, chrome) {",
                 "    fetch(\"/brand\").then(function(r) { return r.json(); }).then(function(brand) {",
                 "        rootElement.replaceChildren(renderDocReader({",
                 "            docId:       params.doc,",
                 "            brand:       { href: brand.homeUrl, label: brand.label, logo: brand.logo },",
+                // RFC 0051 Phase 5 — the server-stamped trail. Present for any
+                // positioned doc; absent for one that has no place in the tree,
+                // where the renderer falls back to its own late-fill.
+                "            crumbs:      chrome && chrome.crumbs,",
                 "            crumbsAbove: []",
                 "        }));",
                 "    });",

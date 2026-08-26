@@ -226,7 +226,7 @@ public abstract class StandardMPA<P extends AppModule._Param, M extends Standard
         // codec. Every MPA subclass shares this one generated body, so this is
         // the single edit that makes composed-viewer, doc-tree-viewer,
         // svg-viewer and the workspace shells addressable by path.
-        lines.add("function appMain(rootElement, params) {");
+        lines.add("function appMain(rootElement, params, chrome) {");
         lines.add("    try {");
         lines.add("");
         lines.add("    // ── Root DOM container ──");
@@ -326,6 +326,19 @@ public abstract class StandardMPA<P extends AppModule._Param, M extends Standard
         lines.add("    //      fetch /open-refs?l0=.. — the breadcrumb is resolved from");
         lines.add("    //      the same path the page is addressed by, so URL and");
         lines.add("    //      breadcrumb share one source of truth (no uuid).");
+        // RFC 0051 Phase 5 — when the server stamped the trail, take it and
+        // fetch nothing. The three cases below all re-derive server-side
+        // knowledge over the wire; the stamp is that knowledge, already here.
+        // /app-refs existed ONLY for case 2, so this is what retires it.
+        lines.add("    if (chrome && chrome.crumbs && chrome.crumbs.length) {");
+        lines.add("        resolvedCrumbs = chrome.crumbs.slice();");
+        lines.add("        var stampedLeaf = resolvedCrumbs[resolvedCrumbs.length - 1];");
+        lines.add("        if (stampedLeaf && stampedLeaf.text) {");
+        lines.add("            resolvedTitle = stampedLeaf.text;");
+        lines.add("            document.title = resolvedTitle + (resolvedBrand && resolvedBrand.label ? ' \\u00b7 ' + resolvedBrand.label : '');");
+        lines.add("        }");
+        lines.add("        refreshHeader();");
+        lines.add("    } else {");
         lines.add("    var crumbUrl;");
         lines.add("    if (widgetParams.id) {");
         lines.add("        crumbUrl = '/doc-refs?id=' + encodeURIComponent(widgetParams.id);");
@@ -337,8 +350,14 @@ public abstract class StandardMPA<P extends AppModule._Param, M extends Standard
         lines.add("        }");
         lines.add("        crumbUrl = '/open-refs?' + crumbPq.join('&');");
         lines.add("    } else {");
-        lines.add("        crumbUrl = '/app-refs?app=' + encodeURIComponent(sp.get('app') || '');");
+        // RFC 0051 Phase 5 — /app-refs is retired. It existed only to answer
+        // "what is the crumb for this app page", which the stamp now answers
+        // without a round trip, so there is nothing left to ask. A page that
+        // reaches here has no id, no tree path and no stamp — it is genuinely
+        // unpositioned, and the honest chrome is the one it already has.
+        lines.add("        crumbUrl = null;");
         lines.add("    }");
+        lines.add("    if (crumbUrl) {");
         lines.add("    fetch(crumbUrl)");
         lines.add("        .then(function(r){ return r.ok ? r.json() : null; })");
         lines.add("        .then(function(info){");
@@ -356,6 +375,8 @@ public abstract class StandardMPA<P extends AppModule._Param, M extends Standard
         lines.add("            }");
         lines.add("        })");
         lines.add("        .catch(function(){});");
+        lines.add("    }");   // closes: if (crumbUrl)
+        lines.add("    }");   // closes: the un-stamped fallback branch
         lines.add("");
         lines.add("    if (!widgetName) {");
         lines.add("        var noWidgetEl = document.createElement('div');");

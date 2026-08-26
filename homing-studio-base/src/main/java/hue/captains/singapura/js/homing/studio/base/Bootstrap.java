@@ -315,7 +315,6 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
         // Resolves the AppDoc by AppModule simpleName, serialises the chain
         // through the same shape as /doc-refs so the StandardMPA chrome can
         // use a uniform code path.
-        var appRefsAction = new AppRefsGetAction(docRegistry, catalogueRegistry);
 
         // --- RFC 0040 — leveled Open endpoints. Rooted at the primary studio's
         // home() (the forest root — the synthetic launcher in a multi-studio
@@ -401,7 +400,6 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
                 // embedded SVGs/images/tables in a RigidDoc/ComposedDoc 404.
                 all.put("/doc-tree-content", new DocTreeContentGetAction(docRegistry));
                 all.put("/doc-refs",    docRefsAction);
-                all.put("/app-refs",    appRefsAction);
                 all.put("/open-content", openContentAction);
                 all.put("/open-refs",    openRefsAction);
                 all.put("/themes",      themesAction);

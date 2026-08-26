@@ -56,12 +56,25 @@ function renderDocReader(props) {
     var root = document.createElement("div");
     css.addClass(root, st_root);
 
-    // Header is rendered with placeholder text for the breadcrumb; the title
-    // is filled in once /doc-refs returns it (server-resolved from the typed Doc).
-    var crumbs = [];
-    for (var i = 0; i < crumbsAbove.length; i++) crumbs.push(crumbsAbove[i]);
-    var leafCrumb = { text: docId ? "Loading…" : "(no document)" };
-    crumbs.push(leafCrumb);
+    // RFC 0051 Phase 5 — when the server stamped the trail into the page, the
+    // header is right on the first paint and stays put. Without it the header
+    // was drawn saying "Loading…" and replaced once /doc-refs answered, which
+    // is where the breadcrumb pop-in came from: the server had already walked
+    // the tree to serve this request, and the page asked it again.
+    var stamped   = props.crumbs && props.crumbs.length ? props.crumbs : null;
+    var crumbs    = [];
+    var leafCrumb;
+    if (stamped) {
+        // Copied wholesale rather than rebuilt field by field: the server's
+        // crumbs are already the shape Header wants, and re-constructing them
+        // would be restating a contract that is already satisfied.
+        crumbs = stamped.slice();
+        leafCrumb = crumbs[crumbs.length - 1];
+    } else {
+        for (var i = 0; i < crumbsAbove.length; i++) crumbs.push(crumbsAbove[i]);
+        leafCrumb = { text: docId ? "Loading…" : "(no document)" };
+        crumbs.push(leafCrumb);
+    }
     var headerEl = Header({ brand: brand, crumbs: crumbs });
     // data-export-chrome: stripped by exportPageAsHtml when the user picks
     // "content only" — the brand bar + breadcrumb chain is page chrome, not
@@ -220,7 +233,14 @@ function renderDocReader(props) {
             // info.breadcrumbs when the server provides it; render the References
             // section from info.references.
             if (info && info.title) {
-                leafCrumb.text = info.title;
+                // RFC 0051 Phase 5 — do NOT touch the leaf when it came from
+                // the stamp: those crumbs are frozen, and a write to a frozen
+                // object throws in a module's strict mode. That threw here,
+                // and the handler's .catch swallowed it — so the title, the
+                // category and the whole References section silently vanished
+                // while the breadcrumb looked perfect. The stamped leaf
+                // already says the title anyway.
+                if (!stamped) leafCrumb.text = info.title;
                 // Update the export filename to a title-derived slug now that
                 // the title is known. Same _slugify rules ComposedWidget uses.
                 _exportSlug = _slugify(info.title) || "doc";
@@ -228,14 +248,19 @@ function renderDocReader(props) {
                 // (catalogue root → ... → containing catalogue), use it instead of
                 // whatever crumbsAbove the caller supplied. The leaf crumb (this
                 // doc's title) is always appended last as a non-link.
-                if (info.breadcrumbs && info.breadcrumbs.length > 0) {
-                    crumbs = info.breadcrumbs.slice();
-                    crumbs.push(leafCrumb);
+                // RFC 0051 Phase 5 — only when the page did NOT arrive with a
+                // stamped trail. Rebuilding a header that is already correct is
+                // the pop-in; this branch is now the fallback for a studio
+                // whose server predates the stamp.
+                if (!stamped) {
+                    if (info.breadcrumbs && info.breadcrumbs.length > 0) {
+                        crumbs = info.breadcrumbs.slice();
+                        crumbs.push(leafCrumb);
+                    }
+                    var newHeader = Header({ brand: brand, crumbs: crumbs });
+                    root.replaceChild(newHeader, headerEl);
+                    headerEl = newHeader;
                 }
-                // Re-render header with the updated chain + leaf crumb text.
-                var newHeader = Header({ brand: brand, crumbs: crumbs });
-                root.replaceChild(newHeader, headerEl);
-                headerEl = newHeader;
                 titleEl.textContent = info.title;
                 // Browser tab title — `<doc> · <brand>`. Replaces the static
                 // default served by AppHtmlGetAction (which doesn't know the
