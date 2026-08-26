@@ -2,17 +2,12 @@ package hue.captains.singapura.js.homing.studio.base;
 
 import hue.captains.singapura.js.homing.server.EmptyParam;
 import hue.captains.singapura.js.homing.server.ResourceNotFound;
-import hue.captains.singapura.js.homing.studio.base.app.Catalogue;
-import hue.captains.singapura.js.homing.studio.base.app.CatalogueAppHost;
-import hue.captains.singapura.js.homing.studio.base.app.CatalogueRegistry;
-import hue.captains.singapura.js.homing.studio.base.app.Crumb;
 import hue.captains.singapura.tao.http.action.GetAction;
 import hue.captains.singapura.tao.http.action.Param;
 import hue.captains.singapura.tao.http.action.ParamMarshaller;
 import io.vertx.ext.web.RoutingContext;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -47,41 +42,9 @@ public class DocRefsGetAction
     public record Query(String id) implements Param._QueryString {}
 
     private final DocRegistry registry;
-    private final CatalogueRegistry catalogueRegistry;   // nullable
-    /** RFC 0016 → tree-leaf doc enriched breadcrumbs. For a tree-leaf
-     *  doc (an SvgDoc / etc. wrapped by a {@code TreeLeaf}), the trail
-     *  here pre-merges the catalogue chain to the tree's host AND the
-     *  tree-internal chain from the tree root to the leaf's parent.
-     *  When present, it takes precedence over the plain catalogue chain
-     *  derived from {@link CatalogueRegistry#breadcrumbsForDoc}. */
-    private final Map<UUID, List<Crumb>> treeLeafTrails;
 
     public DocRefsGetAction(DocRegistry registry) {
-        this(registry, null, Map.of());
-    }
-
-    /**
-     * RFC 0005-ext2: the catalogue registry powers the {@code breadcrumbs}
-     * field of the response. May be {@code null} for studios with no
-     * catalogues configured.
-     */
-    public DocRefsGetAction(DocRegistry registry, CatalogueRegistry catalogueRegistry) {
-        this(registry, catalogueRegistry, Map.of());
-    }
-
-    /**
-     * RFC 0016 → tree-breadcrumb bridge. {@code treeLeafTrails} carries
-     * the enriched trail (catalogue chain + tree-internal chain) for
-     * tree-leaf docs. Computed at boot time by {@code Bootstrap} from the
-     * fixtures' trees and the resolved catalogue registry. Empty map for
-     * studios with no trees or no tree-hosting catalogue leaves.
-     */
-    public DocRefsGetAction(DocRegistry registry,
-                            CatalogueRegistry catalogueRegistry,
-                            Map<UUID, List<Crumb>> treeLeafTrails) {
         this.registry = Objects.requireNonNull(registry, "registry");
-        this.catalogueRegistry = catalogueRegistry;
-        this.treeLeafTrails = (treeLeafTrails == null) ? Map.of() : Map.copyOf(treeLeafTrails);
     }
 
     @Override
@@ -111,105 +74,32 @@ public class DocRefsGetAction
             return CompletableFuture.failedFuture(notFound(raw, "No Doc registered with this UUID"));
         }
         try {
-            // RFC 0016 — prefer enriched tree-leaf trail when present.
-            List<Crumb> trail = treeLeafTrails.get(id);
-            String body = (trail != null)
-                    ? serializeWithTrail(doc, trail)
-                    : serialize(doc, catalogueRegistry);
-            return CompletableFuture.completedFuture(new DocContent(body, "application/json; charset=utf-8"));
+            return CompletableFuture.completedFuture(
+                    new DocContent(serialize(doc), "application/json; charset=utf-8"));
         } catch (Exception e) {
             return CompletableFuture.failedFuture(notFound(raw, "Failed to serialise references: " + e.getMessage()));
         }
     }
 
     /**
-     * Serialise the Doc with a pre-computed breadcrumb trail. Used when
-     * the doc is a tree leaf whose enriched trail (catalogue chain +
-     * tree-internal chain) was computed at boot time.
-     */
-    static String serializeWithTrail(Doc doc, List<Crumb> trail) {
-        StringBuilder sb = new StringBuilder("{");
-        sb.append("\"title\":")    .append(jstr(doc.title())).append(',');
-        sb.append("\"summary\":")  .append(jstr(doc.summary())).append(',');
-        sb.append("\"category\":") .append(jstr(doc.category())).append(',');
-        sb.append("\"breadcrumbs\":[");
-        boolean first = true;
-        for (Crumb c : trail) {
-            if (!first) sb.append(',');
-            first = false;
-            sb.append("{\"text\":").append(jstr(c.text()))
-              .append(",\"href\":").append(jstr(c.href()))
-              .append('}');
-        }
-        sb.append("],");
-        sb.append("\"references\":");
-        sb.append(serializeReferences(doc.references()));
-        sb.append('}');
-        return sb.toString();
-    }
-
-    /**
-     * Serialise the Doc's metadata + references + breadcrumbs as JSON.
+     * Serialise the Doc's metadata + references as JSON.
      * Shape: {@code { "title": "...", "summary": "...", "category": "...",
-     *                "breadcrumbs": [{"text":"...","href":"..."}, ...],
      *                "references": [...] }}.
      *
-     * <p>The {@code breadcrumbs} array (RFC 0005-ext2) is the catalogue chain
-     * from the studio root down to the catalogue that contains the doc,
-     * inclusive. The renderer appends the doc title as the final (non-link)
-     * crumb. Empty when no {@link CatalogueRegistry} is wired or when the
-     * doc isn't referenced by any registered catalogue (DocBrowser-only docs).</p>
+     * <p>RFC 0051 Phase 5 — this payload used to carry a {@code breadcrumbs}
+     * array too (RFC 0005-ext2, later enriched with tree-internal chains per
+     * RFC 0016). It no longer does: the trail is stamped into the page by the
+     * server that rendered it, so no client asks for its own position any
+     * more. What remains here is what only the doc can answer.</p>
      */
-    static String serialize(Doc doc, CatalogueRegistry catalogueRegistry) {
+    static String serialize(Doc doc) {
         StringBuilder sb = new StringBuilder("{");
         sb.append("\"title\":")    .append(jstr(doc.title())).append(',');
         sb.append("\"summary\":")  .append(jstr(doc.summary())).append(',');
         sb.append("\"category\":") .append(jstr(doc.category())).append(',');
-        sb.append("\"breadcrumbs\":");
-        sb.append(serializeBreadcrumbs(doc, catalogueRegistry));
-        sb.append(',');
         sb.append("\"references\":");
         sb.append(serializeReferences(doc.references()));
         sb.append('}');
-        return sb.toString();
-    }
-
-    /** Two-arg form kept for tests/back-compat: no catalogue registry → empty breadcrumbs. */
-    static String serialize(Doc doc) { return serialize(doc, null); }
-
-    /**
-     * Serialise the breadcrumb chain (catalogues only — renderer appends the
-     * doc title). Each crumb has {@code text} (the catalogue name) and
-     * {@code href} (the catalogue URL).
-     */
-    static String serializeBreadcrumbs(Doc doc, CatalogueRegistry catalogueRegistry) {
-        StringBuilder sb = new StringBuilder("[");
-        if (catalogueRegistry != null) {
-            List<Catalogue<?>> chain = catalogueRegistry.breadcrumbsForDoc(doc.uuid());
-            boolean first = true;
-            for (Catalogue<?> c : chain) {
-                if (!first) sb.append(',');
-                first = false;
-                // RFC 0009: prefix crumb text with the catalogue's icon glyph.
-                String icon = c.icon();
-                String text = (icon == null || icon.isEmpty()) ? c.name() : icon + " " + c.name();
-                @SuppressWarnings("unchecked")
-                Class<? extends Catalogue<?>> cClass = (Class<? extends Catalogue<?>>) c.getClass();
-                // RFC 0051 — a doc page's crumbs are built here, NOT by
-                // CatalogueGetAction, which is why converting that action left
-                // these still showing /app?app=catalogue&id=<fqn>. They worked,
-                // because the redirect corrects them on click, but a link that
-                // has to be corrected is not the authentic address — and the
-                // whole point is that only one form is ever displayed.
-                var path = catalogueRegistry.pathOf(c);
-                sb.append('{')
-                  .append("\"text\":").append(jstr(text)).append(',')
-                  .append("\"href\":").append(jstr(path != null ? path.toUrl()
-                                                                : CatalogueAppHost.urlFor(cClass)))
-                  .append('}');
-            }
-        }
-        sb.append(']');
         return sb.toString();
     }
 

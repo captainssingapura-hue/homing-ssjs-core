@@ -336,7 +336,7 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
         // RFC 0051 Phase 5 — the same enriched trails the stamp needs.
         trailHolder.set(treeLeafTrails);
 
-        var docRefsAction = new DocRefsGetAction(docRegistry, catalogueRegistry, treeLeafTrails);
+        var docRefsAction = new DocRefsGetAction(docRegistry);
 
         // --- App-refs action (RFC 0025 L2.2 — breadcrumb chain for AppModule
         // launches via Navigable entries, where the URL has no ?id=<uuid>).

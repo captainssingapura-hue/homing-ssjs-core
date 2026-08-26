@@ -244,19 +244,11 @@ function renderDocReader(props) {
                 // Update the export filename to a title-derived slug now that
                 // the title is known. Same _slugify rules ComposedWidget uses.
                 _exportSlug = _slugify(info.title) || "doc";
-                // RFC 0005-ext2: when the server returned a typed breadcrumb chain
-                // (catalogue root → ... → containing catalogue), use it instead of
-                // whatever crumbsAbove the caller supplied. The leaf crumb (this
-                // doc's title) is always appended last as a non-link.
-                // RFC 0051 Phase 5 — only when the page did NOT arrive with a
-                // stamped trail. Rebuilding a header that is already correct is
-                // the pop-in; this branch is now the fallback for a studio
-                // whose server predates the stamp.
+                // RFC 0051 Phase 5 — /doc-refs no longer returns a chain. A page
+                // that arrives without a stamp has no position to recover, so the
+                // only upgrade left is the title on the placeholder leaf, and the
+                // header is rebuilt once to show it.
                 if (!stamped) {
-                    if (info.breadcrumbs && info.breadcrumbs.length > 0) {
-                        crumbs = info.breadcrumbs.slice();
-                        crumbs.push(leafCrumb);
-                    }
                     var newHeader = Header({ brand: brand, crumbs: crumbs });
                     root.replaceChild(newHeader, headerEl);
                     headerEl = newHeader;

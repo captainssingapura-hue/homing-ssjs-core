@@ -104,18 +104,6 @@ class CatalogueRegistryTest {
     }
 
     @Test
-    void breadcrumbsForDoc_walksFromContainingCatalogueToRoot() {
-        var brand = new StudioBrand("Test", RootCatalogue.class);
-        var registry = new CatalogueRegistry(brand, docs,
-                List.of(RootCatalogue.INSTANCE, LeafCatalogue.INSTANCE));
-
-        var crumbs = registry.breadcrumbsForDoc(DOC_ID);
-        assertEquals(2, crumbs.size());
-        assertSame(RootCatalogue.INSTANCE, crumbs.get(0));
-        assertSame(LeafCatalogue.INSTANCE, crumbs.get(1));
-    }
-
-    @Test
     void levelOf_returnsTypedLevel() {
         assertEquals(0, CatalogueRegistry.levelOf(RootCatalogue.INSTANCE));
         assertEquals(1, CatalogueRegistry.levelOf(LeafCatalogue.INSTANCE));

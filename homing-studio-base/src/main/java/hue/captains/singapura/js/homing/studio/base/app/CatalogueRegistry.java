@@ -97,8 +97,8 @@ public final class CatalogueRegistry {
      * {@code Bootstrap} to register tree-leaf docs against the catalogue
      * that hosts their tree (the catalogue containing the {@code TreeAppHost}
      * navigable leaf for that tree). Without this, tree-leaf docs would
-     * not appear in {@link #breadcrumbsForDoc} and their {@code /doc-refs}
-     * response would carry an empty breadcrumb chain.
+     * not appear in the doc-home index, and the trail stamped into their
+     * page would stop at the tree's host instead of reaching the leaf.
      *
      * <p>Catalogue-leaf docs still take precedence — entries explicitly
      * declared as catalogue leaves win over any conflicting entry in
@@ -561,11 +561,6 @@ public final class CatalogueRegistry {
         List<Catalogue<?>> out = new ArrayList<>(umbrella);
         out.addAll(chain);
         return List.copyOf(out);
-    }
-
-    public List<Catalogue<?>> breadcrumbsForDoc(UUID docId) {
-        Catalogue<?> home = docHome.get(docId);
-        return home == null ? List.of() : breadcrumbs(home);
     }
 
     public List<Catalogue<?>> breadcrumbsForPlan(Class<? extends Plan> cls) {

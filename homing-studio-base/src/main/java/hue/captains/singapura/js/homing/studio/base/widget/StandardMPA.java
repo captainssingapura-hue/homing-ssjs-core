@@ -312,24 +312,17 @@ public abstract class StandardMPA<P extends AppModule._Param, M extends Standard
         lines.add("        Object.keys(params).forEach(function(k){ widgetParams[k] = params[k]; });");
         lines.add("    }");
         lines.add("");
-        lines.add("    // Breadcrumb fetch — uniform handling across two cases.");
-        lines.add("    //   1. URL has ?id=<doc-uuid> (legacy DocViewer1 contract):");
-        lines.add("    //      fetch /doc-refs?id=... — the chain resolves through");
-        lines.add("    //      CatalogueRegistry.breadcrumbsForDoc.");
-        lines.add("    //   2. URL has no ?id= (AppModule-launched via Navigable):");
-        lines.add("    //      fetch /app-refs?app=<simpleName> — the studio's");
-        lines.add("    //      Bootstrap pre-indexed AppDoc UUIDs by simpleName so");
-        lines.add("    //      this resolves to the same shape as case (1).");
-        lines.add("    // Both endpoints return { title, breadcrumbs, references };");
-        lines.add("    // we use the same handler for either.");
-        lines.add("    //   3. URL has a leveled tree path (?l0=..&l1=.., RFC 0040):");
-        lines.add("    //      fetch /open-refs?l0=.. — the breadcrumb is resolved from");
-        lines.add("    //      the same path the page is addressed by, so URL and");
-        lines.add("    //      breadcrumb share one source of truth (no uuid).");
+        lines.add("    // Un-stamped fallback — two cases left after RFC 0051.");
+        lines.add("    //   1. URL has ?id=<doc-uuid>: fetch /doc-refs?id=... for the");
+        lines.add("    //      title. That payload no longer carries a trail; the");
+        lines.add("    //      title is all an unpositioned doc page can honestly show.");
+        lines.add("    //   2. URL has a leveled tree path (?l0=..&l1=.., RFC 0040):");
+        lines.add("    //      fetch /open-refs?l0=.. — still the one endpoint that");
+        lines.add("    //      returns a chain, because the tree path is a different");
+        lines.add("    //      addressing scheme that RFC 0051 has not absorbed.");
         // RFC 0051 Phase 5 — when the server stamped the trail, take it and
-        // fetch nothing. The three cases below all re-derive server-side
-        // knowledge over the wire; the stamp is that knowledge, already here.
-        // /app-refs existed ONLY for case 2, so this is what retires it.
+        // fetch nothing. The fallback below re-derives server-side knowledge
+        // over the wire; the stamp is that knowledge, already here.
         lines.add("    if (chrome && chrome.crumbs && chrome.crumbs.length) {");
         lines.add("        resolvedCrumbs = chrome.crumbs.slice();");
         lines.add("        var stampedLeaf = resolvedCrumbs[resolvedCrumbs.length - 1];");
