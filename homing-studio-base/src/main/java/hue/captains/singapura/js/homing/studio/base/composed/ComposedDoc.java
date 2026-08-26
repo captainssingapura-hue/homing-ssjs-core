@@ -123,7 +123,10 @@ public record ComposedDoc(
 
     @Override public DocId  id()          { return new DocId.ByUuid(uuid); }
     @Override public String kind()        { return "composed"; }
-    @Override public String url()         { return "/app?app=composed-viewer&id=" + uuid; }
+    @Override public String url() {
+        return hue.captains.singapura.js.homing.core.AppUrl.flat(
+                "composed-viewer", ComposedViewer.CODEC, new ComposedViewer.Params(uuid.toString()));
+    }
     @Override public String contentType() { return "application/json; charset=utf-8"; }
     @Override public String fileExtension() { return ""; }
 

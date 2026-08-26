@@ -83,7 +83,12 @@ public final class RigidDocV2 implements Doc, DocTreeV2Source {
     @Override public String summary()     { return summary; }
     @Override public String category()    { return category; }
     @Override public String kind()        { return "composed"; }   // reuses the doc-tree route
-    @Override public String url()         { return "/app?app=doc-tree-viewer&id=" + id; }
+    @Override public String url() {
+        return hue.captains.singapura.js.homing.core.AppUrl.flat(
+                "doc-tree-viewer",
+                hue.captains.singapura.js.homing.studio.base.app.DocTreeViewer.CODEC,
+                new hue.captains.singapura.js.homing.studio.base.app.DocTreeViewer.Params(id.toString()));
+    }
     @Override public String contentType() { return "application/json; charset=utf-8"; }
     @Override public String fileExtension() { return ""; }
 

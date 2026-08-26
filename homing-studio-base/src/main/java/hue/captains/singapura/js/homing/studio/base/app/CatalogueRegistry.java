@@ -363,9 +363,27 @@ public final class CatalogueRegistry {
             identity.remove("app");
             keysByApp.computeIfAbsent(app, k -> new java.util.TreeSet<>()).addAll(identity);
             CataloguePath path = pathOf(d);
-            if (path != null) {
+            // RFC 0051 — pathOf(Doc) DERIVES a path (home's path + the doc's
+            // slug); it does not check that anything answers to it. For a doc
+            // homed by extraDocHomes rather than by being a catalogue leaf —
+            // every tree leaf — the derived path names a child the catalogue
+            // does not have, and /goto would hand out a 404. Worse silently:
+            // SvgDoc takes the class-derived slug, so all four animals derived
+            // the SAME dead path and the index kept whichever came last.
+            //
+            // So the index holds only paths that resolve BACK to this doc.
+            // Anything else is unpositioned as far as addressing goes, and
+            // unpositioned renders flat — which is honest, and is what /goto
+            // already does when it finds nothing.
+            // Identity is unconditional: this flat address names this doc, and
+            // that is true whether or not the doc has a position. The chrome
+            // resolver needs exactly this — a tree leaf HAS a trail (an
+            // enriched one, via treeLeafTrails) despite having no path, so
+            // guarding the doc lookup too would blank the very pages the
+            // trail work was for.
+            flatDocs.put(flatKey(app, args, identity), d);
+            if (path != null && resolvesTo(path, d)) {
                 flat.put(flatKey(app, args, identity), path);
-                flatDocs.put(flatKey(app, args, identity), d);
             }
         }
         this.flatIdentityKeys = Map.copyOf(keysByApp);
@@ -784,6 +802,18 @@ public final class CatalogueRegistry {
      * it does not require any, and docs harvested from content trees have
      * none.
      */
+    /**
+     * Does {@code path} actually name {@code doc}? The derivation and the
+     * walk are separate pieces of code, so agreement between them is a fact
+     * to check rather than assume — the same reason the catalogue bijection
+     * is asserted at every boot instead of being argued from the laws.
+     */
+    private boolean resolvesTo(CataloguePath path, Doc doc) {
+        return resolve(path) instanceof PathResolution.ToLeaf leaf
+                && leaf.doc() != null
+                && leaf.doc().uuid().equals(doc.uuid());
+    }
+
     public CataloguePath pathOf(Doc doc) {
         Objects.requireNonNull(doc, "doc");
         Catalogue<?> home = docHome.get(doc.uuid());

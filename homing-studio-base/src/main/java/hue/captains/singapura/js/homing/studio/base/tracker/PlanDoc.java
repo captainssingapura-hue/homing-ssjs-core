@@ -69,7 +69,8 @@ public record PlanDoc(Plan plan) implements Doc {
     @Override public String kind()     { return "plan"; }
 
     @Override public String url() {
-        return "/app?app=plan&id=" + plan.getClass().getName();
+        return hue.captains.singapura.js.homing.core.AppUrl.flat(
+                PlanAppHost.INSTANCE, new PlanAppHost.Params(plan.getClass().getName(), null));
     }
 
     /** PlanDocs have no markdown body; viewer is PlanAppHost. */

@@ -1,6 +1,8 @@
 package hue.captains.singapura.js.homing.studio.base.app;
 
 import hue.captains.singapura.js.homing.core.AppModule;
+import hue.captains.singapura.js.homing.core.AppUrl;
+import hue.captains.singapura.js.homing.core.ParamCodec;
 
 import java.lang.reflect.RecordComponent;
 import java.net.URLEncoder;
@@ -59,14 +61,36 @@ public record Navigable<P extends AppModule._Param, M extends AppModule<P, M>>(
     }
 
     /**
-     * The fully-formed URL for this binding. Constructs
-     * {@code /app?app=<simpleName>&<params-as-query>} by reflecting on the
-     * Params record's components.
+     * The fully-formed URL for this binding — {@code /app?app=<simpleName>}
+     * plus the params as a query string.
      *
-     * <p>{@code _None} params produce just {@code /app?app=<simpleName>} (no
-     * extra query string).</p>
+     * <p>RFC 0051 (D8): an app that declares a {@link ParamCodec} mints
+     * through it, so the address and the app's own parse are one statement —
+     * {@code from(to(p)) == p} is asserted by {@code ParamCodecLaw}, which
+     * means a URL minted here is a URL that app can read back.</p>
+     *
+     * <p>An app WITHOUT a codec still falls back to reflecting over the
+     * Params record. That fallback is the last of D8's six minting sites and
+     * the reason url() is not yet retired: it is also the "schema-by-
+     * reflection at request time" the Codegen Over Reflection doctrine bans,
+     * and it silently drops empty-string components — so {@code Params(id,
+     * "")} survives a codec but not this. Every app that carries a codec has
+     * left the fallback; the remaining ones are demo apps, tracked with the
+     * ParamsWriter retirement they share a cause with.</p>
+     *
+     * <p>{@code _None} params produce just {@code /app?app=<simpleName>} on
+     * either path.</p>
      */
     public String url() {
+        var codec = app.paramCodec();
+        if (codec != ParamCodec.None.INSTANCE) {
+            return AppUrl.flat(app, params);
+        }
+        return reflectedUrl();
+    }
+
+    /** Pre-codec minting — see {@link #url()} for why it is still here. */
+    private String reflectedUrl() {
         StringBuilder sb = new StringBuilder("/app?app=").append(app.simpleName());
         if (params instanceof AppModule._None) return sb.toString();
 

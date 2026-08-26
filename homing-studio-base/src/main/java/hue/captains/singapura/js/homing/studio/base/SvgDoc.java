@@ -62,7 +62,12 @@ public record SvgDoc<G extends SvgGroup<G>>(
     @Override public String summary()     { return summary; }
     @Override public String category()    { return "SVG"; }
     @Override public String kind()        { return "svg"; }
-    @Override public String url()         { return "/app?app=svg-viewer&id=" + uuid(); }
+    @Override public String url() {
+        return hue.captains.singapura.js.homing.core.AppUrl.flat(
+                "svg-viewer",
+                hue.captains.singapura.js.homing.studio.base.app.SvgViewer.CODEC,
+                new hue.captains.singapura.js.homing.studio.base.app.SvgViewer.Params(uuid().toString()));
+    }
     @Override public String contentType() { return "image/svg+xml"; }
     @Override public String fileExtension() { return ".svg"; }
 

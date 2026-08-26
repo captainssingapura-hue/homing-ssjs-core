@@ -367,4 +367,62 @@ class CatalogueRegistryTest {
     // self-bound on L<N>_Catalogue forces every child in subCatalogues()
     // to be typed L<N+1>_Catalogue<ThisCatalogue, ?>, so the wildcard
     // escape hatch the old test relied on doesn't compile.
+
+    // -----------------------------------------------------------------------
+    // RFC 0051 — identity and position are separate claims.
+    // -----------------------------------------------------------------------
+
+    /** A doc homed by extraDocHomes rather than by being a catalogue leaf —
+     *  the tree-leaf shape. Its derived path (home's path + its slug) names a
+     *  child the catalogue does not have. */
+    private static final UUID GUEST_ID = UUID.fromString("99999999-8888-7777-6666-555555555555");
+
+    private static final Doc GUEST_DOC = new Doc() {
+        @Override public UUID   uuid()    { return GUEST_ID; }
+        @Override public String title()   { return "Guest Doc"; }
+        @Override public String contents(){ return "# Guest"; }
+    };
+
+    private CatalogueRegistry withGuest() {
+        var brand = new StudioBrand("Test", RootCatalogue.class);
+        return new CatalogueRegistry(
+                brand,
+                new DocRegistry(List.of(TEST_DOC, GUEST_DOC)),
+                List.of(RootCatalogue.INSTANCE, LeafCatalogue.INSTANCE),
+                null,
+                java.util.Map.of(GUEST_ID, LeafCatalogue.INSTANCE));
+    }
+
+    @Test
+    void aDerivedPathThatResolvesToNothingIsNotIndexed() {
+        // pathOf DERIVES a path for any homed doc; it does not check that the
+        // catalogue actually has that child. Handing such a path to /goto
+        // produced a 404 — and worse, several docs sharing a class-derived
+        // slug all derived the SAME dead path.
+        var registry = withGuest();
+        assertNull(registry.pathForFlat("doc-reader",
+                        java.util.Map.of("doc", List.of(GUEST_ID.toString()))),
+                "a path nothing answers to must not be handed out as an address");
+    }
+
+    @Test
+    void butTheDocIsStillFoundByItsFlatAddress() {
+        // Identity is unconditional. The chrome resolver looks a doc up by its
+        // flat address to find its trail, and an unpositioned doc can still
+        // have one (a tree leaf's is enriched from the tree). Guarding this
+        // lookup as well blanked those pages.
+        var registry = withGuest();
+        assertSame(GUEST_DOC, registry.docForFlat("doc-reader",
+                java.util.Map.of("doc", List.of(GUEST_ID.toString()))));
+    }
+
+    @Test
+    void aRealCatalogueLeafStillResolvesBothWays() {
+        var registry = withGuest();
+        var args = java.util.Map.of("doc", List.of(DOC_ID.toString()));
+        assertSame(TEST_DOC, registry.docForFlat("doc-reader", args));
+        var path = registry.pathForFlat("doc-reader", args);
+        assertNotNull(path, "a genuine catalogue leaf has a position");
+        assertInstanceOf(PathResolution.ToLeaf.class, registry.resolve(path));
+    }
 }

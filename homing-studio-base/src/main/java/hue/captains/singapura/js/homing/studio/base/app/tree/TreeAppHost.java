@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.core.ParamCodec;
 import hue.captains.singapura.js.homing.core.QueryString;
 import hue.captains.singapura.js.homing.core.AppLink;
 import hue.captains.singapura.js.homing.core.AppModule;
+import hue.captains.singapura.js.homing.core.AppUrl;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.LegacyAppMain;
@@ -72,8 +73,8 @@ public record TreeAppHost() implements AppModule<TreeAppHost.Params, TreeAppHost
      *  containing a space or an {@code &} — silently, since nothing decoded it
      *  back to compare.</p> */
     public static String urlFor(String treeId, String path) {
-        return "/app?app=" + INSTANCE.simpleName() + "&"
-             + CODEC.toQueryString(new Params(treeId, (path == null || path.isEmpty()) ? null : path));
+        return AppUrl.flat(INSTANCE,
+                new Params(treeId, (path == null || path.isEmpty()) ? null : path));
     }
 
     @Override public Class<Params> paramsType() { return Params.class; }

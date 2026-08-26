@@ -107,7 +107,12 @@ public interface Doc extends CatalogueLeaf {
      *
      * <p>Realises Viewer ontology V6 (canonical URL composition).</p>
      */
-    default String url() { return "/app?app=doc-reader&doc=" + uuid(); }
+    default String url() {
+        return hue.captains.singapura.js.homing.core.AppUrl.flat(
+                "doc-reader",
+                hue.captains.singapura.js.homing.studio.base.app.DocReader.CODEC,
+                new hue.captains.singapura.js.homing.studio.base.app.DocReader.Params(uuid().toString()));
+    }
 
     /**
      * Typed cross-references and external citations declared by this Doc, rendered by the

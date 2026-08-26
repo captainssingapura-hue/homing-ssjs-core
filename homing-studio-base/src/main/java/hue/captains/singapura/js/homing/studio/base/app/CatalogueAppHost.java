@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.core.ParamCodec;
 import hue.captains.singapura.js.homing.core.QueryString;
 import hue.captains.singapura.js.homing.core.AppLink;
 import hue.captains.singapura.js.homing.core.AppModule;
+import hue.captains.singapura.js.homing.core.AppUrl;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.LegacyAppMain;
@@ -55,7 +56,7 @@ public record CatalogueAppHost() implements AppModule<CatalogueAppHost.Params, C
      * hand-building the path.
      */
     public static String urlFor(Class<? extends Catalogue<?>> catalogueClass) {
-        return "/app?app=" + INSTANCE.simpleName() + "&id=" + catalogueClass.getName();
+        return AppUrl.flat(INSTANCE, new Params(catalogueClass.getName(), null));
     }
 
     /**
