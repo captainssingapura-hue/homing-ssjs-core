@@ -91,7 +91,12 @@ public final class RigidDoc implements Doc {
     @Override public String  summary()     { return summary; }
     @Override public String  category()    { return category; }
     @Override public String  kind()        { return "composed"; }   // reuses the doc-tree route
-    @Override public String  url()         { return "/app?app=doc-tree-viewer&id=" + uuid; }
+    @Override public String  url() {
+        return hue.captains.singapura.js.homing.core.AppUrl.flat(
+                "doc-tree-viewer",
+                hue.captains.singapura.js.homing.studio.base.app.DocTreeViewer.CODEC,
+                new hue.captains.singapura.js.homing.studio.base.app.DocTreeViewer.Params(uuid.toString()));
+    }
     @Override public String  contentType() { return "application/json; charset=utf-8"; }
     @Override public String  fileExtension() { return ""; }
 
