@@ -72,6 +72,9 @@ public final class CatalogueRegistry {
     private final Map<String, java.util.Set<String>> flatIdentityKeys;
     /** RFC 0051 D4 — canonical flat address → path. */
     private final Map<String, CataloguePath> flatToPath;
+    /** RFC 0051 Phase 5 — canonical flat address to the doc it names, so the
+     *  chrome can be resolved server-side instead of fetched. */
+    private final Map<String, Doc> flatToDoc;
 
     public CatalogueRegistry(StudioBrand brand,
                              DocRegistry docRegistry,
@@ -345,6 +348,7 @@ public final class CatalogueRegistry {
 
         var keysByApp = new HashMap<String, java.util.Set<String>>();
         var flat      = new HashMap<String, CataloguePath>();
+        var flatDocs  = new HashMap<String, Doc>();
         for (UUID id : docHome.keySet()) {
             Doc d = docRegistry.resolve(id);
             if (d == null) continue;
@@ -359,10 +363,14 @@ public final class CatalogueRegistry {
             identity.remove("app");
             keysByApp.computeIfAbsent(app, k -> new java.util.TreeSet<>()).addAll(identity);
             CataloguePath path = pathOf(d);
-            if (path != null) flat.put(flatKey(app, args, identity), path);
+            if (path != null) {
+                flat.put(flatKey(app, args, identity), path);
+                flatDocs.put(flatKey(app, args, identity), d);
+            }
         }
         this.flatIdentityKeys = Map.copyOf(keysByApp);
         this.flatToPath       = Map.copyOf(flat);
+        this.flatToDoc        = Map.copyOf(flatDocs);
     }
 
     /**
@@ -622,6 +630,61 @@ public final class CatalogueRegistry {
         java.util.Set<String> keys = flatIdentityKeys.get(app);
         if (keys == null) return null;
         return flatToPath.get(flatKey(app, args, keys));
+    }
+
+    /**
+     * RFC 0051 Phase 5 — the page chrome for a flat {@code (app, args)}: the
+     * title and the breadcrumb trail, resolved server-side.
+     *
+     * <p>This is the same answer {@code /doc-refs} and {@code /app-refs} give,
+     * arrived at without a round trip. The chrome fetching its own crumb after
+     * render is what produces the pop-in: the page paints, then the trail
+     * appears. The server already resolved the node to answer the request, so
+     * the fetch was re-deriving something it had.</p>
+     *
+     * <p>Returns null when the address names nothing positioned — an
+     * unpositioned app has no trail to state, and inventing one would be
+     * worse than leaving the chrome to say only where it is.</p>
+     */
+    public List<Crumb> chromeCrumbsForFlat(String app, Map<String, List<String>> args) {
+        Doc doc = flatDoc(app, args);
+        Catalogue<?> node = (doc == null) ? catalogueForFlat(app, args) : docHome.get(doc.uuid());
+        if (node == null) return null;
+        var out = new ArrayList<Crumb>();
+        for (Catalogue<?> c : breadcrumbs(node)) {
+            CataloguePath p = pathOf(c);
+            out.add(new Crumb(crumbTextOf(c), p == null ? "" : p.toUrl()));
+        }
+        if (doc != null) {
+            out.add(new Crumb(doc.title(), ""));
+        } else if (!out.isEmpty()) {
+            // A catalogue page's last crumb IS the page. Blank its href for the
+            // same reason a doc's is blank, and the same reason
+            // CatalogueGetAction blanks it: you are already there, and a
+            // self-link in a trail is a dead control.
+            Crumb self = out.remove(out.size() - 1);
+            out.add(new Crumb(self.text(), ""));
+        }
+        return out;
+    }
+
+    /** The doc a flat address names, if any. */
+    private Doc flatDoc(String app, Map<String, List<String>> args) {
+        var keys = (app == null) ? null : flatIdentityKeys.get(app);
+        return keys == null ? null : flatToDoc.get(flatKey(app, args, keys));
+    }
+
+    /** The catalogue a flat address names, for the catalogue app. */
+    private Catalogue<?> catalogueForFlat(String app, Map<String, List<String>> args) {
+        if (!CatalogueAppHost.INSTANCE.simpleName().equals(app)) return null;
+        String id = QueryString.first(args, "id");
+        return id == null ? null : byClassName.get(id);
+    }
+
+    /** RFC 0009 — crumb text is the icon glyph plus the name, when there is one. */
+    static String crumbTextOf(Catalogue<?> c) {
+        String icon = c.icon();
+        return (icon == null || icon.isEmpty()) ? c.name() : icon + " " + c.name();
     }
 
     /** Which query keys identify a node for this app — the rest are refinements

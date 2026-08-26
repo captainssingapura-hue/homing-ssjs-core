@@ -191,9 +191,27 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
         var appMeta = (brand != null && brand.label() != null && !brand.label().isBlank())
                 ? new AppMeta(brand.label())
                 : AppMeta.DEFAULT;
+        // RFC 0051 Phase 5 — the page stamps its own breadcrumb, which needs the
+        // catalogue tree. The tree is built further down (it needs the doc
+        // registry, which needs the app closure), so the resolver is late-bound
+        // through a holder rather than passed by value. Set once during boot,
+        // before anything serves; the alternative was reordering a construction
+        // sequence whose order is itself a dependency chain.
+        var treeHolder = new java.util.concurrent.atomic.AtomicReference<CatalogueRegistry>();
+        hue.captains.singapura.js.homing.server.AppHtmlGetAction.ChromeResolver chromeResolver =
+                (appName, args) -> {
+                    CatalogueRegistry reg = treeHolder.get();
+                    if (reg == null) return null;
+                    var crumbs = reg.chromeCrumbsForFlat(appName, args);
+                    if (crumbs == null) return null;
+                    var out = new ArrayList<Map.Entry<String, String>>();
+                    for (var c : crumbs) out.add(Map.entry(c.text(), c.href() == null ? "" : c.href()));
+                    return out;
+                };
+
         var inner = new HomingActionRegistry(
                 nameResolver, appResolver, params.resourceReader(),
-                themeRegistry, appMeta, fixtures.servableModuleClasses());
+                themeRegistry, appMeta, fixtures.servableModuleClasses(), chromeResolver);
 
         // --- Doc registry — walk DocProviders from apps AND catalogues (RFC 0004 + RFC 0005).
         var docProviders = new ArrayList<DocProvider>();
@@ -260,6 +278,8 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
             // find.
             hue.captains.singapura.js.homing.studio.base.app.CataloguePathConformance
                     .assertPathBijection(catalogueRegistry);
+            // RFC 0051 Phase 5 — the tree exists now; the chrome resolver can see it.
+            treeHolder.set(catalogueRegistry);
             // RFC 0014: when diagnostics is enabled the framework injects a
             // three-tier tile pyramid via the augmentation map — Diagnostics
             // tile on the home L0; per-studio parent tiles (or direct view

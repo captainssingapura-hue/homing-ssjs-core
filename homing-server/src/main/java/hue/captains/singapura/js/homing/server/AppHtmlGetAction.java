@@ -38,6 +38,26 @@ public class AppHtmlGetAction
     private final ThemeRegistry themeRegistry;     // RFC 0002-ext1 — for the theme picker widget
     private final AppMeta meta;                    // downstream-supplied brand label
 
+    /**
+     * RFC 0051 Phase 5 — resolves the page's breadcrumb from its
+     * {@code (app, args)}, server-side.
+     *
+     * <p>A function rather than a registry reference because the catalogue
+     * tree lives a layer above this action; the page renderer needs the
+     * ANSWER, not the machinery that produces it. Null in a studio with no
+     * catalogues, where there is no trail to state.</p>
+     */
+    @FunctionalInterface
+    public interface ChromeResolver {
+        /** Crumbs for this address — {@code [{text, href}, …]}, root first,
+         *  the last one being the page itself with an empty href. Null when
+         *  the address names nothing positioned. */
+        java.util.List<java.util.Map.Entry<String, String>> crumbsFor(
+                String app, java.util.Map<String, java.util.List<String>> args);
+    }
+
+    private final ChromeResolver chrome;           // nullable
+
     public AppHtmlGetAction(ModuleNameResolver nameResolver) {
         this(nameResolver, null, ThemeRegistry.EMPTY, AppMeta.DEFAULT);
     }
@@ -52,10 +72,18 @@ public class AppHtmlGetAction
 
     public AppHtmlGetAction(ModuleNameResolver nameResolver, SimpleAppResolver appResolver,
                              ThemeRegistry themeRegistry, AppMeta meta) {
+        this(nameResolver, appResolver, themeRegistry, meta, null);
+    }
+
+    /** RFC 0051 Phase 5 — with a {@link ChromeResolver}, the page carries its
+     *  own breadcrumb instead of the chrome fetching one after render. */
+    public AppHtmlGetAction(ModuleNameResolver nameResolver, SimpleAppResolver appResolver,
+                             ThemeRegistry themeRegistry, AppMeta meta, ChromeResolver chrome) {
         this.nameResolver = nameResolver;
         this.appResolver = appResolver;
         this.themeRegistry = themeRegistry != null ? themeRegistry : ThemeRegistry.EMPTY;
         this.meta = meta != null ? meta : AppMeta.DEFAULT;
+        this.chrome = chrome;
     }
 
     @Override
@@ -136,6 +164,12 @@ public class AppHtmlGetAction
         // migration is per-app rather than a flag day.
         String stampedParams = stampParams(app, query.all());
 
+        // RFC 0051 Phase 5 — the breadcrumb, resolved here rather than fetched
+        // by the chrome after paint. The server walked the tree to answer this
+        // request; asking the browser to ask again is what makes the trail
+        // pop in a beat late.
+        String stampedCrumbs = stampCrumbs(query);
+
         String baseModuleUrl = nameResolver.resolve(app).basePath();
         String themeJs  = effectiveTheme != null ? "\"" + effectiveTheme + "\"" : "null";
         String localeJs = query.locale() != null ? "\"" + query.locale() + "\"" : "null";
@@ -207,6 +241,7 @@ public class AppHtmlGetAction
                         let moduleUrl = "%s" + "&locale=" + encodeURIComponent(locale);
                         if (theme) moduleUrl += "&theme=" + encodeURIComponent(theme);
                         %s
+                        %s
                         const { appMain } = await import(moduleUrl);
                         appMain(document.getElementById("app")%s);
                     </script>
@@ -216,7 +251,16 @@ public class AppHtmlGetAction
                               bodyClass,
                               backdropHtml, themePickerHtml, audioHtml, themeJs, localeJs, baseModuleUrl,
                               stampedParams == null ? "" : "const params = " + stampedParams + ";",
-                              stampedParams == null ? "" : ", params");
+                              stampedCrumbs == null ? "" : "const chrome = Object.freeze({crumbs: "
+                                                          + stampedCrumbs + "});",
+                              // A third argument, so an app that wants only
+                              // params is unaffected and one that wants the
+                              // chrome can take it. Passed whenever either is
+                              // present, since JS ignores extra arguments but
+                              // cannot skip a middle one.
+                              (stampedParams == null && stampedCrumbs == null) ? ""
+                                      : (stampedParams == null ? ", undefined" : ", params")
+                                        + (stampedCrumbs == null ? "" : ", chrome"));
 
         return CompletableFuture.completedFuture(new HtmlPageContent(html));
     }
@@ -1249,5 +1293,33 @@ public class AppHtmlGetAction
             return hue.captains.singapura.js.homing.core.StampedParams.jsObject(codec.to(p));
         }
         return null;
+    }
+
+    /**
+     * The page's breadcrumb as a frozen JS array, or null when there is none
+     * to state.
+     *
+     * <p>Escaped through the same {@link StampedParams#jsString} the params
+     * use: crumb text is doc titles and catalogue names, which are authored
+     * content rather than user input, but a page that escapes one source and
+     * not another is a page whose safety depends on knowing which is which.
+     * One rule for everything entering a script.</p>
+     */
+    private String stampCrumbs(AppQuery query) {
+        if (chrome == null || query.simpleName() == null) return null;
+        var crumbs = chrome.crumbsFor(query.simpleName(), query.all());
+        if (crumbs == null || crumbs.isEmpty()) return null;
+        var sb = new StringBuilder("Object.freeze([");
+        boolean first = true;
+        for (var c : crumbs) {
+            if (!first) sb.append(',');
+            first = false;
+            sb.append("Object.freeze({text:")
+              .append(hue.captains.singapura.js.homing.core.StampedParams.jsString(c.getKey()))
+              .append(",href:")
+              .append(hue.captains.singapura.js.homing.core.StampedParams.jsString(c.getValue()))
+              .append("})");
+        }
+        return sb.append("])").toString();
     }
 }
