@@ -227,11 +227,10 @@ function renderDocReader(props) {
             return r.json();
         })
         .then(function(info) {
-            // Server-resolved Doc metadata: title (friendly name) + summary + category
-            // + breadcrumbs[] + references[]. Update the breadcrumb + meta line with
-            // the title; rebuild the breadcrumb chain (RFC 0005-ext2) from
-            // info.breadcrumbs when the server provides it; render the References
-            // section from info.references.
+            // Server-resolved Doc metadata: title (friendly name) + summary +
+            // category + references[]. Update the meta line with the title and
+            // render the References section from info.references. No trail here
+            // since RFC 0051 phase 5 — the page arrived carrying one.
             if (info && info.title) {
                 // RFC 0051 Phase 5 — do NOT touch the leaf when it came from
                 // the stamp: those crumbs are frozen, and a write to a frozen
