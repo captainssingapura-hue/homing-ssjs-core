@@ -668,6 +668,17 @@ public final class CatalogueRegistry {
         return out;
     }
 
+    /**
+     * The doc a flat {@code (app, args)} address names, or null.
+     *
+     * <p>Public so a caller that knows something this registry does not — a
+     * tree-leaf's position INSIDE its content tree, say — can key that
+     * knowledge by the same address.</p>
+     */
+    public Doc docForFlat(String app, Map<String, List<String>> args) {
+        return flatDoc(app, args);
+    }
+
     /** The doc a flat address names, if any. */
     private Doc flatDoc(String app, Map<String, List<String>> args) {
         var keys = (app == null) ? null : flatIdentityKeys.get(app);

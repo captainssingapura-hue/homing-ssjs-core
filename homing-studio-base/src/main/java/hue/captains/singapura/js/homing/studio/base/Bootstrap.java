@@ -198,10 +198,35 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
         // before anything serves; the alternative was reordering a construction
         // sequence whose order is itself a dependency chain.
         var treeHolder = new java.util.concurrent.atomic.AtomicReference<CatalogueRegistry>();
+        var trailHolder = new java.util.concurrent.atomic.AtomicReference<
+                Map<UUID, List<hue.captains.singapura.js.homing.studio.base.app.Crumb>>>(Map.of());
         hue.captains.singapura.js.homing.server.AppHtmlGetAction.ChromeResolver chromeResolver =
                 (appName, args) -> {
                     CatalogueRegistry reg = treeHolder.get();
                     if (reg == null) return null;
+
+                    // RFC 0016 + RFC 0051 — a tree-leaf doc's trail is longer
+                    // than its catalogue chain: it continues INSIDE the content
+                    // tree, from the tree root down to the leaf's branch. The
+                    // registry cannot know that — the tree is not the catalogue
+                    // — so the enriched trail is consulted first. Without this
+                    // the stamp silently shortened those crumbs from
+                    // "… / Demo Studio / Animals & Halloween / Animals / Turtle"
+                    // to "… / Demo Studio / Turtle", which is a regression the
+                    // stamp introduced against what /doc-refs had always served.
+                    var doc = reg.docForFlat(appName, args);
+                    if (doc != null) {
+                        var trail = trailHolder.get().get(doc.uuid());
+                        if (trail != null && !trail.isEmpty()) {
+                            var enriched = new ArrayList<Map.Entry<String, String>>();
+                            for (var c : trail) {
+                                enriched.add(Map.entry(c.text(), c.href() == null ? "" : c.href()));
+                            }
+                            enriched.add(Map.entry(doc.title(), ""));
+                            return enriched;
+                        }
+                    }
+
                     var crumbs = reg.chromeCrumbsForFlat(appName, args);
                     if (crumbs == null) return null;
                     var out = new ArrayList<Map.Entry<String, String>>();
@@ -308,6 +333,9 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
                         : Map.of();
 
         // --- Doc-refs action (RFC 0004-ext1 / RFC 0005-ext2 — carries breadcrumb chain).
+        // RFC 0051 Phase 5 — the same enriched trails the stamp needs.
+        trailHolder.set(treeLeafTrails);
+
         var docRefsAction = new DocRefsGetAction(docRegistry, catalogueRegistry, treeLeafTrails);
 
         // --- App-refs action (RFC 0025 L2.2 — breadcrumb chain for AppModule
