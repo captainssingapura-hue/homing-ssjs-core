@@ -87,7 +87,9 @@ public final class RigidDoc implements Doc {
     /** RFC 0051 Law 2 — the authored segment when one was supplied, else the
      *  title: every RigidDoc shares this class, so the class-derived default
      *  would give them all the segment "rigid". */
-    @Override public NodeName slug()       { return slug != null ? slug : NodeName.conciseSlug(title()); }
+    /** The author-chosen name, or null. RFC 0051 Phase 6 — the doc carries the
+     *  NAME; DocSlugs decides how a name becomes a path segment. */
+    public NodeName authoredSlug() { return slug; }
     @Override public String  summary()     { return summary; }
     @Override public String  category()    { return category; }
     @Override public String  kind()        { return "composed"; }   // reuses the doc-tree route

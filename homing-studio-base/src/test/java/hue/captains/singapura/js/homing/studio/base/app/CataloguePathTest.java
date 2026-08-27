@@ -26,7 +26,6 @@ class CataloguePathTest {
         @Override public UUID   uuid()     { return DOC_ID; }
         @Override public String title()    { return "A Leaf"; }
         @Override public String contents() { return ""; }
-        @Override public NodeName slug()   { return new NodeName("a-leaf"); }
     };
 
     record Root() implements L0_Catalogue<Root> {
@@ -42,7 +41,8 @@ class CataloguePathTest {
         @Override public Root parent()  { return Root.INSTANCE; }
         @Override public String name()  { return "Branch"; }
         @Override public List<Entry<Branch>> leaves() {
-            return List.of(Entry.of(this, DocReader.INSTANCE, new DocReader.Params(LEAF_DOC.uuid().toString()), LEAF_DOC));
+            return List.of(Entry.of(this, DocReader.INSTANCE, new DocReader.Params(LEAF_DOC.uuid().toString()),
+                    LEAF_DOC, new NodeName("a-leaf")));
         }
     }
 

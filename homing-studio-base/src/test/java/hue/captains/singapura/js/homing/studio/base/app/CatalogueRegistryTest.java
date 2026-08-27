@@ -248,7 +248,6 @@ class CatalogueRegistryTest {
         @Override public UUID   uuid()     { return uuid; }
         @Override public String title()    { return heading; }
         @Override public String contents() { return ""; }
-        @Override public NodeName slug()   { return new NodeName("twin"); }
     }
 
     static final TwinDoc TWIN_A = new TwinDoc(UUID.randomUUID(), "First Twin");
@@ -258,7 +257,10 @@ class CatalogueRegistryTest {
         public static final TwinCatalogue INSTANCE = new TwinCatalogue();
         @Override public String name() { return "Twin-Cat"; }
         @Override public List<Entry<TwinCatalogue>> leaves() {
-            return List.of(Entry.of(this, DocReader.INSTANCE, new DocReader.Params(TWIN_A.uuid().toString()), TWIN_A), Entry.of(this, DocReader.INSTANCE, new DocReader.Params(TWIN_B.uuid().toString()), TWIN_B));
+            return List.of(Entry.of(this, DocReader.INSTANCE, new DocReader.Params(TWIN_A.uuid().toString()),
+                    TWIN_A, new NodeName("twin")),
+                    Entry.of(this, DocReader.INSTANCE, new DocReader.Params(TWIN_B.uuid().toString()),
+                            TWIN_B, new NodeName("twin")));
         }
     }
 
@@ -327,7 +329,8 @@ class CatalogueRegistryTest {
         @Override public RootCatalogue parent() { return RootCatalogue.INSTANCE; }
         @Override public String name()          { return "Unclaimed-Child"; }
         @Override public List<Entry<UnclaimedChild>> leaves() {
-            return List.of(Entry.of(this, DocReader.INSTANCE, new DocReader.Params(ORPHANED_DOC.uuid().toString()), ORPHANED_DOC));
+            return List.of(Entry.of(this, DocReader.INSTANCE, new DocReader.Params(ORPHANED_DOC.uuid().toString()),
+                    ORPHANED_DOC, new NodeName("orphaned")));
         }
     }
 
@@ -336,7 +339,6 @@ class CatalogueRegistryTest {
         @Override public UUID   uuid()     { return ORPHANED_ID; }
         @Override public String title()    { return "Orphaned"; }
         @Override public String contents() { return ""; }
-        @Override public NodeName slug()   { return new NodeName("orphaned"); }
     };
 
     @Test

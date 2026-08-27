@@ -79,7 +79,6 @@ public final class RigidDocV2 implements Doc, DocTreeV2Source {
     @Override public UUID   uuid()        { return id; }
     @Override public String title()       { return title; }
     /** RFC 0051 Law 2 — value-Doc; see {@link RigidDoc#slug()}. */
-    @Override public NodeName slug()      { return NodeName.conciseSlug(title); }
     @Override public String summary()     { return summary; }
     @Override public String category()    { return category; }
     @Override public String kind()        { return "composed"; }   // reuses the doc-tree route

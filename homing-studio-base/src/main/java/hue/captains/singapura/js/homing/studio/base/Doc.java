@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base;
 
-import hue.captains.singapura.js.homing.studio.base.app.CatalogueLeaf;
+import hue.captains.singapura.tao.ontology.Immutable;
 
 import java.util.List;
 import java.util.Optional;
@@ -38,7 +38,7 @@ import java.util.UUID;
  *
  * @since RFC 0004
  */
-public interface Doc extends CatalogueLeaf {
+public interface Doc extends Immutable {
 
     /**
      * Stable surrogate identity for this Doc on the wire. Unique within a {@link DocRegistry}.

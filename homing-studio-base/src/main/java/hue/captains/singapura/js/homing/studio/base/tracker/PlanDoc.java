@@ -56,7 +56,6 @@ public record PlanDoc(Plan plan) implements Doc {
      * already keys identity that same way — so the path segment and the
      * identity agree by construction rather than by coincidence.
      */
-    @Override public NodeName slug()   { return NodeName.ofType(plan.getClass(), "Plan"); }
 
     @Override public String title()    { return plan.name(); }
     @Override public String summary()  { return plan.summary(); }

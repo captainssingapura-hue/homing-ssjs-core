@@ -78,6 +78,9 @@ public final class CatalogueRegistry {
     /** RFC 0051 Phase 6 — canonical flat address to the bound leaf placed there,
      *  so a leaf with no doc can still state its trail. */
     private final Map<String, BoundPlacement> flatToLeaf;
+    /** RFC 0051 Phase 6 — doc UUID → the path of the leaf that PLACES it. Only
+     *  placed docs appear, which is what makes pathOf(Doc) need no guard. */
+    private final Map<UUID, CataloguePath> docPaths;
 
     public CatalogueRegistry(StudioBrand brand,
                              DocRegistry docRegistry,
@@ -335,6 +338,7 @@ public final class CatalogueRegistry {
         var flat      = new HashMap<String, CataloguePath>();
         var flatDocs  = new HashMap<String, Doc>();
         var flatLeaves = new HashMap<String, BoundPlacement>();
+        var docPathMap = new HashMap<UUID, CataloguePath>();
 
         // RFC 0051 Phase 6 — index the bound leaves FIRST, from their own
         // bindings. The docHome walk below can only find things that have a doc
@@ -357,6 +361,9 @@ public final class CatalogueRegistry {
                 flat.put(key, path);
             }
             flatLeaves.put(key, bp);
+            if (bp.leaf().content() != null && flat.containsKey(key)) {
+                docPathMap.put(bp.leaf().content().uuid(), path);
+            }
             if (bp.leaf().content() != null) {
                 flatDocs.put(key, bp.leaf().content());
             }
@@ -376,34 +383,25 @@ public final class CatalogueRegistry {
             Map<String, List<String>> args = address.args();
             var identity = new java.util.TreeSet<>(args.keySet());
             keysByApp.computeIfAbsent(app, k -> new java.util.TreeSet<>()).addAll(identity);
-            CataloguePath path = pathOf(d);
-            // RFC 0051 — pathOf(Doc) DERIVES a path (home's path + the doc's
-            // slug); it does not check that anything answers to it. For a doc
-            // homed by extraDocHomes rather than by being a catalogue leaf —
-            // every tree leaf — the derived path names a child the catalogue
-            // does not have, and /goto would hand out a 404. Worse silently:
-            // SvgDoc takes the class-derived slug, so all four animals derived
-            // the SAME dead path and the index kept whichever came last.
+            // No path here, and none needed. Every doc that HAS a position was
+            // indexed by its placement above; the docs reaching this loop are
+            // the ones homed through extraDocHomes — tree leaves — which sit in
+            // no catalogue and so have no segment of their own. Deriving one
+            // was the old bug: SvgDoc's class-derived slug gave all four demo
+            // animals the same dead path, and the guard that caught it is
+            // unnecessary once nothing derives.
             //
-            // So the index holds only paths that resolve BACK to this doc.
-            // Anything else is unpositioned as far as addressing goes, and
-            // unpositioned renders flat — which is honest, and is what /goto
-            // already does when it finds nothing.
-            // Identity is unconditional: this flat address names this doc, and
-            // that is true whether or not the doc has a position. The chrome
-            // resolver needs exactly this — a tree leaf HAS a trail (an
-            // enriched one, via treeLeafTrails) despite having no path, so
-            // guarding the doc lookup too would blank the very pages the
-            // trail work was for.
-            flatDocs.put(flatKey(app, args, identity), d);
-            if (path != null && resolvesTo(path, d)) {
-                flat.put(flatKey(app, args, identity), path);
-            }
+            // Identity is still unconditional: this flat address names this
+            // doc whether or not it is positioned. The chrome resolver needs
+            // exactly that — a tree leaf HAS a trail, enriched via
+            // treeLeafTrails, despite having no path.
+            flatDocs.putIfAbsent(flatKey(app, args, identity), d);
         }
         this.flatIdentityKeys = Map.copyOf(keysByApp);
         this.flatToPath       = Map.copyOf(flat);
         this.flatToDoc        = Map.copyOf(flatDocs);
         this.flatToLeaf       = Map.copyOf(flatLeaves);
+        this.docPaths         = Map.copyOf(docPathMap);
     }
 
     /**
@@ -872,10 +870,17 @@ public final class CatalogueRegistry {
         return pathForFlat(nav.app().simpleName(), argsOf(nav));
     }
 
+    /**
+     * RFC 0051 Phase 6 — a doc's path is its PLACEMENT's path. It used to be
+     * derived as home-path + doc.slug(), which asked the document where it
+     * sits and then had to be guarded because the answer might name nothing.
+     * Reading the placement needs no guard: only things actually placed have
+     * one, so a tree leaf — homed through extraDocHomes, placed nowhere —
+     * correctly has no path at all.
+     */
     public CataloguePath pathOf(Doc doc) {
         Objects.requireNonNull(doc, "doc");
-        Catalogue<?> home = docHome.get(doc.uuid());
-        return home == null ? null : pathOf(home).then(doc.slug());
+        return docPaths.get(doc.uuid());
     }
 
     /**

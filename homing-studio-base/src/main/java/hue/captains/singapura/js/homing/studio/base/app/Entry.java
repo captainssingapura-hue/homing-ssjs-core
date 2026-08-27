@@ -65,28 +65,13 @@ public sealed interface Entry<C extends Catalogue<C>> extends Immutable {
     record OfLeaf<C extends Catalogue<C>,
                   P extends AppModule._Param,
                   M extends AppModule<P, M>>
-                 (Navigable<P, M> nav, Doc content) implements Entry<C> {
+                 (Navigable<P, M> nav, Doc content, NodeName slug) implements Entry<C> {
 
         public OfLeaf {
-            java.util.Objects.requireNonNull(nav, "Entry.OfLeaf.nav");
+            java.util.Objects.requireNonNull(nav,  "Entry.OfLeaf.nav");
+            java.util.Objects.requireNonNull(slug, "Entry.OfLeaf.slug");
         }
 
-        /**
-         * This leaf's path segment. RFC 0051 Phase 6 — the slug belongs to the
-         * PLACEMENT, which is what finally makes it fixable: every
-         * {@code SvgDoc} inherits the class-derived slug {@code "svg"}, so four
-         * demo animals derived one colliding path while the slug was the
-         * document's to state.
-         *
-         * <p>Reproduces today's rule exactly, so no path moves: a doc leaf
-         * takes the doc's slug, an app leaf takes its tile name — the same
-         * two rules {@code Doc.slug()} and {@code AppDoc.slug()} apply now.</p>
-         */
-        public NodeName slug() {
-            return content != null
-                    ? content.slug()
-                    : NodeName.conciseSlug(nav.name());
-        }
     }
 
     /** RFC 0011 — a typed re-attachment of a source {@link L0_Catalogue} as a leaf
@@ -122,7 +107,24 @@ public sealed interface Entry<C extends Catalogue<C>> extends Immutable {
             M extends AppModule<P, M>>
            Entry<C> of(C host, M app, P params, Doc doc) {
         return new OfLeaf<>(
-                new Navigable<>(app, params, doc.title(), doc.summary()), doc);
+                new Navigable<>(app, params, doc.title(), doc.summary()),
+                doc, DocSlugs.defaultFor(doc));
+    }
+
+    /**
+     * Place {@code doc} under an explicitly named segment.
+     *
+     * <p>The form that makes the model true: a placement states where the doc
+     * sits AND what that position is called. It is what fixes a collision the
+     * document cannot see — four SvgDocs sharing the class-derived "svg" — and
+     * it is how an authored name reaches the path without the doc minting one.</p>
+     */
+    static <C extends Catalogue<C>,
+            P extends AppModule._Param,
+            M extends AppModule<P, M>>
+           Entry<C> of(C host, M app, P params, Doc doc, NodeName slug) {
+        return new OfLeaf<>(
+                new Navigable<>(app, params, doc.title(), doc.summary()), doc, slug);
     }
 
     /** Place an app: a leaf with a binding and no content. */
@@ -135,7 +137,7 @@ public sealed interface Entry<C extends Catalogue<C>> extends Immutable {
         // goes: it was a Doc a navigable had to become in order to be
         // placeable, and it paid for that with a fabricated uuid seeded from
         // display framing — the defect that forced Law 1's second check.
-        return new OfLeaf<>(nav, null);
+        return new OfLeaf<>(nav, null, NodeName.conciseSlug(nav.name()));
     }
 
     /** Place a plan. */
@@ -155,7 +157,7 @@ public sealed interface Entry<C extends Catalogue<C>> extends Immutable {
                         new hue.captains.singapura.js.homing.studio.base.tracker.PlanAppHost.Params(
                                 plan.getClass().getName(), null),
                         doc.title(), doc.summary()),
-                doc);
+                doc, DocSlugs.defaultFor(doc));
     }
 
     static <C extends Catalogue<C>, S extends L0_Catalogue<S>>
