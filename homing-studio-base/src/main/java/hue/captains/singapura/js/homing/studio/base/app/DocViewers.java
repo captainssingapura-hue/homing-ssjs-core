@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.studio.base.app;
 
 import hue.captains.singapura.js.homing.core.AppAddress;
-import hue.captains.singapura.js.homing.core.QueryString;
+import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.studio.base.Doc;
 import hue.captains.singapura.js.homing.studio.base.ProxyDoc;
 import hue.captains.singapura.js.homing.studio.base.SvgDoc;
@@ -47,16 +47,30 @@ public final class DocViewers {
 
     private DocViewers() {}
 
+
     /**
-     * The default address for {@code doc} — exactly what {@code doc.url()}
-     * returns today, structured rather than serialised.
-     *
-     * <p>Asserted byte-identical to {@code doc.url()} over every registered doc
-     * in both studios by {@code DocAddressLaw}; that gate is what lets the
-     * consumers switch over without the flat-address index shifting under
-     * them, since the index is KEYED on those strings.</p>
+     * The default address for {@code doc} — the encoded rendering of
+     * {@link #navOf(Doc)}, for callers that need an href.
      */
     public static AppAddress addressOf(Doc doc) {
+        return addressOfNav(navOf(doc));
+    }
+
+    /**
+     * RFC 0051 Phase 6 — the same designation as {@link #addressOf(Doc)}, but
+     * as the typed pair it was built from rather than the string it was
+     * encoded into.
+     *
+     * <p>Every branch below already CONSTRUCTS typed params and then hands
+     * them to a codec. The encode was never the answer, only the shape the
+     * flat index happened to want. The addressing index is keyed on the typed
+     * pair now, so callers that consult it take this, and only callers that
+     * emit an href take {@link #addressOf(Doc)}.</p>
+     *
+     * <p>Name and summary come from the doc, which is what a navigable for it
+     * would say — this is a Doc's default binding, stated in full.</p>
+     */
+    public static Navigable<?, ?> navOf(Doc doc) {
         java.util.Objects.requireNonNull(doc, "doc");
         String uuid = doc.uuid().toString();
 
@@ -64,48 +78,49 @@ public final class DocViewers {
         // and ProxyDoc before the prose default (it addresses its OWN uuid,
         // never its target's).
         if (doc instanceof RigidDocV2) {
-            return AppAddress.of("doc-tree-viewer", DocTreeViewer.CODEC,
-                    new DocTreeViewer.Params(uuid));
+            return bind(DocTreeViewer.INSTANCE, new DocTreeViewer.Params(uuid), doc);
         }
         if (doc instanceof RigidDoc) {
-            return AppAddress.of("doc-tree-viewer", DocTreeViewer.CODEC,
-                    new DocTreeViewer.Params(uuid));
+            return bind(DocTreeViewer.INSTANCE, new DocTreeViewer.Params(uuid), doc);
         }
         if (doc instanceof ComposedDoc) {
-            return AppAddress.of("composed-viewer", ComposedViewer.CODEC,
-                    new ComposedViewer.Params(uuid));
+            return bind(ComposedViewer.INSTANCE, new ComposedViewer.Params(uuid), doc);
         }
         if (doc instanceof SvgDoc<?>) {
-            return AppAddress.of("svg-viewer", SvgViewer.CODEC,
-                    new SvgViewer.Params(uuid));
+            return bind(SvgViewer.INSTANCE, new SvgViewer.Params(uuid), doc);
         }
         if (doc instanceof TableDoc) {
-            return AppAddress.of("table-viewer", TableViewer.CODEC,
-                    new TableViewer.Params(uuid));
+            return bind(TableViewer.INSTANCE, new TableViewer.Params(uuid), doc);
         }
         if (doc instanceof ImageDoc) {
-            return AppAddress.of("image-viewer", ImageViewer.CODEC,
-                    new ImageViewer.Params(uuid));
+            return bind(ImageViewer.INSTANCE, new ImageViewer.Params(uuid), doc);
         }
         if (doc instanceof PlanDoc pd) {
             // A plan is identified by its CLASS, not by the uuid PlanDoc
             // synthesises to satisfy Doc — which nothing addresses. One of the
             // negation's exhibits.
-            return AppAddress.of("plan", PlanAppHost.CODEC,
-                    new PlanAppHost.Params(pd.plan().getClass().getName(), null));
+            return bind(PlanAppHost.INSTANCE,
+                    new PlanAppHost.Params(pd.plan().getClass().getName(), null), doc);
         }
         if (doc instanceof ProxyDoc) {
-            return AppAddress.of("doc-reader", DocReader.CODEC,
-                    new DocReader.Params(uuid));
+            return bind(DocReader.INSTANCE, new DocReader.Params(uuid), doc);
         }
-        return AppAddress.of("doc-reader", DocReader.CODEC, new DocReader.Params(uuid));
+        return bind(DocReader.INSTANCE, new DocReader.Params(uuid), doc);
     }
 
-    /** Parse a flat URL back into the pair. Used only for the AppDoc branch. */
-    private static AppAddress fromFlat(String flatUrl) {
-        var args = new java.util.LinkedHashMap<>(QueryString.parse(flatUrl));
-        String app = QueryString.first(args, "app");
-        args.remove("app");
-        return new AppAddress(app, args);
+    /**
+     * Bind an app to params, naming the pair from the doc. Generic so the
+     * app's {@code P} and the params must agree at the call site — the check
+     * a string address could never make.
+     */
+    private static <P extends AppModule._Param, M extends AppModule<P, M>>
+            Navigable<P, M> bind(M app, P params, Doc doc) {
+        String name = (doc.title() == null || doc.title().isBlank()) ? "doc" : doc.title();
+        return new Navigable<>(app, params, name, doc.summary());
+    }
+
+    /** Encode a binding for an outbound href — the one legitimate direction. */
+    private static <P extends AppModule._Param> AppAddress addressOfNav(Navigable<P, ?> nav) {
+        return new AppAddress(nav.app().simpleName(), nav.app().paramCodec().to(nav.params()));
     }
 }
