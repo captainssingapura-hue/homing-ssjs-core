@@ -993,21 +993,15 @@ public final class CatalogueRegistry {
     /**
      * The app's own args for a binding, through its codec.
      *
-     * <p>An app WITHOUT a codec falls back to reading them out of
-     * {@code Navigable.url()}, which reflects over the Params record. Not a
-     * choice — {@code ParamCodec.None} is typed to {@code _None} and throws a
-     * ClassCastException on a real Params, which is precisely what the demo's
-     * boot test caught here (DishListDemoApp). The fallback dies with A9, when
-     * the last uncoded app gets a codec, and this branch goes with it.</p>
+     * <p>RFC 0051 A9 — no branch. This used to fall back to parsing
+     * {@code Navigable.url()} for an app with no codec, because
+     * {@code ParamCodec.None} is typed to {@code _None} and threw a
+     * ClassCastException on a real Params — which is exactly what the demo's
+     * boot test caught here (DishListDemoApp). {@code ParamCodec.ofEmpty} gave
+     * those apps a codec, so there is no uncoded case left to fall back for.</p>
      */
     private static <P extends AppModule._Param> Map<String, List<String>> argsOf(Navigable<P, ?> nav) {
-        var codec = nav.app().paramCodec();
-        if (codec != hue.captains.singapura.js.homing.core.ParamCodec.None.INSTANCE) {
-            return codec.to(nav.params());
-        }
-        var args = new LinkedHashMap<>(QueryString.parse(nav.url()));
-        args.remove("app");
-        return args;
+        return nav.app().paramCodec().to(nav.params());
     }
 
     /** Does this path resolve back to exactly this leaf? Same guard as the doc

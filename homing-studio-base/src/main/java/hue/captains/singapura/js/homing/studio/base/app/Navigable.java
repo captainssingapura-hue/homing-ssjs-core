@@ -4,9 +4,6 @@ import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.AppUrl;
 import hue.captains.singapura.js.homing.core.ParamCodec;
 
-import java.lang.reflect.RecordComponent;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 /**
@@ -69,47 +66,26 @@ public record Navigable<P extends AppModule._Param, M extends AppModule<P, M>>(
      * {@code from(to(p)) == p} is asserted by {@code ParamCodecLaw}, which
      * means a URL minted here is a URL that app can read back.</p>
      *
-     * <p>An app WITHOUT a codec still falls back to reflecting over the
-     * Params record. That fallback is the last of D8's six minting sites and
-     * the reason url() is not yet retired: it is also the "schema-by-
-     * reflection at request time" the Codegen Over Reflection doctrine bans,
-     * and it silently drops empty-string components — so {@code Params(id,
-     * "")} survives a codec but not this. Every app that carries a codec has
-     * left the fallback; the remaining ones are demo apps, tracked with the
-     * ParamsWriter retirement they share a cause with.</p>
+     * <p>RFC 0051 A9 — THE REFLECTED FALLBACK IS GONE. Until Phase 6 this
+     * method branched: an app with no codec had its Params walked by
+     * reflection instead. That was the last of D8's six minting sites, and it
+     * was also the "schema-by-reflection at request time" the Codegen Over
+     * Reflection doctrine bans — silently dropping empty-string components, so
+     * {@code Params(id, "")} survived a codec but not the reflection.</p>
      *
-     * <p>{@code _None} params produce just {@code /app?app=<simpleName>} on
-     * either path.</p>
+     * <p>It survived because five paramless demo apps could not declare a
+     * codec: {@code ParamCodec.None} is typed to {@code _None} and throws on
+     * any other Params, so an app with an empty {@code record Params()} had
+     * nothing to declare. {@code ParamCodec.ofEmpty} closed that, every placed
+     * app now carries a correctly-typed codec, and the branch has no live
+     * caller left.</p>
+     *
+     * <p>{@code _None} params still produce just {@code /app?app=<simpleName>},
+     * because {@code None.to(_None.INSTANCE)} is the empty map — the same
+     * string the reflection produced, by the ordinary path rather than a
+     * special case.</p>
      */
     public String url() {
-        var codec = app.paramCodec();
-        if (codec != ParamCodec.None.INSTANCE) {
-            return AppUrl.flat(app, params);
-        }
-        return reflectedUrl();
-    }
-
-    /** Pre-codec minting — see {@link #url()} for why it is still here. */
-    private String reflectedUrl() {
-        StringBuilder sb = new StringBuilder("/app?app=").append(app.simpleName());
-        if (params instanceof AppModule._None) return sb.toString();
-
-        Class<?> recCls = params.getClass();
-        if (!recCls.isRecord()) return sb.toString();   // should be unreachable given the type bound
-        for (RecordComponent rc : recCls.getRecordComponents()) {
-            try {
-                Object val = rc.getAccessor().invoke(params);
-                if (val == null) continue;
-                String s = val.toString();
-                if (s.isEmpty()) continue;
-                sb.append('&')
-                  .append(URLEncoder.encode(rc.getName(), StandardCharsets.UTF_8))
-                  .append('=')
-                  .append(URLEncoder.encode(s, StandardCharsets.UTF_8));
-            } catch (ReflectiveOperationException e) {
-                // best-effort: skip unreachable components
-            }
-        }
-        return sb.toString();
+        return AppUrl.flat(app, params);
     }
 }

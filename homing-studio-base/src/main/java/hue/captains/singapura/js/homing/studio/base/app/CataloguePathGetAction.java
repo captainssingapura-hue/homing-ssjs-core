@@ -150,16 +150,11 @@ public final class CataloguePathGetAction
         query.query().forEach((k, values) -> values.forEach(v -> QueryString.put(merged, k, v)));
         // The binding's own params win over anything the request spelled.
         //
-        // An UNCODED app cannot be encoded — ParamCodec.None is typed to _None
-        // and throws on a real Params — so its args come from Navigable.url()'s
-        // reflection, the same fallback the index build uses. Not encoding at
-        // all would be wrong in a way that renders: the page would come up with
-        // no args and no crumb, which is what these five demo pages did.
+        // RFC 0051 A9 — no uncoded case. This branched on ParamCodec.None,
+        // parsing Navigable.url()'s reflection for the five demo apps that had
+        // no codec to encode with; ParamCodec.ofEmpty gave them one.
         var codec = nav.app().paramCodec();
-        Map<String, List<String>> bound =
-                (codec != hue.captains.singapura.js.homing.core.ParamCodec.None.INSTANCE)
-                        ? codec.to(nav.params())
-                        : withoutApp(QueryString.parse(nav.url()));
+        Map<String, List<String>> bound = codec.to(nav.params());
         bound.forEach((k, values) -> {
             merged.remove(k);
             values.forEach(v -> QueryString.put(merged, k, v));
@@ -171,19 +166,12 @@ public final class CataloguePathGetAction
         // Phase 4 recorded as "riding across the hop". Passing nav.params()
         // verbatim silently dropped it, so every plan link landed on phase one.
         P effective = nav.params();
-        if (codec != hue.captains.singapura.js.homing.core.ParamCodec.None.INSTANCE
-                && codec.from(merged) instanceof
-                        hue.captains.singapura.js.homing.core.ParamCodec.Decoded.Ok<P>(P p)) {
+        if (codec.from(merged) instanceof
+                hue.captains.singapura.js.homing.core.ParamCodec.Decoded.Ok<P>(P p)) {
             effective = p;
         }
         return pageAction.executeTyped(nav.app(), effective,
                 query.theme(), query.locale(), merged);
-    }
-
-    private static Map<String, List<String>> withoutApp(Map<String, List<String>> args) {
-        var out = new java.util.LinkedHashMap<>(args);
-        out.remove("app");
-        return out;
     }
 
     private CompletableFuture<HtmlPageContent> render(
