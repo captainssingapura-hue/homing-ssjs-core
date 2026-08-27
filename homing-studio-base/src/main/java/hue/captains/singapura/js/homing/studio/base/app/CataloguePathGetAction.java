@@ -164,7 +164,19 @@ public final class CataloguePathGetAction
             merged.remove(k);
             values.forEach(v -> QueryString.put(merged, k, v));
         });
-        return pageAction.executeTyped(nav.app(), nav.params(),
+        // Decode the MERGED query rather than passing the binding's params
+        // through. The binding fixes this leaf's identity — its keys were just
+        // overlaid above and win — but a request may legitimately carry riders
+        // the app's own Params record names: ?phase= on a plan page is the one
+        // Phase 4 recorded as "riding across the hop". Passing nav.params()
+        // verbatim silently dropped it, so every plan link landed on phase one.
+        P effective = nav.params();
+        if (codec != hue.captains.singapura.js.homing.core.ParamCodec.None.INSTANCE
+                && codec.from(merged) instanceof
+                        hue.captains.singapura.js.homing.core.ParamCodec.Decoded.Ok<P>(P p)) {
+            effective = p;
+        }
+        return pageAction.executeTyped(nav.app(), effective,
                 query.theme(), query.locale(), merged);
     }
 
