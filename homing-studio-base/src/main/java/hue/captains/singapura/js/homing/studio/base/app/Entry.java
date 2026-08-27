@@ -65,11 +65,14 @@ public sealed interface Entry<C extends Catalogue<C>> extends Immutable {
     record OfLeaf<C extends Catalogue<C>,
                   P extends AppModule._Param,
                   M extends AppModule<P, M>>
-                 (Navigable<P, M> nav, Doc content, NodeName slug) implements Entry<C> {
+                 (Navigable<P, M> nav, Doc content, NodeName slug,
+                  String kind, String category) implements Entry<C> {
 
         public OfLeaf {
             java.util.Objects.requireNonNull(nav,  "Entry.OfLeaf.nav");
             java.util.Objects.requireNonNull(slug, "Entry.OfLeaf.slug");
+            if (kind     == null) kind     = (content != null) ? content.kind()     : "app";
+            if (category == null) category = (content != null) ? content.category() : "APP";
         }
 
     }
@@ -108,7 +111,7 @@ public sealed interface Entry<C extends Catalogue<C>> extends Immutable {
            Entry<C> of(C host, M app, P params, Doc doc) {
         return new OfLeaf<>(
                 new Navigable<>(app, params, doc.title(), doc.summary()),
-                doc, DocSlugs.defaultFor(doc));
+                doc, DocSlugs.defaultFor(doc), null, null);
     }
 
     /**
@@ -124,7 +127,7 @@ public sealed interface Entry<C extends Catalogue<C>> extends Immutable {
             M extends AppModule<P, M>>
            Entry<C> of(C host, M app, P params, Doc doc, NodeName slug) {
         return new OfLeaf<>(
-                new Navigable<>(app, params, doc.title(), doc.summary()), doc, slug);
+                new Navigable<>(app, params, doc.title(), doc.summary()), doc, slug, null, null);
     }
 
     /** Place an app: a leaf with a binding and no content. */
@@ -137,7 +140,7 @@ public sealed interface Entry<C extends Catalogue<C>> extends Immutable {
         // goes: it was a Doc a navigable had to become in order to be
         // placeable, and it paid for that with a fabricated uuid seeded from
         // display framing — the defect that forced Law 1's second check.
-        return new OfLeaf<>(nav, null, NodeName.conciseSlug(nav.name()));
+        return new OfLeaf<>(nav, null, NodeName.conciseSlug(nav.name()), null, null);
     }
 
     /** Place a plan. */
@@ -157,7 +160,7 @@ public sealed interface Entry<C extends Catalogue<C>> extends Immutable {
                         new hue.captains.singapura.js.homing.studio.base.tracker.PlanAppHost.Params(
                                 plan.getClass().getName(), null),
                         doc.title(), doc.summary()),
-                doc, DocSlugs.defaultFor(doc));
+                doc, DocSlugs.defaultFor(doc), null, null);
     }
 
     static <C extends Catalogue<C>, S extends L0_Catalogue<S>>

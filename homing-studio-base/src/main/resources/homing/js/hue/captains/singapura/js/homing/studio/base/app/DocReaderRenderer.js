@@ -75,7 +75,16 @@ function renderDocReader(props) {
         leafCrumb = { text: docId ? "Loading…" : "(no document)" };
         crumbs.push(leafCrumb);
     }
+    // RFC 0051 Phase 6 - the title is in the stamp, so the heading, the browser
+    // tab and the export filename stop waiting on a round trip for a string
+    // already sitting in the page. The fetch still supplies it for an unstamped
+    // page, which is the only case that cannot answer for itself.
+    var stampedTitle = leafCrumb && stamped ? leafCrumb.text : null;
+
     var headerEl = Header({ brand: brand, crumbs: crumbs });
+    if (stampedTitle) {
+        document.title = stampedTitle + (brand && brand.label ? " · " + brand.label : "");
+    }
     // data-export-chrome: stripped by exportPageAsHtml when the user picks
     // "content only" — the brand bar + breadcrumb chain is page chrome, not
     // document content.
@@ -92,7 +101,9 @@ function renderDocReader(props) {
     //
     // The filename slug starts as "doc" and is replaced with a title-derived
     // slug once /doc-refs returns info.title (see the .then handler below).
-    var _exportSlug = "doc";
+    // Seeded from the stamp so an export before the fetch lands is still named
+    // after the doc rather than "doc".
+    var _exportSlug = stampedTitle ? (_slugify(stampedTitle) || "doc") : "doc";
 
     // Floating export pill — wraps a chrome-include checkbox and the button
     // together so the toggle travels with the action. data-export-exclude on
@@ -151,7 +162,7 @@ function renderDocReader(props) {
     // exportPageAsHtml when the user picks "content only".
     meta.setAttribute("data-export-content", "");
     var titleEl = document.createElement("span");
-    titleEl.textContent = docId ? "" : "—";
+    titleEl.textContent = stampedTitle ? stampedTitle : (docId ? "" : "—");
     meta.appendChild(titleEl);
     main.appendChild(meta);
 

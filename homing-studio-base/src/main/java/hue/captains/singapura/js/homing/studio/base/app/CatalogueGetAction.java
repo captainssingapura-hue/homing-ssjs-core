@@ -192,12 +192,17 @@ public class CatalogueGetAction
                 // unchanged; what differs is where the URL comes from. The doc
                 // is no longer asked how it opens — the placement already said.
                 case Entry.OfLeaf<?, ?, ?> leaf -> {
+                    // RFC 0051 Phase 6 — kind and category are read off the
+                    // LEAF. They are framing, and framing is the placement's:
+                    // TreeGetAction has always let a leaf override the badge,
+                    // so the framework already treated them this way in one
+                    // place and asked the doc everywhere else.
                     Doc content = leaf.content();
-                    String kind = (content != null) ? content.kind() : "app";
+                    String kind = leaf.kind();
                     String titleKey = "doc".equals(kind) ? "\"title\"" : "\"name\"";
                     String name     = (content != null) ? content.title()    : leaf.nav().name();
                     String summary  = (content != null) ? content.summary()  : leaf.nav().summary();
-                    String category = (content != null) ? content.category() : "APP";
+                    String category = leaf.category();
                     sb.append('{')
                       .append("\"kind\":")    .append(jstr(kind)).append(',')
                       .append(titleKey)       .append(':').append(jstr(name)).append(',')
