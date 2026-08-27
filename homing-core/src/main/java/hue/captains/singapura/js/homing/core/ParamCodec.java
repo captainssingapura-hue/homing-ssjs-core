@@ -151,6 +151,31 @@ public interface ParamCodec<P extends AppModule._Param> {
      * @param read   builds the record from the key's value
      * @param write  reads the value back out of the record
      */
+    /**
+     * The codec for an app whose {@code Params} record has no components —
+     * reads anything into the one value that record can hold, writes nothing.
+     *
+     * <p>RFC 0051 — distinct from {@link None}, which is typed to
+     * {@link AppModule._None} and throws on any other Params. An app with an
+     * empty record of its own is genuinely paramless but cannot use
+     * {@code None}, so before this it had no codec at all: its address was
+     * minted by reflection and its identity could not be constructed from a
+     * request. That is the whole of what kept five demo apps on the reflected
+     * fallback.</p>
+     *
+     * @param only the single value the empty record denotes, e.g. {@code Params::new}
+     */
+    static <P extends AppModule._Param> ParamCodec<P> ofEmpty(java.util.function.Supplier<P> only) {
+        return new ParamCodec<>() {
+            @Override public Decoded<P> from(Map<String, List<String>> query) {
+                return Decoded.ok(only.get());
+            }
+            @Override public Map<String, List<String>> to(P params) {
+                return Map.of();
+            }
+        };
+    }
+
     static <P extends AppModule._Param> ParamCodec<P> ofSingle(
             String key, java.util.function.Function<String, P> read,
             java.util.function.Function<P, String> write) {
