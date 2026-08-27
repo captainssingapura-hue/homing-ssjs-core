@@ -303,6 +303,18 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
             // find.
             hue.captains.singapura.js.homing.studio.base.app.CataloguePathConformance
                     .assertPathBijection(catalogueRegistry);
+            // RFC 0051 Phase 6 — the equivalence gate, asserted here for the
+            // same reason the bijection is: every studio, downstream ones
+            // included, at the moment a break is cheapest to find. A test in
+            // this repo could not do it — only a composed studio has a
+            // populated DocRegistry, and compose() is where one exists.
+            //
+            // TEMPORARY BY CONSTRUCTION. It holds addressOf against url()
+            // while the consumers migrate; when url() is deleted at the end of
+            // this phase there is nothing left to compare, and this line goes
+            // with it.
+            hue.captains.singapura.js.homing.studio.base.app.DocAddressLaw
+                    .assertMatchesUrl(brand.label(), allDocs);
             // RFC 0051 Phase 5 — the tree exists now; the chrome resolver can see it.
             treeHolder.set(catalogueRegistry);
             // RFC 0014: when diagnostics is enabled the framework injects a

@@ -23,6 +23,17 @@ public final class AppUrl {
 
     private AppUrl() {}
 
+    /**
+     * The flat address for an app name plus already-encoded args — the form
+     * {@link AppAddress#flat()} uses. Kept package-visible in spirit: prefer
+     * the codec-taking overloads, which cannot emit args the app will not read.
+     */
+    public static String flat(String appName, java.util.Map<String, java.util.List<String>> args) {
+        String query = QueryString.encode(args);
+        String head = "/app?app=" + appName;
+        return query.isEmpty() ? head : head + "&" + query;
+    }
+
     /** The flat address for {@code app} carrying {@code params}. */
     public static <P extends AppModule._Param> String flat(AppModule<P, ?> app, P params) {
         return flat(app.simpleName(), app.paramCodec(), params);
