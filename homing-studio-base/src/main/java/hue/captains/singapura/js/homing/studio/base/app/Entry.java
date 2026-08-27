@@ -11,25 +11,27 @@ import hue.captains.singapura.tao.ontology.Immutable;
  * host catalogue's type {@code C}, so an {@code Entry<C>} can only appear in
  * {@code C}'s {@code leaves()} list. Misplaced entries become compile errors.
  *
- * <p>Sealed to two variants after RFC 0015 Phase 6:</p>
+ * <p>Three variants after RFC 0051 Phase 6:</p>
  *
  * <ul>
- *   <li>{@link OfDoc} — a content leaf bearing any {@link Doc} subtype
- *       (prose Doc, PlanDoc, AppDoc, ProxyDoc, or downstream Doc kinds).</li>
+ *   <li>{@link OfLeaf} — a content leaf as a BINDING: the app that opens it,
+ *       its typed params, and the doc it displays (or none, for a leaf that is
+ *       purely an app).</li>
  *   <li>{@link OfStudio} — RFC 0011 cross-tree portal: a typed re-attachment
  *       of a source L0 catalogue via a {@link StudioProxy}. Structural —
  *       not content. The carve-out per the DocTree T4 ontology axiom.</li>
+ *   <li>{@link OfIllustration} — in-place decoration; not addressable.</li>
  * </ul>
  *
- * <p>The previous {@code OfApp} and {@code OfPlan} variants are gone (RFC 0015
- * Phase 6). Plans and Navigables are now wrapped at the factory boundary into
- * {@link hue.captains.singapura.js.homing.studio.base.tracker.PlanDoc PlanDoc}
- * and {@link AppDoc}, both Doc subtypes carried by {@code OfDoc}. The factory
- * signatures preserve the old call shapes — {@code Entry.of(this, somePlan)}
- * and {@code Entry.of(this, someNavigable)} keep compiling and produce the
- * Doc-wrapped form transparently.</p>
+ * <p><b>What Phase 6 removed.</b> {@code OfDoc} carried a Doc and nothing else,
+ * so the framework had to ask the doc HOW it opens — through {@code url()} —
+ * and a doc is the wrong thing to ask: the same {@code ComposedDoc} reasonably
+ * opens in {@code composed-viewer} from a tile and in {@code doc-tree-viewer}
+ * from a tree. With {@code OfDoc} went {@code AppDoc}, the wrapper a Navigable
+ * had to become to be placeable at all, which paid for that with a uuid seeded
+ * from its display framing — the defect that forced Law 1's second check.</p>
  *
- * <p>The generic factories — {@code Entry.of(host, target)} — take the host
+ * <p>The generic factories — {@code Entry.of(host, …)} — take the host
  * catalogue as a type witness; the compiler infers {@code C} from the
  * {@code this} reference at the call site. The host argument is discarded
  * at runtime (the entry doesn't carry it back as data — it's known by
@@ -37,22 +39,11 @@ import hue.captains.singapura.tao.ontology.Immutable;
  *
  * @param <C> the host catalogue's type
  * @since RFC 0005 (RFC 0005-ext1 OfPlan; RFC 0005-ext2 removed OfCatalogue;
- *        RFC 0011 typed by host + OfStudio variant for cross-tree composition;
- *        RFC 0015 Phase 6 collapsed OfApp / OfPlan into OfDoc-wrapped Doc subtypes)
+ *        RFC 0011 typed by host + OfStudio; RFC 0015 Phase 6 collapsed OfApp /
+ *        OfPlan into OfDoc; RFC 0051 Phase 6 replaced OfDoc with OfLeaf, the
+ *        binding it should have been)
  */
 public sealed interface Entry<C extends Catalogue<C>> extends Immutable {
-
-    /** A content leaf bearing any {@link Doc} — prose, plan, app, proxy, …
-     *
-     *  <p><b>RFC 0051 Phase 6 — being replaced by {@link OfLeaf}.</b> This
-     *  variant records only WHAT is placed, never HOW it opens, so the framework
-     *  had to ask the doc — through {@code url()} — and a doc is the wrong thing
-     *  to ask, because the same {@code ComposedDoc} reasonably opens in
-     *  {@code composed-viewer} from a tile and in {@code doc-tree-viewer} from a
-     *  tree. Both remain during the migration; new placements use
-     *  {@code OfLeaf}.</p> */
-    record OfDoc<C extends Catalogue<C>, D extends Doc>
-                 (D doc) implements Entry<C> {}
 
     /**
      * RFC 0051 Phase 6 — a content leaf as the binding it always was: the app
@@ -114,14 +105,7 @@ public sealed interface Entry<C extends Catalogue<C>> extends Immutable {
 
     // -----------------------------------------------------------------------
     // Convenience factories — `host` is a type witness for inference, discarded.
-    // RFC 0015 Phase 6: Plan and Navigable factories transparently wrap into
-    // PlanDoc / AppDoc and emit OfDoc; the call-site syntax is unchanged.
     // -----------------------------------------------------------------------
-
-    static <C extends Catalogue<C>, D extends Doc>
-           Entry<C> of(C host, D doc) {
-        return new OfDoc<>(doc);
-    }
 
     /**
      * RFC 0051 Phase 6 — place {@code doc}, opened by {@code app} with
@@ -141,10 +125,7 @@ public sealed interface Entry<C extends Catalogue<C>> extends Immutable {
                 new Navigable<>(app, params, doc.title(), doc.summary()), doc);
     }
 
-    /**
-     * RFC 0015 Phase 3b — wraps the Navigable in an {@link AppDoc} and emits
-     * {@link OfDoc}. Phase 6 removed the standalone {@code OfApp} variant.
-     */
+    /** Place an app: a leaf with a binding and no content. */
     static <C extends Catalogue<C>,
             P extends AppModule._Param,
             M extends AppModule<P, M>>
@@ -157,11 +138,7 @@ public sealed interface Entry<C extends Catalogue<C>> extends Immutable {
         return new OfLeaf<>(nav, null);
     }
 
-    /**
-     * RFC 0015 Phase 3b — wraps the Plan in a
-     * {@link hue.captains.singapura.js.homing.studio.base.tracker.PlanDoc PlanDoc}
-     * and emits {@link OfDoc}. Phase 6 removed the standalone {@code OfPlan} variant.
-     */
+    /** Place a plan. */
     static <C extends Catalogue<C>, P extends Plan>
            Entry<C> of(C host, P plan) {
         // RFC 0051 Phase 6 — the app is named HERE rather than at each of the

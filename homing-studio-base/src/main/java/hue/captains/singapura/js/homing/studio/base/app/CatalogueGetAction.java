@@ -206,26 +206,6 @@ public class CatalogueGetAction
                       .append("\"url\":")     .append(jstr(pathUrl(leaf)))
                       .append('}');
                 }
-                case Entry.OfDoc<?, ?>(Doc d) -> {
-                    // RFC 0015 Phase 3b — dispatch via Doc's typed kind() + url().
-                    // Field-key asymmetry preserved: frontend renderer uses entry.title
-                    // for kind="doc"; entry.name for everything else (plan / app /
-                    // studio / catalogue). Phase 6 will unify the schema once the
-                    // frontend dispatch is updated.
-                    String kind = d.kind();
-                    String titleKey = "doc".equals(kind) ? "\"title\"" : "\"name\"";
-                    sb.append('{')
-                      .append("\"kind\":")    .append(jstr(kind)).append(',')
-                      .append(titleKey)       .append(':').append(jstr(d.title())).append(',')
-                      .append("\"summary\":") .append(jstr(d.summary())).append(',')
-                      .append("\"category\":").append(jstr(d.category())).append(',')
-                      .append("\"url\":")     .append(jstr(pathUrl(d)))
-                      .append('}');
-                }
-                // RFC 0015 Phase 6: OfApp / OfPlan branches removed. Plans
-                // and Navigables now flow through OfDoc(PlanDoc/AppDoc) above,
-                // where doc.kind() emits "plan" / "app" and doc.url() emits
-                // the right URL. The two cases collapse into one.
                 case Entry.OfIllustration<?>(CatalogueIllustration illustration) -> {
                     // Specialized in-place decoration — markdown rendered as a
                     // hero block by the frontend. No URL, no addressing, no

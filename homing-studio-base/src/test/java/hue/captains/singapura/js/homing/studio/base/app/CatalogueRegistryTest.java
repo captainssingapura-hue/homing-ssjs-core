@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.studio.base.app;
 
+import hue.captains.singapura.js.homing.studio.base.app.DocReader;
+
 import hue.captains.singapura.js.homing.studio.base.composed.text.NodeName;
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.Exportable;
@@ -41,7 +43,7 @@ class CatalogueRegistryTest {
         @Override public RootCatalogue parent() { return RootCatalogue.INSTANCE; }
         @Override public String name()         { return "Leaf"; }
         @Override public List<Entry<LeafCatalogue>> leaves() {
-            return List.of(Entry.of(this, TEST_DOC));
+            return List.of(Entry.of(this, DocReader.INSTANCE, new DocReader.Params(TEST_DOC.uuid().toString()), TEST_DOC));
         }
     }
 
@@ -138,7 +140,7 @@ class CatalogueRegistryTest {
         record StrangerCatalogue(Doc d) implements L0_Catalogue<StrangerCatalogue> {
             @Override public String name() { return "Stranger-Cat"; }
             @Override public List<Entry<StrangerCatalogue>> leaves() {
-                return List.of(Entry.of(this, d));
+                return List.of(Entry.of(this, DocReader.INSTANCE, new DocReader.Params(d.uuid().toString()), d));
             }
         }
         var brand = new StudioBrand("Test", StrangerCatalogue.class);
@@ -181,18 +183,20 @@ class CatalogueRegistryTest {
         }
     }
 
-    private static AppDoc<AppModule._None, DemoApp> tile(String name, String summary) {
-        return new AppDoc<>(new Navigable<>(
-                DemoApp.INSTANCE, AppModule._None.INSTANCE, name, summary));
+    private static Navigable<AppModule._None, DemoApp> tile(String name, String summary) {
+        return new Navigable<>(DemoApp.INSTANCE, AppModule._None.INSTANCE, name, summary);
     }
 
     /** The canonical tile, one level down. */
-    static final AppDoc<AppModule._None, DemoApp> CANON =
+    static final Navigable<AppModule._None, DemoApp> CANON =
             tile("Demo App", "The canonical entry.");
-    /** The same (app, args) dressed as a featured tile — a DIFFERENT AppDoc
-     *  uuid, because AppDoc seeds identity from the whole Navigable. This is
-     *  precisely what the doc-uuid half of Law 1 cannot see. */
-    static final AppDoc<AppModule._None, DemoApp> ECHO =
+    /** The same (app, args) dressed as a featured tile. RFC 0051 Phase 6 — this
+     *  used to be a DIFFERENT AppDoc uuid, because AppDoc seeded identity from
+     *  the whole Navigable including its display framing, which is exactly what
+     *  the doc-uuid half of Law 1 could not see. With the wrapper gone there is
+     *  no second uuid to be fooled by: the leaf IS the binding, and NavKey
+     *  compares (app class, params) — so the framing cannot disguise it. */
+    static final Navigable<AppModule._None, DemoApp> ECHO =
             tile("Featured: Demo App", "Same app, same args, different framing.");
 
     record FramingRoot() implements L0_Catalogue<FramingRoot> {
@@ -217,13 +221,16 @@ class CatalogueRegistryTest {
 
     @Test
     void law1_rejects_sameAppAndArgsFramedTwice() {
-        // Guard the premise: the two tiles really are distinct to the doc-uuid
-        // check, so this test exercises the (app, args) half and not the other.
-        assertNotEquals(CANON.uuid(), ECHO.uuid(),
-                "premise broken: the framings would already collide on uuid");
+        // Guard the premise: the two tiles differ in FRAMING, so this exercises
+        // the (app, args) half. Before Phase 6 they also differed in uuid,
+        // because AppDoc seeded one from the framing; now there is no uuid at
+        // all on an app leaf, which is the stronger form of the same point.
+        assertNotEquals(CANON, ECHO, "premise broken: the framings are identical");
+        assertEquals(CANON.app(), ECHO.app(), "premise broken: not the same app");
+        assertEquals(CANON.params(), ECHO.params(), "premise broken: not the same args");
 
         var brand = new StudioBrand("Test", FramingRoot.class);
-        var registry = new DocRegistry(List.of(CANON, ECHO));
+        var registry = new DocRegistry(List.<Doc>of());
         var ex = assertThrows(IllegalStateException.class,
                 () -> new CatalogueRegistry(brand, registry,
                         List.of(FramingRoot.INSTANCE, FramingChild.INSTANCE)));
@@ -251,7 +258,7 @@ class CatalogueRegistryTest {
         public static final TwinCatalogue INSTANCE = new TwinCatalogue();
         @Override public String name() { return "Twin-Cat"; }
         @Override public List<Entry<TwinCatalogue>> leaves() {
-            return List.of(Entry.of(this, TWIN_A), Entry.of(this, TWIN_B));
+            return List.of(Entry.of(this, DocReader.INSTANCE, new DocReader.Params(TWIN_A.uuid().toString()), TWIN_A), Entry.of(this, DocReader.INSTANCE, new DocReader.Params(TWIN_B.uuid().toString()), TWIN_B));
         }
     }
 
@@ -261,7 +268,9 @@ class CatalogueRegistryTest {
         public static final ClashRoot INSTANCE = new ClashRoot();
         @Override public String name() { return "Clash-Root"; }
         @Override public List<Entry<ClashRoot>> leaves() {
-            return List.of(Entry.of(this, new TwinDoc(UUID.randomUUID(), "Leaf")));
+            var d = new TwinDoc(UUID.randomUUID(), "Leaf");
+            return List.of(Entry.of(this, DocReader.INSTANCE,
+                    new DocReader.Params(d.uuid().toString()), d));
         }
         @Override public List<? extends L1_Catalogue<ClashRoot, ?>> subCatalogues() {
             return List.of(TwinChild.INSTANCE);
@@ -288,7 +297,7 @@ class CatalogueRegistryTest {
     void law2_rejects_subCatalogueClashingWithLeaf() {
         var brand = new StudioBrand("Test", ClashRoot.class);
         var reg = new DocRegistry(List.of(ClashRoot.INSTANCE.leaves().stream()
-                .map(e -> ((Entry.OfDoc<?, ?>) e).doc()).findFirst().orElseThrow()));
+                .map(e -> ((Entry.OfLeaf<?, ?, ?>) e).content()).findFirst().orElseThrow()));
         var ex = assertThrows(IllegalStateException.class,
                 () -> new CatalogueRegistry(brand, reg,
                         List.of(ClashRoot.INSTANCE, TwinChild.INSTANCE)));
@@ -318,7 +327,7 @@ class CatalogueRegistryTest {
         @Override public RootCatalogue parent() { return RootCatalogue.INSTANCE; }
         @Override public String name()          { return "Unclaimed-Child"; }
         @Override public List<Entry<UnclaimedChild>> leaves() {
-            return List.of(Entry.of(this, ORPHANED_DOC));
+            return List.of(Entry.of(this, DocReader.INSTANCE, new DocReader.Params(ORPHANED_DOC.uuid().toString()), ORPHANED_DOC));
         }
     }
 

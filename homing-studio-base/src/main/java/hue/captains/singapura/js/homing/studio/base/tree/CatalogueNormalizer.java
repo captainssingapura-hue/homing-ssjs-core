@@ -78,8 +78,8 @@ public final class CatalogueNormalizer implements TreeNormalizer<Catalogue<?>> {
         TreeLevel childLevel = hostLevel.below().orElse(null);
         if (childLevel == null) return null;   // host already at the cap
 
-        if (entry instanceof Entry.OfDoc<?, ?> od) {
-            Doc doc = od.doc();
+        if (entry instanceof Entry.OfLeaf<?, ?, ?> od && od.content() != null) {
+            Doc doc = od.content();
             var dims = baseDims(doc.title(), doc.summary(), doc.category(), doc.kind());
             return NormalizedNode.leaf(childLevel, dims);
         }

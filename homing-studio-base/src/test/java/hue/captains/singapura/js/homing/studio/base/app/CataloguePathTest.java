@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.studio.base.app;
 
+import hue.captains.singapura.js.homing.studio.base.app.DocReader;
+
 import hue.captains.singapura.js.homing.studio.base.Doc;
 import hue.captains.singapura.js.homing.studio.base.DocRegistry;
 import hue.captains.singapura.js.homing.studio.base.composed.text.NodeName;
@@ -40,7 +42,7 @@ class CataloguePathTest {
         @Override public Root parent()  { return Root.INSTANCE; }
         @Override public String name()  { return "Branch"; }
         @Override public List<Entry<Branch>> leaves() {
-            return List.of(Entry.of(this, LEAF_DOC));
+            return List.of(Entry.of(this, DocReader.INSTANCE, new DocReader.Params(LEAF_DOC.uuid().toString()), LEAF_DOC));
         }
     }
 

@@ -128,9 +128,6 @@ public final class DocRegistry {
         var out = new ArrayList<Doc>();
         for (var c : catalogues) {
             for (var e : c.leaves()) {
-                if (e instanceof hue.captains.singapura.js.homing.studio.base.app.Entry.OfDoc<?, ?>(Doc d)) {
-                    out.add(d);
-                }
                 // RFC 0051 Phase 6 — a bound leaf's content is registered the
                 // same way. A leaf with no content contributes nothing, which
                 // is the point: an app tile no longer needs a fabricated Doc

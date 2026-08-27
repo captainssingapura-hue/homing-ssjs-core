@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.studio.base.tree;
 
 import hue.captains.singapura.js.homing.studio.base.Doc;
+import hue.captains.singapura.js.homing.studio.base.app.DocReader;
 import hue.captains.singapura.js.homing.studio.base.app.Entry;
 import hue.captains.singapura.js.homing.studio.base.app.L0_Catalogue;
 import hue.captains.singapura.js.homing.studio.base.app.L1_Catalogue;
@@ -33,7 +34,9 @@ class ForestPathResolverTest {
         @Override public Root parent()    { return Root.INSTANCE; }
         @Override public String name()    { return "Child Cat"; }
         @Override public List<Entry<Child>> leaves() {
-            return List.of(Entry.of(this, new TestDoc()));
+            var d = new TestDoc();
+            return List.of(Entry.of(this, DocReader.INSTANCE,
+                    new DocReader.Params(d.uuid().toString()), d));
         }
     }
     private record Root() implements L0_Catalogue<Root> {
@@ -49,7 +52,9 @@ class ForestPathResolverTest {
         static final Source INSTANCE = new Source();
         @Override public String name() { return "Source Studio"; }
         @Override public List<Entry<Source>> leaves() {
-            return List.of(Entry.of(this, new TestDoc()));
+            var d = new TestDoc();
+            return List.of(Entry.of(this, DocReader.INSTANCE,
+                    new DocReader.Params(d.uuid().toString()), d));
         }
     }
     private record ForestHost() implements L0_Catalogue<ForestHost> {

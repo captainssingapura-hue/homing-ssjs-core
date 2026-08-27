@@ -94,14 +94,6 @@ public final class DocViewers {
             return AppAddress.of("plan", PlanAppHost.CODEC,
                     new PlanAppHost.Params(pd.plan().getClass().getName(), null));
         }
-        if (doc instanceof AppDoc<?, ?> ad) {
-            // An AppDoc IS a binding already — it wraps a Navigable of an
-            // arbitrary app with arbitrary params, so there is nothing to look
-            // up. Read back through the Navigable's own url() because an
-            // uncoded app still mints by reflection there; both AppDoc and that
-            // fallback retire later in this phase, and this branch with them.
-            return fromFlat(ad.nav().url());
-        }
         if (doc instanceof ProxyDoc) {
             return AppAddress.of("doc-reader", DocReader.CODEC,
                     new DocReader.Params(uuid));

@@ -211,9 +211,6 @@ public final class CatalogueRegistry {
                         // the moment AppDoc stopped lending them a Doc identity.
                         boundLeaves.add(new BoundPlacement(parent, leaf));
                     }
-                    case Entry.OfDoc<?, ?>(Doc d) -> {
-                        if (d != null) claimSlug(slugOwner, d.slug(), d, parent);
-                    }
                     case Entry.OfStudio<?, ?>(StudioProxy<?> p) -> {
                         if (p != null) claimSlug(slugOwner, p.slug(), p, parent);
                     }
@@ -284,79 +281,6 @@ public final class CatalogueRegistry {
                             }
                         }
                     }
-                    case Entry.OfDoc<?, ?>(Doc d) -> {
-                        if (d == null) {
-                            throw new IllegalStateException(
-                                    "Catalogue " + parent.getClass().getName()
-                                  + " has Entry.OfDoc with null doc");
-                        }
-                        UUID id = d.uuid();
-                        if (id == null || docRegistry.resolve(id) == null) {
-                            throw new IllegalStateException(
-                                    "Catalogue " + parent.getClass().getName()
-                                  + " references Doc " + d.getClass().getName()
-                                  + " (uuid=" + id + ") which is not in the DocRegistry");
-                        }
-                        // RFC 0051 Law 1 — AT MOST ONE POSITION. A being may be
-                        // reached from anywhere, but it SITS in exactly one place:
-                        // that is what makes its tree path well-defined, and so
-                        // deterministic rather than an artifact of scan order.
-                        // This was putIfAbsent, which silently kept whichever
-                        // placement the boot scan reached first. The rule already
-                        // holds one level up — StudioProxyManager rejects a source
-                        // L0 hosted twice, and DocRegistry rejects a UUID used by
-                        // two Docs — so leaves were the level that never got it.
-                        //
-                        // Re-registering the SAME position is fine: a value-Doc
-                        // (e.g. PlanDoc(MyPlan.INSTANCE)) can be harvested more
-                        // than once from one catalogue. Two DIFFERENT homes is the
-                        // violation.
-                        Catalogue<?> priorHome = docHomeMap.put(id, parent);
-                        if (priorHome != null && priorHome != parent) {
-                            throw new IllegalStateException(
-                                    "Doc " + d.getClass().getName() + " (uuid=" + id + ")"
-                                  + " is positioned in two catalogues: "
-                                  + priorHome.getClass().getName() + " and "
-                                  + parent.getClass().getName()
-                                  + ". A navigable has at most ONE position (RFC 0051 - the path axiom);"
-                                  + " keep the canonical entry and drop the echo.");
-                        }
-                        // RFC 0051 Law 1, app half. AppDoc.uuid() seeds from the
-                        // WHOLE Navigable — name and summary included — so two
-                        // tiles for the same (app, args) with different display
-                        // framings get different UUIDs and slide past the check
-                        // above. That is exactly the "multiple framings of one
-                        // navigable" the axiom rules out: identity is (app, args),
-                        // and the framing is only how one position is dressed.
-                        // So key this check on (app class, params) alone.
-                        if (d instanceof AppDoc<?, ?> ad) {
-                            var key = new NavKey(ad.nav().app().getClass(), ad.nav().params());
-                            Catalogue<?> priorNavHome = navHomeMap.put(key, parent);
-                            if (priorNavHome != null && priorNavHome != parent) {
-                                throw new IllegalStateException(
-                                        "App " + key.app().getName() + " with params " + key.params()
-                                      + " is positioned in two catalogues: "
-                                      + priorNavHome.getClass().getName() + " and "
-                                      + parent.getClass().getName()
-                                      + ". A navigable is identified by (app, args) and has at most ONE"
-                                      + " position (RFC 0051 - the path axiom). A differing tile name or"
-                                      + " summary does not make it a second being; keep the canonical entry.");
-                            }
-                        }
-                        // RFC 0015 Phase 6: when the doc is a PlanDoc, register the
-                        // wrapped Plan's class in planHomeMap so the existing
-                        // breadcrumbsForPlan(class) API continues to work for
-                        // Plans surfaced via the unified Doc family.
-                        if (d instanceof hue.captains.singapura.js.homing.studio.base.tracker.PlanDoc pd) {
-                            planHomeMap.putIfAbsent(pd.plan().getClass(), parent);
-                        }
-                    }
-                    // RFC 0015 Phase 6: OfApp / OfPlan cases removed. Plans
-                    // and Navigables now flow through OfDoc(PlanDoc/AppDoc);
-                    // their validation falls through the OfDoc branch above.
-                    // planHomeMap registration moved into the OfDoc branch
-                    // (when doc is a PlanDoc, register the wrapped Plan's
-                    // class as having this catalogue as home).
                     case Entry.OfIllustration<?>(CatalogueIllustration illustration) -> {
                         // No registry-side validation — illustrations are
                         // decoration, not addressable content. Boot accepts
@@ -988,7 +912,6 @@ public final class CatalogueRegistry {
     private static String describe(Object child) {
         if (child == null) return "null";
         String cls = child.getClass().getName();
-        if (child instanceof AppDoc<?, ?> ad)  return cls + "(" + ad.nav().name() + ")";
         if (child instanceof StudioProxy<?> p) return cls + "(" + p.name() + ")";
         if (child instanceof Doc d)            return cls + "(" + d.title() + ")";
         return cls;

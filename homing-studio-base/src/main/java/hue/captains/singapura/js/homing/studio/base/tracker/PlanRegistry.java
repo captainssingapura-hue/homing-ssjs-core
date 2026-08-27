@@ -181,9 +181,6 @@ public final class PlanRegistry {
         var out = new ArrayList<Plan>();
         for (var c : catalogues) {
             for (var e : c.leaves()) {
-                if (e instanceof Entry.OfDoc<?, ?> ofDoc && ofDoc.doc() instanceof PlanDoc pd) {
-                    out.add(pd.plan());
-                }
                 // RFC 0051 Phase 6 — a plan placed as a bound leaf. Its content
                 // is still the PlanDoc, which is what carries the plan itself;
                 // what changed is that the leaf now also states PlanAppHost as

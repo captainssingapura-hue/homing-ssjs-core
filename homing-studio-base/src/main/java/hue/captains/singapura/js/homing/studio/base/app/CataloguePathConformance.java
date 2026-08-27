@@ -36,7 +36,8 @@ public final class CataloguePathConformance {
                            + " -> " + describe(back));
             }
             for (Entry<?> e : c.leaves()) {
-                if (!(e instanceof Entry.OfDoc<?, ?>(Doc d))) continue;
+                if (!(e instanceof Entry.OfLeaf<?, ?, ?> bound) || bound.content() == null) continue;
+                Doc d = bound.content();
                 CataloguePath leafPath = registry.pathOf(d);
                 if (leafPath == null) {
                     failures.add("leaf " + d.title() + " under " + c.getClass().getName()

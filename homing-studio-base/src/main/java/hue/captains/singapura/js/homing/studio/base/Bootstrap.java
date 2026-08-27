@@ -550,9 +550,6 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
                 hue.captains.singapura.js.homing.studio.base.app.Navigable<?, ?> nav;
                 if (entry instanceof hue.captains.singapura.js.homing.studio.base.app.Entry.OfLeaf<?, ?, ?> bound) {
                     nav = bound.nav();
-                } else if (entry instanceof hue.captains.singapura.js.homing.studio.base.app.Entry.OfDoc<?, ?> ofDoc
-                        && ofDoc.doc() instanceof hue.captains.singapura.js.homing.studio.base.app.AppDoc<?, ?> appDoc) {
-                    nav = appDoc.nav();
                 } else {
                     continue;
                 }

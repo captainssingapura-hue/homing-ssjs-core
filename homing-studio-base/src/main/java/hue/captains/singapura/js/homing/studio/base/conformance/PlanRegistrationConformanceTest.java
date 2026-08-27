@@ -108,10 +108,6 @@ public abstract class PlanRegistrationConformanceTest {
             Map<Class<? extends Plan>, String> out) {
         String here = pathSoFar + " › " + cat.getClass().getSimpleName();
         for (var leaf : cat.leaves()) {
-            if (leaf instanceof Entry.OfDoc<?, ?>(var d)
-                    && d instanceof PlanDoc pd) {
-                out.putIfAbsent((Class<? extends Plan>) pd.plan().getClass(), here);
-            }
             // RFC 0051 Phase 6 — the same plan, placed as a bound leaf.
             if (leaf instanceof Entry.OfLeaf<?, ?, ?> bound
                     && bound.content() instanceof PlanDoc pd2) {
