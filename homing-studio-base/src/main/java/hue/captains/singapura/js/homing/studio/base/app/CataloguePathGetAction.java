@@ -90,17 +90,16 @@ public final class CataloguePathGetAction
                            QueryString.of("id", catalogue.getClass().getName()), query);
 
             case PathResolution.ToLeaf(var path, var parent, Doc doc) -> {
-                // The leaf's own flat URL says which app opens it and with
-                // what args — the one place that mapping already lives. It is
-                // read rather than re-derived so this route cannot develop its
-                // own opinion about how a doc kind is viewed. (D8 retires
-                // url(); when it does, this reads the codec instead.)
-                Map<String, List<String>> args = QueryString.parse(doc.url());
-                String app = QueryString.first(args, "app");
-                if (app == null) {
-                    yield CompletableFuture.failedFuture(notFound(path.toUrl(), "leaf " + doc.title() + " has no app in its url()"));
-                }
-                yield render(app, args, query);
+                // RFC 0051 Phase 6 — which app opens this leaf, and with what
+                // args, read as the structured pair. It used to be recovered by
+                // parsing the leaf's own minted url(): a string the framework
+                // had just built, taken apart to get back what went into it.
+                //
+                // The pair is still DERIVED here (from the doc's type) rather
+                // than carried by the leaf. When Entry holds the binding, this
+                // reads it straight off the node and the derivation goes too.
+                var address = DocViewers.addressOf(doc);
+                yield render(address.app(), address.args(), query);
             }
 
             case PathResolution.Miss miss -> CompletableFuture.failedFuture(

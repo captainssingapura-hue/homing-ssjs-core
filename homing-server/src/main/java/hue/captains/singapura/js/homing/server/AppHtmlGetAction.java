@@ -147,6 +147,55 @@ public class AppHtmlGetAction
             return CompletableFuture.failedFuture(ResourceNotFound.forClass(resource, e));
         }
 
+        return dispatch(app, query);
+    }
+
+    /**
+     * RFC 0051 Phase 6 — bridge from the wire form to the typed one. Exists to
+     * name the app's params type {@code P}, which {@code execute} cannot: it
+     * holds an {@code AppModule<?, ?>}, and decoding needs the codec typed.
+     */
+    private <P extends hue.captains.singapura.js.homing.core.AppModule._Param>
+            CompletableFuture<HtmlPageContent> dispatch(
+                    hue.captains.singapura.js.homing.core.AppModule<P, ?> app, AppQuery query) {
+
+        var decoded = app.paramCodec().from(query.all());
+        P params = (decoded instanceof hue.captains.singapura.js.homing.core.ParamCodec.Decoded.Ok<P>(P p))
+                ? p : null;
+        return executeTyped(app, params, query.theme(), query.locale(), query.all());
+    }
+
+    /**
+     * RFC 0051 Phase 6 — the TYPED entry point, for callers inside Java that
+     * already hold an app and its params.
+     *
+     * <p>A codec is a boundary translator, and between two Java callers there
+     * is no boundary. {@code /app} needs one because its app name and params
+     * genuinely arrive as strings; {@code /cat} does not, because it resolved a
+     * node whose binding was typed all along. Before this existed, the path
+     * route flattened its node to {@code (String, Map)} so this action could
+     * look the app back up by name and decode the map it had just encoded —
+     * and {@code stampParams} then RE-encoded the result, a Map to P to Map
+     * round trip inside one method.</p>
+     *
+     * <p>{@code execute(AppQuery)} stays as the wire adapter and is the right
+     * shape for the wire. This is the right shape for everything else.</p>
+     *
+     * @param params    the app's typed params; null when it declares no codec,
+     *                  which is exactly when nothing is stamped
+     * @param allQuery  the full query the page was reached with — the crumb
+     *                  lookup still consults an index keyed on the wire form,
+     *                  so it is passed through unchanged until that index is
+     *                  re-keyed on the typed pair
+     */
+    public <P extends hue.captains.singapura.js.homing.core.AppModule._Param>
+            CompletableFuture<HtmlPageContent> executeTyped(
+                    hue.captains.singapura.js.homing.core.AppModule<P, ?> app,
+                    P params, String theme, String locale,
+                    java.util.Map<String, java.util.List<String>> allQuery) {
+
+        AppQuery query = new AppQuery(app.simpleName(), null, theme, locale,
+                allQuery == null ? java.util.Map.of() : allQuery);
         // If the URL didn't carry ?theme=, fall back to the first theme in
         // the registry so downstream (theme-vars / theme-globals fetches,
         // module URLs, the picker's selected option) all see a concrete
@@ -162,7 +211,7 @@ public class AppHtmlGetAction
         // that declare a codec are stamped; the rest keep today's behaviour
         // exactly, including their generated client-side params const, so the
         // migration is per-app rather than a flag day.
-        String stampedParams = stampParams(app, query.all());
+        String stampedParams = stampParams(app, params);
 
         // RFC 0051 Phase 5 — the breadcrumb, resolved here rather than fetched
         // by the chrome after paint. The server walked the tree to answer this
@@ -1284,15 +1333,11 @@ public class AppHtmlGetAction
      * once; that belongs with the route work, not with adding a stamp.</p>
      */
     private static <P extends hue.captains.singapura.js.homing.core.AppModule._Param>
-            String stampParams(hue.captains.singapura.js.homing.core.AppModule<P, ?> app,
-                               java.util.Map<String, java.util.List<String>> query) {
+            String stampParams(hue.captains.singapura.js.homing.core.AppModule<P, ?> app, P params) {
         var codec = app.paramCodec();
         if (codec == hue.captains.singapura.js.homing.core.ParamCodec.None.INSTANCE) return null;
-        var decoded = codec.from(query);
-        if (decoded instanceof hue.captains.singapura.js.homing.core.ParamCodec.Decoded.Ok<P>(P p)) {
-            return hue.captains.singapura.js.homing.core.StampedParams.jsObject(codec.to(p));
-        }
-        return null;
+        if (params == null) return null;   // malformed on the way in; stamp nothing (D5 deferral)
+        return hue.captains.singapura.js.homing.core.StampedParams.jsObject(codec.to(params));
     }
 
     /**
