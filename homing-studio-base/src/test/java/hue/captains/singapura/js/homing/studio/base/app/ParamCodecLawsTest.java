@@ -4,7 +4,10 @@ import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.ParamCodec;
 import hue.captains.singapura.js.homing.core.ParamCodecLaw;
 import hue.captains.singapura.js.homing.studio.base.StudioBaseCrate;
+import hue.captains.singapura.js.homing.core.QueryString;
 import hue.captains.singapura.js.homing.studio.base.composed.ComposedViewer;
+import hue.captains.singapura.js.homing.studio.base.graph.StudioGraphInspector;
+import hue.captains.singapura.js.homing.studio.base.graph.StudioGraphView;
 import hue.captains.singapura.js.homing.studio.base.image.ImageViewer;
 import hue.captains.singapura.js.homing.studio.base.table.TableViewer;
 import hue.captains.singapura.js.homing.studio.base.tracker.PlanAppHost;
@@ -15,6 +18,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 /**
  * RFC 0051 Phase 2 — the round-trip law over every coded app this module
@@ -37,7 +41,7 @@ class ParamCodecLawsTest {
 
     /** Apps whose samples are declared in this class — read by the coverage gate. */
     private static final Set<String> COVERED = Set.of(
-            "catalogue", "plan", "doc-reader", "composed-viewer",
+            "catalogue", "plan", "studio-graph", "doc-reader", "composed-viewer",
             "svg-viewer", "table-viewer", "image-viewer", "doc-tree-viewer",
             // Covered by TreeAppHostCodecTest, in this module's tree package.
             "tree");
@@ -66,6 +70,31 @@ class ParamCodecLawsTest {
                 // encoding as faithfully as the identity key does.
                 new PlanAppHost.Params("hue.captains.Rfc0051PlanData", "5"),
                 new PlanAppHost.Params("p&q", "phase 2 & 3")));
+    }
+
+    @Test
+    void studioGraphInspector() {
+        var app = hue.captains.singapura.js.homing.studio.base.graph.StudioGraphInspector.INSTANCE;
+        ParamCodecLaw.assertRoundTrips("StudioGraphInspector", app.paramCodec(), List.of(
+                // Both components optional: absent root means the bootstrap
+                // root, absent view means TREE. Neither default may be baked
+                // into the encoding, or the URL stops saying what was asked.
+                new StudioGraphInspector.Params(null, null),
+                new StudioGraphInspector.Params("hue.captains.Studio", null),
+                new StudioGraphInspector.Params(null, StudioGraphView.TREE),
+                new StudioGraphInspector.Params("hue.captains.Studio", StudioGraphView.TREE),
+                new StudioGraphInspector.Params("hue.captains.Studio", StudioGraphView.TYPES),
+                new StudioGraphInspector.Params("a&b=c", StudioGraphView.TYPES)));
+    }
+
+    /** A view the enum does not name is malformed, not a silent fall back to TREE. */
+    @Test
+    void studioGraphRejectsAnUnknownView() {
+        var decoded = StudioGraphInspector.INSTANCE.paramCodec()
+                .from(QueryString.of("view", "GALAXY"));
+        assertInstanceOf(ParamCodec.Decoded.Malformed.class, decoded,
+                "an unrecognised render mode is a typo in a hand-edited URL; "
+              + "answering it with the default hides the typo");
     }
 
     // -----------------------------------------------------------------------

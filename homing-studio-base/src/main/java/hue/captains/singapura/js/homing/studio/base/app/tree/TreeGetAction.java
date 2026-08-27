@@ -230,8 +230,7 @@ public final class TreeGetAction
     }
 
     private static String treeUrl(String id, String path) {
-        if (path == null || path.isEmpty()) return "/app?app=tree&id=" + id;
-        return "/app?app=tree&id=" + id + "&path=" + path;
+        return TreeAppHost.urlFor(id, path);
     }
 
     private static String jstr(String v) {

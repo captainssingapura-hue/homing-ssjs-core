@@ -259,7 +259,7 @@ public class CatalogueGetAction
     }
 
     private static String catalogueUrl(String fqn) {
-        return "/app?app=catalogue&id=" + fqn;
+        return CatalogueAppHost.urlFor(fqn);
     }
 
     /**

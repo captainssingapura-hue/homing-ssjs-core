@@ -56,7 +56,17 @@ public record CatalogueAppHost() implements AppModule<CatalogueAppHost.Params, C
      * hand-building the path.
      */
     public static String urlFor(Class<? extends Catalogue<?>> catalogueClass) {
-        return AppUrl.flat(INSTANCE, new Params(catalogueClass.getName(), null));
+        return urlFor(catalogueClass.getName(), null);
+    }
+
+    /** As above, for a caller holding the FQN as a string rather than the class. */
+    public static String urlFor(String catalogueFqn) {
+        return urlFor(catalogueFqn, null);
+    }
+
+    /** As above, carrying the {@code context} refinement. */
+    public static String urlFor(String catalogueFqn, String context) {
+        return AppUrl.flat(INSTANCE, new Params(catalogueFqn, context));
     }
 
     /**

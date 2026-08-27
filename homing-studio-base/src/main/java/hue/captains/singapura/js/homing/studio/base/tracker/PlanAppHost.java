@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.tracker;
 
+import hue.captains.singapura.js.homing.core.AppUrl;
 import hue.captains.singapura.js.homing.core.ParamCodec;
 import hue.captains.singapura.js.homing.core.QueryString;
 import hue.captains.singapura.js.homing.core.AppLink;
@@ -41,14 +42,22 @@ public record PlanAppHost() implements AppModule<PlanAppHost.Params, PlanAppHost
 
     public static final PlanAppHost INSTANCE = new PlanAppHost();
 
-    /** Build the canonical URL serving the given Plan's index page. */
+    /**
+     * Build the canonical URL serving the given Plan's index page.
+     *
+     * <p>RFC 0051 (D8) — minted through {@link AppUrl} and this app's own
+     * {@link #CODEC}, so the address and the parse that reads it back are one
+     * statement. It used to concatenate, which is why {@code from(to(p)) == p}
+     * held only by the accident that class names need no escaping.</p>
+     */
     public static String urlFor(Class<? extends Plan> planClass) {
-        return "/app?app=" + INSTANCE.simpleName() + "&id=" + planClass.getName();
+        return urlFor(planClass, null);
     }
 
     /** Build the canonical URL serving a phase detail page. */
     public static String urlFor(Class<? extends Plan> planClass, String phaseId) {
-        return urlFor(planClass) + "&phase=" + phaseId;
+        return AppUrl.flat(INSTANCE.simpleName(), CODEC,
+                new Params(planClass.getName(), phaseId));
     }
 
     /** RFC 0051 - plan id required, phase optional (a plan opens at its

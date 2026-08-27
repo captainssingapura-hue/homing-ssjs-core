@@ -6,8 +6,6 @@ import hue.captains.singapura.js.homing.studio.base.app.CatalogueAugmentation;
 import hue.captains.singapura.js.homing.studio.base.app.SyntheticEntry;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -124,8 +122,8 @@ public record DiagnosticsHub(
                 "Diagnostics scoped to " + label + " — object graph + type view rooted "
                   + "at this studio's reachable vertices.",
                 "DIAGNOSTICS",
-                catalogueUrl(DiagnosticsCatalogue.class.getName())
-                  + "&context=" + urlEnc(studio.getClass().getName())
+                hue.captains.singapura.js.homing.studio.base.app.CatalogueAppHost.urlFor(
+                        DiagnosticsCatalogue.class.getName(), studio.getClass().getName())
         );
     }
 
@@ -139,7 +137,7 @@ public record DiagnosticsHub(
                         "Indented tree of every vertex reachable from " + studioName
                           + " — jOntology classification shown via emoji.",
                         "DIAGNOSTICS",
-                        "/app?app=studio-graph&root=" + urlEnc(fqn) + "&view=TREE"
+                        StudioGraphInspector.urlFor(fqn, StudioGraphView.TREE)
                 ),
                 new SyntheticEntry(
                         "app",
@@ -147,7 +145,7 @@ public record DiagnosticsHub(
                         "One row per concrete vertex class reachable from " + studioName
                           + " — ❓-unmarked types surface first as a code-quality gauge.",
                         "DIAGNOSTICS",
-                        "/app?app=studio-graph&root=" + urlEnc(fqn) + "&view=TYPES"
+                        StudioGraphInspector.urlFor(fqn, StudioGraphView.TYPES)
                 )
         );
     }
@@ -155,10 +153,6 @@ public record DiagnosticsHub(
     // -----------------------------------------------------------------------
 
     private static String catalogueUrl(String fqn) {
-        return "/app?app=catalogue&id=" + fqn;
-    }
-
-    private static String urlEnc(String s) {
-        return URLEncoder.encode(s, StandardCharsets.UTF_8);
+        return hue.captains.singapura.js.homing.studio.base.app.CatalogueAppHost.urlFor(fqn);
     }
 }

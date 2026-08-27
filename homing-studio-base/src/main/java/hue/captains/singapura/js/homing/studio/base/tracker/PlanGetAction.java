@@ -286,10 +286,11 @@ public class PlanGetAction
 
     /** RFC 0051 - the brand link is the tree root, whose path is "/cat". */
     private String homeUrl(hue.captains.singapura.js.homing.studio.base.app.StudioBrand brand) {
-        if (catalogueRegistry == null) return "/app?app=catalogue&id=" + brand.homeApp().getName();
+        String flatHome = hue.captains.singapura.js.homing.studio.base.app.CatalogueAppHost
+                .urlFor(brand.homeApp().getName());
+        if (catalogueRegistry == null) return flatHome;
         var root = catalogueRegistry.root();
-        return root == null ? "/app?app=catalogue&id=" + brand.homeApp().getName()
-                            : catalogueRegistry.pathOf(root).toUrl();
+        return root == null ? flatHome : catalogueRegistry.pathOf(root).toUrl();
     }
 
     private static String jstr(String v) {

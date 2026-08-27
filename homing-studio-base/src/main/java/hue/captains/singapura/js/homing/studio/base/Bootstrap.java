@@ -718,9 +718,8 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
                             if (pathSoFar.length() > 0) pathSoFar.append('/');
                             pathSoFar.append(b.segment());
                         }
-                        String href = (pathSoFar.length() == 0)
-                                ? "/app?app=tree&id=" + treeId
-                                : "/app?app=tree&id=" + treeId + "&path=" + pathSoFar;
+                        String href = hue.captains.singapura.js.homing.studio.base.app.tree
+                                .TreeAppHost.urlFor(treeId, pathSoFar.toString());
                         // Icon-prefix branch name when present, matching the
                         // tree page chrome's breadcrumb format (TreeGetAction.serialize).
                         String text = (b.icon() == null || b.icon().isEmpty())
