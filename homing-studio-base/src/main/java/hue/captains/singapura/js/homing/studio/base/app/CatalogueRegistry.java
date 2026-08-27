@@ -194,14 +194,20 @@ public final class CatalogueRegistry {
                 claimSlug(slugOwner, child.slug(), child, parent);
             }
             for (Entry<?> e : parent.leaves() == null ? List.<Entry<?>>of() : parent.leaves()) {
-                CatalogueLeaf leaf = switch (e) {
-                    case Entry.OfDoc<?, ?>(Doc d)              -> d;
-                    case Entry.OfStudio<?, ?>(StudioProxy<?> p) -> p;
-                    case Entry.OfIllustration<?> ignored        -> null;
-                    case null                                   -> null;
-                };
-                if (leaf != null) {
-                    claimSlug(slugOwner, leaf.slug(), leaf, parent);
+                // RFC 0051 Phase 6 — OfLeaf states its own slug, because the
+                // segment is the placement's to name. The other variants still
+                // ask the thing placed, which is what OfLeaf exists to stop.
+                switch (e) {
+                    case Entry.OfLeaf<?, ?, ?> leaf ->
+                            claimSlug(slugOwner, leaf.slug(), leaf, parent);
+                    case Entry.OfDoc<?, ?>(Doc d) -> {
+                        if (d != null) claimSlug(slugOwner, d.slug(), d, parent);
+                    }
+                    case Entry.OfStudio<?, ?>(StudioProxy<?> p) -> {
+                        if (p != null) claimSlug(slugOwner, p.slug(), p, parent);
+                    }
+                    case Entry.OfIllustration<?> ignored -> { }
+                    case null                            -> { }
                 }
             }
             // RFC 0051 Phase 2 — the scan that proves segments unique is the
@@ -223,6 +229,45 @@ public final class CatalogueRegistry {
                           + " has a null Entry in leaves()");
                 }
                 switch (e) {
+                    // RFC 0051 Phase 6 — the binding is right there. Law 1's app
+                    // half reads (app class, params) off the leaf instead of
+                    // unwrapping an AppDoc whose uuid was seeded from display
+                    // framing and so needed this second check to begin with.
+                    case Entry.OfLeaf<?, ?, ?> leaf -> {
+                        var key = new NavKey(leaf.nav().app().getClass(), leaf.nav().params());
+                        Catalogue<?> priorNavHome = navHomeMap.put(key, parent);
+                        if (priorNavHome != null && priorNavHome != parent) {
+                            throw new IllegalStateException(
+                                    "App " + key.app().getName() + " with params " + key.params()
+                                  + " is positioned in two catalogues: "
+                                  + priorNavHome.getClass().getName() + " and "
+                                  + parent.getClass().getName()
+                                  + ". A navigable is identified by (app, args) and has at most ONE"
+                                  + " position (RFC 0051 - the path axiom).");
+                        }
+                        // The doc half applies only when the leaf displays one;
+                        // an app leaf has no content and needs no doc identity,
+                        // which is the whole point of not making it a Doc.
+                        Doc content = leaf.content();
+                        if (content != null) {
+                            UUID id = content.uuid();
+                            if (id == null || docRegistry.resolve(id) == null) {
+                                throw new IllegalStateException(
+                                        "Catalogue " + parent.getClass().getName()
+                                      + " places Doc " + content.getClass().getName()
+                                      + " (uuid=" + id + ") which is not in the DocRegistry");
+                            }
+                            Catalogue<?> priorHome = docHomeMap.put(id, parent);
+                            if (priorHome != null && priorHome != parent) {
+                                throw new IllegalStateException(
+                                        "Doc " + content.getClass().getName() + " (uuid=" + id + ")"
+                                      + " is positioned in two catalogues: "
+                                      + priorHome.getClass().getName() + " and "
+                                      + parent.getClass().getName()
+                                      + ". A doc has at most ONE position (RFC 0051 - the path axiom).");
+                            }
+                        }
+                    }
                     case Entry.OfDoc<?, ?>(Doc d) -> {
                         if (d == null) {
                             throw new IllegalStateException(
@@ -759,6 +804,15 @@ public final class CatalogueRegistry {
                         return new PathResolution.Miss(path, i + 1, PathResolution.Reason.PAST_A_LEAF);
                     }
                     return new PathResolution.ToLeaf(path, at, d);
+                }
+                // RFC 0051 Phase 6 — a bound leaf carries its own binding
+                // through the resolution, so the route never has to ask a doc
+                // how it opens.
+                case Entry.OfLeaf<?, ?, ?> leaf -> {
+                    if (i < path.depth() - 1) {
+                        return new PathResolution.Miss(path, i + 1, PathResolution.Reason.PAST_A_LEAF);
+                    }
+                    return new PathResolution.ToLeaf(path, at, leaf.content(), leaf.nav());
                 }
                 default -> throw new IllegalStateException(
                         "Unexpected child kind in the path index: " + child.getClass().getName());

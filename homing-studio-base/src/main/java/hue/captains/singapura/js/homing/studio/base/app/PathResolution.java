@@ -18,7 +18,23 @@ public sealed interface PathResolution {
     record ToCatalogue(CataloguePath path, Catalogue<?> catalogue) implements PathResolution {}
 
     /** The path names a leaf, held by {@code parent}. */
-    record ToLeaf(CataloguePath path, Catalogue<?> parent, Doc doc) implements PathResolution {}
+    /**
+     * The path names a leaf, held by {@code parent}.
+     *
+     * @param doc the doc displayed there, or null for a pure app leaf
+     * @param nav RFC 0051 Phase 6 — the leaf's binding when it has one, so the
+     *            route can render from {@code (app, params)} without asking a
+     *            doc how it opens. Null for a leaf that still arrives through
+     *            the {@code Entry.OfDoc} form, whose address must be derived.
+     */
+    record ToLeaf(CataloguePath path, Catalogue<?> parent, Doc doc,
+                  Navigable<?, ?> nav) implements PathResolution {
+
+        /** The pre-Phase-6 shape: a doc leaf with no binding of its own. */
+        public ToLeaf(CataloguePath path, Catalogue<?> parent, Doc doc) {
+            this(path, parent, doc, null);
+        }
+    }
 
     /**
      * The path names nothing.

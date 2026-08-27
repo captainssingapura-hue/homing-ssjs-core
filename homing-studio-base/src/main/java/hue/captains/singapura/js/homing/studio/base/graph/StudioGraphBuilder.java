@@ -132,6 +132,17 @@ public record StudioGraphBuilder() implements StatelessFunctionalObject {
 
     private void visitEntry(StudioGraph.Mutable g, Entry<?> entry) {
         switch (entry) {
+            // RFC 0051 Phase 6 — a bound leaf's edges are the ones the OfDoc
+            // branch below has to RECOVER by unwrapping: the leaf holds its
+            // navigable and its app directly, and its content when it has any.
+            case Entry.OfLeaf<?, ?, ?> leaf -> {
+                g.contains(entry, leaf.nav());
+                g.contains(leaf.nav(), leaf.nav().app());
+                if (leaf.content() != null) {
+                    g.contains(entry, leaf.content());
+                    visitDoc(g, leaf.content());
+                }
+            }
             case Entry.OfDoc<?, ?> ofDoc -> {
                 Doc doc = ofDoc.doc();
                 g.contains(entry, doc);

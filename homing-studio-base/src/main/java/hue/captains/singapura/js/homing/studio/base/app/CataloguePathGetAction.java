@@ -89,15 +89,15 @@ public final class CataloguePathGetAction
                     render(CatalogueAppHost.INSTANCE.simpleName(),
                            QueryString.of("id", catalogue.getClass().getName()), query);
 
-            case PathResolution.ToLeaf(var path, var parent, Doc doc) -> {
-                // RFC 0051 Phase 6 — which app opens this leaf, and with what
-                // args, read as the structured pair. It used to be recovered by
-                // parsing the leaf's own minted url(): a string the framework
-                // had just built, taken apart to get back what went into it.
-                //
-                // The pair is still DERIVED here (from the doc's type) rather
-                // than carried by the leaf. When Entry holds the binding, this
-                // reads it straight off the node and the derivation goes too.
+            case PathResolution.ToLeaf(var path, var parent, Doc doc, var nav) -> {
+                // RFC 0051 Phase 6 — a bound leaf states its app and params, so
+                // nothing is derived and nothing is parsed: the placement said
+                // how it opens, and this reads what it said.
+                if (nav != null) {
+                    yield renderTyped(nav, query);
+                }
+                // The pre-Phase-6 form: only a doc, so the address must still be
+                // derived from its type. Goes when the last OfDoc placement does.
                 var address = DocViewers.addressOf(doc);
                 yield render(address.app(), address.args(), query);
             }
@@ -133,6 +133,30 @@ public final class CataloguePathGetAction
      * different {@code id} and make one path serve another node's content.
      * The path is the identity; the query is decoration.</p>
      */
+    /**
+     * RFC 0051 Phase 6 — render straight from the leaf's typed binding.
+     *
+     * <p>No name to look up, no args to encode, no query to decode: the node
+     * held an {@code AppModule} and its {@code Params} all along, and this
+     * hands both to the page action's typed entry point. The extra query — the
+     * {@code ?phase=} and {@code ?theme=} a link may carry — rides alongside,
+     * since it belongs to the request rather than to the position.</p>
+     */
+    private <P extends hue.captains.singapura.js.homing.core.AppModule._Param,
+             M extends hue.captains.singapura.js.homing.core.AppModule<P, M>>
+            CompletableFuture<HtmlPageContent> renderTyped(Navigable<P, M> nav, PathQuery query) {
+
+        var merged = QueryString.params();
+        query.query().forEach((k, values) -> values.forEach(v -> QueryString.put(merged, k, v)));
+        // The binding's own params win over anything the request spelled.
+        nav.app().paramCodec().to(nav.params()).forEach((k, values) -> {
+            merged.remove(k);
+            values.forEach(v -> QueryString.put(merged, k, v));
+        });
+        return pageAction.executeTyped(nav.app(), nav.params(),
+                query.theme(), query.locale(), merged);
+    }
+
     private CompletableFuture<HtmlPageContent> render(
             String app, Map<String, List<String>> args, PathQuery query) {
 

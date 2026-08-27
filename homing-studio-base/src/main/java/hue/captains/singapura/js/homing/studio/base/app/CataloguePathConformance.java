@@ -44,7 +44,7 @@ public final class CataloguePathConformance {
                     continue;
                 }
                 PathResolution leafBack = registry.resolve(leafPath);
-                if (!(leafBack instanceof PathResolution.ToLeaf(var lp, var parent, var gotDoc))
+                if (!(leafBack instanceof PathResolution.ToLeaf(var lp, var parent, var gotDoc, var gotNav))
                         || !gotDoc.uuid().equals(d.uuid())) {
                     failures.add("leaf " + d.title() + " -> " + leafPath.toUrl()
                                + " -> " + describe(leafBack));
@@ -60,7 +60,8 @@ public final class CataloguePathConformance {
     private static String describe(PathResolution r) {
         return switch (r) {
             case PathResolution.ToCatalogue(var p, var c) -> "catalogue " + c.getClass().getName();
-            case PathResolution.ToLeaf(var p, var parent, var d) -> "leaf " + d.title();
+            case PathResolution.ToLeaf(var p, var parent, var d, var n) ->
+                    "leaf " + (d != null ? d.title() : n.name());
             case PathResolution.Miss m -> "MISS(" + m.reason() + " at '" + m.at() + "')";
         };
     }

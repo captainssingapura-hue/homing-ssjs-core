@@ -131,6 +131,14 @@ public final class DocRegistry {
                 if (e instanceof hue.captains.singapura.js.homing.studio.base.app.Entry.OfDoc<?, ?>(Doc d)) {
                     out.add(d);
                 }
+                // RFC 0051 Phase 6 — a bound leaf's content is registered the
+                // same way. A leaf with no content contributes nothing, which
+                // is the point: an app tile no longer needs a fabricated Doc
+                // to be placeable.
+                if (e instanceof hue.captains.singapura.js.homing.studio.base.app.Entry.OfLeaf<?, ?, ?> leaf
+                        && leaf.content() != null) {
+                    out.add(leaf.content());
+                }
             }
         }
         return out;

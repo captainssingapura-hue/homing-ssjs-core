@@ -187,6 +187,25 @@ public class CatalogueGetAction
             if (!firstEntry) sb.append(',');
             firstEntry = false;
             switch (e) {
+                // RFC 0051 Phase 6 — a bound leaf. Its tile reads exactly what
+                // the OfDoc tile reads, from the same places, so the payload is
+                // unchanged; what differs is where the URL comes from. The doc
+                // is no longer asked how it opens — the placement already said.
+                case Entry.OfLeaf<?, ?, ?> leaf -> {
+                    Doc content = leaf.content();
+                    String kind = (content != null) ? content.kind() : "app";
+                    String titleKey = "doc".equals(kind) ? "\"title\"" : "\"name\"";
+                    String name     = (content != null) ? content.title()    : leaf.nav().name();
+                    String summary  = (content != null) ? content.summary()  : leaf.nav().summary();
+                    String category = (content != null) ? content.category() : "APP";
+                    sb.append('{')
+                      .append("\"kind\":")    .append(jstr(kind)).append(',')
+                      .append(titleKey)       .append(':').append(jstr(name)).append(',')
+                      .append("\"summary\":") .append(jstr(summary)).append(',')
+                      .append("\"category\":").append(jstr(category)).append(',')
+                      .append("\"url\":")     .append(jstr(pathUrl(leaf)))
+                      .append('}');
+                }
                 case Entry.OfDoc<?, ?>(Doc d) -> {
                     // RFC 0015 Phase 3b — dispatch via Doc's typed kind() + url().
                     // Field-key asymmetry preserved: frontend renderer uses entry.title
@@ -291,6 +310,18 @@ public class CatalogueGetAction
     private String pathUrl(hue.captains.singapura.js.homing.studio.base.Doc doc) {
         CataloguePath path = registry.pathOf(doc);
         return path == null ? doc.url() : path.toUrl();
+    }
+
+    /**
+     * The address of a bound leaf. RFC 0051 Phase 6 — the flat fallback is
+     * minted from the leaf's OWN binding rather than from a doc's opinion of
+     * how it opens, which is the difference the phase is for. An app leaf with
+     * no content has no doc to ask at all, and needs none.
+     */
+    private String pathUrl(Entry.OfLeaf<?, ?, ?> leaf) {
+        Doc content = leaf.content();
+        CataloguePath path = (content != null) ? registry.pathOf(content) : null;
+        return path == null ? leaf.nav().url() : path.toUrl();
     }
 
     /** RFC 0009: breadcrumb crumb text — icon glyph prefix + name. */
