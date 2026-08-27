@@ -200,10 +200,38 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
         var treeHolder = new java.util.concurrent.atomic.AtomicReference<CatalogueRegistry>();
         var trailHolder = new java.util.concurrent.atomic.AtomicReference<
                 Map<UUID, List<hue.captains.singapura.js.homing.studio.base.app.Crumb>>>(Map.of());
+        // RFC 0040 forest root, hoisted: the chrome resolver below needs it to
+        // stamp a leveled page, and it depends only on the studio list.
+        final Catalogue<?> openRoot = studios.get(0).home();
+
         hue.captains.singapura.js.homing.server.AppHtmlGetAction.ChromeResolver chromeResolver =
                 (appName, args) -> {
                     CatalogueRegistry reg = treeHolder.get();
                     if (reg == null) return null;
+
+                    // RFC 0051 Phase 6 — the leveled-Open page. It is addressed
+                    // by a child-index path rather than by an identity, so no
+                    // index can find it and it rendered UNSTAMPED: the last page
+                    // in the framework that had to fetch its own trail.
+                    //
+                    // D9 defers the leveled ADDRESSING SCHEME to RFC 0040, not
+                    // the stamp. Nothing about the URL changes here; the same
+                    // resolution /open-refs performs at fetch time runs at
+                    // render time instead, which is the whole of this RFC's
+                    // argument applied to the one page it had not reached.
+                    var leveled = levelPathOf(args);
+                    if (leveled != null) {
+                        var found = hue.captains.singapura.js.homing.studio.base.tree
+                                .ForestPathResolver.INSTANCE.resolve(openRoot, leveled);
+                        if (found.isPresent()) {
+                            var out = new ArrayList<Map.Entry<String, String>>();
+                            for (var c : found.get().trail()) {
+                                out.add(Map.entry(c.text(), c.href() == null ? "" : c.href()));
+                            }
+                            out.add(Map.entry(found.get().doc().title(), ""));
+                            return out;
+                        }
+                    }
 
                     // RFC 0016 + RFC 0051 — a tree-leaf doc's trail is longer
                     // than its catalogue chain: it continues INSIDE the content
@@ -350,7 +378,6 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
         // SingleWidgetWorkspace shell fetches doc bytes from /open-content and
         // its breadcrumb from /open-refs by the same child-index path it was
         // opened by — no uuid, URL and breadcrumb share one source of truth.
-        final Catalogue<?> openRoot = studios.get(0).home();
         final OpenContentGetAction openContentAction = new OpenContentGetAction(openRoot);
         final OpenRefsGetAction openRefsAction = new OpenRefsGetAction(openRoot);
 
@@ -501,6 +528,27 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
             byClass.putIfAbsent(p.getClass(), p);
         }
         return List.copyOf(byClass.values());
+    }
+
+    /**
+     * The leveled child-index path a request carries, or null when it is not a
+     * leveled request. RFC 0051 Phase 6 - reads the same lN parameters
+     * OpenRefsGetAction reads, so the stamp and the endpoint cannot disagree
+     * about what a path means.
+     */
+    private List<Integer> levelPathOf(Map<String, List<String>> args) {
+        if (args == null || args.get("l0") == null) return null;
+        var out = new ArrayList<Integer>();
+        for (int n = 0; n < 32; n++) {
+            List<String> v = args.get("l" + n);
+            if (v == null || v.isEmpty()) break;
+            try {
+                out.add(Integer.parseInt(v.get(0)));
+            } catch (NumberFormatException e) {
+                break;
+            }
+        }
+        return out.isEmpty() ? null : out;
     }
 
     /**

@@ -312,18 +312,17 @@ public abstract class StandardMPA<P extends AppModule._Param, M extends Standard
         lines.add("        Object.keys(params).forEach(function(k){ widgetParams[k] = params[k]; });");
         lines.add("    }");
         lines.add("");
-        lines.add("    // Un-stamped fallback — ONE case left after RFC 0051.");
-        lines.add("    //   A leveled tree path (?treeId=..&l0=..&l1=.., RFC 0040):");
-        lines.add("    //   fetch /open-refs?l0=.. — still the one endpoint that returns");
-        lines.add("    //   a chain, because a tree path is a different addressing scheme");
-        lines.add("    //   and D9 leaves it to that RFC.");
-        lines.add("    //");
-        lines.add("    //   The ?id=<doc-uuid> case is GONE. It fetched /doc-refs to");
-        lines.add("    //   recover a title, and a crawl of both studios found 264 of 264");
-        lines.add("    //   navigable pages already carry a stamped one.");
-        // RFC 0051 — when the server stamped the trail, take it and fetch
-        // nothing. The fallback below re-derives server-side knowledge over
-        // the wire; the stamp is that knowledge, already here.
+        // RFC 0051 Phase 6 — the stamp, and nothing else. There is no
+        // un-stamped branch any more: every page that can be reached carries
+        // its trail, including the leveled-Open page, which was the last one
+        // that had to fetch its own. What stood here asked the server where
+        // the page was, which is the pattern this whole RFC set out to remove.
+        //
+        // It goes WHOLE rather than arm by arm. Deleting its /doc-refs arm in
+        // phase 5 orphaned `var crumbPq = []`, which lived in the removed
+        // region — generated JS, so the Java build passed and every tree-path
+        // page would have thrown at runtime. With no arms there is nothing
+        // left to orphan.
         lines.add("    if (chrome && chrome.crumbs && chrome.crumbs.length) {");
         lines.add("        resolvedCrumbs = chrome.crumbs.slice();");
         lines.add("        var stampedLeaf = resolvedCrumbs[resolvedCrumbs.length - 1];");
@@ -332,43 +331,7 @@ public abstract class StandardMPA<P extends AppModule._Param, M extends Standard
         lines.add("            document.title = resolvedTitle + (resolvedBrand && resolvedBrand.label ? ' \u00b7 ' + resolvedBrand.label : '');");
         lines.add("        }");
         lines.add("        refreshHeader();");
-        lines.add("    } else {");
-        lines.add("    var crumbUrl;");
-        lines.add("    if (widgetParams.treeId !== undefined || widgetParams.l0 !== undefined) {");
-        lines.add("        var crumbPq = [];");
-        lines.add("        if (widgetParams.treeId) crumbPq.push('treeId=' + encodeURIComponent(widgetParams.treeId));");
-        lines.add("        for (var ci = 0; widgetParams['l' + ci] !== undefined; ci++) {");
-        lines.add("            crumbPq.push('l' + ci + '=' + encodeURIComponent(widgetParams['l' + ci]));");
-        lines.add("        }");
-        lines.add("        crumbUrl = '/open-refs?' + crumbPq.join('&');");
-        lines.add("    } else {");
-        // RFC 0051 Phase 5 — /app-refs is retired. It existed only to answer
-        // "what is the crumb for this app page", which the stamp now answers
-        // without a round trip, so there is nothing left to ask. A page that
-        // reaches here has no id, no tree path and no stamp — it is genuinely
-        // unpositioned, and the honest chrome is the one it already has.
-        lines.add("        crumbUrl = null;");
         lines.add("    }");
-        lines.add("    if (crumbUrl) {");
-        lines.add("    fetch(crumbUrl)");
-        lines.add("        .then(function(r){ return r.ok ? r.json() : null; })");
-        lines.add("        .then(function(info){");
-        lines.add("            if (info && info.title) {");
-        lines.add("                resolvedTitle = info.title;");
-        lines.add("                var leaf = { text: resolvedTitle };");
-        lines.add("                if (info.breadcrumbs && info.breadcrumbs.length > 0) {");
-        lines.add("                    resolvedCrumbs = info.breadcrumbs.slice();");
-        lines.add("                    resolvedCrumbs.push(leaf);");
-        lines.add("                } else {");
-        lines.add("                    resolvedCrumbs = [leaf];");
-        lines.add("                }");
-        lines.add("                refreshHeader();");
-        lines.add("                document.title = info.title + (resolvedBrand && resolvedBrand.label ? ' \\u00b7 ' + resolvedBrand.label : '');");
-        lines.add("            }");
-        lines.add("        })");
-        lines.add("        .catch(function(){});");
-        lines.add("    }");   // closes: if (crumbUrl)
-        lines.add("    }");   // closes: the un-stamped fallback branch
         lines.add("");
         lines.add("    if (!widgetName) {");
         lines.add("        var noWidgetEl = document.createElement('div');");
