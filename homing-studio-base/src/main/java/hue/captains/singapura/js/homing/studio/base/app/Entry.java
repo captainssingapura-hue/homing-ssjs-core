@@ -149,7 +149,12 @@ public sealed interface Entry<C extends Catalogue<C>> extends Immutable {
             P extends AppModule._Param,
             M extends AppModule<P, M>>
            Entry<C> of(C host, Navigable<P, M> nav) {
-        return new OfDoc<>(new AppDoc<>(nav));
+        // RFC 0051 Phase 6 — no wrapper. A Navigable IS the binding, so an app
+        // leaf is one with no content, and AppDoc's whole reason for existing
+        // goes: it was a Doc a navigable had to become in order to be
+        // placeable, and it paid for that with a fabricated uuid seeded from
+        // display framing — the defect that forced Law 1's second check.
+        return new OfLeaf<>(nav, null);
     }
 
     /**

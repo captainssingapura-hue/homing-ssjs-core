@@ -319,8 +319,11 @@ public class CatalogueGetAction
      * no content has no doc to ask at all, and needs none.
      */
     private String pathUrl(Entry.OfLeaf<?, ?, ?> leaf) {
-        Doc content = leaf.content();
-        CataloguePath path = (content != null) ? registry.pathOf(content) : null;
+        // Ask by BINDING, not by content. A content-less leaf — an app tile —
+        // has no doc to look up, and asking by doc is what silently dropped
+        // thirteen app tiles back to flat URLs when AppDoc stopped lending
+        // them a Doc identity.
+        CataloguePath path = registry.pathOf(leaf.nav());
         return path == null ? leaf.nav().url() : path.toUrl();
     }
 

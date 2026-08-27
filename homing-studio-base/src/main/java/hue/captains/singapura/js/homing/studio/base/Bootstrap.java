@@ -542,9 +542,20 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
 
         for (Catalogue<?> parent : catalogues) {
             for (var entry : parent.leaves()) {
-                if (!(entry instanceof hue.captains.singapura.js.homing.studio.base.app.Entry.OfDoc<?, ?> ofDoc)) continue;
-                if (!(ofDoc.doc() instanceof hue.captains.singapura.js.homing.studio.base.app.AppDoc<?, ?> appDoc)) continue;
-                var nav = appDoc.nav();
+                // RFC 0051 Phase 6 — read the binding off the leaf. This used to
+                // unwrap OfDoc(AppDoc(nav)) to reach the same Navigable; when
+                // the AppDoc wrapper went, that pattern stopped matching and
+                // hostOfTree would have quietly emptied — costing every tree
+                // leaf its enriched trail while every test still passed.
+                hue.captains.singapura.js.homing.studio.base.app.Navigable<?, ?> nav;
+                if (entry instanceof hue.captains.singapura.js.homing.studio.base.app.Entry.OfLeaf<?, ?, ?> bound) {
+                    nav = bound.nav();
+                } else if (entry instanceof hue.captains.singapura.js.homing.studio.base.app.Entry.OfDoc<?, ?> ofDoc
+                        && ofDoc.doc() instanceof hue.captains.singapura.js.homing.studio.base.app.AppDoc<?, ?> appDoc) {
+                    nav = appDoc.nav();
+                } else {
+                    continue;
+                }
                 if (nav.app() != hue.captains.singapura.js.homing.studio.base.app.tree.TreeAppHost.INSTANCE) continue;
                 // Navigable wraps TreeAppHost. Extract tree id from params.
                 if (!(nav.params() instanceof hue.captains.singapura.js.homing.studio.base.app.tree.TreeAppHost.Params treeParams)) continue;

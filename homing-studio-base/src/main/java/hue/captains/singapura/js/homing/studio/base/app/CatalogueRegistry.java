@@ -75,6 +75,9 @@ public final class CatalogueRegistry {
     /** RFC 0051 Phase 5 — canonical flat address to the doc it names, so the
      *  chrome can be resolved server-side instead of fetched. */
     private final Map<String, Doc> flatToDoc;
+    /** RFC 0051 Phase 6 — canonical flat address to the bound leaf placed there,
+     *  so a leaf with no doc can still state its trail. */
+    private final Map<String, BoundPlacement> flatToLeaf;
 
     public CatalogueRegistry(StudioBrand brand,
                              DocRegistry docRegistry,
@@ -146,6 +149,7 @@ public final class CatalogueRegistry {
         var docHomeMap  = new HashMap<UUID, Catalogue<?>>();
         var planHomeMap = new HashMap<Class<? extends Plan>, Catalogue<?>>();
         var navHomeMap  = new HashMap<NavKey, Catalogue<?>>();
+        var boundLeaves = new ArrayList<BoundPlacement>();
         var childIndexMap = new HashMap<Class<?>, Map<NodeName, Object>>();
         for (Catalogue<?> parent : byClass.values()) {
             // ---- Sub-catalogue children ----
@@ -198,8 +202,15 @@ public final class CatalogueRegistry {
                 // segment is the placement's to name. The other variants still
                 // ask the thing placed, which is what OfLeaf exists to stop.
                 switch (e) {
-                    case Entry.OfLeaf<?, ?, ?> leaf ->
-                            claimSlug(slugOwner, leaf.slug(), leaf, parent);
+                    case Entry.OfLeaf<?, ?, ?> leaf -> {
+                        claimSlug(slugOwner, leaf.slug(), leaf, parent);
+                        // Remember the placement so the flat index can position
+                        // it later. A leaf with no content has no doc uuid to be
+                        // found by, and the docHome walk below would miss it —
+                        // which is exactly how the 13 app tiles lost their paths
+                        // the moment AppDoc stopped lending them a Doc identity.
+                        boundLeaves.add(new BoundPlacement(parent, leaf));
+                    }
                     case Entry.OfDoc<?, ?>(Doc d) -> {
                         if (d != null) claimSlug(slugOwner, d.slug(), d, parent);
                     }
@@ -399,6 +410,34 @@ public final class CatalogueRegistry {
         var keysByApp = new HashMap<String, java.util.Set<String>>();
         var flat      = new HashMap<String, CataloguePath>();
         var flatDocs  = new HashMap<String, Doc>();
+        var flatLeaves = new HashMap<String, BoundPlacement>();
+
+        // RFC 0051 Phase 6 — index the bound leaves FIRST, from their own
+        // bindings. The docHome walk below can only find things that have a doc
+        // uuid, so an app leaf — a themes page, a tree host — was invisible to
+        // it and depended on AppDoc lending it a Doc identity to be positioned
+        // at all. Reading the binding needs no such loan, and needs no url():
+        // the app's own codec says what its args are.
+        for (BoundPlacement bp : boundLeaves) {
+            var nav = bp.leaf().nav();
+            String app = nav.app().simpleName();
+            Map<String, List<String>> args = argsOf(nav);
+            var identity = new java.util.TreeSet<>(args.keySet());
+            keysByApp.computeIfAbsent(app, k -> new java.util.TreeSet<>()).addAll(identity);
+
+            CataloguePath parentPath = pathOf(bp.parent());
+            if (parentPath == null) continue;
+            CataloguePath path = parentPath.then(bp.leaf().slug());
+            String key = flatKey(app, args, identity);
+            if (resolvesToLeaf(path, bp.leaf())) {
+                flat.put(key, path);
+            }
+            flatLeaves.put(key, bp);
+            if (bp.leaf().content() != null) {
+                flatDocs.put(key, bp.leaf().content());
+            }
+        }
+
         for (UUID id : docHome.keySet()) {
             Doc d = docRegistry.resolve(id);
             if (d == null) continue;
@@ -439,6 +478,7 @@ public final class CatalogueRegistry {
         this.flatIdentityKeys = Map.copyOf(keysByApp);
         this.flatToPath       = Map.copyOf(flat);
         this.flatToDoc        = Map.copyOf(flatDocs);
+        this.flatToLeaf       = Map.copyOf(flatLeaves);
     }
 
     /**
@@ -712,6 +752,24 @@ public final class CatalogueRegistry {
     public List<Crumb> chromeCrumbsForFlat(String app, Map<String, List<String>> args) {
         Doc doc = flatDoc(app, args);
         Catalogue<?> node = (doc == null) ? catalogueForFlat(app, args) : docHome.get(doc.uuid());
+        // RFC 0051 Phase 6 — a bound leaf with no content has no doc to be
+        // found by, so look it up by its binding instead. Without this an app
+        // page renders unstamped: it has a position and a tile, but nothing
+        // that answers "and what is above you?".
+        if (node == null) {
+            var placement = boundPlacement(app, args);
+            if (placement != null) {
+                var out = new ArrayList<Crumb>();
+                for (Catalogue<?> c : breadcrumbs(placement.parent())) {
+                    CataloguePath p = pathOf(c);
+                    out.add(new Crumb(crumbTextOf(c), p == null ? "" : p.toUrl()));
+                }
+                var leaf = placement.leaf();
+                out.add(new Crumb(leaf.content() != null ? leaf.content().title()
+                                                        : leaf.nav().name(), ""));
+                return out;
+            }
+        }
         if (node == null) return null;
         var out = new ArrayList<Crumb>();
         for (Catalogue<?> c : breadcrumbs(node)) {
@@ -743,6 +801,12 @@ public final class CatalogueRegistry {
     }
 
     /** The doc a flat address names, if any. */
+    /** The bound leaf placed at this flat address, or null. */
+    private BoundPlacement boundPlacement(String app, Map<String, List<String>> args) {
+        var keys = (app == null) ? null : flatIdentityKeys.get(app);
+        return keys == null ? null : flatToLeaf.get(flatKey(app, args, keys));
+    }
+
     private Doc flatDoc(String app, Map<String, List<String>> args) {
         var keys = (app == null) ? null : flatIdentityKeys.get(app);
         return keys == null ? null : flatToDoc.get(flatKey(app, args, keys));
@@ -873,6 +937,16 @@ public final class CatalogueRegistry {
                 && leaf.doc().uuid().equals(doc.uuid());
     }
 
+    /**
+     * RFC 0051 Phase 6 — the path of a binding, for a leaf that has no doc to
+     * be found by. An app tile's position is as real as a doc's; it was only
+     * ever reachable through {@code AppDoc} lending it a Doc identity.
+     */
+    public CataloguePath pathOf(Navigable<?, ?> nav) {
+        if (nav == null) return null;
+        return pathForFlat(nav.app().simpleName(), argsOf(nav));
+    }
+
     public CataloguePath pathOf(Doc doc) {
         Objects.requireNonNull(doc, "doc");
         Catalogue<?> home = docHome.get(doc.uuid());
@@ -931,4 +1005,37 @@ public final class CatalogueRegistry {
      * at most one position regardless of how that position is dressed.</p>
      */
     private record NavKey(Class<?> app, AppModule._Param params) {}
+
+    /** RFC 0051 Phase 6 — a bound leaf and the catalogue it sits in, kept from
+     *  the slug scan so the flat index can position it once paths exist. */
+    private record BoundPlacement(Catalogue<?> parent, Entry.OfLeaf<?, ?, ?> leaf) {}
+
+    /**
+     * The app's own args for a binding, through its codec.
+     *
+     * <p>An app WITHOUT a codec falls back to reading them out of
+     * {@code Navigable.url()}, which reflects over the Params record. Not a
+     * choice — {@code ParamCodec.None} is typed to {@code _None} and throws a
+     * ClassCastException on a real Params, which is precisely what the demo's
+     * boot test caught here (DishListDemoApp). The fallback dies with A9, when
+     * the last uncoded app gets a codec, and this branch goes with it.</p>
+     */
+    private static <P extends AppModule._Param> Map<String, List<String>> argsOf(Navigable<P, ?> nav) {
+        var codec = nav.app().paramCodec();
+        if (codec != hue.captains.singapura.js.homing.core.ParamCodec.None.INSTANCE) {
+            return codec.to(nav.params());
+        }
+        var args = new LinkedHashMap<>(QueryString.parse(nav.url()));
+        args.remove("app");
+        return args;
+    }
+
+    /** Does this path resolve back to exactly this leaf? Same guard as the doc
+     *  form: a derived path that answers to nothing must not be handed out. */
+    private boolean resolvesToLeaf(CataloguePath path, Entry.OfLeaf<?, ?, ?> leaf) {
+        return resolve(path) instanceof PathResolution.ToLeaf found
+                && found.nav() != null
+                && found.nav().equals(leaf.nav());
+    }
+
 }
