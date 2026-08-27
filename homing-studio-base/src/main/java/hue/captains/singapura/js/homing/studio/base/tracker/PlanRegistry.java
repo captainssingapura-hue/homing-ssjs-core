@@ -184,6 +184,13 @@ public final class PlanRegistry {
                 if (e instanceof Entry.OfDoc<?, ?> ofDoc && ofDoc.doc() instanceof PlanDoc pd) {
                     out.add(pd.plan());
                 }
+                // RFC 0051 Phase 6 — a plan placed as a bound leaf. Its content
+                // is still the PlanDoc, which is what carries the plan itself;
+                // what changed is that the leaf now also states PlanAppHost as
+                // the app that opens it, instead of the PlanDoc being asked.
+                if (e instanceof Entry.OfLeaf<?, ?, ?> leaf && leaf.content() instanceof PlanDoc pd2) {
+                    out.add(pd2.plan());
+                }
             }
         }
         return out;

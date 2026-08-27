@@ -112,6 +112,11 @@ public abstract class PlanRegistrationConformanceTest {
                     && d instanceof PlanDoc pd) {
                 out.putIfAbsent((Class<? extends Plan>) pd.plan().getClass(), here);
             }
+            // RFC 0051 Phase 6 — the same plan, placed as a bound leaf.
+            if (leaf instanceof Entry.OfLeaf<?, ?, ?> bound
+                    && bound.content() instanceof PlanDoc pd2) {
+                out.putIfAbsent((Class<? extends Plan>) pd2.plan().getClass(), here);
+            }
         }
         // RFC 0005-ext2: sub-catalogues flow through subCatalogues(), not
         // through Entry leaves.

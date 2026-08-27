@@ -266,6 +266,11 @@ public final class CatalogueRegistry {
                                       + parent.getClass().getName()
                                       + ". A doc has at most ONE position (RFC 0051 - the path axiom).");
                             }
+                            // The plan reverse-index, so breadcrumbsForPlan(class)
+                            // keeps answering for plans placed as bound leaves.
+                            if (content instanceof hue.captains.singapura.js.homing.studio.base.tracker.PlanDoc pd) {
+                                planHomeMap.putIfAbsent(pd.plan().getClass(), parent);
+                            }
                         }
                     }
                     case Entry.OfDoc<?, ?>(Doc d) -> {

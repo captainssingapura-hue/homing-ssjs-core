@@ -159,7 +159,21 @@ public sealed interface Entry<C extends Catalogue<C>> extends Immutable {
      */
     static <C extends Catalogue<C>, P extends Plan>
            Entry<C> of(C host, P plan) {
-        return new OfDoc<>(new hue.captains.singapura.js.homing.studio.base.tracker.PlanDoc(plan));
+        // RFC 0051 Phase 6 — the app is named HERE rather than at each of the
+        // placements, and that is not the doc-determines-its-viewer mistake in
+        // disguise. A doc has a choice of viewers, so the choice belongs to
+        // whoever places it. A Plan does not: PlanAppHost is the definition of
+        // what hosts a plan, and its params are the plan's class because that
+        // is what /plan is keyed by — which is also why PlanDoc's synthesised
+        // uuid addresses nothing.
+        var doc = new hue.captains.singapura.js.homing.studio.base.tracker.PlanDoc(plan);
+        var host_ = hue.captains.singapura.js.homing.studio.base.tracker.PlanAppHost.INSTANCE;
+        return new OfLeaf<>(
+                new Navigable<>(host_,
+                        new hue.captains.singapura.js.homing.studio.base.tracker.PlanAppHost.Params(
+                                plan.getClass().getName(), null),
+                        doc.title(), doc.summary()),
+                doc);
     }
 
     static <C extends Catalogue<C>, S extends L0_Catalogue<S>>
