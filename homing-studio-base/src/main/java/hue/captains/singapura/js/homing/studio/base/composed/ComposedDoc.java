@@ -57,7 +57,11 @@ public record ComposedDoc(
         List<Segment>   segments,
         List<Reference> references,
         NodeName        slug
-) implements Doc {
+) implements Doc, hue.captains.singapura.js.homing.studio.base.AuthoredName {
+
+    /** RFC 0051 Phase 6 — the record component IS the authored name. */
+    @Override public NodeName authoredSlug() { return slug; }
+
 
     public ComposedDoc {
         Objects.requireNonNull(uuid,       "ComposedDoc.uuid");

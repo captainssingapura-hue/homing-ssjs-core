@@ -30,22 +30,15 @@ public final class DocSlugs {
     public static NodeName defaultFor(Doc doc) {
         java.util.Objects.requireNonNull(doc, "doc");
 
-        // A RigidDoc may carry an AUTHORED name — the author saying "call this
-        // rfc0015-inventory". That is the doc's own datum; turning it into a
-        // path segment is the framework's job, which is the split this class
-        // exists to make.
-        if (doc instanceof RigidDoc rd && rd.authoredSlug() != null) {
-            return rd.authoredSlug();
-        }
-        // A ComposedDoc carries its own too, as a record component defaulting
-        // to conciseSlug(title) — which is why two of them can sit in one
-        // catalogue at all. Missing this was caught by Law 2 within seconds:
-        // both container doctrines fell back to the class-derived "composed",
-        // since their INSTANCE fields are plain ComposedDocs rather than
-        // distinct classes.
-        if (doc instanceof hue.captains.singapura.js.homing.studio.base.composed.ComposedDoc cd
-                && cd.slug() != null) {
-            return cd.slug();
+        // An author-chosen name wins: "call this one rfc0015-inventory". That
+        // is the doc's own datum; turning a name into a path segment is the
+        // framework's job, which is the split this class exists to make.
+        // Three kinds carry one in three shapes, and a downstream kind
+        // (RfcDoc) could not be named by a table here at all - AuthoredName is
+        // the seam that serves all of them.
+        if (doc instanceof hue.captains.singapura.js.homing.studio.base.AuthoredName named
+                && named.authoredSlug() != null) {
+            return named.authoredSlug();
         }
         if (doc instanceof RigidDoc)   return NodeName.conciseSlug(doc.title());
         if (doc instanceof RigidDocV2) return NodeName.conciseSlug(doc.title());

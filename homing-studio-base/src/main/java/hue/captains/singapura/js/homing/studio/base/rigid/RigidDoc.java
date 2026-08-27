@@ -30,7 +30,7 @@ import java.util.UUID;
  *
  * @since homing-studio-base — RFC 0042 leveled tree-builder
  */
-public final class RigidDoc implements Doc {
+public final class RigidDoc implements Doc, hue.captains.singapura.js.homing.studio.base.AuthoredName {
 
     private final UUID     uuid;
     private final String   summary;
@@ -89,7 +89,7 @@ public final class RigidDoc implements Doc {
      *  would give them all the segment "rigid". */
     /** The author-chosen name, or null. RFC 0051 Phase 6 — the doc carries the
      *  NAME; DocSlugs decides how a name becomes a path segment. */
-    public NodeName authoredSlug() { return slug; }
+    @Override public NodeName authoredSlug() { return slug; }
     @Override public String  summary()     { return summary; }
     @Override public String  category()    { return category; }
     @Override public String  kind()        { return "composed"; }   // reuses the doc-tree route
