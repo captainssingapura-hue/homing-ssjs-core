@@ -87,12 +87,15 @@ public interface Doc extends Immutable {
     default String fileExtension() { return ".md"; }
 
     /**
-     * RFC 0015 Phase 3 — the content-kind discriminator. Drives JSON
-     * serialization in catalogue/tree responses and routes the request to
-     * the registered {@link hue.captains.singapura.js.homing.studio.base.app.ContentViewer}
-     * (when Phase 5 lands). Default {@code "doc"} for prose Docs; PlanDoc
-     * overrides to {@code "plan"}; AppDoc overrides to {@code "app"};
-     * future Doc kinds declare their own.
+     * The content-kind discriminator, used for DISPLAY: catalogue and tree
+     * payloads carry it and the tile renderer switches on it.
+     *
+     * <p>RFC 0051 Phase 6 — it no longer routes anything, and could not:
+     * {@code "composed"} is answered by ComposedDoc, RigidDoc and RigidDocV2,
+     * which open in two different viewers, so kind → viewer is not a function.
+     * A catalogue entry names the app instead. What remains here is framing,
+     * and framing belongs to the placement — so this is queued to follow
+     * {@code category()} onto the leaf.</p>
      *
      * <p>Realises Viewer ontology V4 (Doc routing through kind).</p>
      */

@@ -28,9 +28,8 @@ import java.util.List;
  *       generation surface.</li>
  *   <li>{@code AppLink<MyViewer>} references — the AppModule class
  *       continues to exist.</li>
- *   <li>{@link hue.captains.singapura.js.homing.studio.base.app.ContentViewer}
- *       registration — points at the viewer's {@code INSTANCE} as
- *       before.</li>
+ *   <li>catalogue placement — an entry names the viewer's {@code INSTANCE}
+ *       directly, so the reference survives.</li>
  * </ul>
  *
  * <p>Changes:</p>

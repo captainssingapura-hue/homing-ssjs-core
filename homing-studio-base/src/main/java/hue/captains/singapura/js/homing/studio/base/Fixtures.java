@@ -3,16 +3,8 @@ package hue.captains.singapura.js.homing.studio.base;
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.server.ThemeRegistry;
-import hue.captains.singapura.js.homing.studio.base.app.AppContentViewer;
-import hue.captains.singapura.js.homing.studio.base.app.ContentViewer;
-import hue.captains.singapura.js.homing.studio.base.app.PlanContentViewer;
-import hue.captains.singapura.js.homing.studio.base.app.ProseContentViewer;
 import hue.captains.singapura.js.homing.studio.base.app.StudioBrand;
-import hue.captains.singapura.js.homing.studio.base.app.SvgContentViewer;
 import hue.captains.singapura.js.homing.studio.base.app.tree.ContentTree;
-import hue.captains.singapura.js.homing.studio.base.composed.ComposedContentViewer;
-import hue.captains.singapura.js.homing.studio.base.image.ImageContentViewer;
-import hue.captains.singapura.js.homing.studio.base.table.TableContentViewer;
 import hue.captains.singapura.js.homing.studio.base.theme.HomingDefault;
 import hue.captains.singapura.js.homing.studio.base.theme.StudioThemeRegistry;
 import hue.captains.singapura.tao.http.action.GetAction;
@@ -69,33 +61,6 @@ public interface Fixtures<S extends Studio<?>> extends Immutable {
     /** Raw POST actions the harness contributes. Empty by default. */
     default Map<String, PostAction<RoutingContext, ?, ?, ?>> harnessPostActions() {
         return Map.of();
-    }
-
-    /**
-     * RFC 0015 Phase 5 — registered {@link ContentViewer}s indexed by
-     * content kind. Framework default ships viewers for the three
-     * built-in Doc kinds: {@code "doc"} → DocReader, {@code "plan"} →
-     * PlanAppHost, {@code "app"} → per-Doc AppModule dispatch.
-     *
-     * <p>Downstream studios override to add Viewers for additional
-     * kinds — diagrams, code surfaces, 3D graph views, etc. Each new
-     * viewer is one record satisfying the ContentViewer protocol;
-     * adding a viewer is one entry in the returned list.</p>
-     *
-     * <p>Realises Viewer ontology V9 (registration as activation):
-     * unregistered viewers are inert. Boot-time enforcement of kind
-     * uniqueness (V3) lands in a follow-up conformance test.</p>
-     */
-    default java.util.List<ContentViewer> contentViewers() {
-        return java.util.List.of(
-                ProseContentViewer.INSTANCE,
-                PlanContentViewer.INSTANCE,
-                AppContentViewer.INSTANCE,
-                SvgContentViewer.INSTANCE,
-                ComposedContentViewer.INSTANCE,
-                TableContentViewer.INSTANCE,
-                ImageContentViewer.INSTANCE
-        );
     }
 
     /**

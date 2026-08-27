@@ -17,7 +17,7 @@ import hue.captains.singapura.js.homing.studio.base.widget.SingleWidgetMPA;
  * {@code ComposedViewerRenderer.js}. Reborn under RFC 0024 Phase P1c as
  * a "fake AppModule" — a {@link SingleWidgetMPA} thin shell hosting
  * {@link ComposedWidget}. The URL grammar, typed Params, {@link AppLink},
- * and {@link ComposedContentViewer} routing are unchanged; what's
+ * and its routing is unchanged; what's
  * underneath is now the new contract:</p>
  *
  * <ul>

@@ -46,7 +46,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * intentionally be reachable only by URL), not a 404 hazard.</p>
  *
  * <p>Per the abstract-base pattern shared with {@link DocConformanceTest}
- * and {@link ContentViewerConformanceTest}, downstream subclasses
+ * and the other conformance tests, downstream subclasses
  * provide the inputs via {@link #studios()}.</p>
  *
  * @since Defect 0005 (relocated in b.2j cleanup — see
