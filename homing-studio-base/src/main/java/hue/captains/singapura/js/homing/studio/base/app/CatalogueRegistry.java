@@ -365,15 +365,16 @@ public final class CatalogueRegistry {
         for (UUID id : docHome.keySet()) {
             Doc d = docRegistry.resolve(id);
             if (d == null) continue;
-            String url = d.url();
-            if (url == null) continue;
-            Map<String, List<String>> args = QueryString.parse(url);
-            String app = QueryString.first(args, "app");
-            if (app == null) continue;
-            // The doc's own URL defines which keys identify it. "app" is the
-            // dispatch, not an argument.
+            // RFC 0051 Phase 6 — the address as the structured pair. This used
+            // to be QueryString.parse(d.url()): a string the framework minted,
+            // taken apart to recover what went into it. The docs reaching here
+            // are the ones with no leaf placement of their own — tree leaves,
+            // homed through extraDocHomes — so their address is derived from
+            // the doc's type rather than stated by a placement.
+            var address = DocViewers.addressOf(d);
+            String app = address.app();
+            Map<String, List<String>> args = address.args();
             var identity = new java.util.TreeSet<>(args.keySet());
-            identity.remove("app");
             keysByApp.computeIfAbsent(app, k -> new java.util.TreeSet<>()).addAll(identity);
             CataloguePath path = pathOf(d);
             // RFC 0051 — pathOf(Doc) DERIVES a path (home's path + the doc's

@@ -84,7 +84,8 @@ public final class OpenRefsGetAction
         // (markdown → DocReader, plan → plan viewer, app → app launch), so the
         // legacy server-side /open redirect can be retired entirely.
         sb.append(",\"url\":");
-        sb.append(jsonString(doc.url()));
+        sb.append(jsonString(
+                hue.captains.singapura.js.homing.studio.base.app.DocViewers.addressOf(doc).flat()));
         sb.append(",\"breadcrumbs\":[");
         boolean first = true;
         for (var crumb : resolved.get().trail()) {

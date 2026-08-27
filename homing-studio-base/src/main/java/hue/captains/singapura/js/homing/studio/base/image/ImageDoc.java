@@ -96,10 +96,6 @@ public record ImageDoc(
     @Override public String summary()       { return caption; }
     @Override public String category()      { return "IMAGE"; }
     @Override public String kind()          { return "image"; }
-    @Override public String url() {
-        return hue.captains.singapura.js.homing.core.AppUrl.flat(
-                "image-viewer", ImageViewer.CODEC, new ImageViewer.Params(uuid().toString()));
-    }
     @Override public String contentType()   { return "application/json; charset=utf-8"; }
     @Override public String fileExtension() { return ""; }
 

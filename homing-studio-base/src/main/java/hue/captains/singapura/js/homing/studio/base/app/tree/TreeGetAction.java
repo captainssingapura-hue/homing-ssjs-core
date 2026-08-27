@@ -219,7 +219,8 @@ public final class TreeGetAction
                       .append("\"name\":")     .append(jstr(name)).append(',')
                       .append("\"summary\":")  .append(jstr(summary)).append(',')
                       .append("\"category\":") .append(jstr(category)).append(',')
-                      .append("\"url\":")      .append(jstr(doc.url()))
+                      .append("\"url\":")      .append(jstr(
+                              hue.captains.singapura.js.homing.studio.base.app.DocViewers.addressOf(doc).flat()))
                       .append('}');
                 }
             }

@@ -289,7 +289,7 @@ public class CatalogueGetAction
      */
     private String pathUrl(hue.captains.singapura.js.homing.studio.base.Doc doc) {
         CataloguePath path = registry.pathOf(doc);
-        return path == null ? doc.url() : path.toUrl();
+        return path == null ? DocViewers.addressOf(doc).flat() : path.toUrl();
     }
 
     /**

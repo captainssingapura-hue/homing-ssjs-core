@@ -99,22 +99,6 @@ public interface Doc extends CatalogueLeaf {
     default String kind() { return "doc"; }
 
     /**
-     * RFC 0015 Phase 3 — the canonical URL the framework uses to address
-     * this Doc. Default {@code /app?app=doc-reader&doc=<uuid>} for prose
-     * Docs; PlanDoc and AppDoc override to return their respective viewer
-     * URLs. Used by catalogue/tree serialization so the JSON payload
-     * carries a pre-resolved URL per entry.
-     *
-     * <p>Realises Viewer ontology V6 (canonical URL composition).</p>
-     */
-    default String url() {
-        return hue.captains.singapura.js.homing.core.AppUrl.flat(
-                "doc-reader",
-                hue.captains.singapura.js.homing.studio.base.app.DocReader.CODEC,
-                new hue.captains.singapura.js.homing.studio.base.app.DocReader.Params(uuid().toString()));
-    }
-
-    /**
      * Typed cross-references and external citations declared by this Doc, rendered by the
      * DocReader as a "References" section beneath the markdown body. Each {@link Reference}
      * is exposed as a stable in-page anchor (id="ref:&lt;name&gt;"); the markdown body cites

@@ -59,7 +59,8 @@ public class PlanGetAction
         try {
             var d = docRegistry.resolve(java.util.UUID.fromString(uuid.trim()));
             return d == null ? null
-                    : hue.captains.singapura.js.homing.studio.base.app.GotoNavigableGetAction.hrefFor(d.url());
+                    : hue.captains.singapura.js.homing.studio.base.app.GotoNavigableGetAction.hrefFor(
+                            hue.captains.singapura.js.homing.studio.base.app.DocViewers.addressOf(d).flat());
         } catch (IllegalArgumentException notAUuid) {
             return null;
         }
