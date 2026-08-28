@@ -171,21 +171,29 @@ public final class TreeGetAction
             }
         }
 
-        // -- Tree-internal chain --
-        StringBuilder cumulative = new StringBuilder();
-        for (int i = 0; i < treeChain.size(); i++) {
-            TreeNode n = treeChain.get(i);
+        // -- The entry, and nothing below it --
+        //
+        // RFC 0051 — this used to continue INTO the tree, appending one crumb
+        // per addressed node, so /tree?id=animals&path=animals rendered
+        // "… / Animals & Halloween / Animals". Disabled: the breadcrumb states
+        // a page's position in the CATALOGUE, and a tree's internal nodes have
+        // no catalogue position — the whole tree is one placed leaf.
+        //
+        // Measured before removing it, over both demo trees in every reachable
+        // state: the extension was always exactly one rung, because the trees
+        // are two levels and their leaves link OUT to a viewer rather than
+        // deeper. That rung was byte-identical to the page's own <h1>, and it
+        // carried no href, being the last crumb. It restated the heading.
+        //
+        // What it did carry was one real affordance — the entry crumb became a
+        // link back to the tree root. That is within-entry navigation and
+        // belongs to the tree page's own UI, not to a trail that claims to say
+        // where you are in the studio.
+        if (!treeChain.isEmpty()) {
             if (!firstCrumb) sb.append(',');
             firstCrumb = false;
-            // i==0 is the root; subsequent nodes append their segment to the path.
-            if (i > 0) {
-                if (cumulative.length() > 0) cumulative.append('/');
-                cumulative.append(n.segment());
-            }
-            String url = (i == treeChain.size() - 1) ? "" : treeUrl(tree.id(), cumulative.toString());
-            sb.append("{\"name\":").append(jstr(n.name()))
-              .append(",\"url\":") .append(jstr(url))
-              .append('}');
+            sb.append("{\"name\":").append(jstr(treeChain.get(0).name()))
+              .append(",\"url\":\"\"}");
         }
         sb.append("],");
 
