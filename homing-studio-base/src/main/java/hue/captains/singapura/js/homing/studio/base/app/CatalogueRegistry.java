@@ -68,8 +68,6 @@ public final class CatalogueRegistry {
     private final Map<Class<?>, Map<NodeName, Object>> childIndex;
     /** RFC 0051 D4 — catalogue FQN → instance, for redirecting flat catalogue URLs. */
     private final Map<String, Catalogue<?>> byClassName;
-    /** RFC 0051 D4 — which query keys identify a node, per app. */
-    private final Map<String, java.util.Set<String>> flatIdentityKeys;
     /** RFC 0051 Phase 6 — the addressing index, keyed on the TYPED identity.
      *
      *  <p>It was keyed on a hand-built {@code app|k=v} string, which is what
@@ -344,7 +342,6 @@ public final class CatalogueRegistry {
         for (Catalogue<?> c : byClass.values()) byName.put(c.getClass().getName(), c);
         this.byClassName = Map.copyOf(byName);
 
-        var keysByApp  = new HashMap<String, java.util.Set<String>>();
         var modulesBy  = new HashMap<String, AppModule<?, ?>>();
         var flat       = new HashMap<NavKey, CataloguePath>();
         var flatDocs   = new HashMap<NavKey, Doc>();
@@ -361,13 +358,6 @@ public final class CatalogueRegistry {
             var nav = bp.leaf().nav();
             String app = nav.app().simpleName();
             modulesBy.putIfAbsent(app, nav.app());
-            // The identity keyspace is still recorded, because /goto needs to
-            // know which inbound args a path already states and which are
-            // refinements to carry across. It is a DERIVED fact now, not the
-            // key — which is the whole difference.
-            Map<String, List<String>> args = argsOf(nav);
-            keysByApp.computeIfAbsent(app, k -> new java.util.TreeSet<>()).addAll(args.keySet());
-
             CataloguePath parentPath = pathOf(bp.parent());
             if (parentPath == null) continue;
             CataloguePath path = parentPath.then(bp.leaf().slug());
@@ -396,8 +386,6 @@ public final class CatalogueRegistry {
             var nav = DocViewers.navOf(d);
             String app = nav.app().simpleName();
             modulesBy.putIfAbsent(app, nav.app());
-            keysByApp.computeIfAbsent(app, k -> new java.util.TreeSet<>())
-                     .addAll(argsOf(nav).keySet());
             // No path here, and none needed. Every doc that HAS a position was
             // indexed by its placement above; the docs reaching this loop are
             // the ones homed through extraDocHomes — tree leaves — which sit in
@@ -412,7 +400,6 @@ public final class CatalogueRegistry {
             // treeLeafTrails, despite having no path.
             flatDocs.putIfAbsent(new NavKey(nav.app().getClass(), nav.params()), d);
         }
-        this.flatIdentityKeys = Map.copyOf(keysByApp);
         this.appsByName       = Map.copyOf(modulesBy);
         this.navToPath        = Map.copyOf(flat);
         this.navToDoc         = Map.copyOf(flatDocs);
@@ -763,28 +750,19 @@ public final class CatalogueRegistry {
      * are misses, not errors: the same answer the string key gave when it
      * found nothing.</p>
      *
-     * <p>ONLY THE IDENTITY ARGS ARE DECODED, and that projection is not
-     * ceremony left over from the string key — it is load-bearing. A Params
-     * record may hold identity and refinement TOGETHER: {@code
-     * PlanAppHost.Params(id, phase)} is one value carrying which plan and
-     * which phase of it to show. Decoding the whole query makes {@code ?phase=6}
-     * part of the identity, so {@code /goto?app=plan&id=…&phase=6} stops
-     * finding the plan it plainly names — measured, not feared. The keyspace
-     * is what each placement's own codec WROTE, so it says exactly which
-     * components a placement is identified by.</p>
+     * <p>THE ARGS ARE TAKEN WHOLE. An earlier version narrowed them to an
+     * identity keyspace first, so that a refinement like {@code ?phase=6}
+     * could ride past the lookup and be re-appended after the redirect. That
+     * keyspace was derived as a UNION OVER PLACEMENTS, which meant one tile
+     * placed at a refinement would have made that refinement identity-bearing
+     * for every other placement of the same app — silently, since the page
+     * still rendered, just at its flat address. The narrowing is gone with the
+     * carrying: an address that says more than a node's identity names no
+     * node, which is the honest answer and the one {@code /goto} now gives.</p>
      */
     private NavKey keyForFlat(String app, Map<String, List<String>> args) {
         AppModule<?, ?> module = (app == null) ? null : appsByName.get(app);
-        if (module == null) return null;
-        var identity = flatIdentityKeys.get(app);
-        if (identity == null) return null;
-        var narrowed = QueryString.params();
-        if (args != null) {
-            for (String k : identity) {
-                for (String v : args.getOrDefault(k, List.of())) QueryString.put(narrowed, k, v);
-            }
-        }
-        return navKeyOf(module, narrowed);
+        return module == null ? null : navKeyOf(module, args == null ? Map.of() : args);
     }
 
     /** Decode args through an app's own codec into the typed key. */
@@ -804,17 +782,6 @@ public final class CatalogueRegistry {
     static String crumbTextOf(Catalogue<?> c) {
         String icon = c.icon();
         return (icon == null || icon.isEmpty()) ? c.name() : icon + " " + c.name();
-    }
-
-    /** Which query keys identify a node for this app — the rest are refinements
-     *  a redirect should carry across rather than absorb. */
-    public java.util.Set<String> flatIdentityKeysFor(String app) {
-        var keys = (app == null) ? null : flatIdentityKeys.get(app);
-        if (keys != null) return keys;
-        // A catalogue is addressed by class rather than through a doc, so it
-        // has no entry in the doc-derived index.
-        return CatalogueAppHost.INSTANCE.simpleName().equals(app)
-                ? java.util.Set.of("id") : java.util.Set.of();
     }
 
     /**

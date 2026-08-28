@@ -37,7 +37,10 @@ import java.util.concurrent.CompletableFuture;
  *   <li><b>Positioned</b> → its catalogue path, the authentic address.</li>
  *   <li><b>Not positioned</b> → the flat render URL. A workspace shell or a
  *       picker has no place in the tree, and inventing one would be worse
- *       than sending the caller to where the thing actually renders.</li>
+ *       than sending the caller to where the thing actually renders. An
+ *       address carrying more than a node's identity — {@code &phase=6} on a
+ *       plan — lands here too, and correctly: it names no node, and this
+ *       route answers only "where does this node live".</li>
  *   <li><b>No app named</b> → 404, rather than a page about nothing.</li>
  * </ol>
  */
@@ -90,27 +93,25 @@ public final class GotoNavigableGetAction
         if (query.app() == null || query.app().isBlank()) {
             return CompletableFuture.failedFuture(notFound("app", "no navigable named"));
         }
+        // RFC 0051 — /goto addresses NODES. The args are taken whole and
+        // matched against the index; nothing is narrowed away first, so an
+        // address carrying more than a node's identity simply names no node
+        // and falls to the flat render alongside the genuinely unpositioned.
+        //
+        // This used to keep an identity keyspace per app so it could split the
+        // args in two, redirect on the identity half and re-append the rest —
+        // carrying ?phase= across the hop. Nothing ever sent one: both emitters
+        // build their href from DocViewers.addressOf(doc).flat(), a canonical
+        // binding with no refinement in it. So the split existed for hand-typed
+        // URLs alone, and paid for it with a keyspace derived as a union over
+        // placements — where one tile placed at a refinement would have made
+        // that refinement identity-bearing for every other placement of the
+        // same app, silently.
         CataloguePath path = registry.pathForFlat(query.app(), query.args());
         String target = (path != null)
-                ? path.toUrl() + QueryString.encodeSuffix(refinements(query))
+                ? path.toUrl()
                 : "/app" + QueryString.encodeSuffix(query.args());
         return CompletableFuture.completedFuture(new HtmlPageContent(redirectHtml(target)));
-    }
-
-    /**
-     * The args that refine rather than identify — {@code phase}, {@code theme}
-     * — which must survive the hop. The identity keys must not: the path
-     * already says which navigable this is, and repeating it invites the two
-     * to disagree.
-     */
-    private Map<String, List<String>> refinements(Query query) {
-        var identity = registry.flatIdentityKeysFor(query.app());
-        var carried = QueryString.params();
-        for (var e : query.args().entrySet()) {
-            if ("app".equals(e.getKey()) || identity.contains(e.getKey())) continue;
-            for (String v : e.getValue()) QueryString.put(carried, e.getKey(), v);
-        }
-        return carried;
     }
 
     private static String redirectHtml(String target) {
