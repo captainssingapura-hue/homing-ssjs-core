@@ -161,12 +161,10 @@ public final class TreeGetAction
                 // All catalogue prelude crumbs link back; even the host
                 // (the catalogue we'd normally render here) gets a link
                 // because the current page is the tree, not the host.
-                @SuppressWarnings("unchecked")
-                Class<? extends Catalogue<?>> cClass = (Class<? extends Catalogue<?>>) c.getClass();
                 String icon = c.icon();
                 String text = (icon == null || icon.isEmpty()) ? c.name() : icon + " " + c.name();
                 sb.append("{\"name\":").append(jstr(text))
-                  .append(",\"url\":") .append(jstr(CatalogueAppHost.urlFor(cClass)))
+                  .append(",\"url\":") .append(jstr(pathUrl(c)))
                   .append('}');
             }
         }
@@ -235,6 +233,26 @@ public final class TreeGetAction
         }
         sb.append("]}");
         return sb.toString();
+    }
+
+    /**
+     * RFC 0051 — a catalogue crumb links to its PATH.
+     *
+     * <p>This prelude minted flat {@code /app?app=catalogue&id=<fqn>} links
+     * unconditionally, so the tree page was the one page in either studio
+     * whose breadcrumb still navigated by raw address — while the correct
+     * trail was being stamped into that same page and discarded, because
+     * CatalogueHostRenderer builds its header from this payload rather than
+     * from {@code chrome}. Same shape as {@code CatalogueGetAction.pathUrl}:
+     * the path when the node has one, the flat address when it does not, which
+     * is what keeps an unpositioned catalogue reachable rather than linkless.</p>
+     */
+    private String pathUrl(Catalogue<?> node) {
+        var path = (catalogueRegistry == null) ? null : catalogueRegistry.pathOf(node);
+        if (path != null) return path.toUrl();
+        @SuppressWarnings("unchecked")
+        Class<? extends Catalogue<?>> cls = (Class<? extends Catalogue<?>>) node.getClass();
+        return CatalogueAppHost.urlFor(cls);
     }
 
     private static String treeUrl(String id, String path) {
