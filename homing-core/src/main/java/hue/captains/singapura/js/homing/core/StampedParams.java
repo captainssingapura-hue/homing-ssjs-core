@@ -7,12 +7,13 @@ import java.util.Map;
  * RFC 0051 — render an app's params as a JS value the server puts into the
  * page, so the client never parses its own URL.
  *
- * <p>Today {@code ParamsWriter} emits JS that reads
+ * <p>{@code ParamsWriter} used to emit JS that read
  * {@code window.location.search} at load time. The server already knows the
  * params — it resolved them to answer the request at all — so the client
- * re-deriving them is a second implementation of the same decision, running
- * against a string the server has already interpreted. Stamping removes the
- * second one.</p>
+ * re-deriving them was a second implementation of the same decision, running
+ * against a string the server had already interpreted. Stamping removed the
+ * second one, and the writer is now deleted rather than merely bypassed: this
+ * is the only source of an app's params.</p>
  *
  * <p><b>Values, not a schema.</b> D5 chose a typed-constructor stamp — a
  * frozen ES class mirroring the Params record. That class is produced by
@@ -20,9 +21,9 @@ import java.util.Map;
  * "schema-by-reflection at request time" the Codegen Over Reflection doctrine
  * bans. So this emits values only, built straight from
  * {@link ParamCodec#to}: no reflection on the request path. The typed class
- * belongs with the module's generated JS, where {@code ParamsWriter}'s
- * build-time reflection already lives, and the two should be unified when
- * that writer is retired.</p>
+ * was to have been unified with {@code ParamsWriter}'s build-time reflection;
+ * with that writer deleted there is nothing left to unify with, so a typed
+ * stamp would now be a new generator rather than a merge of two.</p>
  */
 public final class StampedParams {
 

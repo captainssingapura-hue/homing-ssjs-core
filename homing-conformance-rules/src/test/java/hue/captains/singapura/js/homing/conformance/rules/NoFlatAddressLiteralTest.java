@@ -63,12 +63,15 @@ class NoFlatAddressLiteralTest {
      * pattern that quietly tolerates any literal appearing inside a string
      * that looks generated.</p>
      *
-     * <p>It is not permanent. The generated nav function is RFC 0001
-     * machinery from before the server stamped anything into the page, and it
-     * retires with {@code ParamsWriter} — the same open task, for the same
-     * reason: the client no longer needs to compute what the server already
-     * knows. When that lands, this exemption goes and the rule reads "one
-     * minter".</p>
+     * <p>This was expected to retire alongside {@code ParamsWriter}, as the
+     * other half of RFC 0001's generated-client machinery. It did not.
+     * ParamsWriter answered "what are my params", which the server now knows
+     * and stamps, so it was deleted outright. NavWriter answers "what is the
+     * URL of another app", which the server is not asked and which a page
+     * still needs at click time — a different question that happens to share
+     * an origin. So the exemption is standing, not pending, and the rule
+     * reads "one minter per language" for as long as a page mints links of
+     * its own.</p>
      */
     private static final String JS_MINTER = "NavWriter.java";
 

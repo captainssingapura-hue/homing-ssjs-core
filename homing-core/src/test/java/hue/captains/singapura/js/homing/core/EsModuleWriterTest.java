@@ -118,7 +118,7 @@ class EsModuleWriterTest {
         }
     }
 
-    /** Same params, no codec — keeps deriving them from the URL. */
+    /** Same params, no codec — and still no URL derivation, because there is none. */
     record UncodedApp() implements AppModule<Coded, UncodedApp> {
         static final UncodedApp INSTANCE = new UncodedApp();
         record appMain() implements AppModule._AppMain<Coded, UncodedApp> {}
@@ -146,14 +146,20 @@ class EsModuleWriterTest {
         assertTrue(lines.stream().noneMatch(l -> l.contains("URLSearchParams")), lines.toString());
     }
 
+    /**
+     * The inverse of what this asserted before. Until ParamsWriter was deleted
+     * an app without a codec kept its URL-derived const, because the migration
+     * was per-app and a bypass cannot skip what is not there. Now there is no
+     * generator at all, so declaring a codec is what makes params ARRIVE — not
+     * what suppresses a second source of them.
+     */
     @Test
-    void uncodedApp_keepsDerivingParamsFromTheUrl() {
-        // The migration is per-app; an app without a codec is untouched.
+    void uncodedApp_derivesNothingEither_becauseThereIsNoGenerator() {
         ContentProvider<UncodedApp> content = () -> List.of("function appMain(el) {}");
         var lines = new EsModuleWriter<>(UncodedApp.INSTANCE, content, resolver,
                 ExportWriter.INSTANCE, importsResolver).writeModule();
 
-        assertTrue(lines.stream().anyMatch(l -> l.contains("const params")), lines.toString());
-        assertTrue(lines.stream().anyMatch(l -> l.contains("URLSearchParams")), lines.toString());
+        assertTrue(lines.stream().noneMatch(l -> l.contains("const params")), lines.toString());
+        assertTrue(lines.stream().noneMatch(l -> l.contains("URLSearchParams")), lines.toString());
     }
 }
