@@ -661,58 +661,47 @@ public final class CatalogueRegistry {
     }
 
     /**
-     * RFC 0051 Phase 5 — the page chrome for a flat {@code (app, args)}: the
-     * title and the breadcrumb trail, resolved server-side.
+     * RFC 0051 — the crumbs for a RESOLVED path.
      *
-     * <p>This is the same answer {@code /doc-refs} and {@code /app-refs} give,
-     * arrived at without a round trip. The chrome fetching its own crumb after
-     * render is what produces the pop-in: the page paints, then the trail
-     * appears. The server already resolved the node to answer the request, so
-     * the fetch was re-deriving something it had.</p>
-     *
-     * <p>Returns null when the address names nothing positioned — an
-     * unpositioned app has no trail to state, and inventing one would be
-     * worse than leaving the chrome to say only where it is.</p>
+     * <p>The path route already walked the tree to answer the request, so it
+     * holds the node; this turns that node into a trail without going back
+     * through a string. The flat route cannot use it — it has no node, and
+     * under D4 it renders a permalink rather than a page, so it states no
+     * position and shows none.</p>
      */
-    public List<Crumb> chromeCrumbsForFlat(String app, Map<String, List<String>> args) {
-        Doc doc = flatDoc(app, args);
-        Catalogue<?> node = (doc == null) ? catalogueForFlat(app, args) : docHome.get(doc.uuid());
-        // RFC 0051 Phase 6 — a bound leaf with no content has no doc to be
-        // found by, so look it up by its binding instead. Without this an app
-        // page renders unstamped: it has a position and a tile, but nothing
-        // that answers "and what is above you?".
-        if (node == null) {
-            var placement = boundPlacement(app, args);
-            if (placement != null) {
-                var out = new ArrayList<Crumb>();
-                for (Catalogue<?> c : breadcrumbs(placement.parent())) {
-                    CataloguePath p = pathOf(c);
-                    out.add(new Crumb(crumbTextOf(c), p == null ? "" : p.toUrl()));
+    public List<Crumb> crumbsFor(PathResolution resolution) {
+        return switch (resolution) {
+            case PathResolution.ToCatalogue(var p, var catalogue) -> {
+                var out = ancestorCrumbs(catalogue);
+                // A catalogue page's last crumb IS the page. Blank its href for
+                // the same reason a doc's is blank: you are already there, and a
+                // self-link in a trail is a dead control.
+                if (!out.isEmpty()) {
+                    Crumb self = out.remove(out.size() - 1);
+                    out.add(new Crumb(self.text(), ""));
                 }
-                var leaf = placement.leaf();
-                out.add(new Crumb(leaf.content() != null ? leaf.content().title()
-                                                        : leaf.nav().name(), ""));
-                return out;
+                yield out;
             }
-        }
-        if (node == null) return null;
+            case PathResolution.ToLeaf(var p, var parent, var doc, var nav) -> {
+                var out = ancestorCrumbs(parent);
+                out.add(new Crumb(doc != null ? doc.title()
+                                              : (nav != null ? nav.name() : ""), ""));
+                yield out;
+            }
+            case PathResolution.Miss ignored -> null;
+        };
+    }
+
+    /** Root down to {@code node}, each linked to its own path. */
+    private List<Crumb> ancestorCrumbs(Catalogue<?> node) {
         var out = new ArrayList<Crumb>();
         for (Catalogue<?> c : breadcrumbs(node)) {
             CataloguePath p = pathOf(c);
             out.add(new Crumb(crumbTextOf(c), p == null ? "" : p.toUrl()));
         }
-        if (doc != null) {
-            out.add(new Crumb(doc.title(), ""));
-        } else if (!out.isEmpty()) {
-            // A catalogue page's last crumb IS the page. Blank its href for the
-            // same reason a doc's is blank, and the same reason
-            // CatalogueGetAction blanks it: you are already there, and a
-            // self-link in a trail is a dead control.
-            Crumb self = out.remove(out.size() - 1);
-            out.add(new Crumb(self.text(), ""));
-        }
         return out;
     }
+
 
     /**
      * The doc a flat {@code (app, args)} address names, or null.
@@ -726,11 +715,7 @@ public final class CatalogueRegistry {
     }
 
     /** The doc a flat address names, if any. */
-    /** The bound leaf placed at this flat address, or null. */
-    private BoundPlacement boundPlacement(String app, Map<String, List<String>> args) {
-        var key = keyForFlat(app, args);
-        return key == null ? null : navToLeaf.get(key);
-    }
+
 
     private Doc flatDoc(String app, Map<String, List<String>> args) {
         var key = keyForFlat(app, args);
@@ -769,13 +754,6 @@ public final class CatalogueRegistry {
     private static NavKey navKeyOf(AppModule<?, ?> module, Map<String, List<String>> args) {
         AppModule._Param params = module.paramCodec().from(args).orNull();
         return params == null ? null : new NavKey(module.getClass(), params);
-    }
-
-    /** The catalogue a flat address names, for the catalogue app. */
-    private Catalogue<?> catalogueForFlat(String app, Map<String, List<String>> args) {
-        if (!CatalogueAppHost.INSTANCE.simpleName().equals(app)) return null;
-        String id = QueryString.first(args, "id");
-        return id == null ? null : byClassName.get(id);
     }
 
     /** RFC 0009 — crumb text is the icon glyph plus the name, when there is one. */

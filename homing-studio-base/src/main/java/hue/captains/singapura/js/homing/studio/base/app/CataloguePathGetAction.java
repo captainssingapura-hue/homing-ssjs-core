@@ -85,16 +85,25 @@ public final class CataloguePathGetAction
         }
         PathResolution resolved = registry.resolve(query.path());
         return switch (resolved) {
+            // RFC 0051 — typed, like the leaf branch beside it. This used to
+            // go through the flat delegate, which meant a catalogue page got
+            // its crumbs from a lookup by string; with the ChromeResolver gone
+            // there is nothing to look them up with, and nothing needs to —
+            // this route resolved the node to get here.
             case PathResolution.ToCatalogue(var path, var catalogue) ->
-                    render(CatalogueAppHost.INSTANCE.simpleName(),
-                           QueryString.of("id", catalogue.getClass().getName()), query);
+                    renderTyped(new Navigable<>(
+                                    CatalogueAppHost.INSTANCE,
+                                    new CatalogueAppHost.Params(
+                                            catalogue.getClass().getName(), null),
+                                    catalogue.name(), ""),
+                            query, resolved);
 
             case PathResolution.ToLeaf(var path, var parent, Doc doc, var nav) -> {
                 // RFC 0051 Phase 6 — a bound leaf states its app and params, so
                 // nothing is derived and nothing is parsed: the placement said
                 // how it opens, and this reads what it said.
                 if (nav != null) {
-                    yield renderTyped(nav, query);
+                    yield renderTyped(nav, query, resolved);
                 }
                 // The pre-Phase-6 form: only a doc, so the address must still be
                 // derived from its type. Goes when the last OfDoc placement does.
@@ -144,7 +153,8 @@ public final class CataloguePathGetAction
      */
     private <P extends hue.captains.singapura.js.homing.core.AppModule._Param,
              M extends hue.captains.singapura.js.homing.core.AppModule<P, M>>
-            CompletableFuture<HtmlPageContent> renderTyped(Navigable<P, M> nav, PathQuery query) {
+            CompletableFuture<HtmlPageContent> renderTyped(Navigable<P, M> nav, PathQuery query,
+                                                           PathResolution resolved) {
 
         var merged = QueryString.params();
         query.query().forEach((k, values) -> values.forEach(v -> QueryString.put(merged, k, v)));
@@ -170,8 +180,19 @@ public final class CataloguePathGetAction
                 hue.captains.singapura.js.homing.core.ParamCodec.Decoded.Ok<P>(P p)) {
             effective = p;
         }
+        // RFC 0051 — the crumbs come from the node this route already
+        // resolved, not from a lookup by string. The path IS the trail, so
+        // walking it twice was the last place a breadcrumb was a second
+        // derivation rather than the address itself.
+        var crumbs = registry.crumbsFor(resolved);
+        var stamped = (crumbs == null) ? null : new java.util.ArrayList<Map.Entry<String, String>>();
+        if (crumbs != null) {
+            for (var c : crumbs) {
+                stamped.add(Map.entry(c.text(), c.href() == null ? "" : c.href()));
+            }
+        }
         return pageAction.executeTyped(nav.app(), effective,
-                query.theme(), query.locale(), merged);
+                query.theme(), query.locale(), merged, stamped);
     }
 
     private CompletableFuture<HtmlPageContent> render(

@@ -59,18 +59,9 @@ public class HomingActionRegistry implements ActionRegistry<RoutingContext> {
     public HomingActionRegistry(ModuleNameResolver nameResolver, SimpleAppResolver appResolver,
                                 ResourceReader resourceReader, ThemeRegistry themeRegistry,
                                 AppMeta meta, java.util.Set<String> servable) {
-        this(nameResolver, appResolver, resourceReader, themeRegistry, meta, servable, null);
-    }
-
-    /** RFC 0051 Phase 5 — with a {@link AppHtmlGetAction.ChromeResolver} the page
-     *  carries its own breadcrumb, so no client fetches one after render. */
-    public HomingActionRegistry(ModuleNameResolver nameResolver, SimpleAppResolver appResolver,
-                                ResourceReader resourceReader, ThemeRegistry themeRegistry,
-                                AppMeta meta, java.util.Set<String> servable,
-                                AppHtmlGetAction.ChromeResolver chrome) {
         if (themeRegistry == null) themeRegistry = ThemeRegistry.EMPTY;
         if (meta == null) meta = AppMeta.DEFAULT;
-        this.appAction = new AppHtmlGetAction(nameResolver, appResolver, themeRegistry, meta, chrome);
+        this.appAction = new AppHtmlGetAction(nameResolver, appResolver, themeRegistry, meta);
         this.moduleAction = new EsModuleGetAction(nameResolver, resourceReader, servable);
         // Base registry serves a typed-only CssContentGetAction with no impls
         // and no default theme — every /css-content request 404s unless an

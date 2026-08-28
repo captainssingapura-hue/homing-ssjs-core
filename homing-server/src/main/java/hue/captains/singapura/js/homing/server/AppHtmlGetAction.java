@@ -38,25 +38,7 @@ public class AppHtmlGetAction
     private final ThemeRegistry themeRegistry;     // RFC 0002-ext1 — for the theme picker widget
     private final AppMeta meta;                    // downstream-supplied brand label
 
-    /**
-     * RFC 0051 Phase 5 — resolves the page's breadcrumb from its
-     * {@code (app, args)}, server-side.
-     *
-     * <p>A function rather than a registry reference because the catalogue
-     * tree lives a layer above this action; the page renderer needs the
-     * ANSWER, not the machinery that produces it. Null in a studio with no
-     * catalogues, where there is no trail to state.</p>
-     */
-    @FunctionalInterface
-    public interface ChromeResolver {
-        /** Crumbs for this address — {@code [{text, href}, …]}, root first,
-         *  the last one being the page itself with an empty href. Null when
-         *  the address names nothing positioned. */
-        java.util.List<java.util.Map.Entry<String, String>> crumbsFor(
-                String app, java.util.Map<String, java.util.List<String>> args);
-    }
 
-    private final ChromeResolver chrome;           // nullable
 
     public AppHtmlGetAction(ModuleNameResolver nameResolver) {
         this(nameResolver, null, ThemeRegistry.EMPTY, AppMeta.DEFAULT);
@@ -70,20 +52,24 @@ public class AppHtmlGetAction
         this(nameResolver, appResolver, themeRegistry, AppMeta.DEFAULT);
     }
 
+    /**
+     * RFC 0051 — no ChromeResolver. This action used to take one, a function
+     * from {@code (app, args)} to a trail, so a flat render could show the
+     * breadcrumb of a position its own URL did not state. That was the last
+     * second derivation in the system: everywhere else the crumb IS the path,
+     * read off the address, and here alone it was looked up.
+     *
+     * <p>The path route resolves the node anyway and now passes the crumbs it
+     * already holds. The flat route passes none, which D4 makes honest — /app
+     * renders rather than redirects, so a raw address is a permalink, and a
+     * permalink states no position.</p>
+     */
     public AppHtmlGetAction(ModuleNameResolver nameResolver, SimpleAppResolver appResolver,
                              ThemeRegistry themeRegistry, AppMeta meta) {
-        this(nameResolver, appResolver, themeRegistry, meta, null);
-    }
-
-    /** RFC 0051 Phase 5 — with a {@link ChromeResolver}, the page carries its
-     *  own breadcrumb instead of the chrome fetching one after render. */
-    public AppHtmlGetAction(ModuleNameResolver nameResolver, SimpleAppResolver appResolver,
-                             ThemeRegistry themeRegistry, AppMeta meta, ChromeResolver chrome) {
         this.nameResolver = nameResolver;
         this.appResolver = appResolver;
         this.themeRegistry = themeRegistry != null ? themeRegistry : ThemeRegistry.EMPTY;
         this.meta = meta != null ? meta : AppMeta.DEFAULT;
-        this.chrome = chrome;
     }
 
     @Override
@@ -162,7 +148,13 @@ public class AppHtmlGetAction
         var decoded = app.paramCodec().from(query.all());
         P params = (decoded instanceof hue.captains.singapura.js.homing.core.ParamCodec.Decoded.Ok<P>(P p))
                 ? p : null;
-        return executeTyped(app, params, query.theme(), query.locale(), query.all());
+        // RFC 0051 — no crumbs. A flat address states no position, so this
+        // route shows none: D4 kept /app as a render route rather than a
+        // redirect, which makes a raw (app, args) a PERMALINK rather than a
+        // page in the tree. Looking a trail up here would be the last second
+        // derivation in the system — a claim about where you are that the
+        // address does not make. /goto is what answers that question.
+        return executeTyped(app, params, query.theme(), query.locale(), query.all(), null);
     }
 
     /**
@@ -192,7 +184,8 @@ public class AppHtmlGetAction
             CompletableFuture<HtmlPageContent> executeTyped(
                     hue.captains.singapura.js.homing.core.AppModule<P, ?> app,
                     P params, String theme, String locale,
-                    java.util.Map<String, java.util.List<String>> allQuery) {
+                    java.util.Map<String, java.util.List<String>> allQuery,
+                    java.util.List<java.util.Map.Entry<String, String>> crumbs) {
 
         AppQuery query = new AppQuery(app.simpleName(), null, theme, locale,
                 allQuery == null ? java.util.Map.of() : allQuery);
@@ -217,7 +210,7 @@ public class AppHtmlGetAction
         // by the chrome after paint. The server walked the tree to answer this
         // request; asking the browser to ask again is what makes the trail
         // pop in a beat late.
-        String stampedCrumbs = stampCrumbs(query);
+        String stampedCrumbs = stampCrumbs(crumbs);
 
         String baseModuleUrl = nameResolver.resolve(app).basePath();
         String themeJs  = effectiveTheme != null ? "\"" + effectiveTheme + "\"" : "null";
@@ -1350,9 +1343,7 @@ public class AppHtmlGetAction
      * not another is a page whose safety depends on knowing which is which.
      * One rule for everything entering a script.</p>
      */
-    private String stampCrumbs(AppQuery query) {
-        if (chrome == null || query.simpleName() == null) return null;
-        var crumbs = chrome.crumbsFor(query.simpleName(), query.all());
+    private String stampCrumbs(java.util.List<java.util.Map.Entry<String, String>> crumbs) {
         if (crumbs == null || crumbs.isEmpty()) return null;
         var sb = new StringBuilder("Object.freeze([");
         boolean first = true;

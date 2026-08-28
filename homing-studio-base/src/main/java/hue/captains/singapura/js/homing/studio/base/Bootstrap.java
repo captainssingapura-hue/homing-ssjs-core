@@ -204,67 +204,25 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
         // stamp a leveled page, and it depends only on the studio list.
         final Catalogue<?> openRoot = studios.get(0).home();
 
-        hue.captains.singapura.js.homing.server.AppHtmlGetAction.ChromeResolver chromeResolver =
-                (appName, args) -> {
-                    CatalogueRegistry reg = treeHolder.get();
-                    if (reg == null) return null;
-
-                    // RFC 0051 Phase 6 — the leveled-Open page. It is addressed
-                    // by a child-index path rather than by an identity, so no
-                    // index can find it and it rendered UNSTAMPED: the last page
-                    // in the framework that had to fetch its own trail.
-                    //
-                    // D9 defers the leveled ADDRESSING SCHEME to RFC 0040, not
-                    // the stamp. Nothing about the URL changes here; the same
-                    // resolution /open-refs performs at fetch time runs at
-                    // render time instead, which is the whole of this RFC's
-                    // argument applied to the one page it had not reached.
-                    var leveled = levelPathOf(args);
-                    if (leveled != null) {
-                        var found = hue.captains.singapura.js.homing.studio.base.tree
-                                .ForestPathResolver.INSTANCE.resolve(openRoot, leveled);
-                        if (found.isPresent()) {
-                            var out = new ArrayList<Map.Entry<String, String>>();
-                            for (var c : found.get().trail()) {
-                                out.add(Map.entry(c.text(), c.href() == null ? "" : c.href()));
-                            }
-                            out.add(Map.entry(found.get().doc().title(), ""));
-                            return out;
-                        }
-                    }
-
-                    // RFC 0016 + RFC 0051 — a tree-leaf doc's trail is longer
-                    // than its catalogue chain: it continues INSIDE the content
-                    // tree, from the tree root down to the leaf's branch. The
-                    // registry cannot know that — the tree is not the catalogue
-                    // — so the enriched trail is consulted first. Without this
-                    // the stamp silently shortened those crumbs from
-                    // "… / Demo Studio / Animals & Halloween / Animals / Turtle"
-                    // to "… / Demo Studio / Turtle", which is a regression the
-                    // stamp introduced against what /doc-refs had always served.
-                    var doc = reg.docForFlat(appName, args);
-                    if (doc != null) {
-                        var trail = trailHolder.get().get(doc.uuid());
-                        if (trail != null && !trail.isEmpty()) {
-                            var enriched = new ArrayList<Map.Entry<String, String>>();
-                            for (var c : trail) {
-                                enriched.add(Map.entry(c.text(), c.href() == null ? "" : c.href()));
-                            }
-                            enriched.add(Map.entry(doc.title(), ""));
-                            return enriched;
-                        }
-                    }
-
-                    var crumbs = reg.chromeCrumbsForFlat(appName, args);
-                    if (crumbs == null) return null;
-                    var out = new ArrayList<Map.Entry<String, String>>();
-                    for (var c : crumbs) out.add(Map.entry(c.text(), c.href() == null ? "" : c.href()));
-                    return out;
-                };
-
+        // RFC 0051 — the ChromeResolver is gone. This was a lambda from
+        // (app, args) to a trail, handed to AppHtmlGetAction so a FLAT render
+        // could show the breadcrumb of a position its own URL did not state.
+        // That was the last second derivation in the system: everywhere else
+        // the crumb IS the path, read off the address; here alone it was looked
+        // up. D4 makes a raw (app, args) a permalink rather than a page, and a
+        // permalink states no position — so it shows none, and /goto is what
+        // answers "where does this live". The path route resolves the node
+        // anyway and passes the crumbs it already holds.
+        //
+        // Sacrificed with it, deliberately and recorded in RFC 0053: the
+        // leveled-Open stamp and the enriched tree-leaf trails. Both existed
+        // to give a flat address a trail, and both are tree-shaped — a
+        // ContentTree cannot hold a position, so its pages were flat and needed
+        // rescuing. RFC 0053 gives those nodes real paths, at which point they
+        // need no rescue.
         var inner = new HomingActionRegistry(
                 nameResolver, appResolver, params.resourceReader(),
-                themeRegistry, appMeta, fixtures.servableModuleClasses(), chromeResolver);
+                themeRegistry, appMeta, fixtures.servableModuleClasses());
 
         // --- Doc registry — walk DocProviders from apps AND catalogues (RFC 0004 + RFC 0005).
         var docProviders = new ArrayList<DocProvider>();
