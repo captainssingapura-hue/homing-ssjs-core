@@ -55,7 +55,7 @@ function renderCatalogueHost(props) {
             if (!r.ok) throw new Error("HTTP " + r.status);
             return r.json();
         })
-        .then(function(data) { _renderCataloguePage(root, data, brandFallback); })
+        .then(function(data) { _renderCataloguePage(root, data, brandFallback, props.crumbs); })
         .catch(function(err) {
             var errEl = document.createElement("div");
             css.addClass(errEl, st_error);
@@ -69,20 +69,24 @@ function renderCatalogueHost(props) {
     return root;
 }
 
-function _renderCataloguePage(root, data, brandFallback) {
+function _renderCataloguePage(root, data, brandFallback, stampedCrumbs) {
     var brand = data.brand || brandFallback;
 
     // Browser tab title — `<catalogue> · <brand>`. Same pattern as DocReader
     // and PlanHost. Replaces the static default served by AppHtmlGetAction.
     document.title = data.name + (brand && brand.label ? " · " + brand.label : "");
 
-    // Convert the registry-derived breadcrumb chain to the Header's expected shape.
-    // The last crumb (current page) gets no href; preceding ones link to their
-    // catalogue URL.
-    var crumbs = (data.breadcrumbs || []).map(function(c, i, arr) {
-        if (i === arr.length - 1) return { text: c.name };
-        return { text: c.name, href: c.url };
-    });
+    // RFC 0051 — the server's stamp, taken whole. This used to rebuild the
+    // trail from data.breadcrumbs, which made this page the last one whose
+    // breadcrumb was resolved after paint, and made the app the author of a
+    // statement about where it sits — a statement only the catalogue can make.
+    // The two agree byte for byte today, so this is the same trail arriving
+    // earlier and from the one place entitled to say it.
+    //
+    // No stamp means no CatalogueRegistry on this studio, and then the payload
+    // has no chain either: both come from the same registry. So the fallback
+    // is not a second trail, it is the absence of one — brand only.
+    var crumbs = (stampedCrumbs && stampedCrumbs.length) ? stampedCrumbs.slice() : [];
 
     var children = [];
 

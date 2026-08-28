@@ -104,10 +104,14 @@ public record PlanAppHost() implements AppModule<PlanAppHost.Params, PlanAppHost
     public List<String> selfContent(ModuleNameResolver nameResolver) {
         return List.of(
                 // RFC 0051 - params from the server; a /cat path has no query.
-                "function appMain(rootElement, params) {",
+                // RFC 0051 — chrome is handed in, never built. The stamp ends
+                // at the plan, which is where this page sits whatever ?phase=
+                // says; moving between phases is this app's own navigation.
+                "function appMain(rootElement, params, chrome) {",
                 "    rootElement.replaceChildren(renderPlanHost({",
                 "        planId: params.id,",
-                "        phase:  params.phase",
+                "        phase:  params.phase,",
+                "        crumbs: chrome && chrome.crumbs",
                 "    }));",
                 "}"
         );

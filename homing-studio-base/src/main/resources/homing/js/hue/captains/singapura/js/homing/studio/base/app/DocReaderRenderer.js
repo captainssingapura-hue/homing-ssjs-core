@@ -1,7 +1,7 @@
 // =============================================================================
 // DocReaderRenderer — shared renderer for DocReader.
 //
-// renderDocReader({ docId, brand, crumbsAbove }) → Node
+// renderDocReader({ docId, brand, crumbs }) → Node
 //
 // Fetches /doc?id=<docId> (UUID — typed Doc reference per RFC 0004), parses
 // with marked.js, installs via Range.createContextualFragment (no innerHTML
@@ -51,7 +51,6 @@ function _collectHeadings(rootEl) {
 function renderDocReader(props) {
     var docId       = props.docId;
     var brand       = props.brand;
-    var crumbsAbove = props.crumbsAbove || [];
 
     var root = document.createElement("div");
     css.addClass(root, st_root);
@@ -71,7 +70,10 @@ function renderDocReader(props) {
         crumbs = stamped.slice();
         leafCrumb = crumbs[crumbs.length - 1];
     } else {
-        for (var i = 0; i < crumbsAbove.length; i++) crumbs.push(crumbsAbove[i]);
+        // No stamp — a studio with no CatalogueRegistry, where the framework
+        // has no trail to state. The page says what it is and nothing about
+        // where it sits, which is the honest answer rather than a manufactured
+        // one. RFC 0051: an app never builds a trail of its own.
         leafCrumb = { text: docId ? "Loading…" : "(no document)" };
         crumbs.push(leafCrumb);
     }

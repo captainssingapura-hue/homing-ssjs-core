@@ -106,12 +106,18 @@ public record TreeAppHost() implements AppModule<TreeAppHost.Params, TreeAppHost
                 // decision already made, run against a string already parsed.
                 // The generated URL-reading const is suppressed for apps with a
                 // codec, so this is the only params in scope.
-                "function appMain(rootElement, params) {",
+                // RFC 0051 — chrome is handed in, never built. The stamp ends
+                // at this tree's catalogue leaf whatever ?path= says: a tree's
+                // internal nodes have no catalogue position, so moving among
+                // them is this app's own navigation to render, not a change of
+                // where the page sits.
+                "function appMain(rootElement, params, chrome) {",
                 "    var apiUrl = '/tree?id=' + encodeURIComponent(params.id);",
                 "    if (params.path) apiUrl += '&path=' + encodeURIComponent(params.path);",
                 "    rootElement.replaceChildren(renderCatalogueHost({",
                 "        catalogueId: params.id,",
-                "        apiUrl:      apiUrl",
+                "        apiUrl:      apiUrl,",
+                "        crumbs:      chrome && chrome.crumbs",
                 "    }));",
                 "}"
         );

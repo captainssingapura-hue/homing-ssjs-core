@@ -124,10 +124,14 @@ public record CatalogueAppHost() implements AppModule<CatalogueAppHost.Params, C
                 // RFC 0051 - params arrive from the server. Required here, not
                 // merely preferred: a /cat path URL has no query string for a
                 // client-side parse to read.
-                "function appMain(rootElement, params) {",
+                // RFC 0051 — chrome is handed in, never built. The renderer
+                // takes these crumbs whole; it has no business composing a
+                // statement about where this page sits.
+                "function appMain(rootElement, params, chrome) {",
                 "    rootElement.replaceChildren(renderCatalogueHost({",
                 "        catalogueId: params.id,",
-                "        context:     params.context",
+                "        context:     params.context,",
+                "        crumbs:      chrome && chrome.crumbs",
                 "    }));",
                 "}"
         );

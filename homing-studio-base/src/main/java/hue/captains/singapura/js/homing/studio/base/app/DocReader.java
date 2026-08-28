@@ -123,11 +123,13 @@ public record DocReader() implements AppModule<DocReader.Params, DocReader>, Sel
         // brandLabel() / homeUrl() — those defaults exist as a back-compat
         // safety net for the /brand action when no StudioBrand is registered.
         //
-        // RFC 0005-ext2: the breadcrumb chain is supplied by /doc-refs (typed
-        // catalogue chain — root → ... → containing catalogue). We pass an
-        // empty crumbsAbove here; the renderer overrides it when info.breadcrumbs
-        // arrives. Studios with no catalogues registered get no chain (legacy
-        // behaviour — the brand link in the header is the only nav).
+        // RFC 0051 — the breadcrumb is the server's stamp and nothing else.
+        // This used to pass an empty crumbsAbove for the renderer to fill from
+        // /doc-refs' breadcrumbs array; that array left /doc-refs in phase 5
+        // and the hook has been inert since, so it goes with the comment that
+        // described it. Studios with no catalogues registered get no chain —
+        // the brand link in the header is the only nav, which is the honest
+        // answer when there is no catalogue to be positioned in.
         return List.of(
                 // RFC 0051 - params arrive from the server; a /cat path has no query.
                 "function appMain(rootElement, params, chrome) {",
@@ -138,8 +140,7 @@ public record DocReader() implements AppModule<DocReader.Params, DocReader>, Sel
                 // RFC 0051 Phase 5 — the server-stamped trail. Present for any
                 // positioned doc; absent for one that has no place in the tree,
                 // where the renderer falls back to its own late-fill.
-                "            crumbs:      chrome && chrome.crumbs,",
-                "            crumbsAbove: []",
+                "            crumbs:      chrome && chrome.crumbs",
                 "        }));",
                 "    });",
                 "}"

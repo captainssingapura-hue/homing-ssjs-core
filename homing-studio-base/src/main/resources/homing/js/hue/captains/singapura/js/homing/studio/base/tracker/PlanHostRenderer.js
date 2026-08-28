@@ -19,6 +19,7 @@
 function renderPlanHost(props) {
     var planId = props.planId;
     var phase  = props.phase;
+    var stampedCrumbs = props.crumbs;
 
     var root = document.createElement("div");
     css.addClass(root, st_root);
@@ -52,9 +53,9 @@ function renderPlanHost(props) {
             document.title = subject
                 + (data.brand && data.brand.label ? " · " + data.brand.label : "");
             if (phase) {
-                _renderStep(root, data, planId, phase);
+                _renderStep(root, data, planId, phase, stampedCrumbs);
             } else {
-                _renderIndex(root, data, planId);
+                _renderIndex(root, data, planId, stampedCrumbs);
             }
         })
         .catch(function(err) {
@@ -77,33 +78,34 @@ function _phaseUrl(data, planId, phaseId) {
     return base + (base.indexOf("?") >= 0 ? "&" : "?") + "phase=" + encodeURIComponent(phaseId);
 }
 
-function _brandHeader(data, crumbsAfter) {
+function _brandHeader(data, stampedCrumbs) {
     var brand = data.brand || { label: "studio", homeUrl: "/" };
-    // RFC 0005-ext2: the server now resolves the typed catalogue chain
-    // (root → ... → containing catalogue, typically Journeys) and emits it as
-    // data.breadcrumbs. The plan name is appended as the leaf crumb; the
-    // phase label (when on a phase view) appends after that.
-    var crumbs = [];
-    if (data.breadcrumbs && data.breadcrumbs.length > 0) {
-        for (var i = 0; i < data.breadcrumbs.length; i++) crumbs.push(data.breadcrumbs[i]);
-    } else {
-        // Legacy fallback — no CatalogueRegistry on this studio.
-        crumbs.push({ text: brand.label, href: brand.homeUrl });
-    }
-    crumbs.push({ text: data.name });
-    if (crumbsAfter && crumbsAfter.length) {
-        crumbs[crumbs.length - 1].href = crumbsAfter[0].selfUrl;
-        for (var j = 0; j < crumbsAfter.length; j++) crumbs.push({ text: crumbsAfter[j].text });
-    }
+    // RFC 0051 — the server's stamp, taken whole.
+    //
+    // This used to compose the trail itself: data.breadcrumbs for the
+    // ancestors, data.name appended as the plan's own crumb, and on a phase
+    // view a "Phase N" crumb after that with the plan name turned into a link
+    // back to the index. Two of those three were the app describing a position
+    // the catalogue never gave it. The stamp already ends at the plan, which
+    // IS where this page sits — being at phase 6 of a plan is being at that
+    // plan — so moving between phases is this app's own navigation to render.
+    //
+    // No stamp means no CatalogueRegistry on this studio, and then
+    // data.breadcrumbs is absent too: PlanGetAction emits brand and chain
+    // together, both gated on the registry. So the fallback is not a second
+    // trail, it is the absence of one.
+    var crumbs = (stampedCrumbs && stampedCrumbs.length)
+            ? stampedCrumbs.slice()
+            : [{ text: brand.label, href: brand.homeUrl }, { text: data.name }];
     return Header({
         brand:  { href: brand.homeUrl, label: brand.label, logo: brand.logo },
         crumbs: crumbs
     });
 }
 
-function _renderIndex(root, data, planId) {
+function _renderIndex(root, data, planId, stampedCrumbs) {
     var children = [];
-    children.push(_brandHeader(data, null));
+    children.push(_brandHeader(data, stampedCrumbs));
 
     var main = document.createElement("div");
     css.addClass(main, st_main);
@@ -239,7 +241,7 @@ function _decisionBody(d) {
     return box;
 }
 
-function _renderStep(root, data, planId, phaseId) {
+function _renderStep(root, data, planId, phaseId, stampedCrumbs) {
     var phase = null;
     var phaseIdx = -1;
     for (var i = 0; i < data.phases.length; i++) {
@@ -254,7 +256,7 @@ function _renderStep(root, data, planId, phaseId) {
     }
 
     var children = [];
-    children.push(_brandHeader(data, [{ selfUrl: _planUrl(data, planId), text: "Phase " + phase.id }]));
+    children.push(_brandHeader(data, stampedCrumbs));
 
     var main = document.createElement("div");
     css.addClass(main, st_main);
