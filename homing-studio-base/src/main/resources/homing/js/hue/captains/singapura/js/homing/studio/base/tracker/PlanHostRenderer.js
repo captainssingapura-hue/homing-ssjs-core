@@ -329,7 +329,15 @@ function _renderStep(root, data, planId, phaseId, stampedCrumbs) {
         main.appendChild(Panel({ title: "Notes", children: [notesEl] }));
     }
 
-    // Prev / next nav.
+    // Prev / up / next nav.
+    //
+    // RFC 0051 — the middle link is this app's own, and it exists because the
+    // breadcrumb no longer carries it. The trail used to turn the plan's crumb
+    // into a link back to the index, which was the app editing a statement only
+    // the catalogue may make: being at phase 6 of a plan IS being at that plan,
+    // so the trail ends there and moving within it is navigation this page
+    // renders for itself. Named after its destination with a direction glyph,
+    // the same shape as its two neighbours.
     var navRow = document.createElement("div");
     navRow.style.cssText = "display:flex; justify-content:space-between; margin-top:24px;";
     if (phaseIdx > 0) {
@@ -340,11 +348,16 @@ function _renderStep(root, data, planId, phaseId, stampedCrumbs) {
     } else {
         navRow.appendChild(document.createElement("span"));
     }
+    navRow.appendChild(NavLink({ href: _planUrl(data, planId), text: "↑ " + data.name }));
     if (phaseIdx < data.phases.length - 1) {
         var next = document.createElement("a");
         href.set(next, _phaseUrl(data, planId, data.phases[phaseIdx + 1].id));
         next.textContent = "Phase " + data.phases[phaseIdx + 1].id + " →";
         navRow.appendChild(next);
+    } else {
+        // Balances the row so the up link stays centred on the last phase,
+        // for the same reason the empty span above balances the first.
+        navRow.appendChild(document.createElement("span"));
     }
     main.appendChild(navRow);
 

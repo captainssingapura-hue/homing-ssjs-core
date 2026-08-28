@@ -198,6 +198,22 @@ function Pill(props) {
     return _appendAll(a, iconBox, textBox);
 }
 
+// ---------- NavLink ----------
+// NavLink({ href, text }) → <a href={href}>{text}</a>
+//
+// A plain text link. The studio had no link primitive, which is why the
+// legacy renderers hand-roll anchors with document.createElement and carry
+// the use-dom-ops-party debt for it — there was nothing else to reach for.
+// Routed through _el like every other builder in this file, so a caller adds
+// no raw DOM factory of its own and stays conformant without owning a
+// DomOpsParty branch.
+function NavLink(props) {
+    var a = _el("a");
+    href.set(a, props.href);
+    a.textContent = props.text;
+    return a;
+}
+
 // ---------- Section ----------
 // Section({ title, children }) →
 //   <div class="st-section">

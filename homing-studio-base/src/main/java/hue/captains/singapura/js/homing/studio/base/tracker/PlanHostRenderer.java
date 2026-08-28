@@ -34,6 +34,7 @@ public record PlanHostRenderer() implements DomModule<PlanHostRenderer> {
                 .add(new ModuleImports<>(List.of(new DocReader.link()), DocReader.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new StudioElements.Header(),
+                        new StudioElements.NavLink(),
                         new StudioElements.Card(),
                         new StudioElements.Listing(),
                         new StudioElements.ListItem(),
