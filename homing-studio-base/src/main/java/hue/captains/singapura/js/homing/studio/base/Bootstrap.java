@@ -198,8 +198,6 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
         // before anything serves; the alternative was reordering a construction
         // sequence whose order is itself a dependency chain.
         var treeHolder = new java.util.concurrent.atomic.AtomicReference<CatalogueRegistry>();
-        var trailHolder = new java.util.concurrent.atomic.AtomicReference<
-                Map<UUID, List<hue.captains.singapura.js.homing.studio.base.app.Crumb>>>(Map.of());
         // RFC 0040 forest root, hoisted: the chrome resolver below needs it to
         // stamp a leveled page, and it depends only on the studio list.
         final Catalogue<?> openRoot = studios.get(0).home();
@@ -307,20 +305,14 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
             catalogueAction   = null;
         }
 
-        // --- RFC 0016 — pre-compute enriched breadcrumb trails for tree-leaf
-        // docs. Each tree-leaf doc's trail = catalogue chain from root to
-        // the tree's host catalogue + tree-internal chain from tree root
-        // to the leaf's parent branch. The leaf's own title is appended by
-        // the consumer (DocReader / SvgViewer chrome). Empty map when no
-        // trees or no tree-hosting catalogue leaves.
-        Map<UUID, List<hue.captains.singapura.js.homing.studio.base.app.Crumb>> treeLeafTrails =
-                (catalogueRegistry != null)
-                        ? buildTreeLeafTrails(fixtures.trees(), hostOfTree, catalogueRegistry)
-                        : Map.of();
-
-        // --- Doc-refs action (RFC 0004-ext1 / RFC 0005-ext2 — carries breadcrumb chain).
-        // RFC 0051 Phase 5 — the same enriched trails the stamp needs.
-        trailHolder.set(treeLeafTrails);
+        // --- Doc-refs action (RFC 0004-ext1 / RFC 0005-ext2).
+        //
+        // RFC 0051 — the enriched tree-leaf trails that used to be computed
+        // here are gone with the ChromeResolver that consumed them. They gave
+        // a tree leaf's FLAT page a breadcrumb by splicing the catalogue chain
+        // onto the tree-internal one — a trail assembled for an address that
+        // states no position. RFC 0053 gives those leaves real paths, at which
+        // point the trail is the path and nothing needs splicing.
 
         var docRefsAction = new DocRefsGetAction(docRegistry);
 
@@ -579,58 +571,6 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
                 }
             }
         }
-    }
-
-    /**
-     * RFC 0016 → tree-leaf doc breadcrumb trails. For each tree-leaf doc
-     * across all registered trees, build a pre-merged trail that the
-     * DocRefsGetAction emits when {@code /doc-refs?id=<leaf-uuid>} is
-     * requested. The trail is the user-visible breadcrumb chain that
-     * leads back to the studio root via both the tree-internal path AND
-     * the catalogue chain above the tree.
-     *
-     * <p>Trail composition (root → leaf):</p>
-     * <ol>
-     *   <li>Host catalogue's breadcrumb chain (root catalogue → ... →
-     *       tree's host catalogue), each crumb's text icon-prefixed,
-     *       URL = {@code CatalogueAppHost.urlFor(class)}.</li>
-     *   <li>Tree-internal chain — every TreeBranch ancestor from the
-     *       tree root down to (and including) the leaf's immediate
-     *       parent branch. Each crumb's URL = {@code /app?app=tree&id=<treeId>&path=<...>}
-     *       (omits the path query for the tree root). Branch names are
-     *       NOT icon-prefixed today (TreeBranch.icon is rendered in
-     *       catalogue host pages but not in URLs).</li>
-     *   <li>The leaf's own title is NOT included here — the consumer
-     *       (DocReader / SvgViewer chrome) appends it as the final
-     *       no-link crumb.</li>
-     * </ol>
-     */
-    private Map<UUID, List<hue.captains.singapura.js.homing.studio.base.app.Crumb>> buildTreeLeafTrails(
-            List<? extends hue.captains.singapura.js.homing.studio.base.app.tree.ContentTree> trees,
-            Map<String, Catalogue<?>> hostOfTree,
-            CatalogueRegistry catalogueRegistry) {
-        if (trees.isEmpty() || hostOfTree.isEmpty()) return Map.of();
-        var out = new HashMap<UUID, List<hue.captains.singapura.js.homing.studio.base.app.Crumb>>();
-        for (var tree : trees) {
-            Catalogue<?> host = hostOfTree.get(tree.id());
-            if (host == null) continue;
-            // Pre-compute the catalogue prelude (same for every leaf of this tree).
-            var preludeCrumbs = new ArrayList<hue.captains.singapura.js.homing.studio.base.app.Crumb>();
-            for (Catalogue<?> c : catalogueRegistry.breadcrumbs(host)) {
-                @SuppressWarnings("unchecked")
-                Class<? extends Catalogue<?>> cClass = (Class<? extends Catalogue<?>>) c.getClass();
-                String icon = c.icon();
-                String text = (icon == null || icon.isEmpty()) ? c.name() : icon + " " + c.name();
-                preludeCrumbs.add(new hue.captains.singapura.js.homing.studio.base.app.Crumb(
-                        text, CatalogueAppHost.urlFor(cClass)));
-            }
-            // Walk the tree, accumulating the branch path; at each leaf,
-            // build trail = prelude + (root → ... → leaf's parent).
-            walkLeavesForTrails(tree.id(), tree.root(),
-                    new ArrayList<>(), new ArrayList<>(),
-                    preludeCrumbs, out);
-        }
-        return Map.copyOf(out);
     }
 
     /**
