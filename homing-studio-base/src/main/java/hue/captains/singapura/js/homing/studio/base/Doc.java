@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base;
 
-import hue.captains.singapura.js.homing.studio.base.app.CatalogueLeaf;
+import hue.captains.singapura.tao.ontology.Immutable;
 
 import java.util.List;
 import java.util.Optional;
@@ -38,7 +38,7 @@ import java.util.UUID;
  *
  * @since RFC 0004
  */
-public interface Doc extends CatalogueLeaf {
+public interface Doc extends Immutable {
 
     /**
      * Stable surrogate identity for this Doc on the wire. Unique within a {@link DocRegistry}.
@@ -87,27 +87,19 @@ public interface Doc extends CatalogueLeaf {
     default String fileExtension() { return ".md"; }
 
     /**
-     * RFC 0015 Phase 3 — the content-kind discriminator. Drives JSON
-     * serialization in catalogue/tree responses and routes the request to
-     * the registered {@link hue.captains.singapura.js.homing.studio.base.app.ContentViewer}
-     * (when Phase 5 lands). Default {@code "doc"} for prose Docs; PlanDoc
-     * overrides to {@code "plan"}; AppDoc overrides to {@code "app"};
-     * future Doc kinds declare their own.
+     * The content-kind discriminator, used for DISPLAY: catalogue and tree
+     * payloads carry it and the tile renderer switches on it.
+     *
+     * <p>RFC 0051 Phase 6 — it no longer routes anything, and could not:
+     * {@code "composed"} is answered by ComposedDoc, RigidDoc and RigidDocV2,
+     * which open in two different viewers, so kind → viewer is not a function.
+     * A catalogue entry names the app instead. What remains here is framing,
+     * and framing belongs to the placement — so this is queued to follow
+     * {@code category()} onto the leaf.</p>
      *
      * <p>Realises Viewer ontology V4 (Doc routing through kind).</p>
      */
     default String kind() { return "doc"; }
-
-    /**
-     * RFC 0015 Phase 3 — the canonical URL the framework uses to address
-     * this Doc. Default {@code /app?app=doc-reader&doc=<uuid>} for prose
-     * Docs; PlanDoc and AppDoc override to return their respective viewer
-     * URLs. Used by catalogue/tree serialization so the JSON payload
-     * carries a pre-resolved URL per entry.
-     *
-     * <p>Realises Viewer ontology V6 (canonical URL composition).</p>
-     */
-    default String url() { return "/app?app=doc-reader&doc=" + uuid(); }
 
     /**
      * Typed cross-references and external citations declared by this Doc, rendered by the

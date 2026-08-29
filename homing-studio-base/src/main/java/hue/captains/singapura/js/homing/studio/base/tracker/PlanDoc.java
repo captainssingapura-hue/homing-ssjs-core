@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.tracker;
 
+import hue.captains.singapura.js.homing.studio.base.composed.text.NodeName;
 import hue.captains.singapura.js.homing.studio.base.Doc;
 import hue.captains.singapura.js.homing.studio.base.DocId;
 import hue.captains.singapura.js.homing.studio.base.Reference;
@@ -48,6 +49,14 @@ public record PlanDoc(Plan plan) implements Doc {
         return new DocId.ByClass(plan.getClass());
     }
 
+    /**
+     * RFC 0051 Law 2 — every PlanDoc shares this class, so the segment comes
+     * from the wrapped Plan's class instead. Unlike the other value-Docs this
+     * one has a real per-instance class to derive from, and {@link #id()}
+     * already keys identity that same way — so the path segment and the
+     * identity agree by construction rather than by coincidence.
+     */
+
     @Override public String title()    { return plan.name(); }
     @Override public String summary()  { return plan.summary(); }
 
@@ -58,9 +67,6 @@ public record PlanDoc(Plan plan) implements Doc {
 
     @Override public String kind()     { return "plan"; }
 
-    @Override public String url() {
-        return "/app?app=plan&id=" + plan.getClass().getName();
-    }
 
     /** PlanDocs have no markdown body; viewer is PlanAppHost. */
     @Override public String contents() { return ""; }

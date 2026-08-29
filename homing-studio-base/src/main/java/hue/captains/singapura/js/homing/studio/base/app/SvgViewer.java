@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.app;
 
+import hue.captains.singapura.js.homing.core.ParamCodec;
 import hue.captains.singapura.js.homing.core.AppLink;
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.Widget;
@@ -15,7 +16,7 @@ import hue.captains.singapura.js.homing.studio.base.widget.SvgWidget;
  * with inline chrome + inline body JS. Reborn under RFC 0024 Phase P1b
  * as a "fake AppModule" — a {@link SingleWidgetMPA} thin shell hosting
  * {@link SvgWidget}. The URL grammar, typed Params, {@link AppLink},
- * and {@link SvgContentViewer} routing are unchanged; what's underneath
+ * and its routing is unchanged; what's underneath
  * is now the new contract:</p>
  *
  * <ul>
@@ -31,7 +32,7 @@ import hue.captains.singapura.js.homing.studio.base.widget.SvgWidget;
  * <p>The "fake AppModule" pattern dissolved the framework-routing-refactor
  * blocker: every existing per-Doc-kind viewer can migrate independently
  * by becoming a {@code SingleWidgetMPA} subclass hosting its matching
- * widget. No ContentViewer override mechanism needed; no AppLink rewrite
+ * widget. No viewer-registry override needed; no AppLink rewrite
  * needed; no URL-grammar refactor needed. The viewer keeps its identity;
  * its insides upgrade.</p>
  *
@@ -53,7 +54,13 @@ public final class SvgViewer extends SingleWidgetMPA<SvgViewer.Params, SvgViewer
     public record link() implements AppLink<SvgViewer> {}
 
     @Override public String simpleName() { return "svg-viewer"; }
+    /** RFC 0051 - one required id. Shared shape across the viewers, so the
+     *  codec is built from the same helper rather than copied three times. */
+    public static final ParamCodec<Params> CODEC =
+            ParamCodec.ofSingle("id", Params::new, Params::id);
+
     @Override public Class<Params> paramsType() { return Params.class; }
+    @Override public ParamCodec<Params> paramCodec() { return CODEC; }
     @Override public String title() { return "svg"; }
 
     @Override

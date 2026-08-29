@@ -96,7 +96,6 @@ public record ImageDoc(
     @Override public String summary()       { return caption; }
     @Override public String category()      { return "IMAGE"; }
     @Override public String kind()          { return "image"; }
-    @Override public String url()           { return "/app?app=image-viewer&id=" + uuid(); }
     @Override public String contentType()   { return "application/json; charset=utf-8"; }
     @Override public String fileExtension() { return ""; }
 

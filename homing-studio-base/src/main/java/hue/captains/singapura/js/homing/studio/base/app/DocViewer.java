@@ -135,7 +135,12 @@ public abstract class DocViewer<P extends AppModule._Param, M extends DocViewer<
     public final List<String> selfContent(ModuleNameResolver resolver) {
         var lines = new ArrayList<String>();
         // ---- Chrome open ----
-        lines.add("function appMain(rootElement) {");
+        // RFC 0051 — params arrive as an argument for any subclass that
+        // declares a codec, and the generated URL-reading const is suppressed
+        // for exactly those. The body below refers to `params` throughout, so
+        // this signature is what keeps it defined: adding a codec without this
+        // turns the whole page into "params is not defined".
+        lines.add("function appMain(rootElement, params, chrome) {");
         // Defensive try/catch — surfaces failures inline + to console so a
         // broken viewer doesn't render as an empty page (the failure mode that
         // motivated the chrome-in-type-system refactor).
@@ -152,11 +157,10 @@ public abstract class DocViewer<P extends AppModule._Param, M extends DocViewer<
         lines.add("");
         lines.add("    var resolvedTitle = " + jsString(title()) + ";");
         lines.add("    var resolvedBrand = brandFallback;");
-        // RFC 0005-ext2 — `/doc-refs?id=…` returns a `breadcrumbs` array carrying
-        // the typed catalogue chain (root → … → containing catalogue) the server
-        // pre-built from the CatalogueRegistry. Mirrors DocReader's pattern:
-        // start with a single-crumb fallback (just the doc title), upgrade to
-        // the full chain (catalogue crumbs prepended) once the fetch resolves.
+        // RFC 0051 Phase 5 — the title-only crumb is the starting point and,
+        // for an unpositioned page, the finishing one. A positioned page
+        // replaces it wholesale from the stamp a few lines below, before any
+        // fetch, which is why this no longer pops in.
         lines.add("    var resolvedCrumbs = [{ text: resolvedTitle }];");
         lines.add("    var headerEl = Header({ brand: brandForHeader(brandFallback), crumbs: resolvedCrumbs });");
         lines.add("    root.appendChild(headerEl);");
@@ -173,26 +177,19 @@ public abstract class DocViewer<P extends AppModule._Param, M extends DocViewer<
         lines.add("    fetch('/brand').then(function(r){ return r.ok ? r.json() : null; })");
         lines.add("        .then(function(b){ if (b) { resolvedBrand = b; refreshHeader(); } })");
         lines.add("        .catch(function(){});");
-        lines.add("    if (params && params.id) {");
-        lines.add("        fetch('/doc-refs?id=' + encodeURIComponent(params.id))");
-        lines.add("            .then(function(r){ return r.ok ? r.json() : null; })");
-        lines.add("            .then(function(info){");
-        lines.add("                if (info && info.title) {");
-        lines.add("                    resolvedTitle = info.title;");
-        lines.add("                    // Rebuild the crumb chain: server-supplied catalogue chain");
-        lines.add("                    // (when present) prepended to the leaf-crumb-with-doc-title.");
-        lines.add("                    var leaf = { text: resolvedTitle };");
-        lines.add("                    if (info.breadcrumbs && info.breadcrumbs.length > 0) {");
-        lines.add("                        resolvedCrumbs = info.breadcrumbs.slice();");
-        lines.add("                        resolvedCrumbs.push(leaf);");
-        lines.add("                    } else {");
-        lines.add("                        resolvedCrumbs = [leaf];");
-        lines.add("                    }");
-        lines.add("                    refreshHeader();");
-        lines.add("                    document.title = info.title + (resolvedBrand && resolvedBrand.label ? ' \\u00b7 ' + resolvedBrand.label : '');");
-        lines.add("                }");
-        lines.add("            })");
-        lines.add("            .catch(function(){});");
+        // RFC 0051 — the stamped trail, and now the ONLY source of one. The
+        // /doc-refs title fallback that used to sit here is gone: a crawl of
+        // both studios found 264 of 264 navigable pages carry a stamp, so it
+        // fired for nothing reachable, while costing every table, image and
+        // svg page a fetch to re-ask for a title already in the page.
+        lines.add("    if (chrome && chrome.crumbs && chrome.crumbs.length) {");
+        lines.add("        resolvedCrumbs = chrome.crumbs.slice();");
+        lines.add("        var stampedLeaf = resolvedCrumbs[resolvedCrumbs.length - 1];");
+        lines.add("        if (stampedLeaf && stampedLeaf.text) {");
+        lines.add("            resolvedTitle = stampedLeaf.text;");
+        lines.add("            document.title = resolvedTitle + (resolvedBrand && resolvedBrand.label ? ' \\u00b7 ' + resolvedBrand.label : '');");
+        lines.add("        }");
+        lines.add("        refreshHeader();");
         lines.add("    }");
         lines.add("");
         lines.add("    // === Body (subclass-supplied, kind-specific) ===");

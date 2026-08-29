@@ -51,7 +51,6 @@ public record TableDoc(UUID uuid, String title, String summary, TableData data) 
     @Override public String summary()       { return summary; }
     @Override public String category()      { return "TABLE"; }
     @Override public String kind()          { return "table"; }
-    @Override public String url()           { return "/app?app=table-viewer&id=" + uuid; }
     @Override public String contentType()   { return "application/json; charset=utf-8"; }
     @Override public String fileExtension() { return ""; }
 

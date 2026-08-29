@@ -132,21 +132,15 @@ public record StudioGraphBuilder() implements StatelessFunctionalObject {
 
     private void visitEntry(StudioGraph.Mutable g, Entry<?> entry) {
         switch (entry) {
-            case Entry.OfDoc<?, ?> ofDoc -> {
-                Doc doc = ofDoc.doc();
-                g.contains(entry, doc);
-                // RFC 0015 Phase 6: when the doc is a synthetic Doc subtype
-                // (PlanDoc, AppDoc), walk into the wrapped Plan / Navigable to
-                // preserve the structural edges the old OfApp / OfPlan switch
-                // produced. Prose Docs and ProxyDocs fall through to visitDoc.
-                if (doc instanceof hue.captains.singapura.js.homing.studio.base.tracker.PlanDoc pd) {
-                    g.contains(doc, pd.plan());
-                    visitPlan(g, pd.plan());
-                } else if (doc instanceof hue.captains.singapura.js.homing.studio.base.app.AppDoc<?, ?> ad) {
-                    g.contains(doc, ad.nav());
-                    g.contains(ad.nav(), ad.nav().app());
-                } else {
-                    visitDoc(g, doc);
+            // RFC 0051 Phase 6 — a bound leaf's edges are the ones the OfDoc
+            // branch below has to RECOVER by unwrapping: the leaf holds its
+            // navigable and its app directly, and its content when it has any.
+            case Entry.OfLeaf<?, ?, ?> leaf -> {
+                g.contains(entry, leaf.nav());
+                g.contains(leaf.nav(), leaf.nav().app());
+                if (leaf.content() != null) {
+                    g.contains(entry, leaf.content());
+                    visitDoc(g, leaf.content());
                 }
             }
             case Entry.OfStudio<?, ?> ofStudio -> {

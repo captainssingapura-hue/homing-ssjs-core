@@ -39,6 +39,7 @@ public record StudioElements() implements DomModule<StudioElements> {
     public record Brand()           implements Exportable._Constant<StudioElements> {}
     public record Card()            implements Exportable._Constant<StudioElements> {}
     public record Pill()            implements Exportable._Constant<StudioElements> {}
+    public record NavLink()         implements Exportable._Constant<StudioElements> {}
     public record Section()         implements Exportable._Constant<StudioElements> {}
     /** Vertical list container — counterpart to {@link Section} for prose-like rows (objectives, acceptance, decisions). */
     public record Listing()         implements Exportable._Constant<StudioElements> {}
@@ -133,7 +134,7 @@ public record StudioElements() implements DomModule<StudioElements> {
     @Override
     public ExportsOf<StudioElements> exports() {
         return new ExportsOf<>(INSTANCE, List.of(
-                new Header(), new Brand(), new Card(), new Pill(),
+                new Header(), new Brand(), new Card(), new Pill(), new NavLink(),
                 new Section(), new Listing(), new ListItem(), new Footer(),
                 new StatusBadge(), new OverallProgress(), new StepCard(), new DecisionCard(),
                 new TodoList(), new Panel(), new MetricsTable()

@@ -222,7 +222,11 @@ public abstract class StandardMPA<P extends AppModule._Param, M extends Standard
     @Override
     public final List<String> selfContent(ModuleNameResolver resolver) {
         var lines = new ArrayList<String>();
-        lines.add("function appMain(rootElement) {");
+        // RFC 0051 — params arrive as an argument when the app declares a
+        // codec. Every MPA subclass shares this one generated body, so this is
+        // the single edit that makes composed-viewer, doc-tree-viewer,
+        // svg-viewer and the workspace shells addressable by path.
+        lines.add("function appMain(rootElement, params, chrome) {");
         lines.add("    try {");
         lines.add("");
         lines.add("    // ── Root DOM container ──");
@@ -289,58 +293,45 @@ public abstract class StandardMPA<P extends AppModule._Param, M extends Standard
         // URL grammar: /app?app=svg-viewer&id=<uuid> still routes correctly.
         // Multi-widget shells (DemoStandardMPA) require explicit ?widget=.
         if (widgets().size() == 1) {
-            lines.add("    var widgetName = sp.get('widget') || '"
+            lines.add("    var widgetName = (params && params.widget) || sp.get('widget') || '"
                     + widgets().get(0).simpleName() + "';");
         } else {
-            lines.add("    var widgetName = sp.get('widget');");
+            lines.add("    var widgetName = (params && params.widget) || sp.get('widget');");
         }
         lines.add("    var widgetParams = {};");
+        // RFC 0051 — the URL first, then the server's typed answer over the
+        // top. Union rather than either/or, and deliberately so: a path URL
+        // carries no query at all, so on that route the stamp is the only
+        // source; on the flat route this shell forwards EVERY query key to its
+        // widget (backlog B2), and taking only the stamped keys would silently
+        // drop the ones the app's record does not name. Overlaying keeps the
+        // pass-through intact while letting the typed value win where both
+        // speak.
         lines.add("    sp.forEach(function(v, k){ widgetParams[k] = v; });");
-        lines.add("");
-        lines.add("    // Breadcrumb fetch — uniform handling across two cases.");
-        lines.add("    //   1. URL has ?id=<doc-uuid> (legacy DocViewer1 contract):");
-        lines.add("    //      fetch /doc-refs?id=... — the chain resolves through");
-        lines.add("    //      CatalogueRegistry.breadcrumbsForDoc.");
-        lines.add("    //   2. URL has no ?id= (AppModule-launched via Navigable):");
-        lines.add("    //      fetch /app-refs?app=<simpleName> — the studio's");
-        lines.add("    //      Bootstrap pre-indexed AppDoc UUIDs by simpleName so");
-        lines.add("    //      this resolves to the same shape as case (1).");
-        lines.add("    // Both endpoints return { title, breadcrumbs, references };");
-        lines.add("    // we use the same handler for either.");
-        lines.add("    //   3. URL has a leveled tree path (?l0=..&l1=.., RFC 0040):");
-        lines.add("    //      fetch /open-refs?l0=.. — the breadcrumb is resolved from");
-        lines.add("    //      the same path the page is addressed by, so URL and");
-        lines.add("    //      breadcrumb share one source of truth (no uuid).");
-        lines.add("    var crumbUrl;");
-        lines.add("    if (widgetParams.id) {");
-        lines.add("        crumbUrl = '/doc-refs?id=' + encodeURIComponent(widgetParams.id);");
-        lines.add("    } else if (widgetParams.treeId !== undefined || widgetParams.l0 !== undefined) {");
-        lines.add("        var crumbPq = [];");
-        lines.add("        if (widgetParams.treeId) crumbPq.push('treeId=' + encodeURIComponent(widgetParams.treeId));");
-        lines.add("        for (var ci = 0; widgetParams['l' + ci] !== undefined; ci++) {");
-        lines.add("            crumbPq.push('l' + ci + '=' + encodeURIComponent(widgetParams['l' + ci]));");
-        lines.add("        }");
-        lines.add("        crumbUrl = '/open-refs?' + crumbPq.join('&');");
-        lines.add("    } else {");
-        lines.add("        crumbUrl = '/app-refs?app=' + encodeURIComponent(sp.get('app') || '');");
+        lines.add("    if (params) {");
+        lines.add("        Object.keys(params).forEach(function(k){ widgetParams[k] = params[k]; });");
         lines.add("    }");
-        lines.add("    fetch(crumbUrl)");
-        lines.add("        .then(function(r){ return r.ok ? r.json() : null; })");
-        lines.add("        .then(function(info){");
-        lines.add("            if (info && info.title) {");
-        lines.add("                resolvedTitle = info.title;");
-        lines.add("                var leaf = { text: resolvedTitle };");
-        lines.add("                if (info.breadcrumbs && info.breadcrumbs.length > 0) {");
-        lines.add("                    resolvedCrumbs = info.breadcrumbs.slice();");
-        lines.add("                    resolvedCrumbs.push(leaf);");
-        lines.add("                } else {");
-        lines.add("                    resolvedCrumbs = [leaf];");
-        lines.add("                }");
-        lines.add("                refreshHeader();");
-        lines.add("                document.title = info.title + (resolvedBrand && resolvedBrand.label ? ' \\u00b7 ' + resolvedBrand.label : '');");
-        lines.add("            }");
-        lines.add("        })");
-        lines.add("        .catch(function(){});");
+        lines.add("");
+        // RFC 0051 Phase 6 — the stamp, and nothing else. There is no
+        // un-stamped branch any more: every page that can be reached carries
+        // its trail, including the leveled-Open page, which was the last one
+        // that had to fetch its own. What stood here asked the server where
+        // the page was, which is the pattern this whole RFC set out to remove.
+        //
+        // It goes WHOLE rather than arm by arm. Deleting its /doc-refs arm in
+        // phase 5 orphaned `var crumbPq = []`, which lived in the removed
+        // region — generated JS, so the Java build passed and every tree-path
+        // page would have thrown at runtime. With no arms there is nothing
+        // left to orphan.
+        lines.add("    if (chrome && chrome.crumbs && chrome.crumbs.length) {");
+        lines.add("        resolvedCrumbs = chrome.crumbs.slice();");
+        lines.add("        var stampedLeaf = resolvedCrumbs[resolvedCrumbs.length - 1];");
+        lines.add("        if (stampedLeaf && stampedLeaf.text) {");
+        lines.add("            resolvedTitle = stampedLeaf.text;");
+        lines.add("            document.title = resolvedTitle + (resolvedBrand && resolvedBrand.label ? ' \u00b7 ' + resolvedBrand.label : '');");
+        lines.add("        }");
+        lines.add("        refreshHeader();");
+        lines.add("    }");
         lines.add("");
         lines.add("    if (!widgetName) {");
         lines.add("        var noWidgetEl = document.createElement('div');");

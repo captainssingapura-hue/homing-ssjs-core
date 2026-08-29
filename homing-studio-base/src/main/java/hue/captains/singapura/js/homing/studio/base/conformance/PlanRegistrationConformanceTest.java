@@ -46,7 +46,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * intentionally be reachable only by URL), not a 404 hazard.</p>
  *
  * <p>Per the abstract-base pattern shared with {@link DocConformanceTest}
- * and {@link ContentViewerConformanceTest}, downstream subclasses
+ * and the other conformance tests, downstream subclasses
  * provide the inputs via {@link #studios()}.</p>
  *
  * @since Defect 0005 (relocated in b.2j cleanup — see
@@ -108,9 +108,10 @@ public abstract class PlanRegistrationConformanceTest {
             Map<Class<? extends Plan>, String> out) {
         String here = pathSoFar + " › " + cat.getClass().getSimpleName();
         for (var leaf : cat.leaves()) {
-            if (leaf instanceof Entry.OfDoc<?, ?>(var d)
-                    && d instanceof PlanDoc pd) {
-                out.putIfAbsent((Class<? extends Plan>) pd.plan().getClass(), here);
+            // RFC 0051 Phase 6 — the same plan, placed as a bound leaf.
+            if (leaf instanceof Entry.OfLeaf<?, ?, ?> bound
+                    && bound.content() instanceof PlanDoc pd2) {
+                out.putIfAbsent((Class<? extends Plan>) pd2.plan().getClass(), here);
             }
         }
         // RFC 0005-ext2: sub-catalogues flow through subCatalogues(), not

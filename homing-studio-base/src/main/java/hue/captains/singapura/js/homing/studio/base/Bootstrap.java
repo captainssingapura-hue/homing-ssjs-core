@@ -19,7 +19,9 @@ import hue.captains.singapura.js.homing.studio.base.graph.StudioGraphInspector;
 import hue.captains.singapura.js.homing.studio.base.graph.StudioGraphMarkdownAction;
 import hue.captains.singapura.js.homing.studio.base.app.CatalogueAppHost;
 import hue.captains.singapura.js.homing.studio.base.app.CatalogueGetAction;
+import hue.captains.singapura.js.homing.studio.base.app.CataloguePathGetAction;
 import hue.captains.singapura.js.homing.studio.base.app.CatalogueRegistry;
+import hue.captains.singapura.js.homing.studio.base.app.GotoNavigableGetAction;
 import hue.captains.singapura.js.homing.studio.base.app.StudioBrand;
 import hue.captains.singapura.js.homing.studio.base.theme.CssGroupImplRegistry;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemesGetAction;
@@ -189,6 +191,33 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
         var appMeta = (brand != null && brand.label() != null && !brand.label().isBlank())
                 ? new AppMeta(brand.label())
                 : AppMeta.DEFAULT;
+        // RFC 0051 Phase 5 — the page stamps its own breadcrumb, which needs the
+        // catalogue tree. The tree is built further down (it needs the doc
+        // registry, which needs the app closure), so the resolver is late-bound
+        // through a holder rather than passed by value. Set once during boot,
+        // before anything serves; the alternative was reordering a construction
+        // sequence whose order is itself a dependency chain.
+        var treeHolder = new java.util.concurrent.atomic.AtomicReference<CatalogueRegistry>();
+        // RFC 0040 forest root, hoisted: the chrome resolver below needs it to
+        // stamp a leveled page, and it depends only on the studio list.
+        final Catalogue<?> openRoot = studios.get(0).home();
+
+        // RFC 0051 — the ChromeResolver is gone. This was a lambda from
+        // (app, args) to a trail, handed to AppHtmlGetAction so a FLAT render
+        // could show the breadcrumb of a position its own URL did not state.
+        // That was the last second derivation in the system: everywhere else
+        // the crumb IS the path, read off the address; here alone it was looked
+        // up. D4 makes a raw (app, args) a permalink rather than a page, and a
+        // permalink states no position — so it shows none, and /goto is what
+        // answers "where does this live". The path route resolves the node
+        // anyway and passes the crumbs it already holds.
+        //
+        // Sacrificed with it, deliberately and recorded in RFC 0053: the
+        // leveled-Open stamp and the enriched tree-leaf trails. Both existed
+        // to give a flat address a trail, and both are tree-shaped — a
+        // ContentTree cannot hold a position, so its pages were flat and needed
+        // rescuing. RFC 0053 gives those nodes real paths, at which point they
+        // need no rescue.
         var inner = new HomingActionRegistry(
                 nameResolver, appResolver, params.resourceReader(),
                 themeRegistry, appMeta, fixtures.servableModuleClasses());
@@ -247,6 +276,19 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
         if (!catalogues.isEmpty()) {
             catalogueRegistry = new CatalogueRegistry(brand, docRegistry, catalogues,
                     null, extraDocHomes);
+            // RFC 0051 Phase 2 — every position must survive the round trip
+            // through its own URL. This follows from the boot laws, but Phase 1
+            // is exactly where "follows from" proved untrustworthy twice: one
+            // law was vacuous under the type system and another compared the
+            // wrong thing, both while passing. The check is a few hundred map
+            // lookups over the whole tree, so it costs nothing to stop
+            // trusting the derivation and simply verify it — for every studio,
+            // downstream ones included, at the moment a break is cheapest to
+            // find.
+            hue.captains.singapura.js.homing.studio.base.app.CataloguePathConformance
+                    .assertPathBijection(catalogueRegistry);
+            // RFC 0051 Phase 5 — the tree exists now; the chrome resolver can see it.
+            treeHolder.set(catalogueRegistry);
             // RFC 0014: when diagnostics is enabled the framework injects a
             // three-tier tile pyramid via the augmentation map — Diagnostics
             // tile on the home L0; per-studio parent tiles (or direct view
@@ -263,26 +305,22 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
             catalogueAction   = null;
         }
 
-        // --- RFC 0016 — pre-compute enriched breadcrumb trails for tree-leaf
-        // docs. Each tree-leaf doc's trail = catalogue chain from root to
-        // the tree's host catalogue + tree-internal chain from tree root
-        // to the leaf's parent branch. The leaf's own title is appended by
-        // the consumer (DocReader / SvgViewer chrome). Empty map when no
-        // trees or no tree-hosting catalogue leaves.
-        Map<UUID, List<hue.captains.singapura.js.homing.studio.base.app.Crumb>> treeLeafTrails =
-                (catalogueRegistry != null)
-                        ? buildTreeLeafTrails(fixtures.trees(), hostOfTree, catalogueRegistry)
-                        : Map.of();
+        // --- Doc-refs action (RFC 0004-ext1 / RFC 0005-ext2).
+        //
+        // RFC 0051 — the enriched tree-leaf trails that used to be computed
+        // here are gone with the ChromeResolver that consumed them. They gave
+        // a tree leaf's FLAT page a breadcrumb by splicing the catalogue chain
+        // onto the tree-internal one — a trail assembled for an address that
+        // states no position. RFC 0053 gives those leaves real paths, at which
+        // point the trail is the path and nothing needs splicing.
 
-        // --- Doc-refs action (RFC 0004-ext1 / RFC 0005-ext2 — carries breadcrumb chain).
-        var docRefsAction = new DocRefsGetAction(docRegistry, catalogueRegistry, treeLeafTrails);
+        var docRefsAction = new DocRefsGetAction(docRegistry);
 
         // --- App-refs action (RFC 0025 L2.2 — breadcrumb chain for AppModule
         // launches via Navigable entries, where the URL has no ?id=<uuid>).
         // Resolves the AppDoc by AppModule simpleName, serialises the chain
         // through the same shape as /doc-refs so the StandardMPA chrome can
         // use a uniform code path.
-        var appRefsAction = new AppRefsGetAction(docRegistry, catalogueRegistry);
 
         // --- RFC 0040 — leveled Open endpoints. Rooted at the primary studio's
         // home() (the forest root — the synthetic launcher in a multi-studio
@@ -290,7 +328,6 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
         // SingleWidgetWorkspace shell fetches doc bytes from /open-content and
         // its breadcrumb from /open-refs by the same child-index path it was
         // opened by — no uuid, URL and breadcrumb share one source of truth.
-        final Catalogue<?> openRoot = studios.get(0).home();
         final OpenContentGetAction openContentAction = new OpenContentGetAction(openRoot);
         final OpenRefsGetAction openRefsAction = new OpenRefsGetAction(openRoot);
 
@@ -298,7 +335,7 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
         final PlanGetAction planAction;
         if (!plans.isEmpty()) {
             var planRegistry = new PlanRegistry(plans, docRegistry);
-            planAction = new PlanGetAction(planRegistry, catalogueRegistry);
+            planAction = new PlanGetAction(planRegistry, catalogueRegistry, docRegistry);
         } else {
             planAction = null;
         }
@@ -322,6 +359,10 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
         }
 
         // --- Compose final ActionRegistry.
+        // RFC 0051 — only meaningful when there are catalogues to address.
+        final CataloguePathGetAction pathAction = (catalogueRegistry == null) ? null
+                : new CataloguePathGetAction(catalogueRegistry, inner.appAction());
+
         final var harnessGetActions  = fixtures.harnessGetActions();
         final var harnessPostActions = fixtures.harnessPostActions();
         return new ActionRegistry<>() {
@@ -329,8 +370,32 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
             public Map<String, GetAction<RoutingContext, ?, ?, ?>> getActions() {
                 Map<String, GetAction<RoutingContext, ?, ?, ?>> all = new HashMap<>(inner.getActions());
                 all.put("/",            rootRedirect);
+                // RFC 0051 — the authentic address. Mounted on both the
+                // wildcard and the bare root, because a Vert.x /cat/* route
+                // does not match /cat itself, and /cat is the studio's front
+                // door (the empty path resolves to the root catalogue).
+                if (pathAction != null) {
+                    all.put(CataloguePathGetAction.ROUTE,      pathAction);
+                    all.put(CataloguePathGetAction.ROOT_ROUTE, pathAction);
+                }
+                // RFC 0051 — /app is left alone deliberately. It EXECUTES an
+                // app in direct-access mode and does nothing else. An earlier
+                // pass had it redirect a positioned (app, args) to its path so
+                // old links self-corrected, which worked but made one route
+                // sometimes-render and sometimes-redirect: a caller could no
+                // longer tell from the URL which it would get, and a caller who
+                // genuinely wanted the flat render could not have it.
+                // "Go to this navigable" is now its own action (/goto), so the
+                // render route can go back to being only a render route.
                 all.put("/css-content", cssContentAction);
                 all.put("/doc",         docAction);
+                // RFC 0051 - "go to this navigable", for the whole (app, args)
+                // space. Separate from /app on purpose: /app renders, and its
+                // self-correcting redirect is a property of the render route,
+                // not something a managed reference should lean on.
+                if (catalogueRegistry != null) {
+                    all.put(GotoNavigableGetAction.ROUTE, new GotoNavigableGetAction(catalogueRegistry));
+                }
                 all.put("/doc-tree",    new DocTreeGetAction(docRegistry, openRoot));
                 // The raw-bytes endpoint for resource-backed inline segments
                 // (svg / table / image) embedded in a rigid-tree doc. Sibling of
@@ -340,7 +405,6 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
                 // embedded SVGs/images/tables in a RigidDoc/ComposedDoc 404.
                 all.put("/doc-tree-content", new DocTreeContentGetAction(docRegistry));
                 all.put("/doc-refs",    docRefsAction);
-                all.put("/app-refs",    appRefsAction);
                 all.put("/open-content", openContentAction);
                 all.put("/open-refs",    openRefsAction);
                 all.put("/themes",      themesAction);
@@ -417,6 +481,27 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
     }
 
     /**
+     * The leveled child-index path a request carries, or null when it is not a
+     * leveled request. RFC 0051 Phase 6 - reads the same lN parameters
+     * OpenRefsGetAction reads, so the stamp and the endpoint cannot disagree
+     * about what a path means.
+     */
+    private List<Integer> levelPathOf(Map<String, List<String>> args) {
+        if (args == null || args.get("l0") == null) return null;
+        var out = new ArrayList<Integer>();
+        for (int n = 0; n < 32; n++) {
+            List<String> v = args.get("l" + n);
+            if (v == null || v.isEmpty()) break;
+            try {
+                out.add(Integer.parseInt(v.get(0)));
+            } catch (NumberFormatException e) {
+                break;
+            }
+        }
+        return out.isEmpty() ? null : out;
+    }
+
+    /**
      * RFC 0016 → tree-breadcrumb bridge. Walks every catalogue's leaves;
      * for each {@code Entry.OfDoc(AppDoc(Navigable(TreeAppHost, params)))}
      * encountered, records the (tree id → containing catalogue) linkage in
@@ -443,9 +528,17 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
 
         for (Catalogue<?> parent : catalogues) {
             for (var entry : parent.leaves()) {
-                if (!(entry instanceof hue.captains.singapura.js.homing.studio.base.app.Entry.OfDoc<?, ?> ofDoc)) continue;
-                if (!(ofDoc.doc() instanceof hue.captains.singapura.js.homing.studio.base.app.AppDoc<?, ?> appDoc)) continue;
-                var nav = appDoc.nav();
+                // RFC 0051 Phase 6 — read the binding off the leaf. This used to
+                // unwrap OfDoc(AppDoc(nav)) to reach the same Navigable; when
+                // the AppDoc wrapper went, that pattern stopped matching and
+                // hostOfTree would have quietly emptied — costing every tree
+                // leaf its enriched trail while every test still passed.
+                hue.captains.singapura.js.homing.studio.base.app.Navigable<?, ?> nav;
+                if (entry instanceof hue.captains.singapura.js.homing.studio.base.app.Entry.OfLeaf<?, ?, ?> bound) {
+                    nav = bound.nav();
+                } else {
+                    continue;
+                }
                 if (nav.app() != hue.captains.singapura.js.homing.studio.base.app.tree.TreeAppHost.INSTANCE) continue;
                 // Navigable wraps TreeAppHost. Extract tree id from params.
                 if (!(nav.params() instanceof hue.captains.singapura.js.homing.studio.base.app.tree.TreeAppHost.Params treeParams)) continue;
@@ -478,58 +571,6 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
                 }
             }
         }
-    }
-
-    /**
-     * RFC 0016 → tree-leaf doc breadcrumb trails. For each tree-leaf doc
-     * across all registered trees, build a pre-merged trail that the
-     * DocRefsGetAction emits when {@code /doc-refs?id=<leaf-uuid>} is
-     * requested. The trail is the user-visible breadcrumb chain that
-     * leads back to the studio root via both the tree-internal path AND
-     * the catalogue chain above the tree.
-     *
-     * <p>Trail composition (root → leaf):</p>
-     * <ol>
-     *   <li>Host catalogue's breadcrumb chain (root catalogue → ... →
-     *       tree's host catalogue), each crumb's text icon-prefixed,
-     *       URL = {@code CatalogueAppHost.urlFor(class)}.</li>
-     *   <li>Tree-internal chain — every TreeBranch ancestor from the
-     *       tree root down to (and including) the leaf's immediate
-     *       parent branch. Each crumb's URL = {@code /app?app=tree&id=<treeId>&path=<...>}
-     *       (omits the path query for the tree root). Branch names are
-     *       NOT icon-prefixed today (TreeBranch.icon is rendered in
-     *       catalogue host pages but not in URLs).</li>
-     *   <li>The leaf's own title is NOT included here — the consumer
-     *       (DocReader / SvgViewer chrome) appends it as the final
-     *       no-link crumb.</li>
-     * </ol>
-     */
-    private Map<UUID, List<hue.captains.singapura.js.homing.studio.base.app.Crumb>> buildTreeLeafTrails(
-            List<? extends hue.captains.singapura.js.homing.studio.base.app.tree.ContentTree> trees,
-            Map<String, Catalogue<?>> hostOfTree,
-            CatalogueRegistry catalogueRegistry) {
-        if (trees.isEmpty() || hostOfTree.isEmpty()) return Map.of();
-        var out = new HashMap<UUID, List<hue.captains.singapura.js.homing.studio.base.app.Crumb>>();
-        for (var tree : trees) {
-            Catalogue<?> host = hostOfTree.get(tree.id());
-            if (host == null) continue;
-            // Pre-compute the catalogue prelude (same for every leaf of this tree).
-            var preludeCrumbs = new ArrayList<hue.captains.singapura.js.homing.studio.base.app.Crumb>();
-            for (Catalogue<?> c : catalogueRegistry.breadcrumbs(host)) {
-                @SuppressWarnings("unchecked")
-                Class<? extends Catalogue<?>> cClass = (Class<? extends Catalogue<?>>) c.getClass();
-                String icon = c.icon();
-                String text = (icon == null || icon.isEmpty()) ? c.name() : icon + " " + c.name();
-                preludeCrumbs.add(new hue.captains.singapura.js.homing.studio.base.app.Crumb(
-                        text, CatalogueAppHost.urlFor(cClass)));
-            }
-            // Walk the tree, accumulating the branch path; at each leaf,
-            // build trail = prelude + (root → ... → leaf's parent).
-            walkLeavesForTrails(tree.id(), tree.root(),
-                    new ArrayList<>(), new ArrayList<>(),
-                    preludeCrumbs, out);
-        }
-        return Map.copyOf(out);
     }
 
     /**
@@ -575,9 +616,8 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
                             if (pathSoFar.length() > 0) pathSoFar.append('/');
                             pathSoFar.append(b.segment());
                         }
-                        String href = (pathSoFar.length() == 0)
-                                ? "/app?app=tree&id=" + treeId
-                                : "/app?app=tree&id=" + treeId + "&path=" + pathSoFar;
+                        String href = hue.captains.singapura.js.homing.studio.base.app.tree
+                                .TreeAppHost.urlFor(treeId, pathSoFar.toString());
                         // Icon-prefix branch name when present, matching the
                         // tree page chrome's breadcrumb format (TreeGetAction.serialize).
                         String text = (b.icon() == null || b.icon().isEmpty())

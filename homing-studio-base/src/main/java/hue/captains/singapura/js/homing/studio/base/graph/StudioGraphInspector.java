@@ -1,6 +1,9 @@
 package hue.captains.singapura.js.homing.studio.base.graph;
 
 import hue.captains.singapura.js.homing.core.AppLink;
+import hue.captains.singapura.js.homing.core.AppUrl;
+import hue.captains.singapura.js.homing.core.ParamCodec;
+import hue.captains.singapura.js.homing.core.QueryString;
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
@@ -52,7 +55,42 @@ public record StudioGraphInspector()
 
     public static final StudioGraphInspector INSTANCE = new StudioGraphInspector();
 
+    /**
+     * RFC 0051 (D8) — root optional, view optional and defaulting to TREE.
+     *
+     * <p>A malformed {@code view} is reported as malformed rather than
+     * silently defaulting: an unrecognised render mode is a typo in a
+     * hand-edited URL, and answering it with the tree view hides the typo.
+     * An ABSENT view is a different claim and does default.</p>
+     */
+    public static final ParamCodec<Params> CODEC = new ParamCodec<>() {
+
+        @Override public Decoded<Params> from(java.util.Map<String, java.util.List<String>> query) {
+            String root = QueryString.first(query, "root");
+            String view = QueryString.first(query, "view");
+            if (view == null || view.isBlank()) return Decoded.ok(new Params(root, null));
+            try {
+                return Decoded.ok(new Params(root, StudioGraphView.valueOf(view)));
+            } catch (IllegalArgumentException e) {
+                return Decoded.malformed("view", view, "one of " + java.util.Arrays.toString(StudioGraphView.values()));
+            }
+        }
+
+        @Override public java.util.Map<java.lang.String, java.util.List<String>> to(Params params) {
+            var out = QueryString.params();
+            QueryString.put(out, "root", params.root());
+            QueryString.put(out, "view", params.view() == null ? null : params.view().name());
+            return out;
+        }
+    };
+
+    /** Canonical URL for a graph view rooted at {@code root}. */
+    public static String urlFor(String root, StudioGraphView view) {
+        return AppUrl.flat(INSTANCE, new Params(root, view));
+    }
+
     @Override public Class<Params> paramsType() { return Params.class; }
+    @Override public ParamCodec<Params> paramCodec() { return CODEC; }
 
     @Override public String simpleName() { return "studio-graph"; }
     @Override public String title()      { return "studio graph"; }

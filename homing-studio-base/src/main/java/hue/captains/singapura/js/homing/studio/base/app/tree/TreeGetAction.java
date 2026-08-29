@@ -161,31 +161,37 @@ public final class TreeGetAction
                 // All catalogue prelude crumbs link back; even the host
                 // (the catalogue we'd normally render here) gets a link
                 // because the current page is the tree, not the host.
-                @SuppressWarnings("unchecked")
-                Class<? extends Catalogue<?>> cClass = (Class<? extends Catalogue<?>>) c.getClass();
                 String icon = c.icon();
                 String text = (icon == null || icon.isEmpty()) ? c.name() : icon + " " + c.name();
                 sb.append("{\"name\":").append(jstr(text))
-                  .append(",\"url\":") .append(jstr(CatalogueAppHost.urlFor(cClass)))
+                  .append(",\"url\":") .append(jstr(pathUrl(c)))
                   .append('}');
             }
         }
 
-        // -- Tree-internal chain --
-        StringBuilder cumulative = new StringBuilder();
-        for (int i = 0; i < treeChain.size(); i++) {
-            TreeNode n = treeChain.get(i);
+        // -- The entry, and nothing below it --
+        //
+        // RFC 0051 — this used to continue INTO the tree, appending one crumb
+        // per addressed node, so /tree?id=animals&path=animals rendered
+        // "… / Animals & Halloween / Animals". Disabled: the breadcrumb states
+        // a page's position in the CATALOGUE, and a tree's internal nodes have
+        // no catalogue position — the whole tree is one placed leaf.
+        //
+        // Measured before removing it, over both demo trees in every reachable
+        // state: the extension was always exactly one rung, because the trees
+        // are two levels and their leaves link OUT to a viewer rather than
+        // deeper. That rung was byte-identical to the page's own <h1>, and it
+        // carried no href, being the last crumb. It restated the heading.
+        //
+        // What it did carry was one real affordance — the entry crumb became a
+        // link back to the tree root. That is within-entry navigation and
+        // belongs to the tree page's own UI, not to a trail that claims to say
+        // where you are in the studio.
+        if (!treeChain.isEmpty()) {
             if (!firstCrumb) sb.append(',');
             firstCrumb = false;
-            // i==0 is the root; subsequent nodes append their segment to the path.
-            if (i > 0) {
-                if (cumulative.length() > 0) cumulative.append('/');
-                cumulative.append(n.segment());
-            }
-            String url = (i == treeChain.size() - 1) ? "" : treeUrl(tree.id(), cumulative.toString());
-            sb.append("{\"name\":").append(jstr(n.name()))
-              .append(",\"url\":") .append(jstr(url))
-              .append('}');
+            sb.append("{\"name\":").append(jstr(treeChain.get(0).name()))
+              .append(",\"url\":\"\"}");
         }
         sb.append("],");
 
@@ -219,7 +225,8 @@ public final class TreeGetAction
                       .append("\"name\":")     .append(jstr(name)).append(',')
                       .append("\"summary\":")  .append(jstr(summary)).append(',')
                       .append("\"category\":") .append(jstr(category)).append(',')
-                      .append("\"url\":")      .append(jstr(doc.url()))
+                      .append("\"url\":")      .append(jstr(
+                              hue.captains.singapura.js.homing.studio.base.app.DocViewers.addressOf(doc).flat()))
                       .append('}');
                 }
             }
@@ -228,9 +235,28 @@ public final class TreeGetAction
         return sb.toString();
     }
 
+    /**
+     * RFC 0051 — a catalogue crumb links to its PATH.
+     *
+     * <p>This prelude minted flat {@code /app?app=catalogue&id=<fqn>} links
+     * unconditionally, so the tree page was the one page in either studio
+     * whose breadcrumb still navigated by raw address — while the correct
+     * trail was being stamped into that same page and discarded, because
+     * CatalogueHostRenderer builds its header from this payload rather than
+     * from {@code chrome}. Same shape as {@code CatalogueGetAction.pathUrl}:
+     * the path when the node has one, the flat address when it does not, which
+     * is what keeps an unpositioned catalogue reachable rather than linkless.</p>
+     */
+    private String pathUrl(Catalogue<?> node) {
+        var path = (catalogueRegistry == null) ? null : catalogueRegistry.pathOf(node);
+        if (path != null) return path.toUrl();
+        @SuppressWarnings("unchecked")
+        Class<? extends Catalogue<?>> cls = (Class<? extends Catalogue<?>>) node.getClass();
+        return CatalogueAppHost.urlFor(cls);
+    }
+
     private static String treeUrl(String id, String path) {
-        if (path == null || path.isEmpty()) return "/app?app=tree&id=" + id;
-        return "/app?app=tree&id=" + id + "&path=" + path;
+        return TreeAppHost.urlFor(id, path);
     }
 
     private static String jstr(String v) {

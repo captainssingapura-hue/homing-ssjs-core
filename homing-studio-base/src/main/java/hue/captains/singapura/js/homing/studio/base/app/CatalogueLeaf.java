@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.app;
 
+import hue.captains.singapura.js.homing.studio.base.composed.text.NodeName;
 import hue.captains.singapura.js.homing.studio.base.Doc;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
@@ -44,4 +45,21 @@ import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
  * @since RFC 0015 Phase 1
  */
 public interface CatalogueLeaf extends StatelessFunctionalObject {
+
+    /**
+     * RFC 0051 Law 2 — this leaf's URL path segment, unique among its
+     * siblings. Typed rather than {@code String} so the character set and
+     * length cap are enforced at construction, not by convention.
+     *
+     * <p>The default derives from the implementing class, minus a trailing
+     * {@code "Doc"}: {@code DemoIntroDoc} becomes {@code "demo-intro"}.
+     * That is right for the common case — one class, one leaf — and wrong
+     * for value-leaves where many instances share a class ({@code AppDoc},
+     * {@code PlanDoc}, {@code StudioProxy}), which is why this is a default
+     * to override rather than a fixed rule. Overriders owe only
+     * sibling-uniqueness; the boot check enforces it.</p>
+     */
+    default NodeName slug() {
+        return NodeName.ofType(getClass(), "Doc");
+    }
 }

@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.studio.base.app;
 
+import hue.captains.singapura.js.homing.core.ParamCodec;
+import hue.captains.singapura.js.homing.core.QueryString;
 import hue.captains.singapura.js.homing.core.AppLink;
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.ExportsOf;
@@ -59,7 +61,27 @@ public record DocReader() implements AppModule<DocReader.Params, DocReader>, Sel
 
     public static final DocReader INSTANCE = new DocReader();
 
+    /**
+     * RFC 0051 - the doc id, read and written together. Most catalogue leaves
+     * open through this app, so without a codec every /cat path ending at a
+     * doc renders "(no document)": a path URL has no query string for the
+     * client-side parse to read.
+     */
+    public static final ParamCodec<Params> CODEC = new ParamCodec<>() {
+
+        @Override public Decoded<Params> from(java.util.Map<String, java.util.List<String>> query) {
+            String doc = QueryString.first(query, "doc");
+            if (doc == null || doc.isBlank()) return Decoded.missing("doc");
+            return Decoded.ok(new Params(doc));
+        }
+
+        @Override public java.util.Map<String, java.util.List<String>> to(Params params) {
+            return QueryString.of("doc", params.doc());
+        }
+    };
+
     @Override public Class<Params> paramsType() { return Params.class; }
+    @Override public ParamCodec<Params> paramCodec() { return CODEC; }
 
     /** Generic page-kind label. {@code AppHtmlGetAction} appends the downstream
      *  studio's brand label from {@code AppMeta}, producing {@code "doc · <brand>"}.
@@ -101,18 +123,24 @@ public record DocReader() implements AppModule<DocReader.Params, DocReader>, Sel
         // brandLabel() / homeUrl() — those defaults exist as a back-compat
         // safety net for the /brand action when no StudioBrand is registered.
         //
-        // RFC 0005-ext2: the breadcrumb chain is supplied by /doc-refs (typed
-        // catalogue chain — root → ... → containing catalogue). We pass an
-        // empty crumbsAbove here; the renderer overrides it when info.breadcrumbs
-        // arrives. Studios with no catalogues registered get no chain (legacy
-        // behaviour — the brand link in the header is the only nav).
+        // RFC 0051 — the breadcrumb is the server's stamp and nothing else.
+        // This used to pass an empty crumbsAbove for the renderer to fill from
+        // /doc-refs' breadcrumbs array; that array left /doc-refs in phase 5
+        // and the hook has been inert since, so it goes with the comment that
+        // described it. Studios with no catalogues registered get no chain —
+        // the brand link in the header is the only nav, which is the honest
+        // answer when there is no catalogue to be positioned in.
         return List.of(
-                "function appMain(rootElement) {",
+                // RFC 0051 - params arrive from the server; a /cat path has no query.
+                "function appMain(rootElement, params, chrome) {",
                 "    fetch(\"/brand\").then(function(r) { return r.json(); }).then(function(brand) {",
                 "        rootElement.replaceChildren(renderDocReader({",
                 "            docId:       params.doc,",
                 "            brand:       { href: brand.homeUrl, label: brand.label, logo: brand.logo },",
-                "            crumbsAbove: []",
+                // RFC 0051 Phase 5 — the server-stamped trail. Present for any
+                // positioned doc; absent for one that has no place in the tree,
+                // where the renderer falls back to its own late-fill.
+                "            crumbs:      chrome && chrome.crumbs",
                 "        }));",
                 "    });",
                 "}"

@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.composed;
 
+import hue.captains.singapura.js.homing.studio.base.composed.text.NodeName;
 import hue.captains.singapura.js.homing.studio.base.Doc;
 import hue.captains.singapura.js.homing.studio.base.DocId;
 import hue.captains.singapura.js.homing.studio.base.Reference;
@@ -54,8 +55,13 @@ public record ComposedDoc(
         String          abstractText,
         String          category,
         List<Segment>   segments,
-        List<Reference> references
-) implements Doc {
+        List<Reference> references,
+        NodeName        slug
+) implements Doc, hue.captains.singapura.js.homing.studio.base.AuthoredName {
+
+    /** RFC 0051 Phase 6 — the record component IS the authored name. */
+    @Override public NodeName authoredSlug() { return slug; }
+
 
     public ComposedDoc {
         Objects.requireNonNull(uuid,       "ComposedDoc.uuid");
@@ -68,8 +74,39 @@ public record ComposedDoc(
         if (summary      == null) summary      = "";
         if (abstractText == null) abstractText = summary;
         if (category     == null) category     = "DOC";
+        // RFC 0051 Law 2 — every ComposedDoc shares this class, so the
+        // class-derived default would have them all claim the segment
+        // "composed". The title is the only per-instance datum available by
+        // default; an author who wants a segment that survives re-wording
+        // supplies one through withSlug.
+        if (slug         == null) slug         = NodeName.conciseSlug(title);
         segments   = List.copyOf(segments);
         references = List.copyOf(references);
+    }
+
+    /**
+     * The canonical shape before RFC 0051 — same doc, slug derived from the
+     * title. Kept so no existing construction site has to change.
+     */
+    public ComposedDoc(UUID uuid, String title, String summary, String abstractText,
+                       String category, List<Segment> segments, List<Reference> references) {
+        this(uuid, title, summary, abstractText, category, segments, references, null);
+    }
+
+    /**
+     * RFC 0051 — this doc with an authored path segment, replacing the
+     * title-derived default.
+     *
+     * <p>A wither rather than a wrapper: the framework's viewers and the
+     * doc harvest dispatch on the concrete type ({@code instanceof
+     * ComposedDoc}), so a delegating wrapper would keep the Doc protocol
+     * intact and still blank the page. Identity has to be attached without
+     * changing what the value <i>is</i>.</p>
+     */
+    public ComposedDoc withSlug(NodeName authored) {
+        Objects.requireNonNull(authored, "ComposedDoc.withSlug(authored)");
+        return new ComposedDoc(uuid, title, summary, abstractText, category,
+                               segments, references, authored);
     }
 
     /**
@@ -90,7 +127,6 @@ public record ComposedDoc(
 
     @Override public DocId  id()          { return new DocId.ByUuid(uuid); }
     @Override public String kind()        { return "composed"; }
-    @Override public String url()         { return "/app?app=composed-viewer&id=" + uuid; }
     @Override public String contentType() { return "application/json; charset=utf-8"; }
     @Override public String fileExtension() { return ""; }
 

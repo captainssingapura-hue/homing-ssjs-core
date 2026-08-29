@@ -124,9 +124,4 @@ public record ProxyDoc(
     // -----------------------------------------------------------------------
 
     @Override public String kind() { return target.kind(); }
-    @Override public String url()  {
-        // /app?app=doc-reader&doc=<proxy-uuid> — Phase 4 restricts target to
-        // prose, so the DocReader viewer is correct for the kind.
-        return "/app?app=doc-reader&doc=" + uuid;
-    }
 }

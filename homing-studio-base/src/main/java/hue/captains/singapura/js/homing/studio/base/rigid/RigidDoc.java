@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.rigid;
 
+import hue.captains.singapura.js.homing.studio.base.composed.text.NodeName;
 import hue.captains.singapura.js.homing.studio.base.Doc;
 import hue.captains.singapura.js.homing.studio.base.DocId;
 import hue.captains.singapura.js.homing.studio.base.composed.DocTreeJsonWriter;
@@ -29,18 +30,35 @@ import java.util.UUID;
  *
  * @since homing-studio-base — RFC 0042 leveled tree-builder
  */
-public final class RigidDoc implements Doc {
+public final class RigidDoc implements Doc, hue.captains.singapura.js.homing.studio.base.AuthoredName {
 
-    private final UUID    uuid;
-    private final String  summary;
-    private final String  category;
-    private final DocNode root;
+    private final UUID     uuid;
+    private final String   summary;
+    private final String   category;
+    private final DocNode  root;
+    private final NodeName slug;
 
     RigidDoc(UUID uuid, String summary, String category, DocNode root) {
+        this(uuid, summary, category, root, null);
+    }
+
+    private RigidDoc(UUID uuid, String summary, String category, DocNode root, NodeName slug) {
         this.uuid     = Objects.requireNonNull(uuid, "RigidDoc.uuid");
         this.summary  = (summary  == null) ? "" : summary;
         this.category = (category == null) ? "DOC" : category;
         this.root     = Objects.requireNonNull(root, "RigidDoc.root");
+        this.slug     = slug;
+    }
+
+    /**
+     * RFC 0051 — this doc with an authored path segment. A wither rather than
+     * a wrapper, for the same reason as {@code ComposedDoc.withSlug}: the
+     * viewers dispatch on the concrete type, so identity has to be attached
+     * without changing what the value is.
+     */
+    public RigidDoc withSlug(NodeName authored) {
+        Objects.requireNonNull(authored, "RigidDoc.withSlug(authored)");
+        return new RigidDoc(uuid, summary, category, root, authored);
     }
 
     /** Open the leveled builder at the document root (L0). */
@@ -66,10 +84,15 @@ public final class RigidDoc implements Doc {
     @Override public UUID    uuid()        { return uuid; }
     @Override public DocId   id()          { return new DocId.ByUuid(uuid); }
     @Override public String  title()       { return root.title().text(); }
+    /** RFC 0051 Law 2 — the authored segment when one was supplied, else the
+     *  title: every RigidDoc shares this class, so the class-derived default
+     *  would give them all the segment "rigid". */
+    /** The author-chosen name, or null. RFC 0051 Phase 6 — the doc carries the
+     *  NAME; DocSlugs decides how a name becomes a path segment. */
+    @Override public NodeName authoredSlug() { return slug; }
     @Override public String  summary()     { return summary; }
     @Override public String  category()    { return category; }
     @Override public String  kind()        { return "composed"; }   // reuses the doc-tree route
-    @Override public String  url()         { return "/app?app=doc-tree-viewer&id=" + uuid; }
     @Override public String  contentType() { return "application/json; charset=utf-8"; }
     @Override public String  fileExtension() { return ""; }
 

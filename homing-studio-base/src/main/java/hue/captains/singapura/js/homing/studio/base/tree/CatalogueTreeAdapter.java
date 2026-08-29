@@ -79,8 +79,8 @@ public final class CatalogueTreeAdapter {
 
     private CatalogueTreeNode leafNode(Entry<?> entry, int depth) {
         // v1: only OfDoc leaves participate in the nav tree.
-        if (entry instanceof Entry.OfDoc<?, ?> od) {
-            Doc doc = od.doc();
+        if (entry instanceof Entry.OfLeaf<?, ?, ?> od && od.content() != null) {
+            Doc doc = od.content();
             var dims = baseDims(doc.title(), doc.summary(), doc.category(), doc.kind(), depth);
             return new CatalogueTreeNode(levelAtDepth(depth), dims, List.of());
         }

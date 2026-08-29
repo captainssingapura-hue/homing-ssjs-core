@@ -97,8 +97,8 @@ public final class ForestPathResolver {
         var out = new ArrayList<NavChild>();
         for (Catalogue<?> sub : cat.subCatalogues()) out.add(new NavSub(sub));
         for (Entry<?> entry : cat.leaves()) {
-            if (entry instanceof Entry.OfDoc<?, ?> od) {
-                out.add(new NavDoc(od.doc()));
+            if (entry instanceof Entry.OfLeaf<?, ?, ?> od && od.content() != null) {
+                out.add(new NavDoc(od.content()));
             } else if (entry instanceof Entry.OfStudio<?, ?> os) {
                 out.add(new NavPortal(os.proxy().source()));
             }

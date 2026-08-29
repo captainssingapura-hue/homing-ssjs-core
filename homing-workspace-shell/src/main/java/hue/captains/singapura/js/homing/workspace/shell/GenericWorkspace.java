@@ -1,6 +1,8 @@
 package hue.captains.singapura.js.homing.workspace.shell;
 
 import hue.captains.singapura.js.homing.core.AppLink;
+import hue.captains.singapura.js.homing.core.ParamCodec;
+import hue.captains.singapura.js.homing.core.QueryString;
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.Widget;
 import hue.captains.singapura.js.homing.studio.base.widget.WorkspaceMPA;
@@ -44,7 +46,26 @@ public final class GenericWorkspace extends WorkspaceMPA<GenericWorkspace.Params
     public record link()    implements AppLink<GenericWorkspace> {}
 
     @Override public String simpleName() { return "genericWorkspace"; }
+    /**
+     * RFC 0051 - the workspace kind is required: this app mounts a registered
+     * WorkspaceSpec by kind, and there is no sensible default spec to fall
+     * back to, so an absent kind is a malformed request rather than a page.
+     */
+    public static final ParamCodec<Params> CODEC = new ParamCodec<>() {
+
+        @Override public Decoded<Params> from(java.util.Map<String, java.util.List<String>> query) {
+            String kind = QueryString.first(query, "ws_kind");
+            if (kind == null || kind.isBlank()) return Decoded.missing("ws_kind");
+            return Decoded.ok(new Params(kind));
+        }
+
+        @Override public java.util.Map<String, java.util.List<String>> to(Params params) {
+            return QueryString.of("ws_kind", params.ws_kind());
+        }
+    };
+
     @Override public Class<Params> paramsType() { return Params.class; }
+    @Override public ParamCodec<Params> paramCodec() { return CODEC; }
     @Override public String title() { return "Workspace"; }
 
     @Override

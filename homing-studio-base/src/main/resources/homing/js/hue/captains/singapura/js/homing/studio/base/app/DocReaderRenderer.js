@@ -1,7 +1,7 @@
 // =============================================================================
 // DocReaderRenderer — shared renderer for DocReader.
 //
-// renderDocReader({ docId, brand, crumbsAbove }) → Node
+// renderDocReader({ docId, brand, crumbs }) → Node
 //
 // Fetches /doc?id=<docId> (UUID — typed Doc reference per RFC 0004), parses
 // with marked.js, installs via Range.createContextualFragment (no innerHTML
@@ -51,18 +51,42 @@ function _collectHeadings(rootEl) {
 function renderDocReader(props) {
     var docId       = props.docId;
     var brand       = props.brand;
-    var crumbsAbove = props.crumbsAbove || [];
 
     var root = document.createElement("div");
     css.addClass(root, st_root);
 
-    // Header is rendered with placeholder text for the breadcrumb; the title
-    // is filled in once /doc-refs returns it (server-resolved from the typed Doc).
-    var crumbs = [];
-    for (var i = 0; i < crumbsAbove.length; i++) crumbs.push(crumbsAbove[i]);
-    var leafCrumb = { text: docId ? "Loading…" : "(no document)" };
-    crumbs.push(leafCrumb);
+    // RFC 0051 Phase 5 — when the server stamped the trail into the page, the
+    // header is right on the first paint and stays put. Without it the header
+    // was drawn saying "Loading…" and replaced once /doc-refs answered, which
+    // is where the breadcrumb pop-in came from: the server had already walked
+    // the tree to serve this request, and the page asked it again.
+    var stamped   = props.crumbs && props.crumbs.length ? props.crumbs : null;
+    var crumbs    = [];
+    var leafCrumb;
+    if (stamped) {
+        // Copied wholesale rather than rebuilt field by field: the server's
+        // crumbs are already the shape Header wants, and re-constructing them
+        // would be restating a contract that is already satisfied.
+        crumbs = stamped.slice();
+        leafCrumb = crumbs[crumbs.length - 1];
+    } else {
+        // No stamp — a studio with no CatalogueRegistry, where the framework
+        // has no trail to state. The page says what it is and nothing about
+        // where it sits, which is the honest answer rather than a manufactured
+        // one. RFC 0051: an app never builds a trail of its own.
+        leafCrumb = { text: docId ? "Loading…" : "(no document)" };
+        crumbs.push(leafCrumb);
+    }
+    // RFC 0051 Phase 6 - the title is in the stamp, so the heading, the browser
+    // tab and the export filename stop waiting on a round trip for a string
+    // already sitting in the page. The fetch still supplies it for an unstamped
+    // page, which is the only case that cannot answer for itself.
+    var stampedTitle = leafCrumb && stamped ? leafCrumb.text : null;
+
     var headerEl = Header({ brand: brand, crumbs: crumbs });
+    if (stampedTitle) {
+        document.title = stampedTitle + (brand && brand.label ? " · " + brand.label : "");
+    }
     // data-export-chrome: stripped by exportPageAsHtml when the user picks
     // "content only" — the brand bar + breadcrumb chain is page chrome, not
     // document content.
@@ -79,7 +103,9 @@ function renderDocReader(props) {
     //
     // The filename slug starts as "doc" and is replaced with a title-derived
     // slug once /doc-refs returns info.title (see the .then handler below).
-    var _exportSlug = "doc";
+    // Seeded from the stamp so an export before the fetch lands is still named
+    // after the doc rather than "doc".
+    var _exportSlug = stampedTitle ? (_slugify(stampedTitle) || "doc") : "doc";
 
     // Floating export pill — wraps a chrome-include checkbox and the button
     // together so the toggle travels with the action. data-export-exclude on
@@ -138,7 +164,7 @@ function renderDocReader(props) {
     // exportPageAsHtml when the user picks "content only".
     meta.setAttribute("data-export-content", "");
     var titleEl = document.createElement("span");
-    titleEl.textContent = docId ? "" : "—";
+    titleEl.textContent = stampedTitle ? stampedTitle : (docId ? "" : "—");
     meta.appendChild(titleEl);
     main.appendChild(meta);
 
@@ -214,28 +240,31 @@ function renderDocReader(props) {
             return r.json();
         })
         .then(function(info) {
-            // Server-resolved Doc metadata: title (friendly name) + summary + category
-            // + breadcrumbs[] + references[]. Update the breadcrumb + meta line with
-            // the title; rebuild the breadcrumb chain (RFC 0005-ext2) from
-            // info.breadcrumbs when the server provides it; render the References
-            // section from info.references.
+            // Server-resolved Doc metadata: title (friendly name) + summary +
+            // category + references[]. Update the meta line with the title and
+            // render the References section from info.references. No trail here
+            // since RFC 0051 phase 5 — the page arrived carrying one.
             if (info && info.title) {
-                leafCrumb.text = info.title;
+                // RFC 0051 Phase 5 — do NOT touch the leaf when it came from
+                // the stamp: those crumbs are frozen, and a write to a frozen
+                // object throws in a module's strict mode. That threw here,
+                // and the handler's .catch swallowed it — so the title, the
+                // category and the whole References section silently vanished
+                // while the breadcrumb looked perfect. The stamped leaf
+                // already says the title anyway.
+                if (!stamped) leafCrumb.text = info.title;
                 // Update the export filename to a title-derived slug now that
                 // the title is known. Same _slugify rules ComposedWidget uses.
                 _exportSlug = _slugify(info.title) || "doc";
-                // RFC 0005-ext2: when the server returned a typed breadcrumb chain
-                // (catalogue root → ... → containing catalogue), use it instead of
-                // whatever crumbsAbove the caller supplied. The leaf crumb (this
-                // doc's title) is always appended last as a non-link.
-                if (info.breadcrumbs && info.breadcrumbs.length > 0) {
-                    crumbs = info.breadcrumbs.slice();
-                    crumbs.push(leafCrumb);
+                // RFC 0051 Phase 5 — /doc-refs no longer returns a chain. A page
+                // that arrives without a stamp has no position to recover, so the
+                // only upgrade left is the title on the placeholder leaf, and the
+                // header is rebuilt once to show it.
+                if (!stamped) {
+                    var newHeader = Header({ brand: brand, crumbs: crumbs });
+                    root.replaceChild(newHeader, headerEl);
+                    headerEl = newHeader;
                 }
-                // Re-render header with the updated chain + leaf crumb text.
-                var newHeader = Header({ brand: brand, crumbs: crumbs });
-                root.replaceChild(newHeader, headerEl);
-                headerEl = newHeader;
                 titleEl.textContent = info.title;
                 // Browser tab title — `<doc> · <brand>`. Replaces the static
                 // default served by AppHtmlGetAction (which doesn't know the
@@ -285,7 +314,9 @@ function _renderReferences(refs, container) {
         if (r.kind === "doc") {
             var titleLink = document.createElement("a");
             css.addClass(titleLink, st_card_link);
-            href.set(titleLink, "/app?app=doc-reader&doc=" + encodeURIComponent(r.uuid));
+            // RFC 0051 - the server supplies the target's (app, args); /app is the
+            // generic redirect that turns it into the authentic path.
+            href.set(titleLink, r.url || ("/app?app=doc-reader&doc=" + encodeURIComponent(r.uuid)));
             titleLink.textContent = r.title;
             title.appendChild(titleLink);
             summary.textContent = r.summary || "";

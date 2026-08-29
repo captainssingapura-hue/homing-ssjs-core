@@ -72,6 +72,25 @@ public non-sealed interface AppModule<P extends AppModule._Param, M extends AppM
     }
 
     /**
+     * RFC 0051 — this app's query parameters, read and written by one object.
+     *
+     * <p>{@link #paramsType()} says what the params ARE; this says how they
+     * travel. The pair was previously split across a hand-written
+     * {@code ParamMarshaller} per action and {@code Navigable.url()}'s
+     * component walk, neither of which knew about the other.</p>
+     *
+     * <p>Defaults to the paramless codec, which is correct exactly when
+     * {@link #paramsType()} was also left alone. An app that declares params
+     * and forgets to override this gets the same class-cast mismatch the
+     * paramsType contract already describes — the two are overridden
+     * together or neither is.</p>
+     */
+    @SuppressWarnings("unchecked")
+    default ParamCodec<P> paramCodec() {
+        return (ParamCodec<P>) ParamCodec.None.INSTANCE;
+    }
+
+    /**
      * Marker for the {@code appMain} export.
      * Use the record name {@code appMain} so the JS identifier matches.
      */

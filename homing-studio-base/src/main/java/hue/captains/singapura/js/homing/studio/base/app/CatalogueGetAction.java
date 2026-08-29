@@ -132,7 +132,7 @@ public class CatalogueGetAction
         sb.append("\"brand\":{")
           .append("\"label\":")  .append(jstr(brand.label())).append(',')
           .append("\"logo\":")   .append(jstr(logoSvg)).append(',')
-          .append("\"homeUrl\":").append(jstr(catalogueUrl(brand.homeApp().getName())))
+          .append("\"homeUrl\":").append(jstr(homeUrl()))
           .append("},");
 
         // Breadcrumbs (root → leaf). RFC 0009: prefix the visible text with
@@ -145,7 +145,7 @@ public class CatalogueGetAction
         for (Catalogue<?> ck : crumbs) {
             if (!firstCrumb) sb.append(',');
             firstCrumb = false;
-            String url = (ck.getClass() == c.getClass()) ? "" : catalogueUrl(ck.getClass().getName());
+            String url = (ck.getClass() == c.getClass()) ? "" : pathUrl(ck);
             sb.append("{\"name\":").append(jstr(crumbTextOf(ck)))
               .append(",\"url\":") .append(jstr(url))
               .append('}');
@@ -178,7 +178,7 @@ public class CatalogueGetAction
               .append("\"name\":")    .append(jstr(child.name())).append(',')
               .append("\"summary\":") .append(jstr(child.summary())).append(',')
               .append("\"category\":").append(jstr(child.badge())).append(',')
-              .append("\"url\":")     .append(jstr(catalogueUrl(child.getClass().getName())))
+              .append("\"url\":")     .append(jstr(pathUrl(child)))
               .append('}');
         }
 
@@ -187,26 +187,30 @@ public class CatalogueGetAction
             if (!firstEntry) sb.append(',');
             firstEntry = false;
             switch (e) {
-                case Entry.OfDoc<?, ?>(Doc d) -> {
-                    // RFC 0015 Phase 3b — dispatch via Doc's typed kind() + url().
-                    // Field-key asymmetry preserved: frontend renderer uses entry.title
-                    // for kind="doc"; entry.name for everything else (plan / app /
-                    // studio / catalogue). Phase 6 will unify the schema once the
-                    // frontend dispatch is updated.
-                    String kind = d.kind();
+                // RFC 0051 Phase 6 — a bound leaf. Its tile reads exactly what
+                // the OfDoc tile reads, from the same places, so the payload is
+                // unchanged; what differs is where the URL comes from. The doc
+                // is no longer asked how it opens — the placement already said.
+                case Entry.OfLeaf<?, ?, ?> leaf -> {
+                    // RFC 0051 Phase 6 — kind and category are read off the
+                    // LEAF. They are framing, and framing is the placement's:
+                    // TreeGetAction has always let a leaf override the badge,
+                    // so the framework already treated them this way in one
+                    // place and asked the doc everywhere else.
+                    Doc content = leaf.content();
+                    String kind = leaf.kind();
                     String titleKey = "doc".equals(kind) ? "\"title\"" : "\"name\"";
+                    String name     = (content != null) ? content.title()    : leaf.nav().name();
+                    String summary  = (content != null) ? content.summary()  : leaf.nav().summary();
+                    String category = leaf.category();
                     sb.append('{')
                       .append("\"kind\":")    .append(jstr(kind)).append(',')
-                      .append(titleKey)       .append(':').append(jstr(d.title())).append(',')
-                      .append("\"summary\":") .append(jstr(d.summary())).append(',')
-                      .append("\"category\":").append(jstr(d.category())).append(',')
-                      .append("\"url\":")     .append(jstr(d.url()))
+                      .append(titleKey)       .append(':').append(jstr(name)).append(',')
+                      .append("\"summary\":") .append(jstr(summary)).append(',')
+                      .append("\"category\":").append(jstr(category)).append(',')
+                      .append("\"url\":")     .append(jstr(pathUrl(leaf)))
                       .append('}');
                 }
-                // RFC 0015 Phase 6: OfApp / OfPlan branches removed. Plans
-                // and Navigables now flow through OfDoc(PlanDoc/AppDoc) above,
-                // where doc.kind() emits "plan" / "app" and doc.url() emits
-                // the right URL. The two cases collapse into one.
                 case Entry.OfIllustration<?>(CatalogueIllustration illustration) -> {
                     // Specialized in-place decoration — markdown rendered as a
                     // hero block by the frontend. No URL, no addressing, no
@@ -226,7 +230,7 @@ public class CatalogueGetAction
                                                       : proxy.icon() + " " + proxy.name())).append(',')
                       .append("\"summary\":") .append(jstr(proxy.summary())).append(',')
                       .append("\"category\":").append(jstr(proxy.badge())).append(',')
-                      .append("\"url\":")     .append(jstr(catalogueUrl(proxy.source().getClass().getName())))
+                      .append("\"url\":")     .append(jstr(pathUrl(proxy.source())))
                       .append('}');
                 }
             }
@@ -255,7 +259,57 @@ public class CatalogueGetAction
     }
 
     private static String catalogueUrl(String fqn) {
-        return "/app?app=catalogue&id=" + fqn;
+        return CatalogueAppHost.urlFor(fqn);
+    }
+
+    /**
+     * RFC 0051 — the address of a catalogue node, as a path.
+     *
+     * <p>Every tile and crumb this action emits goes through here, so
+     * catalogue navigation shows the authentic address rather than the flat
+     * {@code (app, args)} form. The path comes from
+     * {@link CatalogueRegistry#pathOf}, which derives it from the same
+     * breadcrumb walk the crumb trail is built from — the URL and the crumb
+     * cannot disagree because they are one derivation.</p>
+     */
+    /** RFC 0051 - the brand home link is the tree root, which is /cat. */
+    private String homeUrl() {
+        Catalogue<?> root = registry.root();
+        return root == null ? catalogueUrl(registry.brand().homeApp().getName()) : pathUrl(root);
+    }
+
+    private String pathUrl(Catalogue<?> node) {
+        CataloguePath path = registry.pathOf(node);
+        return path == null ? catalogueUrl(node.getClass().getName()) : path.toUrl();
+    }
+
+    /**
+     * The address of a leaf, as a path — falling back to the doc's own flat
+     * URL when it has no position.
+     *
+     * <p>The fallback is not dead code: Law 1 gives a doc AT MOST one
+     * position, not necessarily one. Docs harvested from content trees are
+     * reachable and viewable without sitting in the catalogue tree, and they
+     * keep their flat address.</p>
+     */
+    private String pathUrl(hue.captains.singapura.js.homing.studio.base.Doc doc) {
+        CataloguePath path = registry.pathOf(doc);
+        return path == null ? DocViewers.addressOf(doc).flat() : path.toUrl();
+    }
+
+    /**
+     * The address of a bound leaf. RFC 0051 Phase 6 — the flat fallback is
+     * minted from the leaf's OWN binding rather than from a doc's opinion of
+     * how it opens, which is the difference the phase is for. An app leaf with
+     * no content has no doc to ask at all, and needs none.
+     */
+    private String pathUrl(Entry.OfLeaf<?, ?, ?> leaf) {
+        // Ask by BINDING, not by content. A content-less leaf — an app tile —
+        // has no doc to look up, and asking by doc is what silently dropped
+        // thirteen app tiles back to flat URLs when AppDoc stopped lending
+        // them a Doc identity.
+        CataloguePath path = registry.pathOf(leaf.nav());
+        return path == null ? leaf.nav().url() : path.toUrl();
     }
 
     /** RFC 0009: breadcrumb crumb text — icon glyph prefix + name. */

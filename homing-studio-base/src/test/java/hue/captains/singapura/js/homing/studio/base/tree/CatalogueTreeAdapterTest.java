@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.studio.base.tree;
 
 import hue.captains.singapura.js.homing.studio.base.Doc;
 import hue.captains.singapura.js.homing.studio.base.app.Catalogue;
+import hue.captains.singapura.js.homing.studio.base.app.DocReader;
 import hue.captains.singapura.js.homing.studio.base.app.Entry;
 import hue.captains.singapura.js.homing.studio.base.app.L0_Catalogue;
 import hue.captains.singapura.js.homing.studio.base.app.L1_Catalogue;
@@ -36,7 +37,9 @@ class CatalogueTreeAdapterTest {
         @Override public String name()    { return "Child Cat"; }
         @Override public String summary() { return "Child summary."; }
         @Override public List<Entry<Child>> leaves() {
-            return List.of(Entry.of(this, new TestDoc()));
+            var d = new TestDoc();
+            return List.of(Entry.of(this, DocReader.INSTANCE,
+                    new DocReader.Params(d.uuid().toString()), d));
         }
     }
 

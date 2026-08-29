@@ -1,5 +1,8 @@
 package hue.captains.singapura.js.homing.studio.base.tracker;
 
+import hue.captains.singapura.js.homing.core.AppUrl;
+import hue.captains.singapura.js.homing.core.ParamCodec;
+import hue.captains.singapura.js.homing.core.QueryString;
 import hue.captains.singapura.js.homing.core.AppLink;
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.ExportsOf;
@@ -39,17 +42,44 @@ public record PlanAppHost() implements AppModule<PlanAppHost.Params, PlanAppHost
 
     public static final PlanAppHost INSTANCE = new PlanAppHost();
 
-    /** Build the canonical URL serving the given Plan's index page. */
+    /**
+     * Build the canonical URL serving the given Plan's index page.
+     *
+     * <p>RFC 0051 (D8) — minted through {@link AppUrl} and this app's own
+     * {@link #CODEC}, so the address and the parse that reads it back are one
+     * statement. It used to concatenate, which is why {@code from(to(p)) == p}
+     * held only by the accident that class names need no escaping.</p>
+     */
     public static String urlFor(Class<? extends Plan> planClass) {
-        return "/app?app=" + INSTANCE.simpleName() + "&id=" + planClass.getName();
+        return urlFor(planClass, null);
     }
 
     /** Build the canonical URL serving a phase detail page. */
     public static String urlFor(Class<? extends Plan> planClass, String phaseId) {
-        return urlFor(planClass) + "&phase=" + phaseId;
+        return AppUrl.flat(INSTANCE.simpleName(), CODEC,
+                new Params(planClass.getName(), phaseId));
     }
 
+    /** RFC 0051 - plan id required, phase optional (a plan opens at its
+     *  overview when no phase is named). */
+    public static final ParamCodec<Params> CODEC = new ParamCodec<>() {
+
+        @Override public Decoded<Params> from(java.util.Map<String, java.util.List<String>> query) {
+            String id = QueryString.first(query, "id");
+            if (id == null || id.isBlank()) return Decoded.missing("id");
+            return Decoded.ok(new Params(id, QueryString.first(query, "phase")));
+        }
+
+        @Override public java.util.Map<String, java.util.List<String>> to(Params params) {
+            var out = QueryString.params();
+            QueryString.put(out, "id", params.id());
+            QueryString.put(out, "phase", params.phase());
+            return out;
+        }
+    };
+
     @Override public Class<Params> paramsType() { return Params.class; }
+    @Override public ParamCodec<Params> paramCodec() { return CODEC; }
 
     @Override public String simpleName() { return "plan"; }
 
@@ -73,10 +103,15 @@ public record PlanAppHost() implements AppModule<PlanAppHost.Params, PlanAppHost
     @Override
     public List<String> selfContent(ModuleNameResolver nameResolver) {
         return List.of(
-                "function appMain(rootElement) {",
+                // RFC 0051 - params from the server; a /cat path has no query.
+                // RFC 0051 — chrome is handed in, never built. The stamp ends
+                // at the plan, which is where this page sits whatever ?phase=
+                // says; moving between phases is this app's own navigation.
+                "function appMain(rootElement, params, chrome) {",
                 "    rootElement.replaceChildren(renderPlanHost({",
                 "        planId: params.id,",
-                "        phase:  params.phase",
+                "        phase:  params.phase,",
+                "        crumbs: chrome && chrome.crumbs",
                 "    }));",
                 "}"
         );

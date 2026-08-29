@@ -1,7 +1,10 @@
 package hue.captains.singapura.js.homing.studio.base.app.tree;
 
+import hue.captains.singapura.js.homing.core.ParamCodec;
+import hue.captains.singapura.js.homing.core.QueryString;
 import hue.captains.singapura.js.homing.core.AppLink;
 import hue.captains.singapura.js.homing.core.AppModule;
+import hue.captains.singapura.js.homing.core.AppUrl;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.LegacyAppMain;
@@ -40,13 +43,42 @@ public record TreeAppHost() implements AppModule<TreeAppHost.Params, TreeAppHost
 
     public static final TreeAppHost INSTANCE = new TreeAppHost();
 
-    /** Canonical URL for a tree at a given path (or root if path is null/empty). */
+    /**
+     * RFC 0051 — this app's params, read and written together.
+     *
+     * <p>{@code path} is optional: a tree opened at its root has none, so its
+     * absence is a value rather than an error. {@code id} is required — a
+     * tree host without a tree is not a page that can be rendered.</p>
+     */
+    public static final ParamCodec<Params> CODEC = new ParamCodec<>() {
+
+        @Override public Decoded<Params> from(java.util.Map<String, java.util.List<String>> query) {
+            String id = QueryString.first(query, "id");
+            if (id == null || id.isBlank()) return Decoded.missing("id");
+            return Decoded.ok(new Params(id, QueryString.first(query, "path")));
+        }
+
+        @Override public java.util.Map<String, java.util.List<String>> to(Params params) {
+            var out = QueryString.params();
+            QueryString.put(out, "id", params.id());
+            QueryString.put(out, "path", params.path());   // null is simply omitted
+            return out;
+        }
+    };
+
+    /** Canonical URL for a tree at a given path (or root if path is null/empty).
+     *
+     *  <p>Goes through {@link #CODEC} so the values are escaped: this built the
+     *  query by concatenation, which produced a broken URL for any tree path
+     *  containing a space or an {@code &} — silently, since nothing decoded it
+     *  back to compare.</p> */
     public static String urlFor(String treeId, String path) {
-        String base = "/app?app=" + INSTANCE.simpleName() + "&id=" + treeId;
-        return (path == null || path.isEmpty()) ? base : base + "&path=" + path;
+        return AppUrl.flat(INSTANCE,
+                new Params(treeId, (path == null || path.isEmpty()) ? null : path));
     }
 
     @Override public Class<Params> paramsType() { return Params.class; }
+    @Override public ParamCodec<Params> paramCodec() { return CODEC; }
     @Override public String simpleName() { return "tree"; }
     @Override public String title()      { return "tree"; }
 
@@ -68,12 +100,24 @@ public record TreeAppHost() implements AppModule<TreeAppHost.Params, TreeAppHost
         // The renderer takes apiUrl to override the default /catalogue endpoint.
         // We construct the /tree URL from the typed Params and hand it through.
         return List.of(
-                "function appMain(rootElement) {",
+                // RFC 0051 — params arrive as an argument. The server resolved
+                // them to answer this request at all, so re-deriving them from
+                // window.location here was a second implementation of a
+                // decision already made, run against a string already parsed.
+                // The generated URL-reading const is suppressed for apps with a
+                // codec, so this is the only params in scope.
+                // RFC 0051 — chrome is handed in, never built. The stamp ends
+                // at this tree's catalogue leaf whatever ?path= says: a tree's
+                // internal nodes have no catalogue position, so moving among
+                // them is this app's own navigation to render, not a change of
+                // where the page sits.
+                "function appMain(rootElement, params, chrome) {",
                 "    var apiUrl = '/tree?id=' + encodeURIComponent(params.id);",
                 "    if (params.path) apiUrl += '&path=' + encodeURIComponent(params.path);",
                 "    rootElement.replaceChildren(renderCatalogueHost({",
                 "        catalogueId: params.id,",
-                "        apiUrl:      apiUrl",
+                "        apiUrl:      apiUrl,",
+                "        crumbs:      chrome && chrome.crumbs",
                 "    }));",
                 "}"
         );

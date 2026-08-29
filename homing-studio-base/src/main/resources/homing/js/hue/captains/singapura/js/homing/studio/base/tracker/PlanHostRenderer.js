@@ -19,6 +19,7 @@
 function renderPlanHost(props) {
     var planId = props.planId;
     var phase  = props.phase;
+    var stampedCrumbs = props.crumbs;
 
     var root = document.createElement("div");
     css.addClass(root, st_root);
@@ -52,9 +53,9 @@ function renderPlanHost(props) {
             document.title = subject
                 + (data.brand && data.brand.label ? " · " + data.brand.label : "");
             if (phase) {
-                _renderStep(root, data, planId, phase);
+                _renderStep(root, data, planId, phase, stampedCrumbs);
             } else {
-                _renderIndex(root, data, planId);
+                _renderIndex(root, data, planId, stampedCrumbs);
             }
         })
         .catch(function(err) {
@@ -67,36 +68,44 @@ function renderPlanHost(props) {
     return root;
 }
 
-function _planUrl(planId)               { return "/app?app=plan&id=" + encodeURIComponent(planId); }
-function _phaseUrl(planId, phaseId)     { return _planUrl(planId) + "&phase=" + encodeURIComponent(phaseId); }
+// RFC 0051 — the server supplies the plan's own address; these fall back to
+// the flat form only when the plan has no position in the catalogue.
+function _planUrl(data, planId) {
+    return (data && data.selfUrl) || ("/app?app=plan&id=" + encodeURIComponent(planId));
+}
+function _phaseUrl(data, planId, phaseId) {
+    var base = _planUrl(data, planId);
+    return base + (base.indexOf("?") >= 0 ? "&" : "?") + "phase=" + encodeURIComponent(phaseId);
+}
 
-function _brandHeader(data, crumbsAfter) {
+function _brandHeader(data, stampedCrumbs) {
     var brand = data.brand || { label: "studio", homeUrl: "/" };
-    // RFC 0005-ext2: the server now resolves the typed catalogue chain
-    // (root → ... → containing catalogue, typically Journeys) and emits it as
-    // data.breadcrumbs. The plan name is appended as the leaf crumb; the
-    // phase label (when on a phase view) appends after that.
-    var crumbs = [];
-    if (data.breadcrumbs && data.breadcrumbs.length > 0) {
-        for (var i = 0; i < data.breadcrumbs.length; i++) crumbs.push(data.breadcrumbs[i]);
-    } else {
-        // Legacy fallback — no CatalogueRegistry on this studio.
-        crumbs.push({ text: brand.label, href: brand.homeUrl });
-    }
-    crumbs.push({ text: data.name });
-    if (crumbsAfter && crumbsAfter.length) {
-        crumbs[crumbs.length - 1].href = crumbsAfter[0].selfUrl;
-        for (var j = 0; j < crumbsAfter.length; j++) crumbs.push({ text: crumbsAfter[j].text });
-    }
+    // RFC 0051 — the server's stamp, taken whole.
+    //
+    // This used to compose the trail itself: data.breadcrumbs for the
+    // ancestors, data.name appended as the plan's own crumb, and on a phase
+    // view a "Phase N" crumb after that with the plan name turned into a link
+    // back to the index. Two of those three were the app describing a position
+    // the catalogue never gave it. The stamp already ends at the plan, which
+    // IS where this page sits — being at phase 6 of a plan is being at that
+    // plan — so moving between phases is this app's own navigation to render.
+    //
+    // No stamp means no CatalogueRegistry on this studio, and then
+    // data.breadcrumbs is absent too: PlanGetAction emits brand and chain
+    // together, both gated on the registry. So the fallback is not a second
+    // trail, it is the absence of one.
+    var crumbs = (stampedCrumbs && stampedCrumbs.length)
+            ? stampedCrumbs.slice()
+            : [{ text: brand.label, href: brand.homeUrl }, { text: data.name }];
     return Header({
         brand:  { href: brand.homeUrl, label: brand.label, logo: brand.logo },
         crumbs: crumbs
     });
 }
 
-function _renderIndex(root, data, planId) {
+function _renderIndex(root, data, planId, stampedCrumbs) {
     var children = [];
-    children.push(_brandHeader(data, null));
+    children.push(_brandHeader(data, stampedCrumbs));
 
     var main = document.createElement("div");
     css.addClass(main, st_main);
@@ -167,7 +176,7 @@ function _renderIndex(root, data, planId) {
     // column beneath the badge.
     var phaseItems = data.phases.map(function(p) {
         return ListItem({
-            href:        _phaseUrl(planId, p.id),
+            href:        _phaseUrl(data, planId, p.id),
             marker:      _phaseMarker(p),
             met:         (p.status || "").toLowerCase() === "done",
             label:       p.id + " — " + p.label,
@@ -180,13 +189,13 @@ function _renderIndex(root, data, planId) {
     var footerChildren = [];
     if (data.executionDoc) {
         var execA = document.createElement("a");
-        href.set(execA, "/app?app=doc-reader&doc=" + encodeURIComponent(data.executionDoc));
+        href.set(execA, data.executionUrl || ("/app?app=doc-reader&doc=" + encodeURIComponent(data.executionDoc)));
         execA.textContent = "Execution Plan (prose)";
         footerChildren.push(execA);
     }
     if (data.dossierDoc) {
         var dosA = document.createElement("a");
-        href.set(dosA, "/app?app=doc-reader&doc=" + encodeURIComponent(data.dossierDoc));
+        href.set(dosA, data.dossierUrl || ("/app?app=doc-reader&doc=" + encodeURIComponent(data.dossierDoc)));
         dosA.textContent = "Dossier";
         if (footerChildren.length) footerChildren.push(document.createTextNode(" · "));
         footerChildren.push(dosA);
@@ -232,7 +241,7 @@ function _decisionBody(d) {
     return box;
 }
 
-function _renderStep(root, data, planId, phaseId) {
+function _renderStep(root, data, planId, phaseId, stampedCrumbs) {
     var phase = null;
     var phaseIdx = -1;
     for (var i = 0; i < data.phases.length; i++) {
@@ -247,7 +256,7 @@ function _renderStep(root, data, planId, phaseId) {
     }
 
     var children = [];
-    children.push(_brandHeader(data, [{ selfUrl: _planUrl(planId), text: "Phase " + phase.id }]));
+    children.push(_brandHeader(data, stampedCrumbs));
 
     var main = document.createElement("div");
     css.addClass(main, st_main);
@@ -279,7 +288,7 @@ function _renderStep(root, data, planId, phaseId) {
     }
 
     if (phase.tasks && phase.tasks.length) {
-        main.appendChild(Panel({ title: "Tasks", children: [TodoList({ items: phase.tasks })] }));
+        main.appendChild(Panel({ title: "Tasks", children: [TodoList({ tasks: phase.tasks })] }));
     }
 
     if (phase.metrics && phase.metrics.length) {
@@ -292,7 +301,7 @@ function _renderStep(root, data, planId, phaseId) {
             var d = phase.dependsOn[di];
             var li = document.createElement("li");
             var a = document.createElement("a");
-            href.set(a, _phaseUrl(planId, d.phaseId));
+            href.set(a, _phaseUrl(data, planId, d.phaseId));
             a.textContent = "Phase " + d.phaseId;
             li.appendChild(a);
             li.appendChild(document.createTextNode(" — " + d.reason));
@@ -320,22 +329,35 @@ function _renderStep(root, data, planId, phaseId) {
         main.appendChild(Panel({ title: "Notes", children: [notesEl] }));
     }
 
-    // Prev / next nav.
+    // Prev / up / next nav.
+    //
+    // RFC 0051 — the middle link is this app's own, and it exists because the
+    // breadcrumb no longer carries it. The trail used to turn the plan's crumb
+    // into a link back to the index, which was the app editing a statement only
+    // the catalogue may make: being at phase 6 of a plan IS being at that plan,
+    // so the trail ends there and moving within it is navigation this page
+    // renders for itself. Named after its destination with a direction glyph,
+    // the same shape as its two neighbours.
     var navRow = document.createElement("div");
     navRow.style.cssText = "display:flex; justify-content:space-between; margin-top:24px;";
     if (phaseIdx > 0) {
         var prev = document.createElement("a");
-        href.set(prev, _phaseUrl(planId, data.phases[phaseIdx - 1].id));
+        href.set(prev, _phaseUrl(data, planId, data.phases[phaseIdx - 1].id));
         prev.textContent = "← Phase " + data.phases[phaseIdx - 1].id;
         navRow.appendChild(prev);
     } else {
         navRow.appendChild(document.createElement("span"));
     }
+    navRow.appendChild(NavLink({ href: _planUrl(data, planId), text: "↑ " + data.name }));
     if (phaseIdx < data.phases.length - 1) {
         var next = document.createElement("a");
-        href.set(next, _phaseUrl(planId, data.phases[phaseIdx + 1].id));
+        href.set(next, _phaseUrl(data, planId, data.phases[phaseIdx + 1].id));
         next.textContent = "Phase " + data.phases[phaseIdx + 1].id + " →";
         navRow.appendChild(next);
+    } else {
+        // Balances the row so the up link stays centred on the last phase,
+        // for the same reason the empty span above balances the first.
+        navRow.appendChild(document.createElement("span"));
     }
     main.appendChild(navRow);
 

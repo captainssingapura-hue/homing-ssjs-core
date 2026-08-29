@@ -1,4 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.app;
+import hue.captains.singapura.js.homing.studio.base.composed.text.NodeName;
+
 
 /**
  * Typed proxy for re-attaching a source {@link L0_Catalogue} as a leaf in
@@ -37,6 +39,16 @@ public record StudioProxy<S extends L0_Catalogue<S>>(
         String summary,
         String badge,
         String icon) implements CatalogueLeaf {
+
+    /**
+     * RFC 0051 Law 2. Like {@code AppDoc}, every proxy shares one class, so
+     * the segment comes from the wrapped source's own slug — a studio keeps
+     * the same path segment whether reached directly or through an umbrella,
+     * which is the parity this proxy exists to preserve.
+     */
+    @Override public NodeName slug() {
+        return source.slug();
+    }
 
     public StudioProxy {
         if (source == null)         throw new IllegalArgumentException("StudioProxy.source must not be null");
