@@ -2,7 +2,7 @@ package hue.captains.singapura.js.homing.studio.base.app;
 
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.studio.base.Doc;
-import hue.captains.singapura.js.homing.studio.base.composed.text.NodeName;
+import hue.captains.singapura.js.homing.tree.NodeName;
 import hue.captains.singapura.js.homing.studio.base.tracker.Plan;
 import hue.captains.singapura.tao.ontology.Immutable;
 

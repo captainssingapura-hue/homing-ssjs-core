@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.studio.base.app;
 
 import hue.captains.singapura.js.homing.studio.base.Doc;
-import hue.captains.singapura.js.homing.studio.base.composed.text.NodeName;
+import hue.captains.singapura.js.homing.tree.NodeName;
 import hue.captains.singapura.js.homing.studio.base.rigid.RigidDoc;
 import hue.captains.singapura.js.homing.studio.base.rigid.RigidDocV2;
 import hue.captains.singapura.js.homing.studio.base.tracker.PlanDoc;

@@ -2,7 +2,7 @@ package hue.captains.singapura.js.homing.studio.base.composed;
 
 import hue.captains.singapura.js.homing.studio.base.composed.graph.RigidNode;
 import hue.captains.singapura.js.homing.studio.base.composed.graph.RigidNodeNormalizer;
-import hue.captains.singapura.js.homing.studio.base.composed.text.NodeName;
+import hue.captains.singapura.js.homing.tree.NodeName;
 import hue.captains.singapura.js.homing.studio.base.composed.text.Title;
 import org.junit.jupiter.api.Test;
 

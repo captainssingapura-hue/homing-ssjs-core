@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base;
 
-import hue.captains.singapura.js.homing.studio.base.composed.text.NodeName;
+import hue.captains.singapura.js.homing.tree.NodeName;
 
 /**
  * RFC 0051 Phase 6 — a doc that carries an author-chosen NAME.

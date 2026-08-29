@@ -4,7 +4,7 @@ import hue.captains.singapura.js.homing.studio.base.app.DocReader;
 
 import hue.captains.singapura.js.homing.studio.base.Doc;
 import hue.captains.singapura.js.homing.studio.base.DocRegistry;
-import hue.captains.singapura.js.homing.studio.base.composed.text.NodeName;
+import hue.captains.singapura.js.homing.tree.NodeName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

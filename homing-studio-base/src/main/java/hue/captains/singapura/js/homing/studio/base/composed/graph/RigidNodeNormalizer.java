@@ -4,7 +4,7 @@ import hue.captains.singapura.js.homing.studio.base.composed.ComposedLeaf;
 import hue.captains.singapura.js.homing.studio.base.composed.ContentProvider;
 import hue.captains.singapura.js.homing.studio.base.composed.DocTreeV2;
 import hue.captains.singapura.js.homing.studio.base.composed.RigidNodeContent;
-import hue.captains.singapura.js.homing.studio.base.composed.text.NodeName;
+import hue.captains.singapura.js.homing.tree.NodeName;
 import hue.captains.singapura.js.homing.tree.DimensionKey;
 import hue.captains.singapura.js.homing.tree.DimensionValue;
 import hue.captains.singapura.js.homing.tree.DisplayLabel;

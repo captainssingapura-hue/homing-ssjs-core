@@ -12,7 +12,7 @@ package hue.captains.singapura.js.homing.tree;
  * short — so a node's name-path (the chain of {@code NodeKey}s from the root) is
  * a stable address that survives reordering, unlike a child-index path. The value
  * is carried by a {@code DimensionValue} (typically {@code NameValue} wrapping a
- * validated {@code NodeName}).</p>
+ * validated {@link NodeName}).</p>
  *
  * @since homing-tree-views — RFC 0039 name-path identity
  */

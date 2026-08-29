@@ -3,7 +3,7 @@ package hue.captains.singapura.js.homing.studio.base.composed.graph;
 import hue.captains.singapura.js.homing.studio.base.composed.DocTreeV2;
 import hue.captains.singapura.js.homing.studio.base.composed.ParagraphSegment;
 import hue.captains.singapura.js.homing.studio.base.composed.RigidNodeContent;
-import hue.captains.singapura.js.homing.studio.base.composed.text.NodeName;
+import hue.captains.singapura.js.homing.tree.NodeName;
 import hue.captains.singapura.js.homing.studio.base.composed.text.Title;
 import hue.captains.singapura.js.homing.tree.DisplayLabel;
 import hue.captains.singapura.js.homing.tree.NodeKey;
