@@ -33,6 +33,8 @@ import hue.captains.singapura.js.homing.studio.base.css.StudioStyles;
 import hue.captains.singapura.js.homing.studio.base.css.Util;
 import hue.captains.singapura.js.homing.studio.base.export.HtmlExportModule;
 import hue.captains.singapura.js.homing.studio.base.graph.StudioGraphInspector;
+import hue.captains.singapura.js.homing.studio.base.tree.CatalogueTreeView;
+import hue.captains.singapura.js.homing.studio.base.tree.CatalogueTreeViewRenderer;
 import hue.captains.singapura.js.homing.studio.base.graph.StudioGraphInspectorRenderer;
 import hue.captains.singapura.js.homing.studio.base.image.ImageViewer;
 import hue.captains.singapura.js.homing.studio.base.image.ImageViewerRenderer;
@@ -113,6 +115,9 @@ public final class StudioBaseCrate implements Crate {
                 CrateEntry.of(HtmlExportModule.INSTANCE),
                 CrateEntry.of(StudioGraphInspector.INSTANCE),
                 CrateEntry.of(StudioGraphInspectorRenderer.INSTANCE),
+                // RFC 0053 - the catalogue TREE listing, drawn from the normalized forest.
+                CrateEntry.of(CatalogueTreeView.INSTANCE),
+                CrateEntry.of(CatalogueTreeViewRenderer.INSTANCE),
                 CrateEntry.of(ImageViewer.INSTANCE),
                 CrateEntry.of(ImageViewerRenderer.INSTANCE),
                 CrateEntry.of(TableViewer.INSTANCE),

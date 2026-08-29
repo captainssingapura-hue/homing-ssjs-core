@@ -19,6 +19,7 @@ import java.util.TreeSet;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * RFC 0051 Phase 2 — the round-trip law over every coded app this module
@@ -42,7 +43,7 @@ class ParamCodecLawsTest {
     /** Apps whose samples are declared in this class — read by the coverage gate. */
     private static final Set<String> COVERED = Set.of(
             "catalogue", "plan", "studio-graph", "doc-reader", "composed-viewer",
-            "svg-viewer", "table-viewer", "image-viewer", "doc-tree-viewer",
+            "svg-viewer", "table-viewer", "image-viewer", "doc-tree-viewer", "catalogue-tree",
             // Covered by TreeAppHostCodecTest, in this module's tree package.
             "tree");
 
@@ -85,6 +86,21 @@ class ParamCodecLawsTest {
                 new StudioGraphInspector.Params("hue.captains.Studio", StudioGraphView.TREE),
                 new StudioGraphInspector.Params("hue.captains.Studio", StudioGraphView.TYPES),
                 new StudioGraphInspector.Params("a&b=c", StudioGraphView.TYPES)));
+    }
+
+    /**
+     * RFC 0053 - the tree listing is paramless: the whole forest, always. The law
+     * still applies, and for an empty codec it is the one that matters - encoding
+     * must add nothing to the URL, or a paramless app would grow a spurious address.
+     */
+    @Test
+    void catalogueTreeViewTakesNoParams() {
+        ParamCodecLaw.assertRoundTrips("CatalogueTreeView",
+                hue.captains.singapura.js.homing.studio.base.tree.CatalogueTreeView.CODEC,
+                List.of(hue.captains.singapura.js.homing.core.AppModule._None.INSTANCE));
+        assertTrue(hue.captains.singapura.js.homing.studio.base.tree.CatalogueTreeView.CODEC
+                .to(hue.captains.singapura.js.homing.core.AppModule._None.INSTANCE).isEmpty(),
+                "a paramless app must encode to no query at all");
     }
 
     /** A view the enum does not name is malformed, not a silent fall back to TREE. */

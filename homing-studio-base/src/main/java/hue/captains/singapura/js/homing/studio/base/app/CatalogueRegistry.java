@@ -853,6 +853,19 @@ public final class CatalogueRegistry {
     }
 
     /**
+     * RFC 0053 — where a vertex sits, asked by its typed identity.
+     *
+     * <p>This is the resolver the one-tree model routes through. A vertex carries
+     * a {@code NodeIdentity}, and for a catalogue vertex that identity is a
+     * {@link NavKey}, so "where does this node belong" becomes a single lookup
+     * rather than a second walk over a parallel structure. {@code null} when
+     * nothing places it — which is itself the interesting answer.</p>
+     */
+    public CataloguePath pathOf(NavKey key) {
+        return key == null ? null : navToPath.get(key);
+    }
+
+    /**
      * RFC 0051 Phase 6 — the path of a binding, for a leaf that has no doc to
      * be found by. An app tile's position is as real as a doc's; it was only
      * ever reachable through {@code AppDoc} lending it a Doc identity.

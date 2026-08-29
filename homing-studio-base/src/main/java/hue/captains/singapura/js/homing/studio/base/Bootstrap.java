@@ -145,6 +145,10 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
         // ComposedViewer): ?app=doc-tree-viewer&id=<uuid> serves the two-part
         // doc-tree payload via /doc-tree (registered below).
         harnessApps.add(DocTreeViewer.INSTANCE);
+        // RFC 0053 - the catalogue as a TREE, drawn from the normalized forest
+        // rather than the routing index: ?app=catalogue-tree, backed by
+        // /catalogue-parity below. Read-only and off the resolution path.
+        harnessApps.add(hue.captains.singapura.js.homing.studio.base.tree.CatalogueTreeView.INSTANCE);
         if (params.diagnosticsEnabled()) harnessApps.add(StudioGraphInspector.INSTANCE);
         // RFC 0016: when downstream has registered ContentTrees, the TreeAppHost
         // joins the app set so /app?app=tree&id=… resolves.
@@ -412,6 +416,8 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
                 if (catalogueAction != null) all.put("/catalogue", catalogueAction);
                 if (planAction      != null) all.put("/plan",      planAction);
                 if (graphMarkdownAction != null) all.put("/graph-md", graphMarkdownAction);
+                if (catalogueRegistry != null) all.put("/catalogue-parity",
+                        new hue.captains.singapura.js.homing.studio.base.tree.CatalogueTreeParityGetAction(catalogueRegistry));
                 if (treeAction != null)          all.put("/tree",     treeAction);
                 all.putAll(harnessGetActions);
                 return Map.copyOf(all);
