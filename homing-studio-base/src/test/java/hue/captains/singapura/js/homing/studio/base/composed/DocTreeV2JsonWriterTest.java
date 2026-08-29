@@ -26,7 +26,7 @@ class DocTreeV2JsonWriterTest {
         var animals = root.child("Warm.", new NodeName("animals"), new Title("Animals"));
         var turtle = animals.child("Slow.", new NodeName("turtle"), new Title("Turtle"));
 
-        DocTreeV2 tree = RigidNodeNormalizer.INSTANCE.toDocTree(List.of(root, animals, turtle), CONTENT);
+        DocTreeV2 tree = RigidNodeNormalizer.INSTANCE.toDocTree(java.util.UUID.fromString("00000000-0000-4000-8000-000000000001"), List.of(root, animals, turtle), CONTENT);
         String json = DocTreeV2JsonWriter.INSTANCE.write(tree, "root-uuid");
 
         // content keyed by the name-path chain, not child indices

@@ -2,7 +2,9 @@ package hue.captains.singapura.js.homing.studio.base.tree;
 
 import hue.captains.singapura.js.homing.studio.base.Doc;
 import hue.captains.singapura.js.homing.studio.base.app.Catalogue;
+import hue.captains.singapura.js.homing.studio.base.app.CatalogueAppHost;
 import hue.captains.singapura.js.homing.studio.base.app.Entry;
+import hue.captains.singapura.js.homing.studio.base.app.NavKey;
 import hue.captains.singapura.js.homing.tree.Category;
 import hue.captains.singapura.js.homing.tree.DimensionKey;
 import hue.captains.singapura.js.homing.tree.DimensionValue;
@@ -69,7 +71,21 @@ public final class CatalogueNormalizer implements TreeNormalizer<Catalogue<?>> {
                 if (leaf != null) kids.add(leaf);
             }
         }
-        return new NormalizedNode(level, dims, kids);
+        return new NormalizedNode(level, cat.slug(), identityOf(cat), dims, kids);
+    }
+
+    /**
+     * A catalogue's identity is its BINDING: {@code CatalogueAppHost} opened on
+     * this catalogue's class (RFC 0053). Global, because the class is — it owes
+     * nothing to where the catalogue sits, so it survives being grafted.
+     *
+     * <p>The {@code context} param is left null deliberately: it is a REFINEMENT,
+     * selecting framing rather than subject, and identity is the pair that
+     * determines the position — nothing finer, nothing coarser.</p>
+     */
+    private static NavKey identityOf(Catalogue<?> cat) {
+        return new NavKey(CatalogueAppHost.class,
+                new CatalogueAppHost.Params(cat.getClass().getName(), null));
     }
 
     // ── Leaf (doc / portal) ───────────────────────────────────────────────
@@ -81,7 +97,11 @@ public final class CatalogueNormalizer implements TreeNormalizer<Catalogue<?>> {
         if (entry instanceof Entry.OfLeaf<?, ?, ?> od && od.content() != null) {
             Doc doc = od.content();
             var dims = baseDims(doc.title(), doc.summary(), doc.category(), doc.kind());
-            return NormalizedNode.leaf(childLevel, dims);
+            // The placement names the segment and the binding names the identity —
+            // RFC 0051 Phase 6 moved the slug off the doc and onto the placement
+            // precisely so the vertex, not the payload, owns both.
+            var identity = new NavKey(od.nav().app().getClass(), od.nav().params());
+            return NormalizedNode.leaf(childLevel, od.slug(), identity, dims);
         }
 
         if (entry instanceof Entry.OfStudio<?, ?> os) {
@@ -89,6 +109,11 @@ public final class CatalogueNormalizer implements TreeNormalizer<Catalogue<?>> {
             // standalone L0 tree, then re-level it so its root lands one level
             // below this host — a pure recursive shift, no host context inside
             // normalize. This is the studio synthetic forest.
+            //
+            // Segment and identity ride through the shift untouched (RFC 0053), so
+            // the grafted vertices keep the SOURCE studio's identities. That is what
+            // makes the resolver union well-defined, and what makes mounting one
+            // source twice collide rather than silently duplicate.
             NormalizedNode standalone = normalize(os.proxy().source());
             return RigidTrees.graftUnder(standalone, hostLevel);
         }

@@ -8,6 +8,8 @@ import hue.captains.singapura.js.homing.tree.NodeName;
 import hue.captains.singapura.js.homing.tree.DimensionKey;
 import hue.captains.singapura.js.homing.tree.DimensionValue;
 import hue.captains.singapura.js.homing.tree.DisplayLabel;
+import hue.captains.singapura.js.homing.studio.base.DocNodeIdentity;
+import hue.captains.singapura.js.homing.tree.NamePath;
 import hue.captains.singapura.js.homing.tree.NodeKey;
 import hue.captains.singapura.js.homing.tree.NormalizedNode;
 import hue.captains.singapura.js.homing.tree.TreeLevel;
@@ -23,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 
 /**
@@ -69,7 +72,7 @@ public final class RigidNodeNormalizer {
      * {@code content} function resolves each node's body from its {@code source} —
      * one provider for the whole tree, applied as the tree is built.
      */
-    public <T> DocTreeV2 toDocTree(List<RigidNode<T>> nodes, Function<T, RigidNodeContent> content) {
+    public <T> DocTreeV2 toDocTree(UUID doc, List<RigidNode<T>> nodes, Function<T, RigidNodeContent> content) {
         Objects.requireNonNull(nodes, "nodes");
         Objects.requireNonNull(content, "content provider");
         if (nodes.isEmpty()) throw new MalformedTreeException("no nodes provided");
@@ -95,7 +98,7 @@ public final class RigidNodeNormalizer {
         // The one descent: builds structure + content and validates as it goes.
         Map<String, ContentProvider> providers = new LinkedHashMap<>();
         Set<RigidNode<T>> visited = Collections.newSetFromMap(new IdentityHashMap<>());
-        NormalizedNode structure = build(roots.get(0), "", 0, childrenOf, providers, visited, content);
+        NormalizedNode structure = build(doc, roots.get(0), "", 0, childrenOf, providers, visited, content);
 
         if (visited.size() != provided.size()) {
             throw new MalformedTreeException(
@@ -105,7 +108,7 @@ public final class RigidNodeNormalizer {
         return new DocTreeV2(structure, providers);
     }
 
-    private <T> NormalizedNode build(RigidNode<T> node, String pathKey, int depth,
+    private <T> NormalizedNode build(UUID doc, RigidNode<T> node, String pathKey, int depth,
             IdentityHashMap<RigidNode<T>, List<RigidNode<T>>> childrenOf,
             Map<String, ContentProvider> providers, Set<RigidNode<T>> visited,
             Function<T, RigidNodeContent> content) {
@@ -138,7 +141,7 @@ public final class RigidNodeNormalizer {
                         + "' under '" + node.name().value() + "'");
             }
             String childKey = pathKey.isEmpty() ? kn : pathKey + NodeName.SEPARATOR + kn;
-            kidNodes.add(build(kid, childKey, depth + 1, childrenOf, providers, visited, content));
+            kidNodes.add(build(doc, kid, childKey, depth + 1, childrenOf, providers, visited, content));
         }
 
         TreeLevel level;
@@ -148,7 +151,7 @@ public final class RigidNodeNormalizer {
             throw new MalformedTreeException("depth exceeds the rigid cap at '"
                     + node.name().value() + "': " + ex.getMessage());
         }
-        return new NormalizedNode(level, labelDims(node), kidNodes);
+        return new NormalizedNode(level, node.name(), new DocNodeIdentity(doc, NamePath.parse(pathKey)), labelDims(node), kidNodes);
     }
 
     /** The two per-node dimensions: the human heading, then the machine identity. */

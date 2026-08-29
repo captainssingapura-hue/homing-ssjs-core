@@ -7,6 +7,7 @@ import hue.captains.singapura.js.homing.tree.DimensionKey;
 import hue.captains.singapura.js.homing.tree.DimensionValue;
 import hue.captains.singapura.js.homing.tree.DisplayLabel;
 import hue.captains.singapura.js.homing.tree.NormalizedNode;
+import hue.captains.singapura.js.homing.studio.base.DocNodeIdentity;
 import hue.captains.singapura.js.homing.tree.TreeLevel;
 import hue.captains.singapura.js.homing.tree.dims.NameValue;
 
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * RFC 0042 — transforms a {@link RigidDoc} into a {@link DocTree} (RFC 0039):
@@ -42,11 +44,11 @@ public final class RigidDocNormalizer {
     public DocTree toDocTree(RigidDoc doc) {
         if (doc == null) throw new IllegalArgumentException("doc");
         var providers = new LinkedHashMap<List<Integer>, ContentProvider>();
-        NormalizedNode root = build(doc.root(), TreeLevel.L0.INSTANCE, List.of(), providers);
+        NormalizedNode root = build(doc.uuid(), doc.root(), TreeLevel.L0.INSTANCE, List.of(), providers);
         return new DocTree(root, providers);
     }
 
-    private NormalizedNode build(DocNode node, TreeLevel level, List<Integer> path,
+    private NormalizedNode build(UUID doc, DocNode node, TreeLevel level, List<Integer> path,
                                  Map<List<Integer>, ContentProvider> providers) {
         // Content (if any) is this node's bundle, bound at this node's path.
         if (!node.content().isEmpty()) {
@@ -62,10 +64,10 @@ public final class RigidDocNormalizer {
             TreeLevel childLevel = level.below().orElseThrow(() ->
                     new IllegalStateException("RigidDoc nesting exceeds the rigid tree's depth cap at " + level));
             for (int i = 0; i < children.size(); i++) {
-                kids.add(build(children.get(i), childLevel, append(path, i), providers));
+                kids.add(build(doc, children.get(i), childLevel, append(path, i), providers));
             }
         }
-        return new NormalizedNode(level, labelDims(node.title().text()), kids);
+        return new NormalizedNode(level, DocNodeIdentity.indexSegment(path), DocNodeIdentity.byIndex(doc, path), labelDims(node.title().text()), kids);
     }
 
     private static List<Integer> append(List<Integer> prefix, int idx) {

@@ -13,8 +13,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RigidTreesTest {
 
+    /** Test-local identity: the substrate ships the interface, never an impl. */
+    private record TestId(String value) implements NodeIdentity {}
+
     private static NormalizedNode node(TreeLevel level, String label, NormalizedNode... kids) {
-        return new NormalizedNode(level,
+        return new NormalizedNode(level, new NodeName(label), new TestId(label),
                 Map.of(DisplayLabel.INSTANCE, new NameValue(label)), List.of(kids));
     }
 
@@ -85,5 +88,29 @@ class RigidTreesTest {
     void shiftPreservesDimensions() {
         NormalizedNode shifted = RigidTrees.shift(threeDeep(), 4);
         assertEquals("root", ((NameValue) shifted.dimensions().get(DisplayLabel.INSTANCE)).text());
+    }
+
+    /**
+     * The invariant the whole graft design rests on (RFC 0053): a shift re-levels
+     * and touches nothing else. Were segment or identity to move with position,
+     * every graft would have to rebase them — and a grafted subtree would stop
+     * being reachable by the identity its own source minted, which is exactly what
+     * makes the resolver union well-defined.
+     */
+    @Test
+    void shiftCarriesSegmentAndIdentityThroughUnchanged() {
+        NormalizedNode before = threeDeep();
+        NormalizedNode after  = RigidTrees.shift(before, 3);
+
+        assertEquals(before.segment(),  after.segment());
+        assertEquals(before.identity(), after.identity());
+
+        NormalizedNode deepBefore = before.children().get(0).children().get(0);
+        NormalizedNode deepAfter  = after.children().get(0).children().get(0);
+        assertEquals(new NodeName("grandchild"), deepAfter.segment());
+        assertEquals(deepBefore.identity(), deepAfter.identity());
+
+        // Only the level moved.
+        assertEquals(TreeLevel.L5.INSTANCE, deepAfter.level());
     }
 }

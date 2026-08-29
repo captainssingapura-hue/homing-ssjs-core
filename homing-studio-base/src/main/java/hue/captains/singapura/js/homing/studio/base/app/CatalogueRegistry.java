@@ -929,7 +929,6 @@ public final class CatalogueRegistry {
      * those are framing, and the path axiom says one {@code (app, args)} has
      * at most one position regardless of how that position is dressed.</p>
      */
-    private record NavKey(Class<?> app, AppModule._Param params) {}
 
     /** RFC 0051 Phase 6 — a bound leaf and the catalogue it sits in, kept from
      *  the slug scan so the flat index can position it once paths exist. */

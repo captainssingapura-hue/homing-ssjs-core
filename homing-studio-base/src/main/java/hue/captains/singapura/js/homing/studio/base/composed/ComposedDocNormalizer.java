@@ -10,6 +10,8 @@ import hue.captains.singapura.js.homing.tree.TreeNormalizer;
 import hue.captains.singapura.js.homing.studio.base.composed.text.Line;
 import hue.captains.singapura.js.homing.tree.dims.NameValue;
 
+import hue.captains.singapura.js.homing.studio.base.DocNodeIdentity;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -64,53 +66,75 @@ public final class ComposedDocNormalizer implements TreeNormalizer<ComposedDoc> 
     public DocTree toDocTree(ComposedDoc doc) {
         if (doc == null) throw new IllegalArgumentException("doc");
         var providers = new LinkedHashMap<List<Integer>, ContentProvider>();
-        NormalizedNode root = build(doc, TreeLevel.L0.INSTANCE, List.of(),
+        NormalizedNode root = build(doc, TreeLevel.L0.INSTANCE, List.of(), List.of(),
                 new LinkedHashSet<>(), providers);
         return new DocTree(root, providers);
     }
 
     // ── Recursive build: structure into the return, providers into the map ──
 
+    /**
+     * Two index paths are threaded, and the difference is the whole point of
+     * RFC 0053's identity rule. {@code pathPrefix} is HOST-relative: it keys the
+     * providers, so an embedded doc's seam has to be rebased onto its mount point.
+     * {@code withinDoc} is SOURCE-relative and resets to empty at every graft, so a
+     * node's identity is minted from the doc that owns it and is unchanged wherever
+     * that doc is embedded. The seam rebases; the identity never does.
+     */
     private NormalizedNode build(ComposedDoc doc, TreeLevel level, List<Integer> pathPrefix,
-                                 Set<UUID> visiting,
+                                 List<Integer> withinDoc, Set<UUID> visiting,
                                  Map<List<Integer>, ContentProvider> providers) {
         var kids = new ArrayList<NormalizedNode>();
         TreeLevel childLevel = level.below().orElse(null);
         if (childLevel != null) {
             int idx = 0;
             for (Segment seg : doc.segments()) {
-                List<Integer> childPath = append(pathPrefix, idx);
+                List<Integer> childPath   = append(pathPrefix, idx);
+                List<Integer> childWithin = append(withinDoc, idx);
                 if (seg instanceof ComposedSegment cs) {
-                    kids.add(graftEmbed(cs, level, childPath, visiting, providers));
+                    kids.add(graftEmbed(cs, level, childPath, childWithin, visiting, providers));
                 } else {
                     // Content node: a leaf whose provider yields this one segment
                     // as a singleton ComposedLeaf bundle (RFC 0041).
-                    kids.add(NormalizedNode.leaf(childLevel, labelDims(labelFor(seg))));
+                    kids.add(NormalizedNode.leaf(childLevel,
+                            DocNodeIdentity.indexSegment(childWithin),
+                            DocNodeIdentity.byIndex(doc.uuid(), childWithin),
+                            labelDims(labelFor(seg))));
                     final ComposedLeaf content = new ComposedLeaf(List.of(seg));
                     providers.put(childPath, () -> content);
                 }
                 idx++;
             }
         }
-        return new NormalizedNode(level, labelDims(doc.title()), kids);
+        return new NormalizedNode(level,
+                DocNodeIdentity.indexSegment(withinDoc),
+                DocNodeIdentity.byIndex(doc.uuid(), withinDoc),
+                labelDims(doc.title()), kids);
     }
 
     /** Graft an embedded doc under the host, re-keying its providers by position. */
     private NormalizedNode graftEmbed(ComposedSegment cs, TreeLevel hostLevel,
-                                      List<Integer> childPath, Set<UUID> visiting,
+                                      List<Integer> childPath, List<Integer> childWithin,
+                                      Set<UUID> visiting,
                                       Map<List<Integer>, ContentProvider> providers) {
         ComposedDoc embedded = cs.doc();
         UUID id = embedded.uuid();
         TreeLevel childLevel = hostLevel.below().orElseThrow();
         if (id != null && visiting.contains(id)) {
-            // Cycle — truncate; emit a leaf marking the cut (no content).
-            return NormalizedNode.leaf(childLevel, labelDims("↻ " + cs.resolvedCaption()));
+            // Cycle — truncate; emit a leaf marking the cut (no content). The cut
+            // stands in for the embedded doc's ROOT, so that is what it is named by.
+            return NormalizedNode.leaf(childLevel,
+                    DocNodeIdentity.indexSegment(childWithin),
+                    DocNodeIdentity.root(id),
+                    labelDims("↻ " + cs.resolvedCaption()));
         }
         if (id != null) visiting.add(id);
         // Build the embedded doc standalone at L0 (providers keyed under childPath,
         // graft-invariant since positions don't change with the level shift), then
-        // graft so its root lands one level below the host.
-        NormalizedNode subRoot = build(embedded, TreeLevel.L0.INSTANCE, childPath, visiting, providers);
+        // graft so its root lands one level below the host. The within-doc path
+        // restarts at empty: the embedded doc owns its nodes' identities.
+        NormalizedNode subRoot = build(embedded, TreeLevel.L0.INSTANCE, childPath, List.of(),
+                visiting, providers);
         NormalizedNode grafted = RigidTrees.graftUnder(subRoot, hostLevel);
         if (id != null) visiting.remove(id);
         return grafted;

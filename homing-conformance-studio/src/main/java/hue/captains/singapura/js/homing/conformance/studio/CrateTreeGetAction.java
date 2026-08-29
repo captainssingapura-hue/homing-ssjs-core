@@ -12,6 +12,7 @@ import hue.captains.singapura.js.homing.tree.DimensionKey;
 import hue.captains.singapura.js.homing.tree.DimensionValue;
 import hue.captains.singapura.js.homing.tree.DisplayLabel;
 import hue.captains.singapura.js.homing.tree.Kind;
+import hue.captains.singapura.js.homing.tree.NodeName;
 import hue.captains.singapura.js.homing.tree.NormalizedNode;
 import hue.captains.singapura.js.homing.tree.Summary;
 import hue.captains.singapura.js.homing.tree.TreeLevel;
@@ -79,7 +80,7 @@ public final class CrateTreeGetAction
         List<NormalizedNode> crates = topLevel.stream().map(this::crateNode).toList();
         int modules = topLevel.stream().mapToInt(c -> c.entries().size()).sum();
         String summary = topLevel.size() + " crates · " + modules + " modules";
-        return new NormalizedNode(TreeLevel.L0.INSTANCE, dims("Crates", summary, "", "workspace"), crates);
+        return new NormalizedNode(TreeLevel.L0.INSTANCE, new NodeName("crates"), CrateNodeIdentity.root(), dims("Crates", summary, "", "workspace"), crates);
     }
 
     private NormalizedNode crateNode(Crate crate) {
@@ -95,18 +96,19 @@ public final class CrateTreeGetAction
             trie = only.getValue();
         }
 
-        List<NormalizedNode> children = trie.toNodes(TreeLevel.L2.INSTANCE);
+        List<NormalizedNode> children = trie.toNodes(TreeLevel.L2.INSTANCE, crate.name(), "");
         String reqs = crate.requires().isEmpty() ? "no requires"
                 : "requires " + String.join(", ", crate.requires().stream().map(Crate::name).toList());
         String pkg = prefix.length() == 0 ? "" : prefix + ".* · ";
         String summary = crate.entries().size() + " modules · " + pkg + reqs;
-        return new NormalizedNode(TreeLevel.L1.INSTANCE, dims(crate.name(), summary, "", "crate"), children);
+        return new NormalizedNode(TreeLevel.L1.INSTANCE, NodeName.slug(crate.name()), CrateNodeIdentity.ofCrate(crate.name()), dims(crate.name(), summary, "", "crate"), children);
     }
 
     private NormalizedNode moduleLeaf(CrateEntry e, TreeLevel level) {
         // kind = the mechanical ModuleForm; summary = FQCN (a detail widget reads it).
         String form = e.form().name().toLowerCase().replace('_', '-');
-        return NormalizedNode.leaf(level,
+        return NormalizedNode.leaf(level, NodeName.slug(e.module().getClass().getSimpleName()),
+                CrateNodeIdentity.ofModule(e.moduleClass()),
                 dims(e.module().getClass().getSimpleName(), e.moduleClass(), "", form));
     }
 
@@ -142,7 +144,7 @@ public final class CrateTreeGetAction
         }
 
         /** This trie's children (package nodes, then module leaves) at {@code level}. */
-        List<NormalizedNode> toNodes(TreeLevel level) {
+        List<NormalizedNode> toNodes(TreeLevel level, String crate, String prefix) {
             var out = new java.util.ArrayList<NormalizedNode>();
             TreeLevel deeper = level.below().orElse(level);
             for (var ch : children.entrySet()) {
@@ -154,9 +156,11 @@ public final class CrateTreeGetAction
                     t = only.getValue();
                 }
                 int count = t.moduleCount();
-                out.add(new NormalizedNode(level,
+                String pkgPath = prefix.isEmpty() ? label : prefix + "." + label;
+                out.add(new NormalizedNode(level, NodeName.slug(label),
+                        CrateNodeIdentity.ofPackage(crate, pkgPath),
                         dims(label, count + (count == 1 ? " module" : " modules"), "", "package"),
-                        t.toNodes(deeper)));
+                        t.toNodes(deeper, crate, pkgPath)));
             }
             for (CrateEntry e : entries) out.add(moduleLeaf(e, level));
             return out;

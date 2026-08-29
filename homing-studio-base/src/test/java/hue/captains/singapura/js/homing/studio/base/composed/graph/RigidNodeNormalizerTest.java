@@ -39,7 +39,7 @@ class RigidNodeNormalizerTest {
     }
 
     private static DocTreeV2 build(List<RigidNode<String>> nodes) {
-        return RigidNodeNormalizer.INSTANCE.toDocTree(nodes, CONTENT);
+        return RigidNodeNormalizer.INSTANCE.toDocTree(java.util.UUID.fromString("00000000-0000-4000-8000-000000000002"), nodes, CONTENT);
     }
 
     private static String dim(NormalizedNode n, hue.captains.singapura.js.homing.tree.DimensionKey k) {

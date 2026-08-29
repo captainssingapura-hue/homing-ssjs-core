@@ -62,7 +62,7 @@ public final class RigidDocV2 implements Doc, DocTreeV2Source {
         Objects.requireNonNull(nodes, "nodes");
         Objects.requireNonNull(content, "content provider");
         return new RigidDocV2(id, title, summary, category,
-                () -> RigidNodeNormalizer.INSTANCE.toDocTree(nodes.get(), content));
+                () -> RigidNodeNormalizer.INSTANCE.toDocTree(id, nodes.get(), content));
     }
 
     @Override
