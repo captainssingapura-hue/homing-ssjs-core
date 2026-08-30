@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class NamePathWalkTest {
 
@@ -32,81 +33,109 @@ class NamePathWalkTest {
 
     @Test
     void anEmptyPathNamesTheRootItself() {
-        var walk = NamePathWalk.from(studio(), NamePath.ROOT);
-        var found = assertInstanceOf(NamePathWalk.Found.class, walk);
+        var found = assertInstanceOf(NamePathWalk.Found.class,
+                NamePathWalk.from(studio(), NamePath.ROOT));
         assertEquals(new Id("studio"), found.identity());
         assertEquals(NamePath.ROOT, found.path());
     }
 
     @Test
     void aPathAdvancesOneLevelPerSegment() {
-        var walk = NamePathWalk.from(studio(), NamePath.parse("meta/ontology"));
-        var found = assertInstanceOf(NamePathWalk.Found.class, walk);
+        var found = assertInstanceOf(NamePathWalk.Found.class,
+                NamePathWalk.from(studio(), NamePath.parse("meta/ontology")));
         assertEquals(new Id("ontology"), found.identity());
         assertEquals("meta/ontology", found.path().wire());
     }
 
     @Test
     void itWalksAllTheWayToALeaf() {
-        var walk = NamePathWalk.from(studio(), NamePath.parse("meta/ontology/doc-ontology"));
-        var found = assertInstanceOf(NamePathWalk.Found.class, walk);
+        var found = assertInstanceOf(NamePathWalk.Found.class,
+                NamePathWalk.from(studio(), NamePath.parse("meta/ontology/doc-ontology")));
         assertEquals(new Id("doc-ontology"), found.identity());
     }
 
     /**
-     * The root's own segment is not part of any name-path — so a path that
-     * repeats it is a miss, not a courtesy. This is what keeps a catalogue
-     * vertex's name-path equal to its URL after the route prefix.
+     * The root's own segment is not part of any name-path — so a path repeating
+     * it is a miss, not a courtesy. This is what keeps a catalogue vertex's
+     * name-path equal to its URL after the route prefix.
      */
     @Test
     void theRootsOwnSegmentIsNotPartOfThePath() {
-        var walk = NamePathWalk.from(studio(), NamePath.parse("studio/meta"));
-        var missing = assertInstanceOf(NamePathWalk.Missing.class, walk);
-        assertEquals(n("studio"), missing.segment());
+        var missing = assertInstanceOf(NamePathWalk.Missing.class,
+                NamePathWalk.from(studio(), NamePath.parse("studio/meta")));
+        assertEquals(n("studio"), missing.wanted());
         assertEquals(0, missing.depth());
     }
 
-    // ── Missing: the partial path is the useful half ────────────────────────
+    // ── NoSuchChild — carries what IS there ────────────────────────────────
 
     @Test
-    void aMissReportsHowFarItGotAndWhatFailed() {
-        var walk = NamePathWalk.from(studio(), NamePath.parse("meta/nope/deeper"));
-        var missing = assertInstanceOf(NamePathWalk.Missing.class, walk);
+    void noSuchChildReportsTheSegmentsThatDoExist() {
+        var miss = assertInstanceOf(NamePathWalk.NoSuchChild.class,
+                NamePathWalk.from(studio(), NamePath.parse("meta/nope/deeper")));
 
-        assertEquals("meta", missing.matched().wire(), "the partial path that did resolve");
-        assertEquals(n("nope"), missing.segment(),     "the segment that matched nothing");
-        assertEquals(1, missing.depth());
-        assertEquals(NamePathWalk.Reason.NO_SUCH_CHILD, missing.reason());
+        assertEquals("meta", miss.matched().wire(), "the partial path that did resolve");
+        assertEquals(n("nope"), miss.wanted());
+        assertEquals(1, miss.depth());
+        // The evidence a reason tag could never have carried: what to suggest.
+        assertEquals(List.of(n("ontology")), miss.available());
     }
 
     @Test
     void theMissIsAtTheFIRSTLevelThatFails() {
         // Both 'nope' and 'alsoNope' are absent; the walk stops at the first.
-        var walk = NamePathWalk.from(studio(), NamePath.parse("nope/alsoNope"));
-        var missing = assertInstanceOf(NamePathWalk.Missing.class, walk);
-        assertEquals(NamePath.ROOT, missing.matched());
-        assertEquals(n("nope"), missing.segment());
+        var miss = assertInstanceOf(NamePathWalk.NoSuchChild.class,
+                NamePathWalk.from(studio(), NamePath.parse("nope/alsoNope")));
+        assertEquals(NamePath.ROOT, miss.matched());
+        assertEquals(n("nope"), miss.wanted());
+        assertTrue(miss.available().containsAll(List.of(n("meta"), n("rfcs"))));
     }
 
+    @Test
+    void availableIsAnImmutableCopy() {
+        var miss = assertInstanceOf(NamePathWalk.NoSuchChild.class,
+                NamePathWalk.from(studio(), NamePath.parse("absent")));
+        var available = miss.available();
+        assertEquals(2, available.size());
+        org.junit.jupiter.api.Assertions.assertThrows(UnsupportedOperationException.class,
+                () -> available.add(n("x")));
+    }
+
+    // ── PastALeaf — carries the leaf, so a redirect is possible ────────────
+
     /**
-     * Running past a leaf is distinguishable from a branch lacking a child —
-     * different answers, and the difference costs one emptiness test.
+     * A real address with something appended is usually a stale deep link, not a
+     * typo. The leaf travels with the failure, so a caller can answer with the
+     * leaf rather than only refusing — which the enum this replaced promised in
+     * its javadoc and could not support.
      */
     @Test
-    void runningPastALeafSaysSoRatherThanJustNoSuchChild() {
-        var walk = NamePathWalk.from(studio(), NamePath.parse("meta/ontology/doc-ontology/extra"));
-        var missing = assertInstanceOf(NamePathWalk.Missing.class, walk);
+    void pastALeafCarriesTheLeafItselfAndTheUnconsumedTail() {
+        var miss = assertInstanceOf(NamePathWalk.PastALeaf.class,
+                NamePathWalk.from(studio(), NamePath.parse("meta/ontology/doc-ontology/extra/more")));
 
-        assertEquals("meta/ontology/doc-ontology", missing.matched().wire());
-        assertEquals(n("extra"), missing.segment());
-        assertEquals(NamePathWalk.Reason.PAST_A_LEAF, missing.reason());
+        assertEquals("meta/ontology/doc-ontology", miss.matched().wire(),
+                "where a caller would redirect");
+        assertEquals(new Id("doc-ontology"), miss.leaf(),
+                "the leaf's identity, so its content can still be resolved");
+        assertEquals(n("extra"), miss.wanted());
+        assertEquals("extra/more", miss.remaining().wire());
     }
 
     @Test
     void aBranchMissingAChildIsNotPastALeaf() {
-        var walk = NamePathWalk.from(studio(), NamePath.parse("meta/absent"));
-        var missing = assertInstanceOf(NamePathWalk.Missing.class, walk);
-        assertEquals(NamePathWalk.Reason.NO_SUCH_CHILD, missing.reason());
+        assertInstanceOf(NamePathWalk.NoSuchChild.class,
+                NamePathWalk.from(studio(), NamePath.parse("meta/absent")));
+    }
+
+    /** Both failures group, so a caller may handle them uniformly. */
+    @Test
+    void bothFailuresAreMissingAndCarryHowFarTheyGot() {
+        for (String path : List.of("meta/absent", "meta/ontology/doc-ontology/extra")) {
+            var missing = assertInstanceOf(NamePathWalk.Missing.class,
+                    NamePathWalk.from(studio(), NamePath.parse(path)), path);
+            assertEquals("meta", missing.matched().wire().split("/")[0], path);
+        }
     }
 
     // ── The two halves compose ─────────────────────────────────────────────
@@ -117,13 +146,23 @@ class NamePathWalkTest {
      */
     @Test
     void theWalkHandsAnIdentityStraightToTheResolver() {
-        NodeResolver resolver = NodeResolver.forKind(Id.class,
-                id -> "content for " + id.name());
+        NodeResolver resolver = NodeResolver.forKind(Id.class, id -> "content for " + id.name());
 
-        var walk = NamePathWalk.from(studio(), NamePath.parse("meta/ontology"));
-        var found = assertInstanceOf(NamePathWalk.Found.class, walk);
+        var found = assertInstanceOf(NamePathWalk.Found.class,
+                NamePathWalk.from(studio(), NamePath.parse("meta/ontology")));
 
         assertEquals(Optional.of("content for ontology"), resolver.resolve(found.identity()));
+    }
+
+    /** ...and a past-a-leaf miss can still resolve the leaf it overshot. */
+    @Test
+    void aPastALeafMissCanStillResolveTheLeafContent() {
+        NodeResolver resolver = NodeResolver.forKind(Id.class, id -> "content for " + id.name());
+
+        var miss = assertInstanceOf(NamePathWalk.PastALeaf.class,
+                NamePathWalk.from(studio(), NamePath.parse("meta/ontology/doc-ontology/extra")));
+
+        assertEquals(Optional.of("content for doc-ontology"), resolver.resolve(miss.leaf()));
     }
 
     @Test
@@ -135,8 +174,8 @@ class NamePathWalkTest {
         NormalizedNode host = node(TreeLevel.L0.INSTANCE, "demo",
                 RigidTrees.graftUnder(source, TreeLevel.L0.INSTANCE));
 
-        var walk = NamePathWalk.from(host, NamePath.parse("animals/turtle"));
-        var found = assertInstanceOf(NamePathWalk.Found.class, walk);
+        var found = assertInstanceOf(NamePathWalk.Found.class,
+                NamePathWalk.from(host, NamePath.parse("animals/turtle")));
         assertEquals(new Id("turtle"), found.identity());
     }
 }
