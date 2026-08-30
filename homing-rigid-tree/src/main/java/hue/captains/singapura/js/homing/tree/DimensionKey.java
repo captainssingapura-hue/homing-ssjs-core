@@ -14,8 +14,6 @@ package hue.captains.singapura.js.homing.tree;
  *       (value typically {@code NameValue}).</li>
  *   <li>{@link Summary} — a short descriptive blurb; lets a detail view
  *       show branch-node content without a round-trip (value text).</li>
- *   <li>{@link LevelDepth} — zero-indexed depth from the tree root
- *       (value {@code DepthValue}).</li>
  *   <li>{@link Category} — primary grouping category (value supplied per
  *       tree-kind, e.g. studio-base's {@code CategoryValue}).</li>
  *   <li>{@link Kind} — kind/type discriminator (value per tree-kind, e.g.
@@ -39,7 +37,7 @@ package hue.captains.singapura.js.homing.tree;
  * @since homing-tree-views v1
  */
 public sealed interface DimensionKey
-        permits DisplayLabel, Summary, LevelDepth, Category, Kind, NodeKey {
+        permits DisplayLabel, Summary, Category, Kind, NodeKey {
 
     /** Stable wire tag for JSON serialisation (also the key name in JS). */
     String tag();
