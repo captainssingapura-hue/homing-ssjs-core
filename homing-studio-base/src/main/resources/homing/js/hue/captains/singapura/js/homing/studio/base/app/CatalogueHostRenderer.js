@@ -269,36 +269,61 @@ function _mountListingTree(parent, data) {
     var branch = domOpsParty.createBranch("catalogueListing");
     branch.activate(_catalogueListingOwner);
 
-    // Minted through the branch rather than document.createElement, so the
-    // container belongs to the listing's own ownership subtree and dissolving
-    // the branch takes the whole listing with it.
-    var container = branch.createElement("listing", "div");
-    css.addClass(container, st_section);
-    parent.appendChild(container);
+    // Master/detail: a compact tree, and the selected entry drawn with room.
+    // The summaries used to sit in the rows and ellipsise to nothing while still
+    // taking the whole width - doing neither job.
+    var split = branch.createElement("split", "div");
+    css.addClass(split, st_split);
+    parent.appendChild(split);
+
+    var nav = branch.createElement("nav", "div");
+    css.addClass(nav, st_split_nav);
+    split.appendChild(nav);
+
+    var detail = branch.createElement("detail", "div");
+    css.addClass(detail, st_split_detail);
+    split.appendChild(detail);
 
     // A row's namePath is relative to THIS catalogue, so the authentic URL is the
     // server-computed base with it appended. The renderer still constructs no
-    // URLs of its own — it joins two strings the server decided.
+    // URLs of its own - it joins two strings the server decided.
     var base = data.treeBase || "";
     var urlFor = function (namePath) {
         return namePath ? base + "/" + namePath : base;
     };
 
+    var hint = branch.createElement("hint", "div");
+    css.addClass(hint, st_subtitle);
+    hint.textContent = "Select an entry to see it here.";
+    detail.appendChild(hint);
+
+    // The card IS the selected row, drawn larger - the same Card the grid drew,
+    // so bringing the grid back stays a question of how many are rendered rather
+    // than of what a card is.
+    var showCard = function (sel) {
+        detail.replaceChildren(Card({
+            href:    urlFor(sel.namePath),
+            title:   sel.label || "",
+            summary: sel.summary || "",
+            badge:   sel.category || "",
+            link:    sel.hasChildren ? "Browse →" : "Open →"
+        }));
+    };
+
     var renderer = new TreeRenderer({
         branch:      branch,
-        container:   container,
+        container:   nav,
         data:        data.tree,
         // 0 = exactly what the cards showed: the immediate children, nothing
         // more. The rest of the subtree is one click away, which is the whole
         // difference between a tile and a tree.
         expandDepth: 0,
-        showDetail:  true,
+        // The badge rides in the row; the summary belongs to the card now.
+        showBadge:   true,
         // The page IS this catalogue, so its own row would repeat the title.
         showRoot:    false,
-        // A row is a destination, as a card was: one click opens it. The caret
-        // and the rest of the row still expand.
-        followHref:  true,
         hrefForPath: function (path, namePath) { return urlFor(namePath); },
+        onSelect:    showCard,
         onActivate:  function (sel) { HrefManagerInstance.navigate(urlFor(sel.namePath)); }
     });
 

@@ -82,10 +82,12 @@ class TreeRenderer {
         // (no JS) via the fragment link. Live, the row handler preventDefaults
         // and uses onSelect (smooth scroll) instead of the raw anchor jump.
         this._hrefForPath = opts.hrefForPath || null;
-        // Listing mode (RFC 0053): draw the badge and the one-line summary the
-        // card view drew, so a catalogue listing can BE a tree. Off by default,
-        // so the workspace navigator trees are untouched.
-        this._showDetail  = !!opts.showDetail;
+        // Listing mode (RFC 0053). Two flags, not one: a listing in a narrow
+        // column wants the badge but has no room for the note, while a crate tree
+        // wants the note (the FQCN under the module name) in a full-width pane.
+        // Both off by default, so the workspace navigator trees are untouched.
+        this._showBadge   = !!opts.showBadge;
+        this._showNote    = !!opts.showNote;
         // A listing draws the CHILDREN of the catalogue it is the page for — the
         // root row would just repeat the page title. Default true, so every
         // existing tree keeps its root.
@@ -199,7 +201,7 @@ class TreeRenderer {
         row.appendChild(caret);
 
         // The badge, ahead of the label the way a card carried it.
-        if (this._showDetail && sel.category) {
+        if (this._showBadge && sel.category) {
             var badge = this._el("span");
             badge.style.cssText = "flex:0 0 auto;font-size:10px;letter-spacing:.06em;"
                 + "text-transform:uppercase;color:#888;";
@@ -213,7 +215,7 @@ class TreeRenderer {
             // href, which works in a static HTML export with no JavaScript.
             label = this._el('a');
             label.setAttribute('href', this._hrefForPath(path, namePath) || '#');
-            label.style.cssText = (this._showDetail ? "flex:0 1 auto;" : "flex:1;")
+            label.style.cssText = (this._showNote ? "flex:0 1 auto;" : "flex:1;")
                 + "white-space:nowrap;overflow:hidden;"
                 + "text-overflow:ellipsis;color:inherit;text-decoration:none;";
         } else {
@@ -225,7 +227,7 @@ class TreeRenderer {
 
         // The one-line summary. Ellipsised like the label, so a deep listing
         // stays one row per node however long the prose is.
-        if (this._showDetail && sel.summary) {
+        if (this._showNote && sel.summary) {
             var blurb = this._el("span");
             blurb.style.cssText = "flex:1 1 0;white-space:nowrap;overflow:hidden;"
                 + "text-overflow:ellipsis;color:#888;font-size:12px;";

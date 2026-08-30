@@ -62,6 +62,9 @@ public record CatalogueHostRenderer() implements DomModule<CatalogueHostRenderer
                         new StudioStyles.st_title(),
                         new StudioStyles.st_subtitle(),
                         new StudioStyles.st_section(),
+                        new StudioStyles.st_split(),
+                        new StudioStyles.st_split_nav(),
+                        new StudioStyles.st_split_detail(),
                         new StudioStyles.st_loading(),
                         new StudioStyles.st_error()
                 ), StudioStyles.INSTANCE))
