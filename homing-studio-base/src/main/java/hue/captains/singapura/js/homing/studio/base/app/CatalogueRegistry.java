@@ -70,6 +70,15 @@ public final class CatalogueRegistry {
      *  records share one and would collide on every lookup. */
     private final Map<NodeIdentity, Map<NodeName, NodeIdentity>> childIndex;
 
+    /**
+     * RFC 0053 Phase 2 — the reverse of {@code childIndex}, recorded by the same
+     * statement that builds it. The breadcrumb walks THIS rather than re-deriving
+     * the trail from a nine-case type switch, which is why a portal no longer
+     * needs a special case: the umbrella-to-source edge sits in here like any
+     * other edge.
+     */
+    private final Map<NodeIdentity, NodeIdentity> parentIndex;
+
     /** Identity -> the thing itself. The walk descends identities and the kind
      *  switch happens ONCE, here, on whatever the path finally named. */
     private final Map<NodeIdentity, Object> payload;
@@ -169,6 +178,11 @@ public final class CatalogueRegistry {
         var navHomeMap  = new HashMap<NavKey, Catalogue<?>>();
         var boundLeaves = new ArrayList<BoundPlacement>();
         var childIndexMap = new HashMap<NodeIdentity, Map<NodeName, NodeIdentity>>();
+        // RFC 0053 Phase 2 — the reverse edge, recorded in the same walk and by the
+        // same statement. The build already visits every (parent, child) pair to
+        // build the downward index; recording the upward one costs nothing and
+        // stops the trail being re-derived by a type switch.
+        var parentIndexMap = new HashMap<NodeIdentity, NodeIdentity>();
         var payloadMap    = new HashMap<NodeIdentity, Object>();
         for (Catalogue<?> parent : byClass.values()) {
             // ---- Sub-catalogue children ----
@@ -216,7 +230,7 @@ public final class CatalogueRegistry {
             var slugIdentity = new LinkedHashMap<NodeName, NodeIdentity>();
             for (Catalogue<?> child : subs) {
                 var childId = CatalogueAppHost.identityFor(child);
-                claimSlug(slugOwner, slugIdentity, child.slug(), child, childId, parent);
+                claimSlug(slugOwner, slugIdentity, parentIndexMap, child.slug(), child, childId, parent);
                 payloadMap.put(childId, child);
             }
             for (Entry<?> e : parent.leaves() == null ? List.<Entry<?>>of() : parent.leaves()) {
@@ -226,7 +240,7 @@ public final class CatalogueRegistry {
                 switch (e) {
                     case Entry.OfLeaf<?, ?, ?> leaf -> {
                         var leafId = new NavKey(leaf.nav().app().getClass(), leaf.nav().params());
-                        claimSlug(slugOwner, slugIdentity, leaf.slug(), leaf, leafId, parent);
+                        claimSlug(slugOwner, slugIdentity, parentIndexMap, leaf.slug(), leaf, leafId, parent);
                         payloadMap.put(leafId, leaf);
                         // Remember the placement so the flat index can position
                         // it later. A leaf with no content has no doc uuid to be
@@ -242,7 +256,7 @@ public final class CatalogueRegistry {
                         // thing RigidTrees.graftUnder does for the normalized tree.
                         if (p != null) {
                             var sourceId = CatalogueAppHost.identityFor(p.source());
-                            claimSlug(slugOwner, slugIdentity, p.slug(), p, sourceId, parent);
+                            claimSlug(slugOwner, slugIdentity, parentIndexMap, p.slug(), p, sourceId, parent);
                             payloadMap.put(sourceId, p.source());
                         }
                     }
@@ -351,7 +365,8 @@ public final class CatalogueRegistry {
         this.byClass  = Map.copyOf(byClass);
         this.docHome  = Map.copyOf(docHomeMap);
         this.planHome = Map.copyOf(planHomeMap);
-        this.childIndex = Map.copyOf(childIndexMap);
+        this.childIndex  = Map.copyOf(childIndexMap);
+        this.parentIndex = Map.copyOf(parentIndexMap);
         this.payload    = Map.copyOf(payloadMap);
         this.proxyManager = (proxyManager != null) ? proxyManager
                                                    : StudioProxyManager.scan(byClass.values());
@@ -582,50 +597,42 @@ public final class CatalogueRegistry {
         return breadcrumbs(at);
     }
 
+    /**
+     * The trail from the root to {@code at}, by walking the recorded parent edge
+     * (RFC 0053 Phase 2).
+     *
+     * <p>It used to climb {@code declaredParentOf} — a switch over L0..L8 — and
+     * then patch the result with {@code augmentForProxy}, because a proxied
+     * studio's root is an L0 whose {@code parent()} is null, so the typed climb
+     * lost the umbrella exactly where the interesting part was. The recorded edge
+     * has no such blind spot: the build wrote it while standing on the (host,
+     * source) pair, so the trail spans the graft without knowing it did.</p>
+     *
+     * <p>{@code declaredParentOf} survives as the authoring CHECK it always also
+     * was — the build still asserts a child's {@code parent()} agrees with the
+     * parent that lists it — but it is no longer the trail's source of truth.</p>
+     */
     public List<Catalogue<?>> breadcrumbs(Catalogue<?> at) {
         List<Catalogue<?>> chain = new ArrayList<>();
-        Catalogue<?> cursor = at;
+        NodeIdentity cursor = CatalogueAppHost.identityFor(at);
+        // Law 4 gives exactly one un-parented vertex, so this terminates. The
+        // bound turns a malformed graph into a diagnosable error rather than a
+        // hang - cheap insurance for a map that no longer has the type system
+        // guaranteeing its acyclicity.
+        int guard = byClass.size() + 1;
         while (cursor != null) {
-            chain.add(cursor);
-            cursor = declaredParentOf(cursor);
+            if (payload.get(cursor) instanceof Catalogue<?> c) chain.add(c);
+            cursor = parentIndex.get(cursor);
+            if (guard-- < 0) {
+                throw new IllegalStateException(
+                        "Parent edges cycle above " + at.getClass().getName()
+                      + " (RFC 0051 - Law 4 should have caught this)");
+            }
         }
         Collections.reverse(chain);
-        return augmentForProxy(chain);
+        return List.copyOf(chain);
     }
 
-    /**
-     * RFC 0011: if this chain's root is hosted by an umbrella catalogue, prepend
-     * the umbrella's chain so the breadcrumb spans both trees.
-     *
-     * <p>chain[0] is always the L0 root (typed-walk via parent() invariant).
-     * If isHosted(rootClass), prepend umbrella-chain (umbrella-root → … → host)
-     * to the full source chain (source L0 → … → leaf). The source L0 is kept —
-     * it's a meaningful navigation rung between the host tile and the source
-     * sub-tree (e.g. {@code Homing Studios / Core / Homing / Building Blocks}).</p>
-     */
-    @SuppressWarnings("unchecked")
-    private List<Catalogue<?>> augmentForProxy(List<Catalogue<?>> chain) {
-        if (chain.isEmpty()) return List.copyOf(chain);
-        Catalogue<?> root = chain.get(0);
-        if (!(root instanceof L0_Catalogue<?>)) return List.copyOf(chain);
-        Class<? extends L0_Catalogue<?>> rootClass =
-                (Class<? extends L0_Catalogue<?>>) root.getClass();
-        if (!proxyManager.isHosted(rootClass)) return List.copyOf(chain);
-        Catalogue<?> host = proxyManager.hostFor(rootClass);
-        // Walk the host's own typed chain (umbrella-root → … → host), then
-        // append the full source chain (source L0 → … → leaf). The source L0
-        // sits between the host tile and its descendants as a navigation rung.
-        List<Catalogue<?>> umbrella = new ArrayList<>();
-        Catalogue<?> cursor = host;
-        while (cursor != null) {
-            umbrella.add(cursor);
-            cursor = declaredParentOf(cursor);
-        }
-        Collections.reverse(umbrella);
-        List<Catalogue<?>> out = new ArrayList<>(umbrella);
-        out.addAll(chain);
-        return List.copyOf(out);
-    }
 
     public List<Catalogue<?>> breadcrumbsForPlan(Class<? extends Plan> cls) {
         Catalogue<?> home = planHome.get(cls);
@@ -943,6 +950,7 @@ public final class CatalogueRegistry {
      */
     private static void claimSlug(Map<NodeName, Object> owner,
                                   Map<NodeName, NodeIdentity> index,
+                                  Map<NodeIdentity, NodeIdentity> parents,
                                   NodeName slug,
                                   Object claimant,
                                   NodeIdentity identity,
@@ -953,10 +961,17 @@ public final class CatalogueRegistry {
                   + " has a null slug()");
         }
         // The scan that proves segments unique is the scan that builds the
-        // index - now both of them, filled in one statement so they cannot
-        // drift. The claimant map exists for Law 2 and its error message;
-        // the identity map is what the resolver walks.
+        // indices - all three, filled in one statement so they cannot drift.
+        // The claimant map exists for Law 2 and its error message; the identity
+        // map is what the resolver walks DOWN; the parent map is what the
+        // breadcrumb walks UP. One pair visited, both directions recorded.
+        //
+        // A portal arrives here like any other child, with the SOURCE catalogue's
+        // identity and the hosting catalogue as its parent - so the umbrella-to-source
+        // edge is recorded as an ordinary edge, and nothing downstream has to know
+        // a graft happened.
         index.put(slug, identity);
+        parents.put(identity, CatalogueAppHost.identityFor(parent));
         Object prior = owner.put(slug, claimant);
         if (prior != null && !prior.equals(claimant)) {
             throw new IllegalStateException(
