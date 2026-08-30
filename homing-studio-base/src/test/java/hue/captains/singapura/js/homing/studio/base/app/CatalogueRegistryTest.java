@@ -360,16 +360,19 @@ class CatalogueRegistryTest {
     }
 
     @Test
-    void law4_rejects_secondUnhostedRoot() {
-        // LoneRoot is a perfectly valid L0 on its own; the violation is
-        // only that nothing hosts it, so the tree would have two entrances.
+    void law4_rejects_secondUnparentedVertex() {
+        // LoneRoot is a perfectly valid L0 on its own; the violation is only
+        // that nothing PLACES it, so the tree would have two entrances. Law 4'
+        // asks that directly of the recorded parent edge - it no longer needs to
+        // know what an L0 is, or to ask the proxy manager who hosts what.
         var brand = new StudioBrand("Test", RootCatalogue.class);
         var reg = new DocRegistry(List.of(TEST_DOC));
         var ex = assertThrows(IllegalStateException.class,
                 () -> new CatalogueRegistry(brand, reg,
                         List.of(RootCatalogue.INSTANCE, LeafCatalogue.INSTANCE,
                                 LoneRoot.INSTANCE)));
-        assertTrue(ex.getMessage().contains("Expected exactly one un-hosted L0"), ex.getMessage());
+        assertTrue(ex.getMessage().contains("Expected exactly one un-parented vertex"), ex.getMessage());
+        assertTrue(ex.getMessage().contains("LoneRoot"), ex.getMessage());
     }
 
     // RFC 0011 note: the previous "rejects_staleParentReference" test

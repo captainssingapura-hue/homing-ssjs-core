@@ -372,7 +372,7 @@ public final class CatalogueRegistry {
                                                    : StudioProxyManager.scan(byClass.values());
 
         requirePositionedAreResolvable();
-        requireSingleUnhostedRoot();
+        requireSingleUnparentedVertex();
 
         // RFC 0051 D4 — invert each positioned doc's own flat URL, so a raw
         // (app, args) can be redirected to its path.
@@ -494,40 +494,76 @@ public final class CatalogueRegistry {
     }
 
     /**
-     * RFC 0051 Law 4 — ONE ROOT. Every path needs a place to start, and an
-     * L0 that no umbrella hosts is by definition a place someone can start.
-     * Two such roots means a path prefix is ambiguous; none means the tree
-     * has no entrance at all.
+     * RFC 0051 Law 4′ (RFC 0053 Phase 6) — ONE ROOT, AND NO EDGE TO NOWHERE.
      *
-     * <p>The brand's home-app is the root. This checks that the structure
-     * agrees with the brand rather than merely that the brand names something
-     * registered — an umbrella deployment that forgets one proxy leaves a
-     * second reachable root, and the URL scheme would have no way to say
-     * which studio a bare path belongs to.</p>
+     * <p>It used to read "exactly one un-hosted L0 catalogue", tested with a type
+     * check plus a consult of the proxy manager. Both were standing in for a
+     * question the registry could not otherwise ask, because the upward edge was
+     * re-derived from typed {@code parent()} calls rather than recorded. Phase 2
+     * recorded it, so the law can say what it always meant: <b>exactly one vertex
+     * that nothing places</b>.</p>
+     *
+     * <p>That generalises in two directions at once. Hosting stops being special —
+     * a proxied studio's root is parented by an ordinary edge, so no umbrella
+     * lookup is needed. And it stops being about catalogues: leaves are in the
+     * parent index too, so a leaf nothing places is now a second entrance the law
+     * can see, where before it was invisible.</p>
+     *
+     * <p>The second clause is new rather than generalised. An edge whose target
+     * has no payload is a segment the resolver would accept and then fail to land
+     * on. Nothing checked that before, because before Phase 2 there was no edge
+     * set to check — only a downward index nobody could cross-examine.</p>
+     *
+     * <p>The brand's home-app must BE that root. This checks the structure agrees
+     * with the brand rather than merely that the brand names something registered
+     * — an umbrella deployment that forgets one proxy leaves a second reachable
+     * root, and the URL scheme would have no way to say which studio a bare path
+     * belongs to.</p>
      */
-    private void requireSingleUnhostedRoot() {
-        var unhosted = new ArrayList<Catalogue<?>>();
-        for (Catalogue<?> c : byClass.values()) {
-            if (c instanceof L0_Catalogue<?> && !proxyManager.isHosted(asL0Class(c))) {
-                unhosted.add(c);
-            }
+    private void requireSingleUnparentedVertex() {
+        // Every vertex the walk minted, minus every vertex an edge points at.
+        // No type test and no proxy manager: hosting is just an edge now, so a
+        // proxied studio's root is parented like anything else.
+        var unparented = new ArrayList<NodeIdentity>();
+        for (NodeIdentity id : payload.keySet()) {
+            if (!parentIndex.containsKey(id)) unparented.add(id);
         }
-        if (unhosted.size() != 1) {
+        if (unparented.size() != 1) {
             throw new IllegalStateException(
-                    "Expected exactly one un-hosted L0 catalogue (the root every path"
-                  + " starts from), found " + unhosted.size() + ": "
-                  + unhosted.stream().map(c -> c.getClass().getName()).toList()
-                  + " (RFC 0051 - Law 4). An L0 no umbrella hosts is a second entrance;"
-                  + " wrap it in a StudioProxy under the umbrella, or drop it.");
+                    "Expected exactly one un-parented vertex (the root every path"
+                  + " starts from), found " + unparented.size() + ": "
+                  + unparented.stream().map(id -> describe(payload.get(id))).toList()
+                  + " (RFC 0051 - Law 4). A vertex nothing places is a second"
+                  + " entrance; give it a parent, or drop it.");
         }
-        Catalogue<?> root = unhosted.get(0);
-        if (root.getClass() != brand.homeApp()) {
+        NodeIdentity rootId = unparented.get(0);
+        NodeIdentity brandId = CatalogueAppHost.identityFor(brand.homeApp().getName());
+        if (!rootId.equals(brandId)) {
             throw new IllegalStateException(
-                    "The un-hosted root is " + root.getClass().getName()
+                    "The un-parented root is " + describe(payload.get(rootId))
                   + " but StudioBrand.homeApp names " + brand.homeApp().getName()
                   + ". The brand's home and the structural root must be the same"
                   + " catalogue (RFC 0051 - Law 4), or a path and the home button"
                   + " would disagree about where the tree begins.");
+        }
+
+        // ...and every edge resolves. The downward index is a map of identities,
+        // and an identity with no payload is an edge to nowhere - a path segment
+        // the resolver would accept and then fail to land. Nothing checked this
+        // before, because before Phase 2 there was no edge set to check.
+        var dangling = new ArrayList<String>();
+        for (var byParent : childIndex.entrySet()) {
+            for (var edge : byParent.getValue().entrySet()) {
+                if (!payload.containsKey(edge.getValue())) {
+                    dangling.add(describe(payload.get(byParent.getKey()))
+                               + " -> '" + edge.getKey() + "'");
+                }
+            }
+        }
+        if (!dangling.isEmpty()) {
+            throw new IllegalStateException(
+                    "These edges point at a vertex nothing placed (RFC 0051 -"
+                  + " Law 4): " + dangling);
         }
     }
 
