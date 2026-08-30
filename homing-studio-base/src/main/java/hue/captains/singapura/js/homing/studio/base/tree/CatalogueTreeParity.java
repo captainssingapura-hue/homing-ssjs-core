@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.studio.base.app.Catalogue;
 import hue.captains.singapura.js.homing.studio.base.app.CatalogueAppHost;
 import hue.captains.singapura.js.homing.studio.base.app.CataloguePath;
 import hue.captains.singapura.js.homing.studio.base.app.CatalogueRegistry;
+import hue.captains.singapura.js.homing.studio.base.app.Entry;
 import hue.captains.singapura.js.homing.studio.base.app.NavKey;
 import hue.captains.singapura.js.homing.tree.DimensionValue;
 import hue.captains.singapura.js.homing.tree.DisplayLabel;
@@ -14,6 +15,7 @@ import hue.captains.singapura.js.homing.tree.dims.NameValue;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -158,6 +160,44 @@ public final class CatalogueTreeParity {
             }
         }
         return new Report(tree, List.copyOf(rows), agree, differ, unplaced, byIdentity, byStructure);
+    }
+
+    /**
+     * The <b>other</b> direction: everything the registry places that the forest
+     * does not contain.
+     *
+     * <p>{@link #of} proves that every vertex the forest holds sits where the
+     * registry says. It cannot see what the forest OMITS — a normalizer that skips
+     * a placement produces no row to disagree with, so a gap reads as silence
+     * rather than as a finding. That is not hypothetical: the theme picker, an app
+     * tile with no doc, was absent for exactly that reason and the forward check
+     * had nothing to say about it.</p>
+     *
+     * <p>Illustrations are excluded deliberately rather than overlooked. RFC 0053
+     * settles that they are decoration, claim no slug, and are not vertices.</p>
+     *
+     * @return one description per missing placement; empty when the forest is complete
+     */
+    public static List<String> notInForest(CatalogueRegistry registry, Report report) {
+        var present = new HashSet<NodeIdentity>();
+        for (Row row : report.rows()) present.add(row.identity());
+
+        var missing = new ArrayList<String>();
+        for (Catalogue<?> cat : registry.all()) {
+            if (!present.contains(CatalogueNormalizer.identityOf(cat))) {
+                missing.add("catalogue " + cat.name() + " (" + cat.getClass().getSimpleName() + ")");
+            }
+            for (Entry<?> entry : cat.leaves()) {
+                if (entry instanceof Entry.OfLeaf<?, ?, ?> leaf) {
+                    var key = new NavKey(leaf.nav().app().getClass(), leaf.nav().params());
+                    if (!present.contains(key)) {
+                        missing.add("leaf " + leaf.slug().value() + " in " + cat.name()
+                                + (leaf.content() == null ? " (app tile, no doc)" : ""));
+                    }
+                }
+            }
+        }
+        return List.copyOf(missing);
     }
 
     private static void walk(NormalizedNode node, CataloguePath derived, int depth,

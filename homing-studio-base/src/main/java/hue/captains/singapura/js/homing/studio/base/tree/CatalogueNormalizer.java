@@ -83,7 +83,7 @@ public final class CatalogueNormalizer implements TreeNormalizer<Catalogue<?>> {
      * selecting framing rather than subject, and identity is the pair that
      * determines the position — nothing finer, nothing coarser.</p>
      */
-    private static NavKey identityOf(Catalogue<?> cat) {
+    static NavKey identityOf(Catalogue<?> cat) {
         return new NavKey(CatalogueAppHost.class,
                 new CatalogueAppHost.Params(cat.getClass().getName(), null));
     }
@@ -94,12 +94,24 @@ public final class CatalogueNormalizer implements TreeNormalizer<Catalogue<?>> {
         TreeLevel childLevel = hostLevel.below().orElse(null);
         if (childLevel == null) return null;   // host already at the cap
 
-        if (entry instanceof Entry.OfLeaf<?, ?, ?> od && od.content() != null) {
+        if (entry instanceof Entry.OfLeaf<?, ?, ?> od) {
+            // A leaf with no doc is still a position. RFC 0051 Phase 6 made a
+            // Navigable the binding in its own right, so an app tile's place in
+            // the tree is as real as a document's — it was only ever missing here
+            // because this branch tested for content rather than for a placement.
+            // The studio's theme picker is the one such leaf, and it was the sole
+            // vertex the forest lacked against the registry's own inventory.
             Doc doc = od.content();
-            var dims = baseDims(doc.title(), doc.summary(), doc.category(), doc.kind());
+            // The doc branch keeps reading the doc, unchanged, so this stays a
+            // strictly additive change: exactly one new vertex, no existing one
+            // redescribed. (Entry defaults kind/category from content anyway, but
+            // a placement may override them, and that is a separate question.)
+            var dims = (doc != null)
+                    ? baseDims(doc.title(), doc.summary(), doc.category(), doc.kind())
+                    : baseDims(od.nav().name(), od.nav().summary(), od.category(), od.kind());
             // The placement names the segment and the binding names the identity —
-            // RFC 0051 Phase 6 moved the slug off the doc and onto the placement
-            // precisely so the vertex, not the payload, owns both.
+            // Phase 6 moved the slug off the doc and onto the placement precisely
+            // so the vertex, not the payload, owns both.
             var identity = new NavKey(od.nav().app().getClass(), od.nav().params());
             return NormalizedNode.leaf(childLevel, od.slug(), identity, dims);
         }
