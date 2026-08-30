@@ -15,6 +15,11 @@
 
 var href = HrefManagerInstance;
 
+// The listing branch's owner, tracked by WeakRef. Module-scoped and frozen so
+// it is never collected while the page lives — an MPA page has no `this` to
+// hand in, and a function-local owner would be collectible.
+const _catalogueListingOwner = Object.freeze({ toString: () => "catalogueListing" });
+
 function renderCatalogueHost(props) {
     var catalogueId   = props.catalogueId;
     var context       = props.context || "";
@@ -110,9 +115,12 @@ function _renderCataloguePage(root, data, brandFallback, stampedCrumbs) {
         main.appendChild(subtitle);
     }
 
-    // Entries — flat list, per-kind dispatch.
-    var tiles = (data.entries || []).map(_renderEntry);
-    main.appendChild(Section({ title: "", children: tiles }));
+    // The listing IS the tree (RFC 0053) — the same subtree the boot gate
+    // checks, drawn by the substrate's own renderer, so a catalogue costs no
+    // bespoke listing code. `data.entries` is still served and `_renderEntry`
+    // below is untouched: restoring the card view is switching which of the two
+    // this one line calls.
+    _mountListingTree(main, data);
 
     children.push(main);
 
@@ -249,4 +257,53 @@ function _renderEntry(entry) {
     css.addClass(fallback, st_error);
     fallback.textContent = "Unknown entry kind: " + entry.kind;
     return fallback;
+}
+
+// The tree that replaced the tile grid. Every row is minted through a branch, so
+// the listing tears down with the page rather than leaking into the singleton.
+//
+// It opens showing exactly what the cards showed — the immediate children —
+// with the rest of the subtree one click away. That is the whole upgrade: the
+// card view could only ever show one level, because a tile is not a tree.
+function _mountListingTree(parent, data) {
+    var branch = domOpsParty.createBranch("catalogueListing");
+    branch.activate(_catalogueListingOwner);
+
+    // Minted through the branch rather than document.createElement, so the
+    // container belongs to the listing's own ownership subtree and dissolving
+    // the branch takes the whole listing with it.
+    var container = branch.createElement("listing", "div");
+    css.addClass(container, st_section);
+    parent.appendChild(container);
+
+    // A row's namePath is relative to THIS catalogue, so the authentic URL is the
+    // server-computed base with it appended. The renderer still constructs no
+    // URLs of its own — it joins two strings the server decided.
+    var base = data.treeBase || "";
+    var urlFor = function (namePath) {
+        return namePath ? base + "/" + namePath : base;
+    };
+
+    var renderer = new TreeRenderer({
+        branch:      branch,
+        container:   container,
+        data:        data.tree,
+        // 0 = exactly what the cards showed: the immediate children, nothing
+        // more. The rest of the subtree is one click away, which is the whole
+        // difference between a tile and a tree.
+        expandDepth: 0,
+        showDetail:  true,
+        // The page IS this catalogue, so its own row would repeat the title.
+        showRoot:    false,
+        // A row is a destination, as a card was: one click opens it. The caret
+        // and the rest of the row still expand.
+        followHref:  true,
+        hrefForPath: function (path, namePath) { return urlFor(namePath); },
+        onActivate:  function (sel) { HrefManagerInstance.navigate(urlFor(sel.namePath)); }
+    });
+
+    // The page owns WHEN keys flow; the renderer owns what they mean.
+    document.addEventListener("keydown", function (ev) {
+        if (renderer && renderer.handleKeydown(ev)) ev.preventDefault();
+    });
 }

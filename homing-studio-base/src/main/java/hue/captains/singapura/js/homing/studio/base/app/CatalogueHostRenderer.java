@@ -5,6 +5,9 @@ import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
+import hue.captains.singapura.js.homing.core.js.DomOpsPartyModule;
+import hue.captains.singapura.js.homing.core.js.TreeRendererModule;
+import hue.captains.singapura.js.homing.core.js.domOpsParty;
 import hue.captains.singapura.js.homing.server.HrefManager;
 import hue.captains.singapura.js.homing.studio.base.css.StudioStyles;
 import hue.captains.singapura.js.homing.studio.base.ui.StudioElements;
@@ -38,6 +41,14 @@ public record CatalogueHostRenderer() implements DomModule<CatalogueHostRenderer
         return ImportsFor.<CatalogueHostRenderer>builder()
                 .add(new ModuleImports<>(List.of(new HrefManager.HrefManagerInstance()),
                         HrefManager.INSTANCE))
+                // RFC 0053 — the listing is a tree now, drawn by the substrate's own
+                // renderer. The party comes with it: TreeRenderer mints every row
+                // through a branch handed in, so the rows join this page's
+                // ownership tree rather than the singleton's.
+                .add(new ModuleImports<>(List.of(new TreeRendererModule.TreeRenderer()),
+                        TreeRendererModule.INSTANCE))
+                .add(new ModuleImports<>(List.of(new domOpsParty()),
+                        DomOpsPartyModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new StudioElements.Header(),
                         new StudioElements.Card(),
@@ -50,6 +61,7 @@ public record CatalogueHostRenderer() implements DomModule<CatalogueHostRenderer
                         new StudioStyles.st_kicker(),
                         new StudioStyles.st_title(),
                         new StudioStyles.st_subtitle(),
+                        new StudioStyles.st_section(),
                         new StudioStyles.st_loading(),
                         new StudioStyles.st_error()
                 ), StudioStyles.INSTANCE))

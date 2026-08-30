@@ -7,6 +7,8 @@ import hue.captains.singapura.tao.http.action.GetAction;
 import hue.captains.singapura.tao.http.action.Param;
 import hue.captains.singapura.tao.http.action.ParamMarshaller;
 import hue.captains.singapura.js.homing.studio.base.DocContent;
+import hue.captains.singapura.js.homing.studio.base.tree.CatalogueNormalizer;
+import hue.captains.singapura.js.homing.tree.TreeNodeJsonWriter;
 import io.vertx.ext.web.RoutingContext;
 
 import java.util.List;
@@ -61,6 +63,9 @@ public class CatalogueGetAction
      * injections (e.g. RFC 0014 diagnostics tile pyramid). Empty for normal
      * serving — back-compat constructor passes {@code Map.of()}.
      */
+    /** The substrate's own writer — the tree payload costs no bespoke serialisation. */
+    private static final TreeNodeJsonWriter TREE_WRITER = new TreeNodeJsonWriter();
+
     private final Map<CatalogueAugmentation.AugKey, CatalogueAugmentation> augmentations;
 
     public CatalogueGetAction(CatalogueRegistry registry) {
@@ -162,6 +167,25 @@ public class CatalogueGetAction
         Class<? extends Catalogue<?>> cKey = (Class<? extends Catalogue<?>>) c.getClass();
         CatalogueAugmentation aug = augmentations.get(new CatalogueAugmentation.AugKey(cKey, context));
         boolean suppressTyped = aug != null && aug.replace();
+
+        // RFC 0053 — the same catalogue as a TREE, from the normalized layer.
+        // The listing draws this; `entries` below is left exactly as it was so
+        // the card view is one call site away from coming back.
+        //
+        // Normalizing THIS catalogue rather than slicing the forest keeps the
+        // action free of any re-rooting: a Catalogue already knows its own
+        // subCatalogues() and leaves(), so the subtree comes from the same
+        // producer the boot gate checks, not from a second traversal. That is
+        // the whole point of not reaching for CatalogueTreeGetAction, which
+        // re-roots by slug match on the LEGACY adapter.
+        //
+        // treeBase is this catalogue's own path. A row's namePath is relative to
+        // the subtree root, so base + '/' + namePath is the authentic URL — the
+        // identity the parity walk reports 223/223 agreement on.
+        sb.append("\"treeBase\":").append(jstr(pathUrl(c))).append(',');
+        sb.append("\"tree\":")
+          .append(TREE_WRITER.write(CatalogueNormalizer.INSTANCE.normalize(c)))
+          .append(',');
 
         sb.append("\"entries\":[");
         boolean firstEntry = true;
