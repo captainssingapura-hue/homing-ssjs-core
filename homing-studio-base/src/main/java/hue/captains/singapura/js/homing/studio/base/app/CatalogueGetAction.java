@@ -8,6 +8,7 @@ import hue.captains.singapura.tao.http.action.Param;
 import hue.captains.singapura.tao.http.action.ParamMarshaller;
 import hue.captains.singapura.js.homing.studio.base.DocContent;
 import hue.captains.singapura.js.homing.studio.base.tree.CatalogueNormalizer;
+import hue.captains.singapura.js.homing.studio.base.tree.CatalogueTree;
 import hue.captains.singapura.js.homing.tree.TreeNodeJsonWriter;
 import io.vertx.ext.web.RoutingContext;
 
@@ -183,8 +184,11 @@ public class CatalogueGetAction
         // the subtree root, so base + '/' + namePath is the authentic URL — the
         // identity the parity walk reports 223/223 agreement on.
         sb.append("\"treeBase\":").append(jstr(pathUrl(c))).append(',');
+        // Both halves of the same walk: the structure, and the rows its identities
+        // resolve to. The writer is handed the projection, never the details.
+        CatalogueTree ct = CatalogueNormalizer.INSTANCE.toCatalogueTree(c);
         sb.append("\"tree\":")
-          .append(TREE_WRITER.write(CatalogueNormalizer.INSTANCE.normalize(c)))
+          .append(TREE_WRITER.write(ct.structure(), ct.rowDisplay()))
           .append(',');
 
         sb.append("\"entries\":[");

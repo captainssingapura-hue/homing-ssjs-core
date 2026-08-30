@@ -114,15 +114,21 @@ class TreeRenderer {
 
     // No node id is surfaced to the UI — identity is the structural `path`
     // added by _emitSelection. (The wire JSON may still carry an id field;
-    // the UI simply doesn't read it.)
+    // the UI simply does not read it.)
+    //
+    // RFC 0053: prefer the resolved row when the payload carries one, and fall
+    // back to dimensions for a producer that has not migrated yet. The SHAPE of
+    // the selection is unchanged either way — six widgets read these field names,
+    // and one of them uses `summary` as a map key, so the names outlive the
+    // channel they arrive on.
     _toSelection(node) {
+        var d = node.display;
         return {
             level:       node.level,
-            kind:        this._dim(node, 'kind'),
-            label:       this._dim(node, 'displayLabel'),
-            summary:     this._dim(node, "summary"),
-
-            category:    this._dim(node, "category"),
+            kind:        d ? d.kind  : this._dim(node, "kind"),
+            label:       d ? d.label : this._dim(node, "displayLabel"),
+            summary:     d ? d.note  : this._dim(node, "summary"),
+            category:    d ? d.badge : this._dim(node, "category"),
             hasChildren: !!(node.children && node.children.length)
         };
     }

@@ -32,13 +32,26 @@ public final class TreeNodeJsonWriter {
 
     /** Render a node and its subtree to compact JSON. */
     public String write(TreeNode<?> root) {
+        return write(root, RowDisplaySource.none());
+    }
+
+    /**
+     * As above, asking {@code display} what each row should show (RFC 0053).
+     *
+     * <p>The display block travels BESIDE dimensions, not instead of them, for as
+     * long as any producer still fills a dimension map. A client prefers the block
+     * and falls back, so the two halves of the migration never have to land in the
+     * same commit.</p>
+     */
+    public String write(TreeNode<?> root, RowDisplaySource display) {
         if (root == null) throw new IllegalArgumentException("root");
+        if (display == null) throw new IllegalArgumentException("display");
         StringBuilder out = new StringBuilder(256);
-        writeNode(root, out);
+        writeNode(root, display, out);
         return out.toString();
     }
 
-    private void writeNode(TreeNode<?> node, StringBuilder out) {
+    private void writeNode(TreeNode<?> node, RowDisplaySource display, StringBuilder out) {
         out.append('{');
         out.append("\"level\":\"").append(node.level().tag()).append('"');
         // RFC 0053 — the segment travels, so a client rebuilds the node's
@@ -46,6 +59,15 @@ public final class TreeNodeJsonWriter {
         // that rather than by its child index. An ordinal address silently moves
         // when a sibling is inserted or reordered; a name-path does not.
         out.append(",\"segment\":\"").append(node.segment().value()).append('"');
+        RowDisplay row = display.displayOf(node);
+        if (row != null) {
+            out.append(",\"display\":{");
+            out.append("\"label\":");  writeString(row.label(), out);
+            out.append(",\"badge\":"); writeString(row.badge(), out);
+            out.append(",\"note\":");  writeString(row.note(),  out);
+            out.append(",\"kind\":");  writeString(row.kind(),  out);
+            out.append("}");
+        }
         out.append(",\"dimensions\":[");
         boolean first = true;
         for (Map.Entry<DimensionKey, DimensionValue> e : node.dimensions().entrySet()) {
@@ -59,7 +81,7 @@ public final class TreeNodeJsonWriter {
         for (TreeNode<?> child : node.children()) {
             if (!first) out.append(',');
             first = false;
-            writeNode(child, out);
+            writeNode(child, display, out);
         }
         out.append(']');
         out.append('}');

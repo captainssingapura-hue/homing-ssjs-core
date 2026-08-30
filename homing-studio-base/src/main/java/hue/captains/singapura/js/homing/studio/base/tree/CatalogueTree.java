@@ -2,6 +2,8 @@ package hue.captains.singapura.js.homing.studio.base.tree;
 
 import hue.captains.singapura.js.homing.tree.NodeIdentity;
 import hue.captains.singapura.js.homing.tree.NodeResolver;
+import hue.captains.singapura.js.homing.tree.RowDisplay;
+import hue.captains.singapura.js.homing.tree.RowDisplaySource;
 import hue.captains.singapura.js.homing.tree.NormalizedNode;
 
 import java.util.Map;
@@ -35,9 +37,33 @@ public record CatalogueTree(NormalizedNode structure, Map<NodeIdentity, ListingD
         details = Map.copyOf(details);
     }
 
-    /** The details as a resolver, for merging with other subtrees' answers. */
+    /** The details as a resolver, for merging with other subtrees answers. */
     public NodeResolver<ListingDetails> resolver() {
         Map<NodeIdentity, ListingDetails> map = details;
         return identity -> Optional.ofNullable(map.get(identity));
     }
+    /**
+     * The details narrowed to what a tree ROW draws (RFC 0053).
+     *
+     * <p>This is the projection direction the substrate depends on: a catalogue
+     * keeps its own richly typed answer — illustration plus, for a leaf, the
+     * binding that opens it — and hands the renderer four strings. The renderer
+     * never learns what a {@code ListingDetails} is, and the icon simply does not
+     * travel, because a row has nowhere to put one.</p>
+     *
+     * <p>Answers {@code null} for a node it does not own, which is the writer's
+     * signal to fall back rather than an error: a grafted subtree from another
+     * family is expected to be unknown here.</p>
+     */
+    public RowDisplaySource rowDisplay() {
+        Map<NodeIdentity, ListingDetails> map = details;
+        return node -> {
+            if (!(node instanceof NormalizedNode n)) return null;
+            ListingDetails d = map.get(n.identity());
+            if (d == null) return null;
+            Illustration i = d.illustration();
+            return new RowDisplay(i.label(), i.badge(), i.summary(), i.kind());
+        };
+    }
+
 }
