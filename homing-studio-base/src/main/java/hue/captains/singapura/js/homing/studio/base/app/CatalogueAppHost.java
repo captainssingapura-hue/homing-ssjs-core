@@ -51,6 +51,29 @@ public record CatalogueAppHost() implements AppModule<CatalogueAppHost.Params, C
     public static final CatalogueAppHost INSTANCE = new CatalogueAppHost();
 
     /**
+     * The typed identity of a catalogue: this host, opened on that catalogue's
+     * class (RFC 0053). Global, because the class is — it owes nothing to where
+     * the catalogue sits, so the identity survives being grafted under a
+     * different parent.
+     *
+     * <p>{@code context} is left null deliberately. It is a REFINEMENT — it
+     * selects framing, not subject — and identity is the pair that determines
+     * the position, nothing finer and nothing coarser.</p>
+     *
+     * <p>Lives here because this host is what a catalogue is opened by, so it
+     * is the one place that should know how a catalogue is named. Two places
+     * minting this key would be exactly the duplication RFC 0053 removes.</p>
+     */
+    public static NavKey identityFor(Catalogue<?> catalogue) {
+        return identityFor(catalogue.getClass().getName());
+    }
+
+    /** As {@link #identityFor(Catalogue)}, from the class name a flat URL carries. */
+    public static NavKey identityFor(String catalogueFqn) {
+        return new NavKey(CatalogueAppHost.class, new Params(catalogueFqn, null));
+    }
+
+    /**
      * Build the canonical URL serving the given {@link Catalogue}. Used by any consumer
      * (other AppModules, downstream apps) that needs to link to a catalogue without
      * hand-building the path.

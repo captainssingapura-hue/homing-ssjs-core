@@ -71,22 +71,9 @@ public final class CatalogueNormalizer implements TreeNormalizer<Catalogue<?>> {
                 if (leaf != null) kids.add(leaf);
             }
         }
-        return new NormalizedNode(level, cat.slug(), identityOf(cat), dims, kids);
+        return new NormalizedNode(level, cat.slug(), CatalogueAppHost.identityFor(cat), dims, kids);
     }
 
-    /**
-     * A catalogue's identity is its BINDING: {@code CatalogueAppHost} opened on
-     * this catalogue's class (RFC 0053). Global, because the class is — it owes
-     * nothing to where the catalogue sits, so it survives being grafted.
-     *
-     * <p>The {@code context} param is left null deliberately: it is a REFINEMENT,
-     * selecting framing rather than subject, and identity is the pair that
-     * determines the position — nothing finer, nothing coarser.</p>
-     */
-    static NavKey identityOf(Catalogue<?> cat) {
-        return new NavKey(CatalogueAppHost.class,
-                new CatalogueAppHost.Params(cat.getClass().getName(), null));
-    }
 
     // ── Leaf (doc / portal) ───────────────────────────────────────────────
 

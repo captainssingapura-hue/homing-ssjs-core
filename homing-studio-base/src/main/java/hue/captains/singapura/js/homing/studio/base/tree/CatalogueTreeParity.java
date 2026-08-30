@@ -247,7 +247,7 @@ public final class CatalogueTreeParity {
 
         var missing = new ArrayList<String>();
         for (Catalogue<?> cat : registry.all()) {
-            if (!present.contains(CatalogueNormalizer.identityOf(cat))) {
+            if (!present.contains(CatalogueAppHost.identityFor(cat))) {
                 missing.add("catalogue " + cat.name() + " (" + cat.getClass().getSimpleName() + ")");
             }
             for (Entry<?> entry : cat.leaves()) {
