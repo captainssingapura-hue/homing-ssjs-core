@@ -28,7 +28,7 @@ import java.util.Optional;
  * @param details   what each vertex looks like, and for a leaf what opens it
  * @since RFC 0053
  */
-public record CatalogueTree(NormalizedNode structure, Map<NodeIdentity, Details> details) {
+public record CatalogueTree(NormalizedNode structure, Map<NodeIdentity, ListingDetails> details) {
 
     public CatalogueTree {
         Objects.requireNonNull(structure, "CatalogueTree.structure");
@@ -36,8 +36,8 @@ public record CatalogueTree(NormalizedNode structure, Map<NodeIdentity, Details>
     }
 
     /** The details as a resolver, for merging with other subtrees' answers. */
-    public NodeResolver<Details> resolver() {
-        Map<NodeIdentity, Details> map = details;
+    public NodeResolver<ListingDetails> resolver() {
+        Map<NodeIdentity, ListingDetails> map = details;
         return identity -> Optional.ofNullable(map.get(identity));
     }
 }

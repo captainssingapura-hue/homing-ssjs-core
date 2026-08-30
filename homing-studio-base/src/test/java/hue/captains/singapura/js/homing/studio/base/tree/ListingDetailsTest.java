@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class DetailsTest {
+class ListingDetailsTest {
 
     private static NavKey cat(String fqn) { return CatalogueAppHost.identityFor(fqn); }
 
@@ -62,27 +62,27 @@ class DetailsTest {
 
     @Test
     void aBranchIsAnIllustrationAndNothingMore() {
-        Details d = new Details.OfBranch(Illustration.of("Meta", "the meta catalogue"));
-        assertInstanceOf(Details.OfBranch.class, d);
+        ListingDetails d = new ListingDetails.OfBranch(Illustration.of("Meta", "the meta catalogue"));
+        assertInstanceOf(ListingDetails.OfBranch.class, d);
         assertEquals("Meta", d.illustration().label());
     }
 
     @Test
     void bothCasesExposeTheIllustrationThroughTheInterface() {
         // The shared half: a consumer that only draws does not switch at all.
-        List<Details> both = List.of(
-                new Details.OfBranch(Illustration.of("Meta", "")),
-                new Details.OfBranch(Illustration.of("RFCs", "")));
+        List<ListingDetails> both = List.of(
+                new ListingDetails.OfBranch(Illustration.of("Meta", "")),
+                new ListingDetails.OfBranch(Illustration.of("RFCs", "")));
         assertEquals(List.of("Meta", "RFCs"), both.stream().map(x -> x.illustration().label()).toList());
     }
 
     /** Sealed, so a switch over the cases is exhaustive without a default. */
     @Test
     void theCasesAreExhaustiveWithoutADefault() {
-        Details d = new Details.OfBranch(Illustration.of("Meta", ""));
+        ListingDetails d = new ListingDetails.OfBranch(Illustration.of("Meta", ""));
         String kind = switch (d) {
-            case Details.OfLeaf leaf     -> "leaf:" + leaf.nav().name();
-            case Details.OfBranch branch -> "branch:" + branch.illustration().label();
+            case ListingDetails.OfLeaf leaf     -> "leaf:" + leaf.nav().name();
+            case ListingDetails.OfBranch branch -> "branch:" + branch.illustration().label();
         };
         assertEquals("branch:Meta", kind);
     }
@@ -97,12 +97,12 @@ class DetailsTest {
     void aUnionAnswersInOneShapeAcrossIdentityKinds() {
         record OtherId(String name) implements NodeIdentity {}
 
-        Map<NavKey, Details> catalogues = Map.of(
-                cat("a.MetaCatalogue"), new Details.OfBranch(Illustration.of("Meta", "")));
-        Map<OtherId, Details> others = Map.of(
-                new OtherId("crate"), new Details.OfBranch(Illustration.of("Crates", "")));
+        Map<NavKey, ListingDetails> catalogues = Map.of(
+                cat("a.MetaCatalogue"), new ListingDetails.OfBranch(Illustration.of("Meta", "")));
+        Map<OtherId, ListingDetails> others = Map.of(
+                new OtherId("crate"), new ListingDetails.OfBranch(Illustration.of("Crates", "")));
 
-        NodeResolver<Details> union = NodeResolver.union(List.of(
+        NodeResolver<ListingDetails> union = NodeResolver.union(List.of(
                 NodeResolver.forKind(NavKey.class,   catalogues::get),
                 NodeResolver.forKind(OtherId.class, others::get)));
 
@@ -116,7 +116,7 @@ class DetailsTest {
 
     @Test
     void anIdentityNobodyOwnsAnswersEmpty() {
-        NodeResolver<Details> r = NodeResolver.forKind(NavKey.class, k -> null);
+        NodeResolver<ListingDetails> r = NodeResolver.forKind(NavKey.class, k -> null);
         assertEquals(Optional.empty(), r.resolve(cat("a.Absent")));
     }
 }

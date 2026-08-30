@@ -42,8 +42,11 @@ import java.util.function.Function;
  * That is the difference from CONTENT, which is genuinely heterogeneous: a
  * parameter works precisely because the answer is not.</p>
  *
- * <p>In {@code studio-base} that answer is {@code Details} — an illustration,
- * plus a navigable when the vertex is a leaf. The substrate stays free of it.</p>
+ * <p>For a catalogue listing that answer is {@code ListingDetails} in {@code
+ * studio-base} — an illustration, plus a navigable when the vertex is a leaf. It
+ * is that family's answer and not a universal one: the doc side pairs its structure
+ * with content providers and answers in a shape of its own. Which is what this
+ * parameter is for. The substrate stays free of both.</p>
  *
  * <p>An eager identity-keyed map is a perfectly good <i>representation</i> of the
  * same union — it makes lookup constant-time and collisions cheap to find in one

@@ -228,12 +228,12 @@ public final class CatalogueTreeParity {
                   + "chain says: " + disagreeing);
         }
 
-        assertDetailsMatchDimensions(registry);
+        assertListingDetailsMatchDimensions(registry);
     }
 
     /**
      * The gate for the dimension retirement: every vertex must resolve to
-     * {@link Details}, and those details must say what the node's {@code
+     * {@link ListingDetails}, and those details must say what the node's {@code
      * dimensions} say today.
      *
      * <p>Same discipline as every structural swap here — build the new answer
@@ -246,7 +246,7 @@ public final class CatalogueTreeParity {
      * against. And a branch's {@code badge} is compared to the {@code category}
      * dimension, because that is the field the old mapping put it in.</p>
      */
-    private static void assertDetailsMatchDimensions(CatalogueRegistry registry) {
+    private static void assertListingDetailsMatchDimensions(CatalogueRegistry registry) {
         CatalogueTree tree = CatalogueNormalizer.INSTANCE.toCatalogueTree(registry.root());
         var resolver = tree.resolver();
 
@@ -265,9 +265,9 @@ public final class CatalogueTreeParity {
     }
 
     private static void collectDetailMismatches(NormalizedNode node,
-                                                hue.captains.singapura.js.homing.tree.NodeResolver<Details> resolver,
+                                                hue.captains.singapura.js.homing.tree.NodeResolver<ListingDetails> resolver,
                                                 List<String> missing, List<String> mismatched) {
-        Details details = resolver.resolve(node.identity()).orElse(null);
+        ListingDetails details = resolver.resolve(node.identity()).orElse(null);
         if (details == null) {
             missing.add(node.segment().value());
         } else {

@@ -5,14 +5,18 @@ import hue.captains.singapura.tao.ontology.ValueObject;
 import java.util.Objects;
 
 /**
- * What a vertex looks like — the display projection, and the whole of it
+ * What a listing's vertex looks like — the display projection, and the whole of it
  * (RFC 0053).
  *
- * <p>These five fields were carried as {@code dimensions} on every
- * {@code NormalizedNode}: presentation living inside structure, in a substrate
+ * <p>These five fields were carried as {@code dimensions} on a catalogue's
+ * {@code NormalizedNode}s: presentation living inside structure, in a substrate
  * whose claim is that it knows nothing about display. They belong on the answer a
  * resolver gives, not on the node a walk steps through — which is why this type
  * is in {@code studio-base} and not in {@code homing-rigid-tree}.</p>
+ *
+ * <p>Five is what a <i>listing</i> shows, not what every tree node has — the four
+ * doc normalizers only ever carried a label. This is the catalogue family's
+ * projection, which is what {@link ListingDetails} is named for.</p>
  *
  * <p><b>The label is supplied, never derived.</b> A segment is a lossy slug of a
  * label — em-dashes, word order and qualifiers all fall out — and measurement over

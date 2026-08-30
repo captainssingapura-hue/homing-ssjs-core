@@ -65,7 +65,7 @@ public final class CatalogueNormalizer implements TreeNormalizer<Catalogue<?>> {
      */
     public CatalogueTree toCatalogueTree(Catalogue<?> root) {
         if (root == null) throw new IllegalArgumentException("root");
-        var details = new LinkedHashMap<NodeIdentity, Details>();
+        var details = new LinkedHashMap<NodeIdentity, ListingDetails>();
         NormalizedNode structure = catalogueNode(root, TreeLevel.L0.INSTANCE, details);
         return new CatalogueTree(structure, details);
     }
@@ -73,7 +73,7 @@ public final class CatalogueNormalizer implements TreeNormalizer<Catalogue<?>> {
     // ── Catalogue (branch) ────────────────────────────────────────────────
 
     private NormalizedNode catalogueNode(Catalogue<?> cat, TreeLevel level,
-                                         Map<NodeIdentity, Details> details) {
+                                         Map<NodeIdentity, ListingDetails> details) {
         var dims = baseDims(cat.name(), cat.summary(), cat.badge(), "catalogue");
         var kids = new ArrayList<NormalizedNode>();
 
@@ -81,7 +81,7 @@ public final class CatalogueNormalizer implements TreeNormalizer<Catalogue<?>> {
         // A branch is an illustration and nothing more: its address is its path,
         // so it needs no binding to be reached. Note the icon, which dimensions
         // never carried — the catalogue had one and the tile could not show it.
-        details.put(identity, new Details.OfBranch(new Illustration(
+        details.put(identity, new ListingDetails.OfBranch(new Illustration(
                 cat.name(), cat.summary(), cat.badge(), cat.icon(), "catalogue")));
 
         // Children sit one level below. At the L18 cap there is no room — a
@@ -103,7 +103,7 @@ public final class CatalogueNormalizer implements TreeNormalizer<Catalogue<?>> {
     // ── Leaf (doc / portal) ───────────────────────────────────────────────
 
     private NormalizedNode leafNode(Entry<?> entry, TreeLevel hostLevel,
-                                    Map<NodeIdentity, Details> details) {
+                                    Map<NodeIdentity, ListingDetails> details) {
         TreeLevel childLevel = hostLevel.below().orElse(null);
         if (childLevel == null) return null;   // host already at the cap
 
@@ -128,7 +128,7 @@ public final class CatalogueNormalizer implements TreeNormalizer<Catalogue<?>> {
             var identity = new NavKey(od.nav().app().getClass(), od.nav().params());
             // A leaf is a destination, so it answers as an illustrated navigable:
             // how it looks, plus the binding that opens it.
-            details.put(identity, new Details.OfLeaf(
+            details.put(identity, new ListingDetails.OfLeaf(
                     (doc != null)
                             ? new Illustration(doc.title(), doc.summary(), od.category(), "", doc.kind())
                             : new Illustration(od.nav().name(), od.nav().summary(), od.category(), "", od.kind()),
