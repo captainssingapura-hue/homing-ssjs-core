@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.studio.base.tree;
 
 import hue.captains.singapura.js.homing.tree.DimensionKey;
+import hue.captains.singapura.js.homing.tree.NodeName;
 import hue.captains.singapura.js.homing.tree.DimensionValue;
 import hue.captains.singapura.js.homing.tree.TreeLevel;
 import hue.captains.singapura.js.homing.tree.TreeNode;
@@ -23,12 +24,14 @@ import java.util.Map;
  * substrate for the authors who can use it.</p>
  *
  * @param level    the runtime level singleton (L0 at the root, L1 below, …)
+ * @param segment  the sibling-unique name this node is addressed by (RFC 0053)
  * @param dimensions ordered typed metadata (LinkedHashMap for stable JSON)
  * @param kids      children, one level below; empty for leaves
  * @since homing-tree-views v1
  */
 public record CatalogueTreeNode(
         TreeLevel level,
+        NodeName segment,
         Map<DimensionKey, DimensionValue> dimensions,
         List<CatalogueTreeNode> kids
 ) implements TreeNode<TreeLevel> {

@@ -41,6 +41,11 @@ public final class TreeNodeJsonWriter {
     private void writeNode(TreeNode<?> node, StringBuilder out) {
         out.append('{');
         out.append("\"level\":\"").append(node.level().tag()).append('"');
+        // RFC 0053 — the segment travels, so a client rebuilds the node's
+        // name-path during the walk it already performs and addresses the node by
+        // that rather than by its child index. An ordinal address silently moves
+        // when a sibling is inserted or reordered; a name-path does not.
+        out.append(",\"segment\":\"").append(node.segment().value()).append('"');
         out.append(",\"dimensions\":[");
         boolean first = true;
         for (Map.Entry<DimensionKey, DimensionValue> e : node.dimensions().entrySet()) {

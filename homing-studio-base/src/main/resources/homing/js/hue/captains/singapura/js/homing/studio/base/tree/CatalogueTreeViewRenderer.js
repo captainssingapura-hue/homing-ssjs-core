@@ -80,7 +80,7 @@ function renderCatalogueTreeView() {
     container.appendChild(status);
 
     var renderer = null;
-    var byPath = {};
+    var byName = {};
 
     // The host owns WHEN keys flow; the renderer owns what they mean.
     var keyHandler = function (ev) {
@@ -96,7 +96,7 @@ function renderCatalogueTreeView() {
         .then(function (data) {
             var rows = data.rows || [];
             for (var i = 0; i < rows.length; i++) {
-                byPath[(rows[i].path || []).join(',')] = rows[i];
+                byName[rows[i].namePath] = rows[i];
             }
 
             verdict.textContent = data.differ === 0
@@ -115,13 +115,13 @@ function renderCatalogueTreeView() {
                 data:        data.tree,
                 expandDepth: 2,
                 onSelect:    function (sel) {
-                    var row = _rowFor(byPath, sel);
+                    var row = _rowFor(byName, sel);
                     detail.textContent = row
                         ? row.derived + '  ·  ' + _note(row)
                         : '(no parity row for this position)';
                 },
                 onActivate:  function (sel) {
-                    var row = _rowFor(byPath, sel);
+                    var row = _rowFor(byName, sel);
                     if (row && row.authentic && row.authentic.length > 0) {
                         HrefManagerInstance.navigate(row.authentic);
                     }
@@ -140,8 +140,8 @@ function renderCatalogueTreeView() {
 
 // The renderer addresses rows positionally; the endpoint ships verdicts keyed
 // the same way. This is the join, and the only place the ordinal path is used.
-function _rowFor(byPath, sel) {
-    return byPath[((sel && sel.path) || []).join(',')];
+function _rowFor(byName, sel) {
+    return byName[(sel && sel.namePath) || ''];
 }
 
 function _note(row) {

@@ -38,7 +38,15 @@
 // /open?l0=..&l1=.. URL). Nodes carry no id.
 //
 // onSelect receives a flattened selection object:
-//   { path, level, kind, label, summary, hasChildren }
+//   { path, namePath, level, kind, label, summary, hasChildren }
+//
+// `namePath` is the RFC 0053 address and the one to prefer. It is the '/'-joined
+// chain of each node's `segment`, rebuilt during the same walk that draws the
+// rows — '' at the root, 'meta' for its child, 'meta/ontology' below that (the
+// root's own segment is not part of it, so for a catalogue the name-path is
+// exactly the URL after '/cat'). Unlike `path` it does not move when a sibling is
+// inserted or reordered, which is the whole reason it exists. `path` remains for
+// the leveled open URL and for callers not yet migrated.
 //
 // Keyboard (handleKeydown): ArrowDown/ArrowUp move the selection through the
 // VISIBLE rows (live-follow — each move fires onSelect); ArrowRight expands the
@@ -111,6 +119,7 @@ class TreeRenderer {
     _emitSelection(entry) {
         var sel = this._toSelection(entry.node);
         sel.path = entry.path;
+        sel.namePath = entry.namePath;
         this._onSelect(sel);
     }
 
@@ -120,6 +129,7 @@ class TreeRenderer {
     _emitActivation(entry) {
         var sel = this._toSelection(entry.node);
         sel.path = entry.path;
+        sel.namePath = entry.namePath;
         this._onActivate(sel);
     }
 
@@ -138,13 +148,13 @@ class TreeRenderer {
         this._selectedEntry = null;
         var rootWrap = this._el('div');
         this._container.appendChild(rootWrap);
-        this._renderNode(data, rootWrap, 0, []);
+        this._renderNode(data, rootWrap, 0, [], '');
     }
 
     // `path` is the leveled child-index path from the root ([] at the root,
     // parent.path.concat([childIndex]) below). It is purely structural — the
     // node carries no id — and is what the leveled "open" URL encodes.
-    _renderNode(node, parentEl, depth, path) {
+    _renderNode(node, parentEl, depth, path, namePath) {
         var sel      = this._toSelection(node);
         var isBranch = sel.hasChildren;
         var self     = this;
@@ -178,7 +188,8 @@ class TreeRenderer {
         // its subtree) — the natural top-to-bottom visual order arrow nav walks.
         var entry = {
             rowEl: row, node: node, caretEl: caret,
-            kidsEl: null, hasChildren: isBranch, depth: depth, path: path
+            kidsEl: null, hasChildren: isBranch, depth: depth, path: path,
+            namePath: namePath
         };
         this._flat.push(entry);
 
@@ -188,7 +199,9 @@ class TreeRenderer {
             entry.kidsEl = kids;
             parentEl.appendChild(kids);
             for (var i = 0; i < node.children.length; i++) {
-                this._renderNode(node.children[i], kids, depth + 1, path.concat([i]));
+                var kidSeg = node.children[i].segment || String(i);
+                var kidNamePath = namePath ? namePath + '/' + kidSeg : kidSeg;
+                this._renderNode(node.children[i], kids, depth + 1, path.concat([i]), kidNamePath);
             }
             this._setExpanded(entry, depth < this._expandDepth);
         }

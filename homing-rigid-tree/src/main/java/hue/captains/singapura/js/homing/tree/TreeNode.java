@@ -30,6 +30,24 @@ public interface TreeNode<L extends TreeLevel> {
     L level();
 
     /**
+     * The sibling-unique name this node is known by <b>here</b> (RFC 0053).
+     *
+     * <p>The chain of segments from the root is the node's {@link NamePath}, and
+     * that is what a consumer should address it by. It is on the contract rather
+     * than left to a dimension because a dimension is optional display metadata
+     * and a producer may simply omit one — which is exactly how the catalogue
+     * forest ended up addressed by child index, the fragile scheme name-paths
+     * exist to replace: insert or reorder a sibling and every ordinal address
+     * silently points somewhere else.</p>
+     *
+     * <p>Typed as a {@link NodeName}, so the character set, the length cap and
+     * the reserved {@code '/'} are settled at construction rather than trusted.
+     * A segment says WHERE a node sits; it is not an identity, which says who it
+     * is and lives on the concrete node types that have one.</p>
+     */
+    NodeName segment();
+
+    /**
      * Typed metadata, including {@code DisplayLabel} (the human-readable
      * label) and any per-tree-kind dimensions (e.g. category, kind, depth).
      * Keys and values are both typed — no raw strings on the contract.

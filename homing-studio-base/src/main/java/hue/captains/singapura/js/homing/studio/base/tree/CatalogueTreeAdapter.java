@@ -10,6 +10,7 @@ import hue.captains.singapura.js.homing.tree.DisplayLabel;
 import hue.captains.singapura.js.homing.tree.Kind;
 import hue.captains.singapura.js.homing.tree.LevelDepth;
 import hue.captains.singapura.js.homing.tree.Summary;
+import hue.captains.singapura.js.homing.tree.NodeName;
 import hue.captains.singapura.js.homing.tree.TreeLevel;
 import hue.captains.singapura.js.homing.tree.dims.DepthValue;
 import hue.captains.singapura.js.homing.tree.dims.NameValue;
@@ -72,7 +73,7 @@ public final class CatalogueTreeAdapter {
             if (leaf != null) kids.add(leaf);
         }
 
-        return new CatalogueTreeNode(levelAtDepth(depth), dims, kids);
+        return new CatalogueTreeNode(levelAtDepth(depth), cat.slug(), dims, kids);
     }
 
     // ── Leaf (doc) ────────────────────────────────────────────────────────
@@ -82,7 +83,7 @@ public final class CatalogueTreeAdapter {
         if (entry instanceof Entry.OfLeaf<?, ?, ?> od && od.content() != null) {
             Doc doc = od.content();
             var dims = baseDims(doc.title(), doc.summary(), doc.category(), doc.kind(), depth);
-            return new CatalogueTreeNode(levelAtDepth(depth), dims, List.of());
+            return new CatalogueTreeNode(levelAtDepth(depth), od.slug(), dims, List.of());
         }
         // OfStudio / OfIllustration — deferred.
         return null;

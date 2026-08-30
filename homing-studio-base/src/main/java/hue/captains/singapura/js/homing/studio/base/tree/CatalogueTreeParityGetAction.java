@@ -71,9 +71,11 @@ public final class CatalogueTreeParityGetAction
         // own writer, so the interactive tree costs no per-tree-kind rendering code.
         out.append(",\"tree\":").append(new TreeNodeJsonWriter().write(r.tree()));
 
-        // The parity verdicts, keyed by the same child-index path the renderer hands
-        // back in its selection callbacks. A rendering coordinate, not an identity:
-        // the renderer is positional by RFC 0040's design, so this is the join.
+        // The parity verdicts, joined to the rendered rows by NAME-PATH: the
+        // '/'-joined segment chain the renderer now rebuilds while it draws. That
+        // key survives a sibling being inserted or reordered, where the ordinal
+        // path it replaced would have silently addressed a different node. The
+        // ordinal path still travels for callers not yet migrated off it.
         out.append(",\"rows\":[");
         boolean first = true;
         for (CatalogueTreeParity.Row row : r.rows()) {
@@ -86,6 +88,7 @@ public final class CatalogueTreeParityGetAction
                 out.append(row.indexPath().get(i));
             }
             out.append(']');
+            out.append(",\"namePath\":");  quote(namePathOf(row), out);
             out.append(",\"label\":");     quote(row.label(), out);
             out.append(",\"segment\":");   quote(row.segment().value(), out);
             out.append(",\"derived\":");   quote(row.derived() == null ? "" : row.derived().toUrl(), out);
@@ -96,6 +99,23 @@ public final class CatalogueTreeParityGetAction
         }
         out.append("]}");
         return out.toString();
+    }
+
+    /**
+     * A row's name-path — its derived segments, {@code '/'}-joined, {@code ""} at
+     * the root. The same chain the client rebuilds from each node's segment while
+     * it draws, which is what lets the two sides join without either shipping an
+     * ordinal. For a catalogue vertex it is also exactly the URL after
+     * {@code /cat}, because {@code CataloguePath} excludes the root's own segment.
+     */
+    private static String namePathOf(CatalogueTreeParity.Row row) {
+        if (row.derived() == null) return "";
+        var sb = new StringBuilder();
+        for (var seg : row.derived().segments()) {
+            if (sb.length() > 0) sb.append('/');
+            sb.append(seg.value());
+        }
+        return sb.toString();
     }
 
     private static void quote(String s, StringBuilder out) {
