@@ -240,6 +240,11 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
         allDocs.addAll(DocRegistry.harvestSyntheticFromLeaves(catalogues));
 
         var docRegistry = new DocRegistry(allDocs);
+        // RFC 0051 Law 5 - a reference resolves. Asked here rather than in the
+        // constructor because only the boot knows its registry is COMPLETE; a
+        // partial one is a legitimate thing to build, and every reference leaving
+        // it would look like a violation.
+        docRegistry.assertReferencesResolve();
 
         // --- Standard studio actions.
         var cssContentAction = new CssContentGetAction(CssGroupImplRegistry.ALL, defaultTheme);

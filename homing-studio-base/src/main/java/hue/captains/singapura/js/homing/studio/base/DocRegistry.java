@@ -80,6 +80,55 @@ public final class DocRegistry {
     }
 
     /**
+     * RFC 0051 Law 5 (RFC 0053 Phase 6) — A REFERENCE RESOLVES.
+     *
+     * <p>Every {@link DocReference} names a Doc this registry can answer for. The
+     * type system already guarantees the target EXISTS — {@code DocReference(name,
+     * Doc)} will not compile otherwise — and that is exactly the gap: an object
+     * reference proves existence, never reachability. A doc can be cited by three
+     * others, compile cleanly, and 404.</p>
+     *
+     * <p><b>Deliberately relaxed from "placed" to "registered".</b> The stricter
+     * form demands a position in the catalogue tree, which turns every violation
+     * into a design question — where does a defect log belong in a browsable
+     * tree? — and design questions stall where declarations do not. It would also
+     * deny a category that genuinely exists: a whitepaper, a release checklist, a
+     * defect log — properly citable, none of them wanting to be browsable. Law 3
+     * already reads "positioned implies resolvable" and not the converse, so
+     * resolvable-without-position is lawful by construction rather than by
+     * exemption.</p>
+     *
+     * <p><b>Asserted, not enforced in the constructor.</b> The first cut ran this
+     * on construction, on the theory that it is a closure property holding of any
+     * registry however assembled. It is not: partial registries are legitimate and
+     * common — DocConformanceTest builds one from a sub-closure purely to exercise
+     * the collision check, and every reference leaving that subset looked like a
+     * violation. The law belongs to the COMPLETE registry, which only the boot
+     * knows it has, so the boot is what asks.</p>
+     */
+    public void assertReferencesResolve() {
+        var dangling = new ArrayList<String>();
+        for (Doc d : byUuid.values()) {
+            List<Reference> refs = d.references();
+            if (refs == null) continue;
+            for (Reference r : refs) {
+                if (!(r instanceof DocReference dr)) continue;
+                if (dr.target() == null) continue;
+                if (resolve(dr.target().uuid()) == null) {
+                    dangling.add(describe(d) + " cites #ref:" + dr.name()
+                               + " -> " + describe(dr.target()));
+                }
+            }
+        }
+        if (!dangling.isEmpty()) {
+            throw new IllegalStateException(
+                    "These references name a Doc no registry entry answers for (RFC 0051"
+                  + " - Law 5). The target exists as a class; nothing makes it reachable."
+                  + " Register it, or drop the citation: " + dangling);
+        }
+    }
+
+    /**
      * Build a registry by walking a {@link SimpleAppResolver}'s app closure for
      * {@link DocProvider} implementors and unioning every contributor's {@link DocProvider#docs()}.
      */
@@ -142,6 +191,12 @@ public final class DocRegistry {
     }
 
     /** Resolve a Doc by UUID, or null if no Doc with that UUID is registered. */
+    /** Class name plus title - record-valued Docs share a class, so the name alone lies. */
+    private static String describe(Doc d) {
+        String t = (d.title() == null || d.title().isBlank()) ? "" : "(\"" + d.title() + "\")";
+        return d.getClass().getSimpleName() + t;
+    }
+
     public Doc resolve(UUID id) {
         return byUuid.get(id);
     }
