@@ -3,108 +3,155 @@
 //
 // renderCatalogueTreeView() -> Node
 //
-// Fetches /catalogue-parity and renders the catalogue as a TREE listing: one
-// row per vertex, indented by depth, each linking to the authentic URL that
-// vertex resolves at today.
+// Draws the catalogue as an INTERACTIVE tree using the generic TreeRenderer:
+// collapsible branches, arrow-key navigation, Enter / double-click to open.
+// Same wiring as the studio workspace's tree widgets (ModuleTreeWidget and the
+// catalogue Navigator) — a DomOpsParty branch, a container, and the canonical
+// TreeNode JSON — except this is an MPA page rather than a workspace pane, so
+// the branch comes off the global domOpsParty singleton instead of a widget
+// host, and activation is a real navigation instead of a party message.
 //
-// Every row is also a comparison. The path shown is DERIVED by chaining the
-// normalized tree's segments; the link is the AUTHENTIC path the live registry
-// gives. A row marked by identity had those two answers produced independently,
-// so its agreement is a real check. A row marked structural means the registry
-// holds no identity-keyed entry for that vertex and re-derived the path the same
-// way the tree did — the gap RFC 0053 Phase 1 closes, shown rather than hidden.
+// The tree itself costs no bespoke rendering code: /catalogue-parity serves the
+// substrate's own TreeNode payload, and TreeRenderer reads only the universal
+// dimensions. What this file adds is the join back to parity — the renderer
+// addresses rows by child-index path (positional, per RFC 0040), so the endpoint
+// ships the verdicts keyed the same way, and selection looks them up.
 //
-// Composed entirely from StudioElements builders, so this file mints no raw DOM
-// of its own and owns no DomOpsParty branch.
+// Ownership: every element is minted through the branch, so dissolving it tears
+// the page down cleanly. Styling is typed StudioStyles classes throughout — no
+// inline style, no raw DOM factory, and navigation goes through the href
+// manager rather than touching window.location.
 // =============================================================================
 
-function renderCatalogueTreeView() {
-    var host = Panel({ children: ["Loading catalogue tree..."] });
+// Navigation goes through HrefManagerInstance under its imported name, never an
+// `href` alias. The manager is auto-injected AS `href` only for modules that
+// import an AppLink; this one navigates to a path the server computed rather than
+// to a named app, so no injection happens — and hand-writing `var href = ...`
+// trips no-raw-href, whose first pattern is a bare `href =`. StudioElements
+// carries exactly that line as baselined debt; there is no need to add more of it
+// when the imported name works and window.location is still never touched.
 
-    fetch("/catalogue-parity")
+// The branch's owner, tracked by WeakRef. Module-scoped and frozen so it is
+// never collected while the page lives — the same sentinel shape the substrate
+// uses for the root party itself. A workspace widget passes `this`; an MPA page
+// has no such object, and a function-local owner would be collectible.
+const _catalogueTreeViewOwner = Object.freeze({ toString: () => 'catalogueTreeView' });
+
+function renderCatalogueTreeView() {
+    var branch = domOpsParty.createBranch('catalogueTreeView');
+    branch.activate(_catalogueTreeViewOwner);
+
+    var root = branch.createElement('root', 'div');
+    css.addClass(root, st_root);
+
+    var main = branch.createElement('main', 'div');
+    css.addClass(main, st_main);
+    root.appendChild(main);
+
+    // ── Summary ────────────────────────────────────────────────────────────
+    var summary = branch.createElement('summary', 'div');
+    css.addClass(summary, st_section);
+
+    var verdict = branch.createElement('verdict', 'div');
+    css.addClass(verdict, st_section_title);
+    verdict.textContent = 'Catalogue tree';
+    summary.appendChild(verdict);
+
+    var counts = branch.createElement('counts', 'div');
+    css.addClass(counts, st_subtitle);
+    summary.appendChild(counts);
+
+    // Follows the selection: what the tree derived, and which index answered.
+    var detail = branch.createElement('detail', 'div');
+    css.addClass(detail, st_subtitle);
+    detail.textContent = 'Select a node — Enter or double-click opens it at its authentic path.';
+    summary.appendChild(detail);
+
+    main.appendChild(summary);
+
+    // ── Tree ───────────────────────────────────────────────────────────────
+    var container = branch.createElement('treeContainer', 'div');
+    css.addClass(container, st_section);
+    main.appendChild(container);
+
+    var status = branch.createElement('status', 'div');
+    css.addClass(status, st_loading);
+    status.textContent = 'Loading catalogue tree...';
+    container.appendChild(status);
+
+    var renderer = null;
+    var byPath = {};
+
+    // The host owns WHEN keys flow; the renderer owns what they mean.
+    var keyHandler = function (ev) {
+        if (renderer && renderer.handleKeydown(ev)) ev.preventDefault();
+    };
+    document.addEventListener('keydown', keyHandler);
+
+    fetch('/catalogue-parity')
         .then(function (r) {
-            if (!r.ok) throw new Error("HTTP " + r.status);
+            if (!r.ok) throw new Error('HTTP ' + r.status);
             return r.json();
         })
         .then(function (data) {
-            host.replaceChildren(_summary(data), _listing(data));
+            var rows = data.rows || [];
+            for (var i = 0; i < rows.length; i++) {
+                byPath[(rows[i].path || []).join(',')] = rows[i];
+            }
+
+            verdict.textContent = data.differ === 0
+                ? 'Catalogue tree — no disagreement'
+                : 'Catalogue tree — ' + data.differ + ' disagree';
+            counts.textContent = data.total + ' vertices · '
+                + data.byIdentity + ' checked against the identity index · '
+                + data.byStructure + ' resolved structurally only · '
+                + data.unplaced + ' unplaced';
+
+            container.removeChild(status);
+
+            renderer = new TreeRenderer({
+                branch:      branch,
+                container:   container,
+                data:        data.tree,
+                expandDepth: 2,
+                onSelect:    function (sel) {
+                    var row = _rowFor(byPath, sel);
+                    detail.textContent = row
+                        ? row.derived + '  ·  ' + _note(row)
+                        : '(no parity row for this position)';
+                },
+                onActivate:  function (sel) {
+                    var row = _rowFor(byPath, sel);
+                    if (row && row.authentic && row.authentic.length > 0) {
+                        HrefManagerInstance.navigate(row.authentic);
+                    }
+                }
+            });
         })
         .catch(function (err) {
-            host.replaceChildren(Panel({
-                title: "Could not load the catalogue tree",
-                children: [String(err && err.message ? err.message : err)]
-            }));
+            css.removeClass(status, st_loading);
+            css.addClass(status, st_error);
+            status.textContent = 'Failed to load the catalogue tree: '
+                + (err && err.message ? err.message : String(err));
         });
 
-    return host;
+    return root;
 }
 
-// ---------- summary ----------
-// The counts, so a regression is a number rather than a visual diff.
-function _summary(data) {
-    var checked = "" + data.byIdentity + " checked against the identity index";
-    var derivedOnly = "" + data.byStructure + " resolved structurally only";
-    var verdict = data.differ === 0
-        ? "No disagreement."
-        : data.differ + " vertices resolve somewhere other than the tree says.";
-
-    return Panel({
-        title: "Parity — " + data.total + " vertices",
-        children: [
-            Listing({
-                children: [
-                    ListItem({
-                        marker: data.differ === 0 ? "OK" : "!!",
-                        label: verdict,
-                        description: checked + " · " + derivedOnly,
-                        met: data.differ === 0
-                    }),
-                    ListItem({
-                        marker: "" + data.unplaced,
-                        label: "unplaced",
-                        description: "vertices the registry places nowhere at all"
-                    })
-                ]
-            })
-        ]
-    });
+// The renderer addresses rows positionally; the endpoint ships verdicts keyed
+// the same way. This is the join, and the only place the ordinal path is used.
+function _rowFor(byPath, sel) {
+    return byPath[((sel && sel.path) || []).join(',')];
 }
 
-// ---------- the tree ----------
-function _listing(data) {
-    var rows = data.rows || [];
-    var items = [];
-    for (var i = 0; i < rows.length; i++) {
-        items.push(_row(rows[i]));
+function _note(row) {
+    if (row.status === 'DIFFER') {
+        return 'DISAGREES — registry says ' + row.authentic;
     }
-    return Listing({ title: "Catalogue tree", children: items });
-}
-
-function _row(r) {
-    var marker = r.status === "AGREE" ? "✓"
-               : r.status === "DIFFER" ? "✗"
-               : "·";
-
-    // Indent by depth. Non-breaking, because HTML collapses runs of spaces.
-    var indent = "";
-    for (var d = 0; d < r.depth; d++) indent += "   ";
-
-    var note = r.via === "IDENTITY" ? "by identity"
-             : r.via === "STRUCTURAL" ? "structural only"
-             : "unplaced";
-
-    var detail = r.derived + "  ·  " + note;
-    if (r.status === "DIFFER") {
-        detail = "derived " + r.derived + "  ≠  authentic " + r.authentic;
+    if (row.status === 'UNPLACED') {
+        return 'unplaced — the registry positions this nowhere';
     }
-
-    return ListItem({
-        marker: marker,
-        label: indent + r.label,
-        description: detail,
-        href: r.authentic && r.authentic.length > 0 ? r.authentic : null,
-        // Green only where the check was real: agreement reached through two
-        // independent derivations. A structural row agrees with itself.
-        met: r.status === "AGREE" && r.via === "IDENTITY"
-    });
+    return row.via === 'IDENTITY'
+        ? 'agrees, checked by identity'
+        : 'agrees, but resolved structurally only';
 }

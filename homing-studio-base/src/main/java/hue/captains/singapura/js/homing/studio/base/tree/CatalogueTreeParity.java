@@ -92,6 +92,11 @@ public final class CatalogueTreeParity {
 
     /**
      * @param depth     nesting depth, for indentation only
+     * @param indexPath the child-index path from the root — how the generic
+     *                  {@code TreeRenderer} addresses this row. RFC 0040 made node
+     *                  identity in that renderer purely positional, so interop
+     *                  needs the ordinal path even though nothing else here does;
+     *                  it is a rendering coordinate, never an identity
      * @param segment   the vertex's own segment
      * @param label     its display label, for reading
      * @param derived   the path built by chaining segments
@@ -100,7 +105,7 @@ public final class CatalogueTreeParity {
      * @param via       which index answered
      * @param identity  the vertex's identity, so a disagreement can be traced
      */
-    public record Row(int depth, NodeName segment, String label,
+    public record Row(int depth, List<Integer> indexPath, NodeName segment, String label,
                       CataloguePath derived, CataloguePath authentic,
                       Status status, Via via, NodeIdentity identity) {
 
@@ -110,8 +115,13 @@ public final class CatalogueTreeParity {
         }
     }
 
-    /** Every row, plus the counts that make a regression a number rather than a diff. */
-    public record Report(List<Row> rows, int agree, int differ, int unplaced,
+    /**
+     * Every row, plus the counts that make a regression a number rather than a diff,
+     * plus the normalized tree itself so a consumer can hand it to the generic
+     * renderer and the rows to the same renderer's selection callbacks.
+     */
+    public record Report(NormalizedNode tree, List<Row> rows,
+                         int agree, int differ, int unplaced,
                          int byIdentity, int byStructure) {
 
         public int total() { return rows.size(); }
@@ -132,7 +142,7 @@ public final class CatalogueTreeParity {
         if (anchor == null) anchor = CataloguePath.of(List.of());
 
         var rows = new ArrayList<Row>();
-        walk(tree, anchor, 0, registry, byName, rows);
+        walk(tree, anchor, 0, List.of(), registry, byName, rows);
 
         int agree = 0, differ = 0, unplaced = 0, byIdentity = 0, byStructure = 0;
         for (Row r : rows) {
@@ -147,10 +157,11 @@ public final class CatalogueTreeParity {
                 case NONE       -> { }
             }
         }
-        return new Report(List.copyOf(rows), agree, differ, unplaced, byIdentity, byStructure);
+        return new Report(tree, List.copyOf(rows), agree, differ, unplaced, byIdentity, byStructure);
     }
 
     private static void walk(NormalizedNode node, CataloguePath derived, int depth,
+                             List<Integer> indexPath,
                              CatalogueRegistry registry, Map<String, Catalogue<?>> byName,
                              List<Row> out) {
         CataloguePath authentic = null;
@@ -173,11 +184,16 @@ public final class CatalogueTreeParity {
                       : authentic.equals(derived) ? Status.AGREE
                                                   : Status.DIFFER;
 
-        out.add(new Row(depth, node.segment(), labelOf(node), derived, authentic,
+        out.add(new Row(depth, indexPath, node.segment(), labelOf(node), derived, authentic,
                 status, via, node.identity()));
 
-        for (NormalizedNode kid : node.children()) {
-            walk(kid, derived.then(kid.segment()), depth + 1, registry, byName, out);
+        List<NormalizedNode> kids = node.children();
+        for (int i = 0; i < kids.size(); i++) {
+            NormalizedNode kid = kids.get(i);
+            var childIndex = new ArrayList<>(indexPath);
+            childIndex.add(i);
+            walk(kid, derived.then(kid.segment()), depth + 1, List.copyOf(childIndex),
+                    registry, byName, out);
         }
     }
 

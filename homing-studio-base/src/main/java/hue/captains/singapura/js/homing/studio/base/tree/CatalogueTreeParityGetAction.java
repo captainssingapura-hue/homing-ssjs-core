@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.server.EmptyParam;
 import hue.captains.singapura.js.homing.server.ResourceNotFound;
 import hue.captains.singapura.js.homing.studio.base.DocContent;
 import hue.captains.singapura.js.homing.studio.base.app.CatalogueRegistry;
+import hue.captains.singapura.js.homing.tree.TreeNodeJsonWriter;
 import hue.captains.singapura.tao.http.action.GetAction;
 import hue.captains.singapura.tao.http.action.Param;
 import hue.captains.singapura.tao.http.action.ParamMarshaller;
@@ -64,15 +65,29 @@ public final class CatalogueTreeParityGetAction
         out.append(",\"unplaced\":").append(r.unplaced());
         out.append(",\"byIdentity\":").append(r.byIdentity());
         out.append(",\"byStructure\":").append(r.byStructure());
+
+        // The canonical TreeNode payload the generic TreeRenderer consumes — level,
+        // typed dimensions, children, and nothing bespoke. Written by the substrate's
+        // own writer, so the interactive tree costs no per-tree-kind rendering code.
+        out.append(",\"tree\":").append(new TreeNodeJsonWriter().write(r.tree()));
+
+        // The parity verdicts, keyed by the same child-index path the renderer hands
+        // back in its selection callbacks. A rendering coordinate, not an identity:
+        // the renderer is positional by RFC 0040's design, so this is the join.
         out.append(",\"rows\":[");
         boolean first = true;
         for (CatalogueTreeParity.Row row : r.rows()) {
             if (!first) out.append(',');
             first = false;
             out.append('{');
-            out.append("\"depth\":").append(row.depth());
-            out.append(",\"segment\":");   quote(row.segment().value(), out);
+            out.append("\"path\":[");
+            for (int i = 0; i < row.indexPath().size(); i++) {
+                if (i > 0) out.append(',');
+                out.append(row.indexPath().get(i));
+            }
+            out.append(']');
             out.append(",\"label\":");     quote(row.label(), out);
+            out.append(",\"segment\":");   quote(row.segment().value(), out);
             out.append(",\"derived\":");   quote(row.derived() == null ? "" : row.derived().toUrl(), out);
             out.append(",\"authentic\":"); quote(row.authenticUrl() == null ? "" : row.authenticUrl(), out);
             out.append(",\"status\":");    quote(row.status().name(), out);
