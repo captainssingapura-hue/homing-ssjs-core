@@ -141,35 +141,6 @@ public final class DocRegistry {
         return out;
     }
 
-    /**
-     * RFC 0016 — harvest the Docs wrapped by tree leaves. Walks every
-     * registered {@link hue.captains.singapura.js.homing.studio.base.app.tree.DynamicCatalogue DynamicCatalogue}
-     * recursively; for each {@link hue.captains.singapura.js.homing.studio.base.app.tree.TreeLeaf TreeLeaf}
-     * encountered, contributes the wrapped Doc. Collisions across catalogues
-     * and trees collapse via record value-equality (DocRegistry's collision
-     * check uses {@code .equals()} per Phase 3b).
-     */
-    public static List<Doc> harvestFromTrees(
-            java.util.Collection<? extends hue.captains.singapura.js.homing.studio.base.app.tree.DynamicCatalogue> trees) {
-        var out = new ArrayList<Doc>();
-        for (var tree : trees) {
-            walkBranch(tree.root(), out);
-        }
-        return out;
-    }
-
-    private static void walkBranch(
-            hue.captains.singapura.js.homing.studio.base.app.tree.TreeBranch branch,
-            List<Doc> out) {
-        for (var child : branch.children()) {
-            if (child instanceof hue.captains.singapura.js.homing.studio.base.app.tree.TreeBranch sub) {
-                walkBranch(sub, out);
-            } else if (child instanceof hue.captains.singapura.js.homing.studio.base.app.tree.TreeLeaf leaf) {
-                out.add(leaf.doc());
-            }
-        }
-    }
-
     /** Resolve a Doc by UUID, or null if no Doc with that UUID is registered. */
     public Doc resolve(UUID id) {
         return byUuid.get(id);

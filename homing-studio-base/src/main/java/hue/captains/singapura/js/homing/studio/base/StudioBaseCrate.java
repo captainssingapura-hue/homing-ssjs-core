@@ -12,7 +12,6 @@ import hue.captains.singapura.js.homing.studio.base.app.DocReader;
 import hue.captains.singapura.js.homing.studio.base.app.DocReaderRenderer;
 import hue.captains.singapura.js.homing.studio.base.app.DocTreeViewer;
 import hue.captains.singapura.js.homing.studio.base.app.SvgViewer;
-import hue.captains.singapura.js.homing.studio.base.app.tree.TreeAppHost;
 import hue.captains.singapura.js.homing.studio.base.composed.CaptionRenderer;
 import hue.captains.singapura.js.homing.studio.base.composed.CodeSegmentRenderer;
 import hue.captains.singapura.js.homing.studio.base.composed.ComposedSegmentRenderer;
@@ -93,7 +92,6 @@ public final class StudioBaseCrate implements Crate {
                 CrateEntry.of(DocReaderRenderer.INSTANCE),
                 CrateEntry.of(DocTreeViewer.INSTANCE),
                 CrateEntry.of(SvgViewer.INSTANCE),
-                CrateEntry.of(TreeAppHost.INSTANCE),
                 CrateEntry.of(CaptionRenderer.INSTANCE),
                 CrateEntry.of(CodeSegmentRenderer.INSTANCE),
                 CrateEntry.of(ComposedSegmentRenderer.INSTANCE),

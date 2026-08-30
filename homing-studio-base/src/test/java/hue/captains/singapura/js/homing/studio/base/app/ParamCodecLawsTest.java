@@ -43,9 +43,7 @@ class ParamCodecLawsTest {
     /** Apps whose samples are declared in this class — read by the coverage gate. */
     private static final Set<String> COVERED = Set.of(
             "catalogue", "plan", "studio-graph", "doc-reader", "composed-viewer",
-            "svg-viewer", "table-viewer", "image-viewer", "doc-tree-viewer", "catalogue-tree",
-            // Covered by TreeAppHostCodecTest, in this module's tree package.
-            "tree");
+            "svg-viewer", "table-viewer", "image-viewer", "doc-tree-viewer", "catalogue-tree");
 
     // -----------------------------------------------------------------------
     // Two-component codecs — a required id plus an optional companion.
