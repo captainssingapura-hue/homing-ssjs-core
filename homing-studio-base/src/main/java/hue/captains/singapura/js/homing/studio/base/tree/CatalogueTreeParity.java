@@ -6,7 +6,11 @@ import hue.captains.singapura.js.homing.studio.base.app.CataloguePath;
 import hue.captains.singapura.js.homing.studio.base.app.CatalogueRegistry;
 import hue.captains.singapura.js.homing.studio.base.app.Entry;
 import hue.captains.singapura.js.homing.studio.base.app.NavKey;
+import hue.captains.singapura.js.homing.tree.Category;
+import hue.captains.singapura.js.homing.tree.DimensionKey;
 import hue.captains.singapura.js.homing.tree.DimensionValue;
+import hue.captains.singapura.js.homing.tree.Kind;
+import hue.captains.singapura.js.homing.tree.Summary;
 import hue.captains.singapura.js.homing.tree.DisplayLabel;
 import hue.captains.singapura.js.homing.tree.NodeIdentity;
 import hue.captains.singapura.js.homing.tree.NodeIdentities;
@@ -223,6 +227,76 @@ public final class CatalogueTreeParity {
                     "RFC 0053 — these vertices resolve somewhere other than their segment "
                   + "chain says: " + disagreeing);
         }
+
+        assertDetailsMatchDimensions(registry);
+    }
+
+    /**
+     * The gate for the dimension retirement: every vertex must resolve to
+     * {@link Details}, and those details must say what the node's {@code
+     * dimensions} say today.
+     *
+     * <p>Same discipline as every structural swap here — build the new answer
+     * beside the old, assert they agree over the live catalogue, and only then
+     * delete. When dimensions go this check goes with them, having done its
+     * job; until then it is what makes the deletion safe rather than hopeful.</p>
+     *
+     * <p>Two fields are deliberately exempt. {@code icon} is new — a catalogue
+     * always had one and no dimension carried it, so there is nothing to compare
+     * against. And a branch's {@code badge} is compared to the {@code category}
+     * dimension, because that is the field the old mapping put it in.</p>
+     */
+    private static void assertDetailsMatchDimensions(CatalogueRegistry registry) {
+        CatalogueTree tree = CatalogueNormalizer.INSTANCE.toCatalogueTree(registry.root());
+        var resolver = tree.resolver();
+
+        var missing   = new ArrayList<String>();
+        var mismatched = new ArrayList<String>();
+        collectDetailMismatches(tree.structure(), resolver, missing, mismatched);
+
+        if (!missing.isEmpty()) {
+            throw new IllegalStateException(
+                    "RFC 0053 — vertices with no details to resolve: " + missing);
+        }
+        if (!mismatched.isEmpty()) {
+            throw new IllegalStateException(
+                    "RFC 0053 — details disagree with the dimensions they replace: " + mismatched);
+        }
+    }
+
+    private static void collectDetailMismatches(NormalizedNode node,
+                                                hue.captains.singapura.js.homing.tree.NodeResolver<Details> resolver,
+                                                List<String> missing, List<String> mismatched) {
+        Details details = resolver.resolve(node.identity()).orElse(null);
+        if (details == null) {
+            missing.add(node.segment().value());
+        } else {
+            Illustration i = details.illustration();
+            compare(node, "label",   i.label(),   dim(node, DisplayLabel.INSTANCE), mismatched);
+            compare(node, "summary", i.summary(), dim(node, Summary.INSTANCE),      mismatched);
+            compare(node, "badge",   i.badge(),   dim(node, Category.INSTANCE),     mismatched);
+            compare(node, "kind",    i.kind(),    dim(node, Kind.INSTANCE),         mismatched);
+        }
+        for (NormalizedNode kid : node.children()) {
+            collectDetailMismatches(kid, resolver, missing, mismatched);
+        }
+    }
+
+    private static void compare(NormalizedNode node, String field,
+                                String fromDetails, String fromDimension,
+                                List<String> out) {
+        if (!fromDetails.equals(fromDimension)) {
+            out.add(node.segment().value() + "." + field
+                    + " details='" + fromDetails + "' dimension='" + fromDimension + "'");
+        }
+    }
+
+    private static String dim(NormalizedNode node, DimensionKey key) {
+        DimensionValue v = node.dimensions().get(key);
+        return (v instanceof NameValue n)     ? n.text()
+             : (v instanceof CategoryValue c) ? c.text()
+             : (v instanceof KindValue k)     ? k.text()
+             : "";
     }
 
     /**
