@@ -52,7 +52,6 @@ public record CatalogueHostRenderer() implements DomModule<CatalogueHostRenderer
                 .add(new ModuleImports<>(List.of(
                         new StudioElements.Header(),
                         new StudioElements.Card(),
-                        new StudioElements.Section(),
                         new StudioElements.Footer()
                 ), StudioElements.INSTANCE))
                 .add(new ModuleImports<>(List.of(

@@ -4,13 +4,11 @@
 // renderCatalogueHost({ catalogueId, brandFallback }) → Node
 //
 // Fetches /catalogue?id=<catalogueId> for the fully-resolved JSON payload
-// (name + summary + brand + breadcrumbs + entries with pre-resolved URLs),
-// then emits the page DOM. Per-entry dispatch on JSON `kind` discriminator
-// ("doc" | "catalogue" | "app").
+// (name + summary + brand + breadcrumbs + the catalogue subtree),
 //
 // Renderer does no URL construction — the server pre-resolves every URL via
-// the registry. Renderer does no DOM walking — entries are flat structural
-// data, rendered top-to-bottom.
+// the registry. The tree it draws is the catalogue subtree the server already
+// resolved, so there is no second opinion about what a catalogue contains.
 // =============================================================================
 
 var href = HrefManagerInstance;
@@ -50,7 +48,7 @@ function renderCatalogueHost(props) {
     // When apiUrl is set, the catalogue endpoint defaults are bypassed entirely
     // and the renderer fetches whatever URL the caller built. The shape of the
     // JSON response is expected to match the CatalogueGetAction contract
-    // (name, summary, brand, breadcrumbs, entries[]).
+    // (name, summary, brand, breadcrumbs, tree).
     var url = props.apiUrl
         ? props.apiUrl
         : ("/catalogue?id=" + encodeURIComponent(catalogueId)
@@ -116,147 +114,14 @@ function _renderCataloguePage(root, data, brandFallback, stampedCrumbs) {
     }
 
     // The listing IS the tree (RFC 0053) — the same subtree the boot gate
-    // checks, drawn by the substrate's own renderer, so a catalogue costs no
-    // bespoke listing code. `data.entries` is still served and `_renderEntry`
-    // below is untouched: restoring the card view is switching which of the two
-    // this one line calls.
+    // checks, drawn by the substrate own renderer, so a catalogue costs no
+    // bespoke listing code. The tile grid it replaced is gone: the detail card
+    // does what a card did, and one derivation of a catalogue is enough.
     _mountListingTree(main, data);
 
     children.push(main);
 
     root.replaceChildren.apply(root, children);
-}
-
-function _renderEntry(entry) {
-    if (entry.kind === "doc") {
-        return Card({
-            href:    entry.url,
-            title:   entry.title,
-            summary: entry.summary,
-            badge:   entry.category || null,
-            link:    "Open →"
-        });
-    }
-    if (entry.kind === "catalogue") {
-        // Renders as a Card (uniform with Doc/Plan entries) — server emits
-        // a fixed "CATALOGUE" badge so a mixed-kind listing reads at a glance.
-        return Card({
-            href:    entry.url,
-            title:   entry.name,
-            summary: entry.summary,
-            badge:   entry.category || null,
-            link:    "Open →"
-        });
-    }
-    if (entry.kind === "app") {
-        // Renders as a Card (uniform with Doc/Plan/Catalogue entries).
-        return Card({
-            href:    entry.url,
-            title:   entry.name,
-            summary: entry.summary,
-            badge:   entry.category || null,
-            link:    "Open →"
-        });
-    }
-    if (entry.kind === "plan") {
-        // RFC 0005-ext1: Plan entry. Renders as a Card (same shape as Doc
-        // entries) so a catalogue listing reads uniformly. `category` is
-        // server-resolved from plan.kicker() (e.g. "RFC 0001").
-        return Card({
-            href:    entry.url,
-            title:   entry.name,
-            summary: entry.summary,
-            badge:   entry.category || null,
-            link:    "Open →"
-        });
-    }
-    if (entry.kind === "svg") {
-        // RFC 0015 Phase 5: SVG is a typed Doc kind. Routed through the
-        // standard Card with no custom rendering; the framework's chrome
-        // (border, hover, audio cues per RFC 0007) all bind via the st-card
-        // class. The Doc's URL points at the registered SvgViewer; clicking
-        // opens the full-page SVG view via the polymorphic doc viewer.
-        return Card({
-            href:    entry.url,
-            title:   entry.name,
-            summary: entry.summary || "",
-            badge:   entry.category || null,
-            link:    "View →"
-        });
-    }
-    if (entry.kind === "table") {
-        // RFC 0020: TableDoc — typed-table Doc. Routed through the standard
-        // Card; URL points at the registered TableViewer.
-        return Card({
-            href:    entry.url,
-            title:   entry.name,
-            summary: entry.summary || "",
-            badge:   entry.category || null,
-            link:    "View →"
-        });
-    }
-    if (entry.kind === "image") {
-        // RFC 0020: ImageDoc — Raw-tier raster asset. Routed through the
-        // standard Card; URL points at the registered ImageViewer.
-        return Card({
-            href:    entry.url,
-            title:   entry.name,
-            summary: entry.summary || "",
-            badge:   entry.category || null,
-            link:    "View →"
-        });
-    }
-    if (entry.kind === "composed") {
-        // RFC 0019: ComposedDoc — typed-segment doc (markdown + SVG + ...).
-        // Routed through the standard Card; the URL points at the registered
-        // ComposedViewer, which fetches the JSON payload and dispatches per
-        // segment kind on the client side.
-        return Card({
-            href:    entry.url,
-            title:   entry.name,
-            summary: entry.summary || "",
-            badge:   entry.category || null,
-            link:    "Open →"
-        });
-    }
-    if (entry.kind === "illustration") {
-        // Specialized in-place decoration — markdown rendered inline,
-        // visually distinct from the tile grid. Not clickable.
-        var ill = document.createElement("section");
-        ill.style.cssText =
-            "padding:20px 24px;margin:8px 0 24px;border-left:4px solid var(--st-accent,#cfa64a);"
-          + "background:rgba(207,166,74,0.07);border-radius:6px;line-height:1.55;font-size:15px;";
-        try {
-            if (typeof marked !== "undefined" && marked && marked.parse) {
-                var range = document.createRange();
-                range.selectNodeContents(ill);
-                ill.appendChild(range.createContextualFragment(marked.parse(entry.body || "")));
-            } else {
-                ill.textContent = entry.body || "";
-            }
-        } catch (e) {
-            ill.textContent = entry.body || "";
-        }
-        return ill;
-    }
-    if (entry.kind === "studio") {
-        // RFC 0011: a typed re-attachment of a source L0 catalogue. The
-        // server already emitted the proxy's icon prefixed into entry.name,
-        // and the URL points at the wrapped source L0's page. Renders as
-        // a Card (uniform with the other kinds) — badge defaults to "STUDIO".
-        return Card({
-            href:    entry.url,
-            title:   entry.name,
-            summary: entry.summary,
-            badge:   entry.category || null,
-            link:    "Enter →"
-        });
-    }
-    // Unknown kind — render as a plain text fallback so the page doesn't break.
-    var fallback = document.createElement("div");
-    css.addClass(fallback, st_error);
-    fallback.textContent = "Unknown entry kind: " + entry.kind;
-    return fallback;
 }
 
 // The tree that replaced the tile grid. Every row is minted through a branch, so

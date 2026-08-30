@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * RFC 0009 validation — verifies that {@link CatalogueGetAction} serialises
- * each sub-catalogue's typed {@code badge()} into the card's {@code category}
+ * each sub-catalogue typed {@code badge()} into the resolved row {@code badge}
  * JSON field, and prefixes each breadcrumb crumb's {@code name} with the
  * catalogue's {@code icon()} glyph when non-empty. Backward-compat: a
  * catalogue that doesn't override either method emits the framework default
@@ -65,13 +65,14 @@ class CatalogueGetActionRfc0009Test {
     @Test
     void card_carriesOverriddenBadge() throws Exception {
         // Serialising the HOME catalogue produces card entries for its two children.
-        // The branded child's card should carry "category":"STUDIO" (its badge()),
-        // the plain child should carry "category":"CATALOGUE" (the default).
+        // RFC 0053: the badge rides in the row the tree resolves, not in a tile.
+        // Same behaviour, one field along - the per-instance override is what is
+        // under test, not where the serializer happens to put it.
         String body = serialize(HomeCatalogue.INSTANCE);
 
-        assertTrue(body.contains("\"category\":\"STUDIO\""),
-                "Branded child's badge() should flow into the card's category field. Body: " + body);
-        assertTrue(body.contains("\"category\":\"CATALOGUE\""),
+        assertTrue(body.contains("\"badge\":\"STUDIO\""),
+                "Branded child badge() should flow into its resolved row. Body: " + body);
+        assertTrue(body.contains("\"badge\":\"CATALOGUE\""),
                 "Plain child should fall back to the default \"CATALOGUE\" badge. Body: " + body);
     }
 

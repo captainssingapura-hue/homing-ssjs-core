@@ -14,7 +14,6 @@ import hue.captains.singapura.js.homing.studio.base.app.Catalogue;
 import hue.captains.singapura.js.homing.studio.base.graph.StudioGraph;
 import hue.captains.singapura.js.homing.studio.base.graph.StudioGraphBuilder;
 import hue.captains.singapura.js.homing.studio.base.graph.DiagnosticsCatalogue;
-import hue.captains.singapura.js.homing.studio.base.graph.DiagnosticsHub;
 import hue.captains.singapura.js.homing.studio.base.graph.StudioGraphInspector;
 import hue.captains.singapura.js.homing.studio.base.graph.StudioGraphMarkdownAction;
 import hue.captains.singapura.js.homing.studio.base.app.CatalogueAppHost;
@@ -276,17 +275,16 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
                             .assertForestAgrees(catalogueRegistry);
             // RFC 0051 Phase 5 — the tree exists now; the chrome resolver can see it.
             treeHolder.set(catalogueRegistry);
-            // RFC 0014: when diagnostics is enabled the framework injects a
-            // three-tier tile pyramid via the augmentation map — Diagnostics
-            // tile on the home L0; per-studio parent tiles (or direct view
-            // tiles in single-studio) on the DiagnosticsCatalogue page;
-            // per-studio Object Graph + Type View on the &context=<studio>
-            // variant of the same catalogue. See DiagnosticsHub.
-            var diagnosticsAugmentations = params.diagnosticsEnabled()
-                    ? new DiagnosticsHub(studios, brand.homeApp()).augmentations()
-                    : java.util.Map.<hue.captains.singapura.js.homing.studio.base.app.CatalogueAugmentation.AugKey,
-                                     hue.captains.singapura.js.homing.studio.base.app.CatalogueAugmentation>of();
-            catalogueAction = new CatalogueGetAction(catalogueRegistry, diagnosticsAugmentations);
+            // RFC 0053 / D8: the tile-injection mechanism is retired. It existed
+            // only to push SyntheticEntry rows into the `entries` payload, and
+            // that payload is gone - the listing draws the tree. DiagnosticsCatalogue
+            // itself is still registered when the flag is on - though that flag has
+            // been unbootable since RFC 0051 Law 4 landed: DiagnosticsCatalogue is a
+            // SECOND un-hosted L0 and the registry rejects it. So nothing that
+            // worked is lost here. What the mechanism took with it is the per-studio
+            // &context= projection, which rendered ONE identity as two different
+            // listings and could never have been made lawful.
+            catalogueAction = new CatalogueGetAction(catalogueRegistry);
         } else {
             catalogueRegistry = null;
             catalogueAction   = null;
