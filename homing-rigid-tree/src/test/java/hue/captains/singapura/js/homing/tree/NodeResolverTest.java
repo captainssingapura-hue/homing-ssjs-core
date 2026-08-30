@@ -19,11 +19,11 @@ class NodeResolverTest {
     private record CatId(String name)  implements NodeIdentity {}
     private record DocId(String uuid)  implements NodeIdentity {}
 
-    private static NodeResolver cats(Map<String, String> index) {
+    private static NodeResolver<String> cats(Map<String, String> index) {
         return NodeResolver.forKind(CatId.class, id -> index.get(id.name()));
     }
 
-    private static NodeResolver docs(Map<String, String> index) {
+    private static NodeResolver<String> docs(Map<String, String> index) {
         return NodeResolver.forKind(DocId.class, id -> index.get(id.uuid()));
     }
 
@@ -31,7 +31,7 @@ class NodeResolverTest {
 
     @Test
     void aUnionAsksEachPartAndTakesTheFirstAnswer() {
-        NodeResolver u = NodeResolver.union(List.of(
+        NodeResolver<String> u = NodeResolver.union(List.of(
                 cats(Map.of("meta", "the meta catalogue")),
                 docs(Map.of("u-1", "a document"))));
 
@@ -41,7 +41,7 @@ class NodeResolverTest {
 
     @Test
     void anIdentityNobodyOwnsResolvesToEmpty() {
-        NodeResolver u = NodeResolver.union(List.of(cats(Map.of("meta", "x"))));
+        NodeResolver<String> u = NodeResolver.union(List.of(cats(Map.of("meta", "x"))));
         assertEquals(Optional.empty(), u.resolve(new CatId("absent")));
         assertEquals(Optional.empty(), u.resolve(new DocId("u-9")));
     }
@@ -50,30 +50,30 @@ class NodeResolverTest {
     void aResolverDeclinesIdentityKindsItDoesNotOwn() {
         // forKind is the boundary: the lambda sees its own type, and a foreign
         // kind is a miss rather than a cast failure.
-        NodeResolver onlyCats = cats(Map.of("meta", "x"));
+        NodeResolver<String> onlyCats = cats(Map.of("meta", "x"));
         assertEquals(Optional.empty(), onlyCats.resolve(new DocId("u-1")));
     }
 
     @Test
     void emptyUnionAndNoneOwnNothing() {
-        assertEquals(Optional.empty(), NodeResolver.union(List.of()).resolve(new CatId("meta")));
-        assertEquals(Optional.empty(), NodeResolver.NONE.resolve(new CatId("meta")));
+        assertEquals(Optional.empty(), NodeResolver.<String>union(List.of()).resolve(new CatId("meta")));
+        assertEquals(Optional.empty(), NodeResolver.<String>none().resolve(new CatId("meta")));
     }
 
     @Test
     void noneIsTheIdentityElement() {
-        NodeResolver c = cats(Map.of("meta", "x"));
-        assertEquals(c.resolve(new CatId("meta")), c.or(NodeResolver.NONE).resolve(new CatId("meta")));
-        assertEquals(c.resolve(new CatId("meta")), NodeResolver.NONE.or(c).resolve(new CatId("meta")));
+        NodeResolver<String> c = cats(Map.of("meta", "x"));
+        assertEquals(c.resolve(new CatId("meta")), c.or(NodeResolver.<String>none()).resolve(new CatId("meta")));
+        assertEquals(c.resolve(new CatId("meta")), NodeResolver.<String>none().or(c).resolve(new CatId("meta")));
     }
 
     // ── Nesting: a union IS a resolver, so grafts compose ───────────────────
 
     @Test
     void unionsNestSoAGraftOfAGraftNeedsNoSpecialCase() {
-        NodeResolver inner = NodeResolver.union(List.of(
+        NodeResolver<String> inner = NodeResolver.union(List.of(
                 docs(Map.of("u-1", "inner doc"))));
-        NodeResolver outer = NodeResolver.union(List.of(
+        NodeResolver<String> outer = NodeResolver.union(List.of(
                 cats(Map.of("meta", "outer catalogue")),
                 inner));
 
@@ -83,12 +83,12 @@ class NodeResolverTest {
 
     @Test
     void nestingIsAssociative() {
-        NodeResolver a = cats(Map.of("meta", "A"));
-        NodeResolver b = docs(Map.of("u-1", "B"));
-        NodeResolver c = docs(Map.of("u-2", "C"));
+        NodeResolver<String> a = cats(Map.of("meta", "A"));
+        NodeResolver<String> b = docs(Map.of("u-1", "B"));
+        NodeResolver<String> c = docs(Map.of("u-2", "C"));
 
         NodeResolver left  = NodeResolver.union(List.of(NodeResolver.union(List.of(a, b)), c));
-        NodeResolver right = NodeResolver.union(List.of(a, NodeResolver.union(List.of(b, c))));
+        NodeResolver<String> right = NodeResolver.union(List.of(a, NodeResolver.union(List.of(b, c))));
 
         for (NodeIdentity id : List.of(new CatId("meta"), new DocId("u-1"), new DocId("u-2"))) {
             assertEquals(left.resolve(id), right.resolve(id), "associativity at " + id);
@@ -104,11 +104,11 @@ class NodeResolverTest {
      */
     @Test
     void theUnionIsCommutativeWhenDomainsAreDisjoint() {
-        NodeResolver a = cats(Map.of("meta", "A"));
-        NodeResolver b = docs(Map.of("u-1", "B"));
+        NodeResolver<String> a = cats(Map.of("meta", "A"));
+        NodeResolver<String> b = docs(Map.of("u-1", "B"));
 
-        NodeResolver ab = NodeResolver.union(List.of(a, b));
-        NodeResolver ba = NodeResolver.union(List.of(b, a));
+        NodeResolver<String> ab = NodeResolver.union(List.of(a, b));
+        NodeResolver<String> ba = NodeResolver.union(List.of(b, a));
 
         for (NodeIdentity id : List.of(new CatId("meta"), new DocId("u-1"), new CatId("nope"))) {
             assertEquals(ab.resolve(id), ba.resolve(id), "order must not matter at " + id);
@@ -123,8 +123,8 @@ class NodeResolverTest {
      */
     @Test
     void overlappingDomainsMakeTheAnswerDependOnOrder() {
-        NodeResolver a = cats(Map.of("meta", "from A"));
-        NodeResolver b = cats(Map.of("meta", "from B"));
+        NodeResolver<String> a = cats(Map.of("meta", "from A"));
+        NodeResolver<String> b = cats(Map.of("meta", "from B"));
 
         assertEquals(Optional.of("from A"), NodeResolver.union(List.of(a, b)).resolve(new CatId("meta")));
         assertEquals(Optional.of("from B"), NodeResolver.union(List.of(b, a)).resolve(new CatId("meta")));
@@ -132,7 +132,7 @@ class NodeResolverTest {
 
     @Test
     void aUnionOfOneIsThatResolversAnswer() {
-        NodeResolver a = cats(Map.of("meta", "A"));
+        NodeResolver<String> a = cats(Map.of("meta", "A"));
         assertEquals(a.resolve(new CatId("meta")),
                      NodeResolver.union(List.of(a)).resolve(new CatId("meta")));
     }
@@ -196,7 +196,7 @@ class NodeResolverTest {
     void graftingDoesNotDisturbTheResolver() {
         // The resolver is keyed on identity, and a graft changes only levels — so
         // the same resolver answers for a grafted vertex without rebasing.
-        NodeResolver r = docs(Map.of("u-1", "the doc"));
+        NodeResolver<String> r = docs(Map.of("u-1", "the doc"));
         NormalizedNode source = node(TreeLevel.L0.INSTANCE, "src", new CatId("src"),
                 node(TreeLevel.L1.INSTANCE, "doc", new DocId("u-1")));
         NormalizedNode grafted = RigidTrees.graftUnder(source, TreeLevel.L3.INSTANCE);
