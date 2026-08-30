@@ -6,17 +6,10 @@ import hue.captains.singapura.js.homing.studio.base.app.CataloguePath;
 import hue.captains.singapura.js.homing.studio.base.app.CatalogueRegistry;
 import hue.captains.singapura.js.homing.studio.base.app.Entry;
 import hue.captains.singapura.js.homing.studio.base.app.NavKey;
-import hue.captains.singapura.js.homing.tree.Category;
-import hue.captains.singapura.js.homing.tree.DimensionKey;
-import hue.captains.singapura.js.homing.tree.DimensionValue;
-import hue.captains.singapura.js.homing.tree.Kind;
-import hue.captains.singapura.js.homing.tree.Summary;
-import hue.captains.singapura.js.homing.tree.DisplayLabel;
 import hue.captains.singapura.js.homing.tree.NodeIdentity;
 import hue.captains.singapura.js.homing.tree.NodeIdentities;
 import hue.captains.singapura.js.homing.tree.NodeName;
 import hue.captains.singapura.js.homing.tree.NormalizedNode;
-import hue.captains.singapura.js.homing.tree.dims.NameValue;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -127,9 +120,12 @@ public final class CatalogueTreeParity {
      * plus the normalized tree itself so a consumer can hand it to the generic
      * renderer and the rows to the same renderer's selection callbacks.
      */
-    public record Report(NormalizedNode tree, List<Row> rows,
+    public record Report(CatalogueTree catalogue, List<Row> rows,
                          int agree, int differ, int unplaced,
                          int byIdentity, int byStructure) {
+
+        /** The pure structure, for a consumer handing it to the generic renderer. */
+        public NormalizedNode tree() { return catalogue.structure(); }
 
         public int total() { return rows.size(); }
 
@@ -138,7 +134,8 @@ public final class CatalogueTreeParity {
     }
 
     public static Report of(Catalogue<?> root, CatalogueRegistry registry) {
-        NormalizedNode tree = CatalogueNormalizer.INSTANCE.normalize(root);
+        CatalogueTree catalogue = CatalogueNormalizer.INSTANCE.toCatalogueTree(root);
+        NormalizedNode tree = catalogue.structure();
 
         // fqn -> catalogue, so a catalogue identity can still be resolved even
         // though the registry holds no identity-keyed entry for one.
@@ -149,7 +146,7 @@ public final class CatalogueTreeParity {
         if (anchor == null) anchor = CataloguePath.of(List.of());
 
         var rows = new ArrayList<Row>();
-        walk(tree, anchor, 0, List.of(), registry, byName, rows);
+        walk(tree, anchor, 0, List.of(), registry, byName, catalogue.details(), rows);
 
         int agree = 0, differ = 0, unplaced = 0, byIdentity = 0, byStructure = 0;
         for (Row r : rows) {
@@ -164,7 +161,7 @@ public final class CatalogueTreeParity {
                 case NONE       -> { }
             }
         }
-        return new Report(tree, List.copyOf(rows), agree, differ, unplaced, byIdentity, byStructure);
+        return new Report(catalogue, List.copyOf(rows), agree, differ, unplaced, byIdentity, byStructure);
     }
 
     /**
@@ -228,75 +225,36 @@ public final class CatalogueTreeParity {
                   + "chain says: " + disagreeing);
         }
 
-        assertListingDetailsMatchDimensions(registry);
+        assertEveryVertexResolves(registry);
     }
 
     /**
-     * The gate for the dimension retirement: every vertex must resolve to
-     * {@link ListingDetails}, and those details must say what the node's {@code
-     * dimensions} say today.
+     * Every vertex must resolve to {@link ListingDetails}.
      *
-     * <p>Same discipline as every structural swap here — build the new answer
-     * beside the old, assert they agree over the live catalogue, and only then
-     * delete. When dimensions go this check goes with them, having done its
-     * job; until then it is what makes the deletion safe rather than hopeful.</p>
+     * <p>This used to be the gate for the dimension retirement, comparing each
+     * field of the new answer against the dimension it replaced. Those dimensions
+     * are gone, so the comparison went with them — it had done its job, which was
+     * to make the deletion safe rather than hopeful.</p>
      *
-     * <p>Two fields are deliberately exempt. {@code icon} is new — a catalogue
-     * always had one and no dimension carried it, so there is nothing to compare
-     * against. And a branch's {@code badge} is compared to the {@code category}
-     * dimension, because that is the field the old mapping put it in.</p>
+     * <p>What survives is the half that still means something. A vertex with no
+     * details resolves to nothing to draw: a blank row, and a listing that is
+     * silently missing an entry. Better to fail the boot.</p>
      */
-    private static void assertListingDetailsMatchDimensions(CatalogueRegistry registry) {
+    private static void assertEveryVertexResolves(CatalogueRegistry registry) {
         CatalogueTree tree = CatalogueNormalizer.INSTANCE.toCatalogueTree(registry.root());
-        var resolver = tree.resolver();
-
-        var missing   = new ArrayList<String>();
-        var mismatched = new ArrayList<String>();
-        collectDetailMismatches(tree.structure(), resolver, missing, mismatched);
-
+        var missing = new ArrayList<String>();
+        collectUnresolved(tree.structure(), tree.details(), missing);
         if (!missing.isEmpty()) {
             throw new IllegalStateException(
                     "RFC 0053 — vertices with no details to resolve: " + missing);
         }
-        if (!mismatched.isEmpty()) {
-            throw new IllegalStateException(
-                    "RFC 0053 — details disagree with the dimensions they replace: " + mismatched);
-        }
     }
 
-    private static void collectDetailMismatches(NormalizedNode node,
-                                                hue.captains.singapura.js.homing.tree.NodeResolver<ListingDetails> resolver,
-                                                List<String> missing, List<String> mismatched) {
-        ListingDetails details = resolver.resolve(node.identity()).orElse(null);
-        if (details == null) {
-            missing.add(node.segment().value());
-        } else {
-            Illustration i = details.illustration();
-            compare(node, "label",   i.label(),   dim(node, DisplayLabel.INSTANCE), mismatched);
-            compare(node, "summary", i.summary(), dim(node, Summary.INSTANCE),      mismatched);
-            compare(node, "badge",   i.badge(),   dim(node, Category.INSTANCE),     mismatched);
-            compare(node, "kind",    i.kind(),    dim(node, Kind.INSTANCE),         mismatched);
-        }
-        for (NormalizedNode kid : node.children()) {
-            collectDetailMismatches(kid, resolver, missing, mismatched);
-        }
-    }
-
-    private static void compare(NormalizedNode node, String field,
-                                String fromDetails, String fromDimension,
-                                List<String> out) {
-        if (!fromDetails.equals(fromDimension)) {
-            out.add(node.segment().value() + "." + field
-                    + " details='" + fromDetails + "' dimension='" + fromDimension + "'");
-        }
-    }
-
-    private static String dim(NormalizedNode node, DimensionKey key) {
-        DimensionValue v = node.dimensions().get(key);
-        return (v instanceof NameValue n)     ? n.text()
-             : (v instanceof CategoryValue c) ? c.text()
-             : (v instanceof KindValue k)     ? k.text()
-             : "";
+    private static void collectUnresolved(NormalizedNode node,
+                                          Map<NodeIdentity, ListingDetails> details,
+                                          List<String> missing) {
+        if (details.get(node.identity()) == null) missing.add(node.segment().value());
+        for (NormalizedNode kid : node.children()) collectUnresolved(kid, details, missing);
     }
 
     /**
@@ -340,6 +298,7 @@ public final class CatalogueTreeParity {
     private static void walk(NormalizedNode node, CataloguePath derived, int depth,
                              List<Integer> indexPath,
                              CatalogueRegistry registry, Map<String, Catalogue<?>> byName,
+                             Map<NodeIdentity, ListingDetails> details,
                              List<Row> out) {
         CataloguePath authentic = null;
         Via via = Via.NONE;
@@ -361,7 +320,7 @@ public final class CatalogueTreeParity {
                       : authentic.equals(derived) ? Status.AGREE
                                                   : Status.DIFFER;
 
-        out.add(new Row(depth, indexPath, node.segment(), labelOf(node), derived, authentic,
+        out.add(new Row(depth, indexPath, node.segment(), labelOf(node, details), derived, authentic,
                 status, via, node.identity()));
 
         List<NormalizedNode> kids = node.children();
@@ -370,7 +329,7 @@ public final class CatalogueTreeParity {
             var childIndex = new ArrayList<>(indexPath);
             childIndex.add(i);
             walk(kid, derived.then(kid.segment()), depth + 1, List.copyOf(childIndex),
-                    registry, byName, out);
+                    registry, byName, details, out);
         }
     }
 
@@ -380,8 +339,8 @@ public final class CatalogueTreeParity {
         return (key.params() instanceof CatalogueAppHost.Params p) ? byName.get(p.id()) : null;
     }
 
-    private static String labelOf(NormalizedNode node) {
-        DimensionValue v = node.dimensions().get(DisplayLabel.INSTANCE);
-        return (v instanceof NameValue name) ? name.text() : node.segment().value();
+    private static String labelOf(NormalizedNode node, Map<NodeIdentity, ListingDetails> details) {
+        ListingDetails d = details.get(node.identity());
+        return d == null ? node.segment().value() : d.illustration().label();
     }
 }

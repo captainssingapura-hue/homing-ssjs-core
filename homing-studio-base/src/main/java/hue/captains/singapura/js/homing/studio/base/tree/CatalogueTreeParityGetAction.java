@@ -67,9 +67,10 @@ public final class CatalogueTreeParityGetAction
         out.append(",\"byStructure\":").append(r.byStructure());
 
         // The canonical TreeNode payload the generic TreeRenderer consumes — level,
-        // typed dimensions, children, and nothing bespoke. Written by the substrate's
-        // own writer, so the interactive tree costs no per-tree-kind rendering code.
-        out.append(",\"tree\":").append(new TreeNodeJsonWriter().write(r.tree()));
+        // segment, the resolved row, children, and nothing bespoke. Written by the
+        // substrate own writer, so the interactive tree costs no per-tree-kind code.
+        out.append(",\"tree\":")
+           .append(new TreeNodeJsonWriter().write(r.tree(), r.catalogue().rowDisplay()));
 
         // The parity verdicts, joined to the rendered rows by NAME-PATH: the
         // '/'-joined segment chain the renderer now rebuilds while it draws. That

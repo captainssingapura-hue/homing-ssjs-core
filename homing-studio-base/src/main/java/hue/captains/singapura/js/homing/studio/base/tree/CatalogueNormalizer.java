@@ -5,18 +5,11 @@ import hue.captains.singapura.js.homing.studio.base.app.Catalogue;
 import hue.captains.singapura.js.homing.studio.base.app.CatalogueAppHost;
 import hue.captains.singapura.js.homing.studio.base.app.Entry;
 import hue.captains.singapura.js.homing.studio.base.app.NavKey;
-import hue.captains.singapura.js.homing.tree.Category;
-import hue.captains.singapura.js.homing.tree.DimensionKey;
-import hue.captains.singapura.js.homing.tree.DimensionValue;
-import hue.captains.singapura.js.homing.tree.DisplayLabel;
-import hue.captains.singapura.js.homing.tree.Kind;
 import hue.captains.singapura.js.homing.tree.NodeIdentity;
 import hue.captains.singapura.js.homing.tree.NormalizedNode;
 import hue.captains.singapura.js.homing.tree.RigidTrees;
-import hue.captains.singapura.js.homing.tree.Summary;
 import hue.captains.singapura.js.homing.tree.TreeLevel;
 import hue.captains.singapura.js.homing.tree.TreeNormalizer;
-import hue.captains.singapura.js.homing.tree.dims.NameValue;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -74,7 +67,6 @@ public final class CatalogueNormalizer implements TreeNormalizer<Catalogue<?>> {
 
     private NormalizedNode catalogueNode(Catalogue<?> cat, TreeLevel level,
                                          Map<NodeIdentity, ListingDetails> details) {
-        var dims = baseDims(cat.name(), cat.summary(), cat.badge(), "catalogue");
         var kids = new ArrayList<NormalizedNode>();
 
         NavKey identity = CatalogueAppHost.identityFor(cat);
@@ -96,7 +88,7 @@ public final class CatalogueNormalizer implements TreeNormalizer<Catalogue<?>> {
                 if (leaf != null) kids.add(leaf);
             }
         }
-        return new NormalizedNode(level, cat.slug(), identity, dims, kids);
+        return new NormalizedNode(level, cat.slug(), identity, Map.of(), kids);
     }
 
 
@@ -119,9 +111,6 @@ public final class CatalogueNormalizer implements TreeNormalizer<Catalogue<?>> {
             // strictly additive change: exactly one new vertex, no existing one
             // redescribed. (Entry defaults kind/category from content anyway, but
             // a placement may override them, and that is a separate question.)
-            var dims = (doc != null)
-                    ? baseDims(doc.title(), doc.summary(), doc.category(), doc.kind())
-                    : baseDims(od.nav().name(), od.nav().summary(), od.category(), od.kind());
             // The placement names the segment and the binding names the identity —
             // Phase 6 moved the slug off the doc and onto the placement precisely
             // so the vertex, not the payload, owns both.
@@ -133,7 +122,7 @@ public final class CatalogueNormalizer implements TreeNormalizer<Catalogue<?>> {
                             ? new Illustration(doc.title(), doc.summary(), od.category(), "", doc.kind())
                             : new Illustration(od.nav().name(), od.nav().summary(), od.category(), "", od.kind()),
                     od.nav()));
-            return NormalizedNode.leaf(childLevel, od.slug(), identity, dims);
+            return NormalizedNode.leaf(childLevel, od.slug(), identity, Map.of());
         }
 
         if (entry instanceof Entry.OfStudio<?, ?> os) {
@@ -159,16 +148,4 @@ public final class CatalogueNormalizer implements TreeNormalizer<Catalogue<?>> {
         return null;   // OfIllustration — deferred
     }
 
-    // ── Dimensions ─────────────────────────────────────────────────────────
-
-    private Map<DimensionKey, DimensionValue> baseDims(
-            String label, String summary, String category, String kind) {
-        // No LevelDepth dimension — depth lives in level() alone (RFC 0040).
-        var m = new LinkedHashMap<DimensionKey, DimensionValue>();
-        m.put(DisplayLabel.INSTANCE, new NameValue(label == null ? "" : label));
-        m.put(Summary.INSTANCE,      new NameValue(summary == null ? "" : summary));
-        m.put(Category.INSTANCE,     new CategoryValue(category == null ? "" : category));
-        m.put(Kind.INSTANCE,         new KindValue(kind == null ? "" : kind));
-        return m;
-    }
 }
