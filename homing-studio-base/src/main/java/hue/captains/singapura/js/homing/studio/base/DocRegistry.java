@@ -143,14 +143,14 @@ public final class DocRegistry {
 
     /**
      * RFC 0016 — harvest the Docs wrapped by tree leaves. Walks every
-     * registered {@link hue.captains.singapura.js.homing.studio.base.app.tree.ContentTree ContentTree}
+     * registered {@link hue.captains.singapura.js.homing.studio.base.app.tree.DynamicCatalogue DynamicCatalogue}
      * recursively; for each {@link hue.captains.singapura.js.homing.studio.base.app.tree.TreeLeaf TreeLeaf}
      * encountered, contributes the wrapped Doc. Collisions across catalogues
      * and trees collapse via record value-equality (DocRegistry's collision
      * check uses {@code .equals()} per Phase 3b).
      */
     public static List<Doc> harvestFromTrees(
-            java.util.Collection<? extends hue.captains.singapura.js.homing.studio.base.app.tree.ContentTree> trees) {
+            java.util.Collection<? extends hue.captains.singapura.js.homing.studio.base.app.tree.DynamicCatalogue> trees) {
         var out = new ArrayList<Doc>();
         for (var tree : trees) {
             walkBranch(tree.root(), out);

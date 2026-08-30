@@ -5,7 +5,7 @@ import hue.captains.singapura.js.homing.studio.base.Doc;
 import java.util.Objects;
 
 /**
- * RFC 0016 — a leaf node in a {@link ContentTree}. Wraps a {@link Doc}
+ * RFC 0016 — a leaf node in a {@link DynamicCatalogue}. Wraps a {@link Doc}
  * instance directly; the Doc supplies its own viewer URL, content kind,
  * title, summary, references — all via the unified Doc polymorphism (RFC
  * 0015). The tree position adds structure; the Doc supplies content.

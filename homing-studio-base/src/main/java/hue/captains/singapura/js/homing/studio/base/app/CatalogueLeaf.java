@@ -7,7 +7,7 @@ import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 /**
  * RFC 0015 — sealed family of things that can appear as a leaf in a
  * {@code DocTree} (the umbrella term for {@link Catalogue} and the
- * upcoming {@code ContentTree}). Realises the leaf-kind closure axioms
+ * upcoming {@code DynamicCatalogue}). Realises the leaf-kind closure axioms
  * from the DocTree ontology (T3, T4).
  *
  * <p>Two permits:</p>

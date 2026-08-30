@@ -17,7 +17,7 @@ import java.util.List;
 
 /**
  * RFC 0016 — single shared {@link AppModule} that serves any registered
- * {@link ContentTree}. URL contract:
+ * {@link DynamicCatalogue}. URL contract:
  *
  * <pre>/app?app=tree&id=&lt;tree-id&gt;[&path=&lt;branch-path&gt;]</pre>
  *
@@ -36,7 +36,7 @@ public record TreeAppHost() implements AppModule<TreeAppHost.Params, TreeAppHost
     public record link() implements AppLink<TreeAppHost> {}
 
     /**
-     * @param id   ContentTree id (resolved via {@link TreeRegistry})
+     * @param id   DynamicCatalogue id (resolved via {@link TreeRegistry})
      * @param path optional slash-separated branch path; {@code null} / missing → root
      */
     public record Params(String id, String path) implements AppModule._Param {}

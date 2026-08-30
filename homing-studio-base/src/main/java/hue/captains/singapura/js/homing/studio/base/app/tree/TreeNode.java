@@ -3,7 +3,7 @@ package hue.captains.singapura.js.homing.studio.base.app.tree;
 import hue.captains.singapura.tao.ontology.ValueObject;
 
 /**
- * RFC 0016 — sealed sum for the two node kinds in a {@link ContentTree}.
+ * RFC 0016 — sealed sum for the two node kinds in a {@link DynamicCatalogue}.
  * Realises the DocTree T3 ontology axiom (leaf-or-branch closure): every
  * node is either a {@link TreeBranch} (has children, bears no content)
  * or a {@link TreeLeaf} (bears content, has no children). No node is

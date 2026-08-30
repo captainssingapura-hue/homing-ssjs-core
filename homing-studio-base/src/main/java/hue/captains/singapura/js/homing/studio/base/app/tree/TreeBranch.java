@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * RFC 0016 — a branching node in a {@link ContentTree}. Has children
+ * RFC 0016 — a branching node in a {@link DynamicCatalogue}. Has children
  * (mix of {@link TreeBranch} and {@link TreeLeaf}); bears no content.
  *
  * <p>Realises DocTree T5 (branches bear no content) — the metadata

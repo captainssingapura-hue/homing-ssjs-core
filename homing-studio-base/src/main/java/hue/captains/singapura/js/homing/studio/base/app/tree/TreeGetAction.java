@@ -19,7 +19,7 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * RFC 0016 — {@code GET /tree?id=<tree-id>&path=<branch-path>} — serves a
- * {@link ContentTree}'s branch as JSON for the {@link TreeAppHost}'s
+ * {@link DynamicCatalogue}'s branch as JSON for the {@link TreeAppHost}'s
  * renderer to consume.
  *
  * <p>Response shape mirrors {@code CatalogueGetAction} so the same
@@ -99,9 +99,9 @@ public final class TreeGetAction
             return CompletableFuture.failedFuture(
                     notFound("id", "Required query parameter 'id' was not provided"));
         }
-        ContentTree tree = registry.resolve(treeId);
+        DynamicCatalogue tree = registry.resolve(treeId);
         if (tree == null) {
-            return CompletableFuture.failedFuture(notFound(treeId, "No ContentTree registered with this id"));
+            return CompletableFuture.failedFuture(notFound(treeId, "No DynamicCatalogue registered with this id"));
         }
         TreeNode node = registry.resolvePath(treeId, query.path());
         if (node == null) {
@@ -125,7 +125,7 @@ public final class TreeGetAction
         }
     }
 
-    String serialize(ContentTree tree, String currentPath, TreeBranch branch) {
+    String serialize(DynamicCatalogue tree, String currentPath, TreeBranch branch) {
         StringBuilder sb = new StringBuilder("{");
         sb.append("\"name\":")   .append(jstr(branch.name())).append(',');
         sb.append("\"summary\":").append(jstr(branch.summary())).append(',');

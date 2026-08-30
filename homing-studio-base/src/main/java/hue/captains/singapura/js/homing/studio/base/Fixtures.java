@@ -4,7 +4,7 @@ import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.server.ThemeRegistry;
 import hue.captains.singapura.js.homing.studio.base.app.StudioBrand;
-import hue.captains.singapura.js.homing.studio.base.app.tree.ContentTree;
+import hue.captains.singapura.js.homing.studio.base.app.tree.DynamicCatalogue;
 import hue.captains.singapura.js.homing.studio.base.theme.HomingDefault;
 import hue.captains.singapura.js.homing.studio.base.theme.StudioThemeRegistry;
 import hue.captains.singapura.tao.http.action.GetAction;
@@ -64,7 +64,7 @@ public interface Fixtures<S extends Studio<?>> extends Immutable {
     }
 
     /**
-     * RFC 0016 — registered {@link ContentTree}s. Empty by default; downstream
+     * RFC 0016 — registered {@link DynamicCatalogue}s. Empty by default; downstream
      * studios override to register data-authored hierarchical content
      * (search results, tag pages, manifest-driven indexes, SVG categorizations,
      * etc.). Each tree gets a {@code /app?app=tree&id=<id>} URL automatically.
@@ -73,7 +73,7 @@ public interface Fixtures<S extends Studio<?>> extends Immutable {
      * the {@code TreeRegistry}, {@code TreeGetAction}, and {@code TreeAppHost}
      * automatically; when empty, none of the tree machinery is registered.</p>
      */
-    default java.util.List<ContentTree> trees() { return java.util.List.of(); }
+    default java.util.List<DynamicCatalogue> trees() { return java.util.List.of(); }
 
     /** ThemeRegistry the harness installs. Default: {@link StudioThemeRegistry#INSTANCE}. */
     default ThemeRegistry themeRegistry() { return StudioThemeRegistry.INSTANCE; }

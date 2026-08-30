@@ -25,7 +25,7 @@ import java.util.UUID;
  * that wrap SvgDoc instances render through the standard catalogue Card
  * (the framework's chrome) and open the SvgViewer on click.</p>
  *
- * <p>Usage in a {@code ContentTree}:</p>
+ * <p>Usage in a {@code DynamicCatalogue}:</p>
  * <pre>{@code
  * new TreeLeaf("turtle", "Turtle", "Slow, steady.", "ANIMAL", "",
  *              new SvgDoc(new SvgRef<>(CuteAnimal.INSTANCE, new CuteAnimal.turtle()),

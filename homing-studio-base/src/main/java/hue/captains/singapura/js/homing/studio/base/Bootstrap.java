@@ -219,7 +219,7 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
         // Sacrificed with it, deliberately and recorded in RFC 0053: the
         // leveled-Open stamp and the enriched tree-leaf trails. Both existed
         // to give a flat address a trail, and both are tree-shaped — a
-        // ContentTree cannot hold a position, so its pages were flat and needed
+        // DynamicCatalogue cannot hold a position, so its pages were flat and needed
         // rescuing. RFC 0053 gives those nodes real paths, at which point they
         // need no rescue.
         var inner = new HomingActionRegistry(
@@ -516,7 +516,7 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
      * RFC 0016 → tree-breadcrumb bridge. Walks every catalogue's leaves;
      * for each {@code Entry.OfDoc(AppDoc(Navigable(TreeAppHost, params)))}
      * encountered, records the (tree id → containing catalogue) linkage in
-     * {@code hostOfTree}, and walks the matching ContentTree's leaves to
+     * {@code hostOfTree}, and walks the matching DynamicCatalogue's leaves to
      * register their wrapped Docs in {@code extraDocHomes} under the same
      * host catalogue. The two maps drive breadcrumb-rendering for the tree
      * page and for tree-leaf SvgDoc pages respectively.
@@ -528,13 +528,13 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
      */
     private void scanTreeHosts(
             List<Catalogue<?>> catalogues,
-            List<? extends hue.captains.singapura.js.homing.studio.base.app.tree.ContentTree> trees,
+            List<? extends hue.captains.singapura.js.homing.studio.base.app.tree.DynamicCatalogue> trees,
             Map<String, Catalogue<?>> hostOfTree,
             Map<UUID, Catalogue<?>> extraDocHomes) {
         if (catalogues.isEmpty() || trees.isEmpty()) return;
         // Index trees by id for the leaf-doc walk after host detection.
         var treesById = new HashMap<String,
-                hue.captains.singapura.js.homing.studio.base.app.tree.ContentTree>();
+                hue.captains.singapura.js.homing.studio.base.app.tree.DynamicCatalogue>();
         for (var t : trees) treesById.put(t.id(), t);
 
         for (Catalogue<?> parent : catalogues) {

@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * RFC 0016 — boot-time registry of {@link ContentTree}s. Indexed by
+ * RFC 0016 — boot-time registry of {@link DynamicCatalogue}s. Indexed by
  * tree id; resolves a {@code (treeId, path)} request to the addressed
  * {@link TreeNode}.
  *
@@ -30,13 +30,13 @@ public final class TreeRegistry {
     /** Maximum tree depth (root counts as 0). Sanity cap from RFC 0016. */
     public static final int MAX_DEPTH = 16;
 
-    private final Map<String, ContentTree> byId;
+    private final Map<String, DynamicCatalogue> byId;
 
-    public TreeRegistry(Collection<? extends ContentTree> trees) {
-        var byId = new LinkedHashMap<String, ContentTree>();
-        for (ContentTree tree : trees) {
+    public TreeRegistry(Collection<? extends DynamicCatalogue> trees) {
+        var byId = new LinkedHashMap<String, DynamicCatalogue>();
+        for (DynamicCatalogue tree : trees) {
             if (tree == null) {
-                throw new IllegalStateException("TreeRegistry: null ContentTree in input");
+                throw new IllegalStateException("TreeRegistry: null DynamicCatalogue in input");
             }
             if (byId.containsKey(tree.id())) {
                 throw new IllegalStateException(
@@ -66,8 +66,8 @@ public final class TreeRegistry {
         }
     }
 
-    /** Resolve a registered ContentTree by id, or null if absent. */
-    public ContentTree resolve(String id) {
+    /** Resolve a registered DynamicCatalogue by id, or null if absent. */
+    public DynamicCatalogue resolve(String id) {
         return byId.get(id);
     }
 
@@ -78,7 +78,7 @@ public final class TreeRegistry {
      * <p>Empty / null path resolves to the tree's root branch.</p>
      */
     public TreeNode resolvePath(String treeId, String path) {
-        ContentTree tree = byId.get(treeId);
+        DynamicCatalogue tree = byId.get(treeId);
         if (tree == null) return null;
         if (path == null || path.isBlank()) return tree.root();
 
@@ -100,7 +100,7 @@ public final class TreeRegistry {
      * Returns the chain of all branches encountered plus the final node.
      */
     public List<TreeNode> breadcrumbs(String treeId, String path) {
-        ContentTree tree = byId.get(treeId);
+        DynamicCatalogue tree = byId.get(treeId);
         if (tree == null) return List.of();
         var chain = new ArrayList<TreeNode>();
         chain.add(tree.root());
@@ -121,7 +121,7 @@ public final class TreeRegistry {
         return List.copyOf(chain);
     }
 
-    public Collection<ContentTree> all() {
+    public Collection<DynamicCatalogue> all() {
         return Collections.unmodifiableCollection(byId.values());
     }
 
