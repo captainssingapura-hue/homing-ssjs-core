@@ -9,6 +9,7 @@ import hue.captains.singapura.js.homing.studio.base.app.NavKey;
 import hue.captains.singapura.js.homing.tree.DimensionValue;
 import hue.captains.singapura.js.homing.tree.DisplayLabel;
 import hue.captains.singapura.js.homing.tree.NodeIdentity;
+import hue.captains.singapura.js.homing.tree.NodeIdentities;
 import hue.captains.singapura.js.homing.tree.NodeName;
 import hue.captains.singapura.js.homing.tree.NormalizedNode;
 import hue.captains.singapura.js.homing.tree.dims.NameValue;
@@ -160,6 +161,68 @@ public final class CatalogueTreeParity {
             }
         }
         return new Report(tree, List.copyOf(rows), agree, differ, unplaced, byIdentity, byStructure);
+    }
+
+    /**
+     * The boot gate: the normalized forest and the live registry must agree, in
+     * both directions, over whatever studio is starting.
+     *
+     * <p>Three separate claims, each failing with what it found:</p>
+     * <ol>
+     *   <li><b>Disjoint identities.</b> No two vertices carry one identity. This
+     *       is RFC 0051 Law 1 restated, and it is the precondition that makes a
+     *       union of subtree resolvers a well-defined function rather than an
+     *       order-dependent one.</li>
+     *   <li><b>Complete.</b> Every placement the registry holds appears as a
+     *       vertex — the direction {@link #of} is blind to, since a skipped
+     *       placement produces no row to disagree with.</li>
+     *   <li><b>Agreeing.</b> No vertex resolves somewhere other than its segment
+     *       chain says.</li>
+     * </ol>
+     *
+     * <p>Run at boot beside {@code CataloguePathConformance}, and for the same
+     * reason its comment gives: the derivations follow from the laws, and Phase 1
+     * is exactly where "follows from" proved untrustworthy — twice, while
+     * passing. It is a walk of a few hundred nodes, so it costs nothing to verify
+     * rather than trust, for every studio including downstream ones, at the
+     * moment a break is cheapest to find.</p>
+     *
+     * <p>Counts are deliberately <b>not</b> asserted. {@code byStructure} is a
+     * measure of work remaining, not a law — it should shrink to zero as
+     * catalogues gain identity-keyed entries, and a studio is not wrong for
+     * having some today.</p>
+     *
+     * @throws IllegalStateException naming exactly which claim failed and where
+     */
+    public static void assertForestAgrees(CatalogueRegistry registry) {
+        Report report = of(registry.root(), registry);
+
+        var duplicates = NodeIdentities.duplicatesIn(report.tree());
+        if (!duplicates.isEmpty()) {
+            throw new IllegalStateException(
+                    "RFC 0053 — one identity at more than one position, which Law 1 forbids "
+                  + "and a resolver union cannot survive: " + duplicates);
+        }
+
+        List<String> missing = notInForest(registry, report);
+        if (!missing.isEmpty()) {
+            throw new IllegalStateException(
+                    "RFC 0053 — the registry places these, and the normalized forest has no "
+                  + "vertex for them: " + missing);
+        }
+
+        var disagreeing = new ArrayList<String>();
+        for (Row row : report.rows()) {
+            if (row.status() == Status.DIFFER) {
+                disagreeing.add(row.label() + " derived=" + row.derived()
+                        + " authentic=" + row.authentic());
+            }
+        }
+        if (!disagreeing.isEmpty()) {
+            throw new IllegalStateException(
+                    "RFC 0053 — these vertices resolve somewhere other than their segment "
+                  + "chain says: " + disagreeing);
+        }
     }
 
     /**

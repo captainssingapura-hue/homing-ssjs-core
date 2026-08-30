@@ -291,6 +291,11 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
             // find.
             hue.captains.singapura.js.homing.studio.base.app.CataloguePathConformance
                     .assertPathBijection(catalogueRegistry);
+                    // RFC 0053 - and the normalized forest must agree with it, both ways:
+                    // distinct identities, nothing placed but absent, nothing resolving
+                    // elsewhere. Same argument as above, one structure further out.
+                    hue.captains.singapura.js.homing.studio.base.tree.CatalogueTreeParity
+                            .assertForestAgrees(catalogueRegistry);
             // RFC 0051 Phase 5 — the tree exists now; the chrome resolver can see it.
             treeHolder.set(catalogueRegistry);
             // RFC 0014: when diagnostics is enabled the framework injects a
