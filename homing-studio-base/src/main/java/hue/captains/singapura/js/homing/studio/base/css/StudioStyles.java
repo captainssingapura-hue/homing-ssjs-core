@@ -191,19 +191,30 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
 
-    /** The tree column. {@code min-width:0} so its rows may ellipsise rather than push. */
+    /**
+     * The tree column — the LARGER share. Grow factors rather than a percentage,
+     * so the golden ratio divides the space that actually remains after the gap
+     * instead of the container the gap comes out of.
+     *
+     * <p>{@code min-width:0} so its rows may ellipsise rather than push the column
+     * wider — without it a long RFC title would win the argument with the ratio.</p>
+     */
     public record st_split_nav() implements CssClass<StudioStyles> {
         @Override public String body() { return """
-            flex: 1 1 0;
+            flex: 1.618 1 0;
             min-width: 0;
             """;
         }
     }
 
-    /** The detail column — sticky, so the card follows a long tree down the page. */
+    /**
+     * The detail column — the SMALLER share, and first, so the card reads before
+     * the list rather than after it. Sticky, so it follows a long tree down.
+     */
     public record st_split_detail() implements CssClass<StudioStyles> {
         @Override public String body() { return """
-            flex: 0 0 360px;
+            flex: 1 1 0;
+            min-width: 0;
             position: sticky;
             top: 24px;
             """;

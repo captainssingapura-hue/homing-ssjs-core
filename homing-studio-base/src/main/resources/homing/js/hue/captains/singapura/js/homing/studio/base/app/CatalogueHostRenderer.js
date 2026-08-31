@@ -134,20 +134,23 @@ function _mountListingTree(parent, data) {
     var branch = domOpsParty.createBranch("catalogueListing");
     branch.activate(_catalogueListingOwner);
 
-    // Master/detail: a compact tree, and the selected entry drawn with room.
+    // Master/detail, card FIRST: the selected entry reads before the list rather
+    // than after it, and takes the smaller of the two shares - the golden ratio,
+    // by grow factor, so it divides the space left after the gap.
+    //
     // The summaries used to sit in the rows and ellipsise to nothing while still
     // taking the whole width - doing neither job.
     var split = branch.createElement("split", "div");
     css.addClass(split, st_split);
     parent.appendChild(split);
 
-    var nav = branch.createElement("nav", "div");
-    css.addClass(nav, st_split_nav);
-    split.appendChild(nav);
-
     var detail = branch.createElement("detail", "div");
     css.addClass(detail, st_split_detail);
     split.appendChild(detail);
+
+    var nav = branch.createElement("nav", "div");
+    css.addClass(nav, st_split_nav);
+    split.appendChild(nav);
 
     // A row's namePath is relative to THIS catalogue, so the authentic URL is the
     // server-computed base with it appended. The renderer still constructs no
