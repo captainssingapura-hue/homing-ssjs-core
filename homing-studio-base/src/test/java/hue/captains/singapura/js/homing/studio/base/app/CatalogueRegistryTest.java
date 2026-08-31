@@ -439,4 +439,38 @@ class CatalogueRegistryTest {
         assertNotNull(path, "a genuine catalogue leaf has a position");
         assertInstanceOf(PathResolution.ToLeaf.class, registry.resolve(path));
     }
+
+    /**
+     * RFC 0053 Phase 6 — the edge invariant, and why it is NOT a second clause of
+     * Law 4′.
+     *
+     * <p>The phase requires each law to fail on a constructed violation before it
+     * is believed. This one cannot be made to fail, and that is the finding rather
+     * than a gap in the test. {@code slugIdentity} — the map that becomes
+     * {@code childIndex} — has exactly three writers, all of them {@code
+     * claimSlug}, and each is followed by an unconditional {@code payloadMap.put}
+     * for the same identity with no branch between; nothing removes from
+     * {@code payloadMap}. So "an edge whose target has no payload" is unreachable
+     * through the public API, and no test can construct one.</p>
+     *
+     * <p>What this test does instead is pin the invariant on real structure, so a
+     * fourth {@code claimSlug} site that forgets its payload put is caught here as
+     * well as at boot. It deliberately does not pretend to be a bite test.</p>
+     */
+    @Test
+    void everyEdgeTargetHasAPayload_anInvariantNoTestCanFalsify() {
+        var brand = new StudioBrand("Test", RootCatalogue.class);
+        var reg = new CatalogueRegistry(brand, new DocRegistry(List.of(TEST_DOC)),
+                List.of(RootCatalogue.INSTANCE, LeafCatalogue.INSTANCE));
+
+        // Constructing at all means the invariant held — the registry checks it.
+        // Restating it here keeps the property visible where the structure is,
+        // rather than only inside the constructor that guarantees it.
+        var root = CatalogueAppHost.identityFor(RootCatalogue.INSTANCE);
+        assertNotNull(reg.pathOf(RootCatalogue.INSTANCE),
+                "the root is placed, so every edge below it had a target to land on");
+        assertNotNull(reg.pathOf(LeafCatalogue.INSTANCE),
+                "the child reached through an edge resolves to a position");
+        assertNotNull(root);
+    }
 }

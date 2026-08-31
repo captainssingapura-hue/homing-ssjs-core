@@ -494,7 +494,7 @@ public final class CatalogueRegistry {
     }
 
     /**
-     * RFC 0051 Law 4′ (RFC 0053 Phase 6) — ONE ROOT, AND NO EDGE TO NOWHERE.
+     * RFC 0051 Law 4′ (RFC 0053 Phase 6) — ONE ROOT.
      *
      * <p>It used to read "exactly one un-hosted L0 catalogue", tested with a type
      * check plus a consult of the proxy manager. Both were standing in for a
@@ -509,10 +509,13 @@ public final class CatalogueRegistry {
      * parent index too, so a leaf nothing places is now a second entrance the law
      * can see, where before it was invisible.</p>
      *
-     * <p>The second clause is new rather than generalised. An edge whose target
-     * has no payload is a segment the resolver would accept and then fail to land
-     * on. Nothing checked that before, because before Phase 2 there was no edge
-     * set to check — only a downward index nobody could cross-examine.</p>
+     * <p>It carries a construction invariant alongside it — every edge target has
+     * a payload — which is deliberately NOT called a second clause of the law. It
+     * cannot be made to fail: the three claimSlug sites each put a payload for the
+     * same identity unconditionally, and nothing removes one. It is kept as a
+     * tripwire for a fourth call site, and labelled honestly, because an
+     * unfalsifiable clause presented as a law is exactly how RFC 0051 Phase 1
+     * shipped two that quietly did not hold.</p>
      *
      * <p>The brand's home-app must BE that root. This checks the structure agrees
      * with the brand rather than merely that the brand names something registered
@@ -547,10 +550,18 @@ public final class CatalogueRegistry {
                   + " would disagree about where the tree begins.");
         }
 
-        // ...and every edge resolves. The downward index is a map of identities,
-        // and an identity with no payload is an edge to nowhere - a path segment
-        // the resolver would accept and then fail to land. Nothing checked this
-        // before, because before Phase 2 there was no edge set to check.
+        // A CONSTRUCTION INVARIANT, not a second clause of the law - and the
+        // demotion is the finding. It was written as "every edge resolves", which
+        // sounds like a law and is not one: it cannot be made to fail. slugIdentity
+        // has exactly three writers, all of them claimSlug, and every one is
+        // followed by an unconditional payloadMap.put for the same identity with no
+        // branch between; nothing removes from payloadMap. So an edge whose target
+        // has no payload is unreachable through this build.
+        //
+        // Kept anyway, cheaply, as a tripwire for a FOURTH claimSlug site that
+        // forgets its payload put. But it is labelled for what it is. RFC 0051
+        // Phase 1 twice shipped a law that quietly did not hold while passing, and
+        // an unfalsifiable clause dressed as a law is how that happens again.
         var dangling = new ArrayList<String>();
         for (var byParent : childIndex.entrySet()) {
             for (var edge : byParent.getValue().entrySet()) {
@@ -562,8 +573,9 @@ public final class CatalogueRegistry {
         }
         if (!dangling.isEmpty()) {
             throw new IllegalStateException(
-                    "These edges point at a vertex nothing placed (RFC 0051 -"
-                  + " Law 4): " + dangling);
+                    "Construction invariant broken: these edges point at a vertex"
+                  + " with no payload, which the build should have made impossible."
+                  + " A claimSlug call is missing its payloadMap.put: " + dangling);
         }
     }
 
