@@ -9,12 +9,15 @@ import hue.captains.singapura.js.homing.tree.TreeLevel;
 import hue.captains.singapura.js.homing.tree.TreeNormalizer;
 import hue.captains.singapura.js.homing.tree.dims.NameValue;
 
+import hue.captains.singapura.js.homing.studio.base.DocNodeIdentity;
+
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Renders a <b>legacy markdown {@link Doc}</b> through the rigid-tree doc
@@ -64,7 +67,7 @@ public final class MarkdownDocNormalizer implements TreeNormalizer<Doc> {
         parse(body, title, root);
 
         var providers = new LinkedHashMap<List<Integer>, ContentProvider>();
-        NormalizedNode structure = toNode(root, TreeLevel.L0.INSTANCE, List.of(), providers);
+        NormalizedNode structure = toNode(doc.uuid(), root, TreeLevel.L0.INSTANCE, List.of(), providers);
         return new DocTree(structure, providers);
     }
 
@@ -131,7 +134,7 @@ public final class MarkdownDocNormalizer implements TreeNormalizer<Doc> {
 
     // ── Builder tree → NormalizedNode + position-keyed providers ─────────────
 
-    private static NormalizedNode toNode(Section s, TreeLevel level, List<Integer> path,
+    private static NormalizedNode toNode(UUID doc, Section s, TreeLevel level, List<Integer> path,
                                          Map<List<Integer>, ContentProvider> providers) {
         Map<DimensionKey, DimensionValue> dims = new LinkedHashMap<>();
         dims.put(DisplayLabel.INSTANCE, new NameValue(s.title));
@@ -147,10 +150,10 @@ public final class MarkdownDocNormalizer implements TreeNormalizer<Doc> {
             for (int i = 0; i < s.kids.size(); i++) {
                 List<Integer> childPath = new ArrayList<>(path);
                 childPath.add(i);
-                kids.add(toNode(s.kids.get(i), childLevel, List.copyOf(childPath), providers));
+                kids.add(toNode(doc, s.kids.get(i), childLevel, List.copyOf(childPath), providers));
             }
         }
-        return new NormalizedNode(level, dims, kids);
+        return new NormalizedNode(level, DocNodeIdentity.indexSegment(path), DocNodeIdentity.byIndex(doc, path), dims, kids);
     }
 
     /** A mutable heading node during the parse — title + accumulating body + children. */

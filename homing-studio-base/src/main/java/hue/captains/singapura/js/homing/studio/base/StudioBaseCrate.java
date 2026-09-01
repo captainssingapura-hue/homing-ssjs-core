@@ -12,7 +12,6 @@ import hue.captains.singapura.js.homing.studio.base.app.DocReader;
 import hue.captains.singapura.js.homing.studio.base.app.DocReaderRenderer;
 import hue.captains.singapura.js.homing.studio.base.app.DocTreeViewer;
 import hue.captains.singapura.js.homing.studio.base.app.SvgViewer;
-import hue.captains.singapura.js.homing.studio.base.app.tree.TreeAppHost;
 import hue.captains.singapura.js.homing.studio.base.composed.CaptionRenderer;
 import hue.captains.singapura.js.homing.studio.base.composed.CodeSegmentRenderer;
 import hue.captains.singapura.js.homing.studio.base.composed.ComposedSegmentRenderer;
@@ -33,6 +32,8 @@ import hue.captains.singapura.js.homing.studio.base.css.StudioStyles;
 import hue.captains.singapura.js.homing.studio.base.css.Util;
 import hue.captains.singapura.js.homing.studio.base.export.HtmlExportModule;
 import hue.captains.singapura.js.homing.studio.base.graph.StudioGraphInspector;
+import hue.captains.singapura.js.homing.studio.base.tree.CatalogueTreeView;
+import hue.captains.singapura.js.homing.studio.base.tree.CatalogueTreeViewRenderer;
 import hue.captains.singapura.js.homing.studio.base.graph.StudioGraphInspectorRenderer;
 import hue.captains.singapura.js.homing.studio.base.image.ImageViewer;
 import hue.captains.singapura.js.homing.studio.base.image.ImageViewerRenderer;
@@ -91,7 +92,6 @@ public final class StudioBaseCrate implements Crate {
                 CrateEntry.of(DocReaderRenderer.INSTANCE),
                 CrateEntry.of(DocTreeViewer.INSTANCE),
                 CrateEntry.of(SvgViewer.INSTANCE),
-                CrateEntry.of(TreeAppHost.INSTANCE),
                 CrateEntry.of(CaptionRenderer.INSTANCE),
                 CrateEntry.of(CodeSegmentRenderer.INSTANCE),
                 CrateEntry.of(ComposedSegmentRenderer.INSTANCE),
@@ -113,6 +113,9 @@ public final class StudioBaseCrate implements Crate {
                 CrateEntry.of(HtmlExportModule.INSTANCE),
                 CrateEntry.of(StudioGraphInspector.INSTANCE),
                 CrateEntry.of(StudioGraphInspectorRenderer.INSTANCE),
+                // RFC 0053 - the catalogue TREE listing, drawn from the normalized forest.
+                CrateEntry.of(CatalogueTreeView.INSTANCE),
+                CrateEntry.of(CatalogueTreeViewRenderer.INSTANCE),
                 CrateEntry.of(ImageViewer.INSTANCE),
                 CrateEntry.of(ImageViewerRenderer.INSTANCE),
                 CrateEntry.of(TableViewer.INSTANCE),

@@ -7,7 +7,7 @@ package hue.captains.singapura.js.homing.studio.base.app;
  * <p>Used by RFC 0016's tree-leaf doc breadcrumbs, where the trail mixes
  * catalogue crumbs (e.g., "Demo Studio", URL = {@code /app?app=...&id=...})
  * with tree-internal crumbs (e.g., "🌳 Animals & Halloween", URL =
- * {@code /app?app=tree&id=animals}). A single homogeneous record covers
+ * a flat app URL). A single homogeneous record covers
  * both kinds so downstream serializers don't need to dispatch on origin.</p>
  *
  * @param text the visible crumb label (may include an icon prefix)

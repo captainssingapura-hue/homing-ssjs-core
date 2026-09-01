@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.rigid;
 
-import hue.captains.singapura.js.homing.studio.base.composed.text.NodeName;
+import hue.captains.singapura.js.homing.tree.NodeName;
 import hue.captains.singapura.js.homing.studio.base.Doc;
 import hue.captains.singapura.js.homing.studio.base.composed.DocTreeV2;
 import hue.captains.singapura.js.homing.studio.base.composed.DocTreeV2JsonWriter;
@@ -62,7 +62,7 @@ public final class RigidDocV2 implements Doc, DocTreeV2Source {
         Objects.requireNonNull(nodes, "nodes");
         Objects.requireNonNull(content, "content provider");
         return new RigidDocV2(id, title, summary, category,
-                () -> RigidNodeNormalizer.INSTANCE.toDocTree(nodes.get(), content));
+                () -> RigidNodeNormalizer.INSTANCE.toDocTree(id, nodes.get(), content));
     }
 
     @Override

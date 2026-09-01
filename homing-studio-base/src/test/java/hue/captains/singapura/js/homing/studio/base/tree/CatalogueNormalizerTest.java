@@ -115,6 +115,39 @@ class CatalogueNormalizerTest {
         assertEquals(TreeLevel.L3.INSTANCE, doc.level());
     }
 
+    /**
+     * RFC 0053 — a graft carries the SOURCE studio's identity and segment, not the
+     * host's. This is the property that makes merging subtree resolvers a UNION
+     * rather than a rewrite: a grafted vertex stays findable by the identity its
+     * own studio minted, so nothing needs rebasing at the mount point and mounting
+     * one source twice collides instead of silently duplicating.
+     *
+     * <p>Asserted by comparing against the source normalized STANDALONE: every
+     * field but the level must survive the shift untouched.</p>
+     */
+    @Test
+    void graftedVerticesKeepTheSourceStudiosIdentityAndSegment() {
+        NormalizedNode host       = CatalogueNormalizer.INSTANCE.normalize(ForestHost.INSTANCE);
+        NormalizedNode standalone = CatalogueNormalizer.INSTANCE.normalize(Source.INSTANCE);
+        NormalizedNode grafted    = host.children().get(0);
+
+        assertEquals(standalone.identity(), grafted.identity(),
+                "the grafted root is still the source studio, named as the source names itself");
+        assertEquals(standalone.segment(), grafted.segment());
+        assertEquals(Source.INSTANCE.slug(), grafted.segment(),
+                "the portal's own tile framing must not rename the source's segment");
+
+        // ...and all the way down, not just at the mount point.
+        assertEquals(standalone.children().get(0).identity(),
+                     grafted.children().get(0).identity());
+        assertEquals(standalone.children().get(0).children().get(0).identity(),
+                     grafted.children().get(0).children().get(0).identity());
+
+        // The level is the one thing that did move.
+        assertEquals(TreeLevel.L0.INSTANCE, standalone.level());
+        assertEquals(TreeLevel.L1.INSTANCE, grafted.level());
+    }
+
     @Test
     void serialisesViaTheUnchangedWriter() {
         NormalizedNode host = CatalogueNormalizer.INSTANCE.normalize(ForestHost.INSTANCE);

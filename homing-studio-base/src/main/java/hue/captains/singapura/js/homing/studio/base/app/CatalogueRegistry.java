@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.studio.base.app;
 
-import hue.captains.singapura.js.homing.studio.base.composed.text.NodeName;
+import hue.captains.singapura.js.homing.tree.NodeIdentity;
+import hue.captains.singapura.js.homing.tree.NodeName;
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.QueryString;
 import hue.captains.singapura.js.homing.studio.base.Doc;
@@ -64,8 +65,23 @@ public final class CatalogueRegistry {
     private final Map<Class<? extends Plan>, Catalogue<?>> planHome;
     /** RFC 0011 — typed reverse-ref for source-L0-hosted-by-umbrella relationships. */
     private final StudioProxyManager proxyManager;
-    /** RFC 0051 — per-catalogue slug → child (Catalogue, Doc or StudioProxy). */
-    private final Map<Class<?>, Map<NodeName, Object>> childIndex;
+    /** RFC 0053 - the downward index, keyed on IDENTITY. Class-keying worked
+     *  only because a catalogue is a singleton per class; two TreeBranch
+     *  records share one and would collide on every lookup. */
+    private final Map<NodeIdentity, Map<NodeName, NodeIdentity>> childIndex;
+
+    /**
+     * RFC 0053 Phase 2 — the reverse of {@code childIndex}, recorded by the same
+     * statement that builds it. The breadcrumb walks THIS rather than re-deriving
+     * the trail from a nine-case type switch, which is why a portal no longer
+     * needs a special case: the umbrella-to-source edge sits in here like any
+     * other edge.
+     */
+    private final Map<NodeIdentity, NodeIdentity> parentIndex;
+
+    /** Identity -> the thing itself. The walk descends identities and the kind
+     *  switch happens ONCE, here, on whatever the path finally named. */
+    private final Map<NodeIdentity, Object> payload;
     /** RFC 0051 D4 — catalogue FQN → instance, for redirecting flat catalogue URLs. */
     private final Map<String, Catalogue<?>> byClassName;
     /** RFC 0051 Phase 6 — the addressing index, keyed on the TYPED identity.
@@ -161,7 +177,13 @@ public final class CatalogueRegistry {
         var planHomeMap = new HashMap<Class<? extends Plan>, Catalogue<?>>();
         var navHomeMap  = new HashMap<NavKey, Catalogue<?>>();
         var boundLeaves = new ArrayList<BoundPlacement>();
-        var childIndexMap = new HashMap<Class<?>, Map<NodeName, Object>>();
+        var childIndexMap = new HashMap<NodeIdentity, Map<NodeName, NodeIdentity>>();
+        // RFC 0053 Phase 2 — the reverse edge, recorded in the same walk and by the
+        // same statement. The build already visits every (parent, child) pair to
+        // build the downward index; recording the upward one costs nothing and
+        // stops the trail being re-derived by a type switch.
+        var parentIndexMap = new HashMap<NodeIdentity, NodeIdentity>();
+        var payloadMap    = new HashMap<NodeIdentity, Object>();
         for (Catalogue<?> parent : byClass.values()) {
             // ---- Sub-catalogue children ----
             List<? extends Catalogue<?>> subs = parent.subCatalogues();
@@ -204,9 +226,12 @@ public final class CatalogueRegistry {
             // sub-catalogue named the same as a leaf is just as ambiguous as
             // two leaves named alike. Illustrations sit out: they are
             // decoration, never a path segment, so they cannot be ambiguous.
-            var slugOwner = new LinkedHashMap<NodeName, Object>();
+            var slugOwner    = new LinkedHashMap<NodeName, Object>();
+            var slugIdentity = new LinkedHashMap<NodeName, NodeIdentity>();
             for (Catalogue<?> child : subs) {
-                claimSlug(slugOwner, child.slug(), child, parent);
+                var childId = CatalogueAppHost.identityFor(child);
+                claimSlug(slugOwner, slugIdentity, parentIndexMap, child.slug(), child, childId, parent);
+                payloadMap.put(childId, child);
             }
             for (Entry<?> e : parent.leaves() == null ? List.<Entry<?>>of() : parent.leaves()) {
                 // RFC 0051 Phase 6 — OfLeaf states its own slug, because the
@@ -214,7 +239,9 @@ public final class CatalogueRegistry {
                 // ask the thing placed, which is what OfLeaf exists to stop.
                 switch (e) {
                     case Entry.OfLeaf<?, ?, ?> leaf -> {
-                        claimSlug(slugOwner, leaf.slug(), leaf, parent);
+                        var leafId = new NavKey(leaf.nav().app().getClass(), leaf.nav().params());
+                        claimSlug(slugOwner, slugIdentity, parentIndexMap, leaf.slug(), leaf, leafId, parent);
+                        payloadMap.put(leafId, leaf);
                         // Remember the placement so the flat index can position
                         // it later. A leaf with no content has no doc uuid to be
                         // found by, and the docHome walk below would miss it —
@@ -223,7 +250,15 @@ public final class CatalogueRegistry {
                         boundLeaves.add(new BoundPlacement(parent, leaf));
                     }
                     case Entry.OfStudio<?, ?>(StudioProxy<?> p) -> {
-                        if (p != null) claimSlug(slugOwner, p.slug(), p, parent);
+                        // THE GRAFT, resolved at build. A portal's segment maps
+                        // straight to the SOURCE catalogue's identity, so the walk
+                        // never meets a proxy and never unwraps one - the same
+                        // thing RigidTrees.graftUnder does for the normalized tree.
+                        if (p != null) {
+                            var sourceId = CatalogueAppHost.identityFor(p.source());
+                            claimSlug(slugOwner, slugIdentity, parentIndexMap, p.slug(), p, sourceId, parent);
+                            payloadMap.put(sourceId, p.source());
+                        }
                     }
                     case Entry.OfIllustration<?> ignored -> { }
                     case null                            -> { }
@@ -233,7 +268,8 @@ public final class CatalogueRegistry {
             // one that builds the downward index, so the map the resolver
             // walks is by construction the map the law checked. Building it
             // separately would let the two drift.
-            childIndexMap.put(parent.getClass(), Map.copyOf(slugOwner));
+            childIndexMap.put(CatalogueAppHost.identityFor(parent), Map.copyOf(slugIdentity));
+            payloadMap.put(CatalogueAppHost.identityFor(parent), parent);
 
             // ---- Leaves ----
             List<? extends Entry<?>> leaves = parent.leaves();
@@ -329,12 +365,14 @@ public final class CatalogueRegistry {
         this.byClass  = Map.copyOf(byClass);
         this.docHome  = Map.copyOf(docHomeMap);
         this.planHome = Map.copyOf(planHomeMap);
-        this.childIndex = Map.copyOf(childIndexMap);
+        this.childIndex  = Map.copyOf(childIndexMap);
+        this.parentIndex = Map.copyOf(parentIndexMap);
+        this.payload    = Map.copyOf(payloadMap);
         this.proxyManager = (proxyManager != null) ? proxyManager
                                                    : StudioProxyManager.scan(byClass.values());
 
         requirePositionedAreResolvable();
-        requireSingleUnhostedRoot();
+        requireSingleUnparentedVertex();
 
         // RFC 0051 D4 — invert each positioned doc's own flat URL, so a raw
         // (app, args) can be redirected to its path.
@@ -400,6 +438,13 @@ public final class CatalogueRegistry {
             // treeLeafTrails, despite having no path.
             flatDocs.putIfAbsent(new NavKey(nav.app().getClass(), nav.params()), d);
         }
+        // RFC 0053 - a catalogue is a navigable too, so its identity belongs in
+        // the same index a leaf's does. Without this, pathOf(NavKey) could not
+        // answer for one and every consultation fell back to re-deriving the
+        // parent chain - the same walk, done twice, agreeing with itself.
+        for (Catalogue<?> c : byClass.values()) {
+            flat.putIfAbsent(CatalogueAppHost.identityFor(c), pathOf(c));
+        }
         this.appsByName       = Map.copyOf(modulesBy);
         this.navToPath        = Map.copyOf(flat);
         this.navToDoc         = Map.copyOf(flatDocs);
@@ -449,40 +494,88 @@ public final class CatalogueRegistry {
     }
 
     /**
-     * RFC 0051 Law 4 — ONE ROOT. Every path needs a place to start, and an
-     * L0 that no umbrella hosts is by definition a place someone can start.
-     * Two such roots means a path prefix is ambiguous; none means the tree
-     * has no entrance at all.
+     * RFC 0051 Law 4′ (RFC 0053 Phase 6) — ONE ROOT.
      *
-     * <p>The brand's home-app is the root. This checks that the structure
-     * agrees with the brand rather than merely that the brand names something
-     * registered — an umbrella deployment that forgets one proxy leaves a
-     * second reachable root, and the URL scheme would have no way to say
-     * which studio a bare path belongs to.</p>
+     * <p>It used to read "exactly one un-hosted L0 catalogue", tested with a type
+     * check plus a consult of the proxy manager. Both were standing in for a
+     * question the registry could not otherwise ask, because the upward edge was
+     * re-derived from typed {@code parent()} calls rather than recorded. Phase 2
+     * recorded it, so the law can say what it always meant: <b>exactly one vertex
+     * that nothing places</b>.</p>
+     *
+     * <p>That generalises in two directions at once. Hosting stops being special —
+     * a proxied studio's root is parented by an ordinary edge, so no umbrella
+     * lookup is needed. And it stops being about catalogues: leaves are in the
+     * parent index too, so a leaf nothing places is now a second entrance the law
+     * can see, where before it was invisible.</p>
+     *
+     * <p>It carries a construction invariant alongside it — every edge target has
+     * a payload — which is deliberately NOT called a second clause of the law. It
+     * cannot be made to fail: the three claimSlug sites each put a payload for the
+     * same identity unconditionally, and nothing removes one. It is kept as a
+     * tripwire for a fourth call site, and labelled honestly, because an
+     * unfalsifiable clause presented as a law is exactly how RFC 0051 Phase 1
+     * shipped two that quietly did not hold.</p>
+     *
+     * <p>The brand's home-app must BE that root. This checks the structure agrees
+     * with the brand rather than merely that the brand names something registered
+     * — an umbrella deployment that forgets one proxy leaves a second reachable
+     * root, and the URL scheme would have no way to say which studio a bare path
+     * belongs to.</p>
      */
-    private void requireSingleUnhostedRoot() {
-        var unhosted = new ArrayList<Catalogue<?>>();
-        for (Catalogue<?> c : byClass.values()) {
-            if (c instanceof L0_Catalogue<?> && !proxyManager.isHosted(asL0Class(c))) {
-                unhosted.add(c);
-            }
+    private void requireSingleUnparentedVertex() {
+        // Every vertex the walk minted, minus every vertex an edge points at.
+        // No type test and no proxy manager: hosting is just an edge now, so a
+        // proxied studio's root is parented like anything else.
+        var unparented = new ArrayList<NodeIdentity>();
+        for (NodeIdentity id : payload.keySet()) {
+            if (!parentIndex.containsKey(id)) unparented.add(id);
         }
-        if (unhosted.size() != 1) {
+        if (unparented.size() != 1) {
             throw new IllegalStateException(
-                    "Expected exactly one un-hosted L0 catalogue (the root every path"
-                  + " starts from), found " + unhosted.size() + ": "
-                  + unhosted.stream().map(c -> c.getClass().getName()).toList()
-                  + " (RFC 0051 - Law 4). An L0 no umbrella hosts is a second entrance;"
-                  + " wrap it in a StudioProxy under the umbrella, or drop it.");
+                    "Expected exactly one un-parented vertex (the root every path"
+                  + " starts from), found " + unparented.size() + ": "
+                  + unparented.stream().map(id -> describe(payload.get(id))).toList()
+                  + " (RFC 0051 - Law 4). A vertex nothing places is a second"
+                  + " entrance; give it a parent, or drop it.");
         }
-        Catalogue<?> root = unhosted.get(0);
-        if (root.getClass() != brand.homeApp()) {
+        NodeIdentity rootId = unparented.get(0);
+        NodeIdentity brandId = CatalogueAppHost.identityFor(brand.homeApp().getName());
+        if (!rootId.equals(brandId)) {
             throw new IllegalStateException(
-                    "The un-hosted root is " + root.getClass().getName()
+                    "The un-parented root is " + describe(payload.get(rootId))
                   + " but StudioBrand.homeApp names " + brand.homeApp().getName()
                   + ". The brand's home and the structural root must be the same"
                   + " catalogue (RFC 0051 - Law 4), or a path and the home button"
                   + " would disagree about where the tree begins.");
+        }
+
+        // A CONSTRUCTION INVARIANT, not a second clause of the law - and the
+        // demotion is the finding. It was written as "every edge resolves", which
+        // sounds like a law and is not one: it cannot be made to fail. slugIdentity
+        // has exactly three writers, all of them claimSlug, and every one is
+        // followed by an unconditional payloadMap.put for the same identity with no
+        // branch between; nothing removes from payloadMap. So an edge whose target
+        // has no payload is unreachable through this build.
+        //
+        // Kept anyway, cheaply, as a tripwire for a FOURTH claimSlug site that
+        // forgets its payload put. But it is labelled for what it is. RFC 0051
+        // Phase 1 twice shipped a law that quietly did not hold while passing, and
+        // an unfalsifiable clause dressed as a law is how that happens again.
+        var dangling = new ArrayList<String>();
+        for (var byParent : childIndex.entrySet()) {
+            for (var edge : byParent.getValue().entrySet()) {
+                if (!payload.containsKey(edge.getValue())) {
+                    dangling.add(describe(payload.get(byParent.getKey()))
+                               + " -> '" + edge.getKey() + "'");
+                }
+            }
+        }
+        if (!dangling.isEmpty()) {
+            throw new IllegalStateException(
+                    "Construction invariant broken: these edges point at a vertex"
+                  + " with no payload, which the build should have made impossible."
+                  + " A claimSlug call is missing its payloadMap.put: " + dangling);
         }
     }
 
@@ -552,50 +645,42 @@ public final class CatalogueRegistry {
         return breadcrumbs(at);
     }
 
+    /**
+     * The trail from the root to {@code at}, by walking the recorded parent edge
+     * (RFC 0053 Phase 2).
+     *
+     * <p>It used to climb {@code declaredParentOf} — a switch over L0..L8 — and
+     * then patch the result with {@code augmentForProxy}, because a proxied
+     * studio's root is an L0 whose {@code parent()} is null, so the typed climb
+     * lost the umbrella exactly where the interesting part was. The recorded edge
+     * has no such blind spot: the build wrote it while standing on the (host,
+     * source) pair, so the trail spans the graft without knowing it did.</p>
+     *
+     * <p>{@code declaredParentOf} survives as the authoring CHECK it always also
+     * was — the build still asserts a child's {@code parent()} agrees with the
+     * parent that lists it — but it is no longer the trail's source of truth.</p>
+     */
     public List<Catalogue<?>> breadcrumbs(Catalogue<?> at) {
         List<Catalogue<?>> chain = new ArrayList<>();
-        Catalogue<?> cursor = at;
+        NodeIdentity cursor = CatalogueAppHost.identityFor(at);
+        // Law 4 gives exactly one un-parented vertex, so this terminates. The
+        // bound turns a malformed graph into a diagnosable error rather than a
+        // hang - cheap insurance for a map that no longer has the type system
+        // guaranteeing its acyclicity.
+        int guard = byClass.size() + 1;
         while (cursor != null) {
-            chain.add(cursor);
-            cursor = declaredParentOf(cursor);
+            if (payload.get(cursor) instanceof Catalogue<?> c) chain.add(c);
+            cursor = parentIndex.get(cursor);
+            if (guard-- < 0) {
+                throw new IllegalStateException(
+                        "Parent edges cycle above " + at.getClass().getName()
+                      + " (RFC 0051 - Law 4 should have caught this)");
+            }
         }
         Collections.reverse(chain);
-        return augmentForProxy(chain);
+        return List.copyOf(chain);
     }
 
-    /**
-     * RFC 0011: if this chain's root is hosted by an umbrella catalogue, prepend
-     * the umbrella's chain so the breadcrumb spans both trees.
-     *
-     * <p>chain[0] is always the L0 root (typed-walk via parent() invariant).
-     * If isHosted(rootClass), prepend umbrella-chain (umbrella-root → … → host)
-     * to the full source chain (source L0 → … → leaf). The source L0 is kept —
-     * it's a meaningful navigation rung between the host tile and the source
-     * sub-tree (e.g. {@code Homing Studios / Core / Homing / Building Blocks}).</p>
-     */
-    @SuppressWarnings("unchecked")
-    private List<Catalogue<?>> augmentForProxy(List<Catalogue<?>> chain) {
-        if (chain.isEmpty()) return List.copyOf(chain);
-        Catalogue<?> root = chain.get(0);
-        if (!(root instanceof L0_Catalogue<?>)) return List.copyOf(chain);
-        Class<? extends L0_Catalogue<?>> rootClass =
-                (Class<? extends L0_Catalogue<?>>) root.getClass();
-        if (!proxyManager.isHosted(rootClass)) return List.copyOf(chain);
-        Catalogue<?> host = proxyManager.hostFor(rootClass);
-        // Walk the host's own typed chain (umbrella-root → … → host), then
-        // append the full source chain (source L0 → … → leaf). The source L0
-        // sits between the host tile and its descendants as a navigation rung.
-        List<Catalogue<?>> umbrella = new ArrayList<>();
-        Catalogue<?> cursor = host;
-        while (cursor != null) {
-            umbrella.add(cursor);
-            cursor = declaredParentOf(cursor);
-        }
-        Collections.reverse(umbrella);
-        List<Catalogue<?>> out = new ArrayList<>(umbrella);
-        out.addAll(chain);
-        return List.copyOf(out);
-    }
 
     public List<Catalogue<?>> breadcrumbsForPlan(Class<? extends Plan> cls) {
         Catalogue<?> home = planHome.get(cls);
@@ -763,46 +848,55 @@ public final class CatalogueRegistry {
     }
 
     /**
-     * Walk a path down the tree.
+     * Walk a path down the tree: split it into segments, then advance one level
+     * per segment. That is the whole algorithm (RFC 0053).
      *
-     * <p>An empty path is the root itself, so {@code /cat} is the studio's
-     * front door rather than a miss.</p>
+     * <p>Nothing is unwrapped along the way and no node kind is inspected. The
+     * walk used to do three jobs at every rung — advance, unwrap a
+     * {@link StudioProxy} to its source, and decide whether the child was a
+     * branch or a leaf — because its cursor was a {@code Catalogue} and the index
+     * was keyed on {@code getClass()}. Neither is true now: the index is keyed on
+     * identity, a portal's segment already maps to the SOURCE catalogue's
+     * identity at build time, and the kind switch happens once, at the end, on
+     * whatever the path finally named.</p>
+     *
+     * <p>An empty path is the root itself, so {@code /cat} is the studio's front
+     * door rather than a miss.</p>
      */
     public PathResolution resolve(CataloguePath path) {
         Objects.requireNonNull(path, "path");
-        Catalogue<?> at = root();
+
+        NodeIdentity at   = CatalogueAppHost.identityFor(root());
+        NodeIdentity host = null;   // the identity one rung up, for a leaf's trail
+
         for (int i = 0; i < path.depth(); i++) {
-            NodeName segment = path.segments().get(i);
-            Object child = childIndex.getOrDefault(at.getClass(), Map.of()).get(segment);
+            Map<NodeName, NodeIdentity> children = childIndex.get(at);
+            if (children == null || children.isEmpty()) {
+                // Nothing lives below this vertex, yet segments remain: the
+                // caller held a real address and appended to it.
+                return new PathResolution.Miss(path, i, PathResolution.Reason.PAST_A_LEAF);
+            }
+            NodeIdentity child = children.get(path.segments().get(i));
             if (child == null) {
                 return new PathResolution.Miss(path, i, PathResolution.Reason.NO_SUCH_CHILD);
             }
-            switch (child) {
-                // A proxy stands for the studio it wraps, so descending through
-                // an umbrella tile continues into the source tree — the same
-                // rung the breadcrumb shows (RFC 0011).
-                case StudioProxy<?> proxy -> at = proxy.source();
-                case Catalogue<?> c       -> at = c;
-                case Doc d -> {
-                    if (i < path.depth() - 1) {
-                        return new PathResolution.Miss(path, i + 1, PathResolution.Reason.PAST_A_LEAF);
-                    }
-                    return new PathResolution.ToLeaf(path, at, d);
-                }
-                // RFC 0051 Phase 6 — a bound leaf carries its own binding
-                // through the resolution, so the route never has to ask a doc
-                // how it opens.
-                case Entry.OfLeaf<?, ?, ?> leaf -> {
-                    if (i < path.depth() - 1) {
-                        return new PathResolution.Miss(path, i + 1, PathResolution.Reason.PAST_A_LEAF);
-                    }
-                    return new PathResolution.ToLeaf(path, at, leaf.content(), leaf.nav());
-                }
-                default -> throw new IllegalStateException(
-                        "Unexpected child kind in the path index: " + child.getClass().getName());
-            }
+            host = at;
+            at   = child;
         }
-        return new PathResolution.ToCatalogue(path, at);
+
+        Object landed = payload.get(at);
+        return switch (landed) {
+            case Catalogue<?> c -> new PathResolution.ToCatalogue(path, c);
+            // RFC 0051 Phase 6 — a bound leaf carries its own binding through the
+            // resolution, so the route never has to ask a doc how it opens.
+            case Entry.OfLeaf<?, ?, ?> leaf ->
+                    new PathResolution.ToLeaf(path, (Catalogue<?>) payload.get(host),
+                                              leaf.content(), leaf.nav());
+            case null -> throw new IllegalStateException(
+                    "Path index names an identity with no payload: " + at);
+            default -> throw new IllegalStateException(
+                    "Unexpected payload kind in the path index: " + landed.getClass().getName());
+        };
     }
 
     /** Convenience: resolve straight from a URL. A URL that is not a catalogue
@@ -853,6 +947,19 @@ public final class CatalogueRegistry {
     }
 
     /**
+     * RFC 0053 — where a vertex sits, asked by its typed identity.
+     *
+     * <p>This is the resolver the one-tree model routes through. A vertex carries
+     * a {@code NodeIdentity}, and for a catalogue vertex that identity is a
+     * {@link NavKey}, so "where does this node belong" becomes a single lookup
+     * rather than a second walk over a parallel structure. {@code null} when
+     * nothing places it — which is itself the interesting answer.</p>
+     */
+    public CataloguePath pathOf(NavKey key) {
+        return key == null ? null : navToPath.get(key);
+    }
+
+    /**
      * RFC 0051 Phase 6 — the path of a binding, for a leaf that has no doc to
      * be found by. An app tile's position is as real as a doc's; it was only
      * ever reachable through {@code AppDoc} lending it a Doc identity.
@@ -890,14 +997,29 @@ public final class CatalogueRegistry {
      * happen to derive the same segment do not.</p>
      */
     private static void claimSlug(Map<NodeName, Object> owner,
+                                  Map<NodeName, NodeIdentity> index,
+                                  Map<NodeIdentity, NodeIdentity> parents,
                                   NodeName slug,
                                   Object claimant,
+                                  NodeIdentity identity,
                                   Catalogue<?> parent) {
         if (slug == null) {
             throw new IllegalStateException(
                     describe(claimant) + " under " + parent.getClass().getName()
                   + " has a null slug()");
         }
+        // The scan that proves segments unique is the scan that builds the
+        // indices - all three, filled in one statement so they cannot drift.
+        // The claimant map exists for Law 2 and its error message; the identity
+        // map is what the resolver walks DOWN; the parent map is what the
+        // breadcrumb walks UP. One pair visited, both directions recorded.
+        //
+        // A portal arrives here like any other child, with the SOURCE catalogue's
+        // identity and the hosting catalogue as its parent - so the umbrella-to-source
+        // edge is recorded as an ordinary edge, and nothing downstream has to know
+        // a graft happened.
+        index.put(slug, identity);
+        parents.put(identity, CatalogueAppHost.identityFor(parent));
         Object prior = owner.put(slug, claimant);
         if (prior != null && !prior.equals(claimant)) {
             throw new IllegalStateException(
@@ -929,7 +1051,6 @@ public final class CatalogueRegistry {
      * those are framing, and the path axiom says one {@code (app, args)} has
      * at most one position regardless of how that position is dressed.</p>
      */
-    private record NavKey(Class<?> app, AppModule._Param params) {}
 
     /** RFC 0051 Phase 6 — a bound leaf and the catalogue it sits in, kept from
      *  the slug scan so the flat index can position it once paths exist. */

@@ -2,7 +2,7 @@ package hue.captains.singapura.js.homing.studio.base.app;
 
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.studio.base.Doc;
-import hue.captains.singapura.js.homing.studio.base.composed.text.NodeName;
+import hue.captains.singapura.js.homing.tree.NodeName;
 import hue.captains.singapura.js.homing.studio.base.tracker.Plan;
 import hue.captains.singapura.tao.ontology.Immutable;
 
@@ -141,6 +141,29 @@ public sealed interface Entry<C extends Catalogue<C>> extends Immutable {
         // placeable, and it paid for that with a fabricated uuid seeded from
         // display framing — the defect that forced Law 1's second check.
         return new OfLeaf<>(nav, null, NodeName.conciseSlug(nav.name()), null, null);
+    }
+
+    /**
+     * Place an app, naming its segment explicitly.
+     *
+     * <p>The overload above derives the slug from {@code nav.name()}, which is
+     * also what the listing shows — so with it, one string is both the address and
+     * the label. That is right when the name is already a good segment and wrong
+     * when it is not: a collection whose names are non-ASCII, or are corrigible
+     * data, wants a stable segment and a readable name, and they are not the same
+     * string.</p>
+     *
+     * <p>Note {@code NodeName.slug} does not reject a non-ASCII name — it strips
+     * to nothing and falls back to {@code "n"}, so a whole set of such leaves
+     * collapses onto one segment and fails Law 2 later, at the second one. Naming
+     * the segment is how you avoid finding that out from a sibling-collision
+     * message.</p>
+     */
+    static <C extends Catalogue<C>,
+            P extends AppModule._Param,
+            M extends AppModule<P, M>>
+           Entry<C> of(C host, Navigable<P, M> nav, NodeName slug) {
+        return new OfLeaf<>(nav, null, slug, null, null);
     }
 
     /** Place a plan. */

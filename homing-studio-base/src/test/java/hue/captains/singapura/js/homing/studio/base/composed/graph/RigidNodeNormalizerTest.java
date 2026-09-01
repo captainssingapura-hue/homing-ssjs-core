@@ -3,7 +3,7 @@ package hue.captains.singapura.js.homing.studio.base.composed.graph;
 import hue.captains.singapura.js.homing.studio.base.composed.DocTreeV2;
 import hue.captains.singapura.js.homing.studio.base.composed.ParagraphSegment;
 import hue.captains.singapura.js.homing.studio.base.composed.RigidNodeContent;
-import hue.captains.singapura.js.homing.studio.base.composed.text.NodeName;
+import hue.captains.singapura.js.homing.tree.NodeName;
 import hue.captains.singapura.js.homing.studio.base.composed.text.Title;
 import hue.captains.singapura.js.homing.tree.DisplayLabel;
 import hue.captains.singapura.js.homing.tree.NodeKey;
@@ -39,7 +39,7 @@ class RigidNodeNormalizerTest {
     }
 
     private static DocTreeV2 build(List<RigidNode<String>> nodes) {
-        return RigidNodeNormalizer.INSTANCE.toDocTree(nodes, CONTENT);
+        return RigidNodeNormalizer.INSTANCE.toDocTree(java.util.UUID.fromString("00000000-0000-4000-8000-000000000002"), nodes, CONTENT);
     }
 
     private static String dim(NormalizedNode n, hue.captains.singapura.js.homing.tree.DimensionKey k) {

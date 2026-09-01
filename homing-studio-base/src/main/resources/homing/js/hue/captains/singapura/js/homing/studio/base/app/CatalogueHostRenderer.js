@@ -4,16 +4,19 @@
 // renderCatalogueHost({ catalogueId, brandFallback }) → Node
 //
 // Fetches /catalogue?id=<catalogueId> for the fully-resolved JSON payload
-// (name + summary + brand + breadcrumbs + entries with pre-resolved URLs),
-// then emits the page DOM. Per-entry dispatch on JSON `kind` discriminator
-// ("doc" | "catalogue" | "app").
+// (name + summary + brand + breadcrumbs + the catalogue subtree),
 //
 // Renderer does no URL construction — the server pre-resolves every URL via
-// the registry. Renderer does no DOM walking — entries are flat structural
-// data, rendered top-to-bottom.
+// the registry. The tree it draws is the catalogue subtree the server already
+// resolved, so there is no second opinion about what a catalogue contains.
 // =============================================================================
 
 var href = HrefManagerInstance;
+
+// The listing branch's owner, tracked by WeakRef. Module-scoped and frozen so
+// it is never collected while the page lives — an MPA page has no `this` to
+// hand in, and a function-local owner would be collectible.
+const _catalogueListingOwner = Object.freeze({ toString: () => "catalogueListing" });
 
 function renderCatalogueHost(props) {
     var catalogueId   = props.catalogueId;
@@ -45,7 +48,7 @@ function renderCatalogueHost(props) {
     // When apiUrl is set, the catalogue endpoint defaults are bypassed entirely
     // and the renderer fetches whatever URL the caller built. The shape of the
     // JSON response is expected to match the CatalogueGetAction contract
-    // (name, summary, brand, breadcrumbs, entries[]).
+    // (name, summary, brand, breadcrumbs, tree).
     var url = props.apiUrl
         ? props.apiUrl
         : ("/catalogue?id=" + encodeURIComponent(catalogueId)
@@ -110,143 +113,90 @@ function _renderCataloguePage(root, data, brandFallback, stampedCrumbs) {
         main.appendChild(subtitle);
     }
 
-    // Entries — flat list, per-kind dispatch.
-    var tiles = (data.entries || []).map(_renderEntry);
-    main.appendChild(Section({ title: "", children: tiles }));
+    // The listing IS the tree (RFC 0053) — the same subtree the boot gate
+    // checks, drawn by the substrate own renderer, so a catalogue costs no
+    // bespoke listing code. The tile grid it replaced is gone: the detail card
+    // does what a card did, and one derivation of a catalogue is enough.
+    _mountListingTree(main, data);
 
     children.push(main);
 
     root.replaceChildren.apply(root, children);
 }
 
-function _renderEntry(entry) {
-    if (entry.kind === "doc") {
-        return Card({
-            href:    entry.url,
-            title:   entry.title,
-            summary: entry.summary,
-            badge:   entry.category || null,
-            link:    "Open →"
-        });
-    }
-    if (entry.kind === "catalogue") {
-        // Renders as a Card (uniform with Doc/Plan entries) — server emits
-        // a fixed "CATALOGUE" badge so a mixed-kind listing reads at a glance.
-        return Card({
-            href:    entry.url,
-            title:   entry.name,
-            summary: entry.summary,
-            badge:   entry.category || null,
-            link:    "Open →"
-        });
-    }
-    if (entry.kind === "app") {
-        // Renders as a Card (uniform with Doc/Plan/Catalogue entries).
-        return Card({
-            href:    entry.url,
-            title:   entry.name,
-            summary: entry.summary,
-            badge:   entry.category || null,
-            link:    "Open →"
-        });
-    }
-    if (entry.kind === "plan") {
-        // RFC 0005-ext1: Plan entry. Renders as a Card (same shape as Doc
-        // entries) so a catalogue listing reads uniformly. `category` is
-        // server-resolved from plan.kicker() (e.g. "RFC 0001").
-        return Card({
-            href:    entry.url,
-            title:   entry.name,
-            summary: entry.summary,
-            badge:   entry.category || null,
-            link:    "Open →"
-        });
-    }
-    if (entry.kind === "svg") {
-        // RFC 0015 Phase 5: SVG is a typed Doc kind. Routed through the
-        // standard Card with no custom rendering; the framework's chrome
-        // (border, hover, audio cues per RFC 0007) all bind via the st-card
-        // class. The Doc's URL points at the registered SvgViewer; clicking
-        // opens the full-page SVG view via the polymorphic doc viewer.
-        return Card({
-            href:    entry.url,
-            title:   entry.name,
-            summary: entry.summary || "",
-            badge:   entry.category || null,
-            link:    "View →"
-        });
-    }
-    if (entry.kind === "table") {
-        // RFC 0020: TableDoc — typed-table Doc. Routed through the standard
-        // Card; URL points at the registered TableViewer.
-        return Card({
-            href:    entry.url,
-            title:   entry.name,
-            summary: entry.summary || "",
-            badge:   entry.category || null,
-            link:    "View →"
-        });
-    }
-    if (entry.kind === "image") {
-        // RFC 0020: ImageDoc — Raw-tier raster asset. Routed through the
-        // standard Card; URL points at the registered ImageViewer.
-        return Card({
-            href:    entry.url,
-            title:   entry.name,
-            summary: entry.summary || "",
-            badge:   entry.category || null,
-            link:    "View →"
-        });
-    }
-    if (entry.kind === "composed") {
-        // RFC 0019: ComposedDoc — typed-segment doc (markdown + SVG + ...).
-        // Routed through the standard Card; the URL points at the registered
-        // ComposedViewer, which fetches the JSON payload and dispatches per
-        // segment kind on the client side.
-        return Card({
-            href:    entry.url,
-            title:   entry.name,
-            summary: entry.summary || "",
-            badge:   entry.category || null,
-            link:    "Open →"
-        });
-    }
-    if (entry.kind === "illustration") {
-        // Specialized in-place decoration — markdown rendered inline,
-        // visually distinct from the tile grid. Not clickable.
-        var ill = document.createElement("section");
-        ill.style.cssText =
-            "padding:20px 24px;margin:8px 0 24px;border-left:4px solid var(--st-accent,#cfa64a);"
-          + "background:rgba(207,166,74,0.07);border-radius:6px;line-height:1.55;font-size:15px;";
-        try {
-            if (typeof marked !== "undefined" && marked && marked.parse) {
-                var range = document.createRange();
-                range.selectNodeContents(ill);
-                ill.appendChild(range.createContextualFragment(marked.parse(entry.body || "")));
-            } else {
-                ill.textContent = entry.body || "";
-            }
-        } catch (e) {
-            ill.textContent = entry.body || "";
-        }
-        return ill;
-    }
-    if (entry.kind === "studio") {
-        // RFC 0011: a typed re-attachment of a source L0 catalogue. The
-        // server already emitted the proxy's icon prefixed into entry.name,
-        // and the URL points at the wrapped source L0's page. Renders as
-        // a Card (uniform with the other kinds) — badge defaults to "STUDIO".
-        return Card({
-            href:    entry.url,
-            title:   entry.name,
-            summary: entry.summary,
-            badge:   entry.category || null,
-            link:    "Enter →"
-        });
-    }
-    // Unknown kind — render as a plain text fallback so the page doesn't break.
-    var fallback = document.createElement("div");
-    css.addClass(fallback, st_error);
-    fallback.textContent = "Unknown entry kind: " + entry.kind;
-    return fallback;
+// The tree that replaced the tile grid. Every row is minted through a branch, so
+// the listing tears down with the page rather than leaking into the singleton.
+//
+// It opens showing exactly what the cards showed — the immediate children —
+// with the rest of the subtree one click away. That is the whole upgrade: the
+// card view could only ever show one level, because a tile is not a tree.
+function _mountListingTree(parent, data) {
+    var branch = domOpsParty.createBranch("catalogueListing");
+    branch.activate(_catalogueListingOwner);
+
+    // Master/detail, card FIRST: the selected entry reads before the list rather
+    // than after it, and takes the smaller of the two shares - the golden ratio,
+    // by grow factor, so it divides the space left after the gap.
+    //
+    // The summaries used to sit in the rows and ellipsise to nothing while still
+    // taking the whole width - doing neither job.
+    var split = branch.createElement("split", "div");
+    css.addClass(split, st_split);
+    parent.appendChild(split);
+
+    var detail = branch.createElement("detail", "div");
+    css.addClass(detail, st_split_detail);
+    split.appendChild(detail);
+
+    var nav = branch.createElement("nav", "div");
+    css.addClass(nav, st_split_nav);
+    split.appendChild(nav);
+
+    // A row's namePath is relative to THIS catalogue, so the authentic URL is the
+    // server-computed base with it appended. The renderer still constructs no
+    // URLs of its own - it joins two strings the server decided.
+    var base = data.treeBase || "";
+    var urlFor = function (namePath) {
+        return namePath ? base + "/" + namePath : base;
+    };
+
+    var hint = branch.createElement("hint", "div");
+    css.addClass(hint, st_subtitle);
+    hint.textContent = "Select an entry to see it here.";
+    detail.appendChild(hint);
+
+    // The card IS the selected row, drawn larger - the same Card the grid drew,
+    // so bringing the grid back stays a question of how many are rendered rather
+    // than of what a card is.
+    var showCard = function (sel) {
+        detail.replaceChildren(Card({
+            href:    urlFor(sel.namePath),
+            title:   sel.label || "",
+            summary: sel.summary || "",
+            badge:   sel.category || "",
+            link:    sel.hasChildren ? "Browse →" : "Open →"
+        }));
+    };
+
+    var renderer = new TreeRenderer({
+        branch:      branch,
+        container:   nav,
+        data:        data.tree,
+        // 0 = exactly what the cards showed: the immediate children, nothing
+        // more. The rest of the subtree is one click away, which is the whole
+        // difference between a tile and a tree.
+        expandDepth: 0,
+        // The badge rides in the row; the summary belongs to the card now.
+        showBadge:   true,
+        // The page IS this catalogue, so its own row would repeat the title.
+        showRoot:    false,
+        hrefForPath: function (path, namePath) { return urlFor(namePath); },
+        onSelect:    showCard,
+        onActivate:  function (sel) { HrefManagerInstance.navigate(urlFor(sel.namePath)); }
+    });
+
+    // The page owns WHEN keys flow; the renderer owns what they mean.
+    document.addEventListener("keydown", function (ev) {
+        if (renderer && renderer.handleKeydown(ev)) ev.preventDefault();
+    });
 }

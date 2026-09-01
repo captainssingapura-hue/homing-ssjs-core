@@ -5,6 +5,7 @@ import hue.captains.singapura.js.homing.server.ResourceNotFound;
 import hue.captains.singapura.js.homing.studio.base.DocContent;
 import hue.captains.singapura.js.homing.studio.base.app.Catalogue;
 import hue.captains.singapura.js.homing.studio.base.tree.CatalogueNormalizer;
+import hue.captains.singapura.js.homing.studio.base.tree.CatalogueTree;
 import hue.captains.singapura.js.homing.tree.NormalizedNode;
 import hue.captains.singapura.js.homing.tree.TreeNodeJsonWriter;
 import hue.captains.singapura.tao.http.action.GetAction;
@@ -16,7 +17,8 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * RFC 0040 — the normalized-pipeline counterpart of {@link CatalogueTreeGetAction}.
+ * RFC 0040 — the normalized-pipeline catalogue forest. Serves {@code /catalogue-tree},
+ * the route the retired slug-matching adapter action used to hold.
  * Serves the same {@code TreeNode} JSON the generic {@code TreeRenderer}
  * consumes, but produces it through {@link CatalogueNormalizer} →
  * {@link NormalizedNode} (which grafts {@code OfStudio} portals into the
@@ -57,8 +59,11 @@ public final class CatalogueForestGetAction
     public CompletableFuture<DocContent> execute(Query query, EmptyParam.NoHeaders headers) {
         try {
             Catalogue<?> target = resolveTarget(query == null ? null : query.id());
-            NormalizedNode node = normalizer.normalize(target);
-            String body = writer.write(node);
+            // RFC 0053 — structure and rows from the one walk. The workspace tree
+            // draws from the same resolved answer the listing does, so a node cannot
+            // read one way in the Navigator and another on its own page.
+            CatalogueTree ct = normalizer.toCatalogueTree(target);
+            String body = writer.write(ct.structure(), ct.rowDisplay());
             return CompletableFuture.completedFuture(
                     new DocContent(body, "application/json; charset=utf-8"));
         } catch (Exception e) {

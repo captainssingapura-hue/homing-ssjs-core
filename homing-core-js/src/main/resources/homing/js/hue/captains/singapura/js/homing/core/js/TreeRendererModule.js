@@ -38,7 +38,15 @@
 // /open?l0=..&l1=.. URL). Nodes carry no id.
 //
 // onSelect receives a flattened selection object:
-//   { path, level, kind, label, summary, hasChildren }
+//   { path, namePath, level, kind, label, summary, hasChildren }
+//
+// `namePath` is the RFC 0053 address and the one to prefer. It is the '/'-joined
+// chain of each node's `segment`, rebuilt during the same walk that draws the
+// rows — '' at the root, 'meta' for its child, 'meta/ontology' below that (the
+// root's own segment is not part of it, so for a catalogue the name-path is
+// exactly the URL after '/cat'). Unlike `path` it does not move when a sibling is
+// inserted or reordered, which is the whole reason it exists. `path` remains for
+// the leveled open URL and for callers not yet migrated.
 //
 // Keyboard (handleKeydown): ArrowDown/ArrowUp move the selection through the
 // VISIBLE rows (live-follow — each move fires onSelect); ArrowRight expands the
@@ -74,6 +82,20 @@ class TreeRenderer {
         // (no JS) via the fragment link. Live, the row handler preventDefaults
         // and uses onSelect (smooth scroll) instead of the raw anchor jump.
         this._hrefForPath = opts.hrefForPath || null;
+        // Listing mode (RFC 0053). Two flags, not one: a listing in a narrow
+        // column wants the badge but has no room for the note, while a crate tree
+        // wants the note (the FQCN under the module name) in a full-width pane.
+        // Both off by default, so the workspace navigator trees are untouched.
+        this._showBadge   = !!opts.showBadge;
+        this._showNote    = !!opts.showNote;
+        // A listing draws the CHILDREN of the catalogue it is the page for — the
+        // root row would just repeat the page title. Default true, so every
+        // existing tree keeps its root.
+        this._showRoot    = (opts.showRoot !== false);
+        // A TOC row is a pointer INTO the page, so a click is a scroll and the
+        // anchor is suppressed. A LISTING row is a destination, so a click must
+        // open it the way a card did. Opt-in, because the TOC came first.
+        this._followHref  = !!opts.followHref;
         this._expandDepth = (typeof opts.expandDepth === 'number') ? opts.expandDepth : 1;
         this._n            = 0;
         this._flat         = [];    // row entries in pre-order (for keyboard nav)
@@ -94,13 +116,21 @@ class TreeRenderer {
 
     // No node id is surfaced to the UI — identity is the structural `path`
     // added by _emitSelection. (The wire JSON may still carry an id field;
-    // the UI simply doesn't read it.)
+    // the UI simply does not read it.)
+    //
+    // RFC 0053: prefer the resolved row when the payload carries one, and fall
+    // back to dimensions for a producer that has not migrated yet. The SHAPE of
+    // the selection is unchanged either way — six widgets read these field names,
+    // and one of them uses `summary` as a map key, so the names outlive the
+    // channel they arrive on.
     _toSelection(node) {
+        var d = node.display;
         return {
             level:       node.level,
-            kind:        this._dim(node, 'kind'),
-            label:       this._dim(node, 'displayLabel'),
-            summary:     this._dim(node, 'summary'),
+            kind:        d ? d.kind  : this._dim(node, "kind"),
+            label:       d ? d.label : this._dim(node, "displayLabel"),
+            summary:     d ? d.note  : this._dim(node, "summary"),
+            category:    d ? d.badge : this._dim(node, "category"),
             hasChildren: !!(node.children && node.children.length)
         };
     }
@@ -111,6 +141,7 @@ class TreeRenderer {
     _emitSelection(entry) {
         var sel = this._toSelection(entry.node);
         sel.path = entry.path;
+        sel.namePath = entry.namePath;
         this._onSelect(sel);
     }
 
@@ -120,6 +151,7 @@ class TreeRenderer {
     _emitActivation(entry) {
         var sel = this._toSelection(entry.node);
         sel.path = entry.path;
+        sel.namePath = entry.namePath;
         this._onActivate(sel);
     }
 
@@ -136,15 +168,25 @@ class TreeRenderer {
         while (this._container.firstChild) this._container.removeChild(this._container.firstChild);
         this._flat          = [];
         this._selectedEntry = null;
-        var rootWrap = this._el('div');
+        var rootWrap = this._el("div");
         this._container.appendChild(rootWrap);
-        this._renderNode(data, rootWrap, 0, []);
+        if (this._showRoot) {
+            this._renderNode(data, rootWrap, 0, [], "");
+            return;
+        }
+        // Root suppressed: its children become the top level. Their path and
+        // namePath are exactly what the recursion below would have given them,
+        // so addresses are unchanged — only the row is absent.
+        var kids = data.children || [];
+        for (var i = 0; i < kids.length; i++) {
+            this._renderNode(kids[i], rootWrap, 0, [i], kids[i].segment || String(i));
+        }
     }
 
     // `path` is the leveled child-index path from the root ([] at the root,
     // parent.path.concat([childIndex]) below). It is purely structural — the
     // node carries no id — and is what the leveled "open" URL encodes.
-    _renderNode(node, parentEl, depth, path) {
+    _renderNode(node, parentEl, depth, path, namePath) {
         var sel      = this._toSelection(node);
         var isBranch = sel.hasChildren;
         var self     = this;
@@ -158,14 +200,24 @@ class TreeRenderer {
         caret.style.cssText = 'width:12px;display:inline-block;color:#888;font-size:10px;flex:0 0 auto;';
         row.appendChild(caret);
 
+        // The badge, ahead of the label the way a card carried it.
+        if (this._showBadge && sel.category) {
+            var badge = this._el("span");
+            badge.style.cssText = "flex:0 0 auto;font-size:10px;letter-spacing:.06em;"
+                + "text-transform:uppercase;color:#888;";
+            badge.textContent = sel.category;
+            row.appendChild(badge);
+        }
+
         var label;
         if (this._hrefForPath) {
             // Anchor label — clicking jumps to the target's id via the fragment
             // href, which works in a static HTML export with no JavaScript.
             label = this._el('a');
-            label.setAttribute('href', this._hrefForPath(path) || '#');
-            label.style.cssText = 'flex:1;white-space:nowrap;overflow:hidden;'
-                + 'text-overflow:ellipsis;color:inherit;text-decoration:none;';
+            label.setAttribute('href', this._hrefForPath(path, namePath) || '#');
+            label.style.cssText = (this._showNote ? "flex:0 1 auto;" : "flex:1;")
+                + "white-space:nowrap;overflow:hidden;"
+                + "text-overflow:ellipsis;color:inherit;text-decoration:none;";
         } else {
             label = this._el('span');
             label.style.cssText = 'flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
@@ -173,12 +225,23 @@ class TreeRenderer {
         label.textContent = sel.label || '';
         row.appendChild(label);
 
+        // The one-line summary. Ellipsised like the label, so a deep listing
+        // stays one row per node however long the prose is.
+        if (this._showNote && sel.summary) {
+            var blurb = this._el("span");
+            blurb.style.cssText = "flex:1 1 0;white-space:nowrap;overflow:hidden;"
+                + "text-overflow:ellipsis;color:#888;font-size:12px;";
+            blurb.textContent = sel.summary;
+            row.appendChild(blurb);
+        }
+
         parentEl.appendChild(row);
         // Record before recursing so _flat lands in pre-order (parent then
         // its subtree) — the natural top-to-bottom visual order arrow nav walks.
         var entry = {
             rowEl: row, node: node, caretEl: caret,
-            kidsEl: null, hasChildren: isBranch, depth: depth, path: path
+            kidsEl: null, hasChildren: isBranch, depth: depth, path: path,
+            namePath: namePath
         };
         this._flat.push(entry);
 
@@ -188,7 +251,9 @@ class TreeRenderer {
             entry.kidsEl = kids;
             parentEl.appendChild(kids);
             for (var i = 0; i < node.children.length; i++) {
-                this._renderNode(node.children[i], kids, depth + 1, path.concat([i]));
+                var kidSeg = node.children[i].segment || String(i);
+                var kidNamePath = namePath ? namePath + '/' + kidSeg : kidSeg;
+                this._renderNode(node.children[i], kids, depth + 1, path.concat([i]), kidNamePath);
             }
             this._setExpanded(entry, depth < this._expandDepth);
         }
@@ -198,7 +263,10 @@ class TreeRenderer {
             // Live: suppress the anchor's native fragment jump in favour of the
             // smooth scroll + highlight onSelect drives. (In a static export the
             // handler is gone, so the anchor href navigates natively.)
-            if (self._hrefForPath) e.preventDefault();
+            var onLabel = self._followHref && (e.target === label || label.contains(e.target));
+            if (self._hrefForPath && !onLabel) e.preventDefault();
+            // Following the anchor: leave expand/select alone, we are leaving.
+            if (onLabel) return;
             if (isBranch) self._userSetExpanded(entry, !self._isExpanded(entry));
             self._markSelected(entry);
             self._emitSelection(entry);

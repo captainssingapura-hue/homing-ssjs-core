@@ -8,19 +8,17 @@ package hue.captains.singapura.js.homing.tree;
  * open {@link DimensionValue} side instead, supplying new value shapes
  * under these existing keys.
  *
- * <p>The closed vocabulary:</p>
+ * <p>What is left of the vocabulary. It carried six keys and a guess at what
+ * trees are — "axes a tree can be labelled, grouped, or pivoted on". Nothing
+ * ever pivoted or grouped; catalogues and crates now answer through a resolver
+ * and project into {@link RowDisplay}, which is a fact about what a row draws
+ * rather than a theory about trees. These two are the doc residue: one
+ * structural, one descriptive, both due to follow.</p>
+ *
+ * <p>The remaining keys:</p>
  * <ul>
  *   <li>{@link DisplayLabel} — the human-readable label every node carries
  *       (value typically {@code NameValue}).</li>
- *   <li>{@link Summary} — a short descriptive blurb; lets a detail view
- *       show branch-node content without a round-trip (value text).</li>
- *   <li>{@link LevelDepth} — zero-indexed depth from the tree root
- *       (value {@code DepthValue}).</li>
- *   <li>{@link Category} — primary grouping category (value supplied per
- *       tree-kind, e.g. studio-base's {@code CategoryValue}).</li>
- *   <li>{@link Kind} — kind/type discriminator (value per tree-kind, e.g.
- *       studio-base's {@code KindValue}); doubles as the detail view's
- *       widget-registry dispatch key.</li>
  *   <li>{@link NodeKey} — the stable, URL-safe node identity (value typically
  *       {@code NameValue}); the segment from which a name-path address is
  *       built, distinct from the human {@link DisplayLabel}.</li>
@@ -39,7 +37,7 @@ package hue.captains.singapura.js.homing.tree;
  * @since homing-tree-views v1
  */
 public sealed interface DimensionKey
-        permits DisplayLabel, Summary, LevelDepth, Category, Kind, NodeKey {
+        permits DisplayLabel, NodeKey {
 
     /** Stable wire tag for JSON serialisation (also the key name in JS). */
     String tag();

@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.rigid;
 
-import hue.captains.singapura.js.homing.studio.base.composed.text.NodeName;
+import hue.captains.singapura.js.homing.tree.NodeName;
 import hue.captains.singapura.js.homing.studio.base.Doc;
 import hue.captains.singapura.js.homing.studio.base.DocId;
 import hue.captains.singapura.js.homing.studio.base.composed.DocTreeJsonWriter;

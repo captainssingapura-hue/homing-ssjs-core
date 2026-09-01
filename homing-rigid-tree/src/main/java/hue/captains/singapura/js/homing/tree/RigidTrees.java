@@ -24,6 +24,8 @@ public final class RigidTrees {
         if (by == 0) return node;
         return new NormalizedNode(
                 node.level().shifted(by),               // hard error if outside 0..18
+                node.segment(),                        // rides the graft unchanged
+                node.identity(),                       // ditto - see NodeIdentity
                 node.dimensions(),
                 node.children().stream().map(c -> shift(c, by)).toList());
     }

@@ -7,6 +7,9 @@ import hue.captains.singapura.tao.http.action.GetAction;
 import hue.captains.singapura.tao.http.action.Param;
 import hue.captains.singapura.tao.http.action.ParamMarshaller;
 import hue.captains.singapura.js.homing.studio.base.DocContent;
+import hue.captains.singapura.js.homing.studio.base.tree.CatalogueNormalizer;
+import hue.captains.singapura.js.homing.studio.base.tree.CatalogueTree;
+import hue.captains.singapura.js.homing.tree.TreeNodeJsonWriter;
 import io.vertx.ext.web.RoutingContext;
 
 import java.util.List;
@@ -48,29 +51,21 @@ public class CatalogueGetAction
 
     /**
      * @param id      registered catalogue's class FQN
-     * @param context optional scoping tag — when present, picks a different
-     *                augmentation slot in the {@link CatalogueAugmentation}
-     *                map so the same catalogue class can project multiple
-     *                framework-managed variants (e.g. per-studio diagnostics)
+     * @param context optional scoping tag. The flat route still carries it, but
+     *                nothing reads it: it selected an augmentation slot, and the
+     *                augmentation mechanism is gone. It was never part of a
+     *                catalogue's identity either — RFC 0053 excludes it
+     *                deliberately, because it selects framing, not subject.
      */
     public record Query(String id, String context) implements Param._QueryString {}
 
     private final CatalogueRegistry registry;
-    /**
-     * Per-(class, context) augmentation. Reserved for framework-managed
-     * injections (e.g. RFC 0014 diagnostics tile pyramid). Empty for normal
-     * serving — back-compat constructor passes {@code Map.of()}.
-     */
-    private final Map<CatalogueAugmentation.AugKey, CatalogueAugmentation> augmentations;
+
+    /** The substrate's own writer — the tree payload costs no bespoke serialisation. */
+    private static final TreeNodeJsonWriter TREE_WRITER = new TreeNodeJsonWriter();
 
     public CatalogueGetAction(CatalogueRegistry registry) {
-        this(registry, Map.of());
-    }
-
-    public CatalogueGetAction(CatalogueRegistry registry,
-                              Map<CatalogueAugmentation.AugKey, CatalogueAugmentation> augmentations) {
         this.registry = Objects.requireNonNull(registry, "registry");
-        this.augmentations = Map.copyOf(Objects.requireNonNull(augmentations, "augmentations"));
     }
 
     @Override
@@ -108,7 +103,7 @@ public class CatalogueGetAction
             return CompletableFuture.failedFuture(notFound(fqn, "Catalogue not registered"));
         }
         try {
-            String body = serialize(catalogue, query.context());
+            String body = serialize(catalogue);
             return CompletableFuture.completedFuture(new DocContent(body, "application/json; charset=utf-8"));
         } catch (Exception e) {
             return CompletableFuture.failedFuture(notFound(fqn,
@@ -116,10 +111,7 @@ public class CatalogueGetAction
         }
     }
 
-    /** Back-compat overload used by tests that don't exercise the context scoping. */
-    String serialize(Catalogue<?> c) { return serialize(c, null); }
-
-    String serialize(Catalogue<?> c, String context) {
+    String serialize(Catalogue<?> c) {
         StringBuilder sb = new StringBuilder("{");
         sb.append("\"name\":")   .append(jstr(c.name())).append(',');
         sb.append("\"summary\":").append(jstr(c.summary())).append(',');
@@ -152,109 +144,29 @@ public class CatalogueGetAction
         }
         sb.append("],");
 
-        // Entries — RFC 0005-ext2 Option A: typed sub-catalogues first
-        // (rendered as catalogue cards), then leaves (Doc / App / Plan).
-        // Within each group the catalogue's declared order is preserved.
-        // RFC 0014: when an augmentation has replace=true, the typed entries
-        // are suppressed and only the synthetic ones render. Used to project
-        // per-context variants of a catalogue (e.g. per-studio diagnostics).
-        @SuppressWarnings("unchecked")
-        Class<? extends Catalogue<?>> cKey = (Class<? extends Catalogue<?>>) c.getClass();
-        CatalogueAugmentation aug = augmentations.get(new CatalogueAugmentation.AugKey(cKey, context));
-        boolean suppressTyped = aug != null && aug.replace();
+        // RFC 0053 — the same catalogue as a TREE, from the normalized layer.
+        // The listing draws this, and it is now the ONLY entry payload: the tile
+        // grid it replaced has been retired, so the tree is the single derivation
+        // of what a catalogue contains rather than the second of two.
+        //
+        // Normalizing THIS catalogue rather than slicing the forest keeps the
+        // action free of any re-rooting: a Catalogue already knows its own
+        // subCatalogues() and leaves(), so the subtree comes from the same
+        // producer the boot gate checks, not from a second traversal. That is
+        // the whole point of not reaching for CatalogueTreeGetAction, which
+        // re-roots by slug match on the LEGACY adapter.
+        //
+        // treeBase is this catalogue's own path. A row's namePath is relative to
+        // the subtree root, so base + '/' + namePath is the authentic URL — the
+        // identity the parity walk reports 223/223 agreement on.
+        sb.append("\"treeBase\":").append(jstr(pathUrl(c))).append(',');
+        // Both halves of the same walk: the structure, and the rows its identities
+        // resolve to. The writer is handed the projection, never the details.
+        CatalogueTree ct = CatalogueNormalizer.INSTANCE.toCatalogueTree(c);
+        sb.append("\"tree\":")
+          .append(TREE_WRITER.write(ct.structure(), ct.rowDisplay()));
 
-        sb.append("\"entries\":[");
-        boolean firstEntry = true;
-
-        // ---- Sub-catalogues ----
-        if (!suppressTyped) for (Catalogue<?> child : c.subCatalogues()) {
-            if (!firstEntry) sb.append(',');
-            firstEntry = false;
-            // RFC 0009: per-instance badge (default "CATALOGUE", may be
-            // overridden to "STUDIO" / "DOCTRINE" / etc.). The icon glyph is
-            // a navigation aid in breadcrumbs only — the card's category text
-            // is plain. Renderers pick a CSS badge class from the category.
-            sb.append("{\"kind\":\"catalogue\",")
-              .append("\"name\":")    .append(jstr(child.name())).append(',')
-              .append("\"summary\":") .append(jstr(child.summary())).append(',')
-              .append("\"category\":").append(jstr(child.badge())).append(',')
-              .append("\"url\":")     .append(jstr(pathUrl(child)))
-              .append('}');
-        }
-
-        // ---- Leaves ----
-        if (!suppressTyped) for (Entry<?> e : c.leaves()) {
-            if (!firstEntry) sb.append(',');
-            firstEntry = false;
-            switch (e) {
-                // RFC 0051 Phase 6 — a bound leaf. Its tile reads exactly what
-                // the OfDoc tile reads, from the same places, so the payload is
-                // unchanged; what differs is where the URL comes from. The doc
-                // is no longer asked how it opens — the placement already said.
-                case Entry.OfLeaf<?, ?, ?> leaf -> {
-                    // RFC 0051 Phase 6 — kind and category are read off the
-                    // LEAF. They are framing, and framing is the placement's:
-                    // TreeGetAction has always let a leaf override the badge,
-                    // so the framework already treated them this way in one
-                    // place and asked the doc everywhere else.
-                    Doc content = leaf.content();
-                    String kind = leaf.kind();
-                    String titleKey = "doc".equals(kind) ? "\"title\"" : "\"name\"";
-                    String name     = (content != null) ? content.title()    : leaf.nav().name();
-                    String summary  = (content != null) ? content.summary()  : leaf.nav().summary();
-                    String category = leaf.category();
-                    sb.append('{')
-                      .append("\"kind\":")    .append(jstr(kind)).append(',')
-                      .append(titleKey)       .append(':').append(jstr(name)).append(',')
-                      .append("\"summary\":") .append(jstr(summary)).append(',')
-                      .append("\"category\":").append(jstr(category)).append(',')
-                      .append("\"url\":")     .append(jstr(pathUrl(leaf)))
-                      .append('}');
-                }
-                case Entry.OfIllustration<?>(CatalogueIllustration illustration) -> {
-                    // Specialized in-place decoration — markdown rendered as a
-                    // hero block by the frontend. No URL, no addressing, no
-                    // catalogue-tile shape; the renderer treats kind="illustration"
-                    // as a special entry that doesn't go through the Card path.
-                    sb.append("{\"kind\":\"illustration\",")
-                      .append("\"body\":").append(jstr(illustration.body()))
-                      .append('}');
-                }
-                case Entry.OfStudio<?, ?>(StudioProxy<?> proxy) -> {
-                    // RFC 0011: studio-kind card. URL points at the wrapped
-                    // source L0's own catalogue page; the proxy's display
-                    // fields (name / summary / badge / icon) render the tile.
-                    sb.append("{\"kind\":\"studio\",")
-                      .append("\"name\":")    .append(jstr(proxy.icon().isEmpty()
-                                                      ? proxy.name()
-                                                      : proxy.icon() + " " + proxy.name())).append(',')
-                      .append("\"summary\":") .append(jstr(proxy.summary())).append(',')
-                      .append("\"category\":").append(jstr(proxy.badge())).append(',')
-                      .append("\"url\":")     .append(jstr(pathUrl(proxy.source())))
-                      .append('}');
-                }
-            }
-        }
-
-        // ---- Synthetic entries (framework augmentation; e.g. RFC 0014 diagnostics injection).
-        // Appended last so the studio's declared tiles stay where the studio put them
-        // (when replace=false). When replace=true, the typed entries above were
-        // suppressed and these are the only entries rendered.
-        if (aug != null) {
-            for (SyntheticEntry s : aug.entries()) {
-                if (!firstEntry) sb.append(',');
-                firstEntry = false;
-                sb.append('{')
-                  .append("\"kind\":")    .append(jstr(s.kind())).append(',')
-                  .append("\"name\":")    .append(jstr(s.name())).append(',')
-                  .append("\"summary\":") .append(jstr(s.summary())).append(',')
-                  .append("\"category\":").append(jstr(s.category())).append(',')
-                  .append("\"url\":")     .append(jstr(s.url()))
-                  .append('}');
-            }
-        }
-
-        sb.append("]}");
+        sb.append("}");
         return sb.toString();
     }
 
