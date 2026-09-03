@@ -10,17 +10,25 @@
 // shared tree, which brings the keyboard model with it: ArrowUp/Down through
 // visible rows, ArrowRight/Left to fold a group, Enter to activate.
 //
-// Master/detail, side by side. The tree is a column of NAMES ONLY, sized to
-// its content — max-content between a floor and a ceiling, so it is as wide as
-// it needs and no wider. Everything about the selected theme — the in-use
-// marker, the inspiration line, the palette — lives in the content pane on the
-// right. That division is what keeps the whole thing compact: a row carries one
-// string, so nothing competes for its width.
+// Master/detail, side by side. The tree is a column of NAMES ONLY, sized to its
+// content — max-content between a floor and a ceiling, so it is as wide as it
+// needs and no wider. Everything about the selected theme — the in-use marker,
+// the inspiration line, the palette — lives in the content pane on the right.
+// That division is what keeps the whole thing compact: a row carries one string,
+// so nothing competes for its width.
 //
-// Selecting only browses. Enter switches, which navigates - live theme swap is
+// BUILT ONCE, REUSED. Closing the dialog detaches its content; it does not
+// destroy it. The branch owns those elements for the life of the mount, and
+// reopening hands the same body to a new Modal. This is not an optimisation —
+// DomOpsParty names elements and REFUSES a duplicate name with a RangeError, so
+// a second build on the same branch would ask TreeRenderer for "tn0" again and
+// throw mid-render, leaving an empty panel. Detached-but-alive is the model's
+// own answer, and the relation grid keeps its unplaced cells the same way.
+//
+// Selecting only browses. Enter switches, which navigates — live theme swap is
 // not supported yet. A session-local flag carries "the picker was open" across
-// the reload, so the dialog is rebuilt on the far side and the user never has
-// to reopen it between tries.
+// the reload, so the dialog is rebuilt on the far side and the user never has to
+// reopen it between tries.
 //
 // The framework's EsModuleWriter appends the import/export prologue from the
 // matching Java ThemePicker declaration — do not add import/export lines here.
@@ -33,72 +41,79 @@ const _treeOwner = Object.freeze({ toString: () => "themePickerTree" });
 
 var _seq = 0;
 
-
 /**
- * The content pane: everything about the SELECTED theme — its name, whether it
- * is the one in use, what it was drawn from, and its palette.
+ * Build the content pane once and return an UPDATE function.
  *
- * This is what lets the tree be a narrow column of names. A row that carries
- * only its label needs no description column and no badge before the name, so
- * nothing competes for the row's width and every name starts at the same x.
- *
- * Rebuilt on every selection, which is cheap — a heading, a line and a strip.
+ * Every theme reports the same palette keys, so the pane's shape never changes
+ * between selections — only its text and the swatch colours do. Rebuilding it
+ * per selection would mint new elements on every arrow-press, and the branch
+ * would hold each one for the life of the page.
  */
-function _preview(branch, host, theme, activeSlug) {
-    while (host.firstChild) host.removeChild(host.firstChild);
-    if (!theme) return;
-
-    var name = branch.createElement("pvn" + (++_seq), "div");
+function _previewPane(branch, host, seq) {
+    var name = branch.createElement("pvn" + seq, "div");
     css.addClass(name, tp_preview_name);
-    var mySeq = _seq;
 
-    var nameText = branch.createElement("pvnt" + mySeq, "span");
-    nameText.textContent = theme.label || theme.slug;
+    var nameText = branch.createElement("pvnt" + seq, "span");
     name.appendChild(nameText);
 
-    if (theme.slug === activeSlug) {
-        var chip = branch.createElement("pvc" + mySeq, "span");
-        css.addClass(chip, tp_current);
-        chip.textContent = "in use";
-        name.appendChild(chip);
-    }
+    var chip = branch.createElement("pvc" + seq, "span");
+    css.addClass(chip, tp_current);
+    chip.textContent = "in use";
+    name.appendChild(chip);
     host.appendChild(name);
 
-    if (theme.inspiration) {
-        var note = branch.createElement("pvi" + mySeq, "div");
-        css.addClass(note, tp_preview_note);
-        note.textContent = theme.inspiration;
-        host.appendChild(note);
-    }
+    var note = branch.createElement("pvi" + seq, "div");
+    css.addClass(note, tp_preview_note);
+    host.appendChild(note);
 
-    var strip = branch.createElement("pvs" + _seq, "div");
+    var strip = branch.createElement("pvs" + seq, "div");
     css.addClass(strip, tp_swatches);
-
-    var palette = theme.palette || {};
-    var keys = Object.keys(palette);
-    for (var i = 0; i < keys.length; i++) {
-        var v = palette[keys[i]];
-        if (!v) continue;
-        var sw = branch.createElement("sw" + _seq + "_" + i, "div");
-        css.addClass(sw, tp_sw);
-        // setProperty, not a .style.x write — the route RFC 0044 sanctions for
-        // a value that is DATA. The typed class consumes it.
-        sw.style.setProperty("--tp-sw", v);
-        sw.setAttribute("title", keys[i] + ": " + v);
-        strip.appendChild(sw);
-    }
     host.appendChild(strip);
+
+    var swatches = [];
+
+    return function (theme, activeSlug) {
+        if (!theme) return;
+        nameText.textContent = theme.label || theme.slug;
+        chip.hidden = (theme.slug !== activeSlug);
+        note.textContent = theme.inspiration || "";
+
+        var palette = theme.palette || {};
+        var keys = Object.keys(palette);
+        for (var i = 0; i < keys.length; i++) {
+            if (!swatches[i]) {
+                swatches[i] = branch.createElement("sw" + seq + "_" + i, "div");
+                css.addClass(swatches[i], tp_sw);
+                strip.appendChild(swatches[i]);
+            }
+            // setProperty, not a .style.x write — the route RFC 0044 sanctions
+            // for a value that is DATA. The typed class consumes it.
+            swatches[i].style.setProperty("--tp-sw", palette[keys[i]] || "transparent");
+            swatches[i].setAttribute("title", keys[i] + ": " + palette[keys[i]]);
+        }
+    };
 }
 
 /**
- * Build the tree into `container`, with the preview wired to its selection.
- * Returns the renderer so the caller can forward keydown — the host owns WHEN
- * keys flow, the renderer owns what they mean.
+ * Tree plus content pane, wired together, built into `wrap`. Returns the pieces
+ * the caller needs afterwards: the renderer (to forward keydown) and the tree
+ * host (to focus).
  */
-function _buildTree(branch, container, previewHost, themes, active, onSwitch) {
+function _buildPanes(branch, wrap, themes, active, seq, onSwitch) {
+    var treeHost = branch.createElement("thost" + seq, "div");
+    css.addClass(treeHost, tp_tree_host);
+    treeHost.setAttribute("tabindex", "0");
+    wrap.appendChild(treeHost);
+
+    var paneHost = branch.createElement("pane" + seq, "div");
+    css.addClass(paneHost, tp_preview);
+    wrap.appendChild(paneHost);
+
+    var update = _previewPane(branch, paneHost, seq);
+
     var renderer = new TreeRenderer({
         branch:      branch,
-        container:   container,
+        container:   treeHost,
         expandDepth: 2,
         // Neither. A row is its name and nothing else — the description and the
         // in-use marker moved to the content pane, which is what keeps the tree
@@ -108,7 +123,7 @@ function _buildTree(branch, container, previewHost, themes, active, onSwitch) {
         showRoot:    false,
         onSelect:    function (sel) {
             var t = themeBySlug(themes, slugOfSelection(sel));
-            if (t) _preview(branch, previewHost, t, active);
+            if (t) update(t, active);
         },
         onActivate:  function (sel) {
             var slug = slugOfSelection(sel);
@@ -116,12 +131,14 @@ function _buildTree(branch, container, previewHost, themes, active, onSwitch) {
         }
     });
     renderer.setData(themeTreeData(themes, active));
-    return renderer;
+    update(themeBySlug(themes, active) || themes[0], active);
+
+    return { treeHost: treeHost, renderer: renderer };
 }
 
 /**
- * The bare tree, mounted into a host the caller already sized. Used by the
- * themes app, which has a page to put it on and wants no modal.
+ * The bare tree plus pane, mounted into a host the caller already sized. Used by
+ * the themes app, which has a page to put it on and wants no modal.
  */
 function mountThemePickerTree(host, opts) {
     if (!host) throw new Error("mountThemePickerTree: host element required");
@@ -143,27 +160,19 @@ function mountThemePickerTree(host, opts) {
             wrap.appendChild(h);
         }
 
-        var treeHost = branch.createElement("thost" + mySeq, "div");
-        css.addClass(treeHost, tp_tree_host);
-        wrap.appendChild(treeHost);
-
-        var previewHost = branch.createElement("pv" + mySeq, "div");
-        css.addClass(previewHost, tp_preview);
-        wrap.appendChild(previewHost);
-
+        var body = branch.createElement("ibody" + mySeq, "div");
+        css.addClass(body, tp_body);
+        wrap.appendChild(body);
         host.appendChild(wrap);
 
-        var renderer = _buildTree(branch, treeHost, previewHost, themes, active,
+        var panes = _buildPanes(branch, body, themes, active, mySeq,
             function (slug) { switchToTheme(slug); });
 
-        _preview(branch, previewHost, themeBySlug(themes, active) || themes[0], active);
-
-        treeHost.setAttribute("tabindex", "0");
-        treeHost.addEventListener("keydown", function (ev) {
-            if (renderer.handleKeydown(ev)) ev.preventDefault();
+        panes.treeHost.addEventListener("keydown", function (ev) {
+            if (panes.renderer.handleKeydown(ev)) ev.preventDefault();
         });
 
-        return { branch: branch, renderer: renderer,
+        return { branch: branch, renderer: panes.renderer,
                  dissolve: function () { branch.dissolve(); } };
     });
 }
@@ -205,12 +214,16 @@ function mountThemePickerButton(host, opts) {
 
         var modal = null;
         var keyHandler = null;
+        var ui = null;          // built on first open, reused for every later one
 
         function close() {
             // A deliberate close clears the flag: the user is done trying themes,
             // so the next page must NOT reopen. Only a theme switch sets it.
             rememberPickerOpen(false);
             if (keyHandler) { document.removeEventListener("keydown", keyHandler, true); keyHandler = null; }
+            // destroy() removes the Modal's own root, taking our body with it —
+            // detached, but alive and still owned by the branch, ready to be
+            // handed to the next Modal.
             if (modal && modal.destroy) { try { modal.destroy(); } catch (e) {} }
             modal = null;
             if (btn.focus) btn.focus();
@@ -219,17 +232,19 @@ function mountThemePickerButton(host, opts) {
         function open() {
             if (modal) { close(); return; }
 
-            var body = branch.createElement("mbody" + mySeq + "_" + (++_seq), "div");
-            css.addClass(body, tp_body);
-            var bodySeq = _seq;
-
-            var treeHost = branch.createElement("mtree" + bodySeq, "div");
-            css.addClass(treeHost, tp_tree_host);
-            body.appendChild(treeHost);
-
-            var previewHost = branch.createElement("mpv" + bodySeq, "div");
-            css.addClass(previewHost, tp_preview);
-            body.appendChild(previewHost);
+            if (!ui) {
+                var body = branch.createElement("mbody" + mySeq, "div");
+                css.addClass(body, tp_body);
+                var panes = _buildPanes(branch, body, themes, active, mySeq,
+                    function (slug) {
+                        // Switching still navigates — live theme swap is not
+                        // supported yet. Leave a note for the page that comes
+                        // back, which reopens the dialog on the far side.
+                        rememberPickerOpen(true);
+                        switchToTheme(slug);
+                    });
+                ui = { body: body, treeHost: panes.treeHost, renderer: panes.renderer };
+            }
 
             // Compact: the tree sizes itself, so this only has to leave the
             // content pane enough room for a palette strip and two lines of prose.
@@ -238,26 +253,13 @@ function mountThemePickerButton(host, opts) {
             modal = new Modal({
                 container: document.body,
                 title:     "Theme",
-                content:   body,
+                content:   ui.body,
                 x:         Math.max(20, (window.innerWidth  - w) / 2),
                 y:         Math.max(20, (window.innerHeight - h) / 3),
                 width:     w,
                 height:    h,
                 onClose:   function () { modal = null; }
             });
-
-            var renderer = _buildTree(branch, treeHost, previewHost, themes, active,
-                function (slug) {
-                    // Switching still navigates — live theme swap is not supported
-                    // yet. So before leaving, leave a note for the page that comes
-                    // back saying the picker was open; pickerReopenWanted() reads it on
-                    // mount and reopens. From the user's side the dialog persists
-                    // across a try, which is the behaviour that matters.
-                    rememberPickerOpen(true);
-                    switchToTheme(slug);
-                });
-
-            _preview(branch, previewHost, themeBySlug(themes, active), active);
 
             // CAPTURE phase, and stopPropagation on anything we take. The page
             // behind has its own TreeRenderer listening on document; without
@@ -267,15 +269,14 @@ function mountThemePickerButton(host, opts) {
                 if (ev.key === "Escape") {
                     ev.preventDefault(); ev.stopPropagation(); close(); return;
                 }
-                if (renderer.handleKeydown(ev)) {
+                if (ui.renderer.handleKeydown(ev)) {
                     ev.preventDefault(); ev.stopPropagation();
                 }
             };
             document.addEventListener("keydown", keyHandler, true);
 
             if (modal.open) modal.open();
-            treeHost.setAttribute("tabindex", "0");
-            if (treeHost.focus) treeHost.focus();
+            if (ui.treeHost.focus) ui.treeHost.focus();
         }
 
         btn.addEventListener("click", open);
