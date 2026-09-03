@@ -65,8 +65,11 @@ function themeTreeData(themes, active) {
                 segment: t.slug,
                 display: {
                     label: t.label || t.slug,
-                    badge: (t.slug === active) ? "ACTIVE" : "",
-                    note:  t.inspiration || "",
+                    // Nothing but the name in a row. The description and the in-use
+                    // marker both live in the content pane, which is what lets the
+                    // tree be a narrow column of names.
+                    badge: "",
+                    note:  "",
                     kind:  "theme"
                 },
                 children: []

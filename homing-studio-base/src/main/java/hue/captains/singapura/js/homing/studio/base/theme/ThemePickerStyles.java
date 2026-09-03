@@ -53,28 +53,56 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
     public record tp_body() implements CssClass<ThemePickerStyles> {
         @Override public String body() { return """
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             height: 100%;
             min-height: 0;
             """; }
     }
 
-    /** The preview strip — reactive: it follows the tree's selection. */
+    /**
+     * The content pane — everything about the SELECTED theme lives here, so the
+     * tree can stay a column of names. Master/detail: the left says which, the
+     * right says what.
+     */
     public record tp_preview() implements CssClass<ThemePickerStyles> {
         @Override public String body() { return """
-            flex: 0 0 auto;
-            border-top: 1px solid var(--color-border);
-            padding: var(--space-3) 14px;
-            background: var(--color-surface-recessed);
+            flex: 1 1 0;
+            min-width: 0;
+            overflow-y: auto;
+            padding: var(--space-4);
             """; }
     }
 
     public record tp_preview_name() implements CssClass<ThemePickerStyles> {
         @Override public String body() { return """
-            font-weight: 600;
-            font-size: 12px;
+            display: flex;
+            align-items: baseline;
+            gap: var(--space-2);
+            font-weight: 700;
+            font-size: 15px;
             color: var(--color-text-primary);
-            margin-bottom: 8px;
+            margin-bottom: var(--space-2);
+            """; }
+    }
+
+    /** Shown beside the name when the selected theme is the one in use. */
+    public record tp_current() implements CssClass<ThemePickerStyles> {
+        @Override public String body() { return """
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--color-accent);
+            """; }
+    }
+
+    /** The inspiration line, in the pane rather than crowding the row. */
+    public record tp_preview_note() implements CssClass<ThemePickerStyles> {
+        @Override public String body() { return """
+            font-size: 12px;
+            line-height: 1.5;
+            color: var(--color-text-muted);
+            margin-bottom: var(--space-4);
             """; }
     }
 
@@ -85,7 +113,7 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
             border-radius: var(--radius-sm);
             overflow: hidden;
             border: 1px solid var(--color-border);
-            height: 26px;
+            height: 34px;
             """; }
     }
 
@@ -111,37 +139,24 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
      */
     public record tp_tree_host() implements CssClass<ThemePickerStyles> {
         @Override public String body() { return """
-            flex: 1 1 auto;
+            /* Width = max(designed floor, longest entry) + fixed padding, said
+               declaratively: max-content sizes to the longest row, min-width is
+               the floor that keeps a short list from looking pinched, max-width
+               is the ceiling that stops one long name from eating the pane. No
+               measuring, no JS, no reflow pass. */
+            flex: 0 0 auto;
+            width: max-content;
+            min-width: 190px;
+            max-width: 300px;
             min-height: 0;
             overflow-y: auto;
-            padding: var(--space-2) 0;
+            border-right: 1px solid var(--color-border);
+            padding: var(--space-2) var(--space-3) var(--space-2) 0;
             color: var(--color-text-primary);
             /* The container takes focus so keys flow, but the SELECTED ROW is
                the visible focus indicator - TreeRenderer draws it. A ring round
                the whole tree as well reads as a mistake. */
             outline: none;
-            """; }
-    }
-
-    /**
-     * The active theme, marked by a class the row carries rather than a badge
-     * that would sit before the label and push every name out of line.
-     *
-     * <p>The marker itself rides in {@code ::after} — declared through
-     * {@link #pseudoState()} — so it costs the row no element and no layout: it
-     * appends itself at the far end, and {@code margin-left:auto} floats it
-     * right without disturbing anything to its left.</p>
-     */
-    public record tp_active() implements CssClass<ThemePickerStyles> {
-        @Override public String pseudoState() { return "::after"; }
-        @Override public String body() { return """
-            content: "ACTIVE";
-            margin-left: auto;
-            flex: 0 0 auto;
-            padding-left: var(--space-2);
-            font-size: 10px;
-            letter-spacing: 0.06em;
-            color: var(--color-accent);
             """; }
     }
 
@@ -179,7 +194,7 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
                 new tp_btn(), new tp_btn_label(),
                 new tp_tree_host(), new tp_inline(), new tp_inline_head(),
                 new tp_body(), new tp_preview(), new tp_preview_name(),
-                new tp_active(),
+                new tp_current(), new tp_preview_note(),
                 new tp_swatches(), new tp_sw()
         );
     }

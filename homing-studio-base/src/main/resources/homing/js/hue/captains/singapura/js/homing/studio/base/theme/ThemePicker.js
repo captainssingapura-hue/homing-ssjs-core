@@ -10,10 +10,12 @@
 // shared tree, which brings the keyboard model with it: ArrowUp/Down through
 // visible rows, ArrowRight/Left to fold a group, Enter to activate.
 //
-// Master/detail at picker scale. The tree carries a one-line inspiration per
-// theme — enough to choose from — and a reactive strip beneath shows the
-// palette of whatever is selected. The tree says what a theme IS; the strip
-// shows what it LOOKS LIKE, and neither has to clutter the other.
+// Master/detail, side by side. The tree is a column of NAMES ONLY, sized to
+// its content — max-content between a floor and a ceiling, so it is as wide as
+// it needs and no wider. Everything about the selected theme — the in-use
+// marker, the inspiration line, the palette — lives in the content pane on the
+// right. That division is what keeps the whole thing compact: a row carries one
+// string, so nothing competes for its width.
 //
 // Selecting only browses. Enter switches, which navigates - live theme swap is
 // not supported yet. A session-local flag carries "the picker was open" across
@@ -33,17 +35,41 @@ var _seq = 0;
 
 
 /**
- * The reactive sibling: a theme's name over its palette. Rebuilt on every
- * selection, which is cheap — a title and a handful of swatches.
+ * The content pane: everything about the SELECTED theme — its name, whether it
+ * is the one in use, what it was drawn from, and its palette.
+ *
+ * This is what lets the tree be a narrow column of names. A row that carries
+ * only its label needs no description column and no badge before the name, so
+ * nothing competes for the row's width and every name starts at the same x.
+ *
+ * Rebuilt on every selection, which is cheap — a heading, a line and a strip.
  */
-function _preview(branch, host, theme) {
+function _preview(branch, host, theme, activeSlug) {
     while (host.firstChild) host.removeChild(host.firstChild);
     if (!theme) return;
 
     var name = branch.createElement("pvn" + (++_seq), "div");
     css.addClass(name, tp_preview_name);
-    name.textContent = theme.label || theme.slug;
+    var mySeq = _seq;
+
+    var nameText = branch.createElement("pvnt" + mySeq, "span");
+    nameText.textContent = theme.label || theme.slug;
+    name.appendChild(nameText);
+
+    if (theme.slug === activeSlug) {
+        var chip = branch.createElement("pvc" + mySeq, "span");
+        css.addClass(chip, tp_current);
+        chip.textContent = "in use";
+        name.appendChild(chip);
+    }
     host.appendChild(name);
+
+    if (theme.inspiration) {
+        var note = branch.createElement("pvi" + mySeq, "div");
+        css.addClass(note, tp_preview_note);
+        note.textContent = theme.inspiration;
+        host.appendChild(note);
+    }
 
     var strip = branch.createElement("pvs" + _seq, "div");
     css.addClass(strip, tp_swatches);
@@ -74,15 +100,15 @@ function _buildTree(branch, container, previewHost, themes, active, onSwitch) {
         branch:      branch,
         container:   container,
         expandDepth: 2,
-        showBadge:   true,
-        // The inspiration line rides in the row. TreeRenderer gates this behind
-        // showNote, false by default — without it the note is filled and never
-        // drawn, which is a silent way to lose half the content.
-        showNote:    true,
+        // Neither. A row is its name and nothing else — the description and the
+        // in-use marker moved to the content pane, which is what keeps the tree
+        // narrow and every name starting at the same x.
+        showBadge:   false,
+        showNote:    false,
         showRoot:    false,
         onSelect:    function (sel) {
             var t = themeBySlug(themes, slugOfSelection(sel));
-            if (t) _preview(branch, previewHost, t);
+            if (t) _preview(branch, previewHost, t, active);
         },
         onActivate:  function (sel) {
             var slug = slugOfSelection(sel);
@@ -130,7 +156,7 @@ function mountThemePickerTree(host, opts) {
         var renderer = _buildTree(branch, treeHost, previewHost, themes, active,
             function (slug) { switchToTheme(slug); });
 
-        _preview(branch, previewHost, themeBySlug(themes, active) || themes[0]);
+        _preview(branch, previewHost, themeBySlug(themes, active) || themes[0], active);
 
         treeHost.setAttribute("tabindex", "0");
         treeHost.addEventListener("keydown", function (ev) {
@@ -205,10 +231,10 @@ function mountThemePickerButton(host, opts) {
             css.addClass(previewHost, tp_preview);
             body.appendChild(previewHost);
 
-            // Wide enough that the inspiration line reads rather than ellipsises -
-            // a note nobody can finish is worse than no note.
-            var w = 560;
-            var h = 470;
+            // Compact: the tree sizes itself, so this only has to leave the
+            // content pane enough room for a palette strip and two lines of prose.
+            var w = 520;
+            var h = 400;
             modal = new Modal({
                 container: document.body,
                 title:     "Theme",
@@ -231,7 +257,7 @@ function mountThemePickerButton(host, opts) {
                     switchToTheme(slug);
                 });
 
-            _preview(branch, previewHost, themeBySlug(themes, active));
+            _preview(branch, previewHost, themeBySlug(themes, active), active);
 
             // CAPTURE phase, and stopPropagation on anything we take. The page
             // behind has its own TreeRenderer listening on document; without
