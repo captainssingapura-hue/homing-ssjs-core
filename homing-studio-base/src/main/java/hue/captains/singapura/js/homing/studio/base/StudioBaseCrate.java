@@ -50,6 +50,8 @@ import hue.captains.singapura.js.homing.studio.base.theme.ThemesIntro;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemesIntroRenderer;
 import hue.captains.singapura.js.homing.studio.base.tracker.PlanAppHost;
 import hue.captains.singapura.js.homing.studio.base.tracker.PlanHostRenderer;
+import hue.captains.singapura.js.homing.studio.base.ui.MasterDetail;
+import hue.captains.singapura.js.homing.studio.base.ui.MasterDetailStyles;
 import hue.captains.singapura.js.homing.studio.base.ui.StudioElements;
 import hue.captains.singapura.js.homing.studio.base.ui.layout.ModalModule;
 import hue.captains.singapura.js.homing.studio.base.ui.layout.MultiTabPaneDragModule;
@@ -134,6 +136,8 @@ public final class StudioBaseCrate implements Crate {
                 CrateEntry.of(ThemePicker.INSTANCE),
                 CrateEntry.of(PlanAppHost.INSTANCE),
                 CrateEntry.of(PlanHostRenderer.INSTANCE),
+                CrateEntry.of(MasterDetailStyles.INSTANCE),
+                CrateEntry.of(MasterDetail.INSTANCE),
                 CrateEntry.of(StudioElements.INSTANCE),
                 CrateEntry.of(ModalModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
                 CrateEntry.of(FocusManagerModule.INSTANCE, StandardJsModuleType.PRIMITIVE),

@@ -52,24 +52,10 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
      */
     public record tp_body() implements CssClass<ThemePickerStyles> {
         @Override public String body() { return """
+            /* Just a full-height host - MasterDetail supplies the split itself. */
             display: flex;
-            flex-direction: row;
             height: 100%;
             min-height: 0;
-            """; }
-    }
-
-    /**
-     * The content pane — everything about the SELECTED theme lives here, so the
-     * tree can stay a column of names. Master/detail: the left says which, the
-     * right says what.
-     */
-    public record tp_preview() implements CssClass<ThemePickerStyles> {
-        @Override public String body() { return """
-            flex: 1 1 0;
-            min-width: 0;
-            overflow-y: auto;
-            padding: var(--space-4);
             """; }
     }
 
@@ -134,33 +120,6 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
     }
 
     /**
-     * The tree's container inside the modal. Modal owns the frame; this owns the
-     * breathing room and the scroll.
-     */
-    public record tp_tree_host() implements CssClass<ThemePickerStyles> {
-        @Override public String body() { return """
-            /* Width = max(designed floor, longest entry) + fixed padding, said
-               declaratively: max-content sizes to the longest row, min-width is
-               the floor that keeps a short list from looking pinched, max-width
-               is the ceiling that stops one long name from eating the pane. No
-               measuring, no JS, no reflow pass. */
-            flex: 0 0 auto;
-            width: max-content;
-            min-width: 190px;
-            max-width: 300px;
-            min-height: 0;
-            overflow-y: auto;
-            border-right: 1px solid var(--color-border);
-            padding: var(--space-2) var(--space-3) var(--space-2) 0;
-            color: var(--color-text-primary);
-            /* The container takes focus so keys flow, but the SELECTED ROW is
-               the visible focus indicator - TreeRenderer draws it. A ring round
-               the whole tree as well reads as a mistake. */
-            outline: none;
-            """; }
-    }
-
-    /**
      * Inline variant — the themes app hosts the tree in the page rather than a
      * modal, so it supplies the frame the modal would otherwise have given.
      */
@@ -192,9 +151,8 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
     public List<CssClass<ThemePickerStyles>> cssClasses() {
         return List.of(
                 new tp_btn(), new tp_btn_label(),
-                new tp_tree_host(), new tp_inline(), new tp_inline_head(),
-                new tp_body(), new tp_preview(), new tp_preview_name(),
-                new tp_current(), new tp_preview_note(),
+                new tp_body(), new tp_inline(), new tp_inline_head(),
+                new tp_preview_name(), new tp_current(), new tp_preview_note(),
                 new tp_swatches(), new tp_sw()
         );
     }

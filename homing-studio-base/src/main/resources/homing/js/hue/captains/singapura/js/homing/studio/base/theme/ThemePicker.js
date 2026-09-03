@@ -100,40 +100,34 @@ function _previewPane(branch, host, seq) {
  * host (to focus).
  */
 function _buildPanes(branch, wrap, themes, active, seq, onSwitch) {
-    var treeHost = branch.createElement("thost" + seq, "div");
-    css.addClass(treeHost, tp_tree_host);
-    treeHost.setAttribute("tabindex", "0");
-    wrap.appendChild(treeHost);
-
-    var paneHost = branch.createElement("pane" + seq, "div");
-    css.addClass(paneHost, tp_preview);
-    wrap.appendChild(paneHost);
-
-    var update = _previewPane(branch, paneHost, seq);
-
-    var renderer = new TreeRenderer({
+    // The same MasterDetail the catalogue listing uses. What differs is only
+    // what the body draws, which is this module's business and stays here.
+    var update = null;
+    var pair = mountMasterDetail({
         branch:      branch,
-        container:   treeHost,
+        host:        wrap,
+        data:        themeTreeData(themes, active),
         expandDepth: 2,
         // Neither. A row is its name and nothing else — the description and the
-        // in-use marker moved to the content pane, which is what keeps the tree
+        // in-use marker live in the content pane, which is what keeps the tree
         // narrow and every name starting at the same x.
         showBadge:   false,
         showNote:    false,
         showRoot:    false,
-        onSelect:    function (sel) {
+        onSelect:    function (bodyEl, sel) {
             var t = themeBySlug(themes, slugOfSelection(sel));
-            if (t) update(t, active);
+            if (t && update) update(t, active);
         },
         onActivate:  function (sel) {
             var slug = slugOfSelection(sel);
             if (slug) onSwitch(slug);
         }
     });
-    renderer.setData(themeTreeData(themes, active));
+
+    update = _previewPane(branch, pair.bodyEl, seq);
     update(themeBySlug(themes, active) || themes[0], active);
 
-    return { treeHost: treeHost, renderer: renderer };
+    return { treeHost: pair.navEl, renderer: pair.renderer };
 }
 
 /**

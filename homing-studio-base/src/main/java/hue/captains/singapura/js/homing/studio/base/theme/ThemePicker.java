@@ -6,7 +6,7 @@ import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
 import hue.captains.singapura.js.homing.core.js.DomOpsPartyModule;
-import hue.captains.singapura.js.homing.core.js.TreeRendererModule;
+import hue.captains.singapura.js.homing.studio.base.ui.MasterDetail;
 import hue.captains.singapura.js.homing.core.js.domOpsParty;
 import hue.captains.singapura.js.homing.server.HrefManager;
 import hue.captains.singapura.js.homing.studio.base.ui.layout.ModalModule;
@@ -64,16 +64,14 @@ public record ThemePicker() implements DomModule<ThemePicker> {
                         HrefManager.INSTANCE))
                 .add(new ModuleImports<>(List.of(new domOpsParty()),
                         DomOpsPartyModule.INSTANCE))
-                .add(new ModuleImports<>(List.of(new TreeRendererModule.TreeRenderer()),
-                        TreeRendererModule.INSTANCE))
+                .add(new ModuleImports<>(List.of(new MasterDetail.mountMasterDetail()),
+                        MasterDetail.INSTANCE))
                 .add(new ModuleImports<>(List.of(new ModalModule.Modal()),
                         ModalModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new ThemePickerStyles.tp_btn(),
                         new ThemePickerStyles.tp_btn_label(),
-                        new ThemePickerStyles.tp_tree_host(),
                         new ThemePickerStyles.tp_body(),
-                        new ThemePickerStyles.tp_preview(),
                         new ThemePickerStyles.tp_preview_name(),
                         new ThemePickerStyles.tp_current(),
                         new ThemePickerStyles.tp_preview_note(),

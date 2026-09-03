@@ -6,7 +6,7 @@ import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
 import hue.captains.singapura.js.homing.core.js.DomOpsPartyModule;
-import hue.captains.singapura.js.homing.core.js.TreeRendererModule;
+import hue.captains.singapura.js.homing.studio.base.ui.MasterDetail;
 import hue.captains.singapura.js.homing.core.js.domOpsParty;
 import hue.captains.singapura.js.homing.server.HrefManager;
 import hue.captains.singapura.js.homing.studio.base.css.StudioStyles;
@@ -45,8 +45,8 @@ public record CatalogueHostRenderer() implements DomModule<CatalogueHostRenderer
                 // renderer. The party comes with it: TreeRenderer mints every row
                 // through a branch handed in, so the rows join this page's
                 // ownership tree rather than the singleton's.
-                .add(new ModuleImports<>(List.of(new TreeRendererModule.TreeRenderer()),
-                        TreeRendererModule.INSTANCE))
+                .add(new ModuleImports<>(List.of(new MasterDetail.mountMasterDetail()),
+                        MasterDetail.INSTANCE))
                 .add(new ModuleImports<>(List.of(new domOpsParty()),
                         DomOpsPartyModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(
@@ -61,9 +61,6 @@ public record CatalogueHostRenderer() implements DomModule<CatalogueHostRenderer
                         new StudioStyles.st_title(),
                         new StudioStyles.st_subtitle(),
                         new StudioStyles.st_section(),
-                        new StudioStyles.st_split(),
-                        new StudioStyles.st_split_nav(),
-                        new StudioStyles.st_split_detail(),
                         new StudioStyles.st_loading(),
                         new StudioStyles.st_error()
                 ), StudioStyles.INSTANCE))
