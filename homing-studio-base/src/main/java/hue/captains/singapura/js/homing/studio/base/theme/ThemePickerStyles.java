@@ -124,6 +124,28 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
     }
 
     /**
+     * The active theme, marked by a class the row carries rather than a badge
+     * that would sit before the label and push every name out of line.
+     *
+     * <p>The marker itself rides in {@code ::after} — declared through
+     * {@link #pseudoState()} — so it costs the row no element and no layout: it
+     * appends itself at the far end, and {@code margin-left:auto} floats it
+     * right without disturbing anything to its left.</p>
+     */
+    public record tp_active() implements CssClass<ThemePickerStyles> {
+        @Override public String pseudoState() { return "::after"; }
+        @Override public String body() { return """
+            content: "ACTIVE";
+            margin-left: auto;
+            flex: 0 0 auto;
+            padding-left: var(--space-2);
+            font-size: 10px;
+            letter-spacing: 0.06em;
+            color: var(--color-accent);
+            """; }
+    }
+
+    /**
      * Inline variant — the themes app hosts the tree in the page rather than a
      * modal, so it supplies the frame the modal would otherwise have given.
      */
@@ -157,6 +179,7 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
                 new tp_btn(), new tp_btn_label(),
                 new tp_tree_host(), new tp_inline(), new tp_inline_head(),
                 new tp_body(), new tp_preview(), new tp_preview_name(),
+                new tp_active(),
                 new tp_swatches(), new tp_sw()
         );
     }

@@ -75,7 +75,9 @@ function themeTreeData(themes, active) {
         return {
             level:   "L1",
             segment: _slugify(name),
-            display: { label: name, badge: String(kids.length), note: "", kind: "group" },
+            // No count either — it told the reader nothing they could act on and
+            // competed with the names for attention.
+            display: { label: name, badge: "", note: "", kind: "group" },
             children: kids
         };
     });
