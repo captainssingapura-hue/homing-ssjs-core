@@ -47,6 +47,7 @@ public record HomingMapleBridge() implements Theme {
     @Override public String slug()  { return "maple-bridge"; }
     @Override public String label() { return "Maple Bridge"; }
     @Override public String group() { return "Nature"; }
+    @Override public String inspiration() { return "A Tang-dynasty nocturne, after Zhang Ji's 枫桥夜泊."; }
 
     /** Installs universal {@code pointer-events: none} + whitelist so the
      *  nocturne's moon receives hover-grow. Workspace-style apps opt out

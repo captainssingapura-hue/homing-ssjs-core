@@ -50,6 +50,16 @@ public record ThemePicker() implements DomModule<ThemePicker> {
     @Override
     public ImportsFor<ThemePicker> imports() {
         return ImportsFor.<ThemePicker>builder()
+                .add(new ModuleImports<>(List.of(
+                        new ThemePickerModel.activeThemeSlug(),
+                        new ThemePickerModel.fetchThemes(),
+                        new ThemePickerModel.themeBySlug(),
+                        new ThemePickerModel.themeTreeData(),
+                        new ThemePickerModel.slugOfSelection(),
+                        new ThemePickerModel.switchToTheme(),
+                        new ThemePickerModel.rememberPickerOpen(),
+                        new ThemePickerModel.pickerReopenWanted()
+                ), ThemePickerModel.INSTANCE))
                 .add(new ModuleImports<>(List.of(new HrefManager.HrefManagerInstance()),
                         HrefManager.INSTANCE))
                 .add(new ModuleImports<>(List.of(new domOpsParty()),
@@ -62,6 +72,11 @@ public record ThemePicker() implements DomModule<ThemePicker> {
                         new ThemePickerStyles.tp_btn(),
                         new ThemePickerStyles.tp_btn_label(),
                         new ThemePickerStyles.tp_tree_host(),
+                        new ThemePickerStyles.tp_body(),
+                        new ThemePickerStyles.tp_preview(),
+                        new ThemePickerStyles.tp_preview_name(),
+                        new ThemePickerStyles.tp_swatches(),
+                        new ThemePickerStyles.tp_sw(),
                         new ThemePickerStyles.tp_inline(),
                         new ThemePickerStyles.tp_inline_head()
                 ), ThemePickerStyles.INSTANCE))

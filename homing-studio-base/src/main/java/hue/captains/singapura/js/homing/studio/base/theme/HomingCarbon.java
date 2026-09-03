@@ -48,6 +48,7 @@ public record HomingCarbon() implements Theme {
     @Override public String slug()  { return "carbon"; }
     @Override public String label() { return "Carbon"; }
     @Override public String group() { return "Neutral"; }
+    @Override public String inspiration() { return "Neutral slate for long sessions, after LSEG Refinitiv Workspace."; }
 
     public record Vars() implements ThemeVariables<HomingCarbon> {
         public static final Vars INSTANCE = new Vars();

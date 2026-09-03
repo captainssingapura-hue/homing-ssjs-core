@@ -32,6 +32,7 @@ public record HomingDefault() implements Theme {
     @Override public String slug()  { return "default"; }
     @Override public String label() { return "Default"; }
     @Override public String group() { return "Neutral"; }
+    @Override public String inspiration() { return "The house identity — ships with studio-base, working out of the box."; }
 
     // -------------------------------------------------------------------
     // Vars — the variable values for this theme. Served at /theme-vars.

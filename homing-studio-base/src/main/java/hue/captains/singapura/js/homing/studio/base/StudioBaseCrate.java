@@ -43,6 +43,7 @@ import hue.captains.singapura.js.homing.studio.base.theme.HomingJazzDrumsBg;
 import hue.captains.singapura.js.homing.studio.base.theme.HomingMapleBridgeBg;
 import hue.captains.singapura.js.homing.studio.base.theme.HomingRetro90sBg;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemePicker;
+import hue.captains.singapura.js.homing.studio.base.theme.ThemePickerModel;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemePickerStyles;
 import hue.captains.singapura.js.homing.studio.base.theme.StudioVarsJsModule;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemesIntro;
@@ -129,6 +130,7 @@ public final class StudioBaseCrate implements Crate {
                 CrateEntry.of(ThemesIntro.INSTANCE),
                 CrateEntry.of(ThemesIntroRenderer.INSTANCE),
                 CrateEntry.of(ThemePickerStyles.INSTANCE),
+                CrateEntry.of(ThemePickerModel.INSTANCE),
                 CrateEntry.of(ThemePicker.INSTANCE),
                 CrateEntry.of(PlanAppHost.INSTANCE),
                 CrateEntry.of(PlanHostRenderer.INSTANCE),

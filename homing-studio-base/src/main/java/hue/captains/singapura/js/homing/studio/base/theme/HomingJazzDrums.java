@@ -53,6 +53,7 @@ public record HomingJazzDrums() implements Theme {
     @Override public boolean backdropInteractivity() { return true; }
     @Override public String label() { return "Jazz Drum Kit"; }
     @Override public String group() { return "Expressive"; }
+    @Override public String inspiration() { return "The first instrument theme — a playable drum kit as backdrop."; }
 
     /** Drum kit backdrop — the kit is the visible surface and the
      *  interactive surface at once. */

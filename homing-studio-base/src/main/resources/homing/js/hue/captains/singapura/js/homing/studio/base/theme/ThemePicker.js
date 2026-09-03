@@ -6,13 +6,19 @@
 //   mountThemePickerTree(host, opts)    the bare tree — the themes app
 //
 // Borrows rather than builds. The dialog is Modal, the same primitive the
-// workspace-control modal uses, so the two read as one product. The rows are
-// TreeRenderer, the framework's shared tree — which brings the keyboard model
-// with it: ArrowUp/Down through visible rows, ArrowRight/Left to expand and
-// fold a group, Enter to activate.
+// workspace-control modal uses. The rows are TreeRenderer, the framework's
+// shared tree, which brings the keyboard model with it: ArrowUp/Down through
+// visible rows, ArrowRight/Left to fold a group, Enter to activate.
 //
-// onSelect only browses; onActivate switches. Without that split, arrowing down
-// the list would reload the page on every keystroke.
+// Master/detail at picker scale. The tree carries a one-line inspiration per
+// theme — enough to choose from — and a reactive strip beneath shows the
+// palette of whatever is selected. The tree says what a theme IS; the strip
+// shows what it LOOKS LIKE, and neither has to clutter the other.
+//
+// Selecting only browses. Enter switches, which navigates - live theme swap is
+// not supported yet. A session-local flag carries "the picker was open" across
+// the reload, so the dialog is rebuilt on the far side and the user never has
+// to reopen it between tries.
 //
 // The framework's EsModuleWriter appends the import/export prologue from the
 // matching Java ThemePicker declaration — do not add import/export lines here.
@@ -25,110 +31,65 @@ const _treeOwner = Object.freeze({ toString: () => "themePickerTree" });
 
 var _seq = 0;
 
-/** Read the active theme from the current URL, via the sanctioned href API. */
-function _activeTheme() {
-    var url = HrefManagerInstance.current();
-    var q = url.indexOf("?");
-    if (q < 0) return null;
-    return new URLSearchParams(url.slice(q + 1)).get("theme");
-}
-
-function _slugify(s) {
-    return String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-+)|(-+$)/g, "");
-}
 
 /**
- * Shape the theme registry into the tree payload TreeRenderer consumes:
- * { level, segment, display: { label, badge, note, kind }, children }.
- *
- * Registry order decides both group order and order within a group, so the
- * server stays the single place that decides presentation order.
+ * The reactive sibling: a theme's name over its palette. Rebuilt on every
+ * selection, which is cheap — a title and a handful of swatches.
  */
-function _treeData(themes, active) {
-    var order = [];
-    var byName = {};
-    for (var i = 0; i < themes.length; i++) {
-        var t = themes[i];
-        var g = t.group || "Themes";
-        if (!byName[g]) { byName[g] = []; order.push(g); }
-        byName[g].push(t);
+function _preview(branch, host, theme) {
+    while (host.firstChild) host.removeChild(host.firstChild);
+    if (!theme) return;
+
+    var name = branch.createElement("pvn" + (++_seq), "div");
+    css.addClass(name, tp_preview_name);
+    name.textContent = theme.label || theme.slug;
+    host.appendChild(name);
+
+    var strip = branch.createElement("pvs" + _seq, "div");
+    css.addClass(strip, tp_swatches);
+
+    var palette = theme.palette || {};
+    var keys = Object.keys(palette);
+    for (var i = 0; i < keys.length; i++) {
+        var v = palette[keys[i]];
+        if (!v) continue;
+        var sw = branch.createElement("sw" + _seq + "_" + i, "div");
+        css.addClass(sw, tp_sw);
+        // setProperty, not a .style.x write — the route RFC 0044 sanctions for
+        // a value that is DATA. The typed class consumes it.
+        sw.style.setProperty("--tp-sw", v);
+        sw.setAttribute("title", keys[i] + ": " + v);
+        strip.appendChild(sw);
     }
-
-    var groups = order.map(function (name) {
-        var kids = byName[name].map(function (t) {
-            return {
-                level:   "L2",
-                segment: t.slug,
-                display: {
-                    label: t.label || t.slug,
-                    // The badge is the only mark the active theme needs — the
-                    // tree already draws selection, and a second highlight for
-                    // "current" would compete with it.
-                    badge: (t.slug === active) ? "ACTIVE" : "",
-                    note:  "",
-                    kind:  "theme"
-                },
-                children: []
-            };
-        });
-        return {
-            level:   "L1",
-            segment: _slugify(name),
-            display: { label: name, badge: String(kids.length), note: "", kind: "group" },
-            children: kids
-        };
-    });
-
-    return {
-        level:   "L0",
-        segment: "themes",
-        display: { label: "Themes", badge: "", note: "", kind: "root" },
-        children: groups
-    };
-}
-
-function _pick(slug) {
-    if (!slug) return;
-    HrefManagerInstance.navigate(HrefManagerInstance.withParam("theme", slug));
-}
-
-/** A leaf's slug is the last segment of its name-path. */
-function _slugOf(sel) {
-    if (!sel || sel.hasChildren) return null;
-    var np = sel.namePath || "";
-    var i = np.lastIndexOf("/");
-    return i < 0 ? np : np.slice(i + 1);
-}
-
-function _themes() {
-    return fetch("/themes").then(function (r) {
-        if (!r.ok) throw new Error("/themes HTTP " + r.status);
-        return r.json().then(function (j) {
-            // /themes answers an object with a themes array, not a bare array.
-            return (j && j.themes) ? j.themes : (Array.isArray(j) ? j : []);
-        });
-    });
+    host.appendChild(strip);
 }
 
 /**
- * Build the tree into `container`. Returns the renderer so the caller can
- * forward keydown — the host owns WHEN keys flow, the renderer owns what they
- * mean.
+ * Build the tree into `container`, with the preview wired to its selection.
+ * Returns the renderer so the caller can forward keydown — the host owns WHEN
+ * keys flow, the renderer owns what they mean.
  */
-function _buildTree(branch, container, themes, active) {
+function _buildTree(branch, container, previewHost, themes, active, onSwitch) {
     var renderer = new TreeRenderer({
         branch:      branch,
         container:   container,
-        data:        _treeData(themes, active),
-        // Groups open: ten themes in three groups all fit, and a picker that
-        // opens folded makes the reader work before it helps them.
         expandDepth: 2,
         showBadge:   true,
-        // The root is the word "Themes" above a list of themes.
+        // The inspiration line rides in the row. TreeRenderer gates this behind
+        // showNote, false by default — without it the note is filled and never
+        // drawn, which is a silent way to lose half the content.
+        showNote:    true,
         showRoot:    false,
-        onActivate:  function (sel) { _pick(_slugOf(sel)); }
+        onSelect:    function (sel) {
+            var t = themeBySlug(themes, slugOfSelection(sel));
+            if (t) _preview(branch, previewHost, t);
+        },
+        onActivate:  function (sel) {
+            var slug = slugOfSelection(sel);
+            if (slug) onSwitch(slug);
+        }
     });
-    renderer.setData(_treeData(themes, active));
+    renderer.setData(themeTreeData(themes, active));
     return renderer;
 }
 
@@ -143,7 +104,9 @@ function mountThemePickerTree(host, opts) {
     var mySeq = _seq;
     var boxed = !opts || opts.boxed !== false;
 
-    return _themes().then(function (themes) {
+    return fetchThemes().then(function (themes) {
+        var active = activeThemeSlug();
+
         var wrap = branch.createElement("wrap" + mySeq, "div");
         if (boxed) css.addClass(wrap, tp_inline);
 
@@ -154,17 +117,23 @@ function mountThemePickerTree(host, opts) {
             wrap.appendChild(h);
         }
 
-        var host2 = branch.createElement("thost" + mySeq, "div");
-        css.addClass(host2, tp_tree_host);
-        wrap.appendChild(host2);
+        var treeHost = branch.createElement("thost" + mySeq, "div");
+        css.addClass(treeHost, tp_tree_host);
+        wrap.appendChild(treeHost);
+
+        var previewHost = branch.createElement("pv" + mySeq, "div");
+        css.addClass(previewHost, tp_preview);
+        wrap.appendChild(previewHost);
+
         host.appendChild(wrap);
 
-        var renderer = _buildTree(branch, host2, themes, _activeTheme());
+        var renderer = _buildTree(branch, treeHost, previewHost, themes, active,
+            function (slug) { switchToTheme(slug); });
 
-        // Keys flow only while the pointer-independent focus is inside this
-        // tree, so an inline picker never steals the page's arrow keys.
-        host2.setAttribute("tabindex", "0");
-        host2.addEventListener("keydown", function (ev) {
+        _preview(branch, previewHost, themeBySlug(themes, active) || themes[0]);
+
+        treeHost.setAttribute("tabindex", "0");
+        treeHost.addEventListener("keydown", function (ev) {
             if (renderer.handleKeydown(ev)) ev.preventDefault();
         });
 
@@ -183,14 +152,10 @@ function mountThemePickerButton(host, opts) {
     branch.activate(_btnOwner);
     var mySeq = _seq;
 
-    return _themes().then(function (themes) {
+    return fetchThemes().then(function (themes) {
         if (!themes || themes.length < 2) return null;   // nothing to switch between
-        var active = _activeTheme();
-        var activeLabel = "";
-        for (var i = 0; i < themes.length; i++) {
-            if (themes[i].slug === active) activeLabel = themes[i].label || themes[i].slug;
-        }
-        if (!activeLabel) activeLabel = themes[0].label || themes[0].slug;
+        var active = activeThemeSlug();
+        if (!themeBySlug(themes, active)) active = themes[0].slug;
 
         var btn = branch.createElement("btn" + mySeq, "button");
         btn.type = "button";
@@ -203,7 +168,8 @@ function mountThemePickerButton(host, opts) {
         btn.appendChild(cap);
 
         var now = branch.createElement("now" + mySeq, "span");
-        now.textContent = activeLabel;
+        var activeTheme = themeBySlug(themes, active);
+        now.textContent = activeTheme ? (activeTheme.label || activeTheme.slug) : "";
         btn.appendChild(now);
 
         var caret = branch.createElement("bcrt" + mySeq, "span");
@@ -215,6 +181,9 @@ function mountThemePickerButton(host, opts) {
         var keyHandler = null;
 
         function close() {
+            // A deliberate close clears the flag: the user is done trying themes,
+            // so the next page must NOT reopen. Only a theme switch sets it.
+            rememberPickerOpen(false);
             if (keyHandler) { document.removeEventListener("keydown", keyHandler, true); keyHandler = null; }
             if (modal && modal.destroy) { try { modal.destroy(); } catch (e) {} }
             modal = null;
@@ -224,15 +193,26 @@ function mountThemePickerButton(host, opts) {
         function open() {
             if (modal) { close(); return; }
 
-            var content = branch.createElement("mhost" + mySeq + "_" + (++_seq), "div");
-            css.addClass(content, tp_tree_host);
+            var body = branch.createElement("mbody" + mySeq + "_" + (++_seq), "div");
+            css.addClass(body, tp_body);
+            var bodySeq = _seq;
 
-            var w = 320;
-            var h = 420;
+            var treeHost = branch.createElement("mtree" + bodySeq, "div");
+            css.addClass(treeHost, tp_tree_host);
+            body.appendChild(treeHost);
+
+            var previewHost = branch.createElement("mpv" + bodySeq, "div");
+            css.addClass(previewHost, tp_preview);
+            body.appendChild(previewHost);
+
+            // Wide enough that the inspiration line reads rather than ellipsises -
+            // a note nobody can finish is worse than no note.
+            var w = 560;
+            var h = 470;
             modal = new Modal({
                 container: document.body,
                 title:     "Theme",
-                content:   content,
+                content:   body,
                 x:         Math.max(20, (window.innerWidth  - w) / 2),
                 y:         Math.max(20, (window.innerHeight - h) / 3),
                 width:     w,
@@ -240,7 +220,18 @@ function mountThemePickerButton(host, opts) {
                 onClose:   function () { modal = null; }
             });
 
-            var renderer = _buildTree(branch, content, themes, active);
+            var renderer = _buildTree(branch, treeHost, previewHost, themes, active,
+                function (slug) {
+                    // Switching still navigates — live theme swap is not supported
+                    // yet. So before leaving, leave a note for the page that comes
+                    // back saying the picker was open; pickerReopenWanted() reads it on
+                    // mount and reopens. From the user's side the dialog persists
+                    // across a try, which is the behaviour that matters.
+                    rememberPickerOpen(true);
+                    switchToTheme(slug);
+                });
+
+            _preview(branch, previewHost, themeBySlug(themes, active));
 
             // CAPTURE phase, and stopPropagation on anything we take. The page
             // behind has its own TreeRenderer listening on document; without
@@ -257,12 +248,17 @@ function mountThemePickerButton(host, opts) {
             document.addEventListener("keydown", keyHandler, true);
 
             if (modal.open) modal.open();
-            content.setAttribute("tabindex", "0");
-            if (content.focus) content.focus();
+            treeHost.setAttribute("tabindex", "0");
+            if (treeHost.focus) treeHost.focus();
         }
 
         btn.addEventListener("click", open);
         host.appendChild(btn);
+
+        // We arrived here from a theme switch with the picker open, so put it
+        // back. The user sees a dialog that stayed put across the reload; what
+        // actually happened is that it was rebuilt on the far side.
+        if (pickerReopenWanted()) open();
 
         return { branch: branch, open: open, close: close,
                  dissolve: function () { close(); branch.dissolve(); } };
