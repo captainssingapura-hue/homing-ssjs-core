@@ -17,13 +17,14 @@
 // That division is what keeps the whole thing compact: a row carries one string,
 // so nothing competes for its width.
 //
-// BUILT ONCE, REUSED. Closing the dialog detaches its content; it does not
-// destroy it. The branch owns those elements for the life of the mount, and
-// reopening hands the same body to a new Modal. This is not an optimisation —
-// DomOpsParty names elements and REFUSES a duplicate name with a RangeError, so
-// a second build on the same branch would ask TreeRenderer for "tn0" again and
-// throw mid-render, leaving an empty panel. Detached-but-alive is the model's
-// own answer, and the relation grid keeps its unplaced cells the same way.
+// A FRESH BRANCH PER OPEN, dissolved on close. DomOpsParty names elements and
+// refuses a duplicate name, and TreeRenderer numbers its rows from zero on every
+// setData — so a second build on the SAME branch asks for "tn0" twice and throws
+// mid-render, leaving an empty panel. Reusing one detached body avoided that but
+// bought a worse problem: a dialog that is closed but alive still answers
+// keystrokes, and the page's own tree never sees them. A branch per open, named
+// by the clock so no two can collide, keeps each dialog's namespace and its
+// lifetime to itself.
 //
 // Selecting only browses. Enter switches, which navigates — live theme swap is
 // not supported yet. A session-local flag carries "the picker was open" across
@@ -38,8 +39,10 @@
 // collectible while its elements were still on the page.
 const _btnOwner  = Object.freeze({ toString: () => "themePickerButton" });
 const _treeOwner = Object.freeze({ toString: () => "themePickerTree" });
+const _dialogOwner = Object.freeze({ toString: () => "themePickerDialog" });
 
 var _seq = 0;
+var _dlgSeq = 0;
 
 /**
  * Build the content pane once and return an UPDATE function.
@@ -206,39 +209,51 @@ function mountThemePickerButton(host, opts) {
         caret.setAttribute("aria-hidden", "true");
         btn.appendChild(caret);
 
-        var modal = null;
-        var keyHandler = null;
-        var ui = null;          // built on first open, reused for every later one
+        var modal  = null;
+        var keys   = null;   // the capture-phase keydown listener, while open
+        var dialog = null;   // { branch, renderer, treeHost }, while open
+
+        // Everything the open dialog owns, released in one place. Both close
+        // paths run this — the ones we drive (Escape, the trigger button) and
+        // the one Modal drives (its own ✕). Missing the second is what left a
+        // dead listener eating the page's arrow keys after the dialog was gone.
+        function teardown() {
+            if (keys) { document.removeEventListener("keydown", keys, true); keys = null; }
+            if (modal && modal.destroy) { try { modal.destroy(); } catch (e) {} }
+            modal = null;
+            if (dialog) { try { dialog.branch.dissolve(); } catch (e) {} dialog = null; }
+        }
 
         function close() {
             // A deliberate close clears the flag: the user is done trying themes,
             // so the next page must NOT reopen. Only a theme switch sets it.
             rememberPickerOpen(false);
-            if (keyHandler) { document.removeEventListener("keydown", keyHandler, true); keyHandler = null; }
-            // destroy() removes the Modal's own root, taking our body with it —
-            // detached, but alive and still owned by the branch, ready to be
-            // handed to the next Modal.
-            if (modal && modal.destroy) { try { modal.destroy(); } catch (e) {} }
-            modal = null;
+            teardown();
             if (btn.focus) btn.focus();
         }
 
         function open() {
             if (modal) { close(); return; }
 
-            if (!ui) {
-                var body = branch.createElement("mbody" + mySeq, "div");
-                css.addClass(body, tp_body);
-                var panes = _buildPanes(branch, body, themes, active, mySeq,
-                    function (slug) {
-                        // Switching still navigates — live theme swap is not
-                        // supported yet. Leave a note for the page that comes
-                        // back, which reopens the dialog on the far side.
-                        rememberPickerOpen(true);
-                        switchToTheme(slug);
-                    });
-                ui = { body: body, treeHost: panes.treeHost, renderer: panes.renderer };
-            }
+            // Named by the clock, and by a counter for the two opens that land in
+            // the same millisecond. createBranch refuses a name already taken at
+            // this level, and dissolving a child does not always give the name
+            // back — so never ask for the same one twice.
+            var pb = branch.createBranch("tpDlg" + Date.now() + "_" + (++_dlgSeq));
+            pb.activate(_dialogOwner);
+
+            var body = pb.createElement("mbody", "div");
+            css.addClass(body, tp_body);
+
+            var panes = _buildPanes(pb, body, themes, active, mySeq,
+                function (slug) {
+                    // Switching still navigates — live theme swap is not
+                    // supported yet. Leave a note for the page that comes
+                    // back, which reopens the dialog on the far side.
+                    rememberPickerOpen(true);
+                    switchToTheme(slug);
+                });
+            dialog = { branch: pb, renderer: panes.renderer, treeHost: panes.treeHost };
 
             // Compact: the tree sizes itself, so this only has to leave the
             // content pane enough room for a palette strip and two lines of prose.
@@ -247,30 +262,36 @@ function mountThemePickerButton(host, opts) {
             modal = new Modal({
                 container: document.body,
                 title:     "Theme",
-                content:   ui.body,
+                content:   body,
                 x:         Math.max(20, (window.innerWidth  - w) / 2),
                 y:         Math.max(20, (window.innerHeight - h) / 3),
                 width:     w,
                 height:    h,
-                onClose:   function () { modal = null; }
+                // Modal's own ✕ ends the dialog as surely as Escape does, so it
+                // gets the same teardown. It must not be `modal = null` alone:
+                // that leaves the branch mounted and the keydown listener
+                // installed, and the listener answers for a dialog the user has
+                // already dismissed.
+                onClose:   close
             });
 
             // CAPTURE phase, and stopPropagation on anything we take. The page
             // behind has its own TreeRenderer listening on document; without
             // this, one ArrowDown walks both trees and the page navigates under
-            // the open dialog. A modal owns the keyboard while it is up.
-            keyHandler = function (ev) {
+            // the open dialog. A modal owns the keyboard while it is up — and
+            // only while it is up, which is teardown's job.
+            keys = function (ev) {
                 if (ev.key === "Escape") {
                     ev.preventDefault(); ev.stopPropagation(); close(); return;
                 }
-                if (ui.renderer.handleKeydown(ev)) {
+                if (dialog && dialog.renderer.handleKeydown(ev)) {
                     ev.preventDefault(); ev.stopPropagation();
                 }
             };
-            document.addEventListener("keydown", keyHandler, true);
+            document.addEventListener("keydown", keys, true);
 
             if (modal.open) modal.open();
-            if (ui.treeHost.focus) ui.treeHost.focus();
+            if (dialog.treeHost.focus) dialog.treeHost.focus();
         }
 
         btn.addEventListener("click", open);
