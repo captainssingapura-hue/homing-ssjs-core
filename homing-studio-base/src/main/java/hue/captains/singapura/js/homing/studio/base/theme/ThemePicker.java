@@ -6,35 +6,43 @@ import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
 import hue.captains.singapura.js.homing.core.js.DomOpsPartyModule;
+import hue.captains.singapura.js.homing.core.js.TreeRendererModule;
 import hue.captains.singapura.js.homing.core.js.domOpsParty;
 import hue.captains.singapura.js.homing.server.HrefManager;
+import hue.captains.singapura.js.homing.studio.base.ui.layout.ModalModule;
 
 import java.util.List;
 
 /**
- * The theme picker — a grouped tree of the registry's themes, offered in two
+ * The theme picker — the registry's themes as a grouped tree, offered in two
  * shapes from one implementation: {@code mountThemePickerButton} for the chrome
- * (a header trigger that opens the tree in a modal) and
- * {@code mountThemePickerTree} for a host that already has room for it, which
- * is how the themes app uses it.
+ * (a header trigger that opens the tree in a {@code Modal}) and
+ * {@code mountThemePickerTree} for a host that already has room for it, which is
+ * how the themes app takes it.
  *
- * <p><b>Why this module exists.</b> The picker used to be a Java text block in
- * {@code AppHtmlGetAction} — 178 lines, of which 110 were CSS and JavaScript
- * wearing a Java costume. Being string content, it was invisible to every rule
- * the framework has: it would have failed {@code use-dom-ops-party},
- * {@code no-dom-access}, {@code no-inline-style} and {@code no-literal-color}
- * on the day it was written, and nothing could say so. A component belongs in a
+ * <p><b>It borrows rather than builds.</b> The dialog is {@code Modal}, the same
+ * primitive the workspace-control modal uses, so the two look like the same
+ * product. The rows are {@code TreeRenderer}, the framework's shared tree — which
+ * brings the keyboard model with it: ArrowUp/Down move through visible rows,
+ * ArrowRight/Left expand and fold a group, Enter activates. A hand-rolled tree
+ * had none of that, and would have had to grow it.</p>
+ *
+ * <p>The split between {@code onSelect} and {@code onActivate} matters here.
+ * Arrowing through the list only browses; Enter or a double-click switches the
+ * theme. Without that distinction, arrowing down the list would reload the page
+ * on every keystroke.</p>
+ *
+ * <p>Earlier this component was a 178-line Java text block in
+ * {@code AppHtmlGetAction} — 110 of those lines CSS and JavaScript wearing a Java
+ * costume, invisible to every rule the framework has. A component belongs in a
  * module where conformance can see it.</p>
- *
- * <p>It owns its own {@link ThemePickerStyles} group and its own DomOpsParty
- * branch, so it can be mounted anywhere without its host lending it either.</p>
  */
 public record ThemePicker() implements DomModule<ThemePicker> {
 
-    /** Header trigger + modal. Used by the studio chrome. */
+    /** Header trigger plus modal. Used by the studio chrome. */
     public record mountThemePickerButton() implements Exportable._Constant<ThemePicker> {}
 
-    /** The bare tree, for a host with its own room for it. Used by the themes app. */
+    /** The bare tree, for a host with its own room. Used by the themes app. */
     public record mountThemePickerTree() implements Exportable._Constant<ThemePicker> {}
 
     public static final ThemePicker INSTANCE = new ThemePicker();
@@ -46,27 +54,16 @@ public record ThemePicker() implements DomModule<ThemePicker> {
                         HrefManager.INSTANCE))
                 .add(new ModuleImports<>(List.of(new domOpsParty()),
                         DomOpsPartyModule.INSTANCE))
+                .add(new ModuleImports<>(List.of(new TreeRendererModule.TreeRenderer()),
+                        TreeRendererModule.INSTANCE))
+                .add(new ModuleImports<>(List.of(new ModalModule.Modal()),
+                        ModalModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new ThemePickerStyles.tp_btn(),
                         new ThemePickerStyles.tp_btn_label(),
-                        new ThemePickerStyles.tp_scrim(),
-                        new ThemePickerStyles.tp_scrim_open(),
-                        new ThemePickerStyles.tp_panel(),
-                        new ThemePickerStyles.tp_head(),
-                        new ThemePickerStyles.tp_close(),
-                        new ThemePickerStyles.tp_tree(),
-                        new ThemePickerStyles.tp_grp_head(),
-                        new ThemePickerStyles.tp_count(),
-                        new ThemePickerStyles.tp_caret(),
-                        new ThemePickerStyles.tp_shut(),
-                        new ThemePickerStyles.tp_kids(),
-                        new ThemePickerStyles.tp_kids_shut(),
-                        new ThemePickerStyles.tp_caret_shut(),
-                        new ThemePickerStyles.tp_thm(),
-                        new ThemePickerStyles.tp_dot(),
-                        new ThemePickerStyles.tp_on(),
-                        new ThemePickerStyles.tp_dot_on(),
-                        new ThemePickerStyles.tp_inline()
+                        new ThemePickerStyles.tp_tree_host(),
+                        new ThemePickerStyles.tp_inline(),
+                        new ThemePickerStyles.tp_inline_head()
                 ), ThemePickerStyles.INSTANCE))
                 .build();
     }

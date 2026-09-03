@@ -277,7 +277,17 @@ public class AppHtmlGetAction
                         // explicit, not auto-derived.
                         const theme = %s;
                         const locale = %s || navigator.language;
-                        if (theme) document.documentElement.style.colorScheme = theme;
+                        // color-scheme is NOT set from the theme slug. It used to be
+                        // — `style.colorScheme = theme` — which assigned "carbon" or
+                        // "forest" to a property that accepts only
+                        // normal | light | dark | light dark. Every theme was therefore
+                        // setting an invalid value, the browser fell back to light, and
+                        // the inline style outranked the `:root { color-scheme: … }` each
+                        // theme declares in its own Globals CSS. Harmless while every
+                        // theme was light-primary; visible the moment one was not, as a
+                        // bright scrollbar down a near-black page.
+                        //
+                        // The theme owns this. Nothing to do here.
                         let moduleUrl = "%s" + "&locale=" + encodeURIComponent(locale);
                         if (theme) moduleUrl += "&theme=" + encodeURIComponent(theme);
                         %s
