@@ -53,6 +53,7 @@ public record StudioVarsJsModule()
     public record COLOR_TEXT_ON_INVERTED_MUTED()   implements Exportable._Constant<StudioVarsJsModule> {}
     public record COLOR_TEXT_LINK()                implements Exportable._Constant<StudioVarsJsModule> {}
     public record COLOR_TEXT_LINK_HOVER()          implements Exportable._Constant<StudioVarsJsModule> {}
+    public record COLOR_TEXT_TITLE()               implements Exportable._Constant<StudioVarsJsModule> {}
 
     // ── Border ───────────────────────────────────────────────────────
     public record COLOR_BORDER()          implements Exportable._Constant<StudioVarsJsModule> {}
@@ -91,6 +92,7 @@ public record StudioVarsJsModule()
                 new COLOR_TEXT_PRIMARY(), new COLOR_TEXT_MUTED(),
                 new COLOR_TEXT_ON_INVERTED(), new COLOR_TEXT_ON_INVERTED_MUTED(),
                 new COLOR_TEXT_LINK(), new COLOR_TEXT_LINK_HOVER(),
+                new COLOR_TEXT_TITLE(),
                 new COLOR_BORDER(), new COLOR_BORDER_EMPHASIS(),
                 new COLOR_ACCENT(), new COLOR_ACCENT_EMPHASIS(), new COLOR_ACCENT_ON(),
                 new SPACE_1(), new SPACE_2(), new SPACE_3(), new SPACE_4(),

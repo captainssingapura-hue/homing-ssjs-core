@@ -73,6 +73,12 @@ public record HomingCarbon() implements Theme {
                 Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED,       "#E4E4E4"),
                 Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED_MUTED, "#9A9A9A"),
 
+                // The title is NOT the link colour. A link blue is lifted so it
+                // reads at 13px on a dark ground; the same value at 44px is a
+                // shout, and the reference has no large coloured text at all.
+                // Near-white, so the heading reads through size and weight.
+                Map.entry(StudioVars.COLOR_TEXT_TITLE,             "#EDEDED"),
+
                 // Blue is for LINKS only — "you can go here". In the reference
                 // this is the colour of a row identifier and of nothing else.
                 Map.entry(StudioVars.COLOR_TEXT_LINK,              "#4C9AFF"),

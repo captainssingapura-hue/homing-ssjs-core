@@ -59,6 +59,7 @@ public record HomingDefault() implements Theme {
                 Map.entry(StudioVars.COLOR_TEXT_MUTED,             "#64748B"),
                 Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED,       "#FFFFFF"),
                 Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED_MUTED, "#CADCFC"),
+                Map.entry(StudioVars.COLOR_TEXT_TITLE,              "#1E2761"),   // title := link, unchanged
                 Map.entry(StudioVars.COLOR_TEXT_LINK,              "#1E2761"),
                 Map.entry(StudioVars.COLOR_TEXT_LINK_HOVER,        "#C8921E"),
 
@@ -371,6 +372,7 @@ public record HomingDefault() implements Theme {
                         --color-text-muted:              #94A3B8;
                         --color-text-on-inverted:        #E2E8F0;
                         --color-text-on-inverted-muted:  #B8C9F2;
+                        --color-text-title:               #8FA3D8;
                         --color-text-link:               #8FA3D8;   /* lifted navy */
                         --color-text-link-hover:         #E0A833;   /* lifted amber-dk */
 

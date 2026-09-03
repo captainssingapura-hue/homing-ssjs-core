@@ -273,6 +273,7 @@ public record HomingJazzDrums() implements Theme {
                 Map.entry(StudioVars.COLOR_TEXT_MUTED,             "#B89968"),  // warm tan
                 Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED,       "#2A1414"),  // chamber-red on brass
                 Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED_MUTED, "#5A3030"),
+                Map.entry(StudioVars.COLOR_TEXT_TITLE,              "#C7A876"),   // title := link, unchanged
                 Map.entry(StudioVars.COLOR_TEXT_LINK,              "#C7A876"),  // brass
                 Map.entry(StudioVars.COLOR_TEXT_LINK_HOVER,        "#E8D2A0"),  // brass-hi
 
@@ -428,6 +429,7 @@ public record HomingJazzDrums() implements Theme {
                         --color-text-muted:              #98785A;
                         --color-text-on-inverted:        #1A0808;
                         --color-text-on-inverted-muted:  #4A2828;
+                        --color-text-title:               #C7A876;
                         --color-text-link:               #C7A876;
                         --color-text-link-hover:         #EFE4C8;
 

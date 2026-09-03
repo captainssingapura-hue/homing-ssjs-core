@@ -45,6 +45,7 @@ public record HomingForest() implements Theme {
                 Map.entry(StudioVars.COLOR_TEXT_MUTED,             "#5C7561"),  // muted moss
                 Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED,       "#FFFFFF"),
                 Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED_MUTED, "#C8E6C9"),  // pale moss
+                Map.entry(StudioVars.COLOR_TEXT_TITLE,              "#2D5F3F"),   // title := link, unchanged
                 Map.entry(StudioVars.COLOR_TEXT_LINK,              "#2D5F3F"),  // forest green
                 Map.entry(StudioVars.COLOR_TEXT_LINK_HOVER,        "#A6781E"),  // dark honey
 
@@ -93,6 +94,7 @@ public record HomingForest() implements Theme {
                         --color-text-muted:              #94B59C;
                         --color-text-on-inverted:        #DDEBD8;
                         --color-text-on-inverted-muted:  #A8D5B0;
+                        --color-text-title:               #7BAB85;
                         --color-text-link:               #7BAB85;   /* lifted sage */
                         --color-text-link-hover:         #D4A04C;   /* lifted honey */
 

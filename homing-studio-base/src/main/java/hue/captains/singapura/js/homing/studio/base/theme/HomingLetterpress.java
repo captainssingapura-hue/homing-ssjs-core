@@ -55,6 +55,7 @@ public record HomingLetterpress() implements Theme {
                 Map.entry(StudioVars.COLOR_TEXT_MUTED,             "#7A6F60"),  // warm grey
                 Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED,       "#EFE7D6"),  // cream
                 Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED_MUTED, "#A89F8B"),  // muted cream
+                Map.entry(StudioVars.COLOR_TEXT_TITLE,              "#B33A20"),   // title := link, unchanged
                 Map.entry(StudioVars.COLOR_TEXT_LINK,              "#B33A20"),  // brick red
                 Map.entry(StudioVars.COLOR_TEXT_LINK_HOVER,        "#8C2814"),  // darker brick
 
@@ -109,6 +110,7 @@ public record HomingLetterpress() implements Theme {
                         --color-text-muted:              #A89F8B;
                         --color-text-on-inverted:        #EFE7D6;
                         --color-text-on-inverted-muted:  #A89F8B;
+                        --color-text-title:               #D85A3E;
                         --color-text-link:               #D85A3E;
                         --color-text-link-hover:         #EFE7D6;
 

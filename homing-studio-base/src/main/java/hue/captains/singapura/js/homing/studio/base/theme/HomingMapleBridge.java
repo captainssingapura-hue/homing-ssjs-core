@@ -163,6 +163,7 @@ public record HomingMapleBridge() implements Theme {
                 Map.entry(StudioVars.COLOR_TEXT_MUTED,             "#5A5040"),
                 Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED,       "#FFF5DC"),  // dawn moon
                 Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED_MUTED, "#C0A878"),
+                Map.entry(StudioVars.COLOR_TEXT_TITLE,              "#8A6A3A"),   // title := link, unchanged
                 Map.entry(StudioVars.COLOR_TEXT_LINK,              "#8A6A3A"),  // amber window
                 Map.entry(StudioVars.COLOR_TEXT_LINK_HOVER,        "#4A5466"),  // mountain-near
 
@@ -212,6 +213,7 @@ public record HomingMapleBridge() implements Theme {
                         --color-text-muted:              #7A89A0;
                         --color-text-on-inverted:        #BCC7D6;   /* mist */
                         --color-text-on-inverted-muted:  #7A89A0;
+                        --color-text-title:               #F5E3B0;
                         --color-text-link:               #F5E3B0;   /* moon */
                         --color-text-link-hover:         #F0DCA8;
 
