@@ -14,6 +14,14 @@
 // last resolved position into the new view (total: some cell is always the
 // cursor while any cell exists). Base changes re-resolve without resetting.
 //
+// The resolved answer also carries revealIJ — WHERE THE VIEWPORT SHOULD
+// FOLLOW, or null for "don't move". It is the intent's own answer rather
+// than a derivation from the cursor: a plain move reveals the cursor, a
+// shift-extend reveals the range's FOCUS (the edge Excel chases), and
+// Ctrl+A or a view remap reveal nothing — neither is a place the user
+// asked to be taken. The layout does the scrolling; this class still
+// never touches DOM.
+//
 //   new GridSelection({ maps, onPaint, onCursorMoved, onSelectionChanged });
 // =============================================================================
 
@@ -32,6 +40,7 @@ class GridSelection {
         this._ranges = [];          // [{ anchor: {pk, column}, focus: {pk, column} }]
 
         // Resolver memos: the clamp fallback + the change-detection baselines.
+        this._reveal = null;        // 'cursor' | 'focus' | null — this op's follow
         this._lastCursorIJ = null;  // { i, j } of the last successful resolve
         this._lastFired = { cursor: "null", selection: "[]" };
     }
@@ -42,6 +51,7 @@ class GridSelection {
     setCursor(pk, column) {
         this._cursor = { pk: pk, column: column };
         this._ranges = [];
+        this._reveal = "cursor";
         return this.recompute();
     }
 
@@ -54,6 +64,7 @@ class GridSelection {
         } else {
             this._ranges[this._ranges.length - 1].focus = { pk: pk, column: column };
         }
+        this._reveal = "focus";
         return this.recompute();
     }
 
@@ -65,6 +76,7 @@ class GridSelection {
         }
         this._ranges.push({ anchor: { pk: pk, column: column }, focus: { pk: pk, column: column } });
         this._cursor = { pk: pk, column: column };
+        this._reveal = "cursor";
         return this.recompute();
     }
 
@@ -114,6 +126,12 @@ class GridSelection {
     recompute() {
         var m = this._maps, resolved = this._resolve(m);
         this._lastCursorIJ = resolved.cursorIJ || this._lastCursorIJ;
+        // The follow target, consumed here: an intent asks once, and a bare
+        // recompute — a remap, a base change — asks for nothing.
+        var want = this._reveal; this._reveal = null;
+        resolved.revealIJ = (want === "focus")  ? (resolved.focusIJ || resolved.cursorIJ)
+                          : (want === "cursor") ? resolved.cursorIJ
+                          : null;
         if (this._cbPaint) this._cbPaint(resolved);
         var cursorKey = JSON.stringify(this._cursor);
         var selKey = JSON.stringify(resolved.ranges);
@@ -131,7 +149,7 @@ class GridSelection {
     _resolve(m) {
         if (!m.rows() || !m.cols()) {
             this._cursor = null;
-            return { cursorIJ: null, cells: [], ranges: [] };
+            return { cursorIJ: null, focusIJ: null, cells: [], ranges: [] };
         }
         var at = this._cursor ? m.locate(this._cursor.pk, this._cursor.column) : null;
         if (!at) {
@@ -141,7 +159,7 @@ class GridSelection {
             var id = m.resolve(at.i, at.j);
             this._cursor = { pk: id.pk, column: id.column };   // identity self-heal
         }
-        var cells = [], seen = new Set(), ranges = [];
+        var cells = [], seen = new Set(), ranges = [], focusIJ = null;
         var mark = function (i, j) {
             var k = i + "," + j;
             if (!seen.has(k)) { seen.add(k); cells.push({ i: i, j: j }); }
@@ -152,11 +170,12 @@ class GridSelection {
             if (!a || !f) return false;                        // a corner left the view
             for (var i = Math.min(a.i, f.i); i <= Math.max(a.i, f.i); i++)
                 for (var j = Math.min(a.j, f.j); j <= Math.max(a.j, f.j); j++) mark(i, j);
+            focusIJ = f;                                       // the extend edge
             ranges.push({ anchor: r.anchor, focus: r.focus });
             return true;
         });
         mark(at.i, at.j);
-        return { cursorIJ: at, cells: cells, ranges: ranges };
+        return { cursorIJ: at, focusIJ: focusIJ, cells: cells, ranges: ranges };
     }
 
     // ── read access ─────────────────────────────────────────────────────────

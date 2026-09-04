@@ -26,6 +26,7 @@ public interface RelationGridContract {
     String cursor();                                       // { pk, column } JSON, or null pre-boot
     String selection();                                    // the range list, identity-anchored per D5
     void   selectCell(GridKey pk, ColumnName column);      // programmatic shallow cursor
+    void   revealCursor();                                 // scroll the cursor into view (least movement)
 
     // ─── Editing (Phase 5) ───────────────────────────────────────────────
     void beginEditAtCursor();

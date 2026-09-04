@@ -16,7 +16,9 @@
 //   });
 //
 // Surface: render + view commands (D7: deferred while editing) + the
-// rAF-batched direct path + selection + single-cell deep edit + bulk ops
+// rAF-batched direct path + selection (which the viewport FOLLOWS: a
+// keyboard move scrolls the cursor into view, least movement, under any
+// sticky header — see revealCursor) + single-cell deep edit + bulk ops
 // (raw-value TSV copy, delete by PK set, Delete-clears) + the VIRTUAL bulk
 // edit session (EffectiveType-gated value replacement, buffer + caret, live
 // preview, instantaneous types for game grids — the adapter is the move
@@ -271,9 +273,21 @@ class RelationGrid {
         else                         this._selection.setCursor(id.pk, id.column);
     }
 
-    /** Programmatic shallow cursor (the contract's selectCell). */
+    /** Programmatic shallow cursor (the contract's selectCell). The follow is
+     *  UNCONDITIONAL here: a caller that moves the cursor by hand meant to go
+     *  there, whereas the paint-time follow waits for the keyboard to be in
+     *  the grid — which a programmatic move has no reason to be. */
     selectCell(pk, column) {
         this._selection.setCursor(pk, column);
+        return this.revealCursor();
+    }
+
+    /** Scroll whatever contains the grid until the cursor shows — least
+     *  movement, sticky header accounted for. A no-op when it already does. */
+    revealCursor() {
+        var c = this._selection.cursorId();
+        var at = c ? this._maps.locate(c.pk, c.column) : null;
+        if (at) this._layout.revealSlot(at.i, at.j);
         return this;
     }
 

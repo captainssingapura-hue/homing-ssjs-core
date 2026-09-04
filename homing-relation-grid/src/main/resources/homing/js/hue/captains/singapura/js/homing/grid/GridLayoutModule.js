@@ -9,6 +9,10 @@
 // branch; render() rebuilds the slot matrix and the facade re-places content
 // afterwards (one appendChild per cell — b.2i, state preserved).
 //
+// It also owns the VIEWPORT FOLLOW: the selection says which slot to reveal,
+// this class does the scrolling, because the scrollport is DOM and the
+// selection is forbidden to touch it.
+//
 // Like MultiTabPane / SplitPane, this primitive uses raw DOM internally (no
 // DomOpsParty) so it stays portable; it is declared PRIMITIVE in the crate.
 // Styling is an injected stylesheet with theme tokens only (the MTP pattern).
@@ -93,6 +97,60 @@ function _hgrEnsureStyles() {
     document.head.appendChild(s);
 }
 
+// ── the viewport follow ──────────────────────────────────────────────────
+// The keyboard moves the cursor; the scrollport has to move with it, or the
+// cursor walks out of the visible band and the grid looks dead. Native
+// scrollIntoView({block:'nearest'}) has exactly the right SEMANTICS — least
+// movement, and none at all when the slot already shows — but it knows
+// nothing about the sticky header, so an upward move parks the cursor
+// underneath the band. Hence the same arithmetic done here, one inset wiser.
+
+/** The least delta that brings [er] inside the port. A slot TALLER than the
+ *  port aligns to its top rather than its bottom: seeing where you are beats
+ *  seeing where you end. */
+function _hgrDelta(er, top, bottom, left, right) {
+    var dy = 0, dx = 0;
+    if (er.top < top)            dy = er.top - top;
+    else if (er.bottom > bottom) dy = Math.min(er.bottom - bottom, er.top - top);
+    if (er.left < left)          dx = er.left - left;
+    else if (er.right > right)   dx = Math.min(er.right - right, er.left - left);
+    return { dy: dy, dx: dx };
+}
+
+/** Does this element actually scroll? Overflowing content is not enough —
+ *  overflow:visible spills without scrolling. Where no computed style is to
+ *  be had, the overflow measurement stands on its own. */
+function _hgrScrolls(el) {
+    if (!(el.scrollHeight > el.clientHeight || el.scrollWidth > el.clientWidth)) return false;
+    var cs = (typeof window !== "undefined" && window.getComputedStyle)
+           ? window.getComputedStyle(el) : null;
+    if (!cs) return true;
+    return /auto|scroll|overlay/.test(
+        (cs.overflowY || "") + " " + (cs.overflowX || "") + " " + (cs.overflow || ""));
+}
+
+/** Scroll one element scrollport the minimum. clientTop/clientLeft step over
+ *  the border, and clientWidth/clientHeight already exclude the scrollbars. */
+function _hgrRevealIn(scroller, el, topInset) {
+    var sr = scroller.getBoundingClientRect();
+    var top  = sr.top  + (scroller.clientTop  || 0);
+    var left = sr.left + (scroller.clientLeft || 0);
+    var d = _hgrDelta(el.getBoundingClientRect(),
+                      top + topInset, top + scroller.clientHeight,
+                      left,           left + scroller.clientWidth);
+    if (d.dy) scroller.scrollTop  += d.dy;
+    if (d.dx) scroller.scrollLeft += d.dx;
+}
+
+/** …and the window, the scrollport of last resort. */
+function _hgrRevealInWindow(el, topInset) {
+    if (typeof window === "undefined" || !window.scrollBy) return;
+    var w = window.innerWidth || 0, h = window.innerHeight || 0;
+    if (!w || !h) return;
+    var d = _hgrDelta(el.getBoundingClientRect(), topInset, h, 0, w);
+    if (d.dy || d.dx) window.scrollBy(d.dx, d.dy);
+}
+
 class GridLayout {
 
     constructor(opts) {
@@ -124,8 +182,11 @@ class GridLayout {
         // to mint, nothing to wire gestures onto, nothing for a reader to
         // announce. (Minesweeper used to need a CSS trick for this.)
         this._showHead = opts.showHeader !== false;
+        // Held, not re-read off the class list: the follow needs to know
+        // whether the band overlaps the top of the scrollport.
+        this._stickyHead = this._showHead && opts.stickyHeader !== false;
         if (this._showHead) {
-            if (opts.stickyHeader !== false) _hgrAddClass(this._table, "hgr-sticky-head");
+            if (this._stickyHead) _hgrAddClass(this._table, "hgr-sticky-head");
             this._thead = document.createElement("thead");
             this._headerRow = document.createElement("tr");
             this._thead.appendChild(this._headerRow);
@@ -211,6 +272,11 @@ class GridLayout {
                      ? this.slotAt(resolved.cursorIJ.i, resolved.cursorIJ.j) : null;
         if (cursorTd) _hgrAddClass(cursorTd, "hgr-cursor");
         this._painted = { cursorTd: cursorTd, selTds: selTds };
+        // The viewport follows the intent's OWN target — the cursor for a
+        // move, the range's focus for an extend, nothing for a remap — and
+        // only while the keyboard is actually here.
+        if (resolved.revealIJ && this._hasKeyboard())
+            this.revealSlot(resolved.revealIJ.i, resolved.revealIJ.j);
         return this;
     }
 
@@ -240,6 +306,49 @@ class GridLayout {
         else _hgrRemoveClass(this._table, "hgr-fixed");
         return this;
     }
+    /**
+     * Bring a slot into view, moving as little as possible — the viewport's
+     * half of a keyboard move. Every scrollable ancestor takes its turn,
+     * innermost outwards, and then the window. The sticky header's height
+     * comes off the top edge of the FIRST scrollport only, since that is the
+     * one position:sticky sticks to; further out, the band scrolls away with
+     * the table and occludes nothing.
+     *
+     * Public and unguarded, so a downstream that moves the cursor
+     * programmatically can demand the follow.
+     */
+    revealSlot(i, j) {
+        var el = this.slotAt(i, j);
+        if (!el || !el.getBoundingClientRect) return this;
+        // HEIGHT only, deliberately. position:sticky sits on the th CELLS, not
+        // on the thead, so the thead's rect reports its un-stuck origin — its
+        // top is wrong the moment the body scrolls, while its height is the
+        // band's height either way. Never reach for .bottom here.
+        var inset = 0;
+        if (this._stickyHead && this._thead && this._thead.getBoundingClientRect)
+            inset = this._thead.getBoundingClientRect().height || 0;
+        var node = el.parentNode;
+        while (node && node !== document.body && node !== document.documentElement) {
+            if (node.getBoundingClientRect && _hgrScrolls(node)) {
+                _hgrRevealIn(node, el, inset);
+                inset = 0;                        // claimed by the innermost port
+            }
+            node = node.parentNode;
+        }
+        _hgrRevealInWindow(el, inset);
+        return this;
+    }
+
+    /** Is the keyboard actually here? The follow exists to serve it, and a
+     *  grid nobody is typing into has no business moving the page under
+     *  someone. An open editor counts — its input lives in a slot. */
+    _hasKeyboard() {
+        var a = document.activeElement;
+        if (!a || a === document.body) return false;
+        return a === this._table
+            || !!(this._table.contains && this._table.contains(a));
+    }
+
     /** The focusable table element — the keyboard attaches here. */
     el() { return this._table; }
 
