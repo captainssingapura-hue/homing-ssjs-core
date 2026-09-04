@@ -71,6 +71,11 @@ function _draw(root, data, brand) {
         + "your choice sticks across navigation.";
     main.appendChild(subtitle);
 
+    // The shared picker, same component the chrome uses - so the two cannot
+    // drift. The swatch list below stays as the palette PREVIEW; this is the
+    // control.
+    mountThemePickerTree(main, { heading: "Switch theme" });
+
     var themes = (data && data.themes) || [];
     var currentSlug = _currentThemeSlug();
     var rows = themes.map(function (t) {

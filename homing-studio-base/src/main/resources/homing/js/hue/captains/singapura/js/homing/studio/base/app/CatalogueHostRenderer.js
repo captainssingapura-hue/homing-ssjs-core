@@ -134,24 +134,6 @@ function _mountListingTree(parent, data) {
     var branch = domOpsParty.createBranch("catalogueListing");
     branch.activate(_catalogueListingOwner);
 
-    // Master/detail, card FIRST: the selected entry reads before the list rather
-    // than after it, and takes the smaller of the two shares - the golden ratio,
-    // by grow factor, so it divides the space left after the gap.
-    //
-    // The summaries used to sit in the rows and ellipsise to nothing while still
-    // taking the whole width - doing neither job.
-    var split = branch.createElement("split", "div");
-    css.addClass(split, st_split);
-    parent.appendChild(split);
-
-    var detail = branch.createElement("detail", "div");
-    css.addClass(detail, st_split_detail);
-    split.appendChild(detail);
-
-    var nav = branch.createElement("nav", "div");
-    css.addClass(nav, st_split_nav);
-    split.appendChild(nav);
-
     // A row's namePath is relative to THIS catalogue, so the authentic URL is the
     // server-computed base with it appended. The renderer still constructs no
     // URLs of its own - it joins two strings the server decided.
@@ -160,43 +142,47 @@ function _mountListingTree(parent, data) {
         return namePath ? base + "/" + namePath : base;
     };
 
-    var hint = branch.createElement("hint", "div");
-    css.addClass(hint, st_subtitle);
-    hint.textContent = "Select an entry to see it here.";
-    detail.appendChild(hint);
-
-    // The card IS the selected row, drawn larger - the same Card the grid drew,
-    // so bringing the grid back stays a question of how many are rendered rather
-    // than of what a card is.
-    var showCard = function (sel) {
-        detail.replaceChildren(Card({
-            href:    urlFor(sel.namePath),
-            title:   sel.label || "",
-            summary: sel.summary || "",
-            badge:   sel.category || "",
-            link:    sel.hasChildren ? "Browse →" : "Open →"
-        }));
-    };
-
-    var renderer = new TreeRenderer({
+    // Nav LEFT, content right - the same MasterDetail the theme picker uses, so
+    // the two surfaces cannot drift again. This split used to put the card first
+    // and divide by the golden ratio, which was a reasonable answer to not
+    // knowing how wide a tree wanted to be. md_nav sizes to its content, so the
+    // question no longer arises and the ordinary pattern is available: a table of
+    // contents beside what it points at.
+    var pair = mountMasterDetail({
         branch:      branch,
-        container:   nav,
+        host:        parent,
         data:        data.tree,
         // 0 = exactly what the cards showed: the immediate children, nothing
         // more. The rest of the subtree is one click away, which is the whole
         // difference between a tile and a tree.
         expandDepth: 0,
-        // The badge rides in the row; the summary belongs to the card now.
+        // The badge rides in the row; the summary belongs to the card.
         showBadge:   true,
         // The page IS this catalogue, so its own row would repeat the title.
         showRoot:    false,
         hrefForPath: function (path, namePath) { return urlFor(namePath); },
-        onSelect:    showCard,
+        // The card IS the selected row, drawn larger - the same Card the grid
+        // drew, so bringing the grid back stays a question of how many are
+        // rendered rather than of what a card is.
+        onSelect:    function (bodyEl, sel) {
+            bodyEl.replaceChildren(Card({
+                href:    urlFor(sel.namePath),
+                title:   sel.label || "",
+                summary: sel.summary || "",
+                badge:   sel.category || "",
+                link:    sel.hasChildren ? "Browse →" : "Open →"
+            }));
+        },
         onActivate:  function (sel) { HrefManagerInstance.navigate(urlFor(sel.namePath)); }
     });
 
+    var hint = branch.createElement("hint", "div");
+    css.addClass(hint, st_subtitle);
+    hint.textContent = "Select an entry to see it here.";
+    pair.bodyEl.appendChild(hint);
+
     // The page owns WHEN keys flow; the renderer owns what they mean.
     document.addEventListener("keydown", function (ev) {
-        if (renderer && renderer.handleKeydown(ev)) ev.preventDefault();
+        if (pair.renderer && pair.renderer.handleKeydown(ev)) ev.preventDefault();
     });
 }

@@ -28,6 +28,8 @@ public record HomingForbiddenCity() implements Theme {
 
     @Override public String slug()  { return "forbidden-city"; }
     @Override public String label() { return "Forbidden City"; }
+    @Override public String group() { return "Expressive"; }
+    @Override public String inspiration() { return "Imperial palace — vermilion walls, gold roofs, parchment."; }
 
     public record Vars() implements ThemeVariables<HomingForbiddenCity> {
         public static final Vars INSTANCE = new Vars();
@@ -47,6 +49,7 @@ public record HomingForbiddenCity() implements Theme {
                 Map.entry(StudioVars.COLOR_TEXT_MUTED,             "#7A5A3E"),  // tea brown
                 Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED,       "#F5E8D3"),  // cream
                 Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED_MUTED, "#D4B896"),  // muted cream
+                Map.entry(StudioVars.COLOR_TEXT_TITLE,              "#7A1F1A"),   // title := link, unchanged
                 Map.entry(StudioVars.COLOR_TEXT_LINK,              "#7A1F1A"),  // vermilion
                 Map.entry(StudioVars.COLOR_TEXT_LINK_HOVER,        "#A03028"),  // brighter red
 
@@ -96,6 +99,7 @@ public record HomingForbiddenCity() implements Theme {
                         --color-text-muted:              #B89878;
                         --color-text-on-inverted:        #F5E8D3;
                         --color-text-on-inverted-muted:  #D4B896;
+                        --color-text-title:               #E8B85C;
                         --color-text-link:               #E8B85C;   /* lifted gold */
                         --color-text-link-hover:         #FFD700;   /* bright gold */
 

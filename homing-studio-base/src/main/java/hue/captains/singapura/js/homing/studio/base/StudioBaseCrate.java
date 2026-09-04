@@ -42,11 +42,16 @@ import hue.captains.singapura.js.homing.studio.base.table.TableViewerRenderer;
 import hue.captains.singapura.js.homing.studio.base.theme.HomingJazzDrumsBg;
 import hue.captains.singapura.js.homing.studio.base.theme.HomingMapleBridgeBg;
 import hue.captains.singapura.js.homing.studio.base.theme.HomingRetro90sBg;
+import hue.captains.singapura.js.homing.studio.base.theme.ThemePicker;
+import hue.captains.singapura.js.homing.studio.base.theme.ThemePickerModel;
+import hue.captains.singapura.js.homing.studio.base.theme.ThemePickerStyles;
 import hue.captains.singapura.js.homing.studio.base.theme.StudioVarsJsModule;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemesIntro;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemesIntroRenderer;
 import hue.captains.singapura.js.homing.studio.base.tracker.PlanAppHost;
 import hue.captains.singapura.js.homing.studio.base.tracker.PlanHostRenderer;
+import hue.captains.singapura.js.homing.studio.base.ui.MasterDetail;
+import hue.captains.singapura.js.homing.studio.base.ui.MasterDetailStyles;
 import hue.captains.singapura.js.homing.studio.base.ui.StudioElements;
 import hue.captains.singapura.js.homing.studio.base.ui.layout.ModalModule;
 import hue.captains.singapura.js.homing.studio.base.ui.layout.MultiTabPaneDragModule;
@@ -126,8 +131,13 @@ public final class StudioBaseCrate implements Crate {
                 CrateEntry.of(StudioVarsJsModule.INSTANCE),
                 CrateEntry.of(ThemesIntro.INSTANCE),
                 CrateEntry.of(ThemesIntroRenderer.INSTANCE),
+                CrateEntry.of(ThemePickerStyles.INSTANCE),
+                CrateEntry.of(ThemePickerModel.INSTANCE),
+                CrateEntry.of(ThemePicker.INSTANCE),
                 CrateEntry.of(PlanAppHost.INSTANCE),
                 CrateEntry.of(PlanHostRenderer.INSTANCE),
+                CrateEntry.of(MasterDetailStyles.INSTANCE),
+                CrateEntry.of(MasterDetail.INSTANCE),
                 CrateEntry.of(StudioElements.INSTANCE),
                 CrateEntry.of(ModalModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
                 CrateEntry.of(FocusManagerModule.INSTANCE, StandardJsModuleType.PRIMITIVE),

@@ -26,6 +26,8 @@ public record HomingBauhaus() implements Theme {
 
     @Override public String slug()  { return "bauhaus"; }
     @Override public String label() { return "Bauhaus"; }
+    @Override public String group() { return "Expressive"; }
+    @Override public String inspiration() { return "Austere modernist primaries — Bauhaus yellow, Itten blue, black."; }
 
     public record Vars() implements ThemeVariables<HomingBauhaus> {
         public static final Vars INSTANCE = new Vars();
@@ -45,6 +47,7 @@ public record HomingBauhaus() implements Theme {
                 Map.entry(StudioVars.COLOR_TEXT_MUTED,             "#666666"),
                 Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED,       "#FFFFFF"),
                 Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED_MUTED, "#CCCCCC"),
+                Map.entry(StudioVars.COLOR_TEXT_TITLE,              "#1F2D85"),   // title := link, unchanged
                 Map.entry(StudioVars.COLOR_TEXT_LINK,              "#1F2D85"),  // Itten blue
                 Map.entry(StudioVars.COLOR_TEXT_LINK_HOVER,        "#C9252D"),  // Bauhaus red
 
@@ -93,6 +96,7 @@ public record HomingBauhaus() implements Theme {
                         --color-text-muted:              #999999;
                         --color-text-on-inverted:        #FFFFFF;
                         --color-text-on-inverted-muted:  #C7CDEB;
+                        --color-text-title:               #FFD500;
                         --color-text-link:               #FFD500;   /* yellow links pop on ink */
                         --color-text-link-hover:         #C9252D;
 

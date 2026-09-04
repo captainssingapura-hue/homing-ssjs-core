@@ -62,6 +62,8 @@ public record HomingRetro90s() implements Theme {
      *  out via {@link AppModule#acceptsBackdropInteractivity()}. */
     @Override public boolean backdropInteractivity() { return true; }
     @Override public String label() { return "Retro 90s"; }
+    @Override public String group() { return "Expressive"; }
+    @Override public String inspiration() { return "Windows-95 trading terminal — desktop teal and VGA blue."; }
 
     /** Win95 desktop backdrop — rendered as inline DOM so the iconic icons
      *  (My Computer, My Documents, Network Neighborhood, Recycle Bin)
@@ -171,6 +173,7 @@ public record HomingRetro90s() implements Theme {
                 Map.entry(StudioVars.COLOR_TEXT_MUTED,             "#55FFFF"),  // bright cyan — labels
                 Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED,       "#000000"),  // black on grey
                 Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED_MUTED, "#800000"),  // dark red — session badge
+                Map.entry(StudioVars.COLOR_TEXT_TITLE,              "#FFFF55"),   // title := link, unchanged
                 Map.entry(StudioVars.COLOR_TEXT_LINK,              "#FFFF55"),  // bright amber
                 Map.entry(StudioVars.COLOR_TEXT_LINK_HOVER,        "#FFFFFF"),
 
@@ -244,6 +247,7 @@ public record HomingRetro90s() implements Theme {
                         --color-text-muted:              #55FFFF;
                         --color-text-on-inverted:        #FFFFFF;
                         --color-text-on-inverted-muted:  #FF5555;
+                        --color-text-title:               #FFFF55;
                         --color-text-link:               #FFFF55;
                         --color-text-link-hover:         #FFFFFF;
 

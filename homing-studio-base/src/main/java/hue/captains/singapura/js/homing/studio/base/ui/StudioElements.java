@@ -6,6 +6,7 @@ import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
 import hue.captains.singapura.js.homing.server.HrefManager;
+import hue.captains.singapura.js.homing.studio.base.theme.ThemePicker;
 import hue.captains.singapura.js.homing.studio.base.css.StudioStyles;
 
 import java.util.List;
@@ -64,6 +65,8 @@ public record StudioElements() implements DomModule<StudioElements> {
                 // AppLink, but StudioElements doesn't navigate to any specific app
                 // — it just sets href on whatever URL the consumer passes. Import
                 // explicitly so the JS body can use HrefManagerInstance / href.
+                .add(new ModuleImports<>(List.of(new ThemePicker.mountThemePickerButton()),
+                        ThemePicker.INSTANCE))
                 .add(new ModuleImports<>(List.of(new HrefManager.HrefManagerInstance()),
                         HrefManager.INSTANCE))
                 .add(new ModuleImports<>(List.of(

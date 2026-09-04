@@ -38,6 +38,23 @@ public interface Theme extends StatelessFunctionalObject {
     default String label() { return slug(); }
 
     /**
+     * Family this theme belongs to, used to group the picker. A flat list of
+     * themes stops being choosable somewhere around eight; the group is what
+     * lets the picker be a tree. Defaults so no existing theme is broken by
+     * the addition.
+     */
+    default String group() { return "Themes"; }
+
+    /**
+     * One line on where this theme comes from — shown beside its name in the
+     * picker. A palette is easier to choose from when it says what it is
+     * trying to be; a list of ten names is not.
+     *
+     * <p>Concise on purpose: a row, not a paragraph.</p>
+     */
+    default String inspiration() { return ""; }
+
+    /**
      * Optional atmospheric backdrop — a typed {@link SvgRef} pointing at an
      * SVG asset that the framework renders as <i>inline DOM</i> behind the
      * studio chrome, on every page, when this theme is active.

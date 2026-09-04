@@ -27,6 +27,7 @@ public final class StudioThemeRegistry implements ThemeRegistry {
     @Override public List<Theme> themes() {
         return List.of(
                 HomingDefault.INSTANCE,
+                HomingCarbon.INSTANCE,
                 HomingForest.INSTANCE,
                 HomingSunset.INSTANCE,
                 HomingBauhaus.INSTANCE,
@@ -41,6 +42,7 @@ public final class StudioThemeRegistry implements ThemeRegistry {
     @Override public List<ThemeVariables<?>> variables() {
         return List.of(
                 HomingDefault.Vars.INSTANCE,
+                HomingCarbon.Vars.INSTANCE,
                 HomingForest.Vars.INSTANCE,
                 HomingSunset.Vars.INSTANCE,
                 HomingBauhaus.Vars.INSTANCE,
@@ -55,6 +57,7 @@ public final class StudioThemeRegistry implements ThemeRegistry {
     @Override public List<ThemeGlobals<?>> globals() {
         return List.of(
                 HomingDefault.Globals.INSTANCE,
+                HomingCarbon.Globals.INSTANCE,
                 HomingForest.Globals.INSTANCE,
                 HomingSunset.Globals.INSTANCE,
                 HomingBauhaus.Globals.INSTANCE,

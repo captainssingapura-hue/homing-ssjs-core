@@ -37,6 +37,12 @@ public final class StudioVars {
     public static final CssVar COLOR_TEXT_LINK               = new CssVar("--color-text-link");
     public static final CssVar COLOR_TEXT_LINK_HOVER         = new CssVar("--color-text-link-hover");
 
+    /** The page title. Separate from the link colour it used to borrow: a title
+     *  is not a link, and the two only agreed by accident while every theme was
+     *  light-primary. On a dark ground a link colour is lifted for legibility at
+     *  13px, which at 44px is a shout. */
+    public static final CssVar COLOR_TEXT_TITLE              = new CssVar("--color-text-title");
+
     // Border roles
     public static final CssVar COLOR_BORDER          = new CssVar("--color-border");
     public static final CssVar COLOR_BORDER_EMPHASIS = new CssVar("--color-border-emphasis");
@@ -66,6 +72,7 @@ public final class StudioVars {
             COLOR_SURFACE, COLOR_SURFACE_RAISED, COLOR_SURFACE_RECESSED, COLOR_SURFACE_INVERTED,
             COLOR_TEXT_PRIMARY, COLOR_TEXT_MUTED, COLOR_TEXT_ON_INVERTED, COLOR_TEXT_ON_INVERTED_MUTED,
             COLOR_TEXT_LINK, COLOR_TEXT_LINK_HOVER,
+            COLOR_TEXT_TITLE,
             COLOR_BORDER, COLOR_BORDER_EMPHASIS,
             COLOR_ACCENT, COLOR_ACCENT_EMPHASIS, COLOR_ACCENT_ON,
             SPACE_1, SPACE_2, SPACE_3, SPACE_4, SPACE_5, SPACE_6, SPACE_7, SPACE_8,

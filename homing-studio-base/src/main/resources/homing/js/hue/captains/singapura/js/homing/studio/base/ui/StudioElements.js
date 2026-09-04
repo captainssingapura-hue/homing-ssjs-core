@@ -118,17 +118,15 @@ function Header(props) {
     }
     bar.appendChild(trail);
 
-    // Theme-picker slot — server-rendered placeholder (AppHtmlGetAction's
-    // renderThemePicker) lives at document.getElementById("__theme_picker_slot__").
-    // We reparent it into this header bar so the picker shares the sticky
-    // band's inverted background, sits flush against the right edge, and
-    // sticks together with the header on scroll. If the slot is missing
-    // (registry has 0 or 1 themes → server emitted nothing) we no-op.
-    var pickerSlot = document.getElementById("__theme_picker_slot__");
-    if (pickerSlot) {
-        pickerSlot.style.display = "flex";   // server set display:none to hide pre-paint
-        bar.appendChild(pickerSlot);
-    }
+    // Theme picker. Mounts its own trigger straight into this bar, so it shares
+    // the sticky band's inverted background and sticks with the header on
+    // scroll. It fetches /themes itself and resolves to null when the registry
+    // holds fewer than two, so there is nothing to co-ordinate here.
+    //
+    // This used to reparent a server-rendered slot whose markup, CSS and script
+    // were a 178-line Java text block. The component now lives in ThemePicker,
+    // where conformance can see it.
+    mountThemePickerButton(bar, {});
 
     return bar;
 }

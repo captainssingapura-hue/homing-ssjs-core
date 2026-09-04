@@ -24,6 +24,8 @@ public record HomingSunset() implements Theme {
 
     @Override public String slug()  { return "sunset"; }
     @Override public String label() { return "Sunset"; }
+    @Override public String group() { return "Nature"; }
+    @Override public String inspiration() { return "Warm coral and terracotta — a dusk palette."; }
 
     public record Vars() implements ThemeVariables<HomingSunset> {
         public static final Vars INSTANCE = new Vars();
@@ -44,6 +46,7 @@ public record HomingSunset() implements Theme {
                 Map.entry(StudioVars.COLOR_TEXT_MUTED,             "#8B6F4E"),  // muted sand
                 Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED,       "#FFFFFF"),
                 Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED_MUTED, "#FFD4A8"),  // peach
+                Map.entry(StudioVars.COLOR_TEXT_TITLE,              "#B85450"),   // title := link, unchanged
                 Map.entry(StudioVars.COLOR_TEXT_LINK,              "#B85450"),  // terracotta
                 Map.entry(StudioVars.COLOR_TEXT_LINK_HOVER,        "#D2691E"),  // burnt orange
 
@@ -92,6 +95,7 @@ public record HomingSunset() implements Theme {
                         --color-text-muted:              #C9A78B;
                         --color-text-on-inverted:        #FFE4D1;
                         --color-text-on-inverted-muted:  #FFB67A;
+                        --color-text-title:               #E89580;
                         --color-text-link:               #E89580;   /* lifted terracotta */
                         --color-text-link-hover:         #FF8C42;   /* lifted sunset orange */
 

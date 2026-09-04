@@ -148,7 +148,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             font-family: "Georgia", serif;
             font-size: 44px;
             font-weight: 700;
-            color: var(--color-text-link);
+            color: var(--color-text-title, var(--color-text-link));
             margin: 0 0 12px 0;
             line-height: 1.1;
             letter-spacing: -0.5px;
@@ -173,53 +173,8 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
 
-    /**
-     * RFC 0053 — the catalogue listing's master/detail split: a compact tree on
-     * the left, the selected entry's card on the right.
-     *
-     * <p>No media query. The studio has none anywhere and sets no viewport meta,
-     * so the narrow-screen stacking is a deliberate follow-up with its own RFC
-     * rather than something to half-introduce here.</p>
-     */
-    public record st_split() implements CssClass<StudioStyles> {
-        @Override public String body() { return """
-            display: flex;
-            gap: 28px;
-            align-items: flex-start;
-            margin-top: 40px;
-            """;
-        }
-    }
 
-    /**
-     * The tree column — the LARGER share. Grow factors rather than a percentage,
-     * so the golden ratio divides the space that actually remains after the gap
-     * instead of the container the gap comes out of.
-     *
-     * <p>{@code min-width:0} so its rows may ellipsise rather than push the column
-     * wider — without it a long RFC title would win the argument with the ratio.</p>
-     */
-    public record st_split_nav() implements CssClass<StudioStyles> {
-        @Override public String body() { return """
-            flex: 1.618 1 0;
-            min-width: 0;
-            """;
-        }
-    }
 
-    /**
-     * The detail column — the SMALLER share, and first, so the card reads before
-     * the list rather than after it. Sticky, so it follows a long tree down.
-     */
-    public record st_split_detail() implements CssClass<StudioStyles> {
-        @Override public String body() { return """
-            flex: 1 1 0;
-            min-width: 0;
-            position: sticky;
-            top: 24px;
-            """;
-        }
-    }
     public record st_section_title() implements CssClass<StudioStyles> {
         @Override public String body() { return """
             font-family: "Georgia", serif;
@@ -1094,7 +1049,6 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
                 new st_breadcrumbs(), new st_crumb(), new st_crumb_sep(),
                 new st_main(), new st_kicker(), new st_title(), new st_subtitle(),
                 new st_section(), new st_section_title(),
-                new st_split(), new st_split_nav(), new st_split_detail(),
                 new st_grid(),
                 new st_list(), new st_list_item(), new st_list_item_marker(),
                 new st_list_item_body(), new st_list_item_label(), new st_list_item_desc(),
