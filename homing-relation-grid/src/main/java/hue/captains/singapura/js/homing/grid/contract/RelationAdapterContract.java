@@ -24,6 +24,21 @@ public interface RelationAdapterContract {
     List<ColumnName> columns();                            // stable column names
     Object           get(GridKey pk, ColumnName column);   // one cell's domain value
 
+    // ─── The Relation's META — what a column IS, beyond its name ─────────
+    // Today: its ORDERING. columnMeta(column) returns { compare(a, b) } for
+    // every column the grid may be asked to sort. A comparator is MANDATORY
+    // to sort (RFC 0050-ext6): the grid never falls back to raw '<', which
+    // sorted enums alphabetically and text by code point — sortBy refuses a
+    // column without one, and a restored ViewState drops such a sort. The
+    // grid guarantees compare never sees null/undefined (absent values go
+    // last, both directions) and applies direction itself. Stock comparators:
+    // GridComparatorsModule — compareNumbers, compareText (natural, engine-
+    // independent), compareByOrder(options). Ordering lives HERE and not on
+    // the cell's EffectiveType because it is a property of the data: the view
+    // state sorts through get() and has no path to a cell. A Relation that is
+    // never sorted may omit it, as a game board omits deleteRows.
+    Object           columnMeta(ColumnName column);        // { compare } — the sort seam
+
     // ─── Change flow (domain → cells, identity-addressed) ────────────────
     void subscribe(Object onCellChanged);                  // (pk, column, newValue) push
     void unsubscribe(Object onCellChanged);
@@ -33,6 +48,6 @@ public interface RelationAdapterContract {
     void deleteRows(List<GridKey> pks);                            // bulk delete — an identity SET
 
     /** The method names the JS adapter object must expose (conformance-gated). */
-    String[] METHOD_NAMES = { "pks", "columns", "get", "subscribe", "unsubscribe",
+    String[] METHOD_NAMES = { "pks", "columns", "get", "columnMeta", "subscribe", "unsubscribe",
                               "update", "deleteRows" };
 }

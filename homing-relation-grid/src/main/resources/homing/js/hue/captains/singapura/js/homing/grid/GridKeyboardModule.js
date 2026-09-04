@@ -12,6 +12,8 @@
 //   Home / End        first / last column of the cursor's row
 //   Ctrl+A            select the whole view
 //   Ctrl+C            fire the onCopy callback (bound only when provided)
+//   Alt+Up / Alt+Down sort the CURSOR's column asc / desc (ext6; again clears)
+//   Alt+Shift+Up      toggle the cursor column's pin (ext6 multi-key)
 //
 //   new GridKeyboard({ selection, onCopy? }).attach(el);
 // =============================================================================
@@ -23,7 +25,8 @@ class GridKeyboard {
         if (!opts.selection) throw new Error("[GridKeyboard] opts.selection is required");
         this._selection = opts.selection;
         this._onCopy = opts.onCopy || null;
-        this._onColResize = opts.onColumnResize || null;   // ext2: Alt+arrows, cursor column
+        this._onColResize = opts.onColumnResize || null;   // ext2: Alt+Left/Right, cursor column
+        this._onColOps    = opts.onColumnOps    || null;   // ext6: Alt+Up/Down sort, Alt+Shift+Up pin
         this._el = null;
         var self = this;
         this._handler = function (e) { self.handleKey(e); };
@@ -49,6 +52,12 @@ class GridKeyboard {
         if (e.altKey && this._onColResize
                 && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
             this._onColResize(e.key === "ArrowRight" ? 1 : -1);
+            if (e.preventDefault) e.preventDefault();
+            return true;
+        }
+        // ext6 — Alt+Up/Down sort the CURSOR's column; Alt+Shift+Up toggles its pin.
+        if (e.altKey && this._onColOps && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+            this._onColOps(e.key === "ArrowDown" ? "desc" : (e.shiftKey ? "pin" : "asc"));
             if (e.preventDefault) e.preventDefault();
             return true;
         }
