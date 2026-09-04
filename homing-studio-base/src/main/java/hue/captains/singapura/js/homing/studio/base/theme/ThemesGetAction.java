@@ -93,6 +93,7 @@ public class ThemesGetAction
 
             sb.append("{\"slug\":") .append(jstr(theme.slug())) .append(',')
               .append("\"label\":").append(jstr(theme.label())).append(',')
+              .append("\"group\":").append(jstr(theme.group())).append(',')
               .append("\"palette\":{");
             boolean firstKey = true;
             for (CssVar k : PALETTE_KEYS) {

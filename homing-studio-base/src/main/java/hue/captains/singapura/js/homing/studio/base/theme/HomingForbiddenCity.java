@@ -28,6 +28,7 @@ public record HomingForbiddenCity() implements Theme {
 
     @Override public String slug()  { return "forbidden-city"; }
     @Override public String label() { return "Forbidden City"; }
+    @Override public String group() { return "Expressive"; }
 
     public record Vars() implements ThemeVariables<HomingForbiddenCity> {
         public static final Vars INSTANCE = new Vars();

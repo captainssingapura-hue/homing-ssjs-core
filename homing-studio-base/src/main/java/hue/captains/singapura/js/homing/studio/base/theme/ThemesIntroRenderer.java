@@ -27,6 +27,8 @@ public record ThemesIntroRenderer() implements DomModule<ThemesIntroRenderer> {
     @Override
     public ImportsFor<ThemesIntroRenderer> imports() {
         return ImportsFor.<ThemesIntroRenderer>builder()
+                .add(new ModuleImports<>(List.of(new ThemePicker.mountThemePickerTree()),
+                        ThemePicker.INSTANCE))
                 .add(new ModuleImports<>(List.of(new HrefManager.HrefManagerInstance()),
                         HrefManager.INSTANCE))
                 .add(new ModuleImports<>(List.of(

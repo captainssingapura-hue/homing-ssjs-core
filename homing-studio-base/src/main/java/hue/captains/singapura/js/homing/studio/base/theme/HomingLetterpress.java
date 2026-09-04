@@ -35,6 +35,7 @@ public record HomingLetterpress() implements Theme {
 
     @Override public String slug()  { return "letterpress"; }
     @Override public String label() { return "Letterpress"; }
+    @Override public String group() { return "Neutral"; }
 
     public record Vars() implements ThemeVariables<HomingLetterpress> {
         public static final Vars INSTANCE = new Vars();

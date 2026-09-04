@@ -144,6 +144,32 @@ const HrefManagerInstance = (() => {
         return 'href="#' + _attrEscape(slug) + '"';
     }
 
+    /**
+     * The URL currently displayed, as path + query. The one sanctioned way for
+     * a component to ask "where am I": no-raw-href forbids window.location
+     * outside this manager, and until now offered no alternative — which is why
+     * callers that genuinely needed it simply broke the rule.
+     */
+    function current() {
+        return window.location.pathname + window.location.search;
+    }
+
+    /**
+     * The current URL with one query parameter set, or removed when the value is
+     * null/empty. Every other parameter survives, which is the point: a theme
+     * switch must not silently drop the app id it is sitting on.
+     */
+    function withParam(name, value) {
+        if (typeof name !== "string" || !name) {
+            throw new TypeError("href.withParam: name must be a non-empty string");
+        }
+        var params = new URLSearchParams(window.location.search);
+        if (value === null || value === undefined || value === "") params.delete(name);
+        else params.set(name, String(value));
+        var q = params.toString();
+        return window.location.pathname + (q ? "?" + q : "");
+    }
+
     return Object.freeze({
         toAttr,
         set,
@@ -151,5 +177,7 @@ const HrefManagerInstance = (() => {
         openNew,
         navigate,
         fragment,
+        current,
+        withParam,
     });
 })();

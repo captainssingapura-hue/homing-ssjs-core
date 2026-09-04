@@ -24,6 +24,7 @@ public record HomingForest() implements Theme {
 
     @Override public String slug()  { return "forest"; }
     @Override public String label() { return "Forest"; }
+    @Override public String group() { return "Nature"; }
 
     public record Vars() implements ThemeVariables<HomingForest> {
         public static final Vars INSTANCE = new Vars();

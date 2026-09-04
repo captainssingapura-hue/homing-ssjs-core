@@ -24,6 +24,7 @@ public record HomingSunset() implements Theme {
 
     @Override public String slug()  { return "sunset"; }
     @Override public String label() { return "Sunset"; }
+    @Override public String group() { return "Nature"; }
 
     public record Vars() implements ThemeVariables<HomingSunset> {
         public static final Vars INSTANCE = new Vars();

@@ -26,6 +26,7 @@ public record HomingBauhaus() implements Theme {
 
     @Override public String slug()  { return "bauhaus"; }
     @Override public String label() { return "Bauhaus"; }
+    @Override public String group() { return "Expressive"; }
 
     public record Vars() implements ThemeVariables<HomingBauhaus> {
         public static final Vars INSTANCE = new Vars();
