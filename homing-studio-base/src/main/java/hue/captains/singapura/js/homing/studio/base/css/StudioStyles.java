@@ -148,7 +148,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             font-family: "Georgia", serif;
             font-size: 44px;
             font-weight: 700;
-            color: var(--color-text-title);
+            color: var(--color-text-title, var(--color-text-link));
             margin: 0 0 12px 0;
             line-height: 1.1;
             letter-spacing: -0.5px;
