@@ -45,7 +45,7 @@ public record HomingTurboC() implements Theme {
 
     @Override public String slug()  { return "turbo-c"; }
     @Override public String label() { return "Turbo C"; }
-    @Override public String group() { return "Expressive"; }
+    @Override public String group() { return "Retro"; }
     @Override public String inspiration() {
         return "Borland's DOS IDE — EGA blue, a grey menu bar, and yellow where it counts.";
     }
