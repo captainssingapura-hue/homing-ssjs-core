@@ -62,8 +62,8 @@ public record HomingRetro90s() implements Theme {
      *  out via {@link AppModule#acceptsBackdropInteractivity()}. */
     @Override public boolean backdropInteractivity() { return true; }
     @Override public String label() { return "Retro 90s"; }
-    @Override public String group() { return "Expressive"; }
-    @Override public String inspiration() { return "Windows-95 trading terminal — desktop teal and VGA blue."; }
+    @Override public String group() { return "Retro"; }
+    @Override public String inspiration() { return "The Windows-95 desktop — teal, VGA blue and raised grey chrome."; }
 
     /** Win95 desktop backdrop — rendered as inline DOM so the iconic icons
      *  (My Computer, My Documents, Network Neighborhood, Recycle Bin)
