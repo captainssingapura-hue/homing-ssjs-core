@@ -55,6 +55,21 @@ class ShallowKeyboard {
     /** True when the keystroke belongs to this workspace (focus here or nowhere). */
     _inScope(e) {
         if (!this._host) return true;
+
+        // INERT WINS OVER "NOWHERE". A modal above us marks everything behind it
+        // inert; the scrim stops the mouse and this stops the keyboard. Without
+        // it the fallback below is a hole: click a dialog's scrim, or any part
+        // of it that cannot take focus, and activeElement falls back to
+        // document.body — which this method reads as "focus is nowhere, so the
+        // key is ours" and the workspace moves its cursor under an open dialog.
+        //
+        // Walked as a property rather than matched as a selector: inert is
+        // inherited by a whole subtree, and only the element that declared it
+        // carries the attribute.
+        for (var n = this._host; n; n = n.parentElement) {
+            if (n.inert) return false;
+        }
+
         var a = document.activeElement;
         if (a == null || a === document.body) return true;
         return this._host.contains(a) || this._host.contains(e.target);
