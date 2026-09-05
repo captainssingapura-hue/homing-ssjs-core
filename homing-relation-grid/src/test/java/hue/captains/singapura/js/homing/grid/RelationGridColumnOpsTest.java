@@ -188,7 +188,9 @@ class RelationGridColumnOpsTest {
                     var style = f.thAt(1), raw = f.thAt(4);
                     var caret = f.partOf(1, 'hgr-th-caret');
                     f.clickHeader(4);                                          // raw: no comparator
-                    return f.has(style, 'hgr-sortable') && caret && caret.textContent === '\\u2195'
+                    var halves = c => c ? c.children.map(function (h) { return h.className + '=' + h.textContent; }).join(' ') : null;
+                    return f.has(style, 'hgr-sortable') && caret
+                        && halves(caret) === 'hgr-th-caret-up=\\u25B2 hgr-th-caret-dn=\\u25BC'  // both, always
                         && style.getAttribute('aria-sort') === 'none'
                         && !f.has(raw, 'hgr-sortable') && f.partOf(4, 'hgr-th-caret') === null
                         && raw.getAttribute('aria-sort') === null
@@ -227,13 +229,13 @@ class RelationGridColumnOpsTest {
                     f.clickHeader(2);
                     var a = f.keys() === 'price asc' && f.has(f.thAt(2), 'hgr-sorted-asc')
                          && f.thAt(2).getAttribute('aria-sort') === 'ascending'
-                         && f.partOf(2, 'hgr-th-caret').textContent === '\\u25B2'
+                         && f.partOf(2, 'hgr-th-caret').children.length === 2  // the glyphs never change...
                          && f.order() === 'mapo,fish,coq';
                     f.clickHeader(2);
                     var d = f.keys() === 'price desc' && f.has(f.thAt(2), 'hgr-sorted-desc')
                          && !f.has(f.thAt(2), 'hgr-sorted-asc')
                          && f.thAt(2).getAttribute('aria-sort') === 'descending'
-                         && f.partOf(2, 'hgr-th-caret').textContent === '\\u25BC';
+                         && f.partOf(2, 'hgr-th-caret').children.length === 2; // ...the predicate lights one
                     f.clickHeader(2);
                     var n = f.keys() === '' && !f.has(f.thAt(2), 'hgr-sorted-desc')
                          && f.thAt(2).getAttribute('aria-sort') === 'none'
@@ -270,7 +272,7 @@ class RelationGridColumnOpsTest {
                            && f.partOf(1, 'hgr-th-rank').textContent === '1'
                            && f.partOf(2, 'hgr-th-rank').textContent === '2';
                     f.clickPin(1);                                              // unpin: another key exists → gone
-                    var gone = f.keys() === 'price asc' && f.partOf(2, 'hgr-th-rank') === null;
+                    var gone = f.keys() === 'price asc' && f.partOf(2, 'hgr-th-rank').textContent === '';
                     return pinned && two && gone;
                 })()"""), "pin, then sort another: two ranked keys; unpin with another present: it leaves");
     }
@@ -302,6 +304,32 @@ class RelationGridColumnOpsTest {
                     }
                     return ok && f.keys() === 'style asc pin | price asc pin | note asc';
                 })()"""), "the ext3 laws: pinned implies sorted; asc and desc exclude each other");
+    }
+
+    // ── the footprint ────────────────────────────────────────────────────
+
+    @Test
+    void theOpsFootprintIsTheSameInEveryStateSoSortingNeverResizesAColumn() {
+        assertTrue(evalBool("""
+                (() => {
+                    var f = fixture();
+                    var shape = j => f.slotOf(j).children.map(function (c) { return c.className; }).join(' ');
+                    var idle = shape(1);                                        // sortable, unsorted
+                    f.clickHeader(1);          var sorted = shape(1);           // sorted
+                    f.clickPin(1);             var pinned = shape(1);           // pinned
+                    f.clickHeader(2);          var ranked = shape(1), second = shape(2);   // two keys
+                    var rankIdle = f.partOf(2, 'hgr-th-rank');
+                    var g = fixture({ multiKey: false });
+                    var noPinIdle = shape.call(null, 1) && g.slotOf(1).children.map(function (c) { return c.className; }).join(' ');
+                    g.clickHeader(1);
+                    var noPinSorted = g.slotOf(1).children.map(function (c) { return c.className; }).join(' ');
+                    return idle === 'hgr-th-pin hgr-th-rank hgr-th-caret'          // the caret LAST: anchored
+                        && sorted === idle && pinned === idle && ranked === idle && second === idle
+                        && f.partOf(1, 'hgr-th-rank').textContent === '1'      // the number appears...
+                        && f.partOf(2, 'hgr-th-rank').textContent === '2'
+                        && noPinIdle === 'hgr-th-rank hgr-th-caret'            // ...never a new element
+                        && noPinSorted === noPinIdle;
+                })()"""), "pin, rank and caret (both halves) are minted in every state, the caret last and anchored at the edge; only lighting, content and visibility change");
     }
 
     // ── the drag that is not a click ─────────────────────────────────────
