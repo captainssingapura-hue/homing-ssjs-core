@@ -176,6 +176,9 @@ class GridLayout {
                                           onColResize: opts.onColResize || null,
                                           onColReorder: opts.onColReorder || null })
                    : null;
+        // ext6 — the header ops slot + click routing, when the facade has a
+        // column-ops provider; positional, like the drag, and wired per <th>.
+        this._ops = opts.headerOps || null;
         this._colgroup = document.createElement("colgroup");
         this._table.appendChild(this._colgroup);
         // header.show=false builds NO thead at all — not display:none. Nothing
@@ -213,12 +216,16 @@ class GridLayout {
         if (this._headerRow)
             while (this._headerRow.firstChild) this._headerRow.removeChild(this._headerRow.firstChild);
         while (this._colgroup.firstChild) this._colgroup.removeChild(this._colgroup.firstChild);
+        if (this._ops) this._ops.reset();
         for (var h = 0; h < headers.length; h++) {
             this._colgroup.appendChild(document.createElement("col"));   // widths need cols regardless
             if (!this._headerRow) continue;
             var th = document.createElement("th");
             th.className = "hgr-th";
             th.textContent = headers[h];
+            // ext6 ops slot BEFORE the drag wiring, so the resize handle stays the
+            // last child — the right-edge control, and the order tests rely on.
+            if (this._ops) this._ops.wire(th, h, this._drag);
             if (this._drag) this._drag.wire(th, h);
             this._headerRow.appendChild(th);
         }

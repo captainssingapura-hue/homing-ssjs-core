@@ -15,7 +15,15 @@ package hue.captains.singapura.js.homing.grid.contract;
 public interface RelationGridContract {
 
     // ─── View commands (remaps — Phase 3) ────────────────────────────────
-    void sortBy(ColumnName column, String direction);      // 'asc' | 'desc' — an i→PK permutation
+    void sortBy(ColumnName column, String direction);      // 'asc' | 'desc' — an i→PK permutation;
+                                                           //   REQUIRES adapter.columnMeta(column).compare
+                                                           //   (ext6) — throws without one, never guesses.
+                                                           //   The FREE-key sort: replaces the one unpinned
+                                                           //   key; a pinned column flips in place. null
+                                                           //   clears all; a key list sets the whole sort.
+    void pinSortKey(ColumnName column, boolean pinned);    // a pinned key survives the next sortBy — the
+                                                           //   pinned keys are the prefix, in pinning order
+    void removeSortKey(ColumnName column);                 // drop one key; the others keep their rank
     void filterRows(Object predicate);                     // an i→PK subset; cells DETACH, not destroy
     void clearFilter();
     void hideColumn(ColumnName column);

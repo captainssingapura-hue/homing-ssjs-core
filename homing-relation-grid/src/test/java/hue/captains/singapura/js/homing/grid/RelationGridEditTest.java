@@ -82,6 +82,8 @@ class RelationGridEditTest {
                 var adapter = {
                     pks:     function () { return Object.keys(data); },
                     columns: function () { return ['ingredient', 'style', 'calories', 'price']; },
+                    // ext6 — the Relation declares its orderings; a comparator is mandatory to sort
+                    columnMeta: function (c) { return { compare: ['calories', 'price'].indexOf(c) >= 0 ? compareNumbers : compareText }; },
                     get:     function (pk, col) { return data[pk][col]; },
                     subscribe:   function (fn) { subs.push(fn); },
                     unsubscribe: function () {},
@@ -140,7 +142,7 @@ class RelationGridEditTest {
                 .option("js.ecmascript-version", "2022").build();
         eval(DOM_STUB);
         for (String module : new String[]{
-                "GridViewMapsModule.js", "GridHeaderDragModule.js", "GridLayoutModule.js", "GridCellsModule.js",
+                "GridViewMapsModule.js", "GridComparatorsModule.js", "GridHeaderDragModule.js", "GridColumnOpsModule.js", "GridLayoutModule.js", "GridCellsModule.js",
                 "GridCellTypesModule.js", "StockCellsModule.js", "GridSelectionModule.js", "GridKeyboardModule.js",
                 "GridEditControllerModule.js", "GridBulkOpsModule.js", "GridUpdateBatchModule.js", "GridBulkEditSessionModule.js", "GridViewStateModule.js", "RelationGridModule.js"}) {
             eval(readJs("/homing/js/hue/captains/singapura/js/homing/grid/" + module));

@@ -62,6 +62,24 @@ class GridHeaderDrag {
         return this;
     }
 
+    /**
+     * A pointer that moved past the threshold and released still fires a
+     * click on the header under it — a click that ended a reorder and must
+     * not become a sort (ext6). Marked here, consumed once by GridHeaderOps;
+     * cleared next tick in case no click follows (the pointer left the th).
+     */
+    _markDragged(th) {
+        var self = this;
+        this._dragged = th;
+        if (typeof setTimeout === "function")
+            setTimeout(function () { if (self._dragged === th) self._dragged = null; }, 0);
+    }
+    consumeDragged(th) {
+        if (this._dragged !== th) return false;
+        this._dragged = null;
+        return true;
+    }
+
     _makeGuide(atX) {
         var rect = this._table.getBoundingClientRect ? this._table.getBoundingClientRect() : null;
         if (!document.body || !rect) return null;
@@ -138,6 +156,7 @@ class GridHeaderDrag {
         }
         function onUp() {
             teardown();
+            if (moved) self._markDragged(th);            // the click about to land is not a click
             if (!moved || target === j) return;          // no slot change
             // hovered SLOT → insertion index: landing right of home means
             // inserting after the hovered column, because removing the dragged

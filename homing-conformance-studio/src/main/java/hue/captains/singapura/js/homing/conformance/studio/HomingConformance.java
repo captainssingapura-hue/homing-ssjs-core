@@ -55,6 +55,13 @@ public final class HomingConformance {
                     "Split out of GridLayout by the line ratchet; it mints the same layout-branch "
                             + "chrome (resize handle, drop band) and inherits the same posture."),
             new Allowance(
+                    "hue.captains.singapura.js.homing.grid.GridColumnOpsModule",
+                    new RuleId("use-dom-ops-party"),
+                    "The header ops slot and the caret tier's glyph, rank and pin are LAYOUT-branch "
+                            + "chrome inside the layout's own <th> — the GridHeaderDrag posture one band "
+                            + "over: raw DOM keeps the primitive portable and free of a DomOpsParty "
+                            + "dependency. The party discipline applies to the CELLS branch."),
+            new Allowance(
                     "hue.captains.singapura.js.homing.grid.StockCellsModule",
                     new RuleId("use-dom-ops-party"),
                     "A cell mints its OWN editor (input / select) inside its own element. The cell "

@@ -28,6 +28,9 @@
 // onCopy(tsv), onCursorMoved, onSelectionChanged, onViewChanged, and
 // header: { show, sticky, includeInCopy, labels } — the header DISPLAY
 // options, so a headerless or unfrozen grid needs no CSS trick downstream.
+// columnOps: 'caret' (default) | 'none' | a ColumnOpsContract object — the
+// header's sort affordance (ext6: click cycles the free key, pin keeps it);
+// multiKey: 'pin' (default) | false.
 // =============================================================================
 
 class RelationGrid {
@@ -61,8 +64,17 @@ class RelationGrid {
             columns: this._adapter.columns(),
             onViewChanged: function (kind) { if (!self._squelch) self._refresh(kind); }
         });
+        // ext6 — column ops: the header's sort affordance as a Contract & Stock
+        // provider. 'caret' by default — a header that sorts is what a web table
+        // means; 'none' keeps the header inert; an object is the host's own.
+        var co = (opts.columnOps === undefined) ? "caret" : opts.columnOps;
+        this._multiKey = opts.multiKey !== false;
+        this._colOps = (co === "caret") ? new CaretColumnOps({ multiKey: this._multiKey })
+                     : (co && co !== "none") ? co : null;
+        this._headerOps = this._colOps ? new GridHeaderOps({ host: this, provider: this._colOps }) : null;
         this._layout = new GridLayout({
             container: opts.container,
+            headerOps: this._headerOps,
             label: opts.label || null,
             showHeader: this._head.show,
             stickyHeader: this._head.sticky,
@@ -98,7 +110,9 @@ class RelationGrid {
                 var cur = self._selection.cursorId();
                 if (!cur) return;
                 self.setColumnWidth(cur.column, self._vs.widthOr(cur.column, 120) + dir * 10);
-            }
+            },
+            // ext6 keyboard path: Alt+Up/Down sort the CURSOR's column, Alt+Shift+Up pins it.
+            onColumnOps: function (kind) { if (self._headerOps) self._headerOps.key(kind); }
         });
         this._bulk = new GridBulkOps({ cells: this._cells, maps: this._maps,
             selection: this._selection, adapter: this._adapter, host: this,
@@ -149,6 +163,7 @@ class RelationGrid {
         for (var j0 = 0; j0 < maps.cols(); j0++) headers.push(this._labelOf(maps.columnAt(j0)));
         this._layout.render({ headers: headers, rows: maps.rows() });
         if (this._vs) this._layout.setColWidths(this._vs.widthsPositional());   // widths ride identity
+        if (this._headerOps && this._vs) this._headerOps.render();                 // ext6: the header's affordances
 
         // Re-place every visible cell into its (possibly new) slot. ensure() is
         // idempotent — existing cells keep their element + state; only cells
@@ -175,10 +190,25 @@ class RelationGrid {
 
     // ── view commands: thin routes into GridViewState (held intent there) ───
 
-    /** Sort by a column ('asc' | 'desc'); sortBy(null) restores base order. */
+    /** The FREE-key sort: a pinned column flips direction in place, any other
+     *  column replaces the free key while pinned keys survive; sortBy(null)
+     *  clears every key; sortBy([{column, direction, pinned}, …]) sets the list. */
     sortBy(column, direction) {
         if (this._edit && this._edit.defer(() => this.sortBy(column, direction))) return this;   // D7
         this._vs.sortBy(column, direction); return this;
+    }
+
+    /** Pin a sorted column so it survives the next sortBy — multi-key without
+     *  a modifier, the caret tier's "then by" (ext6); unpin to release it. */
+    pinSortKey(column, pinned) {
+        if (this._edit && this._edit.defer(() => this.pinSortKey(column, pinned))) return this;   // D7
+        this._vs.pinSortKey(column, pinned); return this;
+    }
+
+    /** Drop one sort key; the others keep their rank order. */
+    removeSortKey(column) {
+        if (this._edit && this._edit.defer(() => this.removeSortKey(column))) return this;        // D7
+        this._vs.removeSortKey(column); return this;
     }
 
     /** EPHEMERAL raw filter — works, never saved, never exported (ext2). */
@@ -336,6 +366,7 @@ class RelationGrid {
         if (this._session.isActive()) this._session.cancel();
         if (this._edit.isEditing()) this._edit.cancel();
         this._layout.el().removeEventListener("keydown", this._keydown);
+        if (this._colOps && typeof this._colOps.dispose === "function") this._colOps.dispose();
         this._cells.destroy();
         this._layout.destroy();
     }

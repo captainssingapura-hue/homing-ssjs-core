@@ -141,6 +141,8 @@ class RelationGridRevealTest {
                 var adapter = {
                     pks:     function () { return pks; },
                     columns: function () { return COLS; },
+                    // ext6 — the Relation declares its orderings; a comparator is mandatory to sort
+                    columnMeta: function (c) { return { compare: compareText }; },
                     get:     function (pk, col) { return data[pk][col]; },
                     subscribe: function () {}, unsubscribe: function () {}
                 };
@@ -198,7 +200,7 @@ class RelationGridRevealTest {
                 .option("js.ecmascript-version", "2022").build();
         eval(DOM_STUB);
         for (String module : new String[]{
-                "GridViewMapsModule.js", "GridHeaderDragModule.js", "GridLayoutModule.js",
+                "GridViewMapsModule.js", "GridComparatorsModule.js", "GridHeaderDragModule.js", "GridColumnOpsModule.js", "GridLayoutModule.js",
                 "GridCellsModule.js", "GridCellTypesModule.js", "StockCellsModule.js",
                 "GridSelectionModule.js", "GridKeyboardModule.js", "GridEditControllerModule.js",
                 "GridBulkOpsModule.js", "GridUpdateBatchModule.js", "GridBulkEditSessionModule.js",
