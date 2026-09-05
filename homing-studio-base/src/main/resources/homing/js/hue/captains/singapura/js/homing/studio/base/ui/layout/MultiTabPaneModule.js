@@ -76,8 +76,21 @@ var _STYLE_CSS = [
     // The entered pane's content takes DOM focus (tabindex -1); suppress its own
     // focus outline — the pane ring above is the focus affordance.
     ".hmtp-content:focus{outline:none;}",
+    // THE STRIP IS CHROME, so it takes the page's chrome band rather than a
+    // raised panel's ground. A pane's tab bar is the same KIND of thing as the
+    // studio header — a band naming what is below it — and reading it as a
+    // raised surface made every pane look like a card floating on the page
+    // instead of a region of it. --color-surface-inverted is the token a theme
+    // already binds for exactly this, so the strip now matches the header of
+    // whatever theme is on: navy on the fin-dash terminal, EGA light grey on
+    // Turbo C, near-black on Carbon.
+    //
+    // The degree ladder's accent mixes come up correspondingly (7/10/14% became
+    // 12/18/26%) — a wash that reads on surface-raised disappears into a much
+    // darker or much lighter chrome band, and the three steps have to stay
+    // distinguishable from each other on both.
     ".hmtp-strip{display:flex;align-items:center;gap:2px;padding:4px;",
-    "  background:var(--color-surface-raised);",
+    "  background:var(--color-surface-inverted);",
     "  border-bottom:1px solid var(--color-border);",
     "  overflow-x:auto;flex-shrink:0;position:relative;",
     "  transition:background-color 160ms ease, border-color 120ms ease;}",
@@ -87,13 +100,13 @@ var _STYLE_CSS = [
     // reads as chrome outside the selection, and a maximized or busy pane
     // gives no top-edge hint of where the user is.
     ".hmtp-leaf-selected .hmtp-strip{",
-    "  background:color-mix(in srgb, var(--color-accent) 7%, var(--color-surface-raised));",
+    "  background:color-mix(in srgb, var(--color-accent) 12%, var(--color-surface-inverted));",
     "  border-bottom-color:color-mix(in srgb, var(--color-accent) 50%, var(--color-border));}",
     ".hmtp-leaf-hover .hmtp-strip{",
-    "  background:color-mix(in srgb, var(--color-accent) 10%, var(--color-surface-raised));",
+    "  background:color-mix(in srgb, var(--color-accent) 18%, var(--color-surface-inverted));",
     "  border-bottom-color:color-mix(in srgb, var(--color-accent) 75%, var(--color-border));}",
     ".hmtp-leaf-entered .hmtp-strip{",
-    "  background:color-mix(in srgb, var(--color-accent) 14%, var(--color-surface-raised));",
+    "  background:color-mix(in srgb, var(--color-accent) 26%, var(--color-surface-inverted));",
     "  border-bottom-color:var(--color-accent);}",
     // RFC 0052 — the keyboard-locus glyph: the ORTHOGONAL channel marking the
     // one pane that owns the keyboard (the cursor pane or the entered widget).
@@ -135,12 +148,12 @@ var _STYLE_CSS = [
     // the tab bar hanging over the corner. (The alternative — detecting the
     // scrollbar and shifting left by its width — costs JS measurement per
     // resize for the same result.)
-    "  background:var(--color-surface-raised);",
+    "  background:var(--color-surface-inverted);",
     "  border-left:1px solid var(--color-border);",
     "  border-bottom:1px solid var(--color-border);}",
     ".hmtp-chip{display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:3px;",
     "  font:13px sans-serif;cursor:pointer;border:1px solid transparent;flex-shrink:0;",
-    "  color:var(--color-text-muted);}",
+    "  color:var(--color-text-on-inverted-muted);}",
     ".hmtp-chip-active{background:var(--color-surface);",
     "  border-color:var(--color-border);color:var(--color-text-primary);}",
     // Workspace-active accent — sits on top of pane-active. A tab can be both:",
@@ -155,7 +168,7 @@ var _STYLE_CSS = [
     // when the pane is below capacity AND the host passed an onAddTab callback.
     // Absent strips have no "+" → the capacity-full state is visually obvious.
     ".hmtp-strip-add{cursor:pointer;opacity:0.5;padding:0 6px;font:14px sans-serif;",
-    "  background:transparent;border:0;color:var(--color-text-primary);}",
+    "  background:transparent;border:0;color:var(--color-text-on-inverted);}",
     ".hmtp-strip-add:hover{opacity:1;color:var(--color-accent-emphasis);}",
     ".hmtp-pill{margin-left:auto;padding:2px 8px;background:var(--color-surface);",
     "  border:1px solid var(--color-border);border-radius:10px;font:11px sans-serif;",
