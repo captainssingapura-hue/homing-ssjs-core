@@ -62,118 +62,11 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
             """; }
     }
 
-    /**
-     * The page, switched off. z-index 9999 — one below Modal's 10000, so it
-     * covers everything except the dialog it belongs to.
-     *
-     * <p>This is only half of "disabled". A scrim stops the mouse and tells the
-     * eye; it does nothing about Tab, which walks straight behind it, or about
-     * a screen reader, which reads through it. {@code inert} answers both, and
-     * the picker sets it — see {@code ThemePicker.js}. Neither half works
-     * alone: inert without a scrim is invisible, a scrim without inert is a
-     * picture of modality rather than the thing.</p>
-     */
-    public record tp_scrim() implements CssClass<ThemePickerStyles> {
-        @Override public String body() { return """
-            position: fixed;
-            inset: 0;
-            z-index: 9999;
-            /* No colour at all — a FILTER on whatever is behind. The first cut
-               mixed a veil out of --color-surface-inverted, which is a fine
-               dark on Carbon and is the LIGHT GREY MENU BAR on Turbo C, so it
-               washed that page out instead of dimming it. There is no token
-               meaning "darker than whatever is there", because that is not a
-               colour; brightness() is the operation, and it dims a light theme
-               and a dark theme alike with nothing to choose per theme. */
-            background: transparent;
-            backdrop-filter: brightness(0.45) blur(2px);
-            """; }
-    }
 
-    /**
-     * The glow, applied to the Modal's own root. The picker owns the decision
-     * that ITS dialog is lit, so the class is the picker's and rides on
-     * {@code modal.el} — rather than Modal growing an option, which would mean
-     * editing a module that is entirely conformance-baselined and already
-     * within forty lines of the effective-line limit.
-     *
-     * <p>Every colour is mixed from {@code --color-accent}, so a theme re-lights
-     * the dialog by re-binding one token — Turbo C glows Borland yellow and
-     * Carbon glows amber, with nothing here to change.</p>
-     */
-    public record tp_glow() implements CssClass<ThemePickerStyles> {
-        @Override public String body() { return """
-            /* outline and filter, NOT border-color and box-shadow. Modal sets
-               those two from an unlayered <style> tag it injects itself, and
-               unlayered CSS beats layered CSS outright — specificity and source
-               order never enter into it. These two properties Modal leaves
-               alone, so they are the ones available without !important.
-               outline also draws outside the border box, so the panel's
-               overflow:hidden cannot clip it. */
-            outline: 1px solid color-mix(in srgb, var(--color-accent) 60%, transparent);
-            outline-offset: -1px;
-            filter:
-                drop-shadow(0 0 10px color-mix(in srgb, var(--color-accent) 42%, transparent))
-                drop-shadow(0 0 28px color-mix(in srgb, var(--color-accent) 26%, transparent));
-            """; }
-    }
 
-    /**
-     * The action row. Buttons live here rather than in the Modal chrome because
-     * they are this dialog's vocabulary, not every dialog's — a tool palette
-     * has nothing to confirm.
-     */
-    public record tp_actions() implements CssClass<ThemePickerStyles> {
-        @Override public String body() { return """
-            flex: 0 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: var(--space-2);
-            padding: var(--space-2) var(--space-3);
-            border-top: 1px solid var(--color-border);
-            background: var(--color-surface-raised);
-            """; }
-    }
 
-    /** The quiet actions — Cancel, and Apply until something is selected. */
-    public record tp_action() implements CssClass<ThemePickerStyles> {
-        @Override public String body() { return """
-            font: inherit;
-            font-size: 12px;
-            padding: var(--space-1) var(--space-3);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-sm);
-            background: var(--color-surface);
-            color: var(--color-text-primary);
-            cursor: pointer;
-            """; }
-    }
 
-    /**
-     * The confirming action. Takes the accent as its GROUND, not its text, so
-     * the primary button is the one place in the dialog reading as a filled
-     * shape — which is what makes it findable without a hierarchy of sizes.
-     */
-    public record tp_action_primary() implements CssClass<ThemePickerStyles> {
-        @Override public String body() { return """
-            background: var(--color-accent);
-            border-color: var(--color-accent);
-            color: var(--color-accent-on);
-            font-weight: 600;
-            """; }
-    }
 
-    /**
-     * Nothing to do. Applying the theme already in use would spend a page load
-     * to arrive where you are, so the control says so instead of pretending.
-     */
-    public record tp_action_off() implements CssClass<ThemePickerStyles> {
-        @Override public String body() { return """
-            opacity: 0.45;
-            cursor: default;
-            """; }
-    }
 
     public record tp_preview_name() implements CssClass<ThemePickerStyles> {
         @Override public String body() { return """
@@ -267,8 +160,7 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
     public List<CssClass<ThemePickerStyles>> cssClasses() {
         return List.of(
                 new tp_btn(), new tp_btn_label(),
-                new tp_body(), new tp_scrim(), new tp_glow(), new tp_actions(), new tp_action(),
-                new tp_action_primary(), new tp_action_off(), new tp_inline(), new tp_inline_head(),
+                new tp_body(), new tp_inline(), new tp_inline_head(),
                 new tp_preview_name(), new tp_current(), new tp_preview_note(),
                 new tp_swatches(), new tp_sw()
         );

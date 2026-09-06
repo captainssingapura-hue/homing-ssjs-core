@@ -52,6 +52,8 @@ import hue.captains.singapura.js.homing.studio.base.tracker.PlanAppHost;
 import hue.captains.singapura.js.homing.studio.base.tracker.PlanHostRenderer;
 import hue.captains.singapura.js.homing.studio.base.ui.MasterDetail;
 import hue.captains.singapura.js.homing.studio.base.ui.MasterDetailStyles;
+import hue.captains.singapura.js.homing.studio.base.ui.SystemDialog;
+import hue.captains.singapura.js.homing.studio.base.ui.SystemDialogStyles;
 import hue.captains.singapura.js.homing.studio.base.ui.StudioElements;
 import hue.captains.singapura.js.homing.studio.base.ui.layout.ModalModule;
 import hue.captains.singapura.js.homing.studio.base.ui.layout.MultiTabPaneDragModule;
@@ -138,6 +140,11 @@ public final class StudioBaseCrate implements Crate {
                 CrateEntry.of(PlanHostRenderer.INSTANCE),
                 CrateEntry.of(MasterDetailStyles.INSTANCE),
                 CrateEntry.of(MasterDetail.INSTANCE),
+                // RFC 0057 Phase 1 — the system dialog: scrim, inert, keyboard, glow,
+                // golden sizing and the action row, as one component. Its own sheet,
+                // NOT Modal, which stays the MTP widget-transport panel.
+                CrateEntry.of(SystemDialogStyles.INSTANCE),
+                CrateEntry.of(SystemDialog.INSTANCE),
                 CrateEntry.of(StudioElements.INSTANCE),
                 CrateEntry.of(ModalModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
                 CrateEntry.of(FocusManagerModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
