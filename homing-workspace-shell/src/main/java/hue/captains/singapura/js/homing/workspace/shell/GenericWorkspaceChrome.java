@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.workspace.shell;
 
+import hue.captains.singapura.js.homing.studio.base.app.GotoNavigableGetAction;
+import hue.captains.singapura.js.homing.core.StampedParams;
 import hue.captains.singapura.js.homing.core.Importable;
 import hue.captains.singapura.js.homing.core.ModuleImports;
 import hue.captains.singapura.js.homing.core.Widget;
@@ -79,8 +81,15 @@ public final class GenericWorkspaceChrome
                 "    // (Studio, Animals Playground, …). Only the registry here knows",
                 "    // every kind; the shell sees a single spec.",
                 "    spec.availableKinds = Object.keys(SPECS).map(function (k) {",
-                "        return { kind: k, title: SPECS[k].title };",
+                "        return { kind: k, title: SPECS[k].title, group: SPECS[k].group };",
                 "    });",
+                "    // RFC 0057 — where a KIND change navigates. ws_kind is a typed param:",
+                "    // stamped by a catalogue route, so editing it in the query of",
+                "    // /cat/workspace changes nothing. /goto resolves (app, args) to the",
+                "    // authentic path when one exists and to the flat render otherwise,",
+                "    // which is exactly the question a kind change asks.",
+                "    spec.switchBase = " + StampedParams.jsString(
+                        GotoNavigableGetAction.ROUTE + "?app=" + GenericWorkspace.INSTANCE.simpleName()) + ";",
                 "    mountWorkspaceShell(branch, parent, spec);"
         );
     }

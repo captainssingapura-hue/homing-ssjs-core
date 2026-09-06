@@ -78,8 +78,8 @@ class WorkspaceShellChrome {
         this._TabRegistryCtor     = deps.TabRegistryCtor     || TabRegistry;
         this._WorkspaceStateModelCtor =
                 deps.WorkspaceStateModelCtor || WorkspaceStateModel;
-        this._WorkspaceControlModalCtor =
-                deps.WorkspaceControlModalCtor || WorkspaceControlModal;
+        this._WorkspaceSwitcherCtor =
+                deps.WorkspaceSwitcherCtor || WorkspaceSwitcher;
 
         // Per-workspace registry — replay-time silent spawns + live
         // user spawns + MTP callbacks all read/write through this.
@@ -100,7 +100,7 @@ class WorkspaceShellChrome {
         this._eventRecorder         = null;  // populated by Phase 6
         this._lockController        = null;  // populated by Phase 7
         this._checkpointController  = null;  // populated by Phase 8
-        this._workspaceControlModal = null;  // populated post-MTP
+        this._workspaceSwitcher = null;  // populated post-MTP
         this._identity = {
             id: null, name: null, isDefault: true, isNew: false, ready: false
         };
@@ -123,12 +123,12 @@ class WorkspaceShellChrome {
             title:       this._spec.title,
             subtitle:    '',
             onTitleClick: function () {
-                if (!self._workspaceControlModal) {
+                if (!self._workspaceSwitcher) {
                     console.warn('[WorkspaceShellChrome] control modal '
                                + 'not ready yet (boot still racing)');
                     return;
                 }
-                self._workspaceControlModal.toggle();
+                self._workspaceSwitcher.toggle();
             },
             ribbonItems: this._spec.ribbonItems,
             footerItems: this._spec.footerItems,
@@ -337,7 +337,7 @@ class WorkspaceShellChrome {
                         catch (e) {}
                         // Build picker + control modal now that MTP exists.
                         self._buildPickerFlow();
-                        self._buildControlModal();
+                        self._buildSwitcher();
                         // Fresh session: emit pinned-spawn events so next
                         // boot has them recorded. Fence is now off so the
                         // recorder accepts them.
@@ -789,20 +789,21 @@ class WorkspaceShellChrome {
         console.log('[WorkspaceShellChrome] PickerTabFlow ready');
     }
 
-    _buildControlModal() {
+    _buildSwitcher() {
         const cpStore = this._checkpointController
                       ? this._checkpointController.store() : null;
-        this._workspaceControlModal = new this._WorkspaceControlModalCtor({
+        this._workspaceSwitcher = new this._WorkspaceSwitcherCtor({
             workspaceKind:   this._spec.kind,
             workspaceTitle:  this._spec.title,
             availableKinds:  this._spec.availableKinds || [],
+            switchBase:      this._spec.switchBase || null,
             identity:        this._identity,
             catalogueStore:  this._workspaceDirectory._catalogueStore,
             eventLog:        this._eventRecorder
                             ? this._eventRecorder.log() : null,
             checkpointStore: cpStore
         });
-        console.log('[WorkspaceShellChrome] WorkspaceControl modal ready');
+        console.log('[WorkspaceShellChrome] WorkspaceSwitcher ready');
     }
 
     // ── Action dispatch (unchanged from V1) ────────────────────────────

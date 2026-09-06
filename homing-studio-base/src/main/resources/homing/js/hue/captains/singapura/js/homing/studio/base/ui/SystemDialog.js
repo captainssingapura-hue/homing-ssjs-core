@@ -191,6 +191,7 @@ function openSystemDialog(opts) {
     var handle = {
         el: frame, bodyEl: body, branch: branch,
         close: close,
+        actionEl:  function (id) { return buttons[id] || null; },   // an OWNED reference — no querySelector for a caller
         setAction: function (id, state) {
             var b = buttons[id];
             if (!b || !state) return;

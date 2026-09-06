@@ -174,6 +174,19 @@ class WorkspaceLayout {
         if (this._onTitleClick) {
             titleEl.style.cursor = "pointer";
             var clickSelf = this;
+            // Keyboard-reachable. This title is the ONLY way to open the workspace
+            // switcher, and a div with a click handler has no tab stop — so a
+            // keyboard user could not reach the one dialog built for them.
+            // Enter and Space act as click; stopPropagation keeps the shell's
+            // shallow keyboard from also reading the Enter as "go deep".
+            titleEl.setAttribute("tabindex", "0");
+            titleEl.setAttribute("role", "button");
+            titleEl.addEventListener("keydown", function (ev) {
+                if (ev.key !== "Enter" && ev.key !== " ") return;
+                ev.preventDefault(); ev.stopPropagation();
+                try { clickSelf._onTitleClick(); }
+                catch (e) { console.error("[WorkspaceLayout] onTitleClick threw:", e); }
+            });
             titleEl.addEventListener("mouseenter", function () { titleEl.style.opacity = "0.85"; });
             titleEl.addEventListener("mouseleave", function () { titleEl.style.opacity = "1"; });
             titleEl.addEventListener("click", function (ev) {

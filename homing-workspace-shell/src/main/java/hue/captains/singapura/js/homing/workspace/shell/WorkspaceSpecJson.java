@@ -55,6 +55,7 @@ public final class WorkspaceSpecJson {
         sb.append('{');
         sb.append("\"kind\":").append(WorkspaceLayoutJson.quoteString(spec.kind()));
         sb.append(",\"title\":").append(WorkspaceLayoutJson.quoteString(spec.title()));
+        sb.append(",\"group\":").append(WorkspaceLayoutJson.quoteString(spec.group()));
         sb.append(",\"entries\":").append(WidgetEntriesJson.of(spec.widgetEntries()));
         sb.append(",\"ribbonItems\":").append(WorkspaceLayoutJson.ribbonItems(spec.ribbonItems()));
         sb.append(",\"footerItems\":").append(WorkspaceLayoutJson.footerItems(spec.footerItems()));
