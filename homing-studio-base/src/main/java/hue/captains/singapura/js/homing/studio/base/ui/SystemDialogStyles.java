@@ -102,14 +102,26 @@ public record SystemDialogStyles() implements CssGroup<SystemDialogStyles> {
             """; }
     }
 
-    /** The title bar. Inherits the page font — see the class javadoc. */
+    /**
+     * The title bar IS chrome, so it takes the page's chrome band rather than a
+     * raised panel's ground. A standalone window's caption bar is the same KIND
+     * of thing as the studio header — a band naming what is below it — and the
+     * dialog reads as part of the product when the two match: navy on the
+     * fin-dash terminal, EGA light grey on Turbo C, near-black on Carbon.
+     *
+     * <p>This is the surface that wanted the chrome band. The MultiTabPane strip
+     * does NOT: a pane is a region of the page, not a window over it, and it
+     * keeps its raised ground.</p>
+     *
+     * <p>Inherits the page font — see the class javadoc.</p>
+     */
     public record sd_title() implements CssClass<SystemDialogStyles> {
         @Override public String body() { return """
             display: flex;
             align-items: center;
             height: 28px;
             padding: 0 var(--space-3);
-            background: var(--color-surface-raised);
+            background: var(--color-surface-inverted);
             border-bottom: 1px solid var(--color-border);
             flex-shrink: 0;
             user-select: none;
@@ -123,7 +135,7 @@ public record SystemDialogStyles() implements CssGroup<SystemDialogStyles> {
             font-weight: 600;
             letter-spacing: 0.4px;
             text-transform: uppercase;
-            color: var(--color-text-muted);
+            color: var(--color-text-on-inverted-muted);
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -138,7 +150,7 @@ public record SystemDialogStyles() implements CssGroup<SystemDialogStyles> {
             padding: 0 var(--space-1);
             background: transparent;
             border: 0;
-            color: var(--color-text-muted);
+            color: var(--color-text-on-inverted);
             cursor: pointer;
             """; }
     }
