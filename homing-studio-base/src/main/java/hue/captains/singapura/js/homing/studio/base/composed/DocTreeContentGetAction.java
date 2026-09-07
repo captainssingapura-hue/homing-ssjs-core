@@ -118,6 +118,14 @@ public final class DocTreeContentGetAction
             String namePath = (query.rawPath() == null) ? "" : query.rawPath();
             locator = namePath.isEmpty() ? "(root)" : namePath;
             provider = v2.toDocTreeV2().providerAt(namePath);
+        } else if (isMarkdown(root)) {
+            // RFC 0059 D9 — markdown docs are name-addressed too now, by the slug
+            // of each heading. The normalizer is external to the Doc, so they
+            // cannot announce themselves through DocTreeV2Source the way
+            // RigidDocV2 does; the kind is the announcement instead.
+            String namePath = (query.rawPath() == null) ? "" : query.rawPath();
+            locator = namePath.isEmpty() ? "(root)" : namePath;
+            provider = MarkdownDocNormalizer.INSTANCE.toDocTreeV2(root).providerAt(namePath);
         } else {
             DocTree tree = toDocTree(root);
             if (tree == null) {
@@ -160,10 +168,15 @@ public final class DocTreeContentGetAction
             return ComposedDocNormalizer.INSTANCE.toDocTree(cd);
         } else if (doc instanceof RigidDoc rd) {
             return RigidDocNormalizer.INSTANCE.toDocTree(rd);
-        } else if ("doc".equals(doc.kind()) || "markdown".equals(doc.kind())) {
-            return MarkdownDocNormalizer.INSTANCE.toDocTree(doc);
         }
+        // Markdown is deliberately absent: since RFC 0059 D9 it is name-addressed
+        // and handled on the V2 branch above, never here.
         return null;
+    }
+
+    /** The markdown kinds — the doc's own announcement that it wants the V2 path. */
+    private static boolean isMarkdown(Doc doc) {
+        return "doc".equals(doc.kind()) || "markdown".equals(doc.kind());
     }
 
     /** The embedded resource Doc a segment references, or {@code null} for text-shaped kinds. */
