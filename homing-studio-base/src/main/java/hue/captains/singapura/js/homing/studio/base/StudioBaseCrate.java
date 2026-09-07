@@ -28,6 +28,7 @@ import hue.captains.singapura.js.homing.studio.base.composed.SvgSegmentRenderer;
 import hue.captains.singapura.js.homing.studio.base.composed.TableSegmentRenderer;
 import hue.captains.singapura.js.homing.studio.base.composed.TextSegmentRenderer;
 import hue.captains.singapura.js.homing.studio.base.composed.TocSidebarRenderer;
+import hue.captains.singapura.js.homing.studio.base.composed.TocSyncModule;
 import hue.captains.singapura.js.homing.studio.base.css.StudioStyles;
 import hue.captains.singapura.js.homing.studio.base.css.Util;
 import hue.captains.singapura.js.homing.studio.base.export.HtmlExportModule;
@@ -115,6 +116,7 @@ public final class StudioBaseCrate implements Crate {
                 CrateEntry.of(TableSegmentRenderer.INSTANCE),
                 CrateEntry.of(TextSegmentRenderer.INSTANCE),
                 CrateEntry.of(TocSidebarRenderer.INSTANCE),
+                CrateEntry.of(TocSyncModule.INSTANCE),
                 CrateEntry.of(StudioStyles.INSTANCE),
                 CrateEntry.of(Util.INSTANCE),
                 CrateEntry.of(HtmlExportModule.INSTANCE),

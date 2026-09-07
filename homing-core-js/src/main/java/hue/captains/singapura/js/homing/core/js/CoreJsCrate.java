@@ -32,6 +32,7 @@ public final class CoreJsCrate implements Crate {
                 CrateEntry.of(DocTreeRendererModule.INSTANCE),
                 CrateEntry.of(DomOpsPartyModule.INSTANCE),
                 CrateEntry.of(DomOpsPartyBaseModule.INSTANCE),
-                CrateEntry.of(NodeContentModule.INSTANCE));
+                CrateEntry.of(NodeContentModule.INSTANCE),
+                CrateEntry.of(TocSyncSecretaryModule.INSTANCE));
     }
 }

@@ -7,6 +7,7 @@ import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
 import hue.captains.singapura.js.homing.libs.MarkedJs;
 import hue.captains.singapura.js.homing.server.HrefManager;
+import hue.captains.singapura.js.homing.studio.base.composed.TocSyncModule;
 import hue.captains.singapura.js.homing.studio.base.css.StudioStyles;
 import hue.captains.singapura.js.homing.studio.base.export.HtmlExportModule;
 import hue.captains.singapura.js.homing.studio.base.ui.StudioElements;
@@ -36,6 +37,9 @@ public record DocReaderRenderer() implements DomModule<DocReaderRenderer> {
                 .add(new ModuleImports<>(List.of(new HrefManager.HrefManagerInstance()),
                         HrefManager.INSTANCE))
                 .add(new ModuleImports<>(List.of(new MarkedJs.marked()), MarkedJs.INSTANCE))
+                // RFC 0043's TOC↔body law, shared with the rigid-tree reader.
+                .add(new ModuleImports<>(List.of(new TocSyncModule.attachTocSync()),
+                        TocSyncModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new HtmlExportModule.exportPageAsHtml()),
                         HtmlExportModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(

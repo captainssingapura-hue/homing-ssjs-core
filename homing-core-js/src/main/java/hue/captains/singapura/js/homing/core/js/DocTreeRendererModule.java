@@ -41,6 +41,9 @@ public record DocTreeRendererModule() implements DomModule<DocTreeRendererModule
                         TreeRendererModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new NodeContentModule.NodeContent()),
                         NodeContentModule.INSTANCE))
+                // The TOC↔body coordinator, which this module used to hold inline.
+                .add(new ModuleImports<>(List.of(new TocSyncSecretaryModule.TocSyncSecretary()),
+                        TocSyncSecretaryModule.INSTANCE))
                 .build();
     }
 
