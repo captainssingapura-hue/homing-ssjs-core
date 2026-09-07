@@ -113,7 +113,7 @@ public final class MarkdownDocNormalizer implements TreeNormalizer<Doc> {
         if (doc == null) throw new IllegalArgumentException("doc");
         String title = doc.title() == null ? "" : doc.title();
         String body  = doc.contents() == null ? "" : doc.contents();
-        Section root = new Section(title, "doc");
+        Section root = new Section(title, "doc", "doc");
         parse(body, title, root);
         root.flush();
         return root;
@@ -168,7 +168,7 @@ public final class MarkdownDocNormalizer implements TreeNormalizer<Doc> {
             while (levels.peek() >= hl) { stack.peek().flush(); stack.pop(); levels.pop(); }
             stack.peek().flush();
             Section parent = stack.peek();
-            Section node = new Section(text, parent.uniqueChildSlug(text));
+            Section node = new Section(text, parent.uniqueChildSlug(text), slugify(text));
             parent.kids.add(node);
             stack.push(node);
             levels.push(hl);
@@ -220,13 +220,79 @@ public final class MarkdownDocNormalizer implements TreeNormalizer<Doc> {
      * than this gets a shorter anchor than the standalone reader gives it, since
      * that reader has no such limit.
      */
-    private static final int MAX_SLUG = 48;
+    /**
+     * The longest slug a heading may produce. Not a technical ceiling —
+     * {@code NodeName} tolerates 48 — but an editorial one: a heading is a label,
+     * and a label that needs more than this is a sentence wearing a {@code #}.
+     * The eight characters of headroom are for the sibling-disambiguating suffix.
+     */
+    public static final int MAX_SLUG = 40;
 
-    /** Cut to {@code n} characters without leaving a trailing hyphen behind. */
-    private static String clip(String s, int n) {
-        if (s.length() > n) s = s.substring(0, n);
-        s = s.replaceAll("-+$", "");
-        return s.isEmpty() ? "section" : s;
+    /** Hex characters of digest in a hashed slug. */
+    private static final int HASH_LEN = 6;
+
+    /** Wording kept in front of the digest: the budget, less the digest and its separator. */
+    private static final int KEEP = MAX_SLUG - HASH_LEN - 1;
+
+    /**
+     * Every heading in this doc whose slug would not fit {@link #MAX_SLUG} — the
+     * gate {@code DocConformanceTest} enforces, answered by the very code that
+     * does the clipping so the rule and the behaviour cannot drift.
+     *
+     * <p>Reported by heading TEXT rather than by slug, because the author has to
+     * find the line and shorten it, and the slug is not what they wrote.</p>
+     */
+    public static List<String> overlongHeadings(Doc doc) {
+        var out = new ArrayList<String>();
+        collectOverlong(parseDoc(doc), out);
+        return List.copyOf(out);
+    }
+
+    private static void collectOverlong(Section s, List<String> out) {
+        for (Section kid : s.kids) {
+            if (kid.rawSlug.length() > MAX_SLUG) out.add(kid.title);
+            collectOverlong(kid, out);
+        }
+    }
+
+    /**
+     * A slug that fits the budget. Under it, the wording stands. Over it, the
+     * wording is cut to {@link #KEEP} and a short digest of the WHOLE slug is
+     * appended — {@code the-first-part-of-a-very-long-heading_a3f9c1}.
+     *
+     * <p>Plain truncation was the first cut and it was wrong: a clipped slug
+     * still <i>looks</i> like a slug, so a reader has no way to tell a real
+     * anchor from a silently shortened one. A digest announces itself. It is also
+     * <b>stable and local</b> — a function of this heading's own text and nothing
+     * else, so it does not move when a sibling is added, renamed or reordered,
+     * which a positional counter would. And it is deliberately conspicuous: every
+     * {@code _a3f9c1} in an anchor is a heading someone should shorten.</p>
+     */
+    private static String fit(String slug) {
+        if (slug.isEmpty()) return "section";
+        if (slug.length() <= MAX_SLUG) return slug;
+        String head = slug.substring(0, KEEP).replaceAll("-+$", "");
+        return head + "_" + digest(slug);
+    }
+
+    /**
+     * {@link #HASH_LEN} hex characters of SHA-256 over the full slug. A digest
+     * rather than {@code String.hashCode()} because the value ends up in a URL
+     * that people paste: it should not collide by accident, and it should be the
+     * same on every machine that ever renders this doc.
+     */
+    private static String digest(String s) {
+        try {
+            byte[] h = java.security.MessageDigest.getInstance("SHA-256")
+                    .digest(s.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            var sb = new StringBuilder(HASH_LEN);
+            for (int i = 0; sb.length() < HASH_LEN; i++) {
+                sb.append(String.format("%02x", h[i]));
+            }
+            return sb.substring(0, HASH_LEN);
+        } catch (java.security.NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 is required by every JRE", e);
+        }
     }
 
     static String slugify(String text) {
@@ -301,14 +367,17 @@ public final class MarkdownDocNormalizer implements TreeNormalizer<Doc> {
     private static final class Section {
         final String title;
         final String slug;
+        /** The slug BEFORE clipping — what the gate measures. */
+        final String rawSlug;
         final StringBuilder body = new StringBuilder();
         final List<Segment> segments = new ArrayList<>();
         final List<Section> kids = new ArrayList<>();
         private final Set<String> childSlugs = new HashSet<>();
 
-        Section(String title, String slug) {
-            this.title = title == null ? "" : title;
-            this.slug  = slug;
+        Section(String title, String slug, String rawSlug) {
+            this.title  = title == null ? "" : title;
+            this.slug   = slug;
+            this.rawSlug = rawSlug;
         }
 
         /** Close the running prose into a segment, if it holds anything. */
@@ -323,16 +392,16 @@ public final class MarkdownDocNormalizer implements TreeNormalizer<Doc> {
             segments.add(new CodeSegment(body, language));
         }
 
-        /** A slug unique among THIS section's children — see the class javadoc. */
+        /**
+         * A slug unique among THIS section's children — see the class javadoc.
+         * The budget's headroom absorbs the suffix, so a collision never forces
+         * a second truncation of wording that {@link #fit} already settled.
+         */
         String uniqueChildSlug(String headingText) {
-            String base = clip(slugify(headingText), MAX_SLUG);
+            String base = fit(slugify(headingText));
             String candidate = base;
             int n = 2;
-            while (!childSlugs.add(candidate)) {
-                String suffix = "-" + n;
-                candidate = clip(base, MAX_SLUG - suffix.length()) + suffix;
-                n++;
-            }
+            while (!childSlugs.add(candidate)) { candidate = base + "-" + n; n++; }
             return candidate;
         }
     }

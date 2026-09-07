@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.studio.base.Doc;
 import hue.captains.singapura.js.homing.studio.base.DocProvider;
 import hue.captains.singapura.js.homing.studio.base.DocRegistry;
 import hue.captains.singapura.js.homing.studio.base.Reference;
+import hue.captains.singapura.js.homing.studio.base.composed.MarkdownDocNormalizer;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
@@ -116,7 +117,40 @@ public abstract class DocConformanceTest {
                     () -> assertManagedReferences(d)));
         }
 
+        // (5) RFC 0059 — a heading is a label, and it has to fit one.
+        // Every heading becomes a tree node named by its own slug, and a NodeName
+        // is capped, so an over-long heading is CLIPPED — and a clipped anchor is
+        // a worse anchor than a short heading would have given. The gate asks the
+        // normalizer itself, so the rule and the clipping can never disagree.
+        for (Doc d : docs) {
+            if (!".md".equalsIgnoreCase(d.fileExtension())) continue;
+            if (d.headingCapExempt()) continue;   // grandfathered debt — see Doc
+            tests.add(DynamicTest.dynamicTest(
+                    "heading length: " + d.getClass().getSimpleName(),
+                    () -> assertHeadingsFitTheCap(d)));
+        }
+
         return tests.stream();
+    }
+
+    /**
+     * RFC 0059 — fail any markdown doc whose headings would not survive being
+     * turned into node names. Reported by heading text, with the budget, because
+     * the author has to find the line and shorten it.
+     */
+    private static void assertHeadingsFitTheCap(Doc d) {
+        List<String> overlong = MarkdownDocNormalizer.overlongHeadings(d);
+        if (overlong.isEmpty()) return;
+        var sb = new StringBuilder(d.getClass().getName())
+                .append(" has ").append(overlong.size())
+                .append(" heading(s) whose slug exceeds ")
+                .append(MarkdownDocNormalizer.MAX_SLUG)
+                .append(" characters, so their anchors would be clipped.")
+                .append(" Shorten them — a heading is a label, not a sentence.")
+                .append(" (To grandfather this doc while it is rewritten, override")
+                .append(" Doc.headingCapExempt(); that is debt, not licence.)");
+        for (String h : overlong) sb.append("\n    • ").append(h);
+        fail(sb.toString());
     }
 
     /**
