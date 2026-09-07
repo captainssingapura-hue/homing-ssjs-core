@@ -207,6 +207,11 @@ class WorkspaceSwitcher {
     // ── keyboard: Tab cycles the regions, arrows move within one ────────────
     _keys(ev) {
         var c = this._c; if (!c || !this._dlg) return false;
+        // Same rule as the tree's: a modifier makes the chord somebody else's,
+        // and nothing in this dialog reads one. Declining here covers the action
+        // row's own ArrowLeft/Right as well as the Tab cycle, so Alt+Left stays
+        // Back even while the switcher is up. Shift survives — it is Shift+Tab.
+        if (ev.altKey || ev.ctrlKey || ev.metaKey) return false;
         var acts  = [this._dlg.actionEl("cancel"), this._dlg.actionEl("newtab"), this._dlg.actionEl("open")];
         var stops = [c.pair && c.pair.navEl, c.listEl, c.inputEl, acts[2]].filter(function (s) { return !!s; });
         var a = document.activeElement, idx = -1;

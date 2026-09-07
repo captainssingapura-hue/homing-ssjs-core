@@ -383,7 +383,21 @@ class TreeRenderer {
     }
 
     // Arrow-key handler. Returns true iff the key was consumed.
+    //
+    // A MODIFIER MAKES THE CHORD SOMEBODY ELSE'S. Alt+ArrowLeft is the browser's
+    // Back, Cmd+ArrowLeft is Back on a Mac, Ctrl+Enter opens a row's href in a
+    // new tab. None of them mean anything to a tree — but matching on ev.key
+    // alone answered "consumed" to every one of them, and a host that hears
+    // "consumed" calls preventDefault. So the navigation was cancelled AND a
+    // branch was folded that nobody asked to fold: a wrong action, not merely a
+    // missing one. Declined before anything else is read, so a modified chord
+    // cannot move the selection either.
+    //
+    // Shift is deliberately NOT declined: it is not a navigation chord, and a
+    // range-select would want it. This is the rule WorkspaceShallowKeyboard
+    // already states for the workspace, applied where it was missing.
     handleKeydown(ev) {
+        if (ev && (ev.altKey || ev.ctrlKey || ev.metaKey)) return false;
         var key = ev && ev.key;
         if (key !== 'ArrowDown' && key !== 'ArrowUp'
             && key !== 'ArrowRight' && key !== 'ArrowLeft'
