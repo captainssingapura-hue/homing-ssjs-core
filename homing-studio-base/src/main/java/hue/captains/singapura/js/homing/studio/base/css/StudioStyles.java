@@ -514,11 +514,25 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
      * cheap one, and it is what a figure wants anyway.</p>
      *
      * <p><b>Light, but not foreign.</b> The ground is the theme's own surface
-     * mixed to a twelfth against white, so it is always light enough for
-     * Mermaid's ink while still carrying the theme's hue — pale slate under
-     * Carbon, pale EGA blue under Turbo C, and all but invisible under a light
-     * theme, where the plate is only a figure's border. One rule, no per-theme
-     * values, and nothing to keep in step when a twelfth theme arrives.</p>
+     * mixed 30/70 against white: always light enough for Mermaid's ink, and
+     * still of the page — pale EGA blue under Turbo C, pale teal under Retro
+     * 90s. One rule, no per-theme values, nothing to keep in step when a twelfth
+     * theme arrives.</p>
+     *
+     * <p><b>Why 30 and not 12.</b> Eight of the eleven themes already have a
+     * near-white surface, so mixing it into white returns white whatever the
+     * ratio — and those themes never needed a plate, because Mermaid was legible
+     * on them already. The ratio therefore only bites on the themes that are
+     * actually dark or saturated, which is exactly where it should. At a twelfth
+     * even Turbo C came out barely tinted; at 30/70 it reads as blue and Carbon's
+     * plate is still a 190-grey, roughly 5.9:1 against Mermaid's ink.</p>
+     *
+     * <p><b>Carbon cannot be tinted from here, and that is Carbon's doing.</b>
+     * Its surface is {@code #242424} — R=G=B, no hue to inherit — so its plate is
+     * neutral at any ratio. Tinting it would mean sourcing from
+     * {@code --color-accent} instead, which is the theme's signature colour
+     * rather than its background family; that would read as a decorated figure,
+     * not as part of the page, so it is deliberately not done.</p>
      *
      * <p>A colour KEYWORD rather than a hex triple: {@code no-literal-color}
      * flags baked hex and {@code rgb()}, and deliberately not keywords.</p>
@@ -537,7 +551,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             padding: var(--space-3);
             overflow-x: auto;
             text-align: center;
-            background: color-mix(in srgb, var(--color-surface, white) 12%, white);
+            background: color-mix(in srgb, var(--color-surface, white) 30%, white);
             border: 1px solid var(--color-border);
             border-radius: var(--radius-md);
             """;
