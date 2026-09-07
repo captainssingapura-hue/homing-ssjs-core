@@ -162,34 +162,13 @@ function renderDocTree(opts) {
         }
     }
     // ── The local Secretary (RFC 0043) ──────────────────────────────────────
-    // Two-way TOC↔body sync has exactly ONE bug risk: a feedback loop — a TOC
-    // click scrolls the body → the scroll fires → a scroll-spy re-selects →
-    // re-scrolls. We dissolve it structurally: one authority (`currentKey`), two
-    // writers (a TOC Actor via NavRequested, a scroll-spy Actor via ScrolledTo),
-    // and an asymmetry — navigation SCROLLS, the spy only HIGHLIGHTS + SELECTS,
-    // never scrolls. The only residual (flicker through intermediate sections
-    // DURING a programmatic scroll) is absorbed by one `programmaticScroll` field.
-    // The coordinator is a pure (state, message) -> { state, actions } reducer,
-    // exactly RFC 0028's Secretary shape, hosted locally with no hierarchy.
-    var secretary = {
-        state: { currentKey: null, programmaticScroll: false },
-        reduce: function (state, msg) {
-            switch (msg.kind) {
-                case 'NavRequested':                        // TOC click / keyboard reports up
-                    return { state: { currentKey: msg.key, programmaticScroll: true },
-                             actions: [{ kind: 'SyncTo', key: msg.key, path: msg.path, scroll: true }] };
-                case 'ScrolledTo':
-                    if (state.programmaticScroll) return { state: state, actions: [] };   // ignore our own scroll
-                    if (msg.key === state.currentKey) return { state: state, actions: [] };
-                    return { state: { currentKey: msg.key, programmaticScroll: false },
-                             actions: [{ kind: 'SyncTo', key: msg.key, path: msg.path, scroll: false }] };
-                case 'ScrollSettled':                       // scrollend clears the guard
-                    return { state: { currentKey: state.currentKey, programmaticScroll: false }, actions: [] };
-                default:
-                    return { state: state, actions: [] };
-            }
-        }
-    };
+    // The coordinator itself is TocSyncSecretary, which used to be an object
+    // literal right here. It moved out when the markdown reader needed the same
+    // law — the one authority, the two writers, and the asymmetry that makes a
+    // TOC↔body feedback loop unrepresentable. Nothing about it was ever
+    // tree-shaped, which is why the move cost nothing. See that module for the
+    // law; what stays here is only how this reader APPLIES it.
+    var secretaryState = TocSyncSecretary.initial;
     // Scroll a body section to the top of the DETECTED scroll container. We scroll
     // the container EXPLICITLY (scrollTo on `scrollParent`) rather than calling
     // sec.scrollIntoView(): for a nested overflow container — the workspace pane's
@@ -226,8 +205,8 @@ function renderDocTree(opts) {
         }
     }
     function dispatch(msg) {
-        var step = secretary.reduce(secretary.state, msg);
-        secretary.state = step.state;
+        var step = TocSyncSecretary.behavior(secretaryState, msg);
+        secretaryState = step.newState;
         for (var i = 0; i < step.actions.length; i++) applyAction(step.actions[i]);
     }
     // TOC selection (click / arrow key, via onSelect) and the public scrollToPath
