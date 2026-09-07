@@ -503,6 +503,46 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             """;
         }
     }
+    /**
+     * The plate a rendered Mermaid diagram sits on.
+     *
+     * <p>Mermaid draws with its OWN theme — dark strokes and dark labels on a
+     * transparent ground — and it does not hear about ours. On a light page that
+     * is invisible; on Carbon or Turbo C the diagram is dark-on-dark and simply
+     * cannot be read. Re-theming Mermaid per theme is the expensive answer and a
+     * standing maintenance debt; giving it a surface it is legible on is the
+     * cheap one, and it is what a figure wants anyway.</p>
+     *
+     * <p><b>Light, but not foreign.</b> The ground is the theme's own surface
+     * mixed to a twelfth against white, so it is always light enough for
+     * Mermaid's ink while still carrying the theme's hue — pale slate under
+     * Carbon, pale EGA blue under Turbo C, and all but invisible under a light
+     * theme, where the plate is only a figure's border. One rule, no per-theme
+     * values, and nothing to keep in step when a twelfth theme arrives.</p>
+     *
+     * <p>A colour KEYWORD rather than a hex triple: {@code no-literal-color}
+     * flags baked hex and {@code rgb()}, and deliberately not keywords.</p>
+     *
+     * <p><b>The fallback is load-bearing.</b> An undefined {@code --color-surface}
+     * makes the whole {@code color-mix} invalid at computed-value time, the
+     * declaration is dropped, and the plate goes TRANSPARENT — which is
+     * unreadable precisely when a theme is already broken. {@code var(--x, white)}
+     * degrades to a plain white plate instead: still legible, merely untinted.
+     * The same lesson {@code st_title} learned from a downstream theme that was
+     * missing one token.</p>
+     */
+    public record st_mermaid() implements CssClass<StudioStyles> {
+        @Override public String body() { return """
+            margin: 16px 0;
+            padding: var(--space-3);
+            overflow-x: auto;
+            text-align: center;
+            background: color-mix(in srgb, var(--color-surface, white) 12%, white);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            """;
+        }
+    }
     public record st_doc() implements CssClass<StudioStyles> {
         @Override public String body() { return """
             font-size: 16px;
@@ -1062,6 +1102,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
                 new st_filter(), new st_filter_btn(), new st_filter_btn_active(),
                 new st_layout(), new st_sidebar(), new st_sidebar_title(),
                 new st_toc(), new st_toc_item(), new st_toc_h1(), new st_toc_h2(), new st_toc_h3(), new st_toc_active(),
+                new st_mermaid(),
                 new st_doc(), new st_doc_meta(),
                 new st_loading(), new st_error(), new st_doc_pane(), new st_doc_empty(), new st_footer(),
                 new st_app_pill(), new st_app_pill_dark(),

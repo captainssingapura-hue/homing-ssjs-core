@@ -382,7 +382,11 @@ function _renderMermaidBlocks(bodyEl) {
                     if (!pre || !pre.parentNode) return;
                     var wrap = document.createElement("div");
                     wrap.setAttribute("data-mermaid", "");
-                    wrap.style.cssText = "margin:16px 0;overflow-x:auto;text-align:center;";
+                    // A typed plate, not an inline style. Mermaid draws dark ink on a
+                    // transparent ground and never hears about the theme, so on a dark
+                    // one the diagram is unreadable; st_mermaid gives it a light ground
+                    // mixed from the theme's own surface. See StudioStyles.st_mermaid.
+                    css.addClass(wrap, st_mermaid);
                     wrap.appendChild(document.createRange().createContextualFragment(svg));
                     pre.parentNode.replaceChild(wrap, pre);
                 }).catch(function (err) {

@@ -57,6 +57,9 @@ public record DocReaderRenderer() implements DomModule<DocReaderRenderer> {
                         new StudioStyles.st_toc_h2(),
                         new StudioStyles.st_toc_h3(),
                         new StudioStyles.st_toc_active(),
+                        // The plate a rendered Mermaid diagram sits on — it draws
+                        // dark ink and never hears about the theme.
+                        new StudioStyles.st_mermaid(),
                         new StudioStyles.st_doc(),
                         new StudioStyles.st_doc_meta(),
                         new StudioStyles.st_section(),
