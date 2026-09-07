@@ -456,23 +456,12 @@ function _renderDoc(md, bodyEl, tocEl) {
     }
     tocEl.replaceChildren.apply(tocEl, tocLinks);
 
-    if (typeof IntersectionObserver === "function") {
-        var bySlug = {};
-        for (var li = 0; li < tocLinks.length; li++) {
-            bySlug[tocLinks[li].getAttribute("data-slug")] = tocLinks[li];
-        }
-        var observer = new IntersectionObserver(function(entries) {
-            entries.forEach(function(e) {
-                if (e.isIntersecting) {
-                    for (var li = 0; li < tocLinks.length; li++) {
-                        css.removeClass(tocLinks[li], st_toc_active);
-                    }
-                    var link = bySlug[e.target.id];
-                    if (link) css.addClass(link, st_toc_active);
-                }
-            });
-        }, { rootMargin: "0px 0px -70% 0px", threshold: 0 });
-        for (var hi2 = 0; hi2 < headings.length; hi2++) observer.observe(headings[hi2]);
-    }
+    // The scroll-spy used to live here, one-way: it highlighted and nothing
+    // else, so a reader could see where they were but never steer from the TOC.
+    // attachTocSync brings the whole RFC 0043 law instead — the spy AND the
+    // keyboard, coordinated by the same Secretary the rigid-tree reader obeys,
+    // so the two readers now differ in what they draw and not in how they behave.
+    tocEl.setAttribute("tabindex", "0");
+    attachTocSync({ navEl: tocEl, links: tocLinks, headings: headings });
 }
 
