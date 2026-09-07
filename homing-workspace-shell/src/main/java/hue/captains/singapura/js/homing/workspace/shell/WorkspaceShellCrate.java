@@ -55,7 +55,10 @@ public final class WorkspaceShellCrate implements Crate {
                 CrateEntry.of(ReplayEngineModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(TabRegistryModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(WidgetMounterModule.INSTANCE),
-                CrateEntry.of(WorkspaceControlModalModule.INSTANCE),
+                // RFC 0057 Phase 3 — the switcher replaces WorkspaceControlModal.
+                CrateEntry.of(WorkspaceSwitcherStyles.INSTANCE),
+                CrateEntry.of(WorkspaceSwitcherModel.INSTANCE, StandardJsModuleType.PURE_LOGIC),
+                CrateEntry.of(WorkspaceSwitcherModule.INSTANCE),
                 CrateEntry.of(WorkspaceDirectoryModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(WorkspaceShellChromeModule.INSTANCE),
                 CrateEntry.of(WorkspaceStateModelModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),

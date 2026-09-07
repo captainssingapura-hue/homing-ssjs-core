@@ -2,11 +2,12 @@
 //
 // The theme picker, in two shapes from one implementation:
 //
-//   mountThemePickerButton(host, opts)  header trigger + Modal — the chrome
+//   mountThemePickerButton(host, opts)  header trigger + dialog — the chrome
 //   mountThemePickerTree(host, opts)    the bare tree — the themes app
 //
-// Borrows rather than builds. The dialog is Modal, the same primitive the
-// workspace-control modal uses. The rows are TreeRenderer, the framework's
+// Borrows rather than builds. The dialog is SystemDialog (RFC 0057), which
+// brings scrim, inert, keyboard ownership, glow, golden sizing and the action
+// row with it. The rows are TreeRenderer, the framework's
 // shared tree, which brings the keyboard model with it: ArrowUp/Down through
 // visible rows, ArrowRight/Left to fold a group, Enter to activate.
 //
@@ -16,15 +17,6 @@
 // the inspiration line, the palette — lives in the content pane on the right.
 // That division is what keeps the whole thing compact: a row carries one string,
 // so nothing competes for its width.
-//
-// A FRESH BRANCH PER OPEN, dissolved on close. DomOpsParty names elements and
-// refuses a duplicate name, and TreeRenderer numbers its rows from zero on every
-// setData — so a second build on the SAME branch asks for "tn0" twice and throws
-// mid-render, leaving an empty panel. Reusing one detached body avoided that but
-// bought a worse problem: a dialog that is closed but alive still answers
-// keystrokes, and the page's own tree never sees them. A branch per open, named
-// by the clock so no two can collide, keeps each dialog's namespace and its
-// lifetime to itself.
 //
 // Selecting only browses. Enter switches, which navigates — live theme swap is
 // not supported yet. A session-local flag carries "the picker was open" across
@@ -39,10 +31,8 @@
 // collectible while its elements were still on the page.
 const _btnOwner  = Object.freeze({ toString: () => "themePickerButton" });
 const _treeOwner = Object.freeze({ toString: () => "themePickerTree" });
-const _dialogOwner = Object.freeze({ toString: () => "themePickerDialog" });
 
 var _seq = 0;
-var _dlgSeq = 0;
 
 /**
  * Build the content pane once and return an UPDATE function.
@@ -181,52 +171,17 @@ function mountThemePickerTree(host, opts) {
 }
 
 /**
- * The action row, built once and refreshed as the selection moves.
+ * Header trigger plus dialog. The dialog is SystemDialog — scrim, inert,
+ * keyboard ownership, glow, golden sizing and the action row all arrive with
+ * it — so this function is only about what the picker PUTS in the dialog and
+ * what its three actions mean.
  *
  * Switching a theme still NAVIGATES — live swap is Wish 0018 — and that is what
  * separates the two confirming actions. Apply reloads with the dialog flagged to
  * reopen, so you land back here and can try the next one; OK reloads without the
- * flag and the dialog is simply gone. Cancel never navigates at all.
- *
- * Applying the theme already in use would spend a whole page load to arrive
- * exactly where you are, so both are turned off in that case rather than
- * pretending to do something.
- */
-function _actions(branch, host, seq, apply, ok, cancel) {
-    var row = branch.createElement("act" + seq, "div");
-    css.addClass(row, tp_actions);
-
-    function button(name, label, onClick, primary) {
-        var b = branch.createElement(name + seq, "button");
-        b.type = "button";
-        b.textContent = label;
-        css.addClass(b, tp_action);
-        if (primary) css.addClass(b, tp_action_primary);
-        b.addEventListener("click", onClick);
-        row.appendChild(b);
-        return b;
-    }
-
-    var bCancel = button("acx", "Cancel", cancel, false);
-    var bApply  = button("apy", "Apply",  apply,  false);
-    var bOk     = button("aok", "OK",     ok,     true);
-
-    host.appendChild(row);
-
-    return {
-        row: row,
-        // `live` is "the selection would actually change something".
-        refresh: function (live) {
-            css.toggleClass(bApply, tp_action_off, !live);
-            bApply.disabled = !live;
-            bOk.textContent = live ? "OK" : "Close";
-        }
-    };
-}
-
-/**
- * Header trigger plus Modal — the same primitive the workspace-control modal
- * uses, so the two look like one product.
+ * flag and the dialog is simply gone. Cancel never navigates at all. Applying
+ * the theme already in use would spend a page load to arrive exactly where you
+ * are, so Apply switches off and OK becomes Close in that case.
  */
 function mountThemePickerButton(host, opts) {
     if (!host) throw new Error("mountThemePickerButton: host element required");
@@ -259,146 +214,59 @@ function mountThemePickerButton(host, opts) {
         caret.setAttribute("aria-hidden", "true");
         btn.appendChild(caret);
 
-        var modal  = null;
-        var keys   = null;   // the capture-phase keydown listener, while open
-        var dialog = null;   // { branch, renderer, treeHost }, while open
-        var inerted = [];    // what the firewall switched off, to switch back on
+        var dialog = null;   // the SystemDialog handle, while open
 
-        // Everything the open dialog owns, released in one place. Both close
-        // paths run this — the ones we drive (Escape, the trigger button) and
-        // the one Modal drives (its own ✕). Missing the second is what left a
-        // dead listener eating the page's arrow keys after the dialog was gone.
-        function teardown() {
-            for (var i = 0; i < inerted.length; i++) inerted[i].inert = false;
-            inerted = [];
-            if (keys) { document.removeEventListener("keydown", keys, true); keys = null; }
-            if (modal && modal.destroy) { try { modal.destroy(); } catch (e) {} }
-            modal = null;
-            if (dialog) { try { dialog.branch.dissolve(); } catch (e) {} dialog = null; }
-        }
-
-        function close() {
-            // A deliberate close clears the flag: the user is done trying themes,
-            // so the next page must NOT reopen. Only a theme switch sets it.
-            rememberPickerOpen(false);
-            teardown();
-            if (btn.focus) btn.focus();
-        }
-
-        // φ. The dialog takes 1/φ of each viewport axis, so it is the larger
-        // part of the golden cut on a small screen and still leaves the page
-        // framing it on a large one. Measured at open rather than tracked: the
-        // Modal is absolutely positioned in pixels, and a dialog that resized
-        // under the pointer while you were reading it would be worse than one
-        // that is simply right for the viewport you opened it in.
-        var PHI = 1.6180339887;
+        function close() { if (dialog) dialog.close(); }
 
         function open() {
-            if (modal) { close(); return; }
-
-            // Named by the clock, and by a counter for the two opens that land in
-            // the same millisecond. createBranch refuses a name already taken at
-            // this level, and dissolving a child does not always give the name
-            // back — so never ask for the same one twice.
-            var pb = branch.createBranch("tpDlg" + Date.now() + "_" + (++_dlgSeq));
-            pb.activate(_dialogOwner);
-
-            var body = pb.createElement("mbody", "div");
-            css.addClass(body, tp_body);
-
-            var acts = null;
+            if (dialog) { close(); return; }
+            var panes = null;
 
             function applyPicked(keepOpen) {
-                var slug = dialog && dialog.selected();
+                var slug = panes && panes.selected();
                 if (!slug || slug === active) { if (!keepOpen) close(); return; }
-                // The flag is the whole difference between the two: it survives
-                // the reload and tells the far side whether to reopen.
+                // The flag is the whole difference between Apply and OK: it
+                // survives the reload and tells the far side whether to reopen.
                 rememberPickerOpen(!!keepOpen);
                 switchToTheme(slug);
             }
 
-            var panes = _buildPanes(pb, body, themes, active, mySeq,
-                // Enter on a row is the primary action, so it means OK.
-                function () { applyPicked(false); },
-                function (slug) { if (acts) acts.refresh(slug !== active); });
-
-            dialog = { branch: pb, renderer: panes.renderer,
-                       treeHost: panes.treeHost, selected: panes.selected };
-
-            acts = _actions(pb, body, mySeq,
-                function () { applyPicked(true);  },
-                function () { applyPicked(false); },
-                function () { close(); });
-            acts.refresh(dialog.selected() !== active);
-
-            // 1/φ of each viewport axis, then clamped. Modal applies minWidth
-            // only in resize(), never in its constructor, so an unclamped value
-            // reaches the DOM verbatim — a hidden or not-yet-laid-out pane
-            // reports innerWidth 0 and the dialog arrives 2px wide, borders
-            // only. The ceiling is the other end of the same argument: past
-            // about a thousand pixels the tree is still one column of names and
-            // the extra width is spent on nothing.
-            var vw = window.innerWidth  || 1024;
-            var vh = window.innerHeight || 768;
-            var w  = Math.min(980, Math.max(460, Math.round(vw / PHI)));
-            var h  = Math.min(720, Math.max(320, Math.round(vh / PHI)));
-            modal = new Modal({
-                container: document.body,
-                title:     "Theme",
-                content:   body,
-                x:         Math.max(8, Math.round((vw - w) / 2)),
-                y:         Math.max(8, Math.round((vh - h) / 2)),
-                width:     w,
-                height:    h,
-                minWidth:  420,
-                minHeight: 300,
-                // The rest of the page goes inert behind a scrim, and the panel
-                // takes an accent glow — this dialog is the thing you are using.
-                scrim:     true,
-                glow:      true,
-                // Modal's own ✕ ends the dialog as surely as Escape does, so it
-                // gets the same teardown. It must not be `modal = null` alone:
-                // that leaves the branch mounted and the keydown listener
-                // installed, and the listener answers for a dialog the user has
-                // already dismissed.
-                onClose:   close
-            });
-
-            // MODALITY. The scrim is the visible half and inert is the real half:
-            // without inert, Tab walks straight behind the scrim and a screen
-            // reader reads through it. Everything already inert for its own
-            // reasons is left alone, and only what we switched off is restored.
-            var scrim = pb.createElement("scrim", "div");
-            css.addClass(scrim, tp_scrim);
-            scrim.addEventListener("mousedown", function () { close(); });
-            document.body.appendChild(scrim);
-            css.addClass(modal.el, tp_glow);
-
-            var kids = document.body.children;
-            for (var i = 0; i < kids.length; i++) {
-                var k = kids[i];
-                if (k === scrim || k === modal.el || k.inert) continue;
-                k.inert = true;
-                inerted.push(k);
+            // `live` is "the selection would actually change something".
+            function refresh(live) {
+                if (!dialog) return;
+                dialog.setAction("apply", { enabled: live });
+                dialog.setAction("ok",    { label: live ? "OK" : "Close" });
             }
 
-            // CAPTURE phase, and stopPropagation on anything we take. The page
-            // behind has its own TreeRenderer listening on document; without
-            // this, one ArrowDown walks both trees and the page navigates under
-            // the open dialog. A modal owns the keyboard while it is up — and
-            // only while it is up, which is teardown's job.
-            keys = function (ev) {
-                if (ev.key === "Escape") {
-                    ev.preventDefault(); ev.stopPropagation(); close(); return;
+            dialog = openSystemDialog({
+                branch:         branch,
+                title:          "Theme",
+                modal:          true,
+                restoreFocusTo: btn,
+                content: function (pb, bodyEl) {
+                    panes = _buildPanes(pb, bodyEl, themes, active, mySeq,
+                        // Enter on a row is the primary action, so it means OK.
+                        function () { applyPicked(false); },
+                        function (slug) { refresh(slug !== active); });
+                    return { onKeydown: function (ev) { return panes.renderer.handleKeydown(ev); },
+                             focusEl:   panes.treeHost };
+                },
+                actions: [
+                    { id: "cancel", label: "Cancel",                onClick: function () { close(); } },
+                    { id: "apply",  label: "Apply",                 onClick: function () { applyPicked(true);  } },
+                    { id: "ok",     label: "OK",     primary: true, onClick: function () { applyPicked(false); } }
+                ],
+                // Every close path lands here exactly once — Escape, ✕, scrim,
+                // Cancel. A deliberate close clears the flag: the user is done
+                // trying themes, so the next page must NOT reopen. Apply and OK
+                // navigate WITHOUT closing, so they never reach this and the flag
+                // they set survives.
+                onClose: function () {
+                    dialog = null;
+                    rememberPickerOpen(false);
                 }
-                if (dialog && dialog.renderer.handleKeydown(ev)) {
-                    ev.preventDefault(); ev.stopPropagation();
-                }
-            };
-            document.addEventListener("keydown", keys, true);
-
-            if (modal.open) modal.open();
-            if (dialog.treeHost.focus) dialog.treeHost.focus();
+            });
+            refresh(panes.selected() !== active);
         }
 
         btn.addEventListener("click", open);

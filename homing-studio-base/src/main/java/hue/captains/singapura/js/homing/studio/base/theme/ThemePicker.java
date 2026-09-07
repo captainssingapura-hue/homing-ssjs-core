@@ -7,22 +7,23 @@ import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
 import hue.captains.singapura.js.homing.core.js.DomOpsPartyModule;
 import hue.captains.singapura.js.homing.studio.base.ui.MasterDetail;
+import hue.captains.singapura.js.homing.studio.base.ui.SystemDialog;
 import hue.captains.singapura.js.homing.core.js.domOpsParty;
 import hue.captains.singapura.js.homing.server.HrefManager;
-import hue.captains.singapura.js.homing.studio.base.ui.layout.ModalModule;
 
 import java.util.List;
 
 /**
  * The theme picker — the registry's themes as a grouped tree, offered in two
  * shapes from one implementation: {@code mountThemePickerButton} for the chrome
- * (a header trigger that opens the tree in a {@code Modal}) and
+ * (a header trigger that opens the tree in a {@code SystemDialog}) and
  * {@code mountThemePickerTree} for a host that already has room for it, which is
  * how the themes app takes it.
  *
- * <p><b>It borrows rather than builds.</b> The dialog is {@code Modal}, the same
- * primitive the workspace-control modal uses, so the two look like the same
- * product. The rows are {@code TreeRenderer}, the framework's shared tree — which
+ * <p><b>It borrows rather than builds.</b> The dialog is {@code SystemDialog}
+ * (RFC 0057), which brings scrim, inert, keyboard ownership, glow, golden sizing
+ * and the action row with it — so this module is only about what goes IN the
+ * dialog and what its three actions mean. The rows are {@code TreeRenderer}, the framework's shared tree — which
  * brings the keyboard model with it: ArrowUp/Down move through visible rows,
  * ArrowRight/Left expand and fold a group, Enter activates. A hand-rolled tree
  * had none of that, and would have had to grow it.</p>
@@ -66,8 +67,8 @@ public record ThemePicker() implements DomModule<ThemePicker> {
                         DomOpsPartyModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new MasterDetail.mountMasterDetail()),
                         MasterDetail.INSTANCE))
-                .add(new ModuleImports<>(List.of(new ModalModule.Modal()),
-                        ModalModule.INSTANCE))
+                .add(new ModuleImports<>(List.of(new SystemDialog.openSystemDialog()),
+                        SystemDialog.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new ThemePickerStyles.tp_btn(),
                         new ThemePickerStyles.tp_btn_label(),
@@ -78,12 +79,6 @@ public record ThemePicker() implements DomModule<ThemePicker> {
                         new ThemePickerStyles.tp_swatches(),
                         new ThemePickerStyles.tp_sw(),
                         new ThemePickerStyles.tp_inline(),
-                        new ThemePickerStyles.tp_scrim(),
-                        new ThemePickerStyles.tp_glow(),
-                        new ThemePickerStyles.tp_actions(),
-                        new ThemePickerStyles.tp_action(),
-                        new ThemePickerStyles.tp_action_primary(),
-                        new ThemePickerStyles.tp_action_off(),
                         new ThemePickerStyles.tp_inline_head()
                 ), ThemePickerStyles.INSTANCE))
                 .build();

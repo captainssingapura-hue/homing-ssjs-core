@@ -169,12 +169,12 @@ public record WorkspaceShellChromeModule() implements DomModule<WorkspaceShellCh
                 .add(new ModuleImports<>(List.of(
                         new WorkspaceStateModelModule.WorkspaceStateModel()),
                         WorkspaceStateModelModule.INSTANCE))
-                // Phases 16+17+18 combined — WorkspaceControlModal:
+                // RFC 0057 Phase 3 — WorkspaceSwitcher (replaces WorkspaceControlModal):
                 // clickable `kind :: name` header → modal with
                 // switcher + reset + slow-motion replay sections.
                 .add(new ModuleImports<>(List.of(
-                        new WorkspaceControlModalModule.WorkspaceControlModal()),
-                        WorkspaceControlModalModule.INSTANCE))
+                        new WorkspaceSwitcherModule.WorkspaceSwitcher()),
+                        WorkspaceSwitcherModule.INSTANCE))
                 .build();
     }
 

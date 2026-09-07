@@ -62,6 +62,14 @@ public interface WorkspaceSpec {
     /** Title shown in the workspace's Ribbon and the browser tab. */
     String title();
 
+    /**
+     * The section this kind sits under in the workspace switcher — the role
+     * {@code Theme.group()} plays for the theme picker (RFC 0057). Defaulted so
+     * no existing spec breaks: every kind lands in one section until its spec
+     * says otherwise.
+     */
+    default String group() { return "Workspaces"; }
+
     /** Widget types this workspace exposes via its picker. */
     List<WidgetEntry> widgetEntries();
 
