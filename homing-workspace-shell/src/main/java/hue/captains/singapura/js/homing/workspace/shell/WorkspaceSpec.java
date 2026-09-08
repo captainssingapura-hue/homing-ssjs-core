@@ -131,9 +131,11 @@ public interface WorkspaceSpec {
      *
      * <pre>{@code
      * @Override public Arrangement arrangement() {
-     *     return Arrangements.MAIN_AND_OUTPUT
-     *             .with("main",   "DocViewWidget")
-     *             .with("output", "LogWidget");
+     *     return PaneArrangements.MAIN_AND_OUTPUT
+     *             .allocate()
+     *             .place("main",   "DocViewWidget")
+     *             .place("output", "LogWidget")
+     *             .build();
      * }
      * }</pre>
      *
@@ -145,7 +147,7 @@ public interface WorkspaceSpec {
      * <p>{@link #pinnedSpawns()} is the degenerate case of this — one pane, these
      * widgets — and remains supported.</p>
      */
-    default Arrangement arrangement() { return Arrangements.SINGLE; }
+    default Arrangement arrangement() { return PaneArrangements.SINGLE.empty(); }
 
     /**
      * RFC 0047 — the workspace's <b>global tab budget</b>: the maximum number

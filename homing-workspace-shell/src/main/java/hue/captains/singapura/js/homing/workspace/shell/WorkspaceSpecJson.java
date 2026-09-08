@@ -88,10 +88,10 @@ public final class WorkspaceSpecJson {
         var sb = new StringBuilder(128);
         sb.append("{\"name\":").append(WorkspaceLayoutJson.quoteString(a.name()));
         sb.append(",\"layout\":");
-        layoutNode(sb, a.layout());
+        layoutNode(sb, a.panes().layout());
         sb.append(",\"widgets\":{");
         boolean first = true;
-        for (PaneId pane : a.panes()) {
+        for (PaneId pane : a.panes().panes()) {
             var widgets = a.widgetsIn(pane);
             if (widgets.isEmpty()) continue;
             if (!first) sb.append(',');
