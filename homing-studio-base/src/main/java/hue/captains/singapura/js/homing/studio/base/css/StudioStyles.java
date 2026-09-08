@@ -558,6 +558,24 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     /**
+     * The line left on the plate when a diagram could not be drawn — offline, a
+     * blocked CDN, or a diagram Mermaid refused. Muted and small, because the
+     * fence above it is still the content; this only says why it is still a fence.
+     *
+     * <p>Left-aligned deliberately: {@code st_mermaid} centres its plate, which
+     * is right for a diagram and wrong for a sentence.</p>
+     */
+    public record st_mermaid_note() implements CssClass<StudioStyles> {
+        @Override public String body() { return """
+            margin: 6px 0 0;
+            color: var(--color-text-muted);
+            font-size: 12px;
+            font-style: italic;
+            text-align: left;
+            """;
+        }
+    }
+    /**
      * The section the doc reader's TOC is currently synced to — a tinted ground
      * and a bar down its inside edge.
      *
@@ -1140,6 +1158,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
                 new st_layout(), new st_sidebar(), new st_sidebar_title(),
                 new st_toc(), new st_toc_item(), new st_toc_h1(), new st_toc_h2(), new st_toc_h3(), new st_toc_active(),
                 new st_mermaid(),
+                new st_mermaid_note(),
                 new st_doc_section_active(),
                 new st_doc(), new st_doc_meta(),
                 new st_loading(), new st_error(), new st_doc_pane(), new st_doc_empty(), new st_footer(),

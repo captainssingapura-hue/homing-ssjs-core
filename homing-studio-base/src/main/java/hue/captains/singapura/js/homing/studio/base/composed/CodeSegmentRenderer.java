@@ -35,6 +35,9 @@ public record CodeSegmentRenderer() implements DomModule<CodeSegmentRenderer> {
                         new StudioStyles.st_section_title(),
                         new StudioStyles.st_doc()
                 ), StudioStyles.INSTANCE))
+                // A `mermaid` fence is a diagram, not a listing (RFC 0059 Phase 2).
+                .add(new ModuleImports<>(List.of(new MermaidPlateModule.renderMermaidPlate()),
+                        MermaidPlateModule.INSTANCE))
                 .build();
     }
 
