@@ -130,7 +130,14 @@ public final class MarkdownDocNormalizer implements TreeNormalizer<Doc> {
         StringBuilder code = null;
         boolean firstHeading = true;
 
-        for (String line : body.split("\n", -1)) {
+        // Line endings are normalised BEFORE the split. The corpus is authored
+        // on Windows, so a CRLF file leaves a trailing CR on every line and the
+        // split-and-rejoin carries it straight into segment bodies. marked
+        // scrubbed that for the standalone reader, which is why nothing noticed
+        // until the rigid path started carrying fences of its own: Mermaid's
+        // parser rejects a stray CR outright ("Parse error on line 7"), and a
+        // code listing renders it as a glyph. Fixed here, for every segment kind.
+        for (String line : body.replace("\r\n", "\n").replace("\r", "\n").split("\n", -1)) {
             String trimmed = line.stripLeading();
 
             if (trimmed.startsWith("```") || trimmed.startsWith("~~~")) {
