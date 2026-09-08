@@ -962,6 +962,12 @@ class MultiTabPane {
     }
 
     // ── RFC 0052: cover-free pointer reporting ───────────────────────────────
+    /** The slotId owning a leaf element, or null if it is not one of ours. */
+    _slotOfLeafEl(leaf) {
+        var slotId = null;
+        this._leafBySlot.forEach(function (el, slot) { if (el === leaf) slotId = slot; });
+        return slotId;
+    }
 
     /** The slotId whose CONTENT contains the given event target, or null. */
     _slotOfContentTarget(t) {
@@ -970,13 +976,44 @@ class MultiTabPane {
         if (!content) return null;                 // strip / corner / outside
         var leaf = content.closest(".hmtp-leaf");
         if (!leaf) return null;
-        var slotId = null;
-        this._leafBySlot.forEach(function (el, slot) { if (el === leaf) slotId = slot; });
-        return slotId;
+        return this._slotOfLeafEl(leaf);
     }
 
+    /** The slotId of the leaf containing the target — strip and corner included. */
+    _slotOfLeafTarget(t) {
+        if (!t || typeof t.closest !== "function") return null;
+        var leaf = t.closest(".hmtp-leaf");
+        if (!leaf) return null;
+        return this._slotOfLeafEl(leaf);
+    }
+
+    /**
+     * Is this target the chrome's own BACKGROUND — the strip, the corner, or
+     * the budget pill (a label, not a control)?
+     *
+     * The test is IDENTITY, not descent, and that is the whole point: a chip,
+     * its ×, the + and the corner buttons are all descendants, so they are
+     * excluded structurally rather than by a list that would rot as the chrome
+     * grows. It cannot be left to their own ev.stopPropagation() either —
+     * _onPanePress is a CAPTURE listener on the container, so it runs before
+     * any listener on the target, and their stopPropagation reads like
+     * protection while providing none.
+     */
+    _isChromeSurface(t) {
+        if (!t || !t.classList) return false;
+        return t.classList.contains("hmtp-strip")
+            || t.classList.contains("hmtp-corner")
+            || t.classList.contains("hmtp-pill");
+    }
+
+    // RFC 0052 — the POINTER axis asks where the pointer IS, so the whole leaf
+    // counts: a pane's strip and corner are its own furniture, not a different
+    // place. They used to report null, which did not merely fail to register —
+    // it actively REVOKED liveness, so moving the mouse straight up from the
+    // content onto that pane's own tab bar re-inerted it and dropped the hover
+    // ring while the pointer had never left the pane.
     _onPointerOver(ev) {
-        var slot = this._slotOfContentTarget(ev.target);
+        var slot = this._slotOfLeafTarget(ev.target);
         if (slot === this._hoverSlot) return;      // no change — no report
         this._hoverSlot = slot;
         this._fire(this._cbChromeInteract, "onChromeInteract", [{ kind: "pane-hover", slotId: slot }]);
@@ -995,8 +1032,13 @@ class MultiTabPane {
      * rule rests on. Never consumed: the widget receives the same event.
      */
     _onPanePress(ev) {
+        // The pane body, or the chrome's own background. A control on the
+        // chrome (chip, ×, +, split/merge) keeps its own meaning and does not
+        // enter — the + opens the picker, and claiming focus is the picker's
+        // job, not something to pre-empt from here.
         var slot = this._slotOfContentTarget(ev.target);
-        if (slot == null) return;                  // strip/corner clicks are their own gestures
+        if (slot == null && this._isChromeSurface(ev.target)) slot = this._slotOfLeafTarget(ev.target);
+        if (slot == null) return;                  // a chrome control — its own gesture
         this._fire(this._cbChromeInteract, "onChromeInteract", [{ kind: "pane-press", slotId: slot }]);
     }
 
