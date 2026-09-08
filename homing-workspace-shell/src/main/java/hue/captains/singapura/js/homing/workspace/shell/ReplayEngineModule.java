@@ -28,7 +28,7 @@ import java.util.List;
  *       pruning, those are the only ones not already covered by replayed
  *       spawn events).</li>
  *   <li>Empty log + no checkpoint → {@code onEmpty()} fallback
- *       (orchestrator typically delegates to {@code PinnedTabSpawner}).</li>
+ *       (the orchestrator seeds the model from the spec arrangement).</li>
  *   <li>Production mode drops the fence on completion so user actions
  *       resume recording; slow-motion mode leaves it on (observation-
  *       only by design).</li>

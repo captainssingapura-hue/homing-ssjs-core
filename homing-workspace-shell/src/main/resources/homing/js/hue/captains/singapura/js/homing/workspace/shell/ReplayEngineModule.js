@@ -119,9 +119,22 @@ class ReplayEngine {
                             'recorded; cp seq', fromSeq,
                             '; checkpoint-seeded:', restoredFromCheckpoint);
 
-                // ── Step 6: empty queue + no checkpoint → onEmpty ──────
+                // ── Step 6: does this workspace still need seeding? ─────────
+                // The condition is the CALLER'S, because only the caller knows
+                // what "already seeded" looks like in its own log. The default
+                // is the historical one — empty queue, no checkpoint — and it is
+                // wrong for any caller whose boot writes an event before replay
+                // runs, which is why opts.needsSeed exists.
+                //
+                // needsSeed receives ALL rows, not the post-checkpoint queue: a
+                // marker below the checkpoint cutoff is still a marker, and
+                // re-seeding a workspace that already has state would be worse
+                // than never seeding at all.
                 let fellThroughToEmpty = false;
-                if (queue.length === 0 && !restoredFromCheckpoint) {
+                const seedWanted = (typeof opts.needsSeed === 'function')
+                    ? !!opts.needsSeed(rows || [], restoredFromCheckpoint)
+                    : (queue.length === 0 && !restoredFromCheckpoint);
+                if (seedWanted) {
                     fellThroughToEmpty = true;
                     if (typeof opts.onEmpty === 'function') {
                         try { state = opts.onEmpty(state); }
@@ -130,11 +143,13 @@ class ReplayEngine {
                                 e && e.message ? e.message : e);
                         }
                     }
+                }
+                if (seedWanted && queue.length === 0) {
                     return {
                         finalState:             state,
                         replayed:               0,
                         lastSeq:                fromSeq,
-                        restoredFromCheckpoint: false,
+                        restoredFromCheckpoint: restoredFromCheckpoint,
                         fellThroughToEmpty:     true
                     };
                 }

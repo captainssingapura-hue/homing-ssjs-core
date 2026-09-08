@@ -33,33 +33,36 @@
 
 class WorkspaceStateModel {
 
-    constructor() {
-        // Mirror MTP._defaultLayout. Stays identical to MTP's slot ids so
-        // projection lines up without translation. If the framework ever
-        // changes its default, this constructor needs to track.
-        this._layout = {
-            kind: 'split', orientation: 'vertical',
-            children: [
-                { ratio: 0.5, pane: {
-                    kind: 'split', orientation: 'horizontal',
-                    children: [
-                        { ratio: 0.5, pane: { kind: 'leaf', slotId: 'tl' } },
-                        { ratio: 0.5, pane: { kind: 'leaf', slotId: 'tr' } }
-                    ]
-                } },
-                { ratio: 0.5, pane: {
-                    kind: 'split', orientation: 'horizontal',
-                    children: [
-                        { ratio: 0.5, pane: { kind: 'leaf', slotId: 'bl' } },
-                        { ratio: 0.5, pane: { kind: 'leaf', slotId: 'br' } }
-                    ]
-                } }
-            ]
-        };
+    /**
+     * @param seedLayout optional MTP-native layout to start from — the workspace
+     *        shell passes WorkspaceSpec.arrangement()'s (RFC 0060 D9).
+     *
+     * This constructor used to hold its own copy of the 2x2, under a comment
+     * saying it had to track MTP's default by hand. It no longer guesses: it is
+     * TOLD, and its own fallback is the trivial one. That is what D9 is for —
+     * a default nobody owned was written in two places and could disagree.
+     */
+    constructor(seedLayout) {
+        this._layout = seedLayout
+            ? this._cloneNode(seedLayout)
+            : { kind: 'leaf', slotId: 'main' };   // RFC 0060 D8
         this._tabsBySlot = new Map();
-        for (const id of ['tl', 'tr', 'bl', 'br']) this._tabsBySlot.set(id, []);
+        for (const id of WorkspaceStateModel._leafSlotIds(this._layout)) {
+            this._tabsBySlot.set(id, []);
+        }
         this._activeUuid   = null;
         this._nextSplitId  = 1;
+    }
+
+    /** Every leaf slotId in a layout, in document order. */
+    static _leafSlotIds(node) {
+        if (!node) return [];
+        if (node.kind === 'leaf') return [node.slotId];
+        var out = [];
+        for (const c of (node.children || [])) {
+            out = out.concat(WorkspaceStateModel._leafSlotIds(c.pane));
+        }
+        return out;
     }
 
     // ── Public API ──────────────────────────────────────────────────────
@@ -355,6 +358,21 @@ class WorkspaceStateModel {
     }
 
     /** Returns the live slotId at a paneId path, or null. */
+    /**
+     * The live slotId a widget location addresses.
+     *
+     * TWO VOCABULARIES MEET HERE, which is worth saying plainly because nothing
+     * else does. A layout addresses panes by NAME (`tl`, `editor`, `sp_1`), while
+     * _findNodeByPaneId reads a paneId POSITIONALLY — splitting on '_' and taking
+     * each segment as first-or-second child, so `1_2` means "second child of the
+     * first". Both are legitimate; they are simply different, and a name handed to
+     * the positional walk yields -1 and resolves to nothing.
+     *
+     * RFC 0060 gives panes author-chosen names, so the name is tried FIRST and the
+     * positional walk remains the fallback. Without this an arrangement's widgets
+     * all landed in the default slot — silently, because the caller's `|| this
+     * ._defaultSlot()` turns "not found" into "somewhere plausible".
+     */
     _slotIdOfPaneId(paneId) {
         if (paneId == null) return null;
         if (paneId === '' || paneId === '_') {
@@ -362,6 +380,11 @@ class WorkspaceStateModel {
             return (this._layout && this._layout.kind === 'leaf')
                 ? this._layout.slotId : null;
         }
+        // By name — a leaf whose slotId IS this id.
+        if (WorkspaceStateModel._leafSlotIds(this._layout).indexOf(paneId) >= 0) {
+            return paneId;
+        }
+        // By position — the historical form, kept for logs that use it.
         const hit = this._findNodeByPaneId(paneId);
         return (hit && hit.node && hit.node.kind === 'leaf')
                 ? hit.node.slotId : null;

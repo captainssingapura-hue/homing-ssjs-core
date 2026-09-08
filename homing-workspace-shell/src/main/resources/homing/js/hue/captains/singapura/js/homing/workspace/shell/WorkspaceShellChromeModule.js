@@ -40,7 +40,7 @@
 //  11. MultiTabPane (post-replay)  | DONE
 //  12. TabRegistry                 | DONE
 //  13. PickerTabFlow (post-MTP)    | DONE
-//  14. PinnedTabSpawner            | DONE (seeds model on fresh session)
+//  14. (retired)                  | the arrangement seeds the model (RFC 0060 D20)
 //  15. WidgetMounter               | DONE
 //  16+17+18 WorkspaceControl       | DONE
 //
@@ -70,7 +70,6 @@ class WorkspaceShellChrome {
         this._checkpointService   = deps.checkpointService   || CheckpointService.INSTANCE;
         this._replayEngine        = deps.replayEngine        || ReplayEngine.INSTANCE;
         this._widgetMounter       = deps.widgetMounter       || WidgetMounter.INSTANCE;
-        this._pinnedTabSpawner    = deps.pinnedTabSpawner    || PinnedTabSpawner.INSTANCE;
         this._WorkspaceLayoutCtor = deps.WorkspaceLayoutCtor || WorkspaceLayout;
         this._MultiTabPaneCtor    = deps.MultiTabPaneCtor    || MultiTabPane;
         this._FocusCoordinatorCtor = deps.FocusCoordinatorCtor || WorkspaceFocusCoordinator;   // RFC 0049
@@ -88,7 +87,11 @@ class WorkspaceShellChrome {
         // The single source of truth for workspace state. Populated by
         // ReplayEngine fold (post-async); kept in sync by MTP callbacks
         // post-projection so checkpoint capture reads from it.
-        this._model = new this._WorkspaceStateModelCtor();
+        // RFC 0060 D9 — the model is SEEDED from the spec's arrangement rather
+        // than holding its own copy of a default. D10: this is a seed only; a
+        // replayed or snapshot-restored session overwrites it entirely below.
+        const _arr = this._spec && this._spec.arrangement;
+        this._model = new this._WorkspaceStateModelCtor(_arr && _arr.layout);
 
         // Late-bound instance fields.
         this._layout                = null;
@@ -280,8 +283,35 @@ class WorkspaceShellChrome {
                     eventLog:        self._eventRecorder.log(),
                     checkpointStore: cpStore,
                     recorder:        self._eventRecorder,
+                    // RFC 0060 — the gate is the STAMP, not an empty log.
+                    // "Is the log empty" was a proxy for "has this workspace been
+                    // arranged yet", and a poor one: EventEmitter writes
+                    // SessionStarted during boot before replay runs, so the log is
+                    // never empty and the seed never happened.
+                    //
+                    // Scanned across ALL rows rather than the post-checkpoint
+                    // queue, because a checkpoint can advance past the stamp — and
+                    // re-seeding a workspace that already has real state is worse
+                    // than the bug this fixes. A restored checkpoint is itself
+                    // proof of history, so it short-circuits.
+                    needsSeed: function (rows, fromCheckpoint) {
+                        if (fromCheckpoint) return false;
+                        for (const r of (rows || [])) {
+                            if (r && r.name === 'WorkspaceSeeded') return false;
+                        }
+                        return true;
+                    },
                     initialState:    function () {
-                        return new self._WorkspaceStateModelCtor();
+                        // RFC 0060 D9/D10 — replay starts from the SPEC'S
+                        // ARRANGEMENT, not from a bare model. This is the seed,
+                        // and it is only ever a seed: a checkpoint decodes over
+                        // it (decodeCheckpoint below) and a non-empty log folds
+                        // over it, so a saved workspace still wins outright.
+                        // Left unseeded, a fresh session replayed onto the
+                        // model's own fallback and the declared arrangement was
+                        // silently discarded between construction and boot.
+                        const arr = self._spec && self._spec.arrangement;
+                        return new self._WorkspaceStateModelCtor(arr && arr.layout);
                     },
                     decodeCheckpoint: function (cpRow) {
                         // cpRow.state is what captureState returned —
@@ -308,7 +338,7 @@ class WorkspaceShellChrome {
                     },
                     onEmpty: function (state) {
                         // Fresh session — seed model with pinned widgets.
-                        seededPinnedDescriptors = self._seedPinnedIntoModel(state);
+                        seededPinnedDescriptors = self._seedArrangementIntoModel(state);
                         return state;
                     },
                     onProgress: function (s) {
@@ -645,7 +675,7 @@ class WorkspaceShellChrome {
 
     /**
      * Mount one widget into MTP without emitting any event. Used during
-     * projection (post-fold, fence on). Mirrors PinnedTabSpawner /
+     * projection (post-fold, fence on). Mirrors the seed path /
      * PickerTabFlow's mount path: branch, addTab, mounter.resolve→mount→
      * attach, register.
      */
@@ -659,7 +689,7 @@ class WorkspaceShellChrome {
             console.warn('[WorkspaceShellChrome] projection: unknown kind', kind);
             return Promise.resolve();
         }
-        // Tab object — matches the shape PinnedTabSpawner/PickerTabFlow create.
+        // Tab object — matches the shape the seed path / PickerTabFlow create.
         const branchName = 'w-' + uuid.replace(/[^A-Za-z0-9_-]/g, '_');
         const wBranch    = this._widgetsBranch.createBranch(branchName);
         wBranch.activate(Object.freeze({ toString: () => 'projection:' + uuid }));
@@ -737,41 +767,81 @@ class WorkspaceShellChrome {
      * Returns the descriptors so the orchestrator can emit corresponding
      * WidgetSpawnedPinned events after fence drops.
      */
-    _seedPinnedIntoModel(model) {
+    _seedArrangementIntoModel(model) {
         const seeded = [];
         const byName = {};
         for (const e of (this._spec.entries || [])) byName[e.simpleName] = e;
-        const pinned = Array.isArray(this._spec.pinnedSpawns) ? this._spec.pinnedSpawns : [];
-        for (const kind of pinned) {
-            const entry = byName[kind];
-            if (!entry) continue;
+
+        // RFC 0060 D20 — the arrangement is the ONLY source of a seed. The
+        // separate spec.pinnedSpawns list it used to merge with is gone: a
+        // single-pane arrangement says the same thing in the same vocabulary,
+        // so there is no degenerate case left to special-case.
+        const arrangement = (this._spec && this._spec.arrangement) || null;
+
+        const placements = [];
+        if (arrangement && arrangement.widgets) {
+            for (const paneId of Object.keys(arrangement.widgets)) {
+                for (const kind of (arrangement.widgets[paneId] || [])) {
+                    placements.push({ kind: kind, paneId: paneId });
+                }
+            }
+        }
+
+        for (const p of placements) {
+            const entry = byName[p.kind];
+            if (!entry) {
+                console.warn('[WorkspaceShellChrome] arrangement names an unknown widget:', p.kind);
+                continue;
+            }
+            // ':pinned' is a WIRE VALUE — it is the widgetInstanceId written into
+            // every WidgetSpawnedPinned already in somebody's log, so it stays
+            // whatever the vocabulary around it is now called.
             const uuid = entry.simpleName + ':pinned';
             const descriptor = {
                 widgetInstanceId: uuid,
                 widgetKind:       entry.simpleName,
                 title:            entry.label,
                 params:           entry.defaults || {},
-                to: { paneId: '_', tabIndex: 0 }
+                to: { paneId: p.paneId || '_' }
             };
             model.apply({ name: 'WidgetSpawnedPinned', payload: descriptor });
             seeded.push(descriptor);
         }
         if (seeded.length > 0) {
             console.log('[WorkspaceShellChrome] seeded model with',
-                        seeded.length, 'pinned widget(s)');
+                        seeded.length, 'widget(s) from the arrangement');
         }
         return seeded;
     }
 
     /**
-     * Emit WidgetSpawnedPinned events for each seeded pinned widget so
-     * the next session's replay re-spawns them. Run AFTER fence drops.
+     * Emit WidgetSpawnedPinned for each seeded widget so the next session's
+     * replay re-creates them, then stamp the workspace as seeded.
+     *
+     * RFC 0060 — the stamp goes LAST and goes ALWAYS, even when nothing was
+     * placed: a workspace whose kind declares no widgets is still a workspace
+     * that has had its arrangement, and the gate reads one condition rather than
+     * two. Emitted here, after the fence drops, for the same reason the spawns
+     * are: during replay the recorder is suppressed, so anything written then
+     * would be lost.
      */
     _emitSeededPinnedSpawns(descriptors) {
         if (!this._eventRecorder) return;
-        for (const d of descriptors) {
+        for (const d of (descriptors || [])) {
             this._eventRecorder.emit('WidgetSpawnedPinned', d);
         }
+        const arr = (this._spec && this._spec.arrangement) || null;
+        this._eventRecorder.emit('WorkspaceSeeded', {
+            source: {
+                tag:             'fromKind',
+                kind:            this._spec ? this._spec.kind : null,
+                arrangementName: arr ? arr.name : null
+            },
+            seededAt: new Date().toISOString()
+        });
+        console.log('[WorkspaceShellChrome] workspace seeded from',
+                    (this._spec && this._spec.kind), '/', (arr && arr.name),
+                    'with', (descriptors || []).length, 'widget(s) — stamped');
     }
 
     _buildPickerFlow() {

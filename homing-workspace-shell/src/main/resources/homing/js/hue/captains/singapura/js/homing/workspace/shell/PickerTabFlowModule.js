@@ -104,9 +104,7 @@ class PickerTabFlow {
         // via the tab's FocusManager).
         if (this._focus) this._focus.enterDeep(slotId);
 
-        const pickerEntries = this.filterPickable(
-                this._spec.entries || [],
-                this._spec.pinnedSpawns || []);
+        const pickerEntries = this._spec.entries || [];
         const disabledIds = Object.assign({}, this._singletonsByKind);
 
         const picker = new this._WidgetPickerCtor({
@@ -125,17 +123,6 @@ class PickerTabFlow {
         return tabId;
     }
 
-    /**
-     * Pure transform — returns entries that should appear in the picker.
-     * Pinned entries are auto-spawned at boot; offering them again would
-     * let the user spawn duplicate introductions. Instance method per
-     * Explicit Substrate (every helper is on the instance, not static).
-     */
-    filterPickable(entries, pinnedSpawns) {
-        const pinnedSet = {};
-        for (const k of pinnedSpawns) pinnedSet[k] = true;
-        return entries.filter(e => !pinnedSet[e.simpleName]);
-    }
 
     /** SINGLETON focus-existing path: dispose picker tab, focus the live one. */
     _focusExistingSingleton(entry, slotId, tabId) {

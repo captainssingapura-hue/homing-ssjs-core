@@ -18,7 +18,7 @@ import java.util.List;
  *
  * <p>Stateful per-workspace instance (carries singleton tracking +
  * the picker-tab counter); shares {@link WidgetMounterModule} with
- * {@link PinnedTabSpawnerModule} for the actual construct flow.</p>
+ * {@link WidgetMounterModule} for the actual construct flow.</p>
  *
  * <p>Replaces V1's {@code openPickerInNewTab} +
  * {@code mutatePickerTabIntoWidget} (~140 lines inline) with substrate

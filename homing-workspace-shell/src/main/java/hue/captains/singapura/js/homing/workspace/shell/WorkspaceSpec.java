@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.workspace.shell;
 import hue.captains.singapura.js.homing.workspace.FooterItem;
 import hue.captains.singapura.js.homing.workspace.RibbonItem;
 import hue.captains.singapura.js.homing.workspace.WidgetEntry;
+import hue.captains.singapura.tao.ontology.Stateless;
 
 import java.util.List;
 import java.util.Map;
@@ -33,7 +34,12 @@ import java.util.Map;
  * <p>Doctrines applied:</p>
  *
  * <ul>
- *   <li><b>Functional Object</b> — stateless, pure declarations.</li>
+ *   <li><b>{@link Stateless}</b> — pure declarations, so any two instances
+ *       of an implementation are interchangeable and the singleton is a
+ *       convenience rather than a requirement. Deliberately not
+ *       {@code StatelessFunctionalObject}: a spec transforms nothing, and
+ *       unlike a function its <i>identity</i> is load-bearing — {@link #kind()}
+ *       is a wire identifier and an IDB scoping key.</li>
  *   <li><b>Names Are Types</b> — every cross-language identifier
  *       (party name, actor path, action id, widget kind) is carried in
  *       a typed record, not a loose string at the boundary.</li>
@@ -49,7 +55,7 @@ import java.util.Map;
  *
  * @since post-RFC-0034 workspace chrome decomposition
  */
-public interface WorkspaceSpec {
+public interface WorkspaceSpec extends Stateless {
 
     /**
      * Stable wire identifier — appears as {@code ?ws_kind=<kind>} on the
@@ -103,20 +109,50 @@ public interface WorkspaceSpec {
      */
     default List<WidgetCodecRef> widgetCodecs() { return List.of(); }
 
+
     /**
-     * Widget {@code simpleName}s to auto-spawn as <b>pinned</b> tabs at
-     * boot — typically a welcome / introduction doc and any always-on
-     * scratchpad. Each name must match an entry in
-     * {@link #widgetEntries()}; missing names are logged + skipped.
+     * RFC 0060 — the arrangement this workspace <b>starts in</b>: its panes, and
+     * the widgets in each.
      *
-     * <p>Spec-level concern, independent of the widget class's default
-     * {@code lifecycleHint()} — a workspace can pin any widget without
-     * modifying the widget itself. Phase 14
-     * ({@code PinnedTabSpawnerModule}) consumes this list in boot
-     * order, mounting each into a target slot (default {@code 'tl'})
-     * and setting the first as workspace-active.</p>
+     * <p>The default is {@link PaneArrangements#SINGLE} — one pane taking the whole
+     * space. A workspace that has been told nothing should not pre-commit its
+     * reader to a shape, which is what the old 2×2 did.</p>
+     *
+     * <p>Take a shipped design and say what goes where; the starter set is pure
+     * geometry precisely so two workspaces can share one:</p>
+     *
+     * <pre>{@code
+     * @Override public Arrangement arrangement() {
+     *     return PaneArrangements.MAIN_AND_OUTPUT
+     *             .allocate()
+     *             .place(MainAndOutput.MAIN,   DocViewWidget.class)
+     *             .place(MainAndOutput.OUTPUT, LogWidget.class)
+     *             .build();
+     * }
+     * }</pre>
+     *
+     * <p>Widgets that once went in {@code pinnedSpawns()} belong here — in
+     * {@link PaneArrangements#SINGLE}'s one pane when the workspace wants no
+     * particular shape:</p>
+     *
+     * <pre>{@code
+     * @Override public Arrangement arrangement() {
+     *     return PaneArrangements.SINGLE.allocate()
+     *             .place(Single.MAIN, DocViewWidget.class)
+     *             .build();
+     * }
+     * }</pre>
+     *
+     * <p><b>It is a SEED, not a template</b> (D10). It applies only to a workspace
+     * with no saved state; a saved layout always wins, and editing this method
+     * never reshapes a workspace someone already has open. That is a property of
+     * the event-sourced model, not a limitation of this method.</p>
+     *
+     * <p>Seeding a widget here does <b>not</b> hide it from the picker (D20). The
+     * arrangement says what a workspace <i>opens</i> with; whether a second copy
+     * may be opened is the widget's own {@code lifecycleHint()} to declare.</p>
      */
-    default List<String> pinnedSpawns() { return List.of(); }
+    default Arrangement arrangement() { return PaneArrangements.SINGLE.empty(); }
 
     /**
      * RFC 0047 — the workspace's <b>global tab budget</b>: the maximum number

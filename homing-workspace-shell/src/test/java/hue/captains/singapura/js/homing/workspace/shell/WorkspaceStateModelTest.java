@@ -26,7 +26,32 @@ class WorkspaceStateModelTest extends JsModuleTestBase {
         loadModule(MODULE);
     }
 
+    /**
+     * A model over the four-pane layout these tests were written against.
+     *
+     * <p>RFC 0060 D9 changed what an unseeded model starts as: it no longer holds
+     * its own copy of a 2×2 default, it is <b>told</b> a layout, and its fallback
+     * is one pane. These tests exercise multi-pane behaviour — moves between
+     * panes, per-slot tab lists — so they now say which layout they mean instead
+     * of leaning on a default that was never theirs to depend on.</p>
+     */
     private Value freshModel() {
+        return global("WorkspaceStateModel").newInstance(js.eval("js", QUAD_LAYOUT));
+    }
+
+    /** The layout that used to be the model's hardcoded default. */
+    private static final String QUAD_LAYOUT = """
+            ({ kind: 'split', orientation: 'vertical', children: [
+                { ratio: 0.5, pane: { kind: 'split', orientation: 'horizontal', children: [
+                    { ratio: 0.5, pane: { kind: 'leaf', slotId: 'tl' } },
+                    { ratio: 0.5, pane: { kind: 'leaf', slotId: 'tr' } } ] } },
+                { ratio: 0.5, pane: { kind: 'split', orientation: 'horizontal', children: [
+                    { ratio: 0.5, pane: { kind: 'leaf', slotId: 'bl' } },
+                    { ratio: 0.5, pane: { kind: 'leaf', slotId: 'br' } } ] } } ] })
+            """;
+
+    /** RFC 0060 D8 — an unseeded model is one pane, not a 2×2. */
+    private Value unseededModel() {
         return global("WorkspaceStateModel").newInstance();
     }
 
@@ -353,5 +378,32 @@ class WorkspaceStateModelTest extends JsModuleTestBase {
         applyEvent(m, "TabClosed",               "({ widgetInstanceId: 'x' })");
         assertEquals(true, m.invokeMember("isEmpty").asBoolean(),
                 "virtual replay folds spawn-move-move-close to empty");
+    }
+
+    @Test
+    void anUnseededModelIsOnePaneNotAQuad() {
+        // RFC 0060 D8/D9 — the model no longer mirrors MTP's default; it is told
+        // one, and its own fallback is the simplest thing that works.
+        Value m = unseededModel();
+        Value layout = m.invokeMember("layout");
+        assertEquals("leaf", layout.getMember("kind").asString());
+        assertEquals("main", layout.getMember("slotId").asString());
+        assertEquals(1, m.invokeMember("tabsBySlot").getMember("size").asInt(),
+                "exactly one slot, seeded from the layout's single leaf");
+        assertEquals(0, tabsAt(m, "main").getArraySize());
+    }
+
+    @Test
+    void aSeededModelTakesTheLayoutItIsGiven() {
+        Value m = global("WorkspaceStateModel").newInstance(js.eval("js",
+                "({ kind: 'split', orientation: 'horizontal', children: ["
+              + "  { ratio: 0.7, pane: { kind: 'leaf', slotId: 'editor' } },"
+              + "  { ratio: 0.3, pane: { kind: 'leaf', slotId: 'side' } } ] })"));
+        Value layout = m.invokeMember("layout");
+        assertEquals("split", layout.getMember("kind").asString());
+        assertEquals("horizontal", layout.getMember("orientation").asString());
+        // and its per-slot tab lists exist for exactly the layout's leaves
+        assertEquals(0, tabsAt(m, "editor").getArraySize());
+        assertEquals(0, tabsAt(m, "side").getArraySize());
     }
 }
