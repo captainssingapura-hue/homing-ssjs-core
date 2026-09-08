@@ -54,16 +54,27 @@ function renderDocTree(opts) {
     var kidsWrapByKey = {};   // INDEX path key -> the node's children container (fold)
     var contentKeyByIdx = {}; // INDEX path key -> CONTENT key (name-path in V2, index in V1)
     var orderedSections = []; // { key, path, el } in document (pre-order) order — the scroll-spy's ordered index (RFC 0043)
+    var idOwner = Object.create(null); // node id -> the key that claimed it (collision check)
     function keyOf(path) { return path.join('/'); }              // canonical child-index key
-    // The node's export anchor. Java names this shape once, in DocAnchor (which
-    // also builds the seg-* anchors, so the two families cannot drift); this is
-    // the client half, and it now only PREFIXES a key it was handed rather than
-    // reshaping it. The '/' survives: a name-path IS the address, a slash is
-    // legal in a fragment and in an id, and the browser's own fragment
-    // navigation — the only consumer these ids have — resolves it natively.
-    // Nothing here ever selects by id, so CSS-selector syntax is not a concern
-    // (Owned References: the reader holds sectionsByKey from what it minted).
-    function idOf(key)   { return 'doc-node-' + (key === '' ? 'doc' : key); }
+    // The node's export anchor: the name-path, LITERALLY. Java names this shape
+    // once, in DocAnchor.ofNode (which also builds the seg-* anchors, so the two
+    // families cannot drift); this is the client half, and it now returns the key
+    // it was handed rather than reshaping it at all.
+    //
+    // The 'doc-node-' prefix it used to add dates from RFC 0039, when a key was a
+    // CHILD-INDEX path: without it a node's id was the literal '1_0', and a bare
+    // index makes a poor id on a page carrying widget and SVG content. RFC 0059
+    // D9 made keys heading slugs, which retired that reason — a slug is already a
+    // readable, author-meaningful name — and D10 said to drop it. Dropping it is
+    // what makes '#sample-markdown-features' resolve: the anchor every markdown
+    // ecosystem produces, and the one the retired reader produced, is now the id.
+    //
+    // The '/' survives: a name-path IS the address, a slash is legal in a fragment
+    // and in an id, and the browser's own fragment navigation — the only consumer
+    // these ids have — resolves it natively. Nothing here ever selects by id, so
+    // CSS-selector syntax is not a concern (Owned References: the reader holds
+    // sectionsByKey from what it minted).
+    function idOf(key)   { return key === '' ? 'doc' : key; }
     // The stable, URL-safe node id every node carries in a name-path doc
     // (RigidDocV2). Present -> content is addressed by the '/'-joined chain of
     // these ids (stable across sibling reordering); absent (V1) -> by child-index.
@@ -85,7 +96,22 @@ function renderDocTree(opts) {
         // ('animals/turtle', '1/0', '') is not safe, so sanitize a name suffix.
         var nk = (key === '') ? 'root' : key.replace(/[^0-9A-Za-z_-]/g, '_');
         var section = branch.createElement('docSection_' + nk, 'section');
-        section.id = idOf(key);
+        // The uniqueness the prefix used to buy, stated instead of assumed. A
+        // bare slug can collide where a namespaced id could not, and the
+        // failure is silent: navigation to one node lands on the other. Checked
+        // against what this reader minted — never getElementById, which would
+        // trade the module's Owned-References property for a fact it already
+        // holds. Ids inside EMBEDDED content (an SvgSegment's source markup, a
+        // DocumentaryWidget's DOM) do not pass through here and are not covered;
+        // that belongs where they are injected. Loud, not fatal: throwing would
+        // cost the reader the whole document over one bad anchor.
+        var id = idOf(key);
+        if (idOwner[id] !== undefined) {
+            console.error("[docTree] duplicate node id '" + id + "' — nodes '" + idOwner[id]
+                + "' and '" + key + "' claim the same anchor; navigating to one lands on the other.");
+        }
+        idOwner[id] = key;
+        section.id = id;
         // padding-left holds a gutter for the active-node accent bar (an inset
         // box-shadow), so the highlight never overlaps text and adds no layout
         // shift when it toggles.
