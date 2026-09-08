@@ -36,9 +36,10 @@ import java.util.List;
  *       URL is deployment-overridable.</li>
  * </ul>
  *
- * <p>{@code DocReaderRenderer} keeps its own copy until RFC 0059 Phase 3 retires
- * that pipeline onto the normalizer — duplicated briefly on purpose, so this
- * phase cannot regress the standalone reader.</p>
+ * <p>The copy left in {@code DocReaderRenderer} was deliberate and brief: it kept
+ * the standalone reader safe while this landed. Phase 3 then pointed that reader
+ * at the same tree and deleted its pipeline outright, so this is the only
+ * implementation there is.</p>
  *
  * @since homing-studio-base — RFC 0059 Phase 2
  */

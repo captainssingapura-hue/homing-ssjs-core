@@ -607,6 +607,26 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             """;
         }
     }
+    /**
+     * The catalogue category a doc was filed under, shown beside its title in
+     * the meta line. It arrives from {@code /doc-refs}, so it appears a beat
+     * after the page does — which is why it is a chip rather than part of the
+     * layout: nothing moves when it lands.
+     *
+     * <p>It was {@code var(--st-gray-mid)} written inline in DocReaderRenderer,
+     * a palette token rather than a semantic one. On {@code --color-text-muted}
+     * it follows the theme like every other quiet label.</p>
+     */
+    public record st_doc_category() implements CssClass<StudioStyles> {
+        @Override public String body() { return """
+            margin-left: 12px;
+            font-size: 11px;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            """;
+        }
+    }
     public record st_doc_meta() implements CssClass<StudioStyles> {
         @Override public String body() { return """
             margin-bottom: 24px;
@@ -1160,7 +1180,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
                 new st_mermaid(),
                 new st_mermaid_note(),
                 new st_doc_section_active(),
-                new st_doc(), new st_doc_meta(),
+                new st_doc(), new st_doc_meta(), new st_doc_category(),
                 new st_loading(), new st_error(), new st_doc_pane(), new st_doc_empty(), new st_footer(),
                 new st_app_pill(), new st_app_pill_dark(),
                 new st_app_pill_icon(), new st_app_pill_label(), new st_app_pill_desc(),

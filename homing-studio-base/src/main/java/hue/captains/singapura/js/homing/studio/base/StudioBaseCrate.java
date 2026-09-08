@@ -9,7 +9,6 @@ import hue.captains.singapura.js.homing.server.ServerCrate;
 import hue.captains.singapura.js.homing.studio.base.app.CatalogueAppHost;
 import hue.captains.singapura.js.homing.studio.base.app.CatalogueHostRenderer;
 import hue.captains.singapura.js.homing.studio.base.app.DocReader;
-import hue.captains.singapura.js.homing.studio.base.app.DocReaderRenderer;
 import hue.captains.singapura.js.homing.studio.base.app.DocTreeViewer;
 import hue.captains.singapura.js.homing.studio.base.app.SvgViewer;
 import hue.captains.singapura.js.homing.studio.base.composed.CaptionRenderer;
@@ -17,6 +16,7 @@ import hue.captains.singapura.js.homing.studio.base.composed.CodeSegmentRenderer
 import hue.captains.singapura.js.homing.studio.base.composed.ComposedSegmentRenderer;
 import hue.captains.singapura.js.homing.studio.base.composed.ComposedViewer;
 import hue.captains.singapura.js.homing.studio.base.composed.ComposedWidget;
+import hue.captains.singapura.js.homing.studio.base.composed.DocRefsModule;
 import hue.captains.singapura.js.homing.studio.base.composed.DocTreeWidget;
 import hue.captains.singapura.js.homing.studio.base.composed.DocumentaryWidgetSegmentRenderer;
 import hue.captains.singapura.js.homing.studio.base.composed.ImageSegmentRenderer;
@@ -99,7 +99,6 @@ public final class StudioBaseCrate implements Crate {
                 CrateEntry.of(CatalogueAppHost.INSTANCE),
                 CrateEntry.of(CatalogueHostRenderer.INSTANCE),
                 CrateEntry.of(DocReader.INSTANCE),
-                CrateEntry.of(DocReaderRenderer.INSTANCE),
                 CrateEntry.of(DocTreeViewer.INSTANCE),
                 CrateEntry.of(SvgViewer.INSTANCE),
                 CrateEntry.of(CaptionRenderer.INSTANCE),
@@ -108,6 +107,7 @@ public final class StudioBaseCrate implements Crate {
                 CrateEntry.of(ComposedViewer.INSTANCE),
                 CrateEntry.of(ComposedWidget.INSTANCE),
                 CrateEntry.of(DocTreeWidget.INSTANCE),
+                CrateEntry.of(DocRefsModule.INSTANCE),
                 CrateEntry.of(DocumentaryWidgetSegmentRenderer.INSTANCE),
                 CrateEntry.of(ImageSegmentRenderer.INSTANCE),
                 CrateEntry.of(ListSegmentRenderer.INSTANCE),

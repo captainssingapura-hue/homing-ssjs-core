@@ -121,8 +121,8 @@ public record HomingDefault() implements Theme {
 
     /** Tier: COMPONENT — descendant rules / variant styling. Same priority as StudioStyles classes. */
     private static final String COMPONENT_CSS = """
-                /* Doc-reader column slab — `.st-doc-meta` is uniquely emitted
-                 * by DocReaderRenderer, so `:has(.st-doc-meta)` scopes the
+                /* Reading-page column slab — `.st-doc-meta` is uniquely emitted
+                 * by the doc widget, so `:has(.st-doc-meta)` scopes the
                  * slab to the reading page only. Catalogue / doc-browser /
                  * themes-intro / plan-host pages stay slab-less so their
                  * cards keep visual contrast on the body bg. */
