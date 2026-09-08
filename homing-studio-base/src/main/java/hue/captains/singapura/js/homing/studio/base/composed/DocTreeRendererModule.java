@@ -8,6 +8,7 @@ import hue.captains.singapura.js.homing.core.ModuleImports;
 import hue.captains.singapura.js.homing.core.js.NodeContentModule;
 import hue.captains.singapura.js.homing.core.js.TocSyncSecretaryModule;
 import hue.captains.singapura.js.homing.core.js.TreeRendererModule;
+import hue.captains.singapura.js.homing.studio.base.css.StudioStyles;
 
 import java.util.List;
 
@@ -63,6 +64,10 @@ public record DocTreeRendererModule() implements DomModule<DocTreeRendererModule
                 // The TOC↔body coordinator, which this module used to hold inline.
                 .add(new ModuleImports<>(List.of(new TocSyncSecretaryModule.TocSyncSecretary()),
                         TocSyncSecretaryModule.INSTANCE))
+                // The synced-section highlight, themed — the first thing this
+                // module can style properly now that it can see StudioStyles.
+                .add(new ModuleImports<>(List.of(new StudioStyles.st_doc_section_active()),
+                        StudioStyles.INSTANCE))
                 .build();
     }
 

@@ -150,16 +150,19 @@ function renderDocTree(opts) {
     // Mark the selected node's body section, mirroring the TOC's row highlight
     // (same accent as TreeRenderer's selected row) so the eye keeps both panes
     // in step. A faint wash + a left accent bar in the section's gutter.
+    // The highlight is a typed class, not an inline write. It used to be a
+    // hardcoded rgba blue, which meant blue on Carbon, blue on Turbo C and blue
+    // on Forbidden City — a fault nobody saw because the reader had only ever
+    // been read on light themes. st_doc_section_active mixes it from the theme's
+    // accent, so it follows the page. Reachable only since this module moved to
+    // studio-base; from core-js it could not see StudioStyles, which is exactly
+    // what the inline write was working around.
     function setActiveSection(sec) {
         if (activeSection && activeSection !== sec) {
-            activeSection.style.backgroundColor = '';
-            activeSection.style.boxShadow = '';
+            css.removeClass(activeSection, st_doc_section_active);
         }
         activeSection = sec;
-        if (sec) {
-            sec.style.backgroundColor = 'rgba(59,130,246,0.07)';
-            sec.style.boxShadow = 'inset 3px 0 0 rgba(59,130,246,0.6)';
-        }
+        if (sec) css.addClass(sec, st_doc_section_active);
     }
     // ── The local Secretary (RFC 0043) ──────────────────────────────────────
     // The coordinator itself is TocSyncSecretary, which used to be an object

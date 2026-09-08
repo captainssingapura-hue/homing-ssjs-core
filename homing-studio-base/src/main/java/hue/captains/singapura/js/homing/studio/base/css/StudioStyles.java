@@ -557,6 +557,29 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             """;
         }
     }
+    /**
+     * The section the doc reader's TOC is currently synced to — a tinted ground
+     * and a bar down its inside edge.
+     *
+     * <p>It was {@code rgba(59,130,246,…)} written inline, which is to say blue
+     * on every theme: blue on Carbon, blue on Turbo C, blue on Forbidden City.
+     * Invisible as a fault because the reader had only ever been looked at on
+     * light themes, and the same mistake the Mermaid plate had. Mixed from
+     * {@code --color-accent} instead, at the opacities the hardcoded values used,
+     * so Turbo C highlights Borland yellow and Carbon amber with nothing here to
+     * change.</p>
+     *
+     * <p>Reachable at all only because the reader now lives in studio-base; from
+     * core-js it could not see this file, which is what the inline write was
+     * working around.</p>
+     */
+    public record st_doc_section_active() implements CssClass<StudioStyles> {
+        @Override public String body() { return """
+            background-color: color-mix(in srgb, var(--color-accent) 7%, transparent);
+            box-shadow: inset 3px 0 0 color-mix(in srgb, var(--color-accent) 60%, transparent);
+            """;
+        }
+    }
     public record st_doc() implements CssClass<StudioStyles> {
         @Override public String body() { return """
             font-size: 16px;
@@ -1117,6 +1140,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
                 new st_layout(), new st_sidebar(), new st_sidebar_title(),
                 new st_toc(), new st_toc_item(), new st_toc_h1(), new st_toc_h2(), new st_toc_h3(), new st_toc_active(),
                 new st_mermaid(),
+                new st_doc_section_active(),
                 new st_doc(), new st_doc_meta(),
                 new st_loading(), new st_error(), new st_doc_pane(), new st_doc_empty(), new st_footer(),
                 new st_app_pill(), new st_app_pill_dark(),
