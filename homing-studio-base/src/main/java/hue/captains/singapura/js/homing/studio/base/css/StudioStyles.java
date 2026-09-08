@@ -503,12 +503,127 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             """;
         }
     }
+    /**
+     * The plate a rendered Mermaid diagram sits on.
+     *
+     * <p>Mermaid draws with its OWN theme — dark strokes and dark labels on a
+     * transparent ground — and it does not hear about ours. On a light page that
+     * is invisible; on Carbon or Turbo C the diagram is dark-on-dark and simply
+     * cannot be read. Re-theming Mermaid per theme is the expensive answer and a
+     * standing maintenance debt; giving it a surface it is legible on is the
+     * cheap one, and it is what a figure wants anyway.</p>
+     *
+     * <p><b>Light, but not foreign.</b> The ground is the theme's own surface
+     * mixed 30/70 against white: always light enough for Mermaid's ink, and
+     * still of the page — pale EGA blue under Turbo C, pale teal under Retro
+     * 90s. One rule, no per-theme values, nothing to keep in step when a twelfth
+     * theme arrives.</p>
+     *
+     * <p><b>Why 30 and not 12.</b> Eight of the eleven themes already have a
+     * near-white surface, so mixing it into white returns white whatever the
+     * ratio — and those themes never needed a plate, because Mermaid was legible
+     * on them already. The ratio therefore only bites on the themes that are
+     * actually dark or saturated, which is exactly where it should. At a twelfth
+     * even Turbo C came out barely tinted; at 30/70 it reads as blue and Carbon's
+     * plate is still a 190-grey, roughly 5.9:1 against Mermaid's ink.</p>
+     *
+     * <p><b>Carbon cannot be tinted from here, and that is Carbon's doing.</b>
+     * Its surface is {@code #242424} — R=G=B, no hue to inherit — so its plate is
+     * neutral at any ratio. Tinting it would mean sourcing from
+     * {@code --color-accent} instead, which is the theme's signature colour
+     * rather than its background family; that would read as a decorated figure,
+     * not as part of the page, so it is deliberately not done.</p>
+     *
+     * <p>A colour KEYWORD rather than a hex triple: {@code no-literal-color}
+     * flags baked hex and {@code rgb()}, and deliberately not keywords.</p>
+     *
+     * <p><b>The fallback is load-bearing.</b> An undefined {@code --color-surface}
+     * makes the whole {@code color-mix} invalid at computed-value time, the
+     * declaration is dropped, and the plate goes TRANSPARENT — which is
+     * unreadable precisely when a theme is already broken. {@code var(--x, white)}
+     * degrades to a plain white plate instead: still legible, merely untinted.
+     * The same lesson {@code st_title} learned from a downstream theme that was
+     * missing one token.</p>
+     */
+    public record st_mermaid() implements CssClass<StudioStyles> {
+        @Override public String body() { return """
+            margin: 16px 0;
+            padding: var(--space-3);
+            overflow-x: auto;
+            text-align: center;
+            background: color-mix(in srgb, var(--color-surface, white) 30%, white);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            """;
+        }
+    }
+    /**
+     * The line left on the plate when a diagram could not be drawn — offline, a
+     * blocked CDN, or a diagram Mermaid refused. Muted and small, because the
+     * fence above it is still the content; this only says why it is still a fence.
+     *
+     * <p>Left-aligned deliberately: {@code st_mermaid} centres its plate, which
+     * is right for a diagram and wrong for a sentence.</p>
+     */
+    public record st_mermaid_note() implements CssClass<StudioStyles> {
+        @Override public String body() { return """
+            margin: 6px 0 0;
+            color: var(--color-text-muted);
+            font-size: 12px;
+            font-style: italic;
+            text-align: left;
+            """;
+        }
+    }
+    /**
+     * The section the doc reader's TOC is currently synced to — a tinted ground
+     * and a bar down its inside edge.
+     *
+     * <p>It was {@code rgba(59,130,246,…)} written inline, which is to say blue
+     * on every theme: blue on Carbon, blue on Turbo C, blue on Forbidden City.
+     * Invisible as a fault because the reader had only ever been looked at on
+     * light themes, and the same mistake the Mermaid plate had. Mixed from
+     * {@code --color-accent} instead, at the opacities the hardcoded values used,
+     * so Turbo C highlights Borland yellow and Carbon amber with nothing here to
+     * change.</p>
+     *
+     * <p>Reachable at all only because the reader now lives in studio-base; from
+     * core-js it could not see this file, which is what the inline write was
+     * working around.</p>
+     */
+    public record st_doc_section_active() implements CssClass<StudioStyles> {
+        @Override public String body() { return """
+            background-color: color-mix(in srgb, var(--color-accent) 7%, transparent);
+            box-shadow: inset 3px 0 0 color-mix(in srgb, var(--color-accent) 60%, transparent);
+            """;
+        }
+    }
     public record st_doc() implements CssClass<StudioStyles> {
         @Override public String body() { return """
             font-size: 16px;
             line-height: 1.7;
             color: var(--color-text-primary);
             max-width: 820px;
+            """;
+        }
+    }
+    /**
+     * The catalogue category a doc was filed under, shown beside its title in
+     * the meta line. It arrives from {@code /doc-refs}, so it appears a beat
+     * after the page does — which is why it is a chip rather than part of the
+     * layout: nothing moves when it lands.
+     *
+     * <p>It was {@code var(--st-gray-mid)} written inline in DocReaderRenderer,
+     * a palette token rather than a semantic one. On {@code --color-text-muted}
+     * it follows the theme like every other quiet label.</p>
+     */
+    public record st_doc_category() implements CssClass<StudioStyles> {
+        @Override public String body() { return """
+            margin-left: 12px;
+            font-size: 11px;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
             """;
         }
     }
@@ -1062,7 +1177,10 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
                 new st_filter(), new st_filter_btn(), new st_filter_btn_active(),
                 new st_layout(), new st_sidebar(), new st_sidebar_title(),
                 new st_toc(), new st_toc_item(), new st_toc_h1(), new st_toc_h2(), new st_toc_h3(), new st_toc_active(),
-                new st_doc(), new st_doc_meta(),
+                new st_mermaid(),
+                new st_mermaid_note(),
+                new st_doc_section_active(),
+                new st_doc(), new st_doc_meta(), new st_doc_category(),
                 new st_loading(), new st_error(), new st_doc_pane(), new st_doc_empty(), new st_footer(),
                 new st_app_pill(), new st_app_pill_dark(),
                 new st_app_pill_icon(), new st_app_pill_label(), new st_app_pill_desc(),

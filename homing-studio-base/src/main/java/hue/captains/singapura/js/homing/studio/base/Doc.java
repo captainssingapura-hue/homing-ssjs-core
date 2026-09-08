@@ -117,6 +117,23 @@ public interface Doc extends Immutable {
     default List<Reference> references() { return List.of(); }
 
     /**
+     * Grandfathering escape for the heading-length gate (RFC 0059). A heading
+     * becomes a tree node named by its own slug, and a {@code NodeName} is capped
+     * at 48 characters — so an over-long heading is <b>clipped</b>, and a clipped
+     * anchor is a worse anchor. A conformance test therefore fails any markdown
+     * doc carrying one.
+     *
+     * <p>This is <b>debt, not licence.</b> It exists so a corpus written before
+     * the rule can adopt it without a mass rewrite, and every doc that returns
+     * {@code true} is a doc whose headings should be shortened. A heading is a
+     * label, not a sentence; if it does not fit, the fix is almost always to say
+     * it in fewer words rather than to set this.</p>
+     *
+     * <p>New docs must not use it. The gate is the point.</p>
+     */
+    default boolean headingCapExempt() { return false; }
+
+    /**
      * Resolve a child Doc by its local-to-this-doc level identifier — the
      * primitive used by the framework's generic tree walker at
      * {@code GET /doc?id=<root>&l1=...&l2=...&l3=...}. Each {@code lN} value

@@ -55,7 +55,15 @@ function renderDocTree(opts) {
     var contentKeyByIdx = {}; // INDEX path key -> CONTENT key (name-path in V2, index in V1)
     var orderedSections = []; // { key, path, el } in document (pre-order) order — the scroll-spy's ordered index (RFC 0043)
     function keyOf(path) { return path.join('/'); }              // canonical child-index key
-    function idOf(key)   { return 'doc-node-' + (key === '' ? 'root' : key.replace(/\//g, '_')); }
+    // The node's export anchor. Java names this shape once, in DocAnchor (which
+    // also builds the seg-* anchors, so the two families cannot drift); this is
+    // the client half, and it now only PREFIXES a key it was handed rather than
+    // reshaping it. The '/' survives: a name-path IS the address, a slash is
+    // legal in a fragment and in an id, and the browser's own fragment
+    // navigation — the only consumer these ids have — resolves it natively.
+    // Nothing here ever selects by id, so CSS-selector syntax is not a concern
+    // (Owned References: the reader holds sectionsByKey from what it minted).
+    function idOf(key)   { return 'doc-node-' + (key === '' ? 'doc' : key); }
     // The stable, URL-safe node id every node carries in a name-path doc
     // (RigidDocV2). Present -> content is addressed by the '/'-joined chain of
     // these ids (stable across sibling reordering); absent (V1) -> by child-index.
@@ -150,16 +158,19 @@ function renderDocTree(opts) {
     // Mark the selected node's body section, mirroring the TOC's row highlight
     // (same accent as TreeRenderer's selected row) so the eye keeps both panes
     // in step. A faint wash + a left accent bar in the section's gutter.
+    // The highlight is a typed class, not an inline write. It used to be a
+    // hardcoded rgba blue, which meant blue on Carbon, blue on Turbo C and blue
+    // on Forbidden City — a fault nobody saw because the reader had only ever
+    // been read on light themes. st_doc_section_active mixes it from the theme's
+    // accent, so it follows the page. Reachable only since this module moved to
+    // studio-base; from core-js it could not see StudioStyles, which is exactly
+    // what the inline write was working around.
     function setActiveSection(sec) {
         if (activeSection && activeSection !== sec) {
-            activeSection.style.backgroundColor = '';
-            activeSection.style.boxShadow = '';
+            css.removeClass(activeSection, st_doc_section_active);
         }
         activeSection = sec;
-        if (sec) {
-            sec.style.backgroundColor = 'rgba(59,130,246,0.07)';
-            sec.style.boxShadow = 'inset 3px 0 0 rgba(59,130,246,0.6)';
-        }
+        if (sec) css.addClass(sec, st_doc_section_active);
     }
     // ── The local Secretary (RFC 0043) ──────────────────────────────────────
     // The coordinator itself is TocSyncSecretary, which used to be an object

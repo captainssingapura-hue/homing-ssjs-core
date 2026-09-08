@@ -3,7 +3,6 @@ package hue.captains.singapura.js.homing.studio.base.composed;
 import hue.captains.singapura.js.homing.core.Importable;
 import hue.captains.singapura.js.homing.core.ModuleImports;
 import hue.captains.singapura.js.homing.core.Widget;
-import hue.captains.singapura.js.homing.core.js.DocTreeRendererModule;
 import hue.captains.singapura.js.homing.core.js.DomOpsPartyModule;
 import hue.captains.singapura.js.homing.core.js.domOpsParty;
 import hue.captains.singapura.js.homing.libs.MarkedJs;
@@ -93,7 +92,10 @@ public final class DocTreeWidget extends DocWidget<DocTreeWidget.Params, DocTree
                         ParagraphSegmentRenderer.INSTANCE),
                 new ModuleImports<>(List.of(new DocumentaryWidgetSegmentRenderer.renderDocumentaryWidgetSegment()),
                         DocumentaryWidgetSegmentRenderer.INSTANCE),
+                new ModuleImports<>(List.of(new DocRefsModule.attachDocRefs()),
+                        DocRefsModule.INSTANCE),
                 new ModuleImports<>(List.of(
+                        new StudioStyles.st_doc_meta(),
                         new StudioStyles.st_loading(),
                         new StudioStyles.st_error()
                 ), StudioStyles.INSTANCE));
@@ -102,13 +104,17 @@ public final class DocTreeWidget extends DocWidget<DocTreeWidget.Params, DocTree
     @Override
     protected List<String> bodyJs() {
         return List.of(
-                "    // Two locators (symmetric with ComposedWidget): a direct uuid",
-                "    // (?id=, the standalone doc-tree-viewer) or a leveled tree path",
-                "    // (?l0=&l1=…, the Navigator's leveled Open). Both hit /doc-tree.",
-                "    var fetchUrl, ownerLabel;",
-                "    if (params.id) {",
-                "        fetchUrl = '/doc-tree?id=' + encodeURIComponent(params.id);",
-                "        ownerLabel = params.id;",
+                "    // Three locators. A direct uuid arrives as ?id= from the",
+                "    // doc-tree-viewer and as ?doc= from doc-reader -- the same locator",
+                "    // under the name each app has always used, since RFC 0059 Phase 3",
+                "    // pointed doc-reader here and every catalogue in every downstream",
+                "    // studio addresses it with ?doc=. The third is the Navigator's",
+                "    // leveled tree path (?l0=&l1=…). All three hit /doc-tree.",
+                "    var fetchUrl, ownerLabel, docUuid;",
+                "    docUuid = params.id || params.doc;",
+                "    if (docUuid) {",
+                "        fetchUrl = '/doc-tree?id=' + encodeURIComponent(docUuid);",
+                "        ownerLabel = docUuid;",
                 "    } else if (params.treeId || params['l0'] !== undefined) {",
                 "        var pq = [];",
                 "        if (params.treeId) pq.push('treeId=' + encodeURIComponent(params.treeId));",
@@ -120,7 +126,7 @@ public final class DocTreeWidget extends DocWidget<DocTreeWidget.Params, DocTree
                 "    } else {",
                 "        var noId = branch.createElement('noId', 'div');",
                 "        css.addClass(noId, st_error);",
-                "        noId.textContent = 'No doc reference supplied. Use ?id=<uuid> or a tree path ?l0=…';",
+                "        noId.textContent = 'No doc reference supplied. Use ?id=<uuid>, ?doc=<uuid>, or a tree path ?l0=…';",
                 "        parent.appendChild(noId);",
                 "        return;",
                 "    }",
@@ -132,8 +138,25 @@ public final class DocTreeWidget extends DocWidget<DocTreeWidget.Params, DocTree
                 "",
                 "    var bodyBranch = branch.createBranch('body');",
                 "    bodyBranch.activate(owner);",
+                "    // The meta line sits above the document and the References below it",
+                "    // — Doc metadata bracketing the document rather than living inside",
+                "    // it. Both were DocReader's; RFC 0059 Phase 3 brought them here so",
+                "    // every rigid reader has them. st_doc_meta is also the marker the",
+                "    // theme keys its reading-page slab off (`.st-main:has(.st-doc-meta)`),",
+                "    // which is why it is emitted unconditionally rather than only when",
+                "    // /doc-refs answers with a category.",
+                "    var metaHost = bodyBranch.createElement('metaHost', 'div');",
+                "    css.addClass(metaHost, st_doc_meta);",
+                "    metaHost.setAttribute('data-export-content', '');",
+                "    var metaTitle = bodyBranch.createElement('metaTitle', 'span');",
+                "    metaHost.appendChild(metaTitle);",
+                "    parent.appendChild(metaHost);",
+                "",
                 "    var bodyHost = bodyBranch.createElement('bodyHost', 'div');",
                 "    parent.appendChild(bodyHost);",
+                "",
+                "    var refsParent = bodyBranch.createElement('refsParent', 'div');",
+                "    parent.appendChild(refsParent);",
                 "",
                 "    var loading = bodyBranch.createElement('loading', 'div');",
                 "    css.addClass(loading, st_loading);",
@@ -200,6 +223,16 @@ public final class DocTreeWidget extends DocWidget<DocTreeWidget.Params, DocTree
                 "            var _slug = (docTitle || 'doc')",
                 "                .replace(/[^\\w\\s-]/g, '').replace(/\\s+/g, '-').replace(/-+/g, '-').trim() || 'doc';",
                 "            document.title = docTitle || document.title;",
+                "            metaTitle.textContent = docTitle;",
+                "            // RFC 0004-ext1 — the category chip and the References,",
+                "            // from /doc-refs. A path-addressed doc has no uuid to ask",
+                "            // about, so it gets the document and nothing else.",
+                "            attachDocRefs({",
+                "                branch:     bodyBranch,",
+                "                docId:      docUuid,",
+                "                metaHost:   metaHost,",
+                "                refsParent: refsParent",
+                "            });",
                 "            var exportBar = bodyBranch.createElement('exportBar', 'div');",
                 "            exportBar.setAttribute('data-export-exclude', '');",
                 "            exportBar.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:200;'",

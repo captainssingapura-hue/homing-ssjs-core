@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.studio.base.composed;
 
+import hue.captains.singapura.js.homing.studio.base.export.DocAnchor;
+
 import hue.captains.singapura.js.homing.tree.TreeNodeJsonWriter;
 
 import java.util.List;
@@ -120,7 +122,7 @@ public final class DocTreeJsonWriter {
             // Resource-backed segments (svg/table/image) resolve to the embedded
             // doc's own bytes via /doc-tree-content; the closure is invoked by
             // SegmentJson only for those kinds.
-            SegmentJson.write(sb, segs.get(i), "seg-" + key + "-" + i,
+            SegmentJson.write(sb, segs.get(i), DocAnchor.ofSegment(key, i).value(),
                     s -> inlineResourceUrl(rootId, key, segIndex));
         }
         sb.append(']');

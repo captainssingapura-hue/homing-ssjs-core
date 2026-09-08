@@ -12,7 +12,7 @@ import java.util.List;
  * {@code (state, msg) → { newState, actions }} coordinator plus an initial
  * state, exported as one {@code TocSyncSecretary} JS object.
  *
- * <p>Lifted out of {@link DocTreeRendererModule} unchanged in behaviour (RFC
+ * <p>Lifted out of {@code DocTreeRenderer} unchanged in behaviour (RFC
  * 0043 wrote it there, inline). It moved because a <i>second</i> reader needs
  * the same law: the rigid-tree reader draws its TOC as a
  * {@link TreeRendererModule TreeRenderer} over structure nodes and the markdown

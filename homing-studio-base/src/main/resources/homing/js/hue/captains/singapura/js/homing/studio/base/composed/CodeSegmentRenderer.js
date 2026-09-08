@@ -8,6 +8,11 @@
 // Elements owned by the supplied branch: section, h2?, article, pre, code.
 // The code's textContent is set raw (safe — code is data, not markup; the
 // browser preserves whitespace and entities verbatim).
+//
+// One language is not a listing: `mermaid` is a diagram written as text, and
+// since RFC 0059 the fence arrives already typed, so this is a question about
+// data rather than a sweep of the rendered DOM. MermaidPlateModule takes it
+// from here — including building the same fence as the fallback.
 // =============================================================================
 
 function renderCodeSegment(branch, parent, seg, ctx) {
@@ -25,17 +30,21 @@ function renderCodeSegment(branch, parent, seg, ctx) {
     var article = branch.createElement('article', 'article');
     css.addClass(article, st_doc);
 
-    var pre = branch.createElement('pre', 'pre');
-    var code = branch.createElement('code', 'code');
-    if (seg.language) {
-        // language-X is the highlight-library convention. The framework
-        // ships no highlighter; the class is still useful for any consumer
-        // that wants to attach one downstream.
-        code.className = 'language-' + seg.language;
+    if (seg.language === 'mermaid') {
+        renderMermaidPlate(branch, article, seg.body);
+    } else {
+        var pre = branch.createElement('pre', 'pre');
+        var code = branch.createElement('code', 'code');
+        if (seg.language) {
+            // language-X is the highlight-library convention. The framework
+            // ships no highlighter; the class is still useful for any consumer
+            // that wants to attach one downstream.
+            code.className = 'language-' + seg.language;
+        }
+        code.textContent = seg.body;
+        pre.appendChild(code);
+        article.appendChild(pre);
     }
-    code.textContent = seg.body;
-    pre.appendChild(code);
-    article.appendChild(pre);
 
     section.appendChild(article);
     parent.appendChild(section);

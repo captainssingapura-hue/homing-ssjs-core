@@ -9,7 +9,6 @@ import hue.captains.singapura.js.homing.server.ServerCrate;
 import hue.captains.singapura.js.homing.studio.base.app.CatalogueAppHost;
 import hue.captains.singapura.js.homing.studio.base.app.CatalogueHostRenderer;
 import hue.captains.singapura.js.homing.studio.base.app.DocReader;
-import hue.captains.singapura.js.homing.studio.base.app.DocReaderRenderer;
 import hue.captains.singapura.js.homing.studio.base.app.DocTreeViewer;
 import hue.captains.singapura.js.homing.studio.base.app.SvgViewer;
 import hue.captains.singapura.js.homing.studio.base.composed.CaptionRenderer;
@@ -17,16 +16,19 @@ import hue.captains.singapura.js.homing.studio.base.composed.CodeSegmentRenderer
 import hue.captains.singapura.js.homing.studio.base.composed.ComposedSegmentRenderer;
 import hue.captains.singapura.js.homing.studio.base.composed.ComposedViewer;
 import hue.captains.singapura.js.homing.studio.base.composed.ComposedWidget;
+import hue.captains.singapura.js.homing.studio.base.composed.DocRefsModule;
 import hue.captains.singapura.js.homing.studio.base.composed.DocTreeWidget;
 import hue.captains.singapura.js.homing.studio.base.composed.DocumentaryWidgetSegmentRenderer;
 import hue.captains.singapura.js.homing.studio.base.composed.ImageSegmentRenderer;
 import hue.captains.singapura.js.homing.studio.base.composed.ListSegmentRenderer;
 import hue.captains.singapura.js.homing.studio.base.composed.MarkdownSegmentRenderer;
+import hue.captains.singapura.js.homing.studio.base.composed.MermaidPlateModule;
 import hue.captains.singapura.js.homing.studio.base.composed.ParagraphSegmentRenderer;
 import hue.captains.singapura.js.homing.studio.base.composed.RelationSegmentRenderer;
 import hue.captains.singapura.js.homing.studio.base.composed.SvgSegmentRenderer;
 import hue.captains.singapura.js.homing.studio.base.composed.TableSegmentRenderer;
 import hue.captains.singapura.js.homing.studio.base.composed.TextSegmentRenderer;
+import hue.captains.singapura.js.homing.studio.base.composed.DocTreeRendererModule;
 import hue.captains.singapura.js.homing.studio.base.composed.TocSidebarRenderer;
 import hue.captains.singapura.js.homing.studio.base.composed.TocSyncModule;
 import hue.captains.singapura.js.homing.studio.base.css.StudioStyles;
@@ -97,7 +99,6 @@ public final class StudioBaseCrate implements Crate {
                 CrateEntry.of(CatalogueAppHost.INSTANCE),
                 CrateEntry.of(CatalogueHostRenderer.INSTANCE),
                 CrateEntry.of(DocReader.INSTANCE),
-                CrateEntry.of(DocReaderRenderer.INSTANCE),
                 CrateEntry.of(DocTreeViewer.INSTANCE),
                 CrateEntry.of(SvgViewer.INSTANCE),
                 CrateEntry.of(CaptionRenderer.INSTANCE),
@@ -106,15 +107,18 @@ public final class StudioBaseCrate implements Crate {
                 CrateEntry.of(ComposedViewer.INSTANCE),
                 CrateEntry.of(ComposedWidget.INSTANCE),
                 CrateEntry.of(DocTreeWidget.INSTANCE),
+                CrateEntry.of(DocRefsModule.INSTANCE),
                 CrateEntry.of(DocumentaryWidgetSegmentRenderer.INSTANCE),
                 CrateEntry.of(ImageSegmentRenderer.INSTANCE),
                 CrateEntry.of(ListSegmentRenderer.INSTANCE),
                 CrateEntry.of(MarkdownSegmentRenderer.INSTANCE),
+                CrateEntry.of(MermaidPlateModule.INSTANCE),
                 CrateEntry.of(ParagraphSegmentRenderer.INSTANCE),
                 CrateEntry.of(RelationSegmentRenderer.INSTANCE),
                 CrateEntry.of(SvgSegmentRenderer.INSTANCE),
                 CrateEntry.of(TableSegmentRenderer.INSTANCE),
                 CrateEntry.of(TextSegmentRenderer.INSTANCE),
+                CrateEntry.of(DocTreeRendererModule.INSTANCE),
                 CrateEntry.of(TocSidebarRenderer.INSTANCE),
                 CrateEntry.of(TocSyncModule.INSTANCE),
                 CrateEntry.of(StudioStyles.INSTANCE),

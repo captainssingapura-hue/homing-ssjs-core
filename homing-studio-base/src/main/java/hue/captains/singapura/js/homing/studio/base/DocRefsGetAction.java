@@ -14,7 +14,7 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * {@code GET /doc-refs?id=<uuid>} — serves the typed {@link Reference}s declared by a Doc as
- * a JSON list, consumed by {@code DocReaderRenderer.js} to render the References section.
+ * a JSON list, consumed by {@code DocRefsModule.js} to render the References section.
  *
  * <p>Per <a href="../../../../../../../../../../docs/rfcs/Rfc0004Ext1Doc.md">RFC 0004-ext1</a>,
  * the DocReader page renders two parts: the markdown body (fetched from {@code /doc?id=<uuid>})

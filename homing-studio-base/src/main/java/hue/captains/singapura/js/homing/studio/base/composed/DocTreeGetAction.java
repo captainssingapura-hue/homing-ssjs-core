@@ -140,8 +140,14 @@ public final class DocTreeGetAction
                         hue.captains.singapura.js.homing.studio.base.rigid.RigidDocNormalizer.INSTANCE.toDocTree(rd), rootId);
             } else if ("doc".equals(doc.kind()) || "markdown".equals(doc.kind())) {
                 // Legacy markdown-bodied Doc (ClasspathMarkdownDoc, MarkdownDoc, …):
-                // render its raw markdown as one flat node — no migration needed.
-                json = DocTreeJsonWriter.INSTANCE.write(MarkdownDocNormalizer.INSTANCE.toDocTree(doc), rootId);
+                // its own ATX headings become the tree — no migration needed. Served
+                // NAME-addressed since RFC 0059 D9: each node is named by its
+                // heading's slug, so a section's address survives its siblings being
+                // edited, and an anchor written against the standalone reader still
+                // lands. The normalizer is external to the Doc, so markdown cannot
+                // announce itself through DocTreeV2Source the way RigidDocV2 does.
+                json = DocTreeV2JsonWriter.INSTANCE.write(
+                        MarkdownDocNormalizer.INSTANCE.toDocTreeV2(doc), rootId);
             } else {
                 return CompletableFuture.failedFuture(notFound(locator,
                         "Doc kind '" + doc.kind() + "' has no rigid-tree transform — supported: "

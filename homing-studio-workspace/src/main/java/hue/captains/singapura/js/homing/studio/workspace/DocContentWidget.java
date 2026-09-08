@@ -2,7 +2,7 @@ package hue.captains.singapura.js.homing.studio.workspace;
 
 import hue.captains.singapura.js.homing.core.Importable;
 import hue.captains.singapura.js.homing.core.ModuleImports;
-import hue.captains.singapura.js.homing.core.js.DocTreeRendererModule;
+import hue.captains.singapura.js.homing.studio.base.composed.DocTreeRendererModule;
 import hue.captains.singapura.js.homing.libs.MarkedJs;
 import hue.captains.singapura.js.homing.server.HrefManager;
 import hue.captains.singapura.js.homing.studio.base.composed.CodeSegmentRenderer;

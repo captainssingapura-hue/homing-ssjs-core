@@ -1,7 +1,9 @@
 package hue.captains.singapura.js.homing.studio.base.rigid;
 
 import hue.captains.singapura.js.homing.studio.base.SvgDoc;
+import hue.captains.singapura.js.homing.studio.base.composed.CodeLanguage;
 import hue.captains.singapura.js.homing.studio.base.composed.CodeSegment;
+import hue.captains.singapura.js.homing.studio.base.composed.TypedCodeSegment;
 import hue.captains.singapura.js.homing.studio.base.composed.ImageSegment;
 import hue.captains.singapura.js.homing.studio.base.composed.MarkdownSegment;
 import hue.captains.singapura.js.homing.studio.base.composed.RelationCell;
@@ -82,6 +84,25 @@ public final class Rigid {
 
         /** Attach a verbatim code listing (language for the {@code language-X} class). */
         public SELF code(String body, String language) { content.add(new CodeSegment(body, language)); return self(); }
+
+        /**
+         * Attach a verbatim code listing with a <b>typed</b> language — the same
+         * segment as {@link #code(String, String)}, with the second argument a
+         * {@link CodeLanguage} instead of a String.
+         *
+         * <pre>{@code
+         * .code(src, "java")                  // String form, still supported
+         * .code(src, CodeLanguage.JAVA)       // typed form
+         * .code(diagram, CodeLanguage.MERMAID) // draws a diagram (RFC 0059 D15)
+         * }</pre>
+         *
+         * <p>Migration is per-call-site: the wire shape is identical, so a doc
+         * can move one listing at a time and nothing observable changes.</p>
+         */
+        public SELF code(String body, CodeLanguage language) {
+            content.add(new TypedCodeSegment(body, language)); return self();
+        }
+
 
         /** Attach a typed table (header row + body rows + optional caption). */
         public SELF relation(List<String> headers, List<List<String>> rows, String caption) {

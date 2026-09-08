@@ -4,62 +4,66 @@ import hue.captains.singapura.js.homing.core.ParamCodec;
 import hue.captains.singapura.js.homing.core.QueryString;
 import hue.captains.singapura.js.homing.core.AppLink;
 import hue.captains.singapura.js.homing.core.AppModule;
-import hue.captains.singapura.js.homing.core.ExportsOf;
-import hue.captains.singapura.js.homing.core.ImportsFor;
-import hue.captains.singapura.js.homing.core.LegacyAppMain;
-import hue.captains.singapura.js.homing.core.ModuleImports;
-import hue.captains.singapura.js.homing.core.ModuleNameResolver;
-import hue.captains.singapura.js.homing.core.SelfContent;
-
-import java.util.List;
+import hue.captains.singapura.js.homing.core.Widget;
+import hue.captains.singapura.js.homing.studio.base.composed.DocTreeWidget;
+import hue.captains.singapura.js.homing.studio.base.widget.SingleWidgetMPA;
 
 /**
- * Shared concrete AppModule for reading any markdown doc by path. Downstream
- * studios just register {@code DocReader.INSTANCE} alongside their other apps;
- * no per-studio subclass needed.
+ * The reader for any markdown-bodied Doc. Downstream studios register
+ * {@code DocReader.INSTANCE} alongside their other apps; no per-studio subclass.
  *
- * <p>URL: {@code /app?app=doc-reader&doc=<uuid>}. The reader fetches the bytes via
- * {@code /doc?id=<uuid>} (served by {@code DocGetAction} from this same module against
- * the studio's {@link hue.captains.singapura.js.homing.studio.base.DocRegistry}), renders
- * with marked.js, and builds a heading TOC sidebar.</p>
+ * <p>URL: {@code /app?app=doc-reader&doc=<uuid>}.</p>
  *
- * <p>The auto-generated body uses the studio brand by default. Downstream
- * that wants a custom brand can subclass and override {@link #brandLabel()};
- * the typical case is just to use the shared instance.</p>
+ * <h2>RFC 0059 Phase 3 — one markdown path</h2>
  *
- * <h2>Deprecated — prefer the {@code ComposedDoc} viewer</h2>
+ * <p>This app used to own a pipeline of its own: fetch the raw bytes from
+ * {@code /doc?id=}, hand the whole document to {@code marked}, then sweep the
+ * resulting DOM for headings to build a TOC and for {@code language-mermaid}
+ * fences to draw diagrams. That renderer was 471 lines, over the effective-line
+ * cap, and carried some forty baselined conformance findings. More to the point,
+ * every improvement to document rendering had to be made twice — once here and
+ * once in the rigid readers — and in practice was not: mermaid reached one
+ * reader, the scroll-synced TOC reached the other.</p>
  *
- * <p>This app serves the {@code "doc"} content kind — every {@code ClasspathMarkdownDoc},
- * {@code ResourceMarkdownDoc}, and {@code InlineDoc}. Those Doc kinds are themselves
- * deprecated in favour of {@code ComposedDoc}, which is served by {@code ComposedWidget}
- * (its own dedicated viewer with typed-segment rendering, TOC, References, and the
- * floating HTML export pill). The two paths will coexist for the foreseeable future
- * — every existing .md-backed Doc continues to render through this viewer — but new
- * docs should be authored as {@code ComposedDoc}s and served via the {@code ComposedWidget}
- * path.</p>
+ * <p>It is now a {@link SingleWidgetMPA} over {@link DocTreeWidget}, the same
+ * widget the {@code doc-tree-viewer} hosts. The document is normalised on the
+ * server by {@code MarkdownDocNormalizer} and served from {@code /doc-tree?id=},
+ * so a markdown doc and a RigidDoc arrive as the same tree and render through
+ * the same code. A feature now lands once.</p>
  *
- * @deprecated Prefer the {@code ComposedDoc} / {@code ComposedWidget} viewer pair for
- *             new docs. This app remains supported for the existing .md-backed Doc
- *             kinds; no removal date.
+ * <p><b>Nothing about this app's identity moved.</b> Same {@code simpleName},
+ * same {@code ?doc=<uuid>} grammar, same {@link Params}, same {@link #CODEC},
+ * same {@code AppLink} — which matters, because 168 catalogue entries across
+ * four repositories name {@code DocReader.INSTANCE} and address it with
+ * {@code doc}. The widget accepts that locator under its own name; see
+ * {@code DocTreeWidget}'s locator block.</p>
+ *
+ * <p>What the reader gained: the tree TOC with keyboard navigation and
+ * scroll-sync, mermaid, deep (h4–h6) headings, and section anchors that survive
+ * an export with no JavaScript. What it kept: the References section and the
+ * category chip, lifted into {@code DocRefsModule} so the rigid readers have
+ * them too, and the floating Export HTML pill, which the widget already had.</p>
+ *
+ * @since homing-studio-base — RFC 0059 Phase 3 (was a bespoke marked renderer)
  */
-@Deprecated
-@LegacyAppMain(reason = "Markdown body + References renderer; already informs the DocViewer chrome pattern (DocViewer.java back-ported this body in 0.0.111). Clean migration candidate.")
-public record DocReader() implements AppModule<DocReader.Params, DocReader>, SelfContent {
+public final class DocReader extends SingleWidgetMPA<DocReader.Params, DocReader> {
 
-    record appMain() implements AppModule._AppMain<DocReader.Params, DocReader> {}
+    public static final DocReader INSTANCE = new DocReader();
+
+    private DocReader() {}
+
+    public record appMain() implements AppModule._AppMain<Params, DocReader> {}
 
     public record link() implements AppLink<DocReader> {}
 
     /**
-     * Query parameter — the wire identity of the Doc to render. The string is the textual
-     * form of a {@link java.util.UUID}; server-side parsing to a typed UUID happens in
-     * {@code DocGetAction.Query} (the boundary that actually consumes it). Kept as String
-     * here because the Params record drives JS-side codegen, and the JS side just forwards
-     * the string into {@code /doc?id=<string>}.
+     * Query parameter — the wire identity of the Doc to render. The string is the
+     * textual form of a {@link java.util.UUID}; parsing to a typed UUID happens at
+     * the boundary that consumes it ({@code DocTreeGetAction.Query}). Kept as
+     * String here because the Params record drives JS-side codegen, and the JS
+     * side forwards the string into {@code /doc-tree?id=<string>}.
      */
     public record Params(String doc) implements AppModule._Param {}
-
-    public static final DocReader INSTANCE = new DocReader();
 
     /**
      * RFC 0051 - the doc id, read and written together. Most catalogue leaves
@@ -80,70 +84,22 @@ public record DocReader() implements AppModule<DocReader.Params, DocReader>, Sel
         }
     };
 
+    @Override public String simpleName() { return "doc-reader"; }
     @Override public Class<Params> paramsType() { return Params.class; }
     @Override public ParamCodec<Params> paramCodec() { return CODEC; }
 
     /** Generic page-kind label. {@code AppHtmlGetAction} appends the downstream
      *  studio's brand label from {@code AppMeta}, producing {@code "doc · <brand>"}.
-     *  Once the doc loads, {@code DocReaderRenderer} replaces this with the
-     *  doc's actual title. */
+     *  Once the tree loads, the widget replaces this with the doc's own title. */
     @Override public String title() { return "doc"; }
 
-    /** Brand label shown in the header. Override in a subclass for custom branding. */
-    public String brandLabel() { return "Homing · studio"; }
-
-    /**
-     * URL the brand link navigates to. Default {@code "/"} (the framework's root
-     * redirect lands the user on the studio's home app). Downstream studios with a
-     * specific catalogue can override:
-     *
-     * <pre>{@code
-     * @Override public String homeUrl() { return CatalogueAppHost.urlFor(MyHomeCatalogue.class); }
-     * }</pre>
-     */
-    public String homeUrl() { return "/"; }
-
     @Override
-    public ImportsFor<DocReader> imports() {
-        return ImportsFor.<DocReader>builder()
-                .add(new ModuleImports<>(List.of(new DocReaderRenderer.renderDocReader()),
-                        DocReaderRenderer.INSTANCE))
-                .build();
+    protected AppModule._AppMain<Params, DocReader> appMain() {
+        return new appMain();
     }
 
     @Override
-    public ExportsOf<DocReader> exports() {
-        return new ExportsOf<>(INSTANCE, List.of(new appMain()));
-    }
-
-    @Override
-    public List<String> selfContent(ModuleNameResolver nameResolver) {
-        // The brand (label + logo + homeUrl) comes from /brand — populated
-        // from StudioBrand at boot. This module no longer hardcodes its own
-        // brandLabel() / homeUrl() — those defaults exist as a back-compat
-        // safety net for the /brand action when no StudioBrand is registered.
-        //
-        // RFC 0051 — the breadcrumb is the server's stamp and nothing else.
-        // This used to pass an empty crumbsAbove for the renderer to fill from
-        // /doc-refs' breadcrumbs array; that array left /doc-refs in phase 5
-        // and the hook has been inert since, so it goes with the comment that
-        // described it. Studios with no catalogues registered get no chain —
-        // the brand link in the header is the only nav, which is the honest
-        // answer when there is no catalogue to be positioned in.
-        return List.of(
-                // RFC 0051 - params arrive from the server; a /cat path has no query.
-                "function appMain(rootElement, params, chrome) {",
-                "    fetch(\"/brand\").then(function(r) { return r.json(); }).then(function(brand) {",
-                "        rootElement.replaceChildren(renderDocReader({",
-                "            docId:       params.doc,",
-                "            brand:       { href: brand.homeUrl, label: brand.label, logo: brand.logo },",
-                // RFC 0051 Phase 5 — the server-stamped trail. Present for any
-                // positioned doc; absent for one that has no place in the tree,
-                // where the renderer falls back to its own late-fill.
-                "            crumbs:      chrome && chrome.crumbs",
-                "        }));",
-                "    });",
-                "}"
-        );
+    protected Widget<?, ?> widget() {
+        return DocTreeWidget.INSTANCE;
     }
 }

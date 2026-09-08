@@ -159,6 +159,7 @@ public final class ComposedDocNormalizer implements TreeNormalizer<ComposedDoc> 
             case MarkdownSegment m -> m.title().orElse("");
             case TextSegment t     -> t.title().orElse("");
             case CodeSegment c     -> c.title().orElse("");
+            case TypedCodeSegment tc -> tc.title().orElse("");
             case RelationSegment r -> r.caption().map(Line.Plain::raw).orElse("");
             case UnorderedListSegment ul -> "";
             case OrderedListSegment ol -> "";
@@ -177,6 +178,7 @@ public final class ComposedDocNormalizer implements TreeNormalizer<ComposedDoc> 
             case MarkdownSegment m -> "markdown";
             case TextSegment t     -> "text";
             case CodeSegment c     -> "code";
+            case TypedCodeSegment tc -> "code";
             case RelationSegment r -> "relation";
             case UnorderedListSegment ul -> "ulist";
             case OrderedListSegment ol -> "olist";

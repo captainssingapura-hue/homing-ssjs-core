@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -70,5 +71,30 @@ class MarkdownDocNormalizerTest {
         assertEquals("Sub", label(identity.children().get(0)));
         assertEquals(TreeLevel.L2.INSTANCE, identity.children().get(0).level());
         assertEquals("deeper note", bodyAt(tree, List.of(1, 0)));
+    }
+
+    /**
+     * RFC 0059 Phase 2 — a fenced block keeps its language, and a CRLF document
+     * never leaks a carriage return into a segment body.
+     *
+     * <p>The corpus is authored on Windows, and {@code marked} scrubbed CRLF for
+     * the standalone reader, so nothing downstream had ever seen one. The rigid
+     * path carries fences of its own now, and Mermaid's parser rejects a stray CR
+     * outright — six diagrams in the RFC 0049 appendix failed on it.</p>
+     */
+    @Test
+    void fencedBlocksKeepTheirLanguageAndDropTheCarriageReturn() {
+        var doc = new MarkdownDoc(ID, "Diagram",
+                "# Diagram\r\nlead\r\n\r\n```mermaid\r\nflowchart LR\r\n  A --> B\r\n```\r\n");
+        var tree = MarkdownDocNormalizer.INSTANCE.toDocTree(doc);
+
+        var bundle = assertInstanceOf(ComposedLeaf.class,
+                tree.providerAt(List.of()).orElseThrow().content());
+        assertEquals("lead", assertInstanceOf(MarkdownSegment.class, bundle.contents().get(0)).body());
+
+        var code = assertInstanceOf(CodeSegment.class, bundle.contents().get(1));
+        assertEquals("mermaid", code.language(), "the fence info string is the segment's language");
+        assertEquals("flowchart LR\n  A --> B", code.body());
+        assertFalse(code.body().contains("\r"), "no carriage return may survive into a segment body");
     }
 }
