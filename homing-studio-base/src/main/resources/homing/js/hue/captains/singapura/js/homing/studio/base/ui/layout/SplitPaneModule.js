@@ -468,11 +468,14 @@ class SplitPane {
      * own position:absolute box from its parent's _applySizes pass.
      */
     _applySizes(el, node) {
-        if (_isLeaf(node)) return;
-        _normaliseRatios(node.children);
-        var isHorizontal = node.orientation === "horizontal";
-
-        // Top-level root: size it to fill the container.
+        // Top-level root: size it to fill the container. BEFORE the leaf
+        // early-return, because a root that IS a leaf still needs a box —
+        // .hsp-leaf is position:absolute with no offsets of its own, so an
+        // unsized one collapses to the width of its content. Two ways to see
+        // it: boot a workspace whose layout is a single pane (it renders as a
+        // narrow column), or merge two panes into one (the survivor keeps its
+        // pre-merge box instead of expanding). Both land here, because every
+        // caller passes _rootEl.
         if (el === this._rootEl) {
             el.style.position = "absolute";
             el.style.left   = "0px";
@@ -480,6 +483,9 @@ class SplitPane {
             el.style.width  = this._container.clientWidth  + "px";
             el.style.height = this._container.clientHeight + "px";
         }
+        if (_isLeaf(node)) return;
+        _normaliseRatios(node.children);
+        var isHorizontal = node.orientation === "horizontal";
 
         var totalW = el.clientWidth;
         var totalH = el.clientHeight;
