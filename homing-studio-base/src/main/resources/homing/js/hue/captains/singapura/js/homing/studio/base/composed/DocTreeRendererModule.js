@@ -55,7 +55,15 @@ function renderDocTree(opts) {
     var contentKeyByIdx = {}; // INDEX path key -> CONTENT key (name-path in V2, index in V1)
     var orderedSections = []; // { key, path, el } in document (pre-order) order — the scroll-spy's ordered index (RFC 0043)
     function keyOf(path) { return path.join('/'); }              // canonical child-index key
-    function idOf(key)   { return 'doc-node-' + (key === '' ? 'root' : key.replace(/\//g, '_')); }
+    // The node's export anchor. Java names this shape once, in DocAnchor (which
+    // also builds the seg-* anchors, so the two families cannot drift); this is
+    // the client half, and it now only PREFIXES a key it was handed rather than
+    // reshaping it. The '/' survives: a name-path IS the address, a slash is
+    // legal in a fragment and in an id, and the browser's own fragment
+    // navigation — the only consumer these ids have — resolves it natively.
+    // Nothing here ever selects by id, so CSS-selector syntax is not a concern
+    // (Owned References: the reader holds sectionsByKey from what it minted).
+    function idOf(key)   { return 'doc-node-' + (key === '' ? 'doc' : key); }
     // The stable, URL-safe node id every node carries in a name-path doc
     // (RigidDocV2). Present -> content is addressed by the '/'-joined chain of
     // these ids (stable across sibling reordering); absent (V1) -> by child-index.
