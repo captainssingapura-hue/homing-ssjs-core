@@ -5,6 +5,10 @@ import hue.captains.singapura.js.homing.workspace.WidgetGroup;
 import hue.captains.singapura.js.homing.workspace.WidgetIcon;
 import hue.captains.singapura.js.homing.workspace.WidgetLabel;
 import hue.captains.singapura.js.homing.workspace.shell.PartyDecl;
+import hue.captains.singapura.js.homing.workspace.shell.Arrangement;
+import hue.captains.singapura.js.homing.workspace.shell.PaneArrangement;
+import hue.captains.singapura.js.homing.workspace.shell.PaneDirection;
+import hue.captains.singapura.js.homing.workspace.shell.ShapePane;
 import hue.captains.singapura.js.homing.workspace.shell.WorkspaceSpec;
 
 import java.util.LinkedHashMap;
@@ -51,6 +55,47 @@ public final class StudioWorkspaceSpec implements WorkspaceSpec {
     private StudioWorkspaceSpec() {}
 
     @Override public String kind()  { return "studio"; }
+
+    // ── RFC 0060 — the arrangement this workspace opens in ───────────────────
+
+    /**
+     * Navigator down the left, and on the right a Summary card above the
+     * Document it describes.
+     *
+     * <p>The shape follows the widgets' <b>two-speed</b> relationship rather than
+     * taste. Navigator publishes two tiers; Summary reacts to <i>every</i>
+     * selection while Document reacts to intent <i>only</i>. So Navigator and
+     * Summary move together as you arrow around, and Document is the stable
+     * destination — which is why the first two are adjacent and the Document gets
+     * the largest area.</p>
+     *
+     * <p>Its own playbook rather than a shipped shape: {@code TRIPLE_COLUMN} would
+     * put all three in columns and leave the Document — which renders a foldable
+     * TOC beside an 820px body — at half the width, and {@code IDE} has the
+     * detail/main ratio the wrong way round. The shipped set is a starting point,
+     * not a constraint (RFC 0060 D7).</p>
+     */
+    private static final PaneArrangement STUDIO_SHAPE =
+            PaneArrangement.named("studio")
+                    .root("document")
+                    // Navigator takes 20% down the left; the document keeps 80%.
+                    .splitWithRatio("document", PaneDirection.LEFT, "navigator", 0.80)
+                    // Of that 80%, the Summary card takes the top quarter.
+                    .splitWithRatio("document", PaneDirection.UP, "summary", 0.75)
+                    .build();
+
+    private static final ShapePane NAVIGATOR = STUDIO_SHAPE.pane("navigator");
+    private static final ShapePane SUMMARY   = STUDIO_SHAPE.pane("summary");
+    private static final ShapePane DOCUMENT  = STUDIO_SHAPE.pane("document");
+
+    @Override
+    public Arrangement arrangement() {
+        return STUDIO_SHAPE.allocate()
+                .place(NAVIGATOR, TreeWidget.class)
+                .place(SUMMARY,   SummaryWidget.class)
+                .place(DOCUMENT,  DocContentWidget.class)
+                .build();
+    }
     @Override public String title() { return "Studio"; }
 
     @Override
