@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Unit test for {@code PickerTabFlow}. Exercises:
  *
  * <ul>
- *   <li>{@code _filterPickable} — pure transform — directly</li>
+ *   <li>every declared entry reaches the picker (RFC 0060 D20)</li>
  *   <li>{@code openInSlot} — synchronous side effects on stub MTP +
  *       stub WidgetPicker constructor (records args)</li>
  *   <li>{@code onCancel} → {@code mtp.removeTab}</li>
@@ -104,32 +104,27 @@ class PickerTabFlowTest extends JsModuleTestBase {
         loadModule(MODULE);
     }
 
-    /** filterPickable is an instance method now (Explicit Substrate —
-     *  no static helpers). Invoke via the flow fixture. */
+    /**
+     * RFC 0060 D20 — the picker offers every declared widget. It used to filter
+     * out {@code spec.pinnedSpawns}, which meant closing an auto-spawned tab made
+     * that widget unreachable for good. Seeding is now the arrangement's job and
+     * says nothing about pickability; whether a second copy may be opened is the
+     * widget's own {@code lifecycleHint()} to declare.
+     */
     @Test
-    void filterPickableExcludesPinnedKinds() {
-        Value flow = newPickerFlow().getMember("flow");
-        Value entries = js.eval("js", """
-                [
-                    { simpleName: 'DocViewWidget' },
-                    { simpleName: 'SpinningAnimalsWidget' },
-                    { simpleName: 'MovingAnimalWidget' }
-                ]""");
-        Value pinned = js.eval("js", "[ 'DocViewWidget' ]");
-        Value result = flow.invokeMember("filterPickable", entries, pinned);
-        assertEquals(2, result.getArraySize());
-        assertEquals("SpinningAnimalsWidget",
-                     result.getArrayElement(0).getMember("simpleName").asString());
-        assertEquals("MovingAnimalWidget",
-                     result.getArrayElement(1).getMember("simpleName").asString());
-    }
+    void pickerOffersEveryDeclaredEntryIncludingSeededOnes() {
+        Value setup = newPickerFlow();
+        setup.getMember("flow").invokeMember("openInSlot", "tl");
 
-    @Test
-    void filterPickableEmptyPinnedKeepsAll() {
-        Value flow = newPickerFlow().getMember("flow");
-        Value entries = js.eval("js", "[{simpleName: 'A'}, {simpleName: 'B'}]");
-        Value result = flow.invokeMember("filterPickable", entries, js.eval("js", "[]"));
-        assertEquals(2, result.getArraySize());
+        Value offered = js.eval("js", "globalThis._lastPicker.opts.entries");
+        assertEquals(2, offered.getArraySize(),
+                     "both declared entries reach the picker");
+        assertEquals("DocViewWidget",
+                     offered.getArrayElement(0).getMember("simpleName").asString(),
+                     "the seeded widget is still offered — closing its tab must not "
+                   + "make it unreachable");
+        assertEquals("Spinning",
+                     offered.getArrayElement(1).getMember("simpleName").asString());
     }
 
     @Test
@@ -158,19 +153,17 @@ class PickerTabFlowTest extends JsModuleTestBase {
     }
 
     @Test
-    void pickerReceivesFilteredEntriesAndDisabledIds() {
+    void pickerReceivesEveryEntryAndNoDisabledIds() {
         Value setup = newPickerFlow();
         Value flow = setup.getMember("flow");
         flow.invokeMember("openInSlot", "tl");
 
         Value picker = js.getBindings("js").getMember("_lastPicker");
         Value opts   = picker.getMember("opts");
-        Value entries = opts.getMember("entries");
-        // Spec has 2 entries, 1 pinned → 1 left.
-        assertEquals(1, entries.getArraySize());
-        assertEquals("Spinning",
-                     entries.getArrayElement(0).getMember("simpleName").asString());
-        // disabledIds is empty in this fresh setup (no singletons open).
+        // Both declared entries — nothing is filtered any more (D20).
+        assertEquals(2, opts.getMember("entries").getArraySize());
+        // disabledIds is empty in this fresh setup (no singletons open). This,
+        // not the removed filter, is how a kind gets held to one instance.
         assertEquals(0, opts.getMember("disabledIds").getMemberKeys().size());
         // Picker was mounted into the pickerHost (not the tab's contentEl
         // directly — into a host the tab.render attaches; observable via
@@ -206,7 +199,7 @@ class PickerTabFlowTest extends JsModuleTestBase {
         assertEquals(2, snap.getMember("tabsIssued").asInt());
     }
 
-    /** Build a fresh PickerTabFlow + stub MTP. Spec: 2 entries, 1 pinned. */
+    /** Build a fresh PickerTabFlow + stub MTP. Spec: 2 declared entries. */
     private Value newPickerFlow() {
         return js.eval("js", """
                 (() => {
@@ -216,8 +209,7 @@ class PickerTabFlowTest extends JsModuleTestBase {
                         entries: [
                             { simpleName: 'DocViewWidget', moduleUrl: '/dvw', label: 'Doc' },
                             { simpleName: 'Spinning',      moduleUrl: '/s',   label: 'Spin' }
-                        ],
-                        pinnedSpawns: [ 'DocViewWidget' ]
+                        ]
                     };
                     const stubMounter = {
                         resolveCalls: [],

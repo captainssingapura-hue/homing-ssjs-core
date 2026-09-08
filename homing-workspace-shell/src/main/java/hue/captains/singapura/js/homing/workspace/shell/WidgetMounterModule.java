@@ -20,7 +20,7 @@ import java.util.List;
  * dynamic import is the only side effect; the rest is straight typed
  * dispatch.</p>
  *
- * <p>Used by {@link PinnedTabSpawnerModule} (Phase 14) and will be used
+ * <p>Used by {@link PickerTabFlowModule} (Phase 13) and will be used
  * by {@code PickerTabFlow} (Phase 13) and {@code ReplayEngine} (Phase 9)
  * as those land.</p>
  *

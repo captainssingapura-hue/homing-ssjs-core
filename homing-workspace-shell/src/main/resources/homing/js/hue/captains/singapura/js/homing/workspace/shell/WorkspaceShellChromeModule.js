@@ -40,7 +40,7 @@
 //  11. MultiTabPane (post-replay)  | DONE
 //  12. TabRegistry                 | DONE
 //  13. PickerTabFlow (post-MTP)    | DONE
-//  14. PinnedTabSpawner            | DONE (seeds model on fresh session)
+//  14. (retired)                  | the arrangement seeds the model (RFC 0060 D20)
 //  15. WidgetMounter               | DONE
 //  16+17+18 WorkspaceControl       | DONE
 //
@@ -70,7 +70,6 @@ class WorkspaceShellChrome {
         this._checkpointService   = deps.checkpointService   || CheckpointService.INSTANCE;
         this._replayEngine        = deps.replayEngine        || ReplayEngine.INSTANCE;
         this._widgetMounter       = deps.widgetMounter       || WidgetMounter.INSTANCE;
-        this._pinnedTabSpawner    = deps.pinnedTabSpawner    || PinnedTabSpawner.INSTANCE;
         this._WorkspaceLayoutCtor = deps.WorkspaceLayoutCtor || WorkspaceLayout;
         this._MultiTabPaneCtor    = deps.MultiTabPaneCtor    || MultiTabPane;
         this._FocusCoordinatorCtor = deps.FocusCoordinatorCtor || WorkspaceFocusCoordinator;   // RFC 0049
@@ -339,7 +338,7 @@ class WorkspaceShellChrome {
                     },
                     onEmpty: function (state) {
                         // Fresh session — seed model with pinned widgets.
-                        seededPinnedDescriptors = self._seedPinnedIntoModel(state);
+                        seededPinnedDescriptors = self._seedArrangementIntoModel(state);
                         return state;
                     },
                     onProgress: function (s) {
@@ -676,7 +675,7 @@ class WorkspaceShellChrome {
 
     /**
      * Mount one widget into MTP without emitting any event. Used during
-     * projection (post-fold, fence on). Mirrors PinnedTabSpawner /
+     * projection (post-fold, fence on). Mirrors the seed path /
      * PickerTabFlow's mount path: branch, addTab, mounter.resolve→mount→
      * attach, register.
      */
@@ -690,7 +689,7 @@ class WorkspaceShellChrome {
             console.warn('[WorkspaceShellChrome] projection: unknown kind', kind);
             return Promise.resolve();
         }
-        // Tab object — matches the shape PinnedTabSpawner/PickerTabFlow create.
+        // Tab object — matches the shape the seed path / PickerTabFlow create.
         const branchName = 'w-' + uuid.replace(/[^A-Za-z0-9_-]/g, '_');
         const wBranch    = this._widgetsBranch.createBranch(branchName);
         wBranch.activate(Object.freeze({ toString: () => 'projection:' + uuid }));
@@ -768,20 +767,16 @@ class WorkspaceShellChrome {
      * Returns the descriptors so the orchestrator can emit corresponding
      * WidgetSpawnedPinned events after fence drops.
      */
-    _seedPinnedIntoModel(model) {
+    _seedArrangementIntoModel(model) {
         const seeded = [];
         const byName = {};
         for (const e of (this._spec.entries || [])) byName[e.simpleName] = e;
 
-        // RFC 0060 D11 — one loop, two sources. An arrangement binds widgets to a
-        // NAMED pane; pinnedSpawns is the degenerate case of exactly that (one
-        // pane, these widgets), so it is expressed in the same terms rather than
-        // running as a second mechanism beside it. Its widgets land in the
-        // arrangement's first pane, which is where 'tl' used to mean.
+        // RFC 0060 D20 — the arrangement is the ONLY source of a seed. The
+        // separate spec.pinnedSpawns list it used to merge with is gone: a
+        // single-pane arrangement says the same thing in the same vocabulary,
+        // so there is no degenerate case left to special-case.
         const arrangement = (this._spec && this._spec.arrangement) || null;
-        const firstPane   = arrangement
-            ? (this._WorkspaceStateModelCtor._leafSlotIds(arrangement.layout)[0] || null)
-            : null;
 
         const placements = [];
         if (arrangement && arrangement.widgets) {
@@ -791,9 +786,6 @@ class WorkspaceShellChrome {
                 }
             }
         }
-        for (const kind of (Array.isArray(this._spec.pinnedSpawns) ? this._spec.pinnedSpawns : [])) {
-            placements.push({ kind: kind, paneId: firstPane });
-        }
 
         for (const p of placements) {
             const entry = byName[p.kind];
@@ -801,6 +793,9 @@ class WorkspaceShellChrome {
                 console.warn('[WorkspaceShellChrome] arrangement names an unknown widget:', p.kind);
                 continue;
             }
+            // ':pinned' is a WIRE VALUE — it is the widgetInstanceId written into
+            // every WidgetSpawnedPinned already in somebody's log, so it stays
+            // whatever the vocabulary around it is now called.
             const uuid = entry.simpleName + ':pinned';
             const descriptor = {
                 widgetInstanceId: uuid,

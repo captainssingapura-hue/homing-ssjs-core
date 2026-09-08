@@ -51,7 +51,6 @@ public final class WorkspaceShellCrate implements Crate {
                 CrateEntry.of(WorkspaceShallowKeyboardModule.INSTANCE),
                 CrateEntry.of(WorkspaceKeyboardScopeModule.INSTANCE),
                 CrateEntry.of(PickerTabFlowModule.INSTANCE),
-                CrateEntry.of(PinnedTabSpawnerModule.INSTANCE),
                 CrateEntry.of(ReplayEngineModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(TabRegistryModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(WidgetMounterModule.INSTANCE),

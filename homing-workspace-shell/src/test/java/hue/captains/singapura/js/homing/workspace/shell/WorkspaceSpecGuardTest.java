@@ -50,15 +50,8 @@ class WorkspaceSpecGuardTest {
                 spec().entries(TreeWidget.class)));
     }
 
-    /** The shipped specs must actually pass — a guardrail nothing survives is a bug. */
-    @Test
-    void pinned_spawns_alone_still_pass() {
-        assertDoesNotThrow(() -> WorkspaceSpecGuard.check(
-                spec().entries(TreeWidget.class, DocWidget.class)
-                      .pinned("DocWidget")));
-    }
 
-    // ------------------------------------------------------------ the five
+    // ----------------------------------------------------------- the four
 
     @Test
     void two_widgets_sharing_a_simpleName_are_rejected_naming_both_packages() {
@@ -97,15 +90,6 @@ class WorkspaceSpecGuardTest {
         assertTrue(e.getMessage().contains(Beta.DupWidget.class.getName()), e.getMessage());
     }
 
-    @Test
-    void an_undeclared_pinned_name_is_rejected_rather_than_warned_about() {
-        var e = assertThrows(IllegalStateException.class, () -> WorkspaceSpecGuard.check(
-                spec().entries(TreeWidget.class)
-                      .pinned("DocViewWidget")));   // the classic stale rename
-        assertTrue(e.getMessage().contains("DocViewWidget"), e.getMessage());
-        assertTrue(e.getMessage().contains("pinnedSpawns()"), e.getMessage());
-    }
-
     /**
      * The one with no runtime diagnostic whatsoever: the model's spawn is
      * idempotent on the instance id, and the seeded id is the widget kind.
@@ -120,15 +104,6 @@ class WorkspaceSpecGuardTest {
                               .build())));
         assertTrue(e.getMessage().contains("two.left"),  e.getMessage());
         assertTrue(e.getMessage().contains("two.right"), e.getMessage());
-    }
-
-    @Test
-    void a_widget_both_placed_and_pinned_is_rejected() {
-        var e = assertThrows(IllegalStateException.class, () -> WorkspaceSpecGuard.check(
-                spec().entries(TreeWidget.class)
-                      .arrangement(TWO.allocate().place(LEFT, TreeWidget.class).build())
-                      .pinned("TreeWidget")));
-        assertTrue(e.getMessage().contains("pinnedSpawns()"), e.getMessage());
     }
 
     @Test
@@ -168,10 +143,11 @@ class WorkspaceSpecGuardTest {
 
     @Test
     void the_registry_applies_the_guard() {
-        var bad = spec().entries(TreeWidget.class).pinned("Nope");
+        var bad = spec().entries(TreeWidget.class)
+                         .arrangement(TWO.allocate().place(LEFT, LogWidget.class).build());
         var e = assertThrows(IllegalStateException.class,
                              () -> WorkspaceSpecRegistry.INSTANCE.register(bad));
-        assertTrue(e.getMessage().contains("Nope"), e.getMessage());
+        assertTrue(e.getMessage().contains("LogWidget"), e.getMessage());
         assertEquals(java.util.Optional.empty(), WorkspaceSpecRegistry.INSTANCE.get(bad.kind()),
                      "a spec that failed the guard must not be left half-registered");
     }
@@ -186,7 +162,6 @@ class WorkspaceSpecGuardTest {
         private final String kind = "guard-fixture-" + (++seq);
         private List<WidgetEntry> entries = List.of();
         private Arrangement arrangement = PaneArrangements.SINGLE.empty();
-        private List<String> pinned = List.of();
         private int maxTabs = 16;
 
         @SafeVarargs
@@ -198,14 +173,12 @@ class WorkspaceSpecGuardTest {
         }
 
         Fixture arrangement(Arrangement a) { this.arrangement = a;            return this; }
-        Fixture pinned(String... names)    { this.pinned = List.of(names);    return this; }
         Fixture maxTabs(int n)             { this.maxTabs = n;                return this; }
 
         @Override public String kind()                 { return kind; }
         @Override public String title()                { return "Guard Fixture"; }
         @Override public List<WidgetEntry> widgetEntries() { return entries; }
         @Override public Arrangement arrangement()     { return arrangement; }
-        @Override public List<String> pinnedSpawns()   { return pinned; }
         @Override public int maxTabs()                 { return maxTabs; }
     }
 

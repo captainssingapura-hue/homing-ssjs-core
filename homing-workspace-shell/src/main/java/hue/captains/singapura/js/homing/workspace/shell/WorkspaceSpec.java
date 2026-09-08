@@ -109,20 +109,6 @@ public interface WorkspaceSpec extends Stateless {
      */
     default List<WidgetCodecRef> widgetCodecs() { return List.of(); }
 
-    /**
-     * Widget {@code simpleName}s to auto-spawn as <b>pinned</b> tabs at
-     * boot — typically a welcome / introduction doc and any always-on
-     * scratchpad. Each name must match an entry in
-     * {@link #widgetEntries()}; missing names are logged + skipped.
-     *
-     * <p>Spec-level concern, independent of the widget class's default
-     * {@code lifecycleHint()} — a workspace can pin any widget without
-     * modifying the widget itself. Phase 14
-     * ({@code PinnedTabSpawnerModule}) consumes this list in boot
-     * order, mounting each into a target slot (default {@code 'tl'})
-     * and setting the first as workspace-active.</p>
-     */
-    default List<String> pinnedSpawns() { return List.of(); }
 
     /**
      * RFC 0060 — the arrangement this workspace <b>starts in</b>: its panes, and
@@ -145,13 +131,26 @@ public interface WorkspaceSpec extends Stateless {
      * }
      * }</pre>
      *
+     * <p>Widgets that once went in {@code pinnedSpawns()} belong here — in
+     * {@link PaneArrangements#SINGLE}'s one pane when the workspace wants no
+     * particular shape:</p>
+     *
+     * <pre>{@code
+     * @Override public Arrangement arrangement() {
+     *     return PaneArrangements.SINGLE.allocate()
+     *             .place(Single.MAIN, DocViewWidget.class)
+     *             .build();
+     * }
+     * }</pre>
+     *
      * <p><b>It is a SEED, not a template</b> (D10). It applies only to a workspace
      * with no saved state; a saved layout always wins, and editing this method
      * never reshapes a workspace someone already has open. That is a property of
      * the event-sourced model, not a limitation of this method.</p>
      *
-     * <p>{@link #pinnedSpawns()} is the degenerate case of this — one pane, these
-     * widgets — and remains supported.</p>
+     * <p>Seeding a widget here does <b>not</b> hide it from the picker (D20). The
+     * arrangement says what a workspace <i>opens</i> with; whether a second copy
+     * may be opened is the widget's own {@code lifecycleHint()} to declare.</p>
      */
     default Arrangement arrangement() { return PaneArrangements.SINGLE.empty(); }
 

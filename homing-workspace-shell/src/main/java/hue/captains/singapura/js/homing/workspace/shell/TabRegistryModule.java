@@ -16,7 +16,7 @@ import java.util.List;
  *
  * <p>The index lives in-memory per workspace; it's reconstructed on
  * every boot as spawn paths execute (whether from
- * {@code PinnedTabSpawner.onEmpty} or from replay handlers). No
+ * the arrangement seed, or from replay handlers). No
  * persistence — the event log + checkpoint are the durable truth.</p>
  *
  * <p>This is the missing piece between event-replay and DOM mutation.

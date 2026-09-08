@@ -39,8 +39,6 @@ import java.util.Map;
  *   <li><b>Arrangement placements are declared.</b> Compared by {@code Class},
  *       not name: a placement of a same-named class from another package would
  *       pass a name check and mount the other widget.</li>
- *   <li><b>Pinned names are declared.</b> The shell warns and skips; nobody reads
- *       a browser console.</li>
  *   <li><b>Nothing is seeded twice.</b> The seeded instance id is the widget kind,
  *       and the model's spawn is idempotent on that id, so a widget placed in two
  *       panes appears in the first and <b>vanishes without a warning</b> from the
@@ -70,8 +68,7 @@ public final class WorkspaceSpecGuard implements StatelessFunctionalObject {
         Arrangement arrangement = spec.arrangement();
 
         checkPlacementsAreDeclared(arrangement, declared, who);
-        checkPinnedAreDeclared(spec, declared, who);
-        checkNothingSeededTwice(spec, arrangement, who);
+        checkNothingSeededTwice(arrangement, who);
         checkSeedFitsBudget(spec, arrangement, who);
     }
 
@@ -108,35 +105,18 @@ public final class WorkspaceSpecGuard implements StatelessFunctionalObject {
         });
     }
 
-    /** (3) Same, for the degenerate one-pane form. */
-    private static void checkPinnedAreDeclared(WorkspaceSpec spec,
-                                               Map<String, Class<?>> declared,
-                                               String who) {
-        for (String name : spec.pinnedSpawns()) {
-            if (!declared.containsKey(name)) {
-                throw new IllegalStateException(
-                        who + ".pinnedSpawns() names " + name + ", which "
-                      + who + ".widgetEntries() does not declare" + declaredHint(declared));
-            }
-        }
-    }
 
     /**
-     * (4) The seeded id is derived from the kind alone, and the model's spawn is
+     * (3) The seeded id is derived from the kind alone, and the model's spawn is
      * idempotent on it — so the second occurrence is dropped in silence.
      */
-    private static void checkNothingSeededTwice(WorkspaceSpec spec,
-                                                Arrangement arrangement,
-                                                String who) {
+    private static void checkNothingSeededTwice(Arrangement arrangement, String who) {
         var seen = new LinkedHashMap<String, String>();   // simpleName -> where it came from
         arrangement.widgets().forEach((pane, placed) -> {
             for (Class<? extends WorkspaceWidget<?, ?>> cls : placed) {
                 seededOnce(seen, cls.getSimpleName(), "pane " + pane, who);
             }
         });
-        for (String name : spec.pinnedSpawns()) {
-            seededOnce(seen, name, "pinnedSpawns()", who);
-        }
     }
 
     private static void seededOnce(Map<String, String> seen,
@@ -151,7 +131,7 @@ public final class WorkspaceSpecGuard implements StatelessFunctionalObject {
         }
     }
 
-    /** (5) D12 — the seed has to fit in the budget it opens under. */
+    /** (4) D12 — the seed has to fit in the budget it opens under. */
     private static void checkSeedFitsBudget(WorkspaceSpec spec,
                                             Arrangement arrangement,
                                             String who) {
@@ -161,14 +141,13 @@ public final class WorkspaceSpecGuard implements StatelessFunctionalObject {
                     who + ".maxTabs() is " + budget
                   + " — a workspace that may hold no tabs has nothing to be.");
         }
-        int seeded = arrangement.totalWidgets() + spec.pinnedSpawns().size();
+        int seeded = arrangement.totalWidgets();
         if (seeded > budget) {
             throw new IllegalStateException(
-                    who + " seeds " + seeded + " widget(s) but maxTabs() is " + budget
-                  + " — the workspace would open already over its budget, with the picker "
-                  + "disabled on every pane. (" + arrangement.totalWidgets()
-                  + " from arrangement " + arrangement.name() + ", "
-                  + spec.pinnedSpawns().size() + " pinned.)");
+                    who + " seeds " + seeded + " widget(s) from arrangement "
+                  + arrangement.name() + " but maxTabs() is " + budget
+                  + " — the workspace would open already over its budget, with the "
+                  + "picker disabled on every pane.");
         }
     }
 

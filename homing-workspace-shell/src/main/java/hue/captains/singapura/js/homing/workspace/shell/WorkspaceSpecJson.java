@@ -64,7 +64,6 @@ public final class WorkspaceSpecJson {
         sb.append(",\"parties\":").append(parties(spec.parties()));
         sb.append(",\"actionDispatch\":").append(actionDispatch(spec.actionDispatch()));
         sb.append(",\"widgetCodecs\":").append(widgetCodecs(spec.widgetCodecs()));
-        sb.append(",\"pinnedSpawns\":").append(pinnedSpawns(spec.pinnedSpawns()));
         sb.append(",\"arrangement\":").append(arrangement(spec.arrangement()));  // RFC 0060
         sb.append(",\"maxTabs\":").append(spec.maxTabs());   // RFC 0047 — global tab budget
         sb.append('}');
@@ -97,7 +96,7 @@ public final class WorkspaceSpecJson {
             if (!first) sb.append(',');
             first = false;
             sb.append(WorkspaceLayoutJson.quoteString(pane.name())).append(':')
-              .append(pinnedSpawns(widgets));
+              .append(widgetKinds(widgets));
         }
         return sb.append("}}").toString();
     }
@@ -120,7 +119,9 @@ public final class WorkspaceSpecJson {
             }
         }
     }
-    static String pinnedSpawns(Iterable<String> kinds) {
+
+    /** A JSON array of widget kind names — the wire form a pane's widgets take. */
+    static String widgetKinds(Iterable<String> kinds) {
         var sb = new StringBuilder("[");
         boolean first = true;
         for (String kind : kinds) {

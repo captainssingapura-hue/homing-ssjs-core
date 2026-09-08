@@ -95,12 +95,6 @@ public record WorkspaceShellChromeModule() implements DomModule<WorkspaceShellCh
                 .add(new ModuleImports<>(List.of(
                         new WidgetMounterModule.WidgetMounter()),
                         WidgetMounterModule.INSTANCE))
-                // Phase 14 — PinnedTabSpawner: reads spec.pinnedSpawns
-                // and auto-spawns each pinned widget at boot.
-                .add(new ModuleImports<>(List.of(
-                        new PinnedTabSpawnerModule.PinnedTabSpawner()),
-                        PinnedTabSpawnerModule.INSTANCE))
-                // Phase 13 — PickerTabFlow: '+' on a pane opens the
                 // picker; pick → mutate-into-widget.
                 .add(new ModuleImports<>(List.of(
                         new PickerTabFlowModule.PickerTabFlow()),
