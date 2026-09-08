@@ -15,7 +15,9 @@ import java.util.Optional;
  * <p>Apps populate the registry at construction time — typically a
  * static initializer or a studio's bootstrap. Validation is at
  * {@link #register(WorkspaceSpec)}: kind non-blank, no duplicate kind,
- * widget entries non-empty.</p>
+ * widget entries non-empty, plus everything in {@link WorkspaceSpecGuard}
+ * — a spec's arrangement, pinned spawns and tab budget checked against
+ * its own widget declarations.</p>
  *
  * <p>Singleton ({@link #INSTANCE}) per JVM. Synchronization is the
  * caller's responsibility — register at boot, read after.</p>
@@ -48,6 +50,10 @@ public final class WorkspaceSpecRegistry {
                     spec.getClass().getName() + ".widgetEntries() must be non-empty — "
                   + "a workspace with no widget types has nothing to host.");
         }
+        // RFC 0060 — everything a spec can get wrong about ITSELF. Kept apart
+        // because none of it needs the registry: only the duplicate-kind check
+        // above requires knowing what else exists.
+        WorkspaceSpecGuard.check(spec);
         byKind.put(kind, spec);
         return spec;
     }

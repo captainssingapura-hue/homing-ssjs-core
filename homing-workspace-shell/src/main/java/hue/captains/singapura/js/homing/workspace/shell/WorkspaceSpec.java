@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.workspace.shell;
 import hue.captains.singapura.js.homing.workspace.FooterItem;
 import hue.captains.singapura.js.homing.workspace.RibbonItem;
 import hue.captains.singapura.js.homing.workspace.WidgetEntry;
+import hue.captains.singapura.tao.ontology.Stateless;
 
 import java.util.List;
 import java.util.Map;
@@ -33,7 +34,12 @@ import java.util.Map;
  * <p>Doctrines applied:</p>
  *
  * <ul>
- *   <li><b>Functional Object</b> — stateless, pure declarations.</li>
+ *   <li><b>{@link Stateless}</b> — pure declarations, so any two instances
+ *       of an implementation are interchangeable and the singleton is a
+ *       convenience rather than a requirement. Deliberately not
+ *       {@code StatelessFunctionalObject}: a spec transforms nothing, and
+ *       unlike a function its <i>identity</i> is load-bearing — {@link #kind()}
+ *       is a wire identifier and an IDB scoping key.</li>
  *   <li><b>Names Are Types</b> — every cross-language identifier
  *       (party name, actor path, action id, widget kind) is carried in
  *       a typed record, not a loose string at the boundary.</li>
@@ -49,7 +55,7 @@ import java.util.Map;
  *
  * @since post-RFC-0034 workspace chrome decomposition
  */
-public interface WorkspaceSpec {
+public interface WorkspaceSpec extends Stateless {
 
     /**
      * Stable wire identifier — appears as {@code ?ws_kind=<kind>} on the
@@ -122,7 +128,7 @@ public interface WorkspaceSpec {
      * RFC 0060 — the arrangement this workspace <b>starts in</b>: its panes, and
      * the widgets in each.
      *
-     * <p>The default is {@link Arrangements#SINGLE} — one pane taking the whole
+     * <p>The default is {@link PaneArrangements#SINGLE} — one pane taking the whole
      * space. A workspace that has been told nothing should not pre-commit its
      * reader to a shape, which is what the old 2×2 did.</p>
      *
