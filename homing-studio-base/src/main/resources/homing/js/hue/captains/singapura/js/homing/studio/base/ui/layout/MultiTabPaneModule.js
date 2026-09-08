@@ -496,26 +496,16 @@ class MultiTabPane {
     }
 
     // Default 2x2 (depth 2, capacity 4 per pane). Slot ids are stable.
+    // RFC 0060 D8 — ONE PANE, the whole space. This was a 2x2 of empty panes,
+    // which pre-committed every reader of every workspace to a shape none of them
+    // had asked for, and left three of the four empty on arrival.
+    //
+    // It is only a fallback now: the workspace shell passes initialLayout from
+    // WorkspaceSpec.arrangement(), so this is what a DIRECT MultiTabPane consumer
+    // gets when it supplies no layout of its own. The simplest thing that works is
+    // the honest answer there too.
     _defaultLayout() {
-        return {
-            kind: "split", orientation: "vertical",
-            children: [
-                { ratio: 0.5, pane: {
-                    kind: "split", orientation: "horizontal",
-                    children: [
-                        { ratio: 0.5, pane: { kind: "leaf", slotId: "tl" } },
-                        { ratio: 0.5, pane: { kind: "leaf", slotId: "tr" } }
-                    ]
-                } },
-                { ratio: 0.5, pane: {
-                    kind: "split", orientation: "horizontal",
-                    children: [
-                        { ratio: 0.5, pane: { kind: "leaf", slotId: "bl" } },
-                        { ratio: 0.5, pane: { kind: "leaf", slotId: "br" } }
-                    ]
-                } }
-            ]
-        };
+        return { kind: "leaf", slotId: "main" };
     }
 
     // ─── Capacity + predicates ───────────────────────────────────────────────

@@ -2,7 +2,9 @@ package hue.captains.singapura.js.homing.workspace.shell;
 
 import hue.captains.singapura.js.homing.workspace.WidgetEntriesJson;
 import hue.captains.singapura.js.homing.workspace.WorkspaceLayoutJson;
-
+import hue.captains.singapura.js.homing.workspace.state.LayoutNode;
+import hue.captains.singapura.js.homing.workspace.state.Orientation;
+import hue.captains.singapura.js.homing.workspace.state.PaneId;
 import java.util.Collection;
 import java.util.Map;
 
@@ -63,11 +65,61 @@ public final class WorkspaceSpecJson {
         sb.append(",\"actionDispatch\":").append(actionDispatch(spec.actionDispatch()));
         sb.append(",\"widgetCodecs\":").append(widgetCodecs(spec.widgetCodecs()));
         sb.append(",\"pinnedSpawns\":").append(pinnedSpawns(spec.pinnedSpawns()));
+        sb.append(",\"arrangement\":").append(arrangement(spec.arrangement()));  // RFC 0060
         sb.append(",\"maxTabs\":").append(spec.maxTabs());   // RFC 0047 — global tab budget
         sb.append('}');
         return sb.toString();
     }
 
+
+    /**
+     * RFC 0060 — the seed arrangement, as {@code {name, layout, widgets}}.
+     *
+     * <p>{@code layout} is emitted in <b>MultiTabPane's native shape</b>
+     * ({@code kind/orientation/children[{pane,ratio}]}) rather than the typed
+     * record's, because that is what the shell hands to {@code initialLayout} and
+     * what {@code WorkspaceStateModel} seeds from. Converting here rather than in
+     * the browser keeps the client free of a second layout dialect — and the two
+     * children are emitted in first/second order, so the ratio stays the first
+     * child's share exactly as {@link hue.captains.singapura.js.homing.workspace.state.LayoutNode.Split}
+     * records it.</p>
+     */
+    static String arrangement(Arrangement a) {
+        var sb = new StringBuilder(128);
+        sb.append("{\"name\":").append(WorkspaceLayoutJson.quoteString(a.name()));
+        sb.append(",\"layout\":");
+        layoutNode(sb, a.layout());
+        sb.append(",\"widgets\":{");
+        boolean first = true;
+        for (PaneId pane : a.panes()) {
+            var widgets = a.widgetsIn(pane);
+            if (widgets.isEmpty()) continue;
+            if (!first) sb.append(',');
+            first = false;
+            sb.append(WorkspaceLayoutJson.quoteString(pane.value())).append(':')
+              .append(pinnedSpawns(widgets));
+        }
+        return sb.append("}}").toString();
+    }
+
+    /** One node in MTP's native layout shape. Binary throughout (RFC 0060 D1). */
+    private static void layoutNode(StringBuilder sb, LayoutNode node) {
+        switch (node) {
+            case LayoutNode.Leaf leaf ->
+                    sb.append("{\"kind\":\"leaf\",\"slotId\":")
+                      .append(WorkspaceLayoutJson.quoteString(leaf.paneId().value())).append('}');
+            case LayoutNode.Split s -> {
+                sb.append("{\"kind\":\"split\",\"orientation\":")
+                  .append(WorkspaceLayoutJson.quoteString(
+                          s.orientation() == Orientation.VERTICAL ? "vertical" : "horizontal"))
+                  .append(",\"children\":[{\"pane\":");
+                layoutNode(sb, s.first());
+                sb.append(",\"ratio\":").append(s.ratio()).append("},{\"pane\":");
+                layoutNode(sb, s.second());
+                sb.append(",\"ratio\":").append(1.0 - s.ratio()).append("}]}");
+            }
+        }
+    }
     static String pinnedSpawns(Iterable<String> kinds) {
         var sb = new StringBuilder("[");
         boolean first = true;

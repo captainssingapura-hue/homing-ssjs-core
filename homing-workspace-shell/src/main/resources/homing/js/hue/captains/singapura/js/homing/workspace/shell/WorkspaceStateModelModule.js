@@ -33,33 +33,36 @@
 
 class WorkspaceStateModel {
 
-    constructor() {
-        // Mirror MTP._defaultLayout. Stays identical to MTP's slot ids so
-        // projection lines up without translation. If the framework ever
-        // changes its default, this constructor needs to track.
-        this._layout = {
-            kind: 'split', orientation: 'vertical',
-            children: [
-                { ratio: 0.5, pane: {
-                    kind: 'split', orientation: 'horizontal',
-                    children: [
-                        { ratio: 0.5, pane: { kind: 'leaf', slotId: 'tl' } },
-                        { ratio: 0.5, pane: { kind: 'leaf', slotId: 'tr' } }
-                    ]
-                } },
-                { ratio: 0.5, pane: {
-                    kind: 'split', orientation: 'horizontal',
-                    children: [
-                        { ratio: 0.5, pane: { kind: 'leaf', slotId: 'bl' } },
-                        { ratio: 0.5, pane: { kind: 'leaf', slotId: 'br' } }
-                    ]
-                } }
-            ]
-        };
+    /**
+     * @param seedLayout optional MTP-native layout to start from — the workspace
+     *        shell passes WorkspaceSpec.arrangement()'s (RFC 0060 D9).
+     *
+     * This constructor used to hold its own copy of the 2x2, under a comment
+     * saying it had to track MTP's default by hand. It no longer guesses: it is
+     * TOLD, and its own fallback is the trivial one. That is what D9 is for —
+     * a default nobody owned was written in two places and could disagree.
+     */
+    constructor(seedLayout) {
+        this._layout = seedLayout
+            ? this._cloneNode(seedLayout)
+            : { kind: 'leaf', slotId: 'main' };   // RFC 0060 D8
         this._tabsBySlot = new Map();
-        for (const id of ['tl', 'tr', 'bl', 'br']) this._tabsBySlot.set(id, []);
+        for (const id of WorkspaceStateModel._leafSlotIds(this._layout)) {
+            this._tabsBySlot.set(id, []);
+        }
         this._activeUuid   = null;
         this._nextSplitId  = 1;
+    }
+
+    /** Every leaf slotId in a layout, in document order. */
+    static _leafSlotIds(node) {
+        if (!node) return [];
+        if (node.kind === 'leaf') return [node.slotId];
+        var out = [];
+        for (const c of (node.children || [])) {
+            out = out.concat(WorkspaceStateModel._leafSlotIds(c.pane));
+        }
+        return out;
     }
 
     // ── Public API ──────────────────────────────────────────────────────

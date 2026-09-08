@@ -88,7 +88,11 @@ class WorkspaceShellChrome {
         // The single source of truth for workspace state. Populated by
         // ReplayEngine fold (post-async); kept in sync by MTP callbacks
         // post-projection so checkpoint capture reads from it.
-        this._model = new this._WorkspaceStateModelCtor();
+        // RFC 0060 D9 — the model is SEEDED from the spec's arrangement rather
+        // than holding its own copy of a default. D10: this is a seed only; a
+        // replayed or snapshot-restored session overwrites it entirely below.
+        const _arr = this._spec && this._spec.arrangement;
+        this._model = new this._WorkspaceStateModelCtor(_arr && _arr.layout);
 
         // Late-bound instance fields.
         this._layout                = null;
@@ -281,7 +285,16 @@ class WorkspaceShellChrome {
                     checkpointStore: cpStore,
                     recorder:        self._eventRecorder,
                     initialState:    function () {
-                        return new self._WorkspaceStateModelCtor();
+                        // RFC 0060 D9/D10 — replay starts from the SPEC'S
+                        // ARRANGEMENT, not from a bare model. This is the seed,
+                        // and it is only ever a seed: a checkpoint decodes over
+                        // it (decodeCheckpoint below) and a non-empty log folds
+                        // over it, so a saved workspace still wins outright.
+                        // Left unseeded, a fresh session replayed onto the
+                        // model's own fallback and the declared arrangement was
+                        // silently discarded between construction and boot.
+                        const arr = self._spec && self._spec.arrangement;
+                        return new self._WorkspaceStateModelCtor(arr && arr.layout);
                     },
                     decodeCheckpoint: function (cpRow) {
                         // cpRow.state is what captureState returned —
@@ -741,24 +754,49 @@ class WorkspaceShellChrome {
         const seeded = [];
         const byName = {};
         for (const e of (this._spec.entries || [])) byName[e.simpleName] = e;
-        const pinned = Array.isArray(this._spec.pinnedSpawns) ? this._spec.pinnedSpawns : [];
-        for (const kind of pinned) {
-            const entry = byName[kind];
-            if (!entry) continue;
+
+        // RFC 0060 D11 — one loop, two sources. An arrangement binds widgets to a
+        // NAMED pane; pinnedSpawns is the degenerate case of exactly that (one
+        // pane, these widgets), so it is expressed in the same terms rather than
+        // running as a second mechanism beside it. Its widgets land in the
+        // arrangement's first pane, which is where 'tl' used to mean.
+        const arrangement = (this._spec && this._spec.arrangement) || null;
+        const firstPane   = arrangement
+            ? (this._WorkspaceStateModelCtor._leafSlotIds(arrangement.layout)[0] || null)
+            : null;
+
+        const placements = [];
+        if (arrangement && arrangement.widgets) {
+            for (const paneId of Object.keys(arrangement.widgets)) {
+                for (const kind of (arrangement.widgets[paneId] || [])) {
+                    placements.push({ kind: kind, paneId: paneId });
+                }
+            }
+        }
+        for (const kind of (Array.isArray(this._spec.pinnedSpawns) ? this._spec.pinnedSpawns : [])) {
+            placements.push({ kind: kind, paneId: firstPane });
+        }
+
+        for (const p of placements) {
+            const entry = byName[p.kind];
+            if (!entry) {
+                console.warn('[WorkspaceShellChrome] arrangement names an unknown widget:', p.kind);
+                continue;
+            }
             const uuid = entry.simpleName + ':pinned';
             const descriptor = {
                 widgetInstanceId: uuid,
                 widgetKind:       entry.simpleName,
                 title:            entry.label,
                 params:           entry.defaults || {},
-                to: { paneId: '_', tabIndex: 0 }
+                to: { paneId: p.paneId || '_', tabIndex: 0 }
             };
             model.apply({ name: 'WidgetSpawnedPinned', payload: descriptor });
             seeded.push(descriptor);
         }
         if (seeded.length > 0) {
             console.log('[WorkspaceShellChrome] seeded model with',
-                        seeded.length, 'pinned widget(s)');
+                        seeded.length, 'widget(s) from the arrangement');
         }
         return seeded;
     }

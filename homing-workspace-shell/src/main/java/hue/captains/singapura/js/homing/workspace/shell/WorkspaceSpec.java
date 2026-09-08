@@ -119,6 +119,35 @@ public interface WorkspaceSpec {
     default List<String> pinnedSpawns() { return List.of(); }
 
     /**
+     * RFC 0060 — the arrangement this workspace <b>starts in</b>: its panes, and
+     * the widgets in each.
+     *
+     * <p>The default is {@link Arrangements#SINGLE} — one pane taking the whole
+     * space. A workspace that has been told nothing should not pre-commit its
+     * reader to a shape, which is what the old 2×2 did.</p>
+     *
+     * <p>Take a shipped design and say what goes where; the starter set is pure
+     * geometry precisely so two workspaces can share one:</p>
+     *
+     * <pre>{@code
+     * @Override public Arrangement arrangement() {
+     *     return Arrangements.MAIN_AND_OUTPUT
+     *             .with("main",   "DocViewWidget")
+     *             .with("output", "LogWidget");
+     * }
+     * }</pre>
+     *
+     * <p><b>It is a SEED, not a template</b> (D10). It applies only to a workspace
+     * with no saved state; a saved layout always wins, and editing this method
+     * never reshapes a workspace someone already has open. That is a property of
+     * the event-sourced model, not a limitation of this method.</p>
+     *
+     * <p>{@link #pinnedSpawns()} is the degenerate case of this — one pane, these
+     * widgets — and remains supported.</p>
+     */
+    default Arrangement arrangement() { return Arrangements.SINGLE; }
+
+    /**
      * RFC 0047 — the workspace's <b>global tab budget</b>: the maximum number
      * of tabs that may exist across every pane at once. It is a single shared
      * pool, not a per-pane ration — splitting a pane never changes it, and when
