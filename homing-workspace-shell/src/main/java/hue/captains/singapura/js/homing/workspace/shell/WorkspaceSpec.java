@@ -133,8 +133,8 @@ public interface WorkspaceSpec {
      * @Override public Arrangement arrangement() {
      *     return PaneArrangements.MAIN_AND_OUTPUT
      *             .allocate()
-     *             .place("main",   "DocViewWidget")
-     *             .place("output", "LogWidget")
+     *             .place(MainAndOutput.MAIN,   DocViewWidget.class)
+     *             .place(MainAndOutput.OUTPUT, LogWidget.class)
      *             .build();
      * }
      * }</pre>

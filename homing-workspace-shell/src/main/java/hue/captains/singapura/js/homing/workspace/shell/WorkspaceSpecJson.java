@@ -91,12 +91,12 @@ public final class WorkspaceSpecJson {
         layoutNode(sb, a.panes().layout());
         sb.append(",\"widgets\":{");
         boolean first = true;
-        for (PaneId pane : a.panes().panes()) {
-            var widgets = a.widgetsIn(pane);
+        for (ShapePane pane : a.panes().shapePanes()) {
+            var widgets = a.widgetNamesIn(pane);
             if (widgets.isEmpty()) continue;
             if (!first) sb.append(',');
             first = false;
-            sb.append(WorkspaceLayoutJson.quoteString(pane.value())).append(':')
+            sb.append(WorkspaceLayoutJson.quoteString(pane.name())).append(':')
               .append(pinnedSpawns(widgets));
         }
         return sb.append("}}").toString();

@@ -17,9 +17,9 @@ import static hue.captains.singapura.js.homing.workspace.shell.PaneDirection.RIG
  * <pre>{@code
  * @Override public Arrangement arrangement() {
  *     return PaneArrangements.IDE.allocate()
- *             .place("explorer", "TreeWidget")
- *             .place("editor",   "DocViewWidget")
- *             .place("terminal", "LogWidget")
+ *             .place(Ide.EXPLORER, TreeWidget.class)
+ *             .place(Ide.EDITOR,   DocViewWidget.class)
+ *             .place(Ide.TERMINAL, LogWidget.class)
  *             .build();
  * }
  * }</pre>
@@ -126,6 +126,74 @@ public final class PaneArrangements {
                     .splitWithRatio("nav", RIGHT, "list", 0.20)
                     .splitWithRatio("list", RIGHT, "content", 0.375)
                     .build();
+
+
+    // ── The panes, by name ───────────────────────────────────────────────────
+    // Each constant is built through PaneArrangement.pane(), which validates it
+    // against the shape — so a typo fails at class initialisation naming the
+    // panes that exist, and these cannot drift from the playbooks above.
+    //
+    // They are ShapePanes, not PaneIds: they say what a SHAPE calls a pane, and
+    // are the live slot ids only at seed time. See ShapePane.
+
+    /** {@link #COLUMNS}' panes. */
+    public static final class Columns {
+        private Columns() {}
+        public static final ShapePane LEFT  = COLUMNS.pane("left");
+        public static final ShapePane RIGHT = COLUMNS.pane("right");
+    }
+
+    /** {@link #ROWS}' panes. */
+    public static final class Rows {
+        private Rows() {}
+        public static final ShapePane TOP    = ROWS.pane("top");
+        public static final ShapePane BOTTOM = ROWS.pane("bottom");
+    }
+
+    /** {@link #SINGLE}'s pane. */
+    public static final class Single {
+        private Single() {}
+        public static final ShapePane MAIN = SINGLE.pane("main");
+    }
+
+    /** {@link #QUAD}'s panes. */
+    public static final class Quad {
+        private Quad() {}
+        public static final ShapePane TOP_LEFT     = QUAD.pane("top-left");
+        public static final ShapePane TOP_RIGHT    = QUAD.pane("top-right");
+        public static final ShapePane BOTTOM_LEFT  = QUAD.pane("bottom-left");
+        public static final ShapePane BOTTOM_RIGHT = QUAD.pane("bottom-right");
+    }
+
+    /** {@link #MAIN_AND_SIDE}'s panes. */
+    public static final class MainAndSide {
+        private MainAndSide() {}
+        public static final ShapePane MAIN = MAIN_AND_SIDE.pane("main");
+        public static final ShapePane SIDE = MAIN_AND_SIDE.pane("side");
+    }
+
+    /** {@link #MAIN_AND_OUTPUT}'s panes. */
+    public static final class MainAndOutput {
+        private MainAndOutput() {}
+        public static final ShapePane MAIN   = MAIN_AND_OUTPUT.pane("main");
+        public static final ShapePane OUTPUT = MAIN_AND_OUTPUT.pane("output");
+    }
+
+    /** {@link #IDE}'s panes. */
+    public static final class Ide {
+        private Ide() {}
+        public static final ShapePane EXPLORER = IDE.pane("explorer");
+        public static final ShapePane EDITOR   = IDE.pane("editor");
+        public static final ShapePane TERMINAL = IDE.pane("terminal");
+    }
+
+    /** {@link #TRIPLE_COLUMN}'s panes. */
+    public static final class TripleColumn {
+        private TripleColumn() {}
+        public static final ShapePane NAV     = TRIPLE_COLUMN.pane("nav");
+        public static final ShapePane LIST    = TRIPLE_COLUMN.pane("list");
+        public static final ShapePane CONTENT = TRIPLE_COLUMN.pane("content");
+    }
 
     /** Everything the framework ships, in the order this class declares them. */
     public static final List<PaneArrangement> ALL = List.of(

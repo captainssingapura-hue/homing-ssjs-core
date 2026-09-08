@@ -77,6 +77,29 @@ public record PaneArrangement(String name, LayoutNode layout) implements ValueOb
     public int paneCount() { return panes().size(); }
 
 
+
+    /**
+     * This shape's pane by that name, validated now — the only way to obtain a
+     * {@link ShapePane}.
+     *
+     * <p>A shipped shape publishes its panes as constants built through here, so
+     * a typo fails at class initialisation naming the panes that exist, rather
+     * than compiling and going wrong at boot.</p>
+     */
+    public ShapePane pane(String paneName) {
+        var id = new PaneId(paneName);
+        if (!hasPane(id)) {
+            throw new IllegalArgumentException(
+                    "pane: '" + paneName + "' is not in shape '" + name + "' — panes are "
+                  + panes().stream().map(PaneId::value).toList());
+        }
+        return new ShapePane(name, paneName);
+    }
+
+    /** Every pane of this shape, as {@link ShapePane}s, in playbook order. */
+    public List<ShapePane> shapePanes() {
+        return panes().stream().map(p -> new ShapePane(name, p.value())).toList();
+    }
     /**
      * Start allocating widgets into this shape — the step from geometry (shared)
      * to a full {@link Arrangement} (a workspace kind's own).

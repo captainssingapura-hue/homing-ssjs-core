@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.workspace.shell;
 
+import hue.captains.singapura.js.homing.workspace.WorkspaceWidget;
 import hue.captains.singapura.js.homing.workspace.state.LayoutNode;
 import hue.captains.singapura.js.homing.workspace.state.Orientation;
 import hue.captains.singapura.js.homing.workspace.state.PaneId;
@@ -178,10 +179,22 @@ class ArrangementTest {
 
     // ── Shape reused, allocation not ─────────────────────────────────────────
 
+    /**
+     * Widget classes exist only to be named — {@code place} reads
+     * {@code getSimpleName()} and never instantiates — so abstract stubs are the
+     * honest stand-in for a spec's real widgets, which live in modules this one
+     * cannot depend on.
+     */
+    abstract static class TreeWidget   extends WorkspaceWidget<WorkspaceWidget._None, TreeWidget> {}
+    abstract static class DocWidget    extends WorkspaceWidget<WorkspaceWidget._None, DocWidget> {}
+    abstract static class LogWidget    extends WorkspaceWidget<WorkspaceWidget._None, LogWidget> {}
+
     @Test
     void oneShapeServesTwoWorkspacesWithDifferentContents() {
-        var a = PaneArrangements.COLUMNS.allocate().place("left", "AWidget").build();
-        var b = PaneArrangements.COLUMNS.allocate().place("left", "BWidget").build();
+        var a = PaneArrangements.COLUMNS.allocate()
+                .place(PaneArrangements.Columns.LEFT, TreeWidget.class).build();
+        var b = PaneArrangements.COLUMNS.allocate()
+                .place(PaneArrangements.Columns.LEFT, DocWidget.class).build();
         assertEquals(a.panes(), b.panes(), "the shape is shared, identically");
         assertNotEquals(a.widgets(), b.widgets(), "the allocation is not");
     }
@@ -189,43 +202,66 @@ class ArrangementTest {
     @Test
     void allocatingDoesNotDisturbTheShippedShape() {
         var mine = PaneArrangements.IDE.allocate()
-                .place("editor", "DocViewWidget")
-                .place("terminal", "LogWidget")
+                .place(PaneArrangements.Ide.EDITOR,   DocWidget.class)
+                .place(PaneArrangements.Ide.TERMINAL, LogWidget.class)
                 .build();
         assertEquals(2, mine.totalWidgets());
         assertEquals(0, PaneArrangements.IDE.empty().totalWidgets(),
                 "the shipped shape has no widgets to lose");
-        assertEquals(List.of("DocViewWidget"), mine.widgetsIn(new PaneId("editor")));
-        assertEquals(List.of(), mine.widgetsIn(new PaneId("explorer")));
+        assertEquals(List.of(DocWidget.class), mine.widgetsIn(PaneArrangements.Ide.EDITOR));
+        assertEquals(List.of(), mine.widgetsIn(PaneArrangements.Ide.EXPLORER));
         assertEquals(PaneArrangements.IDE, mine.panes(), "geometry untouched by allocation");
     }
 
     @Test
-    void allocatingToAnUnknownPaneNamesThePanesThatExist() {
+    void aPaneFromAnotherShapeIsRejected() {
+        // The distinct type stops the pane-name mix-up the compiler cannot see:
+        // both are ShapePanes, but they belong to different shapes.
         var e = assertThrows(IllegalArgumentException.class,
-                () -> PaneArrangements.IDE.allocate().place("sidebar", "W"));
+                () -> PaneArrangements.IDE.allocate()
+                        .place(PaneArrangements.Columns.LEFT, TreeWidget.class));
+        assertTrue(e.getMessage().contains("different shape"), e.getMessage());
+    }
+
+    @Test
+    void aShapeRefusesToNameAPaneItDoesNotHave() {
+        var e = assertThrows(IllegalArgumentException.class,
+                () -> PaneArrangements.IDE.pane("sidebar"));
         assertTrue(e.getMessage().contains("explorer"), e.getMessage());
+    }
+
+    @Test
+    void panesConstantsCannotDriftFromTheirPlaybook() {
+        // Each constant is built through pane(), so this asserts the set rather
+        // than each name: a playbook rename breaks class init, not this test.
+        assertEquals(List.of("explorer", "editor", "terminal"),
+                PaneArrangements.IDE.shapePanes().stream().map(ShapePane::name).toList());
+        assertEquals(PaneArrangements.IDE.name(), PaneArrangements.Ide.EDITOR.shapeName());
+    }
+
+    @Test
+    void aShapePaneIsTheLiveSlotIdOnlyAtSeedTime() {
+        assertEquals(new PaneId("editor"), PaneArrangements.Ide.EDITOR.asSeededPaneId());
+        assertEquals("ide.editor", PaneArrangements.Ide.EDITOR.toString());
     }
 
     @Test
     void repeatedAllocationAppendsInMountOrder() {
         var a = PaneArrangements.SINGLE.allocate()
-                .place("main", "First").place("main", "Second").build();
-        assertEquals(List.of("First", "Second"), a.widgetsIn(new PaneId("main")));
+                .place(PaneArrangements.Single.MAIN, TreeWidget.class)
+                .place(PaneArrangements.Single.MAIN, DocWidget.class).build();
+        assertEquals(List.of(TreeWidget.class, DocWidget.class),
+                a.widgetsIn(PaneArrangements.Single.MAIN));
     }
 
     @Test
     void allocateFromAnExistingArrangementKeepsWhatWasPlaced() {
-        var first  = PaneArrangements.COLUMNS.allocate().place("left", "A").build();
-        var second = first.allocate().place("right", "B").build();
-        assertEquals(List.of("A"), second.widgetsIn(new PaneId("left")));
-        assertEquals(List.of("B"), second.widgetsIn(new PaneId("right")));
-    }
-
-    @Test
-    void anArrangementCannotHoldAPaneItsShapeLacks() {
-        assertThrows(IllegalArgumentException.class, () -> new Arrangement(
-                PaneArrangements.SINGLE, Map.of(new PaneId("ghost"), List.of("W"))));
+        var first  = PaneArrangements.COLUMNS.allocate()
+                .place(PaneArrangements.Columns.LEFT, TreeWidget.class).build();
+        var second = first.allocate()
+                .place(PaneArrangements.Columns.RIGHT, DocWidget.class).build();
+        assertEquals(List.of(TreeWidget.class), second.widgetsIn(PaneArrangements.Columns.LEFT));
+        assertEquals(List.of(DocWidget.class),  second.widgetsIn(PaneArrangements.Columns.RIGHT));
     }
 
     // ── The wire ─────────────────────────────────────────────────────────────
@@ -233,7 +269,8 @@ class ArrangementTest {
     @Test
     void theWireCarriesMtpsNativeShapeWithBothRatios() {
         String json = WorkspaceSpecJson.arrangement(
-                PaneArrangements.MAIN_AND_SIDE.allocate().place("main", "DocViewWidget").build());
+                PaneArrangements.MAIN_AND_SIDE.allocate()
+                        .place(PaneArrangements.MainAndSide.MAIN, DocWidget.class).build());
         assertTrue(json.contains("\"name\":\"main-and-side\""), json);
         assertTrue(json.contains("\"kind\":\"split\""), json);
         assertTrue(json.contains("\"orientation\":\"horizontal\""), json);
@@ -241,7 +278,8 @@ class ArrangementTest {
         // Both children carry their own share, and they sum to 1.
         assertTrue(json.contains("\"ratio\":0.7"), json);
         assertTrue(json.contains("\"ratio\":0.3"), json);
-        assertTrue(json.contains("\"widgets\":{\"main\":[\"DocViewWidget\"]}"), json);
+        // The wire carries the widget's simpleName, which is what the shell mounts by.
+        assertTrue(json.contains("\"widgets\":{\"main\":[\"DocWidget\"]}"), json);
     }
 
     @Test
