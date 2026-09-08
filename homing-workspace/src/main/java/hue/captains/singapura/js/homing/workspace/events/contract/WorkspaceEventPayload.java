@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.workspace.events.contract;
 
 import hue.captains.singapura.js.homing.workspace.state.Orientation;
+import hue.captains.singapura.js.homing.workspace.state.ArrangementSource;
 import hue.captains.singapura.js.homing.workspace.state.PaneId;
 import hue.captains.singapura.js.homing.workspace.state.WidgetInstanceId;
 import hue.captains.singapura.js.homing.workspace.state.WidgetKind;
@@ -43,6 +44,39 @@ public sealed interface WorkspaceEventPayload {
     EventName name();
 
     // ─── Variants ────────────────────────────────────────────────────────
+
+    /**
+     * RFC 0060 — this workspace has been given its opening arrangement, and will
+     * not be given one again.
+     *
+     * <p><b>The stamp is the gate.</b> Seeding used to be guarded by "is the event
+     * log empty", which asks the wrong question: {@code SessionStarted} is written
+     * during boot before replay runs, so the log is never empty and the seed never
+     * happened. Emptiness was a proxy for "has this workspace been arranged yet",
+     * and this event answers that directly.</p>
+     *
+     * <p>It is written after seeding <b>whether or not there was anything to
+     * seed</b> — a workspace whose kind declares nothing still gets the mark, so
+     * the gate has one condition rather than two and no special case for the
+     * empty arrangement.</p>
+     *
+     * <p>Because a checkpoint can advance past it, the gate must look for this
+     * stamp across the <b>whole log</b> rather than the post-checkpoint queue —
+     * re-seeding a workspace that already has real state would be a worse failure
+     * than the one this fixes.</p>
+     *
+     * @param source   where the arrangement came from
+     * @param seededAt when
+     */
+    record WorkspaceSeeded(ArrangementSource source, Instant seededAt)
+            implements WorkspaceEventPayload {
+        public static final EventName NAME = EventName.of("WorkspaceSeeded");
+        public WorkspaceSeeded {
+            Objects.requireNonNull(source,   "WorkspaceSeeded.source");
+            Objects.requireNonNull(seededAt, "WorkspaceSeeded.seededAt");
+        }
+        @Override public EventName name() { return NAME; }
+    }
 
     /** Boot bookmark — first event of every session. */
     record SessionStarted(URI href, Instant startedAt) implements WorkspaceEventPayload {

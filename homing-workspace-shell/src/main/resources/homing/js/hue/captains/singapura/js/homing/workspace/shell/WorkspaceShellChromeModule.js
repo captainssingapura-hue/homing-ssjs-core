@@ -284,6 +284,24 @@ class WorkspaceShellChrome {
                     eventLog:        self._eventRecorder.log(),
                     checkpointStore: cpStore,
                     recorder:        self._eventRecorder,
+                    // RFC 0060 — the gate is the STAMP, not an empty log.
+                    // "Is the log empty" was a proxy for "has this workspace been
+                    // arranged yet", and a poor one: EventEmitter writes
+                    // SessionStarted during boot before replay runs, so the log is
+                    // never empty and the seed never happened.
+                    //
+                    // Scanned across ALL rows rather than the post-checkpoint
+                    // queue, because a checkpoint can advance past the stamp — and
+                    // re-seeding a workspace that already has real state is worse
+                    // than the bug this fixes. A restored checkpoint is itself
+                    // proof of history, so it short-circuits.
+                    needsSeed: function (rows, fromCheckpoint) {
+                        if (fromCheckpoint) return false;
+                        for (const r of (rows || [])) {
+                            if (r && r.name === 'WorkspaceSeeded') return false;
+                        }
+                        return true;
+                    },
                     initialState:    function () {
                         // RFC 0060 D9/D10 — replay starts from the SPEC'S
                         // ARRANGEMENT, not from a bare model. This is the seed,
@@ -789,7 +807,7 @@ class WorkspaceShellChrome {
                 widgetKind:       entry.simpleName,
                 title:            entry.label,
                 params:           entry.defaults || {},
-                to: { paneId: p.paneId || '_', tabIndex: 0 }
+                to: { paneId: p.paneId || '_' }
             };
             model.apply({ name: 'WidgetSpawnedPinned', payload: descriptor });
             seeded.push(descriptor);
@@ -802,14 +820,33 @@ class WorkspaceShellChrome {
     }
 
     /**
-     * Emit WidgetSpawnedPinned events for each seeded pinned widget so
-     * the next session's replay re-spawns them. Run AFTER fence drops.
+     * Emit WidgetSpawnedPinned for each seeded widget so the next session's
+     * replay re-creates them, then stamp the workspace as seeded.
+     *
+     * RFC 0060 — the stamp goes LAST and goes ALWAYS, even when nothing was
+     * placed: a workspace whose kind declares no widgets is still a workspace
+     * that has had its arrangement, and the gate reads one condition rather than
+     * two. Emitted here, after the fence drops, for the same reason the spawns
+     * are: during replay the recorder is suppressed, so anything written then
+     * would be lost.
      */
     _emitSeededPinnedSpawns(descriptors) {
         if (!this._eventRecorder) return;
-        for (const d of descriptors) {
+        for (const d of (descriptors || [])) {
             this._eventRecorder.emit('WidgetSpawnedPinned', d);
         }
+        const arr = (this._spec && this._spec.arrangement) || null;
+        this._eventRecorder.emit('WorkspaceSeeded', {
+            source: {
+                tag:             'fromKind',
+                kind:            this._spec ? this._spec.kind : null,
+                arrangementName: arr ? arr.name : null
+            },
+            seededAt: new Date().toISOString()
+        });
+        console.log('[WorkspaceShellChrome] workspace seeded from',
+                    (this._spec && this._spec.kind), '/', (arr && arr.name),
+                    'with', (descriptors || []).length, 'widget(s) — stamped');
     }
 
     _buildPickerFlow() {

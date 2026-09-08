@@ -358,6 +358,21 @@ class WorkspaceStateModel {
     }
 
     /** Returns the live slotId at a paneId path, or null. */
+    /**
+     * The live slotId a widget location addresses.
+     *
+     * TWO VOCABULARIES MEET HERE, which is worth saying plainly because nothing
+     * else does. A layout addresses panes by NAME (`tl`, `editor`, `sp_1`), while
+     * _findNodeByPaneId reads a paneId POSITIONALLY — splitting on '_' and taking
+     * each segment as first-or-second child, so `1_2` means "second child of the
+     * first". Both are legitimate; they are simply different, and a name handed to
+     * the positional walk yields -1 and resolves to nothing.
+     *
+     * RFC 0060 gives panes author-chosen names, so the name is tried FIRST and the
+     * positional walk remains the fallback. Without this an arrangement's widgets
+     * all landed in the default slot — silently, because the caller's `|| this
+     * ._defaultSlot()` turns "not found" into "somewhere plausible".
+     */
     _slotIdOfPaneId(paneId) {
         if (paneId == null) return null;
         if (paneId === '' || paneId === '_') {
@@ -365,6 +380,11 @@ class WorkspaceStateModel {
             return (this._layout && this._layout.kind === 'leaf')
                 ? this._layout.slotId : null;
         }
+        // By name — a leaf whose slotId IS this id.
+        if (WorkspaceStateModel._leafSlotIds(this._layout).indexOf(paneId) >= 0) {
+            return paneId;
+        }
+        // By position — the historical form, kept for logs that use it.
         const hit = this._findNodeByPaneId(paneId);
         return (hit && hit.node && hit.node.kind === 'leaf')
                 ? hit.node.slotId : null;
