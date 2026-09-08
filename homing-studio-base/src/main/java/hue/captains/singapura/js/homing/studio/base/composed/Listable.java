@@ -13,7 +13,7 @@ package hue.captains.singapura.js.homing.studio.base.composed;
  * homogeneous run of leaf content.</p>
  */
 public sealed interface Listable extends RigidSegment
-        permits MarkdownSegment, TextSegment, CodeSegment,
+        permits MarkdownSegment, TextSegment, CodeSegment, TypedCodeSegment,
                 RelationSegment, ParagraphSegment,
                 SvgSegment, TableSegment, ImageSegment {
 }

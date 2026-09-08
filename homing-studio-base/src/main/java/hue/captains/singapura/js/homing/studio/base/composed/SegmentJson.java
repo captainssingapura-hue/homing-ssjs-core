@@ -55,13 +55,10 @@ final class SegmentJson {
                 sb.append("\"blocks\":");
                 ComposedDoc.appendBlocks(sb, tx.parsed());
             }
-            case CodeSegment cs -> {
-                sb.append("\"kind\":\"code\",");
-                sb.append("\"anchor\":")  .append(ComposedDoc.jstr(anchor)).append(',');
-                sb.append("\"title\":")   .append(ComposedDoc.jstr(cs.title().orElse(""))).append(',');
-                sb.append("\"language\":").append(ComposedDoc.jstr(cs.language())).append(',');
-                sb.append("\"body\":")    .append(ComposedDoc.jstr(cs.body()));
-            }
+            // One emitter, two callers: the typed mirror is guaranteed to
+            // produce the identical object rather than merely intended to.
+            case CodeSegment cs      -> writeCode(sb, anchor, cs.title(), cs.language(), cs.body());
+            case TypedCodeSegment tc -> writeCode(sb, anchor, tc.title(), tc.language().tag(), tc.body());
             case SvgSegment v -> {
                 sb.append("\"kind\":\"svg\",");
                 sb.append("\"anchor\":")  .append(ComposedDoc.jstr(anchor)).append(',');
@@ -149,6 +146,20 @@ final class SegmentJson {
             }
         }
         sb.append('}');
+    }
+
+    /**
+     * The {@code "kind":"code"} object, written once. {@link CodeSegment} and
+     * {@link TypedCodeSegment} both land here, which is what makes the mirror a
+     * fact rather than a convention two switch arms are supposed to keep.
+     */
+    private static void writeCode(StringBuilder sb, String anchor,
+                                  java.util.Optional<String> title, String language, String body) {
+        sb.append("\"kind\":\"code\",");
+        sb.append("\"anchor\":")  .append(ComposedDoc.jstr(anchor)).append(',');
+        sb.append("\"title\":")   .append(ComposedDoc.jstr(title.orElse(""))).append(',');
+        sb.append("\"language\":").append(ComposedDoc.jstr(language)).append(',');
+        sb.append("\"body\":")    .append(ComposedDoc.jstr(body));
     }
 
     /**

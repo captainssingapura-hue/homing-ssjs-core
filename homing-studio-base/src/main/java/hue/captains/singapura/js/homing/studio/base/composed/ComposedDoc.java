@@ -206,6 +206,14 @@ public record ComposedDoc(
                     sb.append("\"language\":").append(jstr(cs.language())).append(',');
                     sb.append("\"body\":")    .append(jstr(cs.body()));
                 }
+                // The typed mirror: same object, language read from the type.
+                case TypedCodeSegment tc -> {
+                    sb.append("\"kind\":\"code\",");
+                    sb.append("\"anchor\":")  .append(jstr("seg-" + segIndex)).append(',');
+                    sb.append("\"title\":")   .append(jstr(tc.title().orElse(""))).append(',');
+                    sb.append("\"language\":").append(jstr(tc.language().tag())).append(',');
+                    sb.append("\"body\":")    .append(jstr(tc.body()));
+                }
                 case SvgSegment v -> {
                     sb.append("\"kind\":\"svg\",");
                     sb.append("\"anchor\":")  .append(jstr("seg-" + segIndex)).append(',');
@@ -381,6 +389,9 @@ public record ComposedDoc(
                     // Code body is opaque; only the optional title contributes
                     // to the TOC.
                     cs.title().ifPresent(t -> out.add(new TocEntry(2, t, anchor)));
+                }
+                case TypedCodeSegment tc -> {
+                    tc.title().ifPresent(t -> out.add(new TocEntry(2, t, anchor)));
                 }
                 case MarkdownSegment m -> {
                     m.title().ifPresent(t -> out.add(new TocEntry(2, t, anchor)));
