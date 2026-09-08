@@ -5,6 +5,7 @@ import hue.captains.singapura.js.homing.workspace.state.PaneId;
 import hue.captains.singapura.tao.ontology.ValueObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -68,7 +69,10 @@ public record Arrangement(PaneArrangement panes,
             }
             copy.put(pane, List.copyOf(list));
         });
-        widgets = Map.copyOf(copy);
+        // NOT Map.copyOf — it hashes, and the declaration order of placements is
+        // what an error message and a walk over the allocation should follow.
+        // WidgetEntry.defaults notes the same trap for the same reason.
+        widgets = Collections.unmodifiableMap(copy);
     }
 
     /** The shape's name — what a shared arrangement is referenced by. */
