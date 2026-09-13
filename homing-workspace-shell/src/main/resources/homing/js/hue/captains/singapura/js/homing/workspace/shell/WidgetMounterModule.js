@@ -22,18 +22,28 @@ class WidgetMounter {
 
     constructor(deps) {
         deps = deps || {};
-        this._importer = deps.importer || (url => import(url));
+        this._importer    = deps.importer     || (url => import(url));
+        // Injectable for tests, which load this file as a script with no
+        // import chain to speak of; the default is the substrate's helper.
+        this._withContext = deps.withContext  || withServingContext;
     }
 
     /**
      * I/O: dynamic-import the widget's JS module. Returns Promise<module>.
      * The ONE async boundary in the entire mount flow.
+     *
+     * RFC 0063 — the widget's import chain must be the CHROME's chain. A
+     * module's imports inherit the query its own request carried, so a bare
+     * entry.moduleUrl starts a second chain and a second instance of every
+     * module the chrome already holds; for DomOpsPartyModule that is a
+     * second, empty root. withServingContext carries this chain's theme and
+     * locale onto the URL, so the widget joins the chain instead of forking it.
      */
     resolve(entry) {
         if (!entry || !entry.moduleUrl) {
             return Promise.reject(new Error('[WidgetMounter] entry.moduleUrl is required'));
         }
-        return this._importer(entry.moduleUrl);
+        return this._importer(this._withContext(entry.moduleUrl));
     }
 
     /**

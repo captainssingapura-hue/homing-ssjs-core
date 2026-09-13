@@ -58,6 +58,10 @@ public final class WorkspaceShellCrate implements Crate {
                 CrateEntry.of(WorkspaceSwitcherStyles.INSTANCE),
                 CrateEntry.of(WorkspaceSwitcherModel.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(WorkspaceSwitcherModule.INSTANCE),
+                // RFC 0063 — the DomOpsParty monitor: sheet, renderer, widget.
+                CrateEntry.of(PartyMonitorStyles.INSTANCE),
+                CrateEntry.of(PartyMonitorRendererModule.INSTANCE),
+                CrateEntry.of(DomOpsPartyMonitorWidget.INSTANCE),
                 CrateEntry.of(WorkspaceDirectoryModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(WorkspaceShellChromeModule.INSTANCE),
                 CrateEntry.of(WorkspaceStateModelModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
