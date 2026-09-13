@@ -333,6 +333,25 @@ public abstract class StandardMPA<P extends AppModule._Param, M extends Standard
         lines.add("        refreshHeader();");
         lines.add("    }");
         lines.add("");
+        // RFC 0058 — the page's chrome handle, passed to every widget mount as
+        // its fourth argument. A widget whose content addresses SUB-nodes by
+        // anchor (a workspace kind inside its group) appends the inner crumbs
+        // after the trail the server stamped: the seam is exactly where the
+        // server's knowledge ends. The stamped crumbs are the base and are
+        // never replaced — only continued.
+        lines.add("    var page = Object.freeze({");
+        lines.add("        extendCrumbs: function (more) {");
+        lines.add("            var base = (chrome && chrome.crumbs && chrome.crumbs.length) ? chrome.crumbs.slice() : [{ text: resolvedTitle }];");
+        lines.add("            resolvedCrumbs = base.concat(more || []);");
+        lines.add("            var leaf = resolvedCrumbs[resolvedCrumbs.length - 1];");
+        lines.add("            if (leaf && leaf.text) {");
+        lines.add("                resolvedTitle = leaf.text;");
+        lines.add("                document.title = resolvedTitle + (resolvedBrand && resolvedBrand.label ? ' \u00b7 ' + resolvedBrand.label : '');");
+        lines.add("            }");
+        lines.add("            refreshHeader();");
+        lines.add("        }");
+        lines.add("    });");
+        lines.add("");
         lines.add("    if (!widgetName) {");
         lines.add("        var noWidgetEl = document.createElement('div');");
         lines.add("        noWidgetEl.textContent = 'No widget specified. Use ?widget=...';");
@@ -351,7 +370,7 @@ public abstract class StandardMPA<P extends AppModule._Param, M extends Standard
         lines.add("    switch (widgetName) {");
         for (Widget<?, ?> w : widgets()) {
             lines.add("        case '" + w.simpleName() + "':");
-            lines.add("            " + mountIntoAlias(w) + "(widgetBranch, mainHost, widgetParams);");
+            lines.add("            " + mountIntoAlias(w) + "(widgetBranch, mainHost, widgetParams, page);");
             lines.add("            break;");
         }
         lines.add("        default:");

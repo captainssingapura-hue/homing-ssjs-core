@@ -57,6 +57,7 @@ public final class WorkspaceShellCrate implements Crate {
                 // RFC 0057 Phase 3 — the switcher replaces WorkspaceControlModal.
                 CrateEntry.of(WorkspaceSwitcherStyles.INSTANCE),
                 CrateEntry.of(WorkspaceSwitcherModel.INSTANCE, StandardJsModuleType.PURE_LOGIC),
+                CrateEntry.of(WorkspaceGroupPathModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),   // RFC 0058
                 CrateEntry.of(WorkspaceSwitcherModule.INSTANCE),
                 // RFC 0063 — the DomOpsParty monitor: sheet, renderer, widget.
                 CrateEntry.of(PartyMonitorStyles.INSTANCE),

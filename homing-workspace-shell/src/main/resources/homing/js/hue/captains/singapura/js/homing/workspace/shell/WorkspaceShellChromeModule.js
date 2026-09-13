@@ -865,8 +865,7 @@ class WorkspaceShellChrome {
         this._workspaceSwitcher = new this._WorkspaceSwitcherCtor({
             workspaceKind:   this._spec.kind,
             workspaceTitle:  this._spec.title,
-            availableKinds:  this._spec.availableKinds || [],
-            switchBase:      this._spec.switchBase || null,
+            group:           this._spec.group || null,     // RFC 0058 — the group this page is in
             identity:        this._identity,
             catalogueStore:  this._workspaceDirectory._catalogueStore,
             eventLog:        this._eventRecorder

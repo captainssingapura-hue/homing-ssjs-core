@@ -746,6 +746,30 @@ public final class CatalogueRegistry {
     }
 
     /**
+     * RFC 0058 — the address of a <b>sub-node</b>: the path of the node these
+     * args live at, plus the anchor inside it. Answers only when the app is
+     * {@link AnchorAddressable}, its codec decodes the args, the app says they
+     * name a sub-node, and that node is positioned — otherwise null, and the
+     * caller falls to the flat render as for anything unpositioned.
+     *
+     * <p>The path index is not consulted with the sub-node's args at all: a
+     * fragment never reaches the server, so a sub-node was never a position and
+     * could never be in the index. The app maps its args to the node's, and the
+     * node is looked up exactly as {@link #pathForFlat} would.</p>
+     */
+    public String anchoredUrlForFlat(String app, Map<String, List<String>> args) {
+        AppModule<?, ?> module = (app == null) ? null : appsByName.get(app);
+        if (!(module instanceof AnchorAddressable<?> addressable)) return null;
+        AppModule._Param params = module.paramCodec().from(args == null ? Map.of() : args).orNull();
+        if (params == null) return null;
+        @SuppressWarnings("unchecked")
+        var anchored = ((AnchorAddressable<AppModule._Param>) addressable).anchorOf(params).orElse(null);
+        if (anchored == null) return null;
+        CataloguePath path = navToPath.get(new NavKey(module.getClass(), anchored.node()));
+        return path == null ? null : path.toUrl() + "#" + anchored.anchor();
+    }
+
+    /**
      * RFC 0051 — the crumbs for a RESOLVED path.
      *
      * <p>The path route already walked the tree to answer the request, so it

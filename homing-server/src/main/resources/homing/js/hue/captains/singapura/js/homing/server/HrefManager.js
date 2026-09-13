@@ -136,6 +136,50 @@ const HrefManagerInstance = (() => {
         }
     }
 
+
+    /**
+     * RFC 0058 — the current fragment without its '#', or "" when there is
+     * none. A workspace kind is a path inside its group's page, named by the
+     * anchor, and the fragment never reaches the server — so the chrome reads
+     * it here, the one place window.location may be read (no-raw-href).
+     */
+    function hash() {
+        var h = window.location.hash || "";
+        return h.charAt(0) === "#" ? h.slice(1) : h;
+    }
+
+    /**
+     * RFC 0058 — call fn(newHash) whenever the fragment changes; returns a
+     * function that stops listening. A same-address anchor change is not a
+     * navigation the browser reloads for, which is exactly why the chrome
+     * needs to hear about it.
+     */
+    function onHashChange(fn) {
+        if (typeof fn !== "function") {
+            throw new TypeError("href.onHashChange: fn must be a function (got " + typeof fn + ")");
+        }
+        var handler = function () { fn(hash()); };
+        window.addEventListener("hashchange", handler);
+        return function () { window.removeEventListener("hashchange", handler); };
+    }
+
+
+    /**
+     * Rewrite the current fragment in place — no history entry, no hashchange
+     * event — so a canonicalised anchor shows as what it resolved to. Pass ""
+     * to clear it.
+     */
+    function replaceHash(anchor) {
+        if (typeof anchor !== "string") {
+            throw new TypeError("href.replaceHash: anchor must be a string (got " + typeof anchor + ")");
+        }
+        var base = window.location.pathname + window.location.search;
+        window.history.replaceState(window.history.state, "", anchor ? base + "#" + anchor : base);
+    }
+    /** Reload the current address as it stands, fragment included. */
+    function reload() {
+        window.location.reload();
+    }
     /** `href="#<slug>"` for same-page anchors. Slug must be a string. */
     function fragment(slug) {
         if (typeof slug !== "string") {
@@ -179,5 +223,9 @@ const HrefManagerInstance = (() => {
         fragment,
         current,
         withParam,
+        hash,
+        onHashChange,
+        replaceHash,
+        reload,
     });
 })();

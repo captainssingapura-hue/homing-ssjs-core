@@ -27,7 +27,7 @@ public record ConformanceLandingCatalogue() implements L0_Catalogue<ConformanceL
     public List<Entry<ConformanceLandingCatalogue>> leaves() {
         Navigable<GenericWorkspace.Params, GenericWorkspace> workspace =
                 new Navigable<>(GenericWorkspace.INSTANCE,
-                        new GenericWorkspace.Params("conformance"),
+                        new GenericWorkspace.Params(ConformanceWorkspaceGroup.ID, null),
                         "Conformance Workspace",
                         "The module Navigator plus Summary, Full Content, and Conformance panes.");
         return List.of(Entry.of(this, workspace));

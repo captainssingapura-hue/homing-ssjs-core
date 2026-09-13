@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.core.DomModule;
 import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
+import hue.captains.singapura.js.homing.core.ModuleImports;
 
 import java.util.List;
 
@@ -38,7 +39,12 @@ public record WorkspaceSwitcherModel() implements DomModule<WorkspaceSwitcherMod
 
     @Override
     public ImportsFor<WorkspaceSwitcherModel> imports() {
-        return ImportsFor.<WorkspaceSwitcherModel>builder().build();
+        // RFC 0058 — the anchor a choice navigates to is minted by the one
+        // module that mints anchors, over the slugs the server served.
+        return ImportsFor.<WorkspaceSwitcherModel>builder()
+                .add(new ModuleImports<>(List.of(new WorkspaceGroupPathModule.anchorOf()),
+                        WorkspaceGroupPathModule.INSTANCE))
+                .build();
     }
 
     @Override

@@ -108,8 +108,14 @@ public final class GotoNavigableGetAction
         // that refinement identity-bearing for every other placement of the
         // same app, silently.
         CataloguePath path = registry.pathForFlat(query.app(), query.args());
+        // RFC 0058 — a sub-node: params that name a path INSIDE a positioned
+        // node (a workspace kind inside its group). The index cannot hold it, a
+        // fragment being no position; the app maps the args to its node and the
+        // anchor, and the node resolves as any positioned leaf does.
+        String anchored = (path == null) ? registry.anchoredUrlForFlat(query.app(), query.args()) : null;
         String target = (path != null)
                 ? path.toUrl()
+                : (anchored != null) ? anchored
                 : "/app" + QueryString.encodeSuffix(query.args());
         return CompletableFuture.completedFuture(new HtmlPageContent(redirectHtml(target)));
     }
