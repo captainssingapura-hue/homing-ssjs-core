@@ -13,7 +13,8 @@ import java.util.List;
  *
  * <p>The widget is thin on purpose. It hands its branch and host to
  * {@link PartyMonitorRendererModule} and passes its own branch name so the
- * renderer can outline it — the honest proof the view is live. It imports the
+ * renderer can select it — the honest proof the view is live. Keys flow to the
+ * tree only while workspace-active, as the navigator does it. It imports the
  * renderer and nothing else; the renderer imports {@code viewParty()} and
  * nothing else. Nowhere in the chain is {@code domOpsParty}.</p>
  *
@@ -47,9 +48,27 @@ public final class DomOpsPartyMonitorWidget
         return List.of(
                 "    var host = branch.createElement('host', 'div');",
                 "    var monitor = renderPartyMonitor(branch, host, { selfName: branch.name });",
+                "",
+                "    // Keyboard, the way the navigator does it: TreeRenderer owns the key",
+                "    // semantics, the widget owns WHEN keys flow. Forward keydown only",
+                "    // while workspace-active (RFC 0049), so two trees never fight over",
+                "    // the arrows; preventDefault on a consumed key so the page does not",
+                "    // scroll.",
+                "    var __keyHandler = function (ev) {",
+                "        if (monitor.handleKeydown(ev)) ev.preventDefault();",
+                "    };",
+                "",
                 "    return {",
                 "        root: host,",
-                "        setActive: function (active) {},",
+                "        setActive: function (active) {",
+                "            if (active) document.addEventListener('keydown', __keyHandler);",
+                "            else        document.removeEventListener('keydown', __keyHandler);",
+                "        },",
+                "        partyDeregister: function () {",
+                "            // Belt-and-braces: drop the listener on teardown even if",
+                "            // setActive(false) was never called.",
+                "            document.removeEventListener('keydown', __keyHandler);",
+                "        },",
                 "        refresh: monitor.refresh",
                 "    };"
         );

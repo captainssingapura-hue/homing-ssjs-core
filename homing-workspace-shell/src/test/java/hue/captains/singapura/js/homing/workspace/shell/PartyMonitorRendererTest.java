@@ -66,6 +66,7 @@ class PartyMonitorRendererTest extends JsModuleTestBase {
         class StubTree {
             constructor(opts) { this.opts = opts; this.selected = null; MADE.push(this); }
             selectPath(p, o) { this.selected = { path: p, opts: o }; return true; }
+            handleKeydown(ev) { this.keys = (this.keys || []).concat([ev.key]); return ev.key === "ArrowDown"; }
         }
         globalThis.StubTree = StubTree;
 
@@ -178,6 +179,32 @@ class PartyMonitorRendererTest extends JsModuleTestBase {
         assertTrue(cnote.getMember("textContent").asString().startsWith("No owners collected"));
         assertTrue(cnote.getMember("textContent").asString().contains("not the same as no leaks"));
         assertFalse(cnote.getMember("cls").invokeMember("has", "pm-note-leaked").asBoolean());
+    }
+
+    /**
+     * TreeRenderer owns the key semantics and the host owns when keys flow —
+     * so the renderer exposes handleKeydown, and it must reach the renderer of
+     * the LATEST snapshot, not the one that was current when the widget
+     * attached its listener.
+     */
+    @Test
+    void keysReachTheCurrentTreeRendererEvenAfterARefresh() {
+        Value m = mount("w-me", "FIXTURE");
+        Value ctl = m.getMember("ctl");
+        assertTrue(ctl.invokeMember("handleKeydown", js.eval("js", "({ key: 'ArrowDown' })")).asBoolean(),
+                   "consumed → the host will preventDefault");
+        assertFalse(ctl.invokeMember("handleKeydown", js.eval("js", "({ key: 'x' })")).asBoolean());
+        Value first = global("MADE").getArrayElement(0).getMember("keys");
+        assertEquals(2, first.getArraySize());
+        assertEquals("ArrowDown", first.getArrayElement(0).asString());
+        assertEquals("x",         first.getArrayElement(1).asString());
+
+        ctl.invokeMember("refresh");
+        ctl.invokeMember("handleKeydown", js.eval("js", "({ key: 'ArrowUp' })"));
+        Value second = global("MADE").getArrayElement(1);
+        assertEquals(1, second.getMember("keys").getArraySize(), "the new renderer got the key");
+        assertEquals("ArrowUp", second.getMember("keys").getArrayElement(0).asString());
+        assertEquals(2, global("MADE").getArrayElement(0).getMember("keys").getArraySize(), "the old one got nothing more");
     }
 
     /** The default view and the default tree class both throw in these stubs; passing means neither was reached. */

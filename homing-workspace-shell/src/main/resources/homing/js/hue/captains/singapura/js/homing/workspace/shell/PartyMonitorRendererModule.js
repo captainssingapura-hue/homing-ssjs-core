@@ -1,7 +1,7 @@
 // =============================================================================
 // PartyMonitorRendererModule — RFC 0063, the branch tree seen from inside.
 //
-//   renderPartyMonitor(branch, host, opts) → { refresh }
+//   renderPartyMonitor(branch, host, opts) → { refresh, handleKeydown }
 //
 //     opts.selfName  the monitor's own branch name; its row is selected — the
 //                    honest proof the view is live (D9)
@@ -25,6 +25,7 @@ function renderPartyMonitor(branch, host, opts) {
     var view     = opts.view || viewParty;
     var TreeCtor = opts.tree || TreeRenderer;
     var selfName = opts.selfName || null;
+    var current  = null;   // the TreeRenderer of the latest snapshot — keys go here
 
     var root  = branch.createElement('root', 'div');   css.addClass(root,  pm_root);
     var head  = branch.createElement('head', 'div');   css.addClass(head,  pm_head);
@@ -53,7 +54,7 @@ function renderPartyMonitor(branch, host, opts) {
 
         var snap  = view();
         var stats = partySnapshotStats(snap);
-        var tree  = new TreeCtor({
+        var tree  = current = new TreeCtor({
             branch:      tb,
             container:   treeHost,
             data:        partySnapshotToTree(snap),
@@ -82,5 +83,11 @@ function renderPartyMonitor(branch, host, opts) {
 
     btn.addEventListener('click', refresh);
     refresh();
-    return { refresh: refresh };
+    return {
+        refresh: refresh,
+        // TreeRenderer owns the key semantics; the host owns WHEN keys flow. The
+        // widget forwards keydown only while workspace-active (RFC 0049), and
+        // it lands on whichever renderer the latest snapshot built.
+        handleKeydown: function (ev) { return current ? current.handleKeydown(ev) : false; }
+    };
 }
