@@ -32,17 +32,17 @@ public final class HomingConformance {
             // ── RFC 0050 — the Relation Grid family ──────────────────────
             // Deliberate design decisions recorded in the RFC, not debt: they
             // are ALLOWANCES (reasoned, permanent) rather than baseline entries
-            // (grandfathered, meant to shrink). MTP/SplitPane carry the same
-            // findings as baselined debt because they predate the rules; the
-            // grid chose this posture knowingly, so it says so.
+            // (grandfathered, meant to shrink). Each names its own reason; none
+            // rests on "it is a primitive" — a type is a role, not an exemption
+            // — nor on what MultiTabPane / SplitPane do, which is baselined debt.
             new Allowance(
                     "hue.captains.singapura.js.homing.grid.GridLayoutModule",
                     new RuleId("use-dom-ops-party"),
-                    "The layout branch is a PRIMITIVE that owns the <table> skeleton itself, on "
-                            + "the MultiTabPane / SplitPane precedent: raw DOM internally keeps it "
-                            + "portable and free of a DomOpsParty dependency. The party discipline "
-                            + "applies to the CELLS branch, which does mint through a handed-in "
-                            + "branch — that is the ownership boundary RFC 0050 is built on."),
+                    "RFC 0050: the layout branch owns the <table> skeleton itself and depends only "
+                            + "on homing-core, so the grid stays portable outside a DomOpsParty host. "
+                            + "The party discipline applies to the CELLS branch, which does mint "
+                            + "through a handed-in branch — that is the ownership boundary RFC 0050 "
+                            + "is built on. A special case with a reason, not a primitive's right."),
             new Allowance(
                     "hue.captains.singapura.js.homing.grid.GridLayoutModule",
                     new RuleId("view-doctrine"),
@@ -53,14 +53,14 @@ public final class HomingConformance {
                     "hue.captains.singapura.js.homing.grid.GridHeaderDragModule",
                     new RuleId("use-dom-ops-party"),
                     "Split out of GridLayout by the line ratchet; it mints the same layout-branch "
-                            + "chrome (resize handle, drop band) and inherits the same posture."),
+                            + "chrome (resize handle, drop band) under the same RFC 0050 decision — "
+                            + "one ownership boundary, three modules."),
             new Allowance(
                     "hue.captains.singapura.js.homing.grid.GridColumnOpsModule",
                     new RuleId("use-dom-ops-party"),
                     "The header ops slot and the caret tier's glyph, rank and pin are LAYOUT-branch "
-                            + "chrome inside the layout's own <th> — the GridHeaderDrag posture one band "
-                            + "over: raw DOM keeps the primitive portable and free of a DomOpsParty "
-                            + "dependency. The party discipline applies to the CELLS branch."),
+                            + "chrome inside the layout's own <th> — the same RFC 0050 decision one band "
+                            + "over. The party discipline applies to the CELLS branch."),
             new Allowance(
                     "hue.captains.singapura.js.homing.grid.StockCellsModule",
                     new RuleId("use-dom-ops-party"),
@@ -88,7 +88,13 @@ public final class HomingConformance {
                     "hue.captains.singapura.js.homing.server.CssClassManager",
                     new RuleId("no-raw-href"),
                     "CssClassManager builds its own stylesheet <link> href — framework "
-                            + "infrastructure that emits the served CSS, not a consumer view."));
+                            + "infrastructure that emits the served CSS, not a consumer view."),
+            new Allowance(
+                    "hue.captains.singapura.js.homing.server.CssClassManager",
+                    new RuleId("no-raw-css"),
+                    "CssClassManager IS the css-manager implementation — its classList calls are "
+                            + "the css.* API the rule redirects DOM owners to. The one module that "
+                            + "may touch classList raw, because it is where the typed path ends."));
 
     /** The crate closure the gate + export run over — every first-party served module. */
     public static Collection<Crate> closure() {

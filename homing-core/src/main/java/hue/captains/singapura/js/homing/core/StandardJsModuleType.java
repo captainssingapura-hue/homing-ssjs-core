@@ -19,7 +19,14 @@ public enum StandardJsModuleType implements JsModuleType {
 
     /** A consumer DomModule — the full discipline (no HTML, owned refs, typed css/href, no DOM destruction). */
     CONSUMER("Consumer", "consumer"),
-    /** A structural primitive (SplitPane, MultiTabPane, …) — owns branch DOM; must publish its mutations, never wholesale-wipe. */
+    /**
+     * A structural primitive (SplitPane, MultiTabPane, …) — owns branch DOM; must
+     * publish its mutations, never wholesale-wipe. A <b>role label</b>, not an
+     * exemption: it is held to exactly the DOM-owner discipline a {@link
+     * #CONSUMER} is (RFC 0045). The only exemptions that exist are an explicit
+     * {@code Allowance} (a reasoned special case) or a {@code Baseline} entry
+     * (pre-existing debt); a type declaration grants none.
+     */
     PRIMITIVE("Primitive", "primitive"),
     /** A Secretary reducer body — pure (state, envelope) → Step; no DOM, no console, no captures. */
     SECRETARY("Secretary", "secretary"),

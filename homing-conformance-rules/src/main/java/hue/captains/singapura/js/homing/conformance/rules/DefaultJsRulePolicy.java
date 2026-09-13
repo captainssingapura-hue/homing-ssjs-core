@@ -38,7 +38,7 @@ public record DefaultJsRulePolicy() implements JsRulePolicy {
      * The <b>global</b> layer — rules every non-exempt module is held to, whatever
      * its type. This is the shared root every type's rule set is composed from.
      */
-    private static final List<JsRule> GLOBAL = List.of(
+    public static final List<JsRule> GLOBAL = List.of(
             NoCdnImportRule.INSTANCE,
             MaxEffectiveLinesRule.INSTANCE);
 
@@ -59,7 +59,7 @@ public record DefaultJsRulePolicy() implements JsRulePolicy {
      * — is about runtime behaviour, not a pattern a line scan can validate, so it
      * is doctrine rather than a rule.</p>
      */
-    private static final List<JsRule> DOM_OWNER_DISCIPLINE = concat(DOM_DISCIPLINE,
+    public static final List<JsRule> DOM_OWNER_DISCIPLINE = concat(DOM_DISCIPLINE,
             NoRawCssRule.INSTANCE,
             NoInlineStyleRule.INSTANCE,
             NoLiteralColorRule.INSTANCE,
@@ -69,8 +69,8 @@ public record DefaultJsRulePolicy() implements JsRulePolicy {
             NoManagerRedeclarationRule.INSTANCE,
             ViewDoctrineRule.INSTANCE);
 
-    /** No-DOM modules: global + may-not-touch-the-DOM-at-all. */
-    private static final List<JsRule> NO_DOM = concat(GLOBAL,
+    /** No-DOM modules: global + may-not-touch-the-DOM-at-all — the <b>headless lane</b>. */
+    public static final List<JsRule> NO_DOM = concat(GLOBAL,
             NoDomAccessRule.INSTANCE);
 
     private static final JsRuleSet CONSUMER =
@@ -110,9 +110,29 @@ public record DefaultJsRulePolicy() implements JsRulePolicy {
      * This framework policy plus a downstream's own types → rule sets. Standard
      * types keep their exhaustive-switch dispatch here; the {@code extensions}
      * are dispatched by lookup. A downstream may not remap a standard type.
+     * An extension rule set must sit in a <b>lane</b> (see {@link CompositeJsRulePolicy}):
+     * {@link #domOwnerLane} or {@link #headlessLane} builds one directly.
      */
     public JsRulePolicy extendedWith(Map<JsModuleType, JsRuleSet> extensions) {
         return new CompositeJsRulePolicy(this, extensions);
+    }
+
+    /**
+     * A downstream rule set in the <b>DOM-owner lane</b>: the full framework
+     * discipline plus the library's own rules. The shape an extension type
+     * takes when its modules build or style DOM (a game loop, a chart kit).
+     */
+    public static JsRuleSet domOwnerLane(RuleSetId id, String title, JsRule... own) {
+        return new JsRuleSet(id, title, concat(DOM_OWNER_DISCIPLINE, own));
+    }
+
+    /**
+     * A downstream rule set in the <b>headless lane</b>: the global rules, the
+     * strict no-DOM rule, plus the library's own. The shape an extension type
+     * takes when its modules must never touch the DOM (a risk model, a codec).
+     */
+    public static JsRuleSet headlessLane(RuleSetId id, String title, JsRule... own) {
+        return new JsRuleSet(id, title, concat(NO_DOM, own));
     }
 
     private static List<JsRule> concat(List<JsRule> base, JsRule... extra) {
