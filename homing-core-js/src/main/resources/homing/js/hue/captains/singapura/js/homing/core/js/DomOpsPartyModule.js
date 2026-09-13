@@ -288,6 +288,11 @@ class DomOpsParty extends _DomOpsPartyBase {
 // ─── Global singleton ────────────────────────────────────────────────────────
 const domOpsParty = new DomOpsParty('root');
 
-/** Sentinel owner for the root — module-scoped, never GC'd. */
+/**
+ * Sentinel owner for the root. EXPORTED, and that is what keeps it alive: a
+ * module-level const that is neither exported nor captured is not retained
+ * after evaluation — V8 collects it, the WeakRef clears, and the root reads
+ * as leaked. This comment used to say "never GC'd"; RFC 0063 found otherwise.
+ */
 const partyChief = Object.freeze({ toString: () => 'partyChief' });
 domOpsParty.activate(partyChief);
