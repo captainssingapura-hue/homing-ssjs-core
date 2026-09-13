@@ -52,6 +52,24 @@ class SelfConformanceTest {
                 + errors.stream().map(SelfConformanceTest::describe).collect(Collectors.joining("\n")));
     }
 
+    /**
+     * The baseline is a ledger of debt that <em>exists</em>: every fingerprint in
+     * it must match a finding the engine still produces. A line whose module was
+     * deleted or whose violation was fixed is stale — the ratchet turned and the
+     * ledger did not — and it fails here so the file never silently carries
+     * grants nothing claims. Fixing debt means removing its line.
+     */
+    @Test
+    void everyBaselineFingerprintNamesLiveDebt() {
+        List<Finding> raw = new ConformanceEngine().checkCrates(HomingConformance.closure());
+        var live = raw.stream().map(Finding::fingerprint).collect(Collectors.toSet());
+        List<String> stale = HOMING_GRADER.baseline().fingerprints().stream()
+                .filter(fp -> !live.contains(fp)).sorted().toList();
+        assertEquals(List.of(), stale, () -> "stale baseline fingerprints (" + stale.size()
+                + ") — no current finding matches; remove them from conformance-baseline.txt:\n"
+                + String.join("\n", stale));
+    }
+
     private static String describe(GradedFinding g) {
         Finding f = g.finding();
         return f.moduleClass() + " [" + f.rule().value() + "] " + f.message()

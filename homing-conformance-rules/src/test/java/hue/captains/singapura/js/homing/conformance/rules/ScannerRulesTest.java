@@ -20,14 +20,36 @@ class ScannerRulesTest {
     }
 
     @Test
-    void noRawCssFiresOnlyWhenTheCssManagerIsInjected() {
-        // No css import → not policed, even with a raw classList op.
-        assertTrue(NoRawCssRule.INSTANCE.check(served(
+    void noRawCssIsUngated() {
+        // No css import → still policed: the module with no typed class to use
+        // is exactly the one being told to adopt one.
+        assertFalse(NoRawCssRule.INSTANCE.check(served(
                 "el.classList.add('x');")).isEmpty());
-        // css injected → the same raw op is a violation.
+        assertFalse(NoRawCssRule.INSTANCE.check(served(
+                "el.className = 'hsp-root';")).isEmpty());
+        // With the manager injected, the same raw op is a violation.
         assertFalse(NoRawCssRule.INSTANCE.check(served(
                 "import { CssClassManagerInstance as css } from \"/m?class=CssClassManager\";",
                 "el.classList.add('x');")).isEmpty());
+        // The typed path is clean.
+        assertTrue(NoRawCssRule.INSTANCE.check(served(
+                "import { CssClassManagerInstance as css } from \"/m?class=CssClassManager\";",
+                "css.addClass(el, Styles.active());")).isEmpty());
+    }
+
+    @Test
+    void noRawCssFlagsAStylesheetMintedFromJs() {
+        // Raw and branch-minted <style> elements alike: an untyped sheet.
+        assertFalse(NoRawCssRule.INSTANCE.check(served(
+                "var s = document.createElement(\"style\");")).isEmpty());
+        assertFalse(NoRawCssRule.INSTANCE.check(served(
+                "var s = branch.createElement('sheet', 'style');")).isEmpty());
+        // Any other tag is not this rule's concern.
+        assertTrue(NoRawCssRule.INSTANCE.check(served(
+                "var d = branch.createElement('host', 'div');")).isEmpty());
+        // A comment mentioning it does not trip the rule.
+        assertTrue(NoRawCssRule.INSTANCE.check(served(
+                "// never document.createElement('style') here")).isEmpty());
     }
 
     @Test
