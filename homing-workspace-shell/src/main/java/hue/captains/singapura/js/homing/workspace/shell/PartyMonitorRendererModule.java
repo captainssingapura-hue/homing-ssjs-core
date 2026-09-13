@@ -6,27 +6,27 @@ import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
 import hue.captains.singapura.js.homing.core.js.DomOpsPartyModule;
+import hue.captains.singapura.js.homing.core.js.TreeRendererModule;
 import hue.captains.singapura.js.homing.core.js.viewParty;
 
 import java.util.List;
 
 /**
- * RFC 0063 — draws the branch tree from a {@code viewParty()} snapshot.
+ * RFC 0063 — the monitor's chrome, and a {@code TreeRenderer} per snapshot.
  *
- * <p><b>What it imports is the point.</b> {@link viewParty}, and not
- * {@code domOpsParty}: the renderer receives the tree as frozen data and holds
- * no handle that could dissolve anything — observation by construction (D4).
- * Its own elements come through the branch every widget is handed, so the
- * view doctrines grade it like any other view; the tree it draws arrives as
- * facts.</p>
+ * <p><b>What it imports is the point.</b> {@link viewParty} and not
+ * {@code domOpsParty}: the tree arrives as frozen data and the widget holds no
+ * handle that could dissolve anything (D4). The rows are drawn by the
+ * substrate's {@code TreeRenderer} over {@link PartyMonitorAdapterModule}'s
+ * output — no bespoke rendering here, per the renderer's own promise.</p>
  *
- * <p>Each refresh draws into a fresh sub-branch and dissolves the previous
- * one, the move {@code MermaidPlate} makes for its fence. A collected owner is
- * drawn in the original demo's red and counted; the note under the header
- * says <i>none collected</i>, never <i>no leaks</i> (D8). The monitor's own
- * branch is outlined (D9).</p>
- *
- * <p>Refresh is manual (D7) — a button, and once on mount. No timer.</p>
+ * <p><b>A snapshot is immutable</b>, so each refresh builds a new renderer in
+ * a new sub-branch and dissolves the previous one. {@code setData} is never
+ * called twice on one renderer: {@code TreeRenderer} is flat and cannot
+ * release a previous render, and the sub-branch is the unit that can. The
+ * monitor's own row is selected through {@code selectPath} — the honest proof
+ * the view is live (D9). Refresh is manual (D7); the note under the header
+ * says <i>none collected</i>, never <i>no leaks</i> (D8).</p>
  */
 public record PartyMonitorRendererModule() implements DomModule<PartyMonitorRendererModule> {
 
@@ -40,6 +40,13 @@ public record PartyMonitorRendererModule() implements DomModule<PartyMonitorRend
         return ImportsFor.<PartyMonitorRendererModule>builder()
                 // The projection, and ONLY the projection.
                 .add(new ModuleImports<>(List.of(new viewParty()), DomOpsPartyModule.INSTANCE))
+                .add(new ModuleImports<>(List.of(new TreeRendererModule.TreeRenderer()),
+                        TreeRendererModule.INSTANCE))
+                .add(new ModuleImports<>(List.of(
+                        new PartyMonitorAdapterModule.partySnapshotToTree(),
+                        new PartyMonitorAdapterModule.partySnapshotStats(),
+                        new PartyMonitorAdapterModule.pathToBranch()
+                ), PartyMonitorAdapterModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new PartyMonitorStyles.pm_root(),
                         new PartyMonitorStyles.pm_head(),
@@ -48,23 +55,7 @@ public record PartyMonitorRendererModule() implements DomModule<PartyMonitorRend
                         new PartyMonitorStyles.pm_btn(),
                         new PartyMonitorStyles.pm_note(),
                         new PartyMonitorStyles.pm_note_leaked(),
-                        new PartyMonitorStyles.pm_tree(),
-                        new PartyMonitorStyles.pm_node(),
-                        new PartyMonitorStyles.pm_node_header(),
-                        new PartyMonitorStyles.pm_node_header_leaked(),
-                        new PartyMonitorStyles.pm_node_header_self(),
-                        new PartyMonitorStyles.pm_icon(),
-                        new PartyMonitorStyles.pm_name(),
-                        new PartyMonitorStyles.pm_depth_badge(),
-                        new PartyMonitorStyles.pm_owner(),
-                        new PartyMonitorStyles.pm_owner_dot(),
-                        new PartyMonitorStyles.pm_owner_dot_alive(),
-                        new PartyMonitorStyles.pm_owner_dot_leaked(),
-                        new PartyMonitorStyles.pm_badge(),
-                        new PartyMonitorStyles.pm_elements(),
-                        new PartyMonitorStyles.pm_chip(),
-                        new PartyMonitorStyles.pm_branches(),
-                        new PartyMonitorStyles.pm_folded()
+                        new PartyMonitorStyles.pm_tree()
                 ), PartyMonitorStyles.INSTANCE))
                 .build();
     }

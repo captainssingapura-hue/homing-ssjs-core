@@ -11,53 +11,41 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * RFC 0063 — the monitor draws a snapshot, and touches nothing.
+ * RFC 0063 — the monitor's chrome, and one TreeRenderer per snapshot.
  *
- * <p>The renderer is handed a fixture through {@code opts.view}, so no party
- * exists in these tests at all — which is itself the assertion that matters:
- * a renderer that needed the live tree to draw could not be tested this way.
- * What it draws is checked by walking the element stubs it built through the
- * branch stub; what it does NOT do is checked by the branch stub recording
- * every call.</p>
+ * <p>The renderer is handed a fixture through {@code opts.view} and a stub
+ * tree class through {@code opts.tree}, so neither the party nor the real
+ * {@code TreeRenderer} is in these tests. The stub records what it was given;
+ * the branch stub records every call. What is asserted is the contract: a
+ * fresh sub-branch and a fresh renderer per refresh, the previous dissolved,
+ * the self row selected by the adapter's path, the header honest.</p>
  */
 class PartyMonitorRendererTest extends JsModuleTestBase {
 
+    private static final String ADAPTER =
+            "/homing/js/hue/captains/singapura/js/homing/workspace/shell/PartyMonitorAdapterModule.js";
     private static final String MODULE =
             "/homing/js/hue/captains/singapura/js/homing/workspace/shell/PartyMonitorRendererModule.js";
 
-    /**
-     * Enough of the world for the renderer: a css manager over classList, the
-     * typed class handles as name-bearing objects, a branch that mints element
-     * stubs and records dissolutions, and no document — the renderer must not
-     * need one.
-     */
     private static final String STUBS = """
         function el(tag) {
-            const e = { tag, textContent: '', children: [], attrs: {}, listeners: {},
-                cls: new Set(),
-                classList: { add: c => e.cls.add(c), remove: c => e.cls.delete(c),
-                             contains: c => e.cls.has(c),
-                             toggle: (c, f) => { const on = f === undefined ? !e.cls.has(c) : f;
-                                                 on ? e.cls.add(c) : e.cls.delete(c); return on; } },
+            const e = { tag, textContent: '', children: [], attrs: {}, listeners: {}, cls: new Set(),
+                classList: { add: c => e.cls.add(c), remove: c => e.cls.delete(c), contains: c => e.cls.has(c) },
                 appendChild(c) { e.children.push(c); return c; },
                 setAttribute(k, v) { e.attrs[k] = v; },
                 addEventListener(t, fn) { (e.listeners[t] = e.listeners[t] || []).push(fn); },
-                click() { (e.listeners.click || []).forEach(fn => fn()); }
-            };
+                click() { (e.listeners.click || []).forEach(fn => fn()); } };
             return e;
         }
         class StubBranch {
-            constructor(name) { this.name = name; this.branches = {}; this.elements = {};
-                                this.activated = null; this.log = []; }
+            constructor(name) { this.name = name; this.branches = {}; this.elements = {}; this.activated = null; this.log = []; }
             createElement(name, tag) {
                 if (this.elements[name]) throw new RangeError('dup element ' + name);
-                this.log.push('createElement:' + name);
-                return (this.elements[name] = el(tag));
+                this.log.push('createElement:' + name); return (this.elements[name] = el(tag));
             }
             createBranch(name) {
                 if (this.branches[name]) throw new RangeError('dup branch ' + name);
-                this.log.push('createBranch:' + name);
-                return (this.branches[name] = new StubBranch(name));
+                this.log.push('createBranch:' + name); return (this.branches[name] = new StubBranch(name));
             }
             hasBranch(name) { return !!this.branches[name]; }
             dissolveBranch(name) { this.log.push('dissolveBranch:' + name); delete this.branches[name]; }
@@ -66,212 +54,137 @@ class PartyMonitorRendererTest extends JsModuleTestBase {
         globalThis.StubBranch = StubBranch;
         globalThis.css = {
             addClass:    (e, ...cs) => cs.forEach(c => e.classList.add(c.name)),
-            removeClass: (e, ...cs) => cs.forEach(c => e.classList.remove(c.name)),
-            toggleClass: (e, c, f)  => e.classList.toggle(c.name, f),
-            hasClass:    (e, c)     => e.classList.contains(c.name)
+            removeClass: (e, ...cs) => cs.forEach(c => e.classList.remove(c.name))
         };
-        for (const n of ['pm_root','pm_head','pm_title','pm_count','pm_btn','pm_note','pm_note_leaked',
-                         'pm_tree','pm_node','pm_node_header','pm_node_header_leaked','pm_node_header_self',
-                         'pm_icon','pm_name','pm_depth_badge','pm_owner','pm_owner_dot','pm_owner_dot_alive',
-                         'pm_owner_dot_leaked','pm_badge','pm_elements','pm_chip','pm_branches','pm_folded'])
+        for (const n of ['pm_root','pm_head','pm_title','pm_count','pm_btn','pm_note','pm_note_leaked','pm_tree'])
             globalThis[n] = { name: n.replace(/_/g, '-') };
-        // viewParty is what the module imports by default; tests inject opts.view instead,
-        // and this one throws so a renderer that ignored opts.view would fail loudly.
         globalThis.viewParty = () => { throw new Error('renderer reached the live party'); };
+        globalThis.TreeRenderer = function () { throw new Error('renderer reached the real TreeRenderer'); };
 
-        // A fixture in snapshot() shape: root → nav (alive), widgets → w-me (self), w-dead (collected).
-        globalThis.FIXTURE = Object.freeze({
-            name: 'root', depth: 0, path: ['root'], owner: 'partyChief', ownerAlive: true,
-            elements: [], branches: [
-                { name: 'nav', depth: 1, path: ['root','nav'], owner: 'shell:nav', ownerAlive: true,
-                  elements: [{ name: 'bar', tagName: 'nav' }, { name: 'logo', tagName: 'img' }], branches: [] },
+        // A stub TreeRenderer that records its constructor options and selectPath calls.
+        globalThis.MADE = [];
+        class StubTree {
+            constructor(opts) { this.opts = opts; this.selected = null; MADE.push(this); }
+            selectPath(p, o) { this.selected = { path: p, opts: o }; return true; }
+        }
+        globalThis.StubTree = StubTree;
+
+        const deepFreeze = o => { if (o && typeof o === 'object') { Object.freeze(o); Object.values(o).forEach(deepFreeze); } return o; };
+        globalThis.FIXTURE = deepFreeze({
+            name: 'root', depth: 0, path: ['root'], owner: 'partyChief', ownerAlive: true, elements: [], branches: [
                 { name: 'widgets', depth: 1, path: ['root','widgets'], owner: 'shell:widgets', ownerAlive: true,
-                  elements: [], branches: [
-                    { name: 'w-me', depth: 2, path: ['root','widgets','w-me'], owner: 'widget:me', ownerAlive: true,
-                      elements: [{ name: 'host', tagName: 'div' }], branches: [] },
-                    { name: 'w-dead', depth: 2, path: ['root','widgets','w-dead'], owner: 'widget:dead', ownerAlive: false,
-                      elements: [{ name: 'root', tagName: 'div' }], branches: [] },
-                    { name: 'never', depth: 2, path: ['root','widgets','never'], owner: null, ownerAlive: null,
-                      elements: [], branches: [] }
-                ] }
-            ]
-        });
+                  elements: [{ name: 'slot', tagName: 'div' }], branches: [
+                    { name: 'w-me',   depth: 2, path: ['root','widgets','w-me'],   owner: 'widget:me',   ownerAlive: true,  elements: [], branches: [] },
+                    { name: 'w-dead', depth: 2, path: ['root','widgets','w-dead'], owner: 'widget:dead', ownerAlive: false, elements: [], branches: [] }
+                ] } ] });
+        globalThis.CLEAN = deepFreeze({ name: 'root', depth: 0, path: ['root'], owner: 'partyChief', ownerAlive: true, elements: [], branches: [] });
         """;
 
     @BeforeEach
     void load() {
         js = buildContext();
         js.eval(Source.newBuilder("js", STUBS, "stubs.js").buildLiteral());
+        loadModule(ADAPTER);
         loadModule(MODULE);
     }
 
-    /** Mount into a fresh branch + host, with the fixture as the view. */
-    private Value mount(String selfName) {
+    private Value mount(String selfName, String fixture) {
         return js.eval("js", """
             (() => {
+                MADE.length = 0;
                 const branch = new StubBranch('w-me');
                 const host = { children: [], appendChild(c) { this.children.push(c); } };
-                const ctl = renderPartyMonitor(branch, host, {
-                    selfName: %s, view: () => FIXTURE });
+                const ctl = renderPartyMonitor(branch, host, { selfName: %s, view: () => %s, tree: StubTree });
                 return { branch, host, ctl };
-            })()""".formatted(selfName == null ? "null" : "'" + selfName + "'"));
+            })()""".formatted(selfName == null ? "null" : "'" + selfName + "'", fixture));
     }
 
-    /** Every element under `root` with the given class, depth-first. */
-    private static Value withClass(Value root, String cls, Value js) {
-        return js.execute(root, cls);
-    }
-
-    private Value finder() {
+    private Value find(Value root, String cls) {
         return js.eval("js", """
             (function find(node, cls, acc) {
                 acc = acc || [];
                 if (node.cls && node.cls.has(cls)) acc.push(node);
                 for (const c of (node.children || [])) find(c, cls, acc);
                 return acc;
-            })""");
-    }
-
-    // ---------------------------------------------------------------- draws
-
-    @Test
-    void everyBranchInTheSnapshotIsDrawnWithNameAndDepth() {
-        Value m = mount("w-me");
-        Value root = m.getMember("host").getMember("children").getArrayElement(0);
-        Value names = finder().execute(root, "pm-name");
-        assertEquals(6, names.getArraySize(), "root, nav, widgets, w-me, w-dead, never");
-        StringBuilder seen = new StringBuilder();
-        for (int i = 0; i < names.getArraySize(); i++) seen.append(names.getArrayElement(i).getMember("textContent").asString()).append(',');
-        assertEquals("root,nav,widgets,w-me,w-dead,never,", seen.toString(), "tree order");
-
-        Value depths = finder().execute(root, "pm-depth-badge");
-        assertEquals("L0", depths.getArrayElement(0).getMember("textContent").asString());
-        assertEquals("L2", depths.getArrayElement(3).getMember("textContent").asString());
+            })""").execute(root, cls);
     }
 
     @Test
-    void elementsAppearAsChipsAndTheHeaderCountsThem() {
-        Value m = mount("w-me");
-        Value root = m.getMember("host").getMember("children").getArrayElement(0);
-        Value chips = finder().execute(root, "pm-chip");
-        assertEquals(4, chips.getArraySize(), "bar, logo, host, root");
-        assertEquals("bar <nav>", chips.getArrayElement(0).getMember("textContent").asString());
+    void oneTreeRendererPerSnapshotInItsOwnSubBranchWithTheAdaptedData() {
+        Value m = mount("w-me", "FIXTURE");
+        Value made = global("MADE");
+        assertEquals(1, made.getArraySize());
+        Value opts = made.getArrayElement(0).getMember("opts");
+        assertEquals("tree", opts.getMember("branch").getMember("name").asString(), "drawn into the tree sub-branch");
+        assertTrue(opts.getMember("container").getMember("cls").invokeMember("has", "pm-tree").asBoolean());
+        assertEquals("root", opts.getMember("data").getMember("display").getMember("label").asString(), "adapter output, not the raw snapshot");
+        assertTrue(opts.getMember("showBadge").asBoolean());
+        assertTrue(opts.getMember("showNote").asBoolean());
+        assertEquals(99, opts.getMember("expandDepth").asInt(), "fully expanded");
 
-        Value count = finder().execute(root, "pm-count").getArrayElement(0);
-        assertEquals("6 branches · 4 elements", count.getMember("textContent").asString());
+        Value tree = m.getMember("branch").getMember("branches").getMember("tree");
+        assertEquals("partyMonitor:tree", tree.getMember("activated").getMember("label").asString());
+        assertTrue(tree.getMember("activated").getMember("owner").getMember("cls").invokeMember("has", "pm-root").asBoolean(),
+                   "owned by the monitor's root element");
     }
 
     @Test
-    void aCollectedOwnerIsDrawnRedAndCountedAndNeverCalledALeak() {
-        Value m = mount("w-me");
-        Value root = m.getMember("host").getMember("children").getArrayElement(0);
+    void theSelfRowIsSelectedByTheAdaptersPath() {
+        Value m = mount("w-me", "FIXTURE");
+        Value sel = global("MADE").getArrayElement(0).getMember("selected");
+        // widgets has 1 element, so w-me is at [0, 1]
+        assertEquals(2, sel.getMember("path").getArraySize());
+        assertEquals(0, sel.getMember("path").getArrayElement(0).asInt());
+        assertEquals(1, sel.getMember("path").getArrayElement(1).asInt());
+        assertTrue(sel.getMember("opts").getMember("reveal").asBoolean());
 
-        Value leakedHeaders = finder().execute(root, "pm-node-header-leaked");
-        assertEquals(1, leakedHeaders.getArraySize());
-        Value nameInLeaked = finder().execute(leakedHeaders.getArrayElement(0), "pm-name").getArrayElement(0);
-        assertEquals("w-dead", nameInLeaked.getMember("textContent").asString());
-
-        assertEquals(1, finder().execute(root, "pm-owner-dot-leaked").getArraySize());
-        assertEquals(4, finder().execute(root, "pm-owner-dot-alive").getArraySize(), "root, nav, widgets, w-me");
-        // The never-activated node has no dot at all, and no owner span.
-        assertEquals(5, finder().execute(root, "pm-owner").getArraySize());
-
-        Value note = finder().execute(root, "pm-note").getArrayElement(0);
-        String text = note.getMember("textContent").asString();
-        assertTrue(text.startsWith("1 owner collected"), text);
-        assertFalse(text.toLowerCase().contains("no leaks"), "D8: never claims no leaks");
-        assertTrue(note.getMember("cls").invokeMember("has", "pm-note-leaked").asBoolean());
+        mount(null, "FIXTURE");
+        assertTrue(global("MADE").getArrayElement(0).getMember("selected").isNull(), "no selfName → nothing selected");
     }
 
     @Test
-    void aCleanTreeSaysNoneCollectedNotNoLeaks() {
-        Value m = js.eval("js", """
-            (() => {
-                const clean = Object.freeze({ name: 'root', depth: 0, path: ['root'], owner: 'partyChief',
-                    ownerAlive: true, elements: [], branches: [] });
-                const branch = new StubBranch('w-x');
-                const host = { children: [], appendChild(c) { this.children.push(c); } };
-                renderPartyMonitor(branch, host, { view: () => clean });
-                return host.children[0];
-            })()""");
-        Value note = finder().execute(m, "pm-note").getArrayElement(0);
-        String text = note.getMember("textContent").asString();
-        assertTrue(text.startsWith("No owners collected"), text);
-        assertTrue(text.contains("not the same as no leaks"), text);
-        assertFalse(note.getMember("cls").invokeMember("has", "pm-note-leaked").asBoolean());
-    }
-
-    @Test
-    void theMonitorOutlinesItsOwnBranchByName() {
-        Value m = mount("w-me");
-        Value root = m.getMember("host").getMember("children").getArrayElement(0);
-        Value self = finder().execute(root, "pm-node-header-self");
-        assertEquals(1, self.getArraySize());
-        assertEquals("w-me", finder().execute(self.getArrayElement(0), "pm-name")
-                .getArrayElement(0).getMember("textContent").asString());
-
-        Value none = mount(null);
-        assertEquals(0, finder().execute(none.getMember("host").getMember("children").getArrayElement(0),
-                                         "pm-node-header-self").getArraySize());
-    }
-
-    // ------------------------------------------------------------- refresh
-
-    @Test
-    void refreshDissolvesTheOldTreeAndDrawsTheNewOne() {
-        Value m = mount("w-me");
-        Value branch = m.getMember("branch");
-        Value log = branch.getMember("log");
-        long before = log.getArraySize();
-        assertTrue(log.toString().contains("createBranch:tree"));
-
+    void refreshDissolvesThePreviousTreeAndBuildsANewRenderer() {
+        Value m = mount("w-me", "FIXTURE");
         m.getMember("ctl").invokeMember("refresh");
-        assertTrue(log.toString().contains("dissolveBranch:tree"), "the previous tree sub-branch is dissolved");
-        assertTrue(log.getArraySize() > before);
-        assertTrue(branch.invokeMember("hasBranch", "tree").asBoolean(), "exactly one tree sub-branch after refresh");
+        assertEquals(2, global("MADE").getArraySize(), "a fresh renderer per refresh — setData is never reused");
+        String log = m.getMember("branch").getMember("log").toString();
+        assertTrue(log.contains("dissolveBranch:tree"));
+        assertTrue(m.getMember("branch").invokeMember("hasBranch", "tree").asBoolean(), "exactly one live tree sub-branch");
     }
 
     @Test
     void theRefreshButtonRefreshes() {
-        Value m = mount("w-me");
+        Value m = mount("w-me", "FIXTURE");
         Value root = m.getMember("host").getMember("children").getArrayElement(0);
-        Value btn = finder().execute(root, "pm-btn").getArrayElement(0);
+        Value btn = find(root, "pm-btn").getArrayElement(0);
         assertEquals("button", btn.getMember("attrs").getMember("type").asString());
         btn.invokeMember("click");
-        assertTrue(m.getMember("branch").getMember("log").toString().contains("dissolveBranch:tree"));
+        assertEquals(2, global("MADE").getArraySize());
     }
 
     @Test
-    void clickingAHeaderFoldsItsChildren() {
-        Value m = mount("w-me");
+    void theHeaderCountsAndTheNoteNeverSaysNoLeaks() {
+        Value m = mount("w-me", "FIXTURE");
         Value root = m.getMember("host").getMember("children").getArrayElement(0);
-        Value headers = finder().execute(root, "pm-node-header");
-        Value widgetsHeader = headers.getArrayElement(2);
-        assertEquals("widgets", finder().execute(widgetsHeader, "pm-name").getArrayElement(0).getMember("textContent").asString());
-        assertEquals(0, finder().execute(root, "pm-folded").getArraySize());
-        widgetsHeader.invokeMember("click");
-        assertEquals(1, finder().execute(root, "pm-folded").getArraySize());
-        widgetsHeader.invokeMember("click");
-        assertEquals(0, finder().execute(root, "pm-folded").getArraySize());
+        assertEquals("4 branches · 1 element", find(root, "pm-count").getArrayElement(0).getMember("textContent").asString());
+        Value note = find(root, "pm-note").getArrayElement(0);
+        String text = note.getMember("textContent").asString();
+        assertTrue(text.startsWith("1 owner collected"), text);
+        assertFalse(text.toLowerCase().contains("no leaks"));
+        assertTrue(note.getMember("cls").invokeMember("has", "pm-note-leaked").asBoolean());
+
+        Value clean = mount("w-me", "CLEAN").getMember("host").getMember("children").getArrayElement(0);
+        Value cnote = find(clean, "pm-note").getArrayElement(0);
+        assertTrue(cnote.getMember("textContent").asString().startsWith("No owners collected"));
+        assertTrue(cnote.getMember("textContent").asString().contains("not the same as no leaks"));
+        assertFalse(cnote.getMember("cls").invokeMember("has", "pm-note-leaked").asBoolean());
     }
 
-    // ----------------------------------------------------- cannot touch
-
-    /**
-     * The contract, stated as what the renderer never did: it made its own
-     * elements and one sub-branch, and it never reached for the live party —
-     * the default viewParty in these stubs throws, and the fixture is frozen.
-     */
+    /** The default view and the default tree class both throw in these stubs; passing means neither was reached. */
     @Test
-    void theRendererTouchesOnlyItsOwnBranch() {
-        Value m = mount("w-me");
-        Value branch = m.getMember("branch");
-        Value tree = branch.getMember("branches").getMember("tree");
-        assertEquals("partyMonitor:tree", tree.getMember("activated").getMember("label").asString());
-        // The sub-branch's owner is the monitor's own root element, not a party object.
-        assertTrue(tree.getMember("activated").getMember("owner").getMember("cls")
-                .invokeMember("has", "pm-root").asBoolean());
+    void theRendererReachesNeitherThePartyNorTheRealTreeRenderer() {
+        Value m = mount("w-me", "FIXTURE");
         m.getMember("ctl").invokeMember("refresh");
-        assertTrue(js.eval("js", "Object.isFrozen(FIXTURE)").asBoolean(), "still frozen after two draws");
+        assertTrue(js.eval("js", "Object.isFrozen(FIXTURE)").asBoolean());
     }
 }
