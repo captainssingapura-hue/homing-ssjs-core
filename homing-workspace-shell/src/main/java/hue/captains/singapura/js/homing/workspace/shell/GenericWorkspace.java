@@ -32,7 +32,10 @@ import java.util.Optional;
  * <p><b>{@code ws_kind} is the legacy form.</b> Every permalink minted before
  * RFC 0058 carries it, so the codec still reads it: a kind resolves to the group
  * holding it, and the kind rides along in the params so a flat render opens
- * that kind. {@code /goto} canonicalises the pair to the group's path plus the
+ * that kind. The two forms are exclusive: with {@code ws_group} named, a
+ * {@code ws_kind} beside it is ignored, so a rider on a path address names
+ * nothing — the anchor is the one way to name a kind there. {@code /goto}
+ * canonicalises the legacy form to the group's path plus the
  * kind's anchor ({@link AnchorAddressable}). A kind no group holds renders
  * alone, as an implicit group of one — the shape every deployment had before
  * groups existed, so an unmigrated studio keeps working.</p>
@@ -92,17 +95,22 @@ public final class GenericWorkspace extends WorkspaceMPA<GenericWorkspace.Params
             String group = blankToNull(QueryString.first(query, "ws_group"));
             String kind  = blankToNull(QueryString.first(query, "ws_kind"));
             if (group == null && kind == null) return Decoded.missing("ws_group");
-            if (group == null) {
-                // Legacy: the kind names its group, when one holds it.
-                group = WorkspaceGroupRegistry.INSTANCE.groupOf(kind).map(WorkspaceGroup::id).orElse(null);
-            }
+            // The two forms are exclusive. With a group named, a ws_kind beside
+            // it is ignored: on a path address the placement's ws_group is
+            // overlaid on the request's query, and a ?ws_kind= rider there
+            // would otherwise name a kind the anchor is the one way to name.
+            if (group != null) return Decoded.ok(new Params(group, null));
+            // Legacy: the kind names its group, when one holds it.
+            group = WorkspaceGroupRegistry.INSTANCE.groupOf(kind).map(WorkspaceGroup::id).orElse(null);
             return Decoded.ok(new Params(group, kind));
         }
 
         @Override public Map<String, List<String>> to(Params params) {
+            // A kind is written in the legacy form alone, so from(to(p)) == p:
+            // the kind names its group, and the group is never written beside it.
             var out = new LinkedHashMap<String, List<String>>();
-            if (params.ws_group() != null) out.put("ws_group", List.of(params.ws_group()));
-            if (params.ws_kind()  != null) out.put("ws_kind",  List.of(params.ws_kind()));
+            if (params.ws_kind() != null)  out.put("ws_kind",  List.of(params.ws_kind()));
+            else                           out.put("ws_group", List.of(params.ws_group()));
             return out;
         }
 

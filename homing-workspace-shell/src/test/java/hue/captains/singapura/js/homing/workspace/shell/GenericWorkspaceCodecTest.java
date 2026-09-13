@@ -39,6 +39,11 @@ class GenericWorkspaceCodecTest {
 
     @Test
     void genericWorkspaceRoundTripsBothForms() {
+        // The paired form round-trips through the registry: a kind is written alone
+        // (the legacy form) and reads back paired with the group holding it.
+        var trader = WorkspaceGroupTest.spec("trader", "Trader Desk", "Trading");
+        WorkspaceSpecRegistry.INSTANCE.register(trader);
+        WorkspaceGroupRegistry.INSTANCE.register(WorkspaceGroup.of("fx-desk", "FX Desk", "", List.of(trader)));
         ParamCodecLaw.assertRoundTrips("GenericWorkspace", GenericWorkspace.CODEC, List.of(
                 new GenericWorkspace.Params("studio-ws", null),          // a placement
                 new GenericWorkspace.Params("fx-desk", "trader"),         // legacy kind, its group resolved
@@ -65,11 +70,16 @@ class GenericWorkspaceCodecTest {
         // Groupless when no group holds the kind — the address a pre-group deployment minted.
         assertEquals(new GenericWorkspace.Params(null, "orphan"),
                 GenericWorkspace.CODEC.fromQueryString("ws_kind=orphan").orNull());
-        // The canonical form is read as written; a kind beside it rides along.
+        // The canonical form is read as written — and a ws_kind beside it is IGNORED.
+        // On a path address the placement's ws_group is overlaid on the request's
+        // query, so this is exactly what /cat/…/workspaces?ws_kind=trader decodes to:
+        // the group, and nothing the query smuggled. The anchor names the kind there.
         assertEquals(new GenericWorkspace.Params("fx-desk", null),
                 GenericWorkspace.CODEC.fromQueryString("ws_group=fx-desk").orNull());
-        assertEquals(new GenericWorkspace.Params("fx-desk", "trader"),
+        assertEquals(new GenericWorkspace.Params("fx-desk", null),
                 GenericWorkspace.CODEC.fromQueryString("ws_group=fx-desk&ws_kind=trader").orNull());
+        // And the paired value writes as the legacy form alone.
+        assertEquals(Set.of("ws_kind"), GenericWorkspace.CODEC.to(new GenericWorkspace.Params("fx-desk", "trader")).keySet());
     }
 
     @Test

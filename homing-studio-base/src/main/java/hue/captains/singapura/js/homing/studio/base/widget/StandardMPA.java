@@ -339,7 +339,12 @@ public abstract class StandardMPA<P extends AppModule._Param, M extends Standard
         // after the trail the server stamped: the seam is exactly where the
         // server's knowledge ends. The stamped crumbs are the base and are
         // never replaced — only continued.
+        // `params` is the server-STAMPED value alone — what the codec decoded on
+        // the flat route, what the placement wrote on the path route — never the
+        // query. A widget that must know what the server vouched for reads it
+        // here; widgetParams is the union, for pass-through.
         lines.add("    var page = Object.freeze({");
+        lines.add("        params: (typeof params !== 'undefined' && params) ? params : null,");
         lines.add("        extendCrumbs: function (more) {");
         lines.add("            var base = (chrome && chrome.crumbs && chrome.crumbs.length) ? chrome.crumbs.slice() : [{ text: resolvedTitle }];");
         lines.add("            resolvedCrumbs = base.concat(more || []);");
