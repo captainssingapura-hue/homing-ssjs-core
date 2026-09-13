@@ -47,6 +47,14 @@ class _DomOpsPartyBase {
   #ownerRef = null;
 
   /**
+   * @type {string|null} — String(owner), captured at activate(). A plain
+   * string outlives the owner it names, which is the point: a LEAKED branch
+   * — owner registered, since collected — is exactly the one whose owner
+   * can no longer be asked, and exactly the one whose name matters most.
+   */
+  #ownerLabel = null;
+
+  /**
    * @param {string}         name       - Branch label. [a-zA-Z0-9_-]+
    * @param {number}         depth      - Distance from root (0 = root, 18 = max).
    * @param {(() => void)|null} [deregister=null] - Callback to remove this
@@ -98,7 +106,7 @@ class _DomOpsPartyBase {
   // ── Activation gate ───────────────────────────────────────────────────────
 
   /**
-   * Throws if this branch has not been activated via activate(owner).
+   * Throws if this branch has not been activated via activate(owner, label).
    * Called by createElement() and createBranch() to enforce the rule that
    * every branch must have an owner before it can do work.
    */
@@ -263,6 +271,63 @@ class _DomOpsPartyBase {
            `elements=${this.#elements.size}, branches=${this.#branches.size})`;
   }
 
+  /**
+   * The label given at activate() — explicitly, or `String(owner)` — or null
+   * when this branch was never activated. RFC 0063 D2: a label, never the
+   * handle. A string cannot dissolve anything; the WeakRef stays private.
+   *
+   * Captured rather than derived so that it survives the owner: a leaked
+   * branch is precisely one whose owner can no longer be dereferenced, and
+   * precisely the one you want named.
+   *
+   * @returns {string|null}
+   */
+  get ownerLabel() { return this.#ownerLabel; }
+
+  /**
+   * A frozen, plain-data projection of this branch and everything under it —
+   * RFC 0063's observation by construction.
+   *
+   * Nothing in the result is a function, and nothing in it is a live branch
+   * or element, so a holder of a snapshot can inspect the tree and cannot
+   * touch it. That is the whole contract: a monitor inside the tree it
+   * renders must not hold the handle that could dissolve its own host.
+   *
+   * `path` is computed by this walk — relative to the node it is called on,
+   * absolute from the root. A branch does not store its own path; being
+   * addressable from outside is a capability the party has never granted.
+   *
+   * `ownerAlive === false` is a leak: an owner that was registered and has
+   * since been collected. Detection depends on the engine having run GC, so
+   * `true` means "not collected yet", not "not leaked".
+   *
+   * @returns {Readonly<{
+   *   name: string, depth: number, path: readonly string[],
+   *   owner: string|null, ownerAlive: boolean|null,
+   *   elements: readonly {name: string, tagName: string}[],
+   *   branches: readonly object[]
+   * }>}
+   */
+  snapshot() { return this.#snapshotAt([]); }
+
+  /** The walk behind snapshot(); `above` is the path to this node's parent. */
+  #snapshotAt(above) {
+    const path = Object.freeze([...above, this.#name]);
+    const elements = Object.freeze(
+      this.listElements().map(e => Object.freeze({ name: e.name, tagName: e.tagName })));
+    const branches = Object.freeze(
+      [...this.#branches.values()].map(b => b.#snapshotAt(path)));
+    return Object.freeze({
+      name:       this.#name,
+      depth:      this.#depth,
+      path,
+      owner:      this.#ownerLabel,
+      ownerAlive: this.isOwnerAlive,
+      elements,
+      branches,
+    });
+  }
+
   // ── Protected helpers — for subclass createBranch overrides only ──────────
 
   /**
@@ -337,16 +402,24 @@ class _DomOpsPartyBase {
    * Activation is optional: root and utility branches that have no
    * component owner work fine without it.
    *
-   * @param {object} owner - The component responsible for this branch.
+   * @param {object} owner - The object whose reachability IS this branch's
+   *        rightful lifetime — the component that mounted it, the tab that
+   *        holds it. A literal minted at the call site is collected at the
+   *        first GC and the branch reads as leaked ever after (RFC 0063 D14).
+   * @param {string} [label=String(owner)] - What the branch is called in a
+   *        view. Separate from the owner so that the real owner can be
+   *        passed even when its toString is not presentable — a tab, a
+   *        controller — and the label still reads "widget:…".
    * @throws {Error} If the branch has already been activated.
    */
-  activate(owner) {
+  activate(owner, label = String(owner)) {
     if (this.#ownerRef !== null) {
       throw new Error(
         `[DomOpsParty] activate: Branch "${this.#name}" is already activated.`
       );
     }
     this.#ownerRef = new WeakRef(owner);
+    this.#ownerLabel = String(label);
   }
 
   /**

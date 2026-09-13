@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.workspace.WidgetEntry;
 import hue.captains.singapura.js.homing.workspace.WidgetGroup;
 import hue.captains.singapura.js.homing.workspace.WidgetIcon;
 import hue.captains.singapura.js.homing.workspace.WidgetLabel;
+import hue.captains.singapura.js.homing.workspace.shell.DomOpsPartyMonitorWidget;
 import hue.captains.singapura.js.homing.workspace.shell.PartyDecl;
 import hue.captains.singapura.js.homing.workspace.shell.Arrangement;
 import hue.captains.singapura.js.homing.workspace.shell.PaneArrangement;
@@ -110,7 +111,13 @@ public final class StudioWorkspaceSpec implements WorkspaceSpec {
                         .withGroup(WidgetGroup.of("Navigation")),
                 WidgetEntry.of(DocContentWidget.class, WidgetLabel.of("Document"))
                         .withIcon(new WidgetIcon.Emoji("📖")) // 📖
-                        .withGroup(WidgetGroup.of("Navigation"))
+                        .withGroup(WidgetGroup.of("Navigation")),
+                // RFC 0063 — the branch tree, seen from inside itself. Declared
+                // here rather than appended by the shell (D10), so the guard that
+                // checks placements against this list keeps its meaning.
+                WidgetEntry.of(DomOpsPartyMonitorWidget.class, WidgetLabel.of("Party Monitor"))
+                        .withIcon(new WidgetIcon.Emoji("🧬")) // 🧬
+                        .withGroup(WidgetGroup.of("Diagnostics"))
         );
     }
 

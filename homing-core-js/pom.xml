@@ -45,6 +45,13 @@
             <version>${project.parent.version}</version>
             <scope>test</scope>
         </dependency>
+        <!-- RFC 0063 — the base gets its first direct test; the JS harness lives here. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-ssjs-test-fixtures</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 </project>

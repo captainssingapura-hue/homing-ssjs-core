@@ -20,6 +20,14 @@ import java.util.List;
  * element ownership, branch registration, recursive {@code dissolve()}
  * teardown, owner-WeakRef activation gate, and name validation.</p>
  *
+ * <p>RFC 0063 adds the read-only projection: {@code snapshot()} returns a
+ * deep-frozen plain-data tree — name, depth, path, owner label, owner
+ * liveness, elements, branches — holding no function and no live reference,
+ * so a holder can inspect the tree and cannot touch it. {@code ownerLabel}
+ * is {@code String(owner)} captured at {@code activate()}, and so outlives
+ * the owner: a leaked branch is exactly the one whose owner can no longer be
+ * asked. This is the first behaviour of the base to have a direct test.</p>
+ *
  * <p>The leading underscore in {@code _DomOpsPartyBase} is preserved from
  * the upstream source as a Java identifier; it's a legal record name and
  * keeps the JS export symbol identical to the vendored bundle.</p>

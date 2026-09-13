@@ -4,6 +4,8 @@ import hue.captains.singapura.js.homing.core.DomModule;
 import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
+import hue.captains.singapura.js.homing.core.ModuleImports;
+import hue.captains.singapura.js.homing.core.js.ServingContextModule;
 
 import java.util.List;
 
@@ -34,7 +36,13 @@ public record WidgetMounterModule() implements DomModule<WidgetMounterModule> {
     public record WidgetMounter() implements Exportable._Class<WidgetMounterModule> {}
 
     @Override
-    public ImportsFor<WidgetMounterModule> imports() { return ImportsFor.noImports(); }
+    public ImportsFor<WidgetMounterModule> imports() {
+        return ImportsFor.<WidgetMounterModule>builder()
+                // RFC 0063 — so a widget joins the chrome's import chain instead of forking it.
+                .add(new ModuleImports<>(List.of(new ServingContextModule.withServingContext()),
+                        ServingContextModule.INSTANCE))
+                .build();
+    }
 
     @Override
     public ExportsOf<WidgetMounterModule> exports() {

@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.core.js;
 
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
+import hue.captains.singapura.js.homing.core.StandardJsModuleType;
 
 import java.util.List;
 
@@ -28,10 +29,12 @@ public final class CoreJsCrate implements Crate {
     @Override
     public List<CrateEntry> entries() {
         return List.of(
-                CrateEntry.of(TreeRendererModule.INSTANCE),
+                CrateEntry.of(TreeRendererModule.INSTANCE),
                 CrateEntry.of(DomOpsPartyModule.INSTANCE),
                 CrateEntry.of(DomOpsPartyBaseModule.INSTANCE),
                 CrateEntry.of(NodeContentModule.INSTANCE),
+                // RFC 0063 — the query this chain was served with; isolates import.meta.
+                CrateEntry.of(ServingContextModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(TocSyncSecretaryModule.INSTANCE));
     }
 }

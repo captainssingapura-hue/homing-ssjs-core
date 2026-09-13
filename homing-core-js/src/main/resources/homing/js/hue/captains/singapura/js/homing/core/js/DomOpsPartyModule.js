@@ -288,6 +288,24 @@ class DomOpsParty extends _DomOpsPartyBase {
 // ─── Global singleton ────────────────────────────────────────────────────────
 const domOpsParty = new DomOpsParty('root');
 
-/** Sentinel owner for the root — module-scoped, never GC'd. */
-const partyChief = Object.freeze({ toString: () => 'partyChief' });
-domOpsParty.activate(partyChief);
+// The root owns itself. There is nothing above it and it cannot dissolve, so
+// "owned by the party" is the truth rather than a sentinel standing in for it —
+// and the singleton is retained by this module for as long as the page lives,
+// which is what makes the owner reachable. RFC 0063 found the previous form
+// wrong: a module-level const that is neither exported nor captured is not
+// retained by V8, and the root read as leaked on every workspace.
+domOpsParty.activate(domOpsParty, 'partyChief');
+
+// ─── View ────────────────────────────────────────────────────────────────────
+
+/**
+ * The party tree as data — RFC 0063's observation by construction.
+ *
+ * This is the ONLY thing a monitor imports. Not `domOpsParty`: that is the
+ * root handle, and a widget inside the tree it renders must not hold the
+ * handle that could dissolve its own host. What comes back is a deep-frozen
+ * snapshot with no function and no live reference in it.
+ *
+ * @returns {ReturnType<_DomOpsPartyBase['snapshot']>}
+ */
+const viewParty = () => domOpsParty.snapshot();
