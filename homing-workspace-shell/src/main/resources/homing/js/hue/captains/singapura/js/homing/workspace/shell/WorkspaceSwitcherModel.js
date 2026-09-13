@@ -21,7 +21,7 @@ function kindTreeData(kinds, currentKind) {
     var order = [], byName = {}, slugOf = {};
     for (var i = 0; i < kinds.length; i++) {
         var s = kinds[i].section || DEFAULT_SECTION;
-        if (!byName[s]) { byName[s] = []; order.push(s); slugOf[s] = kinds[i].sectionSlug || "n"; }
+        if (!byName[s]) { byName[s] = []; order.push(s); slugOf[s] = kinds[i].sectionSlug || _slug(s); }
         byName[s].push(kinds[i]);
     }
     return {
@@ -98,41 +98,57 @@ function canDelete(row, currentId) {
 }
 
 /**
- * The URL a choice navigates to.
+ * The URL a choice navigates to. Two apps share this switcher, and they name a
+ * kind two different ways (RFC 0058):
  *
- *   o.kinds       the group's kinds as served — [{kind, title, section, sectionSlug}]
- *   o.groupId     the group's id (null for a kind no group holds)
+ *   ANCHOR mode — the authentic-path app (workspaceGroup). o.kinds carries the
+ *   served section slugs and o.base is absent. The kind is `#ws/<section>/<kind>`
+ *   on the SAME address, and the chrome reloads on hashchange; a same-kind
+ *   change (another instance) keeps the anchor too, because current() carries
+ *   no fragment and a reload without one would open the group's default.
+ *
+ *   GOTO mode — the legacy app (genericWorkspace), unchanged from RFC 0057.
+ *   o.base is "/goto?app=<simpleName>", where a KIND change must go: ws_kind is
+ *   a typed, stamped param, so editing it in the query of a path address
+ *   changes nothing, and /goto resolves the pair to its authentic path when one
+ *   exists and to the flat render otherwise. A same-kind change edits the
+ *   current URL and every other parameter survives.
+ *
+ *   o.kinds       the kinds as served — [{kind, title, section, sectionSlug?}]
  *   o.kind        the chosen kind
+ *   o.currentKind the kind now open
+ *   o.base        "/goto?app=<simpleName>" — GOTO mode when present
  *   o.instanceId  an existing instance (→ ?workspace=)
  *   o.name        a new instance to mint (→ ?name=, which the directory resolves)
- *
- * RFC 0058 — the kind is the ANCHOR. The path and query are the current page's,
- * because a kind lives inside its group and the group is where the page already
- * is: a kind change is `#ws/<section>/<kind>` on the same address, and the
- * chrome reloads on hashchange. On a path address nothing else moves. On the
- * legacy flat address a `ws_kind` in the query would contradict the anchor, so
- * it is rewritten to the canonical `ws_group` — the anchor names the kind, the
- * query names the group, and the two agree.
  *
  * workspace and name are plain query reads — the directory takes them from the
  * address as given — and, with slowmo, are scoped to one kind and one instance,
  * so all three are cleared before the choice is written. Never both workspace
- * and name. The anchor is ALWAYS written, a same-kind change included: current()
- * carries no fragment, and a reload without one would open the group's default.
+ * and name.
  */
 function targetUrl(current, o) {
-    var q = current.indexOf("?");
-    var path   = q < 0 ? current : current.slice(0, q);
-    var params = new URLSearchParams(q < 0 ? "" : current.slice(q + 1));
-    params.delete("workspace"); params.delete("name"); params.delete("slowmo");
-    if (params.has("ws_kind")) {
-        params.delete("ws_kind");
-        if (o.groupId) params.set("ws_group", o.groupId);
-        else           params.set("ws_kind", o.kind);     // no group: the kind stays the address
+    var kindChange = !!(o.kind && o.kind !== o.currentKind);
+    var path, params;
+    if (o.base && kindChange) {
+        var b = o.base.indexOf("?");
+        path   = b < 0 ? o.base : o.base.slice(0, b);
+        params = new URLSearchParams(b < 0 ? "" : o.base.slice(b + 1));
+    } else {
+        var q = current.indexOf("?");
+        path   = q < 0 ? current : current.slice(0, q);
+        params = new URLSearchParams(q < 0 ? "" : current.slice(q + 1));
     }
+    params.delete("workspace"); params.delete("name"); params.delete("slowmo");
+    if (o.base && kindChange) params.set("ws_kind", o.kind);
     if (o.name)            params.set("name", o.name);
     else if (o.instanceId) params.set("workspace", o.instanceId);
     var s = params.toString();
-    var anchor = anchorOf(o.kinds, o.kind);
+    var anchor = o.base ? null : anchorOf(o.kinds, o.kind);
     return path + (s ? "?" + s : "") + (anchor ? "#" + anchor : "");
+}
+
+// The legacy app serves kinds without a slug (its tree is not an address);
+// the authentic-path app serves the slug the server minted and this is unused.
+function _slug(s) {
+    return String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 32) || "n";
 }

@@ -22,7 +22,6 @@ public record WorkspaceGroupPathModule() implements DomModule<WorkspaceGroupPath
     public record anchorOf()     implements Exportable._Constant<WorkspaceGroupPathModule> {}
     public record resolveKind()  implements Exportable._Constant<WorkspaceGroupPathModule> {}
     public record innerCrumbs()  implements Exportable._Constant<WorkspaceGroupPathModule> {}
-    public record soloGroup()    implements Exportable._Constant<WorkspaceGroupPathModule> {}
 
     public static final WorkspaceGroupPathModule INSTANCE = new WorkspaceGroupPathModule();
 
@@ -32,6 +31,6 @@ public record WorkspaceGroupPathModule() implements DomModule<WorkspaceGroupPath
     @Override
     public ExportsOf<WorkspaceGroupPathModule> exports() {
         return new ExportsOf<>(INSTANCE, List.of(
-                new parseAnchor(), new anchorOf(), new resolveKind(), new innerCrumbs(), new soloGroup()));
+                new parseAnchor(), new anchorOf(), new resolveKind(), new innerCrumbs()));
     }
 }

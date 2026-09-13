@@ -43,6 +43,9 @@ public final class WorkspaceShellCrate implements Crate {
                 CrateEntry.of(CodecRegistrarModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(EventEmitterModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(GenericWorkspace.INSTANCE),
+                // RFC 0058 — the authentic-path app: one page per WorkspaceGroup, the kind an anchor.
+                CrateEntry.of(WorkspaceGroupApp.INSTANCE),
+                CrateEntry.of(WorkspaceGroupChrome.INSTANCE),
                 CrateEntry.of(GenericWorkspaceChrome.INSTANCE),
                 CrateEntry.of(LayoutCodecModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(PartyBootstrapModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),

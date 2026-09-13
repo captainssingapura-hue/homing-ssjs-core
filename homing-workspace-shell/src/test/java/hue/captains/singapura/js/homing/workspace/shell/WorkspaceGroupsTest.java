@@ -15,8 +15,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * RFC 0058 law 4, the tree half — every group placed exactly once, no kind a
- * leaf, no unknown group placed. A static walk from the L0 root, so the studio
+ * RFC 0058 law 4, the tree half — every group placed exactly once, no unknown
+ * group placed, and no kind both held by a group and placed as a legacy leaf. A static walk from the L0 root, so the studio
  * fails to boot with the names rather than the index shadowing a placement.
  */
 class WorkspaceGroupsTest {
@@ -56,20 +56,24 @@ class WorkspaceGroupsTest {
         @Override public List<Entry<Sub>> leaves() { return LEAVES; }
     }
 
-    private static Navigable<GenericWorkspace.Params, GenericWorkspace> nav(GenericWorkspace.Params p, String name) {
-        return new Navigable<>(GenericWorkspace.INSTANCE, p, name, "");
+    private static Navigable<WorkspaceGroupApp.Params, WorkspaceGroupApp> nav(WorkspaceGroupApp.Params p, String name) {
+        return new Navigable<>(WorkspaceGroupApp.INSTANCE, p, name, "");
+    }
+
+    private static Navigable<GenericWorkspace.Params, GenericWorkspace> legacy(String kind, String name) {
+        return new Navigable<>(GenericWorkspace.INSTANCE, new GenericWorkspace.Params(kind), name, "");
     }
 
     @Test
     void everyGroupPlacedOnceAcrossTheTreePasses() {
-        Tree.LEAVES = List.of(Entry.of(Tree.INSTANCE, nav(GenericWorkspace.ofGroup(desk), "Desk")));
-        Sub.LEAVES  = List.of(Entry.of(Sub.INSTANCE,  nav(GenericWorkspace.ofGroup(ops),  "Ops")));
+        Tree.LEAVES = List.of(Entry.of(Tree.INSTANCE, nav(WorkspaceGroupApp.of(desk), "Desk")));
+        Sub.LEAVES  = List.of(Entry.of(Sub.INSTANCE,  nav(WorkspaceGroupApp.of(ops),  "Ops")));
         assertDoesNotThrow(() -> WorkspaceGroups.assertPlacedOnce(Tree.INSTANCE, WorkspaceGroupRegistry.INSTANCE));
     }
 
     @Test
     void anUnplacedGroupIsNamed() {
-        Tree.LEAVES = List.of(Entry.of(Tree.INSTANCE, nav(GenericWorkspace.ofGroup(desk), "Desk")));
+        Tree.LEAVES = List.of(Entry.of(Tree.INSTANCE, nav(WorkspaceGroupApp.of(desk), "Desk")));
         var e = assertThrows(IllegalStateException.class,
                 () -> WorkspaceGroups.assertPlacedOnce(Tree.INSTANCE, WorkspaceGroupRegistry.INSTANCE));
         assertTrue(e.getMessage().contains("group 'ops'") && e.getMessage().contains("placed nowhere"), e.getMessage());
@@ -77,9 +81,9 @@ class WorkspaceGroupsTest {
 
     @Test
     void aGroupPlacedTwiceNamesBothPositions() {
-        Tree.LEAVES = List.of(Entry.of(Tree.INSTANCE, nav(GenericWorkspace.ofGroup(desk), "Desk")));
-        Sub.LEAVES  = List.of(Entry.of(Sub.INSTANCE,  nav(GenericWorkspace.ofGroup(desk), "Desk again")),
-                              Entry.of(Sub.INSTANCE,  nav(GenericWorkspace.ofGroup(ops),  "Ops")));
+        Tree.LEAVES = List.of(Entry.of(Tree.INSTANCE, nav(WorkspaceGroupApp.of(desk), "Desk")));
+        Sub.LEAVES  = List.of(Entry.of(Sub.INSTANCE,  nav(WorkspaceGroupApp.of(desk), "Desk again")),
+                              Entry.of(Sub.INSTANCE,  nav(WorkspaceGroupApp.of(ops),  "Ops")));
         var e = assertThrows(IllegalStateException.class,
                 () -> WorkspaceGroups.assertPlacedOnce(Tree.INSTANCE, WorkspaceGroupRegistry.INSTANCE));
         assertTrue(e.getMessage().contains("group 'desk' is placed 2 times"), e.getMessage());
@@ -87,20 +91,26 @@ class WorkspaceGroupsTest {
     }
 
     @Test
-    void aKindPlacedAsALeafIsRefused() {
-        Tree.LEAVES = List.of(Entry.of(Tree.INSTANCE, nav(GenericWorkspace.ofGroup(desk), "Desk")),
-                              Entry.of(Tree.INSTANCE, nav(new GenericWorkspace.Params(null, "loose"), "Loose")));
-        Sub.LEAVES  = List.of(Entry.of(Sub.INSTANCE,  nav(GenericWorkspace.ofGroup(ops),  "Ops")));
+    void aLegacyKindLeafIsFineUntilAGroupHoldsTheKind() {
+        // 'loose' is held by no group: its legacy leaf is the only address it has.
+        Tree.LEAVES = List.of(Entry.of(Tree.INSTANCE, nav(WorkspaceGroupApp.of(desk), "Desk")),
+                              Entry.of(Tree.INSTANCE, legacy("loose", "Loose")));
+        Sub.LEAVES  = List.of(Entry.of(Sub.INSTANCE,  nav(WorkspaceGroupApp.of(ops),  "Ops")));
+        assertDoesNotThrow(() -> WorkspaceGroups.assertPlacedOnce(Tree.INSTANCE, WorkspaceGroupRegistry.INSTANCE));
+
+        // 'trader' is held by 'desk' AND placed as a legacy leaf: one kind, two positions.
+        Sub.LEAVES  = List.of(Entry.of(Sub.INSTANCE,  nav(WorkspaceGroupApp.of(ops),  "Ops")),
+                              Entry.of(Sub.INSTANCE,  legacy("trader", "Trader (old)")));
         var e = assertThrows(IllegalStateException.class,
                 () -> WorkspaceGroups.assertPlacedOnce(Tree.INSTANCE, WorkspaceGroupRegistry.INSTANCE));
-        assertTrue(e.getMessage().contains("kind 'loose'") && e.getMessage().contains("never a leaf"), e.getMessage());
+        assertTrue(e.getMessage().contains("kind 'trader' is positioned twice") && e.getMessage().contains("group 'desk'")
+                && e.getMessage().contains(Sub.class.getName()), e.getMessage());
     }
-
     @Test
     void anUnregisteredGroupIsRefused() {
-        Tree.LEAVES = List.of(Entry.of(Tree.INSTANCE, nav(GenericWorkspace.ofGroup(desk), "Desk")),
-                              Entry.of(Tree.INSTANCE, nav(new GenericWorkspace.Params("ghost", null), "Ghost")));
-        Sub.LEAVES  = List.of(Entry.of(Sub.INSTANCE,  nav(GenericWorkspace.ofGroup(ops),  "Ops")));
+        Tree.LEAVES = List.of(Entry.of(Tree.INSTANCE, nav(WorkspaceGroupApp.of(desk), "Desk")),
+                              Entry.of(Tree.INSTANCE, nav(new WorkspaceGroupApp.Params("ghost"), "Ghost")));
+        Sub.LEAVES  = List.of(Entry.of(Sub.INSTANCE,  nav(WorkspaceGroupApp.of(ops),  "Ops")));
         var e = assertThrows(IllegalStateException.class,
                 () -> WorkspaceGroups.assertPlacedOnce(Tree.INSTANCE, WorkspaceGroupRegistry.INSTANCE));
         assertTrue(e.getMessage().contains("unregistered group: 'ghost'"), e.getMessage());

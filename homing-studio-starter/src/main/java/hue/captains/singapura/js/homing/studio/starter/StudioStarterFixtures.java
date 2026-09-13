@@ -8,6 +8,7 @@ import hue.captains.singapura.js.homing.studio.base.Umbrella;
 import hue.captains.singapura.js.homing.studio.workspace.CatalogueForestGetAction;
 import hue.captains.singapura.js.homing.studio.workspace.StudioWorkspaceSpec;
 import hue.captains.singapura.js.homing.workspace.shell.GenericWorkspace;
+import hue.captains.singapura.js.homing.workspace.shell.WorkspaceGroupApp;
 import hue.captains.singapura.js.homing.workspace.shell.WorkspaceSpecRegistry;
 import hue.captains.singapura.tao.http.action.GetAction;
 import hue.captains.singapura.tao.ontology.ValueObject;
@@ -86,6 +87,7 @@ public record StudioStarterFixtures<S extends Studio<?>>(Umbrella<S> umbrella)
     public List<AppModule<?, ?>> harnessApps() {
         var apps = new ArrayList<>(defaults().harnessApps());
         apps.add(GenericWorkspace.INSTANCE);
+        apps.add(WorkspaceGroupApp.INSTANCE);   // RFC 0058 — the authentic-path app a studio places its groups on
         return List.copyOf(apps);
     }
 

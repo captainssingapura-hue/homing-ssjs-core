@@ -48,20 +48,15 @@ function anchorOf(kinds, kind) {
 }
 
 /**
- * Which kind the page opens, and why.
- *
- *   1. the anchor's kind, when the group holds it — canonicalised to its true
- *      section, so #ws/wrong/trader and #ws/trader both open trader at
- *      #ws/trading/trader;
- *   2. else the legacy ws_kind param, when the group holds it;
- *   3. else the group's default.
- *   A ws/ anchor that named a kind the group does not hold draws a notice in
- *   either of the last two cases — it lied, whatever opened instead. A non-ws
- *   anchor draws none: it was never a workspace path.
+ * Which kind the page opens, and why: the anchor's kind when the group holds
+ * it — canonicalised to its true section, so #ws/wrong/trader and #ws/trader
+ * both open trader at #ws/trading/trader — else the group's default. A ws/
+ * anchor that named a kind the group does not hold draws a notice; a non-ws
+ * anchor draws none, because it was never a workspace path.
  *
  * → { kind, anchor, canonicalised, notice }
  */
-function resolveKind(group, hash, legacyKind) {
+function resolveKind(group, hash) {
     var kinds = group.kinds || [];
     var parsed = parseAnchor(hash);
     if (parsed && _find(kinds, parsed.kind)) {
@@ -69,14 +64,11 @@ function resolveKind(group, hash, legacyKind) {
         return { kind: parsed.kind, anchor: canonical,
                  canonicalised: _stripHash(hash) !== canonical, notice: null };
     }
-    // A ws/ anchor that named a kind the group does not hold lied, whatever
-    // opens instead: the notice names it either way.
-    var opened = (legacyKind && _find(kinds, legacyKind)) ? _find(kinds, legacyKind)
-               : (_find(kinds, group.defaultKind) || kinds[0]);
+    var dflt = _find(kinds, group.defaultKind) || kinds[0];
     var notice = parsed
-            ? "No workspace at #" + _stripHash(hash) + " in " + group.title + " — opened " + (opened.title || opened.kind) + "."
+            ? "No workspace at #" + _stripHash(hash) + " in " + group.title + " — opened " + (dflt.title || dflt.kind) + "."
             : null;
-    return { kind: opened.kind, anchor: anchorOf(kinds, opened.kind), canonicalised: !!parsed, notice: notice };
+    return { kind: dflt.kind, anchor: anchorOf(kinds, dflt.kind), canonicalised: !!parsed, notice: notice };
 }
 
 /**
@@ -87,20 +79,4 @@ function innerCrumbs(group, kind) {
     var k = _find(group.kinds, kind);
     if (!k) return [];
     return [ { text: k.section }, { text: k.title || k.kind } ];
-}
-
-/** A group of one — the shape a kind no group holds renders as (legacy). */
-function soloGroup(spec) {
-    return {
-        id: spec.kind, title: spec.title || spec.kind, summary: "", defaultKind: spec.kind,
-        kinds: [ { kind: spec.kind, title: spec.title || spec.kind,
-                   section: spec.section || "Workspaces",
-                   sectionSlug: _slug(spec.section || "Workspaces") } ]
-    };
-}
-
-// Only soloGroup derives a slug, for a spec the server never grouped; a served
-// group carries its slugs. Same shape as NodeName.conciseSlug for plain ASCII.
-function _slug(s) {
-    return String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 32) || "n";
 }

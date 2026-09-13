@@ -73,41 +73,37 @@ class WorkspaceGroupPathTest extends JsModuleTestBase {
     }
 
     @Test
-    void resolveKindPrefersTheAnchorThenTheLegacyParamThenTheDefault() {
+    void resolveKindIsTheAnchorsKindElseTheDefault() {
         Value g = global("GROUP");
         // The anchor's kind, canonical.
-        Value r = global("resolveKind").execute(g, "#ws/trading/sales", "");
+        Value r = global("resolveKind").execute(g, "#ws/trading/sales");
         assertEquals("sales", r.getMember("kind").asString());
         assertEquals("ws/trading/sales", r.getMember("anchor").asString());
         assertFalse(r.getMember("canonicalised").asBoolean());
         assertTrue(r.getMember("notice").isNull());
         // A known kind under the wrong section, or alone, is canonicalised.
-        r = global("resolveKind").execute(g, "#ws/wrong/ipv", "");
+        r = global("resolveKind").execute(g, "#ws/wrong/ipv");
         assertEquals("ipv", r.getMember("kind").asString());
         assertEquals("ws/product-control-ipv/ipv", r.getMember("anchor").asString());
         assertTrue(r.getMember("canonicalised").asBoolean());
-        r = global("resolveKind").execute(g, "#ws/ipv", "trader");
-        assertEquals("ipv", r.getMember("kind").asString(), "the anchor outranks the legacy param");
-        // The legacy param, when the group holds it.
-        r = global("resolveKind").execute(g, "", "sales");
-        assertEquals("sales", r.getMember("kind").asString());
-        assertEquals("ws/trading/sales", r.getMember("anchor").asString());
+        r = global("resolveKind").execute(g, "#ws/ipv");
+        assertEquals("ipv", r.getMember("kind").asString());
+        assertTrue(r.getMember("canonicalised").asBoolean());
         // The default, silently, with no anchor or a heading anchor.
-        r = global("resolveKind").execute(g, "", "");
+        r = global("resolveKind").execute(g, "");
         assertEquals("trader", r.getMember("kind").asString());
+        assertEquals("ws/trading/trader", r.getMember("anchor").asString());
+        assertFalse(r.getMember("canonicalised").asBoolean());
         assertTrue(r.getMember("notice").isNull());
-        r = global("resolveKind").execute(g, "#some-heading", "");
+        r = global("resolveKind").execute(g, "#some-heading");
         assertEquals("trader", r.getMember("kind").asString());
         assertTrue(r.getMember("notice").isNull(), "a heading anchor was never a workspace path — no notice");
         // The default WITH a notice when a ws/ anchor named a kind the group does not hold.
-        r = global("resolveKind").execute(g, "#ws/trading/etrading", "");
+        r = global("resolveKind").execute(g, "#ws/trading/etrading");
         assertEquals("trader", r.getMember("kind").asString());
+        assertTrue(r.getMember("canonicalised").asBoolean());
         assertTrue(r.getMember("notice").asString().contains("#ws/trading/etrading"), r.getMember("notice").asString());
         assertTrue(r.getMember("notice").asString().contains("Trader Desk"));
-        // …and likewise when the legacy param decides what opens: the anchor still lied.
-        r = global("resolveKind").execute(g, "#ws/trading/etrading", "sales");
-        assertEquals("sales", r.getMember("kind").asString());
-        assertTrue(r.getMember("notice").asString().contains("opened Sales Desk"), r.getMember("notice").asString());
     }
 
     @Test
@@ -118,17 +114,6 @@ class WorkspaceGroupPathTest extends JsModuleTestBase {
         assertEquals("IPV", c.getArrayElement(1).getMember("text").asString());
         assertFalse(c.getArrayElement(0).hasMember("href"), "neither crumb is a server position");
         assertEquals(0, global("innerCrumbs").execute(global("GROUP"), "nope").getArraySize());
-    }
-
-    @Test
-    void aSoloGroupIsAGroupOfOne() {
-        Value spec = js.eval("js", "({ kind: 'studio', title: 'Studio', section: 'Workspaces' })");
-        Value g = global("soloGroup").execute(spec);
-        assertEquals("studio", g.getMember("id").asString());
-        assertEquals("studio", g.getMember("defaultKind").asString());
-        assertEquals(1, g.getMember("kinds").getArraySize());
-        assertEquals("workspaces", g.getMember("kinds").getArrayElement(0).getMember("sectionSlug").asString());
-        assertEquals("ws/workspaces/studio", global("anchorOf").execute(g.getMember("kinds"), "studio").asString());
     }
 
     // ----------------------------------------------------------- the switcher
@@ -150,28 +135,43 @@ class WorkspaceGroupPathTest extends JsModuleTestBase {
     }
 
     @Test
-    void targetUrlIsTheSameAddressWithTheKindsAnchor() {
+    void anchorMode_targetUrlIsTheSameAddressWithTheKindsAnchor() {
         Value kinds = global("GROUP").getMember("kinds");
         // A path address: nothing but the anchor changes; scoped params are cleared.
         String u = global("targetUrl").execute("/cat/fx-options-desk/workspaces?workspace=old&slowmo=500",
-                obj("kinds", kinds, "groupId", "fx-desk", "kind", "ipv")).asString();
+                obj("kinds", kinds, "currentKind", "trader", "kind", "ipv")).asString();
         assertEquals("/cat/fx-options-desk/workspaces#ws/product-control-ipv/ipv", u);
-        // An instance rides in the query, before the anchor.
+        // An instance rides in the query, before the anchor; a same-kind change keeps the anchor.
         u = global("targetUrl").execute("/cat/fx-options-desk/workspaces",
-                obj("kinds", kinds, "groupId", "fx-desk", "kind", "sales", "instanceId", "abc")).asString();
+                obj("kinds", kinds, "currentKind", "sales", "kind", "sales", "instanceId", "abc")).asString();
         assertEquals("/cat/fx-options-desk/workspaces?workspace=abc#ws/trading/sales", u);
         // A new name likewise.
         u = global("targetUrl").execute("/cat/fx-options-desk/workspaces",
-                obj("kinds", kinds, "groupId", "fx-desk", "kind", "trader", "name", "EOD checks")).asString();
+                obj("kinds", kinds, "currentKind", "sales", "kind", "trader", "name", "EOD checks")).asString();
         assertEquals("/cat/fx-options-desk/workspaces?name=EOD%20checks#ws/trading/trader", u);
-        // The legacy flat address: ws_kind would contradict the anchor, so it becomes ws_group.
-        u = global("targetUrl").execute("/app?app=genericWorkspace&ws_kind=trader",
-                obj("kinds", kinds, "groupId", "fx-desk", "kind", "ipv")).asString();
-        assertEquals("/app?app=genericWorkspace&ws_group=fx-desk#ws/product-control-ipv/ipv", u);
-        // A kind no group holds keeps ws_kind as its address.
-        u = global("targetUrl").execute("/app?app=genericWorkspace&ws_kind=studio",
-                obj("kinds", kinds, "groupId", null, "kind", "trader")).asString();
-        assertEquals("/app?app=genericWorkspace&ws_kind=trader#ws/trading/trader", u);
+        // The flat form of the same app behaves the same: the anchor names the kind.
+        u = global("targetUrl").execute("/app?app=workspaceGroup&ws_group=fx-desk",
+                obj("kinds", kinds, "currentKind", "trader", "kind", "ipv")).asString();
+        assertEquals("/app?app=workspaceGroup&ws_group=fx-desk#ws/product-control-ipv/ipv", u);
+    }
+
+    @Test
+    void gotoMode_theLegacyAppIsUnchanged() {
+        // The legacy chrome serves kinds without slugs and hands a goto base.
+        Value kinds = js.eval("js", "([{ kind: 'studio', title: 'Studio', section: 'Workspaces' }, { kind: 'zoo', title: 'Zoo', section: 'Demos' }])");
+        String base = "/goto?app=genericWorkspace";
+        // A kind change goes to the goto base with ws_kind — no anchor.
+        String u = global("targetUrl").execute("/cat/studio-ws?workspace=old",
+                obj("kinds", kinds, "base", base, "currentKind", "studio", "kind", "zoo")).asString();
+        assertEquals("/goto?app=genericWorkspace&ws_kind=zoo", u);
+        // A same-kind change edits the current URL; every other parameter survives.
+        u = global("targetUrl").execute("/app?app=genericWorkspace&ws_kind=studio&theme=x&slowmo=1",
+                obj("kinds", kinds, "base", base, "currentKind", "studio", "kind", "studio", "instanceId", "abc")).asString();
+        assertEquals("/app?app=genericWorkspace&ws_kind=studio&theme=x&workspace=abc", u);
+        // And its tree derives a slug client-side, since the server minted none.
+        Value t = global("kindTreeData").execute(kinds, "zoo");
+        assertEquals("workspaces", t.getMember("children").getArrayElement(0).getMember("segment").asString());
+        assertEquals("demos", t.getMember("children").getArrayElement(1).getMember("segment").asString());
     }
 
     private Value obj(Object... kv) {

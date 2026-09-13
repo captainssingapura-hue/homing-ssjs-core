@@ -8,6 +8,7 @@ import hue.captains.singapura.js.homing.studio.base.DefaultFixtures;
 import hue.captains.singapura.js.homing.studio.base.Fixtures;
 import hue.captains.singapura.js.homing.studio.base.Umbrella;
 import hue.captains.singapura.js.homing.workspace.shell.GenericWorkspace;
+import hue.captains.singapura.js.homing.workspace.shell.WorkspaceGroupApp;
 import hue.captains.singapura.js.homing.workspace.shell.WorkspaceGroupRegistry;
 import hue.captains.singapura.js.homing.workspace.shell.WorkspaceGroups;
 import hue.captains.singapura.tao.http.action.GetAction;
@@ -60,6 +61,7 @@ public record ConformanceStudioFixtures(Umbrella<ConformanceStudio> umbrella, Li
     public List<AppModule<?, ?>> harnessApps() {
         var apps = new ArrayList<>(defaults().harnessApps());
         apps.add(GenericWorkspace.INSTANCE);
+        apps.add(WorkspaceGroupApp.INSTANCE);   // RFC 0058 — the authentic-path app the landing places
         return List.copyOf(apps);
     }
 
