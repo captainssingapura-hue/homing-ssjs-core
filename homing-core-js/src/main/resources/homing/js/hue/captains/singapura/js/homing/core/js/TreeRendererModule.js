@@ -197,7 +197,7 @@ class TreeRenderer {
             + 'padding-left:' + (6 + depth * 16) + 'px;';
 
         var caret = this._el('span');
-        caret.style.cssText = 'width:12px;display:inline-block;color:#888;font-size:10px;flex:0 0 auto;';
+        caret.style.cssText = 'width:17px;display:inline-block;color:#888;font-size:14px;flex:0 0 auto;';
         row.appendChild(caret);
 
         // The badge, ahead of the label the way a card carried it.
