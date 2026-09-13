@@ -106,7 +106,7 @@ class _DomOpsPartyBase {
   // ── Activation gate ───────────────────────────────────────────────────────
 
   /**
-   * Throws if this branch has not been activated via activate(owner).
+   * Throws if this branch has not been activated via activate(owner, label).
    * Called by createElement() and createBranch() to enforce the rule that
    * every branch must have an owner before it can do work.
    */
@@ -272,7 +272,7 @@ class _DomOpsPartyBase {
   }
 
   /**
-   * The owner's label — `String(owner)` as captured at activate() — or null
+   * The label given at activate() — explicitly, or `String(owner)` — or null
    * when this branch was never activated. RFC 0063 D2: a label, never the
    * handle. A string cannot dissolve anything; the WeakRef stays private.
    *
@@ -402,17 +402,24 @@ class _DomOpsPartyBase {
    * Activation is optional: root and utility branches that have no
    * component owner work fine without it.
    *
-   * @param {object} owner - The component responsible for this branch.
+   * @param {object} owner - The object whose reachability IS this branch's
+   *        rightful lifetime — the component that mounted it, the tab that
+   *        holds it. A literal minted at the call site is collected at the
+   *        first GC and the branch reads as leaked ever after (RFC 0063 D14).
+   * @param {string} [label=String(owner)] - What the branch is called in a
+   *        view. Separate from the owner so that the real owner can be
+   *        passed even when its toString is not presentable — a tab, a
+   *        controller — and the label still reads "widget:…".
    * @throws {Error} If the branch has already been activated.
    */
-  activate(owner) {
+  activate(owner, label = String(owner)) {
     if (this.#ownerRef !== null) {
       throw new Error(
         `[DomOpsParty] activate: Branch "${this.#name}" is already activated.`
       );
     }
     this.#ownerRef = new WeakRef(owner);
-    this.#ownerLabel = String(owner);
+    this.#ownerLabel = String(label);
   }
 
   /**

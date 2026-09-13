@@ -92,10 +92,8 @@ public record DomOpsPartyModule() implements DomModule<DomOpsPartyModule> {
                 new DomOpsPartyL3(),  new DomOpsPartyL2(),  new DomOpsPartyL1(),
                 new DomOpsParty(),
                 new domOpsParty(),
-                // RFC 0063 — exported so it is RETAINED. An uncaptured, unexported
-                // module const is collected after evaluation, and the root read as
-                // leaked on every workspace. See partyChief.java.
-                new partyChief()
+                // RFC 0063 — the party tree as data; the only thing a monitor imports.
+                new viewParty()
         ));
     }
 }

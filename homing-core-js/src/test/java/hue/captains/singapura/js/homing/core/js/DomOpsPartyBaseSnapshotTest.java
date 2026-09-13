@@ -50,7 +50,7 @@ class DomOpsPartyBaseSnapshotTest extends JsModuleTestBase {
 
     /**
      * A small tree with every owner state in it:
-     *   root (partyChief, alive)
+     *   root      owns itself, labelled partyChief
      *     ├─ nav      activated, owner kept alive by the test
      *     │    └─ menu   never activated (and so empty)
      *     └─ widgets  activated
@@ -60,7 +60,7 @@ class DomOpsPartyBaseSnapshotTest extends JsModuleTestBase {
         return js.eval("js", """
             (() => {
                 const root = new DomOpsParty('root');
-                root.activate(Object.freeze({ toString: () => 'partyChief' }));
+                root.activate(root, 'partyChief');               // the root owns itself
                 const nav = root.createBranch('nav');
                 globalThis.__navOwner = Object.freeze({ toString: () => 'shell:nav' });
                 nav.activate(globalThis.__navOwner);
@@ -174,6 +174,49 @@ class DomOpsPartyBaseSnapshotTest extends JsModuleTestBase {
         assertEquals("widget:1", leaked.getMember("owner").asString(),
                      "the label survives the owner — that is why it is captured, not derived");
         assertFalse(leaked.getMember("ownerAlive").asBoolean(), "collected owner → leak");
+    }
+
+    /**
+     * The label is separate from the owner so the REAL owner can be passed
+     * even when its toString is nothing to show — a tab, a controller. That
+     * separation is what makes D14 achievable at every call site.
+     */
+    @Test
+    void theLabelCanBeGivenExplicitlySoARealOwnerCanBePassed() {
+        Value b = js.eval("js", """
+            (() => {
+                const root = new DomOpsParty('root');
+                root.activate(root, 'partyChief');
+                const tabLike = { id: 'tab:7', title: 'Blotter' };   // no useful toString
+                globalThis.__tab = tabLike;                            // retained, like MTP would
+                const w = root.createBranch('w-7');
+                w.activate(tabLike, 'widget:7');
+                return w;
+            })()""");
+        assertEquals("widget:7", b.getMember("ownerLabel").asString());
+        assertTrue(b.getMember("isOwnerAlive").asBoolean());
+        assertEquals("widget:7", b.invokeMember("snapshot").getMember("owner").asString());
+    }
+
+    /** The root owns itself, and so cannot read as leaked. */
+    @Test
+    void theRootOwnsItselfAndSurvivesCollection() {
+        Value root = global("domOpsParty");
+        assertEquals("partyChief", root.getMember("ownerLabel").asString());
+        for (int i = 0; i < 5; i++) { System.gc(); try { Thread.sleep(20); } catch (InterruptedException ignored) { } }
+        assertTrue(root.getMember("isOwnerAlive").asBoolean(),
+                   "the singleton is retained by its module; nothing to collect");
+    }
+
+    /** viewParty() is the projection of the real root — and only that. */
+    @Test
+    void viewPartyReturnsTheRootSnapshotAndNothingElse() {
+        Value view = global("viewParty").execute();
+        assertEquals("root",       view.getMember("name").asString());
+        assertEquals("partyChief", view.getMember("owner").asString());
+        assertTrue(js.eval("js", "(v => Object.isFrozen(v))").execute(view).asBoolean());
+        assertTrue(js.eval("js", "(v => typeof v.createBranch === 'undefined' && typeof v.dissolve === 'undefined')")
+                     .execute(view).asBoolean(), "a view has no verbs");
     }
 
     // ---------------------------------------------------- cannot touch
