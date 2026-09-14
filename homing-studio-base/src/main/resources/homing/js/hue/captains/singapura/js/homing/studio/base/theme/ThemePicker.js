@@ -61,10 +61,24 @@ function _previewPane(branch, host, seq) {
     css.addClass(note, tp_preview_note);
     host.appendChild(note);
 
+    // The frame and its loading banner share a positioned wrapper: the banner
+    // covers the frame while a page is on its way and fades once it lands.
+    var wrap = branch.createElement("pvw" + seq, "div");
+    css.addClass(wrap, tp_preview_wrap);
+    host.appendChild(wrap);
+
     var frame = branch.createElement("pvf" + seq, "iframe");
     css.addClass(frame, tp_preview_frame);
     frame.setAttribute("title", "Theme preview");
-    host.appendChild(frame);
+    wrap.appendChild(frame);
+
+    var banner = branch.createElement("pvl" + seq, "div");
+    css.addClass(banner, tp_preview_loading);
+    wrap.appendChild(banner);
+
+    // `load` fires for every page the frame finishes, error pages included, so
+    // the banner cannot get stuck; a slug selected mid-load simply re-shows it.
+    frame.addEventListener("load", function () { css.removeClass(banner, tp_preview_loading_on); });
 
     var shown = null;   // the slug the frame is showing — re-selecting it is free
 
@@ -75,6 +89,8 @@ function _previewPane(branch, host, seq) {
         note.textContent = theme.inspiration || "";
         if (theme.slug === shown) return;
         shown = theme.slug;
+        banner.textContent = "Loading " + (theme.label || theme.slug) + "…";
+        css.addClass(banner, tp_preview_loading_on);
         frame.src = previewUrl(theme.slug);
     };
 }

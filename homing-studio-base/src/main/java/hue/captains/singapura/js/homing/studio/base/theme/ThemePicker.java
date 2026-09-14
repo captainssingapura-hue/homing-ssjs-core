@@ -78,6 +78,9 @@ public record ThemePicker() implements DomModule<ThemePicker> {
                         new ThemePickerStyles.tp_current(),
                         new ThemePickerStyles.tp_preview_note(),
                         new ThemePickerStyles.tp_preview_frame(),
+                        new ThemePickerStyles.tp_preview_wrap(),
+                        new ThemePickerStyles.tp_preview_loading(),
+                        new ThemePickerStyles.tp_preview_loading_on(),
                         new ThemePickerStyles.tp_inline(),
                         new ThemePickerStyles.tp_inline_head()
                 ), ThemePickerStyles.INSTANCE))
