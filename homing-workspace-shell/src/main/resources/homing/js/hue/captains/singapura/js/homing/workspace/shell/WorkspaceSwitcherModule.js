@@ -4,7 +4,7 @@
 // kind on the right, and three verbs underneath: Cancel, Open in new tab, Open.
 // Nothing navigates until you confirm — browsing and opening are different acts.
 //
-//   new WorkspaceSwitcher({ workspaceKind, workspaceTitle, availableKinds,
+//   new WorkspaceSwitcher({ workspaceKind, workspaceTitle, group | availableKinds + switchBase,
 //                           identity, catalogueStore, eventLog, checkpointStore })
 //     .open() .close() .toggle() .isOpen() .destroy()
 //
@@ -38,8 +38,14 @@ class WorkspaceSwitcher {
         opts = opts || {};
         this._kind     = opts.workspaceKind;
         this._title    = opts.workspaceTitle || opts.workspaceKind;
-        this._kinds    = Array.isArray(opts.availableKinds) ? opts.availableKinds : [];
-        this._base     = opts.switchBase || null;       // /goto?app=… — where a KIND change goes
+        // Two apps, two ways to name a kind (RFC 0058). The authentic-path app
+        // hands the GROUP the page is in, as served, and a kind change is an
+        // anchor on this same address. The legacy app hands availableKinds and
+        // switchBase, and a kind change goes through /goto as it always has.
+        this._group    = opts.group || null;
+        this._kinds    = this._group ? (this._group.kinds || [])
+                       : (Array.isArray(opts.availableKinds) ? opts.availableKinds : []);
+        this._base     = this._group ? null : (opts.switchBase || null);
         this._identity = opts.identity || {};          // LIVE ref — the orchestrator fills it in
         this._store    = opts.catalogueStore  || null;
         this._eventLog = opts.eventLog        || null;
@@ -176,13 +182,13 @@ class WorkspaceSwitcher {
     _go(newTab) {
         var c = this._c; if (!c) return;
         if (this._same() && !newTab) { this.close(); return; }
-        var url = targetUrl(HrefManagerInstance.current(), { base: this._base, currentKind: this._kind, kind: c.kind, instanceId: c.instance });
+        var url = targetUrl(HrefManagerInstance.current(), { kinds: this._kinds, base: this._base, currentKind: this._kind, kind: c.kind, instanceId: c.instance });
         if (newTab) HrefManagerInstance.openNew(url); else HrefManagerInstance.navigate(url);
     }
 
     _create(name) {
         var c = this._c; name = (name || "").trim(); if (!c || !name) return;
-        HrefManagerInstance.navigate(targetUrl(HrefManagerInstance.current(), { base: this._base, currentKind: this._kind, kind: c.kind, name: name }));
+        HrefManagerInstance.navigate(targetUrl(HrefManagerInstance.current(), { kinds: this._kinds, base: this._base, currentKind: this._kind, kind: c.kind, name: name }));
     }
 
     _delete() {

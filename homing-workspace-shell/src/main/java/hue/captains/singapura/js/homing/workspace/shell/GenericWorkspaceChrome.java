@@ -81,7 +81,7 @@ public final class GenericWorkspaceChrome
                 "    // (Studio, Animals Playground, …). Only the registry here knows",
                 "    // every kind; the shell sees a single spec.",
                 "    spec.availableKinds = Object.keys(SPECS).map(function (k) {",
-                "        return { kind: k, title: SPECS[k].title, group: SPECS[k].group };",
+                "        return { kind: k, title: SPECS[k].title, section: SPECS[k].section };",
                 "    });",
                 "    // RFC 0057 — where a KIND change navigates. ws_kind is a typed param:",
                 "    // stamped by a catalogue route, so editing it in the query of",

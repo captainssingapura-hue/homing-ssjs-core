@@ -69,12 +69,15 @@ public interface WorkspaceSpec extends Stateless {
     String title();
 
     /**
-     * The section this kind sits under in the workspace switcher — the role
-     * {@code Theme.group()} plays for the theme picker (RFC 0057). Defaulted so
-     * no existing spec breaks: every kind lands in one section until its spec
-     * says otherwise.
+     * The section this kind sits under in its {@link WorkspaceGroup}'s tree — the
+     * heading the switcher draws it beneath, and the middle segment of its anchor
+     * ({@code #ws/<section>/<kind>}, RFC 0058). The role {@code Theme.group()}
+     * plays for the theme picker (RFC 0057), under a different name: a
+     * <em>group</em> is the container a studio places; a <em>section</em> is a
+     * heading inside it. Defaulted so every kind lands in one section until its
+     * spec says otherwise.
      */
-    default String group() { return "Workspaces"; }
+    default String section() { return "Workspaces"; }
 
     /** Widget types this workspace exposes via its picker. */
     List<WidgetEntry> widgetEntries();

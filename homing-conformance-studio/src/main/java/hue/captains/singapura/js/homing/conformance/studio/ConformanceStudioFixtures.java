@@ -8,7 +8,9 @@ import hue.captains.singapura.js.homing.studio.base.DefaultFixtures;
 import hue.captains.singapura.js.homing.studio.base.Fixtures;
 import hue.captains.singapura.js.homing.studio.base.Umbrella;
 import hue.captains.singapura.js.homing.workspace.shell.GenericWorkspace;
-import hue.captains.singapura.js.homing.workspace.shell.WorkspaceSpecRegistry;
+import hue.captains.singapura.js.homing.workspace.shell.WorkspaceGroupApp;
+import hue.captains.singapura.js.homing.workspace.shell.WorkspaceGroupRegistry;
+import hue.captains.singapura.js.homing.workspace.shell.WorkspaceGroups;
 import hue.captains.singapura.tao.http.action.GetAction;
 import hue.captains.singapura.tao.ontology.ValueObject;
 import io.vertx.ext.web.RoutingContext;
@@ -28,7 +30,7 @@ import java.util.Objects;
  *
  * <p>Composition over the {@code DefaultFixtures} seams (records are final):</p>
  * <ul>
- *   <li>registers {@link ConformanceWorkspaceSpec} (kind {@code "conformance"})
+ *   <li>registers {@link ConformanceWorkspaceSpec} and its {@link ConformanceWorkspaceGroup} (RFC 0058)
  *       once per JVM, idempotently;</li>
  *   <li>{@link #harnessApps()} appends {@link GenericWorkspace} (the shell app);</li>
  *   <li>{@link #harnessGetActions()} adds {@code GET /crate-tree}, the
@@ -46,9 +48,9 @@ public record ConformanceStudioFixtures(Umbrella<ConformanceStudio> umbrella, Li
     public ConformanceStudioFixtures {
         Objects.requireNonNull(umbrella, "umbrella");
         topLevel = List.copyOf(Objects.requireNonNull(topLevel, "topLevel"));
-        if (WorkspaceSpecRegistry.INSTANCE.get(ConformanceWorkspaceSpec.INSTANCE.kind()).isEmpty()) {
-            WorkspaceSpecRegistry.INSTANCE.register(ConformanceWorkspaceSpec.INSTANCE);
-        }
+        // RFC 0058 — the spec and the group holding it; the landing places the group.
+        ConformanceWorkspaceGroup.register();
+        WorkspaceGroups.assertPlacedOnce(ConformanceLandingCatalogue.INSTANCE, WorkspaceGroupRegistry.INSTANCE);
     }
 
     private DefaultFixtures<ConformanceStudio> defaults() {
@@ -59,6 +61,7 @@ public record ConformanceStudioFixtures(Umbrella<ConformanceStudio> umbrella, Li
     public List<AppModule<?, ?>> harnessApps() {
         var apps = new ArrayList<>(defaults().harnessApps());
         apps.add(GenericWorkspace.INSTANCE);
+        apps.add(WorkspaceGroupApp.INSTANCE);   // RFC 0058 — the authentic-path app the landing places
         return List.copyOf(apps);
     }
 

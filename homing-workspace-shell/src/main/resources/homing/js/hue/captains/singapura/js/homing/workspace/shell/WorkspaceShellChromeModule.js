@@ -865,6 +865,9 @@ class WorkspaceShellChrome {
         this._workspaceSwitcher = new this._WorkspaceSwitcherCtor({
             workspaceKind:   this._spec.kind,
             workspaceTitle:  this._spec.title,
+            // RFC 0058 — two apps: the authentic-path chrome sets spec.group; the
+            // legacy chrome sets availableKinds + switchBase. The switcher takes either.
+            group:           this._spec.group || null,
             availableKinds:  this._spec.availableKinds || [],
             switchBase:      this._spec.switchBase || null,
             identity:        this._identity,

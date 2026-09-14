@@ -23,7 +23,8 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
  */
 class GenericWorkspaceCodecTest {
 
-    private static final Set<String> COVERED = Set.of("genericWorkspace");
+    /** Round-trip samples live here for genericWorkspace and in WorkspaceGroupAppCodecTest for workspaceGroup. */
+    private static final Set<String> COVERED = Set.of("genericWorkspace", "workspaceGroup");
 
     @Test
     void genericWorkspace() {

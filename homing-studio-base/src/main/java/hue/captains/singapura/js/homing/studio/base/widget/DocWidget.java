@@ -123,7 +123,9 @@ public abstract class DocWidget<P extends Widget._Param, W extends DocWidget<P, 
     @Override
     public final List<String> selfContent(ModuleNameResolver resolver) {
         var lines = new ArrayList<String>();
-        lines.add("function mountInto(branch, parent, params) {");
+        // RFC 0058 — `page` is the hosting page's chrome handle (extendCrumbs, …),
+        // passed by StandardMPA; undefined when a widget is mounted elsewhere.
+        lines.add("function mountInto(branch, parent, params, page) {");
         lines.add("    try {");
         lines.addAll(bodyJs());
         lines.add("    } catch (e) {");

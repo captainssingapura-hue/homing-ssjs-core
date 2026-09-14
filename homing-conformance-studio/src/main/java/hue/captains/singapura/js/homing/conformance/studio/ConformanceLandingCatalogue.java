@@ -4,7 +4,7 @@ import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.studio.base.app.Entry;
 import hue.captains.singapura.js.homing.studio.base.app.L0_Catalogue;
 import hue.captains.singapura.js.homing.studio.base.app.Navigable;
-import hue.captains.singapura.js.homing.workspace.shell.GenericWorkspace;
+import hue.captains.singapura.js.homing.workspace.shell.WorkspaceGroupApp;
 
 import java.util.List;
 
@@ -25,9 +25,11 @@ public record ConformanceLandingCatalogue() implements L0_Catalogue<ConformanceL
 
     @Override
     public List<Entry<ConformanceLandingCatalogue>> leaves() {
-        Navigable<GenericWorkspace.Params, GenericWorkspace> workspace =
-                new Navigable<>(GenericWorkspace.INSTANCE,
-                        new GenericWorkspace.Params("conformance"),
+        // RFC 0058 — the leaf is the GROUP, on the authentic-path app; the kind is
+        // the anchor inside it (#ws/workspaces/conformance).
+        Navigable<WorkspaceGroupApp.Params, WorkspaceGroupApp> workspace =
+                new Navigable<>(WorkspaceGroupApp.INSTANCE,
+                        new WorkspaceGroupApp.Params(ConformanceWorkspaceGroup.ID),
                         "Conformance Workspace",
                         "The module Navigator plus Summary, Full Content, and Conformance panes.");
         return List.of(Entry.of(this, workspace));
