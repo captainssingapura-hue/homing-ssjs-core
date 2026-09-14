@@ -46,9 +46,9 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
     }
 
     /**
-     * Column: the tree takes the room, the palette preview sits under it as a
-     * fixed strip. Master/detail at picker scale — the tree says what a theme
-     * is, the strip shows what it looks like.
+     * Column: the tree takes the room, the preview pane sits beside it.
+     * Master/detail at picker scale — the tree says what a theme is, the
+     * frame shows what it looks like.
      */
     public record tp_body() implements CssClass<ThemePickerStyles> {
         @Override public String body() { return """
@@ -101,43 +101,101 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
             """; }
     }
 
-    /** The swatch strip. Contiguous, so the palette reads as one object. */
-    public record tp_swatches() implements CssClass<ThemePickerStyles> {
+    /**
+     * The content pane as a column filling the master/detail body: the name
+     * and the note take their own height, the frame's wrapper takes the rest.
+     * The body pads its left edge only (its scrollbar sits at the right), so
+     * the pane pads the right to match and the frame sits in from both sides.
+     */
+    public record tp_preview_pane() implements CssClass<ThemePickerStyles> {
         @Override public String body() { return """
             display: flex;
-            border-radius: var(--radius-sm);
-            overflow: hidden;
-            border: 1px solid var(--color-border);
-            height: 34px;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0;
+            box-sizing: border-box;
+            padding-right: var(--space-4);
             """; }
     }
 
     /**
-     * One swatch. The colour itself is the only thing set from JS, because it
-     * is data rather than design — every other property lives here.
+     * Positions the loading banner over the frame and takes the pane's
+     * remaining height. A column itself, so the frame can flex to fill it
+     * without percentage heights — which resolve to nothing when the pane is
+     * inline and has no height of its own.
      */
-    public record tp_sw() implements CssClass<ThemePickerStyles> {
+    public record tp_preview_wrap() implements CssClass<ThemePickerStyles> {
         @Override public String body() { return """
+            position: relative;
+            display: flex;
+            flex-direction: column;
             flex: 1 1 0;
-            min-width: 0;
-            /* The colour arrives as a custom property set by JS - the route
-               RFC 0044 sanctions for DATA-driven values, since setProperty is a
-               method call rather than a .style.x write. Everything else about a
-               swatch is design and lives here. */
-            background: var(--tp-sw, transparent);
+            min-height: 0;
+            """; }
+    }
+
+    /**
+     * The preview frame — the preview page, wearing the selected theme. Fills
+     * its wrapper; in a dialog that is the rest of the pane, inline it is the
+     * minimum, so the frame is never a sliver. Bordered like the swatch strip
+     * it replaces, so it reads as one object in the pane.
+     */
+    public record tp_preview_frame() implements CssClass<ThemePickerStyles> {
+        @Override public String body() { return """
+            display: block;
+            box-sizing: border-box;
+            width: 100%;
+            flex: 1 1 0;
+            min-height: 420px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            background: var(--color-surface-base);
+            """; }
+    }
+
+    /**
+     * The loading banner: covers the frame while a page is on its way. Kept
+     * transparent to the pointer and faded rather than removed, so a fast load
+     * barely registers and a slow one reads as "on its way" rather than broken.
+     * The modifier below turns it on; the base is the off state.
+     */
+    public record tp_preview_loading() implements CssClass<ThemePickerStyles> {
+        @Override public String body() { return """
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-sm);
+            background: var(--color-surface-raised);
+            color: var(--color-text-muted);
+            font-size: 12px;
+            letter-spacing: 0.04em;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 120ms ease;
+            """; }
+    }
+
+    /** The banner while a page is loading. Emitted after the base, so it wins. */
+    public record tp_preview_loading_on() implements CssClass<ThemePickerStyles> {
+        @Override public String body() { return """
+            opacity: 0.92;
             """; }
     }
 
     /**
      * Inline variant — the themes app hosts the tree in the page rather than a
      * modal, so it supplies the frame the modal would otherwise have given.
+     * Wide enough for the preview pane to show a page rather than a sliver:
+     * the tree is a narrow column of names and the rest is the frame.
      */
     public record tp_inline() implements CssClass<ThemePickerStyles> {
         @Override public String body() { return """
             border: 1px solid var(--color-border);
             border-radius: var(--radius-md);
             background: var(--color-surface-raised);
-            max-width: 340px;
+            max-width: 760px;
             overflow: hidden;
             """; }
     }
@@ -162,7 +220,8 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
                 new tp_btn(), new tp_btn_label(),
                 new tp_body(), new tp_inline(), new tp_inline_head(),
                 new tp_preview_name(), new tp_current(), new tp_preview_note(),
-                new tp_swatches(), new tp_sw()
+                new tp_preview_pane(), new tp_preview_frame(), new tp_preview_wrap(),
+                new tp_preview_loading(), new tp_preview_loading_on()
         );
     }
 }
