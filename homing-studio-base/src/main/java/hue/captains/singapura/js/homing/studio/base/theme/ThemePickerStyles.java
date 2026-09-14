@@ -102,28 +102,54 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
     }
 
     /**
-     * The preview frame — the preview page, wearing the selected theme. The
-     * pane is a scrolling column, so the frame takes a fixed, generous height
-     * rather than trying to fill a parent that has no height to give; the page
-     * inside scrolls on its own. Bordered like the swatch strip it replaces, so
-     * it reads as one object in the pane.
+     * The content pane as a column filling the master/detail body: the name
+     * and the note take their own height, the frame's wrapper takes the rest.
+     * The body pads its left edge only (its scrollbar sits at the right), so
+     * the pane pads the right to match and the frame sits in from both sides.
+     */
+    public record tp_preview_pane() implements CssClass<ThemePickerStyles> {
+        @Override public String body() { return """
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0;
+            box-sizing: border-box;
+            padding-right: var(--space-4);
+            """; }
+    }
+
+    /**
+     * Positions the loading banner over the frame and takes the pane's
+     * remaining height. A column itself, so the frame can flex to fill it
+     * without percentage heights — which resolve to nothing when the pane is
+     * inline and has no height of its own.
+     */
+    public record tp_preview_wrap() implements CssClass<ThemePickerStyles> {
+        @Override public String body() { return """
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 0;
+            min-height: 0;
+            """; }
+    }
+
+    /**
+     * The preview frame — the preview page, wearing the selected theme. Fills
+     * its wrapper; in a dialog that is the rest of the pane, inline it is the
+     * minimum, so the frame is never a sliver. Bordered like the swatch strip
+     * it replaces, so it reads as one object in the pane.
      */
     public record tp_preview_frame() implements CssClass<ThemePickerStyles> {
         @Override public String body() { return """
             display: block;
             box-sizing: border-box;
             width: 100%;
-            height: 420px;
+            flex: 1 1 0;
+            min-height: 420px;
             border: 1px solid var(--color-border);
             border-radius: var(--radius-sm);
             background: var(--color-surface-base);
-            """; }
-    }
-
-    /** Positions the loading banner over the frame. */
-    public record tp_preview_wrap() implements CssClass<ThemePickerStyles> {
-        @Override public String body() { return """
-            position: relative;
             """; }
     }
 
@@ -194,7 +220,7 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
                 new tp_btn(), new tp_btn_label(),
                 new tp_body(), new tp_inline(), new tp_inline_head(),
                 new tp_preview_name(), new tp_current(), new tp_preview_note(),
-                new tp_preview_frame(), new tp_preview_wrap(),
+                new tp_preview_pane(), new tp_preview_frame(), new tp_preview_wrap(),
                 new tp_preview_loading(), new tp_preview_loading_on()
         );
     }

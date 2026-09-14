@@ -55,13 +55,18 @@ function _isFormControl(el) {
  * on nothing. Measured at open rather than tracked: a dialog that resized under
  * the pointer while you read it would be worse than one right for the viewport
  * you opened it in.
+ *
+ * A requested size is honoured up to the viewport less a margin: a dialog that
+ * asks for more than the screen has gets the screen, not an overflow.
  */
 function _size(opts) {
     var vw = window.innerWidth  || 1024;
     var vh = window.innerHeight || 768;
+    var w = opts.size && opts.size.w;
+    var h = opts.size && opts.size.h;
     return {
-        w: (opts.size && opts.size.w) || Math.min(980, Math.max(460, Math.round(vw / PHI))),
-        h: (opts.size && opts.size.h) || Math.min(720, Math.max(320, Math.round(vh / PHI)))
+        w: w ? Math.min(w, vw - 48) : Math.min(980, Math.max(460, Math.round(vw / PHI))),
+        h: h ? Math.min(h, vh - 48) : Math.min(720, Math.max(320, Math.round(vh / PHI)))
     };
 }
 

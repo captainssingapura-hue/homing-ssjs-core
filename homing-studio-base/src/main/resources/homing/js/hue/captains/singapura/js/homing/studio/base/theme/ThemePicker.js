@@ -45,6 +45,13 @@ var _seq = 0;
  * backdrop and all, exactly as a navigation would deliver it.
  */
 function _previewPane(branch, host, seq) {
+    // A column filling the pane: name and note take their height, the frame
+    // takes the rest. Inline, where the pane has no height of its own, the
+    // frame falls back to its minimum and the column is as tall as that.
+    var pane = branch.createElement("pvp" + seq, "div");
+    css.addClass(pane, tp_preview_pane);
+    host.appendChild(pane);
+
     var name = branch.createElement("pvn" + seq, "div");
     css.addClass(name, tp_preview_name);
 
@@ -55,17 +62,17 @@ function _previewPane(branch, host, seq) {
     css.addClass(chip, tp_current);
     chip.textContent = "in use";
     name.appendChild(chip);
-    host.appendChild(name);
+    pane.appendChild(name);
 
     var note = branch.createElement("pvi" + seq, "div");
     css.addClass(note, tp_preview_note);
-    host.appendChild(note);
+    pane.appendChild(note);
 
     // The frame and its loading banner share a positioned wrapper: the banner
     // covers the frame while a page is on its way and fades once it lands.
     var wrap = branch.createElement("pvw" + seq, "div");
     css.addClass(wrap, tp_preview_wrap);
-    host.appendChild(wrap);
+    pane.appendChild(wrap);
 
     var frame = branch.createElement("pvf" + seq, "iframe");
     css.addClass(frame, tp_preview_frame);
@@ -250,6 +257,9 @@ function mountThemePickerButton(host, opts) {
                 branch:         branch,
                 title:          "Theme",
                 modal:          true,
+                // A showcase wants room: the tree is a narrow column of names
+                // and the rest is a page. The dialog clamps this to the viewport.
+                size:           { w: 1100, h: 780 },
                 restoreFocusTo: btn,
                 content: function (pb, bodyEl) {
                     panes = _buildPanes(pb, bodyEl, themes, active, mySeq,
