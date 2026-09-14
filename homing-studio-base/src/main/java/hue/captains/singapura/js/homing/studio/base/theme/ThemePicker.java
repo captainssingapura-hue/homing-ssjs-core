@@ -59,7 +59,8 @@ public record ThemePicker() implements DomModule<ThemePicker> {
                         new ThemePickerModel.slugOfSelection(),
                         new ThemePickerModel.switchToTheme(),
                         new ThemePickerModel.rememberPickerOpen(),
-                        new ThemePickerModel.pickerReopenWanted()
+                        new ThemePickerModel.pickerReopenWanted(),
+                        new ThemePickerModel.previewUrl()
                 ), ThemePickerModel.INSTANCE))
                 .add(new ModuleImports<>(List.of(new HrefManager.HrefManagerInstance()),
                         HrefManager.INSTANCE))
@@ -76,8 +77,7 @@ public record ThemePicker() implements DomModule<ThemePicker> {
                         new ThemePickerStyles.tp_preview_name(),
                         new ThemePickerStyles.tp_current(),
                         new ThemePickerStyles.tp_preview_note(),
-                        new ThemePickerStyles.tp_swatches(),
-                        new ThemePickerStyles.tp_sw(),
+                        new ThemePickerStyles.tp_preview_frame(),
                         new ThemePickerStyles.tp_inline(),
                         new ThemePickerStyles.tp_inline_head()
                 ), ThemePickerStyles.INSTANCE))

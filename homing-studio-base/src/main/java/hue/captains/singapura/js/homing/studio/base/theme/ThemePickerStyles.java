@@ -46,9 +46,9 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
     }
 
     /**
-     * Column: the tree takes the room, the palette preview sits under it as a
-     * fixed strip. Master/detail at picker scale — the tree says what a theme
-     * is, the strip shows what it looks like.
+     * Column: the tree takes the room, the preview pane sits beside it.
+     * Master/detail at picker scale — the tree says what a theme is, the
+     * frame shows what it looks like.
      */
     public record tp_body() implements CssClass<ThemePickerStyles> {
         @Override public String body() { return """
@@ -101,43 +101,36 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
             """; }
     }
 
-    /** The swatch strip. Contiguous, so the palette reads as one object. */
-    public record tp_swatches() implements CssClass<ThemePickerStyles> {
-        @Override public String body() { return """
-            display: flex;
-            border-radius: var(--radius-sm);
-            overflow: hidden;
-            border: 1px solid var(--color-border);
-            height: 34px;
-            """; }
-    }
-
     /**
-     * One swatch. The colour itself is the only thing set from JS, because it
-     * is data rather than design — every other property lives here.
+     * The preview frame — the preview page, wearing the selected theme. The
+     * pane is a scrolling column, so the frame takes a fixed, generous height
+     * rather than trying to fill a parent that has no height to give; the page
+     * inside scrolls on its own. Bordered like the swatch strip it replaces, so
+     * it reads as one object in the pane.
      */
-    public record tp_sw() implements CssClass<ThemePickerStyles> {
+    public record tp_preview_frame() implements CssClass<ThemePickerStyles> {
         @Override public String body() { return """
-            flex: 1 1 0;
-            min-width: 0;
-            /* The colour arrives as a custom property set by JS - the route
-               RFC 0044 sanctions for DATA-driven values, since setProperty is a
-               method call rather than a .style.x write. Everything else about a
-               swatch is design and lives here. */
-            background: var(--tp-sw, transparent);
+            display: block;
+            width: 100%;
+            height: 420px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            background: var(--color-surface-base);
             """; }
     }
 
     /**
      * Inline variant — the themes app hosts the tree in the page rather than a
      * modal, so it supplies the frame the modal would otherwise have given.
+     * Wide enough for the preview pane to show a page rather than a sliver:
+     * the tree is a narrow column of names and the rest is the frame.
      */
     public record tp_inline() implements CssClass<ThemePickerStyles> {
         @Override public String body() { return """
             border: 1px solid var(--color-border);
             border-radius: var(--radius-md);
             background: var(--color-surface-raised);
-            max-width: 340px;
+            max-width: 760px;
             overflow: hidden;
             """; }
     }
@@ -162,7 +155,7 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
                 new tp_btn(), new tp_btn_label(),
                 new tp_body(), new tp_inline(), new tp_inline_head(),
                 new tp_preview_name(), new tp_current(), new tp_preview_note(),
-                new tp_swatches(), new tp_sw()
+                new tp_preview_frame()
         );
     }
 }

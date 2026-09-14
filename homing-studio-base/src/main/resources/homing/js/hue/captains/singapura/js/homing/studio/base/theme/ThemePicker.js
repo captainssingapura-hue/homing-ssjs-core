@@ -14,7 +14,7 @@
 // Master/detail, side by side. The tree is a column of NAMES ONLY, sized to its
 // content — max-content between a floor and a ceiling, so it is as wide as it
 // needs and no wider. Everything about the selected theme — the in-use marker,
-// the inspiration line, the palette — lives in the content pane on the right.
+// the inspiration line, the live preview — lives in the content pane on the right.
 // That division is what keeps the whole thing compact: a row carries one string,
 // so nothing competes for its width.
 //
@@ -37,10 +37,12 @@ var _seq = 0;
 /**
  * Build the content pane once and return an UPDATE function.
  *
- * Every theme reports the same palette keys, so the pane's shape never changes
- * between selections — only its text and the swatch colours do. Rebuilding it
- * per selection would mint new elements on every arrow-press, and the branch
- * would hold each one for the life of the page.
+ * The pane is a name, an inspiration line and a FRAME showing the preview page
+ * under the selected theme. The frame is one element whose address changes;
+ * rebuilding it per selection would mint a new element on every arrow-press,
+ * and the branch would hold each one for the life of the page. Reloading it is
+ * what makes the preview honest: the page comes back wearing the theme,
+ * backdrop and all, exactly as a navigation would deliver it.
  */
 function _previewPane(branch, host, seq) {
     var name = branch.createElement("pvn" + seq, "div");
@@ -59,31 +61,21 @@ function _previewPane(branch, host, seq) {
     css.addClass(note, tp_preview_note);
     host.appendChild(note);
 
-    var strip = branch.createElement("pvs" + seq, "div");
-    css.addClass(strip, tp_swatches);
-    host.appendChild(strip);
+    var frame = branch.createElement("pvf" + seq, "iframe");
+    css.addClass(frame, tp_preview_frame);
+    frame.setAttribute("title", "Theme preview");
+    host.appendChild(frame);
 
-    var swatches = [];
+    var shown = null;   // the slug the frame is showing — re-selecting it is free
 
     return function (theme, activeSlug) {
         if (!theme) return;
         nameText.textContent = theme.label || theme.slug;
         chip.hidden = (theme.slug !== activeSlug);
         note.textContent = theme.inspiration || "";
-
-        var palette = theme.palette || {};
-        var keys = Object.keys(palette);
-        for (var i = 0; i < keys.length; i++) {
-            if (!swatches[i]) {
-                swatches[i] = branch.createElement("sw" + seq + "_" + i, "div");
-                css.addClass(swatches[i], tp_sw);
-                strip.appendChild(swatches[i]);
-            }
-            // setProperty, not a .style.x write — the route RFC 0044 sanctions
-            // for a value that is DATA. The typed class consumes it.
-            swatches[i].style.setProperty("--tp-sw", palette[keys[i]] || "transparent");
-            swatches[i].setAttribute("title", keys[i] + ": " + palette[keys[i]]);
-        }
+        if (theme.slug === shown) return;
+        shown = theme.slug;
+        frame.src = previewUrl(theme.slug);
     };
 }
 

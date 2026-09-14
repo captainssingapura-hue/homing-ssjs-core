@@ -140,3 +140,20 @@ function pickerReopenWanted() {
         return wanted;
     } catch (e) { return false; }
 }
+
+// ── Preview ──────────────────────────────────────────────────────────────────
+
+/**
+ * The preview page under a theme: the address the picker's frame loads on each
+ * selection. The current locale rides along so the preview reads in the same
+ * language as the page around it; `theme` is set explicitly and so wins over
+ * anything the address carries.
+ */
+function previewUrl(slug) {
+    var url = "/app?app=theme-preview&theme=" + encodeURIComponent(slug);
+    var cur = HrefManagerInstance.current();
+    var q = cur.indexOf("?");
+    var locale = q < 0 ? null : new URLSearchParams(cur.slice(q + 1)).get("locale");
+    if (locale) url += "&locale=" + encodeURIComponent(locale);
+    return url;
+}

@@ -44,6 +44,7 @@ public record ThemePickerModel() implements DomModule<ThemePickerModel> {
 
     /** Read — and consume — that note. One-shot by design. */
     public record pickerReopenWanted() implements Exportable._Constant<ThemePickerModel> {}
+    public record previewUrl() implements Exportable._Constant<ThemePickerModel> {}
 
     public static final ThemePickerModel INSTANCE = new ThemePickerModel();
 
@@ -60,6 +61,6 @@ public record ThemePickerModel() implements DomModule<ThemePickerModel> {
         return new ExportsOf<>(INSTANCE, List.of(
                 new activeThemeSlug(), new fetchThemes(), new themeBySlug(),
                 new themeTreeData(), new slugOfSelection(), new switchToTheme(),
-                new rememberPickerOpen(), new pickerReopenWanted()));
+                new rememberPickerOpen(), new pickerReopenWanted(), new previewUrl()));
     }
 }
