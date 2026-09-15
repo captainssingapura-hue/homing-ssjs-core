@@ -2,9 +2,9 @@
 
 A Java library for declaratively defining ES6 module structure — imports, exports, and inter-module dependencies — and generating valid JavaScript ES modules from that definition. You write the module logic in `.js` files; Homing wires them together with correct `import`/`export` statements based on a dependency graph you define in Java.
 
-**Latest release: [0.7.1 — The Relation Grid, and a Workspace Without Covers](https://github.com/captainssingapura-hue/japjs/releases/tag/0.7.1).** ([full notes](release-notes/0_7_1.md)) A new module, **`homing-relation-grid`** (RFC 0050): an Excel-like table over a **typed Relation** — two DomOpsParty branches merged into one visual tree, a placement-only `(i,j)`↔`(PK,column)` lookup so every view operation is a pure remap, cells that **detach alive** rather than dying, and bulk editing as a **virtual** session gated by fine-grained EffectiveTypes. Alongside it the workspace's selection becomes **recompute-don't-track** (RFC 0049) — intent, a total resolver, a reconciler — which makes a two-glow state *unrepresentable*; and the click-capturing **cover overlay is removed** (RFC 0052): the pane under the pointer is live, a click **acts on the widget *and* enters it**, scrolling is native (nested regions included), and `inert` guards the rest. **Breaking:** the `cover-*` interaction kinds, RFC 0048's focus API on `MultiTabPane` and `FocusScope` are all gone, and a background click now acts immediately.
+**Latest release: [0.8.3 — The Theme Is the Reader's, and the Framework Can See Itself](https://github.com/captainssingapura-hue/japjs/releases/tag/0.8.3).** ([full notes](release-notes/0_8_3.md)) **RFC 0064** moves the theme to the client: a preference steward remembers an explicit pick in `localStorage` and resolves it in one order everywhere (address override, stored pick, default); the server stops reading `?theme=`; links stop being stamped with it; CSS dependencies are declared per class with `dependsOn()` and derived per group, loaded in dependency **waves**, and a **theme switch no longer reloads the page**. **RFC 0063** gives the DomOpsParty a frozen `snapshot()` and a Party Monitor built on it — which found a forked widget import chain on its first spawn. **RFC 0058 Phase 1** makes the workspace *group* the catalogue leaf and a kind an anchor inside it. The conformance engine stops exempting by category and holds its baseline to live findings. Plus a live-preview theme picker and **Brutalist**, the eleventh theme. **Breaking:** `CssGroup.cssImports()` is removed (every group's override must go), `?theme=`/`?locale=` are no longer read by the server, Jazz Drums and the SVG backdrops are gone, and `WorkspaceSpec.group()` is `section()`.
 
-Past releases: [0.7.0 — Keyboard Panes, One Tab Budget](https://github.com/captainssingapura-hue/japjs/releases/tag/0.7.0) · [0.6.1 — Two-Way Docs, Articulated Tables](https://github.com/captainssingapura-hue/japjs/releases/tag/0.6.1) · [0.6.0 — HTTPS, and Diagrams As Text](https://github.com/captainssingapura-hue/japjs/releases/tag/0.6.0) · [0.5.4 — Bring Your Own Tree, Typed](https://github.com/captainssingapura-hue/japjs/releases/tag/0.5.4) · [0.5.3 — Typed Blocks, Trees On Demand](https://github.com/captainssingapura-hue/japjs/releases/tag/0.5.3) · [0.5.2 — Legacy Markdown, Live](https://github.com/captainssingapura-hue/japjs/releases/tag/0.5.2) · [0.5.1 — The Document Pane](https://github.com/captainssingapura-hue/japjs/releases/tag/0.5.1) · [0.5.0 — The Rigid-Tree Document](https://github.com/captainssingapura-hue/japjs/releases/tag/0.5.0) · [0.4.0 — The Workspace Becomes a Product](https://github.com/captainssingapura-hue/japjs/releases/tag/0.4.0) · [0.3.0 — The Workspace Substrate](https://github.com/captainssingapura-hue/japjs/releases/tag/0.3.0) · [0.2.0 — Workspace Primitives](https://github.com/captainssingapura-hue/japjs/releases/tag/0.2.0) · [0.1.0 — The Widget Substrate](https://github.com/captainssingapura-hue/japjs/releases/tag/0.1.0). Full notes under [`release-notes/`](release-notes/).
+Past releases: [0.8.2 — One Markdown Path, One Way to Open a Workspace](https://github.com/captainssingapura-hue/japjs/releases/tag/0.8.2) · [0.8.1 — Two Dark Themes, Two Real Dialogs, and a Sort That Means Something](https://github.com/captainssingapura-hue/japjs/releases/tag/0.8.1) · [0.7.1 — The Relation Grid, and a Workspace Without Covers](https://github.com/captainssingapura-hue/japjs/releases/tag/0.7.1) · [0.7.0 — Keyboard Panes, One Tab Budget](https://github.com/captainssingapura-hue/japjs/releases/tag/0.7.0) · [0.6.1 — Two-Way Docs, Articulated Tables](https://github.com/captainssingapura-hue/japjs/releases/tag/0.6.1) · [0.6.0 — HTTPS, and Diagrams As Text](https://github.com/captainssingapura-hue/japjs/releases/tag/0.6.0) · [0.5.4 — Bring Your Own Tree, Typed](https://github.com/captainssingapura-hue/japjs/releases/tag/0.5.4) · [0.5.3 — Typed Blocks, Trees On Demand](https://github.com/captainssingapura-hue/japjs/releases/tag/0.5.3) · [0.5.2 — Legacy Markdown, Live](https://github.com/captainssingapura-hue/japjs/releases/tag/0.5.2) · [0.5.1 — The Document Pane](https://github.com/captainssingapura-hue/japjs/releases/tag/0.5.1) · [0.5.0 — The Rigid-Tree Document](https://github.com/captainssingapura-hue/japjs/releases/tag/0.5.0) · [0.4.0 — The Workspace Becomes a Product](https://github.com/captainssingapura-hue/japjs/releases/tag/0.4.0) · [0.3.0 — The Workspace Substrate](https://github.com/captainssingapura-hue/japjs/releases/tag/0.3.0) · [0.2.0 — Workspace Primitives](https://github.com/captainssingapura-hue/japjs/releases/tag/0.2.0) · [0.1.0 — The Widget Substrate](https://github.com/captainssingapura-hue/japjs/releases/tag/0.1.0). Full notes under [`release-notes/`](release-notes/).
 
 ## Why?
 
@@ -158,13 +158,22 @@ public record ButtonStyles() implements CssGroup<ButtonStyles> {
     public record btn_disabled() implements CssClass<ButtonStyles> {}
 
     @Override
-    public CssImportsFor<ButtonStyles> cssImports() {
-        return CssImportsFor.none(this);
-    }
-
-    @Override
     public List<CssClass<ButtonStyles>> cssClasses() {
         return List.of(new btn(), new btn_primary(), new btn_disabled());
+    }
+}
+```
+
+A group does not declare what it imports. A class whose rules lean on another
+group's class — laid out inside it, or needing to follow it in the cascade —
+says so with `dependsOn()`, and the group's dependencies are derived from its
+classes (RFC 0064). The server serves that dependency subgraph with the group,
+and the client loads a group's whole tree, dependencies first.
+
+```java
+public record btn_in_dialog() implements CssClass<ButtonStyles> {
+    @Override public List<CssClass<?>> dependsOn() {
+        return List.of(new SystemDialogStyles.sd_body());
     }
 }
 ```
@@ -218,15 +227,9 @@ Record names use `snake_case`, which maps 1:1 to `kebab-case` CSS class names:
 
 ### Theme Support
 
-CSS files support theme variants. Place theme-specific CSS alongside the default:
+A theme is a `Theme` with a `ThemeVariables` (the `--color-*` token surface) and a `ThemeGlobals` overlay on `@layer theme`. Typed CSS records reference the tokens and never ship per-theme files — one set of records covers every theme.
 
-```
-homing/css/.../PlaygroundStyles.css           # default
-homing/css/.../PlaygroundStyles.beach.css     # beach theme
-homing/css/.../PlaygroundStyles.alpine.css    # alpine theme
-```
-
-Theme is selected via the `?theme=` query parameter and propagates through import URLs automatically.
+The theme a page wears is the **client's** to resolve (RFC 0064). The server serves every page under the registry's default; the preference steward on the client resolves the theme in one order — `?theme=` on the address as that page's override, else the pick stored in `localStorage` (`homing.theme`), else the default — and the CSS manager loads every group under it. Picking a theme in the picker stores it and switches the page in place, without a reload; a `?theme=` written into a link pins that theme for the page it names and is never copied onto other links.
 
 ## Typed Navigation
 
@@ -402,7 +405,7 @@ Homing includes a server module (`homing-server`) that serves ES modules and SPA
 | `/css?class=<CssGroup>` | `application/json` | Resolved CSS dependency chain |
 | `/css-content?class=<CssGroup>` | `text/css` | Raw CSS file content |
 
-Query parameters `theme` and `locale` are supported on all endpoints and propagate through import URLs for DOM-aware modules.
+`/app` ignores `?theme=` and `?locale=`: the page is served under the registry's default and the client resolves both through the preference steward (RFC 0064). The keyed resources — `/css-content`, `/theme-vars`, `/theme-globals` — still take `?theme=` explicitly; the client's CSS manager puts it there.
 
 The `?app=<simple-name>` URL contract — introduced in [RFC 0001](docs/rfcs/0001-app-registry-and-typed-nav.md) — is the public surface. Simple names default to a kebab-case derivation of the AppModule's class name (e.g. `PitchDeck` → `pitch-deck`); each AppModule may override `simpleName()` to lock the URL contract independently of its Java class. The legacy `?class=` form is retained for backwards compatibility.
 
@@ -451,11 +454,11 @@ As of 0.0.111, demos live in their own repo — [`homing-doc-plus-demo`](https:/
 | Spinning Animals | `/app?app=spinning-animals` | AppModule — auto-rotating gallery |
 | Composed-doc demo | (catalogue tile) | `ComposedDoc` mixing text/svg/table/image/code segments |
 | Interactive animals tree | `/app?app=tree&id=interactive-animals` | RFC 0016 ContentTree of per-animal `ComposedDoc`s |
-| Themes | `/app?app=themes` | Theme picker for the four bundled themes |
+| Themes | `/app?app=themes` | Theme picker for the eleven bundled themes, with a live preview |
 
 ### Themes
 
-The framework ships four themes: Default, Forest, Sunset, Bauhaus. Each defines the standard `--color-*` token surface (`--color-surface`, `--color-text-primary`, `--color-accent`, `--color-border`, etc.) that every typed CSS record references. Switching themes flips the entire studio chrome plus every app's playground without app-side code.
+The framework ships eleven themes: Default, Carbon, Forest, Sunset, Bauhaus, Forbidden City, Letterpress, Maple Bridge, Retro 90s, Turbo C and Brutalist. Each defines the standard `--color-*` token surface (`--color-surface`, `--color-text-primary`, `--color-accent`, `--color-border`, etc.) that every typed CSS record references. Switching themes flips the entire studio chrome plus every app's playground without app-side code — and without a reload: the client's CSS manager reloads every sheet on the page under the new theme in dependency order and applies them at once.
 
 Apps drop the `--color-*` tokens into their typed `CssClass.body()` returns; the framework's `CssGroupImpl` machinery handles the `:root { --color-…: … }` emission per theme. No per-theme CSS files in app code — one set of typed CSS records covers every theme.
 
