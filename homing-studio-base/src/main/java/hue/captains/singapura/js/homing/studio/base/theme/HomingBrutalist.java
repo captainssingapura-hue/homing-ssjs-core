@@ -374,6 +374,8 @@ public record HomingBrutalist() implements Theme {
                     background: var(--color-accent);
                     color: var(--bru-ink);
                     border-color: var(--bru-ink);
+                    transform: translate(-2px, -2px);
+                    box-shadow: 6px 6px 0 var(--bru-ink);
                 }
                 .st-filter-btn:active, .sd-action:active, .ws-btn:active, .cg-btn:active, .pm-btn:active {
                     transform: translate(4px, 4px);
@@ -403,7 +405,14 @@ public record HomingBrutalist() implements Theme {
                     opacity: 1;
                     cursor: not-allowed;
                 }
-                .sd-action-off:active, .ws-btn-off:active, .sd-action[disabled]:active { transform: none; }
+                .sd-action-off:hover, .ws-btn-off:hover, .st-filter-btn[disabled]:hover, .sd-action[disabled]:hover,
+                .ws-btn[disabled]:hover, .cg-btn[disabled]:hover, .pm-btn[disabled]:hover,
+                .sd-action-off:active, .ws-btn-off:active, .sd-action[disabled]:active {
+                    background: var(--bru-hatch), var(--bru-paper);
+                    color: var(--color-text-muted);
+                    transform: none;
+                    box-shadow: none;
+                }
 
                 /* The picker's button sits on the ink masthead — paper rules,
                    a yellow shadow, and the same press. */
@@ -418,7 +427,13 @@ public record HomingBrutalist() implements Theme {
                     padding: 4px 10px;
                     transition: var(--bru-snap);
                 }
-                .tp-btn:hover { background: var(--color-accent); color: var(--color-accent-on); border-color: var(--color-accent); }
+                .tp-btn:hover {
+                    background: var(--color-accent);
+                    color: var(--color-accent-on);
+                    border-color: var(--color-accent);
+                    transform: translate(-2px, -2px);
+                    box-shadow: 5px 5px 0 var(--color-text-on-inverted);
+                }
                 .tp-btn:hover .tp-btn-label { color: var(--color-accent-on); }
                 .tp-btn:active { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--color-accent); }
                 """;
