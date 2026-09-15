@@ -77,7 +77,7 @@ function _draw(root, data, brand) {
     mountThemePickerTree(main, { heading: "Switch theme" });
 
     var themes = (data && data.themes) || [];
-    var currentSlug = _currentThemeSlug();
+    var currentSlug = _currentThemeSlug() || (themes[0] && themes[0].slug);
     var rows = themes.map(function (t) {
         return ListItem({
             href:        _activateUrl(t.slug),
@@ -95,25 +95,23 @@ function _draw(root, data, brand) {
 
 // ---------- helpers ----------
 
+/**
+ * The theme this page wears — what the steward resolves: the address's
+ * override, else the stored pick, else null (the caller falls back to the
+ * registry's first theme, which is what the page wears then). RFC 0064: the
+ * address alone was wrong the moment a bare URL rendered under a stored pick.
+ */
 function _currentThemeSlug() {
-    try {
-        return new URLSearchParams(window.location.search).get("theme");
-    } catch (_) {
-        return null;
-    }
+    return PreferenceViewInstance.resolve("theme", null);
 }
 
-/** Same URL as the current page, with ?theme=<slug> set. href.set's session-
- *  key propagation handles `locale` and any other propagated key. */
+/**
+ * Same URL as the current page, with ?theme=<slug> set — an explicit override,
+ * on purpose: an Activate link is a shareable themed view, and the address
+ * wins while it names one. Built through href, the one reader of the address.
+ */
 function _activateUrl(slug) {
-    var params;
-    try {
-        params = new URLSearchParams(window.location.search);
-    } catch (_) {
-        params = new URLSearchParams();
-    }
-    params.set("theme", slug);
-    return window.location.pathname + "?" + params.toString();
+    return HrefManagerInstance.withParam("theme", slug);
 }
 
 /** A horizontal strip of fixed-size colored boxes — one per palette key.
