@@ -19,7 +19,7 @@ var _OPEN_KEY = "homing.themePicker.open";
  * to the registry's first theme, which is what the page wears then).
  */
 function activeThemeSlug() {
-    return PreferenceStewardInstance.resolve("theme", null);
+    return PreferenceViewInstance.resolve("theme", null);
 }
 
 function _slugify(s) {

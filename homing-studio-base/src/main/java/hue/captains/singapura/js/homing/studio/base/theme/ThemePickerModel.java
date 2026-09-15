@@ -54,7 +54,8 @@ public record ThemePickerModel() implements DomModule<ThemePickerModel> {
         return ImportsFor.<ThemePickerModel>builder()
                 .add(new ModuleImports<>(List.of(new HrefManager.HrefManagerInstance()),
                         HrefManager.INSTANCE))
-                .add(new ModuleImports<>(List.of(new PreferenceSteward.PreferenceStewardInstance()),
+                .add(new ModuleImports<>(List.of(new PreferenceSteward.PreferenceStewardInstance(),
+                                                 new PreferenceSteward.PreferenceViewInstance()),
                         PreferenceSteward.INSTANCE))
                 .build();
     }

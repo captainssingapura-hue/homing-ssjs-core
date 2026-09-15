@@ -95,7 +95,7 @@ const CssClassManagerInstance = (() => {
      * on the page, so a widget mounted later arrives in the same theme.
      */
     function themeFor(fallback) {
-        return PreferenceStewardInstance.resolve("theme", fallback);
+        return PreferenceViewInstance.resolve("theme", fallback);
     }
 
     async function loadCss(cssBeing, theme) {
