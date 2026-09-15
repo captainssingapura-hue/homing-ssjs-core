@@ -5,10 +5,20 @@ import hue.captains.singapura.js.homing.core.*;
 import java.util.List;
 
 /**
- * Framework-level EsModule that provides CSS class management.
- * <p>Subsumes {@link CssLoader}: handles CSS file loading and provides
- * type-safe CSS class operations (addClass, removeClass, etc.) using
- * frozen CssClass objects.</p>
+ * The one module that puts a stylesheet on the page (RFC 0002-ext1), and the
+ * page's theme owner (RFC 0064): every served CSS group module calls
+ * {@code loadCss(group, fallbackTheme, subgraph)}; the manager merges the
+ * group's dependency subgraph into the page's graph, resolves the theme
+ * through the preference steward, and has the load procedure bring the
+ * group's whole tree in — dependencies first, missing ones by name, applied
+ * all at once. {@code switchTheme(to)} is the same procedure over every
+ * loaded node, then the old theme retires; the manager follows the store, so
+ * another tab's pick reaches this one.
+ *
+ * <p>Three affiliates, all pure: {@link CssHandles} (the handles),
+ * {@link CssDependencyGraph} (what depends on what, and the waves),
+ * {@link CssLoadProcedure} (how sheets arrive). The DOM is touched here, in
+ * one place.</p>
  */
 public record CssClassManager() implements EsModule<CssClassManager> {
 
@@ -18,9 +28,13 @@ public record CssClassManager() implements EsModule<CssClassManager> {
 
     @Override
     public ImportsFor<CssClassManager> imports() {
-        // RFC 0064 — the theme a group loads under is the steward's to say;
-        // the argument a served group module carries is only the fallback.
         return ImportsFor.<CssClassManager>builder()
+                .add(new ModuleImports<>(List.of(new CssHandles.CssClass(), new CssHandles.CssUtility()),
+                        CssHandles.INSTANCE))
+                .add(new ModuleImports<>(List.of(new CssDependencyGraph.createCssDependencyGraph()),
+                        CssDependencyGraph.INSTANCE))
+                .add(new ModuleImports<>(List.of(new CssLoadProcedure.createCssLoadProcedure()),
+                        CssLoadProcedure.INSTANCE))
                 .add(new ModuleImports<>(List.of(new PreferenceSteward.PreferenceViewInstance()),
                         PreferenceSteward.INSTANCE))
                 .build();

@@ -1,129 +1,116 @@
 // =============================================================================
-// CssClassManager — RFC 0002-ext1
-// Per-class JS handles use ES6 classes for prototype sharing and clean variant
-// exposition. Each pseudo-state has a dedicated subclass mirroring the Java
-// side (HoverVariantOf / FocusVariantOf / ActiveVariantOf): one uniform value
-// type for plain classes, one subclass per variant state.
+// CssClassManager — RFC 0002-ext1, RFC 0064
+//
+// The one module that puts a stylesheet on the page. Every served CSS group
+// module calls loadCss(group, fallbackTheme, subgraph); the manager merges the
+// group's dependency subgraph into the page's graph (CssDependencyGraph),
+// resolves the theme through the preference steward, and has the load
+// procedure (CssLoadProcedure) bring the group's whole tree in — dependencies
+// first, missing ones by name, applied all at once.
+//
+// switchTheme(to) is the same procedure over every node the page has loaded:
+// the new theme's sheets arrive in dependency waves under media="not all",
+// flip in one pass, and the old theme's leave. A -> B -> A works because
+// leaving a theme forgets it. The manager also FOLLOWS the store: when the
+// steward reports a change and the resolved theme differs from the one worn,
+// it switches — which is how another tab's pick reaches this one.
+//
+// The handles (CssHandles) are identity, bound late by the cascade — every
+// holder keeps its handle across a switch. The graph and the procedure are
+// pure; this module is where the DOM is touched, in one place.
 // =============================================================================
 
-class CssClass {
-    constructor(name) { this.name = name; }
-    toString() { return this.name; }
-}
-
-// Dedicated variant classes — mirror Java's HoverVariantOf / FocusVariantOf /
-// ActiveVariantOf. Each carries the kebab-name of the state-restricted CSS
-// rule. Distinct types so consumers can introspect via `instanceof`.
-class HoverVariant  extends CssClass { static pseudoState = ":hover";  }
-class FocusVariant  extends CssClass { static pseudoState = ":focus";  }
-class ActiveVariant extends CssClass { static pseudoState = ":active"; }
-
-// Lookup: variant state name (as emitted by CssGroupContentProvider) →
-// dedicated subclass. Unknown states fall back to plain CssClass — keeps the
-// JS forward-compatible if a new VariantOf subtype is added on the Java side
-// before the JS is updated.
-const VARIANT_CLASSES = {
-    hover:  HoverVariant,
-    focus:  FocusVariant,
-    active: ActiveVariant,
-};
-
-class CssUtility extends CssClass {
-    /**
-     * @param {string} name           kebab-case base class name
-     * @param {Object<string,string>} variants  state → variant kebab-name (e.g. { hover: "hover-bg-accent" })
-     *
-     * Each variant is precomputed once as the appropriate subclass instance
-     * (HoverVariant / FocusVariant / etc.) and exposed as a PROPERTY (no
-     * parens, no string return). This keeps every class handle in the system
-     * the same uniform value type — `cls instanceof CssClass` for all of them
-     * — while preserving distinguishability via the dedicated subclasses.
-     *
-     * Use site: `cn(bg_accent, bg_accent.hover)` — property access, no parens.
-     */
-    constructor(name, variants) {
-        super(name);
-        const states = Object.keys(variants || {});
-        for (const state of states) {
-            const VariantClass = VARIANT_CLASSES[state] || CssClass;
-            this[state] = new VariantClass(variants[state]);
-        }
-    }
-}
-
 const CssClassManagerInstance = (() => {
-    const loaded = new Set();
+    const graph = createCssDependencyGraph();
+    const VARS = graph.VARS, GLOBALS = graph.GLOBALS;
 
-    /**
-     * RFC 0002-ext1 Phase 09 — auto-load the theme bundle (vars + globals)
-     * once per page per theme. The bundle endpoints always return 200 with an
-     * empty body when the theme has nothing registered, so this is safe to
-     * call before deployments have populated their ThemeRegistry. Once
-     * deployments migrate (Phase 10/11), the bundle becomes the canonical
-     * source of `:root` and global rules; per-group `/css-content` files are
-     * just class rules.
-     */
-    async function ensureThemeBundleLoaded(theme) {
-        // SEQUENTIAL: theme-vars must land in the cascade BEFORE theme-globals.
-        // Globals contains `@media (prefers-color-scheme: dark) { :root { … } }`
-        // overrides for primitives; if vars loaded last, the unconditional :root
-        // would shadow the @media override (last-wins for same specificity).
-        //
-        // When `theme` is null (no ?theme= URL param), we still call the routes
-        // — the server uses its registered default theme. Without this, class
-        // bodies that reference `var(--color-*)` resolve to nothing because the
-        // cascade is never set up.
-        const themeKey = theme || "__default";
-        const themeQuery = theme ? "?theme=" + encodeURIComponent(theme) : "";
-        const varsKey = themeKey + ":__theme-vars";
-        if (!loaded.has(varsKey)) {
-            loaded.add(varsKey);
-            await appendLink("/theme-vars" + themeQuery).catch(() => {});
-        }
-        const globalsKey = themeKey + ":__theme-globals";
-        if (!loaded.has(globalsKey)) {
-            loaded.add(globalsKey);
-            await appendLink("/theme-globals" + themeQuery).catch(() => {});
-        }
-    }
-
-    /**
-     * RFC 0064 — which theme this page loads under. The served group module
-     * carries the theme the server propagated, and the server now propagates
-     * only its default; the steward resolves the address's override, then the
-     * stored pick, and falls back to that default. One answer for every group
-     * on the page, so a widget mounted later arrives in the same theme.
-     */
-    function themeFor(fallback) {
-        return PreferenceViewInstance.resolve("theme", fallback);
-    }
-
-    async function loadCss(cssBeing, theme) {
-        theme = themeFor(theme);
-        // Theme-scoped bundle (vars + globals) loads first, idempotently.
-        await ensureThemeBundleLoaded(theme);
-
-        const key = cssBeing + (theme ? ":" + theme : "");
-        if (loaded.has(key)) return;
-        loaded.add(key);
-
-        // Each module emits one loadCss(group) call per group it imports,
-        // so transitive dependencies are already resolved at module-link
-        // time — no need for a separate /css JSON resolver round-trip.
-        let href = "/css-content?class=" + encodeURIComponent(cssBeing);
-        if (theme) href += "&theme=" + encodeURIComponent(theme);
-        await appendLink(href);
+    function hrefFor(id, theme) {
+        const q = theme ? "theme=" + encodeURIComponent(theme) : "";
+        if (id === VARS)    return "/theme-vars"    + (q ? "?" + q : "");
+        if (id === GLOBALS) return "/theme-globals" + (q ? "?" + q : "");
+        return "/css-content?class=" + encodeURIComponent(id) + (q ? "&" + q : "");
     }
 
     function appendLink(href) {
-        return new Promise((resolve, reject) => {
-            const link = document.createElement("link");
-            link.rel = "stylesheet";
-            link.href = href;
-            link.onload = resolve;
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = href;
+        const loaded = new Promise((resolve, reject) => {
+            link.onload = () => resolve(link);
             link.onerror = () => reject(new Error("Failed to load CSS: " + href));
-            document.head.appendChild(link);
         });
+        document.head.appendChild(link);
+        return { link, loaded };
+    }
+
+    const procedure = createCssLoadProcedure(graph, appendLink, hrefFor);
+
+    let worn = null;          // the theme the page wears, once anything has loaded
+    let changing = null;      // the switch in flight, if one is
+    const listeners = new Set();
+
+    /**
+     * Which theme this page loads under: the steward's answer — the address as
+     * this page's override, else the stored pick — falling back to what the
+     * served group module carries, which is the server's default. One answer
+     * for every group, so a widget mounted later arrives in the same theme.
+     */
+    function themeFor(fallback) {
+        return worn || PreferenceViewInstance.resolve("theme", fallback || null);
+    }
+
+    async function loadCss(cssBeing, fallbackTheme, subgraph) {
+        graph.merge(subgraph || { [cssBeing]: { deps: [] } });
+        if (changing) await changing.catch(() => {});
+        const theme = themeFor(fallbackTheme);
+        await procedure.load(graph.closureOf([cssBeing]), theme);
+        if (!worn) worn = theme;
+    }
+
+    /**
+     * Refresh every loaded node under another theme, then retire the current
+     * one. Resolves when the page wears `to`; rejects, with the page whole
+     * under the old theme, if any sheet fails to arrive.
+     */
+    function switchTheme(to) {
+        if (!to || to === worn) return Promise.resolve(worn);
+        if (changing) return changing.then(() => switchTheme(to));
+        const from = worn;
+        const nodes = procedure.loadedUnder(from).filter(id => id !== VARS && id !== GLOBALS);
+        changing = procedure.load(nodes, to).then(() => {
+            procedure.retire(from);
+            worn = to;
+            for (const fn of Array.from(listeners)) {
+                try { fn({ from, to }); } catch (e) { console.error("[css] listener failed", e); }
+            }
+            return to;
+        }).finally(() => { changing = null; });
+        return changing;
+    }
+
+    /** Call fn({ from, to }) after a switch has applied. Returns the function that stops listening. */
+    function onThemeApplied(fn) {
+        if (typeof fn !== "function") throw new TypeError("css.onThemeApplied: fn must be a function");
+        listeners.add(fn);
+        return () => { listeners.delete(fn); };
+    }
+
+    // Follow the store: a pick here or in another tab. The address's override
+    // still wins inside resolve(), so a tab pinned by ?theme= stays put.
+    PreferenceViewInstance.onChange(() => {
+        const next = PreferenceViewInstance.resolve("theme", worn);
+        if (worn && next && next !== worn) switchTheme(next).catch(e => console.error("[css] switch failed", e));
+    });
+
+    /** The waves a switch to `to` (or a load of `ids`) WOULD run — nothing appended. */
+    function plan(ids) {
+        const set = ids || procedure.loadedUnder(worn).filter(id => id !== VARS && id !== GLOBALS);
+        return graph.plan(set);
+    }
+
+    /** Frozen, plain data — the workbench's whole view: the theme worn, the graph, every sheet. */
+    function snapshot() {
+        return Object.freeze({ theme: worn, graph: graph.snapshot(), sheets: procedure.snapshot() });
     }
 
     /**
@@ -147,6 +134,11 @@ const CssClassManagerInstance = (() => {
 
     return {
         loadCss,
+        switchTheme,
+        onThemeApplied,
+        plan,
+        snapshot,
+        theme() { return worn; },
         cls,
         addClass(el, ...classes)            { for (const c of classes) el.classList.add(resolve(c)); },
         removeClass(el, ...classes)         { for (const c of classes) el.classList.remove(resolve(c)); },
