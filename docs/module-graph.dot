@@ -1,0 +1,137 @@
+// homing-ssjs-core — Maven module dependency graph, as measured on 2026-09-15
+// from each module's pom.xml (main @ 3209625). Solid edge = compile scope;
+// test edges are summarised in the title. Node label = module [java files / js files].
+//
+//   dot -Tsvg docs/module-graph.dot -o docs/module-graph.svg
+//
+// Clusters are the strata the graph sorts into; they are a reading aid, not a
+// declaration. The one edge that crosses a stratum "the wrong way" is drawn
+// red: homing-workspace -> homing-studio-base (compile).
+
+digraph homing_ssjs_core {
+    rankdir = BT; newrank = true; splines = spline;
+    graph [fontname = "Helvetica", fontsize = 11, labelloc = "t",
+           label = "homing-ssjs-core · Maven modules · compile edges (an arrow points at what is depended on)\nTest scope, not drawn: 10 modules depend on homing-conformance-rules (their own gate), 5 on homing-ssjs-test-fixtures (the JS harness)",
+           nodesep = 0.3, ranksep = 0.75, compound = true];
+    node  [shape = box, style = "rounded,filled", fontname = "Helvetica", fontsize = 10];
+    edge  [fontname = "Helvetica", fontsize = 8, arrowsize = 0.7];
+
+    // ── Foundation ──────────────────────────────────────────────────────────
+    subgraph cluster_foundation {
+        label = "foundation"; style = "rounded"; color = "#8a8a8a"; fontcolor = "#555555";
+        node [fillcolor = "#e8eef7"];
+        core        [label = "homing-core\n[89 / 0]"];
+        core_js     [label = "homing-core-js\n[11 / 6]"];
+        server      [label = "homing-server\n[21 / 2]"];
+        libs        [label = "homing-libs\n[9 / 0]"];
+        codec       [label = "homing-codec\n[5 / 0]"];
+        codec_ecma  [label = "homing-codec-ecma\n[3 / 0]"];
+        codec_java  [label = "homing-codec-java\n[1 / 0]"];
+        fixtures    [label = "homing-ssjs-test-fixtures\n[2 / 0]", fillcolor = "#f2f2f2"];
+    }
+
+    // ── Conformance (the gate) ──────────────────────────────────────────────
+    subgraph cluster_conformance {
+        label = "conformance"; style = "rounded"; color = "#8a8a8a"; fontcolor = "#555555";
+        node [fillcolor = "#efe8f7"];
+        rules        [label = "homing-conformance-rules\n[46 / 0]"];
+        conformance  [label = "homing-conformance\n[1 / 0]"];
+        engine       [label = "homing-conformance-engine\n[3 / 0]"];
+        report_gen   [label = "homing-conformance-report-gen\n[2 / 0]"];
+        report_codec [label = "homing-conformance-report-codec\n[0 / 0]"];
+        export       [label = "homing-conformance-export\n[3 / 0]"];
+    }
+
+    // ── Studio ──────────────────────────────────────────────────────────────
+    subgraph cluster_studio {
+        label = "studio"; style = "rounded"; color = "#8a8a8a"; fontcolor = "#555555";
+        node [fillcolor = "#e8f5e9"];
+        rigid_tree       [label = "homing-rigid-tree\n[19 / 0]"];
+        tree_views       [label = "homing-tree-views\n[1 / 0]"];
+        studio_base      [label = "homing-studio-base\n[234 / 35]", penwidth = 2];
+        studio_workspace [label = "homing-studio-workspace\n[7 / 1]"];
+        studio_starter   [label = "homing-studio-starter\n[1 / 0]"];
+        conf_studio      [label = "homing-conformance-studio\n[27 / 0]"];
+    }
+
+    // ── Workspace ───────────────────────────────────────────────────────────
+    subgraph cluster_workspace {
+        label = "workspace"; style = "rounded"; color = "#8a8a8a"; fontcolor = "#555555";
+        node [fillcolor = "#fff3e0"];
+        workspace   [label = "homing-workspace\n[100 / 9]"];
+        ws_codecs   [label = "homing-workspace-codecs\n[6 / 0]"];
+        ws_persist  [label = "homing-workspace-persistence\n[2 / 1]"];
+        ws_shell    [label = "homing-workspace-shell\n[47 / 22]"];
+    }
+
+    // ── Grid, episode 1 (superseded by the homing-rel-grid repo) ───────────
+    subgraph cluster_grid {
+        label = "relation grid (ep. 1)"; style = "rounded,dashed"; color = "#8a8a8a"; fontcolor = "#555555";
+        node [fillcolor = "#fdecea"];
+        rel_grid1 [label = "homing-relation-grid\n[23 / 16]"];
+    }
+
+    // ── Compile edges (44) ──────────────────────────────────────────────────
+    core_js      -> core;
+    server       -> core;
+    libs         -> core;
+    codec_ecma   -> codec;
+    codec_java   -> codec;
+
+    rules        -> core;
+    conformance  -> core;
+    engine       -> rules;
+    engine       -> server;
+    report_gen   -> rules;
+    report_gen   -> codec;
+    report_gen   -> codec_java;
+    report_codec -> rules;
+    report_codec -> codec;
+    report_codec -> report_gen;
+    export       -> engine;
+    export       -> report_codec;
+
+    tree_views   -> rigid_tree;
+    studio_base  -> server;
+    studio_base  -> libs;
+    studio_base  -> core_js;
+    studio_base  -> tree_views;
+    studio_base  -> conformance;
+
+    workspace    -> studio_base [color = "#c62828", penwidth = 2,
+                                 label = "12 imports:\nWorkspaceMPA, DocWidget, Catalogue/Entry/Navigable,\nGotoNavigable, MultiTabPane, FocusManager,\nSystemDialog, MasterDetail, StudioStyles",
+                                 fontcolor = "#c62828"];
+    workspace    -> codec;
+    ws_codecs    -> workspace;
+    ws_codecs    -> codec;
+    ws_codecs    -> codec_ecma;
+    ws_codecs    -> core;
+    ws_persist   -> workspace;
+    ws_persist   -> ws_codecs;
+    ws_persist   -> core;
+    ws_shell     -> workspace;
+    ws_shell     -> ws_codecs;
+    ws_shell     -> ws_persist;
+
+    studio_workspace -> ws_shell;
+    studio_starter   -> studio_workspace;
+    conf_studio      -> studio_starter;
+    conf_studio      -> rules;
+    conf_studio      -> engine;
+    conf_studio      -> export;
+    conf_studio      -> report_gen;
+    conf_studio      -> codec_ecma;
+
+    rel_grid1    -> core;
+
+    // ── Context: the product already spun out, and what it reaches back for ─
+    edge [color = "#1565c0"];
+    subgraph cluster_external {
+        label = "homing-rel-grid (own repo, pins core 0.8.3)"; style = "rounded,dotted"; color = "#1565c0"; fontcolor = "#1565c0";
+        node [fillcolor = "#e3f2fd", color = "#1565c0"];
+        rel_grid2 [label = "rel-channel · rel-grid-protocol · rel-grid\nrel-grid-selection · rel-grid-group · rel-tree\njson-kit · rel-grid-workbench"];
+    }
+    rel_grid2 -> core;
+    rel_grid2 -> core_js;
+    rel_grid2 -> server [label = "workbench only", fontcolor = "#1565c0"];
+}
