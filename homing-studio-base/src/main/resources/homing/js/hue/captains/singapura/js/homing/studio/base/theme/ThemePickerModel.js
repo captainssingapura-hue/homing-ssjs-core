@@ -154,15 +154,10 @@ function pickerReopenWanted() {
 
 /**
  * The preview page under a theme: the address the picker's frame loads on each
- * selection. The current locale rides along so the preview reads in the same
- * language as the page around it; `theme` is set explicitly and so wins over
- * anything the address carries.
+ * selection. `theme` is set explicitly — an override for that page, which the
+ * frame's own steward honours. Nothing else rides along: the frame shares this
+ * page's origin and so its stored preferences, locale included.
  */
 function previewUrl(slug) {
-    var url = "/app?app=theme-preview&theme=" + encodeURIComponent(slug);
-    var cur = HrefManagerInstance.current();
-    var q = cur.indexOf("?");
-    var locale = q < 0 ? null : new URLSearchParams(cur.slice(q + 1)).get("locale");
-    if (locale) url += "&locale=" + encodeURIComponent(locale);
-    return url;
+    return "/app?app=theme-preview&theme=" + encodeURIComponent(slug);
 }

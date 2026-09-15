@@ -215,7 +215,6 @@ public class AppHtmlGetAction
 
         String baseModuleUrl = nameResolver.resolve(app).basePath();
         String themeJs  = effectiveTheme != null ? "\"" + effectiveTheme + "\"" : "null";
-        String localeJs = query.locale() != null ? "\"" + query.locale() + "\"" : "null";
         String backdropHtml    = renderBackdrop(effectiveTheme);
         String audioHtml       = renderAudioRuntime(effectiveTheme);
 
@@ -272,12 +271,15 @@ public class AppHtmlGetAction
                     <div id="app"></div>
                     %s
                     <script type="module">
-                        // RFC 0002: theme is opt-in. If the URL didn't carry ?theme=, we
-                        // forward nothing and the server resolves to its registered default.
-                        // Browser prefers-color-scheme is intentionally ignored — themes are
+                        // RFC 0064: the page is served under the registry's default theme
+                        // and no locale. Neither is the address's to say here — the client
+                        // resolves both through the preference steward (an ?override for
+                        // this page, else the stored pick, else the default) and puts them
+                        // on the resources that vary by them. What rides on the module URL
+                        // is only the default the server propagated. Browser
+                        // prefers-color-scheme is intentionally ignored — themes are
                         // explicit, not auto-derived.
                         const theme = %s;
-                        const locale = %s || navigator.language;
                         // color-scheme is NOT set from the theme slug. It used to be
                         // — `style.colorScheme = theme` — which assigned "carbon" or
                         // "forest" to a property that accepts only
@@ -289,7 +291,7 @@ public class AppHtmlGetAction
                         // bright scrollbar down a near-black page.
                         //
                         // The theme owns this. Nothing to do here.
-                        let moduleUrl = "%s" + "&locale=" + encodeURIComponent(locale);
+                        let moduleUrl = "%s";
                         if (theme) moduleUrl += "&theme=" + encodeURIComponent(theme);
                         %s
                         %s
@@ -300,7 +302,7 @@ public class AppHtmlGetAction
                 </html>
                 """.formatted(htmlEscape(app.title() + " · " + meta.label()),
                               bodyClass,
-                              backdropHtml, audioHtml, themeJs, localeJs, baseModuleUrl,
+                              backdropHtml, audioHtml, themeJs, baseModuleUrl,
                               stampedParams == null ? "" : "const params = " + stampedParams + ";",
                               stampedCrumbs == null ? "" : "const chrome = Object.freeze({crumbs: "
                                                           + stampedCrumbs + "});",
