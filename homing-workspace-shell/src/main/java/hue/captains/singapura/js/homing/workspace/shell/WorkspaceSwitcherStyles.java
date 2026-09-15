@@ -2,7 +2,6 @@ package hue.captains.singapura.js.homing.workspace.shell;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
-import hue.captains.singapura.js.homing.core.CssImportsFor;
 
 import java.util.List;
 
@@ -142,11 +141,6 @@ public record WorkspaceSwitcherStyles() implements CssGroup<WorkspaceSwitcherSty
             padding-top: var(--space-2);
             border-top: 1px solid var(--color-border);
             """; }
-    }
-
-    @Override
-    public CssImportsFor<WorkspaceSwitcherStyles> cssImports() {
-        return CssImportsFor.none(this);
     }
 
     @Override

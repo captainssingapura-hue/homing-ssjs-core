@@ -18,7 +18,6 @@ class CssClassNameTest {
         record active() implements CssClass<TestCss> {}
         record very_long_class_name() implements CssClass<TestCss> {}
 
-        @Override public CssImportsFor<TestCss> cssImports() { return CssImportsFor.none(this); }
         @Override public List<CssClass<TestCss>> cssClasses() { return List.of(); }
     }
 

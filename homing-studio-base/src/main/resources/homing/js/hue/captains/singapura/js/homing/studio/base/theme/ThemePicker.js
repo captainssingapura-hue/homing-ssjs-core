@@ -18,10 +18,9 @@
 // That division is what keeps the whole thing compact: a row carries one string,
 // so nothing competes for its width.
 //
-// Selecting only browses. Enter switches, which navigates — live theme swap is
-// not supported yet. A session-local flag carries "the picker was open" across
-// the reload, so the dialog is rebuilt on the far side and the user never has to
-// reopen it between tries.
+// Selecting only browses; the preview frame shows the selection. Enter, Apply
+// and OK switch — live, on this page (RFC 0064): the CSS manager swaps every
+// sheet in dependency waves and the dialog is the same element afterwards.
 //
 // The framework's EsModuleWriter appends the import/export prologue from the
 // matching Java ThemePicker declaration — do not add import/export lines here.
@@ -141,7 +140,13 @@ function _buildPanes(branch, wrap, themes, active, seq, onSwitch, onPick) {
     update(themeBySlug(themes, active) || themes[0], active);
 
     return { treeHost: pair.navEl, renderer: pair.renderer,
-             selected: function () { return picked; } };
+             selected: function () { return picked; },
+             // The theme the page wears has moved — from this dialog, or from
+             // elsewhere — so the "in use" chip moves with it (RFC 0064).
+             markActive: function (slug) {
+                 active = slug;
+                 update(themeBySlug(themes, picked) || themeBySlug(themes, slug), active);
+             } };
 }
 
 /**
@@ -175,6 +180,8 @@ function mountThemePickerTree(host, opts) {
 
         var panes = _buildPanes(branch, body, themes, active, mySeq,
             function (slug) { switchToTheme(slug); });
+        // The chip follows the page — a switch from here or from anywhere.
+        css.onThemeApplied(function (change) { panes.markActive(change.to); });
 
         panes.treeHost.addEventListener("keydown", function (ev) {
             if (panes.renderer.handleKeydown(ev)) ev.preventDefault();
@@ -191,12 +198,14 @@ function mountThemePickerTree(host, opts) {
  * it — so this function is only about what the picker PUTS in the dialog and
  * what its three actions mean.
  *
- * Switching a theme still NAVIGATES — live swap is Wish 0018 — and that is what
- * separates the two confirming actions. Apply reloads with the dialog flagged to
- * reopen, so you land back here and can try the next one; OK reloads without the
- * flag and the dialog is simply gone. Cancel never navigates at all. Applying
- * the theme already in use would spend a page load to arrive exactly where you
- * are, so Apply switches off and OK becomes Close in that case.
+ * Switching a theme is LIVE (RFC 0064, Wish 0018): the CSS manager swaps every
+ * sheet on the page in dependency waves and the dialog is the same element
+ * afterwards. Apply switches and keeps the dialog open, so you can try the next
+ * one; OK switches and closes; Cancel does nothing. The theme already in use
+ * is nothing to switch to, so Apply switches off and OK becomes Close then. A
+ * switch that fails leaves the page whole, the dialog open and the chip where
+ * it was. The header label and the chip follow the manager, so a switch made
+ * elsewhere — the workbench, another tab — shows here too.
  */
 function mountThemePickerButton(host, opts) {
     if (!host) throw new Error("mountThemePickerButton: host element required");
@@ -230,27 +239,37 @@ function mountThemePickerButton(host, opts) {
         btn.appendChild(caret);
 
         var dialog = null;   // the SystemDialog handle, while open
+        var panes  = null;   // the dialog's tree + pane, while open
 
         function close() { if (dialog) dialog.close(); }
 
+        // `live` is "the selection would actually change something".
+        function refresh(live) {
+            if (!dialog) return;
+            dialog.setAction("apply", { enabled: live });
+            dialog.setAction("ok",    { label: live ? "OK" : "Close" });
+        }
+
+        // The page wears another theme now — from Apply, or from anywhere.
+        function wear(slug) {
+            active = slug;
+            var t = themeBySlug(themes, slug);
+            now.textContent = t ? (t.label || t.slug) : slug;
+            if (panes) { panes.markActive(slug); refresh(panes.selected() !== active); }
+        }
+        css.onThemeApplied(function (change) { wear(change.to); });
+
         function open() {
             if (dialog) { close(); return; }
-            var panes = null;
 
             function applyPicked(keepOpen) {
                 var slug = panes && panes.selected();
                 if (!slug || slug === active) { if (!keepOpen) close(); return; }
-                // The flag is the whole difference between Apply and OK: it
-                // survives the reload and tells the far side whether to reopen.
-                rememberPickerOpen(!!keepOpen);
-                switchToTheme(slug);
-            }
-
-            // `live` is "the selection would actually change something".
-            function refresh(live) {
-                if (!dialog) return;
-                dialog.setAction("apply", { enabled: live });
-                dialog.setAction("ok",    { label: live ? "OK" : "Close" });
+                switchToTheme(slug).then(function () {
+                    if (!keepOpen) close();
+                }, function (err) {
+                    console.error("[theme] switch failed; the page is unchanged", err);
+                });
             }
 
             dialog = openSystemDialog({
@@ -275,13 +294,10 @@ function mountThemePickerButton(host, opts) {
                     { id: "ok",     label: "OK",     primary: true, onClick: function () { applyPicked(false); } }
                 ],
                 // Every close path lands here exactly once — Escape, ✕, scrim,
-                // Cancel. A deliberate close clears the flag: the user is done
-                // trying themes, so the next page must NOT reopen. Apply and OK
-                // navigate WITHOUT closing, so they never reach this and the flag
-                // they set survives.
+                // Cancel, OK after its switch.
                 onClose: function () {
                     dialog = null;
-                    rememberPickerOpen(false);
+                    panes = null;
                 }
             });
             refresh(panes.selected() !== active);
@@ -289,11 +305,6 @@ function mountThemePickerButton(host, opts) {
 
         btn.addEventListener("click", open);
         host.appendChild(btn);
-
-        // We arrived here from a theme switch with the picker open, so put it
-        // back. The user sees a dialog that stayed put across the reload; what
-        // actually happened is that it was rebuilt on the far side.
-        if (pickerReopenWanted()) open();
 
         return { branch: branch, open: open, close: close,
                  dissolve: function () { close(); branch.dissolve(); } };

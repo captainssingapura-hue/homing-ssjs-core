@@ -33,7 +33,13 @@ public record CssGroupContentProvider<C extends CssGroup<C>>(
         String themeArg = theme != null ? ", \"" + theme + "\"" : "";
 
         lines.add("import { CssClassManagerInstance as _css } from \"" + managerPath + "\";");
-        lines.add("await _css.loadCss(\"" + groupName + "\"" + themeArg + ");");
+        // RFC 0064 — the group carries its transitive dependency subgraph as
+        // DATA, derived from its classes' dependsOn() on the server, so the
+        // client's CSS manager can load a lazily mounted widget's whole tree
+        // — missing dependencies included, by name — and can order a theme
+        // switch by the same graph. Not ES imports: a dependency's CSS is
+        // needed, its handles are not.
+        lines.add("await _css.loadCss(\"" + groupName + "\"" + themeArg + ", " + subgraphJs(cssGroup) + ");");
 
         for (CssClass<C> cls : cssGroup.cssClasses()) {
             String recordName = cls.getClass().getSimpleName();
@@ -57,5 +63,28 @@ public record CssGroupContentProvider<C extends CssGroup<C>>(
             }
         }
         return lines;
+    }
+
+    /**
+     * {@code { "<fqcn>": { deps: ["<fqcn>", …], prior: bool }, … }} for the
+     * group and everything it transitively depends on, in dependency order.
+     * Class names need no escaping; the resolver refuses cycles.
+     */
+    static String subgraphJs(CssGroup<?> root) {
+        StringBuilder sb = new StringBuilder("{ ");
+        boolean first = true;
+        for (CssGroup<?> g : CssGroupResolver.resolve(List.of(root))) {
+            if (!first) sb.append(", ");
+            first = false;
+            sb.append('"').append(g.getClass().getCanonicalName()).append("\": { deps: [");
+            boolean firstDep = true;
+            for (CssGroup<?> dep : CssImportsFor.dependenciesOf(g)) {
+                if (!firstDep) sb.append(", ");
+                firstDep = false;
+                sb.append('"').append(dep.getClass().getCanonicalName()).append('"');
+            }
+            sb.append("]").append(g.prior() ? ", prior: true" : "").append(" }");
+        }
+        return sb.append(" }").toString();
     }
 }

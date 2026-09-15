@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.core;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -63,4 +64,43 @@ public interface CssClass<C extends CssGroup<C>> extends Exportable._Constant<C>
      * path. Existing CssClass records are unaffected.</p>
      */
     default String body() { return null; }
+
+    /**
+     * RFC 0064 — the classes this one's rules lean on: a class whose body
+     * assumes another's is present on the same element or an ancestor, or
+     * that must follow another's in the cascade to win at equal specificity.
+     * A dependency in another group makes that group a dependency of this
+     * one — {@link CssGroup#cssImports()} derives it, so a group cannot forget
+     * to import what its classes need.
+     *
+     * <p>Declared here, per class, because that is where the knowledge is:
+     * the author of {@code tp_body} knows it lays out inside {@code md_body};
+     * nobody else does. The client-side CSS manager loads groups in the order
+     * these dependencies induce, and switches themes the same way.</p>
+     *
+     * <p>Default: none.</p>
+     */
+    default List<CssClass<?>> dependsOn() { return List.of(); }
+
+    /**
+     * The group this class belongs to, from its declaration: a {@code CssClass}
+     * is a record nested in its group, and the group's {@code INSTANCE} is the
+     * one object of that class. Used to derive group dependencies from class
+     * dependencies.
+     */
+    static CssGroup<?> groupOf(CssClass<?> cls) {
+        Class<?> enclosing = cls.getClass().getEnclosingClass();
+        if (enclosing == null || !CssGroup.class.isAssignableFrom(enclosing)) {
+            throw new IllegalStateException(
+                    "CssClass " + cls.getClass().getName() + " is not nested in a CssGroup");
+        }
+        try {
+            var field = enclosing.getDeclaredField("INSTANCE");
+            field.trySetAccessible();          // a test's package-private group is still a group
+            return (CssGroup<?>) field.get(null);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException(
+                    "CssGroup " + enclosing.getName() + " has no public static INSTANCE", e);
+        }
+    }
 }

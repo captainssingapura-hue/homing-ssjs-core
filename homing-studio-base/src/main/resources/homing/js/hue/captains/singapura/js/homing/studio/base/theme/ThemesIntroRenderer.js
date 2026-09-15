@@ -5,8 +5,8 @@
 //
 // Fetches /themes, renders a sticky-header page with an intro paragraph + one
 // Listing row per theme. Each row has palette swatches and an "Activate" link
-// that points to the same URL with ?theme=<slug>; href.set's session-key
-// propagation keeps `locale` (and any future propagated key) sticky on click.
+// that points to the same URL with ?theme=<slug> — an explicit override, a
+// shareable themed view; the address wins for the page it names (RFC 0064).
 // =============================================================================
 
 function renderThemesIntro() {
@@ -77,17 +77,30 @@ function _draw(root, data, brand) {
     mountThemePickerTree(main, { heading: "Switch theme" });
 
     var themes = (data && data.themes) || [];
-    var currentSlug = _currentThemeSlug();
-    var rows = themes.map(function (t) {
-        return ListItem({
-            href:        _activateUrl(t.slug),
-            marker:      _swatchStrip(t.palette),
-            label:       t.label + (t.slug === currentSlug ? "  (active)" : ""),
-            description: "?theme=" + t.slug,
-            met:         t.slug === currentSlug
+
+    // The listing marks the theme the page wears. A switch is live (RFC 0064)
+    // and may come from the picker above, the workbench or another tab, so
+    // the listing is rebuilt whole when the manager says the page has changed
+    // — one element swapped for another, the rows being one-shot renders.
+    function listing(currentSlug) {
+        var rows = themes.map(function (t) {
+            return ListItem({
+                href:        _activateUrl(t.slug),
+                marker:      _swatchStrip(t.palette),
+                label:       t.label + (t.slug === currentSlug ? "  (active)" : ""),
+                description: "?theme=" + t.slug,
+                met:         t.slug === currentSlug
+            });
         });
+        return Listing({ title: "Available themes", children: rows });
+    }
+    var list = listing(_currentThemeSlug() || (themes[0] && themes[0].slug));
+    main.appendChild(list);
+    css.onThemeApplied(function (change) {
+        var next = listing(change.to);
+        list.replaceWith(next);
+        list = next;
     });
-    main.appendChild(Listing({ title: "Available themes", children: rows }));
 
     children.push(main);
     root.replaceChildren.apply(root, children);
@@ -95,25 +108,23 @@ function _draw(root, data, brand) {
 
 // ---------- helpers ----------
 
+/**
+ * The theme this page wears — what the steward resolves: the address's
+ * override, else the stored pick, else null (the caller falls back to the
+ * registry's first theme, which is what the page wears then). RFC 0064: the
+ * address alone was wrong the moment a bare URL rendered under a stored pick.
+ */
 function _currentThemeSlug() {
-    try {
-        return new URLSearchParams(window.location.search).get("theme");
-    } catch (_) {
-        return null;
-    }
+    return PreferenceViewInstance.resolve("theme", null);
 }
 
-/** Same URL as the current page, with ?theme=<slug> set. href.set's session-
- *  key propagation handles `locale` and any other propagated key. */
+/**
+ * Same URL as the current page, with ?theme=<slug> set — an explicit override,
+ * on purpose: an Activate link is a shareable themed view, and the address
+ * wins while it names one. Built through href, the one reader of the address.
+ */
 function _activateUrl(slug) {
-    var params;
-    try {
-        params = new URLSearchParams(window.location.search);
-    } catch (_) {
-        params = new URLSearchParams();
-    }
-    params.set("theme", slug);
-    return window.location.pathname + "?" + params.toString();
+    return HrefManagerInstance.withParam("theme", slug);
 }
 
 /** A horizontal strip of fixed-size colored boxes — one per palette key.

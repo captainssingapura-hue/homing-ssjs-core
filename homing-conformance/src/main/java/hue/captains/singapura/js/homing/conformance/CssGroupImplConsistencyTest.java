@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.conformance;
 
 import hue.captains.singapura.js.homing.core.CssGroup;
 import hue.captains.singapura.js.homing.core.CssGroupImpl;
+import hue.captains.singapura.js.homing.core.CssImportsFor;
 import hue.captains.singapura.js.homing.core.DomModule;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
@@ -155,14 +156,14 @@ public abstract class CssGroupImplConsistencyTest {
 
     private void walk(CssGroup<?> g, Set<Class<?>> seen) {
         if (!seen.add(g.getClass())) return;
-        for (var imp : g.cssImports().imports()) {
+        for (var imp : CssImportsFor.dependenciesOf(g)) {
             walk(imp, seen);
         }
     }
 
     private void walkInstances(CssGroup<?> g, Map<Class<?>, CssGroup<?>> seen) {
         if (seen.putIfAbsent(g.getClass(), g) != null) return;
-        for (var imp : g.cssImports().imports()) {
+        for (var imp : CssImportsFor.dependenciesOf(g)) {
             walkInstances(imp, seen);
         }
     }

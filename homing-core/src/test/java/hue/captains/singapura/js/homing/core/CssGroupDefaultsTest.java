@@ -14,11 +14,6 @@ class CssGroupDefaultsTest {
         record disabled() implements CssClass<TestCss> {}
 
         @Override
-        public CssImportsFor<TestCss> cssImports() {
-            return CssImportsFor.none(this);
-        }
-
-        @Override
         public List<CssClass<TestCss>> cssClasses() {
             return List.of(new active(), new disabled());
         }
@@ -49,8 +44,8 @@ class CssGroupDefaultsTest {
     }
 
     @Test
-    void cssImportsNone_hasEmptyImportsList() {
-        var cssImports = CssImportsFor.none(TestCss.INSTANCE);
+    void aGroupWhoseClassesDependOnNothing_hasNoImports() {
+        var cssImports = CssImportsFor.of(TestCss.INSTANCE);
         assertSame(TestCss.INSTANCE, cssImports.cssGroup());
         assertTrue(cssImports.imports().isEmpty());
     }

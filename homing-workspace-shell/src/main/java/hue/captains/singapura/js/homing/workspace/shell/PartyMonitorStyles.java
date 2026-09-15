@@ -2,7 +2,6 @@ package hue.captains.singapura.js.homing.workspace.shell;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
-import hue.captains.singapura.js.homing.core.CssImportsFor;
 
 import java.util.List;
 
@@ -99,11 +98,6 @@ public record PartyMonitorStyles() implements CssGroup<PartyMonitorStyles> {
             padding: var(--space-2) var(--space-3);
             font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
             """; }
-    }
-
-    @Override
-    public CssImportsFor<PartyMonitorStyles> cssImports() {
-        return CssImportsFor.none(this);
     }
 
     @Override

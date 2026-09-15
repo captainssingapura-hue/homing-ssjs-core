@@ -2,7 +2,7 @@
 //
 // The theme picker's model half — everything that touches no DOM. Fetching the
 // registry, shaping it into the tree payload, reading the active slug, and the
-// session flag that carries "the picker was open" across a theme switch.
+// switch itself — the manager, the address, the store, in that order.
 //
 // Split out of ThemePicker when that module crossed the 250 effective-line
 // limit. The count was the prompt, not the reason: this half needs no document
@@ -11,14 +11,13 @@
 // The framework's EsModuleWriter appends the import/export prologue from the
 // matching Java ThemePickerModel declaration — do not add import/export lines.
 
-var _OPEN_KEY = "homing.themePicker.open";
-
-/** The active theme's slug, read from the current URL via the href API. */
+/**
+ * The active theme's slug — what the steward resolves for this page: the
+ * address's override, else the stored pick, else null (the caller falls back
+ * to the registry's first theme, which is what the page wears then).
+ */
 function activeThemeSlug() {
-    var url = HrefManagerInstance.current();
-    var q = url.indexOf("?");
-    if (q < 0) return null;
-    return new URLSearchParams(url.slice(q + 1)).get("theme");
+    return PreferenceViewInstance.resolve("theme", null);
 }
 
 function _slugify(s) {
@@ -101,59 +100,39 @@ function slugOfSelection(sel) {
     return i < 0 ? np : np.slice(i + 1);
 }
 
-/** Navigate to the same page under another theme. */
-function switchToTheme(slug) {
-    if (!slug) return;
-    HrefManagerInstance.navigate(HrefManagerInstance.withParam("theme", slug));
-}
-
-// ── Reopen-after-switch ──────────────────────────────────────────────────────
-//
-// Switching a theme navigates, because live theme swap is not supported yet.
-// The dialog therefore cannot survive the reload, so it is REBUILT: this flag
-// says "the picker was open when we left" and the next mount honours it.
-//
-// sessionStorage rather than a URL parameter, deliberately. This is transient UI
-// state, not an address: it must not appear in a shared link, must not outlive
-// the tab, and must not become part of the page's identity. It also expires on
-// its own, so nothing has to clean it up.
-//
-// Wrapped because storage throws outright in some contexts (private mode with
-// site data blocked), and a picker that cannot remember is still a picker.
-
-function rememberPickerOpen(open) {
-    try {
-        if (open) window.sessionStorage.setItem(_OPEN_KEY, "1");
-        else window.sessionStorage.removeItem(_OPEN_KEY);
-    } catch (e) { /* storage unavailable — degrade to not remembering */ }
-}
-
 /**
- * ONE-SHOT: reading the flag consumes it. The picker should reopen after the
- * switch that set it and not one navigation later — a flag that merely persisted
- * would follow the reader around the studio, opening a dialog nobody asked for.
+ * Switch to another theme — live, on this page (RFC 0064). Three steps, in an
+ * order that is the whole design:
+ *
+ *   1. the CSS manager switches: every loaded sheet arrives under the new
+ *      theme in dependency waves and flips at once; if any sheet fails, it
+ *      rejects with the page whole under the old theme and nothing below runs;
+ *   2. the address drops any ?theme= override, in place — no history entry:
+ *      an override left there would outrank the pick on the next resolve;
+ *   3. the pick is remembered. The steward's change reaches the manager's own
+ *      follower, which resolves — address silent, store says the theme the
+ *      page already wears — and does nothing. Remember BEFORE the address and
+ *      the follower would resolve to the stale override and switch back.
+ *
+ * Resolves when the page wears the theme. Sharing a themed view stays
+ * deliberate: the Themes page's Activate links carry ?theme= on purpose.
  */
-function pickerReopenWanted() {
-    try {
-        var wanted = window.sessionStorage.getItem(_OPEN_KEY) === "1";
-        if (wanted) window.sessionStorage.removeItem(_OPEN_KEY);
-        return wanted;
-    } catch (e) { return false; }
+function switchToTheme(slug) {
+    if (!slug) return Promise.resolve();
+    return CssClassManagerInstance.switchTheme(slug).then(function () {
+        HrefManagerInstance.replaceParam("theme", null);
+        PreferenceStewardInstance.remember("theme", slug);
+    });
 }
 
 // ── Preview ──────────────────────────────────────────────────────────────────
 
 /**
  * The preview page under a theme: the address the picker's frame loads on each
- * selection. The current locale rides along so the preview reads in the same
- * language as the page around it; `theme` is set explicitly and so wins over
- * anything the address carries.
+ * selection. `theme` is set explicitly — an override for that page, which the
+ * frame's own steward honours. Nothing else rides along: the frame shares this
+ * page's origin and so its stored preferences, locale included.
  */
 function previewUrl(slug) {
-    var url = "/app?app=theme-preview&theme=" + encodeURIComponent(slug);
-    var cur = HrefManagerInstance.current();
-    var q = cur.indexOf("?");
-    var locale = q < 0 ? null : new URLSearchParams(cur.slice(q + 1)).get("locale");
-    if (locale) url += "&locale=" + encodeURIComponent(locale);
-    return url;
+    return "/app?app=theme-preview&theme=" + encodeURIComponent(slug);
 }

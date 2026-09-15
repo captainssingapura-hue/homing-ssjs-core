@@ -8,40 +8,87 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class CssGroupResolverTest {
 
-    // --- Test CssGroups with a diamond dependency graph ---
+    // --- Test CssGroups with a diamond dependency graph, declared the only
+    // way there is: per class, on the class that leans on another ---
     // Base (no deps) <- Left <- Root
     //                <- Right <-/
 
     record Base() implements CssGroup<Base> {
         static final Base INSTANCE = new Base();
-        @Override public CssImportsFor<Base> cssImports() { return CssImportsFor.none(this); }
-        @Override public List<CssClass<Base>> cssClasses() { return List.of(); }
+        record base_thing() implements CssClass<Base> {}
+        @Override public List<CssClass<Base>> cssClasses() { return List.of(new base_thing()); }
     }
 
     record Left() implements CssGroup<Left> {
         static final Left INSTANCE = new Left();
-        @Override public CssImportsFor<Left> cssImports() {
-            return new CssImportsFor<>(this, List.of(Base.INSTANCE));
+        record left_thing() implements CssClass<Left> {
+            @Override public List<CssClass<?>> dependsOn() { return List.of(new Base.base_thing()); }
         }
-        @Override public List<CssClass<Left>> cssClasses() { return List.of(); }
+        @Override public List<CssClass<Left>> cssClasses() { return List.of(new left_thing()); }
     }
 
     record Right() implements CssGroup<Right> {
         static final Right INSTANCE = new Right();
-        @Override public CssImportsFor<Right> cssImports() {
-            return new CssImportsFor<>(this, List.of(Base.INSTANCE));
+        record right_thing() implements CssClass<Right> {
+            @Override public List<CssClass<?>> dependsOn() { return List.of(new Base.base_thing()); }
         }
-        @Override public List<CssClass<Right>> cssClasses() { return List.of(); }
+        @Override public List<CssClass<Right>> cssClasses() { return List.of(new right_thing()); }
     }
 
     record Root() implements CssGroup<Root> {
         static final Root INSTANCE = new Root();
-        @Override public CssImportsFor<Root> cssImports() {
-            return new CssImportsFor<>(this, List.of(Left.INSTANCE, Right.INSTANCE));
+        record root_thing() implements CssClass<Root> {
+            @Override public List<CssClass<?>> dependsOn() {
+                return List.of(new Left.left_thing(), new Right.right_thing(), new Base.base_thing());
+            }
         }
-        @Override public List<CssClass<Root>> cssClasses() { return List.of(); }
+        @Override public List<CssClass<Root>> cssClasses() { return List.of(new root_thing()); }
     }
 
+    // A cycle: CycA <- CycB <- CycA.
+    record CycA() implements CssGroup<CycA> {
+        static final CycA INSTANCE = new CycA();
+        record a() implements CssClass<CycA> {
+            @Override public List<CssClass<?>> dependsOn() { return List.of(new CycB.b()); }
+        }
+        @Override public List<CssClass<CycA>> cssClasses() { return List.of(new a()); }
+    }
+    record CycB() implements CssGroup<CycB> {
+        static final CycB INSTANCE = new CycB();
+        record b() implements CssClass<CycB> {
+            @Override public List<CssClass<?>> dependsOn() { return List.of(new CycA.a()); }
+        }
+        @Override public List<CssClass<CycB>> cssClasses() { return List.of(new b()); }
+    }
+
+    // A prior that leans on something — refused.
+    record BadPrior() implements CssGroup<BadPrior> {
+        static final BadPrior INSTANCE = new BadPrior();
+        @Override public boolean prior() { return true; }
+        record p() implements CssClass<BadPrior> {
+            @Override public List<CssClass<?>> dependsOn() { return List.of(new Base.base_thing()); }
+        }
+        @Override public List<CssClass<BadPrior>> cssClasses() { return List.of(new p()); }
+    }
+
+    @Test
+    void groupDependencies_areDerivedFromClasses_selfExcluded_firstMentionOrder() {
+        assertEquals(List.of(), CssImportsFor.of(Base.INSTANCE).imports());
+        assertEquals(List.of(Base.INSTANCE), CssImportsFor.of(Left.INSTANCE).imports());
+        assertEquals(List.of(Left.INSTANCE, Right.INSTANCE, Base.INSTANCE), CssImportsFor.of(Root.INSTANCE).imports());
+    }
+
+    @Test
+    void aCycle_isRefusedWithItsNames() {
+        var e = assertThrows(IllegalStateException.class, () -> CssGroupResolver.resolve(List.of(CycA.INSTANCE)));
+        assertTrue(e.getMessage().contains("CycA -> CycB -> CycA"), e.getMessage());
+    }
+
+    @Test
+    void aPriorWithDependencies_isRefused() {
+        var e = assertThrows(IllegalStateException.class, () -> CssGroupResolver.resolve(List.of(BadPrior.INSTANCE)));
+        assertTrue(e.getMessage().contains("prior"), e.getMessage());
+    }
     @Test
     void resolve_emptyList() {
         var result = CssGroupResolver.resolve(List.of());

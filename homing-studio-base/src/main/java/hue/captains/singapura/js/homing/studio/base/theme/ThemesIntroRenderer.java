@@ -6,6 +6,7 @@ import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
 import hue.captains.singapura.js.homing.server.HrefManager;
+import hue.captains.singapura.js.homing.server.PreferenceSteward;
 import hue.captains.singapura.js.homing.studio.base.css.StudioStyles;
 import hue.captains.singapura.js.homing.studio.base.ui.StudioElements;
 
@@ -31,6 +32,8 @@ public record ThemesIntroRenderer() implements DomModule<ThemesIntroRenderer> {
                         ThemePicker.INSTANCE))
                 .add(new ModuleImports<>(List.of(new HrefManager.HrefManagerInstance()),
                         HrefManager.INSTANCE))
+                .add(new ModuleImports<>(List.of(new PreferenceSteward.PreferenceViewInstance()),
+                        PreferenceSteward.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new StudioElements.Header(),
                         new StudioElements.Listing(),

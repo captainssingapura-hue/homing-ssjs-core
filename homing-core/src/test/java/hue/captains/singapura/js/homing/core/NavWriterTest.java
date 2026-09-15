@@ -48,7 +48,6 @@ class NavWriterTest {
     record OnlyCss() implements CssGroup<OnlyCss> {
         public record btn() implements CssClass<OnlyCss> {}
         static final OnlyCss INSTANCE = new OnlyCss();
-        @Override public CssImportsFor<OnlyCss> cssImports() { return CssImportsFor.none(this); }
         @Override public List<CssClass<OnlyCss>> cssClasses() { return List.of(new btn()); }
     }
 

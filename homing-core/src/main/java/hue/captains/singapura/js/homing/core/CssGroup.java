@@ -12,7 +12,19 @@ import java.util.List;
  */
 public interface CssGroup<C extends CssGroup<C>> extends EsModule<C> {
 
-    CssImportsFor<C> cssImports();
+    // RFC 0064 — a group's dependencies are not declared here. They are
+    // derived from its classes' dependsOn() by CssImportsFor.of(group), and
+    // there is deliberately no method to override: see CssImportsFor.
+
+    /**
+     * RFC 0064 — a group that predates the dependency discipline: it declares
+     * no dependencies and everything implicitly leans on it (the studio's
+     * base styles). The client loads priors before the graph, always. A prior
+     * with dependencies is refused.
+     *
+     * <p>Default: {@code false}.</p>
+     */
+    default boolean prior() { return false; }
 
     List<CssClass<C>> cssClasses();
 

@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.workspace.WidgetEntry;
 import hue.captains.singapura.js.homing.workspace.WidgetGroup;
 import hue.captains.singapura.js.homing.workspace.WidgetIcon;
 import hue.captains.singapura.js.homing.workspace.WidgetLabel;
+import hue.captains.singapura.js.homing.workspace.shell.CssGraphWorkbenchWidget;
 import hue.captains.singapura.js.homing.workspace.shell.DomOpsPartyMonitorWidget;
 import hue.captains.singapura.js.homing.workspace.shell.PartyDecl;
 import hue.captains.singapura.js.homing.workspace.shell.Arrangement;
@@ -117,6 +118,11 @@ public final class StudioWorkspaceSpec implements WorkspaceSpec {
                 // checks placements against this list keeps its meaning.
                 WidgetEntry.of(DomOpsPartyMonitorWidget.class, WidgetLabel.of("Party Monitor"))
                         .withIcon(new WidgetIcon.Emoji("🧬")) // 🧬
+                        .withGroup(WidgetGroup.of("Diagnostics")),
+                // RFC 0064 — the CSS dependency graph and load order, seen from
+                // inside; a plan bar that asks what a switch would do, and runs it.
+                WidgetEntry.of(CssGraphWorkbenchWidget.class, WidgetLabel.of("CSS Graph"))
+                        .withIcon(new WidgetIcon.Emoji("🧵")) // 🧵
                         .withGroup(WidgetGroup.of("Diagnostics"))
         );
     }

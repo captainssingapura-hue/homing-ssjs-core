@@ -2,7 +2,6 @@ package hue.captains.singapura.js.homing.studio.base.css;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
-import hue.captains.singapura.js.homing.core.CssImportsFor;
 import hue.captains.singapura.js.homing.core.UtilityCssClass;
 
 import java.util.List;
@@ -32,6 +31,10 @@ import java.util.List;
 public record Util() implements CssGroup<Util> {
 
     public static final Util INSTANCE = new Util();
+
+    /** RFC 0064 — utilities predate the dependency discipline and lean on nothing;
+     *  a prior, loaded before the graph. */
+    @Override public boolean prior() { return true; }
 
     // -------------------------------------------------------------------
     // Color / visual base utilities — UtilityCssClass opts into all three
@@ -131,10 +134,5 @@ public record Util() implements CssGroup<Util> {
                 new justify_center(), new justify_between(),
                 new text_center()
         );
-    }
-
-    @Override
-    public CssImportsFor<Util> cssImports() {
-        return CssImportsFor.none(this);
     }
 }

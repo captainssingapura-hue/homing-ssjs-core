@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
  * theme key.
  *
  * <p>Examples: {@code "default"}, {@code "forest"}, {@code "bauhaus"},
- * {@code "jazz-drums"}. Grammar: lowercase letters, digits, hyphen —
+ * {@code "retro-90s"}. Grammar: lowercase letters, digits, hyphen —
  * the kebab-case shape the framework's CSS layer uses.</p>
  *
  * @param value the underlying theme registry key

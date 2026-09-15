@@ -35,6 +35,14 @@
             <version>${project.parent.version}</version>
             <scope>test</scope>
         </dependency>
+        <!-- RFC 0064 — the JS test harness, for the preference steward's own test:
+             the raw module evaluated as a script against a shimmed window. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-ssjs-test-fixtures</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 </project>
