@@ -35,11 +35,12 @@ public final class CssGroupResolver {
         }
         if (path.contains(current.getClass())) {
             List<String> names = new ArrayList<>();
-            for (Class<?> c : path) names.add(c.getSimpleName());
+            // push() stacks at the head; the walk's order is the reverse.
+            for (var it = path.descendingIterator(); it.hasNext(); ) names.add(it.next().getSimpleName());
             names.add(current.getClass().getSimpleName());
             throw new IllegalStateException("CSS dependency cycle: " + String.join(" -> ", names));
         }
-        List<CssGroup<?>> deps = current.cssImports().imports();
+        List<CssGroup<?>> deps = CssImportsFor.dependenciesOf(current);
         if (current.prior() && !deps.isEmpty()) {
             throw new IllegalStateException(
                     "CssGroup " + current.getClass().getSimpleName() + " is a prior and may not declare dependencies");

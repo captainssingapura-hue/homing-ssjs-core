@@ -130,7 +130,6 @@ class SimpleAppResolverTest {
     record Styles() implements CssGroup<Styles> {
         public record btn() implements CssClass<Styles> {}
         static final Styles INSTANCE = new Styles();
-        @Override public CssImportsFor<Styles> cssImports() { return CssImportsFor.none(this); }
         @Override public List<CssClass<Styles>> cssClasses() { return List.of(new btn()); }
     }
 

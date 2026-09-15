@@ -2,7 +2,6 @@ package hue.captains.singapura.js.homing.workspace;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
-import hue.captains.singapura.js.homing.core.CssImportsFor;
 
 import java.util.List;
 
@@ -167,8 +166,4 @@ public record WidgetPickerStyles() implements CssGroup<WidgetPickerStyles> {
         );
     }
 
-    @Override
-    public CssImportsFor<WidgetPickerStyles> cssImports() {
-        return CssImportsFor.none(this);
-    }
 }

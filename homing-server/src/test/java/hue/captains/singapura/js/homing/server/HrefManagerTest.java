@@ -50,7 +50,6 @@ class HrefManagerTest {
     record SomeStyles() implements CssGroup<SomeStyles> {
         public record btn() implements CssClass<SomeStyles> {}
         static final SomeStyles INSTANCE = new SomeStyles();
-        @Override public CssImportsFor<SomeStyles> cssImports() { return CssImportsFor.none(this); }
         @Override public List<CssClass<SomeStyles>> cssClasses() { return List.of(new btn()); }
     }
 

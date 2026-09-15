@@ -12,7 +12,6 @@ class DomModuleTest {
         static final Styles INSTANCE = new Styles();
         record btn() implements CssClass<Styles> {}
 
-        @Override public CssImportsFor<Styles> cssImports() { return CssImportsFor.none(this); }
         @Override public List<CssClass<Styles>> cssClasses() { return List.of(new btn()); }
     }
 

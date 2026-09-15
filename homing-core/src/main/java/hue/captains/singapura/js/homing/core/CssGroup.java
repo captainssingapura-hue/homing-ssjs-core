@@ -12,26 +12,9 @@ import java.util.List;
  */
 public interface CssGroup<C extends CssGroup<C>> extends EsModule<C> {
 
-    /**
-     * The groups this one depends on — RFC 0064: DERIVED from its classes'
-     * {@link CssClass#dependsOn()}, in first-mention order, this group itself
-     * excluded. A group may still override to declare more, never less; the
-     * conformance check compares the two.
-     */
-    @SuppressWarnings("unchecked")
-    default CssImportsFor<C> cssImports() {
-        List<CssGroup<?>> groups = new java.util.ArrayList<>();
-        for (CssClass<C> cls : cssClasses()) {
-            for (CssClass<?> dep : cls.dependsOn()) {
-                CssGroup<?> g = CssClass.groupOf(dep);
-                if (g.getClass() == getClass()) continue;
-                boolean seen = false;
-                for (CssGroup<?> have : groups) if (have.getClass() == g.getClass()) { seen = true; break; }
-                if (!seen) groups.add(g);
-            }
-        }
-        return new CssImportsFor<>((C) this, List.copyOf(groups));
-    }
+    // RFC 0064 — a group's dependencies are not declared here. They are
+    // derived from its classes' dependsOn() by CssImportsFor.of(group), and
+    // there is deliberately no method to override: see CssImportsFor.
 
     /**
      * RFC 0064 — a group that predates the dependency discipline: it declares

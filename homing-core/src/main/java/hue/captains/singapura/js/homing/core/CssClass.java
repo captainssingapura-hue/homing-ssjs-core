@@ -95,7 +95,9 @@ public interface CssClass<C extends CssGroup<C>> extends Exportable._Constant<C>
                     "CssClass " + cls.getClass().getName() + " is not nested in a CssGroup");
         }
         try {
-            return (CssGroup<?>) enclosing.getField("INSTANCE").get(null);
+            var field = enclosing.getDeclaredField("INSTANCE");
+            field.trySetAccessible();          // a test's package-private group is still a group
+            return (CssGroup<?>) field.get(null);
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException(
                     "CssGroup " + enclosing.getName() + " has no public static INSTANCE", e);

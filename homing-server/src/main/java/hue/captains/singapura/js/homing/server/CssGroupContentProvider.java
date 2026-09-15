@@ -78,7 +78,7 @@ public record CssGroupContentProvider<C extends CssGroup<C>>(
             first = false;
             sb.append('"').append(g.getClass().getCanonicalName()).append("\": { deps: [");
             boolean firstDep = true;
-            for (CssGroup<?> dep : g.cssImports().imports()) {
+            for (CssGroup<?> dep : CssImportsFor.dependenciesOf(g)) {
                 if (!firstDep) sb.append(", ");
                 firstDep = false;
                 sb.append('"').append(dep.getClass().getCanonicalName()).append('"');
