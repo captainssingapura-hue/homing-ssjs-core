@@ -201,11 +201,36 @@ public record CssGraphStyles() implements CssGroup<CssGraphStyles> {
             """; }
     }
 
-    /** A sheet appended but not applied — only ever seen mid-switch. */
+    /** One sheet on a card's line: "✓ forest", "● forest", "… forest". */
+    public record cg_sheet() implements CssClass<CssGraphStyles> {
+        @Override public String body() { return """
+            display: inline-block;
+            margin-right: var(--space-2);
+            transition: color 160ms ease, opacity 160ms ease;
+            """; }
+    }
+
+    /** Appended and fetching — the first thing a switch shows. */
     public record cg_sheet_pending() implements CssClass<CssGraphStyles> {
         @Override public String body() { return """
             opacity: 0.55;
             font-style: italic;
+            """; }
+    }
+
+    /** Landed but not yet applied — waiting for the wave, or for the flip. */
+    public record cg_sheet_landed() implements CssClass<CssGraphStyles> {
+        @Override public String body() { return """
+            color: var(--color-accent);
+            """; }
+    }
+
+    /** Applied — the green tick. The one literal here is the tick's green; no theme
+     *  names a success colour, and the tick must read the same under every theme. */
+    public record cg_sheet_applied() implements CssClass<CssGraphStyles> {
+        @Override public String body() { return """
+            color: #2E7D32;
+            font-weight: 600;
             """; }
     }
 
@@ -216,7 +241,7 @@ public record CssGraphStyles() implements CssGroup<CssGraphStyles> {
                 new cg_bar(), new cg_select(), new cg_note(), new cg_note_err(),
                 new cg_waves(), new cg_wave(), new cg_wave_head(),
                 new cg_node(), new cg_node_id(), new cg_badge(), new cg_badge_prior(), new cg_badge_unknown(),
-                new cg_deps(), new cg_sheets(), new cg_sheet_pending()
+                new cg_deps(), new cg_sheets(), new cg_sheet(), new cg_sheet_pending(), new cg_sheet_landed(), new cg_sheet_applied()
         );
     }
 }

@@ -38,7 +38,8 @@ public record CssGraphRendererModule() implements DomModule<CssGraphRendererModu
                         new CssGraphStyles.cg_waves(), new CssGraphStyles.cg_wave(), new CssGraphStyles.cg_wave_head(),
                         new CssGraphStyles.cg_node(), new CssGraphStyles.cg_node_id(), new CssGraphStyles.cg_badge(),
                         new CssGraphStyles.cg_badge_prior(), new CssGraphStyles.cg_badge_unknown(),
-                        new CssGraphStyles.cg_deps(), new CssGraphStyles.cg_sheets(), new CssGraphStyles.cg_sheet_pending()
+                        new CssGraphStyles.cg_deps(), new CssGraphStyles.cg_sheets(), new CssGraphStyles.cg_sheet(),
+                        new CssGraphStyles.cg_sheet_pending(), new CssGraphStyles.cg_sheet_landed(), new CssGraphStyles.cg_sheet_applied()
                 ), CssGraphStyles.INSTANCE))
                 .build();
     }

@@ -43,7 +43,16 @@ const CssClassManagerInstance = (() => {
         return { link, loaded };
     }
 
-    const procedure = createCssLoadProcedure(graph, appendLink, hrefFor);
+    // Progress fans out to whoever watches — the workbench draws a switch as
+    // it happens. A notification is { id, theme, state } with state one of
+    // appended, landed, applied, failed, retired.
+    const watchers = new Set();
+    function tell(id, theme, state) {
+        for (const fn of Array.from(watchers)) {
+            try { fn({ id, theme, state }); } catch (e) { console.error("[css] watcher failed", e); }
+        }
+    }
+    const procedure = createCssLoadProcedure(graph, appendLink, hrefFor, tell);
 
     let worn = null;          // the theme the page wears, once anything has loaded
     let changing = null;      // the switch in flight, if one is
@@ -86,6 +95,13 @@ const CssClassManagerInstance = (() => {
             return to;
         }).finally(() => { changing = null; });
         return changing;
+    }
+
+    /** Call fn({ id, theme, state }) as each sheet moves. Returns the function that stops listening. */
+    function onProgress(fn) {
+        if (typeof fn !== "function") throw new TypeError("css.onProgress: fn must be a function");
+        watchers.add(fn);
+        return () => { watchers.delete(fn); };
     }
 
     /** Call fn({ from, to }) after a switch has applied. Returns the function that stops listening. */
@@ -136,6 +152,7 @@ const CssClassManagerInstance = (() => {
         loadCss,
         switchTheme,
         onThemeApplied,
+        onProgress,
         plan,
         snapshot,
         theme() { return worn; },

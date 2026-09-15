@@ -85,6 +85,7 @@ function renderCssGraph(branch, host, opts) {
         worn.textContent = "wears: " + (snap.theme || "—");
 
         if (current) { branch.dissolveBranch(current.name); current = null; }
+        lines = {};
         current = branch.createBranch("cols" + (++seq));
         current.activate(opts.owner || root, "cssGraph:" + seq);
 
@@ -123,15 +124,41 @@ function renderCssGraph(branch, host, opts) {
         deps.textContent = info && info.deps.length ? "← " + info.deps.map(_short).join(", ") : "no dependencies";
         card.appendChild(deps);
         var sh = b.createElement("s" + key, "div"); css.addClass(sh, cg_sheets);
-        if (!sheets.length) sh.textContent = "no sheet";
-        for (var i = 0; i < sheets.length; i++) {
-            var one = b.createElement("s" + key + "_" + i, "span");
-            one.textContent = (i ? " · " : "") + sheets[i].theme + (sheets[i].applied ? "" : " (pending)");
-            if (!sheets[i].applied) css.addClass(one, cg_sheet_pending);
-            sh.appendChild(one);
-        }
         card.appendChild(sh);
+        lines[id] = { host: sh, branch: b, key: key, seq: 0 };
+        _sheetLine(id, sheets);
         return card;
+    }
+
+    // The sheet line of one card, redrawn from the manager's own record —
+    // live, per progress event, without touching the rest of the card. Each
+    // sheet shows where it is: appended and fetching (…), landed but not yet
+    // applied (●), applied (✓). A retired sheet simply stops being listed.
+    var lines = {};   // id → { host, branch, key, seq }
+
+    function _sheetLine(id, sheets) {
+        var line = lines[id];
+        if (!line) return;
+        while (line.host.firstChild) line.host.removeChild(line.host.firstChild);
+        var stamp = ++line.seq;
+        if (!sheets.length) { line.host.textContent = "no sheet"; return; }
+        for (var i = 0; i < sheets.length; i++) {
+            var s = sheets[i];
+            var one = line.branch.createElement("s" + line.key + "_" + stamp + "_" + i, "span");
+            css.addClass(one, cg_sheet);
+            if (s.applied)      { css.addClass(one, cg_sheet_applied); one.textContent = "✓ " + s.theme; }
+            else if (s.landed)  { css.addClass(one, cg_sheet_landed);  one.textContent = "● " + s.theme; }
+            else                { css.addClass(one, cg_sheet_pending); one.textContent = "… " + s.theme; }
+            line.host.appendChild(one);
+        }
+    }
+
+    function _progress(ev) {
+        if (!lines[ev.id]) return;
+        var all = manager.snapshot().sheets;
+        var mine = [];
+        for (var i = 0; i < all.length; i++) if (all[i].id === ev.id) mine.push(all[i]);
+        _sheetLine(ev.id, mine);
     }
 
     function _badge(b, key, text, extra) {
@@ -169,8 +196,9 @@ function renderCssGraph(branch, host, opts) {
         });
     });
 
-    var off = manager.onThemeApplied(function () { refresh(); });
+    var offApplied  = manager.onThemeApplied(function () { refresh(); });
+    var offProgress = manager.onProgress(_progress);
 
     refresh();
-    return { refresh: refresh, dispose: off };
+    return { refresh: refresh, dispose: function () { offApplied(); offProgress(); } };
 }

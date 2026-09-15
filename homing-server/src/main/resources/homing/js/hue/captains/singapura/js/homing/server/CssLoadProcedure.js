@@ -30,10 +30,14 @@
 // document.
 // =============================================================================
 
-function createCssLoadProcedure(graph, appendLink, hrefFor) {
+function createCssLoadProcedure(graph, appendLink, hrefFor, notify) {
 
-    // "<node>:<theme>" → { link, loaded: Promise<link>, applied: boolean }
+    // "<node>:<theme>" → { link, loaded: Promise<entry>, landed, applied }
     const entries = new Map();
+    // Progress, for whoever watches: appended → landed → applied, or failed;
+    // retired when a theme leaves. The manager fans this out (RFC 0064: the
+    // workbench shows a switch as it happens, not after).
+    const tell = typeof notify === "function" ? notify : function () {};
 
     function key(id, theme) { return id + ":" + (theme || "__default"); }
 
@@ -44,15 +48,16 @@ function createCssLoadProcedure(graph, appendLink, hrefFor) {
         if (e) return e;
         const made = appendLink(hrefFor(id, theme));
         made.link.media = "not all";
-        e = { link: made.link, applied: false, loaded: null };
-        e.loaded = made.loaded.then(function () { return e; });
+        e = { link: made.link, landed: false, applied: false, loaded: null };
+        e.loaded = made.loaded.then(function () { e.landed = true; tell(id, theme, "landed"); return e; });
         entries.set(k, e);
+        tell(id, theme, "appended");
         return e;
     }
 
     function forget(e, theme) {
         for (const [k, have] of entries) {
-            if (have === e) { entries.delete(k); break; }
+            if (have === e) { entries.delete(k); tell(k.slice(0, k.lastIndexOf(":")), theme, "failed"); break; }
         }
         try { e.link.remove(); } catch (_) { /* never attached, or already gone */ }
     }
@@ -80,6 +85,7 @@ function createCssLoadProcedure(graph, appendLink, hrefFor) {
         for (const e of mine) {          // one synchronous pass: one recalc
             if (!e.applied) { e.link.media = "all"; e.applied = true; }
         }
+        for (const [k, e] of entries) if (mine.indexOf(e) >= 0) tell(k.slice(0, k.lastIndexOf(":")), theme, "applied");
         return mine;
     }
 
@@ -87,7 +93,11 @@ function createCssLoadProcedure(graph, appendLink, hrefFor) {
     function retire(theme) {
         const suffix = ":" + (theme || "__default");
         for (const [k, e] of Array.from(entries)) {
-            if (k.endsWith(suffix)) { entries.delete(k); try { e.link.remove(); } catch (_) {} }
+            if (k.endsWith(suffix)) {
+                entries.delete(k);
+                try { e.link.remove(); } catch (_) {}
+                tell(k.slice(0, k.length - suffix.length), theme, "retired");
+            }
         }
     }
 
@@ -106,7 +116,7 @@ function createCssLoadProcedure(graph, appendLink, hrefFor) {
         const out = [];
         for (const [k, e] of entries) {
             const i = k.lastIndexOf(":");
-            out.push(Object.freeze({ id: k.slice(0, i), theme: k.slice(i + 1), applied: e.applied }));
+            out.push(Object.freeze({ id: k.slice(0, i), theme: k.slice(i + 1), landed: e.landed, applied: e.applied }));
         }
         return Object.freeze(out);
     }
