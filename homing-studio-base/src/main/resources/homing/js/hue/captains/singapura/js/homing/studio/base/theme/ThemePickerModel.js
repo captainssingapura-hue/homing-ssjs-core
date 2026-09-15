@@ -13,12 +13,13 @@
 
 var _OPEN_KEY = "homing.themePicker.open";
 
-/** The active theme's slug, read from the current URL via the href API. */
+/**
+ * The active theme's slug — what the steward resolves for this page: the
+ * address's override, else the stored pick, else null (the caller falls back
+ * to the registry's first theme, which is what the page wears then).
+ */
 function activeThemeSlug() {
-    var url = HrefManagerInstance.current();
-    var q = url.indexOf("?");
-    if (q < 0) return null;
-    return new URLSearchParams(url.slice(q + 1)).get("theme");
+    return PreferenceStewardInstance.resolve("theme", null);
 }
 
 function _slugify(s) {
@@ -101,10 +102,18 @@ function slugOfSelection(sel) {
     return i < 0 ? np : np.slice(i + 1);
 }
 
-/** Navigate to the same page under another theme. */
+/**
+ * Switch to another theme: the pick is REMEMBERED, then the page reloads at
+ * its bare address. The choice is a preference the browser keeps, not part of
+ * the page's identity, so ?theme= is removed on the way — an override left in
+ * the address would outrank the pick that was just made. Sharing a themed
+ * view stays deliberate: the Themes page's Activate links carry ?theme= on
+ * purpose, and the address wins while it names one.
+ */
 function switchToTheme(slug) {
     if (!slug) return;
-    HrefManagerInstance.navigate(HrefManagerInstance.withParam("theme", slug));
+    PreferenceStewardInstance.remember("theme", slug);
+    HrefManagerInstance.navigate(HrefManagerInstance.withParam("theme", null));
 }
 
 // ── Reopen-after-switch ──────────────────────────────────────────────────────

@@ -201,7 +201,8 @@ const HrefManagerInstance = (() => {
     /**
      * The current URL with one query parameter set, or removed when the value is
      * null/empty. Every other parameter survives, which is the point: a theme
-     * switch must not silently drop the app id it is sitting on.
+     * switch must not silently drop the app id it is sitting on — nor, since
+     * RFC 0058 put the workspace kind there, the fragment.
      */
     function withParam(name, value) {
         if (typeof name !== "string" || !name) {
@@ -211,7 +212,7 @@ const HrefManagerInstance = (() => {
         if (value === null || value === undefined || value === "") params.delete(name);
         else params.set(name, String(value));
         var q = params.toString();
-        return window.location.pathname + (q ? "?" + q : "");
+        return window.location.pathname + (q ? "?" + q : "") + (window.location.hash || "");
     }
 
     return Object.freeze({

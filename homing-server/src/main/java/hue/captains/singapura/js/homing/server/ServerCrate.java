@@ -25,6 +25,7 @@ public final class ServerCrate implements Crate {
     public List<CrateEntry> entries() {
         return List.of(
                 CrateEntry.of(CssClassManager.INSTANCE),
-                CrateEntry.of(HrefManager.INSTANCE));
+                CrateEntry.of(HrefManager.INSTANCE),
+                CrateEntry.of(PreferenceSteward.INSTANCE));
     }
 }

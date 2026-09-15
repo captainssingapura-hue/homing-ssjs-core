@@ -18,7 +18,12 @@ public record CssClassManager() implements EsModule<CssClassManager> {
 
     @Override
     public ImportsFor<CssClassManager> imports() {
-        return ImportsFor.noImports();
+        // RFC 0064 — the theme a group loads under is the steward's to say;
+        // the argument a served group module carries is only the fallback.
+        return ImportsFor.<CssClassManager>builder()
+                .add(new ModuleImports<>(List.of(new PreferenceSteward.PreferenceStewardInstance()),
+                        PreferenceSteward.INSTANCE))
+                .build();
     }
 
     @Override

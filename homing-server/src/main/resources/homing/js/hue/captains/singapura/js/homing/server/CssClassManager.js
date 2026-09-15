@@ -87,7 +87,19 @@ const CssClassManagerInstance = (() => {
         }
     }
 
+    /**
+     * RFC 0064 — which theme this page loads under. The served group module
+     * carries the theme the server propagated, and the server now propagates
+     * only its default; the steward resolves the address's override, then the
+     * stored pick, and falls back to that default. One answer for every group
+     * on the page, so a widget mounted later arrives in the same theme.
+     */
+    function themeFor(fallback) {
+        return PreferenceStewardInstance.resolve("theme", fallback);
+    }
+
     async function loadCss(cssBeing, theme) {
+        theme = themeFor(theme);
         // Theme-scoped bundle (vars + globals) loads first, idempotently.
         await ensureThemeBundleLoaded(theme);
 

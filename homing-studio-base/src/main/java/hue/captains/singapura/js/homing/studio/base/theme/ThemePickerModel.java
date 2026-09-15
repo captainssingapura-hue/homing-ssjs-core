@@ -6,6 +6,7 @@ import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
 import hue.captains.singapura.js.homing.server.HrefManager;
+import hue.captains.singapura.js.homing.server.PreferenceSteward;
 
 import java.util.List;
 
@@ -53,6 +54,8 @@ public record ThemePickerModel() implements DomModule<ThemePickerModel> {
         return ImportsFor.<ThemePickerModel>builder()
                 .add(new ModuleImports<>(List.of(new HrefManager.HrefManagerInstance()),
                         HrefManager.INSTANCE))
+                .add(new ModuleImports<>(List.of(new PreferenceSteward.PreferenceStewardInstance()),
+                        PreferenceSteward.INSTANCE))
                 .build();
     }
 
