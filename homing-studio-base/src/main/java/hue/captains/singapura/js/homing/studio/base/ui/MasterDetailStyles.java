@@ -2,7 +2,6 @@ package hue.captains.singapura.js.homing.studio.base.ui;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
-import hue.captains.singapura.js.homing.core.CssImportsFor;
 
 import java.util.List;
 
@@ -69,11 +68,6 @@ public record MasterDetailStyles() implements CssGroup<MasterDetailStyles> {
             overflow-y: auto;
             padding: var(--space-2) 0 var(--space-2) var(--space-4);
             """; }
-    }
-
-    @Override
-    public CssImportsFor<MasterDetailStyles> cssImports() {
-        return CssImportsFor.none(this);
     }
 
     @Override

@@ -2,7 +2,8 @@ package hue.captains.singapura.js.homing.studio.base.theme;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
-import hue.captains.singapura.js.homing.core.CssImportsFor;
+import hue.captains.singapura.js.homing.studio.base.ui.MasterDetailStyles;
+import hue.captains.singapura.js.homing.studio.base.ui.SystemDialogStyles;
 
 import java.util.List;
 
@@ -51,6 +52,10 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
      * frame shows what it looks like.
      */
     public record tp_body() implements CssClass<ThemePickerStyles> {
+        /** Hosts MasterDetail's split and, in the modal, sits in the dialog's body. */
+        @Override public List<CssClass<?>> dependsOn() {
+            return List.of(new MasterDetailStyles.md_split(), new SystemDialogStyles.sd_body());
+        }
         @Override public String body() { return """
             /* A column: MasterDetail's split takes the space, the footer sits
                under it. The split is flex:1 1 auto, so it yields to the
@@ -108,6 +113,8 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
      * the pane pads the right to match and the frame sits in from both sides.
      */
     public record tp_preview_pane() implements CssClass<ThemePickerStyles> {
+        /** Fills the master/detail body it is built into. */
+        @Override public List<CssClass<?>> dependsOn() { return List.of(new MasterDetailStyles.md_body()); }
         @Override public String body() { return """
             display: flex;
             flex-direction: column;
@@ -207,11 +214,6 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
             font-weight: 600;
             color: var(--color-text-primary);
             """; }
-    }
-
-    @Override
-    public CssImportsFor<ThemePickerStyles> cssImports() {
-        return CssImportsFor.none(this);
     }
 
     @Override

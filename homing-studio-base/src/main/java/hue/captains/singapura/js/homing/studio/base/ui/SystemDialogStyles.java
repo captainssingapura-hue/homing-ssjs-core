@@ -2,7 +2,6 @@ package hue.captains.singapura.js.homing.studio.base.ui;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
-import hue.captains.singapura.js.homing.core.CssImportsFor;
 
 import java.util.List;
 
@@ -221,11 +220,6 @@ public record SystemDialogStyles() implements CssGroup<SystemDialogStyles> {
             opacity: 0.45;
             cursor: default;
             """; }
-    }
-
-    @Override
-    public CssImportsFor<SystemDialogStyles> cssImports() {
-        return CssImportsFor.none(this);
     }
 
     @Override

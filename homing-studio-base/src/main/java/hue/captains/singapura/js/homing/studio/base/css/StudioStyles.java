@@ -2,7 +2,6 @@ package hue.captains.singapura.js.homing.studio.base.css;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
-import hue.captains.singapura.js.homing.core.CssImportsFor;
 import hue.captains.singapura.js.homing.core.InLayer;
 import hue.captains.singapura.js.homing.core.Layout;
 
@@ -10,6 +9,10 @@ import java.util.List;
 
 public record StudioStyles() implements CssGroup<StudioStyles> {
     public static final StudioStyles INSTANCE = new StudioStyles();
+
+    /** RFC 0064 — the studio's base: it declares no dependencies and everything
+     *  leans on it, so the client loads it before the dependency graph. */
+    @Override public boolean prior() { return true; }
 
     public record st_root() implements CssClass<StudioStyles>, InLayer<Layout> {
         @Override public String body() { return """
@@ -1149,11 +1152,6 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             font-size: 14px;
             """;
         }
-    }
-
-    @Override
-    public CssImportsFor<StudioStyles> cssImports() {
-        return CssImportsFor.none(this);
     }
 
     @Override
