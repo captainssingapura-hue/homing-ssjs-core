@@ -126,6 +126,16 @@ const HrefManagerInstance = (() => {
         var base = window.location.pathname + window.location.search;
         window.history.replaceState(window.history.state, "", anchor ? base + "#" + anchor : base);
     }
+    /**
+     * RFC 0064 — rewrite one query parameter of the current address in place:
+     * no history entry, no navigation, fragment and history state preserved.
+     * The sibling of replaceHash for the query. Transport only: what the
+     * parameter means is the caller's business.
+     */
+    function replaceParam(name, value) {
+        window.history.replaceState(window.history.state, "", withParam(name, value));
+    }
+
     /** Reload the current address as it stands, fragment included. */
     function reload() {
         window.location.reload();
@@ -177,6 +187,7 @@ const HrefManagerInstance = (() => {
         hash,
         onHashChange,
         replaceHash,
+        replaceParam,
         reload,
     });
 })();

@@ -58,8 +58,6 @@ public record ThemePicker() implements DomModule<ThemePicker> {
                         new ThemePickerModel.themeTreeData(),
                         new ThemePickerModel.slugOfSelection(),
                         new ThemePickerModel.switchToTheme(),
-                        new ThemePickerModel.rememberPickerOpen(),
-                        new ThemePickerModel.pickerReopenWanted(),
                         new ThemePickerModel.previewUrl()
                 ), ThemePickerModel.INSTANCE))
                 .add(new ModuleImports<>(List.of(new HrefManager.HrefManagerInstance()),

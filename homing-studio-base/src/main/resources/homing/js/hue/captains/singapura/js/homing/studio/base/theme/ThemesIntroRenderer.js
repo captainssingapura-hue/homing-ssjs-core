@@ -77,17 +77,30 @@ function _draw(root, data, brand) {
     mountThemePickerTree(main, { heading: "Switch theme" });
 
     var themes = (data && data.themes) || [];
-    var currentSlug = _currentThemeSlug() || (themes[0] && themes[0].slug);
-    var rows = themes.map(function (t) {
-        return ListItem({
-            href:        _activateUrl(t.slug),
-            marker:      _swatchStrip(t.palette),
-            label:       t.label + (t.slug === currentSlug ? "  (active)" : ""),
-            description: "?theme=" + t.slug,
-            met:         t.slug === currentSlug
+
+    // The listing marks the theme the page wears. A switch is live (RFC 0064)
+    // and may come from the picker above, the workbench or another tab, so
+    // the listing is rebuilt whole when the manager says the page has changed
+    // — one element swapped for another, the rows being one-shot renders.
+    function listing(currentSlug) {
+        var rows = themes.map(function (t) {
+            return ListItem({
+                href:        _activateUrl(t.slug),
+                marker:      _swatchStrip(t.palette),
+                label:       t.label + (t.slug === currentSlug ? "  (active)" : ""),
+                description: "?theme=" + t.slug,
+                met:         t.slug === currentSlug
+            });
         });
+        return Listing({ title: "Available themes", children: rows });
+    }
+    var list = listing(_currentThemeSlug() || (themes[0] && themes[0].slug));
+    main.appendChild(list);
+    css.onThemeApplied(function (change) {
+        var next = listing(change.to);
+        list.replaceWith(next);
+        list = next;
     });
-    main.appendChild(Listing({ title: "Available themes", children: rows }));
 
     children.push(main);
     root.replaceChildren.apply(root, children);

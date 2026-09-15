@@ -5,6 +5,7 @@ import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
+import hue.captains.singapura.js.homing.server.CssClassManager;
 import hue.captains.singapura.js.homing.server.HrefManager;
 import hue.captains.singapura.js.homing.server.PreferenceSteward;
 
@@ -41,10 +42,8 @@ public record ThemePickerModel() implements DomModule<ThemePickerModel> {
     public record switchToTheme() implements Exportable._Constant<ThemePickerModel> {}
 
     /** Leave a note that the picker was open when we navigated away. */
-    public record rememberPickerOpen() implements Exportable._Constant<ThemePickerModel> {}
 
     /** Read — and consume — that note. One-shot by design. */
-    public record pickerReopenWanted() implements Exportable._Constant<ThemePickerModel> {}
     public record previewUrl() implements Exportable._Constant<ThemePickerModel> {}
 
     public static final ThemePickerModel INSTANCE = new ThemePickerModel();
@@ -54,6 +53,8 @@ public record ThemePickerModel() implements DomModule<ThemePickerModel> {
         return ImportsFor.<ThemePickerModel>builder()
                 .add(new ModuleImports<>(List.of(new HrefManager.HrefManagerInstance()),
                         HrefManager.INSTANCE))
+                .add(new ModuleImports<>(List.of(new CssClassManager.CssClassManagerInstance()),
+                        CssClassManager.INSTANCE))
                 .add(new ModuleImports<>(List.of(new PreferenceSteward.PreferenceStewardInstance(),
                                                  new PreferenceSteward.PreferenceViewInstance()),
                         PreferenceSteward.INSTANCE))
@@ -65,6 +66,6 @@ public record ThemePickerModel() implements DomModule<ThemePickerModel> {
         return new ExportsOf<>(INSTANCE, List.of(
                 new activeThemeSlug(), new fetchThemes(), new themeBySlug(),
                 new themeTreeData(), new slugOfSelection(), new switchToTheme(),
-                new rememberPickerOpen(), new pickerReopenWanted(), new previewUrl()));
+                new previewUrl()));
     }
 }
