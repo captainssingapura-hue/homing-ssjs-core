@@ -9,7 +9,6 @@ import hue.captains.singapura.js.homing.core.MediaGated;
 import hue.captains.singapura.js.homing.core.Prose;
 import hue.captains.singapura.js.homing.core.Reset;
 import hue.captains.singapura.js.homing.core.State;
-import hue.captains.singapura.js.homing.core.SvgRef;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.ThemeAudio;
 import hue.captains.singapura.js.homing.core.ThemeGlobals;
@@ -57,23 +56,9 @@ public record HomingRetro90s() implements Theme {
     public static final HomingRetro90s INSTANCE = new HomingRetro90s();
 
     @Override public String slug()  { return "retro-90s"; }
-    /** Installs universal pointer-events:none + whitelist so the desktop
-     *  icons (.w95-icon) receive hover/click. Workspace-style apps opt
-     *  out via {@link AppModule#acceptsBackdropInteractivity()}. */
-    @Override public boolean backdropInteractivity() { return true; }
     @Override public String label() { return "Retro 90s"; }
     @Override public String group() { return "Retro"; }
     @Override public String inspiration() { return "The Windows-95 desktop — teal, VGA blue and raised grey chrome."; }
-
-    /** Win95 desktop backdrop — rendered as inline DOM so the iconic icons
-     *  (My Computer, My Documents, Network Neighborhood, Recycle Bin)
-     *  participate in the host document's CSS cascade and can receive
-     *  per-icon {@code :hover} effects, the same pattern Maple Bridge uses
-     *  for its moon. */
-    @Override
-    public SvgRef<?> backdrop() {
-        return new SvgRef<>(HomingRetro90sBg.INSTANCE, new HomingRetro90sBg.desktop());
-    }
 
     /** Theme-audio binding — clicks on the desktop icons fire system-
      *  click sounds; clicks on catalogue cards fire a soft membrane
@@ -262,117 +247,26 @@ public record HomingRetro90s() implements Theme {
                 """;
 
         /**
-         * Inline-DOM SVG desktop backdrop + per-icon hover plumbing. The
-         * framework injects {@code <div class="theme-backdrop"><svg>…desktop…</svg></div>}
-         * as the first child of {@code <body>}; this CSS positions it
-         * fixed-cover, gives it the Win95 teal surface, and wires the four
-         * iconic icons (My Computer, My Documents, Network Neighborhood,
-         * Recycle Bin) to scale-up + glow on hover.
-         *
-         * <p>Same pattern as Maple Bridge's moon, with one twist: the
-         * {@code scale} CSS property (independent of {@code transform})
-         * composes cleanly with each icon group's existing
-         * {@code transform="translate(…)"} positioning. Using {@code transform: scale}
-         * would overwrite the translation; using {@code scale} keeps them
-         * composed.</p>
-         *
-         * <p>Pointer-events plumbing mirrors Maple Bridge — universal
-         * {@code body, body *} pass-through so the backdrop (at
-         * {@code z-index:-1}) can receive hover, then selective restoration
-         * on user-interactive elements + the icon class.</p>
+         * The desktop as the page surface. The Win95 desktop used to be a
+         * full-page inline SVG the framework injected behind the chrome — four
+         * icons that grew on hover — with universal {@code pointer-events:
+         * none} plumbing so the icons could take the pointer. RFC 0064 retired
+         * the injected backdrop: the server no longer knows the theme a page
+         * wears, and a part only the server could render was a part that only
+         * sometimes applied. What remains is the teal: a fixed gradient built
+         * from the theme's own surface token, so it dims with the dark-mode
+         * override rather than carrying a second palette.
          */
         private static final String BACKDROP_DESKTOP = """
-                /* HomingDefault's structural CSS sets a solid body background
-                   that would mask the backdrop SVG. Make body transparent so
-                   the .theme-backdrop becomes the visible page surface. */
-                html, body { background: transparent; }
-                /* Inline-DOM atmospheric layer — fixed-cover, behind everything. */
-                .theme-backdrop {
-                    position: fixed;
-                    inset: 0;
-                    z-index: -1;
-                    pointer-events: none;
-                    overflow: hidden;
-                    background: var(--color-surface);
+                html {
+                    background: linear-gradient(
+                        180deg,
+                        color-mix(in srgb, var(--color-surface) 82%, white) 0%,
+                        var(--color-surface) 40%,
+                        color-mix(in srgb, var(--color-surface) 72%, black) 100%);
+                    background-attachment: fixed;
                 }
-                .theme-backdrop svg {
-                    width: 100%;
-                    height: 100%;
-                    display: block;
-                }
-                /* Retro 90s opts out of the doc-reader column slab: it uses
-                 * the per-pane "Notepad window" metaphor (see WINDOW_PANES
-                 * below) for .st-doc / .st-sidebar / .st-doc-meta instead.
-                 * A parchment slab around three Notepad windows would be a
-                 * window-inside-window. Scope matches the framework's slab
-                 * selector exactly — both target `.st-main:has(.st-doc-meta)`. */
-                .st-main:has(.st-doc-meta) {
-                    background-color: transparent;
-                    border-radius: 0;
-                    box-shadow: none;
-                }
-
-                /* Pointer-events plumbing — body and ALL descendants pass
-                   through to the backdrop's z-index:-1 layer, then we
-                   re-enable receive on the user-interactive surfaces and
-                   the icons themselves. Same trade-off as Maple Bridge:
-                   text selection in prose is impaired; clicks/links/keyboard
-                   nav all work. */
-                /* Gated by :not(.homing-bg-passive) — workspace-style apps
-                 * opt out and reclaim event surface. The backdrop icons
-                 * (.w95-icon) stay interactive regardless because the
-                 * .theme-backdrop tree is unaffected by the body-class
-                 * gate. See AppModule.acceptsBackdropInteractivity. */
-                body:not(.homing-bg-passive),
-                body:not(.homing-bg-passive) * { pointer-events: none; }
-                body:not(.homing-bg-passive) a,
-                body:not(.homing-bg-passive) button,
-                body:not(.homing-bg-passive) input,
-                body:not(.homing-bg-passive) select,
-                body:not(.homing-bg-passive) textarea,
-                body:not(.homing-bg-passive) label,
-                body:not(.homing-bg-passive) .st-header,
-                body:not(.homing-bg-passive) .st-card,
-                body:not(.homing-bg-passive) .st-list-item,
-                body:not(.homing-bg-passive) .st-toc-item,
-                /* Reading panes get pointer-events so text inside the Notepad-
-                 * style windows can be selected and scrolled normally.
-                 * Universal descendants of these panes are also re-enabled. */
-                body:not(.homing-bg-passive) .st-doc,
-                body:not(.homing-bg-passive) .st-doc *,
-                body:not(.homing-bg-passive) .st-sidebar,
-                body:not(.homing-bg-passive) .st-sidebar *,
-                body:not(.homing-bg-passive) .st-doc-meta,
-                body:not(.homing-bg-passive) .st-doc-meta *,
-                /* The icon group AND every descendant must be hover-targetable.
-                   `body *` directly hits each <rect>/<text>/<path> inside the
-                   icon, pinning their pointer-events to none and breaking the
-                   hover chain (a child with `none` can't be the hit target,
-                   so :hover never fires on its parent .w95-icon). Listing
-                   descendants here overrides that per-element. */
-                .theme-backdrop .w95-icon,
-                .theme-backdrop .w95-icon * { pointer-events: auto; }
-
-                /* Icon hover — subtle enlarge. No glow, no double-shadow:
-                   Win95 desktop icons didn't dramatically light up on hover,
-                   they just felt slightly more "selectable". A 6% scale-up is
-                   noticeable enough to signal interactivity without making
-                   the desktop feel reactive or animated.
-
-                   transform-box: fill-box anchors the scale to each icon's
-                   own bbox centre. `scale` (not `transform: scale(…)`)
-                   composes with each <g>'s existing `transform="translate(…)"`
-                   attribute — using transform would overwrite the translation
-                   and launch the icon off-position. */
-                .theme-backdrop .w95-icon {
-                    cursor: pointer;
-                    transform-box: fill-box;
-                    transform-origin: center;
-                    transition: scale 160ms ease;
-                }
-                .theme-backdrop .w95-icon:hover {
-                    scale: 1.06;
-                }
+                body { background: transparent; }
                 """;
 
         /**

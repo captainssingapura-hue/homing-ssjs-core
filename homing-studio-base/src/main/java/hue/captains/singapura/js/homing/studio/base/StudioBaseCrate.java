@@ -42,9 +42,6 @@ import hue.captains.singapura.js.homing.studio.base.image.ImageViewer;
 import hue.captains.singapura.js.homing.studio.base.image.ImageViewerRenderer;
 import hue.captains.singapura.js.homing.studio.base.table.TableViewer;
 import hue.captains.singapura.js.homing.studio.base.table.TableViewerRenderer;
-import hue.captains.singapura.js.homing.studio.base.theme.HomingJazzDrumsBg;
-import hue.captains.singapura.js.homing.studio.base.theme.HomingMapleBridgeBg;
-import hue.captains.singapura.js.homing.studio.base.theme.HomingRetro90sBg;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemePicker;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemePickerModel;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemePickerStyles;
@@ -135,9 +132,6 @@ public final class StudioBaseCrate implements Crate {
                 CrateEntry.of(ImageViewerRenderer.INSTANCE),
                 CrateEntry.of(TableViewer.INSTANCE),
                 CrateEntry.of(TableViewerRenderer.INSTANCE),
-                CrateEntry.of(HomingJazzDrumsBg.INSTANCE),
-                CrateEntry.of(HomingMapleBridgeBg.INSTANCE),
-                CrateEntry.of(HomingRetro90sBg.INSTANCE),
                 CrateEntry.of(StudioVarsJsModule.INSTANCE),
                 CrateEntry.of(ThemesIntro.INSTANCE),
                 CrateEntry.of(ThemesIntroRenderer.INSTANCE),
