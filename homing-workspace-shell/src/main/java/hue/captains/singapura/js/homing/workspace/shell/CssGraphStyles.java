@@ -102,15 +102,19 @@ public record CssGraphStyles() implements CssGroup<CssGraphStyles> {
             """; }
     }
 
-    /** The graph: one column per wave, scrolling sideways when wide. */
+    /**
+     * The graph: one column per wave, scrolling sideways when wide. Sized by
+     * its content when the host has no height of its own (a widget host is
+     * auto-height) and filling the rest when it has — a flex-basis of 0 here
+     * collapsed the columns to a scrollbar sliver in a tab.
+     */
     public record cg_waves() implements CssClass<CssGraphStyles> {
         @Override public String body() { return """
             display: flex;
             gap: var(--space-3);
             padding: var(--space-3);
             overflow: auto;
-            flex: 1 1 0;
-            min-height: 0;
+            flex: 1 1 auto;
             align-items: flex-start;
             """; }
     }
