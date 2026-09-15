@@ -189,15 +189,16 @@ public class AppHtmlGetAction
 
         AppQuery query = new AppQuery(app.simpleName(), null, theme, locale,
                 allQuery == null ? java.util.Map.of() : allQuery);
-        // If the URL didn't carry ?theme=, fall back to the first theme in
-        // the registry so downstream (theme-vars / theme-globals fetches,
-        // module URLs, the picker's selected option) all see a concrete
-        // slug instead of null. The URL itself is untouched — the default
-        // is applied in-flight, transparently.
-        String effectiveTheme = query.theme();
-        if (effectiveTheme == null && !themeRegistry.themes().isEmpty()) {
-            effectiveTheme = themeRegistry.themes().get(0).slug();
-        }
+        // RFC 0064 — the server no longer takes the page's ?theme=. The context
+        // is the client's to resolve (the steward: address as override, stored
+        // preference, registry default) and to put on the resources that vary
+        // by it. What the page template propagates is only the registry's
+        // default, so every downstream that still expects a concrete slug —
+        // the theme bundle, module URLs, the three template parts — sees one.
+        // The address's ?theme= is read by the client, not here.
+        String effectiveTheme = themeRegistry.themes().isEmpty()
+                ? null
+                : themeRegistry.themes().get(0).slug();
 
         // RFC 0051 — stamp the app's params into the page, so the client does
         // not re-parse a URL the server has already interpreted. Only apps
