@@ -7,21 +7,18 @@
 // User code MUST use these six methods exclusively. Step 10 ships the
 // conformance scanner that enforces it.
 //
-// Cross-page session keys (theme, locale) — every internal link constructed
-// through this manager auto-inherits the current page's `?theme=` and
-// `?locale=` query params, unless the link already specifies them. This
-// keeps the user's theme + locale choice sticky across navigation without
-// per-call boilerplate. External URLs and same-page fragments are left
-// untouched.
+// A link is what its author wrote. This manager used to stamp the current
+// page's ?theme= and ?locale= onto every internal link — "session keys",
+// the address acting as the memory of a choice, because there was no other.
+// RFC 0064 gave the choice a memory of its own (the preference steward), and
+// with it the stamp became a leak: a shared ?theme= link followed the reader
+// through the whole studio, outranking their own preference on every page.
+// So nothing rewrites links any more. An explicit ?theme= or ?locale= an
+// author writes INTO a link passes through untouched, and wins for the page
+// it names — that is what an override is for.
 // =============================================================================
 
 const HrefManagerInstance = (() => {
-
-    // Query-string keys that the framework propagates from the current page
-    // onto every outgoing internal link. Keep this list small — these are
-    // session-style preferences, not arbitrary data. Adding a key here makes
-    // it sticky across every navigation site-wide.
-    const _SESSION_KEYS = ["theme", "locale"];
 
     function _str(link, where) {
         if (typeof link !== "string") {
@@ -30,56 +27,9 @@ const HrefManagerInstance = (() => {
         return link;
     }
 
-    /**
-     * Append the current page's session keys (`theme`, `locale`) to an
-     * outgoing internal link if not already present. Returns the link
-     * untouched when:
-     *   - it's a same-page fragment (starts with `#`)
-     *   - it has a URL scheme (mailto:, https:, tel:, …)
-     *   - it's protocol-relative (starts with `//`)
-     *   - the current page has no session keys to propagate
-     *   - the link already sets the key (caller intent wins)
-     */
-    function _propagateSessionKeys(link) {
-        if (typeof link !== "string" || link === "") return link;
-        if (link.charAt(0) === "#") return link;
-        if (link.indexOf("//") === 0) return link;       // protocol-relative
-        if (/^[a-z][a-z0-9+.\-]*:/i.test(link)) return link;   // any scheme
-
-        let pageSearch;
-        try {
-            pageSearch = new URLSearchParams(window.location.search);
-        } catch (_) {
-            return link;
-        }
-
-        // Split the link into path / query / fragment so we can mutate just the
-        // query part without touching the rest.
-        const hashIdx  = link.indexOf("#");
-        const fragment = hashIdx >= 0 ? link.slice(hashIdx) : "";
-        const beforeHash = hashIdx >= 0 ? link.slice(0, hashIdx) : link;
-        const queryIdx = beforeHash.indexOf("?");
-        const path     = queryIdx >= 0 ? beforeHash.slice(0, queryIdx) : beforeHash;
-        const linkSearch = new URLSearchParams(queryIdx >= 0 ? beforeHash.slice(queryIdx + 1) : "");
-
-        let mutated = false;
-        for (let i = 0; i < _SESSION_KEYS.length; i++) {
-            const k = _SESSION_KEYS[i];
-            if (linkSearch.has(k)) continue;
-            const v = pageSearch.get(k);
-            if (v == null) continue;
-            linkSearch.set(k, v);
-            mutated = true;
-        }
-        if (!mutated) return link;
-
-        const qs = linkSearch.toString();
-        return path + (qs ? "?" + qs : "") + fragment;
-    }
-
-    /** Type-check + propagate session keys. Used by every link-accepting method. */
+    /** Type-check. Used by every link-accepting method; the link is returned as written. */
     function _link(link, where) {
-        return _propagateSessionKeys(_str(link, where));
+        return _str(link, where);
     }
 
     function _attrEscape(s) {

@@ -5,8 +5,8 @@
 //
 // Fetches /themes, renders a sticky-header page with an intro paragraph + one
 // Listing row per theme. Each row has palette swatches and an "Activate" link
-// that points to the same URL with ?theme=<slug>; href.set's session-key
-// propagation keeps `locale` (and any future propagated key) sticky on click.
+// that points to the same URL with ?theme=<slug> — an explicit override, a
+// shareable themed view; the address wins for the page it names (RFC 0064).
 // =============================================================================
 
 function renderThemesIntro() {
