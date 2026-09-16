@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.server;
 import hue.captains.singapura.js.homing.core.ModuleNameResolver;
 import hue.captains.singapura.js.homing.core.CssGroup;
 import hue.captains.singapura.js.homing.core.SimpleAppResolver;
+import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.util.ResourceReader;
 import hue.captains.singapura.tao.http.action.ActionRegistry;
 import hue.captains.singapura.tao.http.action.GetAction;
@@ -67,11 +68,14 @@ public class HomingActionRegistry implements ActionRegistry<RoutingContext> {
         // the palette is a group, served by /css-content like any other.
         List<CssGroup<?>> priors = themeRegistry.palette() == null ? List.of() : List.of(themeRegistry.palette());
         this.moduleAction = new EsModuleGetAction(nameResolver, resourceReader, servable, priors);
-        // Base registry serves a typed-only CssContentGetAction with no impls
-        // and no default theme — every /css-content request 404s unless an
-        // outer registry (e.g. StudioActionRegistry) overrides this route with
-        // its own typed-impl-aware action. RFC 0002 §3.6 (hard cut, no file-based fallback).
-        this.cssContentAction = new CssContentGetAction(List.of(), null);
+        // RFC 0066 - the base registry renders every group from its inline bodies,
+        // and fills the palette from the theme registry's provisions: a deployment
+        // with a theme registry and no studio is themed by this action alone. The
+        // first theme listed is the default a request without ?theme= gets; an
+        // outer registry (the studio's Bootstrap) overrides the route to add its
+        // own CssGroupImpls. RFC 0002 §3.6 still holds: no file-based fallback.
+        Theme defaultTheme = themeRegistry.themes().isEmpty() ? null : themeRegistry.themes().get(0);
+        this.cssContentAction = new CssContentGetAction(List.copyOf(themeRegistry.palettes()), defaultTheme);
         this.themeGlobalsAction = new ThemeGlobalsGetAction(themeRegistry, null);
     }
 
