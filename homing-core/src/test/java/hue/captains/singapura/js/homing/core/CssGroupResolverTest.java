@@ -89,6 +89,35 @@ class CssGroupResolverTest {
         var e = assertThrows(IllegalStateException.class, () -> CssGroupResolver.resolve(List.of(BadPrior.INSTANCE)));
         assertTrue(e.getMessage().contains("prior"), e.getMessage());
     }
+
+    // RFC 0066 — a prior that is not a palette: refused. "Everything leans on me"
+    // is the palette's claim; a drawn group is depended on by name.
+    record DrawnPrior() implements CssGroup<DrawnPrior> {
+        static final DrawnPrior INSTANCE = new DrawnPrior();
+        @Override public boolean prior() { return true; }
+        record d() implements CssClass<DrawnPrior> { @Override public String body() { return "display: flex;"; } }
+        @Override public List<CssClass<DrawnPrior>> cssClasses() { return List.of(new d()); }
+    }
+
+    record Palette() implements CssGroup<Palette> {
+        static final Palette INSTANCE = new Palette();
+        @Override public boolean prior() { return true; }
+        record palette() implements PaletteClass<Palette> {
+            @Override public java.util.Set<CssVar> declares() { return java.util.Set.of(new CssVar("--x")); }
+        }
+        @Override public List<CssClass<Palette>> cssClasses() { return List.of(new palette()); }
+    }
+
+    @Test
+    void aPriorThatIsNotAPalette_isRefused() {
+        var e = assertThrows(IllegalStateException.class, () -> CssGroupResolver.resolve(List.of(DrawnPrior.INSTANCE)));
+        assertTrue(e.getMessage().contains("holds no PaletteClass"), e.getMessage());
+    }
+
+    @Test
+    void aPalettePrior_resolvesAlone() {
+        assertEquals(List.of(Palette.INSTANCE), CssGroupResolver.resolve(List.of(Palette.INSTANCE)));
+    }
     @Test
     void resolve_emptyList() {
         var result = CssGroupResolver.resolve(List.of());

@@ -32,9 +32,9 @@ public record Util() implements CssGroup<Util> {
 
     public static final Util INSTANCE = new Util();
 
-    /** RFC 0064 — utilities predate the dependency discipline and lean on nothing;
-     *  a prior, loaded before the graph. */
-    @Override public boolean prior() { return true; }
+    // RFC 0066 — not a prior: utilities lean on nothing, and nothing needs them
+    // first. Only the global palette is prior; a group that needs a utility
+    // present names it in dependsOn().
 
     // -------------------------------------------------------------------
     // Color / visual base utilities — UtilityCssClass opts into all three

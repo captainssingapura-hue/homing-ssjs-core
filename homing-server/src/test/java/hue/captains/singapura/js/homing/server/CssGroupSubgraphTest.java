@@ -31,10 +31,12 @@ class CssGroupSubgraphTest {
         @Override public List<CssClass<Palette>> cssClasses() { return List.of(new palette()); }
     }
 
-    /** A prior in its own right — the studio's base styles today. */
+    /** A second palette that is a prior in its own right (RFC 0066: only a palette may be). */
     record Base() implements CssGroup<Base> {
         static final Base INSTANCE = new Base();
-        record base_thing() implements CssClass<Base> {}
+        record base_thing() implements PaletteClass<Base> {
+            @Override public Set<CssVar> declares() { return Set.of(new CssVar("--y")); }
+        }
         @Override public boolean prior() { return true; }
         @Override public List<CssClass<Base>> cssClasses() { return List.of(new base_thing()); }
     }

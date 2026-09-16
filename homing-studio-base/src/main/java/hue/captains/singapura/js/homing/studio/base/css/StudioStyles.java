@@ -10,9 +10,9 @@ import java.util.List;
 public record StudioStyles() implements CssGroup<StudioStyles> {
     public static final StudioStyles INSTANCE = new StudioStyles();
 
-    /** RFC 0064 — the studio's base: it declares no dependencies and everything
-     *  leans on it, so the client loads it before the dependency graph. */
-    @Override public boolean prior() { return true; }
+    // RFC 0066 — no longer a prior. The one implicit node is the global palette;
+    // a class that lays out inside the studio's chrome names st_root / st_main
+    // in its dependsOn(), as WorkspaceLayoutStyles does.
 
     public record st_root() implements CssClass<StudioStyles>, InLayer<Layout> {
         @Override public String body() { return """
