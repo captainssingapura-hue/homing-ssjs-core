@@ -30,6 +30,16 @@ public interface CssClass<C extends CssGroup<C>> extends Exportable._Constant<C>
     default String pseudoState() { return null; }
 
     /**
+     * RFC 0066 — a selector that is not the class. The one legitimate case is
+     * a rule over an element no class reaches: the page reset, {@code html,
+     * body}. Such a class is still a node of the graph (others depend on it,
+     * a theme may override it), still exports a handle nobody needs, and
+     * renders with this selector instead of {@code .kebab-name}. Default
+     * {@code null}: the class selector, with {@link #pseudoState()} appended.
+     */
+    default String selector() { return null; }
+
+    /**
      * Pseudo-state variants the framework should auto-generate for this base.
      *
      * <p>For each state {@code s} in the returned set, the framework synthesizes

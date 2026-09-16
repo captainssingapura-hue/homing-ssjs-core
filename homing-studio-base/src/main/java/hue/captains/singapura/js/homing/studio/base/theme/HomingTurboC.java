@@ -1,10 +1,11 @@
 package hue.captains.singapura.js.homing.studio.base.theme;
 
+import hue.captains.singapura.js.homing.core.CssBlock;
 import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
 import hue.captains.singapura.js.homing.theme.color.HomingVars;
 import hue.captains.singapura.js.homing.core.Theme;
-import hue.captains.singapura.js.homing.core.ThemeGlobals;
+import hue.captains.singapura.js.homing.studio.base.css.StudioStyles;
 
 import java.util.Map;
 
@@ -55,6 +56,8 @@ public record HomingTurboC() implements Theme {
         public static final Palette INSTANCE = new Palette();
         @Override public HomingTurboC theme() { return HomingTurboC.INSTANCE; }
         @Override public Map<CssVar, String> values() { return VALUES; }
+        /** Dark in every mode: the browser's own chrome follows. */
+        @Override public String colorScheme() { return "dark"; }
 
         // The EGA sixteen, and nothing outside them. Named where a value is one
         // of the canonical entries; the two blues that are not EGA are the two
@@ -118,46 +121,37 @@ public record HomingTurboC() implements Theme {
         );
     }
 
-    public record Globals() implements ThemeGlobals<HomingTurboC> {
-        public static final Globals INSTANCE = new Globals();
+    /**
+     * RFC 0066 — the theme's word on the studio's classes: the monospace face,
+     * everywhere the studio set a serif. The studio names Georgia on twelve
+     * typed classes and on prose headings; a theme cannot inherit its way past
+     * a class, so the face is answered where it is set — one override per
+     * class, each appended inside that class's rule. (The count is the case
+     * for a typography vocabulary in the palette — Episode 2's sub-module.)
+     */
+    public record Studio() implements StudioStyles.Overrides<HomingTurboC> {
+        public static final Studio INSTANCE = new Studio();
         @Override public HomingTurboC theme() { return HomingTurboC.INSTANCE; }
-        @Override public String css() { return HomingDefault.STRUCTURAL_CSS + SCHEME; }
 
-        // SCHEME goes LAST, unlike Carbon. Carbon only declares color-scheme,
-        // which nothing else sets, so order does not matter to it. This theme
-        // re-does typography, and STRUCTURAL_CSS sets `body { font-family:
-        // Calibri }` at the same specificity — whichever is written second wins.
-
-        /**
-         * Everything is monospace, because in a text mode everything WAS —
-         * menus, dialogs and editor all sat on the same character grid, and a
-         * proportional menu over a monospace page would read as two products.
-         *
-         * <p>Consolas leads over Courier New: it is the closer descendant of the
-         * VGA 8×16 face, where Courier is a typewriter. {@code color-scheme:
-         * dark} keeps the browser's own scrollbars off a blue page.</p>
-         */
-        private static final String SCHEME = """
-                :root { color-scheme: dark; }
-                html, body {
-                    font-family: "Consolas", "DejaVu Sans Mono", "Lucida Console",
-                                 "Courier New", monospace;
-                    letter-spacing: 0;
-                }
-                /* The studio sets Georgia on twelve typed classes and on prose
-                   headings. A theme cannot inherit its way past a class, so the
-                   serif is named and answered where it is set — the same thing
-                   Retro 90s does, and the reason a theme owns a Globals sheet
-                   at all. */
-                .st-title, .st-section-title, .st-panel-title, .st-card-title,
-                .st-brand-word, .st-list-item-label, .st-app-pill-label,
-                .st-app-pill-icon, .st-step-id, .st-step-label, .st-effort,
-                .st-overall-pct,
-                .st-doc h1, .st-doc h2, .st-doc h3, .st-doc h4 {
-                    font-family: "Consolas", "DejaVu Sans Mono", "Lucida Console",
-                                 "Courier New", monospace;
-                    letter-spacing: 0;
-                }
+        private static final String MONO = """
+                font-family: "Consolas", "DejaVu Sans Mono", "Lucida Console", "Courier New", monospace;
+                letter-spacing: 0;
                 """;
+
+        public CssBlock<StudioStyles.st_page>            st_page()            { return CssBlock.of(MONO); }
+        public CssBlock<StudioStyles.st_title>           st_title()           { return CssBlock.of(MONO); }
+        public CssBlock<StudioStyles.st_section_title>   st_section_title()   { return CssBlock.of(MONO); }
+        public CssBlock<StudioStyles.st_panel_title>     st_panel_title()     { return CssBlock.of(MONO); }
+        public CssBlock<StudioStyles.st_card_title>      st_card_title()      { return CssBlock.of(MONO); }
+        public CssBlock<StudioStyles.st_brand_word>      st_brand_word()      { return CssBlock.of(MONO); }
+        public CssBlock<StudioStyles.st_list_item_label> st_list_item_label() { return CssBlock.of(MONO); }
+        public CssBlock<StudioStyles.st_app_pill_label>  st_app_pill_label()  { return CssBlock.of(MONO); }
+        public CssBlock<StudioStyles.st_app_pill_icon>   st_app_pill_icon()   { return CssBlock.of(MONO); }
+        public CssBlock<StudioStyles.st_step_id>         st_step_id()         { return CssBlock.of(MONO); }
+        public CssBlock<StudioStyles.st_step_label>      st_step_label()      { return CssBlock.of(MONO); }
+        public CssBlock<StudioStyles.st_effort>          st_effort()          { return CssBlock.of(MONO); }
+        public CssBlock<StudioStyles.st_overall_pct>     st_overall_pct()     { return CssBlock.of(MONO); }
+        /** The prose headings nest under st_doc. */
+        public CssBlock<StudioStyles.st_doc> st_doc() { return CssBlock.of("h1, h2, h3, h4 {\n" + MONO.indent(4) + "}\n"); }
     }
 }

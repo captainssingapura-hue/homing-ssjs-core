@@ -1,13 +1,14 @@
 package hue.captains.singapura.js.homing.studio.base.theme;
 
 import hue.captains.singapura.js.homing.core.ClickTarget;
+import hue.captains.singapura.js.homing.core.CssBlock;
 import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
 import hue.captains.singapura.js.homing.theme.color.HomingVars;
 import hue.captains.singapura.js.homing.core.Cue;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.ThemeAudio;
-import hue.captains.singapura.js.homing.core.ThemeGlobals;
+import hue.captains.singapura.js.homing.studio.base.css.StudioStyles;
 
 import java.util.Map;
 
@@ -121,6 +122,28 @@ public record HomingMapleBridge() implements Theme {
         public static final Palette INSTANCE = new Palette();
         @Override public HomingMapleBridge theme() { return HomingMapleBridge.INSTANCE; }
         @Override public Map<CssVar, String> values() { return VALUES; }
+            @Override public Map<CssVar, String> darkValues() { return DARK; }
+
+            /** The re-binding under prefers-color-scheme: dark — the colour roles only;
+             *  the scales are the same job in both modes. */
+            private static final Map<CssVar, String> DARK = Map.ofEntries(
+                    Map.entry(HomingVars.COLOR_SURFACE,               "#0A131E"),   // water-bot
+                    Map.entry(HomingVars.COLOR_SURFACE_RAISED,        "#1B2D44"),   // sky-mid night
+                    Map.entry(HomingVars.COLOR_SURFACE_RECESSED,      "#0D1620"),   // mountain-near
+                    Map.entry(HomingVars.COLOR_SURFACE_INVERTED,      "#0E1620"),   // temple
+                    Map.entry(HomingVars.COLOR_TEXT_PRIMARY,          "#CBD9E8"),
+                    Map.entry(HomingVars.COLOR_TEXT_MUTED,            "#7A89A0"),
+                    Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED,      "#BCC7D6"),   // mist
+                    Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED_MUTED, "#7A89A0"),
+                    Map.entry(HomingVars.COLOR_TEXT_TITLE,            "#F5E3B0"),
+                    Map.entry(HomingVars.COLOR_TEXT_LINK,             "#F5E3B0"),   // moon
+                    Map.entry(HomingVars.COLOR_TEXT_LINK_HOVER,       "#F0DCA8"),
+                    Map.entry(HomingVars.COLOR_BORDER,                "#3A5070"),   // ripple
+                    Map.entry(HomingVars.COLOR_BORDER_EMPHASIS,       "#F5E3B0"),
+                    Map.entry(HomingVars.COLOR_ACCENT,                "#F5E3B0"),
+                    Map.entry(HomingVars.COLOR_ACCENT_EMPHASIS,       "#D9A35A"),   // temple-window
+                    Map.entry(HomingVars.COLOR_ACCENT_ON,             "#0A131E")
+            );
 
         // Light mode (dawn) — distilled from the SVG's dawn palette but
         // independent of it. Page surfaces are translucent-ish warm tones
@@ -161,82 +184,32 @@ public record HomingMapleBridge() implements Theme {
         );
     }
 
-    public record Globals() implements ThemeGlobals<HomingMapleBridge> {
-        public static final Globals INSTANCE = new Globals();
+    /** RFC 0066 — the theme's word on the studio's classes: the night behind
+     *  the parchment, and the reading page lit from behind. */
+    public record Studio() implements StudioStyles.Overrides<HomingMapleBridge> {
+        public static final Studio INSTANCE = new Studio();
         @Override public HomingMapleBridge theme() { return HomingMapleBridge.INSTANCE; }
-        @Override public String css() {
-            // Order: dark-mode overrides → shared structural cascade → our
-            // SVG-background overlay. Putting the overlay last lets the
-            // background-image longhand land after the structural
-            // `background: var(--color-surface)` shorthand cleared it.
-            return DARK_OVERRIDE + HomingDefault.STRUCTURAL_CSS + TEXTURE_OVERRIDE;
-        }
 
-        /** Dark-mode (night) palette — when the OS prefers dark. */
-        private static final String DARK_OVERRIDE = """
-                :root { color-scheme: light dark; }
-                @media (prefers-color-scheme: dark) {
-                    :root {
-                        --color-surface:           #0A131E;   /* water-bot */
-                        --color-surface-raised:    #1B2D44;   /* sky-mid night */
-                        --color-surface-recessed:  #0D1620;   /* mountain-near */
-                        --color-surface-inverted:  #0E1620;   /* temple */
-
-                        --color-text-primary:            #CBD9E8;
-                        --color-text-muted:              #7A89A0;
-                        --color-text-on-inverted:        #BCC7D6;   /* mist */
-                        --color-text-on-inverted-muted:  #7A89A0;
-                        --color-text-title:               #F5E3B0;
-                        --color-text-link:               #F5E3B0;   /* moon */
-                        --color-text-link-hover:         #F0DCA8;
-
-                        --color-border:           #3A5070;          /* ripple */
-                        --color-border-emphasis:  #F5E3B0;
-
-                        --color-accent:           #F5E3B0;
-                        --color-accent-emphasis:  #D9A35A;          /* temple-window */
-                        --color-accent-on:        #0A131E;
-                    }
-                }
-                """;
-
-        /**
-         * The night sky as the page surface. The nocturne used to be a
-         * full-page inline SVG the framework injected behind the chrome, with
-         * universal {@code pointer-events: none} plumbing so its moon could
-         * take a hover; RFC 0064 retired the injected backdrop — the server no
-         * longer knows the theme a page wears, and a backdrop that only some
-         * addresses got was a theme that only sometimes applied. What remains
-         * is the sky itself: a fixed gradient from the zenith down to the lake,
-         * deep navy to a lit horizon, so the parchment reading surface still
-         * sits on a night.
-         */
-        private static final String TEXTURE_OVERRIDE = """
-                html {
+        /** The night sky on {@code html}, fixed; {@code body} lets it through.
+         *  The declared rule is {@code html, body}; the nested selectors pick
+         *  each element out of the pair. */
+        public CssBlock<StudioStyles.st_page> st_page() { return CssBlock.of("""
+                &:is(html) {
                     background: linear-gradient(180deg, #0A131E 0%, #12213A 45%, #24405C 100%);
                     background-attachment: fixed;
                 }
-                body {
-                    background: transparent;
-                }
-                /* Doc-reader column slab is set framework-default (HomingDefault
-                   COMPONENT_CSS targets `.st-main:has(.st-doc-meta)`). Maple
-                   Bridge only adjusts the fill to be slightly translucent so
-                   the night bleeds a hint through the parchment — gives the
-                   surface a "lit from behind" feel on the reading page.
-                   Same scope: only the doc reader. */
-                .st-main:has(.st-doc-meta) {
+                &:is(body) { background: transparent; }
+                """); }
+
+        /** The doc-reader slab goes slightly translucent so the night bleeds a
+         *  hint through the parchment — the reading page only, as declared. */
+        public CssBlock<StudioStyles.st_main> st_main() { return CssBlock.of("""
+                &:has(.st-doc-meta) {
                     background-color: color-mix(in srgb, var(--color-surface-raised) 92%, transparent);
                 }
+                """); }
 
-                /* Inner panes inherit the parchment from .st-main; no per-pane
-                   background needed. Padding kept for reading-pane feel. */
-                .st-doc {
-                    padding: 28px 32px;
-                }
-                .st-sidebar {
-                    padding: 16px;
-                }
-                """;
+        public CssBlock<StudioStyles.st_doc> st_doc() { return CssBlock.of("padding: 28px 32px;"); }
+        public CssBlock<StudioStyles.st_sidebar> st_sidebar() { return CssBlock.of("padding: 16px;"); }
     }
 }

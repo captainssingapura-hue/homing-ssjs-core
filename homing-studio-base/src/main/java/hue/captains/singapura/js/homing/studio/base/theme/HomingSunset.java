@@ -4,7 +4,6 @@ import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
 import hue.captains.singapura.js.homing.theme.color.HomingVars;
 import hue.captains.singapura.js.homing.core.Theme;
-import hue.captains.singapura.js.homing.core.ThemeGlobals;
 
 import java.util.Map;
 
@@ -13,9 +12,8 @@ import java.util.Map;
  * layout and semantic vocabulary as {@link HomingDefault}; the primitive
  * palette shifts to warm tones.
  *
- * <p>Self-contained: light mode primitives in {@link Palette}, dark-mode
- * {@code @media} override in {@link Globals}. Structural CSS reused from
- * {@link HomingDefault#STRUCTURAL_CSS}.</p>
+ * <p>Self-contained: the light binding and the dark re-binding, both in
+ * {@link Palette} (RFC 0066). Palette-only — nothing overridden.</p>
  *
  * <p>Activate via {@code ?theme=sunset} on any studio URL.</p>
  */
@@ -32,6 +30,28 @@ public record HomingSunset() implements Theme {
         public static final Palette INSTANCE = new Palette();
         @Override public HomingSunset theme() { return HomingSunset.INSTANCE; }
         @Override public Map<CssVar, String> values() { return VALUES; }
+            @Override public Map<CssVar, String> darkValues() { return DARK; }
+
+            /** The re-binding under prefers-color-scheme: dark — the colour roles only;
+             *  the scales are the same job in both modes. */
+            private static final Map<CssVar, String> DARK = Map.ofEntries(
+                    Map.entry(HomingVars.COLOR_SURFACE,               "#1A0F08"),
+                    Map.entry(HomingVars.COLOR_SURFACE_RAISED,        "#2A1A10"),
+                    Map.entry(HomingVars.COLOR_SURFACE_RECESSED,      "#3A2418"),
+                    Map.entry(HomingVars.COLOR_SURFACE_INVERTED,      "#7A2E2E"),   // kept — header bg
+                    Map.entry(HomingVars.COLOR_TEXT_PRIMARY,          "#FFE4D1"),   // light peach
+                    Map.entry(HomingVars.COLOR_TEXT_MUTED,            "#C9A78B"),
+                    Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED,      "#FFE4D1"),
+                    Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED_MUTED, "#FFB67A"),
+                    Map.entry(HomingVars.COLOR_TEXT_TITLE,            "#E89580"),
+                    Map.entry(HomingVars.COLOR_TEXT_LINK,             "#E89580"),   // lifted terracotta
+                    Map.entry(HomingVars.COLOR_TEXT_LINK_HOVER,       "#FF8C42"),   // lifted sunset orange
+                    Map.entry(HomingVars.COLOR_BORDER,                "#4A3424"),
+                    Map.entry(HomingVars.COLOR_BORDER_EMPHASIS,       "#FF8C42"),   // sunset orange
+                    Map.entry(HomingVars.COLOR_ACCENT,                "#FF8C42"),
+                    Map.entry(HomingVars.COLOR_ACCENT_EMPHASIS,       "#FFA363"),
+                    Map.entry(HomingVars.COLOR_ACCENT_ON,             "#7A2E2E")
+            );
 
         // Sunset palette — semantic-only. Warm coral/terracotta accents on
         // cream surfaces.
@@ -75,41 +95,4 @@ public record HomingSunset() implements Theme {
         );
     }
 
-    public record Globals() implements ThemeGlobals<HomingSunset> {
-        public static final Globals INSTANCE = new Globals();
-        @Override public HomingSunset theme() { return HomingSunset.INSTANCE; }
-        @Override public String css() { return DARK_OVERRIDE + HomingDefault.STRUCTURAL_CSS; }
-
-        /** Sunset's dark-mode adaptation — dusk tones. */
-        private static final String DARK_OVERRIDE = """
-                :root { color-scheme: light dark; }
-                @media (prefers-color-scheme: dark) {
-                    :root {
-                        /* Surfaces — deep dusk. */
-                        --color-surface:           #1A0F08;
-                        --color-surface-raised:    #2A1A10;
-                        --color-surface-recessed:  #3A2418;
-                        --color-surface-inverted:  #7A2E2E;   /* kept — header bg */
-
-                        /* Text */
-                        --color-text-primary:            #FFE4D1;   /* light peach */
-                        --color-text-muted:              #C9A78B;
-                        --color-text-on-inverted:        #FFE4D1;
-                        --color-text-on-inverted-muted:  #FFB67A;
-                        --color-text-title:               #E89580;
-                        --color-text-link:               #E89580;   /* lifted terracotta */
-                        --color-text-link-hover:         #FF8C42;   /* lifted sunset orange */
-
-                        /* Borders */
-                        --color-border:           #4A3424;
-                        --color-border-emphasis:  #FF8C42;          /* sunset orange */
-
-                        /* Accent */
-                        --color-accent:           #FF8C42;
-                        --color-accent-emphasis:  #FFA363;
-                        --color-accent-on:        #7A2E2E;
-                    }
-                }
-                """;
-    }
 }

@@ -80,12 +80,11 @@ class CssClassManagerTest extends JsModuleTestBase {
     void loadCss_bringsTheWholeTree_dependenciesFirst_thenAppliesAtOnce() {
         js.eval("js", "globalThis.done = false; CssClassManagerInstance.loadCss('G', 'default', { Palette: SUB.Palette, G: SUB.G, D: SUB.D }).then(() => globalThis.done = true); undefined");
         tick();
-        assertEquals(List.of("/theme-globals?theme=default not all"), live());
-        fire("theme-globals");
+        assertEquals(List.of("/css-content?class=Palette&theme=default not all"), live(), "the prior alone until it lands");
         fire("class=Palette");
-        assertEquals("/css-content?class=D&theme=default not all", live().get(2), "the dependency, by name, before the group");
+        assertEquals("/css-content?class=D&theme=default not all", live().get(1), "the dependency, by name, before the group");
         fire("class=D");
-        assertEquals("/css-content?class=G&theme=default not all", live().get(3));
+        assertEquals("/css-content?class=G&theme=default not all", live().get(2));
         assertTrue(live().stream().allMatch(s -> s.endsWith("not all")));
         fire("class=G");
         assertTrue(live().stream().allMatch(s -> s.endsWith(" all")), "applied in one pass");
@@ -98,7 +97,7 @@ class CssClassManagerTest extends JsModuleTestBase {
         js.eval("js", "globalThis.stored = 'forest'; undefined");
         js.eval("js", "CssClassManagerInstance.loadCss('D', 'default', { Palette: SUB.Palette, D: SUB.D }); undefined");
         tick();
-        assertEquals(List.of("/theme-globals?theme=forest not all"), live());
+        assertEquals(List.of("/css-content?class=Palette&theme=forest not all"), live());
     }
 
     // ── Switching ─────────────────────────────────────────────────────────────
@@ -106,19 +105,19 @@ class CssClassManagerTest extends JsModuleTestBase {
     @Test
     void switchTheme_loadsEverythingUnderTheNewTheme_thenRetiresTheOld() {
         pageUnderDefault();
-        assertEquals(5, live().size());
+        assertEquals(4, live().size());
         js.eval("js", "globalThis.applied = null; CssClassManagerInstance.onThemeApplied(function (c) { globalThis.applied = c.from + '>' + c.to; });"
                 + "globalThis.sw = null; CssClassManagerInstance.switchTheme('forest').then(t => globalThis.sw = t); undefined");
         tick();
-        assertEquals("/theme-globals?theme=forest not all", live().get(5), "the new theme's sheets arrive after the old");
-        fire("theme-globals?theme=forest"); fire("class=Palette&theme=forest");
-        assertEquals("/css-content?class=Base&theme=forest not all", live().get(7), "the prior first");
+        assertEquals("/css-content?class=Palette&theme=forest not all", live().get(4), "the new theme's sheets arrive after the old");
+        fire("class=Palette&theme=forest");
+        assertEquals("/css-content?class=Base&theme=forest not all", live().get(5), "the prior first");
         fire("class=Base&theme=forest");
         fire("class=D&theme=forest");
-        assertTrue(live().subList(0, 5).stream().allMatch(s -> s.endsWith(" all")), "the old theme is still authoritative");
+        assertTrue(live().subList(0, 4).stream().allMatch(s -> s.endsWith(" all")), "the old theme is still authoritative");
         assertEquals(null, js.eval("js", "applied").isNull() ? null : "early");
         fire("class=G&theme=forest");
-        assertEquals(List.of("/theme-globals?theme=forest all", "/css-content?class=Palette&theme=forest all",
+        assertEquals(List.of("/css-content?class=Palette&theme=forest all",
                              "/css-content?class=Base&theme=forest all", "/css-content?class=D&theme=forest all",
                              "/css-content?class=G&theme=forest all"), live(), "only the new theme remains, all applied");
         assertEquals("forest", theme());
@@ -133,7 +132,7 @@ class CssClassManagerTest extends JsModuleTestBase {
         assertEquals("forest", theme());
         js.eval("js", "CssClassManagerInstance.switchTheme('default'); undefined"); tick(); fireAll("default");
         assertEquals("default", theme());
-        assertEquals(5, live().size());
+        assertEquals(4, live().size());
         assertTrue(live().stream().allMatch(s -> s.contains("theme=default") && s.endsWith(" all")));
     }
 
@@ -151,10 +150,10 @@ class CssClassManagerTest extends JsModuleTestBase {
     void aFailedSwitch_leavesTheOldThemeWhole() {
         pageUnderDefault();
         js.eval("js", "globalThis.err = null; CssClassManagerInstance.switchTheme('forest').catch(e => globalThis.err = e.message); undefined");
-        tick(); fire("theme-globals?theme=forest"); fire("class=Palette&theme=forest");
+        tick(); fire("class=Palette&theme=forest");
         js.eval("js", "failOne('class=Base&theme=forest'); undefined"); tick();
         assertTrue(js.eval("js", "err").asString().contains("Failed to load CSS"));
-        assertEquals(5, live().size());
+        assertEquals(4, live().size());
         assertTrue(live().stream().allMatch(s -> s.contains("theme=default") && s.endsWith(" all")));
         assertEquals("default", theme());
     }
@@ -163,7 +162,7 @@ class CssClassManagerTest extends JsModuleTestBase {
     void switchingToTheThemeWorn_isANoOp() {
         pageUnderDefault();
         js.eval("js", "CssClassManagerInstance.switchTheme('default'); undefined"); tick();
-        assertEquals(5, live().size());
+        assertEquals(4, live().size());
     }
 
     // ── Following the store ───────────────────────────────────────────────────
@@ -173,7 +172,7 @@ class CssClassManagerTest extends JsModuleTestBase {
         pageUnderDefault();
         js.eval("js", "globalThis.stored = 'carbon'; changeListeners.forEach(fn => fn()); undefined");
         tick();
-        assertEquals("/theme-globals?theme=carbon not all", live().get(5));
+        assertEquals("/css-content?class=Palette&theme=carbon not all", live().get(4));
         fireAll("carbon");
         assertEquals("carbon", theme());
     }
@@ -183,6 +182,6 @@ class CssClassManagerTest extends JsModuleTestBase {
         pageUnderDefault();
         js.eval("js", "globalThis.stored = 'default'; changeListeners.forEach(fn => fn()); undefined");
         tick();
-        assertEquals(5, live().size());
+        assertEquals(4, live().size());
     }
 }

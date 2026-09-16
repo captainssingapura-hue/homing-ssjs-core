@@ -2,6 +2,8 @@ package hue.captains.singapura.js.homing.studio.base.ui;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
+import hue.captains.singapura.js.homing.core.CssGroupImpl;
+import hue.captains.singapura.js.homing.core.Theme;
 
 import java.util.List;
 
@@ -30,6 +32,7 @@ import java.util.List;
 public record SystemDialogStyles() implements CssGroup<SystemDialogStyles> {
 
     public static final SystemDialogStyles INSTANCE = new SystemDialogStyles();
+/** RFC 0066 — a theme's word on this group: one block per overridden class,     *  appended inside that class's rule after the declared body. */    public interface Overrides<TH extends Theme> extends CssGroupImpl<SystemDialogStyles, TH> {        @Override default SystemDialogStyles group() { return INSTANCE; }    }
 
     /**
      * The page, switched off. Dims by FILTER, not by colour: there is no token

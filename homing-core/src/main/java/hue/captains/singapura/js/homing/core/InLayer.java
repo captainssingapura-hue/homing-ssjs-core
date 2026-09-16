@@ -2,7 +2,7 @@ package hue.captains.singapura.js.homing.core;
 
 /**
  * Generic guard — an opt-in marker that types a {@link CssClass} (or a
- * {@link ThemeGlobals} chunk) to a specific {@link Layer}.
+ * theme override) to a specific {@link Layer}.
  *
  * <p>Java forbids implementing the same parameterised interface twice with
  * different type arguments, so a record cannot accidentally declare two

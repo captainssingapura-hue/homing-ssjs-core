@@ -1,10 +1,11 @@
 package hue.captains.singapura.js.homing.studio.base.theme;
 
+import hue.captains.singapura.js.homing.core.CssBlock;
 import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
 import hue.captains.singapura.js.homing.theme.color.HomingVars;
 import hue.captains.singapura.js.homing.core.Theme;
-import hue.captains.singapura.js.homing.core.ThemeGlobals;
+import hue.captains.singapura.js.homing.studio.base.css.StudioStyles;
 
 import java.util.Map;
 
@@ -18,14 +19,13 @@ import java.util.Map;
  * <p>Two things make this theme more elaborate than the other four:</p>
  *
  * <ol>
- *   <li>A theme-specific {@code TEXTURE_OVERRIDE} CSS block appended after the
- *       shared {@link HomingDefault#STRUCTURAL_CSS} block. The shared block
- *       sets {@code background: var(--color-surface)} (the shorthand resets
- *       background-image to none); the override re-installs an SVG-noise
- *       background-image on top of that surface color. The grain is an
- *       inline data:URI — no extra asset, no extra HTTP request.</li>
- *   <li>A serif body-font override applied at the same point. Affects only
- *       this theme — other themes keep the Calibri / system-ui stack.</li>
+ *   <li>An override of the page reset ({@link Studio#st_page()}, RFC 0066):
+ *       the declared {@code background: var(--color-surface)} shorthand resets
+ *       background-image to none; the override, appended inside the same
+ *       rule, re-installs an SVG-noise background-image on top of that
+ *       surface colour — an inline data:URI, no extra asset, no request —
+ *       and the serif body face. Other themes keep the Calibri / system-ui
+ *       stack.</li>
  * </ol>
  *
  * <p>Activate via {@code ?theme=letterpress} on any studio URL.</p>
@@ -43,6 +43,28 @@ public record HomingLetterpress() implements Theme {
         public static final Palette INSTANCE = new Palette();
         @Override public HomingLetterpress theme() { return HomingLetterpress.INSTANCE; }
         @Override public Map<CssVar, String> values() { return VALUES; }
+            @Override public Map<CssVar, String> darkValues() { return DARK; }
+
+            /** The re-binding under prefers-color-scheme: dark — the colour roles only;
+             *  the scales are the same job in both modes. */
+            private static final Map<CssVar, String> DARK = Map.ofEntries(
+                    Map.entry(HomingVars.COLOR_SURFACE,               "#1A1814"),
+                    Map.entry(HomingVars.COLOR_SURFACE_RAISED,        "#252118"),
+                    Map.entry(HomingVars.COLOR_SURFACE_RECESSED,      "#2E2A20"),
+                    Map.entry(HomingVars.COLOR_SURFACE_INVERTED,      "#0F0E0A"),   // Text
+                    Map.entry(HomingVars.COLOR_TEXT_PRIMARY,          "#EFE7D6"),
+                    Map.entry(HomingVars.COLOR_TEXT_MUTED,            "#A89F8B"),
+                    Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED,      "#EFE7D6"),
+                    Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED_MUTED, "#A89F8B"),
+                    Map.entry(HomingVars.COLOR_TEXT_TITLE,            "#D85A3E"),
+                    Map.entry(HomingVars.COLOR_TEXT_LINK,             "#D85A3E"),
+                    Map.entry(HomingVars.COLOR_TEXT_LINK_HOVER,       "#EFE7D6"),   // Borders
+                    Map.entry(HomingVars.COLOR_BORDER,                "#3A3428"),
+                    Map.entry(HomingVars.COLOR_BORDER_EMPHASIS,       "#D85A3E"),   // Accent
+                    Map.entry(HomingVars.COLOR_ACCENT,                "#D85A3E"),
+                    Map.entry(HomingVars.COLOR_ACCENT_EMPHASIS,       "#EFE7D6"),
+                    Map.entry(HomingVars.COLOR_ACCENT_ON,             "#1A1814")
+            );
 
         // Cream parchment + ink + brick-red. Two-tone editorial palette.
         private static final Map<CssVar, String> VALUES = Map.ofEntries(
@@ -85,82 +107,30 @@ public record HomingLetterpress() implements Theme {
         );
     }
 
-    public record Globals() implements ThemeGlobals<HomingLetterpress> {
-        public static final Globals INSTANCE = new Globals();
+    /** RFC 0066 — the theme's word on the studio's classes: two of them. */
+    public record Studio() implements StudioStyles.Overrides<HomingLetterpress> {
+        public static final Studio INSTANCE = new Studio();
         @Override public HomingLetterpress theme() { return HomingLetterpress.INSTANCE; }
-        @Override public String css() {
-            // Order matters: structural CSS sets `background: var(--color-surface)`
-            // (shorthand → clears background-image). TEXTURE_OVERRIDE comes AFTER
-            // so the background-image longhand lands on top, preserving the color.
-            return DARK_OVERRIDE + HomingDefault.STRUCTURAL_CSS + TEXTURE_OVERRIDE;
-        }
 
-        /** Dark-mode adaptation — night reading on inked paper.
-         *  Surface flips to deep ink; link tone lifts to a softer brick. */
-        private static final String DARK_OVERRIDE = """
-                :root { color-scheme: light dark; }
+        /** Serif body face, and the paper grain multiplied into the parchment
+         *  — inverted to light specks on ink under a dark scheme. */
+        public CssBlock<StudioStyles.st_page> st_page() { return CssBlock.of("""
+                font-family: "Iowan Old Style", "Charter", "Georgia", "Cambria", "Times New Roman", serif;
+                background-image:
+                    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n' x='0' y='0'><feTurbulence type='fractalNoise' baseFrequency='0.92' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.18  0 0 0 0 0.15  0 0 0 0 0.12  0 0 0 0.10 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+                background-repeat: repeat;
                 @media (prefers-color-scheme: dark) {
-                    :root {
-                        /* Surfaces — ink at night. */
-                        --color-surface:           #1A1814;
-                        --color-surface-raised:    #252118;
-                        --color-surface-recessed:  #2E2A20;
-                        --color-surface-inverted:  #0F0E0A;
-
-                        /* Text */
-                        --color-text-primary:            #EFE7D6;
-                        --color-text-muted:              #A89F8B;
-                        --color-text-on-inverted:        #EFE7D6;
-                        --color-text-on-inverted-muted:  #A89F8B;
-                        --color-text-title:               #D85A3E;
-                        --color-text-link:               #D85A3E;
-                        --color-text-link-hover:         #EFE7D6;
-
-                        /* Borders */
-                        --color-border:           #3A3428;
-                        --color-border-emphasis:  #D85A3E;
-
-                        /* Accent */
-                        --color-accent:           #D85A3E;
-                        --color-accent-emphasis:  #EFE7D6;
-                        --color-accent-on:        #1A1814;
-                    }
-                }
-                """;
-
-        /**
-         * Texture + typography overrides — distinguishing features of this
-         * theme. The SVG noise is an inline data:URI (no extra HTTP, no extra
-         * asset) generated by feTurbulence + feColorMatrix:
-         * <ul>
-         *   <li>{@code feTurbulence baseFrequency="0.92"} → fine paper grain (large value = small specks)</li>
-         *   <li>{@code feColorMatrix} → tint the noise: dark warm grain for light mode (ink dust on paper); soft cream grain for dark mode (paper specks lifted on ink)</li>
-         * </ul>
-         * The {@code %23} encodes {@code #} for the filter reference — required
-         * inside a {@code data:} URI. {@code stitchTiles='stitch'} keeps the
-         * pattern seamless across the repeat.
-         */
-        private static final String TEXTURE_OVERRIDE = """
-                html, body {
-                    /* Serif body type — editorial broadsheet feel. Falls back gracefully. */
-                    font-family: "Iowan Old Style", "Charter", "Georgia", "Cambria", "Times New Roman", serif;
-                    /* Paper grain — fine dark specks, multiplied into the parchment. */
-                    background-image:
-                        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n' x='0' y='0'><feTurbulence type='fractalNoise' baseFrequency='0.92' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.18  0 0 0 0 0.15  0 0 0 0 0.12  0 0 0 0.10 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-                    background-repeat: repeat;
-                }
-                @media (prefers-color-scheme: dark) {
-                    html, body {
-                        /* Inverted grain — light specks of paper dust on ink. */
+                    & {
                         background-image:
                             url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n' x='0' y='0'><feTurbulence type='fractalNoise' baseFrequency='0.92' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.94  0 0 0 0 0.91  0 0 0 0 0.84  0 0 0 0.06 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
                     }
                 }
-                /* Drop double-rule beneath section titles — editorial divider. */
-                .st-section-title {
-                    border-bottom-width: 3px;
-                    border-bottom-style: double;
-                }
-                """;
+                """); }
+
+        /** Double rule beneath section titles — the editorial divider. */
+        public CssBlock<StudioStyles.st_section_title> st_section_title() { return CssBlock.of("""
+                border-bottom-width: 3px;
+                border-bottom-style: double;
+                """); }
     }
 }

@@ -4,7 +4,7 @@ import hue.captains.singapura.js.homing.server.CssContentGetAction;
 import hue.captains.singapura.js.homing.server.EmptyParam;
 import hue.captains.singapura.js.homing.server.ModuleQuery;
 import hue.captains.singapura.js.homing.studio.base.css.Util;
-import hue.captains.singapura.js.homing.studio.base.theme.CssGroupImplRegistry;
+import hue.captains.singapura.js.homing.studio.base.theme.StudioThemeRegistry;
 import hue.captains.singapura.js.homing.studio.base.theme.HomingDefault;
 import org.junit.jupiter.api.Test;
 
@@ -14,13 +14,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * RFC 0002-ext1 Phase 06 — smoke tests for the {@link Util} CssGroup. Verifies
  * that inline-bodied utilities render correctly, that auto-synthesized variants
- * (Phase 01) reuse the inline body, and that the trivial {@code UtilImpl}
- * resolves through the registry under {@link HomingDefault}.
+ * (Phase 01) reuse the inline body, and that with no theme override for any
+ * utility (RFC 0066) every class renders from its own body under {@link HomingDefault}.
  */
 class UtilRenderingTest {
 
     private final CssContentGetAction action = new CssContentGetAction(
-            CssGroupImplRegistry.ALL,
+            StudioThemeRegistry.INSTANCE.impls(),
             HomingDefault.INSTANCE
     );
 
@@ -78,8 +78,8 @@ class UtilRenderingTest {
     @Test
     void renderError_isNotEmittedForInlineBodied() throws Exception {
         var css = renderUtil();
-        // UtilImpl has zero per-class methods. Every class must resolve via cls.body().
-        assertFalse(css.contains("/* render error: no method"),
+        // No theme overrides a utility. Every class must resolve via cls.body().
+        assertFalse(css.contains("/* render error"),
                 "inline-bodied utilities must not fall through to impl-method dispatch. css:\n" + css);
     }
 }

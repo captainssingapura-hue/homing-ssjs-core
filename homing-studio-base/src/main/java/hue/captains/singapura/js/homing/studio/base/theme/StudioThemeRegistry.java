@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.studio.base.theme;
 
 import hue.captains.singapura.js.homing.core.Theme;
-import hue.captains.singapura.js.homing.core.ThemeGlobals;
+import hue.captains.singapura.js.homing.core.CssGroupImpl;
 import hue.captains.singapura.js.homing.core.PaletteProvision;
 import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
 import hue.captains.singapura.js.homing.server.ThemeRegistry;
@@ -11,14 +11,15 @@ import java.util.List;
 /**
  * RFC 0002-ext1 Phase 10 — registry of theme artifacts shipped by
  * {@code homing-studio-base}.
- *
  * <p>Every {@link Theme} the studio supports has a registered
- * {@link GlobalColorPalette.Provision} (its body for the global palette, served as the prior of every page)
- * and a {@link ThemeGlobals} (the raw global rules, served at
- * {@code /theme-globals}).</p>
+ * {@link GlobalColorPalette.Provision} — its body for the global palette, light
+ * and dark, served as the prior of every page — and, when it has more to say
+ * than a palette, {@link CssGroupImpl}s carrying per-class overrides
+ * (RFC 0066). There is no globals sheet.</p>
  *
- * <p>Adding a new theme: implement {@link Theme} + nested {@code Palette} +
- * nested {@code Globals} (mirroring {@link HomingDefault}), then append all
+ * <p>Adding a new theme: implement {@link Theme} + nested {@code Palette}
+ * (mirroring {@link HomingDefault}), append both to the lists below, and add
+ * an overrides record to {@link #overrides()} only if the theme needs one.</p>
  * three singletons to the lists below.</p>
  */
 public final class StudioThemeRegistry implements ThemeRegistry {
@@ -57,19 +58,23 @@ public final class StudioThemeRegistry implements ThemeRegistry {
         );
     }
 
-    @Override public List<ThemeGlobals<?>> globals() {
+    /**
+     * RFC 0066 — the per-class overrides the studio's themes carry: five themes
+     * are palette-only and appear nowhere here; the rest say what differs, one
+     * impl per group they touch. Brutalist's word on the workspace's classes is
+     * not here — studio-base cannot see workspace-shell — but in
+     * {@code homing-studio-workspace}, registered by the starter's fixtures.
+     */
+    @Override public List<CssGroupImpl<?, ?>> overrides() {
         return List.of(
-                HomingDefault.Globals.INSTANCE,
-                HomingCarbon.Globals.INSTANCE,
-                HomingForest.Globals.INSTANCE,
-                HomingSunset.Globals.INSTANCE,
-                HomingBauhaus.Globals.INSTANCE,
-                HomingForbiddenCity.Globals.INSTANCE,
-                HomingLetterpress.Globals.INSTANCE,
-                HomingMapleBridge.Globals.INSTANCE,
-                HomingRetro90s.Globals.INSTANCE,
-                HomingTurboC.Globals.INSTANCE,
-                HomingBrutalist.Globals.INSTANCE
+                HomingLetterpress.Studio.INSTANCE,
+                HomingMapleBridge.Studio.INSTANCE,
+                HomingRetro90s.Studio.INSTANCE,
+                HomingTurboC.Studio.INSTANCE,
+                HomingBrutalist.Studio.INSTANCE,
+                HomingBrutalist.Dialog.INSTANCE,
+                HomingBrutalist.Picker.INSTANCE,
+                HomingBrutalist.MasterDetail.INSTANCE
         );
     }
 }

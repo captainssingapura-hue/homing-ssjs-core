@@ -2,6 +2,8 @@ package hue.captains.singapura.js.homing.studio.base.ui;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
+import hue.captains.singapura.js.homing.core.CssGroupImpl;
+import hue.captains.singapura.js.homing.core.Theme;
 
 import java.util.List;
 
@@ -25,6 +27,7 @@ import java.util.List;
 public record MasterDetailStyles() implements CssGroup<MasterDetailStyles> {
 
     public static final MasterDetailStyles INSTANCE = new MasterDetailStyles();
+/** RFC 0066 — a theme's word on this group: one block per overridden class,     *  appended inside that class's rule after the declared body. */    public interface Overrides<TH extends Theme> extends CssGroupImpl<MasterDetailStyles, TH> {        @Override default MasterDetailStyles group() { return INSTANCE; }    }
 
     /** The pair, side by side. */
     public record md_split() implements CssClass<MasterDetailStyles> {

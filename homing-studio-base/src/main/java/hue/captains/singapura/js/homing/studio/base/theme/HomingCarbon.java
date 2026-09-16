@@ -4,7 +4,6 @@ import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
 import hue.captains.singapura.js.homing.theme.color.HomingVars;
 import hue.captains.singapura.js.homing.core.Theme;
-import hue.captains.singapura.js.homing.core.ThemeGlobals;
 
 import java.util.Map;
 
@@ -55,6 +54,8 @@ public record HomingCarbon() implements Theme {
         public static final Palette INSTANCE = new Palette();
         @Override public HomingCarbon theme() { return HomingCarbon.INSTANCE; }
         @Override public Map<CssVar, String> values() { return VALUES; }
+        /** Dark in every mode: the browser's own chrome follows. */
+        @Override public String colorScheme() { return "dark"; }
 
         // Carbon palette — DARK values here, unlike every other theme in this
         // package. There is no @media light override; see the class javadoc.
@@ -112,18 +113,4 @@ public record HomingCarbon() implements Theme {
         );
     }
 
-    public record Globals() implements ThemeGlobals<HomingCarbon> {
-        public static final Globals INSTANCE = new Globals();
-        @Override public HomingCarbon theme() { return HomingCarbon.INSTANCE; }
-        @Override public String css() { return SCHEME + HomingDefault.STRUCTURAL_CSS; }
-
-        /**
-         * No @media block. Carbon is dark in both OS modes on purpose, and
-         * color-scheme:dark is what makes the browser's own chrome — scrollbars,
-         * select popups, the canvas behind an overscroll — follow the page.
-         */
-        private static final String SCHEME = """
-                :root { color-scheme: dark; }
-                """;
-    }
 }

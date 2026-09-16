@@ -55,7 +55,7 @@ class CssDependencyGraphTest extends JsModuleTestBase {
 
     @Test
     void anEmptyPlan_isStillTheBundle() {
-        assertEquals(List.of(List.of("__theme-globals")), plan());
+        assertEquals(List.of(), plan());
     }
 
     @Test
@@ -63,7 +63,6 @@ class CssDependencyGraphTest extends JsModuleTestBase {
         merge("{ Base: { deps: [], prior: true }, Util: { deps: [], prior: true } }");
         merge("{ Picker: { deps: [] } }");
         assertEquals(List.of(
-                List.of("__theme-globals"),
                 List.of("Base", "Util"),
                 List.of("Picker")), plan("Picker", "Util", "Base"));
     }
@@ -82,7 +81,6 @@ class CssDependencyGraphTest extends JsModuleTestBase {
     void aDiamond_loadsInThreeWaves_withTheMiddlePairParallel() {
         merge("{ Root: { deps: ['Left', 'Right'] }, Left: { deps: ['Base'] }, Right: { deps: ['Base'] }, Base: { deps: [] } }");
         assertEquals(List.of(
-                List.of("__theme-globals"),
                 List.of("Base"),
                 List.of("Left", "Right"),
                 List.of("Root")), plan("Root", "Left", "Right", "Base"));
@@ -93,7 +91,6 @@ class CssDependencyGraphTest extends JsModuleTestBase {
         merge("{ A: { deps: [] }, B: { deps: ['A'] }, C: { deps: ['B'] }, D: { deps: [] } }");
         // D has nothing pending → it joins A's wave; C waits for B which waits for A.
         assertEquals(List.of(
-                List.of("__theme-globals"),
                 List.of("A", "D"), List.of("B"), List.of("C")), plan("A", "B", "C", "D"));
     }
 
@@ -102,7 +99,6 @@ class CssDependencyGraphTest extends JsModuleTestBase {
         merge("{ Widget: { deps: ['Base'] }, Base: { deps: [] } }");
         // loading only Widget (Base already on the page): one wave, no Base.
         assertEquals(List.of(
-                List.of("__theme-globals"),
                 List.of("Widget")), plan("Widget"));
     }
 

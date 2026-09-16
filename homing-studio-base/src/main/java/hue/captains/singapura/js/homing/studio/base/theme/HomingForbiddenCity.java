@@ -4,7 +4,6 @@ import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
 import hue.captains.singapura.js.homing.theme.color.HomingVars;
 import hue.captains.singapura.js.homing.core.Theme;
-import hue.captains.singapura.js.homing.core.ThemeGlobals;
 
 import java.util.Map;
 
@@ -36,6 +35,28 @@ public record HomingForbiddenCity() implements Theme {
         public static final Palette INSTANCE = new Palette();
         @Override public HomingForbiddenCity theme() { return HomingForbiddenCity.INSTANCE; }
         @Override public Map<CssVar, String> values() { return VALUES; }
+            @Override public Map<CssVar, String> darkValues() { return DARK; }
+
+            /** The re-binding under prefers-color-scheme: dark — the colour roles only;
+             *  the scales are the same job in both modes. */
+            private static final Map<CssVar, String> DARK = Map.ofEntries(
+                    Map.entry(HomingVars.COLOR_SURFACE,               "#1A0E0A"),
+                    Map.entry(HomingVars.COLOR_SURFACE_RAISED,        "#2A1810"),
+                    Map.entry(HomingVars.COLOR_SURFACE_RECESSED,      "#3A2418"),
+                    Map.entry(HomingVars.COLOR_SURFACE_INVERTED,      "#5C140F"),   // deeper vermilion
+                    Map.entry(HomingVars.COLOR_TEXT_PRIMARY,          "#F5E8D3"),
+                    Map.entry(HomingVars.COLOR_TEXT_MUTED,            "#B89878"),
+                    Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED,      "#F5E8D3"),
+                    Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED_MUTED, "#D4B896"),
+                    Map.entry(HomingVars.COLOR_TEXT_TITLE,            "#E8B85C"),
+                    Map.entry(HomingVars.COLOR_TEXT_LINK,             "#E8B85C"),   // lifted gold
+                    Map.entry(HomingVars.COLOR_TEXT_LINK_HOVER,       "#FFD700"),   // bright gold
+                    Map.entry(HomingVars.COLOR_BORDER,                "#4A3424"),
+                    Map.entry(HomingVars.COLOR_BORDER_EMPHASIS,       "#C8911C"),   // Accent — gold reads strongly against the dark ground.
+                    Map.entry(HomingVars.COLOR_ACCENT,                "#C8911C"),
+                    Map.entry(HomingVars.COLOR_ACCENT_EMPHASIS,       "#E8B85C"),
+                    Map.entry(HomingVars.COLOR_ACCENT_ON,             "#1A0E0A")
+            );
 
         // Vermilion + imperial gold + parchment + ink. Warm, saturated, historical.
         private static final Map<CssVar, String> VALUES = Map.ofEntries(
@@ -78,42 +99,4 @@ public record HomingForbiddenCity() implements Theme {
         );
     }
 
-    public record Globals() implements ThemeGlobals<HomingForbiddenCity> {
-        public static final Globals INSTANCE = new Globals();
-        @Override public HomingForbiddenCity theme() { return HomingForbiddenCity.INSTANCE; }
-        @Override public String css() { return DARK_OVERRIDE + HomingDefault.STRUCTURAL_CSS; }
-
-        /** Dark-mode adaptation — near-black ground with the same vermilion
-         *  band and gold-lifted link tones for night reading. */
-        private static final String DARK_OVERRIDE = """
-                :root { color-scheme: light dark; }
-                @media (prefers-color-scheme: dark) {
-                    :root {
-                        /* Surfaces — ink-tinted near-black at night. */
-                        --color-surface:           #1A0E0A;
-                        --color-surface-raised:    #2A1810;
-                        --color-surface-recessed:  #3A2418;
-                        --color-surface-inverted:  #5C140F;   /* deeper vermilion */
-
-                        /* Text */
-                        --color-text-primary:            #F5E8D3;
-                        --color-text-muted:              #B89878;
-                        --color-text-on-inverted:        #F5E8D3;
-                        --color-text-on-inverted-muted:  #D4B896;
-                        --color-text-title:               #E8B85C;
-                        --color-text-link:               #E8B85C;   /* lifted gold */
-                        --color-text-link-hover:         #FFD700;   /* bright gold */
-
-                        /* Borders */
-                        --color-border:           #4A3424;
-                        --color-border-emphasis:  #C8911C;
-
-                        /* Accent — gold reads strongly against the dark ground. */
-                        --color-accent:           #C8911C;
-                        --color-accent-emphasis:  #E8B85C;
-                        --color-accent-on:        #1A0E0A;
-                    }
-                }
-                """;
-    }
 }

@@ -1,45 +1,45 @@
 package hue.captains.singapura.js.homing.server;
 
-import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.CssGroup;
-import hue.captains.singapura.js.homing.core.ThemeGlobals;
+import hue.captains.singapura.js.homing.core.CssGroupImpl;
 import hue.captains.singapura.js.homing.core.PaletteProvision;
+import hue.captains.singapura.js.homing.core.Theme;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * RFC 0002-ext1 Phase 09 — registry of per-theme artifacts.
+ * RFC 0066 — what a deployment says about its themes: the {@link Theme}
+ * identities, each one's {@link PaletteProvision} of the global palette, and
+ * the {@link CssGroupImpl}s carrying their per-class overrides. That is the
+ * whole of a theme; there is no globals sheet any more (RFC 0066 retired it:
+ * structure is agnostic classes, the dark binding is on the provision, the
+ * overlay is overrides).
  *
- * <p>Holds three lists: {@link Theme} identities, {@link PaletteProvision} singletons
- * (one per theme — RFC 0066: the theme's body for the global palette), {@link ThemeGlobals}
- * singletons (one per theme; may be empty).
- * {@code ThemeGlobalsGetAction} consults it for {@code /theme-globals?theme=Y}; the
- * palette is served as a group by {@code CssContentGetAction}, and {@link #palette()}
- * names it as the prior the module action writes into every subgraph.
- *
- * <p>Each deployment provides its own {@code ThemeRegistry} implementation,
- * typically as a record holding its themes + palettes + globals. The default
- * empty registry is used by deployments that haven't migrated to the new
- * theme-bundle model — those still use the legacy {@code CssGroupImpl} path
- * via {@code CssContentGetAction}.</p>
+ * <p>Each deployment provides its own implementation. The first theme listed
+ * is the default a page is served under. {@link #palette()} — derived — is the
+ * prior the module action writes into every served subgraph.</p>
  */
 public interface ThemeRegistry {
 
-    /** All themes registered for this deployment. */
+    /** All themes registered for this deployment; the first is the default. */
     List<Theme> themes();
 
-    /** RFC 0066 — every theme's provision of the global palette, one per theme. */
+    /** Every theme's provision of the global palette, one per theme. */
     List<PaletteProvision<?, ?>> palettes();
 
-    /** All theme-globals singletons registered for this deployment. */
-    List<ThemeGlobals<?>> globals();
+    /**
+     * The per-class overrides: an impl per (group, theme) a theme has something
+     * to say about. Optional — a palette-only theme contributes none. Provisions
+     * are impls too, but are listed by {@link #palettes()}; {@link #impls()}
+     * joins the two.
+     */
+    default List<CssGroupImpl<?, ?>> overrides() { return List.of(); }
 
-    /** Empty registry — no themes registered. Used as the default until a
-     *  deployment provides its own. */
+    /** Empty registry — no themes registered. */
     ThemeRegistry EMPTY = new ThemeRegistry() {
-        @Override public List<Theme>              themes()    { return List.of(); }
+        @Override public List<Theme>                 themes()   { return List.of(); }
         @Override public List<PaletteProvision<?, ?>> palettes() { return List.of(); }
-        @Override public List<ThemeGlobals<?>>    globals()   { return List.of(); }
     };
 
     /** Look up the {@link PaletteProvision} for a theme by slug.
@@ -53,25 +53,20 @@ public interface ThemeRegistry {
     }
 
     /**
-     * RFC 0066 — the palette group the provisions fill: the PRIOR every group
-     * on every page leans on without declaring it. The server writes it into
-     * each served group's dependency subgraph, so the client loads it first by
-     * the ordinary plan rather than by a special node. Derived from the
-     * provisions (they all fill one group — the completeness gate checks it);
-     * {@code null} when the deployment registers none.
+     * The palette group the provisions fill: the PRIOR every group on every
+     * page leans on without declaring it. Derived from the provisions (they all
+     * fill one group — the completeness gate checks it); {@code null} when the
+     * deployment registers none.
      */
     default CssGroup<?> palette() {
         var all = palettes();
         return all.isEmpty() ? null : all.get(0).group();
     }
 
-    /** Look up the {@link ThemeGlobals} singleton for a theme by slug.
-     *  Returns {@code null} if not registered. */
-    default ThemeGlobals<?> globalsForSlug(String slug) {
-        if (slug == null) return null;
-        for (var g : globals()) {
-            if (slug.equals(g.theme().slug())) return g;
-        }
-        return null;
+    /** Provisions and overrides together — what the CSS action resolves impls from. */
+    default List<CssGroupImpl<?, ?>> impls() {
+        var all = new ArrayList<CssGroupImpl<?, ?>>(palettes());
+        all.addAll(overrides());
+        return List.copyOf(all);
     }
 }

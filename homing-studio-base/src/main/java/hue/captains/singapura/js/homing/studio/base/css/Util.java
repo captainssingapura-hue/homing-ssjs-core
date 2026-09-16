@@ -17,16 +17,16 @@ import java.util.List;
  *       to opt into auto-generated {@code hover}/{@code focus}/{@code active}
  *       variants. Bodies reference semantic tokens
  *       (e.g. {@code var(--color-accent)}) that the active theme's
- *       {@code semanticTokens()} provides.</li>
+ *       the palette provides.</li>
  *   <li><b>Layout / structural utilities</b> — plain {@link CssClass} with
  *       no variants. Bodies reference the spacing scale or use universal
  *       CSS keywords.</li>
  * </ul>
  *
  * <p>Theme-independence comes for free because every body resolves through
- * tokens the active theme defines. The companion {@code UtilImpl} is trivial
- * — it has no per-method bodies because every record carries its own
- * {@code body()} (RFC 0002-ext1 Phase 05).</p>
+ * tokens the active theme defines — the global palette, the prior every class
+ * reaches (RFC 0066). Every record carries its own {@code body()}; no theme
+ * has had a word on a utility yet.</p>
  */
 public record Util() implements CssGroup<Util> {
 

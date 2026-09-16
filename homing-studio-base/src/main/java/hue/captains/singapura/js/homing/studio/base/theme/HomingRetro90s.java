@@ -1,20 +1,14 @@
 package hue.captains.singapura.js.homing.studio.base.theme;
 
 import hue.captains.singapura.js.homing.core.ClickTarget;
-import hue.captains.singapura.js.homing.core.Component;
+import hue.captains.singapura.js.homing.core.CssBlock;
 import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
 import hue.captains.singapura.js.homing.theme.color.HomingVars;
 import hue.captains.singapura.js.homing.core.Cue;
-import hue.captains.singapura.js.homing.core.Layer;
-import hue.captains.singapura.js.homing.core.MediaGated;
-import hue.captains.singapura.js.homing.core.Prose;
-import hue.captains.singapura.js.homing.core.Reset;
-import hue.captains.singapura.js.homing.core.State;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.ThemeAudio;
-import hue.captains.singapura.js.homing.core.ThemeGlobals;
-import hue.captains.singapura.js.homing.core.ThemeOverlay;
+import hue.captains.singapura.js.homing.studio.base.css.StudioStyles;
 
 import java.util.Map;
 
@@ -45,10 +39,11 @@ import java.util.Map;
  *       enough to set the mood.</li>
  * </ol>
  *
- * <p>The card-shape change rides on {@code @layer theme}
- * (via {@link ThemeOverlay} chunks) — that's the layer designed to win
- * against component-tier rules in {@code StudioStyles}, exactly the case
- * the cascade ladder (Defect 0003 resolution) was built for.</p>
+ * <p>The card-shape change is a set of per-class overrides (RFC 0066,
+ * {@link Studio}): each block is appended inside the class's own rule after
+ * the declared body, so it wins by source order at the same specificity —
+ * no {@code @layer theme}, no {@code !important}, and nothing outside the
+ * class it changes.</p>
  *
  * <p>Activate via {@code ?theme=retro-90s} on any studio URL.</p>
  */
@@ -142,6 +137,29 @@ public record HomingRetro90s() implements Theme {
         public static final Palette INSTANCE = new Palette();
         @Override public HomingRetro90s theme() { return HomingRetro90s.INSTANCE; }
         @Override public Map<CssVar, String> values() { return VALUES; }
+            @Override public Map<CssVar, String> darkValues() { return DARK; }
+            @Override public String colorScheme() { return "dark"; }
+
+            /** The re-binding under prefers-color-scheme: dark — the colour roles only;
+             *  the scales are the same job in both modes. */
+            private static final Map<CssVar, String> DARK = Map.ofEntries(
+                    Map.entry(HomingVars.COLOR_SURFACE,               "#003636"),
+                    Map.entry(HomingVars.COLOR_SURFACE_RAISED,        "#000060"),
+                    Map.entry(HomingVars.COLOR_SURFACE_RECESSED,      "#002020"),
+                    Map.entry(HomingVars.COLOR_SURFACE_INVERTED,      "#585858"),
+                    Map.entry(HomingVars.COLOR_TEXT_PRIMARY,          "#FFFFFF"),
+                    Map.entry(HomingVars.COLOR_TEXT_MUTED,            "#55FFFF"),
+                    Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED,      "#FFFFFF"),
+                    Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED_MUTED, "#FF5555"),
+                    Map.entry(HomingVars.COLOR_TEXT_TITLE,            "#FFFF55"),
+                    Map.entry(HomingVars.COLOR_TEXT_LINK,             "#FFFF55"),
+                    Map.entry(HomingVars.COLOR_TEXT_LINK_HOVER,       "#FFFFFF"),
+                    Map.entry(HomingVars.COLOR_BORDER,                "#A8A8A8"),
+                    Map.entry(HomingVars.COLOR_BORDER_EMPHASIS,       "#FFFF55"),
+                    Map.entry(HomingVars.COLOR_ACCENT,                "#FFFF55"),
+                    Map.entry(HomingVars.COLOR_ACCENT_EMPHASIS,       "#FFFFFF"),
+                    Map.entry(HomingVars.COLOR_ACCENT_ON,             "#000060")
+            );
 
         // Windows-95-era palette: desktop teal chassis, VGA-blue windows,
         // light-grey task bars. Hex values are the actual period defaults
@@ -189,77 +207,42 @@ public record HomingRetro90s() implements Theme {
         );
     }
 
-    public record Globals() implements ThemeGlobals<HomingRetro90s> {
-        public static final Globals INSTANCE = new Globals();
+    /**
+     * RFC 0066 — the theme's word on the studio's classes. The desktop teal
+     * behind everything, CRT scanlines and the monospace chrome on the page;
+     * cards reshaped into Win95 windows; the reading pane and the outline as
+     * Notepad-ish application windows on a cream surface; the doc-meta strip
+     * as a status bar. What used to be four raw chunks on {@code @layer theme}
+     * is one block per class, each inside the class's own rule.
+     */
+    public record Studio() implements StudioStyles.Overrides<HomingRetro90s> {
+        public static final Studio INSTANCE = new Studio();
         @Override public HomingRetro90s theme() { return HomingRetro90s.INSTANCE; }
 
-        /** Back-compat handle — concatenated CSS for clients still reading {@code css()}.
-         *  The framework prefers {@link #chunks()} when present. */
-        @Override public String css() {
-            return HomingDefault.STRUCTURAL_CSS + DARK_OVERRIDE + BACKDROP_DESKTOP
-                 + SCANLINES + CARD_RESHAPE + WINDOW_PANES;
-        }
-
-        /** Tier-tagged content. Card-reshape and CRT scanlines ride on
-         *  {@link ThemeOverlay} — that's the tier that wins against
-         *  component-layer base rules (Defect 0003 cascade ladder). */
-        @Override
-        public Map<Class<? extends Layer>, String> chunks() {
-            return Map.of(
-                    Reset.class,        HomingDefault.STRUCTURAL_CHUNKS.get(Reset.class),
-                    Component.class,    HomingDefault.STRUCTURAL_CHUNKS.get(Component.class),
-                    Prose.class,        HomingDefault.STRUCTURAL_CHUNKS.get(Prose.class),
-                    State.class,        HomingDefault.STRUCTURAL_CHUNKS.get(State.class),
-                    MediaGated.class,   HomingDefault.STRUCTURAL_CHUNKS.get(MediaGated.class),
-                    // Retro-90s overrides land in @layer theme:
-                    // backdrop + scanlines + card windows + reading-window panes + dark
-                    ThemeOverlay.class,
-                            BACKDROP_DESKTOP + SCANLINES + CARD_RESHAPE + WINDOW_PANES + DARK_OVERRIDE
-            );
-        }
-
-        /** Dark mode — the desktop goes black-teal, windows go near-black-blue.
-         *  Phosphor amber stays; the workstation just dims for night shift. */
-        private static final String DARK_OVERRIDE = """
-                :root { color-scheme: dark; }
-                @media (prefers-color-scheme: dark) {
-                    :root {
-                        --color-surface:           #003636;
-                        --color-surface-raised:    #000060;
-                        --color-surface-recessed:  #002020;
-                        --color-surface-inverted:  #585858;
-
-                        --color-text-primary:            #FFFFFF;
-                        --color-text-muted:              #55FFFF;
-                        --color-text-on-inverted:        #FFFFFF;
-                        --color-text-on-inverted-muted:  #FF5555;
-                        --color-text-title:               #FFFF55;
-                        --color-text-link:               #FFFF55;
-                        --color-text-link-hover:         #FFFFFF;
-
-                        --color-border:           #A8A8A8;
-                        --color-border-emphasis:  #FFFF55;
-
-                        --color-accent:           #FFFF55;
-                        --color-accent-emphasis:  #FFFFFF;
-                        --color-accent-on:        #000060;
-                    }
-                }
+        private static final String TITLE_BAR = """
+                display: block;
+                background: linear-gradient(to right, #000080 0%, #1084D0 100%);
+                color: #FFFFFF;
+                font-family: "Tahoma", "MS Sans Serif", sans-serif;
+                font-weight: 700;
+                font-size: 12px;
+                letter-spacing: 0.5px;
+                padding: 2px 8px;
+                border-bottom: 1px solid #000040;
                 """;
 
         /**
-         * The desktop as the page surface. The Win95 desktop used to be a
-         * full-page inline SVG the framework injected behind the chrome — four
-         * icons that grew on hover — with universal {@code pointer-events:
-         * none} plumbing so the icons could take the pointer. RFC 0064 retired
-         * the injected backdrop: the server no longer knows the theme a page
-         * wears, and a part only the server could render was a part that only
-         * sometimes applied. What remains is the teal: a fixed gradient built
-         * from the theme's own surface token, so it dims with the dark-mode
-         * override rather than carrying a second palette.
+         * The desktop as the page surface — a fixed gradient built from the
+         * theme's own surface token, so it dims with the dark re-binding rather
+         * than carrying a second palette; body lets it through. Monospace
+         * chrome. CRT scanlines: a fixed pseudo-element on body, 3px pitch,
+         * pointer-events none — real CRTs do not scroll their refresh pattern.
          */
-        private static final String BACKDROP_DESKTOP = """
-                html {
+        public CssBlock<StudioStyles.st_page> st_page() { return CssBlock.of("""
+                font-family: "Courier New", "Consolas", "Lucida Console", monospace;
+                font-size: 13px;
+                letter-spacing: 0;
+                &:is(html) {
                     background: linear-gradient(
                         180deg,
                         color-mix(in srgb, var(--color-surface) 82%, white) 0%,
@@ -267,267 +250,168 @@ public record HomingRetro90s() implements Theme {
                         color-mix(in srgb, var(--color-surface) 72%, black) 100%);
                     background-attachment: fixed;
                 }
-                body { background: transparent; }
-                """;
+                &:is(body) {
+                    background: transparent;
+                    position: relative;
+                    &::before {
+                        content: "";
+                        position: fixed;
+                        top: 0; left: 0; right: 0; bottom: 0;
+                        background-image: repeating-linear-gradient(
+                            to bottom,
+                            rgba(0, 0, 0, 0)      0,
+                            rgba(0, 0, 0, 0)      1px,
+                            rgba(0, 0, 0, 0.12)   2px,
+                            rgba(0, 0, 0, 0.12)   3px
+                        );
+                        pointer-events: none;
+                        z-index: 9999;
+                    }
+                }
+                """); }
 
-        /**
-         * CRT scanlines + monospace body font. The scanline effect is a
-         * fixed-position pseudo-element on {@code body::before} — horizontal
-         * stripes at 3px pitch, pointer-events: none so it doesn't block
-         * clicks. Stays in place during scroll (fixed positioning) because
-         * real CRTs don't scroll their refresh pattern.
-         */
-        private static final String SCANLINES = """
-                html, body {
-                    font-family: "Courier New", "Consolas", "Lucida Console", monospace;
-                    font-size: 13px;
-                    letter-spacing: 0;
-                }
-                body { position: relative; }
-                body::before {
-                    content: "";
-                    position: fixed;
-                    top: 0; left: 0; right: 0; bottom: 0;
-                    background-image: repeating-linear-gradient(
-                        to bottom,
-                        rgba(0, 0, 0, 0)      0,
-                        rgba(0, 0, 0, 0)      1px,
-                        rgba(0, 0, 0, 0.12)   2px,
-                        rgba(0, 0, 0, 0.12)   3px
-                    );
-                    pointer-events: none;
-                    z-index: 9999;
-                }
-                """;
-
-        /**
-         * Card-shape mutation — turn the rounded-corner left-accented
-         * "Maven Central tile" into a Windows-95 window. Drops the radius,
-         * replaces the left accent with a navy-gradient title-bar strip
-         * (via {@code ::before}), adds a Fixed3D-style inset white bevel,
-         * tightens padding.
-         *
-         * <p>Each rule wins against the matching component-tier base rule by
-         * {@code @layer} ordering, not by selector specificity — which is why
-         * these rules stay short and readable instead of inflating to
-         * {@code .st-card.st-card} or chasing {@code !important}.</p>
-         */
-        private static final String CARD_RESHAPE = """
-                .st-card {
-                    background: var(--color-surface-raised);
-                    border: 1px solid var(--color-border);
-                    border-left: 1px solid var(--color-border);
-                    border-radius: 0;
-                    padding: 0;
-                    overflow: hidden;
-                    /* Fixed3D bevel — 1px inset white edge inside the white border,
-                     * giving the classic Win95 sunken/raised window look. */
-                    box-shadow:
-                        inset 1px 1px 0 rgba(255, 255, 255, 0.6),
-                        inset -1px -1px 0 rgba(0, 0, 0, 0.4);
-                    min-height: 130px;
-                    color: #FFFFFF;
-                }
-                .st-card::before {
-                    /* Decorative title bar — Win95 active-window navy gradient.
-                     * The card's actual title (.st-card-title) renders inside
-                     * the body below; this strip is pure visual chrome, with
-                     * a window-control glyph as the only "content". */
+        /** The rounded, left-accented tile becomes a Win95 window: no radius, a
+         *  navy title-bar strip via ::before, a Fixed3D inset bevel. */
+        public CssBlock<StudioStyles.st_card> st_card() { return CssBlock.of("""
+                background: var(--color-surface-raised);
+                border: 1px solid var(--color-border);
+                border-left: 1px solid var(--color-border);
+                border-radius: 0;
+                padding: 0;
+                overflow: hidden;
+                box-shadow:
+                    inset 1px 1px 0 rgba(255, 255, 255, 0.6),
+                    inset -1px -1px 0 rgba(0, 0, 0, 0.4);
+                min-height: 130px;
+                color: #FFFFFF;
+                &::before {
                     content: "▸";
-                    display: block;
-                    background: linear-gradient(to right, #000080 0%, #1084D0 100%);
-                    color: #FFFFFF;
+                """ + TITLE_BAR.indent(4) + """
+                    border-bottom: 1px solid var(--color-border);
                     padding: 1px 8px;
-                    font-weight: 700;
-                    font-size: 12px;
                     line-height: 16px;
-                    border-bottom: 1px solid var(--color-border);
                     letter-spacing: 1px;
                 }
-                .st-card > * {
-                    padding-left: 10px;
-                    padding-right: 10px;
-                }
-                .st-card > *:first-child { padding-top: 8px; }
-                .st-card > *:last-child  { padding-bottom: 8px; }
-                .st-card-title {
-                    font-family: "Courier New", "Consolas", monospace;
-                    font-weight: 700;
-                    color: var(--color-text-link);
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                    font-size: 14px;
-                }
-                .st-card-summary {
-                    color: #FFFFFF;
-                    font-size: 12px;
-                }
-                .st-card-meta {
-                    background: var(--color-surface-recessed);
-                    border-top: 1px solid var(--color-border);
-                    color: var(--color-text-muted);
-                    font-size: 11px;
-                    padding: 2px 10px;
-                    margin: 0;
-                }
-                .st-card-link {
-                    color: var(--color-text-link);
-                    letter-spacing: 1px;
-                }
-                .st-card-featured {
-                    /* Keep the iconic blue-window look on the featured card too;
-                     * its full-width grid placement already differentiates it. */
-                    background: var(--color-surface-raised);
-                    border-left: 1px solid var(--color-border);
-                }
-                /* Header band echoes the workstation title strip — grey task bar
-                 * with black caption text, classic Win95 chrome. */
-                .st-header {
-                    background: var(--color-surface-inverted);
-                    color: var(--color-text-on-inverted);
-                    border-bottom: 1px solid var(--color-border);
-                    box-shadow: none;
-                }
-                /* Footer echoes the F-key bar at the bottom of the workbench. */
-                .st-footer {
-                    background: var(--color-surface-inverted);
-                    color: var(--color-text-on-inverted);
-                    border-top: 1px solid var(--color-border);
-                    font-family: "Courier New", monospace;
-                }
-                """;
+                & > * { padding-left: 10px; padding-right: 10px; }
+                & > *:first-child { padding-top: 8px; }
+                & > *:last-child  { padding-bottom: 8px; }
+                """); }
+
+        public CssBlock<StudioStyles.st_card_title> st_card_title() { return CssBlock.of("""
+                font-family: "Courier New", "Consolas", monospace;
+                font-weight: 700;
+                color: var(--color-text-link);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                font-size: 14px;
+                """); }
+        public CssBlock<StudioStyles.st_card_summary> st_card_summary() { return CssBlock.of("""
+                color: #FFFFFF;
+                font-size: 12px;
+                """); }
+        public CssBlock<StudioStyles.st_card_meta> st_card_meta() { return CssBlock.of("""
+                background: var(--color-surface-recessed);
+                border-top: 1px solid var(--color-border);
+                color: var(--color-text-muted);
+                font-size: 11px;
+                padding: 2px 10px;
+                margin: 0;
+                """); }
+        public CssBlock<StudioStyles.st_card_link> st_card_link() { return CssBlock.of("""
+                color: var(--color-text-link);
+                letter-spacing: 1px;
+                """); }
+        /** The featured card keeps the blue-window look; its full-width grid
+         *  placement already differentiates it. */
+        public CssBlock<StudioStyles.st_card_featured> st_card_featured() { return CssBlock.of("""
+                background: var(--color-surface-raised);
+                border-left: 1px solid var(--color-border);
+                """); }
+        /** The header echoes the workstation title strip — grey task bar. */
+        public CssBlock<StudioStyles.st_header> st_header() { return CssBlock.of("""
+                background: var(--color-surface-inverted);
+                color: var(--color-text-on-inverted);
+                border-bottom: 1px solid var(--color-border);
+                box-shadow: none;
+                """); }
+        /** The footer echoes the F-key bar at the bottom of the workbench. */
+        public CssBlock<StudioStyles.st_footer> st_footer() { return CssBlock.of("""
+                background: var(--color-surface-inverted);
+                color: var(--color-text-on-inverted);
+                border-top: 1px solid var(--color-border);
+                font-family: "Courier New", monospace;
+                """); }
 
         /**
-         * Reading-pane window-chrome — wrap {@code .st-doc} and {@code .st-sidebar}
-         * as Win95 application windows (Notepad-ish), so long-form prose sits on
-         * a readable cream surface with black text inside a properly-bevelled
-         * window frame instead of floating on the teal desktop.
-         *
-         * <p>Why this is needed in Retro 90s specifically: most themes inherit
-         * the framework-default {@code .st-main} column slab (parchment-on-body
-         * surface, readable contrast). Retro 90s opts out of that slab because
-         * the Win95 desktop should bleed through behind the catalogue cards —
-         * but the same opt-out leaves doc reading panes exposed on the desktop
-         * teal with no contrast surface beneath them.</p>
-         *
-         * <p>The fix: per-pane window chrome. {@code .st-doc} becomes the
-         * "Document Reader" window; {@code .st-sidebar} becomes the "Outline"
-         * window. Both get a navy-gradient title bar via {@code ::before}, a
-         * Fixed3D bevel, cream content surface, and a period-accurate
-         * Tahoma/MS-Sans-Serif body font (Win95's actual system UI typeface,
-         * not the monospace the rest of the chrome rides on — long-form prose
-         * needs proportional letterforms to be comfortably readable).</p>
-         *
-         * <p>Code blocks and inline code inside the doc retain monospace so
-         * the chrome/code distinction stays clear within the window.</p>
+         * The reading pane as the "Document Reader" window: cream Notepad
+         * surface, black text, a period Tahoma / MS Sans Serif body (prose
+         * wants proportional letterforms; the chrome stays monospace; code
+         * stays monospace — three-way), navy title bar, Fixed3D bevel. Retro
+         * opts out of the framework's column slab so the desktop bleeds
+         * through behind the cards, which is exactly why the reading panes
+         * need their own contrast surface.
          */
-        private static final String WINDOW_PANES = """
-                /* === Document Reader window ============================ */
-                .st-doc {
-                    background: #FFFFE1;                  /* cream "notepad" surface */
-                    color: #000000;
-                    font-family: "Tahoma", "MS Sans Serif", "Geneva", "Arial", sans-serif;
-                    font-size: 13px;
-                    line-height: 1.55;
-                    letter-spacing: 0;
-                    border: 1px solid var(--color-border);
-                    border-radius: 0;
-                    box-shadow:
-                        inset 1px 1px 0 rgba(255, 255, 255, 0.8),
-                        inset -1px -1px 0 rgba(0, 0, 0, 0.4);
-                    padding: 0 16px 16px;
-                    max-width: none;
-                }
-                .st-doc::before {
-                    /* Win95 active-window title bar — navy gradient, white
-                     * caption. Negative horizontal margin breaks the title bar
-                     * out of the parent's horizontal padding so it spans the
-                     * full window width flush to the bevel. */
+        public CssBlock<StudioStyles.st_doc> st_doc() { return CssBlock.of("""
+                background: #FFFFE1;
+                color: #000000;
+                font-family: "Tahoma", "MS Sans Serif", "Geneva", "Arial", sans-serif;
+                font-size: 13px;
+                line-height: 1.55;
+                letter-spacing: 0;
+                border: 1px solid var(--color-border);
+                border-radius: 0;
+                box-shadow:
+                    inset 1px 1px 0 rgba(255, 255, 255, 0.8),
+                    inset -1px -1px 0 rgba(0, 0, 0, 0.4);
+                padding: 0 16px 16px;
+                max-width: none;
+                &::before {
                     content: "📄  Document Reader";
-                    display: block;
                     margin: 0 -16px 14px;
-                    background: linear-gradient(to right, #000080 0%, #1084D0 100%);
-                    color: #FFFFFF;
-                    font-family: "Tahoma", "MS Sans Serif", sans-serif;
-                    font-weight: 700;
-                    font-size: 12px;
-                    letter-spacing: 0.5px;
-                    padding: 2px 8px;
-                    border-bottom: 1px solid #000040;
+                """ + TITLE_BAR.indent(4) + """
                 }
-                /* Inline code + code blocks keep monospace — chrome stays
-                 * monospace, prose is sans, code is mono. Three-way separation. */
-                .st-doc pre,
-                .st-doc code,
-                .st-doc kbd,
-                .st-doc samp {
-                    font-family: "Courier New", "Consolas", "Lucida Console", monospace;
-                }
-                /* Headings get a period-accurate "bold sans" look against the
-                 * cream body — overriding the framework's default Georgia
-                 * serif which would clash with the Win95 motif. */
-                .st-doc h1, .st-doc h2, .st-doc h3, .st-doc h4 {
-                    font-family: "Tahoma", "MS Sans Serif", "Arial", sans-serif;
-                    color: #000080;
-                }
-                /* Body-paragraph links rebind to navy underlined — the
-                 * canonical "hyperlink" colour pair of the era. */
-                .st-doc a {
-                    color: #0000EE;
-                    text-decoration: underline;
-                }
-                .st-doc a:visited { color: #551A8B; }
-                .st-doc blockquote {
-                    border-left: 3px solid #808080;
-                    background: #FFFFCC;
-                    color: #000000;
-                }
+                pre, code, kbd, samp { font-family: "Courier New", "Consolas", "Lucida Console", monospace; }
+                h1, h2, h3, h4 { font-family: "Tahoma", "MS Sans Serif", "Arial", sans-serif; color: #000080; }
+                a { color: #0000EE; text-decoration: underline; }
+                a:visited { color: #551A8B; }
+                blockquote { border-left: 3px solid #808080; background: #FFFFCC; color: #000000; }
+                """); }
 
-                /* === Outline (sidebar) window ========================== */
-                .st-sidebar {
-                    background: #FFFFE1;
-                    color: #000000;
-                    font-family: "Tahoma", "MS Sans Serif", "Geneva", "Arial", sans-serif;
-                    font-size: 12px;
-                    border: 1px solid var(--color-border);
-                    border-radius: 0;
-                    box-shadow:
-                        inset 1px 1px 0 rgba(255, 255, 255, 0.8),
-                        inset -1px -1px 0 rgba(0, 0, 0, 0.4);
-                    padding: 0 12px 12px;
-                }
-                .st-sidebar::before {
+        /** The outline as its own window. */
+        public CssBlock<StudioStyles.st_sidebar> st_sidebar() { return CssBlock.of("""
+                background: #FFFFE1;
+                color: #000000;
+                font-family: "Tahoma", "MS Sans Serif", "Geneva", "Arial", sans-serif;
+                font-size: 12px;
+                border: 1px solid var(--color-border);
+                border-radius: 0;
+                box-shadow:
+                    inset 1px 1px 0 rgba(255, 255, 255, 0.8),
+                    inset -1px -1px 0 rgba(0, 0, 0, 0.4);
+                padding: 0 12px 12px;
+                &::before {
                     content: "📑  Outline";
-                    display: block;
                     margin: 0 -12px 10px;
-                    background: linear-gradient(to right, #000080 0%, #1084D0 100%);
-                    color: #FFFFFF;
-                    font-family: "Tahoma", "MS Sans Serif", sans-serif;
-                    font-weight: 700;
-                    font-size: 12px;
-                    letter-spacing: 0.5px;
-                    padding: 2px 8px;
-                    border-bottom: 1px solid #000040;
+                """ + TITLE_BAR.indent(4) + """
                 }
-                .st-sidebar-title { color: #000080; font-weight: 700; }
+                """); }
+        public CssBlock<StudioStyles.st_sidebar_title> st_sidebar_title() { return CssBlock.of("""
+                color: #000080;
+                font-weight: 700;
+                """); }
 
-                /* === Doc-meta strip (status bar) ======================= */
-                /* The breadcrumb/title strip above the document — styled as
-                 * a Win95 status bar (grey chassis, sunken bevel, monospace
-                 * caption). Sits between the page header and the reading
-                 * windows, completing the workstation-app metaphor. */
-                .st-doc-meta {
-                    background: #C0C0C0;
-                    color: #000000;
-                    font-family: "Tahoma", "MS Sans Serif", sans-serif;
-                    font-size: 12px;
-                    border: 1px solid var(--color-border);
-                    box-shadow:
-                        inset 1px 1px 0 rgba(0, 0, 0, 0.4),
-                        inset -1px -1px 0 rgba(255, 255, 255, 0.8);
-                    padding: 4px 10px;
-                    margin-bottom: 8px;
-                }
-                """;
+        /** The doc-meta strip as a Win95 status bar: grey chassis, sunken bevel. */
+        public CssBlock<StudioStyles.st_doc_meta> st_doc_meta() { return CssBlock.of("""
+                background: #C0C0C0;
+                color: #000000;
+                font-family: "Tahoma", "MS Sans Serif", sans-serif;
+                font-size: 12px;
+                border: 1px solid var(--color-border);
+                box-shadow:
+                    inset 1px 1px 0 rgba(0, 0, 0, 0.4),
+                    inset -1px -1px 0 rgba(255, 255, 255, 0.8);
+                padding: 4px 10px;
+                margin-bottom: 8px;
+                """); }
     }
 }

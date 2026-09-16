@@ -18,7 +18,6 @@ public class HomingActionRegistry implements ActionRegistry<RoutingContext> {
     private final AppHtmlGetAction appAction;
     private final EsModuleGetAction moduleAction;
     private final CssContentGetAction cssContentAction;
-    private final ThemeGlobalsGetAction themeGlobalsAction;
 
     /** Legacy constructor — only the {@code ?class=} contract is supported. */
     public HomingActionRegistry(ModuleNameResolver nameResolver) {
@@ -75,8 +74,7 @@ public class HomingActionRegistry implements ActionRegistry<RoutingContext> {
         // outer registry (the studio's Bootstrap) overrides the route to add its
         // own CssGroupImpls. RFC 0002 §3.6 still holds: no file-based fallback.
         Theme defaultTheme = themeRegistry.themes().isEmpty() ? null : themeRegistry.themes().get(0);
-        this.cssContentAction = new CssContentGetAction(List.copyOf(themeRegistry.palettes()), defaultTheme);
-        this.themeGlobalsAction = new ThemeGlobalsGetAction(themeRegistry, null);
+        this.cssContentAction = new CssContentGetAction(themeRegistry.impls(), defaultTheme);
     }
 
     /** Backwards-compatible constructor for callers that don't yet use {@code SimpleAppResolver}. */
@@ -93,8 +91,7 @@ public class HomingActionRegistry implements ActionRegistry<RoutingContext> {
         return Map.of(
                 "/app", appAction,
                 "/module", moduleAction,
-                "/css-content", cssContentAction,
-                "/theme-globals", themeGlobalsAction
+                "/css-content", cssContentAction
         );
     }
 

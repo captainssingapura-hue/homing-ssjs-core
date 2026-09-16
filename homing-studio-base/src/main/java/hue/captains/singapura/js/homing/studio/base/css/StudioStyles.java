@@ -2,8 +2,11 @@ package hue.captains.singapura.js.homing.studio.base.css;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
+import hue.captains.singapura.js.homing.core.CssGroupImpl;
 import hue.captains.singapura.js.homing.core.InLayer;
 import hue.captains.singapura.js.homing.core.Layout;
+import hue.captains.singapura.js.homing.core.Reset;
+import hue.captains.singapura.js.homing.core.Theme;
 
 import java.util.List;
 
@@ -13,6 +16,40 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
     // RFC 0066 — no longer a prior. The one implicit node is the global palette;
     // a class that lays out inside the studio's chrome names st_root / st_main
     // in its dependsOn(), as WorkspaceLayoutStyles does.
+
+    /**
+     * RFC 0066 — a theme's word on this group: a record naming the classes it
+     * overrides, each method returning the block appended inside that class's
+     * rule after the declared body. The theme says only what differs.
+     */
+    public interface Overrides<TH extends Theme> extends CssGroupImpl<StudioStyles, TH> {
+        @Override default StudioStyles group() { return INSTANCE; }
+    }
+
+    /**
+     * The page reset — {@code html, body}, the one rule over elements no class
+     * reaches. Once the structural CSS every theme re-shipped; now a class of
+     * this group (RFC 0066), agnostic, in the reset layer, and the node a theme
+     * overrides to change the body face or paint a texture. The print rules
+     * for the two framework-minted elements ({@code .theme-backdrop}, the
+     * picker slot) nest here because both are children of {@code body}.
+     */
+    public record st_page() implements CssClass<StudioStyles>, InLayer<Reset> {
+        @Override public String selector() { return "html, body"; }
+        @Override public String body() { return """
+            margin: 0;
+            padding: 0;
+            background: var(--color-surface);
+            color: var(--color-text-primary);
+            font-family: "Calibri", "Segoe UI", system-ui, sans-serif;
+            min-height: 100vh;
+            @media print {
+                .theme-backdrop        { display: none; }
+                #__theme_picker_slot__ { display: none; }
+            }
+            """;
+        }
+    }
 
     public record st_root() implements CssClass<StudioStyles>, InLayer<Layout> {
         @Override public String body() { return """
@@ -34,6 +71,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             position: sticky;
             top: 0;
             z-index: 50;
+            @media print { & { position: static; } }
             """;
         }
     }
@@ -53,6 +91,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             gap: 10px;
             text-decoration: none;
             color: var(--color-text-on-inverted);
+            &:hover .st-brand-logo { transform: scale(1.18); }
             """;
         }
     }
@@ -69,8 +108,8 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
      *  {@code overflow:hidden} is the safety net: if a consumer ships an SVG
      *  without width/height attrs (browsers default it to 300×150) the
      *  wrapper still clips to 22×22 and won't blow out the header layout.
-     *  The transition pairs with the {@code .st-brand-logo:hover} rule in
-     *  STRUCTURAL_CSS for a small playful enlarge-on-hover. */
+     *  The transition pairs with the {@code      *  The transition pairs with the {@code .st-brand-logo:hover} rule in:hover .st-brand-logo} rule nested in
+     *  st_brand for a small playful enlarge-on-hover. */
     public record st_brand_logo() implements CssClass<StudioStyles> {
         @Override public String body() { return """
             width: 22px;
@@ -82,6 +121,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             overflow: hidden;
             transform-origin: center;
             transition: transform 160ms ease;
+            svg { width: 100%; height: 100%; display: block; }
             """;
         }
     }
@@ -109,6 +149,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         @Override public String body() { return """
             color: var(--color-text-on-inverted-muted);
             text-decoration: none;
+            &:hover { color: var(--color-accent); }
             """;
         }
     }
@@ -126,12 +167,14 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             margin: 0 auto;
             padding: 36px 32px 64px;
             box-sizing: border-box;
-            /* The doc-reader page gets a "page on a desk" column slab applied
-             * via @layer component (HomingDefault.COMPONENT_CSS targets
-             * `.st-main:has(.st-doc-meta)`); catalogue/doc-browser/themes-intro/
-             * plan-host pages stay slab-less because they don't carry the
-             * doc-meta marker. Cards on those pages keep their own
-             * surface-raised fill without losing contrast to a column bg. */
+            /* Reading-page column slab — `.st-doc-meta` is uniquely emitted by the
+             * doc widget, so `:has(.st-doc-meta)` scopes the slab to the reading page. */
+            &:has(.st-doc-meta) {
+                background-color: var(--color-surface-raised);
+                border-radius: 6px;
+                box-shadow: 0 2px 24px color-mix(in srgb, var(--color-text-primary) 8%, transparent);
+            }
+            @media print { & { max-width: none; padding: 12px 0; } }
             """;
         }
     }
@@ -283,6 +326,11 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             box-shadow: 0 1px 3px color-mix(in srgb, var(--color-text-link) 4%, transparent);
             transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
             min-height: 150px;
+            &:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 16px color-mix(in srgb, var(--color-text-link) 12%, transparent);
+                border-left-color: var(--color-accent-emphasis);
+            }
             """;
         }
     }
@@ -297,6 +345,10 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             gap: 24px;
             padding: 20px 28px;
             min-height: auto;
+            & .st-card-title   { color: var(--color-text-on-inverted); font-size: 22px; }
+            & .st-card-summary { color: var(--color-text-on-inverted-muted); font-size: 14px; margin-top: 4px; }
+            & .st-card-meta    { border: none; padding: 0; margin: 0; flex-direction: column; align-items: flex-end; gap: 8px; }
+            & .st-card-link    { color: var(--color-accent); }
             """;
         }
     }
@@ -399,6 +451,11 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             color: var(--color-text-primary);
             background: var(--color-surface-raised);
             transition: border-color 160ms ease, box-shadow 160ms ease;
+            &:focus {
+                outline: none;
+                border-color: var(--color-border-emphasis);
+                box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 18%, transparent);
+            }
             """;
         }
     }
@@ -424,6 +481,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             border-radius: 3px;
             text-transform: uppercase;
             transition: all 140ms ease;
+            &:hover { border-color: var(--color-border-emphasis); color: var(--color-text-link-hover); }
             """;
         }
     }
@@ -432,6 +490,11 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             background: var(--color-surface-inverted);
             color: var(--color-text-on-inverted);
             border-color: var(--color-surface-inverted);
+            &:hover {
+                background: var(--color-surface-inverted);
+                color: var(--color-accent);
+                border-color: var(--color-surface-inverted);
+            }
             """;
         }
     }
@@ -441,6 +504,8 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             grid-template-columns: 260px 1fr;
             gap: 32px;
             margin-top: 8px;
+            @media (max-width: 920px) { & { grid-template-columns: 1fr; } }
+            @media print { & { grid-template-columns: 1fr; } }
             """;
         }
     }
@@ -452,6 +517,8 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             max-height: calc(100vh - 48px);
             overflow-y: auto;
             padding: 4px 8px 4px 4px;
+            @media (max-width: 920px) { & { display: none; } }
+            @media print { & { display: none; } }
             """;
         }
     }
@@ -486,6 +553,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             border-left: 2px solid transparent;
             margin-left: -1px;
             transition: color 140ms ease, border-color 140ms ease;
+            &:hover { color: var(--color-text-link); border-left-color: var(--color-border-emphasis); }
             """;
         }
     }
@@ -607,6 +675,56 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             line-height: 1.7;
             color: var(--color-text-primary);
             max-width: 820px;
+            /* Prose — markdown-rendered content has no class hooks; the rules nest here. */
+            h1, h2, h3, h4 {
+                font-family: "Georgia", serif;
+                color: var(--color-text-link);
+                margin: 1.6em 0 0.6em 0;
+                line-height: 1.25;
+                scroll-margin-top: 24px;
+            }
+            h1 { font-size: 32px; border-bottom: 2px solid var(--color-border-emphasis); padding-bottom: 8px; margin-top: 0; }
+            h2 { font-size: 24px; }
+            h3 { font-size: 19px; }
+            h4 { font-size: 16px; color: var(--color-text-link-hover); letter-spacing: 1px; text-transform: uppercase; }
+            p  { margin: 0 0 1em 0; }
+            ul, ol { margin: 0 0 1em 0; padding-left: 1.5em; }
+            li { margin: 0.3em 0; }
+            a { color: var(--color-text-link-hover); text-decoration: underline; text-underline-offset: 2px; }
+            a:hover { color: var(--color-text-link); }
+            blockquote {
+                margin: 1em 0;
+                padding: 4px 0 4px 18px;
+                border-left: 3px solid var(--color-border-emphasis);
+                color: var(--color-text-muted);
+                font-style: italic;
+            }
+            code {
+                font-family: "Consolas", "Courier New", monospace;
+                font-size: 0.92em;
+                background: var(--color-surface-recessed);
+                color: var(--color-text-link);
+                padding: 1px 6px;
+                border-radius: 3px;
+            }
+            pre {
+                background: var(--color-surface-inverted);
+                color: var(--color-text-on-inverted-muted);
+                padding: 14px 18px;
+                border-radius: 4px;
+                overflow-x: auto;
+                margin: 1em 0;
+                font-size: 13px;
+                line-height: 1.5;
+            }
+            pre code { background: transparent; color: inherit; padding: 0; font-size: inherit; }
+            table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 14px; }
+            th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--color-border); vertical-align: top; }
+            th { background: var(--color-surface-inverted); color: var(--color-text-on-inverted); font-weight: 700; border: none; }
+            tr:nth-child(even) td { background: var(--color-surface-recessed); }
+            hr { border: none; border-top: 1px solid var(--color-border); margin: 2em 0; }
+            img { max-width: 100%; }
+            @media print { & { max-width: none; } }
             """;
         }
     }
@@ -828,6 +946,13 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             border-top: 1px solid var(--color-border);
             color: var(--color-text-muted);
             font-size: 12px;
+            code {
+                font-family: "Consolas", "Courier New", monospace;
+                background: var(--color-surface-recessed);
+                color: var(--color-text-link);
+                padding: 1px 6px;
+                border-radius: 3px;
+            }
             """;
         }
     }
@@ -845,6 +970,11 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             gap: 18px;
             box-shadow: 0 1px 3px color-mix(in srgb, var(--color-text-link) 5%, transparent);
             transition: all 160ms ease;
+            &:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 18px color-mix(in srgb, var(--color-text-link) 12%, transparent);
+                border-left-color: var(--color-accent-emphasis);
+            }
             """;
         }
     }
@@ -853,6 +983,10 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             background: var(--color-surface-inverted);
             color: var(--color-text-on-inverted-muted);
             border-left-color: var(--color-border-emphasis);
+            & .st-app-pill-icon  { background: var(--color-accent); color: var(--color-accent-on); }
+            & .st-app-pill-label { color: var(--color-text-on-inverted); }
+            & .st-app-pill-desc  { color: var(--color-text-on-inverted-muted); }
+            &:hover { background: var(--color-surface-inverted); }
             """;
         }
     }
@@ -949,6 +1083,11 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             display: block;
             box-shadow: 0 1px 3px color-mix(in srgb, var(--color-text-link) 4%, transparent);
             transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+            &:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 16px color-mix(in srgb, var(--color-text-link) 10%, transparent);
+                border-left-color: var(--color-accent-emphasis);
+            }
             """;
         }
     }
@@ -1102,6 +1241,12 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         @Override public String body() { return """
             color: var(--color-text-muted);
             text-decoration: line-through;
+            & .st-task-box {
+                background: var(--color-accent);
+                border-color: var(--color-accent-emphasis);
+                color: var(--color-accent-on);
+                font-weight: 700;
+            }
             """;
         }
     }
@@ -1157,7 +1302,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
     @Override
     public List<CssClass<StudioStyles>> cssClasses() {
         return List.of(
-                new st_root(), new st_header(), new st_nav(),
+                new st_page(), new st_root(), new st_header(), new st_nav(),
                 new st_brand(), new st_brand_dot(), new st_brand_logo(), new st_brand_word(),
                 new st_breadcrumbs(), new st_crumb(), new st_crumb_sep(),
                 new st_main(), new st_kicker(), new st_title(), new st_subtitle(),

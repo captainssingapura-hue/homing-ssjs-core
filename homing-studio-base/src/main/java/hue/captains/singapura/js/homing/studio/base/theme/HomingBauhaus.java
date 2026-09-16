@@ -4,7 +4,6 @@ import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
 import hue.captains.singapura.js.homing.theme.color.HomingVars;
 import hue.captains.singapura.js.homing.core.Theme;
-import hue.captains.singapura.js.homing.core.ThemeGlobals;
 
 import java.util.Map;
 
@@ -34,6 +33,28 @@ public record HomingBauhaus() implements Theme {
         public static final Palette INSTANCE = new Palette();
         @Override public HomingBauhaus theme() { return HomingBauhaus.INSTANCE; }
         @Override public Map<CssVar, String> values() { return VALUES; }
+            @Override public Map<CssVar, String> darkValues() { return DARK; }
+
+            /** The re-binding under prefers-color-scheme: dark — the colour roles only;
+             *  the scales are the same job in both modes. */
+            private static final Map<CssVar, String> DARK = Map.ofEntries(
+                    Map.entry(HomingVars.COLOR_SURFACE,               "#0A0A0A"),
+                    Map.entry(HomingVars.COLOR_SURFACE_RAISED,        "#1A1A1A"),
+                    Map.entry(HomingVars.COLOR_SURFACE_RECESSED,      "#242424"),
+                    Map.entry(HomingVars.COLOR_SURFACE_INVERTED,      "#1F2D85"),   // Itten-blue header in dark
+                    Map.entry(HomingVars.COLOR_TEXT_PRIMARY,          "#F5F5F0"),
+                    Map.entry(HomingVars.COLOR_TEXT_MUTED,            "#999999"),
+                    Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED,      "#FFFFFF"),
+                    Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED_MUTED, "#C7CDEB"),
+                    Map.entry(HomingVars.COLOR_TEXT_TITLE,            "#FFD500"),
+                    Map.entry(HomingVars.COLOR_TEXT_LINK,             "#FFD500"),   // yellow links pop on ink
+                    Map.entry(HomingVars.COLOR_TEXT_LINK_HOVER,       "#C9252D"),   // Borders
+                    Map.entry(HomingVars.COLOR_BORDER,                "#303030"),
+                    Map.entry(HomingVars.COLOR_BORDER_EMPHASIS,       "#FFD500"),   // Accent
+                    Map.entry(HomingVars.COLOR_ACCENT,                "#FFD500"),
+                    Map.entry(HomingVars.COLOR_ACCENT_EMPHASIS,       "#C9252D"),
+                    Map.entry(HomingVars.COLOR_ACCENT_ON,             "#0A0A0A")
+            );
 
         // Bauhaus palette — black, white, primary yellow / blue / red.
         private static final Map<CssVar, String> VALUES = Map.ofEntries(
@@ -76,41 +97,4 @@ public record HomingBauhaus() implements Theme {
         );
     }
 
-    public record Globals() implements ThemeGlobals<HomingBauhaus> {
-        public static final Globals INSTANCE = new Globals();
-        @Override public HomingBauhaus theme() { return HomingBauhaus.INSTANCE; }
-        @Override public String css() { return DARK_OVERRIDE + HomingDefault.STRUCTURAL_CSS; }
-
-        /** Bauhaus's dark-mode adaptation — flip page to ink, keep primary triad. */
-        private static final String DARK_OVERRIDE = """
-                :root { color-scheme: light dark; }
-                @media (prefers-color-scheme: dark) {
-                    :root {
-                        /* Surfaces — ink at night, primary triad unchanged. */
-                        --color-surface:           #0A0A0A;
-                        --color-surface-raised:    #1A1A1A;
-                        --color-surface-recessed:  #242424;
-                        --color-surface-inverted:  #1F2D85;   /* Itten-blue header in dark */
-
-                        /* Text */
-                        --color-text-primary:            #F5F5F0;
-                        --color-text-muted:              #999999;
-                        --color-text-on-inverted:        #FFFFFF;
-                        --color-text-on-inverted-muted:  #C7CDEB;
-                        --color-text-title:               #FFD500;
-                        --color-text-link:               #FFD500;   /* yellow links pop on ink */
-                        --color-text-link-hover:         #C9252D;
-
-                        /* Borders */
-                        --color-border:           #303030;
-                        --color-border-emphasis:  #FFD500;
-
-                        /* Accent */
-                        --color-accent:           #FFD500;
-                        --color-accent-emphasis:  #C9252D;
-                        --color-accent-on:        #0A0A0A;
-                    }
-                }
-                """;
-    }
 }

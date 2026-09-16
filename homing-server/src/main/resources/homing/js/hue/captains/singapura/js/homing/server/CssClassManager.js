@@ -22,11 +22,9 @@
 
 const CssClassManagerInstance = (() => {
     const graph = createCssDependencyGraph();
-    const GLOBALS = graph.GLOBALS;
 
     function hrefFor(id, theme) {
         const q = theme ? "theme=" + encodeURIComponent(theme) : "";
-        if (id === GLOBALS) return "/theme-globals" + (q ? "?" + q : "");
         return "/css-content?class=" + encodeURIComponent(id) + (q ? "&" + q : "");
     }
 
@@ -84,7 +82,7 @@ const CssClassManagerInstance = (() => {
         if (!to || to === worn) return Promise.resolve(worn);
         if (changing) return changing.then(() => switchTheme(to));
         const from = worn;
-        const nodes = procedure.loadedUnder(from).filter(id => id !== GLOBALS);
+        const nodes = procedure.loadedUnder(from);
         changing = procedure.load(nodes, to).then(() => {
             procedure.retire(from);
             worn = to;
@@ -119,7 +117,7 @@ const CssClassManagerInstance = (() => {
 
     /** The waves a switch to `to` (or a load of `ids`) WOULD run — nothing appended. */
     function plan(ids) {
-        const set = ids || procedure.loadedUnder(worn).filter(id => id !== GLOBALS);
+        const set = ids || procedure.loadedUnder(worn);
         return graph.plan(set);
     }
 

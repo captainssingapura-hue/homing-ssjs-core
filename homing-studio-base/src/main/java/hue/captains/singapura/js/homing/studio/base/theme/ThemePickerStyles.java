@@ -2,6 +2,8 @@ package hue.captains.singapura.js.homing.studio.base.theme;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
+import hue.captains.singapura.js.homing.core.CssGroupImpl;
+import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.studio.base.ui.MasterDetailStyles;
 import hue.captains.singapura.js.homing.studio.base.ui.SystemDialogStyles;
 
@@ -22,6 +24,7 @@ import java.util.List;
 public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
 
     public static final ThemePickerStyles INSTANCE = new ThemePickerStyles();
+/** RFC 0066 — a theme's word on this group: one block per overridden class,     *  appended inside that class's rule after the declared body. */    public interface Overrides<TH extends Theme> extends CssGroupImpl<ThemePickerStyles, TH> {        @Override default ThemePickerStyles group() { return INSTANCE; }    }
 
     /** The header trigger — reads as chrome, so it paints on inverted tokens. */
     public record tp_btn() implements CssClass<ThemePickerStyles> {

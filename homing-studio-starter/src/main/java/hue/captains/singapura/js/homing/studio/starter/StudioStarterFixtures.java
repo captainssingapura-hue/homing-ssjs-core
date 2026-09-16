@@ -6,7 +6,9 @@ import hue.captains.singapura.js.homing.studio.base.Fixtures;
 import hue.captains.singapura.js.homing.studio.base.Studio;
 import hue.captains.singapura.js.homing.studio.base.Umbrella;
 import hue.captains.singapura.js.homing.studio.workspace.CatalogueForestGetAction;
+import hue.captains.singapura.js.homing.server.ThemeRegistry;
 import hue.captains.singapura.js.homing.studio.workspace.StudioWorkspaceSpec;
+import hue.captains.singapura.js.homing.studio.workspace.StudioWorkspaceThemes;
 import hue.captains.singapura.js.homing.workspace.shell.GenericWorkspace;
 import hue.captains.singapura.js.homing.workspace.shell.WorkspaceGroupApp;
 import hue.captains.singapura.js.homing.workspace.shell.WorkspaceSpecRegistry;
@@ -97,6 +99,12 @@ public record StudioStarterFixtures<S extends Studio<?>>(Umbrella<S> umbrella)
         actions.put("/catalogue-tree",
                 new CatalogueForestGetAction(umbrella.studios().get(0).home()));
         return Map.copyOf(actions);
+    }
+
+    /** RFC 0066 — the studio's themes with their word on the workspace's classes. */
+    @Override
+    public ThemeRegistry themeRegistry() {
+        return StudioWorkspaceThemes.INSTANCE;
     }
 
     @Override

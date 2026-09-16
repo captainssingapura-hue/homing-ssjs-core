@@ -2,7 +2,6 @@ package hue.captains.singapura.js.homing.studio.base;
 
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.SimpleAppResolver;
-import hue.captains.singapura.js.homing.core.CssGroupImpl;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.server.AppMeta;
 import hue.captains.singapura.js.homing.server.CssContentGetAction;
@@ -23,7 +22,6 @@ import hue.captains.singapura.js.homing.studio.base.app.CataloguePathGetAction;
 import hue.captains.singapura.js.homing.studio.base.app.CatalogueRegistry;
 import hue.captains.singapura.js.homing.studio.base.app.GotoNavigableGetAction;
 import hue.captains.singapura.js.homing.studio.base.app.StudioBrand;
-import hue.captains.singapura.js.homing.studio.base.theme.CssGroupImplRegistry;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemesGetAction;
 import hue.captains.singapura.js.homing.studio.base.app.DocTreeViewer;
 import hue.captains.singapura.js.homing.studio.base.composed.DocTreeContentGetAction;
@@ -248,11 +246,9 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
         docRegistry.assertReferencesResolve();
 
         // --- Standard studio actions.
-        // RFC 0066 - a theme's palette provisions are CssGroupImpls too: the
-        // global palette is a group, served as itself when the plan names it.
-        var impls = new ArrayList<CssGroupImpl<?, ?>>(CssGroupImplRegistry.ALL);
-        impls.addAll(themeRegistry.palettes());
-        var cssContentAction = new CssContentGetAction(List.copyOf(impls), defaultTheme);
+        // RFC 0066 - every impl the CSS action resolves comes from the theme
+        // registry: each theme's palette provision and its per-class overrides.
+        var cssContentAction = new CssContentGetAction(themeRegistry.impls(), defaultTheme);
         var docAction        = new DocGetAction(docRegistry);
         var themesAction     = new ThemesGetAction(themeRegistry);
         var brandAction      = new BrandGetAction(brand, !catalogues.isEmpty());

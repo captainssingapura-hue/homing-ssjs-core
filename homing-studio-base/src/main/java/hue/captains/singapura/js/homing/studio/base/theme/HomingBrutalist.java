@@ -1,17 +1,13 @@
 package hue.captains.singapura.js.homing.studio.base.theme;
 
-import hue.captains.singapura.js.homing.core.Component;
+import hue.captains.singapura.js.homing.core.CssBlock;
 import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
 import hue.captains.singapura.js.homing.theme.color.HomingVars;
-import hue.captains.singapura.js.homing.core.Layer;
-import hue.captains.singapura.js.homing.core.MediaGated;
-import hue.captains.singapura.js.homing.core.Prose;
-import hue.captains.singapura.js.homing.core.Reset;
-import hue.captains.singapura.js.homing.core.State;
 import hue.captains.singapura.js.homing.core.Theme;
-import hue.captains.singapura.js.homing.core.ThemeGlobals;
-import hue.captains.singapura.js.homing.core.ThemeOverlay;
+import hue.captains.singapura.js.homing.studio.base.css.StudioStyles;
+import hue.captains.singapura.js.homing.studio.base.ui.MasterDetailStyles;
+import hue.captains.singapura.js.homing.studio.base.ui.SystemDialogStyles;
 
 import java.util.Map;
 
@@ -22,7 +18,7 @@ import java.util.Map;
  * red ({@code #FF3B21}) for hover and the destructive edge.
  *
  * <p>Built to find out how far a theme can go on CSS alone. Every rule is
- * in the {@code @layer theme} overlay and touches only classes the studio
+ * as a per-class override (RFC 0066) and touches only classes the studio
  * already renders — no module, no markup, no script:</p>
  *
  * <ul>
@@ -62,7 +58,68 @@ public record HomingBrutalist() implements Theme {
     public record Palette() implements GlobalColorPalette.Provision<HomingBrutalist> {
         public static final Palette INSTANCE = new Palette();
         @Override public HomingBrutalist theme() { return HomingBrutalist.INSTANCE; }
-        @Override public Map<CssVar, String> values() { return VALUES; }
+        @Override public Map<CssVar, String> values() { return Merged.ALL; }
+
+        /**
+         * RFC 0066 Law 2 — the theme's own vocabulary as EXTRAS on the palette
+         * body: derived from the semantic tokens so the dark flip carries them
+         * (ink is the text colour, paper the surface, a shadow a solid offset
+         * block of ink). Prefixed, so they shadow nothing the palette declares;
+         * read only by this theme's overrides, never by a declared body.
+         */
+        static final CssVar BRU_INK       = new CssVar("--bru-ink");
+        static final CssVar BRU_PAPER     = new CssVar("--bru-paper");
+        static final CssVar BRU_RULE      = new CssVar("--bru-rule");
+        static final CssVar BRU_RULE_3    = new CssVar("--bru-rule-3");
+        static final CssVar BRU_SHADOW    = new CssVar("--bru-shadow");
+        static final CssVar BRU_SHADOW_MD = new CssVar("--bru-shadow-md");
+        static final CssVar BRU_SHADOW_SM = new CssVar("--bru-shadow-sm");
+        static final CssVar BRU_SNAP      = new CssVar("--bru-snap");
+        static final CssVar BRU_HATCH     = new CssVar("--bru-hatch");
+        static final CssVar BRU_DISPLAY   = new CssVar("--bru-display");
+        private static final Map<CssVar, String> EXTRAS = Map.ofEntries(
+                Map.entry(BRU_INK,       "var(--color-text-primary)"),
+                Map.entry(BRU_PAPER,     "var(--color-surface)"),
+                Map.entry(BRU_RULE,      "4px solid var(--bru-ink)"),
+                Map.entry(BRU_RULE_3,    "3px solid var(--bru-ink)"),
+                Map.entry(BRU_SHADOW,    "8px 8px 0 var(--bru-ink)"),
+                Map.entry(BRU_SHADOW_MD, "5px 5px 0 var(--bru-ink)"),
+                Map.entry(BRU_SHADOW_SM, "4px 4px 0 var(--bru-ink)"),
+                Map.entry(BRU_SNAP,      "transform 70ms steps(2), box-shadow 70ms steps(2), background 100ms"),
+                Map.entry(BRU_HATCH,     "repeating-linear-gradient(45deg, color-mix(in srgb, var(--bru-ink) 22%, transparent) 0 7px, transparent 7px 14px)"),
+                Map.entry(BRU_DISPLAY,   "\"Arial Black\", \"Helvetica Neue\", Helvetica, Arial, sans-serif")
+        );
+        /** A holder, so the merge runs after VALUES (declared below) is set. */
+        private static final class Merged {
+            static final Map<CssVar, String> ALL;
+            static {
+                var m = new java.util.LinkedHashMap<CssVar, String>(VALUES);
+                m.putAll(EXTRAS);
+                ALL = java.util.Collections.unmodifiableMap(m);
+            }
+        }
+            @Override public Map<CssVar, String> darkValues() { return DARK; }
+
+            /** The re-binding under prefers-color-scheme: dark — the colour roles only;
+             *  the scales are the same job in both modes. */
+            private static final Map<CssVar, String> DARK = Map.ofEntries(
+                    Map.entry(HomingVars.COLOR_SURFACE,               "#0B0B0B"),
+                    Map.entry(HomingVars.COLOR_SURFACE_RAISED,        "#0B0B0B"),
+                    Map.entry(HomingVars.COLOR_SURFACE_RECESSED,      "#1E1E1E"),
+                    Map.entry(HomingVars.COLOR_SURFACE_INVERTED,      "#FFFFFF"),
+                    Map.entry(HomingVars.COLOR_TEXT_PRIMARY,          "#FFFFFF"),
+                    Map.entry(HomingVars.COLOR_TEXT_MUTED,            "#BDBDBD"),
+                    Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED,      "#000000"),
+                    Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED_MUTED, "#3A3A3A"),
+                    Map.entry(HomingVars.COLOR_TEXT_TITLE,            "#FFFFFF"),
+                    Map.entry(HomingVars.COLOR_TEXT_LINK,             "#7D93FF"),
+                    Map.entry(HomingVars.COLOR_TEXT_LINK_HOVER,       "#FF6A55"),
+                    Map.entry(HomingVars.COLOR_BORDER,                "#2E2E2E"),
+                    Map.entry(HomingVars.COLOR_BORDER_EMPHASIS,       "#FFFFFF"),
+                    Map.entry(HomingVars.COLOR_ACCENT,                "#FFE800"),
+                    Map.entry(HomingVars.COLOR_ACCENT_EMPHASIS,       "#FF6A55"),
+                    Map.entry(HomingVars.COLOR_ACCENT_ON,             "#000000")
+            );
 
         // Ink, paper, and the three riso drums — yellow, blue, red. The
         // hairline border is the grid's grey; the overlay hardens to ink
@@ -109,414 +166,357 @@ public record HomingBrutalist() implements Theme {
         );
     }
 
-    public record Globals() implements ThemeGlobals<HomingBrutalist> {
-        public static final Globals INSTANCE = new Globals();
+    // ── RFC 0066 — the theme's word, per class ─────────────────────────────
+    //
+    // What used to be ten raw chunks on @layer theme is one block per class,
+    // each appended inside the class's own rule after the declared body. The
+    // theme's own vocabulary (--bru-*) rides on the palette provision as
+    // extras derived from the semantic tokens, so the dark flip carries it.
+    // The workspace's buttons and input (.ws-*, .cg-*, .pm-*) are not here:
+    // studio-base cannot see workspace-shell, and a theme that has something
+    // to say about another product's classes says it in an impl a module that
+    // sees both can register — BrutalistWorkspace, in homing-studio-workspace.
+
+    /** Press-into-shadow, shared by every plate and button. */
+    static final String PRESS_HOVER = """
+            transform: translate(-2px, -2px);
+            box-shadow: var(--bru-shadow);
+            border-color: var(--bru-ink);
+            """;
+    static final String PRESS_ACTIVE = """
+            transform: translate(5px, 5px);
+            box-shadow: 0 0 0 var(--bru-ink);
+            """;
+    static final String FOCUS_RING = """
+            outline: 4px solid var(--color-text-link);
+            outline-offset: 4px;
+            """;
+    static final String NO_MOTION = "@media (prefers-reduced-motion: reduce) { & { transition: none; } }\n";
+
+    /** A plate — card, row, panel, pill: hard rule, offset shadow, the press. */
+    static final String PLATE = """
+            background: var(--bru-paper);
+            border: var(--bru-rule);
+            border-radius: 0;
+            box-shadow: var(--bru-shadow-md);
+            transition: var(--bru-snap);
+            &:focus-visible {
+            """ + FOCUS_RING.indent(4) + """
+            }
+            """ + NO_MOTION;
+    static final String PLATE_PRESS = """
+            &:hover {
+            """ + PRESS_HOVER.indent(4) + """
+            }
+            &:active {
+            """ + PRESS_ACTIVE.indent(4) + """
+            }
+            """;
+
+    /** A display label — the stamped, heavy, uppercase face. */
+    static final String DISPLAY = """
+            font-family: var(--bru-display);
+            font-weight: 900;
+            """;
+    /** An inverted tag — paper on ink. */
+    static final String TAG = """
+            display: inline-block;
+            font-family: var(--bru-display);
+            font-weight: 900;
+            font-size: 12px;
+            letter-spacing: 0.04em;
+            color: var(--bru-paper);
+            background: var(--bru-ink);
+            border: 0;
+            padding: 5px 11px;
+            """;
+    /** A button — hard border, offset shadow, yellow on hover, pressed on
+     *  active, blue outline on keyboard focus, hatched when inert. */
+    public static final String BUTTON = """
+            font-family: var(--bru-display);
+            font-weight: 900;
+            font-size: 12px;
+            letter-spacing: -0.01em;
+            text-transform: uppercase;
+            color: var(--bru-ink);
+            background: var(--bru-paper);
+            border: var(--bru-rule-3);
+            border-radius: 0;
+            box-shadow: var(--bru-shadow-sm);
+            padding: 7px 14px;
+            transition: var(--bru-snap);
+            &:hover {
+                background: var(--color-accent);
+                color: var(--bru-ink);
+                border-color: var(--bru-ink);
+                transform: translate(-2px, -2px);
+                box-shadow: 6px 6px 0 var(--bru-ink);
+            }
+            &:active {
+                transform: translate(4px, 4px);
+                box-shadow: 0 0 0 var(--bru-ink);
+            }
+            &:focus-visible {
+            """ + FOCUS_RING.indent(4) + """
+            }
+            &[disabled], &[disabled]:hover, &[disabled]:active {
+                background: var(--bru-hatch), var(--bru-paper);
+                color: var(--color-text-muted);
+                transform: none;
+                box-shadow: none;
+                opacity: 1;
+                cursor: not-allowed;
+            }
+            """ + NO_MOTION;
+    /** The inert state a class asserts by name rather than by attribute. */
+    public static final String INERT = """
+            background: var(--bru-hatch), var(--bru-paper);
+            color: var(--color-text-muted);
+            box-shadow: none;
+            opacity: 1;
+            cursor: not-allowed;
+            &:hover, &:active {
+                background: var(--bru-hatch), var(--bru-paper);
+                color: var(--color-text-muted);
+                transform: none;
+                box-shadow: none;
+            }
+            """;
+    /** A mark — badge, chip: bordered, square, heavy. */
+    static final String MARK = """
+            border: 2px solid var(--bru-ink);
+            border-radius: 0;
+            font-weight: 900;
+            letter-spacing: 0.06em;
+            """;
+
+    public record Studio() implements StudioStyles.Overrides<HomingBrutalist> {
+        public static final Studio INSTANCE = new Studio();
         @Override public HomingBrutalist theme() { return HomingBrutalist.INSTANCE; }
 
-        @Override public String css() {
-            return HomingDefault.STRUCTURAL_CSS + DARK_OVERRIDE + TOKENS + SHEET + TYPE
-                 + PLATES + BUTTONS + FIELDS + MARKS + PROSE + DIALOG + PICKER;
-        }
-
-        /** Structural chunks from the default theme; everything brutalist
-         *  rides on {@code @layer theme}, above state and media, so the press
-         *  and focus rules win over the default hover/focus set. */
-        @Override
-        public Map<Class<? extends Layer>, String> chunks() {
-            return Map.of(
-                    Reset.class,        HomingDefault.STRUCTURAL_CHUNKS.get(Reset.class),
-                    Component.class,    HomingDefault.STRUCTURAL_CHUNKS.get(Component.class),
-                    Prose.class,        HomingDefault.STRUCTURAL_CHUNKS.get(Prose.class),
-                    State.class,        HomingDefault.STRUCTURAL_CHUNKS.get(State.class),
-                    MediaGated.class,   HomingDefault.STRUCTURAL_CHUNKS.get(MediaGated.class),
-                    ThemeOverlay.class,
-                            DARK_OVERRIDE + TOKENS + SHEET + TYPE + PLATES + BUTTONS
-                          + FIELDS + MARKS + PROSE + DIALOG + PICKER
-            );
-        }
-
-        /** Dark mode — ink and paper trade places; the drums stay. The
-         *  masthead becomes a paper band on the ink page so it still reads
-         *  as the inverted element. */
-        private static final String DARK_OVERRIDE = """
-                :root { color-scheme: light dark; }
-                @media (prefers-color-scheme: dark) {
-                    :root {
-                        --color-surface:           #0B0B0B;
-                        --color-surface-raised:    #0B0B0B;
-                        --color-surface-recessed:  #1E1E1E;
-                        --color-surface-inverted:  #FFFFFF;
-
-                        --color-text-primary:            #FFFFFF;
-                        --color-text-muted:              #BDBDBD;
-                        --color-text-on-inverted:        #000000;
-                        --color-text-on-inverted-muted:  #3A3A3A;
-                        --color-text-title:              #FFFFFF;
-                        --color-text-link:               #7D93FF;
-                        --color-text-link-hover:         #FF6A55;
-
-                        --color-border:           #2E2E2E;
-                        --color-border-emphasis:  #FFFFFF;
-
-                        --color-accent:           #FFE800;
-                        --color-accent-emphasis:  #FF6A55;
-                        --color-accent-on:        #000000;
-                    }
-                }
-                """;
-
-        /** The theme's own vocabulary, derived from the semantic tokens so
-         *  the dark flip carries it: ink is the text colour, paper the
-         *  surface, and a shadow is a solid offset block of ink. */
-        private static final String TOKENS = """
-                :root {
-                    --bru-ink:    var(--color-text-primary);
-                    --bru-paper:  var(--color-surface);
-                    --bru-rule:   4px solid var(--bru-ink);
-                    --bru-rule-3: 3px solid var(--bru-ink);
-                    --bru-shadow:    8px 8px 0 var(--bru-ink);
-                    --bru-shadow-md: 5px 5px 0 var(--bru-ink);
-                    --bru-shadow-sm: 4px 4px 0 var(--bru-ink);
-                    --bru-snap: transform 70ms steps(2), box-shadow 70ms steps(2), background 100ms;
-                    --bru-hatch: repeating-linear-gradient(45deg,
-                        color-mix(in srgb, var(--bru-ink) 22%, transparent) 0 7px,
-                        transparent 7px 14px);
-                    --bru-display: "Arial Black", "Helvetica Neue", Helvetica, Arial, sans-serif;
-                }
-                """;
-
-        /** The sheet — grid paper behind everything, and the reading page as
-         *  a column with a rule down each side. */
-        private static final String SHEET = """
-                html, body {
-                    font-family: Helvetica, Arial, sans-serif;
-                    font-weight: 500;
-                    background-image:
-                        linear-gradient(color-mix(in srgb, var(--bru-ink) 14%, transparent) 1px, transparent 1px),
-                        linear-gradient(90deg, color-mix(in srgb, var(--bru-ink) 14%, transparent) 1px, transparent 1px);
-                    background-size: 28px 28px;
-                }
-                ::selection { background: var(--color-text-link); color: var(--bru-paper); }
-
-                .st-header {
-                    border-bottom: 4px solid var(--color-accent);
-                    box-shadow: 0 4px 0 var(--bru-ink);
-                }
-                .st-main:has(.st-doc-meta) {
+        // The sheet — grid paper behind everything; the selection in riso blue.
+        public CssBlock<StudioStyles.st_page> st_page() { return CssBlock.of("""
+                font-family: Helvetica, Arial, sans-serif;
+                font-weight: 500;
+                background-image:
+                    linear-gradient(color-mix(in srgb, var(--bru-ink) 14%, transparent) 1px, transparent 1px),
+                    linear-gradient(90deg, color-mix(in srgb, var(--bru-ink) 14%, transparent) 1px, transparent 1px);
+                background-size: 28px 28px;
+                & ::selection { background: var(--color-text-link); color: var(--bru-paper); }
+                """); }
+        public CssBlock<StudioStyles.st_header> st_header() { return CssBlock.of("""
+                border-bottom: 4px solid var(--color-accent);
+                box-shadow: 0 4px 0 var(--bru-ink);
+                """); }
+        // The reading page as a column with a rule down each side.
+        public CssBlock<StudioStyles.st_main> st_main() { return CssBlock.of("""
+                &:has(.st-doc-meta) {
                     background-color: var(--bru-paper);
                     border-left: var(--bru-rule);
                     border-right: var(--bru-rule);
                     border-radius: 0;
                     box-shadow: none;
                 }
-                .st-doc-meta { border-bottom: var(--bru-rule); }
-                .st-footer {
-                    border-top: var(--bru-rule);
-                    color: var(--bru-ink);
-                    font-size: 13px;
-                    max-width: 60ch;
-                }
-                .st-footer code { border-radius: 0; }
-                """;
+                """); }
+        public CssBlock<StudioStyles.st_doc_meta> st_doc_meta() { return CssBlock.of("border-bottom: var(--bru-rule);"); }
+        public CssBlock<StudioStyles.st_footer> st_footer() { return CssBlock.of("""
+                border-top: var(--bru-rule);
+                color: var(--bru-ink);
+                font-size: 13px;
+                max-width: 60ch;
+                code { border-radius: 0; }
+                """); }
 
-        /** Type — display faces set heavy and uppercase so they read as
-         *  stamped; the kicker is the rotated yellow box from the masthead;
-         *  section titles are inverted tags. */
-        private static final String TYPE = """
-                .st-brand-word {
-                    font-family: var(--bru-display);
-                    font-style: normal;
-                    font-weight: 900;
-                    text-transform: uppercase;
-                    letter-spacing: -0.04em;
-                }
-                .st-brand-dot { border: 2px solid var(--color-text-on-inverted); }
-                .st-title {
-                    font-family: var(--bru-display);
-                    font-weight: 900;
-                    font-size: clamp(38px, 6vw, 68px);
-                    line-height: 0.92;
-                    letter-spacing: -0.05em;
-                    text-transform: uppercase;
-                    color: var(--bru-ink);
-                    margin-bottom: 18px;
-                }
-                .st-kicker {
-                    display: inline-block;
-                    font-family: var(--bru-display);
-                    font-weight: 900;
-                    font-size: 13px;
-                    letter-spacing: 0.02em;
-                    color: var(--bru-ink);
-                    background: var(--color-accent);
-                    border: var(--bru-rule);
-                    padding: 2px 10px;
-                    margin: 0 0 18px 4px;
-                    transform: rotate(-2deg);
-                }
-                .st-subtitle {
-                    font-style: normal;
-                    color: var(--bru-ink);
-                    border-left: 10px solid var(--color-text-link-hover);
-                    padding-left: 14px;
-                    max-width: 52ch;
-                }
-                .st-section-title, .st-panel-title, .st-sidebar-title {
-                    display: inline-block;
-                    font-family: var(--bru-display);
-                    font-weight: 900;
-                    font-size: 12px;
-                    letter-spacing: 0.04em;
-                    color: var(--bru-paper);
-                    background: var(--bru-ink);
-                    border: 0;
-                    padding: 5px 11px;
-                }
-                .st-card-title, .st-list-item-label, .st-step-label {
-                    font-family: var(--bru-display);
-                    font-weight: 900;
-                    letter-spacing: -0.02em;
-                    color: var(--bru-ink);
-                }
-                .st-step-id, .st-effort, .st-card-link {
-                    font-family: var(--bru-display);
-                    font-style: normal;
-                    font-weight: 900;
-                    color: var(--bru-ink);
-                }
-                .st-crumb:hover { color: var(--color-accent); text-decoration: underline; text-decoration-thickness: 3px; }
-                """;
+        // Type — display faces set heavy and uppercase so they read as stamped.
+        public CssBlock<StudioStyles.st_brand_word> st_brand_word() { return CssBlock.of(DISPLAY + """
+                font-style: normal;
+                text-transform: uppercase;
+                letter-spacing: -0.04em;
+                """); }
+        public CssBlock<StudioStyles.st_brand_dot> st_brand_dot() { return CssBlock.of("border: 2px solid var(--color-text-on-inverted);"); }
+        public CssBlock<StudioStyles.st_title> st_title() { return CssBlock.of(DISPLAY + """
+                font-size: clamp(38px, 6vw, 68px);
+                line-height: 0.92;
+                letter-spacing: -0.05em;
+                text-transform: uppercase;
+                color: var(--bru-ink);
+                margin-bottom: 18px;
+                """); }
+        // The kicker is the rotated yellow box from the masthead.
+        public CssBlock<StudioStyles.st_kicker> st_kicker() { return CssBlock.of(DISPLAY + """
+                display: inline-block;
+                font-size: 13px;
+                letter-spacing: 0.02em;
+                color: var(--bru-ink);
+                background: var(--color-accent);
+                border: var(--bru-rule);
+                padding: 2px 10px;
+                margin: 0 0 18px 4px;
+                transform: rotate(-2deg);
+                """); }
+        public CssBlock<StudioStyles.st_subtitle> st_subtitle() { return CssBlock.of("""
+                font-style: normal;
+                color: var(--bru-ink);
+                border-left: 10px solid var(--color-text-link-hover);
+                padding-left: 14px;
+                max-width: 52ch;
+                """); }
+        public CssBlock<StudioStyles.st_section_title> st_section_title() { return CssBlock.of(TAG); }
+        public CssBlock<StudioStyles.st_panel_title>   st_panel_title()   { return CssBlock.of(TAG); }
+        public CssBlock<StudioStyles.st_sidebar_title> st_sidebar_title() { return CssBlock.of(TAG); }
+        public CssBlock<StudioStyles.st_card_title>      st_card_title()      { return CssBlock.of(DISPLAY + "letter-spacing: -0.02em;\ncolor: var(--bru-ink);\n"); }
+        public CssBlock<StudioStyles.st_list_item_label> st_list_item_label() { return CssBlock.of(DISPLAY + "letter-spacing: -0.02em;\ncolor: var(--bru-ink);\n"); }
+        public CssBlock<StudioStyles.st_step_label>      st_step_label()      { return CssBlock.of(DISPLAY + "letter-spacing: -0.02em;\ncolor: var(--bru-ink);\n"); }
+        public CssBlock<StudioStyles.st_step_id>   st_step_id()   { return CssBlock.of(DISPLAY + "font-style: normal;\ncolor: var(--bru-ink);\n"); }
+        public CssBlock<StudioStyles.st_effort>    st_effort()    { return CssBlock.of(DISPLAY + "font-style: normal;\ncolor: var(--bru-ink);\n"); }
+        public CssBlock<StudioStyles.st_card_link> st_card_link() { return CssBlock.of(DISPLAY + "font-style: normal;\ncolor: var(--bru-ink);\n"); }
+        public CssBlock<StudioStyles.st_crumb> st_crumb() { return CssBlock.of("""
+                &:hover { color: var(--color-accent); text-decoration: underline; text-decoration-thickness: 3px; }
+                """); }
 
-        /** Plates — anything that sits on the page as a block: cards, rows,
-         *  panels, pills. Hard rule, offset shadow, and the press. */
-        private static final String PLATES = """
-                .st-card, .st-list-item, .st-step-card, .st-app-pill, .st-panel, .st-dep {
-                    background: var(--bru-paper);
-                    border: var(--bru-rule);
-                    border-radius: 0;
-                    box-shadow: var(--bru-shadow-md);
-                    transition: var(--bru-snap);
+        // Plates — anything that sits on the page as a block.
+        public CssBlock<StudioStyles.st_card>      st_card()      { return CssBlock.of(PLATE + PLATE_PRESS); }
+        public CssBlock<StudioStyles.st_step_card> st_step_card() { return CssBlock.of(PLATE + PLATE_PRESS); }
+        public CssBlock<StudioStyles.st_app_pill>  st_app_pill()  { return CssBlock.of(PLATE + PLATE_PRESS); }
+        public CssBlock<StudioStyles.st_panel>     st_panel()     { return CssBlock.of(PLATE); }
+        /** A row presses only when it is a link. */
+        public CssBlock<StudioStyles.st_list_item> st_list_item() { return CssBlock.of(PLATE + """
+                &[href]:hover {
+                """ + PRESS_HOVER.indent(4) + """
                 }
-                .st-card:hover, .st-list-item[href]:hover, .st-step-card:hover, .st-app-pill:hover {
-                    transform: translate(-2px, -2px);
-                    box-shadow: var(--bru-shadow);
-                    border-color: var(--bru-ink);
+                &[href]:active {
+                """ + PRESS_ACTIVE.indent(4) + """
                 }
-                .st-card:active, .st-list-item[href]:active, .st-step-card:active, .st-app-pill:active {
-                    transform: translate(5px, 5px);
-                    box-shadow: 0 0 0 var(--bru-ink);
-                }
-                .st-card:focus-visible, .st-list-item:focus-visible, .st-step-card:focus-visible, .st-app-pill:focus-visible {
-                    outline: 4px solid var(--color-text-link);
-                    outline-offset: 4px;
-                }
-                .st-card-featured, .st-app-pill-dark {
-                    background: var(--color-surface-inverted);
-                    box-shadow: 5px 5px 0 var(--color-accent);
-                }
-                .st-card-featured:hover, .st-app-pill-dark:hover {
-                    background: var(--color-surface-inverted);
-                    box-shadow: 8px 8px 0 var(--color-accent);
-                }
-                .st-card-featured .st-card-title, .st-app-pill-dark .st-app-pill-label { color: var(--color-text-on-inverted); }
-                .st-card-meta { border-top: 2px solid var(--bru-ink); color: var(--bru-ink); }
-                .st-app-pill-icon { border: var(--bru-rule-3); border-radius: 0; }
-                .st-dep { box-shadow: 3px 3px 0 var(--bru-ink); border-width: 2px; font-weight: 700; }
-                .st-doc-section-active {
-                    background-color: color-mix(in srgb, var(--color-accent) 30%, transparent);
-                    box-shadow: inset 6px 0 0 var(--bru-ink);
-                }
+                """); }
+        public CssBlock<StudioStyles.st_dep> st_dep() { return CssBlock.of(PLATE + """
+                box-shadow: 3px 3px 0 var(--bru-ink);
+                border-width: 2px;
+                font-weight: 700;
+                """); }
+        public CssBlock<StudioStyles.st_card_featured> st_card_featured() { return CssBlock.of("""
+                background: var(--color-surface-inverted);
+                box-shadow: 5px 5px 0 var(--color-accent);
+                &:hover { background: var(--color-surface-inverted); box-shadow: 8px 8px 0 var(--color-accent); }
+                & .st-card-title { color: var(--color-text-on-inverted); }
+                """); }
+        public CssBlock<StudioStyles.st_app_pill_dark> st_app_pill_dark() { return CssBlock.of("""
+                background: var(--color-surface-inverted);
+                box-shadow: 5px 5px 0 var(--color-accent);
+                &:hover { background: var(--color-surface-inverted); box-shadow: 8px 8px 0 var(--color-accent); }
+                & .st-app-pill-label { color: var(--color-text-on-inverted); }
+                """); }
+        public CssBlock<StudioStyles.st_card_meta>     st_card_meta()     { return CssBlock.of("border-top: 2px solid var(--bru-ink);\ncolor: var(--bru-ink);\n"); }
+        public CssBlock<StudioStyles.st_app_pill_icon> st_app_pill_icon() { return CssBlock.of("border: var(--bru-rule-3);\nborder-radius: 0;\n"); }
+        public CssBlock<StudioStyles.st_doc_section_active> st_doc_section_active() { return CssBlock.of("""
+                background-color: color-mix(in srgb, var(--color-accent) 30%, transparent);
+                box-shadow: inset 6px 0 0 var(--bru-ink);
+                """); }
+        public CssBlock<StudioStyles.st_toc_item> st_toc_item() { return CssBlock.of("""
+                border-left: 4px solid transparent;
+                font-weight: 700;
+                color: var(--bru-ink);
+                transition: none;
+                &:hover { border-left-color: var(--bru-ink); color: var(--bru-ink); }
+                """); }
+        public CssBlock<StudioStyles.st_toc_active> st_toc_active() { return CssBlock.of("""
+                border-left-color: var(--bru-ink);
+                background: var(--color-accent);
+                color: var(--bru-ink);
+                """); }
+        public CssBlock<StudioStyles.st_table> st_table() { return CssBlock.of("border: var(--bru-rule);\nborder-collapse: collapse;\n"); }
+        public CssBlock<StudioStyles.st_thead> st_thead() { return CssBlock.of("background: var(--bru-ink);"); }
+        public CssBlock<StudioStyles.st_th> st_th() { return CssBlock.of(DISPLAY + """
+                background: var(--bru-ink);
+                color: var(--bru-paper);
+                font-size: 12px;
+                letter-spacing: 0.04em;
+                text-transform: uppercase;
+                border: 0;
+                """); }
+        public CssBlock<StudioStyles.st_td> st_td() { return CssBlock.of("border-bottom: 2px solid var(--bru-ink);"); }
 
-                .st-toc-item {
-                    border-left: 4px solid transparent;
-                    font-weight: 700;
-                    color: var(--bru-ink);
-                    transition: none;
-                }
-                .st-toc-item:hover { border-left-color: var(--bru-ink); color: var(--bru-ink); }
-                .st-toc-active { border-left-color: var(--bru-ink); background: var(--color-accent); color: var(--bru-ink); }
-
-                .st-table { border: var(--bru-rule); border-collapse: collapse; }
-                .st-thead { background: var(--bru-ink); }
-                .st-th {
-                    background: var(--bru-ink);
-                    color: var(--bru-paper);
-                    font-family: var(--bru-display);
-                    font-weight: 900;
-                    font-size: 12px;
-                    letter-spacing: 0.04em;
-                    text-transform: uppercase;
-                    border: 0;
-                }
-                .st-td { border-bottom: 2px solid var(--bru-ink); }
-                """;
-
-        /** Buttons — every clickable the studio renders as a button: filters,
-         *  dialog actions, the picker's header button, the shell's and the
-         *  workbench's. Hard border, offset shadow, yellow on hover, pressed
-         *  into the shadow on active, blue outline on keyboard focus,
-         *  hatched when inert. */
-        private static final String BUTTONS = """
-                .st-filter-btn, .sd-action, .ws-btn, .cg-btn, .pm-btn {
-                    font-family: var(--bru-display);
-                    font-weight: 900;
-                    font-size: 12px;
-                    letter-spacing: -0.01em;
-                    text-transform: uppercase;
-                    color: var(--bru-ink);
-                    background: var(--bru-paper);
-                    border: var(--bru-rule-3);
-                    border-radius: 0;
-                    box-shadow: var(--bru-shadow-sm);
-                    padding: 7px 14px;
-                    transition: var(--bru-snap);
-                }
-                .st-filter-btn:hover, .sd-action:hover, .ws-btn:hover, .cg-btn:hover, .pm-btn:hover {
-                    background: var(--color-accent);
-                    color: var(--bru-ink);
-                    border-color: var(--bru-ink);
-                    transform: translate(-2px, -2px);
-                    box-shadow: 6px 6px 0 var(--bru-ink);
-                }
-                .st-filter-btn:active, .sd-action:active, .ws-btn:active, .cg-btn:active, .pm-btn:active {
-                    transform: translate(4px, 4px);
-                    box-shadow: 0 0 0 var(--bru-ink);
-                }
-                .st-filter-btn:focus-visible, .sd-action:focus-visible, .ws-btn:focus-visible,
-                .cg-btn:focus-visible, .pm-btn:focus-visible, .tp-btn:focus-visible, .sd-close:focus-visible {
-                    outline: 4px solid var(--color-text-link);
-                    outline-offset: 4px;
-                }
-                .st-filter-btn-active, .sd-action-primary {
-                    background: var(--color-accent);
-                    color: var(--bru-ink);
-                    border-color: var(--bru-ink);
-                }
-                .st-filter-btn-active:hover, .sd-action-primary:hover {
-                    background: var(--bru-paper);
-                    color: var(--bru-ink);
-                }
-                .ws-btn-danger { background: var(--color-text-link-hover); color: var(--bru-paper); }
-                .ws-btn-danger:hover { background: var(--bru-ink); color: var(--bru-paper); }
-                .sd-action-off, .ws-btn-off, .st-filter-btn[disabled], .sd-action[disabled],
-                .ws-btn[disabled], .cg-btn[disabled], .pm-btn[disabled] {
-                    background: var(--bru-hatch), var(--bru-paper);
-                    color: var(--color-text-muted);
-                    box-shadow: none;
-                    opacity: 1;
-                    cursor: not-allowed;
-                }
-                .sd-action-off:hover, .ws-btn-off:hover, .st-filter-btn[disabled]:hover, .sd-action[disabled]:hover,
-                .ws-btn[disabled]:hover, .cg-btn[disabled]:hover, .pm-btn[disabled]:hover,
-                .sd-action-off:active, .ws-btn-off:active, .sd-action[disabled]:active {
-                    background: var(--bru-hatch), var(--bru-paper);
-                    color: var(--color-text-muted);
-                    transform: none;
-                    box-shadow: none;
-                }
-
-                /* The picker's button sits on the ink masthead — paper rules,
-                   a yellow shadow, and the same press. */
-                .tp-btn {
-                    font-family: var(--bru-display);
-                    font-weight: 900;
-                    font-size: 11px;
-                    text-transform: uppercase;
-                    border: 2px solid var(--color-text-on-inverted);
-                    border-radius: 0;
-                    box-shadow: 3px 3px 0 var(--color-accent);
-                    padding: 4px 10px;
-                    transition: var(--bru-snap);
-                }
-                .tp-btn:hover {
-                    background: var(--color-accent);
-                    color: var(--color-accent-on);
-                    border-color: var(--color-accent);
-                    transform: translate(-2px, -2px);
-                    box-shadow: 5px 5px 0 var(--color-text-on-inverted);
-                }
-                .tp-btn:hover .tp-btn-label { color: var(--color-accent-on); }
-                .tp-btn:active { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--color-accent); }
-                """;
-
-        /** Fields — the search box and the shell's input invert to yellow on
-         *  focus and grow a shadow, so the focused field is the loudest thing
-         *  on the page. */
-        private static final String FIELDS = """
-                .st-search, .ws-input {
-                    font-weight: 600;
-                    color: var(--bru-ink);
-                    background: var(--bru-paper);
-                    border: var(--bru-rule);
-                    border-radius: 0;
-                    box-shadow: inset 5px 5px 0 color-mix(in srgb, var(--bru-ink) 9%, transparent);
-                    transition: none;
-                }
-                .st-search:focus, .ws-input:focus {
+        // Buttons and fields.
+        public CssBlock<StudioStyles.st_filter_btn> st_filter_btn() { return CssBlock.of(BUTTON); }
+        public CssBlock<StudioStyles.st_filter_btn_active> st_filter_btn_active() { return CssBlock.of("""
+                background: var(--color-accent);
+                color: var(--bru-ink);
+                border-color: var(--bru-ink);
+                &:hover { background: var(--bru-paper); color: var(--bru-ink); }
+                """); }
+        /** The search box inverts to yellow on focus and grows a shadow — the
+         *  focused field is the loudest thing on the page. */
+        public CssBlock<StudioStyles.st_search> st_search() { return CssBlock.of("""
+                font-weight: 600;
+                color: var(--bru-ink);
+                background: var(--bru-paper);
+                border: var(--bru-rule);
+                border-radius: 0;
+                box-shadow: inset 5px 5px 0 color-mix(in srgb, var(--bru-ink) 9%, transparent);
+                transition: none;
+                &:focus {
                     outline: none;
                     background: var(--color-accent);
                     border-color: var(--bru-ink);
                     box-shadow: var(--bru-shadow-md);
                 }
-                .st-search::placeholder, .ws-input::placeholder { color: var(--color-text-muted); font-weight: 500; }
-                """;
+                &::placeholder { color: var(--color-text-muted); font-weight: 500; }
+                """); }
 
-        /** Marks — badges, task boxes, status chips, progress bars. Bordered,
-         *  square, and the fills are hatched. */
-        private static final String MARKS = """
-                .st-badge, .st-status-badge,
-                .st-td-badge-success, .st-td-badge-warning, .st-td-badge-error {
-                    border: 2px solid var(--bru-ink);
-                    border-radius: 0;
-                    font-weight: 900;
-                    letter-spacing: 0.06em;
-                }
-                .st-badge-reference { background: var(--bru-paper); color: var(--color-text-link); }
-                .st-status-not-started { background: var(--bru-paper); color: var(--bru-ink); }
-                .st-task-box {
-                    width: 18px;
-                    height: 18px;
-                    flex-basis: 18px;
-                    border: var(--bru-rule-3);
-                    border-radius: 0;
-                    background: var(--bru-paper);
-                    color: var(--bru-paper);
-                }
-                .st-task-done .st-task-box {
-                    background: var(--bru-ink);
-                    border-color: var(--bru-ink);
-                    color: var(--bru-paper);
-                }
-                .st-overall-bar, .st-step-progress-bar {
-                    border: var(--bru-rule-3);
-                    border-radius: 0;
-                    background: var(--bru-paper);
-                    height: 16px;
-                }
-                .st-step-progress-bar { height: 10px; border-width: 2px; }
-                .st-overall-fill, .st-step-progress-fill {
-                    background:
-                        repeating-linear-gradient(45deg, var(--bru-ink) 0 5px, transparent 5px 10px),
-                        var(--color-accent);
-                    transition: width 200ms steps(4);
-                }
-                .st-overall-pct { font-family: var(--bru-display); font-weight: 900; }
+        // Marks — badges, task boxes, status chips, progress bars.
+        public CssBlock<StudioStyles.st_badge>            st_badge()            { return CssBlock.of(MARK); }
+        public CssBlock<StudioStyles.st_status_badge>     st_status_badge()     { return CssBlock.of(MARK); }
+        public CssBlock<StudioStyles.st_td_badge_success> st_td_badge_success() { return CssBlock.of(MARK); }
+        public CssBlock<StudioStyles.st_td_badge_warning> st_td_badge_warning() { return CssBlock.of(MARK); }
+        public CssBlock<StudioStyles.st_td_badge_error>   st_td_badge_error()   { return CssBlock.of(MARK); }
+        public CssBlock<StudioStyles.st_badge_reference>  st_badge_reference()  { return CssBlock.of("background: var(--bru-paper);\ncolor: var(--color-text-link);\n"); }
+        public CssBlock<StudioStyles.st_status_not_started> st_status_not_started() { return CssBlock.of("background: var(--bru-paper);\ncolor: var(--bru-ink);\n"); }
+        public CssBlock<StudioStyles.st_task_box> st_task_box() { return CssBlock.of("""
+                width: 18px;
+                height: 18px;
+                flex-basis: 18px;
+                border: var(--bru-rule-3);
+                border-radius: 0;
+                background: var(--bru-paper);
+                color: var(--bru-paper);
+                """); }
+        public CssBlock<StudioStyles.st_task_done> st_task_done() { return CssBlock.of("""
+                & .st-task-box { background: var(--bru-ink); border-color: var(--bru-ink); color: var(--bru-paper); }
+                """); }
+        public CssBlock<StudioStyles.st_overall_bar> st_overall_bar() { return CssBlock.of("""
+                border: var(--bru-rule-3);
+                border-radius: 0;
+                background: var(--bru-paper);
+                height: 16px;
+                """); }
+        public CssBlock<StudioStyles.st_step_progress_bar> st_step_progress_bar() { return CssBlock.of("""
+                border: 2px solid var(--bru-ink);
+                border-radius: 0;
+                background: var(--bru-paper);
+                height: 10px;
+                """); }
+        public CssBlock<StudioStyles.st_overall_fill>       st_overall_fill()       { return CssBlock.of(HATCHED_FILL); }
+        public CssBlock<StudioStyles.st_step_progress_fill> st_step_progress_fill() { return CssBlock.of(HATCHED_FILL); }
+        private static final String HATCHED_FILL = """
+                background:
+                    repeating-linear-gradient(45deg, var(--bru-ink) 0 5px, transparent 5px 10px),
+                    var(--color-accent);
+                transition: width 200ms steps(4);
                 """;
+        public CssBlock<StudioStyles.st_overall_pct> st_overall_pct() { return CssBlock.of(DISPLAY); }
 
-        /** Prose — markdown the framework did not class. Headings go display
-         *  face; links underline heavy and highlight on hover; code blocks are
-         *  ink plates with a yellow shadow. */
-        private static final String PROSE = """
-                .st-doc h1, .st-doc h2, .st-doc h3 {
+        // Prose — headings go display face; links underline heavy and highlight
+        // on hover; code blocks are ink plates with a shadow.
+        public CssBlock<StudioStyles.st_doc> st_doc() { return CssBlock.of("""
+                h1, h2, h3 {
                     font-family: var(--bru-display);
                     font-weight: 900;
                     letter-spacing: -0.03em;
                     color: var(--bru-ink);
                     line-height: 1.05;
                 }
-                .st-doc h1 { text-transform: uppercase; border-bottom: var(--bru-rule); padding-bottom: 10px; }
-                .st-doc h2 { text-transform: uppercase; }
-                .st-doc h4 {
+                h1 { text-transform: uppercase; border-bottom: var(--bru-rule); padding-bottom: 10px; }
+                h2 { text-transform: uppercase; }
+                h4 {
                     display: inline-block;
                     font-family: var(--bru-display);
                     font-weight: 900;
@@ -526,29 +526,25 @@ public record HomingBrutalist() implements Theme {
                     background: var(--bru-ink);
                     padding: 4px 10px;
                 }
-                .st-doc a {
-                    color: var(--color-text-link);
-                    text-decoration-thickness: 3px;
-                    text-underline-offset: 3px;
-                }
-                .st-doc a:hover { background: var(--color-accent); color: var(--bru-ink); }
-                .st-doc blockquote {
+                a { color: var(--color-text-link); text-decoration-thickness: 3px; text-underline-offset: 3px; }
+                a:hover { background: var(--color-accent); color: var(--bru-ink); }
+                blockquote {
                     border-left: 10px solid var(--color-text-link-hover);
                     padding-left: 14px;
                     color: var(--bru-ink);
                     font-style: normal;
                 }
-                .st-doc code { border-radius: 0; color: var(--bru-ink); }
-                .st-doc pre {
+                code { border-radius: 0; color: var(--bru-ink); }
+                pre {
                     border: var(--bru-rule);
                     border-radius: 0;
                     background: var(--bru-ink);
                     color: var(--bru-paper);
                     box-shadow: var(--bru-shadow-md);
                 }
-                .st-doc pre code { color: inherit; }
-                .st-doc table { border: var(--bru-rule); }
-                .st-doc th {
+                pre code { color: inherit; }
+                table { border: var(--bru-rule); }
+                th {
                     background: var(--bru-ink);
                     color: var(--bru-paper);
                     font-family: var(--bru-display);
@@ -557,73 +553,86 @@ public record HomingBrutalist() implements Theme {
                     text-transform: uppercase;
                     letter-spacing: 0.04em;
                 }
-                .st-doc td { border-bottom: 2px solid var(--bru-ink); }
-                .st-doc hr { border-top: var(--bru-rule); }
-                .st-doc img { border: var(--bru-rule); box-shadow: var(--bru-shadow-md); }
-                """;
+                td { border-bottom: 2px solid var(--bru-ink); }
+                hr { border-top: var(--bru-rule); }
+                img { border: var(--bru-rule); box-shadow: var(--bru-shadow-md); }
+                """); }
+    }
 
-        /** The system dialog — a plate with a deep shadow, an ink title bar,
-         *  and a hatched scrim in place of the blur. */
-        private static final String DIALOG = """
-                .sd-scrim {
-                    background: var(--bru-hatch);
-                    backdrop-filter: brightness(0.7);
-                }
-                .sd-frame {
-                    border: var(--bru-rule);
-                    border-radius: 0;
-                    box-shadow: 12px 12px 0 var(--bru-ink);
-                }
-                .sd-glow {
-                    border-color: var(--bru-ink);
-                    box-shadow: 12px 12px 0 var(--color-accent);
-                }
-                .sd-title {
-                    height: 34px;
-                    background: var(--bru-ink);
-                    border-bottom: var(--bru-rule);
-                }
-                .sd-title-label {
-                    font-family: var(--bru-display);
-                    font-weight: 900;
-                    font-size: 12px;
-                    letter-spacing: 0.04em;
-                    color: var(--bru-paper);
-                }
-                .sd-close { color: var(--bru-paper); font-weight: 900; }
-                .sd-actions {
-                    border-top: var(--bru-rule);
-                    background: var(--bru-paper);
-                    padding: 12px 14px;
-                    gap: 14px;
-                }
-                """;
+    /** The system dialog — a plate with a deep shadow, an ink title bar, and a
+     *  hatched scrim in place of the blur. */
+    public record Dialog() implements SystemDialogStyles.Overrides<HomingBrutalist> {
+        public static final Dialog INSTANCE = new Dialog();
+        @Override public HomingBrutalist theme() { return HomingBrutalist.INSTANCE; }
 
-        /** The picker — inline frame, preview frame, and the in-use chip. */
-        private static final String PICKER = """
-                .tp-inline { border: var(--bru-rule); border-radius: 0; box-shadow: var(--bru-shadow); }
-                .tp-inline-head {
-                    font-family: var(--bru-display);
-                    font-weight: 900;
-                    text-transform: uppercase;
-                    border-bottom: var(--bru-rule);
+        public CssBlock<SystemDialogStyles.sd_scrim> sd_scrim() { return CssBlock.of("background: var(--bru-hatch);\nbackdrop-filter: brightness(0.7);\n"); }
+        public CssBlock<SystemDialogStyles.sd_frame> sd_frame() { return CssBlock.of("border: var(--bru-rule);\nborder-radius: 0;\nbox-shadow: 12px 12px 0 var(--bru-ink);\n"); }
+        public CssBlock<SystemDialogStyles.sd_glow>  sd_glow()  { return CssBlock.of("border-color: var(--bru-ink);\nbox-shadow: 12px 12px 0 var(--color-accent);\n"); }
+        public CssBlock<SystemDialogStyles.sd_title> sd_title() { return CssBlock.of("height: 34px;\nbackground: var(--bru-ink);\nborder-bottom: var(--bru-rule);\n"); }
+        public CssBlock<SystemDialogStyles.sd_title_label> sd_title_label() { return CssBlock.of(DISPLAY + "font-size: 12px;\nletter-spacing: 0.04em;\ncolor: var(--bru-paper);\n"); }
+        public CssBlock<SystemDialogStyles.sd_close> sd_close() { return CssBlock.of("""
+                color: var(--bru-paper);
+                font-weight: 900;
+                &:focus-visible {
+                """ + FOCUS_RING.indent(4) + """
                 }
-                .tp-preview-frame { border: var(--bru-rule); border-radius: 0; }
-                .tp-preview-loading { border-radius: 0; }
-                .tp-preview-name { font-family: var(--bru-display); font-weight: 900; }
-                .tp-current {
-                    color: var(--bru-ink);
+                """); }
+        public CssBlock<SystemDialogStyles.sd_actions> sd_actions() { return CssBlock.of("border-top: var(--bru-rule);\nbackground: var(--bru-paper);\npadding: 12px 14px;\ngap: 14px;\n"); }
+        public CssBlock<SystemDialogStyles.sd_action> sd_action() { return CssBlock.of(BUTTON); }
+        public CssBlock<SystemDialogStyles.sd_action_primary> sd_action_primary() { return CssBlock.of("""
+                background: var(--color-accent);
+                color: var(--bru-ink);
+                border-color: var(--bru-ink);
+                &:hover { background: var(--bru-paper); color: var(--bru-ink); }
+                """); }
+        public CssBlock<SystemDialogStyles.sd_action_off> sd_action_off() { return CssBlock.of(INERT); }
+    }
+
+    /** The picker — its header button on the ink masthead, the inline and
+     *  preview frames, and the in-use chip. */
+    public record Picker() implements ThemePickerStyles.Overrides<HomingBrutalist> {
+        public static final Picker INSTANCE = new Picker();
+        @Override public HomingBrutalist theme() { return HomingBrutalist.INSTANCE; }
+
+        public CssBlock<ThemePickerStyles.tp_btn> tp_btn() { return CssBlock.of(DISPLAY + """
+                font-size: 11px;
+                text-transform: uppercase;
+                border: 2px solid var(--color-text-on-inverted);
+                border-radius: 0;
+                box-shadow: 3px 3px 0 var(--color-accent);
+                padding: 4px 10px;
+                transition: var(--bru-snap);
+                &:hover {
                     background: var(--color-accent);
-                    border: 2px solid var(--bru-ink);
-                    padding: 1px 6px;
-                    font-weight: 900;
+                    color: var(--color-accent-on);
+                    border-color: var(--color-accent);
+                    transform: translate(-2px, -2px);
+                    box-shadow: 5px 5px 0 var(--color-text-on-inverted);
                 }
-                .md-nav { border-right: var(--bru-rule); }
+                &:hover .tp-btn-label { color: var(--color-accent-on); }
+                &:active { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--color-accent); }
+                &:focus-visible {
+                """ + FOCUS_RING.indent(4) + """
+                }
+                """ + NO_MOTION); }
+        public CssBlock<ThemePickerStyles.tp_inline> tp_inline() { return CssBlock.of("border: var(--bru-rule);\nborder-radius: 0;\nbox-shadow: var(--bru-shadow);\n"); }
+        public CssBlock<ThemePickerStyles.tp_inline_head> tp_inline_head() { return CssBlock.of(DISPLAY + "text-transform: uppercase;\nborder-bottom: var(--bru-rule);\n"); }
+        public CssBlock<ThemePickerStyles.tp_preview_frame>   tp_preview_frame()   { return CssBlock.of("border: var(--bru-rule);\nborder-radius: 0;\n"); }
+        public CssBlock<ThemePickerStyles.tp_preview_loading> tp_preview_loading() { return CssBlock.of("border-radius: 0;"); }
+        public CssBlock<ThemePickerStyles.tp_preview_name>    tp_preview_name()    { return CssBlock.of(DISPLAY); }
+        public CssBlock<ThemePickerStyles.tp_current> tp_current() { return CssBlock.of("""
+                color: var(--bru-ink);
+                background: var(--color-accent);
+                border: 2px solid var(--bru-ink);
+                padding: 1px 6px;
+                font-weight: 900;
+                """); }
+    }
 
-                @media (prefers-reduced-motion: reduce) {
-                    .st-card, .st-list-item, .st-step-card, .st-app-pill, .st-panel,
-                    .st-filter-btn, .sd-action, .ws-btn, .cg-btn, .pm-btn, .tp-btn { transition: none; }
-                }
-                """;
+    /** The master-detail nav rule. */
+    public record MasterDetail() implements MasterDetailStyles.Overrides<HomingBrutalist> {
+        public static final MasterDetail INSTANCE = new MasterDetail();
+        @Override public HomingBrutalist theme() { return HomingBrutalist.INSTANCE; }
+        public CssBlock<MasterDetailStyles.md_nav> md_nav() { return CssBlock.of("border-right: var(--bru-rule);"); }
     }
 }
