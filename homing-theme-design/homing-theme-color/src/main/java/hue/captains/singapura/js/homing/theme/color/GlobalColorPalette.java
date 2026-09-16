@@ -1,4 +1,4 @@
-package hue.captains.singapura.js.homing.studio.base.theme;
+package hue.captains.singapura.js.homing.theme.color;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
@@ -14,10 +14,12 @@ import java.util.Set;
  * RFC 0066 — the global palette as a node in the CSS dependency graph: one
  * group, one {@link PaletteClass}, and a {@link Provision} per theme.
  *
- * <p>Extracted from {@link StudioVars}, which stays as the typed names the
- * palette declares. What was three things — a list the studio kept, a map each
- * theme kept, and a sheet the server assembled from the map — is one class
- * that declares its tokens and eleven bodies that bind them.</p>
+ * <p>Declared here, in the theme design core, and not in the studio: any app
+ * the framework serves binds a palette by depending on this module and
+ * registering a {@link Provision} per theme. {@link HomingVars} is the typed
+ * vocabulary the palette declares. What was three things — a list the studio
+ * kept, a map each theme kept, and a sheet the server assembled from the map —
+ * is one class that declares its tokens and one body per theme that binds them.</p>
  *
  * <p><b>The prior.</b> 179 of the studio's 251 classes read a token from this
  * palette. Rather than 179 identical {@code dependsOn()} declarations, the
@@ -42,14 +44,14 @@ public record GlobalColorPalette() implements CssGroup<GlobalColorPalette> {
 
     /** The one node: {@code :root}, provided per theme. */
     public record global_color_palette() implements PaletteClass<GlobalColorPalette> {
-        @Override public Set<CssVar> declares() { return StudioVars.ALL; }
+        @Override public Set<CssVar> declares() { return HomingVars.ALL; }
     }
 
     /**
      * A theme's body for the palette. One record per theme, registered in the
-     * deployment's {@link hue.captains.singapura.js.homing.server.ThemeRegistry#palettes()};
+     * deployment's theme registry ({@code ThemeRegistry.palettes()} in homing-server);
      * {@link #values()} must bind every token {@link global_color_palette#declares()}
-     * names and nothing outside it — {@code PaletteCompletenessTest} is the gate.
+     * names and nothing outside it — the deployment's palette completeness test is the gate.
      */
     public interface Provision<TH extends Theme> extends PaletteProvision<GlobalColorPalette, TH> {
         @Override default GlobalColorPalette group() { return INSTANCE; }

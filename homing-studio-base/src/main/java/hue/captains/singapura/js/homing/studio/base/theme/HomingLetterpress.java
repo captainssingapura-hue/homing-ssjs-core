@@ -1,6 +1,8 @@
 package hue.captains.singapura.js.homing.studio.base.theme;
 
 import hue.captains.singapura.js.homing.core.CssVar;
+import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
+import hue.captains.singapura.js.homing.theme.color.HomingVars;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.ThemeGlobals;
 
@@ -45,41 +47,41 @@ public record HomingLetterpress() implements Theme {
         // Cream parchment + ink + brick-red. Two-tone editorial palette.
         private static final Map<CssVar, String> VALUES = Map.ofEntries(
                 // Surfaces — warm parchment for page, deep ink for header band.
-                Map.entry(StudioVars.COLOR_SURFACE,          "#EFE7D6"),  // parchment
-                Map.entry(StudioVars.COLOR_SURFACE_RAISED,   "#F7F1E0"),  // raised paper
-                Map.entry(StudioVars.COLOR_SURFACE_RECESSED, "#E2D8C2"),  // aged paper
-                Map.entry(StudioVars.COLOR_SURFACE_INVERTED, "#1A1814"),  // deep ink
+                Map.entry(HomingVars.COLOR_SURFACE,          "#EFE7D6"),  // parchment
+                Map.entry(HomingVars.COLOR_SURFACE_RAISED,   "#F7F1E0"),  // raised paper
+                Map.entry(HomingVars.COLOR_SURFACE_RECESSED, "#E2D8C2"),  // aged paper
+                Map.entry(HomingVars.COLOR_SURFACE_INVERTED, "#1A1814"),  // deep ink
 
                 // Text — ink black on parchment, cream on ink.
-                Map.entry(StudioVars.COLOR_TEXT_PRIMARY,           "#2A2620"),  // ink
-                Map.entry(StudioVars.COLOR_TEXT_MUTED,             "#7A6F60"),  // warm grey
-                Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED,       "#EFE7D6"),  // cream
-                Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED_MUTED, "#A89F8B"),  // muted cream
-                Map.entry(StudioVars.COLOR_TEXT_TITLE,              "#B33A20"),   // title := link, unchanged
-                Map.entry(StudioVars.COLOR_TEXT_LINK,              "#B33A20"),  // brick red
-                Map.entry(StudioVars.COLOR_TEXT_LINK_HOVER,        "#8C2814"),  // darker brick
+                Map.entry(HomingVars.COLOR_TEXT_PRIMARY,           "#2A2620"),  // ink
+                Map.entry(HomingVars.COLOR_TEXT_MUTED,             "#7A6F60"),  // warm grey
+                Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED,       "#EFE7D6"),  // cream
+                Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED_MUTED, "#A89F8B"),  // muted cream
+                Map.entry(HomingVars.COLOR_TEXT_TITLE,              "#B33A20"),   // title := link, unchanged
+                Map.entry(HomingVars.COLOR_TEXT_LINK,              "#B33A20"),  // brick red
+                Map.entry(HomingVars.COLOR_TEXT_LINK_HOVER,        "#8C2814"),  // darker brick
 
                 // Borders — aged-paper neutral with brick-red emphasis.
-                Map.entry(StudioVars.COLOR_BORDER,          "#C7BCA3"),  // aged paper
-                Map.entry(StudioVars.COLOR_BORDER_EMPHASIS, "#B33A20"),  // brick red
+                Map.entry(HomingVars.COLOR_BORDER,          "#C7BCA3"),  // aged paper
+                Map.entry(HomingVars.COLOR_BORDER_EMPHASIS, "#B33A20"),  // brick red
 
                 // Accent — brick red.
-                Map.entry(StudioVars.COLOR_ACCENT,          "#B33A20"),
-                Map.entry(StudioVars.COLOR_ACCENT_EMPHASIS, "#8C2814"),
-                Map.entry(StudioVars.COLOR_ACCENT_ON,       "#EFE7D6"),
+                Map.entry(HomingVars.COLOR_ACCENT,          "#B33A20"),
+                Map.entry(HomingVars.COLOR_ACCENT_EMPHASIS, "#8C2814"),
+                Map.entry(HomingVars.COLOR_ACCENT_ON,       "#EFE7D6"),
 
                 // Spacing / radius — same scale as default.
-                Map.entry(StudioVars.SPACE_1, "4px"),
-                Map.entry(StudioVars.SPACE_2, "8px"),
-                Map.entry(StudioVars.SPACE_3, "12px"),
-                Map.entry(StudioVars.SPACE_4, "16px"),
-                Map.entry(StudioVars.SPACE_5, "20px"),
-                Map.entry(StudioVars.SPACE_6, "24px"),
-                Map.entry(StudioVars.SPACE_7, "32px"),
-                Map.entry(StudioVars.SPACE_8, "40px"),
-                Map.entry(StudioVars.RADIUS_SM, "2px"),  // tighter radius — paper feels less plasticy
-                Map.entry(StudioVars.RADIUS_MD, "4px"),
-                Map.entry(StudioVars.RADIUS_LG, "6px")
+                Map.entry(HomingVars.SPACE_1, "4px"),
+                Map.entry(HomingVars.SPACE_2, "8px"),
+                Map.entry(HomingVars.SPACE_3, "12px"),
+                Map.entry(HomingVars.SPACE_4, "16px"),
+                Map.entry(HomingVars.SPACE_5, "20px"),
+                Map.entry(HomingVars.SPACE_6, "24px"),
+                Map.entry(HomingVars.SPACE_7, "32px"),
+                Map.entry(HomingVars.SPACE_8, "40px"),
+                Map.entry(HomingVars.RADIUS_SM, "2px"),  // tighter radius — paper feels less plasticy
+                Map.entry(HomingVars.RADIUS_MD, "4px"),
+                Map.entry(HomingVars.RADIUS_LG, "6px")
         );
     }
 

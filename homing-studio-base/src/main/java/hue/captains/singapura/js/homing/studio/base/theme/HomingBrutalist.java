@@ -2,6 +2,8 @@ package hue.captains.singapura.js.homing.studio.base.theme;
 
 import hue.captains.singapura.js.homing.core.Component;
 import hue.captains.singapura.js.homing.core.CssVar;
+import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
+import hue.captains.singapura.js.homing.theme.color.HomingVars;
 import hue.captains.singapura.js.homing.core.Layer;
 import hue.captains.singapura.js.homing.core.MediaGated;
 import hue.captains.singapura.js.homing.core.Prose;
@@ -67,43 +69,43 @@ public record HomingBrutalist() implements Theme {
         // wherever a rule is meant to be seen.
         private static final Map<CssVar, String> VALUES = Map.ofEntries(
                 // Surfaces — paper page, ink masthead.
-                Map.entry(StudioVars.COLOR_SURFACE,          "#FFFFFF"),
-                Map.entry(StudioVars.COLOR_SURFACE_RAISED,   "#FFFFFF"),
-                Map.entry(StudioVars.COLOR_SURFACE_RECESSED, "#EFEFEF"),
-                Map.entry(StudioVars.COLOR_SURFACE_INVERTED, "#000000"),
+                Map.entry(HomingVars.COLOR_SURFACE,          "#FFFFFF"),
+                Map.entry(HomingVars.COLOR_SURFACE_RAISED,   "#FFFFFF"),
+                Map.entry(HomingVars.COLOR_SURFACE_RECESSED, "#EFEFEF"),
+                Map.entry(HomingVars.COLOR_SURFACE_INVERTED, "#000000"),
 
                 // Text — ink; muted stays well inside legibility.
-                Map.entry(StudioVars.COLOR_TEXT_PRIMARY,           "#000000"),
-                Map.entry(StudioVars.COLOR_TEXT_MUTED,             "#4A4A4A"),
-                Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED,       "#FFFFFF"),
-                Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED_MUTED, "#D9D9D9"),
-                Map.entry(StudioVars.COLOR_TEXT_TITLE,             "#000000"),
-                Map.entry(StudioVars.COLOR_TEXT_LINK,              "#2B4CFF"),  // riso blue
-                Map.entry(StudioVars.COLOR_TEXT_LINK_HOVER,        "#FF3B21"),  // riso red
+                Map.entry(HomingVars.COLOR_TEXT_PRIMARY,           "#000000"),
+                Map.entry(HomingVars.COLOR_TEXT_MUTED,             "#4A4A4A"),
+                Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED,       "#FFFFFF"),
+                Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED_MUTED, "#D9D9D9"),
+                Map.entry(HomingVars.COLOR_TEXT_TITLE,             "#000000"),
+                Map.entry(HomingVars.COLOR_TEXT_LINK,              "#2B4CFF"),  // riso blue
+                Map.entry(HomingVars.COLOR_TEXT_LINK_HOVER,        "#FF3B21"),  // riso red
 
                 // Borders — grid grey for hairlines, ink for emphasis.
-                Map.entry(StudioVars.COLOR_BORDER,          "#D9D9D9"),
-                Map.entry(StudioVars.COLOR_BORDER_EMPHASIS, "#000000"),
+                Map.entry(HomingVars.COLOR_BORDER,          "#D9D9D9"),
+                Map.entry(HomingVars.COLOR_BORDER_EMPHASIS, "#000000"),
 
                 // Accent — the yellow; red when pressed; ink on it.
-                Map.entry(StudioVars.COLOR_ACCENT,          "#FFE800"),
-                Map.entry(StudioVars.COLOR_ACCENT_EMPHASIS, "#FF3B21"),
-                Map.entry(StudioVars.COLOR_ACCENT_ON,       "#000000"),
+                Map.entry(HomingVars.COLOR_ACCENT,          "#FFE800"),
+                Map.entry(HomingVars.COLOR_ACCENT_EMPHASIS, "#FF3B21"),
+                Map.entry(HomingVars.COLOR_ACCENT_ON,       "#000000"),
 
                 // Spacing — the default scale.
-                Map.entry(StudioVars.SPACE_1, "4px"),
-                Map.entry(StudioVars.SPACE_2, "8px"),
-                Map.entry(StudioVars.SPACE_3, "12px"),
-                Map.entry(StudioVars.SPACE_4, "16px"),
-                Map.entry(StudioVars.SPACE_5, "20px"),
-                Map.entry(StudioVars.SPACE_6, "24px"),
-                Map.entry(StudioVars.SPACE_7, "32px"),
-                Map.entry(StudioVars.SPACE_8, "40px"),
+                Map.entry(HomingVars.SPACE_1, "4px"),
+                Map.entry(HomingVars.SPACE_2, "8px"),
+                Map.entry(HomingVars.SPACE_3, "12px"),
+                Map.entry(HomingVars.SPACE_4, "16px"),
+                Map.entry(HomingVars.SPACE_5, "20px"),
+                Map.entry(HomingVars.SPACE_6, "24px"),
+                Map.entry(HomingVars.SPACE_7, "32px"),
+                Map.entry(HomingVars.SPACE_8, "40px"),
 
                 // Radius — none. A corner is a corner.
-                Map.entry(StudioVars.RADIUS_SM, "0px"),
-                Map.entry(StudioVars.RADIUS_MD, "0px"),
-                Map.entry(StudioVars.RADIUS_LG, "0px")
+                Map.entry(HomingVars.RADIUS_SM, "0px"),
+                Map.entry(HomingVars.RADIUS_MD, "0px"),
+                Map.entry(HomingVars.RADIUS_LG, "0px")
         );
     }
 

@@ -1,6 +1,8 @@
 package hue.captains.singapura.js.homing.studio.base.theme;
 
 import hue.captains.singapura.js.homing.core.CssVar;
+import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
+import hue.captains.singapura.js.homing.theme.color.HomingVars;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.ThemeGlobals;
 
@@ -61,52 +63,52 @@ public record HomingCarbon() implements Theme {
                 // so the header reads as a frame rather than as another panel.
                 // Neutral is the correction: the first cut was blue-cast slate,
                 // and against the reference the cast was the thing you noticed.
-                Map.entry(StudioVars.COLOR_SURFACE,          "#242424"),  // page, grid
-                Map.entry(StudioVars.COLOR_SURFACE_RAISED,   "#2C2C2C"),  // panels, cards
-                Map.entry(StudioVars.COLOR_SURFACE_RECESSED, "#1C1C1C"),  // wells, inputs
-                Map.entry(StudioVars.COLOR_SURFACE_INVERTED, "#161616"),  // chrome band
+                Map.entry(HomingVars.COLOR_SURFACE,          "#242424"),  // page, grid
+                Map.entry(HomingVars.COLOR_SURFACE_RAISED,   "#2C2C2C"),  // panels, cards
+                Map.entry(HomingVars.COLOR_SURFACE_RECESSED, "#1C1C1C"),  // wells, inputs
+                Map.entry(HomingVars.COLOR_SURFACE_INVERTED, "#161616"),  // chrome band
 
                 // Text — neutral grey rather than white. Pure #FFF on near-black
                 // vibrates over long reads; #D6D6D6 still clears ~11:1 on the page.
-                Map.entry(StudioVars.COLOR_TEXT_PRIMARY,           "#D6D6D6"),
-                Map.entry(StudioVars.COLOR_TEXT_MUTED,             "#8C8C8C"),
-                Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED,       "#E4E4E4"),
-                Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED_MUTED, "#9A9A9A"),
+                Map.entry(HomingVars.COLOR_TEXT_PRIMARY,           "#D6D6D6"),
+                Map.entry(HomingVars.COLOR_TEXT_MUTED,             "#8C8C8C"),
+                Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED,       "#E4E4E4"),
+                Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED_MUTED, "#9A9A9A"),
 
                 // The title is NOT the link colour. A link blue is lifted so it
                 // reads at 13px on a dark ground; the same value at 44px is a
                 // shout, and the reference has no large coloured text at all.
                 // Near-white, so the heading reads through size and weight.
-                Map.entry(StudioVars.COLOR_TEXT_TITLE,             "#EDEDED"),
+                Map.entry(HomingVars.COLOR_TEXT_TITLE,             "#EDEDED"),
 
                 // Blue is for LINKS only — "you can go here". In the reference
                 // this is the colour of a row identifier and of nothing else.
-                Map.entry(StudioVars.COLOR_TEXT_LINK,              "#4C9AFF"),
-                Map.entry(StudioVars.COLOR_TEXT_LINK_HOVER,        "#7FB8FF"),
+                Map.entry(HomingVars.COLOR_TEXT_LINK,              "#4C9AFF"),
+                Map.entry(HomingVars.COLOR_TEXT_LINK_HOVER,        "#7FB8FF"),
 
                 // Borders — a shade, not a line. Emphasis takes the accent.
-                Map.entry(StudioVars.COLOR_BORDER,          "#3A3A3A"),
-                Map.entry(StudioVars.COLOR_BORDER_EMPHASIS, "#E8912D"),
+                Map.entry(HomingVars.COLOR_BORDER,          "#3A3A3A"),
+                Map.entry(HomingVars.COLOR_BORDER_EMPHASIS, "#E8912D"),
 
                 // Amber is for ATTENTION — "look at this". An active filter, a
                 // live count, a checked box. Distinct from blue on purpose, and
                 // the reason the studio's gold brand mark stops looking stranded.
-                Map.entry(StudioVars.COLOR_ACCENT,          "#E8912D"),
-                Map.entry(StudioVars.COLOR_ACCENT_EMPHASIS, "#C97518"),
-                Map.entry(StudioVars.COLOR_ACCENT_ON,       "#1A1A1A"),
+                Map.entry(HomingVars.COLOR_ACCENT,          "#E8912D"),
+                Map.entry(HomingVars.COLOR_ACCENT_EMPHASIS, "#C97518"),
+                Map.entry(HomingVars.COLOR_ACCENT_ON,       "#1A1A1A"),
 
                 // Spacing / radius — same scale as default.
-                Map.entry(StudioVars.SPACE_1, "4px"),
-                Map.entry(StudioVars.SPACE_2, "8px"),
-                Map.entry(StudioVars.SPACE_3, "12px"),
-                Map.entry(StudioVars.SPACE_4, "16px"),
-                Map.entry(StudioVars.SPACE_5, "20px"),
-                Map.entry(StudioVars.SPACE_6, "24px"),
-                Map.entry(StudioVars.SPACE_7, "32px"),
-                Map.entry(StudioVars.SPACE_8, "40px"),
-                Map.entry(StudioVars.RADIUS_SM, "4px"),
-                Map.entry(StudioVars.RADIUS_MD, "8px"),
-                Map.entry(StudioVars.RADIUS_LG, "12px")
+                Map.entry(HomingVars.SPACE_1, "4px"),
+                Map.entry(HomingVars.SPACE_2, "8px"),
+                Map.entry(HomingVars.SPACE_3, "12px"),
+                Map.entry(HomingVars.SPACE_4, "16px"),
+                Map.entry(HomingVars.SPACE_5, "20px"),
+                Map.entry(HomingVars.SPACE_6, "24px"),
+                Map.entry(HomingVars.SPACE_7, "32px"),
+                Map.entry(HomingVars.SPACE_8, "40px"),
+                Map.entry(HomingVars.RADIUS_SM, "4px"),
+                Map.entry(HomingVars.RADIUS_MD, "8px"),
+                Map.entry(HomingVars.RADIUS_LG, "12px")
         );
     }
 

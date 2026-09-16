@@ -1,6 +1,8 @@
 package hue.captains.singapura.js.homing.studio.base.theme;
 
 import hue.captains.singapura.js.homing.core.CssVar;
+import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
+import hue.captains.singapura.js.homing.theme.color.HomingVars;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.ThemeGlobals;
 
@@ -35,41 +37,41 @@ public record HomingSunset() implements Theme {
         // cream surfaces.
         private static final Map<CssVar, String> VALUES = Map.ofEntries(
                 // Surfaces
-                Map.entry(StudioVars.COLOR_SURFACE,          "#FFF5EB"),  // cream page bg
-                Map.entry(StudioVars.COLOR_SURFACE_RAISED,   "#FFFFFF"),
-                Map.entry(StudioVars.COLOR_SURFACE_RECESSED, "#F5E8DA"),  // pale sand
-                Map.entry(StudioVars.COLOR_SURFACE_INVERTED, "#7A2E2E"),  // deep clay header
+                Map.entry(HomingVars.COLOR_SURFACE,          "#FFF5EB"),  // cream page bg
+                Map.entry(HomingVars.COLOR_SURFACE_RAISED,   "#FFFFFF"),
+                Map.entry(HomingVars.COLOR_SURFACE_RECESSED, "#F5E8DA"),  // pale sand
+                Map.entry(HomingVars.COLOR_SURFACE_INVERTED, "#7A2E2E"),  // deep clay header
 
                 // Text
-                Map.entry(StudioVars.COLOR_TEXT_PRIMARY,           "#4A2D1A"),  // dark cocoa
-                Map.entry(StudioVars.COLOR_TEXT_MUTED,             "#8B6F4E"),  // muted sand
-                Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED,       "#FFFFFF"),
-                Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED_MUTED, "#FFD4A8"),  // peach
-                Map.entry(StudioVars.COLOR_TEXT_TITLE,              "#B85450"),   // title := link, unchanged
-                Map.entry(StudioVars.COLOR_TEXT_LINK,              "#B85450"),  // terracotta
-                Map.entry(StudioVars.COLOR_TEXT_LINK_HOVER,        "#D2691E"),  // burnt orange
+                Map.entry(HomingVars.COLOR_TEXT_PRIMARY,           "#4A2D1A"),  // dark cocoa
+                Map.entry(HomingVars.COLOR_TEXT_MUTED,             "#8B6F4E"),  // muted sand
+                Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED,       "#FFFFFF"),
+                Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED_MUTED, "#FFD4A8"),  // peach
+                Map.entry(HomingVars.COLOR_TEXT_TITLE,              "#B85450"),   // title := link, unchanged
+                Map.entry(HomingVars.COLOR_TEXT_LINK,              "#B85450"),  // terracotta
+                Map.entry(HomingVars.COLOR_TEXT_LINK_HOVER,        "#D2691E"),  // burnt orange
 
                 // Borders
-                Map.entry(StudioVars.COLOR_BORDER,          "#E8D5C0"),  // sand
-                Map.entry(StudioVars.COLOR_BORDER_EMPHASIS, "#FF8C42"),  // sunset orange
+                Map.entry(HomingVars.COLOR_BORDER,          "#E8D5C0"),  // sand
+                Map.entry(HomingVars.COLOR_BORDER_EMPHASIS, "#FF8C42"),  // sunset orange
 
                 // Accent — sunset orange
-                Map.entry(StudioVars.COLOR_ACCENT,          "#FF8C42"),
-                Map.entry(StudioVars.COLOR_ACCENT_EMPHASIS, "#D2691E"),
-                Map.entry(StudioVars.COLOR_ACCENT_ON,       "#7A2E2E"),
+                Map.entry(HomingVars.COLOR_ACCENT,          "#FF8C42"),
+                Map.entry(HomingVars.COLOR_ACCENT_EMPHASIS, "#D2691E"),
+                Map.entry(HomingVars.COLOR_ACCENT_ON,       "#7A2E2E"),
 
                 // Spacing / radius — same scale.
-                Map.entry(StudioVars.SPACE_1, "4px"),
-                Map.entry(StudioVars.SPACE_2, "8px"),
-                Map.entry(StudioVars.SPACE_3, "12px"),
-                Map.entry(StudioVars.SPACE_4, "16px"),
-                Map.entry(StudioVars.SPACE_5, "20px"),
-                Map.entry(StudioVars.SPACE_6, "24px"),
-                Map.entry(StudioVars.SPACE_7, "32px"),
-                Map.entry(StudioVars.SPACE_8, "40px"),
-                Map.entry(StudioVars.RADIUS_SM, "4px"),
-                Map.entry(StudioVars.RADIUS_MD, "8px"),
-                Map.entry(StudioVars.RADIUS_LG, "12px")
+                Map.entry(HomingVars.SPACE_1, "4px"),
+                Map.entry(HomingVars.SPACE_2, "8px"),
+                Map.entry(HomingVars.SPACE_3, "12px"),
+                Map.entry(HomingVars.SPACE_4, "16px"),
+                Map.entry(HomingVars.SPACE_5, "20px"),
+                Map.entry(HomingVars.SPACE_6, "24px"),
+                Map.entry(HomingVars.SPACE_7, "32px"),
+                Map.entry(HomingVars.SPACE_8, "40px"),
+                Map.entry(HomingVars.RADIUS_SM, "4px"),
+                Map.entry(HomingVars.RADIUS_MD, "8px"),
+                Map.entry(HomingVars.RADIUS_LG, "12px")
         );
     }
 

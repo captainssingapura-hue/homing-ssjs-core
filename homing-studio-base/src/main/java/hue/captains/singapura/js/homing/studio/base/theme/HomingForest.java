@@ -1,6 +1,8 @@
 package hue.captains.singapura.js.homing.studio.base.theme;
 
 import hue.captains.singapura.js.homing.core.CssVar;
+import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
+import hue.captains.singapura.js.homing.theme.color.HomingVars;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.ThemeGlobals;
 
@@ -35,41 +37,41 @@ public record HomingForest() implements Theme {
         // accents; pale-green/sage surfaces for light mode.
         private static final Map<CssVar, String> VALUES = Map.ofEntries(
                 // Surfaces
-                Map.entry(StudioVars.COLOR_SURFACE,          "#F4F8F2"),  // pale green page bg
-                Map.entry(StudioVars.COLOR_SURFACE_RAISED,   "#FFFFFF"),
-                Map.entry(StudioVars.COLOR_SURFACE_RECESSED, "#E8EFE3"),  // pale sage subtle
-                Map.entry(StudioVars.COLOR_SURFACE_INVERTED, "#1A3829"),  // deep evergreen header
+                Map.entry(HomingVars.COLOR_SURFACE,          "#F4F8F2"),  // pale green page bg
+                Map.entry(HomingVars.COLOR_SURFACE_RAISED,   "#FFFFFF"),
+                Map.entry(HomingVars.COLOR_SURFACE_RECESSED, "#E8EFE3"),  // pale sage subtle
+                Map.entry(HomingVars.COLOR_SURFACE_INVERTED, "#1A3829"),  // deep evergreen header
 
                 // Text
-                Map.entry(StudioVars.COLOR_TEXT_PRIMARY,           "#2A3D2E"),  // dark forest text
-                Map.entry(StudioVars.COLOR_TEXT_MUTED,             "#5C7561"),  // muted moss
-                Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED,       "#FFFFFF"),
-                Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED_MUTED, "#C8E6C9"),  // pale moss
-                Map.entry(StudioVars.COLOR_TEXT_TITLE,              "#2D5F3F"),   // title := link, unchanged
-                Map.entry(StudioVars.COLOR_TEXT_LINK,              "#2D5F3F"),  // forest green
-                Map.entry(StudioVars.COLOR_TEXT_LINK_HOVER,        "#A6781E"),  // dark honey
+                Map.entry(HomingVars.COLOR_TEXT_PRIMARY,           "#2A3D2E"),  // dark forest text
+                Map.entry(HomingVars.COLOR_TEXT_MUTED,             "#5C7561"),  // muted moss
+                Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED,       "#FFFFFF"),
+                Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED_MUTED, "#C8E6C9"),  // pale moss
+                Map.entry(HomingVars.COLOR_TEXT_TITLE,              "#2D5F3F"),   // title := link, unchanged
+                Map.entry(HomingVars.COLOR_TEXT_LINK,              "#2D5F3F"),  // forest green
+                Map.entry(HomingVars.COLOR_TEXT_LINK_HOVER,        "#A6781E"),  // dark honey
 
                 // Borders
-                Map.entry(StudioVars.COLOR_BORDER,          "#D4DFCC"),  // sage
-                Map.entry(StudioVars.COLOR_BORDER_EMPHASIS, "#D4A04C"),  // honey
+                Map.entry(HomingVars.COLOR_BORDER,          "#D4DFCC"),  // sage
+                Map.entry(HomingVars.COLOR_BORDER_EMPHASIS, "#D4A04C"),  // honey
 
                 // Accent — honey
-                Map.entry(StudioVars.COLOR_ACCENT,          "#D4A04C"),
-                Map.entry(StudioVars.COLOR_ACCENT_EMPHASIS, "#A6781E"),
-                Map.entry(StudioVars.COLOR_ACCENT_ON,       "#1A3829"),
+                Map.entry(HomingVars.COLOR_ACCENT,          "#D4A04C"),
+                Map.entry(HomingVars.COLOR_ACCENT_EMPHASIS, "#A6781E"),
+                Map.entry(HomingVars.COLOR_ACCENT_ON,       "#1A3829"),
 
                 // Spacing / radius — same scale as default.
-                Map.entry(StudioVars.SPACE_1, "4px"),
-                Map.entry(StudioVars.SPACE_2, "8px"),
-                Map.entry(StudioVars.SPACE_3, "12px"),
-                Map.entry(StudioVars.SPACE_4, "16px"),
-                Map.entry(StudioVars.SPACE_5, "20px"),
-                Map.entry(StudioVars.SPACE_6, "24px"),
-                Map.entry(StudioVars.SPACE_7, "32px"),
-                Map.entry(StudioVars.SPACE_8, "40px"),
-                Map.entry(StudioVars.RADIUS_SM, "4px"),
-                Map.entry(StudioVars.RADIUS_MD, "8px"),
-                Map.entry(StudioVars.RADIUS_LG, "12px")
+                Map.entry(HomingVars.SPACE_1, "4px"),
+                Map.entry(HomingVars.SPACE_2, "8px"),
+                Map.entry(HomingVars.SPACE_3, "12px"),
+                Map.entry(HomingVars.SPACE_4, "16px"),
+                Map.entry(HomingVars.SPACE_5, "20px"),
+                Map.entry(HomingVars.SPACE_6, "24px"),
+                Map.entry(HomingVars.SPACE_7, "32px"),
+                Map.entry(HomingVars.SPACE_8, "40px"),
+                Map.entry(HomingVars.RADIUS_SM, "4px"),
+                Map.entry(HomingVars.RADIUS_MD, "8px"),
+                Map.entry(HomingVars.RADIUS_LG, "12px")
         );
     }
 

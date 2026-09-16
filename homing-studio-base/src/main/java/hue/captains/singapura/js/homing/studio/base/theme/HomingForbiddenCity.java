@@ -1,6 +1,8 @@
 package hue.captains.singapura.js.homing.studio.base.theme;
 
 import hue.captains.singapura.js.homing.core.CssVar;
+import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
+import hue.captains.singapura.js.homing.theme.color.HomingVars;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.ThemeGlobals;
 
@@ -38,41 +40,41 @@ public record HomingForbiddenCity() implements Theme {
         // Vermilion + imperial gold + parchment + ink. Warm, saturated, historical.
         private static final Map<CssVar, String> VALUES = Map.ofEntries(
                 // Surfaces — parchment page, vermilion header band.
-                Map.entry(StudioVars.COLOR_SURFACE,          "#F5E8D3"),  // warm parchment
-                Map.entry(StudioVars.COLOR_SURFACE_RAISED,   "#FBF5E6"),  // raised paper
-                Map.entry(StudioVars.COLOR_SURFACE_RECESSED, "#EAD9B8"),  // aged paper
-                Map.entry(StudioVars.COLOR_SURFACE_INVERTED, "#7A1F1A"),  // imperial vermilion
+                Map.entry(HomingVars.COLOR_SURFACE,          "#F5E8D3"),  // warm parchment
+                Map.entry(HomingVars.COLOR_SURFACE_RAISED,   "#FBF5E6"),  // raised paper
+                Map.entry(HomingVars.COLOR_SURFACE_RECESSED, "#EAD9B8"),  // aged paper
+                Map.entry(HomingVars.COLOR_SURFACE_INVERTED, "#7A1F1A"),  // imperial vermilion
 
                 // Text — dark ink on parchment, cream on vermilion.
-                Map.entry(StudioVars.COLOR_TEXT_PRIMARY,           "#2A1810"),  // dark ink
-                Map.entry(StudioVars.COLOR_TEXT_MUTED,             "#7A5A3E"),  // tea brown
-                Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED,       "#F5E8D3"),  // cream
-                Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED_MUTED, "#D4B896"),  // muted cream
-                Map.entry(StudioVars.COLOR_TEXT_TITLE,              "#7A1F1A"),   // title := link, unchanged
-                Map.entry(StudioVars.COLOR_TEXT_LINK,              "#7A1F1A"),  // vermilion
-                Map.entry(StudioVars.COLOR_TEXT_LINK_HOVER,        "#A03028"),  // brighter red
+                Map.entry(HomingVars.COLOR_TEXT_PRIMARY,           "#2A1810"),  // dark ink
+                Map.entry(HomingVars.COLOR_TEXT_MUTED,             "#7A5A3E"),  // tea brown
+                Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED,       "#F5E8D3"),  // cream
+                Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED_MUTED, "#D4B896"),  // muted cream
+                Map.entry(HomingVars.COLOR_TEXT_TITLE,              "#7A1F1A"),   // title := link, unchanged
+                Map.entry(HomingVars.COLOR_TEXT_LINK,              "#7A1F1A"),  // vermilion
+                Map.entry(HomingVars.COLOR_TEXT_LINK_HOVER,        "#A03028"),  // brighter red
 
                 // Borders — tan with imperial-gold emphasis.
-                Map.entry(StudioVars.COLOR_BORDER,          "#D4B896"),  // tan
-                Map.entry(StudioVars.COLOR_BORDER_EMPHASIS, "#C8911C"),  // imperial gold
+                Map.entry(HomingVars.COLOR_BORDER,          "#D4B896"),  // tan
+                Map.entry(HomingVars.COLOR_BORDER_EMPHASIS, "#C8911C"),  // imperial gold
 
                 // Accent — imperial gold; emphasis flips to vermilion.
-                Map.entry(StudioVars.COLOR_ACCENT,          "#C8911C"),  // imperial gold
-                Map.entry(StudioVars.COLOR_ACCENT_EMPHASIS, "#A03028"),  // vermilion
-                Map.entry(StudioVars.COLOR_ACCENT_ON,       "#2A1810"),  // dark ink on gold
+                Map.entry(HomingVars.COLOR_ACCENT,          "#C8911C"),  // imperial gold
+                Map.entry(HomingVars.COLOR_ACCENT_EMPHASIS, "#A03028"),  // vermilion
+                Map.entry(HomingVars.COLOR_ACCENT_ON,       "#2A1810"),  // dark ink on gold
 
                 // Spacing / radius — same scale as default.
-                Map.entry(StudioVars.SPACE_1, "4px"),
-                Map.entry(StudioVars.SPACE_2, "8px"),
-                Map.entry(StudioVars.SPACE_3, "12px"),
-                Map.entry(StudioVars.SPACE_4, "16px"),
-                Map.entry(StudioVars.SPACE_5, "20px"),
-                Map.entry(StudioVars.SPACE_6, "24px"),
-                Map.entry(StudioVars.SPACE_7, "32px"),
-                Map.entry(StudioVars.SPACE_8, "40px"),
-                Map.entry(StudioVars.RADIUS_SM, "4px"),
-                Map.entry(StudioVars.RADIUS_MD, "8px"),
-                Map.entry(StudioVars.RADIUS_LG, "12px")
+                Map.entry(HomingVars.SPACE_1, "4px"),
+                Map.entry(HomingVars.SPACE_2, "8px"),
+                Map.entry(HomingVars.SPACE_3, "12px"),
+                Map.entry(HomingVars.SPACE_4, "16px"),
+                Map.entry(HomingVars.SPACE_5, "20px"),
+                Map.entry(HomingVars.SPACE_6, "24px"),
+                Map.entry(HomingVars.SPACE_7, "32px"),
+                Map.entry(HomingVars.SPACE_8, "40px"),
+                Map.entry(HomingVars.RADIUS_SM, "4px"),
+                Map.entry(HomingVars.RADIUS_MD, "8px"),
+                Map.entry(HomingVars.RADIUS_LG, "12px")
         );
     }
 

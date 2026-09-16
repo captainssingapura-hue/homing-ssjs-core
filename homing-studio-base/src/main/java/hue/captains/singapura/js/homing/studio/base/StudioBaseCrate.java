@@ -45,8 +45,8 @@ import hue.captains.singapura.js.homing.studio.base.table.TableViewerRenderer;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemePicker;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemePickerModel;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemePickerStyles;
-import hue.captains.singapura.js.homing.studio.base.theme.GlobalColorPalette;
 import hue.captains.singapura.js.homing.studio.base.theme.StudioVarsJsModule;
+import hue.captains.singapura.js.homing.theme.color.ThemeColorCrate;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemePreview;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemePreviewRenderer;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemesIntro;
@@ -90,7 +90,8 @@ public final class StudioBaseCrate implements Crate {
 
     @Override
     public List<Crate> requires() {
-        return List.of(CoreJsCrate.INSTANCE, ServerCrate.INSTANCE, LibsCrate.INSTANCE);
+        // RFC 0066 - the palette every studio class reads lives in the theme design core.
+        return List.of(CoreJsCrate.INSTANCE, ServerCrate.INSTANCE, LibsCrate.INSTANCE, ThemeColorCrate.INSTANCE);
     }
 
     @Override
@@ -123,8 +124,6 @@ public final class StudioBaseCrate implements Crate {
                 CrateEntry.of(TocSyncModule.INSTANCE),
                 CrateEntry.of(StudioStyles.INSTANCE),
                 CrateEntry.of(Util.INSTANCE),
-                // RFC 0066 - the global palette as a node of the CSS graph; the prior.
-                CrateEntry.of(GlobalColorPalette.INSTANCE),
                 CrateEntry.of(HtmlExportModule.INSTANCE),
                 CrateEntry.of(StudioGraphInspector.INSTANCE),
                 CrateEntry.of(StudioGraphInspectorRenderer.INSTANCE),

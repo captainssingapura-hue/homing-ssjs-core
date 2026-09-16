@@ -13,6 +13,9 @@
         <module>homing-core-js</module>
         <module>homing-server</module>
         <module>homing-libs</module>
+        <!-- RFC 0065 layer 3 / RFC 0066 — the theme design core, one sub-module per
+             design vocabulary; colour first. -->
+        <module>homing-theme-design</module>
         <!-- The Meta-Function ontology — four typed interfaces naming the
              objects involved in code-generated codecs (ObjectDefinition,
              TransformationFunctions, FunctionsCodeGen, DefinitionCodeGen).

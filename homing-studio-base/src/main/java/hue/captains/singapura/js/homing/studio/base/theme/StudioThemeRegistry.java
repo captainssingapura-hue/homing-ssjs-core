@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.studio.base.theme;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.ThemeGlobals;
 import hue.captains.singapura.js.homing.core.PaletteProvision;
+import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
 import hue.captains.singapura.js.homing.server.ThemeRegistry;
 
 import java.util.List;

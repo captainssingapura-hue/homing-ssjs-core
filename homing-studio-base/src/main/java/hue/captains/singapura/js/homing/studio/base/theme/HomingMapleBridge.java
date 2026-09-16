@@ -2,6 +2,8 @@ package hue.captains.singapura.js.homing.studio.base.theme;
 
 import hue.captains.singapura.js.homing.core.ClickTarget;
 import hue.captains.singapura.js.homing.core.CssVar;
+import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
+import hue.captains.singapura.js.homing.theme.color.HomingVars;
 import hue.captains.singapura.js.homing.core.Cue;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.ThemeAudio;
@@ -125,37 +127,37 @@ public record HomingMapleBridge() implements Theme {
         // that read well against the dawn scene; cards/header are opaque
         // surfaces that sit cleanly over the illustration.
         private static final Map<CssVar, String> VALUES = Map.ofEntries(
-                Map.entry(StudioVars.COLOR_SURFACE,                "#E8C9A0"),  // sky-bot dawn
-                Map.entry(StudioVars.COLOR_SURFACE_RAISED,         "#F5E7C8"),  // raised paper
-                Map.entry(StudioVars.COLOR_SURFACE_RECESSED,       "#D4B896"),  // sky-mid dawn
-                Map.entry(StudioVars.COLOR_SURFACE_INVERTED,       "#3A4250"),  // temple slate
+                Map.entry(HomingVars.COLOR_SURFACE,                "#E8C9A0"),  // sky-bot dawn
+                Map.entry(HomingVars.COLOR_SURFACE_RAISED,         "#F5E7C8"),  // raised paper
+                Map.entry(HomingVars.COLOR_SURFACE_RECESSED,       "#D4B896"),  // sky-mid dawn
+                Map.entry(HomingVars.COLOR_SURFACE_INVERTED,       "#3A4250"),  // temple slate
 
-                Map.entry(StudioVars.COLOR_TEXT_PRIMARY,           "#2A2418"),  // deep ink
-                Map.entry(StudioVars.COLOR_TEXT_MUTED,             "#5A5040"),
-                Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED,       "#FFF5DC"),  // dawn moon
-                Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED_MUTED, "#C0A878"),
-                Map.entry(StudioVars.COLOR_TEXT_TITLE,              "#8A6A3A"),   // title := link, unchanged
-                Map.entry(StudioVars.COLOR_TEXT_LINK,              "#8A6A3A"),  // amber window
-                Map.entry(StudioVars.COLOR_TEXT_LINK_HOVER,        "#4A5466"),  // mountain-near
+                Map.entry(HomingVars.COLOR_TEXT_PRIMARY,           "#2A2418"),  // deep ink
+                Map.entry(HomingVars.COLOR_TEXT_MUTED,             "#5A5040"),
+                Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED,       "#FFF5DC"),  // dawn moon
+                Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED_MUTED, "#C0A878"),
+                Map.entry(HomingVars.COLOR_TEXT_TITLE,              "#8A6A3A"),   // title := link, unchanged
+                Map.entry(HomingVars.COLOR_TEXT_LINK,              "#8A6A3A"),  // amber window
+                Map.entry(HomingVars.COLOR_TEXT_LINK_HOVER,        "#4A5466"),  // mountain-near
 
-                Map.entry(StudioVars.COLOR_BORDER,                 "#C0A878"),
-                Map.entry(StudioVars.COLOR_BORDER_EMPHASIS,        "#8A6A3A"),
+                Map.entry(HomingVars.COLOR_BORDER,                 "#C0A878"),
+                Map.entry(HomingVars.COLOR_BORDER_EMPHASIS,        "#8A6A3A"),
 
-                Map.entry(StudioVars.COLOR_ACCENT,                 "#8A6A3A"),
-                Map.entry(StudioVars.COLOR_ACCENT_EMPHASIS,        "#4A5466"),
-                Map.entry(StudioVars.COLOR_ACCENT_ON,              "#FFF5DC"),
+                Map.entry(HomingVars.COLOR_ACCENT,                 "#8A6A3A"),
+                Map.entry(HomingVars.COLOR_ACCENT_EMPHASIS,        "#4A5466"),
+                Map.entry(HomingVars.COLOR_ACCENT_ON,              "#FFF5DC"),
 
-                Map.entry(StudioVars.SPACE_1, "4px"),
-                Map.entry(StudioVars.SPACE_2, "8px"),
-                Map.entry(StudioVars.SPACE_3, "12px"),
-                Map.entry(StudioVars.SPACE_4, "16px"),
-                Map.entry(StudioVars.SPACE_5, "20px"),
-                Map.entry(StudioVars.SPACE_6, "24px"),
-                Map.entry(StudioVars.SPACE_7, "32px"),
-                Map.entry(StudioVars.SPACE_8, "40px"),
-                Map.entry(StudioVars.RADIUS_SM, "3px"),
-                Map.entry(StudioVars.RADIUS_MD, "6px"),
-                Map.entry(StudioVars.RADIUS_LG, "10px")
+                Map.entry(HomingVars.SPACE_1, "4px"),
+                Map.entry(HomingVars.SPACE_2, "8px"),
+                Map.entry(HomingVars.SPACE_3, "12px"),
+                Map.entry(HomingVars.SPACE_4, "16px"),
+                Map.entry(HomingVars.SPACE_5, "20px"),
+                Map.entry(HomingVars.SPACE_6, "24px"),
+                Map.entry(HomingVars.SPACE_7, "32px"),
+                Map.entry(HomingVars.SPACE_8, "40px"),
+                Map.entry(HomingVars.RADIUS_SM, "3px"),
+                Map.entry(HomingVars.RADIUS_MD, "6px"),
+                Map.entry(HomingVars.RADIUS_LG, "10px")
         );
     }
 

@@ -3,6 +3,8 @@ package hue.captains.singapura.js.homing.studio.base.theme;
 import hue.captains.singapura.js.homing.core.ClickTarget;
 import hue.captains.singapura.js.homing.core.Component;
 import hue.captains.singapura.js.homing.core.CssVar;
+import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
+import hue.captains.singapura.js.homing.theme.color.HomingVars;
 import hue.captains.singapura.js.homing.core.Cue;
 import hue.captains.singapura.js.homing.core.Layer;
 import hue.captains.singapura.js.homing.core.MediaGated;
@@ -146,44 +148,44 @@ public record HomingRetro90s() implements Theme {
         // (Win95 desktop teal #008080, VGA blue #0000A8, Win95 chrome #C0C0C0).
         private static final Map<CssVar, String> VALUES = Map.ofEntries(
                 // Surfaces — teal page background, blue card windows, grey chrome.
-                Map.entry(StudioVars.COLOR_SURFACE,          "#008080"),  // Win95 desktop teal
-                Map.entry(StudioVars.COLOR_SURFACE_RAISED,   "#0000A8"),  // VGA blue — the iconic card window
-                Map.entry(StudioVars.COLOR_SURFACE_RECESSED, "#006666"),  // deeper teal — recessed wells
-                Map.entry(StudioVars.COLOR_SURFACE_INVERTED, "#C0C0C0"),  // Win95 chrome grey — header/footer task bar
+                Map.entry(HomingVars.COLOR_SURFACE,          "#008080"),  // Win95 desktop teal
+                Map.entry(HomingVars.COLOR_SURFACE_RAISED,   "#0000A8"),  // VGA blue — the iconic card window
+                Map.entry(HomingVars.COLOR_SURFACE_RECESSED, "#006666"),  // deeper teal — recessed wells
+                Map.entry(HomingVars.COLOR_SURFACE_INVERTED, "#C0C0C0"),  // Win95 chrome grey — header/footer task bar
 
                 // Text — white on teal/blue surfaces, black on grey task bars,
                 // cyan field-labels, amber for the link/highlight role.
-                Map.entry(StudioVars.COLOR_TEXT_PRIMARY,           "#FFFFFF"),  // bright white
-                Map.entry(StudioVars.COLOR_TEXT_MUTED,             "#55FFFF"),  // bright cyan — labels
-                Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED,       "#000000"),  // black on grey
-                Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED_MUTED, "#800000"),  // dark red — session badge
-                Map.entry(StudioVars.COLOR_TEXT_TITLE,              "#FFFF55"),   // title := link, unchanged
-                Map.entry(StudioVars.COLOR_TEXT_LINK,              "#FFFF55"),  // bright amber
-                Map.entry(StudioVars.COLOR_TEXT_LINK_HOVER,        "#FFFFFF"),
+                Map.entry(HomingVars.COLOR_TEXT_PRIMARY,           "#FFFFFF"),  // bright white
+                Map.entry(HomingVars.COLOR_TEXT_MUTED,             "#55FFFF"),  // bright cyan — labels
+                Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED,       "#000000"),  // black on grey
+                Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED_MUTED, "#800000"),  // dark red — session badge
+                Map.entry(HomingVars.COLOR_TEXT_TITLE,              "#FFFF55"),   // title := link, unchanged
+                Map.entry(HomingVars.COLOR_TEXT_LINK,              "#FFFF55"),  // bright amber
+                Map.entry(HomingVars.COLOR_TEXT_LINK_HOVER,        "#FFFFFF"),
 
                 // Borders — solid white for window edges, amber for emphasis.
-                Map.entry(StudioVars.COLOR_BORDER,          "#FFFFFF"),
-                Map.entry(StudioVars.COLOR_BORDER_EMPHASIS, "#FFFF55"),
+                Map.entry(HomingVars.COLOR_BORDER,          "#FFFFFF"),
+                Map.entry(HomingVars.COLOR_BORDER_EMPHASIS, "#FFFF55"),
 
                 // Accent — amber. Classic terminal highlight colour.
-                Map.entry(StudioVars.COLOR_ACCENT,          "#FFFF55"),
-                Map.entry(StudioVars.COLOR_ACCENT_EMPHASIS, "#FFFFFF"),
-                Map.entry(StudioVars.COLOR_ACCENT_ON,       "#0000A8"),
+                Map.entry(HomingVars.COLOR_ACCENT,          "#FFFF55"),
+                Map.entry(HomingVars.COLOR_ACCENT_EMPHASIS, "#FFFFFF"),
+                Map.entry(HomingVars.COLOR_ACCENT_ON,       "#0000A8"),
 
                 // Spacing — tighter than default; terminals don't breathe.
-                Map.entry(StudioVars.SPACE_1, "2px"),
-                Map.entry(StudioVars.SPACE_2, "4px"),
-                Map.entry(StudioVars.SPACE_3, "8px"),
-                Map.entry(StudioVars.SPACE_4, "12px"),
-                Map.entry(StudioVars.SPACE_5, "16px"),
-                Map.entry(StudioVars.SPACE_6, "20px"),
-                Map.entry(StudioVars.SPACE_7, "28px"),
-                Map.entry(StudioVars.SPACE_8, "36px"),
+                Map.entry(HomingVars.SPACE_1, "2px"),
+                Map.entry(HomingVars.SPACE_2, "4px"),
+                Map.entry(HomingVars.SPACE_3, "8px"),
+                Map.entry(HomingVars.SPACE_4, "12px"),
+                Map.entry(HomingVars.SPACE_5, "16px"),
+                Map.entry(HomingVars.SPACE_6, "20px"),
+                Map.entry(HomingVars.SPACE_7, "28px"),
+                Map.entry(HomingVars.SPACE_8, "36px"),
 
                 // Radius — zero. Pure rectangles. The 1990s had no rounded corners.
-                Map.entry(StudioVars.RADIUS_SM, "0"),
-                Map.entry(StudioVars.RADIUS_MD, "0"),
-                Map.entry(StudioVars.RADIUS_LG, "0")
+                Map.entry(HomingVars.RADIUS_SM, "0"),
+                Map.entry(HomingVars.RADIUS_MD, "0"),
+                Map.entry(HomingVars.RADIUS_LG, "0")
         );
     }
 

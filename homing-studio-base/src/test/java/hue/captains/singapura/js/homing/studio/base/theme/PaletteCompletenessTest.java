@@ -2,6 +2,8 @@ package hue.captains.singapura.js.homing.studio.base.theme;
 
 import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.core.PaletteProvision;
+import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
+import hue.captains.singapura.js.homing.theme.color.HomingVars;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -19,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * names — the palette declares, the provision binds, and the two agree.
  *
  * <p>Also gates the reverse drift: a theme binding a token the palette does
- * not declare is a token that escaped {@link StudioVars} (or a typo), and a new
+ * not declare is a token that escaped {@link HomingVars} (or a typo), and a new
  * token declared without updating every theme fails the first assertion for
  * all of them at once — exactly when it should. Episode 1 of the RFC keeps the
  * declared set flat; the law here is the one the conformance rules take over

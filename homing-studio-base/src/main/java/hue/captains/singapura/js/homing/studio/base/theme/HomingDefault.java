@@ -2,6 +2,8 @@ package hue.captains.singapura.js.homing.studio.base.theme;
 
 import hue.captains.singapura.js.homing.core.Component;
 import hue.captains.singapura.js.homing.core.CssVar;
+import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
+import hue.captains.singapura.js.homing.theme.color.HomingVars;
 import hue.captains.singapura.js.homing.core.Layer;
 import hue.captains.singapura.js.homing.core.MediaGated;
 import hue.captains.singapura.js.homing.core.Prose;
@@ -49,43 +51,43 @@ public record HomingDefault() implements Theme {
         // class of bug. Light values here; dark overrides in Globals.@media.
         private static final Map<CssVar, String> VALUES = Map.ofEntries(
                 // Surfaces
-                Map.entry(StudioVars.COLOR_SURFACE,          "#FAFBFD"),
-                Map.entry(StudioVars.COLOR_SURFACE_RAISED,   "#FFFFFF"),
-                Map.entry(StudioVars.COLOR_SURFACE_RECESSED, "#F1F4F9"),
-                Map.entry(StudioVars.COLOR_SURFACE_INVERTED, "#111936"),
+                Map.entry(HomingVars.COLOR_SURFACE,          "#FAFBFD"),
+                Map.entry(HomingVars.COLOR_SURFACE_RAISED,   "#FFFFFF"),
+                Map.entry(HomingVars.COLOR_SURFACE_RECESSED, "#F1F4F9"),
+                Map.entry(HomingVars.COLOR_SURFACE_INVERTED, "#111936"),
 
                 // Text
-                Map.entry(StudioVars.COLOR_TEXT_PRIMARY,           "#3B4A6B"),
-                Map.entry(StudioVars.COLOR_TEXT_MUTED,             "#64748B"),
-                Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED,       "#FFFFFF"),
-                Map.entry(StudioVars.COLOR_TEXT_ON_INVERTED_MUTED, "#CADCFC"),
-                Map.entry(StudioVars.COLOR_TEXT_TITLE,              "#1E2761"),   // title := link, unchanged
-                Map.entry(StudioVars.COLOR_TEXT_LINK,              "#1E2761"),
-                Map.entry(StudioVars.COLOR_TEXT_LINK_HOVER,        "#C8921E"),
+                Map.entry(HomingVars.COLOR_TEXT_PRIMARY,           "#3B4A6B"),
+                Map.entry(HomingVars.COLOR_TEXT_MUTED,             "#64748B"),
+                Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED,       "#FFFFFF"),
+                Map.entry(HomingVars.COLOR_TEXT_ON_INVERTED_MUTED, "#CADCFC"),
+                Map.entry(HomingVars.COLOR_TEXT_TITLE,              "#1E2761"),   // title := link, unchanged
+                Map.entry(HomingVars.COLOR_TEXT_LINK,              "#1E2761"),
+                Map.entry(HomingVars.COLOR_TEXT_LINK_HOVER,        "#C8921E"),
 
                 // Borders
-                Map.entry(StudioVars.COLOR_BORDER,          "#E2E8F0"),
-                Map.entry(StudioVars.COLOR_BORDER_EMPHASIS, "#F4B942"),
+                Map.entry(HomingVars.COLOR_BORDER,          "#E2E8F0"),
+                Map.entry(HomingVars.COLOR_BORDER_EMPHASIS, "#F4B942"),
 
                 // Accent
-                Map.entry(StudioVars.COLOR_ACCENT,          "#F4B942"),
-                Map.entry(StudioVars.COLOR_ACCENT_EMPHASIS, "#C8921E"),
-                Map.entry(StudioVars.COLOR_ACCENT_ON,       "#111936"),
+                Map.entry(HomingVars.COLOR_ACCENT,          "#F4B942"),
+                Map.entry(HomingVars.COLOR_ACCENT_EMPHASIS, "#C8921E"),
+                Map.entry(HomingVars.COLOR_ACCENT_ON,       "#111936"),
 
                 // Spacing scale
-                Map.entry(StudioVars.SPACE_1, "4px"),
-                Map.entry(StudioVars.SPACE_2, "8px"),
-                Map.entry(StudioVars.SPACE_3, "12px"),
-                Map.entry(StudioVars.SPACE_4, "16px"),
-                Map.entry(StudioVars.SPACE_5, "20px"),
-                Map.entry(StudioVars.SPACE_6, "24px"),
-                Map.entry(StudioVars.SPACE_7, "32px"),
-                Map.entry(StudioVars.SPACE_8, "40px"),
+                Map.entry(HomingVars.SPACE_1, "4px"),
+                Map.entry(HomingVars.SPACE_2, "8px"),
+                Map.entry(HomingVars.SPACE_3, "12px"),
+                Map.entry(HomingVars.SPACE_4, "16px"),
+                Map.entry(HomingVars.SPACE_5, "20px"),
+                Map.entry(HomingVars.SPACE_6, "24px"),
+                Map.entry(HomingVars.SPACE_7, "32px"),
+                Map.entry(HomingVars.SPACE_8, "40px"),
 
                 // Radius scale
-                Map.entry(StudioVars.RADIUS_SM, "4px"),
-                Map.entry(StudioVars.RADIUS_MD, "8px"),
-                Map.entry(StudioVars.RADIUS_LG, "12px")
+                Map.entry(HomingVars.RADIUS_SM, "4px"),
+                Map.entry(HomingVars.RADIUS_MD, "8px"),
+                Map.entry(HomingVars.RADIUS_LG, "12px")
         );
     }
 
