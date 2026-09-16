@@ -25,7 +25,7 @@ gives you:
 | `/plan?id=…`              | JSON payload for one plan (objectives, decisions, phases, acceptance) |
 | `/module`                 | served ES module per Java module (auto-imports + nav + params) |
 | `/css-content`            | typed `CssGroupImpl`-backed stylesheets, theme-keyed |
-| `/theme-vars`             | semantic CSS variables for the active theme |
+| `/css-content?class=…GlobalColorPalette` | the global palette for the active theme (RFC 0066 — the prior; `/theme-vars` is gone) |
 | `/theme-globals`          | global CSS rules (light/dark `@media` overrides) |
 | `/doc`                    | classpath markdown / html / txt / json / svg by `?path=` |
 
@@ -571,7 +571,7 @@ modules are scanned automatically.
 | Doc browser missing some docs | Forgot to add the new `Doc` record to `MyDocs.docs()` list |
 | `/doc?path=…` returns 404 | Path must start `docs/…` and end in a registered extension; no `..`, no leading slash |
 | Theme picker doesn't appear | `themeRegistry.themes().size() < 2` — picker hides itself when there's only one option |
-| All pages render unstyled (white background) | `StudioStyles` not imported, or the bundle endpoints failed (check `/theme-vars` returns CSS, not 404) |
+| All pages render unstyled (white background) | `StudioStyles` not imported, or the bundle endpoints failed (check `/css-content?class=…GlobalColorPalette&theme=default` returns CSS, not 404) |
 
 ---
 
@@ -599,7 +599,7 @@ After launch:
 curl -s -o /dev/null -w 'root=%{http_code}\n'    http://localhost:8081/
 curl -s -o /dev/null -w 'home=%{http_code}\n'    "http://localhost:8081/app?app=my-home"
 curl -s -o /dev/null -w 'css=%{http_code}\n'     "http://localhost:8081/css-content?class=hue.captains.singapura.js.homing.studio.base.css.StudioStyles"
-curl -s -o /dev/null -w 'theme=%{http_code}\n'   "http://localhost:8081/theme-vars?theme=default"
+curl -s -o /dev/null -w 'theme=%{http_code}\n'   "http://localhost:8081/css-content?class=hue.captains.singapura.js.homing.studio.base.theme.GlobalColorPalette&theme=default"
 ```
 
 Any non-200 → check the cookbook above.

@@ -97,8 +97,8 @@ public class CssContentGetAction
             // RFC 0002-ext1 Phase 10/11: groups whose classes all have non-null
             // `body()` no longer need a registered CssGroupImpl. The renderer
             // handles `impl == null` by rendering purely from inline bodies.
-            // Theme cascade comes from the theme-bundle endpoints
-            // (/theme-vars, /theme-globals), not from the per-group response.
+            // Theme cascade comes from the palette group (RFC 0066, the prior)
+            // and /theme-globals, not from the per-group response.
             CssGroupImpl<?, ?> impl = findImpl(group, themeSlug);
             return CompletableFuture.completedFuture(new CssContent(renderCss(impl, group)));
         } catch (Exception e) {

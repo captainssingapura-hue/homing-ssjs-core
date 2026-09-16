@@ -20,7 +20,7 @@ import java.util.Map;
  *
  * <p>RFC 0002-ext1 Phase 10 — restructured into identity record + nested
  * {@link Palette} and {@link Globals} singletons. The framework serves these
- * at independently-cacheable routes ({@code /theme-vars?theme=default},
+ * at independently-cacheable routes ({@code /css-content?class=…GlobalColorPalette&theme=default} — RFC 0066,
  * {@code /theme-globals?theme=default}); per-CssGroup CSS files served
  * by {@code /css-content} no longer carry the cascade.</p>
  */
@@ -34,7 +34,7 @@ public record HomingDefault() implements Theme {
     @Override public String inspiration() { return "The house identity — ships with studio-base, working out of the box."; }
 
     // -------------------------------------------------------------------
-    // Palette — the theme's body for GlobalColorPalette (RFC 0066). Served at /theme-vars.
+    // Palette — the theme's body for GlobalColorPalette (RFC 0066). Served as the prior of every page.
     // Single semantic layer (--color-*, --space-*, --radius-*) — each role
     // gets a concrete value directly, with no intermediate primitive layer.
     // -------------------------------------------------------------------

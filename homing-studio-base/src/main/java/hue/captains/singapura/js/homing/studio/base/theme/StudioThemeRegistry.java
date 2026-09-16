@@ -12,7 +12,7 @@ import java.util.List;
  * {@code homing-studio-base}.
  *
  * <p>Every {@link Theme} the studio supports has a registered
- * {@link GlobalColorPalette.Provision} (its body for the global palette, served at {@code /theme-vars})
+ * {@link GlobalColorPalette.Provision} (its body for the global palette, served as the prior of every page)
  * and a {@link ThemeGlobals} (the raw global rules, served at
  * {@code /theme-globals}).</p>
  *

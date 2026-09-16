@@ -26,10 +26,10 @@ import java.util.Set;
  * information — a second palette that only some classes need, a class that
  * lays out inside another's.</p>
  *
- * <p><b>Served.</b> The client's first wave is still {@code /theme-vars}, and
- * that endpoint now renders this palette's provision for the requested theme;
- * the group is also served as itself at {@code /css-content?class=…&theme=…},
- * for when the client's plan names it directly. Episode 1 keeps the palette
+ * <p><b>Served.</b> As a group, at {@code /css-content?class=…GlobalColorPalette&theme=…}:
+ * the server writes this group into every served group's dependency subgraph
+ * as the prior, so the client loads it first by the ordinary plan — no special
+ * node, no {@code /theme-vars}. Episode 1 keeps the palette
  * PLAIN — the flat set, colours and scales together — so the organisation can
  * be finished first; Episode 2 re-declares it as a semantic tree.</p>
  */

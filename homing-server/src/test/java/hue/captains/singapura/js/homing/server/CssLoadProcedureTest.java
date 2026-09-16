@@ -74,19 +74,17 @@ class CssLoadProcedureTest extends JsModuleTestBase {
     void wavesAppendInOrder_andTheNextWaitsForThePrevious() {
         js.eval("js", "start(['Root', 'Left', 'Right', 'Base'], 'a')");
         tick();
-        assertEquals(List.of("__theme-vars@a"), hrefs(), "wave 0 alone until it lands");
-        ok("__theme-vars@a");
-        assertEquals(List.of("__theme-vars@a", "__theme-globals@a"), hrefs());
+        assertEquals(List.of("__theme-globals@a"), hrefs(), "wave 0 alone until it lands");
         ok("__theme-globals@a");
-        assertEquals(List.of("__theme-vars@a", "__theme-globals@a", "Base@a"), hrefs(), "the prior");
+        assertEquals(List.of("__theme-globals@a", "Base@a"), hrefs(), "the prior");
         ok("Base@a");
-        assertEquals(List.of("__theme-vars@a", "__theme-globals@a", "Base@a", "Left@a", "Right@a"), hrefs(),
+        assertEquals(List.of("__theme-globals@a", "Base@a", "Left@a", "Right@a"), hrefs(),
                 "Left and Right together: nothing pending for either");
         ok("Left@a");
-        assertEquals(5, hrefs().size(), "Root waits for the whole wave");
+        assertEquals(4, hrefs().size(), "Root waits for the whole wave");
         ok("Right@a");
-        assertEquals(6, hrefs().size());
-        assertEquals("Root@a", hrefs().get(5));
+        assertEquals(5, hrefs().size());
+        assertEquals("Root@a", hrefs().get(4));
         assertTrue(medias().stream().allMatch("not all"::equals), "nothing applied before the last has landed");
         assertEquals(null, outcome());
         ok("Root@a");
@@ -97,8 +95,8 @@ class CssLoadProcedureTest extends JsModuleTestBase {
     @Test
     void aDependencyOutsideTheSet_isNotAppended() {
         js.eval("js", "start(['Left'], 'a')");
-        tick(); ok("__theme-vars@a"); ok("__theme-globals@a");
-        assertEquals(List.of("__theme-vars@a", "__theme-globals@a", "Left@a"), hrefs());
+        tick(); ok("__theme-globals@a");
+        assertEquals(List.of("__theme-globals@a", "Left@a"), hrefs());
     }
 
     // ── Sharing ───────────────────────────────────────────────────────────────
@@ -106,12 +104,12 @@ class CssLoadProcedureTest extends JsModuleTestBase {
     @Test
     void aNodeInFlight_isSharedNotAppendedTwice() {
         js.eval("js", "start(['Base'], 'a')");
-        tick(); ok("__theme-vars@a"); ok("__theme-globals@a");
+        tick(); ok("__theme-globals@a");
         js.eval("js", "proc.load(['Left', 'Base'], 'a')");     // second caller wants Base too
         tick();
         assertEquals(1, hrefs().stream().filter("Base@a"::equals).count());
         ok("Base@a");
-        assertEquals(List.of("__theme-vars@a", "__theme-globals@a", "Base@a", "Left@a"), hrefs());
+        assertEquals(List.of("__theme-globals@a", "Base@a", "Left@a"), hrefs());
         ok("Left@a");
         assertTrue(medias().stream().allMatch("all"::equals));
     }
@@ -119,11 +117,11 @@ class CssLoadProcedureTest extends JsModuleTestBase {
     @Test
     void anAppliedNode_isNotAppendedAgain() {
         js.eval("js", "start(['Base'], 'a')");
-        tick(); ok("__theme-vars@a"); ok("__theme-globals@a"); ok("Base@a");
+        tick(); ok("__theme-globals@a"); ok("Base@a");
         assertEquals("ok", outcome());
         js.eval("js", "start(['Base', 'Left'], 'a')");
         tick();
-        assertEquals(List.of("__theme-vars@a", "__theme-globals@a", "Base@a", "Left@a"), hrefs());
+        assertEquals(List.of("__theme-globals@a", "Base@a", "Left@a"), hrefs());
     }
 
     // ── Abort ─────────────────────────────────────────────────────────────────
@@ -131,16 +129,16 @@ class CssLoadProcedureTest extends JsModuleTestBase {
     @Test
     void aFailedFetch_abortsWithNothingApplied_andCanBeRetried() {
         js.eval("js", "start(['Left', 'Base'], 'a')");
-        tick(); ok("__theme-vars@a"); ok("__theme-globals@a");
+        tick(); ok("__theme-globals@a");
         fail("Base@a");
         assertEquals("fail:failed Base@a", outcome());
         assertEquals(List.of(), hrefs(), "every link this call appended is gone");
         assertEquals(List.of(), js.eval("js", "proc.loadedUnder('a')").as(List.class));
 
         js.eval("js", "start(['Left', 'Base'], 'a')");         // retry appends afresh
-        tick(); ok("__theme-vars@a"); ok("__theme-globals@a"); ok("Base@a"); ok("Left@a");
+        tick(); ok("__theme-globals@a"); ok("Base@a"); ok("Left@a");
         assertEquals("ok", outcome());
-        assertEquals(4, hrefs().size());
+        assertEquals(3, hrefs().size());
     }
 
     // ── Switching: load under b, retire a ────────────────────────────────────
@@ -148,25 +146,25 @@ class CssLoadProcedureTest extends JsModuleTestBase {
     @Test
     void aSecondTheme_arrivesAfterTheFirst_andRetiringTheFirst_leavesOnlyTheSecond() {
         js.eval("js", "start(['Left', 'Base'], 'a')");
-        tick(); ok("__theme-vars@a"); ok("__theme-globals@a"); ok("Base@a"); ok("Left@a");
-        assertEquals(List.of("__theme-vars", "__theme-globals", "Base", "Left").size(),
+        tick(); ok("__theme-globals@a"); ok("Base@a"); ok("Left@a");
+        assertEquals(List.of("__theme-globals", "Base", "Left").size(),
                 js.eval("js", "proc.loadedUnder('a')").as(List.class).size());
 
         js.eval("js", "start(proc.loadedUnder('a').filter(id => !id.startsWith('__')), 'b')");
-        tick(); ok("__theme-vars@b"); ok("__theme-globals@b"); ok("Base@b");
-        assertTrue(medias().subList(4, medias().size()).stream().allMatch("not all"::equals), "b not applied yet");
-        assertTrue(medias().subList(0, 4).stream().allMatch("all"::equals), "a still authoritative");
+        tick(); ok("__theme-globals@b"); ok("Base@b");
+        assertTrue(medias().subList(3, medias().size()).stream().allMatch("not all"::equals), "b not applied yet");
+        assertTrue(medias().subList(0, 3).stream().allMatch("all"::equals), "a still authoritative");
         ok("Left@b");
         assertEquals("ok", outcome());
         assertTrue(medias().stream().allMatch("all"::equals));
 
         js.eval("js", "proc.retire('a')");
-        assertEquals(List.of("__theme-vars@b", "__theme-globals@b", "Base@b", "Left@b"), hrefs());
+        assertEquals(List.of("__theme-globals@b", "Base@b", "Left@b"), hrefs());
         assertEquals(List.of(), js.eval("js", "proc.loadedUnder('a')").as(List.class));
 
         // and back: A -> B -> A loads a again, after b
         js.eval("js", "start(['Left', 'Base'], 'a')");
-        tick(); ok("__theme-vars@a"); ok("__theme-globals@a"); ok("Base@a"); ok("Left@a");
+        tick(); ok("__theme-globals@a"); ok("Base@a"); ok("Left@a");
         assertEquals("ok", outcome());
         assertEquals("Left@a", hrefs().get(hrefs().size() - 1));
     }
@@ -174,7 +172,7 @@ class CssLoadProcedureTest extends JsModuleTestBase {
     @Test
     void theSnapshot_isFrozenData() {
         js.eval("js", "start(['Base'], 'a')");
-        tick(); ok("__theme-vars@a"); ok("__theme-globals@a"); ok("Base@a");
+        tick(); ok("__theme-globals@a"); ok("Base@a");
         assertTrue(js.eval("js", "(() => { const s = proc.snapshot(); return Object.isFrozen(s) && Object.isFrozen(s[0]) && s.some(e => e.id === 'Base' && e.theme === 'a' && e.applied); })()").asBoolean());
         assertFalse(js.eval("js", "proc.snapshot().some(e => !e.applied)").asBoolean());
     }

@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.server;
 
 import hue.captains.singapura.js.homing.core.Theme;
+import hue.captains.singapura.js.homing.core.CssGroup;
 import hue.captains.singapura.js.homing.core.ThemeGlobals;
 import hue.captains.singapura.js.homing.core.PaletteProvision;
 
@@ -12,8 +13,9 @@ import java.util.List;
  * <p>Holds three lists: {@link Theme} identities, {@link PaletteProvision} singletons
  * (one per theme — RFC 0066: the theme's body for the global palette), {@link ThemeGlobals}
  * singletons (one per theme; may be empty).
- * The framework's {@code ThemeVarsGetAction} and {@code ThemeGlobalsGetAction}
- * consult this registry to resolve a request like {@code /theme-vars?theme=Y}.</p>
+ * {@code ThemeGlobalsGetAction} consults it for {@code /theme-globals?theme=Y}; the
+ * palette is served as a group by {@code CssContentGetAction}, and {@link #palette()}
+ * names it as the prior the module action writes into every subgraph.
  *
  * <p>Each deployment provides its own {@code ThemeRegistry} implementation,
  * typically as a record holding its themes + palettes + globals. The default
@@ -48,6 +50,19 @@ public interface ThemeRegistry {
             if (slug.equals(v.theme().slug())) return v;
         }
         return null;
+    }
+
+    /**
+     * RFC 0066 — the palette group the provisions fill: the PRIOR every group
+     * on every page leans on without declaring it. The server writes it into
+     * each served group's dependency subgraph, so the client loads it first by
+     * the ordinary plan rather than by a special node. Derived from the
+     * provisions (they all fill one group — the completeness gate checks it);
+     * {@code null} when the deployment registers none.
+     */
+    default CssGroup<?> palette() {
+        var all = palettes();
+        return all.isEmpty() ? null : all.get(0).group();
     }
 
     /** Look up the {@link ThemeGlobals} singleton for a theme by slug.

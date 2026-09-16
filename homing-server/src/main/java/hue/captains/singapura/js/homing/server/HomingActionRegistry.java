@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.server;
 
 import hue.captains.singapura.js.homing.core.ModuleNameResolver;
+import hue.captains.singapura.js.homing.core.CssGroup;
 import hue.captains.singapura.js.homing.core.SimpleAppResolver;
 import hue.captains.singapura.js.homing.core.util.ResourceReader;
 import hue.captains.singapura.tao.http.action.ActionRegistry;
@@ -16,7 +17,6 @@ public class HomingActionRegistry implements ActionRegistry<RoutingContext> {
     private final AppHtmlGetAction appAction;
     private final EsModuleGetAction moduleAction;
     private final CssContentGetAction cssContentAction;
-    private final ThemeVarsGetAction themeVarsAction;
     private final ThemeGlobalsGetAction themeGlobalsAction;
 
     /** Legacy constructor — only the {@code ?class=} contract is supported. */
@@ -62,13 +62,16 @@ public class HomingActionRegistry implements ActionRegistry<RoutingContext> {
         if (themeRegistry == null) themeRegistry = ThemeRegistry.EMPTY;
         if (meta == null) meta = AppMeta.DEFAULT;
         this.appAction = new AppHtmlGetAction(nameResolver, appResolver, themeRegistry, meta);
-        this.moduleAction = new EsModuleGetAction(nameResolver, resourceReader, servable);
+        // RFC 0066 - the palette is the prior every served group leans on; the
+        // module action writes it into each group's subgraph. /theme-vars is gone:
+        // the palette is a group, served by /css-content like any other.
+        List<CssGroup<?>> priors = themeRegistry.palette() == null ? List.of() : List.of(themeRegistry.palette());
+        this.moduleAction = new EsModuleGetAction(nameResolver, resourceReader, servable, priors);
         // Base registry serves a typed-only CssContentGetAction with no impls
         // and no default theme — every /css-content request 404s unless an
         // outer registry (e.g. StudioActionRegistry) overrides this route with
         // its own typed-impl-aware action. RFC 0002 §3.6 (hard cut, no file-based fallback).
         this.cssContentAction = new CssContentGetAction(List.of(), null);
-        this.themeVarsAction    = new ThemeVarsGetAction(themeRegistry, null);
         this.themeGlobalsAction = new ThemeGlobalsGetAction(themeRegistry, null);
     }
 
@@ -87,7 +90,6 @@ public class HomingActionRegistry implements ActionRegistry<RoutingContext> {
                 "/app", appAction,
                 "/module", moduleAction,
                 "/css-content", cssContentAction,
-                "/theme-vars", themeVarsAction,
                 "/theme-globals", themeGlobalsAction
         );
     }
