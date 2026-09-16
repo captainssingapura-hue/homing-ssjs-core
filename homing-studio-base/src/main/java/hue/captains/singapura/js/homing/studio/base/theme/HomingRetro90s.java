@@ -13,7 +13,6 @@ import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.ThemeAudio;
 import hue.captains.singapura.js.homing.core.ThemeGlobals;
 import hue.captains.singapura.js.homing.core.ThemeOverlay;
-import hue.captains.singapura.js.homing.core.ThemeVariables;
 
 import java.util.Map;
 
@@ -137,8 +136,8 @@ public record HomingRetro90s() implements Theme {
         }
     }
 
-    public record Vars() implements ThemeVariables<HomingRetro90s> {
-        public static final Vars INSTANCE = new Vars();
+    public record Palette() implements GlobalColorPalette.Provision<HomingRetro90s> {
+        public static final Palette INSTANCE = new Palette();
         @Override public HomingRetro90s theme() { return HomingRetro90s.INSTANCE; }
         @Override public Map<CssVar, String> values() { return VALUES; }
 

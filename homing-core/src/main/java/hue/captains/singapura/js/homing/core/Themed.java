@@ -25,7 +25,7 @@ import java.util.Set;
  *   <li>Every {@code var(--…)} reference parsed from {@link #body()} must correspond
  *       to a {@code CssVar} declared in {@link #requiredVars()}.</li>
  *   <li>Every {@code CssVar} in any active class's {@code requiredVars()} must be
- *       provided by every registered {@link ThemeVariables}.</li>
+ *       provided by every registered {@link PaletteProvision}.</li>
  * </ol>
  *
  * @param <G> the CssGroup this class belongs to
@@ -34,7 +34,7 @@ public interface Themed<G extends CssGroup<G>> extends CssClass<G> {
 
     /**
      * The CSS variables this class depends on, resolved by the active theme's
-     * {@link ThemeVariables} via the cascade.
+     * {@link PaletteProvision} via the cascade.
      *
      * <p>This is the canonical machine-readable contract — the body string may
      * also reference these vars textually, but the {@code requiredVars()} set

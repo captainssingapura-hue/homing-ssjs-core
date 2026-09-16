@@ -13,6 +13,10 @@ import java.util.List;
  * the eternal-good rationale for keeping it manual: audit-able, build-deterministic,
  * reflection-free, downstream-friendly, fail-loud.</p>
  *
+ * <p>RFC 0066: a theme's {@link GlobalColorPalette.Provision} is an impl too, but it
+ * travels with the theme — {@link StudioThemeRegistry#palettes()} lists them and the
+ * boot joins the two lists.</p>
+ *
  * <p>Adding a new impl: instantiate it (or use its {@code INSTANCE}) and append
  * to {@link #ALL}. Concrete classes belong in this same package by convention.</p>
  */

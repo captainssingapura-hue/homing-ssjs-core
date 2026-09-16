@@ -10,7 +10,6 @@ import hue.captains.singapura.js.homing.core.State;
 import hue.captains.singapura.js.homing.core.ThemeOverlay;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.ThemeGlobals;
-import hue.captains.singapura.js.homing.core.ThemeVariables;
 
 import java.util.Map;
 
@@ -20,7 +19,7 @@ import java.util.Map;
  * working CSS out of the box without designing their own theme.
  *
  * <p>RFC 0002-ext1 Phase 10 — restructured into identity record + nested
- * {@link Vars} and {@link Globals} singletons. The framework serves these
+ * {@link Palette} and {@link Globals} singletons. The framework serves these
  * at independently-cacheable routes ({@code /theme-vars?theme=default},
  * {@code /theme-globals?theme=default}); per-CssGroup CSS files served
  * by {@code /css-content} no longer carry the cascade.</p>
@@ -35,13 +34,13 @@ public record HomingDefault() implements Theme {
     @Override public String inspiration() { return "The house identity — ships with studio-base, working out of the box."; }
 
     // -------------------------------------------------------------------
-    // Vars — the variable values for this theme. Served at /theme-vars.
+    // Palette — the theme's body for GlobalColorPalette (RFC 0066). Served at /theme-vars.
     // Single semantic layer (--color-*, --space-*, --radius-*) — each role
     // gets a concrete value directly, with no intermediate primitive layer.
     // -------------------------------------------------------------------
 
-    public record Vars() implements ThemeVariables<HomingDefault> {
-        public static final Vars INSTANCE = new Vars();
+    public record Palette() implements GlobalColorPalette.Provision<HomingDefault> {
+        public static final Palette INSTANCE = new Palette();
         @Override public HomingDefault theme() { return HomingDefault.INSTANCE; }
         @Override public Map<CssVar, String> values() { return VALUES; }
 

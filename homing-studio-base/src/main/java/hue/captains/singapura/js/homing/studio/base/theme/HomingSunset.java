@@ -3,7 +3,6 @@ package hue.captains.singapura.js.homing.studio.base.theme;
 import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.ThemeGlobals;
-import hue.captains.singapura.js.homing.core.ThemeVariables;
 
 import java.util.Map;
 
@@ -12,7 +11,7 @@ import java.util.Map;
  * layout and semantic vocabulary as {@link HomingDefault}; the primitive
  * palette shifts to warm tones.
  *
- * <p>Self-contained: light mode primitives in {@link Vars}, dark-mode
+ * <p>Self-contained: light mode primitives in {@link Palette}, dark-mode
  * {@code @media} override in {@link Globals}. Structural CSS reused from
  * {@link HomingDefault#STRUCTURAL_CSS}.</p>
  *
@@ -27,8 +26,8 @@ public record HomingSunset() implements Theme {
     @Override public String group() { return "Nature"; }
     @Override public String inspiration() { return "Warm coral and terracotta — a dusk palette."; }
 
-    public record Vars() implements ThemeVariables<HomingSunset> {
-        public static final Vars INSTANCE = new Vars();
+    public record Palette() implements GlobalColorPalette.Provision<HomingSunset> {
+        public static final Palette INSTANCE = new Palette();
         @Override public HomingSunset theme() { return HomingSunset.INSTANCE; }
         @Override public Map<CssVar, String> values() { return VALUES; }
 

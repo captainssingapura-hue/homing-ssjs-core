@@ -7,6 +7,8 @@ import hue.captains.singapura.js.homing.core.CssGroup;
 import hue.captains.singapura.js.homing.core.CssGroupImpl;
 import hue.captains.singapura.js.homing.core.Layer;
 import hue.captains.singapura.js.homing.core.Layers;
+import hue.captains.singapura.js.homing.core.PaletteClass;
+import hue.captains.singapura.js.homing.core.PaletteProvision;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.util.CssClassName;
 import hue.captains.singapura.tao.http.action.GetAction;
@@ -165,6 +167,21 @@ public class CssContentGetAction
         }
 
         for (CssClass<?> cssClass : group.cssClasses()) {
+            // RFC 0066 — a palette is a PROVIDED class: no rule of its own, its
+            // body is the theme's :root binding, emitted unlayered like the
+            // impl's :root block above (custom properties do not cascade-conflict).
+            // No provision under this theme is the completeness failure the
+            // build gate reports; here it renders as a comment so the sheet
+            // still arrives and the page says what is missing.
+            if (cssClass instanceof PaletteClass<?> palette) {
+                if (impl instanceof PaletteProvision<?, ?> provision) {
+                    sb.append(provision.rootBlock()).append('\n');
+                } else {
+                    sb.append("/* render error: no PaletteProvision for ")
+                      .append(palette.getClass().getSimpleName()).append(" under this theme */\n\n");
+                }
+                continue;
+            }
             Class<? extends Layer> layer = Layers.ofImplementor(cssClass);
             List<String> bucket = byLayer.get(layer);
             try {

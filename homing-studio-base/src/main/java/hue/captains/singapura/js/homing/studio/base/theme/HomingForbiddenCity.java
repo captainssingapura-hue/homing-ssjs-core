@@ -3,7 +3,6 @@ package hue.captains.singapura.js.homing.studio.base.theme;
 import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.ThemeGlobals;
-import hue.captains.singapura.js.homing.core.ThemeVariables;
 
 import java.util.Map;
 
@@ -31,8 +30,8 @@ public record HomingForbiddenCity() implements Theme {
     @Override public String group() { return "Expressive"; }
     @Override public String inspiration() { return "Imperial palace — vermilion walls, gold roofs, parchment."; }
 
-    public record Vars() implements ThemeVariables<HomingForbiddenCity> {
-        public static final Vars INSTANCE = new Vars();
+    public record Palette() implements GlobalColorPalette.Provision<HomingForbiddenCity> {
+        public static final Palette INSTANCE = new Palette();
         @Override public HomingForbiddenCity theme() { return HomingForbiddenCity.INSTANCE; }
         @Override public Map<CssVar, String> values() { return VALUES; }
 

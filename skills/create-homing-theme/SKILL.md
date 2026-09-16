@@ -5,7 +5,7 @@ description: Use this skill when the user wants to add a new theme (palette + op
 
 # Create a Homing Theme
 
-A Homing theme is **two static records in one Java file**: `Vars` (the per-token primitive values) and `Globals` (the dark-mode override + structural CSS reuse + optional theme-specific CSS layer for textures, fonts, etc.). Plus three lines added to a registry. Total ~120 LoC for a basic theme; ~180 LoC for an elaborate one with texture / serif body / custom dividers.
+A Homing theme is **two static records in one Java file**: `Palette` (the theme's body for the global palette — its per-token values, RFC 0066) and `Globals` (the dark-mode override + structural CSS reuse + optional theme-specific CSS layer for textures, fonts, etc.). Plus three lines added to a registry. Total ~120 LoC for a basic theme; ~180 LoC for an elaborate one with texture / serif body / custom dividers.
 
 ## Mental model
 
@@ -15,7 +15,7 @@ Three tiers of theme complexity:
 
 | Tier | Adds | Examples |
 |---|---|---|
-| **Basic** | Just `Vars` map (the 14 tokens) + dark-mode `Globals` | Default, Forest, Sunset, Forbidden City |
+| **Basic** | Just the `Palette` map (every token `GlobalColorPalette` declares) + dark-mode `Globals` | Default, Forest, Sunset, Forbidden City |
 | **Identity-charged** | Override `RADIUS_*` to `0px` for geometric look, custom accent emphasis colour for impact | Bauhaus |
 | **Layered** | Texture (SVG noise data: URI), body-font override, custom rules — appended *after* the shared structural CSS | Letterpress |
 
@@ -80,7 +80,7 @@ package hue.captains.singapura.js.homing.studio.base.theme;
 import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.ThemeGlobals;
-import hue.captains.singapura.js.homing.core.ThemeVariables;
+import hue.captains.singapura.js.homing.core.PaletteProvision;
 
 import java.util.Map;
 
@@ -91,8 +91,8 @@ public record Homing<Name>() implements Theme {
     @Override public String slug()  { return "<slug>"; }   // URL: ?theme=<slug>
     @Override public String label() { return "<Label>"; }  // shown in picker
 
-    public record Vars() implements ThemeVariables<Homing<Name>> {
-        public static final Vars INSTANCE = new Vars();
+    public record Palette() implements GlobalColorPalette.Provision<Homing<Name>> {   // RFC 0066
+        public static final Palette INSTANCE = new Palette();
         @Override public Homing<Name> theme() { return Homing<Name>.INSTANCE; }
         @Override public Map<CssVar, String> values() { return VALUES; }
 
@@ -173,11 +173,11 @@ Add three lines to `StudioThemeRegistry.java` (or your downstream's equivalent):
     );
 }
 
-@Override public List<ThemeVariables<?>> variables() {
+@Override public List<PaletteProvision<?, ?>> palettes() {
     return List.of(
-            HomingDefault.Vars.INSTANCE,
+            HomingDefault.Palette.INSTANCE,
             // … existing
-            Homing<Name>.Vars.INSTANCE     // ← new
+            Homing<Name>.Palette.INSTANCE     // ← new
     );
 }
 

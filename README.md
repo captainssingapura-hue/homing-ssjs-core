@@ -227,7 +227,7 @@ Record names use `snake_case`, which maps 1:1 to `kebab-case` CSS class names:
 
 ### Theme Support
 
-A theme is a `Theme` with a `ThemeVariables` (the `--color-*` token surface) and a `ThemeGlobals` overlay on `@layer theme`. Typed CSS records reference the tokens and never ship per-theme files — one set of records covers every theme.
+A theme is a `Theme` with a `GlobalColorPalette.Provision` (RFC 0066 — its body for the global palette, the `--color-*` token surface) and a `ThemeGlobals` overlay on `@layer theme`. Typed CSS records reference the tokens and never ship per-theme files — one set of records covers every theme.
 
 The theme a page wears is the **client's** to resolve (RFC 0064). The server serves every page under the registry's default; the preference steward on the client resolves the theme in one order — `?theme=` on the address as that page's override, else the pick stored in `localStorage` (`homing.theme`), else the default — and the CSS manager loads every group under it. Picking a theme in the picker stores it and switches the page in place, without a reload; a `?theme=` written into a link pins that theme for the page it names and is never copied onto other links.
 

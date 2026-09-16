@@ -3,7 +3,6 @@ package hue.captains.singapura.js.homing.studio.base.theme;
 import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.ThemeGlobals;
-import hue.captains.singapura.js.homing.core.ThemeVariables;
 
 import java.util.Map;
 
@@ -50,8 +49,8 @@ public record HomingTurboC() implements Theme {
         return "Borland's DOS IDE — EGA blue, a grey menu bar, and yellow where it counts.";
     }
 
-    public record Vars() implements ThemeVariables<HomingTurboC> {
-        public static final Vars INSTANCE = new Vars();
+    public record Palette() implements GlobalColorPalette.Provision<HomingTurboC> {
+        public static final Palette INSTANCE = new Palette();
         @Override public HomingTurboC theme() { return HomingTurboC.INSTANCE; }
         @Override public Map<CssVar, String> values() { return VALUES; }
 

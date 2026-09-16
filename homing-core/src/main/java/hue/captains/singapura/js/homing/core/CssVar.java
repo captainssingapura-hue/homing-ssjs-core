@@ -19,7 +19,7 @@ package hue.captains.singapura.js.homing.core;
  * <p>Use sites:</p>
  * <ul>
  *   <li>{@link Themed#requiredVars()} — declares which vars a class depends on (machine-readable contract).</li>
- *   <li>{@link ThemeVariables#values()} — keys the per-theme variable map.</li>
+ *   <li>{@link PaletteProvision#values()} — keys the per-theme binding of a {@link PaletteClass}.</li>
  *   <li>Class bodies — reference via {@link #ref()} to produce {@code "var(--color-surface)"}.</li>
  * </ul>
  *

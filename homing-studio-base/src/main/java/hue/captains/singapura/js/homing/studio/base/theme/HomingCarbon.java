@@ -3,7 +3,6 @@ package hue.captains.singapura.js.homing.studio.base.theme;
 import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.ThemeGlobals;
-import hue.captains.singapura.js.homing.core.ThemeVariables;
 
 import java.util.Map;
 
@@ -29,7 +28,7 @@ import java.util.Map;
  *
  * <p><b>Dark by identity, not by preference.</b> Every other theme here is
  * light-primary with a {@code prefers-color-scheme: dark} override — the
- * palette in {@link Vars} is its light face. Carbon inverts that: {@code Vars}
+ * palette in {@link Palette} is its light face. Carbon inverts that: {@code Palette}
  * <i>is</i> the dark palette, and there is no light variant, because a light
  * Carbon would not be Carbon. {@code color-scheme: dark} is declared so the
  * browser renders scrollbars, form controls and the canvas to match; without it
@@ -50,8 +49,8 @@ public record HomingCarbon() implements Theme {
     @Override public String group() { return "Neutral"; }
     @Override public String inspiration() { return "Neutral slate for long sessions, after LSEG Refinitiv Workspace."; }
 
-    public record Vars() implements ThemeVariables<HomingCarbon> {
-        public static final Vars INSTANCE = new Vars();
+    public record Palette() implements GlobalColorPalette.Provision<HomingCarbon> {
+        public static final Palette INSTANCE = new Palette();
         @Override public HomingCarbon theme() { return HomingCarbon.INSTANCE; }
         @Override public Map<CssVar, String> values() { return VALUES; }
 

@@ -2,7 +2,7 @@ package hue.captains.singapura.js.homing.studio.base.theme;
 
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.ThemeGlobals;
-import hue.captains.singapura.js.homing.core.ThemeVariables;
+import hue.captains.singapura.js.homing.core.PaletteProvision;
 import hue.captains.singapura.js.homing.server.ThemeRegistry;
 
 import java.util.List;
@@ -12,11 +12,11 @@ import java.util.List;
  * {@code homing-studio-base}.
  *
  * <p>Every {@link Theme} the studio supports has a registered
- * {@link ThemeVariables} (the variable values, served at {@code /theme-vars})
+ * {@link GlobalColorPalette.Provision} (its body for the global palette, served at {@code /theme-vars})
  * and a {@link ThemeGlobals} (the raw global rules, served at
  * {@code /theme-globals}).</p>
  *
- * <p>Adding a new theme: implement {@link Theme} + nested {@code Vars} +
+ * <p>Adding a new theme: implement {@link Theme} + nested {@code Palette} +
  * nested {@code Globals} (mirroring {@link HomingDefault}), then append all
  * three singletons to the lists below.</p>
  */
@@ -40,19 +40,19 @@ public final class StudioThemeRegistry implements ThemeRegistry {
         );
     }
 
-    @Override public List<ThemeVariables<?>> variables() {
+    @Override public List<PaletteProvision<?, ?>> palettes() {
         return List.of(
-                HomingDefault.Vars.INSTANCE,
-                HomingCarbon.Vars.INSTANCE,
-                HomingForest.Vars.INSTANCE,
-                HomingSunset.Vars.INSTANCE,
-                HomingBauhaus.Vars.INSTANCE,
-                HomingForbiddenCity.Vars.INSTANCE,
-                HomingLetterpress.Vars.INSTANCE,
-                HomingMapleBridge.Vars.INSTANCE,
-                HomingRetro90s.Vars.INSTANCE,
-                HomingTurboC.Vars.INSTANCE,
-                HomingBrutalist.Vars.INSTANCE
+                HomingDefault.Palette.INSTANCE,
+                HomingCarbon.Palette.INSTANCE,
+                HomingForest.Palette.INSTANCE,
+                HomingSunset.Palette.INSTANCE,
+                HomingBauhaus.Palette.INSTANCE,
+                HomingForbiddenCity.Palette.INSTANCE,
+                HomingLetterpress.Palette.INSTANCE,
+                HomingMapleBridge.Palette.INSTANCE,
+                HomingRetro90s.Palette.INSTANCE,
+                HomingTurboC.Palette.INSTANCE,
+                HomingBrutalist.Palette.INSTANCE
         );
     }
 

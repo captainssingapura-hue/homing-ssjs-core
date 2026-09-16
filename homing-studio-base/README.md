@@ -499,7 +499,7 @@ the markdown body; the browser's served JS module has the line
 ## Custom themes (optional)
 
 `StudioThemeRegistry.INSTANCE` ships Default / Forest / Sunset. To add your
-own theme alongside them, declare a `Theme` record + `ThemeVariables<TH>` +
+own theme alongside them, declare a `Theme` record + a `GlobalColorPalette.Provision<TH>` (RFC 0066) +
 `ThemeGlobals<TH>` mirroring `HomingDefault.java`, then compose a registry
 that includes both yours and the studio's:
 
@@ -510,7 +510,7 @@ public record MyThemeRegistry() implements ThemeRegistry {
     @Override public List<Theme>             themes()    {
         return List.concat(StudioThemeRegistry.INSTANCE.themes(), List.of(MyTheme.INSTANCE));
     }
-    @Override public List<ThemeVariables<?>> variables() { /* same pattern */ }
+    @Override public List<PaletteProvision<?, ?>> palettes() { /* same pattern */ }
     @Override public List<ThemeGlobals<?>>   globals()   { /* same pattern */ }
 }
 ```

@@ -15,7 +15,7 @@ package hue.captains.singapura.js.homing.core;
  *       when a single theme wants to internally adapt to system preference.</li>
  * </ol>
  *
- * <p>Like {@link ThemeVariables}, this is a sibling singleton bound to a
+ * <p>Like a {@link PaletteProvision}, this is a sibling singleton bound to a
  * specific theme via the {@code <TH>} type parameter:</p>
  *
  * <pre>

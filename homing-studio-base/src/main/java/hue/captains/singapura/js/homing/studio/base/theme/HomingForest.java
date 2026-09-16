@@ -3,7 +3,6 @@ package hue.captains.singapura.js.homing.studio.base.theme;
 import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.ThemeGlobals;
-import hue.captains.singapura.js.homing.core.ThemeVariables;
 
 import java.util.Map;
 
@@ -13,7 +12,7 @@ import java.util.Map;
  * (and the brand role mapping) differs.
  *
  * <p>Self-contained: this single file delivers a complete theme — light
- * mode primitives in {@link Vars}, dark-mode {@code @media} override in
+ * mode primitives in {@link Palette}, dark-mode {@code @media} override in
  * {@link Globals}.</p>
  *
  * <p>Activate via {@code ?theme=forest} on any studio URL.</p>
@@ -27,8 +26,8 @@ public record HomingForest() implements Theme {
     @Override public String group() { return "Nature"; }
     @Override public String inspiration() { return "Green and earth tones, with honey for the accents."; }
 
-    public record Vars() implements ThemeVariables<HomingForest> {
-        public static final Vars INSTANCE = new Vars();
+    public record Palette() implements GlobalColorPalette.Provision<HomingForest> {
+        public static final Palette INSTANCE = new Palette();
         @Override public HomingForest theme() { return HomingForest.INSTANCE; }
         @Override public Map<CssVar, String> values() { return VALUES; }
 

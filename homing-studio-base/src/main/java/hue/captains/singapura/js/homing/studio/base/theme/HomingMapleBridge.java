@@ -6,7 +6,6 @@ import hue.captains.singapura.js.homing.core.Cue;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.ThemeAudio;
 import hue.captains.singapura.js.homing.core.ThemeGlobals;
-import hue.captains.singapura.js.homing.core.ThemeVariables;
 
 import java.util.Map;
 
@@ -116,8 +115,8 @@ public record HomingMapleBridge() implements Theme {
         }
     }
 
-    public record Vars() implements ThemeVariables<HomingMapleBridge> {
-        public static final Vars INSTANCE = new Vars();
+    public record Palette() implements GlobalColorPalette.Provision<HomingMapleBridge> {
+        public static final Palette INSTANCE = new Palette();
         @Override public HomingMapleBridge theme() { return HomingMapleBridge.INSTANCE; }
         @Override public Map<CssVar, String> values() { return VALUES; }
 

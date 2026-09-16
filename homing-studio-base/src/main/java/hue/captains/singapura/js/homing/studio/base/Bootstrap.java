@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.studio.base;
 
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.SimpleAppResolver;
+import hue.captains.singapura.js.homing.core.CssGroupImpl;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.server.AppMeta;
 import hue.captains.singapura.js.homing.server.CssContentGetAction;
@@ -247,7 +248,11 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
         docRegistry.assertReferencesResolve();
 
         // --- Standard studio actions.
-        var cssContentAction = new CssContentGetAction(CssGroupImplRegistry.ALL, defaultTheme);
+        // RFC 0066 - a theme's palette provisions are CssGroupImpls too: the
+        // global palette is a group, served as itself when the plan names it.
+        var impls = new ArrayList<CssGroupImpl<?, ?>>(CssGroupImplRegistry.ALL);
+        impls.addAll(themeRegistry.palettes());
+        var cssContentAction = new CssContentGetAction(List.copyOf(impls), defaultTheme);
         var docAction        = new DocGetAction(docRegistry);
         var themesAction     = new ThemesGetAction(themeRegistry);
         var brandAction      = new BrandGetAction(brand, !catalogues.isEmpty());

@@ -8,10 +8,11 @@ import java.util.Set;
  * RFC 0002-ext1 — typed CSS variable vocabulary for the studio.
  *
  * <p>Semantic-only: every variable here is a role-named token that component
- * bodies reference via {@link CssVar#ref()}. Concrete values are provided
- * per-theme by each {@link hue.captains.singapura.js.homing.core.ThemeVariables}
- * implementation (e.g. {@link HomingDefault.Vars}, {@link HomingForest.Vars},
- * {@link HomingSunset.Vars}). The previous primitive layer ({@code --st-*}
+ * bodies reference via {@link CssVar#ref()}. RFC 0066: this is the set
+ * {@link GlobalColorPalette.global_color_palette#declares()}; concrete values are provided
+ * per-theme by each {@link GlobalColorPalette.Provision}
+ * (e.g. {@link HomingDefault.Palette}, {@link HomingForest.Palette},
+ * {@link HomingSunset.Palette}). The previous primitive layer ({@code --st-*}
  * brand colors) was retired — having two layers caused a "primitive doing
  * double duty" class of bug, where the same primitive served two semantic
  * roles whose dark-mode requirements diverged. Each role now owns its

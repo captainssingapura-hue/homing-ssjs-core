@@ -10,7 +10,6 @@ import hue.captains.singapura.js.homing.core.State;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.ThemeGlobals;
 import hue.captains.singapura.js.homing.core.ThemeOverlay;
-import hue.captains.singapura.js.homing.core.ThemeVariables;
 
 import java.util.Map;
 
@@ -58,8 +57,8 @@ public record HomingBrutalist() implements Theme {
     @Override public String group() { return "Expressive"; }
     @Override public String inspiration() { return "A riso-print order form — ink rules, offset shadows, one loud yellow."; }
 
-    public record Vars() implements ThemeVariables<HomingBrutalist> {
-        public static final Vars INSTANCE = new Vars();
+    public record Palette() implements GlobalColorPalette.Provision<HomingBrutalist> {
+        public static final Palette INSTANCE = new Palette();
         @Override public HomingBrutalist theme() { return HomingBrutalist.INSTANCE; }
         @Override public Map<CssVar, String> values() { return VALUES; }
 

@@ -3,7 +3,6 @@ package hue.captains.singapura.js.homing.studio.base.theme;
 import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.ThemeGlobals;
-import hue.captains.singapura.js.homing.core.ThemeVariables;
 
 import java.util.Map;
 
@@ -38,8 +37,8 @@ public record HomingLetterpress() implements Theme {
     @Override public String group() { return "Neutral"; }
     @Override public String inspiration() { return "Editorial broadsheet — brick-red ink on grained parchment."; }
 
-    public record Vars() implements ThemeVariables<HomingLetterpress> {
-        public static final Vars INSTANCE = new Vars();
+    public record Palette() implements GlobalColorPalette.Provision<HomingLetterpress> {
+        public static final Palette INSTANCE = new Palette();
         @Override public HomingLetterpress theme() { return HomingLetterpress.INSTANCE; }
         @Override public Map<CssVar, String> values() { return VALUES; }
 

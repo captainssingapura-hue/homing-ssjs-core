@@ -1,13 +1,11 @@
 package hue.captains.singapura.js.homing.server;
 
-import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.core.Theme;
-import hue.captains.singapura.js.homing.core.ThemeVariables;
+import hue.captains.singapura.js.homing.core.PaletteProvision;
 import hue.captains.singapura.tao.http.action.GetAction;
 import hue.captains.singapura.tao.http.action.ParamMarshaller;
 import io.vertx.ext.web.RoutingContext;
 
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
@@ -15,8 +13,8 @@ import java.util.concurrent.CompletableFuture;
  * RFC 0002-ext1 Phase 09 — serves per-theme CSS variable values as a separate,
  * cacheable CSS file at {@code GET /theme-vars?theme=Y}.
  *
- * <p>Body shape: one {@code :root { ... }} block listing every {@link CssVar}
- * the theme's {@link ThemeVariables} provides. The browser caches it once per
+ * <p>Body shape: one {@code :root { ... }} block listing every token
+ * the theme's {@link PaletteProvision} of the global palette binds (RFC 0066). The browser caches it once per
  * theme; the value is referenced via {@code var(--foo)} in per-class CSS files
  * served by {@code /css-content}.</p>
  *
@@ -58,17 +56,11 @@ public class ThemeVarsGetAction
             return CompletableFuture.completedFuture(new CssContent(""));
         }
 
-        ThemeVariables<?> vars = registry.variablesForSlug(slug);
-        if (vars == null || vars.values().isEmpty()) {
+        PaletteProvision<?, ?> palette = registry.paletteForSlug(slug);
+        if (palette == null) {
             return CompletableFuture.completedFuture(new CssContent(""));
         }
 
-        StringBuilder sb = new StringBuilder();
-        sb.append(":root {\n");
-        for (Map.Entry<CssVar, String> e : vars.values().entrySet()) {
-            sb.append("    ").append(e.getKey().name()).append(": ").append(e.getValue()).append(";\n");
-        }
-        sb.append("}\n");
-        return CompletableFuture.completedFuture(new CssContent(sb.toString()));
+        return CompletableFuture.completedFuture(new CssContent(palette.rootBlock()));
     }
 }

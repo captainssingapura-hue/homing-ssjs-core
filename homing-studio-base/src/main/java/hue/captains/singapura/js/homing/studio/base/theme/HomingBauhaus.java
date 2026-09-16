@@ -3,7 +3,6 @@ package hue.captains.singapura.js.homing.studio.base.theme;
 import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.ThemeGlobals;
-import hue.captains.singapura.js.homing.core.ThemeVariables;
 
 import java.util.Map;
 
@@ -29,8 +28,8 @@ public record HomingBauhaus() implements Theme {
     @Override public String group() { return "Expressive"; }
     @Override public String inspiration() { return "Austere modernist primaries — Bauhaus yellow, Itten blue, black."; }
 
-    public record Vars() implements ThemeVariables<HomingBauhaus> {
-        public static final Vars INSTANCE = new Vars();
+    public record Palette() implements GlobalColorPalette.Provision<HomingBauhaus> {
+        public static final Palette INSTANCE = new Palette();
         @Override public HomingBauhaus theme() { return HomingBauhaus.INSTANCE; }
         @Override public Map<CssVar, String> values() { return VALUES; }
 
