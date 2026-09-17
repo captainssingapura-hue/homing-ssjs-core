@@ -49,6 +49,13 @@
             <artifactId>homing-studio-workspace</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+        <!-- RFC 0065 layer 5 / RFC 0066 - the eleven themes the starter installs by
+             default; a bespoke Fixtures may install its own instead. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-studio-themes</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>

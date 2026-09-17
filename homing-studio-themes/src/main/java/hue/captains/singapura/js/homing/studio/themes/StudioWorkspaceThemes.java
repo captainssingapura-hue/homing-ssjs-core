@@ -1,10 +1,9 @@
-package hue.captains.singapura.js.homing.studio.workspace;
+package hue.captains.singapura.js.homing.studio.themes;
 
 import hue.captains.singapura.js.homing.core.CssGroupImpl;
 import hue.captains.singapura.js.homing.core.PaletteProvision;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.server.ThemeRegistry;
-import hue.captains.singapura.js.homing.studio.base.theme.StudioThemeRegistry;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -96,6 +96,8 @@
              workspace-shell (the workspace stack is a strict downstream of
              studio-base, so the wiring cannot live in studio-base itself). -->
         <module>homing-studio-workspace</module>
+        <!-- RFC 0065 layer 5 / RFC 0066 - the eleven themes, above the bundle. -->
+        <module>homing-studio-themes</module>
         <!-- RFC 0050 — the Relation Grid: the generic Excel-like table
              primitive family, its own Maven module (one Crate per module) so
              any downstream can consume it without the studio/workspace shells. -->

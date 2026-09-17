@@ -4,8 +4,6 @@ import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.server.ThemeRegistry;
 import hue.captains.singapura.js.homing.studio.base.app.StudioBrand;
-import hue.captains.singapura.js.homing.studio.base.theme.HomingDefault;
-import hue.captains.singapura.js.homing.studio.base.theme.StudioThemeRegistry;
 import hue.captains.singapura.tao.http.action.GetAction;
 import hue.captains.singapura.tao.http.action.PostAction;
 import hue.captains.singapura.tao.ontology.Immutable;
@@ -61,11 +59,17 @@ public interface Fixtures<S extends Studio<?>> extends Immutable {
     default Map<String, PostAction<RoutingContext, ?, ?, ?>> harnessPostActions() {
         return Map.of();
     }
-    /** ThemeRegistry the harness installs. Default: {@link StudioThemeRegistry#INSTANCE}. */
-    default ThemeRegistry themeRegistry() { return StudioThemeRegistry.INSTANCE; }
+    /** RFC 0066 — the themes the harness installs. studio-base ships none: the
+     *  eleven live one layer up in {@code homing-studio-themes} and the starter
+     *  installs them; a bespoke Fixtures installs its own. Default: none. */
+    default ThemeRegistry themeRegistry() { return ThemeRegistry.EMPTY; }
 
-    /** Default theme. Default: {@link HomingDefault#INSTANCE}. */
-    default Theme defaultTheme() { return HomingDefault.INSTANCE; }
+    /** The theme a request without {@code ?theme=} is served under: the first the
+     *  registry lists, or none when the registry is empty. */
+    default Theme defaultTheme() {
+        var themes = themeRegistry().themes();
+        return themes.isEmpty() ? null : themes.get(0);
+    }
 
     /**
      * Brand to install. Default: the first studio's

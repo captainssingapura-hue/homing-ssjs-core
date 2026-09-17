@@ -8,7 +8,7 @@ import hue.captains.singapura.js.homing.studio.base.Umbrella;
 import hue.captains.singapura.js.homing.studio.workspace.CatalogueForestGetAction;
 import hue.captains.singapura.js.homing.server.ThemeRegistry;
 import hue.captains.singapura.js.homing.studio.workspace.StudioWorkspaceSpec;
-import hue.captains.singapura.js.homing.studio.workspace.StudioWorkspaceThemes;
+import hue.captains.singapura.js.homing.studio.themes.StudioWorkspaceThemes;
 import hue.captains.singapura.js.homing.workspace.shell.GenericWorkspace;
 import hue.captains.singapura.js.homing.workspace.shell.WorkspaceGroupApp;
 import hue.captains.singapura.js.homing.workspace.shell.WorkspaceSpecRegistry;

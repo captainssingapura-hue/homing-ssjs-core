@@ -4,9 +4,10 @@ import hue.captains.singapura.js.homing.server.CssContentGetAction;
 import hue.captains.singapura.js.homing.server.EmptyParam;
 import hue.captains.singapura.js.homing.server.ModuleQuery;
 import hue.captains.singapura.js.homing.studio.base.css.Util;
-import hue.captains.singapura.js.homing.studio.base.theme.StudioThemeRegistry;
-import hue.captains.singapura.js.homing.studio.base.theme.HomingDefault;
+import hue.captains.singapura.js.homing.core.Theme;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -15,14 +16,18 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * RFC 0002-ext1 Phase 06 — smoke tests for the {@link Util} CssGroup. Verifies
  * that inline-bodied utilities render correctly, that auto-synthesized variants
  * (Phase 01) reuse the inline body, and that with no theme override for any
- * utility (RFC 0066) every class renders from its own body under {@link HomingDefault}.
+ * utility (RFC 0066) every class renders from its own body under any theme.
  */
 class UtilRenderingTest {
 
-    private final CssContentGetAction action = new CssContentGetAction(
-            StudioThemeRegistry.INSTANCE.impls(),
-            HomingDefault.INSTANCE
-    );
+    /** studio-base ships no theme (RFC 0066); a utility renders from its own
+     *  body under any theme, so a nameless one is enough to ask under. */
+    record Bare() implements Theme {
+        static final Bare INSTANCE = new Bare();
+        @Override public String slug() { return "bare"; }
+    }
+
+    private final CssContentGetAction action = new CssContentGetAction(List.of(), Bare.INSTANCE);
 
     private String renderUtil() throws Exception {
         var query = new ModuleQuery(Util.class.getCanonicalName(), null, null);

@@ -1,4 +1,4 @@
-package hue.captains.singapura.js.homing.studio.base.theme;
+package hue.captains.singapura.js.homing.studio.themes;
 
 import hue.captains.singapura.js.homing.core.CssBlock;
 import hue.captains.singapura.js.homing.core.CssVar;
@@ -8,6 +8,7 @@ import hue.captains.singapura.js.homing.theme.type.GlobalTypePalette;
 import hue.captains.singapura.js.homing.theme.type.HomingFonts;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.studio.base.css.StudioStyles;
+import hue.captains.singapura.js.homing.studio.base.theme.ThemePickerStyles;
 import hue.captains.singapura.js.homing.studio.base.ui.MasterDetailStyles;
 import hue.captains.singapura.js.homing.studio.base.ui.SystemDialogStyles;
 

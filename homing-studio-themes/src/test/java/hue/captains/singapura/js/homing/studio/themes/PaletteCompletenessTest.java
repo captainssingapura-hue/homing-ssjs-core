@@ -1,4 +1,4 @@
-package hue.captains.singapura.js.homing.studio.base.theme;
+package hue.captains.singapura.js.homing.studio.themes;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;

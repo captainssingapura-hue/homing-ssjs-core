@@ -1,8 +1,7 @@
-package hue.captains.singapura.js.homing.studio.workspace;
+package hue.captains.singapura.js.homing.studio.themes;
 
 import hue.captains.singapura.js.homing.core.CssBlock;
 import hue.captains.singapura.js.homing.core.CssGroupImpl;
-import hue.captains.singapura.js.homing.studio.base.theme.HomingBrutalist;
 import hue.captains.singapura.js.homing.workspace.shell.CssGraphStyles;
 import hue.captains.singapura.js.homing.workspace.shell.PartyMonitorStyles;
 import hue.captains.singapura.js.homing.workspace.shell.WorkspaceSwitcherStyles;
