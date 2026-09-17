@@ -29,8 +29,7 @@ public final class StudioThemeRegistry implements ThemeRegistry {
             List.of(),
             List.of(HomingDefault.Palette.INSTANCE, HomingNeoBrutalism.Palette.INSTANCE,
                     HomingDefault.Fonts.INSTANCE, HomingNeoBrutalism.Fonts.INSTANCE),
-            List.of(HomingNeoBrutalism.Dialog.INSTANCE,
-                    HomingNeoBrutalism.Picker.INSTANCE, HomingNeoBrutalism.MasterDetail.INSTANCE));
+            List.of());
 
     private StudioThemeRegistry() {}
 

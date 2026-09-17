@@ -3,17 +3,17 @@ package hue.captains.singapura.js.homing.studio.themes;
 import hue.captains.singapura.js.homing.core.CssGroupImpl;
 import hue.captains.singapura.js.homing.core.PaletteProvision;
 import hue.captains.singapura.js.homing.core.Theme;
+import hue.captains.singapura.js.homing.server.CssRenderer;
 import hue.captains.singapura.js.homing.server.ThemeRegistry;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * RFC 0066 — the studio's themes with their word on the workspace added: the
- * same themes and palettes as {@link StudioThemeRegistry}, plus the impls that
- * override the workspace's classes. A theme's overrides for a product live in
- * a module that sees both the theme and the product; this registry is where
- * the studio+workspace bundle joins them, and the starter's fixtures serve it.
+ * The studio's registry for a deployment with the workspace mounted. Once a
+ * theme's word on the workspace was a second file of overrides that this
+ * registry appended; now a design binds the classes the workspace's elements
+ * wear, and there is nothing to append. Kept as the name the starter and the
+ * downstream studios registered; it is {@link StudioThemeRegistry}.
  */
 public final class StudioWorkspaceThemes implements ThemeRegistry {
 
@@ -23,13 +23,6 @@ public final class StudioWorkspaceThemes implements ThemeRegistry {
 
     @Override public List<Theme> themes() { return StudioThemeRegistry.INSTANCE.themes(); }
     @Override public List<PaletteProvision<?, ?>> palettes() { return StudioThemeRegistry.INSTANCE.palettes(); }
-
-    @Override public List<hue.captains.singapura.js.homing.server.CssRenderer> renderers() { return StudioThemeRegistry.INSTANCE.renderers(); }
-    @Override public List<CssGroupImpl<?, ?>> overrides() {
-        var all = new ArrayList<CssGroupImpl<?, ?>>(StudioThemeRegistry.INSTANCE.overrides());
-        all.add(BrutalistWorkspace.Switcher.INSTANCE);
-        all.add(BrutalistWorkspace.Graph.INSTANCE);
-        all.add(BrutalistWorkspace.Monitor.INSTANCE);
-        return List.copyOf(all);
-    }
+    @Override public List<CssGroupImpl<?, ?>> overrides() { return StudioThemeRegistry.INSTANCE.overrides(); }
+    @Override public List<CssRenderer> renderers() { return StudioThemeRegistry.INSTANCE.renderers(); }
 }

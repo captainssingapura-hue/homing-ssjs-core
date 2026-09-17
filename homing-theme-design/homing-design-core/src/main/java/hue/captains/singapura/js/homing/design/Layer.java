@@ -17,6 +17,8 @@ public interface Layer extends Semantic {
         public record base_color_ink() implements DesignClass<Base, Color.Ink> {}
         public record base_color_edge() implements DesignClass<Base, Color.Edge> {}
         public record base_color_scrollbar() implements DesignClass<Base, Color.Scrollbar> {}
+        public record base_shape_rule() implements DesignClass<Base, Shape.Rule> {}
+        public record base_shape_corner() implements DesignClass<Base, Shape.Corner> {}
     }
 
     record Raised() implements Layer {

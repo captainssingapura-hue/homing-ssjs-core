@@ -17,10 +17,13 @@ import static hue.captains.singapura.js.homing.design.Feedback.Danger.*;
 import static hue.captains.singapura.js.homing.design.Feedback.Success.*;
 import static hue.captains.singapura.js.homing.design.Feedback.Warning.*;
 import static hue.captains.singapura.js.homing.design.Interaction.Current.*;
+import static hue.captains.singapura.js.homing.design.Interaction.Focus.*;
+import static hue.captains.singapura.js.homing.design.Interaction.Inert.*;
 import static hue.captains.singapura.js.homing.design.Interaction.Interactive.*;
 import static hue.captains.singapura.js.homing.design.Interaction.Selected.*;
 import static hue.captains.singapura.js.homing.design.Layer.Base.*;
 import static hue.captains.singapura.js.homing.design.Layer.Inverted.*;
+import static hue.captains.singapura.js.homing.design.Layer.Overlay.*;
 import static hue.captains.singapura.js.homing.design.Layer.Raised.*;
 import static hue.captains.singapura.js.homing.design.Layer.Recessed.*;
 import static hue.captains.singapura.js.homing.design.Pairing.OnInverted.*;
@@ -31,6 +34,7 @@ import static hue.captains.singapura.js.homing.design.Structure.Cap.*;
 import static hue.captains.singapura.js.homing.design.Structure.Divider.*;
 import static hue.captains.singapura.js.homing.design.Structure.Hairline.*;
 import static hue.captains.singapura.js.homing.design.Structure.Marker.*;
+import static hue.captains.singapura.js.homing.design.Structure.Rail.*;
 import static hue.captains.singapura.js.homing.design.Structure.Spine.*;
 import static hue.captains.singapura.js.homing.design.Text.Body.*;
 import static hue.captains.singapura.js.homing.design.Text.Code.*;
@@ -71,6 +75,8 @@ final class NeoBrutalismDesign {
             // ── layers: paper, and everything edged in ink ──────────────
             surface(base_color_surface.class, PAPER, PAPER_D),
             one(base_color_scrollbar.class, INK + " " + PAPER, INK_D + " " + PAPER_D),
+            rule(base_shape_rule.class, "0", "none"),
+            one(base_shape_corner.class, "0"),
             surface(raised_color_surface.class, PAPER, PAPER_D),
             edge(raised_color_edge.class, RULE, RULE_D),
             ruleWithFocusRing(raised_shape_rule.class, "3px", "solid", "4px", "4px"),
@@ -134,6 +140,8 @@ final class NeoBrutalismDesign {
                     .at(State.HOVER, "translate(-2px, -2px)")
                     .at(State.ACTIVE, "translate(5px, 5px)")),
             states(interactive_shape_shadow.class, shadow(4), shadow(8), "0 0 0 " + INK),
+            surface(interactive_color_surface.class, SIGNAL),
+            edge(interactive_color_edge.class, INK, INK_D),
             surface(selected_color_surface.class, INK, "#FFFFFF"),
             one(selected_color_ink.class, SIGNAL, INK),
             edge(selected_color_edge.class, INK, "#FFFFFF"),
@@ -155,6 +163,18 @@ final class NeoBrutalismDesign {
             rule(marker_shape_rule.class, "0 0 0 4px", "solid"),
             edge(bar_color_edge.class, RULE, RULE_D),
             rule(bar_shape_rule.class, "3px 3px 3px 8px", "solid"),
+
+            edge(rail_color_edge.class, RULE, RULE_D),
+            rule(rail_shape_rule.class, "0 3px 0 0", "solid"),
+            edge(on_inverted_color_edge.class, PAPER, INK),
+            edge(primary_color_edge.class, INK),
+            one(overlay_shape_shadow.class, shadow(12)),
+            ImplProvider.of(overlay_effect_filter.class, Impl.Bindings.none().at(State.REST, "backdrop-filter", "grayscale(1) contrast(1.4)")),
+            surfaceImage(overlay_color_surface.class, "transparent", "repeating-linear-gradient(45deg, color-mix(in srgb, " + INK + " 22%, transparent) 0 7px, transparent 7px 14px)"),
+            edge(focus_color_edge.class, RISO_BLUE),
+            one(focus_shape_shadow.class, shadow(12) + ", 0 0 0 4px " + RISO_BLUE),
+            one(inert_effect_opacity.class, "0.4"),
+            one(inert_affordance_cursor.class, "not-allowed"),
 
             // ── boxes ───────────────────────────────────────────────────
             one(control_shape_corner.class, "0"),

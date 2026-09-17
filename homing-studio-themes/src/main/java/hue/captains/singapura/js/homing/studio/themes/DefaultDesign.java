@@ -15,10 +15,13 @@ import static hue.captains.singapura.js.homing.design.Feedback.Danger.*;
 import static hue.captains.singapura.js.homing.design.Feedback.Success.*;
 import static hue.captains.singapura.js.homing.design.Feedback.Warning.*;
 import static hue.captains.singapura.js.homing.design.Interaction.Current.*;
+import static hue.captains.singapura.js.homing.design.Interaction.Focus.*;
+import static hue.captains.singapura.js.homing.design.Interaction.Inert.*;
 import static hue.captains.singapura.js.homing.design.Interaction.Interactive.*;
 import static hue.captains.singapura.js.homing.design.Interaction.Selected.*;
 import static hue.captains.singapura.js.homing.design.Layer.Base.*;
 import static hue.captains.singapura.js.homing.design.Layer.Inverted.*;
+import static hue.captains.singapura.js.homing.design.Layer.Overlay.*;
 import static hue.captains.singapura.js.homing.design.Layer.Raised.*;
 import static hue.captains.singapura.js.homing.design.Layer.Recessed.*;
 import static hue.captains.singapura.js.homing.design.Pairing.OnInverted.*;
@@ -29,6 +32,7 @@ import static hue.captains.singapura.js.homing.design.Structure.Cap.*;
 import static hue.captains.singapura.js.homing.design.Structure.Divider.*;
 import static hue.captains.singapura.js.homing.design.Structure.Hairline.*;
 import static hue.captains.singapura.js.homing.design.Structure.Marker.*;
+import static hue.captains.singapura.js.homing.design.Structure.Rail.*;
 import static hue.captains.singapura.js.homing.design.Structure.Spine.*;
 import static hue.captains.singapura.js.homing.design.Text.Body.*;
 import static hue.captains.singapura.js.homing.design.Text.Caption.*;
@@ -76,6 +80,8 @@ final class DefaultDesign {
             // ── layers ──────────────────────────────────────────────────
             surface(base_color_surface.class, SURFACE, SURFACE_D),
             one(base_color_scrollbar.class, MUTED + " " + SURFACE, MUTED_D + " " + SURFACE_D),
+            rule(base_shape_rule.class, "0", "none"),
+            one(base_shape_corner.class, "0"),
             surface(raised_color_surface.class, RAISED, RAISED_D),
             edgeFocus(raised_color_edge.class, BORDER, GOLD),
             rule(raised_shape_rule.class, "1px", "solid"),
@@ -161,6 +167,8 @@ final class DefaultDesign {
                     "0 1px 3px color-mix(in srgb, " + NAVY + " 4%, transparent)",
                     "0 6px 16px color-mix(in srgb, " + NAVY + " 12%, transparent)"),
             one(interactive_affordance_cursor.class, "pointer"),
+            surface(interactive_color_surface.class, "color-mix(in srgb, " + GOLD + " 15%, transparent)"),
+            edge(interactive_color_edge.class, BORDER, BORDER_D),
             surface(selected_color_surface.class, INVERTED),
             states(selected_color_ink.class, ON_INVERTED, GOLD),
             edge(selected_color_edge.class, INVERTED),
@@ -182,6 +190,17 @@ final class DefaultDesign {
             rule(marker_shape_rule.class, "0 0 0 2px", "solid"),
             edgeHover(bar_color_edge.class, BORDER + " " + BORDER + " " + BORDER + " " + GOLD, BORDER + " " + BORDER + " " + BORDER + " " + AMBER),
             rule(bar_shape_rule.class, "1px 1px 1px 4px", "solid"),
+
+            edge(rail_color_edge.class, BORDER, BORDER_D),
+            rule(rail_shape_rule.class, "0 1px 0 0", "solid"),
+            edge(on_inverted_color_edge.class, BORDER, BORDER_D),
+            edge(primary_color_edge.class, GOLD),
+            one(overlay_shape_shadow.class, "0 10px 30px color-mix(in srgb, " + INVERTED + " 45%, transparent), 0 2px 6px color-mix(in srgb, " + INVERTED + " 30%, transparent)"),
+            ImplProvider.of(overlay_effect_filter.class, hue.captains.singapura.js.homing.design.Impl.Bindings.none().at(hue.captains.singapura.js.homing.design.State.REST, "backdrop-filter", "brightness(0.45) blur(2px)")),
+            edge(focus_color_edge.class, "color-mix(in srgb, " + GOLD + " 55%, " + BORDER + ")"),
+            one(focus_shape_shadow.class, "0 10px 30px color-mix(in srgb, " + INVERTED + " 45%, transparent), 0 0 0 1px color-mix(in srgb, " + GOLD + " 28%, transparent), 0 0 36px color-mix(in srgb, " + GOLD + " 30%, transparent)"),
+            one(inert_effect_opacity.class, "0.45"),
+            one(inert_affordance_cursor.class, "default"),
 
             // ── boxes ───────────────────────────────────────────────────
             one(control_shape_corner.class, "3px"),

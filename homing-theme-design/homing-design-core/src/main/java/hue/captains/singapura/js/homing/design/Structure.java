@@ -48,6 +48,12 @@ public interface Structure extends Semantic {
         public record cap_shape_rule() implements DesignClass<Cap, Shape.Rule> {}
     }
 
+    /** The rail: a one-pixel line along the trailing edge of a column — a nav beside its detail. */
+    record Rail() implements Structure {
+        public record rail_color_edge() implements DesignClass<Rail, Color.Edge> {}
+        public record rail_shape_rule() implements DesignClass<Rail, Shape.Rule> {}
+    }
+
     record Backdrop() implements Structure {
         public record backdrop_asset_illustration() implements DesignClass<Backdrop, Asset.Illustration> {}
         public record backdrop_color_surface() implements DesignClass<Backdrop, Color.Surface> {}

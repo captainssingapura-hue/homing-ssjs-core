@@ -2,34 +2,18 @@ package hue.captains.singapura.js.homing.studio.base.ui;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
-import hue.captains.singapura.js.homing.core.CssGroupImpl;
-import hue.captains.singapura.js.homing.core.Theme;
 
 import java.util.List;
 
+import static hue.captains.singapura.js.homing.design.Structure.Rail.*;
+
 /**
- * Layout for the master/detail pattern — a tree on the left, whatever the
- * selected row is about on the right.
- *
- * <p>Its own group rather than part of
- * {@link hue.captains.singapura.js.homing.studio.base.css.StudioStyles}, because
- * it travels with {@link MasterDetail} and both of its consumers — the catalogue
- * listing and the theme picker — take the component, not the sheet.</p>
- *
- * <p><b>The nav is sized by its content, not by a ratio.</b> An earlier
- * catalogue split divided the space by the golden ratio, which was a reasonable
- * answer to not knowing how wide a tree wanted to be. It is the wrong answer
- * once you can ask: a ratio makes the nav's width a function of the window,
- * so the same tree is cramped on a narrow screen and swimming on a wide one.
- * Content sizing makes it a function of the longest label, which is the only
- * thing that actually determines how much room the tree needs.</p>
+ * The master/detail split: a nav column beside a detail body. Structure
+ * only; the nav wears the rail along its trailing edge.
  */
 public record MasterDetailStyles() implements CssGroup<MasterDetailStyles> {
-
     public static final MasterDetailStyles INSTANCE = new MasterDetailStyles();
-/** RFC 0066 — a theme's word on this group: one block per overridden class,     *  appended inside that class's rule after the declared body. */    public interface Overrides<TH extends Theme> extends CssGroupImpl<MasterDetailStyles, TH> {        @Override default MasterDetailStyles group() { return INSTANCE; }    }
 
-    /** The pair, side by side. */
     public record md_split() implements CssClass<MasterDetailStyles> {
         @Override public String body() { return """
             display: flex;
@@ -41,14 +25,8 @@ public record MasterDetailStyles() implements CssGroup<MasterDetailStyles> {
             gap: 0;
             """; }
     }
-
-    /**
-     * The tree. Width is max(designed floor, longest entry) + fixed padding,
-     * said declaratively: max-content sizes to the longest row, min-width keeps
-     * a short list from looking pinched, max-width stops one long name from
-     * eating the pane. No measuring, no reflow pass, no JS.
-     */
     public record md_nav() implements CssClass<MasterDetailStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new rail_color_edge(), new rail_shape_rule()); }
         @Override public String body() { return """
             flex: 0 0 auto;
             width: max-content;
@@ -56,20 +34,17 @@ public record MasterDetailStyles() implements CssGroup<MasterDetailStyles> {
             max-width: 340px;
             min-height: 0;
             overflow-y: auto;
-            padding: var(--space-2) var(--space-4) var(--space-2) 0;
-            border-right: 1px solid var(--color-border);
+            padding: 8px 16px 8px 0;
             outline: none;
             """; }
     }
-
-    /** Everything the selected row is about. */
     public record md_body() implements CssClass<MasterDetailStyles> {
         @Override public String body() { return """
             flex: 1 1 0;
             min-width: 0;
             min-height: 0;
             overflow-y: auto;
-            padding: var(--space-2) 0 var(--space-2) var(--space-4);
+            padding: 8px 0 8px 16px;
             """; }
     }
 

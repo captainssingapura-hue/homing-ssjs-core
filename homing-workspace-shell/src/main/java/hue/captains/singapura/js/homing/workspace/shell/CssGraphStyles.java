@@ -5,233 +5,182 @@ import hue.captains.singapura.js.homing.core.CssGroup;
 
 import java.util.List;
 
+import static hue.captains.singapura.js.homing.design.Box.Control.*;
+import static hue.captains.singapura.js.homing.design.Box.Inline.*;
+import static hue.captains.singapura.js.homing.design.Emphasis.Muted.*;
+import static hue.captains.singapura.js.homing.design.Emphasis.Primary.*;
+import static hue.captains.singapura.js.homing.design.Feedback.Danger.*;
+import static hue.captains.singapura.js.homing.design.Feedback.Success.*;
+import static hue.captains.singapura.js.homing.design.Interaction.Inert.*;
+import static hue.captains.singapura.js.homing.design.Interaction.Interactive.*;
+import static hue.captains.singapura.js.homing.design.Layer.Base.*;
+import static hue.captains.singapura.js.homing.design.Layer.Raised.*;
+import static hue.captains.singapura.js.homing.design.Layer.Recessed.*;
+import static hue.captains.singapura.js.homing.design.Pairing.OnPrimary.*;
+import static hue.captains.singapura.js.homing.design.Structure.Hairline.*;
+import static hue.captains.singapura.js.homing.design.Text.Body.*;
+import static hue.captains.singapura.js.homing.design.Text.Caption.*;
+import static hue.captains.singapura.js.homing.design.Text.Heading.*;
+import static hue.captains.singapura.js.homing.design.Text.Kicker.*;
+import static hue.captains.singapura.js.homing.design.Text.Label.*;
+import static hue.captains.singapura.js.homing.design.Text.Link.*;
+
 /**
- * Typed CSS for the CSS graph workbench (RFC 0064): a head with the theme
- * worn, a plan bar, and the graph as columns by wave. Theme tokens
- * throughout, so the workbench re-themes under the switch it demonstrates.
+ * The CSS graph workbench: a head, a bar of controls, and the waves of nodes.
+ * Structure only; a node is a raised card, a badge is an inline mark, a
+ * prior badge is on the primary surface, a sheet's state is feedback.
  */
 public record CssGraphStyles() implements CssGroup<CssGraphStyles> {
-
     public static final CssGraphStyles INSTANCE = new CssGraphStyles();
 
     public record cg_root() implements CssClass<CssGraphStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new caption_type_scale(), new body_color_ink()); }
         @Override public String body() { return """
             display: flex;
             flex-direction: column;
             height: 100%;
             min-height: 0;
-            font-size: 12px;
-            color: var(--color-text-primary);
             """; }
     }
-
     public record cg_head() implements CssClass<CssGraphStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new hairline_color_edge(), new hairline_shape_rule()); }
         @Override public String body() { return """
             display: flex;
             align-items: center;
-            gap: var(--space-2);
-            padding: var(--space-2) var(--space-3);
-            border-bottom: 1px solid var(--color-border);
+            gap: 8px;
+            padding: 8px 12px;
             flex: 0 0 auto;
             """; }
     }
-
     public record cg_title() implements CssClass<CssGraphStyles> {
-        @Override public String body() { return """
-            font-weight: 700;
-            """; }
+        @Override public List<CssClass<?>> wears() { return List.of(new heading_type_weight()); }
+        @Override public String body() { return ""; }
     }
-
-    /** "wears: forest" — the theme the page is under, from the manager. */
     public record cg_worn() implements CssClass<CssGraphStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new muted_color_ink()); }
         @Override public String body() { return """
-            color: var(--color-text-muted);
             margin-left: auto;
             """; }
     }
-
     public record cg_btn() implements CssClass<CssGraphStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new raised_color_surface(), new body_color_ink(), new raised_color_edge(), new raised_shape_rule(), new control_shape_corner(), new kicker_type_scale(), new interactive_affordance_cursor()); }
         @Override public String body() { return """
             font: inherit;
-            font-size: 11px;
-            padding: 2px var(--space-2);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-sm);
-            background: var(--color-surface-raised);
-            color: var(--color-text-primary);
-            cursor: pointer;
+            padding: 2px 8px;
             """; }
     }
-
-    /** The plan bar: a target theme, Plan, Run, and the note. */
     public record cg_bar() implements CssClass<CssGraphStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new hairline_color_edge(), new hairline_shape_rule()); }
         @Override public String body() { return """
             display: flex;
             align-items: center;
-            gap: var(--space-2);
-            padding: var(--space-2) var(--space-3);
-            border-bottom: 1px solid var(--color-border);
+            gap: 8px;
+            padding: 8px 12px;
             flex: 0 0 auto;
             """; }
     }
-
     public record cg_select() implements CssClass<CssGraphStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new base_color_surface(), new body_color_ink(), new raised_color_edge(), new raised_shape_rule(), new control_shape_corner(), new kicker_type_scale()); }
         @Override public String body() { return """
             font: inherit;
-            font-size: 11px;
-            padding: 2px var(--space-1);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-sm);
-            background: var(--color-surface);
-            color: var(--color-text-primary);
+            padding: 2px 4px;
             """; }
     }
-
     public record cg_note() implements CssClass<CssGraphStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new muted_color_ink()); }
         @Override public String body() { return """
-            color: var(--color-text-muted);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             """; }
     }
-
     public record cg_note_err() implements CssClass<CssGraphStyles> {
-        @Override public String body() { return """
-            color: var(--color-danger, var(--color-accent));
-            """; }
+        @Override public List<CssClass<?>> wears() { return List.of(new danger_color_ink()); }
+        @Override public String body() { return ""; }
     }
-
-    /**
-     * The graph: one column per wave, scrolling sideways when wide. Sized by
-     * its content when the host has no height of its own (a widget host is
-     * auto-height) and filling the rest when it has — a flex-basis of 0 here
-     * collapsed the columns to a scrollbar sliver in a tab.
-     */
     public record cg_waves() implements CssClass<CssGraphStyles> {
         @Override public String body() { return """
             display: flex;
-            gap: var(--space-3);
-            padding: var(--space-3);
+            gap: 12px;
+            padding: 12px;
             overflow: auto;
             flex: 1 1 auto;
             align-items: flex-start;
             """; }
     }
-
     public record cg_wave() implements CssClass<CssGraphStyles> {
         @Override public String body() { return """
             display: flex;
             flex-direction: column;
-            gap: var(--space-2);
+            gap: 8px;
             min-width: 180px;
             """; }
     }
-
     public record cg_wave_head() implements CssClass<CssGraphStyles> {
-        @Override public String body() { return """
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: var(--color-text-muted);
-            """; }
+        @Override public List<CssClass<?>> wears() { return List.of(new kicker_type_scale(), new kicker_type_weight(), new kicker_type_treatment(), new muted_color_ink()); }
+        @Override public String body() { return ""; }
     }
-
-    /** One node: the group, its badges, its dependencies, its sheets. */
     public record cg_node() implements CssClass<CssGraphStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new raised_color_surface(), new raised_color_edge(), new raised_shape_rule(), new control_shape_corner()); }
         @Override public String body() { return """
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-sm);
-            background: var(--color-surface-raised);
-            padding: var(--space-2);
+            padding: 8px;
             display: flex;
             flex-direction: column;
             gap: 2px;
             """; }
     }
-
     public record cg_node_id() implements CssClass<CssGraphStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new label_type_weight()); }
         @Override public String body() { return """
-            font-weight: 600;
             word-break: break-all;
             """; }
     }
-
     public record cg_badge() implements CssClass<CssGraphStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new kicker_type_scale(), new kicker_type_treatment(), new inline_shape_corner(), new recessed_color_surface(), new muted_color_ink()); }
         @Override public String body() { return """
             display: inline-block;
-            font-size: 9px;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
             padding: 0 4px;
-            border-radius: var(--radius-sm);
-            background: var(--color-surface-recessed);
-            color: var(--color-text-muted);
             margin-right: 4px;
             """; }
     }
-
-    /** A prior: loads before the graph. */
+    /** The prior's badge: applied beside cg_badge; the primary surface and ink win by order. */
     public record cg_badge_prior() implements CssClass<CssGraphStyles> {
-        @Override public String body() { return """
-            background: var(--color-accent);
-            color: var(--color-accent-on);
-            """; }
+        @Override public List<CssClass<?>> wears() { return List.of(new primary_color_surface(), new on_primary_color_ink()); }
+        @Override public String body() { return ""; }
     }
-
-    /** Named by a dependency, never declared: its CSS is loaded by name, without handles. */
+    /** An unknown node's badge: no surface, a dashed inline edge. */
     public record cg_badge_unknown() implements CssClass<CssGraphStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new muted_color_edge(), new inline_shape_rule()); }
         @Override public String body() { return """
-            border: 1px dashed var(--color-border-emphasis, var(--color-border));
             background: transparent;
             """; }
     }
-
     public record cg_deps() implements CssClass<CssGraphStyles> {
-        @Override public String body() { return """
-            color: var(--color-text-muted);
-            font-size: 11px;
-            """; }
+        @Override public List<CssClass<?>> wears() { return List.of(new muted_color_ink(), new kicker_type_scale()); }
+        @Override public String body() { return ""; }
     }
-
     public record cg_sheets() implements CssClass<CssGraphStyles> {
-        @Override public String body() { return """
-            font-size: 11px;
-            """; }
+        @Override public List<CssClass<?>> wears() { return List.of(new kicker_type_scale()); }
+        @Override public String body() { return ""; }
     }
-
-    /** One sheet on a card's line: "✓ forest", "● forest", "… forest". */
     public record cg_sheet() implements CssClass<CssGraphStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new link_motion_ease()); }
         @Override public String body() { return """
             display: inline-block;
-            margin-right: var(--space-2);
-            transition: color 160ms ease, opacity 160ms ease;
+            margin-right: 8px;
             """; }
     }
-
-    /** Appended and fetching — the first thing a switch shows. */
     public record cg_sheet_pending() implements CssClass<CssGraphStyles> {
-        @Override public String body() { return """
-            opacity: 0.55;
-            font-style: italic;
-            """; }
+        @Override public List<CssClass<?>> wears() { return List.of(new inert_effect_opacity(), new caption_type_treatment()); }
+        @Override public String body() { return ""; }
     }
-
-    /** Landed but not yet applied — waiting for the wave, or for the flip. */
     public record cg_sheet_landed() implements CssClass<CssGraphStyles> {
-        @Override public String body() { return """
-            color: var(--color-accent);
-            """; }
+        @Override public List<CssClass<?>> wears() { return List.of(new primary_color_ink()); }
+        @Override public String body() { return ""; }
     }
-
-    /** Applied — the green tick. The one literal here is the tick's green; no theme
-     *  names a success colour, and the tick must read the same under every theme. */
     public record cg_sheet_applied() implements CssClass<CssGraphStyles> {
-        @Override public String body() { return """
-            color: #2E7D32;
-            font-weight: 600;
-            """; }
+        @Override public List<CssClass<?>> wears() { return List.of(new success_color_ink(), new label_type_weight()); }
+        @Override public String body() { return ""; }
     }
 
     @Override

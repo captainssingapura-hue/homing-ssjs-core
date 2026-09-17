@@ -5,98 +5,80 @@ import hue.captains.singapura.js.homing.core.CssGroup;
 
 import java.util.List;
 
+import static hue.captains.singapura.js.homing.design.Box.Control.*;
+import static hue.captains.singapura.js.homing.design.Emphasis.Muted.*;
+import static hue.captains.singapura.js.homing.design.Feedback.Warning.*;
+import static hue.captains.singapura.js.homing.design.Interaction.Interactive.*;
+import static hue.captains.singapura.js.homing.design.Layer.Base.*;
+import static hue.captains.singapura.js.homing.design.Layer.Raised.*;
+import static hue.captains.singapura.js.homing.design.Structure.Hairline.*;
+import static hue.captains.singapura.js.homing.design.Text.Body.*;
+import static hue.captains.singapura.js.homing.design.Text.Caption.*;
+import static hue.captains.singapura.js.homing.design.Text.Code.*;
+import static hue.captains.singapura.js.homing.design.Text.Heading.*;
+import static hue.captains.singapura.js.homing.design.Text.Label.*;
+
 /**
- * RFC 0063 — the DomOpsParty monitor's chrome: header, note, and the host the
- * tree is drawn into. The rows themselves are {@code TreeRenderer}'s and carry
- * its styling; a bespoke row sheet in the original demo's vocabulary was
- * built first and retired with the bespoke renderer, in review.
- *
- * <p>Every value is a token. The widget template this replaces styled itself
- * with {@code style.cssText}; that is baselined debt, not a pattern, and a
- * monitor whose whole point is that the framework can see itself should not
- * be invisible to {@code no-inline-style}.</p>
+ * The party monitor: a head over a tree of the live DOM parties. Structure
+ * only; the head is a raised band, the tree is set in the code face, a
+ * leak note is a warning.
  */
 public record PartyMonitorStyles() implements CssGroup<PartyMonitorStyles> {
-
     public static final PartyMonitorStyles INSTANCE = new PartyMonitorStyles();
 
-    /** The widget: header pinned, tree scrolls. */
     public record pm_root() implements CssClass<PartyMonitorStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new caption_type_scale(), new body_color_ink()); }
         @Override public String body() { return """
             display: flex;
             flex-direction: column;
             height: 100%;
             min-height: 0;
-            font-size: 12px;
-            color: var(--color-text-primary);
             """; }
     }
-
     public record pm_head() implements CssClass<PartyMonitorStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new raised_color_surface(), new hairline_color_edge(), new hairline_shape_rule()); }
         @Override public String body() { return """
             display: flex;
             align-items: center;
-            gap: var(--space-2);
-            padding: var(--space-2) var(--space-3);
-            border-bottom: 1px solid var(--color-border);
-            background: var(--color-surface-raised);
+            gap: 8px;
+            padding: 8px 12px;
             """; }
     }
-
     public record pm_title() implements CssClass<PartyMonitorStyles> {
-        @Override public String body() { return """
-            font-weight: 600;
-            color: var(--color-text-title);
-            """; }
+        @Override public List<CssClass<?>> wears() { return List.of(new label_type_weight(), new heading_color_ink()); }
+        @Override public String body() { return ""; }
     }
-
-    /** Branch and element totals: small and muted, after the title. */
     public record pm_count() implements CssClass<PartyMonitorStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new muted_color_ink()); }
         @Override public String body() { return """
-            color: var(--color-text-muted);
             flex: 1;
             """; }
     }
-
     public record pm_btn() implements CssClass<PartyMonitorStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new base_color_surface(), new body_color_ink(), new raised_color_edge(), new raised_shape_rule(), new control_shape_corner(), new interactive_affordance_cursor()); }
         @Override public String body() { return """
             font: inherit;
             padding: 2px 10px;
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-md);
-            background: var(--color-surface);
-            color: var(--color-text-primary);
-            cursor: pointer;
             """; }
     }
-
-    /**
-     * The one line under the header that says what the monitor cannot know:
-     * none collected is not no leaks. Muted when clean, emphasised when not.
-     */
     public record pm_note() implements CssClass<PartyMonitorStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new muted_color_ink(), new caption_type_treatment()); }
         @Override public String body() { return """
-            padding: var(--space-1) var(--space-3);
-            color: var(--color-text-muted);
-            font-style: italic;
+            padding: 4px 12px;
             """; }
     }
-
+    /** A leak: the note in the warning ink, upright. Applied beside pm_note; its ink wins by order, and the treatment is the caption's. */
     public record pm_note_leaked() implements CssClass<PartyMonitorStyles> {
-        @Override public String body() { return """
-            color: var(--color-accent-emphasis);
-            font-style: normal;
-            """; }
+        @Override public List<CssClass<?>> wears() { return List.of(new warning_color_ink(), new label_type_weight()); }
+        @Override public String body() { return ""; }
     }
-
-    /** The host the per-snapshot TreeRenderer draws into. */
     public record pm_tree() implements CssClass<PartyMonitorStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new code_type_face()); }
         @Override public String body() { return """
             flex: 1;
             min-height: 0;
             overflow: auto;
-            padding: var(--space-2) var(--space-3);
-            font-family: var(--font-mono);
+            padding: 8px 12px;
             """; }
     }
 

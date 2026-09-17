@@ -32,7 +32,6 @@ import hue.captains.singapura.js.homing.studio.base.composed.DocTreeRendererModu
 import hue.captains.singapura.js.homing.studio.base.composed.TocSidebarRenderer;
 import hue.captains.singapura.js.homing.studio.base.composed.TocSyncModule;
 import hue.captains.singapura.js.homing.studio.base.css.StudioStyles;
-import hue.captains.singapura.js.homing.studio.base.css.Util;
 import hue.captains.singapura.js.homing.studio.base.export.HtmlExportModule;
 import hue.captains.singapura.js.homing.studio.base.graph.StudioGraphInspector;
 import hue.captains.singapura.js.homing.studio.base.tree.CatalogueTreeView;
@@ -125,7 +124,6 @@ public final class StudioBaseCrate implements Crate {
                 CrateEntry.of(TocSidebarRenderer.INSTANCE),
                 CrateEntry.of(TocSyncModule.INSTANCE),
                 CrateEntry.of(StudioStyles.INSTANCE),
-                CrateEntry.of(Util.INSTANCE),
                 CrateEntry.of(HtmlExportModule.INSTANCE),
                 CrateEntry.of(StudioGraphInspector.INSTANCE),
                 CrateEntry.of(StudioGraphInspectorRenderer.INSTANCE),

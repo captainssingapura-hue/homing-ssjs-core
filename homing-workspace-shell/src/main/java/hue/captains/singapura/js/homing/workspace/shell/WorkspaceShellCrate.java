@@ -38,6 +38,7 @@ public final class WorkspaceShellCrate implements Crate {
                 WorkspacePersistenceCrate.INSTANCE,
                 // RFC 0066 - the palettes its groups read: colour, and the mono face.
                 ThemeColorCrate.INSTANCE,
+                hue.captains.singapura.js.homing.design.DesignCrate.INSTANCE,
                 ThemeTypeCrate.INSTANCE);
     }
 

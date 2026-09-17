@@ -61,6 +61,12 @@ public interface Interaction extends Semantic {
         public record dragging_affordance_cursor() implements DesignClass<Dragging, Affordance.Cursor> {}
     }
 
+    /** Inert: a control that is present but cannot be acted on right now. */
+    record Inert() implements Interaction {
+        public record inert_effect_opacity() implements DesignClass<Inert, Effect.Opacity> {}
+        public record inert_affordance_cursor() implements DesignClass<Inert, Affordance.Cursor> {}
+    }
+
     record DropTarget() implements Interaction {
         public record drop_target_color_surface() implements DesignClass<DropTarget, Color.Surface> {}
         public record drop_target_color_edge() implements DesignClass<DropTarget, Color.Edge> {}

@@ -1,21 +1,4 @@
-    var a = _withClass(_el("a"), st_app_pill);
-    href.set(a, props.href);
-
-    var iconBox = _withClass(_el("div"), st_app_pill_icon);
-    iconBox.textContent = props.icon || "";
-
-    var textBox = _el("div");
-    var label = _withClass(_el("div"), st_app_pill_label);
-    label.textContent = props.label;
-    var desc = _withClass(_el("div"), st_app_pill_desc);
-    desc.textContent = props.desc;
-    // The dark variant is the pill's and each child's: no rule reaches down.
-    if (props.dark) {
-        css.addClass(a, st_app_pill_dark);
-        css.addClass(iconBox, st_app_pill_icon_dark);
-        css.addClass(label, st_app_pill_label_dark);
-        css.addClass(desc, st_app_pill_desc_dark);
-    }// =============================================================================
+// =============================================================================
 // StudioElements — shared view-element builders used by every studio
 // AppModule. Each function takes a props object and returns a Node; the
 // consumer composes these instead of authoring HTML strings.
@@ -197,7 +180,6 @@ function Card(props) {
 // Use for launcher tiles (icon + label + desc), as on StudioCatalogue.
 function Pill(props) {
     var a = _withClass(_el("a"), st_app_pill);
-    if (props.dark) css.addClass(a, st_app_pill_dark);
     href.set(a, props.href);
 
     var iconBox = _withClass(_el("div"), st_app_pill_icon);
@@ -208,6 +190,13 @@ function Pill(props) {
     label.textContent = props.label;
     var desc = _withClass(_el("div"), st_app_pill_desc);
     desc.textContent = props.desc;
+    // The dark variant is the pill's and each child's: no rule reaches down.
+    if (props.dark) {
+        css.addClass(a, st_app_pill_dark);
+        css.addClass(iconBox, st_app_pill_icon_dark);
+        css.addClass(label, st_app_pill_label_dark);
+        css.addClass(desc, st_app_pill_desc_dark);
+    }
     _appendAll(textBox, label, desc);
 
     return _appendAll(a, iconBox, textBox);
