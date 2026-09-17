@@ -26,7 +26,9 @@ public record CssImportsFor<C extends CssGroup<C>>(
     public static <C extends CssGroup<C>> CssImportsFor<C> of(C group) {
         List<CssGroup<?>> groups = new ArrayList<>();
         for (CssClass<C> cls : group.cssClasses()) {
-            for (CssClass<?> dep : cls.dependsOn()) {
+            var deps = new ArrayList<CssClass<?>>(cls.dependsOn());
+            deps.addAll(cls.wears());
+            for (CssClass<?> dep : deps) {
                 CssGroup<?> g = CssClass.groupOf(dep);
                 if (g.getClass() == group.getClass()) continue;
                 boolean seen = false;

@@ -24,6 +24,7 @@ public final class StudioWorkspaceThemes implements ThemeRegistry {
     @Override public List<Theme> themes() { return StudioThemeRegistry.INSTANCE.themes(); }
     @Override public List<PaletteProvision<?, ?>> palettes() { return StudioThemeRegistry.INSTANCE.palettes(); }
 
+    @Override public List<hue.captains.singapura.js.homing.server.CssRenderer> renderers() { return StudioThemeRegistry.INSTANCE.renderers(); }
     @Override public List<CssGroupImpl<?, ?>> overrides() {
         var all = new ArrayList<CssGroupImpl<?, ?>>(StudioThemeRegistry.INSTANCE.overrides());
         all.add(BrutalistWorkspace.Switcher.INSTANCE);

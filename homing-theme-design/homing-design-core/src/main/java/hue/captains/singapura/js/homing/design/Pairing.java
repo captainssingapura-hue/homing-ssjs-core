@@ -55,6 +55,12 @@ public interface Pairing extends Semantic {
         public record on_inverted_color_edge() implements DesignClass<OnInverted, Color.Edge> {}
     }
 
+    /** Muted ink on the inverted layer — the second weight of text on a dark band. */
+    record OnInvertedMuted() implements Pairing {
+        public record on_inverted_muted_color_ink() implements DesignClass<OnInvertedMuted, Color.Ink> {}
+        public record on_inverted_muted_color_fill() implements DesignClass<OnInvertedMuted, Color.Fill> {}
+    }
+
     record OnOverlay() implements Pairing {
         public record on_overlay_color_ink() implements DesignClass<OnOverlay, Color.Ink> {}
         public record on_overlay_color_fill() implements DesignClass<OnOverlay, Color.Fill> {}

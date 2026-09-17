@@ -96,6 +96,7 @@ public final class DocTreeWidget extends DocWidget<DocTreeWidget.Params, DocTree
                         DocRefsModule.INSTANCE),
                 new ModuleImports<>(List.of(
                         new StudioStyles.st_doc_meta(),
+                        new StudioStyles.st_main_slab(),
                         new StudioStyles.st_loading(),
                         new StudioStyles.st_error()
                 ), StudioStyles.INSTANCE));
@@ -147,6 +148,8 @@ public final class DocTreeWidget extends DocWidget<DocTreeWidget.Params, DocTree
                 "    // /doc-refs answers with a category.",
                 "    var metaHost = bodyBranch.createElement('metaHost', 'div');",
                 "    css.addClass(metaHost, st_doc_meta);",
+                "    // The reading page sits on the raised slab: the design's word, worn by the main host.",
+                "    css.addClass(parent, st_main_slab);",
                 "    metaHost.setAttribute('data-export-content', '');",
                 "    var metaTitle = bodyBranch.createElement('metaTitle', 'span');",
                 "    metaHost.appendChild(metaTitle);",

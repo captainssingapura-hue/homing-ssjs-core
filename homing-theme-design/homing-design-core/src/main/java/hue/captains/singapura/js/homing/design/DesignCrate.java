@@ -26,11 +26,12 @@ public final class DesignCrate implements Crate {
                 Interaction.Interactive.class, Interaction.Selected.class, Interaction.Current.class,
                 Interaction.Focus.class, Interaction.Dragging.class, Interaction.DropTarget.class,
                 Text.Body.class, Text.Heading.class, Text.Display.class, Text.Caption.class, Text.Label.class, Text.Code.class, Text.Link.class,
+                Text.Kicker.class, Text.Prose.class, Text.Lede.class, Text.Numeral.class,
                 Pairing.OnPrimary.class, Pairing.OnSecondary.class, Pairing.OnDanger.class, Pairing.OnWarning.class,
-                Pairing.OnSuccess.class, Pairing.OnInfo.class, Pairing.OnInverted.class, Pairing.OnOverlay.class,
+                Pairing.OnSuccess.class, Pairing.OnInfo.class, Pairing.OnInverted.class, Pairing.OnInvertedMuted.class, Pairing.OnOverlay.class,
                 Box.Control.class, Box.Inline.class, Box.Container.class, Box.Section.class,
                 Brand.Mark.class, Brand.House.class,
-                Structure.Divider.class, Structure.Backdrop.class);
+                Structure.Divider.class, Structure.Hairline.class, Structure.Bar.class, Structure.Spine.class, Structure.Marker.class, Structure.Cap.class, Structure.Backdrop.class);
     }
 
     private DesignCrate() {}

@@ -22,18 +22,18 @@ public final class BrutalistWorkspace {
 
     private BrutalistWorkspace() {}
 
-    public record Switcher() implements CssGroupImpl<WorkspaceSwitcherStyles, HomingBrutalist> {
+    public record Switcher() implements CssGroupImpl<WorkspaceSwitcherStyles, HomingNeoBrutalism> {
         public static final Switcher INSTANCE = new Switcher();
         @Override public WorkspaceSwitcherStyles group() { return WorkspaceSwitcherStyles.INSTANCE; }
-        @Override public HomingBrutalist theme() { return HomingBrutalist.INSTANCE; }
+        @Override public HomingNeoBrutalism theme() { return HomingNeoBrutalism.INSTANCE; }
 
-        public CssBlock<WorkspaceSwitcherStyles.ws_btn> ws_btn() { return CssBlock.of(HomingBrutalist.BUTTON); }
+        public CssBlock<WorkspaceSwitcherStyles.ws_btn> ws_btn() { return CssBlock.of(HomingNeoBrutalism.BUTTON); }
         public CssBlock<WorkspaceSwitcherStyles.ws_btn_danger> ws_btn_danger() { return CssBlock.of("""
                 background: var(--color-text-link-hover);
                 color: var(--bru-paper);
                 &:hover { background: var(--bru-ink); color: var(--bru-paper); }
                 """); }
-        public CssBlock<WorkspaceSwitcherStyles.ws_btn_off> ws_btn_off() { return CssBlock.of(HomingBrutalist.INERT); }
+        public CssBlock<WorkspaceSwitcherStyles.ws_btn_off> ws_btn_off() { return CssBlock.of(HomingNeoBrutalism.INERT); }
         /** The shell's input inverts to yellow on focus, like the studio's search. */
         public CssBlock<WorkspaceSwitcherStyles.ws_input> ws_input() { return CssBlock.of("""
                 font-weight: 600;
@@ -53,17 +53,17 @@ public final class BrutalistWorkspace {
                 """); }
     }
 
-    public record Graph() implements CssGroupImpl<CssGraphStyles, HomingBrutalist> {
+    public record Graph() implements CssGroupImpl<CssGraphStyles, HomingNeoBrutalism> {
         public static final Graph INSTANCE = new Graph();
         @Override public CssGraphStyles group() { return CssGraphStyles.INSTANCE; }
-        @Override public HomingBrutalist theme() { return HomingBrutalist.INSTANCE; }
-        public CssBlock<CssGraphStyles.cg_btn> cg_btn() { return CssBlock.of(HomingBrutalist.BUTTON); }
+        @Override public HomingNeoBrutalism theme() { return HomingNeoBrutalism.INSTANCE; }
+        public CssBlock<CssGraphStyles.cg_btn> cg_btn() { return CssBlock.of(HomingNeoBrutalism.BUTTON); }
     }
 
-    public record Monitor() implements CssGroupImpl<PartyMonitorStyles, HomingBrutalist> {
+    public record Monitor() implements CssGroupImpl<PartyMonitorStyles, HomingNeoBrutalism> {
         public static final Monitor INSTANCE = new Monitor();
         @Override public PartyMonitorStyles group() { return PartyMonitorStyles.INSTANCE; }
-        @Override public HomingBrutalist theme() { return HomingBrutalist.INSTANCE; }
-        public CssBlock<PartyMonitorStyles.pm_btn> pm_btn() { return CssBlock.of(HomingBrutalist.BUTTON); }
+        @Override public HomingNeoBrutalism theme() { return HomingNeoBrutalism.INSTANCE; }
+        public CssBlock<PartyMonitorStyles.pm_btn> pm_btn() { return CssBlock.of(HomingNeoBrutalism.BUTTON); }
     }
 }

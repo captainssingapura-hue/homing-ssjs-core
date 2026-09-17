@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.design;
 
 import hue.captains.singapura.js.homing.design.Target.Color;
 import hue.captains.singapura.js.homing.design.Target.Effect;
+import hue.captains.singapura.js.homing.design.Target.Motion;
 import hue.captains.singapura.js.homing.design.Target.Type;
 
 /**
@@ -18,6 +19,7 @@ public interface Emphasis extends Semantic {
         public record primary_color_fill() implements DesignClass<Primary, Color.Fill> {}
         public record primary_color_stroke() implements DesignClass<Primary, Color.Stroke> {}
         public record primary_type_weight() implements DesignClass<Primary, Type.Weight> {}
+        public record primary_motion_ease() implements DesignClass<Primary, Motion.Ease> {}
     }
 
     record Secondary() implements Emphasis {
@@ -41,5 +43,6 @@ public interface Emphasis extends Semantic {
         public record muted_color_stroke() implements DesignClass<Muted, Color.Stroke> {}
         public record muted_color_edge() implements DesignClass<Muted, Color.Edge> {}
         public record muted_effect_opacity() implements DesignClass<Muted, Effect.Opacity> {}
+        public record muted_type_decoration() implements DesignClass<Muted, Type.Decoration> {}
     }
 }

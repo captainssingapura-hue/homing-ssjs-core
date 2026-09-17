@@ -22,6 +22,7 @@ public interface Brand extends Semantic {
         public record house_type_face() implements DesignClass<House, Type.Face> {}
         public record house_type_weight() implements DesignClass<House, Type.Weight> {}
         public record house_type_treatment() implements DesignClass<House, Type.Treatment> {}
+        public record house_type_scale() implements DesignClass<House, Type.Scale> {}
         public record house_color_ink() implements DesignClass<House, Color.Ink> {}
     }
 }

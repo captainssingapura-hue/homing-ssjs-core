@@ -50,8 +50,13 @@ public record CssGroupContentProvider<C extends CssGroup<C>>(
             String recordName = cls.getClass().getSimpleName();
             String cssName = CssClassName.toCssName(cls.getClass());
             var variants = cls.variants();
+            // The design classes this class wears travel with the handle, as tokens:
+            // the manager adds them to the element beside the class itself.
+            String wears = cls.wears().isEmpty() ? "" : cls.wears().stream()
+                    .map(w -> "\"" + CssClassName.toCssName(w.getClass()) + "\"")
+                    .collect(java.util.stream.Collectors.joining(", ", ", [", "]"));
             if (variants.isEmpty()) {
-                lines.add("const " + recordName + " = _css.cls(\"" + cssName + "\");");
+                lines.add("const " + recordName + " = _css.cls(\"" + cssName + "\"" + (wears.isEmpty() ? "" : ", null" + wears) + ");");
             } else {
                 StringBuilder sb = new StringBuilder();
                 sb.append("const ").append(recordName).append(" = _css.cls(\"")
@@ -63,7 +68,7 @@ public record CssGroupContentProvider<C extends CssGroup<C>>(
                     sb.append(" ").append(state).append(": \"")
                       .append(state).append("-").append(cssName).append("\"");
                 }
-                sb.append(" });");
+                sb.append(" }").append(wears).append(");");
                 lines.add(sb.toString());
             }
         }

@@ -92,7 +92,8 @@ public final class StudioBaseCrate implements Crate {
     @Override
     public List<Crate> requires() {
         // RFC 0066 - the palette every studio class reads lives in the theme design core.
-        return List.of(CoreJsCrate.INSTANCE, ServerCrate.INSTANCE, LibsCrate.INSTANCE, ThemeColorCrate.INSTANCE, ThemeTypeCrate.INSTANCE);
+        return List.of(CoreJsCrate.INSTANCE, ServerCrate.INSTANCE, LibsCrate.INSTANCE, ThemeColorCrate.INSTANCE, ThemeTypeCrate.INSTANCE,
+                hue.captains.singapura.js.homing.design.DesignCrate.INSTANCE);
     }
 
     @Override

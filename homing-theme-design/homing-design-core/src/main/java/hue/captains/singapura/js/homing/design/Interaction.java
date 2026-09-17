@@ -45,6 +45,7 @@ public interface Interaction extends Semantic {
         public record current_color_edge() implements DesignClass<Current, Color.Edge> {}
         public record current_shape_rule() implements DesignClass<Current, Shape.Rule> {}
         public record current_type_weight() implements DesignClass<Current, Type.Weight> {}
+        public record current_shape_shadow() implements DesignClass<Current, Shape.Shadow> {}
     }
 
     record Focus() implements Interaction {

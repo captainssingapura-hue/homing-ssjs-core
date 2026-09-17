@@ -141,9 +141,12 @@ const CssClassManagerInstance = (() => {
      *   _css.cls("st-root")                                   → CssClass
      *   _css.cls("bg-accent", { hover: "hover-bg-accent" })   → CssUtility
      */
-    function cls(name, variants) {
-        return variants ? new CssUtility(name, variants) : new CssClass(name);
+    function cls(name, variants, wears) {
+        return variants ? new CssUtility(name, variants, wears) : new CssClass(name, wears);
     }
+
+    /** The tokens an add or remove touches: the class and everything it wears. */
+    function tokensOf(c) { return [resolve(c)].concat(c.wears || []); }
 
     return {
         loadCss,
@@ -154,14 +157,13 @@ const CssClassManagerInstance = (() => {
         snapshot,
         theme() { return worn; },
         cls,
-        addClass(el, ...classes)            { for (const c of classes) el.classList.add(resolve(c)); },
-        removeClass(el, ...classes)         { for (const c of classes) el.classList.remove(resolve(c)); },
+        addClass(el, ...classes)            { for (const c of classes) el.classList.add(...tokensOf(c)); },
+        removeClass(el, ...classes)         { for (const c of classes) el.classList.remove(...tokensOf(c)); },
         toggleClass(el, c, force) {
-            arguments.length === 3
-                ? el.classList.toggle(resolve(c), force)
-                : el.classList.toggle(resolve(c));
+            const on = arguments.length === 3 ? !!force : !el.classList.contains(resolve(c));
+            for (const t of tokensOf(c)) el.classList.toggle(t, on);
         },
-        setClass(el, ...classes)            { el.className = classes.map(resolve).join(" "); },
+        setClass(el, ...classes)            { el.className = classes.flatMap(tokensOf).join(" "); },
         hasClass(el, c)                     { return el.classList.contains(resolve(c)); },
         className(c)                        { return resolve(c); }
     };

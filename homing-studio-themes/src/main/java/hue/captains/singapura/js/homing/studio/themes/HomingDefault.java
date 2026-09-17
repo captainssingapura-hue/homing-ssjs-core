@@ -4,7 +4,9 @@ import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
 import hue.captains.singapura.js.homing.theme.color.HomingVars;
 import hue.captains.singapura.js.homing.theme.type.GlobalTypePalette;
-import hue.captains.singapura.js.homing.core.Theme;
+import hue.captains.singapura.js.homing.design.Design;
+import hue.captains.singapura.js.homing.design.ImplProvider;
+import java.util.List;
 
 import java.util.Map;
 
@@ -18,9 +20,12 @@ import java.util.Map;
  * theme once re-shipped lives in {@code StudioStyles} as agnostic classes;
  * this theme overrides none of them, which is what makes it the default.</p>
  */
-public record HomingDefault() implements Theme {
+public record HomingDefault() implements Design {
 
     public static final HomingDefault INSTANCE = new HomingDefault();
+
+    /** The design: one provider per design class the studio's components wear. Grows as each group moves. */
+    @Override public List<ImplProvider<?>> providers() { return DefaultDesign.PROVIDERS; }
 
     @Override public String slug()  { return "default"; }
     @Override public String label() { return "Default"; }

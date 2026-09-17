@@ -2,46 +2,76 @@ package hue.captains.singapura.js.homing.studio.base.css;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
-import hue.captains.singapura.js.homing.core.CssGroupImpl;
 import hue.captains.singapura.js.homing.core.InLayer;
 import hue.captains.singapura.js.homing.core.Layout;
 import hue.captains.singapura.js.homing.core.Reset;
-import hue.captains.singapura.js.homing.core.Theme;
 
 import java.util.List;
 
+import static hue.captains.singapura.js.homing.design.Box.Control.*;
+import static hue.captains.singapura.js.homing.design.Box.Inline.*;
+import static hue.captains.singapura.js.homing.design.Brand.House.*;
+import static hue.captains.singapura.js.homing.design.Emphasis.Muted.*;
+import static hue.captains.singapura.js.homing.design.Emphasis.Primary.*;
+import static hue.captains.singapura.js.homing.design.Emphasis.Secondary.*;
+import static hue.captains.singapura.js.homing.design.Emphasis.Tertiary.*;
+import static hue.captains.singapura.js.homing.design.Feedback.Danger.*;
+import static hue.captains.singapura.js.homing.design.Feedback.Success.*;
+import static hue.captains.singapura.js.homing.design.Feedback.Warning.*;
+import static hue.captains.singapura.js.homing.design.Interaction.Current.*;
+import static hue.captains.singapura.js.homing.design.Interaction.Interactive.*;
+import static hue.captains.singapura.js.homing.design.Interaction.Selected.*;
+import static hue.captains.singapura.js.homing.design.Layer.Base.*;
+import static hue.captains.singapura.js.homing.design.Layer.Inverted.*;
+import static hue.captains.singapura.js.homing.design.Layer.Raised.*;
+import static hue.captains.singapura.js.homing.design.Layer.Recessed.*;
+import static hue.captains.singapura.js.homing.design.Pairing.OnInverted.*;
+import static hue.captains.singapura.js.homing.design.Pairing.OnInvertedMuted.*;
+import static hue.captains.singapura.js.homing.design.Pairing.OnPrimary.*;
+import static hue.captains.singapura.js.homing.design.Structure.Bar.*;
+import static hue.captains.singapura.js.homing.design.Structure.Cap.*;
+import static hue.captains.singapura.js.homing.design.Structure.Divider.*;
+import static hue.captains.singapura.js.homing.design.Structure.Hairline.*;
+import static hue.captains.singapura.js.homing.design.Structure.Marker.*;
+import static hue.captains.singapura.js.homing.design.Structure.Spine.*;
+import static hue.captains.singapura.js.homing.design.Text.Body.*;
+import static hue.captains.singapura.js.homing.design.Text.Caption.*;
+import static hue.captains.singapura.js.homing.design.Text.Code.*;
+import static hue.captains.singapura.js.homing.design.Text.Display.*;
+import static hue.captains.singapura.js.homing.design.Text.Heading.*;
+import static hue.captains.singapura.js.homing.design.Text.Kicker.*;
+import static hue.captains.singapura.js.homing.design.Text.Label.*;
+import static hue.captains.singapura.js.homing.design.Text.Lede.*;
+import static hue.captains.singapura.js.homing.design.Text.Link.*;
+import static hue.captains.singapura.js.homing.design.Text.Numeral.*;
+import static hue.captains.singapura.js.homing.design.Text.Prose.*;
+
+/**
+ * The studio's chrome and reading surfaces — <b>structure only</b>. Every
+ * class here says where its parts sit and how they arrange; what an element
+ * <i>means</i> and where that shows is declared through {@link CssClass#wears()},
+ * as design classes a design fulfils. No body in this group paints: no
+ * colour, no face, no corner, no shadow, no motion. A design never learns
+ * these classes exist; it fulfils the design classes they wear.
+ *
+ * <p>Two things remain on the structural side deliberately: the paddings
+ * (density is a plane this pass leaves to a later one); and one habit
+ * changed: a variant of a parent ({@code st_app_pill_dark}, {@code st_task_done})
+ * no longer reaches its children through a nested selector — the children
+ * have variants of their own, and the builder applies them together.</p>
+ */
 public record StudioStyles() implements CssGroup<StudioStyles> {
     public static final StudioStyles INSTANCE = new StudioStyles();
 
-    // RFC 0066 — no longer a prior. The one implicit node is the global palette;
-    // a class that lays out inside the studio's chrome names st_root / st_main
-    // in its dependsOn(), as WorkspaceLayoutStyles does.
+    /** The structure of a table-cell badge; its colour is the class beside it. */
+    static final String TD_BADGE = "display: inline-block; padding: 2px 8px;";
 
-    /**
-     * RFC 0066 — a theme's word on this group: a record naming the classes it
-     * overrides, each method returning the block appended inside that class's
-     * rule after the declared body. The theme says only what differs.
-     */
-    public interface Overrides<TH extends Theme> extends CssGroupImpl<StudioStyles, TH> {
-        @Override default StudioStyles group() { return INSTANCE; }
-    }
-
-    /**
-     * The page reset — {@code html, body}, the one rule over elements no class
-     * reaches. Once the structural CSS every theme re-shipped; now a class of
-     * this group (RFC 0066), agnostic, in the reset layer, and the node a theme
-     * overrides to change the body face or paint a texture. The print rule
-     * for the framework-minted picker slot nests here because the slot is a
-     * child of {@code body}.
-     */
+    /** The page reset — {@code html, body}: the one rule over elements no class reaches. Structure only; the root wears the page's meaning. */
     public record st_page() implements CssClass<StudioStyles>, InLayer<Reset> {
         @Override public String selector() { return "html, body"; }
         @Override public String body() { return """
             margin: 0;
             padding: 0;
-            background: var(--color-surface);
-            color: var(--color-text-primary);
-            font-family: var(--font-body);
             min-height: 100vh;
             @media print {
                 #__theme_picker_slot__ { display: none; }
@@ -50,7 +80,9 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
 
+    /** The root every studio page mounts on: the base layer, the body's ink and face. */
     public record st_root() implements CssClass<StudioStyles>, InLayer<Layout> {
+        @Override public List<CssClass<?>> wears() { return List.of(new base_color_surface(), new base_color_scrollbar(), new body_color_ink(), new body_type_face()); }
         @Override public String body() { return """
             min-height: 100vh;
             display: flex;
@@ -59,9 +91,8 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_header() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new inverted_color_surface(), new divider_color_edge(), new divider_shape_rule()); }
         @Override public String body() { return """
-            background: var(--color-surface-inverted);
-            border-bottom: 2px solid var(--color-border-emphasis);
             padding: 14px 32px;
             display: flex;
             align-items: center;
@@ -84,32 +115,25 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_brand() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new on_inverted_color_ink(), new link_type_decoration()); }
         @Override public String body() { return """
             display: flex;
             align-items: center;
             gap: 10px;
-            text-decoration: none;
-            color: var(--color-text-on-inverted);
-            &:hover .st-brand-logo { transform: scale(1.18); }
             """;
         }
     }
     public record st_brand_dot() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new primary_color_surface()); }
         @Override public String body() { return """
             width: 12px;
             height: 12px;
-            background: var(--color-accent);
             """;
         }
     }
-    /** Wrapper for a typed SVG logo (StudioBrand.logo). Fixed 22×22 box; the
-     *  child SVG is sized to fill the box — no per-app sizing required.
-     *  {@code overflow:hidden} is the safety net: if a consumer ships an SVG
-     *  without width/height attrs (browsers default it to 300×150) the
-     *  wrapper still clips to 22×22 and won't blow out the header layout.
-     *  The transition pairs with the {@code &:hover .st-brand-logo} rule nested in
-     *  st_brand for a small playful enlarge-on-hover. */
+    /** Wrapper for a typed SVG logo (StudioBrand.logo): a fixed 22×22 box the child fills; overflow hidden clips an unsized SVG. */
     public record st_brand_logo() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new interactive_motion_ease(), new interactive_motion_transform()); }
         @Override public String body() { return """
             width: 22px;
             height: 22px;
@@ -118,26 +142,18 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             justify-content: center;
             flex-shrink: 0;
             overflow: hidden;
-            transform-origin: center;
-            transition: transform 160ms ease;
             svg { width: 100%; height: 100%; display: block; }
             """;
         }
     }
+    /** The house word beside the mark: the brand's own setting. */
     public record st_brand_word() implements CssClass<StudioStyles> {
-        @Override public String body() { return """
-            font-family: var(--font-display);
-            font-style: italic;
-            font-size: 22px;
-            color: var(--color-text-on-inverted);
-            line-height: 1;
-            """;
-        }
+        @Override public List<CssClass<?>> wears() { return List.of(new on_inverted_color_ink(), new house_type_face(), new house_type_scale(), new house_type_treatment()); }
+        @Override public String body() { return ""; }
     }
     public record st_breadcrumbs() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new on_inverted_muted_color_ink(), new caption_type_scale()); }
         @Override public String body() { return """
-            color: var(--color-text-on-inverted-muted);
-            font-size: 13px;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -145,18 +161,12 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_crumb() implements CssClass<StudioStyles> {
-        @Override public String body() { return """
-            color: var(--color-text-on-inverted-muted);
-            text-decoration: none;
-            &:hover { color: var(--color-accent); }
-            """;
-        }
+        @Override public List<CssClass<?>> wears() { return List.of(new on_inverted_muted_color_ink(), new link_type_decoration(), new link_motion_ease()); }
+        @Override public String body() { return ""; }
     }
     public record st_crumb_sep() implements CssClass<StudioStyles> {
-        @Override public String body() { return """
-            color: var(--color-text-muted);
-            """;
-        }
+        @Override public List<CssClass<?>> wears() { return List.of(new muted_color_ink()); }
+        @Override public String body() { return ""; }
     }
     public record st_main() implements CssClass<StudioStyles>, InLayer<Layout> {
         @Override public String body() { return """
@@ -166,48 +176,34 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             margin: 0 auto;
             padding: 36px 32px 64px;
             box-sizing: border-box;
-            /* Reading-page column slab — `.st-doc-meta` is uniquely emitted by the
-             * doc widget, so `:has(.st-doc-meta)` scopes the slab to the reading page. */
-            &:has(.st-doc-meta) {
-                background-color: var(--color-surface-raised);
-                border-radius: 6px;
-                box-shadow: 0 2px 24px color-mix(in srgb, var(--color-text-primary) 8%, transparent);
-            }
             @media print { & { max-width: none; padding: 12px 0; } }
             """;
         }
     }
+    /** The reading-page slab: a main with a document in it sits on the raised layer. Applied beside st_main by the document renderers. */
+    public record st_main_slab() implements CssClass<StudioStyles>, InLayer<Layout> {
+        @Override public List<CssClass<?>> wears() { return List.of(new raised_color_surface(), new raised_shape_corner(), new raised_shape_shadow()); }
+        @Override public String body() { return ""; }
+    }
     public record st_kicker() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new kicker_type_scale(), new kicker_type_weight(), new kicker_type_treatment(), new kicker_color_ink()); }
         @Override public String body() { return """
-            font-size: 12px;
-            letter-spacing: 4px;
-            color: var(--color-text-link-hover);
-            font-weight: 700;
-            text-transform: uppercase;
             margin: 0 0 12px 0;
             """;
         }
     }
     public record st_title() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new display_type_face(), new display_type_scale(), new display_type_weight(), new display_type_treatment(), new display_color_ink()); }
         @Override public String body() { return """
-            font-family: var(--font-display);
-            font-size: 44px;
-            font-weight: 700;
-            color: var(--color-text-title, var(--color-text-link));
             margin: 0 0 12px 0;
-            line-height: 1.1;
-            letter-spacing: -0.5px;
             """;
         }
     }
     public record st_subtitle() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new lede_color_ink(), new lede_type_scale(), new lede_type_treatment()); }
         @Override public String body() { return """
-            font-size: 17px;
-            color: var(--color-text-muted);
             margin: 0 0 32px 0;
             max-width: 760px;
-            line-height: 1.55;
-            font-style: italic;
             """;
         }
     }
@@ -217,20 +213,11 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             """;
         }
     }
-
-
-
     public record st_section_title() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new kicker_type_face(), new kicker_type_scale(), new kicker_type_weight(), new kicker_type_treatment(), new heading_color_ink(), new divider_color_edge(), new divider_shape_rule()); }
         @Override public String body() { return """
-            font-family: var(--font-display);
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--color-text-link);
-            letter-spacing: 5px;
-            text-transform: uppercase;
             margin: 0 0 16px 0;
             padding-bottom: 8px;
-            border-bottom: 2px solid var(--color-border-emphasis);
             display: inline-block;
             """;
         }
@@ -243,8 +230,6 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             """;
         }
     }
-    // Vertical-list layout — used for prose-like rows (objectives, acceptance,
-    // decisions). Counterpart to st-grid (which lays out card tiles).
     public record st_list() implements CssClass<StudioStyles>, InLayer<Layout> {
         @Override public String body() { return """
             display: flex;
@@ -254,17 +239,12 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_list_item() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new raised_color_surface(), new raised_shape_corner(), new bar_color_edge(), new bar_shape_rule(), new body_color_ink(), new link_type_decoration()); }
         @Override public String body() { return """
-            background: var(--color-surface-raised);
-            border: 1px solid var(--color-border);
-            border-left: 3px solid var(--color-border-emphasis);
-            border-radius: 4px;
             padding: 12px 16px;
             display: flex;
             gap: 14px;
             align-items: flex-start;
-            text-decoration: none;
-            color: inherit;
             """;
         }
     }
@@ -285,148 +265,100 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_list_item_label() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new heading_type_face(), new heading_type_weight(), new heading_color_ink(), new label_type_scale()); }
         @Override public String body() { return """
-            font-family: var(--font-display);
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--color-text-link);
             margin: 0 0 4px 0;
-            line-height: 1.3;
             """;
         }
     }
     public record st_list_item_desc() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new caption_type_scale(), new muted_color_ink()); }
         @Override public String body() { return """
-            font-size: 13px;
-            color: var(--color-text-muted);
-            line-height: 1.5;
             margin: 0;
             """;
         }
     }
     public record st_list_item_met() implements CssClass<StudioStyles> {
-        @Override public String body() { return """
-            color: #4a7c4a;
-            """;
-        }
+        @Override public List<CssClass<?>> wears() { return List.of(new success_color_ink()); }
+        @Override public String body() { return ""; }
     }
     public record st_card() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new raised_color_surface(), new raised_shape_corner(), new bar_color_edge(), new bar_shape_rule(),
+                new body_color_ink(), new link_type_decoration(), new interactive_shape_shadow(), new interactive_motion_ease(), new interactive_motion_transform(), new interactive_affordance_cursor()); }
         @Override public String body() { return """
-            background: var(--color-surface-raised);
-            border: 1px solid var(--color-border);
-            border-left: 4px solid var(--color-border-emphasis);
-            border-radius: 4px;
             padding: 18px 20px;
-            cursor: pointer;
-            text-decoration: none;
-            color: inherit;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 1px 3px color-mix(in srgb, var(--color-text-link) 4%, transparent);
-            transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
             min-height: 150px;
-            &:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 6px 16px color-mix(in srgb, var(--color-text-link) 12%, transparent);
-                border-left-color: var(--color-accent-emphasis);
-            }
-            """;
-        }
-    }
-    public record st_card_featured() implements CssClass<StudioStyles> {
-        @Override public String body() { return """
-            grid-column: 1 / -1;
-            background: var(--color-surface-inverted);
-            color: var(--color-text-on-inverted-muted);
-            border-left-color: var(--color-border-emphasis);
-            flex-direction: row;
-            align-items: center;
-            gap: 24px;
-            padding: 20px 28px;
-            min-height: auto;
-            & .st-card-title   { color: var(--color-text-on-inverted); font-size: 22px; }
-            & .st-card-summary { color: var(--color-text-on-inverted-muted); font-size: 14px; margin-top: 4px; }
-            & .st-card-meta    { border: none; padding: 0; margin: 0; flex-direction: column; align-items: flex-end; gap: 8px; }
-            & .st-card-link    { color: var(--color-accent); }
             """;
         }
     }
     public record st_card_title() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new heading_type_face(), new heading_type_scale(), new heading_type_weight(), new heading_color_ink()); }
         @Override public String body() { return """
-            font-family: var(--font-display);
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--color-text-link);
             margin: 0 0 6px 0;
-            line-height: 1.25;
             """;
         }
     }
     public record st_card_summary() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new caption_type_scale(), new muted_color_ink()); }
         @Override public String body() { return """
-            font-size: 13px;
-            color: var(--color-text-muted);
-            line-height: 1.5;
             margin: 0;
             flex: 1;
             """;
         }
     }
     public record st_card_meta() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new cap_color_edge(), new cap_shape_rule(), new caption_type_scale(), new muted_color_ink()); }
         @Override public String body() { return """
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-top: 14px;
             padding-top: 12px;
-            border-top: 1px solid var(--color-border);
-            font-size: 11px;
-            color: var(--color-text-muted);
             """;
         }
     }
     public record st_card_link() implements CssClass<StudioStyles> {
-        @Override public String body() { return """
-            color: var(--color-text-link-hover);
-            font-weight: 700;
-            font-size: 11px;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            """;
-        }
+        @Override public List<CssClass<?>> wears() { return List.of(new kicker_type_scale(), new kicker_type_weight(), new kicker_type_treatment(), new kicker_color_ink()); }
+        @Override public String body() { return ""; }
     }
+    /** A badge: inline, small, loud. Its colour comes from the class beside it. */
     public record st_badge() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new kicker_type_scale(), new kicker_type_weight(), new kicker_type_treatment(), new inline_shape_corner()); }
         @Override public String body() { return """
             display: inline-block;
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 1.5px;
             padding: 3px 8px;
-            border-radius: 2px;
-            text-transform: uppercase;
             """;
         }
     }
     public record st_badge_whitepaper() implements CssClass<StudioStyles> {
-        @Override public String body() { return "background: var(--color-surface-inverted); color: var(--color-accent);"; }
+        @Override public List<CssClass<?>> wears() { return List.of(new inverted_color_surface(), new primary_color_ink()); }
+        @Override public String body() { return ""; }
     }
     public record st_badge_brochure() implements CssClass<StudioStyles> {
-        @Override public String body() { return "background: var(--color-accent); color: var(--color-accent-on);"; }
+        @Override public List<CssClass<?>> wears() { return List.of(new primary_color_surface(), new on_primary_color_ink()); }
+        @Override public String body() { return ""; }
     }
     public record st_badge_rfc() implements CssClass<StudioStyles> {
-        @Override public String body() { return "background: var(--color-surface-inverted); color: var(--color-text-on-inverted-muted);"; }
+        @Override public List<CssClass<?>> wears() { return List.of(new inverted_color_surface(), new on_inverted_muted_color_ink()); }
+        @Override public String body() { return ""; }
     }
     public record st_badge_brand() implements CssClass<StudioStyles> {
-        @Override public String body() { return "background: var(--color-text-on-inverted-muted); color: var(--color-text-link);"; }
+        @Override public List<CssClass<?>> wears() { return List.of(new secondary_color_surface(), new heading_color_ink()); }
+        @Override public String body() { return ""; }
     }
     public record st_badge_session() implements CssClass<StudioStyles> {
-        @Override public String body() { return "background: var(--color-surface-recessed); color: var(--color-text-primary); border: 1px solid var(--color-border);"; }
+        @Override public List<CssClass<?>> wears() { return List.of(new recessed_color_surface(), new body_color_ink(), new raised_color_edge(), new raised_shape_rule()); }
+        @Override public String body() { return ""; }
     }
     public record st_badge_reference() implements CssClass<StudioStyles> {
-        @Override public String body() { return "background: var(--color-border); color: var(--color-text-link);"; }
+        @Override public List<CssClass<?>> wears() { return List.of(new tertiary_color_surface(), new heading_color_ink()); }
+        @Override public String body() { return ""; }
     }
     public record st_badge_rename() implements CssClass<StudioStyles> {
-        @Override public String body() { return "background: var(--color-accent-emphasis); color: var(--color-text-on-inverted-muted);"; }
+        @Override public List<CssClass<?>> wears() { return List.of(new secondary_color_surface(), new on_inverted_muted_color_ink()); }
+        @Override public String body() { return ""; }
     }
     public record st_search_wrap() implements CssClass<StudioStyles> {
         @Override public String body() { return """
@@ -438,23 +370,15 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             """;
         }
     }
+    /** The search field: a raised control whose edge answers focus. */
     public record st_search() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new raised_color_surface(), new raised_color_edge(), new raised_shape_rule(), new raised_shape_corner(), new raised_shape_shadow(),
+                new body_color_ink(), new body_type_face(), new label_type_scale(), new interactive_motion_ease()); }
         @Override public String body() { return """
             flex: 1;
             min-width: 280px;
             padding: 10px 16px;
-            border: 1px solid var(--color-border);
-            border-radius: 4px;
-            font-family: inherit;
-            font-size: 14px;
-            color: var(--color-text-primary);
-            background: var(--color-surface-raised);
-            transition: border-color 160ms ease, box-shadow 160ms ease;
-            &:focus {
-                outline: none;
-                border-color: var(--color-border-emphasis);
-                box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 18%, transparent);
-            }
+            &:focus { outline: none; }
             """;
         }
     }
@@ -466,36 +390,20 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             """;
         }
     }
+    /** A filter chip: a small raised control the pointer can press. */
     public record st_filter_btn() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new raised_color_surface(), new raised_color_edge(), new raised_shape_rule(), new control_shape_corner(),
+                new body_color_ink(), new body_type_face(), new kicker_type_scale(), new kicker_type_weight(), new kicker_type_treatment(),
+                new interactive_affordance_cursor(), new interactive_motion_ease()); }
         @Override public String body() { return """
-            font-family: inherit;
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 1.5px;
             padding: 6px 12px;
-            border: 1px solid var(--color-border);
-            background: var(--color-surface-raised);
-            color: var(--color-text-primary);
-            cursor: pointer;
-            border-radius: 3px;
-            text-transform: uppercase;
-            transition: all 140ms ease;
-            &:hover { border-color: var(--color-border-emphasis); color: var(--color-text-link-hover); }
             """;
         }
     }
+    /** The active filter chip: selected. Applied beside st_filter_btn; the selected surface, ink and edge win by order. */
     public record st_filter_btn_active() implements CssClass<StudioStyles> {
-        @Override public String body() { return """
-            background: var(--color-surface-inverted);
-            color: var(--color-text-on-inverted);
-            border-color: var(--color-surface-inverted);
-            &:hover {
-                background: var(--color-surface-inverted);
-                color: var(--color-accent);
-                border-color: var(--color-surface-inverted);
-            }
-            """;
-        }
+        @Override public List<CssClass<?>> wears() { return List.of(new selected_color_surface(), new selected_color_ink(), new selected_color_edge()); }
+        @Override public String body() { return ""; }
     }
     public record st_layout() implements CssClass<StudioStyles>, InLayer<Layout> {
         @Override public String body() { return """
@@ -522,236 +430,103 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_sidebar_title() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new kicker_type_scale(), new kicker_type_weight(), new kicker_type_treatment(), new kicker_color_ink()); }
         @Override public String body() { return """
-            font-size: 11px;
-            letter-spacing: 4px;
-            color: var(--color-text-link-hover);
-            font-weight: 700;
-            text-transform: uppercase;
             margin: 0 0 12px 0;
             """;
         }
     }
     public record st_toc() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new spine_color_edge(), new spine_shape_rule()); }
         @Override public String body() { return """
             display: flex;
             flex-direction: column;
             gap: 2px;
-            border-left: 1px solid var(--color-border);
             """;
         }
     }
+    /** A contents entry: a quiet link whose leading marker lights on hover. */
     public record st_toc_item() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new caption_type_scale(), new link_color_ink(), new link_type_decoration(), new link_motion_ease(), new marker_color_edge(), new marker_shape_rule()); }
         @Override public String body() { return """
             display: block;
             padding: 4px 12px;
-            font-size: 13px;
-            color: var(--color-text-muted);
-            text-decoration: none;
-            line-height: 1.4;
-            border-left: 2px solid transparent;
             margin-left: -1px;
-            transition: color 140ms ease, border-color 140ms ease;
-            &:hover { color: var(--color-text-link); border-left-color: var(--color-border-emphasis); }
             """;
         }
     }
     public record st_toc_h1() implements CssClass<StudioStyles> {
-        @Override public String body() { return "font-weight: 700; color: var(--color-text-link); padding-left: 12px;"; }
+        @Override public List<CssClass<?>> wears() { return List.of(new heading_type_weight(), new heading_color_ink()); }
+        @Override public String body() { return "padding-left: 12px;"; }
     }
     public record st_toc_h2() implements CssClass<StudioStyles> {
         @Override public String body() { return "padding-left: 24px;"; }
     }
     public record st_toc_h3() implements CssClass<StudioStyles> {
-        @Override public String body() { return "padding-left: 36px; font-size: 12px;"; }
+        @Override public String body() { return "padding-left: 36px;"; }
     }
     public record st_toc_active() implements CssClass<StudioStyles> {
-        @Override public String body() { return """
-            color: var(--color-text-link);
-            border-left-color: var(--color-border-emphasis);
-            background: var(--color-surface-recessed);
-            """;
-        }
+        @Override public List<CssClass<?>> wears() { return List.of(new current_color_ink(), new current_color_surface(), new current_color_edge()); }
+        @Override public String body() { return ""; }
     }
-    /**
-     * The plate a rendered Mermaid diagram sits on.
-     *
-     * <p>Mermaid draws with its OWN theme — dark strokes and dark labels on a
-     * transparent ground — and it does not hear about ours. On a light page that
-     * is invisible; on Carbon or Turbo C the diagram is dark-on-dark and simply
-     * cannot be read. Re-theming Mermaid per theme is the expensive answer and a
-     * standing maintenance debt; giving it a surface it is legible on is the
-     * cheap one, and it is what a figure wants anyway.</p>
-     *
-     * <p><b>Light, but not foreign.</b> The ground is the theme's own surface
-     * mixed 30/70 against white: always light enough for Mermaid's ink, and
-     * still of the page — pale EGA blue under Turbo C, pale teal under Retro
-     * 90s. One rule, no per-theme values, nothing to keep in step when a twelfth
-     * theme arrives.</p>
-     *
-     * <p><b>Why 30 and not 12.</b> Eight of the eleven themes already have a
-     * near-white surface, so mixing it into white returns white whatever the
-     * ratio — and those themes never needed a plate, because Mermaid was legible
-     * on them already. The ratio therefore only bites on the themes that are
-     * actually dark or saturated, which is exactly where it should. At a twelfth
-     * even Turbo C came out barely tinted; at 30/70 it reads as blue and Carbon's
-     * plate is still a 190-grey, roughly 5.9:1 against Mermaid's ink.</p>
-     *
-     * <p><b>Carbon cannot be tinted from here, and that is Carbon's doing.</b>
-     * Its surface is {@code #242424} — R=G=B, no hue to inherit — so its plate is
-     * neutral at any ratio. Tinting it would mean sourcing from
-     * {@code --color-accent} instead, which is the theme's signature colour
-     * rather than its background family; that would read as a decorated figure,
-     * not as part of the page, so it is deliberately not done.</p>
-     *
-     * <p>A colour KEYWORD rather than a hex triple: {@code no-literal-color}
-     * flags baked hex and {@code rgb()}, and deliberately not keywords.</p>
-     *
-     * <p><b>The fallback is load-bearing.</b> An undefined {@code --color-surface}
-     * makes the whole {@code color-mix} invalid at computed-value time, the
-     * declaration is dropped, and the plate goes TRANSPARENT — which is
-     * unreadable precisely when a theme is already broken. {@code var(--x, white)}
-     * degrades to a plain white plate instead: still legible, merely untinted.
-     * The same lesson {@code st_title} learned from a downstream theme that was
-     * missing one token.</p>
-     */
     public record st_mermaid() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new raised_color_surface(), new raised_color_edge(), new raised_shape_rule(), new raised_shape_corner()); }
         @Override public String body() { return """
             margin: 16px 0;
-            padding: var(--space-3);
+            padding: 12px;
             overflow-x: auto;
             text-align: center;
-            background: color-mix(in srgb, var(--color-surface, white) 30%, white);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-md);
             """;
         }
     }
-    /**
-     * The line left on the plate when a diagram could not be drawn — offline, a
-     * blocked CDN, or a diagram Mermaid refused. Muted and small, because the
-     * fence above it is still the content; this only says why it is still a fence.
-     *
-     * <p>Left-aligned deliberately: {@code st_mermaid} centres its plate, which
-     * is right for a diagram and wrong for a sentence.</p>
-     */
     public record st_mermaid_note() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new muted_color_ink(), new caption_type_scale(), new caption_type_treatment()); }
         @Override public String body() { return """
             margin: 6px 0 0;
-            color: var(--color-text-muted);
-            font-size: 12px;
-            font-style: italic;
             text-align: left;
             """;
         }
     }
-    /**
-     * The section the doc reader's TOC is currently synced to — a tinted ground
-     * and a bar down its inside edge.
-     *
-     * <p>It was {@code rgba(59,130,246,…)} written inline, which is to say blue
-     * on every theme: blue on Carbon, blue on Turbo C, blue on Forbidden City.
-     * Invisible as a fault because the reader had only ever been looked at on
-     * light themes, and the same mistake the Mermaid plate had. Mixed from
-     * {@code --color-accent} instead, at the opacities the hardcoded values used,
-     * so Turbo C highlights Borland yellow and Carbon amber with nothing here to
-     * change.</p>
-     *
-     * <p>Reachable at all only because the reader now lives in studio-base; from
-     * core-js it could not see this file, which is what the inline write was
-     * working around.</p>
-     */
+    /** The section the reader is in: current, marked by its surface and an inset line along its leading edge. */
     public record st_doc_section_active() implements CssClass<StudioStyles> {
-        @Override public String body() { return """
-            background-color: color-mix(in srgb, var(--color-accent) 7%, transparent);
-            box-shadow: inset 3px 0 0 color-mix(in srgb, var(--color-accent) 60%, transparent);
-            """;
-        }
+        @Override public List<CssClass<?>> wears() { return List.of(new current_color_surface(), new current_shape_shadow()); }
+        @Override public String body() { return ""; }
     }
+    /** The document: rendered markdown, no class on anything inside. Its prose is set by the design, per element, inside the one class it wears. */
     public record st_doc() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new prose_color_ink(), new prose_type_scale(), new prose_type_face(), new prose_type_weight(), new prose_type_treatment(),
+                new prose_type_decoration(), new prose_color_surface(), new prose_color_edge(), new prose_shape_rule(), new prose_shape_corner()); }
         @Override public String body() { return """
-            font-size: 16px;
-            line-height: 1.7;
-            color: var(--color-text-primary);
             max-width: 820px;
-            /* Prose — markdown-rendered content has no class hooks; the rules nest here. */
-            h1, h2, h3, h4 {
-                font-family: var(--font-display);
-                color: var(--color-text-link);
-                margin: 1.6em 0 0.6em 0;
-                line-height: 1.25;
-                scroll-margin-top: 24px;
-            }
-            h1 { font-size: 32px; border-bottom: 2px solid var(--color-border-emphasis); padding-bottom: 8px; margin-top: 0; }
-            h2 { font-size: 24px; }
-            h3 { font-size: 19px; }
-            h4 { font-size: 16px; color: var(--color-text-link-hover); letter-spacing: 1px; text-transform: uppercase; }
+            h1, h2, h3, h4 { margin: 1.6em 0 0.6em 0; scroll-margin-top: 24px; }
+            h1 { padding-bottom: 8px; margin-top: 0; }
             p  { margin: 0 0 1em 0; }
             ul, ol { margin: 0 0 1em 0; padding-left: 1.5em; }
             li { margin: 0.3em 0; }
-            a { color: var(--color-text-link-hover); text-decoration: underline; text-underline-offset: 2px; }
-            a:hover { color: var(--color-text-link); }
-            blockquote {
-                margin: 1em 0;
-                padding: 4px 0 4px 18px;
-                border-left: 3px solid var(--color-border-emphasis);
-                color: var(--color-text-muted);
-                font-style: italic;
-            }
-            code {
-                font-family: var(--font-mono);
-                font-size: 0.92em;
-                background: var(--color-surface-recessed);
-                color: var(--color-text-link);
-                padding: 1px 6px;
-                border-radius: 3px;
-            }
-            pre {
-                background: var(--color-surface-inverted);
-                color: var(--color-text-on-inverted-muted);
-                padding: 14px 18px;
-                border-radius: 4px;
-                overflow-x: auto;
-                margin: 1em 0;
-                font-size: 13px;
-                line-height: 1.5;
-            }
-            pre code { background: transparent; color: inherit; padding: 0; font-size: inherit; }
-            table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 14px; }
-            th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--color-border); vertical-align: top; }
-            th { background: var(--color-surface-inverted); color: var(--color-text-on-inverted); font-weight: 700; border: none; }
-            tr:nth-child(even) td { background: var(--color-surface-recessed); }
-            hr { border: none; border-top: 1px solid var(--color-border); margin: 2em 0; }
+            blockquote { margin: 1em 0; padding: 4px 0 4px 18px; }
+            code { padding: 1px 6px; }
+            pre { padding: 14px 18px; overflow-x: auto; margin: 1em 0; }
+            pre code { padding: 0; }
+            table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+            th, td { text-align: left; padding: 8px 12px; vertical-align: top; }
+            hr { margin: 2em 0; }
             img { max-width: 100%; }
             @media print { & { max-width: none; } }
             """;
         }
     }
-    /**
-     * The catalogue category a doc was filed under, shown beside its title in
-     * the meta line. It arrives from {@code /doc-refs}, so it appears a beat
-     * after the page does — which is why it is a chip rather than part of the
-     * layout: nothing moves when it lands.
-     *
-     * <p>It was {@code var(--st-gray-mid)} written inline in DocReaderRenderer,
-     * a palette token rather than a semantic one. On {@code --color-text-muted}
-     * it follows the theme like every other quiet label.</p>
-     */
     public record st_doc_category() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new muted_color_ink(), new kicker_type_scale(), new kicker_type_treatment()); }
         @Override public String body() { return """
             margin-left: 12px;
-            font-size: 11px;
-            color: var(--color-text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
             """;
         }
     }
     public record st_doc_meta() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new hairline_color_edge(), new hairline_shape_rule()); }
         @Override public String body() { return """
             margin-bottom: 24px;
             padding-bottom: 20px;
-            border-bottom: 1px solid var(--color-border);
             display: flex;
             gap: 12px;
             align-items: center;
@@ -760,30 +535,21 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_loading() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new muted_color_ink(), new caption_type_treatment(), new label_type_scale()); }
         @Override public String body() { return """
             text-align: center;
             padding: 48px 16px;
-            color: var(--color-text-muted);
-            font-style: italic;
-            font-size: 14px;
             """;
         }
     }
     public record st_error() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new danger_color_surface(), new danger_color_edge(), new bar_shape_rule(), new raised_shape_corner(), new danger_color_ink()); }
         @Override public String body() { return """
-            background: rgba(220, 38, 38, 0.06);
-            border: 1px solid rgba(220, 38, 38, 0.3);
-            border-left: 4px solid #DC2626;
             padding: 16px 20px;
-            border-radius: 4px;
-            color: #7F1D1D;
             margin: 16px 0;
             """;
         }
     }
-    // A scrollable doc-content pane host — used by the studio workspace's
-    // DocContentWidget to mount an opened doc inside a workspace pane (the pane
-    // host doesn't scroll on its own, so the widget root owns overflow).
     public record st_doc_pane() implements CssClass<StudioStyles> {
         @Override public String body() { return """
             height: 100%;
@@ -793,53 +559,39 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             """;
         }
     }
-    // The muted "nothing opened yet" notice for a doc-content pane — a readable,
-    // left-aligned hint (distinct from st_loading's centered transient notice).
     public record st_doc_empty() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new muted_color_ink(), new caption_type_treatment()); }
         @Override public String body() { return """
-            color: var(--color-text-muted);
-            font-style: italic;
-            line-height: 1.5;
             padding: 24px 8px;
             max-width: 640px;
             """;
         }
     }
-    // -----------------------------------------------------------------------
-    // RFC 0020 — TableDoc rendering.
-    // Slim table primitives: th/td borders + padding via RFC 0017 tokens.
-    // -----------------------------------------------------------------------
     public record st_table() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new base_color_surface(), new body_color_ink(), new label_type_scale()); }
         @Override public String body() { return """
             width: 100%;
             border-collapse: collapse;
             margin: 16px 0;
-            font-size: 14px;
-            color: var(--color-text-primary);
-            background: var(--color-surface);
             """;
         }
     }
     public record st_thead() implements CssClass<StudioStyles> {
-        @Override public String body() { return """
-            background: var(--color-surface-recessed);
-            """;
-        }
+        @Override public List<CssClass<?>> wears() { return List.of(new recessed_color_surface()); }
+        @Override public String body() { return ""; }
     }
     public record st_th() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new divider_color_edge(), new divider_shape_rule(), new body_color_ink(), new label_type_weight()); }
         @Override public String body() { return """
             text-align: left;
             padding: 10px 14px;
-            border-bottom: 2px solid var(--color-border-emphasis);
-            font-weight: 600;
-            color: var(--color-text-primary);
             """;
         }
     }
     public record st_td() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new hairline_color_edge(), new hairline_shape_rule()); }
         @Override public String body() { return """
             padding: 10px 14px;
-            border-bottom: 1px solid var(--color-border);
             vertical-align: top;
             """;
         }
@@ -853,63 +605,27 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
     public record st_td_align_right() implements CssClass<StudioStyles> {
         @Override public String body() { return "text-align: right;"; }
     }
+    /** A feedback badge in a table cell: inline, small, edged, and coloured by what it says. */
     public record st_td_badge_success() implements CssClass<StudioStyles> {
-        @Override public String body() { return """
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 3px;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            background: rgba(34, 139, 34, 0.12);
-            color: #1B5E20;
-            border: 1px solid rgba(34, 139, 34, 0.35);
-            """;
-        }
+        @Override public List<CssClass<?>> wears() { return List.of(new success_color_surface(), new success_color_ink(), new success_color_edge(), new kicker_type_scale(), new kicker_type_weight(), new kicker_type_treatment(), new inline_shape_corner(), new inline_shape_rule()); }
+        @Override public String body() { return TD_BADGE; }
     }
     public record st_td_badge_warning() implements CssClass<StudioStyles> {
-        @Override public String body() { return """
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 3px;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            background: rgba(202, 138, 4, 0.12);
-            color: #713F12;
-            border: 1px solid rgba(202, 138, 4, 0.35);
-            """;
-        }
+        @Override public List<CssClass<?>> wears() { return List.of(new warning_color_surface(), new warning_color_ink(), new warning_color_edge(), new kicker_type_scale(), new kicker_type_weight(), new kicker_type_treatment(), new inline_shape_corner(), new inline_shape_rule()); }
+        @Override public String body() { return TD_BADGE; }
     }
     public record st_td_badge_error() implements CssClass<StudioStyles> {
-        @Override public String body() { return """
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 3px;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            background: rgba(220, 38, 38, 0.10);
-            color: #7F1D1D;
-            border: 1px solid rgba(220, 38, 38, 0.35);
-            """;
-        }
+        @Override public List<CssClass<?>> wears() { return List.of(new danger_color_surface(), new danger_color_ink(), new danger_color_edge(), new kicker_type_scale(), new kicker_type_weight(), new kicker_type_treatment(), new inline_shape_corner(), new inline_shape_rule()); }
+        @Override public String body() { return TD_BADGE; }
     }
-    // Cell emphasis marks for an articulated relation (Articulation.Emphasis).
     public record st_td_strong() implements CssClass<StudioStyles> {
-        @Override public String body() { return "font-weight: 700;"; }
+        @Override public List<CssClass<?>> wears() { return List.of(new heading_type_weight()); }
+        @Override public String body() { return ""; }
     }
     public record st_td_muted() implements CssClass<StudioStyles> {
-        @Override public String body() { return "opacity: 0.62; font-style: italic;"; }
+        @Override public List<CssClass<?>> wears() { return List.of(new muted_effect_opacity(), new caption_type_treatment()); }
+        @Override public String body() { return ""; }
     }
-
-    // -----------------------------------------------------------------------
-    // RFC 0020 — ImageDoc rendering (Raw tier; no theming on the raster
-    // itself — chrome around it is themed).
-    // -----------------------------------------------------------------------
     public record st_image_figure() implements CssClass<StudioStyles> {
         @Override public String body() { return """
             margin: 24px 0;
@@ -920,120 +636,88 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_image_img() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new raised_shape_corner(), new raised_shape_shadow()); }
         @Override public String body() { return """
             max-width: 100%;
             height: auto;
-            border-radius: 4px;
-            box-shadow: 0 1px 4px color-mix(in srgb, var(--color-text-link) 8%, transparent);
             """;
         }
     }
     public record st_image_caption() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new caption_type_scale(), new muted_color_ink()); }
         @Override public String body() { return """
             margin-top: 8px;
-            font-size: 13px;
-            color: var(--color-text-muted);
             text-align: center;
             """;
         }
     }
-
     public record st_footer() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new cap_color_edge(), new cap_shape_rule(), new muted_color_ink(), new kicker_type_scale(),
+                new code_type_face(), new code_color_surface(), new code_color_ink(), new code_shape_corner()); }
         @Override public String body() { return """
             margin-top: 64px;
             padding-top: 24px;
-            border-top: 1px solid var(--color-border);
-            color: var(--color-text-muted);
-            font-size: 12px;
-            code {
-                font-family: var(--font-mono);
-                background: var(--color-surface-recessed);
-                color: var(--color-text-link);
-                padding: 1px 6px;
-                border-radius: 3px;
-            }
+            code { padding: 1px 6px; }
             """;
         }
     }
     public record st_app_pill() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new raised_color_surface(), new raised_shape_corner(), new bar_color_edge(), new bar_shape_rule(),
+                new body_color_ink(), new link_type_decoration(), new interactive_shape_shadow(), new interactive_motion_ease(), new interactive_motion_transform(), new interactive_affordance_cursor()); }
         @Override public String body() { return """
-            background: var(--color-surface-raised);
-            border: 1px solid var(--color-border);
-            border-left: 4px solid var(--color-border-emphasis);
             padding: 22px 24px;
-            border-radius: 4px;
-            text-decoration: none;
-            color: inherit;
             display: flex;
             align-items: center;
             gap: 18px;
-            box-shadow: 0 1px 3px color-mix(in srgb, var(--color-text-link) 5%, transparent);
-            transition: all 160ms ease;
-            &:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 8px 18px color-mix(in srgb, var(--color-text-link) 12%, transparent);
-                border-left-color: var(--color-accent-emphasis);
-            }
             """;
         }
     }
+    /** The dark pill: on the inverted layer. Its children wear their own dark variants, applied by the builder beside their class. */
     public record st_app_pill_dark() implements CssClass<StudioStyles> {
-        @Override public String body() { return """
-            background: var(--color-surface-inverted);
-            color: var(--color-text-on-inverted-muted);
-            border-left-color: var(--color-border-emphasis);
-            & .st-app-pill-icon  { background: var(--color-accent); color: var(--color-accent-on); }
-            & .st-app-pill-label { color: var(--color-text-on-inverted); }
-            & .st-app-pill-desc  { color: var(--color-text-on-inverted-muted); }
-            &:hover { background: var(--color-surface-inverted); }
-            """;
-        }
+        @Override public List<CssClass<?>> wears() { return List.of(new inverted_color_surface(), new on_inverted_muted_color_ink()); }
+        @Override public String body() { return ""; }
+    }
+    public record st_app_pill_icon_dark() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new primary_color_surface(), new on_primary_color_ink()); }
+        @Override public String body() { return ""; }
+    }
+    public record st_app_pill_label_dark() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new on_inverted_color_ink()); }
+        @Override public String body() { return ""; }
+    }
+    public record st_app_pill_desc_dark() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new on_inverted_muted_color_ink()); }
+        @Override public String body() { return ""; }
     }
     public record st_app_pill_icon() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new primary_color_surface(), new heading_color_ink(), new raised_shape_corner(), new numeral_type_face(), new numeral_type_weight(), new numeral_type_scale(), new numeral_type_treatment()); }
         @Override public String body() { return """
             flex: 0 0 56px;
             height: 56px;
-            background: var(--color-accent);
-            color: var(--color-text-link);
-            border-radius: 4px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: var(--font-display);
-            font-style: italic;
-            font-size: 28px;
-            font-weight: 700;
             """;
         }
     }
     public record st_app_pill_label() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new heading_type_face(), new heading_type_scale(), new heading_type_weight(), new heading_color_ink()); }
         @Override public String body() { return """
-            font-family: var(--font-display);
-            font-size: 19px;
-            font-weight: 700;
-            color: var(--color-text-link);
             margin: 0 0 4px 0;
             """;
         }
     }
     public record st_app_pill_desc() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new caption_type_scale(), new muted_color_ink()); }
         @Override public String body() { return """
-            font-size: 13px;
-            color: var(--color-text-muted);
             margin: 0;
-            line-height: 1.5;
             """;
         }
     }
-
-    // RFC implementation tracker
     public record st_overall_progress() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new inverted_color_surface(), new on_inverted_muted_color_ink(), new bar_color_edge(), new bar_shape_rule(), new raised_shape_corner()); }
         @Override public String body() { return """
-            background: var(--color-surface-inverted);
-            color: var(--color-text-on-inverted-muted);
-            border-left: 4px solid var(--color-border-emphasis);
             padding: 18px 24px;
-            border-radius: 4px;
             margin: 0 0 24px 0;
             display: flex;
             align-items: center;
@@ -1042,51 +726,35 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_overall_bar() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new recessed_color_surface(), new recessed_shape_corner()); }
         @Override public String body() { return """
             flex: 1;
             height: 12px;
-            background: color-mix(in srgb, var(--color-text-link) 12%, transparent);
-            border-radius: 6px;
             overflow: hidden;
             """;
         }
     }
     public record st_overall_fill() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new primary_color_surface(), new primary_motion_ease()); }
         @Override public String body() { return """
             height: 100%;
-            background: linear-gradient(90deg, var(--color-accent), var(--color-accent-emphasis));
-            transition: width 280ms ease;
             """;
         }
     }
     public record st_overall_pct() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new numeral_type_face(), new numeral_type_weight(), new numeral_type_scale(), new primary_color_ink()); }
         @Override public String body() { return """
-            font-family: var(--font-display);
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--color-accent);
             flex: 0 0 auto;
             """;
         }
     }
     public record st_step_card() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new raised_color_surface(), new raised_shape_corner(), new bar_color_edge(), new bar_shape_rule(),
+                new body_color_ink(), new link_type_decoration(), new interactive_shape_shadow(), new interactive_motion_ease(), new interactive_motion_transform()); }
         @Override public String body() { return """
-            background: var(--color-surface-raised);
-            border: 1px solid var(--color-border);
-            border-left: 4px solid var(--color-border-emphasis);
-            border-radius: 4px;
             padding: 18px 22px;
             margin-bottom: 12px;
-            text-decoration: none;
-            color: inherit;
             display: block;
-            box-shadow: 0 1px 3px color-mix(in srgb, var(--color-text-link) 4%, transparent);
-            transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
-            &:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 6px 16px color-mix(in srgb, var(--color-text-link) 10%, transparent);
-                border-left-color: var(--color-accent-emphasis);
-            }
             """;
         }
     }
@@ -1100,34 +768,24 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_step_id() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new kicker_type_face(), new kicker_type_weight(), new kicker_type_treatment(), new kicker_color_ink(), new caption_type_scale()); }
         @Override public String body() { return """
-            font-family: var(--font-display);
-            font-style: italic;
-            font-size: 13px;
-            color: var(--color-text-link-hover);
-            font-weight: 700;
             flex: 0 0 auto;
-            letter-spacing: 1px;
             """;
         }
     }
     public record st_step_label() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new heading_type_face(), new heading_type_scale(), new heading_type_weight(), new heading_color_ink()); }
         @Override public String body() { return """
-            font-family: var(--font-display);
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--color-text-link);
             margin: 0;
             flex: 1;
             """;
         }
     }
     public record st_step_summary() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new caption_type_scale(), new muted_color_ink()); }
         @Override public String body() { return """
-            font-size: 13px;
-            color: var(--color-text-muted);
             margin: 0 0 10px 0;
-            line-height: 1.5;
             """;
         }
     }
@@ -1141,77 +799,66 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_step_progress_bar() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new recessed_color_surface(), new recessed_shape_corner()); }
         @Override public String body() { return """
             flex: 1;
             height: 6px;
-            background: var(--color-surface-recessed);
-            border-radius: 3px;
             overflow: hidden;
             """;
         }
     }
     public record st_step_progress_fill() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new primary_color_surface(), new primary_motion_ease()); }
         @Override public String body() { return """
             height: 100%;
-            background: var(--color-accent);
-            transition: width 280ms ease;
             """;
         }
     }
     public record st_step_meta() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new caption_type_scale(), new muted_color_ink()); }
         @Override public String body() { return """
             display: flex;
             gap: 10px;
             align-items: center;
             flex: 0 0 auto;
-            font-size: 11px;
-            color: var(--color-text-muted);
             """;
         }
     }
     public record st_status_badge() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new kicker_type_scale(), new kicker_type_weight(), new kicker_type_treatment(), new inline_shape_corner()); }
         @Override public String body() { return """
             display: inline-block;
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 1.5px;
             padding: 3px 8px;
-            border-radius: 2px;
-            text-transform: uppercase;
             """;
         }
     }
     public record st_status_not_started() implements CssClass<StudioStyles> {
-        @Override public String body() { return "background: var(--color-border); color: var(--color-text-primary);"; }
+        @Override public List<CssClass<?>> wears() { return List.of(new tertiary_color_surface(), new body_color_ink()); }
+        @Override public String body() { return ""; }
     }
     public record st_status_in_progress() implements CssClass<StudioStyles> {
-        @Override public String body() { return "background: var(--color-accent); color: var(--color-accent-on);"; }
+        @Override public List<CssClass<?>> wears() { return List.of(new primary_color_surface(), new on_primary_color_ink()); }
+        @Override public String body() { return ""; }
     }
     public record st_status_blocked() implements CssClass<StudioStyles> {
-        @Override public String body() { return "background: #FECACA; color: #7F1D1D;"; }
+        @Override public List<CssClass<?>> wears() { return List.of(new danger_color_surface(), new danger_color_ink()); }
+        @Override public String body() { return ""; }
     }
     public record st_status_done() implements CssClass<StudioStyles> {
-        @Override public String body() { return "background: #BBF7D0; color: #14532D;"; }
+        @Override public List<CssClass<?>> wears() { return List.of(new success_color_surface(), new success_color_ink()); }
+        @Override public String body() { return ""; }
     }
     public record st_panel() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new raised_color_surface(), new raised_color_edge(), new raised_shape_rule(), new raised_shape_corner(), new raised_shape_shadow()); }
         @Override public String body() { return """
-            background: var(--color-surface-raised);
-            border: 1px solid var(--color-border);
-            border-radius: 4px;
             padding: 18px 22px;
             margin-bottom: 16px;
-            box-shadow: 0 1px 3px color-mix(in srgb, var(--color-text-link) 4%, transparent);
             """;
         }
     }
     public record st_panel_title() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new kicker_type_face(), new kicker_type_scale(), new kicker_type_weight(), new kicker_type_treatment(), new kicker_color_ink()); }
         @Override public String body() { return """
-            font-family: var(--font-display);
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--color-text-link-hover);
-            letter-spacing: 4px;
-            text-transform: uppercase;
             margin: 0 0 12px 0;
             """;
         }
@@ -1225,77 +872,53 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_task_item() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new body_color_ink(), new label_type_scale()); }
         @Override public String body() { return """
             display: flex;
             align-items: flex-start;
             gap: 10px;
             padding: 6px 0;
-            color: var(--color-text-primary);
-            font-size: 14px;
-            line-height: 1.5;
             """;
         }
     }
+    /** A done task: muted and struck; its box wears the done variant, applied by the builder. */
     public record st_task_done() implements CssClass<StudioStyles> {
-        @Override public String body() { return """
-            color: var(--color-text-muted);
-            text-decoration: line-through;
-            & .st-task-box {
-                background: var(--color-accent);
-                border-color: var(--color-accent-emphasis);
-                color: var(--color-accent-on);
-                font-weight: 700;
-            }
-            """;
-        }
+        @Override public List<CssClass<?>> wears() { return List.of(new muted_color_ink(), new muted_type_decoration()); }
+        @Override public String body() { return ""; }
+    }
+    public record st_task_box_done() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new primary_color_surface(), new primary_color_edge(), new on_primary_color_ink(), new heading_type_weight()); }
+        @Override public String body() { return ""; }
     }
     public record st_task_box() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new raised_color_surface(), new muted_color_edge(), new control_shape_rule(), new code_shape_corner(), new on_inverted_color_ink(), new caption_type_scale()); }
         @Override public String body() { return """
             flex: 0 0 16px;
             width: 16px;
             height: 16px;
-            border: 1.5px solid var(--color-text-muted);
-            border-radius: 3px;
             margin-top: 2px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
-            color: var(--color-text-on-inverted);
-            background: var(--color-surface-raised);
             """;
         }
     }
     public record st_dep() implements CssClass<StudioStyles> {
+        @Override public List<CssClass<?>> wears() { return List.of(new recessed_color_surface(), new raised_color_edge(), new raised_shape_rule(), new code_shape_corner(), new caption_type_scale(), new heading_color_ink(), new link_type_decoration()); }
         @Override public String body() { return """
             display: inline-block;
             margin: 4px 6px 4px 0;
             padding: 4px 10px;
-            background: var(--color-surface-recessed);
-            border: 1px solid var(--color-border);
-            border-radius: 3px;
-            font-size: 12px;
-            color: var(--color-text-link);
-            text-decoration: none;
             """;
         }
     }
     public record st_acceptance() implements CssClass<StudioStyles> {
-        @Override public String body() { return """
-            color: var(--color-text-primary);
-            line-height: 1.6;
-            font-size: 14px;
-            """;
-        }
+        @Override public List<CssClass<?>> wears() { return List.of(new body_color_ink(), new label_type_scale()); }
+        @Override public String body() { return ""; }
     }
     public record st_effort() implements CssClass<StudioStyles> {
-        @Override public String body() { return """
-            font-family: var(--font-display);
-            font-style: italic;
-            color: var(--color-text-link-hover);
-            font-size: 14px;
-            """;
-        }
+        @Override public List<CssClass<?>> wears() { return List.of(new kicker_type_face(), new kicker_color_ink(), new label_type_scale(), new lede_type_treatment()); }
+        @Override public String body() { return ""; }
     }
 
     @Override
@@ -1304,13 +927,13 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
                 new st_page(), new st_root(), new st_header(), new st_nav(),
                 new st_brand(), new st_brand_dot(), new st_brand_logo(), new st_brand_word(),
                 new st_breadcrumbs(), new st_crumb(), new st_crumb_sep(),
-                new st_main(), new st_kicker(), new st_title(), new st_subtitle(),
+                new st_main(), new st_main_slab(), new st_kicker(), new st_title(), new st_subtitle(),
                 new st_section(), new st_section_title(),
                 new st_grid(),
                 new st_list(), new st_list_item(), new st_list_item_marker(),
                 new st_list_item_body(), new st_list_item_label(), new st_list_item_desc(),
                 new st_list_item_met(),
-                new st_card(), new st_card_featured(),
+                new st_card(),
                 new st_card_title(), new st_card_summary(), new st_card_meta(), new st_card_link(),
                 new st_badge(),
                 new st_badge_whitepaper(), new st_badge_brochure(), new st_badge_rfc(),
@@ -1326,7 +949,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
                 new st_loading(), new st_error(), new st_doc_pane(), new st_doc_empty(), new st_footer(),
                 new st_app_pill(), new st_app_pill_dark(),
                 new st_app_pill_icon(), new st_app_pill_label(), new st_app_pill_desc(),
-                // rfc tracker
+                new st_app_pill_icon_dark(), new st_app_pill_label_dark(), new st_app_pill_desc_dark(),
                 new st_overall_progress(), new st_overall_bar(), new st_overall_fill(), new st_overall_pct(),
                 new st_step_card(), new st_step_head(), new st_step_id(), new st_step_label(),
                 new st_step_summary(), new st_step_progress(), new st_step_progress_bar(), new st_step_progress_fill(),
@@ -1334,9 +957,8 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
                 new st_status_badge(),
                 new st_status_not_started(), new st_status_in_progress(), new st_status_blocked(), new st_status_done(),
                 new st_panel(), new st_panel_title(),
-                new st_task_list(), new st_task_item(), new st_task_done(), new st_task_box(),
+                new st_task_list(), new st_task_item(), new st_task_done(), new st_task_box(), new st_task_box_done(),
                 new st_dep(), new st_acceptance(), new st_effort(),
-                // RFC 0020 — TableDoc + ImageDoc
                 new st_table(), new st_thead(), new st_th(), new st_td(),
                 new st_td_align_left(), new st_td_align_center(), new st_td_align_right(),
                 new st_td_badge_success(), new st_td_badge_warning(), new st_td_badge_error(),

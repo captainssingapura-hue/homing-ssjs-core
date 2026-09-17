@@ -6,8 +6,8 @@ import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
 import hue.captains.singapura.js.homing.theme.color.HomingVars;
 import hue.captains.singapura.js.homing.theme.type.GlobalTypePalette;
 import hue.captains.singapura.js.homing.theme.type.HomingFonts;
-import hue.captains.singapura.js.homing.core.Theme;
-import hue.captains.singapura.js.homing.studio.base.css.StudioStyles;
+import hue.captains.singapura.js.homing.design.Design;
+import hue.captains.singapura.js.homing.design.ImplProvider;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemePickerStyles;
 import hue.captains.singapura.js.homing.studio.base.ui.MasterDetailStyles;
 import hue.captains.singapura.js.homing.studio.base.ui.SystemDialogStyles;
@@ -49,18 +49,22 @@ import java.util.Map;
  *
  * <p>Dark mode swaps ink and paper — the shadows go white, the yellow stays.</p>
  */
-public record HomingBrutalist() implements Theme {
+public record HomingNeoBrutalism() implements Design {
 
-    public static final HomingBrutalist INSTANCE = new HomingBrutalist();
+    public static final HomingNeoBrutalism INSTANCE = new HomingNeoBrutalism();
 
-    @Override public String slug()  { return "brutalist"; }
-    @Override public String label() { return "Brutalist"; }
+    /** Over Default: its own word where it has one, Default's for the rest. */
+    @Override public java.util.Optional<Design> base() { return java.util.Optional.of(HomingDefault.INSTANCE); }
+    @Override public java.util.List<ImplProvider<?>> providers() { return NeoBrutalismDesign.PROVIDERS; }
+
+    @Override public String slug()  { return "neo-brutalism"; }
+    @Override public String label() { return "Neo-Brutalism"; }
     @Override public String group() { return "Expressive"; }
     @Override public String inspiration() { return "A riso-print order form — ink rules, offset shadows, one loud yellow."; }
 
-    public record Palette() implements GlobalColorPalette.Provision<HomingBrutalist> {
+    public record Palette() implements GlobalColorPalette.Provision<HomingNeoBrutalism> {
         public static final Palette INSTANCE = new Palette();
-        @Override public HomingBrutalist theme() { return HomingBrutalist.INSTANCE; }
+        @Override public HomingNeoBrutalism theme() { return HomingNeoBrutalism.INSTANCE; }
         @Override public Map<CssVar, String> values() { return Merged.ALL; }
 
         /**
@@ -293,9 +297,9 @@ public record HomingBrutalist() implements Theme {
 
     /** A grotesque body and a black display — the riso form's two voices;
      *  code keeps the house mono. */
-    public record Fonts() implements GlobalTypePalette.Provision<HomingBrutalist> {
+    public record Fonts() implements GlobalTypePalette.Provision<HomingNeoBrutalism> {
         public static final Fonts INSTANCE = new Fonts();
-        @Override public HomingBrutalist theme() { return HomingBrutalist.INSTANCE; }
+        @Override public HomingNeoBrutalism theme() { return HomingNeoBrutalism.INSTANCE; }
         @Override public Map<CssVar, String> values() {
             return Map.of(HomingFonts.FONT_BODY,    "Helvetica, Arial, sans-serif",
                           HomingFonts.FONT_DISPLAY, "\"Arial Black\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
@@ -303,279 +307,12 @@ public record HomingBrutalist() implements Theme {
         }
     }
 
-    public record Studio() implements StudioStyles.Overrides<HomingBrutalist> {
-        public static final Studio INSTANCE = new Studio();
-        @Override public HomingBrutalist theme() { return HomingBrutalist.INSTANCE; }
-
-        // The sheet — grid paper behind everything; the selection in riso blue.
-        public CssBlock<StudioStyles.st_page> st_page() { return CssBlock.of("""
-                font-weight: 500;
-                background-image:
-                    linear-gradient(color-mix(in srgb, var(--bru-ink) 14%, transparent) 1px, transparent 1px),
-                    linear-gradient(90deg, color-mix(in srgb, var(--bru-ink) 14%, transparent) 1px, transparent 1px);
-                background-size: 28px 28px;
-                & ::selection { background: var(--color-text-link); color: var(--bru-paper); }
-                """); }
-        public CssBlock<StudioStyles.st_header> st_header() { return CssBlock.of("""
-                border-bottom: 4px solid var(--color-accent);
-                box-shadow: 0 4px 0 var(--bru-ink);
-                """); }
-        // The reading page as a column with a rule down each side.
-        public CssBlock<StudioStyles.st_main> st_main() { return CssBlock.of("""
-                &:has(.st-doc-meta) {
-                    background-color: var(--bru-paper);
-                    border-left: var(--bru-rule);
-                    border-right: var(--bru-rule);
-                    border-radius: 0;
-                    box-shadow: none;
-                }
-                """); }
-        public CssBlock<StudioStyles.st_doc_meta> st_doc_meta() { return CssBlock.of("border-bottom: var(--bru-rule);"); }
-        public CssBlock<StudioStyles.st_footer> st_footer() { return CssBlock.of("""
-                border-top: var(--bru-rule);
-                color: var(--bru-ink);
-                font-size: 13px;
-                max-width: 60ch;
-                code { border-radius: 0; }
-                """); }
-
-        // Type — display faces set heavy and uppercase so they read as stamped.
-        public CssBlock<StudioStyles.st_brand_word> st_brand_word() { return CssBlock.of(DISPLAY + """
-                font-style: normal;
-                text-transform: uppercase;
-                letter-spacing: -0.04em;
-                """); }
-        public CssBlock<StudioStyles.st_brand_dot> st_brand_dot() { return CssBlock.of("border: 2px solid var(--color-text-on-inverted);"); }
-        public CssBlock<StudioStyles.st_title> st_title() { return CssBlock.of(DISPLAY + """
-                font-size: clamp(38px, 6vw, 68px);
-                line-height: 0.92;
-                letter-spacing: -0.05em;
-                text-transform: uppercase;
-                color: var(--bru-ink);
-                margin-bottom: 18px;
-                """); }
-        // The kicker is the rotated yellow box from the masthead.
-        public CssBlock<StudioStyles.st_kicker> st_kicker() { return CssBlock.of(DISPLAY + """
-                display: inline-block;
-                font-size: 13px;
-                letter-spacing: 0.02em;
-                color: var(--bru-ink);
-                background: var(--color-accent);
-                border: var(--bru-rule);
-                padding: 2px 10px;
-                margin: 0 0 18px 4px;
-                transform: rotate(-2deg);
-                """); }
-        public CssBlock<StudioStyles.st_subtitle> st_subtitle() { return CssBlock.of("""
-                font-style: normal;
-                color: var(--bru-ink);
-                border-left: 10px solid var(--color-text-link-hover);
-                padding-left: 14px;
-                max-width: 52ch;
-                """); }
-        public CssBlock<StudioStyles.st_section_title> st_section_title() { return CssBlock.of(TAG); }
-        public CssBlock<StudioStyles.st_panel_title>   st_panel_title()   { return CssBlock.of(TAG); }
-        public CssBlock<StudioStyles.st_sidebar_title> st_sidebar_title() { return CssBlock.of(TAG); }
-        public CssBlock<StudioStyles.st_card_title>      st_card_title()      { return CssBlock.of(DISPLAY + "letter-spacing: -0.02em;\ncolor: var(--bru-ink);\n"); }
-        public CssBlock<StudioStyles.st_list_item_label> st_list_item_label() { return CssBlock.of(DISPLAY + "letter-spacing: -0.02em;\ncolor: var(--bru-ink);\n"); }
-        public CssBlock<StudioStyles.st_step_label>      st_step_label()      { return CssBlock.of(DISPLAY + "letter-spacing: -0.02em;\ncolor: var(--bru-ink);\n"); }
-        public CssBlock<StudioStyles.st_step_id>   st_step_id()   { return CssBlock.of(DISPLAY + "font-style: normal;\ncolor: var(--bru-ink);\n"); }
-        public CssBlock<StudioStyles.st_effort>    st_effort()    { return CssBlock.of(DISPLAY + "font-style: normal;\ncolor: var(--bru-ink);\n"); }
-        public CssBlock<StudioStyles.st_card_link> st_card_link() { return CssBlock.of(DISPLAY + "font-style: normal;\ncolor: var(--bru-ink);\n"); }
-        public CssBlock<StudioStyles.st_crumb> st_crumb() { return CssBlock.of("""
-                &:hover { color: var(--color-accent); text-decoration: underline; text-decoration-thickness: 3px; }
-                """); }
-
-        // Plates — anything that sits on the page as a block.
-        public CssBlock<StudioStyles.st_card>      st_card()      { return CssBlock.of(PLATE + PLATE_PRESS); }
-        public CssBlock<StudioStyles.st_step_card> st_step_card() { return CssBlock.of(PLATE + PLATE_PRESS); }
-        public CssBlock<StudioStyles.st_app_pill>  st_app_pill()  { return CssBlock.of(PLATE + PLATE_PRESS); }
-        public CssBlock<StudioStyles.st_panel>     st_panel()     { return CssBlock.of(PLATE); }
-        /** A row presses only when it is a link. */
-        public CssBlock<StudioStyles.st_list_item> st_list_item() { return CssBlock.of(PLATE + """
-                &[href]:hover {
-                """ + PRESS_HOVER.indent(4) + """
-                }
-                &[href]:active {
-                """ + PRESS_ACTIVE.indent(4) + """
-                }
-                """); }
-        public CssBlock<StudioStyles.st_dep> st_dep() { return CssBlock.of(PLATE + """
-                box-shadow: 3px 3px 0 var(--bru-ink);
-                border-width: 2px;
-                font-weight: 700;
-                """); }
-        public CssBlock<StudioStyles.st_card_featured> st_card_featured() { return CssBlock.of("""
-                background: var(--color-surface-inverted);
-                box-shadow: 5px 5px 0 var(--color-accent);
-                &:hover { background: var(--color-surface-inverted); box-shadow: 8px 8px 0 var(--color-accent); }
-                & .st-card-title { color: var(--color-text-on-inverted); }
-                """); }
-        public CssBlock<StudioStyles.st_app_pill_dark> st_app_pill_dark() { return CssBlock.of("""
-                background: var(--color-surface-inverted);
-                box-shadow: 5px 5px 0 var(--color-accent);
-                &:hover { background: var(--color-surface-inverted); box-shadow: 8px 8px 0 var(--color-accent); }
-                & .st-app-pill-label { color: var(--color-text-on-inverted); }
-                """); }
-        public CssBlock<StudioStyles.st_card_meta>     st_card_meta()     { return CssBlock.of("border-top: 2px solid var(--bru-ink);\ncolor: var(--bru-ink);\n"); }
-        public CssBlock<StudioStyles.st_app_pill_icon> st_app_pill_icon() { return CssBlock.of("border: var(--bru-rule-3);\nborder-radius: 0;\n"); }
-        public CssBlock<StudioStyles.st_doc_section_active> st_doc_section_active() { return CssBlock.of("""
-                background-color: color-mix(in srgb, var(--color-accent) 30%, transparent);
-                box-shadow: inset 6px 0 0 var(--bru-ink);
-                """); }
-        public CssBlock<StudioStyles.st_toc_item> st_toc_item() { return CssBlock.of("""
-                border-left: 4px solid transparent;
-                font-weight: 700;
-                color: var(--bru-ink);
-                transition: none;
-                &:hover { border-left-color: var(--bru-ink); color: var(--bru-ink); }
-                """); }
-        public CssBlock<StudioStyles.st_toc_active> st_toc_active() { return CssBlock.of("""
-                border-left-color: var(--bru-ink);
-                background: var(--color-accent);
-                color: var(--bru-ink);
-                """); }
-        public CssBlock<StudioStyles.st_table> st_table() { return CssBlock.of("border: var(--bru-rule);\nborder-collapse: collapse;\n"); }
-        public CssBlock<StudioStyles.st_thead> st_thead() { return CssBlock.of("background: var(--bru-ink);"); }
-        public CssBlock<StudioStyles.st_th> st_th() { return CssBlock.of(DISPLAY + """
-                background: var(--bru-ink);
-                color: var(--bru-paper);
-                font-size: 12px;
-                letter-spacing: 0.04em;
-                text-transform: uppercase;
-                border: 0;
-                """); }
-        public CssBlock<StudioStyles.st_td> st_td() { return CssBlock.of("border-bottom: 2px solid var(--bru-ink);"); }
-
-        // Buttons and fields.
-        public CssBlock<StudioStyles.st_filter_btn> st_filter_btn() { return CssBlock.of(BUTTON); }
-        public CssBlock<StudioStyles.st_filter_btn_active> st_filter_btn_active() { return CssBlock.of("""
-                background: var(--color-accent);
-                color: var(--bru-ink);
-                border-color: var(--bru-ink);
-                &:hover { background: var(--bru-paper); color: var(--bru-ink); }
-                """); }
-        /** The search box inverts to yellow on focus and grows a shadow — the
-         *  focused field is the loudest thing on the page. */
-        public CssBlock<StudioStyles.st_search> st_search() { return CssBlock.of("""
-                font-weight: 600;
-                color: var(--bru-ink);
-                background: var(--bru-paper);
-                border: var(--bru-rule);
-                border-radius: 0;
-                box-shadow: inset 5px 5px 0 color-mix(in srgb, var(--bru-ink) 9%, transparent);
-                transition: none;
-                &:focus {
-                    outline: none;
-                    background: var(--color-accent);
-                    border-color: var(--bru-ink);
-                    box-shadow: var(--bru-shadow-md);
-                }
-                &::placeholder { color: var(--color-text-muted); font-weight: 500; }
-                """); }
-
-        // Marks — badges, task boxes, status chips, progress bars.
-        public CssBlock<StudioStyles.st_badge>            st_badge()            { return CssBlock.of(MARK); }
-        public CssBlock<StudioStyles.st_status_badge>     st_status_badge()     { return CssBlock.of(MARK); }
-        public CssBlock<StudioStyles.st_td_badge_success> st_td_badge_success() { return CssBlock.of(MARK); }
-        public CssBlock<StudioStyles.st_td_badge_warning> st_td_badge_warning() { return CssBlock.of(MARK); }
-        public CssBlock<StudioStyles.st_td_badge_error>   st_td_badge_error()   { return CssBlock.of(MARK); }
-        public CssBlock<StudioStyles.st_badge_reference>  st_badge_reference()  { return CssBlock.of("background: var(--bru-paper);\ncolor: var(--color-text-link);\n"); }
-        public CssBlock<StudioStyles.st_status_not_started> st_status_not_started() { return CssBlock.of("background: var(--bru-paper);\ncolor: var(--bru-ink);\n"); }
-        public CssBlock<StudioStyles.st_task_box> st_task_box() { return CssBlock.of("""
-                width: 18px;
-                height: 18px;
-                flex-basis: 18px;
-                border: var(--bru-rule-3);
-                border-radius: 0;
-                background: var(--bru-paper);
-                color: var(--bru-paper);
-                """); }
-        public CssBlock<StudioStyles.st_task_done> st_task_done() { return CssBlock.of("""
-                & .st-task-box { background: var(--bru-ink); border-color: var(--bru-ink); color: var(--bru-paper); }
-                """); }
-        public CssBlock<StudioStyles.st_overall_bar> st_overall_bar() { return CssBlock.of("""
-                border: var(--bru-rule-3);
-                border-radius: 0;
-                background: var(--bru-paper);
-                height: 16px;
-                """); }
-        public CssBlock<StudioStyles.st_step_progress_bar> st_step_progress_bar() { return CssBlock.of("""
-                border: 2px solid var(--bru-ink);
-                border-radius: 0;
-                background: var(--bru-paper);
-                height: 10px;
-                """); }
-        public CssBlock<StudioStyles.st_overall_fill>       st_overall_fill()       { return CssBlock.of(HATCHED_FILL); }
-        public CssBlock<StudioStyles.st_step_progress_fill> st_step_progress_fill() { return CssBlock.of(HATCHED_FILL); }
-        private static final String HATCHED_FILL = """
-                background:
-                    repeating-linear-gradient(45deg, var(--bru-ink) 0 5px, transparent 5px 10px),
-                    var(--color-accent);
-                transition: width 200ms steps(4);
-                """;
-        public CssBlock<StudioStyles.st_overall_pct> st_overall_pct() { return CssBlock.of(DISPLAY); }
-
-        // Prose — headings go display face; links underline heavy and highlight
-        // on hover; code blocks are ink plates with a shadow.
-        public CssBlock<StudioStyles.st_doc> st_doc() { return CssBlock.of("""
-                h1, h2, h3 {
-                    font-family: var(--font-display);
-                    font-weight: 900;
-                    letter-spacing: -0.03em;
-                    color: var(--bru-ink);
-                    line-height: 1.05;
-                }
-                h1 { text-transform: uppercase; border-bottom: var(--bru-rule); padding-bottom: 10px; }
-                h2 { text-transform: uppercase; }
-                h4 {
-                    display: inline-block;
-                    font-family: var(--font-display);
-                    font-weight: 900;
-                    font-size: 12px;
-                    letter-spacing: 0.04em;
-                    color: var(--bru-paper);
-                    background: var(--bru-ink);
-                    padding: 4px 10px;
-                }
-                a { color: var(--color-text-link); text-decoration-thickness: 3px; text-underline-offset: 3px; }
-                a:hover { background: var(--color-accent); color: var(--bru-ink); }
-                blockquote {
-                    border-left: 10px solid var(--color-text-link-hover);
-                    padding-left: 14px;
-                    color: var(--bru-ink);
-                    font-style: normal;
-                }
-                code { border-radius: 0; color: var(--bru-ink); }
-                pre {
-                    border: var(--bru-rule);
-                    border-radius: 0;
-                    background: var(--bru-ink);
-                    color: var(--bru-paper);
-                    box-shadow: var(--bru-shadow-md);
-                }
-                pre code { color: inherit; }
-                table { border: var(--bru-rule); }
-                th {
-                    background: var(--bru-ink);
-                    color: var(--bru-paper);
-                    font-family: var(--font-display);
-                    font-weight: 900;
-                    font-size: 12px;
-                    text-transform: uppercase;
-                    letter-spacing: 0.04em;
-                }
-                td { border-bottom: 2px solid var(--bru-ink); }
-                hr { border-top: var(--bru-rule); }
-                img { border: var(--bru-rule); box-shadow: var(--bru-shadow-md); }
-                """); }
-    }
 
     /** The system dialog — a plate with a deep shadow, an ink title bar, and a
      *  hatched scrim in place of the blur. */
-    public record Dialog() implements SystemDialogStyles.Overrides<HomingBrutalist> {
+    public record Dialog() implements SystemDialogStyles.Overrides<HomingNeoBrutalism> {
         public static final Dialog INSTANCE = new Dialog();
-        @Override public HomingBrutalist theme() { return HomingBrutalist.INSTANCE; }
+        @Override public HomingNeoBrutalism theme() { return HomingNeoBrutalism.INSTANCE; }
 
         public CssBlock<SystemDialogStyles.sd_scrim> sd_scrim() { return CssBlock.of("background: var(--bru-hatch);\nbackdrop-filter: brightness(0.7);\n"); }
         public CssBlock<SystemDialogStyles.sd_frame> sd_frame() { return CssBlock.of("border: var(--bru-rule);\nborder-radius: 0;\nbox-shadow: 12px 12px 0 var(--bru-ink);\n"); }
@@ -602,9 +339,9 @@ public record HomingBrutalist() implements Theme {
 
     /** The picker — its header button on the ink masthead, the inline and
      *  preview frames, and the in-use chip. */
-    public record Picker() implements ThemePickerStyles.Overrides<HomingBrutalist> {
+    public record Picker() implements ThemePickerStyles.Overrides<HomingNeoBrutalism> {
         public static final Picker INSTANCE = new Picker();
-        @Override public HomingBrutalist theme() { return HomingBrutalist.INSTANCE; }
+        @Override public HomingNeoBrutalism theme() { return HomingNeoBrutalism.INSTANCE; }
 
         public CssBlock<ThemePickerStyles.tp_btn> tp_btn() { return CssBlock.of(DISPLAY + """
                 font-size: 11px;
@@ -642,9 +379,9 @@ public record HomingBrutalist() implements Theme {
     }
 
     /** The master-detail nav rule. */
-    public record MasterDetail() implements MasterDetailStyles.Overrides<HomingBrutalist> {
+    public record MasterDetail() implements MasterDetailStyles.Overrides<HomingNeoBrutalism> {
         public static final MasterDetail INSTANCE = new MasterDetail();
-        @Override public HomingBrutalist theme() { return HomingBrutalist.INSTANCE; }
+        @Override public HomingNeoBrutalism theme() { return HomingNeoBrutalism.INSTANCE; }
         public CssBlock<MasterDetailStyles.md_nav> md_nav() { return CssBlock.of("border-right: var(--bru-rule);"); }
     }
 }

@@ -110,6 +110,7 @@ public final class ComposedWidget extends DocWidget<ComposedWidget.Params, Compo
                         new StudioStyles.st_toc(),
                         new StudioStyles.st_toc_active(),
                         new StudioStyles.st_doc_meta(),
+                        new StudioStyles.st_main_slab(),
                         new StudioStyles.st_loading(),
                         new StudioStyles.st_error()
                 ), StudioStyles.INSTANCE));
@@ -214,6 +215,7 @@ public final class ComposedWidget extends DocWidget<ComposedWidget.Params, Compo
                 "            // Meta row — always rendered (holds title/category/summary + export button).",
                 "            var meta = bodyBranch.createElement('meta', 'div');",
                 "            css.addClass(meta, st_doc_meta);",
+                "            css.addClass(parent, st_main_slab);",
                 "            if (payload.title) {",
                 "                var titleSpan = document.createElement('span');",
                 "                titleSpan.textContent = payload.title;",

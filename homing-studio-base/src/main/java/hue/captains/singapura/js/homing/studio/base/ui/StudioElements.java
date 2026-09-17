@@ -89,6 +89,9 @@ public record StudioElements() implements DomModule<StudioElements> {
                         // Pill chrome
                         new StudioStyles.st_app_pill(),
                         new StudioStyles.st_app_pill_dark(),
+                        new StudioStyles.st_app_pill_icon_dark(),
+                        new StudioStyles.st_app_pill_label_dark(),
+                        new StudioStyles.st_app_pill_desc_dark(),
                         new StudioStyles.st_app_pill_icon(),
                         new StudioStyles.st_app_pill_label(),
                         new StudioStyles.st_app_pill_desc(),
@@ -129,6 +132,7 @@ public record StudioElements() implements DomModule<StudioElements> {
                         new StudioStyles.st_task_list(),
                         new StudioStyles.st_task_item(),
                         new StudioStyles.st_task_done(),
+                        new StudioStyles.st_task_box_done(),
                         new StudioStyles.st_task_box()
                 ), StudioStyles.INSTANCE))
                 .build();

@@ -64,6 +64,50 @@ public interface Text extends Semantic {
         public record code_size_inset() implements DesignClass<Code, Size.Inset> {}
     }
 
+    /** The eyebrow: a short tracked label above or beside a title, set small and loud. */
+    record Kicker() implements Text {
+        public record kicker_type_face() implements DesignClass<Kicker, Type.Face> {}
+        public record kicker_type_weight() implements DesignClass<Kicker, Type.Weight> {}
+        public record kicker_type_scale() implements DesignClass<Kicker, Type.Scale> {}
+        public record kicker_type_treatment() implements DesignClass<Kicker, Type.Treatment> {}
+        public record kicker_color_ink() implements DesignClass<Kicker, Color.Ink> {}
+    }
+
+    /**
+     * Rendered prose — markdown, with no class on any element inside it. The one
+     * place a design writes a body with element selectors nested: the headings,
+     * links, code and tables of a document are the design's to set, per element,
+     * inside the one class the document wears.
+     */
+    record Prose() implements Text {
+        public record prose_type_face() implements DesignClass<Prose, Type.Face> {}
+        public record prose_type_scale() implements DesignClass<Prose, Type.Scale> {}
+        public record prose_type_weight() implements DesignClass<Prose, Type.Weight> {}
+        public record prose_type_treatment() implements DesignClass<Prose, Type.Treatment> {}
+        public record prose_type_decoration() implements DesignClass<Prose, Type.Decoration> {}
+        public record prose_color_ink() implements DesignClass<Prose, Color.Ink> {}
+        public record prose_color_surface() implements DesignClass<Prose, Color.Surface> {}
+        public record prose_color_edge() implements DesignClass<Prose, Color.Edge> {}
+        public record prose_shape_rule() implements DesignClass<Prose, Shape.Rule> {}
+        public record prose_shape_corner() implements DesignClass<Prose, Shape.Corner> {}
+    }
+
+    /** The lede: the paragraph under a title, set a little larger and a little quieter. */
+    record Lede() implements Text {
+        public record lede_type_scale() implements DesignClass<Lede, Type.Scale> {}
+        public record lede_type_treatment() implements DesignClass<Lede, Type.Treatment> {}
+        public record lede_color_ink() implements DesignClass<Lede, Color.Ink> {}
+    }
+
+    /** A figure that is read at a glance: a percentage, a count, a glyph — set large in the display face. */
+    record Numeral() implements Text {
+        public record numeral_type_face() implements DesignClass<Numeral, Type.Face> {}
+        public record numeral_type_weight() implements DesignClass<Numeral, Type.Weight> {}
+        public record numeral_type_scale() implements DesignClass<Numeral, Type.Scale> {}
+        public record numeral_type_treatment() implements DesignClass<Numeral, Type.Treatment> {}
+        public record numeral_color_ink() implements DesignClass<Numeral, Color.Ink> {}
+    }
+
     record Link() implements Text {
         public record link_type_weight() implements DesignClass<Link, Type.Weight> {}
         public record link_type_decoration() implements DesignClass<Link, Type.Decoration> {}
