@@ -37,6 +37,12 @@ public interface ThemeRegistry {
      */
     default List<CssGroupImpl<?, ?>> overrides() { return List.of(); }
 
+    /**
+     * The design side's renderers — asked first by {@code /css-content} for any group,
+     * before the declared-body rendering. Empty for a registry with no design side.
+     */
+    default List<CssRenderer> renderers() { return List.of(); }
+
     /** Empty registry — no themes registered. */
     ThemeRegistry EMPTY = new ThemeRegistry() {
         @Override public List<Theme>                 themes()   { return List.of(); }

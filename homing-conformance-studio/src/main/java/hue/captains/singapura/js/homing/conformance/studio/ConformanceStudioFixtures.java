@@ -1,9 +1,7 @@
 package hue.captains.singapura.js.homing.conformance.studio;
 
-import hue.captains.singapura.js.homing.conformance.rules.CrateClosure;
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.Crate;
-import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.studio.base.DefaultFixtures;
 import hue.captains.singapura.js.homing.studio.base.Fixtures;
 import hue.captains.singapura.js.homing.studio.base.Umbrella;
@@ -81,22 +79,15 @@ public record ConformanceStudioFixtures(Umbrella<ConformanceStudio> umbrella, Li
     }
 
     /**
-     * RFC 0044 — the runtime crate‑gate allow‑list: every module this studio may
-     * serve. It is the closure of the studio's own top‑level crates <b>plus</b> the
-     * framework serving stack it always mounts ({@link TopLevelCrates#ALL} — the
-     * workspace shell, studio base, and the conformance‑studio's own widgets). A
-     * module outside this closure is, by definition, in no registered crate, so
-     * {@code /module} refuses to serve it — a served module cannot bypass the crate
-     * (and thus conformance) requirement.
+     * RFC 0044 — the crate roots this studio serves: its own top-level crates
+     * <b>plus</b> the framework serving stack it always mounts ({@link
+     * TopLevelCrates#ALL}). A module outside their closure is in no registered
+     * crate, so {@code /module} refuses to serve it.
      */
     @Override
-    public java.util.Set<String> servableModuleClasses() {
+    public java.util.List<Crate> crates() {
         var roots = new ArrayList<Crate>(topLevel);
         roots.addAll(TopLevelCrates.ALL);
-        var classes = new java.util.HashSet<String>();
-        for (Crate c : CrateClosure.of(roots)) {
-            for (CrateEntry e : c.entries()) classes.add(e.moduleClass());
-        }
-        return classes;
+        return roots;
     }
 }

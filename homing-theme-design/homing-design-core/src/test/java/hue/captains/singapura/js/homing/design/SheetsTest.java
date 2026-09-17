@@ -60,11 +60,11 @@ class SheetsTest {
             @Override public String slug() { return "odd"; }
             @Override public List<ImplProvider<?>> providers() {
                 return List.of(
-                        ImplProvider.of(Interactive.Motion_Transform.class, Impl.Silence.css()),
-                        ImplProvider.of(Danger.Color_Surface.class, new Impl.Body("background-color: #B00020;\nbackground-image: url(hatch.svg);\n&:hover { background-color: #C51F31; }\n")));
+                        ImplProvider.of(Interactive.interactive_motion_transform.class, Impl.Silence.css()),
+                        ImplProvider.of(Danger.danger_color_surface.class, new Impl.Body("background-color: #B00020;\nbackground-image: url(hatch.svg);\n&:hover { background-color: #C51F31; }\n")));
             }
         }
-        var r = Deployment.of(Set.of(Interactive.Motion_Transform.class, Danger.Color_Surface.class), new Odd()).resolve();
+        var r = Deployment.of(Set.of(Interactive.interactive_motion_transform.class, Danger.danger_color_surface.class), new Odd()).resolve();
         assertEquals(List.of(), r.findings());
         var sheets = Sheets.targetSheets(r);
         assertFalse(sheets.containsKey("motion-transform"), "silence emits nothing");

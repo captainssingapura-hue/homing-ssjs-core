@@ -12,51 +12,51 @@ import hue.captains.singapura.js.homing.design.Target.Color;
 public interface Pairing extends Semantic {
 
     record OnPrimary() implements Pairing {
-        public record Color_Ink()    implements DesignClass<OnPrimary, Color.Ink> {}
-        public record Color_Fill()   implements DesignClass<OnPrimary, Color.Fill> {}
-        public record Color_Stroke() implements DesignClass<OnPrimary, Color.Stroke> {}
-        public record Color_Edge()   implements DesignClass<OnPrimary, Color.Edge> {}
+        public record on_primary_color_ink() implements DesignClass<OnPrimary, Color.Ink> {}
+        public record on_primary_color_fill() implements DesignClass<OnPrimary, Color.Fill> {}
+        public record on_primary_color_stroke() implements DesignClass<OnPrimary, Color.Stroke> {}
+        public record on_primary_color_edge() implements DesignClass<OnPrimary, Color.Edge> {}
     }
 
     record OnSecondary() implements Pairing {
-        public record Color_Ink()    implements DesignClass<OnSecondary, Color.Ink> {}
-        public record Color_Fill()   implements DesignClass<OnSecondary, Color.Fill> {}
-        public record Color_Stroke() implements DesignClass<OnSecondary, Color.Stroke> {}
+        public record on_secondary_color_ink() implements DesignClass<OnSecondary, Color.Ink> {}
+        public record on_secondary_color_fill() implements DesignClass<OnSecondary, Color.Fill> {}
+        public record on_secondary_color_stroke() implements DesignClass<OnSecondary, Color.Stroke> {}
     }
 
     record OnDanger() implements Pairing {
-        public record Color_Ink()    implements DesignClass<OnDanger, Color.Ink> {}
-        public record Color_Fill()   implements DesignClass<OnDanger, Color.Fill> {}
-        public record Color_Stroke() implements DesignClass<OnDanger, Color.Stroke> {}
+        public record on_danger_color_ink() implements DesignClass<OnDanger, Color.Ink> {}
+        public record on_danger_color_fill() implements DesignClass<OnDanger, Color.Fill> {}
+        public record on_danger_color_stroke() implements DesignClass<OnDanger, Color.Stroke> {}
     }
 
     record OnWarning() implements Pairing {
-        public record Color_Ink()    implements DesignClass<OnWarning, Color.Ink> {}
-        public record Color_Fill()   implements DesignClass<OnWarning, Color.Fill> {}
-        public record Color_Stroke() implements DesignClass<OnWarning, Color.Stroke> {}
+        public record on_warning_color_ink() implements DesignClass<OnWarning, Color.Ink> {}
+        public record on_warning_color_fill() implements DesignClass<OnWarning, Color.Fill> {}
+        public record on_warning_color_stroke() implements DesignClass<OnWarning, Color.Stroke> {}
     }
 
     record OnSuccess() implements Pairing {
-        public record Color_Ink()    implements DesignClass<OnSuccess, Color.Ink> {}
-        public record Color_Fill()   implements DesignClass<OnSuccess, Color.Fill> {}
-        public record Color_Stroke() implements DesignClass<OnSuccess, Color.Stroke> {}
+        public record on_success_color_ink() implements DesignClass<OnSuccess, Color.Ink> {}
+        public record on_success_color_fill() implements DesignClass<OnSuccess, Color.Fill> {}
+        public record on_success_color_stroke() implements DesignClass<OnSuccess, Color.Stroke> {}
     }
 
     record OnInfo() implements Pairing {
-        public record Color_Ink()    implements DesignClass<OnInfo, Color.Ink> {}
-        public record Color_Fill()   implements DesignClass<OnInfo, Color.Fill> {}
-        public record Color_Stroke() implements DesignClass<OnInfo, Color.Stroke> {}
+        public record on_info_color_ink() implements DesignClass<OnInfo, Color.Ink> {}
+        public record on_info_color_fill() implements DesignClass<OnInfo, Color.Fill> {}
+        public record on_info_color_stroke() implements DesignClass<OnInfo, Color.Stroke> {}
     }
 
     record OnInverted() implements Pairing {
-        public record Color_Ink()    implements DesignClass<OnInverted, Color.Ink> {}
-        public record Color_Fill()   implements DesignClass<OnInverted, Color.Fill> {}
-        public record Color_Stroke() implements DesignClass<OnInverted, Color.Stroke> {}
-        public record Color_Edge()   implements DesignClass<OnInverted, Color.Edge> {}
+        public record on_inverted_color_ink() implements DesignClass<OnInverted, Color.Ink> {}
+        public record on_inverted_color_fill() implements DesignClass<OnInverted, Color.Fill> {}
+        public record on_inverted_color_stroke() implements DesignClass<OnInverted, Color.Stroke> {}
+        public record on_inverted_color_edge() implements DesignClass<OnInverted, Color.Edge> {}
     }
 
     record OnOverlay() implements Pairing {
-        public record Color_Ink()    implements DesignClass<OnOverlay, Color.Ink> {}
-        public record Color_Fill()   implements DesignClass<OnOverlay, Color.Fill> {}
+        public record on_overlay_color_ink() implements DesignClass<OnOverlay, Color.Ink> {}
+        public record on_overlay_color_fill() implements DesignClass<OnOverlay, Color.Fill> {}
     }
 }

@@ -13,43 +13,43 @@ import hue.captains.singapura.js.homing.design.Target.Sound;
 public interface Feedback extends Semantic {
 
     record Danger() implements Feedback {
-        public record Color_Surface() implements DesignClass<Danger, Color.Surface> {}
-        public record Color_Ink()     implements DesignClass<Danger, Color.Ink> {}
-        public record Color_Edge()    implements DesignClass<Danger, Color.Edge> {}
-        public record Color_Fill()    implements DesignClass<Danger, Color.Fill> {}
-        public record Color_Stroke()  implements DesignClass<Danger, Color.Stroke> {}
-        public record Motion_Animate() implements DesignClass<Danger, Motion.Animate> {}
-        public record Asset_Icon()    implements DesignClass<Danger, Asset.Icon> {}
-        public record Sound_Cue()     implements DesignClass<Danger, Sound.Cue> {}
+        public record danger_color_surface() implements DesignClass<Danger, Color.Surface> {}
+        public record danger_color_ink() implements DesignClass<Danger, Color.Ink> {}
+        public record danger_color_edge() implements DesignClass<Danger, Color.Edge> {}
+        public record danger_color_fill() implements DesignClass<Danger, Color.Fill> {}
+        public record danger_color_stroke() implements DesignClass<Danger, Color.Stroke> {}
+        public record danger_motion_animate() implements DesignClass<Danger, Motion.Animate> {}
+        public record danger_asset_icon() implements DesignClass<Danger, Asset.Icon> {}
+        public record danger_sound_cue() implements DesignClass<Danger, Sound.Cue> {}
     }
 
     record Warning() implements Feedback {
-        public record Color_Surface() implements DesignClass<Warning, Color.Surface> {}
-        public record Color_Ink()     implements DesignClass<Warning, Color.Ink> {}
-        public record Color_Edge()    implements DesignClass<Warning, Color.Edge> {}
-        public record Color_Fill()    implements DesignClass<Warning, Color.Fill> {}
-        public record Color_Stroke()  implements DesignClass<Warning, Color.Stroke> {}
-        public record Asset_Icon()    implements DesignClass<Warning, Asset.Icon> {}
-        public record Sound_Cue()     implements DesignClass<Warning, Sound.Cue> {}
+        public record warning_color_surface() implements DesignClass<Warning, Color.Surface> {}
+        public record warning_color_ink() implements DesignClass<Warning, Color.Ink> {}
+        public record warning_color_edge() implements DesignClass<Warning, Color.Edge> {}
+        public record warning_color_fill() implements DesignClass<Warning, Color.Fill> {}
+        public record warning_color_stroke() implements DesignClass<Warning, Color.Stroke> {}
+        public record warning_asset_icon() implements DesignClass<Warning, Asset.Icon> {}
+        public record warning_sound_cue() implements DesignClass<Warning, Sound.Cue> {}
     }
 
     record Success() implements Feedback {
-        public record Color_Surface() implements DesignClass<Success, Color.Surface> {}
-        public record Color_Ink()     implements DesignClass<Success, Color.Ink> {}
-        public record Color_Edge()    implements DesignClass<Success, Color.Edge> {}
-        public record Color_Fill()    implements DesignClass<Success, Color.Fill> {}
-        public record Color_Stroke()  implements DesignClass<Success, Color.Stroke> {}
-        public record Asset_Icon()    implements DesignClass<Success, Asset.Icon> {}
-        public record Sound_Cue()     implements DesignClass<Success, Sound.Cue> {}
+        public record success_color_surface() implements DesignClass<Success, Color.Surface> {}
+        public record success_color_ink() implements DesignClass<Success, Color.Ink> {}
+        public record success_color_edge() implements DesignClass<Success, Color.Edge> {}
+        public record success_color_fill() implements DesignClass<Success, Color.Fill> {}
+        public record success_color_stroke() implements DesignClass<Success, Color.Stroke> {}
+        public record success_asset_icon() implements DesignClass<Success, Asset.Icon> {}
+        public record success_sound_cue() implements DesignClass<Success, Sound.Cue> {}
     }
 
     record Info() implements Feedback {
-        public record Color_Surface() implements DesignClass<Info, Color.Surface> {}
-        public record Color_Ink()     implements DesignClass<Info, Color.Ink> {}
-        public record Color_Edge()    implements DesignClass<Info, Color.Edge> {}
-        public record Color_Fill()    implements DesignClass<Info, Color.Fill> {}
-        public record Color_Stroke()  implements DesignClass<Info, Color.Stroke> {}
-        public record Asset_Icon()    implements DesignClass<Info, Asset.Icon> {}
-        public record Sound_Cue()     implements DesignClass<Info, Sound.Cue> {}
+        public record info_color_surface() implements DesignClass<Info, Color.Surface> {}
+        public record info_color_ink() implements DesignClass<Info, Color.Ink> {}
+        public record info_color_edge() implements DesignClass<Info, Color.Edge> {}
+        public record info_color_fill() implements DesignClass<Info, Color.Fill> {}
+        public record info_color_stroke() implements DesignClass<Info, Color.Stroke> {}
+        public record info_asset_icon() implements DesignClass<Info, Asset.Icon> {}
+        public record info_sound_cue() implements DesignClass<Info, Sound.Cue> {}
     }
 }

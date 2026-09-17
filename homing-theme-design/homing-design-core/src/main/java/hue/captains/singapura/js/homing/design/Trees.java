@@ -47,6 +47,9 @@ public final class Trees {
                 Class<?> target = (Class<?>) p.getActualTypeArguments()[1];
                 requireSemanticLeaf(s);
                 requireTargetLeaf(target);
+                String expected = (semanticToken(s) + "-" + targetToken(target)).replace('-', '_');
+                if (!designClass.getSimpleName().equals(expected))
+                    throw new IllegalArgumentException(designClass.getName() + ": a projection is named for its coordinates — expected " + expected);
                 if (designClass.getEnclosingClass() != s)
                     throw new IllegalArgumentException(designClass.getName() + ": a projection is declared inside its semantic leaf, "
                             + s.getSimpleName() + " — not in " + (designClass.getEnclosingClass() == null ? "a top-level file" : designClass.getEnclosingClass().getSimpleName()));
@@ -73,7 +76,7 @@ public final class Trees {
             throw new IllegalArgumentException(s.getName() + ": a semantic leaf has exactly one branch; found " + branchesOf(s));
     }
 
-    /** The branches a leaf directly implements — {@code Semantic} itself excluded. */
+    /** The branches a leaf directly implements — {@code Semantic} itself and the graph's contracts excluded. */
     public static List<Class<?>> branchesOf(Class<?> leaf) {
         var out = new ArrayList<Class<?>>();
         for (Class<?> i : leaf.getInterfaces())
@@ -102,6 +105,12 @@ public final class Trees {
             try { return (Target) l.getField("INSTANCE").get(null); }
             catch (ReflectiveOperationException e) { throw new IllegalStateException(l.getName() + " has no INSTANCE", e); }
         });
+    }
+
+    /** The registered projections onto a target leaf, as that leaf's classes — the derived group. */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public static <T extends Target & hue.captains.singapura.js.homing.core.CssGroup<T>> List<hue.captains.singapura.js.homing.core.CssClass<T>> classesOf(T leaf) {
+        return (List) Vocabulary.onto(leaf.getClass());
     }
 
     /** {@code branch-leaf}. */

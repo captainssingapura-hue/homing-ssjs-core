@@ -45,12 +45,12 @@ class TreesTest {
 
     @Test
     void aProjectionKnowsItsCoordinates_andItsToken() {
-        var dc = new Feedback.Danger.Color_Surface();
+        var dc = new Feedback.Danger.danger_color_surface();
         assertEquals(Feedback.Danger.class, dc.semantic());
         assertEquals(Target.Color.Surface.class, dc.target());
         assertEquals("danger-color-surface", dc.token());
-        assertEquals("on-danger-color-ink", new Pairing.OnDanger.Color_Ink().token());
-        assertEquals("interactive-motion-transform", new Interaction.Interactive.Motion_Transform().token());
+        assertEquals("on-danger-color-ink", new Pairing.OnDanger.on_danger_color_ink().token());
+        assertEquals("interactive-motion-transform", new Interaction.Interactive.interactive_motion_transform().token());
     }
 
     @Test
@@ -77,21 +77,37 @@ class TreesTest {
 
     /** Two branches on one leaf. */
     record TwoBranches() implements Feedback, Emphasis {
-        record Color_Ink() implements DesignClass<TwoBranches, Target.Color.Ink> {}
+        record two_branches_color_ink() implements DesignClass<TwoBranches, Target.Color.Ink> {}
     }
 
     /** A leaf declared correctly, but its projection declared elsewhere. */
     record Lonely() implements Feedback {}
-    record StrayProjection() implements DesignClass<Lonely, Target.Color.Ink> {}
+    record lonely_color_ink() implements DesignClass<Lonely, Target.Color.Ink> {}
+    /** Named for the wrong coordinates. */
+    record Misnamed() implements Feedback {
+        record danger_color_ink() implements DesignClass<Misnamed, Target.Color.Ink> {}
+    }
 
     @Test
     void theGuardsRefuse() {
         var e1 = assertThrows(IllegalArgumentException.class, () -> Trees.coordinates(BranchAsCoordinate.class));
         assertTrue(e1.getMessage().contains("leaf"), e1.getMessage());
-        var e2 = assertThrows(IllegalArgumentException.class, () -> Trees.coordinates(TwoBranches.Color_Ink.class));
+        var e2 = assertThrows(IllegalArgumentException.class, () -> Trees.coordinates(TwoBranches.two_branches_color_ink.class));
         assertTrue(e2.getMessage().contains("exactly one branch"), e2.getMessage());
-        var e3 = assertThrows(IllegalArgumentException.class, () -> Trees.coordinates(StrayProjection.class));
+        var e3 = assertThrows(IllegalArgumentException.class, () -> Trees.coordinates(lonely_color_ink.class));
         assertTrue(e3.getMessage().contains("declared inside its semantic leaf"), e3.getMessage());
+        var e4 = assertThrows(IllegalArgumentException.class, () -> Trees.coordinates(Misnamed.danger_color_ink.class));
+        assertTrue(e4.getMessage().contains("expected misnamed_color_ink"), e4.getMessage());
+    }
+
+    @Test
+    void theTargetIsTheGroup_derivedFromTheVocabulary() {
+        Vocabulary.register(Feedback.Danger.class, Pairing.OnDanger.class);
+        var surface = Target.Color.Surface.INSTANCE;
+        assertTrue(surface.cssClasses().stream().anyMatch(c -> c instanceof Feedback.Danger.danger_color_surface), "the surface group carries danger's surface");
+        assertTrue(surface.cssClasses().stream().noneMatch(c -> c.getClass() == Feedback.Danger.danger_color_ink.class), "and not its ink");
+        assertEquals(surface, new Feedback.Danger.danger_color_surface().group(), "a design class's group is its target");
+        assertEquals(Target.Color.Ink.INSTANCE, new Pairing.OnDanger.on_danger_color_ink().group());
     }
 
     @Test

@@ -12,16 +12,16 @@ import hue.captains.singapura.js.homing.design.Target.Type;
 public interface Brand extends Semantic {
 
     record Mark() implements Brand {
-        public record Asset_Icon()         implements DesignClass<Mark, Asset.Icon> {}
-        public record Asset_Illustration() implements DesignClass<Mark, Asset.Illustration> {}
-        public record Color_Fill()         implements DesignClass<Mark, Color.Fill> {}
-        public record Color_Stroke()       implements DesignClass<Mark, Color.Stroke> {}
+        public record mark_asset_icon() implements DesignClass<Mark, Asset.Icon> {}
+        public record mark_asset_illustration() implements DesignClass<Mark, Asset.Illustration> {}
+        public record mark_color_fill() implements DesignClass<Mark, Color.Fill> {}
+        public record mark_color_stroke() implements DesignClass<Mark, Color.Stroke> {}
     }
 
     record House() implements Brand {
-        public record Type_Face()      implements DesignClass<House, Type.Face> {}
-        public record Type_Weight()    implements DesignClass<House, Type.Weight> {}
-        public record Type_Treatment() implements DesignClass<House, Type.Treatment> {}
-        public record Color_Ink()      implements DesignClass<House, Color.Ink> {}
+        public record house_type_face() implements DesignClass<House, Type.Face> {}
+        public record house_type_weight() implements DesignClass<House, Type.Weight> {}
+        public record house_type_treatment() implements DesignClass<House, Type.Treatment> {}
+        public record house_color_ink() implements DesignClass<House, Color.Ink> {}
     }
 }

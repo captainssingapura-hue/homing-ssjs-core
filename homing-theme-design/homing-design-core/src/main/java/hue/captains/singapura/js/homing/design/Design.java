@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.design;
 
-import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
+import hue.captains.singapura.js.homing.core.Theme;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,12 +15,14 @@ import java.util.Optional;
  * an application only if its providers cover the application's requirement
  * set; a design with a base is complete if the two together do. The check is
  * {@link Deployment}'s, over the set, never over the design's idea of itself.</p>
+ *
+ * <p>A design is a {@link Theme} — the framework's identity of "what a page
+ * wears" — so a registry lists designs where it listed themes, the page's
+ * {@code ?theme=} names one, and a picker shows its label. Nothing else of the
+ * theme contract survives here: a design has no palette and no override; it
+ * has providers.</p>
  */
-public interface Design extends StatelessFunctionalObject {
-
-    String slug();
-
-    default String label() { return slug(); }
+public interface Design extends Theme {
 
     List<ImplProvider<?>> providers();
 

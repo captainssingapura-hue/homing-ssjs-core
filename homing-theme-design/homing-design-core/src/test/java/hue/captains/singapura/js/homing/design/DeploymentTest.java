@@ -21,25 +21,25 @@ class DeploymentTest {
 
     // ── a danger button's requirement set ────────────────────────────────
     static final Set<Class<? extends DesignClass<?, ?>>> DANGER_BUTTON = Set.of(
-            Danger.Color_Surface.class, OnDanger.Color_Ink.class, Interactive.Motion_Transform.class, Interactive.Motion_Ease.class,
-            Box.Control.Shape_Corner.class, Box.Control.Size_Inset.class, Text.Label.Type_Face.class);
+            Danger.danger_color_surface.class, OnDanger.on_danger_color_ink.class, Interactive.interactive_motion_transform.class, Interactive.interactive_motion_ease.class,
+            Box.Control.control_shape_corner.class, Box.Control.control_size_inset.class, Text.Label.label_type_face.class);
 
     // ── a base design that answers all of it ─────────────────────────────
     record Plain() implements Design {
         @Override public String slug() { return "plain"; }
         @Override public List<ImplProvider<?>> providers() {
             return List.of(
-                    ImplProvider.of(Danger.Color_Surface.class, Impl.Bindings.none()
+                    ImplProvider.of(Danger.danger_color_surface.class, Impl.Bindings.none()
                             .at(State.REST, "background-color", "#B00020")
                             .at(State.HOVER, "background-color", "#C51F31")
                             .in(Mode.DARK, State.REST, "background-color", "#FF5A6E")),
-                    ImplProvider.of(Success.Color_Surface.class, Impl.Bindings.none().at(State.REST, "background-color", "#0A7D3A")),
-                    ImplProvider.of(OnDanger.Color_Ink.class, Impl.Bindings.of("#FFFFFF")),
-                    ImplProvider.of(Interactive.Motion_Transform.class, Impl.Bindings.none().at(State.ACTIVE, "scale(.97)")),
-                    ImplProvider.of(Interactive.Motion_Ease.class, Impl.Bindings.of("transform 80ms, background-color 80ms")),
-                    ImplProvider.of(Box.Control.Shape_Corner.class, Impl.Bindings.of("4px")),
-                    ImplProvider.of(Box.Control.Size_Inset.class, Impl.Bindings.of("6px 12px")),
-                    ImplProvider.of(Text.Label.Type_Face.class, Impl.Bindings.of("system-ui, sans-serif")));
+                    ImplProvider.of(Success.success_color_surface.class, Impl.Bindings.none().at(State.REST, "background-color", "#0A7D3A")),
+                    ImplProvider.of(OnDanger.on_danger_color_ink.class, Impl.Bindings.of("#FFFFFF")),
+                    ImplProvider.of(Interactive.interactive_motion_transform.class, Impl.Bindings.none().at(State.ACTIVE, "scale(.97)")),
+                    ImplProvider.of(Interactive.interactive_motion_ease.class, Impl.Bindings.of("transform 80ms, background-color 80ms")),
+                    ImplProvider.of(Box.Control.control_shape_corner.class, Impl.Bindings.of("4px")),
+                    ImplProvider.of(Box.Control.control_size_inset.class, Impl.Bindings.of("6px 12px")),
+                    ImplProvider.of(Text.Label.label_type_face.class, Impl.Bindings.of("system-ui, sans-serif")));
         }
     }
 
@@ -49,9 +49,9 @@ class DeploymentTest {
         @Override public Optional<Design> base() { return Optional.of(new Plain()); }
         @Override public List<ImplProvider<?>> providers() {
             return List.of(
-                    ImplProvider.of(Danger.Color_Surface.class, Impl.Bindings.none().at(State.REST, "background-color", "#FFE800")),
-                    ImplProvider.of(Box.Control.Shape_Corner.class, Impl.Bindings.of("0")),
-                    ImplProvider.of(Interactive.Motion_Transform.class, Impl.Silence.css()));
+                    ImplProvider.of(Danger.danger_color_surface.class, Impl.Bindings.none().at(State.REST, "background-color", "#FFE800")),
+                    ImplProvider.of(Box.Control.control_shape_corner.class, Impl.Bindings.of("0")),
+                    ImplProvider.of(Interactive.interactive_motion_transform.class, Impl.Silence.css()));
         }
     }
 
@@ -66,38 +66,38 @@ class DeploymentTest {
     void aThemeOverABase_isCompleteThroughTheBase_andItsOwnWordWins() {
         var r = Deployment.of(DANGER_BUTTON, new Brutal()).resolve();
         assertEquals(List.of(), r.findings());
-        var danger = assertInstanceOf(Impl.Bindings.class, r.impls().get(Danger.Color_Surface.class));
+        var danger = assertInstanceOf(Impl.Bindings.class, r.impls().get(Danger.danger_color_surface.class));
         assertEquals("#FFE800", danger.values().get(Mode.LIGHT).get(State.REST).get("background-color"));
-        assertInstanceOf(Impl.Silence.class, r.impls().get(Interactive.Motion_Transform.class), "silence is a fulfilment");
-        assertInstanceOf(Impl.Bindings.class, r.impls().get(OnDanger.Color_Ink.class), "the base answers what the theme did not");
+        assertInstanceOf(Impl.Silence.class, r.impls().get(Interactive.interactive_motion_transform.class), "silence is a fulfilment");
+        assertInstanceOf(Impl.Bindings.class, r.impls().get(OnDanger.on_danger_color_ink.class), "the base answers what the theme did not");
     }
 
     @Test
     void aMissingClass_isNamed() {
-        var required = Set.<Class<? extends DesignClass<?, ?>>>of(Danger.Color_Surface.class, Danger.Sound_Cue.class);
+        var required = Set.<Class<? extends DesignClass<?, ?>>>of(Danger.danger_color_surface.class, Danger.danger_sound_cue.class);
         var r = Deployment.of(required, new Plain()).resolve();
         assertEquals(1, r.findings().size(), r.findings().toString());
         assertEquals(Finding.Kind.MISSING, r.findings().get(0).kind());
-        assertEquals(Danger.Sound_Cue.class, r.findings().get(0).designClass());
+        assertEquals(Danger.danger_sound_cue.class, r.findings().get(0).designClass());
     }
 
     // ── extension: a product's own leaf, derived from the base's semantics ──
     record Up() implements Feedback {
-        public record Color_Surface() implements DesignClass<Up, Target.Color.Surface> {}
+        public record up_color_surface() implements DesignClass<Up, Target.Color.Surface> {}
     }
     record FinDash() implements DesignExtension {
         @Override public String slug() { return "fin-dash"; }
         @Override public List<ImplProvider<?>> providers() {
-            return List.of(ImplProvider.as(Up.Color_Surface.class, Success.Color_Surface.class));
+            return List.of(ImplProvider.as(Up.up_color_surface.class, Success.success_color_surface.class));
         }
     }
 
     @Test
     void anExtension_fulfilsItsOwnClass_byDelegation_andTheResultIsFlat() {
-        var required = Set.<Class<? extends DesignClass<?, ?>>>of(Up.Color_Surface.class, Success.Color_Surface.class);
+        var required = Set.<Class<? extends DesignClass<?, ?>>>of(Up.up_color_surface.class, Success.success_color_surface.class);
         var r = new Deployment(required, new Brutal(), List.of(new FinDash())).resolve();
         assertEquals(List.of(), r.findings());
-        var up = assertInstanceOf(Impl.Bindings.class, r.impls().get(Up.Color_Surface.class));
+        var up = assertInstanceOf(Impl.Bindings.class, r.impls().get(Up.up_color_surface.class));
         assertEquals("#0A7D3A", up.values().get(Mode.LIGHT).get(State.REST).get("background-color"), "Up is Success, resolved through the base, flat");
     }
 
@@ -105,13 +105,13 @@ class DeploymentTest {
     record Twice() implements DesignExtension {
         @Override public String slug() { return "twice"; }
         @Override public List<ImplProvider<?>> providers() {
-            return List.of(ImplProvider.of(Danger.Color_Surface.class, Impl.Bindings.of("#000")));
+            return List.of(ImplProvider.of(Danger.danger_color_surface.class, Impl.Bindings.of("#000")));
         }
     }
 
     @Test
     void twoProvidersForOneClass_isRefused_notLastWins() {
-        var r = new Deployment(Set.of(Danger.Color_Surface.class), new Plain(), List.of(new Twice())).resolve();
+        var r = new Deployment(Set.of(Danger.danger_color_surface.class), new Plain(), List.of(new Twice())).resolve();
         assertEquals(Finding.Kind.DOUBLE, r.findings().get(0).kind(), r.findings().toString());
         assertTrue(r.findings().get(0).detail().contains("plain") && r.findings().get(0).detail().contains("twice"));
     }
@@ -120,17 +120,17 @@ class DeploymentTest {
         @Override public String slug() { return "wrong"; }
         @Override public List<ImplProvider<?>> providers() {
             return List.of(
-                    ImplProvider.of(Danger.Sound_Cue.class, Impl.Bindings.of("beep")),                                  // CSS impl for an audio target
-                    ImplProvider.of(Danger.Color_Ink.class, Impl.Bindings.none().at(State.REST, "background-color", "#000")), // ink does not own background
-                    ImplProvider.of(Box.Control.Shape_Corner.class, Impl.Bindings.none().at(State.HOVER, "0")), // corner offers no hover slot
-                    ImplProvider.of(Danger.Color_Surface.class, Impl.Bindings.of("#000")),                              // SOLE on a two-property target
-                    ImplProvider.of(Success.Color_Surface.class, new Impl.Body("background-color: #0A7D3A;\npadding-top: 4px;\n& .st-card { color: red; }\n")));
+                    ImplProvider.of(Danger.danger_sound_cue.class, Impl.Bindings.of("beep")),                                  // CSS impl for an audio target
+                    ImplProvider.of(Danger.danger_color_ink.class, Impl.Bindings.none().at(State.REST, "background-color", "#000")), // ink does not own background
+                    ImplProvider.of(Box.Control.control_shape_corner.class, Impl.Bindings.none().at(State.HOVER, "0")), // corner offers no hover slot
+                    ImplProvider.of(Danger.danger_color_surface.class, Impl.Bindings.of("#000")),                              // SOLE on a two-property target
+                    ImplProvider.of(Success.success_color_surface.class, new Impl.Body("background-color: #0A7D3A;\npadding-top: 4px;\n& .st-card { color: red; }\n")));
         }
     }
 
     @Test
     void impls_areValidatedAgainstTheirTarget() {
-        var required = Set.<Class<? extends DesignClass<?, ?>>>of(Danger.Sound_Cue.class, Danger.Color_Ink.class, Box.Control.Shape_Corner.class, Danger.Color_Surface.class, Success.Color_Surface.class);
+        var required = Set.<Class<? extends DesignClass<?, ?>>>of(Danger.danger_sound_cue.class, Danger.danger_color_ink.class, Box.Control.control_shape_corner.class, Danger.danger_color_surface.class, Success.success_color_surface.class);
         var r = Deployment.of(required, new WrongCarrier()).resolve();
         var kinds = r.findings().stream().map(Finding::kind).toList();
         assertTrue(kinds.contains(Finding.Kind.CARRIER_MISMATCH), kinds.toString());
@@ -141,14 +141,14 @@ class DeploymentTest {
     record Loop() implements Design {
         @Override public String slug() { return "loop"; }
         @Override public List<ImplProvider<?>> providers() {
-            return List.of(ImplProvider.as(Danger.Color_Surface.class, Success.Color_Surface.class),
-                           ImplProvider.as(Success.Color_Surface.class, Danger.Color_Surface.class));
+            return List.of(ImplProvider.as(Danger.danger_color_surface.class, Success.success_color_surface.class),
+                           ImplProvider.as(Success.success_color_surface.class, Danger.danger_color_surface.class));
         }
     }
 
     @Test
     void aDelegationCycle_isRefused() {
-        var r = Deployment.of(Set.of(Danger.Color_Surface.class), new Loop()).resolve();
+        var r = Deployment.of(Set.of(Danger.danger_color_surface.class), new Loop()).resolve();
         assertTrue(r.findings().stream().anyMatch(f -> f.kind() == Finding.Kind.CYCLE), r.findings().toString());
     }
 
@@ -156,7 +156,7 @@ class DeploymentTest {
     void projectionsOf_buildsARequirementSetByMeaning() {
         var set = Deployment.projectionsOf(Danger.class);
         assertEquals(8, set.size());
-        assertTrue(set.contains(Danger.Sound_Cue.class));
+        assertTrue(set.contains(Danger.danger_sound_cue.class));
         assertEquals(Map.of(), Map.of()); // keeps the import honest
     }
 }

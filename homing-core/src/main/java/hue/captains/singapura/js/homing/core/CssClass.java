@@ -103,12 +103,20 @@ public interface CssClass<C extends CssGroup<C>> extends Exportable._Constant<C>
     default List<CssClass<?>> dependsOn() { return List.of(); }
 
     /**
-     * The group this class belongs to, from its declaration: a {@code CssClass}
-     * is a record nested in its group, and the group's {@code INSTANCE} is the
-     * one object of that class. Used to derive group dependencies from class
-     * dependencies.
+     * The group this class belongs to. By declaration, a {@code CssClass} is a
+     * record nested in its group and the group's {@code INSTANCE} is the one
+     * object of that class; a class whose group is not its enclosing type — a
+     * design class, whose group is its physical target — overrides this and
+     * names it. Used to derive group dependencies from class dependencies and
+     * to find the sheet a class is served in.
      */
-    static CssGroup<?> groupOf(CssClass<?> cls) {
+    default CssGroup<?> group() { return enclosingGroupOf(this); }
+
+    /** {@link #group()} of a class — the one call the graph makes. */
+    static CssGroup<?> groupOf(CssClass<?> cls) { return cls.group(); }
+
+    /** The enclosing-type rule: the record is nested in its group, which has an {@code INSTANCE}. */
+    static CssGroup<?> enclosingGroupOf(CssClass<?> cls) {
         Class<?> enclosing = cls.getClass().getEnclosingClass();
         if (enclosing == null || !CssGroup.class.isAssignableFrom(enclosing)) {
             throw new IllegalStateException(

@@ -20,6 +20,7 @@
     </description>
     <modules>
         <module>homing-design-core</module>
+        <module>homing-design-server</module>
         <module>homing-theme-color</module>
         <module>homing-theme-type</module>
     </modules>

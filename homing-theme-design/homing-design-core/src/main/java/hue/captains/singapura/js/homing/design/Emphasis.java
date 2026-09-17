@@ -12,34 +12,34 @@ import hue.captains.singapura.js.homing.design.Target.Type;
 public interface Emphasis extends Semantic {
 
     record Primary() implements Emphasis {
-        public record Color_Surface() implements DesignClass<Primary, Color.Surface> {}
-        public record Color_Ink()     implements DesignClass<Primary, Color.Ink> {}
-        public record Color_Edge()    implements DesignClass<Primary, Color.Edge> {}
-        public record Color_Fill()    implements DesignClass<Primary, Color.Fill> {}
-        public record Color_Stroke()  implements DesignClass<Primary, Color.Stroke> {}
-        public record Type_Weight()   implements DesignClass<Primary, Type.Weight> {}
+        public record primary_color_surface() implements DesignClass<Primary, Color.Surface> {}
+        public record primary_color_ink() implements DesignClass<Primary, Color.Ink> {}
+        public record primary_color_edge() implements DesignClass<Primary, Color.Edge> {}
+        public record primary_color_fill() implements DesignClass<Primary, Color.Fill> {}
+        public record primary_color_stroke() implements DesignClass<Primary, Color.Stroke> {}
+        public record primary_type_weight() implements DesignClass<Primary, Type.Weight> {}
     }
 
     record Secondary() implements Emphasis {
-        public record Color_Surface() implements DesignClass<Secondary, Color.Surface> {}
-        public record Color_Ink()     implements DesignClass<Secondary, Color.Ink> {}
-        public record Color_Edge()    implements DesignClass<Secondary, Color.Edge> {}
-        public record Color_Fill()    implements DesignClass<Secondary, Color.Fill> {}
-        public record Type_Weight()   implements DesignClass<Secondary, Type.Weight> {}
+        public record secondary_color_surface() implements DesignClass<Secondary, Color.Surface> {}
+        public record secondary_color_ink() implements DesignClass<Secondary, Color.Ink> {}
+        public record secondary_color_edge() implements DesignClass<Secondary, Color.Edge> {}
+        public record secondary_color_fill() implements DesignClass<Secondary, Color.Fill> {}
+        public record secondary_type_weight() implements DesignClass<Secondary, Type.Weight> {}
     }
 
     record Tertiary() implements Emphasis {
-        public record Color_Surface() implements DesignClass<Tertiary, Color.Surface> {}
-        public record Color_Ink()     implements DesignClass<Tertiary, Color.Ink> {}
-        public record Color_Edge()    implements DesignClass<Tertiary, Color.Edge> {}
-        public record Type_Weight()   implements DesignClass<Tertiary, Type.Weight> {}
+        public record tertiary_color_surface() implements DesignClass<Tertiary, Color.Surface> {}
+        public record tertiary_color_ink() implements DesignClass<Tertiary, Color.Ink> {}
+        public record tertiary_color_edge() implements DesignClass<Tertiary, Color.Edge> {}
+        public record tertiary_type_weight() implements DesignClass<Tertiary, Type.Weight> {}
     }
 
     record Muted() implements Emphasis {
-        public record Color_Ink()      implements DesignClass<Muted, Color.Ink> {}
-        public record Color_Fill()     implements DesignClass<Muted, Color.Fill> {}
-        public record Color_Stroke()   implements DesignClass<Muted, Color.Stroke> {}
-        public record Color_Edge()     implements DesignClass<Muted, Color.Edge> {}
-        public record Effect_Opacity() implements DesignClass<Muted, Effect.Opacity> {}
+        public record muted_color_ink() implements DesignClass<Muted, Color.Ink> {}
+        public record muted_color_fill() implements DesignClass<Muted, Color.Fill> {}
+        public record muted_color_stroke() implements DesignClass<Muted, Color.Stroke> {}
+        public record muted_color_edge() implements DesignClass<Muted, Color.Edge> {}
+        public record muted_effect_opacity() implements DesignClass<Muted, Effect.Opacity> {}
     }
 }

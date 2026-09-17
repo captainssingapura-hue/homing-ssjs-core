@@ -27,7 +27,9 @@ class UtilRenderingTest {
         @Override public String slug() { return "bare"; }
     }
 
-    private final CssContentGetAction action = new CssContentGetAction(List.of(), Bare.INSTANCE);
+    // The action resolves a name by lookup against the crate closure, never by reflection.
+    private final CssContentGetAction action = new CssContentGetAction(List.of(), Bare.INSTANCE,
+            hue.captains.singapura.js.homing.server.ServedModules.of(List.of(StudioBaseCrate.INSTANCE)), List.of());
 
     private String renderUtil() throws Exception {
         var query = new ModuleQuery(Util.class.getCanonicalName(), null, null);

@@ -20,50 +20,50 @@ import hue.captains.singapura.js.homing.design.Target.Type;
 public interface Interaction extends Semantic {
 
     record Interactive() implements Interaction {
-        public record Color_Surface()     implements DesignClass<Interactive, Color.Surface> {}
-        public record Color_Ink()         implements DesignClass<Interactive, Color.Ink> {}
-        public record Color_Edge()        implements DesignClass<Interactive, Color.Edge> {}
-        public record Shape_Shadow()      implements DesignClass<Interactive, Shape.Shadow> {}
-        public record Motion_Ease()       implements DesignClass<Interactive, Motion.Ease> {}
-        public record Motion_Transform()  implements DesignClass<Interactive, Motion.Transform> {}
-        public record Effect_Opacity()    implements DesignClass<Interactive, Effect.Opacity> {}
-        public record Affordance_Cursor() implements DesignClass<Interactive, Affordance.Cursor> {}
-        public record Sound_Cue()         implements DesignClass<Interactive, Sound.Cue> {}
+        public record interactive_color_surface() implements DesignClass<Interactive, Color.Surface> {}
+        public record interactive_color_ink() implements DesignClass<Interactive, Color.Ink> {}
+        public record interactive_color_edge() implements DesignClass<Interactive, Color.Edge> {}
+        public record interactive_shape_shadow() implements DesignClass<Interactive, Shape.Shadow> {}
+        public record interactive_motion_ease() implements DesignClass<Interactive, Motion.Ease> {}
+        public record interactive_motion_transform() implements DesignClass<Interactive, Motion.Transform> {}
+        public record interactive_effect_opacity() implements DesignClass<Interactive, Effect.Opacity> {}
+        public record interactive_affordance_cursor() implements DesignClass<Interactive, Affordance.Cursor> {}
+        public record interactive_sound_cue() implements DesignClass<Interactive, Sound.Cue> {}
     }
 
     record Selected() implements Interaction {
-        public record Color_Surface() implements DesignClass<Selected, Color.Surface> {}
-        public record Color_Ink()     implements DesignClass<Selected, Color.Ink> {}
-        public record Color_Edge()    implements DesignClass<Selected, Color.Edge> {}
-        public record Shape_Rule()    implements DesignClass<Selected, Shape.Rule> {}
-        public record Type_Weight()   implements DesignClass<Selected, Type.Weight> {}
+        public record selected_color_surface() implements DesignClass<Selected, Color.Surface> {}
+        public record selected_color_ink() implements DesignClass<Selected, Color.Ink> {}
+        public record selected_color_edge() implements DesignClass<Selected, Color.Edge> {}
+        public record selected_shape_rule() implements DesignClass<Selected, Shape.Rule> {}
+        public record selected_type_weight() implements DesignClass<Selected, Type.Weight> {}
     }
 
     record Current() implements Interaction {
-        public record Color_Surface() implements DesignClass<Current, Color.Surface> {}
-        public record Color_Ink()     implements DesignClass<Current, Color.Ink> {}
-        public record Color_Edge()    implements DesignClass<Current, Color.Edge> {}
-        public record Shape_Rule()    implements DesignClass<Current, Shape.Rule> {}
-        public record Type_Weight()   implements DesignClass<Current, Type.Weight> {}
+        public record current_color_surface() implements DesignClass<Current, Color.Surface> {}
+        public record current_color_ink() implements DesignClass<Current, Color.Ink> {}
+        public record current_color_edge() implements DesignClass<Current, Color.Edge> {}
+        public record current_shape_rule() implements DesignClass<Current, Shape.Rule> {}
+        public record current_type_weight() implements DesignClass<Current, Type.Weight> {}
     }
 
     record Focus() implements Interaction {
-        public record Color_Edge()   implements DesignClass<Focus, Color.Edge> {}
-        public record Shape_Rule()   implements DesignClass<Focus, Shape.Rule> {}
-        public record Shape_Shadow() implements DesignClass<Focus, Shape.Shadow> {}
+        public record focus_color_edge() implements DesignClass<Focus, Color.Edge> {}
+        public record focus_shape_rule() implements DesignClass<Focus, Shape.Rule> {}
+        public record focus_shape_shadow() implements DesignClass<Focus, Shape.Shadow> {}
     }
 
     record Dragging() implements Interaction {
-        public record Effect_Opacity()    implements DesignClass<Dragging, Effect.Opacity> {}
-        public record Shape_Shadow()      implements DesignClass<Dragging, Shape.Shadow> {}
-        public record Motion_Transform()  implements DesignClass<Dragging, Motion.Transform> {}
-        public record Affordance_Cursor() implements DesignClass<Dragging, Affordance.Cursor> {}
+        public record dragging_effect_opacity() implements DesignClass<Dragging, Effect.Opacity> {}
+        public record dragging_shape_shadow() implements DesignClass<Dragging, Shape.Shadow> {}
+        public record dragging_motion_transform() implements DesignClass<Dragging, Motion.Transform> {}
+        public record dragging_affordance_cursor() implements DesignClass<Dragging, Affordance.Cursor> {}
     }
 
     record DropTarget() implements Interaction {
-        public record Color_Surface()  implements DesignClass<DropTarget, Color.Surface> {}
-        public record Color_Edge()     implements DesignClass<DropTarget, Color.Edge> {}
-        public record Shape_Rule()     implements DesignClass<DropTarget, Shape.Rule> {}
-        public record Motion_Animate() implements DesignClass<DropTarget, Motion.Animate> {}
+        public record drop_target_color_surface() implements DesignClass<DropTarget, Color.Surface> {}
+        public record drop_target_color_edge() implements DesignClass<DropTarget, Color.Edge> {}
+        public record drop_target_shape_rule() implements DesignClass<DropTarget, Shape.Rule> {}
+        public record drop_target_motion_animate() implements DesignClass<DropTarget, Motion.Animate> {}
     }
 }

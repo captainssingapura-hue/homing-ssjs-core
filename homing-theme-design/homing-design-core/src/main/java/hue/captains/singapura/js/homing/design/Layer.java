@@ -13,41 +13,41 @@ import hue.captains.singapura.js.homing.design.Target.Shape;
 public interface Layer extends Semantic {
 
     record Base() implements Layer {
-        public record Color_Surface()   implements DesignClass<Base, Color.Surface> {}
-        public record Color_Ink()       implements DesignClass<Base, Color.Ink> {}
-        public record Color_Edge()      implements DesignClass<Base, Color.Edge> {}
-        public record Color_Scrollbar() implements DesignClass<Base, Color.Scrollbar> {}
+        public record base_color_surface() implements DesignClass<Base, Color.Surface> {}
+        public record base_color_ink() implements DesignClass<Base, Color.Ink> {}
+        public record base_color_edge() implements DesignClass<Base, Color.Edge> {}
+        public record base_color_scrollbar() implements DesignClass<Base, Color.Scrollbar> {}
     }
 
     record Raised() implements Layer {
-        public record Color_Surface() implements DesignClass<Raised, Color.Surface> {}
-        public record Color_Ink()     implements DesignClass<Raised, Color.Ink> {}
-        public record Color_Edge()    implements DesignClass<Raised, Color.Edge> {}
-        public record Shape_Shadow()  implements DesignClass<Raised, Shape.Shadow> {}
-        public record Shape_Corner()  implements DesignClass<Raised, Shape.Corner> {}
-        public record Shape_Rule()    implements DesignClass<Raised, Shape.Rule> {}
+        public record raised_color_surface() implements DesignClass<Raised, Color.Surface> {}
+        public record raised_color_ink() implements DesignClass<Raised, Color.Ink> {}
+        public record raised_color_edge() implements DesignClass<Raised, Color.Edge> {}
+        public record raised_shape_shadow() implements DesignClass<Raised, Shape.Shadow> {}
+        public record raised_shape_corner() implements DesignClass<Raised, Shape.Corner> {}
+        public record raised_shape_rule() implements DesignClass<Raised, Shape.Rule> {}
     }
 
     record Recessed() implements Layer {
-        public record Color_Surface() implements DesignClass<Recessed, Color.Surface> {}
-        public record Color_Ink()     implements DesignClass<Recessed, Color.Ink> {}
-        public record Color_Edge()    implements DesignClass<Recessed, Color.Edge> {}
-        public record Shape_Shadow()  implements DesignClass<Recessed, Shape.Shadow> {}
-        public record Shape_Corner()  implements DesignClass<Recessed, Shape.Corner> {}
+        public record recessed_color_surface() implements DesignClass<Recessed, Color.Surface> {}
+        public record recessed_color_ink() implements DesignClass<Recessed, Color.Ink> {}
+        public record recessed_color_edge() implements DesignClass<Recessed, Color.Edge> {}
+        public record recessed_shape_shadow() implements DesignClass<Recessed, Shape.Shadow> {}
+        public record recessed_shape_corner() implements DesignClass<Recessed, Shape.Corner> {}
     }
 
     record Inverted() implements Layer {
-        public record Color_Surface() implements DesignClass<Inverted, Color.Surface> {}
-        public record Color_Ink()     implements DesignClass<Inverted, Color.Ink> {}
-        public record Color_Edge()    implements DesignClass<Inverted, Color.Edge> {}
+        public record inverted_color_surface() implements DesignClass<Inverted, Color.Surface> {}
+        public record inverted_color_ink() implements DesignClass<Inverted, Color.Ink> {}
+        public record inverted_color_edge() implements DesignClass<Inverted, Color.Edge> {}
     }
 
     record Overlay() implements Layer {
-        public record Color_Surface() implements DesignClass<Overlay, Color.Surface> {}
-        public record Color_Ink()     implements DesignClass<Overlay, Color.Ink> {}
-        public record Color_Edge()    implements DesignClass<Overlay, Color.Edge> {}
-        public record Shape_Shadow()  implements DesignClass<Overlay, Shape.Shadow> {}
-        public record Shape_Corner()  implements DesignClass<Overlay, Shape.Corner> {}
-        public record Effect_Filter() implements DesignClass<Overlay, Effect.Filter> {}
+        public record overlay_color_surface() implements DesignClass<Overlay, Color.Surface> {}
+        public record overlay_color_ink() implements DesignClass<Overlay, Color.Ink> {}
+        public record overlay_color_edge() implements DesignClass<Overlay, Color.Edge> {}
+        public record overlay_shape_shadow() implements DesignClass<Overlay, Shape.Shadow> {}
+        public record overlay_shape_corner() implements DesignClass<Overlay, Shape.Corner> {}
+        public record overlay_effect_filter() implements DesignClass<Overlay, Effect.Filter> {}
     }
 }

@@ -5,6 +5,7 @@ import hue.captains.singapura.js.homing.core.util.CssClassName;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * Auto-generates JS module content for a {@link CssGroup}.
@@ -22,8 +23,12 @@ import java.util.List;
  * framework synthesizes everything from the base + its declared states.</p>
  */
 public record CssGroupContentProvider<C extends CssGroup<C>>(
-        C cssGroup, String theme, ModuleNameResolver nameResolver, List<CssGroup<?>> priors
+        C cssGroup, String theme, ModuleNameResolver nameResolver, List<CssGroup<?>> priors, Predicate<CssGroup<?>> varies
 ) implements ContentProvider<C> {
+
+    public CssGroupContentProvider(C cssGroup, String theme, ModuleNameResolver nameResolver, List<CssGroup<?>> priors) {
+        this(cssGroup, theme, nameResolver, priors, g -> true);
+    }
 
     @Override
     public List<String> content() {
@@ -39,7 +44,7 @@ public record CssGroupContentProvider<C extends CssGroup<C>>(
         // — missing dependencies included, by name — and can order a theme
         // switch by the same graph. Not ES imports: a dependency's CSS is
         // needed, its handles are not.
-        lines.add("await _css.loadCss(\"" + groupName + "\"" + themeArg + ", " + subgraphJs(cssGroup, priors) + ");");
+        lines.add("await _css.loadCss(\"" + groupName + "\"" + themeArg + ", " + subgraphJs(cssGroup, priors, varies) + ");");
 
         for (CssClass<C> cls : cssGroup.cssClasses()) {
             String recordName = cls.getClass().getSimpleName();
@@ -77,7 +82,9 @@ public record CssGroupContentProvider<C extends CssGroup<C>>(
      * own right (a group that is one) gains no dependencies — a prior declares
      * none — and a prior named twice is one node.</p>
      */
-    static String subgraphJs(CssGroup<?> root, List<CssGroup<?>> priors) {
+    static String subgraphJs(CssGroup<?> root, List<CssGroup<?>> priors) { return subgraphJs(root, priors, g -> true); }
+
+    static String subgraphJs(CssGroup<?> root, List<CssGroup<?>> priors, Predicate<CssGroup<?>> varies) {
         StringBuilder sb = new StringBuilder("{ ");
         boolean first = true;
         List<String> priorNames = new ArrayList<>();
@@ -108,7 +115,7 @@ public record CssGroupContentProvider<C extends CssGroup<C>>(
                 firstDep = false;
                 sb.append('"').append(dep.getClass().getCanonicalName()).append('"');
             }
-            sb.append("]").append(g.prior() ? ", prior: true" : "").append(" }");
+            sb.append("]").append(g.prior() ? ", prior: true" : "").append(varies.test(g) ? "" : ", varies: false").append(" }");
         }
         return sb.append(" }").toString();
     }
