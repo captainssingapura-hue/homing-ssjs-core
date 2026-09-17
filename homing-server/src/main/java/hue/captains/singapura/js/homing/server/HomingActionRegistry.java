@@ -1,7 +1,9 @@
 package hue.captains.singapura.js.homing.server;
 
 import hue.captains.singapura.js.homing.core.ModuleNameResolver;
+import hue.captains.singapura.js.homing.core.CssGroup;
 import hue.captains.singapura.js.homing.core.SimpleAppResolver;
+import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.util.ResourceReader;
 import hue.captains.singapura.tao.http.action.ActionRegistry;
 import hue.captains.singapura.tao.http.action.GetAction;
@@ -16,8 +18,6 @@ public class HomingActionRegistry implements ActionRegistry<RoutingContext> {
     private final AppHtmlGetAction appAction;
     private final EsModuleGetAction moduleAction;
     private final CssContentGetAction cssContentAction;
-    private final ThemeVarsGetAction themeVarsAction;
-    private final ThemeGlobalsGetAction themeGlobalsAction;
 
     /** Legacy constructor — only the {@code ?class=} contract is supported. */
     public HomingActionRegistry(ModuleNameResolver nameResolver) {
@@ -62,14 +62,19 @@ public class HomingActionRegistry implements ActionRegistry<RoutingContext> {
         if (themeRegistry == null) themeRegistry = ThemeRegistry.EMPTY;
         if (meta == null) meta = AppMeta.DEFAULT;
         this.appAction = new AppHtmlGetAction(nameResolver, appResolver, themeRegistry, meta);
-        this.moduleAction = new EsModuleGetAction(nameResolver, resourceReader, servable);
-        // Base registry serves a typed-only CssContentGetAction with no impls
-        // and no default theme — every /css-content request 404s unless an
-        // outer registry (e.g. StudioActionRegistry) overrides this route with
-        // its own typed-impl-aware action. RFC 0002 §3.6 (hard cut, no file-based fallback).
-        this.cssContentAction = new CssContentGetAction(List.of(), null);
-        this.themeVarsAction    = new ThemeVarsGetAction(themeRegistry, null);
-        this.themeGlobalsAction = new ThemeGlobalsGetAction(themeRegistry, null);
+        // RFC 0066 - the palettes are the priors every served group leans on; the
+        // module action writes it into each group's subgraph. /theme-vars is gone:
+        // the palette is a group, served by /css-content like any other.
+        List<CssGroup<?>> priors = themeRegistry.priors();
+        this.moduleAction = new EsModuleGetAction(nameResolver, resourceReader, servable, priors);
+        // RFC 0066 - the base registry renders every group from its inline bodies,
+        // and fills the palette from the theme registry's provisions: a deployment
+        // with a theme registry and no studio is themed by this action alone. The
+        // first theme listed is the default a request without ?theme= gets; an
+        // outer registry (the studio's Bootstrap) overrides the route to add its
+        // own CssGroupImpls. RFC 0002 §3.6 still holds: no file-based fallback.
+        Theme defaultTheme = themeRegistry.themes().isEmpty() ? null : themeRegistry.themes().get(0);
+        this.cssContentAction = new CssContentGetAction(themeRegistry.impls(), defaultTheme);
     }
 
     /** Backwards-compatible constructor for callers that don't yet use {@code SimpleAppResolver}. */
@@ -86,9 +91,7 @@ public class HomingActionRegistry implements ActionRegistry<RoutingContext> {
         return Map.of(
                 "/app", appAction,
                 "/module", moduleAction,
-                "/css-content", cssContentAction,
-                "/theme-vars", themeVarsAction,
-                "/theme-globals", themeGlobalsAction
+                "/css-content", cssContentAction
         );
     }
 

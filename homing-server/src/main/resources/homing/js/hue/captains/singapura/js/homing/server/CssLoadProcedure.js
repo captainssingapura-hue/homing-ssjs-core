@@ -4,7 +4,7 @@
 // One procedure, two callers. Loading a group's tree for the first time and
 // refreshing every loaded group under a new theme are the same steps:
 //
-//   1. PLAN     the graph answers waves — the theme bundle, the priors, then
+//   1. PLAN     the graph answers waves — the priors, then
 //               Kahn's waves (CssDependencyGraph.plan);
 //   2. ENSURE   wave by wave, every node's sheet for the theme is appended
 //               under media="not all" — fetched, `load` fires, NOT applied —

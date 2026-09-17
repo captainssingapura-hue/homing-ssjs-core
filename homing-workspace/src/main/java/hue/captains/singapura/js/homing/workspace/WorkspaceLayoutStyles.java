@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.workspace;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
+import hue.captains.singapura.js.homing.studio.base.css.StudioStyles;
 
 import java.util.List;
 
@@ -53,6 +54,9 @@ public record WorkspaceLayoutStyles() implements CssGroup<WorkspaceLayoutStyles>
      * container.</p>
      */
     public record wl_root() implements CssClass<WorkspaceLayoutStyles> {
+        // RFC 0066 — lays out inside .st-main's flex column: a declared edge, not
+        // an assumption that the studio's sheet happens to be on the page first.
+        @Override public List<CssClass<?>> dependsOn() { return List.of(new StudioStyles.st_main()); }
         // ─── Subtle border: 1px solid with the framework's --color-border
         //     token + a small radius so the workspace reads as a single
         //     bordered surface distinct from surrounding studio chrome.
@@ -244,6 +248,8 @@ public record WorkspaceLayoutStyles() implements CssGroup<WorkspaceLayoutStyles>
      * the workspace's chain.
      */
     public record wl_body_locked() implements CssClass<WorkspaceLayoutStyles> {
+        // RFC 0066 — overrides .st-root's min-height; leans on that rule being there.
+        @Override public List<CssClass<?>> dependsOn() { return List.of(new StudioStyles.st_root()); }
         // The selector here piggybacks on the class name. JS adds the same
         // generated name to body when the workspace mounts. Browser-native
         // pseudo-selector logic isn't accessible via typed CssClass; we use

@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.core.StandardJsModuleType;
 import hue.captains.singapura.js.homing.core.js.CoreJsCrate;
+import hue.captains.singapura.js.homing.theme.color.ThemeColorCrate;
 import hue.captains.singapura.js.homing.studio.base.StudioBaseCrate;
 import hue.captains.singapura.js.homing.workspace.catalogue.WorkspaceCatalogueModule;
 import hue.captains.singapura.js.homing.workspace.events.CheckpointStoreModule;
@@ -30,7 +31,8 @@ public final class WorkspaceCrate implements Crate {
     @Override public String name() { return "homing-workspace"; }
 
     @Override public List<Crate> requires() {
-        return List.of(CoreJsCrate.INSTANCE, StudioBaseCrate.INSTANCE);
+        // RFC 0066 - the palette its groups read is a crate edge, not a transitive accident.
+        return List.of(CoreJsCrate.INSTANCE, StudioBaseCrate.INSTANCE, ThemeColorCrate.INSTANCE);
     }
 
     @Override

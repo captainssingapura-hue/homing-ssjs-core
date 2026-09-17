@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+        <artifactId>homing.js</artifactId>
+        <version>LOCAL-SNAPSHOT</version>
+    </parent>
+    <artifactId>homing-studio-themes</artifactId>
+    <description>
+        RFC 0065 layer 5, RFC 0066 — the theme implementations the studio and
+        workspace bundle ships: eleven themes, each an identity plus its
+        provisions of the global palettes (colour, type) and, where it has more
+        to say than a palette, per-class overrides on the studio's and the
+        workspace's groups. Depends on the bundle (homing-studio-workspace)
+        because a theme's word reaches every product's classes; nothing in the
+        bundle depends on this module — a downstream that ships its own themes
+        (fin-dash) takes layers 1–4 and replaces it.
+    </description>
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-studio-workspace</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <!-- RFC 0066 — the completeness law is a conformance rule; the test calls it. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-conformance-rules</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

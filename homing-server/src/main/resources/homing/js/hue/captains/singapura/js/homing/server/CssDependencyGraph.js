@@ -8,16 +8,17 @@
 //   deps    the groups this one's classes depend on, declared in Java per
 //           CssClass and derived per group, carried to the client as data
 //           inside the served group module;
-//   prior   a group that predates the discipline: it declares nothing and
-//           everything implicitly leans on it (the studio's base styles).
+//   prior   a group that declares nothing and everything implicitly leans on:
+//           the global palette (RFC 0066), the studio's base styles.
 //           Priors load before the graph, always, in the order they arrived;
 //   known   whether the node has been declared at all, or is only referred
 //           to by another's deps — a node the manager will have to load by
 //           name, without its handles.
 //
 // and one operation: a PLAN. Given the nodes to load, the plan is a list of
-// WAVES. Wave 0 is the theme bundle (vars, then globals — an edge like any
-// other). Then the priors. Then the graph, by Kahn's rule: a wave is every
+// WAVES. First the priors (RFC 0066: the global palette, a node the server
+// writes into every subgraph — there is no special node left; the theme
+// globals sheet is gone). Then the graph, by Kahn's rule: a wave is every
 // remaining node whose dependencies all sit in earlier waves. A wave may load
 // in parallel precisely because nothing in it is waiting on anything pending;
 // waves run one after another. A cycle leaves nodes that never qualify, and
@@ -28,8 +29,6 @@
 // frozen projection the workbench draws (RFC 0063: data, never handles).
 // =============================================================================
 
-const VARS    = "__theme-vars";
-const GLOBALS = "__theme-globals";
 
 function createCssDependencyGraph() {
     // id → { deps: string[], prior: boolean, known: boolean, seq: number }
@@ -88,15 +87,14 @@ function createCssDependencyGraph() {
     }
 
     /**
-     * The waves for loading exactly these group ids (the theme bundle is
-     * always first and is not among them). Priors form the first group wave,
+     * The waves for loading exactly these group ids. Priors form the first wave,
      * in arrival order. Everything else follows Kahn's rule over the ids
      * given — a dependency outside the set is treated as already satisfied,
      * which is what "load only the missing ones" needs.
      */
     function plan(ids) {
         const set = new Set(ids);
-        const waves = [[VARS], [GLOBALS]];
+        const waves = [];
 
         const priors = Array.from(set).filter(prior).sort(function (a, b) { return nodes.get(a).seq - nodes.get(b).seq; });
         if (priors.length) waves.push(priors);
@@ -128,5 +126,5 @@ function createCssDependencyGraph() {
         return Object.freeze(out);
     }
 
-    return Object.freeze({ merge, has, deps, prior, known, closureOf, plan, snapshot, VARS, GLOBALS });
+    return Object.freeze({ merge, has, deps, prior, known, closureOf, plan, snapshot });
 }

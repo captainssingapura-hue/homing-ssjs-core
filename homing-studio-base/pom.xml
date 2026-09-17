@@ -47,6 +47,18 @@
             <artifactId>homing-core-js</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+        <!-- RFC 0066 — the global palette and its vocabulary live in the theme
+             design core; the studio's themes fill it and its classes read it. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-theme-color</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-theme-type</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
         <!-- Rigid tree substrate (homing-tree-views): studio-base supplies the
              catalogue -> TreeNode adapter that turns the catalogue tree into the
              canonical TreeNode JSON the nav/detail views consume. Depends only on
@@ -54,18 +66,6 @@
         <dependency>
             <groupId>io.github.captainssingapura-hue.homing.js</groupId>
             <artifactId>homing-tree-views</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-        <!-- Cross-cutting conformance bases (NoDomDestructionConformanceTest,
-             CssConformanceTest, etc.) live in homing-conformance, depending only
-             on homing-core. studio-base depends on them at compile scope because
-             it HOSTS its own substrate-typed conformance bases (DocConformanceTest,
-             ContentViewerConformanceTest, PlanRegistrationConformanceTest) — those
-             bases use the cross-cutting ones' patterns and helpers, and studio-base
-             test subclasses use both. -->
-        <dependency>
-            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
-            <artifactId>homing-conformance</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <!-- JUnit at COMPILE scope (overriding parent dependencyManagement's

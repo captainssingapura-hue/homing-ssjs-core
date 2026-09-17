@@ -30,6 +30,26 @@ public interface CssClass<C extends CssGroup<C>> extends Exportable._Constant<C>
     default String pseudoState() { return null; }
 
     /**
+     * RFC 0066 — a selector that is not the class. The one legitimate case is
+     * a rule over an element no class reaches: the page reset, {@code html,
+     * body}. Such a class is still a node of the graph (others depend on it,
+     * a theme may override it), still exports a handle nobody needs, and
+     * renders with this selector instead of {@code .kebab-name}. Default
+     * {@code null}: the class selector, with {@link #pseudoState()} appended.
+     */
+    default String selector() { return null; }
+
+    /**
+     * RFC 0066 Law 5 — custom properties this class reads that are set at
+     * RUNTIME by the module that owns it ({@code el.style.setProperty("--hgr-guide-x", …)}),
+     * never by a theme. Declared so the token law can tell a runtime value from
+     * a palette token the theme forgot: everything a body reads through
+     * {@code var(--…)} must be declared by a palette the class reaches, unless
+     * it is named here. Default: none.
+     */
+    default Set<CssVar> runtimeVars() { return Set.of(); }
+
+    /**
      * Pseudo-state variants the framework should auto-generate for this base.
      *
      * <p>For each state {@code s} in the returned set, the framework synthesizes

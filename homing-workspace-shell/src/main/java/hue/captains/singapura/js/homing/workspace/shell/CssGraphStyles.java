@@ -82,7 +82,7 @@ public record CssGraphStyles() implements CssGroup<CssGraphStyles> {
             padding: 2px var(--space-1);
             border: 1px solid var(--color-border);
             border-radius: var(--radius-sm);
-            background: var(--color-surface-base);
+            background: var(--color-surface);
             color: var(--color-text-primary);
             """; }
     }
@@ -176,7 +176,7 @@ public record CssGraphStyles() implements CssGroup<CssGraphStyles> {
     public record cg_badge_prior() implements CssClass<CssGraphStyles> {
         @Override public String body() { return """
             background: var(--color-accent);
-            color: var(--color-accent-on, var(--color-surface-base));
+            color: var(--color-accent-on);
             """; }
     }
 

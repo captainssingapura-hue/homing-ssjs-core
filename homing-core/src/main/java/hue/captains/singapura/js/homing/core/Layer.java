@@ -4,7 +4,7 @@ import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 /**
  * CSS cascade layer — a typed "tier" carried as a marker interface on
- * {@link CssClass} (via {@link InLayer}) and on {@link ThemeGlobals} chunks.
+ * {@link CssClass} (via {@link InLayer}).
  *
  * <p>The framework serves CSS rules grouped by Layer, wrapped in
  * {@code @layer reset, layout, component, prose, state, media, theme;}

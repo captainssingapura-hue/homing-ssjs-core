@@ -7,6 +7,8 @@ import hue.captains.singapura.js.homing.core.CssGroup;
 import hue.captains.singapura.js.homing.core.CssGroupImpl;
 import hue.captains.singapura.js.homing.core.Layer;
 import hue.captains.singapura.js.homing.core.Layers;
+import hue.captains.singapura.js.homing.core.PaletteClass;
+import hue.captains.singapura.js.homing.core.PaletteProvision;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.util.CssClassName;
 import hue.captains.singapura.tao.http.action.GetAction;
@@ -24,16 +26,13 @@ import java.util.concurrent.CompletableFuture;
 /**
  * GET /css-content?class=&lt;CssGroup canonical name&gt;[&amp;theme=&lt;slug&gt;]
  *
- * <p>Renders CSS programmatically from a typed {@link CssGroupImpl} resolved
+ * <p>Renders CSS from the group's declared bodies, with the theme's word from the
+ * {@link CssGroupImpl} resolved
  * via the registry passed at construction. Body shape:</p>
  * <ol>
- *   <li>{@code :root { … }} from {@link CssGroupImpl#cssVariables()}</li>
- *   <li>{@link CssGroupImpl#globalRules()} verbatim — pseudo-classes, descendant
- *       selectors, media queries, html/body resets</li>
- *   <li>One {@code .kebab-name { body }} per declared {@link CssClass} in the
- *       group, body sourced by reflection from the impl's matching method
- *       (record {@code st_root} → method {@code st_root()} → selector
- *       {@code .st-root})</li>
+ *   <li>a {@link PaletteClass}: the theme's {@link PaletteProvision} as {@code :root} blocks, unlayered</li>
+ *   <li>every other class: {@code selector { declared body; theme override }} in its
+ *       {@code @layer} — the override appended inside the rule (RFC 0066)</li>
  * </ol>
  *
  * <p>Hard cut: unknown {@code class} or {@code theme} returns 404. No
@@ -95,8 +94,8 @@ public class CssContentGetAction
             // RFC 0002-ext1 Phase 10/11: groups whose classes all have non-null
             // `body()` no longer need a registered CssGroupImpl. The renderer
             // handles `impl == null` by rendering purely from inline bodies.
-            // Theme cascade comes from the theme-bundle endpoints
-            // (/theme-vars, /theme-globals), not from the per-group response.
+            // Theme cascade comes from the palette group (RFC 0066, the prior)
+            // and /theme-globals, not from the per-group response.
             CssGroupImpl<?, ?> impl = findImpl(group, themeSlug);
             return CompletableFuture.completedFuture(new CssContent(renderCss(impl, group)));
         } catch (Exception e) {
@@ -132,32 +131,8 @@ public class CssContentGetAction
         // honours the ladder regardless of bundle load order.
         sb.append(Layers.declaration()).append("\n\n");
 
-        // 1. :root custom properties stay unlayered — CSS vars don't
-        // participate in cascade conflicts; layering them would only
-        // complicate `var(--…)` resolution.
-        if (impl != null) {
-            Map<String, String> primitives = impl.cssVariables();
-            Map<String, String> semantic   = impl.semanticTokens();
-            if (!primitives.isEmpty() || !semantic.isEmpty()) {
-                sb.append(":root {\n");
-                primitives.forEach((k, v) -> sb.append("    ").append(k).append(": ").append(v).append(";\n"));
-                semantic  .forEach((k, v) -> sb.append("    ").append(k).append(": ").append(v).append(";\n"));
-                sb.append("}\n\n");
-            }
-            // Legacy globalRules — wrap in @layer component as the safe
-            // default. Themes targeting other tiers should migrate to
-            // ThemeGlobals.chunks().
-            String global = impl.globalRules();
-            if (global != null && !global.isEmpty()) {
-                sb.append("@layer component {\n");
-                sb.append(global.indent(4));
-                if (!global.endsWith("\n")) sb.append('\n');
-                sb.append("}\n\n");
-            }
-        }
-
-        // 2. Per-class rules — group by the cascade tier each CssClass opts
-        // into via InLayer<L>. Classes without an InLayer marker fall into
+        // Per-class rules — grouped by the cascade tier each CssClass opts into
+        // via InLayer<L>. Classes without an InLayer marker fall into
         // @layer component (the implicit default — see Layers.ofImplementor).
         Map<Class<? extends Layer>, List<String>> byLayer = new LinkedHashMap<>();
         for (Class<? extends Layer> layer : Layers.ASCENDING) {
@@ -165,49 +140,61 @@ public class CssContentGetAction
         }
 
         for (CssClass<?> cssClass : group.cssClasses()) {
+            // RFC 0066 — a palette is a PROVIDED class: no rule of its own, its
+            // body is the theme's :root binding, emitted unlayered (custom
+            // properties do not cascade-conflict). No provision under this
+            // theme is the completeness failure the build gate reports; here it
+            // renders as a comment so the sheet still arrives and says what is
+            // missing.
+            if (cssClass instanceof PaletteClass<?> palette) {
+                if (impl instanceof PaletteProvision<?, ?> provision) {
+                    sb.append(provision.rootBlock()).append('\n');
+                } else {
+                    sb.append("/* render error: no PaletteProvision for ")
+                      .append(palette.getClass().getSimpleName()).append(" under this theme */\n\n");
+                }
+                continue;
+            }
             Class<? extends Layer> layer = Layers.ofImplementor(cssClass);
             List<String> bucket = byLayer.get(layer);
-            try {
-                String baseKebab = CssClassName.toCssName(cssClass.getClass());
-                String selector = "." + baseKebab;
+            String baseKebab = CssClassName.toCssName(cssClass.getClass());
+            String selector = cssClass.selector();
+            if (selector == null) {
+                selector = "." + baseKebab;
                 String state = cssClass.pseudoState();
                 if (state != null && !state.isEmpty()) selector += state;
+            }
 
-                String body;
-                String inline = cssClass.body();
-                if (inline != null) {
-                    body = inline;
-                } else if (impl != null) {
-                    Method m = impl.getClass().getMethod(cssClass.getClass().getSimpleName());
-                    body = ((CssBlock<?>) m.invoke(impl)).body();
-                } else {
-                    bucket.add("/* render error: no body() and no registered impl for "
-                            + cssClass.getClass().getSimpleName() + " */");
-                    continue;
-                }
+            // RFC 0066 — the declared body, then the theme's override for this
+            // class appended INSIDE the rule: the theme says only what differs
+            // and wins by source order, same layer, same specificity. A class
+            // with neither is a declaration error, rendered as a comment.
+            String declared = cssClass.body();
+            String override = overrideFor(impl, cssClass);
+            if (declared == null && override == null) {
+                bucket.add("/* render error: no body() and no override for "
+                        + cssClass.getClass().getSimpleName() + " on "
+                        + (impl == null ? "(null impl)" : impl.getClass().getSimpleName()) + " */");
+                continue;
+            }
+            String body = (declared == null ? "" : declared)
+                        + (override == null ? "" : (declared == null || declared.isEmpty() ? "" : "\n") + override);
 
-                StringBuilder rule = new StringBuilder();
-                rule.append(selector).append(" {\n");
+            StringBuilder rule = new StringBuilder();
+            rule.append(selector).append(" {\n");
+            if (!body.isEmpty()) rule.append(body.indent(4));
+            rule.append("}\n");
+
+            for (String variant : cssClass.variants()) {
+                rule.append(".").append(variant).append("-").append(baseKebab)
+                        .append(":").append(variant).append(" {\n");
                 if (!body.isEmpty()) rule.append(body.indent(4));
                 rule.append("}\n");
-
-                for (String variant : cssClass.variants()) {
-                    rule.append(".").append(variant).append("-").append(baseKebab)
-                            .append(":").append(variant).append(" {\n");
-                    if (!body.isEmpty()) rule.append(body.indent(4));
-                    rule.append("}\n");
-                }
-                bucket.add(rule.toString());
-            } catch (NoSuchMethodException e) {
-                bucket.add("/* render error: no method " + cssClass.getClass().getSimpleName()
-                        + "() on " + (impl == null ? "(null impl)" : impl.getClass().getSimpleName()) + " */");
-            } catch (Exception e) {
-                bucket.add("/* render error: " + cssClass.getClass().getSimpleName()
-                        + " — " + e.getMessage() + " */");
             }
+            bucket.add(rule.toString());
         }
 
-        // 3. Emit each non-empty layer in ASCENDING order, wrapped in
+        // Emit each non-empty layer in ASCENDING order, wrapped in
         // `@layer X { … }`. The declaration at the top fixes cascade order
         // regardless of how these blocks interleave with other bundles.
         for (Class<? extends Layer> layer : Layers.ASCENDING) {
@@ -221,5 +208,27 @@ public class CssContentGetAction
         }
 
         return sb.toString();
+    }
+
+    /**
+     * The theme's block for a class, if its impl has one: a public no-arg
+     * method named after the record, returning a {@link CssBlock}. Absent
+     * method — the common case — is no override. A method that exists but
+     * fails is a declaration error and renders as a comment in the body.
+     */
+    private static String overrideFor(CssGroupImpl<?, ?> impl, CssClass<?> cssClass) {
+        if (impl == null) return null;
+        Method m;
+        try {
+            m = impl.getClass().getMethod(cssClass.getClass().getSimpleName());
+        } catch (NoSuchMethodException e) {
+            return null;
+        }
+        try {
+            Object block = m.invoke(impl);
+            return block instanceof CssBlock<?> b ? b.body() : String.valueOf(block);
+        } catch (Exception e) {
+            return "/* render error: " + cssClass.getClass().getSimpleName() + " — " + e.getMessage() + " */";
+        }
     }
 }

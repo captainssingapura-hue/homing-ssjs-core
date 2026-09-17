@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.conformance.studio;
 
 import hue.captains.singapura.js.homing.conformance.engine.ConformanceEngine;
+import hue.captains.singapura.js.homing.conformance.rules.CssConformance;
 import hue.captains.singapura.js.homing.conformance.rules.Finding;
 import hue.captains.singapura.js.homing.conformance.rules.FindingGrader;
 import hue.captains.singapura.js.homing.conformance.rules.GradedFinding;
@@ -68,6 +69,37 @@ class SelfConformanceTest {
         assertEquals(List.of(), stale, () -> "stale baseline fingerprints (" + stale.size()
                 + ") — no current finding matches; remove them from conformance-baseline.txt:\n"
                 + String.join("\n", stale));
+    }
+
+    /**
+     * RFC 0066 — the laws over the CSS graph: palettes complete, tokens declared
+     * by a palette the class reaches, priors palettes, nested names declared,
+     * crates requiring what their groups lean on. These FAIL the build like any
+     * JS rule, graded through the same allowances and baseline. Law 6 — no
+     * literal where a token family is declared — is reported and not failed
+     * until the shape and space palettes exist to name what the literals say
+     * (29 radii, 11 fallbacks, measured); {@code -Dconformance.css.strict=true}
+     * fails on it too.
+     */
+    private static final boolean CSS_STRICT =
+            Boolean.parseBoolean(System.getProperty("conformance.css.strict", "false"));
+
+    @Test
+    void theCssGraphKeepsItsLaws() {
+        List<GradedFinding> graded = HOMING_GRADER.grade(
+                CssConformance.check(HomingConformance.closure(), HomingConformance.provisions()));
+        List<GradedFinding> reported = graded.stream()
+                .filter(g -> !CSS_STRICT && g.finding().rule().equals(CssConformance.NO_LITERAL_FAMILY)).toList();
+        List<GradedFinding> errors = graded.stream()
+                .filter(GradedFinding::isError).filter(g -> !reported.contains(g)).toList();
+        if (!graded.isEmpty()) {
+            System.out.println("[conformance] css graph: " + graded.size() + " finding(s), "
+                    + errors.size() + " error(s), " + reported.size() + " reported only (" + CssConformance.NO_LITERAL_FAMILY.value()
+                    + "; -Dconformance.css.strict=true to fail on them):");
+            graded.forEach(g -> System.out.println("  " + (errors.contains(g) ? "ERROR " : "WARN  ") + describe(g)));
+        }
+        assertEquals(List.of(), errors, () -> "css graph errors (" + errors.size() + "):\n"
+                + errors.stream().map(SelfConformanceTest::describe).collect(Collectors.joining("\n")));
     }
 
     private static String describe(GradedFinding g) {

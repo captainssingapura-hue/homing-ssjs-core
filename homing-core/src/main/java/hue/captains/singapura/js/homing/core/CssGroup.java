@@ -17,10 +17,12 @@ public interface CssGroup<C extends CssGroup<C>> extends EsModule<C> {
     // there is deliberately no method to override: see CssImportsFor.
 
     /**
-     * RFC 0064 — a group that predates the dependency discipline: it declares
-     * no dependencies and everything implicitly leans on it (the studio's
-     * base styles). The client loads priors before the graph, always. A prior
-     * with dependencies is refused.
+     * RFC 0064 / RFC 0066 — a group everything implicitly leans on: it declares
+     * no dependencies, the client loads it before the graph, always, and the
+     * server writes it into every served subgraph. Only a palette may be one —
+     * the global palette is the single implicit node of a deployment; a drawn
+     * group others lean on is named in their {@code dependsOn()}. A prior with
+     * dependencies, or without a {@link PaletteClass}, is refused when served.
      *
      * <p>Default: {@code false}.</p>
      */

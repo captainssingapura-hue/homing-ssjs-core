@@ -31,6 +31,11 @@ public class EsModuleGetAction
      */
     private final Set<String> servable;
 
+    /** RFC 0066 — the deployment's priors (its global palette), written into
+     *  every served CSS group's dependency subgraph so the client loads them
+     *  first by the ordinary plan. Empty when the deployment has none. */
+    private final List<CssGroup<?>> priors;
+
     public EsModuleGetAction(ModuleNameResolver nameResolver) {
         this(nameResolver, ResourceReader.INSTANCE);
     }
@@ -41,9 +46,16 @@ public class EsModuleGetAction
 
     /** With a crate‑closure allow‑list ({@code servable}); {@code null} = permissive. */
     public EsModuleGetAction(ModuleNameResolver nameResolver, ResourceReader resourceReader, Set<String> servable) {
+        this(nameResolver, resourceReader, servable, List.of());
+    }
+
+    /** With the deployment's priors (RFC 0066). */
+    public EsModuleGetAction(ModuleNameResolver nameResolver, ResourceReader resourceReader,
+                             Set<String> servable, List<CssGroup<?>> priors) {
         this.nameResolver = nameResolver;
         this.resourceReader = resourceReader;
         this.servable = (servable == null) ? null : Set.copyOf(servable);
+        this.priors = List.copyOf(priors);
     }
 
     @Override
@@ -135,7 +147,7 @@ public class EsModuleGetAction
         } else if (module instanceof CssGroup) {
             @SuppressWarnings("rawtypes")
             CssGroup css = (CssGroup) module;
-            contentProvider = (ContentProvider<M>) new CssGroupContentProvider<>(css, theme, nameResolver);
+            contentProvider = (ContentProvider<M>) new CssGroupContentProvider<>(css, theme, nameResolver, priors);
         } else if (module instanceof SelfContent self) {
             // Generic self-providing module: the type emits its own JS body.
             // Used by DocGroup (in homing-studio-base) and any future self-contained types

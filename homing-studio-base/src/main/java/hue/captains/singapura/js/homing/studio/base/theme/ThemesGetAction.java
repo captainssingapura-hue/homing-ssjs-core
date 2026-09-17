@@ -1,8 +1,10 @@
 package hue.captains.singapura.js.homing.studio.base.theme;
 
 import hue.captains.singapura.js.homing.core.CssVar;
+import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
+import hue.captains.singapura.js.homing.theme.color.HomingVars;
 import hue.captains.singapura.js.homing.core.Theme;
-import hue.captains.singapura.js.homing.core.ThemeVariables;
+import hue.captains.singapura.js.homing.core.PaletteProvision;
 import hue.captains.singapura.js.homing.server.EmptyParam;
 import hue.captains.singapura.js.homing.server.ThemeRegistry;
 import hue.captains.singapura.js.homing.studio.base.DocContent;
@@ -22,7 +24,7 @@ import java.util.concurrent.CompletableFuture;
  * <p>The selected swatch keys cover the page's preview surface — page bg,
  * header band, accent, link, primary text, muted text, and the emphasis
  * border. Every theme guarantees these via the semantic vocabulary in
- * {@link StudioVars}.</p>
+ * {@link HomingVars}.</p>
  *
  * <p>Response shape:</p>
  * <pre>{@code
@@ -49,15 +51,15 @@ import java.util.concurrent.CompletableFuture;
 public class ThemesGetAction
         implements GetAction<RoutingContext, EmptyParam.NoQuery, EmptyParam.NoHeaders, DocContent> {
 
-    /** Subset of StudioVars used in the page swatches. Order = render order. */
+    /** Subset of HomingVars used in the page swatches. Order = render order. */
     private static final List<CssVar> PALETTE_KEYS = List.of(
-            StudioVars.COLOR_SURFACE,
-            StudioVars.COLOR_SURFACE_INVERTED,
-            StudioVars.COLOR_ACCENT,
-            StudioVars.COLOR_TEXT_LINK,
-            StudioVars.COLOR_TEXT_PRIMARY,
-            StudioVars.COLOR_TEXT_MUTED,
-            StudioVars.COLOR_BORDER_EMPHASIS
+            HomingVars.COLOR_SURFACE,
+            HomingVars.COLOR_SURFACE_INVERTED,
+            HomingVars.COLOR_ACCENT,
+            HomingVars.COLOR_TEXT_LINK,
+            HomingVars.COLOR_TEXT_PRIMARY,
+            HomingVars.COLOR_TEXT_MUTED,
+            HomingVars.COLOR_BORDER_EMPHASIS
     );
 
     private final ThemeRegistry registry;
@@ -88,7 +90,7 @@ public class ThemesGetAction
         for (Theme theme : registry.themes()) {
             if (!first) sb.append(',');
             first = false;
-            ThemeVariables<?> vars = findVars(theme);
+            PaletteProvision<?, ?> vars = registry.paletteForSlug(theme.slug(), GlobalColorPalette.INSTANCE);
             Map<CssVar, String> values = vars != null ? vars.values() : Map.of();
 
             sb.append("{\"slug\":") .append(jstr(theme.slug())) .append(',')
@@ -108,14 +110,6 @@ public class ThemesGetAction
         }
         sb.append("]}");
         return sb.toString();
-    }
-
-    /** Find the {@link ThemeVariables} entry whose theme matches the given Theme by slug. */
-    private ThemeVariables<?> findVars(Theme theme) {
-        for (var v : registry.variables()) {
-            if (v.theme().slug().equals(theme.slug())) return v;
-        }
-        return null;
     }
 
     /** Strip the leading "--" so the JSON keys read as friendly names ("surface" not "--color-surface"). */

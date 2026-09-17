@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+        <artifactId>homing.js</artifactId>
+        <version>LOCAL-SNAPSHOT</version>
+    </parent>
+    <artifactId>homing-theme-design</artifactId>
+    <packaging>pom</packaging>
+    <description>
+        RFC 0065 layer 3, RFC 0066 — the theme design core: the design
+        vocabularies an app declares and a theme fills, one sub-module per
+        kind. Nothing here is a studio; anything that serves a JS app can bind
+        a palette. The first sub-module is colour (the global palette); scales,
+        typography and the rest arrive as their own sub-modules as the
+        semantic tree grows (RFC 0066 Episode 2).
+    </description>
+    <modules>
+        <module>homing-theme-color</module>
+        <module>homing-theme-type</module>
+    </modules>
+</project>

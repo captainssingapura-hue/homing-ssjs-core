@@ -14,8 +14,8 @@ import java.util.List;
 /**
  * The theme preview page: {@code /app?app=theme-preview&theme=<slug>}. A
  * theme shown by wearing it — the studio's own elements rendered under the
- * theme the address names, with the backdrop, audio and body class the page
- * template gives any page under that theme.
+ * theme the address names, exactly as the page template gives any page under
+ * that theme.
  *
  * <p>The theme picker embeds this page in a frame and reloads the frame on
  * every selection, which is what makes the preview live for every kind of

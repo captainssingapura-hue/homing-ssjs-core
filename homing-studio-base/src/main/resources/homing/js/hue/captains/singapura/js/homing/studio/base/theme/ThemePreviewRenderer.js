@@ -6,8 +6,8 @@
 // title, cards, badges, a listing, a progress bar, a task list, a table, a
 // footer — under whatever theme the address names. The picker embeds this page
 // in a frame and reloads the frame per selection, so a theme is previewed by
-// rendering it rather than by a strip of its palette. Backdrop, audio and body
-// class come with the page, because the page is a page.
+// rendering it rather than by a strip of its palette. The palette and the
+// overrides come with the page, because the page is a page.
 //
 // No header. The header carries the picker, and a picker inside the picker's
 // own preview is a hall of mirrors.

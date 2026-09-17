@@ -141,7 +141,7 @@ public record WidgetPickerStyles() implements CssGroup<WidgetPickerStyles> {
     public record hwp_form_btn_primary() implements CssClass<WidgetPickerStyles> {
         @Override public String body() { return """
                 background: var(--color-accent);
-                color: var(--color-on-accent, #fff);
+                color: var(--color-accent-on);
                 border-color: var(--color-accent);
                 """; }
     }

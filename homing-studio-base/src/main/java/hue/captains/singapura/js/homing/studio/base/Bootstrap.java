@@ -22,7 +22,6 @@ import hue.captains.singapura.js.homing.studio.base.app.CataloguePathGetAction;
 import hue.captains.singapura.js.homing.studio.base.app.CatalogueRegistry;
 import hue.captains.singapura.js.homing.studio.base.app.GotoNavigableGetAction;
 import hue.captains.singapura.js.homing.studio.base.app.StudioBrand;
-import hue.captains.singapura.js.homing.studio.base.theme.CssGroupImplRegistry;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemesGetAction;
 import hue.captains.singapura.js.homing.studio.base.app.DocTreeViewer;
 import hue.captains.singapura.js.homing.studio.base.composed.DocTreeContentGetAction;
@@ -247,7 +246,9 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
         docRegistry.assertReferencesResolve();
 
         // --- Standard studio actions.
-        var cssContentAction = new CssContentGetAction(CssGroupImplRegistry.ALL, defaultTheme);
+        // RFC 0066 - every impl the CSS action resolves comes from the theme
+        // registry: each theme's palette provision and its per-class overrides.
+        var cssContentAction = new CssContentGetAction(themeRegistry.impls(), defaultTheme);
         var docAction        = new DocGetAction(docRegistry);
         var themesAction     = new ThemesGetAction(themeRegistry);
         var brandAction      = new BrandGetAction(brand, !catalogues.isEmpty());

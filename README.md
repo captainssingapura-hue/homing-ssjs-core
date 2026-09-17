@@ -227,7 +227,7 @@ Record names use `snake_case`, which maps 1:1 to `kebab-case` CSS class names:
 
 ### Theme Support
 
-A theme is a `Theme` with a `ThemeVariables` (the `--color-*` token surface) and a `ThemeGlobals` overlay on `@layer theme`. Typed CSS records reference the tokens and never ship per-theme files — one set of records covers every theme.
+A theme is a `Theme` with a `GlobalColorPalette.Provision` (RFC 0066 — its body for the global palette, the `--color-*` token surface) and a `ThemeGlobals` overlay on `@layer theme`. Typed CSS records reference the tokens and never ship per-theme files — one set of records covers every theme.
 
 The theme a page wears is the **client's** to resolve (RFC 0064). The server serves every page under the registry's default; the preference steward on the client resolves the theme in one order — `?theme=` on the address as that page's override, else the pick stored in `localStorage` (`homing.theme`), else the default — and the CSS manager loads every group under it. Picking a theme in the picker stores it and switches the page in place, without a reload; a `?theme=` written into a link pins that theme for the page it names and is never copied onto other links.
 
@@ -405,7 +405,7 @@ Homing includes a server module (`homing-server`) that serves ES modules and SPA
 | `/css?class=<CssGroup>` | `application/json` | Resolved CSS dependency chain |
 | `/css-content?class=<CssGroup>` | `text/css` | Raw CSS file content |
 
-`/app` ignores `?theme=` and `?locale=`: the page is served under the registry's default and the client resolves both through the preference steward (RFC 0064). The keyed resources — `/css-content`, `/theme-vars`, `/theme-globals` — still take `?theme=` explicitly; the client's CSS manager puts it there.
+`/app` ignores `?theme=` and `?locale=`: the page is served under the registry's default and the client resolves both through the preference steward (RFC 0064). The keyed resources — `/css-content`, `/theme-globals` — still take `?theme=` explicitly; the client's CSS manager puts it there.
 
 The `?app=<simple-name>` URL contract — introduced in [RFC 0001](docs/rfcs/0001-app-registry-and-typed-nav.md) — is the public surface. Simple names default to a kebab-case derivation of the AppModule's class name (e.g. `PitchDeck` → `pitch-deck`); each AppModule may override `simpleName()` to lock the URL contract independently of its Java class. The legacy `?class=` form is retained for backwards compatibility.
 

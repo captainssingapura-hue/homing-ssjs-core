@@ -3,9 +3,12 @@ package hue.captains.singapura.js.homing.conformance.studio;
 import hue.captains.singapura.js.homing.conformance.rules.Allowance;
 import hue.captains.singapura.js.homing.conformance.rules.Baseline;
 import hue.captains.singapura.js.homing.conformance.rules.CrateClosure;
+import hue.captains.singapura.js.homing.conformance.rules.CssConformance;
 import hue.captains.singapura.js.homing.conformance.rules.FindingGrader;
 import hue.captains.singapura.js.homing.conformance.rules.RuleId;
 import hue.captains.singapura.js.homing.core.Crate;
+import hue.captains.singapura.js.homing.core.PaletteProvision;
+import hue.captains.singapura.js.homing.studio.themes.StudioWorkspaceThemes;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -94,9 +97,26 @@ public final class HomingConformance {
                     new RuleId("no-raw-css"),
                     "CssClassManager IS the css-manager implementation — its classList calls are "
                             + "the css.* API the rule redirects DOM owners to. The one module that "
-                            + "may touch classList raw, because it is where the typed path ends."));
+                            + "may touch classList raw, because it is where the typed path ends."),
+            // ── RFC 0066 — the CSS graph laws ────────────────────────────
+            new Allowance(
+                    "hue.captains.singapura.js.homing.studio.base.css.StudioStyles",
+                    CssConformance.NESTED_DECLARED,
+                    "st_page's print rule names #__theme_picker_slot__: an element the page template "
+                            + "mints (AppHtmlGetAction), not a class of any group. It becomes a class when "
+                            + "the picker slot leaves the server (RFC 0065 D2)."),
+            new Allowance(
+                    "hue.captains.singapura.js.homing.workspace.shell.CssGraphStyles",
+                    CssConformance.TOKEN_DECLARED,
+                    "cg_note_err reads --color-danger, the feedback role no palette declares yet — RFC 0066 "
+                            + "Episode 2's base tree names it feedback/error; until then it falls to unset, "
+                            + "which is the state RFC 0050-ext3 recorded when it asked for the token."));
 
-    /** The crate closure the gate + export run over — every first-party served module. */
+    /** RFC 0066 — the provisions the studio bundle registers; the CSS graph rules derive the priors from them. */
+    public static List<PaletteProvision<?, ?>> provisions() {
+        return StudioWorkspaceThemes.INSTANCE.palettes();
+    }
+
     public static Collection<Crate> closure() {
         return CrateClosure.of(TopLevelCrates.ALL);
     }
