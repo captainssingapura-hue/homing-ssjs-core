@@ -62,10 +62,10 @@ public class HomingActionRegistry implements ActionRegistry<RoutingContext> {
         if (themeRegistry == null) themeRegistry = ThemeRegistry.EMPTY;
         if (meta == null) meta = AppMeta.DEFAULT;
         this.appAction = new AppHtmlGetAction(nameResolver, appResolver, themeRegistry, meta);
-        // RFC 0066 - the palette is the prior every served group leans on; the
+        // RFC 0066 - the palettes are the priors every served group leans on; the
         // module action writes it into each group's subgraph. /theme-vars is gone:
         // the palette is a group, served by /css-content like any other.
-        List<CssGroup<?>> priors = themeRegistry.palette() == null ? List.of() : List.of(themeRegistry.palette());
+        List<CssGroup<?>> priors = themeRegistry.priors();
         this.moduleAction = new EsModuleGetAction(nameResolver, resourceReader, servable, priors);
         // RFC 0066 - the base registry renders every group from its inline bodies,
         // and fills the palette from the theme registry's provisions: a deployment

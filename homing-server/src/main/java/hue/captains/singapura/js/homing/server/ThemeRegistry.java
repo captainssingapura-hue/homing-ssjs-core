@@ -10,22 +10,23 @@ import java.util.List;
 
 /**
  * RFC 0066 — what a deployment says about its themes: the {@link Theme}
- * identities, each one's {@link PaletteProvision} of the global palette, and
- * the {@link CssGroupImpl}s carrying their per-class overrides. That is the
- * whole of a theme; there is no globals sheet any more (RFC 0066 retired it:
+ * identities, each one's {@link PaletteProvision}s of the global palettes
+ * (colour, type, and whatever vocabularies follow), and the
+ * {@link CssGroupImpl}s carrying their per-class overrides. That is the whole
+ * of a theme; there is no globals sheet any more (RFC 0066 retired it:
  * structure is agnostic classes, the dark binding is on the provision, the
  * overlay is overrides).
  *
  * <p>Each deployment provides its own implementation. The first theme listed
- * is the default a page is served under. {@link #palette()} — derived — is the
- * prior the module action writes into every served subgraph.</p>
+ * is the default a page is served under. {@link #priors()} — derived — are the
+ * palette groups the module action writes into every served subgraph.</p>
  */
 public interface ThemeRegistry {
 
     /** All themes registered for this deployment; the first is the default. */
     List<Theme> themes();
 
-    /** Every theme's provision of the global palette, one per theme. */
+    /** Every theme's provisions of the global palettes — one per theme per palette group. */
     List<PaletteProvision<?, ?>> palettes();
 
     /**
@@ -42,25 +43,34 @@ public interface ThemeRegistry {
         @Override public List<PaletteProvision<?, ?>> palettes() { return List.of(); }
     };
 
-    /** Look up the {@link PaletteProvision} for a theme by slug.
-     *  Returns {@code null} if not registered. */
-    default PaletteProvision<?, ?> paletteForSlug(String slug) {
-        if (slug == null) return null;
+    /**
+     * Look up a theme's provision of one palette group by slug — the colour
+     * palette for the picker's swatches, say. Returns {@code null} if the theme
+     * has none for that group.
+     */
+    default PaletteProvision<?, ?> paletteForSlug(String slug, CssGroup<?> palette) {
+        if (slug == null || palette == null) return null;
         for (var v : palettes()) {
-            if (slug.equals(v.theme().slug())) return v;
+            if (slug.equals(v.theme().slug()) && v.group().getClass() == palette.getClass()) return v;
         }
         return null;
     }
 
     /**
-     * The palette group the provisions fill: the PRIOR every group on every
-     * page leans on without declaring it. Derived from the provisions (they all
-     * fill one group — the completeness gate checks it); {@code null} when the
-     * deployment registers none.
+     * The palette groups the provisions fill — colour, type, and whatever
+     * vocabularies follow — each a PRIOR every group on every page leans on
+     * without declaring it. Derived from the provisions, first-mention order,
+     * one entry per group; the server writes them all into every served
+     * subgraph. Empty when the deployment registers none.
      */
-    default CssGroup<?> palette() {
-        var all = palettes();
-        return all.isEmpty() ? null : all.get(0).group();
+    default List<CssGroup<?>> priors() {
+        var out = new ArrayList<CssGroup<?>>();
+        for (var p : palettes()) {
+            boolean seen = false;
+            for (var have : out) if (have.getClass() == p.group().getClass()) { seen = true; break; }
+            if (!seen) out.add(p.group());
+        }
+        return List.copyOf(out);
     }
 
     /** Provisions and overrides together — what the CSS action resolves impls from. */

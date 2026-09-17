@@ -41,7 +41,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             padding: 0;
             background: var(--color-surface);
             color: var(--color-text-primary);
-            font-family: "Calibri", "Segoe UI", system-ui, sans-serif;
+            font-family: var(--font-body);
             min-height: 100vh;
             @media print {
                 .theme-backdrop        { display: none; }
@@ -108,7 +108,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
      *  {@code overflow:hidden} is the safety net: if a consumer ships an SVG
      *  without width/height attrs (browsers default it to 300×150) the
      *  wrapper still clips to 22×22 and won't blow out the header layout.
-     *  The transition pairs with the {@code      *  The transition pairs with the {@code .st-brand-logo:hover} rule in:hover .st-brand-logo} rule nested in
+     *  The transition pairs with the {@code &:hover .st-brand-logo} rule nested in
      *  st_brand for a small playful enlarge-on-hover. */
     public record st_brand_logo() implements CssClass<StudioStyles> {
         @Override public String body() { return """
@@ -127,7 +127,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
     }
     public record st_brand_word() implements CssClass<StudioStyles> {
         @Override public String body() { return """
-            font-family: "Georgia", serif;
+            font-family: var(--font-display);
             font-style: italic;
             font-size: 22px;
             color: var(--color-text-on-inverted);
@@ -191,7 +191,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
     }
     public record st_title() implements CssClass<StudioStyles> {
         @Override public String body() { return """
-            font-family: "Georgia", serif;
+            font-family: var(--font-display);
             font-size: 44px;
             font-weight: 700;
             color: var(--color-text-title, var(--color-text-link));
@@ -223,7 +223,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
 
     public record st_section_title() implements CssClass<StudioStyles> {
         @Override public String body() { return """
-            font-family: "Georgia", serif;
+            font-family: var(--font-display);
             font-size: 12px;
             font-weight: 700;
             color: var(--color-text-link);
@@ -287,7 +287,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
     }
     public record st_list_item_label() implements CssClass<StudioStyles> {
         @Override public String body() { return """
-            font-family: "Georgia", serif;
+            font-family: var(--font-display);
             font-size: 16px;
             font-weight: 700;
             color: var(--color-text-link);
@@ -354,7 +354,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
     }
     public record st_card_title() implements CssClass<StudioStyles> {
         @Override public String body() { return """
-            font-family: "Georgia", serif;
+            font-family: var(--font-display);
             font-size: 18px;
             font-weight: 700;
             color: var(--color-text-link);
@@ -677,7 +677,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             max-width: 820px;
             /* Prose — markdown-rendered content has no class hooks; the rules nest here. */
             h1, h2, h3, h4 {
-                font-family: "Georgia", serif;
+                font-family: var(--font-display);
                 color: var(--color-text-link);
                 margin: 1.6em 0 0.6em 0;
                 line-height: 1.25;
@@ -700,7 +700,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
                 font-style: italic;
             }
             code {
-                font-family: "Consolas", "Courier New", monospace;
+                font-family: var(--font-mono);
                 font-size: 0.92em;
                 background: var(--color-surface-recessed);
                 color: var(--color-text-link);
@@ -947,7 +947,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             color: var(--color-text-muted);
             font-size: 12px;
             code {
-                font-family: "Consolas", "Courier New", monospace;
+                font-family: var(--font-mono);
                 background: var(--color-surface-recessed);
                 color: var(--color-text-link);
                 padding: 1px 6px;
@@ -1000,7 +1000,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: "Georgia", serif;
+            font-family: var(--font-display);
             font-style: italic;
             font-size: 28px;
             font-weight: 700;
@@ -1009,7 +1009,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
     }
     public record st_app_pill_label() implements CssClass<StudioStyles> {
         @Override public String body() { return """
-            font-family: "Georgia", serif;
+            font-family: var(--font-display);
             font-size: 19px;
             font-weight: 700;
             color: var(--color-text-link);
@@ -1062,7 +1062,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
     }
     public record st_overall_pct() implements CssClass<StudioStyles> {
         @Override public String body() { return """
-            font-family: "Georgia", serif;
+            font-family: var(--font-display);
             font-size: 28px;
             font-weight: 700;
             color: var(--color-accent);
@@ -1102,7 +1102,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
     }
     public record st_step_id() implements CssClass<StudioStyles> {
         @Override public String body() { return """
-            font-family: "Georgia", serif;
+            font-family: var(--font-display);
             font-style: italic;
             font-size: 13px;
             color: var(--color-text-link-hover);
@@ -1114,7 +1114,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
     }
     public record st_step_label() implements CssClass<StudioStyles> {
         @Override public String body() { return """
-            font-family: "Georgia", serif;
+            font-family: var(--font-display);
             font-size: 18px;
             font-weight: 700;
             color: var(--color-text-link);
@@ -1207,7 +1207,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
     }
     public record st_panel_title() implements CssClass<StudioStyles> {
         @Override public String body() { return """
-            font-family: "Georgia", serif;
+            font-family: var(--font-display);
             font-size: 12px;
             font-weight: 700;
             color: var(--color-text-link-hover);
@@ -1291,7 +1291,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
     }
     public record st_effort() implements CssClass<StudioStyles> {
         @Override public String body() { return """
-            font-family: "Georgia", serif;
+            font-family: var(--font-display);
             font-style: italic;
             color: var(--color-text-link-hover);
             font-size: 14px;

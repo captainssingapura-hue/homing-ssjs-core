@@ -42,6 +42,7 @@ public final class StudioThemeRegistry implements ThemeRegistry {
         );
     }
 
+    /** Colour and type — one provision per theme per palette group; both priors. */
     @Override public List<PaletteProvision<?, ?>> palettes() {
         return List.of(
                 HomingDefault.Palette.INSTANCE,
@@ -54,7 +55,19 @@ public final class StudioThemeRegistry implements ThemeRegistry {
                 HomingMapleBridge.Palette.INSTANCE,
                 HomingRetro90s.Palette.INSTANCE,
                 HomingTurboC.Palette.INSTANCE,
-                HomingBrutalist.Palette.INSTANCE
+                HomingBrutalist.Palette.INSTANCE,
+                // RFC 0066 — the type palette: the three faces, per theme.
+                HomingDefault.Fonts.INSTANCE,
+                HomingCarbon.Fonts.INSTANCE,
+                HomingForest.Fonts.INSTANCE,
+                HomingSunset.Fonts.INSTANCE,
+                HomingBauhaus.Fonts.INSTANCE,
+                HomingForbiddenCity.Fonts.INSTANCE,
+                HomingLetterpress.Fonts.INSTANCE,
+                HomingMapleBridge.Fonts.INSTANCE,
+                HomingRetro90s.Fonts.INSTANCE,
+                HomingTurboC.Fonts.INSTANCE,
+                HomingBrutalist.Fonts.INSTANCE
         );
     }
 
@@ -70,7 +83,6 @@ public final class StudioThemeRegistry implements ThemeRegistry {
                 HomingLetterpress.Studio.INSTANCE,
                 HomingMapleBridge.Studio.INSTANCE,
                 HomingRetro90s.Studio.INSTANCE,
-                HomingTurboC.Studio.INSTANCE,
                 HomingBrutalist.Studio.INSTANCE,
                 HomingBrutalist.Dialog.INSTANCE,
                 HomingBrutalist.Picker.INSTANCE,

@@ -4,6 +4,8 @@ import hue.captains.singapura.js.homing.core.CssBlock;
 import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
 import hue.captains.singapura.js.homing.theme.color.HomingVars;
+import hue.captains.singapura.js.homing.theme.type.GlobalTypePalette;
+import hue.captains.singapura.js.homing.theme.type.HomingFonts;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.studio.base.css.StudioStyles;
 
@@ -107,15 +109,25 @@ public record HomingLetterpress() implements Theme {
         );
     }
 
-    /** RFC 0066 — the theme's word on the studio's classes: two of them. */
+    /** A serif body — the editorial broadsheet; display and code stay the house faces. */
+    public record Fonts() implements GlobalTypePalette.Provision<HomingLetterpress> {
+        public static final Fonts INSTANCE = new Fonts();
+        @Override public HomingLetterpress theme() { return HomingLetterpress.INSTANCE; }
+        @Override public Map<CssVar, String> values() {
+            return Map.of(HomingFonts.FONT_BODY,    "\"Iowan Old Style\", \"Charter\", \"Georgia\", \"Cambria\", \"Times New Roman\", serif",
+                          HomingFonts.FONT_DISPLAY, StudioFonts.DISPLAY,
+                          HomingFonts.FONT_MONO,    StudioFonts.MONO);
+        }
+    }
+
+    /** RFC 0066 — the theme's word on the studio's classes: the grain and the divider. */
     public record Studio() implements StudioStyles.Overrides<HomingLetterpress> {
         public static final Studio INSTANCE = new Studio();
         @Override public HomingLetterpress theme() { return HomingLetterpress.INSTANCE; }
 
-        /** Serif body face, and the paper grain multiplied into the parchment
+        /** The paper grain multiplied into the parchment
          *  — inverted to light specks on ink under a dark scheme. */
         public CssBlock<StudioStyles.st_page> st_page() { return CssBlock.of("""
-                font-family: "Iowan Old Style", "Charter", "Georgia", "Cambria", "Times New Roman", serif;
                 background-image:
                     url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n' x='0' y='0'><feTurbulence type='fractalNoise' baseFrequency='0.92' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.18  0 0 0 0 0.15  0 0 0 0 0.12  0 0 0 0.10 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
                 background-repeat: repeat;

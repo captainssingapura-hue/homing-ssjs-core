@@ -4,6 +4,8 @@ import hue.captains.singapura.js.homing.core.CssBlock;
 import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
 import hue.captains.singapura.js.homing.theme.color.HomingVars;
+import hue.captains.singapura.js.homing.theme.type.GlobalTypePalette;
+import hue.captains.singapura.js.homing.theme.type.HomingFonts;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.studio.base.css.StudioStyles;
 import hue.captains.singapura.js.homing.studio.base.ui.MasterDetailStyles;
@@ -76,7 +78,6 @@ public record HomingBrutalist() implements Theme {
         static final CssVar BRU_SHADOW_SM = new CssVar("--bru-shadow-sm");
         static final CssVar BRU_SNAP      = new CssVar("--bru-snap");
         static final CssVar BRU_HATCH     = new CssVar("--bru-hatch");
-        static final CssVar BRU_DISPLAY   = new CssVar("--bru-display");
         private static final Map<CssVar, String> EXTRAS = Map.ofEntries(
                 Map.entry(BRU_INK,       "var(--color-text-primary)"),
                 Map.entry(BRU_PAPER,     "var(--color-surface)"),
@@ -86,8 +87,7 @@ public record HomingBrutalist() implements Theme {
                 Map.entry(BRU_SHADOW_MD, "5px 5px 0 var(--bru-ink)"),
                 Map.entry(BRU_SHADOW_SM, "4px 4px 0 var(--bru-ink)"),
                 Map.entry(BRU_SNAP,      "transform 70ms steps(2), box-shadow 70ms steps(2), background 100ms"),
-                Map.entry(BRU_HATCH,     "repeating-linear-gradient(45deg, color-mix(in srgb, var(--bru-ink) 22%, transparent) 0 7px, transparent 7px 14px)"),
-                Map.entry(BRU_DISPLAY,   "\"Arial Black\", \"Helvetica Neue\", Helvetica, Arial, sans-serif")
+                Map.entry(BRU_HATCH,     "repeating-linear-gradient(45deg, color-mix(in srgb, var(--bru-ink) 22%, transparent) 0 7px, transparent 7px 14px)")
         );
         /** A holder, so the merge runs after VALUES (declared below) is set. */
         private static final class Merged {
@@ -215,13 +215,13 @@ public record HomingBrutalist() implements Theme {
 
     /** A display label — the stamped, heavy, uppercase face. */
     static final String DISPLAY = """
-            font-family: var(--bru-display);
+            font-family: var(--font-display);
             font-weight: 900;
             """;
     /** An inverted tag — paper on ink. */
     static final String TAG = """
             display: inline-block;
-            font-family: var(--bru-display);
+            font-family: var(--font-display);
             font-weight: 900;
             font-size: 12px;
             letter-spacing: 0.04em;
@@ -233,7 +233,7 @@ public record HomingBrutalist() implements Theme {
     /** A button — hard border, offset shadow, yellow on hover, pressed on
      *  active, blue outline on keyboard focus, hatched when inert. */
     public static final String BUTTON = """
-            font-family: var(--bru-display);
+            font-family: var(--font-display);
             font-weight: 900;
             font-size: 12px;
             letter-spacing: -0.01em;
@@ -290,13 +290,24 @@ public record HomingBrutalist() implements Theme {
             letter-spacing: 0.06em;
             """;
 
+    /** A grotesque body and a black display — the riso form's two voices;
+     *  code keeps the house mono. */
+    public record Fonts() implements GlobalTypePalette.Provision<HomingBrutalist> {
+        public static final Fonts INSTANCE = new Fonts();
+        @Override public HomingBrutalist theme() { return HomingBrutalist.INSTANCE; }
+        @Override public Map<CssVar, String> values() {
+            return Map.of(HomingFonts.FONT_BODY,    "Helvetica, Arial, sans-serif",
+                          HomingFonts.FONT_DISPLAY, "\"Arial Black\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+                          HomingFonts.FONT_MONO,    StudioFonts.MONO);
+        }
+    }
+
     public record Studio() implements StudioStyles.Overrides<HomingBrutalist> {
         public static final Studio INSTANCE = new Studio();
         @Override public HomingBrutalist theme() { return HomingBrutalist.INSTANCE; }
 
         // The sheet — grid paper behind everything; the selection in riso blue.
         public CssBlock<StudioStyles.st_page> st_page() { return CssBlock.of("""
-                font-family: Helvetica, Arial, sans-serif;
                 font-weight: 500;
                 background-image:
                     linear-gradient(color-mix(in srgb, var(--bru-ink) 14%, transparent) 1px, transparent 1px),
@@ -508,7 +519,7 @@ public record HomingBrutalist() implements Theme {
         // on hover; code blocks are ink plates with a shadow.
         public CssBlock<StudioStyles.st_doc> st_doc() { return CssBlock.of("""
                 h1, h2, h3 {
-                    font-family: var(--bru-display);
+                    font-family: var(--font-display);
                     font-weight: 900;
                     letter-spacing: -0.03em;
                     color: var(--bru-ink);
@@ -518,7 +529,7 @@ public record HomingBrutalist() implements Theme {
                 h2 { text-transform: uppercase; }
                 h4 {
                     display: inline-block;
-                    font-family: var(--bru-display);
+                    font-family: var(--font-display);
                     font-weight: 900;
                     font-size: 12px;
                     letter-spacing: 0.04em;
@@ -547,7 +558,7 @@ public record HomingBrutalist() implements Theme {
                 th {
                     background: var(--bru-ink);
                     color: var(--bru-paper);
-                    font-family: var(--bru-display);
+                    font-family: var(--font-display);
                     font-weight: 900;
                     font-size: 12px;
                     text-transform: uppercase;

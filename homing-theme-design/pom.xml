@@ -20,5 +20,6 @@
     </description>
     <modules>
         <module>homing-theme-color</module>
+        <module>homing-theme-type</module>
     </modules>
 </project>

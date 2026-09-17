@@ -5,6 +5,8 @@ import hue.captains.singapura.js.homing.core.CssBlock;
 import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
 import hue.captains.singapura.js.homing.theme.color.HomingVars;
+import hue.captains.singapura.js.homing.theme.type.GlobalTypePalette;
+import hue.captains.singapura.js.homing.theme.type.HomingFonts;
 import hue.captains.singapura.js.homing.core.Cue;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.ThemeAudio;
@@ -207,6 +209,17 @@ public record HomingRetro90s() implements Theme {
         );
     }
 
+    /** Courier throughout the chrome — body, display and code alike; the
+     *  application windows set their own Tahoma inside, as overrides. */
+    public record Fonts() implements GlobalTypePalette.Provision<HomingRetro90s> {
+        public static final Fonts INSTANCE = new Fonts();
+        @Override public HomingRetro90s theme() { return HomingRetro90s.INSTANCE; }
+        private static final String COURIER = "\"Courier New\", \"Consolas\", \"Lucida Console\", monospace";
+        @Override public Map<CssVar, String> values() {
+            return Map.of(HomingFonts.FONT_BODY, COURIER, HomingFonts.FONT_DISPLAY, COURIER, HomingFonts.FONT_MONO, COURIER);
+        }
+    }
+
     /**
      * RFC 0066 — the theme's word on the studio's classes. The desktop teal
      * behind everything, CRT scanlines and the monospace chrome on the page;
@@ -239,7 +252,6 @@ public record HomingRetro90s() implements Theme {
          * pointer-events none — real CRTs do not scroll their refresh pattern.
          */
         public CssBlock<StudioStyles.st_page> st_page() { return CssBlock.of("""
-                font-family: "Courier New", "Consolas", "Lucida Console", monospace;
                 font-size: 13px;
                 letter-spacing: 0;
                 &:is(html) {
@@ -298,7 +310,6 @@ public record HomingRetro90s() implements Theme {
                 """); }
 
         public CssBlock<StudioStyles.st_card_title> st_card_title() { return CssBlock.of("""
-                font-family: "Courier New", "Consolas", monospace;
                 font-weight: 700;
                 color: var(--color-text-link);
                 text-transform: uppercase;
@@ -339,7 +350,6 @@ public record HomingRetro90s() implements Theme {
                 background: var(--color-surface-inverted);
                 color: var(--color-text-on-inverted);
                 border-top: 1px solid var(--color-border);
-                font-family: "Courier New", monospace;
                 """); }
 
         /**

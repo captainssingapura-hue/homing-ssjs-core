@@ -96,7 +96,7 @@ public record PartyMonitorStyles() implements CssGroup<PartyMonitorStyles> {
             min-height: 0;
             overflow: auto;
             padding: var(--space-2) var(--space-3);
-            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-family: var(--font-mono);
             """; }
     }
 

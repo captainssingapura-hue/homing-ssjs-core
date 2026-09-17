@@ -54,6 +54,11 @@
             <artifactId>homing-theme-color</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-theme-type</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
         <!-- Rigid tree substrate (homing-tree-views): studio-base supplies the
              catalogue -> TreeNode adapter that turns the catalogue tree into the
              canonical TreeNode JSON the nav/detail views consume. Depends only on

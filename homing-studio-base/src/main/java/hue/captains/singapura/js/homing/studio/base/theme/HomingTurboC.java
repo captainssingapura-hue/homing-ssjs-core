@@ -4,6 +4,8 @@ import hue.captains.singapura.js.homing.core.CssBlock;
 import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
 import hue.captains.singapura.js.homing.theme.color.HomingVars;
+import hue.captains.singapura.js.homing.theme.type.GlobalTypePalette;
+import hue.captains.singapura.js.homing.theme.type.HomingFonts;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.studio.base.css.StudioStyles;
 
@@ -122,36 +124,25 @@ public record HomingTurboC() implements Theme {
     }
 
     /**
-     * RFC 0066 — the theme's word on the studio's classes: the monospace face,
-     * everywhere the studio set a serif. The studio names Georgia on twelve
-     * typed classes and on prose headings; a theme cannot inherit its way past
-     * a class, so the face is answered where it is set — one override per
-     * class, each appended inside that class's rule. (The count is the case
-     * for a typography vocabulary in the palette — Episode 2's sub-module.)
+     * RFC 0066 — the monospace face, everywhere: one binding of the three
+     * faces, where an earlier cut needed fourteen per-class overrides to reach
+     * past the serif the studio had baked in. Zero overrides remain; the
+     * letter-spacing the VGA face wants rides on the same binding through
+     * {@code st_page}'s inheritance.
      */
+    public record Fonts() implements GlobalTypePalette.Provision<HomingTurboC> {
+        public static final Fonts INSTANCE = new Fonts();
+        @Override public HomingTurboC theme() { return HomingTurboC.INSTANCE; }
+        private static final String MONO = "\"Consolas\", \"DejaVu Sans Mono\", \"Lucida Console\", \"Courier New\", monospace";
+        @Override public Map<CssVar, String> values() {
+            return Map.of(HomingFonts.FONT_BODY, MONO, HomingFonts.FONT_DISPLAY, MONO, HomingFonts.FONT_MONO, MONO);
+        }
+    }
+
+    /** Letter-spacing 0 on the page — the VGA face wants no tracking. */
     public record Studio() implements StudioStyles.Overrides<HomingTurboC> {
         public static final Studio INSTANCE = new Studio();
         @Override public HomingTurboC theme() { return HomingTurboC.INSTANCE; }
-
-        private static final String MONO = """
-                font-family: "Consolas", "DejaVu Sans Mono", "Lucida Console", "Courier New", monospace;
-                letter-spacing: 0;
-                """;
-
-        public CssBlock<StudioStyles.st_page>            st_page()            { return CssBlock.of(MONO); }
-        public CssBlock<StudioStyles.st_title>           st_title()           { return CssBlock.of(MONO); }
-        public CssBlock<StudioStyles.st_section_title>   st_section_title()   { return CssBlock.of(MONO); }
-        public CssBlock<StudioStyles.st_panel_title>     st_panel_title()     { return CssBlock.of(MONO); }
-        public CssBlock<StudioStyles.st_card_title>      st_card_title()      { return CssBlock.of(MONO); }
-        public CssBlock<StudioStyles.st_brand_word>      st_brand_word()      { return CssBlock.of(MONO); }
-        public CssBlock<StudioStyles.st_list_item_label> st_list_item_label() { return CssBlock.of(MONO); }
-        public CssBlock<StudioStyles.st_app_pill_label>  st_app_pill_label()  { return CssBlock.of(MONO); }
-        public CssBlock<StudioStyles.st_app_pill_icon>   st_app_pill_icon()   { return CssBlock.of(MONO); }
-        public CssBlock<StudioStyles.st_step_id>         st_step_id()         { return CssBlock.of(MONO); }
-        public CssBlock<StudioStyles.st_step_label>      st_step_label()      { return CssBlock.of(MONO); }
-        public CssBlock<StudioStyles.st_effort>          st_effort()          { return CssBlock.of(MONO); }
-        public CssBlock<StudioStyles.st_overall_pct>     st_overall_pct()     { return CssBlock.of(MONO); }
-        /** The prose headings nest under st_doc. */
-        public CssBlock<StudioStyles.st_doc> st_doc() { return CssBlock.of("h1, h2, h3, h4 {\n" + MONO.indent(4) + "}\n"); }
+        public CssBlock<StudioStyles.st_page> st_page() { return CssBlock.of("letter-spacing: 0;"); }
     }
 }

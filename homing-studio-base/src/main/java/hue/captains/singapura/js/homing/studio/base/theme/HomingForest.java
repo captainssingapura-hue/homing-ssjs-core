@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.studio.base.theme;
 import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
 import hue.captains.singapura.js.homing.theme.color.HomingVars;
+import hue.captains.singapura.js.homing.theme.type.GlobalTypePalette;
 import hue.captains.singapura.js.homing.core.Theme;
 
 import java.util.Map;
@@ -95,4 +96,10 @@ public record HomingForest() implements Theme {
         );
     }
 
+    /** The house faces — this theme has no typographic identity of its own. */
+    public record Fonts() implements GlobalTypePalette.Provision<HomingForest> {
+        public static final Fonts INSTANCE = new Fonts();
+        @Override public HomingForest theme() { return HomingForest.INSTANCE; }
+        @Override public Map<CssVar, String> values() { return StudioFonts.HOUSE; }
+    }
 }

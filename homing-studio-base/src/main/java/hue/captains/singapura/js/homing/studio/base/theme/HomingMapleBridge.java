@@ -5,6 +5,7 @@ import hue.captains.singapura.js.homing.core.CssBlock;
 import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
 import hue.captains.singapura.js.homing.theme.color.HomingVars;
+import hue.captains.singapura.js.homing.theme.type.GlobalTypePalette;
 import hue.captains.singapura.js.homing.core.Cue;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.ThemeAudio;
@@ -211,5 +212,11 @@ public record HomingMapleBridge() implements Theme {
 
         public CssBlock<StudioStyles.st_doc> st_doc() { return CssBlock.of("padding: 28px 32px;"); }
         public CssBlock<StudioStyles.st_sidebar> st_sidebar() { return CssBlock.of("padding: 16px;"); }
+    }
+    /** The house faces — this theme has no typographic identity of its own. */
+    public record Fonts() implements GlobalTypePalette.Provision<HomingMapleBridge> {
+        public static final Fonts INSTANCE = new Fonts();
+        @Override public HomingMapleBridge theme() { return HomingMapleBridge.INSTANCE; }
+        @Override public Map<CssVar, String> values() { return StudioFonts.HOUSE; }
     }
 }

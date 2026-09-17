@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.studio.base.theme;
 
 import hue.captains.singapura.js.homing.core.CssVar;
+import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
 import hue.captains.singapura.js.homing.theme.color.HomingVars;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.PaletteProvision;
@@ -89,7 +90,7 @@ public class ThemesGetAction
         for (Theme theme : registry.themes()) {
             if (!first) sb.append(',');
             first = false;
-            PaletteProvision<?, ?> vars = registry.paletteForSlug(theme.slug());
+            PaletteProvision<?, ?> vars = registry.paletteForSlug(theme.slug(), GlobalColorPalette.INSTANCE);
             Map<CssVar, String> values = vars != null ? vars.values() : Map.of();
 
             sb.append("{\"slug\":") .append(jstr(theme.slug())) .append(',')
