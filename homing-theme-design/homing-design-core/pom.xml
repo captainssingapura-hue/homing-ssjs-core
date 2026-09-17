@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+        <artifactId>homing-theme-design</artifactId>
+        <version>LOCAL-SNAPSHOT</version>
+    </parent>
+    <artifactId>homing-design-core</artifactId>
+    <description>
+        The design substrate: two trees and a projection. A sealed physical tree
+        (Target) owns the CSS — the property partition, the states a medium can
+        show, the template and the sheet; an open semantic tree (Semantic) owns
+        the meaning — a branch is an interface, a leaf a record in whoever's
+        crate needs it. A DesignClass is one semantic leaf projected onto one
+        physical leaf; a Design is a provider per class — bindings, a body, or
+        silence — and whatever a provider delegates to, the served sheet is
+        flat. Depends on nothing of the framework: not homing-core, not the
+        server. Components and designs both depend on this, and never on each
+        other.
+    </description>
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.lang.ontology</groupId>
+            <artifactId>core</artifactId>
+            <version>0.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>
