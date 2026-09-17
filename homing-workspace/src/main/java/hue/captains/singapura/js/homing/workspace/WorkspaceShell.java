@@ -25,8 +25,7 @@ import java.util.Objects;
  * </ol>
  *
  * <p>WorkspaceShell extends {@link WorkspaceMPA}, so subclasses inherit
- * the full-viewport main slot and the opt-out of theme backdrop
- * interactivity. The "behaviours trapped in a page" profile is the
+ * the full-viewport main slot. The "behaviours trapped in a page" profile is the
  * right default for any workspace.</p>
  *
  * <h2>Boot-time validation</h2>

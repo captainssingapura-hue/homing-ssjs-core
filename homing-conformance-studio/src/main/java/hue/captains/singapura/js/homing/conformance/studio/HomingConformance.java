@@ -102,9 +102,9 @@ public final class HomingConformance {
             new Allowance(
                     "hue.captains.singapura.js.homing.studio.base.css.StudioStyles",
                     CssConformance.NESTED_DECLARED,
-                    "st_page's print rule names .theme-backdrop and #__theme_picker_slot__: two elements "
-                            + "the page template mints (AppHtmlGetAction), not classes of any group. "
-                            + "They become classes when the template's backdrop leaves the server (RFC 0065 D2)."),
+                    "st_page's print rule names #__theme_picker_slot__: an element the page template "
+                            + "mints (AppHtmlGetAction), not a class of any group. It becomes a class when "
+                            + "the picker slot leaves the server (RFC 0065 D2)."),
             new Allowance(
                     "hue.captains.singapura.js.homing.workspace.shell.CssGraphStyles",
                     CssConformance.TOKEN_DECLARED,

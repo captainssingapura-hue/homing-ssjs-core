@@ -1,15 +1,12 @@
 package hue.captains.singapura.js.homing.studio.themes;
 
-import hue.captains.singapura.js.homing.core.ClickTarget;
 import hue.captains.singapura.js.homing.core.CssBlock;
 import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
 import hue.captains.singapura.js.homing.theme.color.HomingVars;
 import hue.captains.singapura.js.homing.theme.type.GlobalTypePalette;
 import hue.captains.singapura.js.homing.theme.type.HomingFonts;
-import hue.captains.singapura.js.homing.core.Cue;
 import hue.captains.singapura.js.homing.core.Theme;
-import hue.captains.singapura.js.homing.core.ThemeAudio;
 import hue.captains.singapura.js.homing.studio.base.css.StudioStyles;
 
 import java.util.Map;
@@ -57,83 +54,6 @@ public record HomingRetro90s() implements Theme {
     @Override public String label() { return "Retro 90s"; }
     @Override public String group() { return "Retro"; }
     @Override public String inspiration() { return "The Windows-95 desktop — teal, VGA blue and raised grey chrome."; }
-
-    /** Theme-audio binding — clicks on the desktop icons fire system-
-     *  click sounds; clicks on catalogue cards fire a soft membrane
-     *  thud. RFC 0007. */
-    @Override
-    public ThemeAudio<?> audio() {
-        return StandardAudio.INSTANCE;
-    }
-
-    // ===========================================================================
-    //  Click targets — sealed permits enumerate every clickable element on the
-    //  Retro 90s surface. Each record carries a classToken matching either an
-    //  SVG class in desktop.svg or a framework CssClass name.
-    // ===========================================================================
-
-    /** Sealed surface area of audio-bound Retro-90s elements — desktop
-     *  icons (click cues) + chrome elements (hover cues). */
-    public sealed interface R90sTarget extends ClickTarget<HomingRetro90s>
-            permits MyComputer, MyDocuments, NetworkNeighborhood, RecycleBin,
-                    Card, ListItem, TocItem {}
-
-    // Desktop icons — click cues.
-    public record MyComputer()          implements R90sTarget { @Override public String classToken() { return "w95-icon-mycomputer"; } }
-    public record MyDocuments()         implements R90sTarget { @Override public String classToken() { return "w95-icon-documents"; } }
-    public record NetworkNeighborhood() implements R90sTarget { @Override public String classToken() { return "w95-icon-network"; } }
-    public record RecycleBin()          implements R90sTarget { @Override public String classToken() { return "w95-icon-recycle"; } }
-
-    // Chrome — Card is both click-bound (CARD_THUD) AND hover-bound
-    // (HOVER_BLEEP). List + TOC items are hover-only.
-    public record Card()     implements R90sTarget { @Override public String classToken() { return "st-card"; } }
-    public record ListItem() implements R90sTarget { @Override public String classToken() { return "st-list-item"; } }
-    public record TocItem()  implements R90sTarget { @Override public String classToken() { return "st-toc-item"; } }
-
-    /** Retro 90s' audio spec. */
-    public interface R90sAudio extends ThemeAudio<HomingRetro90s> {
-        Cue myComputer();
-        Cue myDocuments();
-        Cue networkNeighborhood();
-        Cue recycleBin();
-        Cue card();
-
-        @Override default HomingRetro90s theme() { return HomingRetro90s.INSTANCE; }
-
-        @Override default java.util.Map<ClickTarget<HomingRetro90s>, Cue> bindings() {
-            return java.util.Map.of(
-                    new MyComputer(),          myComputer(),
-                    new MyDocuments(),         myDocuments(),
-                    new NetworkNeighborhood(), networkNeighborhood(),
-                    new RecycleBin(),          recycleBin(),
-                    new Card(),                card()
-            );
-        }
-    }
-
-    /** Standard implementation — click cues (desktop icons + card) +
-     *  hover cues (Win95 selection bleep on chrome elements, with each
-     *  element getting its own pitch from the shared vocal palette). */
-    public record StandardAudio() implements R90sAudio {
-        public static final StandardAudio INSTANCE = new StandardAudio();
-        @Override public Cue myComputer()          { return Cues.WIN95_CLICK; }
-        @Override public Cue myDocuments()         { return Cues.WIN95_CLICK; }
-        @Override public Cue networkNeighborhood() { return Cues.WIN95_CLICK; }
-        @Override public Cue recycleBin()          { return Cues.WIN95_DING; }
-        @Override public Cue card()                { return Cues.CARD_THUD; }
-
-        @Override public java.util.Map<ClickTarget<HomingRetro90s>, Cue> hoverBindings() {
-            return java.util.Map.of(
-                    // Cards play a chiptune chord — Genesis / NES-style triad.
-                    // Each card's chord is hash-stable within a session.
-                    new Card(),     Cues.HOVER_CHORD_RETRO,
-                    // List + TOC items keep the single-note bleep — period-correct
-                    // Win95 selection feedback for navigation surfaces.
-                    new ListItem(), Cues.HOVER_BLEEP,
-                    new TocItem(),  Cues.HOVER_BLEEP
-            );
-        }
-    }
 
     public record Palette() implements GlobalColorPalette.Provision<HomingRetro90s> {
         public static final Palette INSTANCE = new Palette();

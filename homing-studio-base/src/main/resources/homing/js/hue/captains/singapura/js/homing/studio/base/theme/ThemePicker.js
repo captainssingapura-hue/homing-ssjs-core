@@ -41,7 +41,7 @@ var _seq = 0;
  * rebuilding it per selection would mint a new element on every arrow-press,
  * and the branch would hold each one for the life of the page. Reloading it is
  * what makes the preview honest: the page comes back wearing the theme,
- * backdrop and all, exactly as a navigation would deliver it.
+ * palette and all, exactly as a navigation would deliver it.
  */
 function _previewPane(branch, host, seq) {
     // A column filling the pane: name and note take their height, the frame

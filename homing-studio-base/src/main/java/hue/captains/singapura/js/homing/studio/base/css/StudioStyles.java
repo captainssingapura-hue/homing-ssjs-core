@@ -30,9 +30,9 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
      * The page reset — {@code html, body}, the one rule over elements no class
      * reaches. Once the structural CSS every theme re-shipped; now a class of
      * this group (RFC 0066), agnostic, in the reset layer, and the node a theme
-     * overrides to change the body face or paint a texture. The print rules
-     * for the two framework-minted elements ({@code .theme-backdrop}, the
-     * picker slot) nest here because both are children of {@code body}.
+     * overrides to change the body face or paint a texture. The print rule
+     * for the framework-minted picker slot nests here because the slot is a
+     * child of {@code body}.
      */
     public record st_page() implements CssClass<StudioStyles>, InLayer<Reset> {
         @Override public String selector() { return "html, body"; }
@@ -44,7 +44,6 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             font-family: var(--font-body);
             min-height: 100vh;
             @media print {
-                .theme-backdrop        { display: none; }
                 #__theme_picker_slot__ { display: none; }
             }
             """;
