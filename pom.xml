@@ -55,7 +55,6 @@
              substrate-typed conformance subclasses on top of. Conformance
              depends only on homing-core; studio-base depends on conformance. -->
         <module>homing-conformance-rules</module>
-        <module>homing-conformance</module>
         <module>homing-conformance-engine</module>
         <!-- Phase 8 polyglot report codec. -gen holds the managed Functions (the
              ReportCodecManifest + ReportCodecGen driver); -codec is output-only,

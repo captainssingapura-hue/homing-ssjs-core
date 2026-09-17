@@ -1,6 +1,8 @@
 package hue.captains.singapura.js.homing.conformance.studio;
 
 import hue.captains.singapura.js.homing.core.Crate;
+import hue.captains.singapura.js.homing.theme.color.ThemeColorCrate;
+import hue.captains.singapura.js.homing.theme.type.ThemeTypeCrate;
 import hue.captains.singapura.js.homing.grid.RelationGridCrate;
 import hue.captains.singapura.js.homing.core.js.CoreJsCrate;
 import hue.captains.singapura.js.homing.server.ServerCrate;
@@ -40,5 +42,8 @@ public final class TopLevelCrates {
             ConformanceStudioCrate.INSTANCE,
             // RFC 0050 — the Relation Grid family. Its crate test proves the
             // modules are DECLARED; listing it here is what gets them RULE-GRADED.
-            RelationGridCrate.INSTANCE);
+            RelationGridCrate.INSTANCE,
+            // RFC 0066 — the palettes, so the CSS graph rules see the priors as crated.
+            ThemeColorCrate.INSTANCE,
+            ThemeTypeCrate.INSTANCE);
 }

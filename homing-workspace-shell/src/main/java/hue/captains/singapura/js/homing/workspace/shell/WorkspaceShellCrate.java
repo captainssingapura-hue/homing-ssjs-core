@@ -6,6 +6,8 @@ import hue.captains.singapura.js.homing.core.StandardJsModuleType;
 import hue.captains.singapura.js.homing.core.js.CoreJsCrate;
 import hue.captains.singapura.js.homing.server.ServerCrate;
 import hue.captains.singapura.js.homing.studio.base.StudioBaseCrate;
+import hue.captains.singapura.js.homing.theme.color.ThemeColorCrate;
+import hue.captains.singapura.js.homing.theme.type.ThemeTypeCrate;
 import hue.captains.singapura.js.homing.workspace.WorkspaceCrate;
 import hue.captains.singapura.js.homing.workspace.codecs.WorkspaceCodecsCrate;
 import hue.captains.singapura.js.homing.workspace.persistence.WorkspacePersistenceCrate;
@@ -33,7 +35,10 @@ public final class WorkspaceShellCrate implements Crate {
                 StudioBaseCrate.INSTANCE,
                 WorkspaceCrate.INSTANCE,
                 WorkspaceCodecsCrate.INSTANCE,
-                WorkspacePersistenceCrate.INSTANCE);
+                WorkspacePersistenceCrate.INSTANCE,
+                // RFC 0066 - the palettes its groups read: colour, and the mono face.
+                ThemeColorCrate.INSTANCE,
+                ThemeTypeCrate.INSTANCE);
     }
 
     @Override

@@ -30,6 +30,13 @@
             <artifactId>homing-studio-workspace</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+        <!-- RFC 0066 — the completeness law is a conformance rule; the test calls it. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-conformance-rules</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>

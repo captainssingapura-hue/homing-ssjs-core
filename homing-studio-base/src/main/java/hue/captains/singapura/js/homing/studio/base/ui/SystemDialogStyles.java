@@ -2,10 +2,12 @@ package hue.captains.singapura.js.homing.studio.base.ui;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
+import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.core.CssGroupImpl;
 import hue.captains.singapura.js.homing.core.Theme;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * The look of a system dialog — frame, title bar, body, action row, and the two
@@ -65,6 +67,8 @@ public record SystemDialogStyles() implements CssGroup<SystemDialogStyles> {
      * RFC 0044 sanctions for a value that is DATA.
      */
     public record sd_frame() implements CssClass<SystemDialogStyles> {
+        /** RFC 0066 Law 5 — the frame's size is set by SystemDialog.js at open time, never by a theme. */
+        @Override public Set<CssVar> runtimeVars() { return Set.of(new CssVar("--sd-w"), new CssVar("--sd-h")); }
         @Override public String body() { return """
             position: fixed;
             left: 50%;

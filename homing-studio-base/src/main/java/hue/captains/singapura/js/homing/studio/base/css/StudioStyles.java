@@ -817,7 +817,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             margin: 16px 0;
             font-size: 14px;
             color: var(--color-text-primary);
-            background: var(--color-surface-base);
+            background: var(--color-surface);
             """;
         }
     }

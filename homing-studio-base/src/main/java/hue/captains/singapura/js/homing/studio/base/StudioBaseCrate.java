@@ -47,6 +47,7 @@ import hue.captains.singapura.js.homing.studio.base.theme.ThemePickerModel;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemePickerStyles;
 import hue.captains.singapura.js.homing.studio.base.theme.StudioVarsJsModule;
 import hue.captains.singapura.js.homing.theme.color.ThemeColorCrate;
+import hue.captains.singapura.js.homing.theme.type.ThemeTypeCrate;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemePreview;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemePreviewRenderer;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemesIntro;
@@ -91,7 +92,7 @@ public final class StudioBaseCrate implements Crate {
     @Override
     public List<Crate> requires() {
         // RFC 0066 - the palette every studio class reads lives in the theme design core.
-        return List.of(CoreJsCrate.INSTANCE, ServerCrate.INSTANCE, LibsCrate.INSTANCE, ThemeColorCrate.INSTANCE);
+        return List.of(CoreJsCrate.INSTANCE, ServerCrate.INSTANCE, LibsCrate.INSTANCE, ThemeColorCrate.INSTANCE, ThemeTypeCrate.INSTANCE);
     }
 
     @Override
