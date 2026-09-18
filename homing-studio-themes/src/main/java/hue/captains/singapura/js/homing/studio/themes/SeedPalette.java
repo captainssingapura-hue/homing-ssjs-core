@@ -71,6 +71,12 @@ public record SeedPalette(String slug, String label, String inspiration, Seeds l
             new Seeds("#E0E5EC", "#E0E5EC", "#D6DBE3", "#D1D9E6", "#3B4A5E", "#7C8A9E", "#3B4A5E", "#6B7A90", "#2D3A4B", "#6C8CFF", "#4F6FE0", "#FFFFFF", "#CBD3DF"),
             new Seeds("#2B2F36", "#2B2F36", "#262A30", "#1F2328", "#D5DAE2", "#8B93A1", "#D5DAE2", "#8B93A1", "#E6EAF0", "#8FA5FF", "#6C8CFF", "#1B1F26", "#3A3F48"));
 
+    /** Black marker on white paper: one ink for text, lines and the primary alike; a grey for what is said quietly. */
+    public static final SeedPalette MARKER = new SeedPalette("marker", "Marker",
+            "Black marker on white paper — one ink for the text, the lines and the primary alike.",
+            new Seeds("#FFFFFF", "#FFFFFF", "#F7F7F9", "#333333", "#212529", "#555555", "#FFFFFF", "#CCCCCC", "#212529", "#333333", "#555555", "#FFFFFF", "#333333"),
+            new Seeds("#212529", "#212529", "#2A2C2E", "#F8F9FA", "#DEE2E6", "#ADB5BD", "#212529", "#555555", "#F8F9FA", "#F8F9FA", "#DEE2E6", "#000000", "#DEE2E6"));
+
     private static final Map<String, Map<DesignClass<?>, Impl>> WORDS = new java.util.concurrent.ConcurrentHashMap<>();
 
     @Override public Impl impl(DesignClass<?> pair) {

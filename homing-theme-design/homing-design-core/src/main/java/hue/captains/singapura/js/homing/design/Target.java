@@ -121,7 +121,7 @@ public sealed interface Target permits
             public static final Rule INSTANCE = new Rule();
             @Override public List<CssClass<Rule>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("border-width", "border-style", "outline-width", "outline-style", "outline-offset"); }
-            @Override public Set<State> states() { return EnumSet.of(State.REST, State.HOVER, State.ACTIVE, State.FOCUS, State.DISABLED, State.INVALID, State.SELECTED); }
+            @Override public Set<State> states() { return INTERACTIVE; }   // a line may change with every state: dotted for current, dashed for highlighted
         }
         record Shadow() implements Shape, CssGroup<Shadow> {
             public static final Shadow INSTANCE = new Shadow();
