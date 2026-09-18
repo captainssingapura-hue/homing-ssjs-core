@@ -156,6 +156,10 @@ public record SeedPalette(String slug, String label, String inspiration, Seeds l
                 .in(Mode.DARK, State.CURRENT, "border-color", d.accent)
                 .in(Mode.DARK, State.CHECKED, "border-color", d.accent)
                 .in(Mode.DARK, State.FOCUS, "outline-color", d.accent)));
+        // Selectable — a row, a cell, an option — is coloured exactly as Interactive: the one word, under both pairs
+        w.put(of(Selectable.class, Color.Surface.class), w.get(of(Interactive.class, Color.Surface.class)));
+        w.put(of(Selectable.class, Color.Ink.class),     w.get(of(Interactive.class, Color.Ink.class)));
+        w.put(of(Selectable.class, Color.Edge.class),    w.get(of(Interactive.class, Color.Edge.class)));
         put.accept(sfc(of(Selected.class, Color.Surface.class), l.inverted, d.inverted));
         put.accept(Map.entry(of(Selected.class, Color.Ink.class), Impl.Bindings.of(l.onInverted).at(State.HOVER, l.accent)
                 .in(Mode.DARK, State.REST, d.onInverted).in(Mode.DARK, State.HOVER, d.accent)));

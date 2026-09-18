@@ -114,6 +114,27 @@ final class DefaultDesign {
                     .at(hue.captains.singapura.js.homing.design.State.FOCUS, "outline-width", "2px")
                     .at(hue.captains.singapura.js.homing.design.State.FOCUS, "outline-style", "solid")
                     .at(hue.captains.singapura.js.homing.design.State.FOCUS, "outline-offset", "-2px")),
+            // Selectable — a row, a cell, an option: flat at rest, the same lifts as Interactive in its states
+            one(of(Selectable.class, Motion.Ease.class), "transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background-color 160ms ease"),
+            one(of(Selectable.class, Affordance.Cursor.class), "pointer"),
+            Map.entry(of(Selectable.class, Motion.Transform.class), hue.captains.singapura.js.homing.design.Impl.Bindings.none()
+                    .at(hue.captains.singapura.js.homing.design.State.HOVER, "translateY(-1px)")
+                    .at(hue.captains.singapura.js.homing.design.State.SELECTED, "translateY(-2px)")
+                    .at(hue.captains.singapura.js.homing.design.State.HIGHLIGHTED, "translateY(-1px)")),
+            Map.entry(of(Selectable.class, Shape.Shadow.class), hue.captains.singapura.js.homing.design.Impl.Bindings.none()
+                    .at(hue.captains.singapura.js.homing.design.State.REST, "none")
+                    .at(hue.captains.singapura.js.homing.design.State.HOVER, "0 4px 12px color-mix(in srgb, " + INK_REF + " 10%, transparent)")
+                    .at(hue.captains.singapura.js.homing.design.State.SELECTED, "0 8px 20px color-mix(in srgb, " + INK_REF + " 18%, transparent)")
+                    .at(hue.captains.singapura.js.homing.design.State.HIGHLIGHTED, "0 4px 12px color-mix(in srgb, " + PRIMARY_REF + " 35%, transparent)")),
+            Map.entry(of(Selectable.class, Effect.Filter.class), hue.captains.singapura.js.homing.design.Impl.Bindings.none()
+                    .at(hue.captains.singapura.js.homing.design.State.SELECTED, "filter", "drop-shadow(0 6px 10px color-mix(in srgb, " + INK_REF + " 18%, transparent))")
+                    .at(hue.captains.singapura.js.homing.design.State.HIGHLIGHTED, "filter", "drop-shadow(0 3px 8px color-mix(in srgb, " + PRIMARY_REF + " 35%, transparent))")),
+            Map.entry(of(Selectable.class, Shape.Rule.class), hue.captains.singapura.js.homing.design.Impl.Bindings.none()
+                    .at(hue.captains.singapura.js.homing.design.State.REST, "border-width", "1px")
+                    .at(hue.captains.singapura.js.homing.design.State.REST, "border-style", "solid")
+                    .at(hue.captains.singapura.js.homing.design.State.FOCUS, "outline-width", "2px")
+                    .at(hue.captains.singapura.js.homing.design.State.FOCUS, "outline-style", "solid")
+                    .at(hue.captains.singapura.js.homing.design.State.FOCUS, "outline-offset", "-2px")),
             // the Selected semantic in depth — for a component that says "lifted" with a class of its own
             one(of(Selected.class, Shape.Shadow.class), "0 8px 20px color-mix(in srgb, " + INK_REF + " 18%, transparent)"),
             one(of(Selected.class, Motion.Transform.class), "translateY(-2px)"),

@@ -72,6 +72,36 @@ final class NeoFuturismDesign {
     static final String DROP   = "0 12px 32px " + glow(SPACE_REF, 10);
     static final String DROP_D = "0 12px 32px " + glow(SPACE_REF, 55);
 
+    // ── the interactive colours, one word each; Interactive and Selectable both wear them ──
+    static final Impl INTERACTIVE_SURFACE = Impl.Bindings.none()
+                    .at(State.REST, "background-color", "transparent")
+                    .at(State.HOVER, "background-color", glow(CYAN, 10))
+                    .at(State.SELECTED, "background-color", CYAN)
+                    .at(State.CURRENT, "background-color", glow(CYAN, 6))
+                    .at(State.HIGHLIGHTED, "background-color", glow(CYAN, 22))
+                    .in(Mode.DARK, State.HIGHLIGHTED, "background-color", glow(CYAN_D, 24))
+                    .in(Mode.DARK, State.HOVER, "background-color", glow(CYAN_D, 12))
+                    .in(Mode.DARK, State.SELECTED, "background-color", CYAN_D)
+                    .in(Mode.DARK, State.CURRENT, "background-color", glow(CYAN_D, 8));
+    static final Impl INTERACTIVE_INK = Impl.Bindings.of("inherit")
+                    .at(State.SELECTED, ON_CYAN).at(State.CURRENT, CYAN_INK)
+                    .at(State.HIGHLIGHTED, CYAN_INK).in(Mode.DARK, State.HIGHLIGHTED, CYAN_INK_D)
+                    .in(Mode.DARK, State.CURRENT, CYAN_INK_D);
+    static final Impl INTERACTIVE_EDGE = Impl.Bindings.none()
+                    .at(State.REST, "border-color", "transparent")
+                    .at(State.HOVER, "border-color", glow(CYAN, 35))
+                    .at(State.SELECTED, "border-color", CYAN)
+                    .at(State.CURRENT, "border-color", glow(CYAN, 55))
+                    .at(State.HIGHLIGHTED, "border-color", CYAN)
+                    .in(Mode.DARK, State.HIGHLIGHTED, "border-color", CYAN_D)
+                    .at(State.CHECKED, "border-color", CYAN)
+                    .at(State.FOCUS, "outline-color", CYAN)
+                    .in(Mode.DARK, State.HOVER, "border-color", glow(CYAN_D, 40))
+                    .in(Mode.DARK, State.SELECTED, "border-color", CYAN_D)
+                    .in(Mode.DARK, State.CURRENT, "border-color", glow(CYAN_D, 55))
+                    .in(Mode.DARK, State.CHECKED, "border-color", CYAN_D)
+                    .in(Mode.DARK, State.FOCUS, "outline-color", CYAN_D);
+
     static final Map<DesignClass<?>, Impl> WORDS = Map.ofEntries(
             // ── layers: glass over space ────────────────────────────────
             surface(of(Base.class, Color.Surface.class), SURFACE, SURFACE_D),
@@ -166,36 +196,32 @@ final class NeoFuturismDesign {
             Map.entry(of(Interactive.class, Effect.Filter.class), Impl.Bindings.none()
                     .at(State.SELECTED, "filter", "drop-shadow(0 0 14px " + glow(LIGHT_REF, 60) + ")")
                     .at(State.HIGHLIGHTED, "filter", "drop-shadow(0 0 10px " + glow(LIGHT_REF, 45) + ")")),
-            // nothing at rest; hover lights faintly, selected is the light itself, current a filament
-            Map.entry(of(Interactive.class, Color.Surface.class), Impl.Bindings.none()
-                    .at(State.REST, "background-color", "transparent")
-                    .at(State.HOVER, "background-color", glow(CYAN, 10))
-                    .at(State.SELECTED, "background-color", CYAN)
-                    .at(State.CURRENT, "background-color", glow(CYAN, 6))
-                    .at(State.HIGHLIGHTED, "background-color", glow(CYAN, 22))
-                    .in(Mode.DARK, State.HIGHLIGHTED, "background-color", glow(CYAN_D, 24))
-                    .in(Mode.DARK, State.HOVER, "background-color", glow(CYAN_D, 12))
-                    .in(Mode.DARK, State.SELECTED, "background-color", CYAN_D)
-                    .in(Mode.DARK, State.CURRENT, "background-color", glow(CYAN_D, 8))),
-            Map.entry(of(Interactive.class, Color.Ink.class), Impl.Bindings.of("inherit")
-                    .at(State.SELECTED, ON_CYAN).at(State.CURRENT, CYAN_INK)
-                    .at(State.HIGHLIGHTED, CYAN_INK).in(Mode.DARK, State.HIGHLIGHTED, CYAN_INK_D)
-                    .in(Mode.DARK, State.CURRENT, CYAN_INK_D)),
-            Map.entry(of(Interactive.class, Color.Edge.class), Impl.Bindings.none()
-                    .at(State.REST, "border-color", "transparent")
-                    .at(State.HOVER, "border-color", glow(CYAN, 35))
-                    .at(State.SELECTED, "border-color", CYAN)
-                    .at(State.CURRENT, "border-color", glow(CYAN, 55))
-                    .at(State.HIGHLIGHTED, "border-color", CYAN)
-                    .in(Mode.DARK, State.HIGHLIGHTED, "border-color", CYAN_D)
-                    .at(State.CHECKED, "border-color", CYAN)
-                    .at(State.FOCUS, "outline-color", CYAN)
-                    .in(Mode.DARK, State.HOVER, "border-color", glow(CYAN_D, 40))
-                    .in(Mode.DARK, State.SELECTED, "border-color", CYAN_D)
-                    .in(Mode.DARK, State.CURRENT, "border-color", glow(CYAN_D, 55))
-                    .in(Mode.DARK, State.CHECKED, "border-color", CYAN_D)
-                    .in(Mode.DARK, State.FOCUS, "outline-color", CYAN_D)),
+            // nothing at rest; hover lights faintly, selected is the light itself, current a filament.
+            // Selectable — a row, a cell, an option — is coloured exactly the same: the one word, under both pairs.
+            Map.entry(of(Interactive.class, Color.Surface.class), INTERACTIVE_SURFACE),
+            Map.entry(of(Selectable.class,  Color.Surface.class), INTERACTIVE_SURFACE),
+            Map.entry(of(Interactive.class, Color.Ink.class), INTERACTIVE_INK),
+            Map.entry(of(Selectable.class,  Color.Ink.class), INTERACTIVE_INK),
+            Map.entry(of(Interactive.class, Color.Edge.class), INTERACTIVE_EDGE),
+            Map.entry(of(Selectable.class,  Color.Edge.class), INTERACTIVE_EDGE),
             Map.entry(of(Interactive.class, Shape.Rule.class), Impl.Bindings.none()
+                    .at(State.REST, "border-width", "1px").at(State.REST, "border-style", "solid")
+                    .at(State.FOCUS, "outline-width", "1px").at(State.FOCUS, "outline-style", "solid").at(State.FOCUS, "outline-offset", "-1px")),
+            // Selectable — a row, a cell, an option: dark until it is the one, then it glows
+            one(of(Selectable.class, Motion.Ease.class), EASE),
+            Map.entry(of(Selectable.class, Motion.Transform.class), Impl.Bindings.none()
+                    .at(State.HOVER, "translateY(-1px)")
+                    .at(State.SELECTED, "translateY(-1px)")
+                    .at(State.HIGHLIGHTED, "translateY(-1px)")),
+            Map.entry(of(Selectable.class, Shape.Shadow.class), Impl.Bindings.none()
+                    .at(State.REST, "none")
+                    .at(State.HOVER, "0 0 0 1px " + glow(LIGHT_REF, 45) + ", 0 0 16px " + glow(LIGHT_REF, 25))
+                    .at(State.SELECTED, "0 0 0 1px " + LIGHT_REF + ", 0 0 36px " + glow(LIGHT_REF, 45) + ", " + DROP)
+                    .at(State.HIGHLIGHTED, "0 0 0 1px " + glow(LIGHT_REF, 70) + ", 0 0 20px " + glow(LIGHT_REF, 35))),
+            Map.entry(of(Selectable.class, Effect.Filter.class), Impl.Bindings.none()
+                    .at(State.SELECTED, "filter", "drop-shadow(0 0 14px " + glow(LIGHT_REF, 60) + ")")
+                    .at(State.HIGHLIGHTED, "filter", "drop-shadow(0 0 10px " + glow(LIGHT_REF, 45) + ")")),
+            Map.entry(of(Selectable.class, Shape.Rule.class), Impl.Bindings.none()
                     .at(State.REST, "border-width", "1px").at(State.REST, "border-style", "solid")
                     .at(State.FOCUS, "outline-width", "1px").at(State.FOCUS, "outline-style", "solid").at(State.FOCUS, "outline-offset", "-1px")),
             surface(of(Selected.class, Color.Surface.class), CYAN, CYAN_D),

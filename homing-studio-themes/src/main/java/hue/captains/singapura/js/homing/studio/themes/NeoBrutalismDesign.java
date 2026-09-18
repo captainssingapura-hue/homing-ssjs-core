@@ -48,6 +48,32 @@ final class NeoBrutalismDesign {
 
     static String shadow(int px) { return px + "px " + px + "px 0 " + INK_REF; }
 
+    // ── the interactive colours, one word each; Interactive and Selectable both wear them ──
+    static final Impl INTERACTIVE_SURFACE = Impl.Bindings.none()
+                    .at(State.REST, "background-color", "transparent")
+                    .at(State.HOVER, "background-color", SIGNAL)
+                    .at(State.SELECTED, "background-color", INK)
+                    .at(State.CURRENT, "background-color", GREY)
+                    .at(State.HIGHLIGHTED, "background-color", "color-mix(in srgb, " + SIGNAL + " 55%, transparent)")
+                    .in(Mode.DARK, State.SELECTED, "background-color", INK_D)
+                    .in(Mode.DARK, State.CURRENT, "background-color", GREY_D);
+    static final Impl INTERACTIVE_INK = Impl.Bindings.of("inherit")
+                    .at(State.HOVER, INK).at(State.SELECTED, SIGNAL)
+                    .at(State.HIGHLIGHTED, INK)
+                    .in(Mode.DARK, State.SELECTED, INK);
+    static final Impl INTERACTIVE_EDGE = Impl.Bindings.none()
+                    .at(State.REST, "border-color", "transparent")
+                    .at(State.HOVER, "border-color", INK)
+                    .at(State.SELECTED, "border-color", INK)
+                    .at(State.CURRENT, "border-color", INK)
+                    .at(State.CHECKED, "border-color", RISO_BLUE)
+                    .at(State.HIGHLIGHTED, "border-color", INK)
+                    .in(Mode.DARK, State.HIGHLIGHTED, "border-color", INK_D)
+                    .at(State.FOCUS, "outline-color", RISO_BLUE)
+                    .in(Mode.DARK, State.HOVER, "border-color", INK_D)
+                    .in(Mode.DARK, State.SELECTED, "border-color", INK_D)
+                    .in(Mode.DARK, State.CURRENT, "border-color", INK_D);
+
     static final Map<DesignClass<?>, Impl> WORDS = Map.ofEntries(
             // ── layers: paper, and everything edged in ink ──────────────
             surface(of(Base.class, Color.Surface.class), PAPER, PAPER_D),
@@ -128,32 +154,32 @@ final class NeoBrutalismDesign {
             Map.entry(of(Interactive.class, Effect.Filter.class), Impl.Bindings.none()
                     .at(State.SELECTED, "filter", "drop-shadow(6px 6px 0 " + INK_REF + ")")
                     .at(State.HIGHLIGHTED, "filter", "drop-shadow(4px 4px 0 " + INK_REF + ")")),
-            // nothing at rest; hover is the signal with an ink rule, selected is ink with signal on it, current is signal-edged
-            Map.entry(of(Interactive.class, Color.Surface.class), Impl.Bindings.none()
-                    .at(State.REST, "background-color", "transparent")
-                    .at(State.HOVER, "background-color", SIGNAL)
-                    .at(State.SELECTED, "background-color", INK)
-                    .at(State.CURRENT, "background-color", GREY)
-                    .at(State.HIGHLIGHTED, "background-color", "color-mix(in srgb, " + SIGNAL + " 55%, transparent)")
-                    .in(Mode.DARK, State.SELECTED, "background-color", INK_D)
-                    .in(Mode.DARK, State.CURRENT, "background-color", GREY_D)),
-            Map.entry(of(Interactive.class, Color.Ink.class), Impl.Bindings.of("inherit")
-                    .at(State.HOVER, INK).at(State.SELECTED, SIGNAL)
-                    .at(State.HIGHLIGHTED, INK)
-                    .in(Mode.DARK, State.SELECTED, INK)),
-            Map.entry(of(Interactive.class, Color.Edge.class), Impl.Bindings.none()
-                    .at(State.REST, "border-color", "transparent")
-                    .at(State.HOVER, "border-color", INK)
-                    .at(State.SELECTED, "border-color", INK)
-                    .at(State.CURRENT, "border-color", INK)
-                    .at(State.CHECKED, "border-color", RISO_BLUE)
-                    .at(State.HIGHLIGHTED, "border-color", INK)
-                    .in(Mode.DARK, State.HIGHLIGHTED, "border-color", INK_D)
-                    .at(State.FOCUS, "outline-color", RISO_BLUE)
-                    .in(Mode.DARK, State.HOVER, "border-color", INK_D)
-                    .in(Mode.DARK, State.SELECTED, "border-color", INK_D)
-                    .in(Mode.DARK, State.CURRENT, "border-color", INK_D)),
+            // nothing at rest; hover is the signal with an ink rule, selected is ink with signal on it, current is signal-edged.
+            // Selectable — a row, a cell, an option — is coloured exactly the same: the one word, under both pairs.
+            Map.entry(of(Interactive.class, Color.Surface.class), INTERACTIVE_SURFACE),
+            Map.entry(of(Selectable.class,  Color.Surface.class), INTERACTIVE_SURFACE),
+            Map.entry(of(Interactive.class, Color.Ink.class), INTERACTIVE_INK),
+            Map.entry(of(Selectable.class,  Color.Ink.class), INTERACTIVE_INK),
+            Map.entry(of(Interactive.class, Color.Edge.class), INTERACTIVE_EDGE),
+            Map.entry(of(Selectable.class,  Color.Edge.class), INTERACTIVE_EDGE),
             Map.entry(of(Interactive.class, Shape.Rule.class), Impl.Bindings.none()
+                    .at(State.REST, "border-width", "3px").at(State.REST, "border-style", "solid")
+                    .at(State.FOCUS, "outline-width", "4px").at(State.FOCUS, "outline-style", "solid").at(State.FOCUS, "outline-offset", "-4px")),
+            // Selectable — a row, a cell, an option: flat on the page until it is the one, then up on the ink
+            one(of(Selectable.class, Motion.Ease.class), SNAP),
+            Map.entry(of(Selectable.class, Motion.Transform.class), Impl.Bindings.none()
+                    .at(State.HOVER, "translate(-2px, -2px)")
+                    .at(State.SELECTED, "translate(-3px, -3px)")
+                    .at(State.HIGHLIGHTED, "translate(-2px, -2px)")),
+            Map.entry(of(Selectable.class, Shape.Shadow.class), Impl.Bindings.none()
+                    .at(State.REST, "none")
+                    .at(State.HOVER, shadow(4))
+                    .at(State.SELECTED, shadow(6))
+                    .at(State.HIGHLIGHTED, shadow(5))),
+            Map.entry(of(Selectable.class, Effect.Filter.class), Impl.Bindings.none()
+                    .at(State.SELECTED, "filter", "drop-shadow(6px 6px 0 " + INK_REF + ")")
+                    .at(State.HIGHLIGHTED, "filter", "drop-shadow(4px 4px 0 " + INK_REF + ")")),
+            Map.entry(of(Selectable.class, Shape.Rule.class), Impl.Bindings.none()
                     .at(State.REST, "border-width", "3px").at(State.REST, "border-style", "solid")
                     .at(State.FOCUS, "outline-width", "4px").at(State.FOCUS, "outline-style", "solid").at(State.FOCUS, "outline-offset", "-4px")),
             surface(of(Selected.class, Color.Surface.class), INK, "#FFFFFF"),

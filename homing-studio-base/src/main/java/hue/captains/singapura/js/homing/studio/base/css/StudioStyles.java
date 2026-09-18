@@ -565,8 +565,8 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     /**
-     * An interactive row of a plain table: every state is a slot of the pairs
-     * it wears — {@code :hover}, {@code [aria-selected]}, {@code [aria-current]},
+     * A selectable row of a plain table — one of many, flat until it is the one:
+     * every state is a slot of the pairs it wears — {@code :hover}, {@code [aria-selected]}, {@code [aria-current]},
      * {@code :focus-visible} — so one class covers rest and every state and the
      * attribute is the source of truth. A row takes a surface, an ink, an edge
      * and a rule — and a filter, which is how a row lifts: a browser paints no
@@ -574,7 +574,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
      * filter, and the row stacks above its neighbours while it is lifted.
      */
     public record st_tr() implements CssClass<StudioStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Interactive.class, Color.Surface.class), of(Interactive.class, Color.Ink.class), of(Interactive.class, Color.Edge.class), of(Interactive.class, Shape.Rule.class), of(Interactive.class, Effect.Filter.class), of(Interactive.class, Motion.Ease.class), of(Interactive.class, Affordance.Cursor.class)); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Selectable.class, Color.Surface.class), of(Selectable.class, Color.Ink.class), of(Selectable.class, Color.Edge.class), of(Selectable.class, Shape.Rule.class), of(Selectable.class, Effect.Filter.class), of(Selectable.class, Motion.Ease.class), of(Selectable.class, Affordance.Cursor.class)); }
         @Override public String body() { return """
             position: relative;
             &[aria-selected="true"], &[data-highlighted] { z-index: 1; }
