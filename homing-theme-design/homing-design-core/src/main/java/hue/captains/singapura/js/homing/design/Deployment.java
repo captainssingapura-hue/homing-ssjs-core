@@ -32,7 +32,11 @@ import java.util.regex.Pattern;
  */
 public record Deployment(Set<DesignClass<?>> required, Design design, List<DesignExtension> extensions) {
 
-    public Deployment { required = Set.copyOf(required); extensions = List.copyOf(extensions); }
+    public Deployment {
+        // in order — the order of resolution is the order the closure wore them; the sheet has its own (Sheets.PRECEDENCE)
+        required = java.util.Collections.unmodifiableSet(new LinkedHashSet<>(required));
+        extensions = List.copyOf(extensions);
+    }
 
     public static Deployment of(Set<DesignClass<?>> required, Design design) {
         return new Deployment(required, design, List.of());
@@ -81,7 +85,7 @@ public record Deployment(Set<DesignClass<?>> required, Design design, List<Desig
         }
         checkReferences(impls, findings);
         checkColourLiterals(impls, findings);
-        return new Resolution(Map.copyOf(impls), List.copyOf(findings));
+        return new Resolution(java.util.Collections.unmodifiableMap(impls), List.copyOf(findings));
     }
 
     // ── validation against the target ─────────────────────────────────────
@@ -126,8 +130,26 @@ public record Deployment(Set<DesignClass<?>> required, Design design, List<Desig
             if (prelude.startsWith("@")) continue;                              // media, supports
             if (prelude.contains(".") || prelude.contains("#"))
                 findings.add(new Finding(Finding.Kind.INVALID_BODY, pair, "body nests a class or id selector: " + prelude));
+            // On self, a body may take only a State's slot or a pseudo-element: a
+            // design does not invent a state of the component — the component does,
+            // by wearing another class. Elements below are the design's to address.
+            for (String part : prelude.split(",")) {
+                String p = part.trim();
+                if (!p.startsWith("&")) continue;
+                if (p.startsWith("&::")) continue;
+                if (p.contains(".") || p.contains("#")) continue;                 // reported above
+
+                if (!SELF_STATES.contains(p))
+                    findings.add(new Finding(Finding.Kind.INVALID_BODY, pair, "body nests a state of its own on self: " + p + " — a State's slot or a pseudo-element only"));
+            }
         }
     }
+
+    /** Every {@code &…} prelude a {@link State} names, split on commas. */
+    private static final Set<String> SELF_STATES = java.util.Arrays.stream(State.values())
+            .flatMap(s -> java.util.Arrays.stream(s.selector().split(",")))
+            .map(String::trim).filter(s -> !s.isEmpty())
+            .collect(java.util.stream.Collectors.toUnmodifiableSet());
 
     // ── references between words ──────────────────────────────────────────
 

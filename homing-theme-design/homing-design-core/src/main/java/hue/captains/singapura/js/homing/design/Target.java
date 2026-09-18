@@ -51,7 +51,7 @@ public sealed interface Target permits
     // ── helpers for the leaves ────────────────────────────────────────────
     Set<State> REST_ONLY    = EnumSet.of(State.REST);
     Set<State> INTERACTIVE  = EnumSet.of(State.REST, State.HOVER, State.ACTIVE, State.FOCUS, State.DISABLED,
-                                         State.SELECTED, State.CURRENT, State.CHECKED, State.INVALID, State.EXPANDED);
+                                         State.SELECTED, State.CURRENT, State.CHECKED, State.INVALID, State.EXPANDED, State.HIGHLIGHTED);
     Set<State> POINTER      = EnumSet.of(State.REST, State.HOVER, State.ACTIVE, State.FOCUS, State.DISABLED);
 
     // ═════════════════════════════════════════════════════════════════════
@@ -123,7 +123,7 @@ public sealed interface Target permits
             public static final Shadow INSTANCE = new Shadow();
             @Override public List<CssClass<Shadow>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("box-shadow"); }
-            @Override public Set<State> states() { return POINTER; }
+            @Override public Set<State> states() { return INTERACTIVE; }   // depth is a state too: a selected or highlighted thing lifts
         }
         record Clip() implements Shape, CssGroup<Clip> {
             public static final Clip INSTANCE = new Clip();
@@ -237,7 +237,7 @@ public sealed interface Target permits
             public static final Filter INSTANCE = new Filter();
             @Override public List<CssClass<Filter>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("filter", "backdrop-filter"); }
-            @Override public Set<State> states() { return POINTER; }
+            @Override public Set<State> states() { return INTERACTIVE; }   // a lift a table row can show — filter paints where box-shadow does not
         }
         record Blend() implements Effect, CssGroup<Blend> {
             public static final Blend INSTANCE = new Blend();

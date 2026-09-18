@@ -149,32 +149,45 @@ final class NeoFuturismDesign {
 
             // ── interaction: the glow comes up ──────────────────────────
             one(of(Interactive.class, Motion.Ease.class), EASE),
+            // the glow comes up: hover faintly, selected fully, highlighted in between; a row glows by filter
             Map.entry(of(Interactive.class, Motion.Transform.class), Impl.Bindings.none()
                     .at(State.HOVER, "translateY(-1px) scale(1.01)")
-                    .at(State.ACTIVE, "scale(0.985)")),
+                    .at(State.ACTIVE, "scale(0.985)")
+                    .at(State.SELECTED, "translateY(-1px)")
+                    .at(State.HIGHLIGHTED, "translateY(-1px)")),
             Map.entry(of(Interactive.class, Shape.Shadow.class), Impl.Bindings
                     .of(plate(LIGHT_REF, 14, DROP))
                     .at(State.HOVER, "0 0 0 1px " + glow(LIGHT_REF, 60) + ", 0 0 28px " + glow(LIGHT_REF, 30) + ", " + DROP)
                     .at(State.ACTIVE, "0 0 0 1px " + glow(LIGHT_REF, 60) + ", 0 0 10px " + glow(LIGHT_REF, 25))
+                    .at(State.SELECTED, "0 0 0 1px " + LIGHT_REF + ", 0 0 36px " + glow(LIGHT_REF, 45) + ", " + DROP)
+                    .at(State.HIGHLIGHTED, "0 0 0 1px " + glow(LIGHT_REF, 70) + ", 0 0 20px " + glow(LIGHT_REF, 35))
                     .in(Mode.DARK, State.REST, plate(LIGHT_REF, 18, DROP_D))
                     .in(Mode.DARK, State.HOVER, "0 0 0 1px " + glow(LIGHT_REF, 70) + ", 0 0 32px " + glow(LIGHT_REF, 35) + ", " + DROP_D)),
+            Map.entry(of(Interactive.class, Effect.Filter.class), Impl.Bindings.none()
+                    .at(State.SELECTED, "filter", "drop-shadow(0 0 14px " + glow(LIGHT_REF, 60) + ")")
+                    .at(State.HIGHLIGHTED, "filter", "drop-shadow(0 0 10px " + glow(LIGHT_REF, 45) + ")")),
             // nothing at rest; hover lights faintly, selected is the light itself, current a filament
             Map.entry(of(Interactive.class, Color.Surface.class), Impl.Bindings.none()
                     .at(State.REST, "background-color", "transparent")
                     .at(State.HOVER, "background-color", glow(CYAN, 10))
                     .at(State.SELECTED, "background-color", CYAN)
                     .at(State.CURRENT, "background-color", glow(CYAN, 6))
+                    .at(State.HIGHLIGHTED, "background-color", glow(CYAN, 22))
+                    .in(Mode.DARK, State.HIGHLIGHTED, "background-color", glow(CYAN_D, 24))
                     .in(Mode.DARK, State.HOVER, "background-color", glow(CYAN_D, 12))
                     .in(Mode.DARK, State.SELECTED, "background-color", CYAN_D)
                     .in(Mode.DARK, State.CURRENT, "background-color", glow(CYAN_D, 8))),
             Map.entry(of(Interactive.class, Color.Ink.class), Impl.Bindings.of("inherit")
                     .at(State.SELECTED, ON_CYAN).at(State.CURRENT, CYAN_INK)
+                    .at(State.HIGHLIGHTED, CYAN_INK).in(Mode.DARK, State.HIGHLIGHTED, CYAN_INK_D)
                     .in(Mode.DARK, State.CURRENT, CYAN_INK_D)),
             Map.entry(of(Interactive.class, Color.Edge.class), Impl.Bindings.none()
                     .at(State.REST, "border-color", "transparent")
                     .at(State.HOVER, "border-color", glow(CYAN, 35))
                     .at(State.SELECTED, "border-color", CYAN)
                     .at(State.CURRENT, "border-color", glow(CYAN, 55))
+                    .at(State.HIGHLIGHTED, "border-color", CYAN)
+                    .in(Mode.DARK, State.HIGHLIGHTED, "border-color", CYAN_D)
                     .at(State.CHECKED, "border-color", CYAN)
                     .at(State.FOCUS, "outline-color", CYAN)
                     .in(Mode.DARK, State.HOVER, "border-color", glow(CYAN_D, 40))

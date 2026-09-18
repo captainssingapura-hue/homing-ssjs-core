@@ -7,7 +7,10 @@ package hue.captains.singapura.js.homing.design;
  * opinion on, and the template falls back to {@link #REST} for the rest.
  *
  * <p>Custom states a component invents are not here and never will be: a
- * component in a state of its own wears a different design class.</p>
+ * component in a state of its own wears a different design class. The one
+ * slot with no aria behind it is {@link #HIGHLIGHTED}: a thing lit from
+ * elsewhere is a state every list, table and tree has, and none of aria's
+ * words is it.</p>
  */
 public enum State {
     REST(""),
@@ -19,7 +22,9 @@ public enum State {
     CURRENT("&[aria-current]"),
     CHECKED("&:checked, &[aria-checked=\"true\"]"),
     INVALID("&:invalid, &[aria-invalid=\"true\"]"),
-    EXPANDED("&[aria-expanded=\"true\"]");
+    EXPANDED("&[aria-expanded=\"true\"]"),
+    /** Lit from elsewhere — a search hit, the rows a chart points at. No aria state says it, so the slot reads {@code data-highlighted}. */
+    HIGHLIGHTED("&[data-highlighted]");
 
     private final String selector;
 

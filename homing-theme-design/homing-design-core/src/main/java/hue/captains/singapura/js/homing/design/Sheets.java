@@ -27,7 +27,33 @@ public final class Sheets {
 
     private Sheets() {}
 
-    /** Every target sheet, keyed by target token, in tree order; only targets the resolution reaches. */
+    /**
+     * The order of rules within a target sheet — the one thing that decides
+     * which of two classes on one element, on one target, wins, since they
+     * are equal in specificity. A component is free to wear two (a base and a
+     * look beside it), so the order must be fixed and known: by the
+     * semantic's branch, the thing an element <i>is</i> before what it
+     * <i>says</i> before what it <i>does</i> —
+     * {@code Layer < Text < Box < Brand < Structure < Emphasis < Feedback < Pairing < Interaction}
+     * — then by leaf name. A branch this list does not know sorts between
+     * Structure and Emphasis, by its name. Same deployment, same sheet, every
+     * start.
+     */
+    static final List<Class<?>> PRECEDENCE = List.of(
+            Layer.class, Text.class, Box.class, Brand.class, Structure.class,
+            Emphasis.class, Feedback.class, Pairing.class, Interaction.class);
+
+    static int precedence(Class<?> branch) {
+        int i = PRECEDENCE.indexOf(branch);
+        return i >= 0 ? i * 2 : PRECEDENCE.indexOf(Structure.class) * 2 + 1;   // unknown: after Structure, before Emphasis
+    }
+
+    static final java.util.Comparator<DesignClass<?>> BY_PRECEDENCE = java.util.Comparator
+            .<DesignClass<?>>comparingInt(dc -> precedence(Trees.branchOf(dc.semantic())))
+            .thenComparing(dc -> Trees.branchOf(dc.semantic()).getSimpleName())
+            .thenComparing(dc -> dc.semantic().getSimpleName());
+
+    /** Every target sheet, keyed by target token, in tree order; only targets the resolution reaches; rules in {@link #PRECEDENCE}. */
     public static Map<String, String> targetSheets(Deployment.Resolution resolution) {
         var byTarget = new LinkedHashMap<Target, List<Map.Entry<DesignClass<?>, Impl>>>();
         for (Target t : Target.leaves()) byTarget.put(t, new ArrayList<>());
@@ -35,6 +61,7 @@ public final class Sheets {
         var out = new LinkedHashMap<String, String>();
         byTarget.forEach((target, entries) -> {
             if (entries.isEmpty() || target.carrier() != Carrier.CSS) return;
+            entries.sort(Map.Entry.comparingByKey(BY_PRECEDENCE));
             var sb = new StringBuilder("/* ").append(target.token()).append(" — generated; the template is the target's, the values the design's */\n");
             for (var e : entries) sb.append(rule(e.getKey(), e.getValue()));
             out.put(target.token(), sb.toString());

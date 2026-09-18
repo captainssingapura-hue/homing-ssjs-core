@@ -569,12 +569,16 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
      * it wears — {@code :hover}, {@code [aria-selected]}, {@code [aria-current]},
      * {@code :focus-visible} — so one class covers rest and every state and the
      * attribute is the source of truth. A row takes a surface, an ink, an edge
-     * and a rule; a browser paints no shadow and no transform on a table row,
-     * so depth is not worn here.
+     * and a rule — and a filter, which is how a row lifts: a browser paints no
+     * shadow and no transform on a table row, but it paints a drop-shadow
+     * filter, and the row stacks above its neighbours while it is lifted.
      */
     public record st_tr() implements CssClass<StudioStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Interactive.class, Color.Surface.class), of(Interactive.class, Color.Ink.class), of(Interactive.class, Color.Edge.class), of(Interactive.class, Shape.Rule.class), of(Interactive.class, Motion.Ease.class), of(Interactive.class, Affordance.Cursor.class)); }
-        @Override public String body() { return ""; }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Interactive.class, Color.Surface.class), of(Interactive.class, Color.Ink.class), of(Interactive.class, Color.Edge.class), of(Interactive.class, Shape.Rule.class), of(Interactive.class, Effect.Filter.class), of(Interactive.class, Motion.Ease.class), of(Interactive.class, Affordance.Cursor.class)); }
+        @Override public String body() { return """
+            position: relative;
+            &[aria-selected="true"], &[data-highlighted] { z-index: 1; }
+            """; }
     }
     public record st_td() implements CssClass<StudioStyles> {
         @Override public List<? extends Wearable> wears() { return List.of(of(Hairline.class, Color.Edge.class), of(Hairline.class, Shape.Rule.class)); }

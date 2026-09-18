@@ -113,20 +113,33 @@ final class NeoBrutalismDesign {
 
             // ── interaction: the press ──────────────────────────────────
             one(of(Interactive.class, Motion.Ease.class), SNAP),
+            // the press, and the lift: a selected thing sits up on its shadow, a highlighted one half as far; a row lifts by filter
             Map.entry(of(Interactive.class, Motion.Transform.class), Impl.Bindings.none()
                     .at(State.HOVER, "translate(-2px, -2px)")
-                    .at(State.ACTIVE, "translate(5px, 5px)")),
-            states(of(Interactive.class, Shape.Shadow.class), shadow(4), shadow(8), "0 0 0 " + INK_REF),
+                    .at(State.ACTIVE, "translate(5px, 5px)")
+                    .at(State.SELECTED, "translate(-3px, -3px)")
+                    .at(State.HIGHLIGHTED, "translate(-2px, -2px)")),
+            Map.entry(of(Interactive.class, Shape.Shadow.class), Impl.Bindings
+                    .of(shadow(4))
+                    .at(State.HOVER, shadow(8))
+                    .at(State.ACTIVE, "0 0 0 " + INK_REF)
+                    .at(State.SELECTED, shadow(6))
+                    .at(State.HIGHLIGHTED, shadow(5))),
+            Map.entry(of(Interactive.class, Effect.Filter.class), Impl.Bindings.none()
+                    .at(State.SELECTED, "filter", "drop-shadow(6px 6px 0 " + INK_REF + ")")
+                    .at(State.HIGHLIGHTED, "filter", "drop-shadow(4px 4px 0 " + INK_REF + ")")),
             // nothing at rest; hover is the signal with an ink rule, selected is ink with signal on it, current is signal-edged
             Map.entry(of(Interactive.class, Color.Surface.class), Impl.Bindings.none()
                     .at(State.REST, "background-color", "transparent")
                     .at(State.HOVER, "background-color", SIGNAL)
                     .at(State.SELECTED, "background-color", INK)
                     .at(State.CURRENT, "background-color", GREY)
+                    .at(State.HIGHLIGHTED, "background-color", "color-mix(in srgb, " + SIGNAL + " 55%, transparent)")
                     .in(Mode.DARK, State.SELECTED, "background-color", INK_D)
                     .in(Mode.DARK, State.CURRENT, "background-color", GREY_D)),
             Map.entry(of(Interactive.class, Color.Ink.class), Impl.Bindings.of("inherit")
                     .at(State.HOVER, INK).at(State.SELECTED, SIGNAL)
+                    .at(State.HIGHLIGHTED, INK)
                     .in(Mode.DARK, State.SELECTED, INK)),
             Map.entry(of(Interactive.class, Color.Edge.class), Impl.Bindings.none()
                     .at(State.REST, "border-color", "transparent")
@@ -134,6 +147,8 @@ final class NeoBrutalismDesign {
                     .at(State.SELECTED, "border-color", INK)
                     .at(State.CURRENT, "border-color", INK)
                     .at(State.CHECKED, "border-color", RISO_BLUE)
+                    .at(State.HIGHLIGHTED, "border-color", INK)
+                    .in(Mode.DARK, State.HIGHLIGHTED, "border-color", INK_D)
                     .at(State.FOCUS, "outline-color", RISO_BLUE)
                     .in(Mode.DARK, State.HOVER, "border-color", INK_D)
                     .in(Mode.DARK, State.SELECTED, "border-color", INK_D)

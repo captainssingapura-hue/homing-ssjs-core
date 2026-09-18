@@ -134,17 +134,21 @@ public record SeedPalette(String slug, String label, String inspiration, Seeds l
                 .at(State.HOVER, "background-color", tint(l.accent, 15))
                 .at(State.SELECTED, "background-color", l.inverted)
                 .at(State.CURRENT, "background-color", tint(l.accent, 7))
+                .at(State.HIGHLIGHTED, "background-color", tint(l.accent, 28))
+                .in(Mode.DARK, State.HIGHLIGHTED, "background-color", tint(d.accent, 28))
                 .in(Mode.DARK, State.HOVER, "background-color", tint(d.accent, 15))
                 .in(Mode.DARK, State.SELECTED, "background-color", d.inverted)
                 .in(Mode.DARK, State.CURRENT, "background-color", tint(d.accent, 7))));
         put.accept(Map.entry(of(Interactive.class, Color.Ink.class), Impl.Bindings.of("inherit")
-                .at(State.SELECTED, l.onInverted).at(State.CURRENT, l.title)
-                .in(Mode.DARK, State.SELECTED, d.onInverted).in(Mode.DARK, State.CURRENT, d.title)));
+                .at(State.SELECTED, l.onInverted).at(State.CURRENT, l.title).at(State.HIGHLIGHTED, l.title)
+                .in(Mode.DARK, State.SELECTED, d.onInverted).in(Mode.DARK, State.CURRENT, d.title).in(Mode.DARK, State.HIGHLIGHTED, d.title)));
         put.accept(Map.entry(of(Interactive.class, Color.Edge.class), Impl.Bindings.none()
                 .at(State.REST, "border-color", "transparent")
                 .at(State.HOVER, "border-color", l.border)
                 .at(State.SELECTED, "border-color", l.inverted)
                 .at(State.CURRENT, "border-color", l.accent)
+                .at(State.HIGHLIGHTED, "border-color", l.accent)
+                .in(Mode.DARK, State.HIGHLIGHTED, "border-color", d.accent)
                 .at(State.CHECKED, "border-color", l.accent)
                 .at(State.FOCUS, "outline-color", l.accent)
                 .in(Mode.DARK, State.HOVER, "border-color", d.border)

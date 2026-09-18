@@ -93,11 +93,19 @@ final class DefaultDesign {
 
             // ── interaction ─────────────────────────────────────────────
             one(of(Interactive.class, Motion.Ease.class), "transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease"),
+            // depth is a state: hover lifts, selected and highlighted stay lifted; a row lifts by filter, since a row paints no shadow
             Map.entry(of(Interactive.class, Motion.Transform.class), hue.captains.singapura.js.homing.design.Impl.Bindings.none()
-                    .at(hue.captains.singapura.js.homing.design.State.HOVER, "translateY(-2px)")),
-            states(of(Interactive.class, Shape.Shadow.class),
-                    "0 1px 3px color-mix(in srgb, " + INK_REF + " 4%, transparent)",
-                    "0 6px 16px color-mix(in srgb, " + INK_REF + " 12%, transparent)"),
+                    .at(hue.captains.singapura.js.homing.design.State.HOVER, "translateY(-2px)")
+                    .at(hue.captains.singapura.js.homing.design.State.SELECTED, "translateY(-2px)")
+                    .at(hue.captains.singapura.js.homing.design.State.HIGHLIGHTED, "translateY(-1px)")),
+            Map.entry(of(Interactive.class, Shape.Shadow.class), hue.captains.singapura.js.homing.design.Impl.Bindings
+                    .of("0 1px 3px color-mix(in srgb, " + INK_REF + " 4%, transparent)")
+                    .at(hue.captains.singapura.js.homing.design.State.HOVER, "0 6px 16px color-mix(in srgb, " + INK_REF + " 12%, transparent)")
+                    .at(hue.captains.singapura.js.homing.design.State.SELECTED, "0 8px 20px color-mix(in srgb, " + INK_REF + " 18%, transparent)")
+                    .at(hue.captains.singapura.js.homing.design.State.HIGHLIGHTED, "0 4px 12px color-mix(in srgb, " + PRIMARY_REF + " 35%, transparent)")),
+            Map.entry(of(Interactive.class, Effect.Filter.class), hue.captains.singapura.js.homing.design.Impl.Bindings.none()
+                    .at(hue.captains.singapura.js.homing.design.State.SELECTED, "filter", "drop-shadow(0 6px 10px color-mix(in srgb, " + INK_REF + " 18%, transparent))")
+                    .at(hue.captains.singapura.js.homing.design.State.HIGHLIGHTED, "filter", "drop-shadow(0 3px 8px color-mix(in srgb, " + PRIMARY_REF + " 35%, transparent))")),
             one(of(Interactive.class, Affordance.Cursor.class), "pointer"),
             // a hairline that the palette colours only in a state; a 2px ring, inset, on focus
             Map.entry(of(Interactive.class, Shape.Rule.class), hue.captains.singapura.js.homing.design.Impl.Bindings.none()
