@@ -55,7 +55,7 @@ class SheetsTest {
     @Test
     void silence_andABody_render_asTheyShould() {
         record Odd() implements Design {
-            @Override public String slug() { return "odd"; }
+            @Override public DesignId id() { return new DesignId("odd"); }
             @Override public Impl impl(DesignClass<?> pair) {
                 if (pair.equals(DeploymentTest.PRESS)) return Impl.Silence.css();
                 // a body says its colour by reference — to the success surface, bound below
@@ -82,7 +82,7 @@ class SheetsTest {
         var danger   = DesignClass.of(Feedback.Danger.class,        Target.Color.Surface.class);
         var code     = DesignClass.of(Text.Code.class,              Target.Color.Surface.class);
         record Flat() implements Design {
-            @Override public String slug() { return "flat"; }
+            @Override public DesignId id() { return new DesignId("flat"); }
             @Override public Impl impl(DesignClass<?> pair) { return pair.onColourPlane() ? Impl.Bindings.none().at(State.REST, "background-color", "#123456") : null; }
         }
         java.util.function.Function<List<DesignClass<?>>, List<String>> order = required -> {
@@ -102,7 +102,7 @@ class SheetsTest {
     void aBody_mayNestOnlyAStateOrAPseudoElement_onSelf() {
         var surface = DeploymentTest.DANGER_SURFACE;
         record Inventive() implements Design {
-            @Override public String slug() { return "inventive"; }
+            @Override public DesignId id() { return new DesignId("inventive"); }
             @Override public Impl impl(DesignClass<?> pair) {
                 return new Impl.Body("background-color: transparent;\n&[aria-selected=\"true\"] { background-color: transparent; }\n&::after { background-color: transparent; }\n&[data-lifted] { background-color: transparent; }\n&:hover, &.on { background-color: transparent; }\ntd:hover { background-color: transparent; }\n");
             }

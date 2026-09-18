@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.studio.themes;
 import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.design.Design;
 import hue.captains.singapura.js.homing.design.DesignClass;
+import hue.captains.singapura.js.homing.design.DesignId;
 import hue.captains.singapura.js.homing.design.Impl;
 import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
 import hue.captains.singapura.js.homing.theme.color.HomingVars;
@@ -20,19 +21,20 @@ import java.util.Map;
  */
 public record HomingGlassmorphism() implements Design {
 
+    public static final DesignId ID = new DesignId("glassmorphism");
     public static final HomingGlassmorphism INSTANCE = new HomingGlassmorphism();
 
     /** Over Default: the frosting where it has one, Default's for the rest; Frost on the colour plane. */
     @Override public Impl impl(DesignClass<?> pair) {
         if (pair.onColourPlane()) return FrostPalette.INSTANCE.impl(pair);
         Impl own = GlassmorphismDesign.WORDS.get(pair);
-        return own != null ? own : HomingDefault.INSTANCE.impl(pair);
+        return own != null ? own : HomingEditorial.INSTANCE.impl(pair);
     }
 
     /** Worn in Frost by default; Frost is a palette in its own name, so any physique may wear it. */
     @Override public hue.captains.singapura.js.homing.design.Palette palette() { return FrostPalette.INSTANCE; }
 
-    @Override public String slug()  { return "glassmorphism"; }
+    @Override public DesignId id() { return ID; }
     @Override public String label() { return "Glassmorphism"; }
     @Override public String group() { return "Expressive"; }
     @Override public String inspiration() { return "Plates of frosted glass over an aurora — blurred, rimmed in light, lifted on soft shadow."; }

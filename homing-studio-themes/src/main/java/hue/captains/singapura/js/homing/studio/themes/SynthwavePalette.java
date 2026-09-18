@@ -1,12 +1,14 @@
 package hue.captains.singapura.js.homing.studio.themes;
 
 import hue.captains.singapura.js.homing.design.DesignClass;
+import hue.captains.singapura.js.homing.design.DesignId;
 import hue.captains.singapura.js.homing.design.Impl;
 import hue.captains.singapura.js.homing.design.Mode;
 import hue.captains.singapura.js.homing.design.Palette;
 import hue.captains.singapura.js.homing.design.State;
 
 import java.util.Map;
+import java.util.Set;
 
 import static hue.captains.singapura.js.homing.design.DesignClass.of;
 import static hue.captains.singapura.js.homing.design.Target.*;
@@ -32,7 +34,13 @@ public record SynthwavePalette() implements Palette {
 
     public static final SynthwavePalette INSTANCE = new SynthwavePalette();
 
-    @Override public String slug()  { return "synthwave"; }
+    public static final DesignId ID = new DesignId("synthwave");
+
+    /** Retro-Futurism's — the void its neon frames glow against; also the dark-and-neon Neo-Futurism. */
+    @Override public DesignId id() { return ID; }
+    @Override public DesignId anchor() { return HomingRetroFuturism.ID; }
+    @Override public Set<DesignId> compatible() { return COMPATIBLE; }
+    private static final Set<DesignId> COMPATIBLE = Set.of(HomingNeoFuturism.ID);
     @Override public String label() { return "Synthwave"; }
     @Override public String inspiration() { return "A magenta sun over a cyan grid — the colours of a 1984 that never happened."; }
 

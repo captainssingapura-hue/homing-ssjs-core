@@ -43,7 +43,7 @@ Found in `StudioVars` (`homing-studio-base/.../theme/StudioVars.java`). **Every 
 | `COLOR_ACCENT_EMPHASIS` | accent hover / pressed | `#C8921E` | `#E0A833` |
 | `COLOR_ACCENT_ON` | text on accent fill | `#111936` | `#111936` |
 
-Plus the spacing scale (`SPACE_1..8`) and radius scale (`RADIUS_SM/MD/LG`) — typically copied verbatim from `HomingDefault`. Override `RADIUS_*` to `0px` for a geometric / Bauhaus look.
+Plus the spacing scale (`SPACE_1..8`) and radius scale (`RADIUS_SM/MD/LG`) — typically copied verbatim from `HomingEditorial`. Override `RADIUS_*` to `0px` for a geometric / Bauhaus look.
 
 ## Step-by-step
 
@@ -126,7 +126,7 @@ public record Homing<Name>() implements Theme {
     public record Globals() implements ThemeGlobals<Homing<Name>> {
         public static final Globals INSTANCE = new Globals();
         @Override public Homing<Name> theme() { return Homing<Name>.INSTANCE; }
-        @Override public String css() { return DARK_OVERRIDE + HomingDefault.STRUCTURAL_CSS; }
+        @Override public String css() { return DARK_OVERRIDE + HomingEditorial.STRUCTURAL_CSS; }
 
         /** Re-bind every token for prefers-color-scheme: dark. */
         private static final String DARK_OVERRIDE = """
@@ -167,7 +167,7 @@ Add three lines to `StudioThemeRegistry.java` (or your downstream's equivalent):
 ```java
 @Override public List<Theme> themes() {
     return List.of(
-            HomingDefault.INSTANCE,
+            HomingEditorial.INSTANCE,
             // … existing themes
             Homing<Name>.INSTANCE          // ← new
     );
@@ -175,7 +175,7 @@ Add three lines to `StudioThemeRegistry.java` (or your downstream's equivalent):
 
 @Override public List<PaletteProvision<?, ?>> palettes() {
     return List.of(
-            HomingDefault.Palette.INSTANCE,
+            HomingEditorial.Palette.INSTANCE,
             // … existing
             Homing<Name>.Palette.INSTANCE     // ← new
     );
@@ -183,7 +183,7 @@ Add three lines to `StudioThemeRegistry.java` (or your downstream's equivalent):
 
 @Override public List<ThemeGlobals<?>> globals() {
     return List.of(
-            HomingDefault.Globals.INSTANCE,
+            HomingEditorial.Globals.INSTANCE,
             // … existing
             Homing<Name>.Globals.INSTANCE  // ← new
     );
@@ -210,7 +210,7 @@ If your theme needs more than palette swap — e.g. a paper texture, serif body,
     // Order: dark-overrides, then shared structural CSS, then YOUR overlay.
     // Putting your overlay last lets you re-install background-image after the
     // shared `background: var(--color-surface)` shorthand cleared it.
-    return DARK_OVERRIDE + HomingDefault.STRUCTURAL_CSS + EXTRA_OVERRIDE;
+    return DARK_OVERRIDE + HomingEditorial.STRUCTURAL_CSS + EXTRA_OVERRIDE;
 }
 
 private static final String EXTRA_OVERRIDE = """
@@ -266,7 +266,7 @@ For an inked-paper grain (dark mode): `R=0.94 G=0.91 B=0.84 ALPHA=0.06` (cream s
 
 | Theme | File | When to copy |
 |---|---|---|
-| `HomingDefault`     | the canonical "warm gold + navy" baseline | for any modern corporate-clean look |
+| `HomingEditorial`   | the house baseline — serif headings, hairlines, navy + gold (Harbour) | for any quiet, print-derived look |
 | `HomingForest`      | greens + honey | for organic / earth-toned themes |
 | `HomingSunset`      | corals + ambers | for warm dusk themes |
 | `HomingBauhaus`     | black + yellow + Itten blue, no rounded corners | for geometric / modernist themes |

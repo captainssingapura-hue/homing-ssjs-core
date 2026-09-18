@@ -164,10 +164,14 @@ function openSystemDialog(opts) {
     // page behind may have its own tree listening on document, and without this
     // one ArrowDown walks both. Non-modal: bubble, on the frame, so keys reach
     // us only while focus is inside — which is what non-modal means.
+    //
+    // The content is asked FIRST, Escape included: a popup nested in the
+    // dialog — a menu, a combo — takes Escape to close itself, and only an
+    // Escape nobody inside wanted closes the dialog.
     keys = function (ev) {
         var handled = false;
-        if (ev.key === "Escape") { close(); handled = true; }
-        else if (built.onKeydown && built.onKeydown(ev)) handled = true;
+        if (built.onKeydown && built.onKeydown(ev)) handled = true;
+        else if (ev.key === "Escape") { close(); handled = true; }
         else if (ev.key === "Enter" && primary && !_isFormControl(ev.target)) {
             var pb = buttons[primary.id];
             if (pb && !pb.disabled) primary.onClick(handle);

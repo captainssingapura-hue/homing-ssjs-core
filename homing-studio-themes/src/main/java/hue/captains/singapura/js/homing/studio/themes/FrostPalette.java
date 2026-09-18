@@ -1,12 +1,14 @@
 package hue.captains.singapura.js.homing.studio.themes;
 
 import hue.captains.singapura.js.homing.design.DesignClass;
+import hue.captains.singapura.js.homing.design.DesignId;
 import hue.captains.singapura.js.homing.design.Impl;
 import hue.captains.singapura.js.homing.design.Mode;
 import hue.captains.singapura.js.homing.design.Palette;
 import hue.captains.singapura.js.homing.design.State;
 
 import java.util.Map;
+import java.util.Set;
 
 import static hue.captains.singapura.js.homing.design.DesignClass.of;
 import static hue.captains.singapura.js.homing.design.Target.*;
@@ -31,7 +33,13 @@ public record FrostPalette() implements Palette {
 
     public static final FrostPalette INSTANCE = new FrostPalette();
 
-    @Override public String slug()  { return "frost"; }
+    public static final DesignId ID = new DesignId("frost");
+
+    /** Glassmorphism's — the aurora and the glass are what its blur shows through; also chrome over an aurora, and Editorial's flat plates over one. */
+    @Override public DesignId id() { return ID; }
+    @Override public DesignId anchor() { return HomingGlassmorphism.ID; }
+    @Override public Set<DesignId> compatible() { return COMPATIBLE; }
+    private static final Set<DesignId> COMPATIBLE = Set.of(HomingNeoFuturism.ID, HomingEditorial.ID);
     @Override public String label() { return "Frost"; }
     @Override public String inspiration() { return "An aurora behind plates of frosted glass — white at a fraction, rimmed in light."; }
 

@@ -146,7 +146,7 @@ final class NeumorphismDesign {
             body(of(Prose.class, Type.Face.class), """
                 h1, h2, h3, h4 { font-family: %s; }
                 code, pre { font-family: %s; }
-                """.formatted(DISPLAY_FACE, DefaultDesign.MONO_FACE)),
+                """.formatted(DISPLAY_FACE, EditorialDesign.MONO_FACE)),
             body(of(Prose.class, Type.Weight.class), "h1, h2, h3, h4, th { font-weight: 800; }\n"),
             body(of(Prose.class, Type.Treatment.class), """
                 h4 { letter-spacing: 0.08em; text-transform: uppercase; }

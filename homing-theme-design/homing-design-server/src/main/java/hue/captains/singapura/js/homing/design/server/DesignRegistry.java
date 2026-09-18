@@ -25,7 +25,9 @@ import java.util.Map;
  * written as colours alone. {@link #themes()} is the closure — the bases and
  * every cross — so the page's {@code ?theme=} and the renderer resolve any
  * slug a picker can compose; {@link #bases()} and {@link #colours()} are the
- * two axes a picker shows, and {@link #dressed} joins them.
+ * two axes a picker shows, {@link #dressed} joins them, and {@link #fits} says
+ * which joins a picker offers — the palette's own declaration of what it was
+ * crafted for and what else it suits.
  *
  * <p>Given what the deployment serves, hands the server the one renderer that
  * serves the target groups, cut to the pairs the served components wear.</p>
@@ -89,6 +91,12 @@ public final class DesignRegistry implements ThemeRegistry {
         if (!(base instanceof Design d) || !(colours instanceof Design p)) return base;
         var cross = Composed.of(d, p);
         return cross.isDiagonal() ? base : bySlug.getOrDefault(cross.slug(), cross);
+    }
+
+    /** A base's own colours always; another palette when it says it fits the base. A theme that is not a design is offered everything. */
+    @Override public boolean fits(Theme base, Theme colours) {
+        if (!(base instanceof Design d) || !(colours instanceof Palette p)) return true;
+        return Composed.paletteOf(d).id().equals(p.id()) || p.fits(d);
     }
     @Override public List<PaletteProvision<?, ?>> palettes() { return palettes; }
     @Override public List<CssGroupImpl<?, ?>> overrides() { return overrides; }

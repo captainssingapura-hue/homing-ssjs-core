@@ -6,36 +6,44 @@ import hue.captains.singapura.js.homing.theme.color.HomingVars;
 import hue.captains.singapura.js.homing.theme.type.GlobalTypePalette;
 import hue.captains.singapura.js.homing.design.Design;
 import hue.captains.singapura.js.homing.design.DesignClass;
+import hue.captains.singapura.js.homing.design.DesignId;
 import hue.captains.singapura.js.homing.design.Impl;
 
 import java.util.Map;
 
 /**
- * The default Homing theme — the visual identity that ships with
- * {@code homing-studio-base}. Any consumer depending on this module gets
- * working CSS out of the box without designing their own theme.
+ * Editorial — the house design, the one that ships with
+ * {@code homing-studio-base} and works out of the box: a serif for the
+ * headings, a grotesque for the body, hairline rules, corners just off
+ * square, a whisper of shadow. Print-derived and quiet, which is what lets
+ * every other design be written over it — {@link EditorialDesign} is the
+ * physique they all fall back to for whatever they have no word of their own
+ * for. Worn in {@link SeedPalette#HARBOUR} — navy and gold on a cool white
+ * page — by default.
  *
  * <p>RFC 0066 — an identity record and one nested {@link Palette}: the
- * theme's body for the global palette, light and dark. The structure every
- * theme once re-shipped lives in {@code StudioStyles} as agnostic classes;
- * this theme overrides none of them, which is what makes it the default.</p>
+ * theme's body for the global palette, light and dark, for the groups not
+ * yet on design classes. The structure every theme once re-shipped lives in
+ * {@code StudioStyles} as agnostic classes; this theme overrides none of
+ * them.</p>
  */
-public record HomingDefault() implements Design {
+public record HomingEditorial() implements Design {
 
-    public static final HomingDefault INSTANCE = new HomingDefault();
+    public static final DesignId ID = new DesignId("editorial");
+    public static final HomingEditorial INSTANCE = new HomingEditorial();
 
     /** The design as a function: the house physique off the colour plane, the house seeds on it; none for what neither has. */
     @Override public Impl impl(DesignClass<?> pair) {
-        return pair.onColourPlane() ? SeedPalette.HOUSE.impl(pair) : DefaultDesign.WORDS.get(pair);
+        return pair.onColourPlane() ? SeedPalette.HARBOUR.impl(pair) : EditorialDesign.WORDS.get(pair);
     }
 
-    /** Worn in the house colours by default — the first seed palette, in its own name. */
-    @Override public hue.captains.singapura.js.homing.design.Palette palette() { return SeedPalette.HOUSE; }
+    /** Worn in Harbour by default — the first seed palette, in its own name. */
+    @Override public hue.captains.singapura.js.homing.design.Palette palette() { return SeedPalette.HARBOUR; }
 
-    @Override public String slug()  { return "default"; }
-    @Override public String label() { return "Default"; }
+    @Override public DesignId id() { return ID; }
+    @Override public String label() { return "Editorial"; }
     @Override public String group() { return "Neutral"; }
-    @Override public String inspiration() { return "The house identity — ships with studio-base, working out of the box."; }
+    @Override public String inspiration() { return "The house design — serif headings, hairline rules, a whisper of shadow; ships with studio-base."; }
 
     // -------------------------------------------------------------------
     // Palette — the theme's body for GlobalColorPalette (RFC 0066). Served as the prior of every page.
@@ -43,9 +51,9 @@ public record HomingDefault() implements Design {
     // gets a concrete value directly, with no intermediate primitive layer.
     // -------------------------------------------------------------------
 
-    public record Palette() implements GlobalColorPalette.Provision<HomingDefault> {
+    public record Palette() implements GlobalColorPalette.Provision<HomingEditorial> {
         public static final Palette INSTANCE = new Palette();
-        @Override public HomingDefault theme() { return HomingDefault.INSTANCE; }
+        @Override public HomingEditorial theme() { return HomingEditorial.INSTANCE; }
         @Override public Map<CssVar, String> values() { return VALUES; }
             @Override public Map<CssVar, String> darkValues() { return DARK; }
 
@@ -115,9 +123,9 @@ public record HomingDefault() implements Design {
         );
     }
     /** The house faces — this theme has no typographic identity of its own. */
-    public record Fonts() implements GlobalTypePalette.Provision<HomingDefault> {
+    public record Fonts() implements GlobalTypePalette.Provision<HomingEditorial> {
         public static final Fonts INSTANCE = new Fonts();
-        @Override public HomingDefault theme() { return HomingDefault.INSTANCE; }
+        @Override public HomingEditorial theme() { return HomingEditorial.INSTANCE; }
         @Override public Map<CssVar, String> values() { return StudioFonts.HOUSE; }
     }
 }

@@ -5,6 +5,8 @@ import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.design.Deployment;
 import hue.captains.singapura.js.homing.design.Design;
 import hue.captains.singapura.js.homing.design.DesignClass;
+import hue.captains.singapura.js.homing.design.DesignId;
+import hue.captains.singapura.js.homing.design.Palette;
 import hue.captains.singapura.js.homing.server.ServedModules;
 import hue.captains.singapura.js.homing.studio.workspace.StudioWorkspaceCrate;
 import org.junit.jupiter.api.Test;
@@ -56,26 +58,73 @@ class DesignCompletenessTest {
     }
 
     @Test
-    void aDesignOverDefault_hasItsOwnWord_forMostOfWhatIsWorn() {
+    void aDesignOverEditorial_hasItsOwnWord_forMostOfWhatIsWorn() {
         var worn = worn();
         for (Design d : List.of(HomingNeoBrutalism.INSTANCE, HomingNeoFuturism.INSTANCE, HomingNeumorphism.INSTANCE, HomingGlassmorphism.INSTANCE, HomingRetroFuturism.INSTANCE, HomingSketchy.INSTANCE)) {
-            long own = worn.stream().filter(p -> !d.impl(p).equals(HomingDefault.INSTANCE.impl(p))).count();
+            long own = worn.stream().filter(p -> !d.impl(p).equals(HomingEditorial.INSTANCE.impl(p))).count();
             assertTrue(own * 2 > worn.size(), d.slug() + " says only " + own + " of " + worn.size() + " pairs in its own words");
         }
     }
 
     @Test
-    void theThreeBases_areListedDefaultFirst_thenEveryCross() {
+    void theSevenBases_areListedEditorialFirst_thenEveryCross() {
         var r = StudioThemeRegistry.INSTANCE;
-        assertEquals(List.of("default", "neo-brutalism", "neo-futurism", "neumorphism", "glassmorphism", "retro-futurism", "sketchy"), r.bases().stream().map(Theme::slug).toList());
-        assertEquals(List.of("default", "neo-brutalism", "neo-futurism", "clay", "frost", "synthwave", "marker", "forest", "sunset"), r.colours().stream().map(Theme::slug).toList());
+        assertEquals(List.of("editorial", "neo-brutalism", "neo-futurism", "neumorphism", "glassmorphism", "retro-futurism", "sketchy"), r.bases().stream().map(Theme::slug).toList());
+        assertEquals(List.of("harbour", "neo-brutalism", "neo-futurism", "clay", "frost", "synthwave", "marker", "forest", "sunset"), r.colours().stream().map(Theme::slug).toList());
         var slugs = r.themes().stream().map(Theme::slug).toList();
         assertEquals(7 + 7 * 8, slugs.size(), "seven bases, each in the eight other colours: " + slugs);
-        assertEquals(List.of("default", "neo-brutalism", "neo-futurism", "neumorphism", "glassmorphism", "retro-futurism", "sketchy"), slugs.subList(0, 7));
-        assertTrue(slugs.contains("neo-brutalism_forest") && slugs.contains("default_sunset"), slugs.toString());
+        assertEquals(List.of("editorial", "neo-brutalism", "neo-futurism", "neumorphism", "glassmorphism", "retro-futurism", "sketchy"), slugs.subList(0, 7));
+        assertTrue(slugs.contains("neo-brutalism_forest") && slugs.contains("editorial_sunset"), slugs.toString());
         // dressed: the base in its own colours is the base; in another's, the cross the registry lists
         assertEquals("neo-futurism", r.dressed(r.bases().get(2), r.colours().get(2)).slug());
         assertEquals("neo-futurism_forest", r.dressed(r.bases().get(2), r.colours().get(7)).slug());
         assertFalse(StudioThemeRegistry.INSTANCE.themes().stream().anyMatch(t -> !(t instanceof Design)), "every theme is a design");
+    }
+
+    /**
+     * The offer: a base is offered its own colours always, and a palette only
+     * where the palette says so. Every anchor and every compatible id names a
+     * listed base — a pointer at a design this deployment does not have is
+     * legal for a palette library, but here it is a typo — and every base's
+     * default colours fit it, else the picker's "default" would be a palette
+     * that disowns the design.
+     */
+    @Test
+    void everyPalette_pointsAtListedDesigns_andEveryBase_isOfferedItsOwnColours() {
+        var r = StudioThemeRegistry.INSTANCE;
+        var bases = r.bases().stream().map(t -> ((Design) t).id()).toList();
+        for (Theme c : r.colours()) {
+            Palette p = (Palette) c;
+            assertTrue(bases.contains(p.anchor()), p.slug() + " is anchored to " + p.anchor() + ", which is not a base here");
+            for (DesignId d : p.compatible()) {
+                assertTrue(bases.contains(d), p.slug() + " names " + d + " compatible, which is not a base here");
+                assertFalse(d.equals(p.anchor()), p.slug() + " names its anchor compatible too");
+            }
+        }
+        for (Theme b : r.bases()) {
+            Design d = (Design) b;
+            assertTrue(d.palette().fits(d), d.slug() + "'s default colours, " + d.palette().slug() + ", do not fit it");
+            assertTrue(r.fits(b, d.palette()), d.slug() + " is not offered its own colours");
+        }
+    }
+
+    /** The matrix as declared — the picker's offer per base, own colours first. */
+    @Test
+    void theOffer_perBase() {
+        var r = StudioThemeRegistry.INSTANCE;
+        java.util.function.Function<String, List<String>> offered = slug -> {
+            Theme b = r.bases().stream().filter(t -> t.slug().equals(slug)).findFirst().orElseThrow();
+            return r.colours().stream().filter(c -> r.fits(b, c)).map(Theme::slug).toList();
+        };
+        assertEquals(List.of("harbour", "clay", "frost", "marker", "forest", "sunset"), offered.apply("editorial"));
+        assertEquals(List.of("neo-brutalism", "marker", "forest", "sunset"), offered.apply("neo-brutalism"));
+        assertEquals(List.of("harbour", "neo-futurism", "frost", "synthwave"), offered.apply("neo-futurism"));
+        assertEquals(List.of("harbour", "clay", "forest", "sunset"), offered.apply("neumorphism"));
+        assertEquals(List.of("frost"), offered.apply("glassmorphism"));
+        assertEquals(List.of("synthwave"), offered.apply("retro-futurism"));
+        assertEquals(List.of("harbour", "marker", "forest", "sunset"), offered.apply("sketchy"));
+        // and the cross nobody vouches for is still wearable by slug
+        assertEquals("sketchy_frost", r.dressed(r.bases().get(6), r.colours().get(4)).slug());
+        assertFalse(r.fits(r.bases().get(6), r.colours().get(4)));
     }
 }

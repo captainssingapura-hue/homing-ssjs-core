@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.studio.themes;
 import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.design.Design;
 import hue.captains.singapura.js.homing.design.DesignClass;
+import hue.captains.singapura.js.homing.design.DesignId;
 import hue.captains.singapura.js.homing.design.Impl;
 import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
 import hue.captains.singapura.js.homing.theme.color.HomingVars;
@@ -24,19 +25,20 @@ import java.util.Map;
  */
 public record HomingNeumorphism() implements Design {
 
+    public static final DesignId ID = new DesignId("neumorphism");
     public static final HomingNeumorphism INSTANCE = new HomingNeumorphism();
 
     /** Over Default: the mould where it has one, Default's for the rest; the clay on the colour plane. */
     @Override public Impl impl(DesignClass<?> pair) {
         if (pair.onColourPlane()) return SeedPalette.CLAY.impl(pair);
         Impl own = NeumorphismDesign.WORDS.get(pair);
-        return own != null ? own : HomingDefault.INSTANCE.impl(pair);
+        return own != null ? own : HomingEditorial.INSTANCE.impl(pair);
     }
 
     /** Worn in the clay by default; the clay is a palette in its own name, so any physique may wear it. */
     @Override public hue.captains.singapura.js.homing.design.Palette palette() { return SeedPalette.CLAY; }
 
-    @Override public String slug()  { return "neumorphism"; }
+    @Override public DesignId id() { return ID; }
     @Override public String label() { return "Neumorphism"; }
     @Override public String group() { return "Expressive"; }
     @Override public String inspiration() { return "One material, moulded — pressed out of the page or into it, never drawn on."; }

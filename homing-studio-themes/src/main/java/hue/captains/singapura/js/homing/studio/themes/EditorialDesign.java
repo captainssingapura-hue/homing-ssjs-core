@@ -25,11 +25,11 @@ import static hue.captains.singapura.js.homing.studio.themes.Bind.*;
  * shadow names them by reference and carries none. Every value here was a
  * token or a literal in a class body until the components stopped painting.
  */
-final class DefaultDesign {
+final class EditorialDesign {
 
-    private DefaultDesign() {}
+    private EditorialDesign() {}
 
-    // The house colours live in SeedPalette.HOUSE — this is the physique: shape, type, motion, depth.
+    // The house colours live in SeedPalette.HARBOUR — this is the physique: shape, type, motion, depth.
 
     static final String DISPLAY_FACE = StudioFonts.DISPLAY;
     static final String BODY_FACE    = StudioFonts.BODY;

@@ -6,6 +6,7 @@ import hue.captains.singapura.js.homing.core.Wearable;
 import hue.captains.singapura.js.homing.design.Box;
 import hue.captains.singapura.js.homing.design.Design;
 import hue.captains.singapura.js.homing.design.DesignClass;
+import hue.captains.singapura.js.homing.design.DesignId;
 import hue.captains.singapura.js.homing.design.Feedback;
 import hue.captains.singapura.js.homing.design.Impl;
 import hue.captains.singapura.js.homing.design.State;
@@ -33,11 +34,11 @@ class DesignCssRendererTest {
                 DANGER, Impl.Bindings.none().at(State.REST, "background-color", "#B00020").at(State.HOVER, "background-color", "#C51F31"),
                 SUCCESS, Impl.Bindings.none().at(State.REST, "background-color", "#0A7D3A"),
                 CORNER, Impl.Bindings.of("4px"));
-        @Override public String slug() { return "plain"; }
+        @Override public DesignId id() { return new DesignId("plain"); }
         @Override public Impl impl(DesignClass<?> pair) { return WORDS.get(pair); }
     }
     record Brutal() implements Design {
-        @Override public String slug() { return "brutal"; }
+        @Override public DesignId id() { return new DesignId("brutal"); }
         @Override public Impl impl(DesignClass<?> pair) { return pair.equals(CORNER) ? Impl.Bindings.of("0") : new Plain().impl(pair); }
     }
 

@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.studio.themes;
 import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.design.Design;
 import hue.captains.singapura.js.homing.design.DesignClass;
+import hue.captains.singapura.js.homing.design.DesignId;
 import hue.captains.singapura.js.homing.design.Impl;
 import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
 import hue.captains.singapura.js.homing.theme.color.HomingVars;
@@ -20,7 +21,7 @@ import java.util.Map;
  *
  * <p>The third design, and the first written on the design classes from the
  * start: no override ever existed for it, so it is exactly the sum of its
- * words in {@link NeoFuturismDesign} over {@link HomingDefault}'s.</p>
+ * words in {@link NeoFuturismDesign} over {@link HomingEditorial}'s.</p>
  *
  * <p>Dark mode is the native register — the light mode is the same design
  * seen in daylight, the glow kept but dimmed to what a white page can carry.
@@ -29,15 +30,16 @@ import java.util.Map;
  */
 public record HomingNeoFuturism() implements Design {
 
+    public static final DesignId ID = new DesignId("neo-futurism");
     public static final HomingNeoFuturism INSTANCE = new HomingNeoFuturism();
 
     /** Over Default: its own word where it has one, Default's for the rest — the base is a plain call. */
     @Override public Impl impl(DesignClass<?> pair) {
         Impl own = NeoFuturismDesign.WORDS.get(pair);
-        return own != null ? own : HomingDefault.INSTANCE.impl(pair);
+        return own != null ? own : HomingEditorial.INSTANCE.impl(pair);
     }
 
-    @Override public String slug()  { return "neo-futurism"; }
+    @Override public DesignId id() { return ID; }
     @Override public String label() { return "Neo-Futurism"; }
     @Override public String group() { return "Expressive"; }
     @Override public String inspiration() { return "Cool glass over deep space — one electric cyan, every edge a filament."; }

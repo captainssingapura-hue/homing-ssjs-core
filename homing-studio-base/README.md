@@ -500,7 +500,7 @@ the markdown body; the browser's served JS module has the line
 
 `StudioThemeRegistry.INSTANCE` ships Default / Forest / Sunset. To add your
 own theme alongside them, declare a `Theme` record + a `GlobalColorPalette.Provision<TH>` (RFC 0066) +
-`ThemeGlobals<TH>` mirroring `HomingDefault.java`, then compose a registry
+`ThemeGlobals<TH>` mirroring `HomingEditorial.java`, then compose a registry
 that includes both yours and the studio's:
 
 ```java
