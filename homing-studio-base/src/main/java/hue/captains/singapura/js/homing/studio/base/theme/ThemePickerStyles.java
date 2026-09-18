@@ -2,25 +2,22 @@ package hue.captains.singapura.js.homing.studio.base.theme;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
+import hue.captains.singapura.js.homing.core.Wearable;
 import hue.captains.singapura.js.homing.studio.base.ui.MasterDetailStyles;
 import hue.captains.singapura.js.homing.studio.base.ui.SystemDialogStyles;
 
 import java.util.List;
 
-import static hue.captains.singapura.js.homing.design.Box.Control.*;
-import static hue.captains.singapura.js.homing.design.Emphasis.Muted.*;
-import static hue.captains.singapura.js.homing.design.Emphasis.Primary.*;
-import static hue.captains.singapura.js.homing.design.Interaction.Interactive.*;
-import static hue.captains.singapura.js.homing.design.Layer.Base.*;
-import static hue.captains.singapura.js.homing.design.Layer.Raised.*;
-import static hue.captains.singapura.js.homing.design.Pairing.OnInverted.*;
-import static hue.captains.singapura.js.homing.design.Pairing.OnInvertedMuted.*;
-import static hue.captains.singapura.js.homing.design.Structure.Hairline.*;
-import static hue.captains.singapura.js.homing.design.Text.Body.*;
-import static hue.captains.singapura.js.homing.design.Text.Caption.*;
-import static hue.captains.singapura.js.homing.design.Text.Heading.*;
-import static hue.captains.singapura.js.homing.design.Text.Kicker.*;
-import static hue.captains.singapura.js.homing.design.Text.Label.*;
+import static hue.captains.singapura.js.homing.design.DesignClass.of;
+import static hue.captains.singapura.js.homing.design.Target.*;
+import static hue.captains.singapura.js.homing.design.Box.*;
+import static hue.captains.singapura.js.homing.design.Emphasis.*;
+import static hue.captains.singapura.js.homing.design.Interaction.*;
+import static hue.captains.singapura.js.homing.design.Layer.*;
+import static hue.captains.singapura.js.homing.design.Pairing.*;
+import static hue.captains.singapura.js.homing.design.Structure.*;
+import static hue.captains.singapura.js.homing.design.Text.*;
+
 
 /**
  * The theme picker: the header button, the picker dialog's body (a
@@ -32,7 +29,7 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
 
     /** The header button: an outlined control on the inverted band. */
     public record tp_btn() implements CssClass<ThemePickerStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new on_inverted_color_edge(), new raised_shape_rule(), new control_shape_corner(), new on_inverted_color_ink(), new interactive_affordance_cursor()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(OnInverted.class, Color.Edge.class), of(Raised.class, Shape.Rule.class), of(Control.class, Shape.Corner.class), of(OnInverted.class, Color.Ink.class), of(Interactive.class, Affordance.Cursor.class)); }
         @Override public String body() { return """
             font: inherit;
             display: inline-flex;
@@ -44,7 +41,7 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
             """; }
     }
     public record tp_btn_label() implements CssClass<ThemePickerStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new on_inverted_muted_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(OnInvertedMuted.class, Color.Ink.class)); }
         @Override public String body() { return ""; }
     }
     public record tp_body() implements CssClass<ThemePickerStyles> {
@@ -62,7 +59,7 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
             """; }
     }
     public record tp_preview_name() implements CssClass<ThemePickerStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new heading_type_weight(), new label_type_scale(), new body_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Heading.class, Type.Weight.class), of(Label.class, Type.Scale.class), of(Body.class, Color.Ink.class)); }
         @Override public String body() { return """
             display: flex;
             align-items: baseline;
@@ -71,11 +68,11 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
             """; }
     }
     public record tp_current() implements CssClass<ThemePickerStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new kicker_type_scale(), new kicker_type_weight(), new kicker_type_treatment(), new primary_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Kicker.class, Type.Scale.class), of(Kicker.class, Type.Weight.class), of(Kicker.class, Type.Treatment.class), of(Primary.class, Color.Ink.class)); }
         @Override public String body() { return ""; }
     }
     public record tp_preview_note() implements CssClass<ThemePickerStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new caption_type_scale(), new muted_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Caption.class, Type.Scale.class), of(Muted.class, Color.Ink.class)); }
         @Override public String body() { return """
             margin-bottom: 16px;
             """; }
@@ -101,7 +98,7 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
             """; }
     }
     public record tp_preview_frame() implements CssClass<ThemePickerStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new base_color_surface(), new raised_color_edge(), new raised_shape_rule(), new control_shape_corner()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Base.class, Color.Surface.class), of(Raised.class, Color.Edge.class), of(Raised.class, Shape.Rule.class), of(Control.class, Shape.Corner.class)); }
         @Override public String body() { return """
             display: block;
             box-sizing: border-box;
@@ -112,7 +109,7 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
     }
     /** The loading veil over the preview: hidden until the component shows it — visibility is the component's. */
     public record tp_preview_loading() implements CssClass<ThemePickerStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new raised_color_surface(), new muted_color_ink(), new caption_type_scale(), new control_shape_corner()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Muted.class, Color.Ink.class), of(Caption.class, Type.Scale.class), of(Control.class, Shape.Corner.class)); }
         @Override public String body() { return """
             position: absolute;
             inset: 0;
@@ -130,14 +127,14 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
             """; }
     }
     public record tp_inline() implements CssClass<ThemePickerStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new raised_color_surface(), new raised_color_edge(), new raised_shape_rule(), new raised_shape_corner()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Raised.class, Color.Edge.class), of(Raised.class, Shape.Rule.class), of(Raised.class, Shape.Corner.class)); }
         @Override public String body() { return """
             max-width: 760px;
             overflow: hidden;
             """; }
     }
     public record tp_inline_head() implements CssClass<ThemePickerStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new hairline_color_edge(), new hairline_shape_rule(), new label_type_weight(), new body_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Hairline.class, Color.Edge.class), of(Hairline.class, Shape.Rule.class), of(Label.class, Type.Weight.class), of(Body.class, Color.Ink.class)); }
         @Override public String body() { return """
             padding: 12px 14px;
             """; }

@@ -11,19 +11,15 @@ import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
  * {@link Pairing}, {@link Box}, {@link Brand}, {@link Structure}); a
  * product adds a leaf under an existing branch and, rarely, a branch.
  *
- * <p>A leaf owns its projections: the {@link DesignClass} records that pair
- * it with the physical targets it makes sense in are declared nested inside
- * it — {@code Feedback.Danger.danger_color_surface} — so a projection exists
- * once, where the meaning lives, and a consumer can only ask for one that
- * exists. A leaf is <i>not</i> a module and <i>not</i> a group: meaning is
- * served by nothing. Its projections are served by their targets, which are
- * the groups ({@link Target}), once the leaf is registered with the
- * {@link Vocabulary}.</p>
+ * <p>A leaf is projected onto a physical target by whoever needs it, as a
+ * value that pairs the two — {@code DesignClass.of(Danger.class, Color.Surface.class)}: a value a
+ * component wears and a design answers. A leaf is <i>not</i> a module and
+ * <i>not</i> a group: meaning is served by nothing; its projections are
+ * served by their targets, which are the groups ({@link Target}).</p>
  *
- * <p>Three guards the open side does not get from the compiler, all checked
- * by {@link Trees}: a coordinate must be a leaf (a record), a leaf must have
- * exactly one branch, and a leaf's projections are declared inside it and
- * named for their coordinates.</p>
+ * <p>Two guards the open side does not get from the compiler, both checked
+ * by {@link Trees}: a coordinate must be a leaf (a record), and a leaf must
+ * have exactly one branch.</p>
  */
 public interface Semantic extends StatelessFunctionalObject {
 

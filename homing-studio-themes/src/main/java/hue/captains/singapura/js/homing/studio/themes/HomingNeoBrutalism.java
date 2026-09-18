@@ -6,7 +6,8 @@ import hue.captains.singapura.js.homing.theme.color.HomingVars;
 import hue.captains.singapura.js.homing.theme.type.GlobalTypePalette;
 import hue.captains.singapura.js.homing.theme.type.HomingFonts;
 import hue.captains.singapura.js.homing.design.Design;
-import hue.captains.singapura.js.homing.design.ImplProvider;
+import hue.captains.singapura.js.homing.design.DesignClass;
+import hue.captains.singapura.js.homing.design.Impl;
 
 import java.util.Map;
 
@@ -49,9 +50,11 @@ public record HomingNeoBrutalism() implements Design {
 
     public static final HomingNeoBrutalism INSTANCE = new HomingNeoBrutalism();
 
-    /** Over Default: its own word where it has one, Default's for the rest. */
-    @Override public java.util.Optional<Design> base() { return java.util.Optional.of(HomingDefault.INSTANCE); }
-    @Override public java.util.List<ImplProvider<?>> providers() { return NeoBrutalismDesign.PROVIDERS; }
+    /** Over Default: its own word where it has one, Default's for the rest — the base is a plain call. */
+    @Override public Impl impl(DesignClass<?> pair) {
+        Impl own = NeoBrutalismDesign.WORDS.get(pair);
+        return own != null ? own : HomingDefault.INSTANCE.impl(pair);
+    }
 
     @Override public String slug()  { return "neo-brutalism"; }
     @Override public String label() { return "Neo-Brutalism"; }

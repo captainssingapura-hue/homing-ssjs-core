@@ -24,5 +24,5 @@ public final class StudioWorkspaceThemes implements ThemeRegistry {
     @Override public List<Theme> themes() { return StudioThemeRegistry.INSTANCE.themes(); }
     @Override public List<PaletteProvision<?, ?>> palettes() { return StudioThemeRegistry.INSTANCE.palettes(); }
     @Override public List<CssGroupImpl<?, ?>> overrides() { return StudioThemeRegistry.INSTANCE.overrides(); }
-    @Override public List<CssRenderer> renderers() { return StudioThemeRegistry.INSTANCE.renderers(); }
+    @Override public List<CssRenderer> renderers(hue.captains.singapura.js.homing.server.ServedModules served) { return StudioThemeRegistry.INSTANCE.renderers(served); }
 }

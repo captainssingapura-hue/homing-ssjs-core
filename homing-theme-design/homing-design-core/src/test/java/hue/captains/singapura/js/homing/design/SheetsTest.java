@@ -1,7 +1,5 @@
 package hue.captains.singapura.js.homing.design;
 
-import hue.captains.singapura.js.homing.design.Feedback.Danger;
-import hue.captains.singapura.js.homing.design.Interaction.Interactive;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -58,13 +56,13 @@ class SheetsTest {
     void silence_andABody_render_asTheyShould() {
         record Odd() implements Design {
             @Override public String slug() { return "odd"; }
-            @Override public List<ImplProvider<?>> providers() {
-                return List.of(
-                        ImplProvider.of(Interactive.interactive_motion_transform.class, Impl.Silence.css()),
-                        ImplProvider.of(Danger.danger_color_surface.class, new Impl.Body("background-color: #B00020;\nbackground-image: url(hatch.svg);\n&:hover { background-color: #C51F31; }\n")));
+            @Override public Impl impl(DesignClass<?> pair) {
+                if (pair.equals(DeploymentTest.PRESS)) return Impl.Silence.css();
+                if (pair.equals(DeploymentTest.DANGER_SURFACE)) return new Impl.Body("background-color: #B00020;\nbackground-image: url(hatch.svg);\n&:hover { background-color: #C51F31; }\n");
+                return null;
             }
         }
-        var r = Deployment.of(Set.of(Interactive.interactive_motion_transform.class, Danger.danger_color_surface.class), new Odd()).resolve();
+        var r = Deployment.of(Set.of(DeploymentTest.PRESS, DeploymentTest.DANGER_SURFACE), new Odd()).resolve();
         assertEquals(List.of(), r.findings());
         var sheets = Sheets.targetSheets(r);
         assertFalse(sheets.containsKey("motion-transform"), "silence emits nothing");

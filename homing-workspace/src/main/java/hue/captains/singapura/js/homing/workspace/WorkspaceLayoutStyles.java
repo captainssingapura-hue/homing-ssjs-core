@@ -2,22 +2,20 @@ package hue.captains.singapura.js.homing.workspace;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
+import hue.captains.singapura.js.homing.core.Wearable;
 import hue.captains.singapura.js.homing.studio.base.css.StudioStyles;
 
 import java.util.List;
 
-import static hue.captains.singapura.js.homing.design.Box.Control.*;
-import static hue.captains.singapura.js.homing.design.Emphasis.Muted.*;
-import static hue.captains.singapura.js.homing.design.Emphasis.Tertiary.*;
-import static hue.captains.singapura.js.homing.design.Interaction.Interactive.*;
-import static hue.captains.singapura.js.homing.design.Layer.Base.*;
-import static hue.captains.singapura.js.homing.design.Layer.Raised.*;
-import static hue.captains.singapura.js.homing.design.Structure.Cap.*;
-import static hue.captains.singapura.js.homing.design.Structure.Hairline.*;
-import static hue.captains.singapura.js.homing.design.Text.Body.*;
-import static hue.captains.singapura.js.homing.design.Text.Caption.*;
-import static hue.captains.singapura.js.homing.design.Text.Kicker.*;
-import static hue.captains.singapura.js.homing.design.Text.Label.*;
+import static hue.captains.singapura.js.homing.design.DesignClass.of;
+import static hue.captains.singapura.js.homing.design.Target.*;
+import static hue.captains.singapura.js.homing.design.Box.*;
+import static hue.captains.singapura.js.homing.design.Emphasis.*;
+import static hue.captains.singapura.js.homing.design.Interaction.*;
+import static hue.captains.singapura.js.homing.design.Layer.*;
+import static hue.captains.singapura.js.homing.design.Structure.*;
+import static hue.captains.singapura.js.homing.design.Text.*;
+
 
 /**
  * The workspace frame: a ribbon over the content, a footer under it, and the
@@ -31,7 +29,7 @@ public record WorkspaceLayoutStyles() implements CssGroup<WorkspaceLayoutStyles>
 
     public record wl_root() implements CssClass<WorkspaceLayoutStyles> {
         @Override public List<CssClass<?>> dependsOn() { return List.of(new StudioStyles.st_main()); }
-        @Override public List<CssClass<?>> wears() { return List.of(new base_color_surface(), new raised_color_edge(), new raised_shape_rule(), new raised_shape_corner()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Base.class, Color.Surface.class), of(Raised.class, Color.Edge.class), of(Raised.class, Shape.Rule.class), of(Raised.class, Shape.Corner.class)); }
         @Override public String body() { return """
                 position: relative;
                 display: flex;
@@ -43,7 +41,7 @@ public record WorkspaceLayoutStyles() implements CssGroup<WorkspaceLayoutStyles>
                 """; }
     }
     public record wl_ribbon() implements CssClass<WorkspaceLayoutStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new raised_color_surface(), new hairline_color_edge(), new hairline_shape_rule(), new body_color_ink(), new body_type_face(), new caption_type_scale()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Hairline.class, Color.Edge.class), of(Hairline.class, Shape.Rule.class), of(Body.class, Color.Ink.class), of(Body.class, Type.Face.class), of(Caption.class, Type.Scale.class)); }
         @Override public String body() { return """
                 display: flex;
                 align-items: center;
@@ -53,7 +51,7 @@ public record WorkspaceLayoutStyles() implements CssGroup<WorkspaceLayoutStyles>
                 """; }
     }
     public record wl_ribbon_title() implements CssClass<WorkspaceLayoutStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new label_type_weight(), new body_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Label.class, Type.Weight.class), of(Body.class, Color.Ink.class)); }
         @Override public String body() { return ""; }
     }
     public record wl_ribbon_items() implements CssClass<WorkspaceLayoutStyles> {
@@ -67,7 +65,7 @@ public record WorkspaceLayoutStyles() implements CssGroup<WorkspaceLayoutStyles>
     }
     /** A ghost control: no surface and no edge until the hover class beside it says so. */
     public record wl_ribbon_button() implements CssClass<WorkspaceLayoutStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new body_color_ink(), new body_type_face(), new label_type_scale(), new control_shape_corner(), new interactive_affordance_cursor()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Body.class, Color.Ink.class), of(Body.class, Type.Face.class), of(Label.class, Type.Scale.class), of(Control.class, Shape.Corner.class), of(Interactive.class, Affordance.Cursor.class)); }
         @Override public String body() { return """
                 display: inline-flex;
                 align-items: center;
@@ -81,22 +79,22 @@ public record WorkspaceLayoutStyles() implements CssGroup<WorkspaceLayoutStyles>
     }
     /** The hovered ghost control: the interactive surface and edge, applied by the ribbon while the pointer is over it. */
     public record wl_ribbon_button_hover() implements CssClass<WorkspaceLayoutStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new interactive_color_surface(), new interactive_color_edge()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Interactive.class, Color.Surface.class), of(Interactive.class, Color.Edge.class)); }
         @Override public String body() { return ""; }
     }
     public record wl_ribbon_separator() implements CssClass<WorkspaceLayoutStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new tertiary_color_surface()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Tertiary.class, Color.Surface.class)); }
         @Override public String body() { return """
                 width: 1px;
                 height: 16px;
                 """; }
     }
     public record wl_ribbon_label() implements CssClass<WorkspaceLayoutStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new muted_color_ink(), new caption_type_scale()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Muted.class, Color.Ink.class), of(Caption.class, Type.Scale.class)); }
         @Override public String body() { return ""; }
     }
     public record wl_ribbon_fs() implements CssClass<WorkspaceLayoutStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new body_color_ink(), new body_type_face(), new label_type_scale(), new control_shape_corner(), new interactive_affordance_cursor()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Body.class, Color.Ink.class), of(Body.class, Type.Face.class), of(Label.class, Type.Scale.class), of(Control.class, Shape.Corner.class), of(Interactive.class, Affordance.Cursor.class)); }
         @Override public String body() { return """
                 margin-left: auto;
                 display: inline-flex;
@@ -118,7 +116,7 @@ public record WorkspaceLayoutStyles() implements CssGroup<WorkspaceLayoutStyles>
                 """; }
     }
     public record wl_footer() implements CssClass<WorkspaceLayoutStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new raised_color_surface(), new cap_color_edge(), new cap_shape_rule(), new muted_color_ink(), new body_type_face(), new kicker_type_scale()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Cap.class, Color.Edge.class), of(Cap.class, Shape.Rule.class), of(Muted.class, Color.Ink.class), of(Body.class, Type.Face.class), of(Kicker.class, Type.Scale.class)); }
         @Override public String body() { return """
                 display: flex;
                 align-items: center;
@@ -128,14 +126,14 @@ public record WorkspaceLayoutStyles() implements CssGroup<WorkspaceLayoutStyles>
                 """; }
     }
     public record wl_footer_separator() implements CssClass<WorkspaceLayoutStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new tertiary_color_surface()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Tertiary.class, Color.Surface.class)); }
         @Override public String body() { return """
                 width: 1px;
                 height: 12px;
                 """; }
     }
     public record wl_footer_button() implements CssClass<WorkspaceLayoutStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new body_color_ink(), new body_type_face(), new caption_type_scale(), new control_shape_corner(), new interactive_affordance_cursor()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Body.class, Color.Ink.class), of(Body.class, Type.Face.class), of(Caption.class, Type.Scale.class), of(Control.class, Shape.Corner.class), of(Interactive.class, Affordance.Cursor.class)); }
         @Override public String body() { return """
                 display: inline-flex;
                 align-items: center;
@@ -162,7 +160,7 @@ public record WorkspaceLayoutStyles() implements CssGroup<WorkspaceLayoutStyles>
     }
     /** The frame gone fullscreen: flush with the viewport, so it wears the base layer's absence of edge and corner. */
     public record wl_root_fullscreen() implements CssClass<WorkspaceLayoutStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new base_shape_rule(), new base_shape_corner()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Base.class, Shape.Rule.class), of(Base.class, Shape.Corner.class)); }
         @Override public String body() { return """
                 position: fixed;
                 inset: 0;

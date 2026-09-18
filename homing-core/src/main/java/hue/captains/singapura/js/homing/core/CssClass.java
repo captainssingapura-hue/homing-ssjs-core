@@ -103,32 +103,24 @@ public interface CssClass<C extends CssGroup<C>> extends Exportable._Constant<C>
     default List<CssClass<?>> dependsOn() { return List.of(); }
 
     /**
-     * The design classes this class wears: applied to the element with it,
-     * by the client manager, whenever this class is added — so a component
-     * declares once, in Java, what its element means and where that shows
-     * ({@code heading_color_ink}, {@code heading_type_scale}), and its JS adds
-     * one class as before. A worn class's group is a dependency of this
-     * class's group, like {@link #dependsOn()}; unlike it, a worn class is
-     * added to the element. This class's own body carries structure and
-     * nothing a worn class says. Default: none.
+     * What this class's element wears beside it: tokens applied with the
+     * class by the client manager whenever this class is added, and removed
+     * with it — so a component declares once, in Java, what its element means
+     * and where that shows, and its JS adds one class as before. A worn
+     * token's group is a dependency of this class's group, like
+     * {@link #dependsOn()}; unlike it, a worn token is put on the element. This
+     * class's own body carries structure and nothing a worn token says.
+     * Default: none.
      */
-    default List<CssClass<?>> wears() { return List.of(); }
+    default List<? extends Wearable> wears() { return List.of(); }
 
     /**
-     * The group this class belongs to. By declaration, a {@code CssClass} is a
-     * record nested in its group and the group's {@code INSTANCE} is the one
-     * object of that class; a class whose group is not its enclosing type — a
-     * design class, whose group is its physical target — overrides this and
-     * names it. Used to derive group dependencies from class dependencies and
-     * to find the sheet a class is served in.
+     * The group this class belongs to, from its declaration: a {@code CssClass}
+     * is a record nested in its group, and the group's {@code INSTANCE} is the
+     * one object of that class. Used to derive group dependencies from class
+     * dependencies.
      */
-    default CssGroup<?> group() { return enclosingGroupOf(this); }
-
-    /** {@link #group()} of a class — the one call the graph makes. */
-    static CssGroup<?> groupOf(CssClass<?> cls) { return cls.group(); }
-
-    /** The enclosing-type rule: the record is nested in its group, which has an {@code INSTANCE}. */
-    static CssGroup<?> enclosingGroupOf(CssClass<?> cls) {
+    static CssGroup<?> groupOf(CssClass<?> cls) {
         Class<?> enclosing = cls.getClass().getEnclosingClass();
         if (enclosing == null || !CssGroup.class.isAssignableFrom(enclosing)) {
             throw new IllegalStateException(

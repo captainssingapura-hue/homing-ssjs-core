@@ -29,36 +29,36 @@ public final class Sheets {
 
     /** Every target sheet, keyed by target token, in tree order; only targets the resolution reaches. */
     public static Map<String, String> targetSheets(Deployment.Resolution resolution) {
-        var byTarget = new LinkedHashMap<Target, List<Map.Entry<Class<? extends DesignClass<?, ?>>, Impl>>>();
+        var byTarget = new LinkedHashMap<Target, List<Map.Entry<DesignClass<?>, Impl>>>();
         for (Target t : Target.leaves()) byTarget.put(t, new ArrayList<>());
-        resolution.impls().forEach((cls, impl) -> { if (impl instanceof Impl.Silence) return; byTarget.get(Trees.targetInstance(Trees.coordinates(cls).target())).add(Map.entry(cls, impl)); });
+        resolution.impls().forEach((pair, impl) -> { if (impl instanceof Impl.Silence) return; byTarget.get(pair.targetLeaf()).add(Map.entry(pair, impl)); });
         var out = new LinkedHashMap<String, String>();
         byTarget.forEach((target, entries) -> {
             if (entries.isEmpty() || target.carrier() != Carrier.CSS) return;
             var sb = new StringBuilder("/* ").append(target.token()).append(" — generated; the template is the target's, the values the design's */\n");
-            for (var e : entries) sb.append(rule(instance(e.getKey()), e.getValue()));
+            for (var e : entries) sb.append(rule(e.getKey(), e.getValue()));
             out.put(target.token(), sb.toString());
         });
         return out;
     }
 
     /** One class's rule. */
-    public static String rule(DesignClass<?, ?> dc, Impl impl) {
+    public static String rule(DesignClass<?> dc, Impl impl) {
         return switch (impl) {
             case Impl.Bindings b -> template(dc, b);
-            case Impl.Body body -> "." + dc.token() + " {\n" + indent(body.css()) + "}\n";
+            case Impl.Body body -> "." + dc.cssName() + " {\n" + indent(body.css()) + "}\n";
             default -> "";
         };
     }
 
-    private static String template(DesignClass<?, ?> dc, Impl.Bindings b) {
+    private static String template(DesignClass<?> dc, Impl.Bindings b) {
         var rest = b.values().getOrDefault(Mode.LIGHT, Map.of()).getOrDefault(State.REST, Map.of());
         // every (state, property) bound in any mode gets a slot; the value comes from :root
         var slots = new EnumMap<State, java.util.Set<String>>(State.class);
         b.values().forEach((mode, states) -> states.forEach((state, props) ->
                 props.keySet().forEach(p -> slots.computeIfAbsent(state, s -> new java.util.TreeSet<>()).add(property(dc, p)))));
         if (slots.isEmpty()) return "";
-        var sb = new StringBuilder(".").append(dc.token()).append(" {\n");
+        var sb = new StringBuilder(".").append(dc.cssName()).append(" {\n");
         for (String p : slots.getOrDefault(State.REST, java.util.Set.of()))
             sb.append("    ").append(p).append(": var(").append(variable(dc, p, State.REST)).append(");\n");
         slots.forEach((state, props) -> {
@@ -76,9 +76,8 @@ public final class Sheets {
     /** The root sheet: the design's bindings as custom properties, per mode. */
     public static String rootSheet(Deployment.Resolution resolution) {
         var perMode = new EnumMap<Mode, Map<String, String>>(Mode.class);
-        resolution.impls().forEach((cls, impl) -> {
+        resolution.impls().forEach((dc, impl) -> {
             if (!(impl instanceof Impl.Bindings b)) return;
-            DesignClass<?, ?> dc = instance(cls);
             b.values().forEach((mode, states) -> states.forEach((state, props) -> props.forEach((p, v) ->
                     perMode.computeIfAbsent(mode, m -> new TreeMap<>()).put(variable(dc, property(dc, p), state), v))));
         });
@@ -96,18 +95,13 @@ public final class Sheets {
     // ── names ─────────────────────────────────────────────────────────────
 
     /** The real property for a binding key — {@link Impl.Bindings#SOLE} resolves to the target's one property. */
-    static String property(DesignClass<?, ?> dc, String key) {
+    static String property(DesignClass<?> dc, String key) {
         return key.equals(Impl.Bindings.SOLE) ? dc.targetLeaf().properties().iterator().next() : key;
     }
 
     /** {@code --<token>[-<property>][-<state>]}. */
-    static String variable(DesignClass<?, ?> dc, String property, State state) {
+    static String variable(DesignClass<?> dc, String property, State state) {
         return Trees.variable(dc, property) + state.suffix();
-    }
-
-    static DesignClass<?, ?> instance(Class<? extends DesignClass<?, ?>> cls) {
-        try { return cls.getDeclaredConstructor().newInstance(); }
-        catch (ReflectiveOperationException e) { throw new IllegalStateException(cls.getName(), e); }
     }
 
     private static String indent(String css) {

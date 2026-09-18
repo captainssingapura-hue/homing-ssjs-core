@@ -39,9 +39,11 @@ public interface ThemeRegistry {
 
     /**
      * The design side's renderers — asked first by {@code /css-content} for any group,
-     * before the declared-body rendering. Empty for a registry with no design side.
+     * before the declared-body rendering — given what the deployment serves, since
+     * what a sheet must carry is decided by what the served components wear.
+     * Empty for a registry with no design side.
      */
-    default List<CssRenderer> renderers() { return List.of(); }
+    default List<CssRenderer> renderers(ServedModules served) { return List.of(); }
 
     /** Empty registry — no themes registered. */
     ThemeRegistry EMPTY = new ThemeRegistry() {

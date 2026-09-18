@@ -2,23 +2,20 @@ package hue.captains.singapura.js.homing.workspace.shell;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
+import hue.captains.singapura.js.homing.core.Wearable;
 
 import java.util.List;
 
-import static hue.captains.singapura.js.homing.design.Box.Control.*;
-import static hue.captains.singapura.js.homing.design.Emphasis.Muted.*;
-import static hue.captains.singapura.js.homing.design.Feedback.Danger.*;
-import static hue.captains.singapura.js.homing.design.Interaction.Inert.*;
-import static hue.captains.singapura.js.homing.design.Interaction.Interactive.*;
-import static hue.captains.singapura.js.homing.design.Layer.Base.*;
-import static hue.captains.singapura.js.homing.design.Layer.Raised.*;
-import static hue.captains.singapura.js.homing.design.Layer.Recessed.*;
-import static hue.captains.singapura.js.homing.design.Structure.Cap.*;
-import static hue.captains.singapura.js.homing.design.Text.Body.*;
-import static hue.captains.singapura.js.homing.design.Text.Caption.*;
-import static hue.captains.singapura.js.homing.design.Text.Heading.*;
-import static hue.captains.singapura.js.homing.design.Text.Kicker.*;
-import static hue.captains.singapura.js.homing.design.Text.Label.*;
+import static hue.captains.singapura.js.homing.design.DesignClass.of;
+import static hue.captains.singapura.js.homing.design.Target.*;
+import static hue.captains.singapura.js.homing.design.Box.*;
+import static hue.captains.singapura.js.homing.design.Emphasis.*;
+import static hue.captains.singapura.js.homing.design.Feedback.*;
+import static hue.captains.singapura.js.homing.design.Interaction.*;
+import static hue.captains.singapura.js.homing.design.Layer.*;
+import static hue.captains.singapura.js.homing.design.Structure.*;
+import static hue.captains.singapura.js.homing.design.Text.*;
+
 
 /**
  * The workspace switcher's detail pane: a heading, a list of workspaces, a
@@ -39,16 +36,16 @@ public record WorkspaceSwitcherStyles() implements CssGroup<WorkspaceSwitcherSty
             """; }
     }
     public record ws_head() implements CssClass<WorkspaceSwitcherStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new label_type_weight(), new heading_color_ink(), new label_type_scale()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Label.class, Type.Weight.class), of(Heading.class, Color.Ink.class), of(Label.class, Type.Scale.class)); }
         @Override public String body() { return ""; }
     }
     public record ws_sub() implements CssClass<WorkspaceSwitcherStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new kicker_type_scale(), new muted_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Kicker.class, Type.Scale.class), of(Muted.class, Color.Ink.class)); }
         @Override public String body() { return ""; }
     }
     /** The list is a recessed field; its edge answers focus (the raised edge's focus slot). */
     public record ws_list() implements CssClass<WorkspaceSwitcherStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new recessed_color_surface(), new raised_color_edge(), new raised_shape_rule(), new control_shape_corner()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Recessed.class, Color.Surface.class), of(Raised.class, Color.Edge.class), of(Raised.class, Shape.Rule.class), of(Control.class, Shape.Corner.class)); }
         @Override public String body() { return """
             flex: 1 1 auto;
             min-height: 0;
@@ -63,7 +60,7 @@ public record WorkspaceSwitcherStyles() implements CssGroup<WorkspaceSwitcherSty
         @Override public String body() { return ""; }
     }
     public record ws_note() implements CssClass<WorkspaceSwitcherStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new kicker_type_scale(), new muted_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Kicker.class, Type.Scale.class), of(Muted.class, Color.Ink.class)); }
         @Override public String body() { return ""; }
     }
     public record ws_row() implements CssClass<WorkspaceSwitcherStyles> {
@@ -75,7 +72,7 @@ public record WorkspaceSwitcherStyles() implements CssGroup<WorkspaceSwitcherSty
             """; }
     }
     public record ws_input() implements CssClass<WorkspaceSwitcherStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new recessed_color_surface(), new body_color_ink(), new raised_color_edge(), new raised_shape_rule(), new control_shape_corner(), new caption_type_scale()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Recessed.class, Color.Surface.class), of(Body.class, Color.Ink.class), of(Raised.class, Color.Edge.class), of(Raised.class, Shape.Rule.class), of(Control.class, Shape.Corner.class), of(Caption.class, Type.Scale.class)); }
         @Override public String body() { return """
             flex: 1 1 160px;
             min-width: 0;
@@ -84,7 +81,7 @@ public record WorkspaceSwitcherStyles() implements CssGroup<WorkspaceSwitcherSty
             """; }
     }
     public record ws_btn() implements CssClass<WorkspaceSwitcherStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new base_color_surface(), new body_color_ink(), new raised_color_edge(), new raised_shape_rule(), new control_shape_corner(), new caption_type_scale(), new interactive_affordance_cursor()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Base.class, Color.Surface.class), of(Body.class, Color.Ink.class), of(Raised.class, Color.Edge.class), of(Raised.class, Shape.Rule.class), of(Control.class, Shape.Corner.class), of(Caption.class, Type.Scale.class), of(Interactive.class, Affordance.Cursor.class)); }
         @Override public String body() { return """
             font: inherit;
             padding: 4px 12px;
@@ -92,15 +89,15 @@ public record WorkspaceSwitcherStyles() implements CssGroup<WorkspaceSwitcherSty
     }
     /** The destructive action: applied beside ws_btn; the danger ink and edge win by order. */
     public record ws_btn_danger() implements CssClass<WorkspaceSwitcherStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new danger_color_ink(), new danger_color_edge()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Danger.class, Color.Ink.class), of(Danger.class, Color.Edge.class)); }
         @Override public String body() { return ""; }
     }
     public record ws_btn_off() implements CssClass<WorkspaceSwitcherStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new inert_effect_opacity(), new inert_affordance_cursor()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Inert.class, Effect.Opacity.class), of(Inert.class, Affordance.Cursor.class)); }
         @Override public String body() { return ""; }
     }
     public record ws_maint() implements CssClass<WorkspaceSwitcherStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new cap_color_edge(), new cap_shape_rule()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Cap.class, Color.Edge.class), of(Cap.class, Shape.Rule.class)); }
         @Override public String body() { return """
             padding-top: 8px;
             """; }

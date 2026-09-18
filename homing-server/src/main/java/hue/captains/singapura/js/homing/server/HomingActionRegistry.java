@@ -72,7 +72,7 @@ public class HomingActionRegistry implements ActionRegistry<RoutingContext> {
         // for it, or when a design-side renderer owns it and says so; every other
         // group is served once, without a theme, and left alone by a switch.
         var impls = themeRegistry.impls();
-        var renderers = themeRegistry.renderers();
+        var renderers = themeRegistry.renderers(served);
         java.util.function.Predicate<CssGroup<?>> varies = g ->
                 priors.stream().anyMatch(p -> p.getClass() == g.getClass())
                 || impls.stream().anyMatch(i -> i.group().getClass() == g.getClass())
@@ -83,7 +83,7 @@ public class HomingActionRegistry implements ActionRegistry<RoutingContext> {
         // side's renderers are asked first. The first theme listed is the default a
         // request without ?theme= gets. RFC 0002 §3.6 still holds: no file-based fallback.
         Theme defaultTheme = themeRegistry.themes().isEmpty() ? null : themeRegistry.themes().get(0);
-        this.cssContentAction = new CssContentGetAction(themeRegistry.impls(), defaultTheme, served, themeRegistry.renderers());
+        this.cssContentAction = new CssContentGetAction(themeRegistry.impls(), defaultTheme, served, renderers);
     }
 
     /** Backwards-compatible constructor for callers that don't yet use {@code SimpleAppResolver}. */

@@ -2,10 +2,14 @@ package hue.captains.singapura.js.homing.studio.base.ui;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
+import hue.captains.singapura.js.homing.core.Wearable;
 
 import java.util.List;
 
-import static hue.captains.singapura.js.homing.design.Structure.Rail.*;
+import static hue.captains.singapura.js.homing.design.DesignClass.of;
+import static hue.captains.singapura.js.homing.design.Target.*;
+import static hue.captains.singapura.js.homing.design.Structure.*;
+
 
 /**
  * The master/detail split: a nav column beside a detail body. Structure
@@ -26,7 +30,7 @@ public record MasterDetailStyles() implements CssGroup<MasterDetailStyles> {
             """; }
     }
     public record md_nav() implements CssClass<MasterDetailStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new rail_color_edge(), new rail_shape_rule()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Rail.class, Color.Edge.class), of(Rail.class, Shape.Rule.class)); }
         @Override public String body() { return """
             flex: 0 0 auto;
             width: max-content;

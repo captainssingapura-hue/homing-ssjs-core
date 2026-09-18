@@ -36,5 +36,5 @@ public final class StudioThemeRegistry implements ThemeRegistry {
     @Override public List<Theme> themes() { return DESIGNS.themes(); }
     @Override public List<PaletteProvision<?, ?>> palettes() { return DESIGNS.palettes(); }
     @Override public List<CssGroupImpl<?, ?>> overrides() { return DESIGNS.overrides(); }
-    @Override public List<CssRenderer> renderers() { return DESIGNS.renderers(); }
+    @Override public List<CssRenderer> renderers(hue.captains.singapura.js.homing.server.ServedModules served) { return DESIGNS.renderers(served); }
 }

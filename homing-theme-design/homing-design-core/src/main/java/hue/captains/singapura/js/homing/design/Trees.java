@@ -1,68 +1,25 @@
 package hue.captains.singapura.js.homing.design;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * The walks and the guards over the two trees. Everything here is derived
- * from types alone — no instance, no registry — and cached per class, so a
- * projection record stays a one-liner and the tokens cannot drift from the
- * names.
+ * The walks and the guards over the two trees, derived from types alone.
  *
- * <p>The guards the open tree needs: a coordinate must be a leaf (a record);
- * a semantic leaf must have exactly one branch; a projection must be declared
- * inside its semantic leaf. The sealed tree's guard: siblings' property sets
- * are disjoint. Each is a refusal at the point the type is first touched,
- * and a rule over a closure repeats it.</p>
+ * <p>The open tree's guards: a semantic coordinate must be a leaf (a record),
+ * and a leaf must have exactly one branch. The sealed tree's guard:
+ * siblings' property sets are disjoint. Each is a refusal at the point a
+ * pair is made, and a test over the tree repeats it.</p>
  */
 public final class Trees {
 
     private Trees() {}
 
-    /** The two coordinates of a design class. */
-    public record Coordinates(Class<? extends Semantic> semantic, Class<? extends Target> target) {}
-
-    private static final Map<Class<?>, Coordinates> COORDINATES = new ConcurrentHashMap<>();
     private static final Map<Class<?>, Target> TARGETS = new ConcurrentHashMap<>();
-
-    // ── design classes ────────────────────────────────────────────────────
-
-    /** Reads {@code DesignClass<S, T>} off the record's declared interfaces; refuses a non-leaf coordinate. */
-    public static Coordinates coordinates(Class<?> designClass) {
-        return COORDINATES.computeIfAbsent(designClass, Trees::readCoordinates);
-    }
-
-    @SuppressWarnings("unchecked")
-    private static Coordinates readCoordinates(Class<?> designClass) {
-        if (!designClass.isRecord())
-            throw new IllegalArgumentException(designClass.getName() + ": a design class is a record");
-        for (Type t : designClass.getGenericInterfaces()) {
-            if (t instanceof ParameterizedType p && p.getRawType() == DesignClass.class) {
-                Class<?> s = (Class<?>) p.getActualTypeArguments()[0];
-                Class<?> target = (Class<?>) p.getActualTypeArguments()[1];
-                requireSemanticLeaf(s);
-                requireTargetLeaf(target);
-                String expected = (semanticToken(s) + "-" + targetToken(target)).replace('-', '_');
-                if (!designClass.getSimpleName().equals(expected))
-                    throw new IllegalArgumentException(designClass.getName() + ": a projection is named for its coordinates — expected " + expected);
-                if (designClass.getEnclosingClass() != s)
-                    throw new IllegalArgumentException(designClass.getName() + ": a projection is declared inside its semantic leaf, "
-                            + s.getSimpleName() + " — not in " + (designClass.getEnclosingClass() == null ? "a top-level file" : designClass.getEnclosingClass().getSimpleName()));
-                return new Coordinates((Class<? extends Semantic>) s, (Class<? extends Target>) target);
-            }
-        }
-        throw new IllegalArgumentException(designClass.getName() + ": does not implement DesignClass<S, T> directly");
-    }
-
-    public static String classToken(Class<?> designClass) {
-        Coordinates c = coordinates(designClass);
-        return semanticToken(c.semantic()) + "-" + targetToken(c.target());
-    }
 
     // ── semantic leaves ───────────────────────────────────────────────────
 
@@ -76,7 +33,7 @@ public final class Trees {
             throw new IllegalArgumentException(s.getName() + ": a semantic leaf has exactly one branch; found " + branchesOf(s));
     }
 
-    /** The branches a leaf directly implements — {@code Semantic} itself and the graph's contracts excluded. */
+    /** The branches a leaf directly implements — {@code Semantic} itself excluded. */
     public static List<Class<?>> branchesOf(Class<?> leaf) {
         var out = new ArrayList<Class<?>>();
         for (Class<?> i : leaf.getInterfaces())
@@ -90,6 +47,7 @@ public final class Trees {
         return branchesOf(leaf).get(0);
     }
 
+    /** {@code OnDanger} → {@code on-danger}. */
     public static String semanticToken(Class<?> leaf) { return kebab(leaf.getSimpleName()); }
 
     // ── target leaves ─────────────────────────────────────────────────────
@@ -107,13 +65,7 @@ public final class Trees {
         });
     }
 
-    /** The registered projections onto a target leaf, as that leaf's classes — the derived group. */
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public static <T extends Target & hue.captains.singapura.js.homing.core.CssGroup<T>> List<hue.captains.singapura.js.homing.core.CssClass<T>> classesOf(T leaf) {
-        return (List) Vocabulary.onto(leaf.getClass());
-    }
-
-    /** {@code branch-leaf}. */
+    /** {@code branch-leaf}: {@code color-surface}. */
     public static String targetToken(Class<?> leaf) {
         Class<?> branch = leaf.getEnclosingClass();
         return kebab(branch.getSimpleName()) + "-" + kebab(leaf.getSimpleName());
@@ -136,7 +88,7 @@ public final class Trees {
     public static List<String> propertyCollisions() {
         var out = new ArrayList<String>();
         for (Class<?> branch : Target.class.getPermittedSubclasses()) {
-            var seen = new java.util.HashMap<String, String>();
+            var seen = new HashMap<String, String>();
             for (Class<?> leaf : branch.getPermittedSubclasses()) {
                 for (String p : targetInstance(leaf).properties()) {
                     String prior = seen.put(p, leaf.getSimpleName());
@@ -162,8 +114,8 @@ public final class Trees {
     }
 
     /** The variable stem for a (class, property): the class token, plus the property when the target owns more than one. */
-    public static String variable(DesignClass<?, ?> dc, String property) {
+    public static String variable(DesignClass<?> dc, String property) {
         Set<String> owned = dc.targetLeaf().properties();
-        return "--" + dc.token() + (owned.size() == 1 ? "" : "-" + property);
+        return "--" + dc.cssName() + (owned.size() == 1 ? "" : "-" + property);
     }
 }

@@ -1,20 +1,25 @@
 package hue.captains.singapura.js.homing.design.server;
 
+import hue.captains.singapura.js.homing.core.CssGroup;
 import hue.captains.singapura.js.homing.core.CssGroupImpl;
 import hue.captains.singapura.js.homing.core.PaletteProvision;
 import hue.captains.singapura.js.homing.core.Theme;
+import hue.captains.singapura.js.homing.design.Deployment;
 import hue.captains.singapura.js.homing.design.Design;
 import hue.captains.singapura.js.homing.design.DesignExtension;
 import hue.captains.singapura.js.homing.server.CssRenderer;
+import hue.captains.singapura.js.homing.server.ServedModules;
 import hue.captains.singapura.js.homing.server.ThemeRegistry;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * A {@link ThemeRegistry} whose themes are designs. Lists the designs (a
  * {@link Design} is a {@link Theme}, so the page's {@code ?theme=} and the
- * picker see them as before), the extensions, and hands the server the one
- * renderer that serves the target groups.
+ * picker see them as before) and the extensions, and — given what the
+ * deployment serves — hands the server the one renderer that serves the
+ * target groups, cut to the pairs the served components wear.
  *
  * <p>During the migration a deployment still carries palettes and overrides
  * for the groups not yet moved onto design classes; they pass through here
@@ -26,7 +31,6 @@ public final class DesignRegistry implements ThemeRegistry {
     private final List<DesignExtension> extensions;
     private final List<PaletteProvision<?, ?>> palettes;
     private final List<CssGroupImpl<?, ?>> overrides;
-    private final DesignCssRenderer renderer;
 
     public DesignRegistry(List<Design> designs, List<DesignExtension> extensions) {
         this(designs, extensions, List.of(), List.of());
@@ -39,7 +43,6 @@ public final class DesignRegistry implements ThemeRegistry {
         this.extensions = List.copyOf(extensions);
         this.palettes = List.copyOf(palettes);
         this.overrides = List.copyOf(overrides);
-        this.renderer = new DesignCssRenderer(this.designs, this.extensions);
     }
 
     public List<Design> designs() { return designs; }
@@ -48,5 +51,11 @@ public final class DesignRegistry implements ThemeRegistry {
     @Override public List<Theme> themes() { return List.copyOf(designs); }
     @Override public List<PaletteProvision<?, ?>> palettes() { return palettes; }
     @Override public List<CssGroupImpl<?, ?>> overrides() { return overrides; }
-    @Override public List<CssRenderer> renderers() { return List.of(renderer); }
+
+    @Override
+    public List<CssRenderer> renderers(ServedModules served) {
+        var groups = new ArrayList<CssGroup<?>>();
+        for (var m : served.byName().values()) if (m instanceof CssGroup<?> g) groups.add(g);
+        return List.of(new DesignCssRenderer(designs, extensions, Deployment.wornBy(groups)));
+    }
 }

@@ -5,8 +5,8 @@ import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
 import hue.captains.singapura.js.homing.theme.color.HomingVars;
 import hue.captains.singapura.js.homing.theme.type.GlobalTypePalette;
 import hue.captains.singapura.js.homing.design.Design;
-import hue.captains.singapura.js.homing.design.ImplProvider;
-import java.util.List;
+import hue.captains.singapura.js.homing.design.DesignClass;
+import hue.captains.singapura.js.homing.design.Impl;
 
 import java.util.Map;
 
@@ -24,8 +24,8 @@ public record HomingDefault() implements Design {
 
     public static final HomingDefault INSTANCE = new HomingDefault();
 
-    /** The design: one provider per design class the studio's components wear. Grows as each group moves. */
-    @Override public List<ImplProvider<?>> providers() { return DefaultDesign.PROVIDERS; }
+    /** The design as a function: its word for a design class the studio's components wear, or none. */
+    @Override public Impl impl(DesignClass<?> pair) { return DefaultDesign.WORDS.get(pair); }
 
     @Override public String slug()  { return "default"; }
     @Override public String label() { return "Default"; }

@@ -2,22 +2,19 @@ package hue.captains.singapura.js.homing.workspace;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
+import hue.captains.singapura.js.homing.core.Wearable;
 
 import java.util.List;
 
-import static hue.captains.singapura.js.homing.design.Box.Control.*;
-import static hue.captains.singapura.js.homing.design.Emphasis.Muted.*;
-import static hue.captains.singapura.js.homing.design.Emphasis.Primary.*;
-import static hue.captains.singapura.js.homing.design.Interaction.Inert.*;
-import static hue.captains.singapura.js.homing.design.Interaction.Interactive.*;
-import static hue.captains.singapura.js.homing.design.Layer.Base.*;
-import static hue.captains.singapura.js.homing.design.Layer.Raised.*;
-import static hue.captains.singapura.js.homing.design.Pairing.OnPrimary.*;
-import static hue.captains.singapura.js.homing.design.Text.Body.*;
-import static hue.captains.singapura.js.homing.design.Text.Caption.*;
-import static hue.captains.singapura.js.homing.design.Text.Kicker.*;
-import static hue.captains.singapura.js.homing.design.Text.Label.*;
-import static hue.captains.singapura.js.homing.design.Text.Numeral.*;
+import static hue.captains.singapura.js.homing.design.DesignClass.of;
+import static hue.captains.singapura.js.homing.design.Target.*;
+import static hue.captains.singapura.js.homing.design.Box.*;
+import static hue.captains.singapura.js.homing.design.Emphasis.*;
+import static hue.captains.singapura.js.homing.design.Interaction.*;
+import static hue.captains.singapura.js.homing.design.Layer.*;
+import static hue.captains.singapura.js.homing.design.Pairing.*;
+import static hue.captains.singapura.js.homing.design.Text.*;
+
 
 /**
  * The widget picker: a grid of tiles, then a params form. Structure only;
@@ -36,14 +33,14 @@ public record WidgetPickerStyles() implements CssGroup<WidgetPickerStyles> {
                 """; }
     }
     public record hwp_group_label() implements CssClass<WidgetPickerStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new kicker_type_scale(), new kicker_type_weight(), new kicker_type_treatment(), new muted_color_ink(), new body_type_face()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Kicker.class, Type.Scale.class), of(Kicker.class, Type.Weight.class), of(Kicker.class, Type.Treatment.class), of(Muted.class, Color.Ink.class), of(Body.class, Type.Face.class)); }
         @Override public String body() { return """
                 grid-column: 1 / -1;
                 padding: 6px 2px 2px;
                 """; }
     }
     public record hwp_tile() implements CssClass<WidgetPickerStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new base_color_surface(), new raised_color_edge(), new raised_shape_rule(), new raised_shape_corner(), new body_color_ink(), new interactive_affordance_cursor(), new interactive_motion_ease()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Base.class, Color.Surface.class), of(Raised.class, Color.Edge.class), of(Raised.class, Shape.Rule.class), of(Raised.class, Shape.Corner.class), of(Body.class, Color.Ink.class), of(Interactive.class, Affordance.Cursor.class), of(Interactive.class, Motion.Ease.class)); }
         @Override public String body() { return """
                 display: flex;
                 flex-direction: column;
@@ -53,21 +50,21 @@ public record WidgetPickerStyles() implements CssGroup<WidgetPickerStyles> {
                 """; }
     }
     public record hwp_tile_disabled() implements CssClass<WidgetPickerStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new inert_effect_opacity(), new inert_affordance_cursor()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Inert.class, Effect.Opacity.class), of(Inert.class, Affordance.Cursor.class)); }
         @Override public String body() { return ""; }
     }
     public record hwp_tile_icon() implements CssClass<WidgetPickerStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new numeral_type_scale()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Numeral.class, Type.Scale.class)); }
         @Override public String body() { return ""; }
     }
     public record hwp_tile_label() implements CssClass<WidgetPickerStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new body_type_face(), new caption_type_scale()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Body.class, Type.Face.class), of(Caption.class, Type.Scale.class)); }
         @Override public String body() { return """
                 text-align: center;
                 """; }
     }
     public record hwp_tile_desc() implements CssClass<WidgetPickerStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new body_type_face(), new kicker_type_scale(), new muted_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Body.class, Type.Face.class), of(Kicker.class, Type.Scale.class), of(Muted.class, Color.Ink.class)); }
         @Override public String body() { return """
                 text-align: center;
                 """; }
@@ -88,11 +85,11 @@ public record WidgetPickerStyles() implements CssGroup<WidgetPickerStyles> {
                 """; }
     }
     public record hwp_form_label() implements CssClass<WidgetPickerStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new body_type_face(), new caption_type_scale(), new muted_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Body.class, Type.Face.class), of(Caption.class, Type.Scale.class), of(Muted.class, Color.Ink.class)); }
         @Override public String body() { return ""; }
     }
     public record hwp_form_input() implements CssClass<WidgetPickerStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new base_color_surface(), new raised_color_edge(), new raised_shape_rule(), new control_shape_corner(), new body_color_ink(), new body_type_face(), new caption_type_scale()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Base.class, Color.Surface.class), of(Raised.class, Color.Edge.class), of(Raised.class, Shape.Rule.class), of(Control.class, Shape.Corner.class), of(Body.class, Color.Ink.class), of(Body.class, Type.Face.class), of(Caption.class, Type.Scale.class)); }
         @Override public String body() { return """
                 padding: 5px 8px;
                 """; }
@@ -106,14 +103,14 @@ public record WidgetPickerStyles() implements CssGroup<WidgetPickerStyles> {
                 """; }
     }
     public record hwp_form_btn() implements CssClass<WidgetPickerStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new base_color_surface(), new raised_color_edge(), new raised_shape_rule(), new control_shape_corner(), new body_color_ink(), new body_type_face(), new caption_type_scale(), new interactive_affordance_cursor()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Base.class, Color.Surface.class), of(Raised.class, Color.Edge.class), of(Raised.class, Shape.Rule.class), of(Control.class, Shape.Corner.class), of(Body.class, Color.Ink.class), of(Body.class, Type.Face.class), of(Caption.class, Type.Scale.class), of(Interactive.class, Affordance.Cursor.class)); }
         @Override public String body() { return """
                 padding: 5px 12px;
                 """; }
     }
     /** The primary action: applied beside hwp_form_btn; its surface, ink and edge win by order. */
     public record hwp_form_btn_primary() implements CssClass<WidgetPickerStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new primary_color_surface(), new primary_color_edge(), new on_primary_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Primary.class, Color.Surface.class), of(Primary.class, Color.Edge.class), of(OnPrimary.class, Color.Ink.class)); }
         @Override public String body() { return ""; }
     }
 

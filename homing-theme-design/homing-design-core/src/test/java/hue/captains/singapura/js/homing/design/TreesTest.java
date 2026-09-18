@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** The two trees hold their shape: the sealed one partitions, the open one is guarded. */
+/** The two trees hold their shape: the sealed one partitions, the open one is guarded, and a pair is a value. */
 class TreesTest {
 
     // ── the sealed tree ───────────────────────────────────────────────────
@@ -31,6 +31,7 @@ class TreesTest {
                 assertTrue(!p.equals("border") && !p.equals("background") && !p.equals("outline") && !p.equals("text-decoration") && !p.equals("font"),
                         t.token() + " owns a shorthand that crosses leaves: " + p);
             if (t.carrier() != Carrier.CSS) assertTrue(t.properties().isEmpty(), t.token() + " is not CSS and owns no property");
+            assertEquals(List.of(), ((hue.captains.singapura.js.homing.core.CssGroup<?>) t).cssClasses(), t.token() + " declares no class of its own");
         }
     }
 
@@ -41,73 +42,43 @@ class TreesTest {
         assertEquals("sound-cue",        Target.Sound.Cue.INSTANCE.token());
     }
 
-    // ── the open tree ─────────────────────────────────────────────────────
+    // ── the pair ──────────────────────────────────────────────────────────
 
     @Test
-    void aProjectionKnowsItsCoordinates_andItsToken() {
-        var dc = new Feedback.Danger.danger_color_surface();
-        assertEquals(Feedback.Danger.class, dc.semantic());
-        assertEquals(Target.Color.Surface.class, dc.target());
-        assertEquals("danger-color-surface", dc.token());
-        assertEquals("on-danger-color-ink", new Pairing.OnDanger.on_danger_color_ink().token());
-        assertEquals("interactive-motion-transform", new Interaction.Interactive.interactive_motion_transform().token());
+    void aPair_isAValue_withItsTokenAndItsGroup() {
+        var dc = DesignClass.of(Feedback.Danger.class, Target.Color.Surface.class);
+        assertEquals("danger-color-surface", dc.cssName());
+        assertEquals(Target.Color.Surface.INSTANCE, dc.group(), "the group is the target");
+        assertEquals(dc, DesignClass.of(Feedback.Danger.class, Target.Color.Surface.class), "the same pair, asked twice, is one value");
+        assertEquals("on-danger-color-ink", DesignClass.of(Pairing.OnDanger.class, Target.Color.Ink.class).cssName());
+        assertEquals("interactive-motion-transform", DesignClass.of(Interaction.Interactive.class, Target.Motion.Transform.class).cssName());
+        assertEquals("drop-target-shape-rule", DesignClass.of(Interaction.DropTarget.class, Target.Shape.Rule.class).cssName());
     }
 
     @Test
-    void everyShippedProjection_isDeclaredInsideItsLeaf_withOneBranch() {
+    void everyShippedLeaf_hasExactlyOneBranch() {
         int count = 0;
         for (Class<?> branch : List.of(Feedback.class, Emphasis.class, Layer.class, Interaction.class, Text.class, Pairing.class, Box.class, Brand.class, Structure.class)) {
             for (Class<?> leaf : branch.getDeclaredClasses()) {
                 if (!leaf.isRecord()) continue;
                 assertEquals(branch, Trees.branchOf(leaf), leaf.getName() + " has one branch, " + branch.getSimpleName());
-                for (Class<?> projection : leaf.getDeclaredClasses()) {
-                    var c = Trees.coordinates(projection);
-                    assertEquals(leaf, c.semantic());
-                    count++;
-                }
+                count++;
             }
         }
-        assertTrue(count >= 150, "the first vocabulary projects " + count + " classes");
+        assertTrue(count >= 40, "the first vocabulary has " + count + " leaves");
     }
 
     // ── the guards ────────────────────────────────────────────────────────
 
-    /** A branch as a coordinate. */
-    record BranchAsCoordinate() implements DesignClass<Semantic, Target.Color.Ink> {}
-
     /** Two branches on one leaf. */
-    record TwoBranches() implements Feedback, Emphasis {
-        record two_branches_color_ink() implements DesignClass<TwoBranches, Target.Color.Ink> {}
-    }
-
-    /** A leaf declared correctly, but its projection declared elsewhere. */
-    record Lonely() implements Feedback {}
-    record lonely_color_ink() implements DesignClass<Lonely, Target.Color.Ink> {}
-    /** Named for the wrong coordinates. */
-    record Misnamed() implements Feedback {
-        record danger_color_ink() implements DesignClass<Misnamed, Target.Color.Ink> {}
-    }
+    record TwoBranches() implements Feedback, Emphasis {}
 
     @Test
     void theGuardsRefuse() {
-        var e1 = assertThrows(IllegalArgumentException.class, () -> Trees.coordinates(BranchAsCoordinate.class));
+        var e1 = assertThrows(IllegalArgumentException.class, () -> DesignClass.of(Feedback.class.asSubclass(Semantic.class), Target.Color.Ink.class));
         assertTrue(e1.getMessage().contains("leaf"), e1.getMessage());
-        var e2 = assertThrows(IllegalArgumentException.class, () -> Trees.coordinates(TwoBranches.two_branches_color_ink.class));
+        var e2 = assertThrows(IllegalArgumentException.class, () -> DesignClass.of(TwoBranches.class, Target.Color.Ink.class));
         assertTrue(e2.getMessage().contains("exactly one branch"), e2.getMessage());
-        var e3 = assertThrows(IllegalArgumentException.class, () -> Trees.coordinates(lonely_color_ink.class));
-        assertTrue(e3.getMessage().contains("declared inside its semantic leaf"), e3.getMessage());
-        var e4 = assertThrows(IllegalArgumentException.class, () -> Trees.coordinates(Misnamed.danger_color_ink.class));
-        assertTrue(e4.getMessage().contains("expected misnamed_color_ink"), e4.getMessage());
-    }
-
-    @Test
-    void theTargetIsTheGroup_derivedFromTheVocabulary() {
-        Vocabulary.register(Feedback.Danger.class, Pairing.OnDanger.class);
-        var surface = Target.Color.Surface.INSTANCE;
-        assertTrue(surface.cssClasses().stream().anyMatch(c -> c instanceof Feedback.Danger.danger_color_surface), "the surface group carries danger's surface");
-        assertTrue(surface.cssClasses().stream().noneMatch(c -> c.getClass() == Feedback.Danger.danger_color_ink.class), "and not its ink");
-        assertEquals(surface, new Feedback.Danger.danger_color_surface().group(), "a design class's group is its target");
-        assertEquals(Target.Color.Ink.INSTANCE, new Pairing.OnDanger.on_danger_color_ink().group());
     }
 
     @Test

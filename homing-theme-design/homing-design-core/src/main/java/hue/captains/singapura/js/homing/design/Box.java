@@ -1,8 +1,5 @@
 package hue.captains.singapura.js.homing.design;
 
-import hue.captains.singapura.js.homing.design.Target.Shape;
-import hue.captains.singapura.js.homing.design.Target.Size;
-
 /**
  * Box — the kind of box an element is, for the geometry a design owns:
  * density (inset, gap, extent) and shape (corner, rule). A component's own
@@ -13,30 +10,11 @@ import hue.captains.singapura.js.homing.design.Target.Size;
  */
 public interface Box extends Semantic {
 
-    record Control() implements Box {
-        public record control_size_inset() implements DesignClass<Control, Size.Inset> {}
-        public record control_size_gap() implements DesignClass<Control, Size.Gap> {}
-        public record control_size_extent() implements DesignClass<Control, Size.Extent> {}
-        public record control_shape_corner() implements DesignClass<Control, Shape.Corner> {}
-        public record control_shape_rule() implements DesignClass<Control, Shape.Rule> {}
-    }
+    record Control() implements Box {}
 
-    record Inline() implements Box {
-        public record inline_size_inset() implements DesignClass<Inline, Size.Inset> {}
-        public record inline_size_gap() implements DesignClass<Inline, Size.Gap> {}
-        public record inline_shape_corner() implements DesignClass<Inline, Shape.Corner> {}
-        public record inline_shape_rule() implements DesignClass<Inline, Shape.Rule> {}
-    }
+    record Inline() implements Box {}
 
-    record Container() implements Box {
-        public record container_size_inset() implements DesignClass<Container, Size.Inset> {}
-        public record container_size_gap() implements DesignClass<Container, Size.Gap> {}
-        public record container_shape_corner() implements DesignClass<Container, Shape.Corner> {}
-        public record container_shape_rule() implements DesignClass<Container, Shape.Rule> {}
-    }
+    record Container() implements Box {}
 
-    record Section() implements Box {
-        public record section_size_inset() implements DesignClass<Section, Size.Inset> {}
-        public record section_size_gap() implements DesignClass<Section, Size.Gap> {}
-    }
+    record Section() implements Box {}
 }

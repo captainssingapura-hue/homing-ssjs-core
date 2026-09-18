@@ -2,29 +2,22 @@ package hue.captains.singapura.js.homing.studio.base.ui;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
+import hue.captains.singapura.js.homing.core.Wearable;
 import hue.captains.singapura.js.homing.core.CssVar;
 
 import java.util.List;
 import java.util.Set;
 
-import static hue.captains.singapura.js.homing.design.Box.Control.*;
-import static hue.captains.singapura.js.homing.design.Emphasis.Primary.*;
-import static hue.captains.singapura.js.homing.design.Interaction.Focus.*;
-import static hue.captains.singapura.js.homing.design.Interaction.Inert.*;
-import static hue.captains.singapura.js.homing.design.Interaction.Interactive.*;
-import static hue.captains.singapura.js.homing.design.Layer.Base.*;
-import static hue.captains.singapura.js.homing.design.Layer.Inverted.*;
-import static hue.captains.singapura.js.homing.design.Layer.Overlay.*;
-import static hue.captains.singapura.js.homing.design.Layer.Raised.*;
-import static hue.captains.singapura.js.homing.design.Pairing.OnInverted.*;
-import static hue.captains.singapura.js.homing.design.Pairing.OnInvertedMuted.*;
-import static hue.captains.singapura.js.homing.design.Pairing.OnPrimary.*;
-import static hue.captains.singapura.js.homing.design.Structure.Cap.*;
-import static hue.captains.singapura.js.homing.design.Structure.Hairline.*;
-import static hue.captains.singapura.js.homing.design.Text.Body.*;
-import static hue.captains.singapura.js.homing.design.Text.Caption.*;
-import static hue.captains.singapura.js.homing.design.Text.Kicker.*;
-import static hue.captains.singapura.js.homing.design.Text.Label.*;
+import static hue.captains.singapura.js.homing.design.DesignClass.of;
+import static hue.captains.singapura.js.homing.design.Target.*;
+import static hue.captains.singapura.js.homing.design.Box.*;
+import static hue.captains.singapura.js.homing.design.Emphasis.*;
+import static hue.captains.singapura.js.homing.design.Interaction.*;
+import static hue.captains.singapura.js.homing.design.Layer.*;
+import static hue.captains.singapura.js.homing.design.Pairing.*;
+import static hue.captains.singapura.js.homing.design.Structure.*;
+import static hue.captains.singapura.js.homing.design.Text.*;
+
 
 /**
  * The system dialog: a scrim over the page, a frame centred on it with a
@@ -36,7 +29,7 @@ public record SystemDialogStyles() implements CssGroup<SystemDialogStyles> {
     public static final SystemDialogStyles INSTANCE = new SystemDialogStyles();
 
     public record sd_scrim() implements CssClass<SystemDialogStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new overlay_effect_filter()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Overlay.class, Effect.Filter.class)); }
         @Override public String body() { return """
             position: fixed;
             inset: 0;
@@ -46,7 +39,7 @@ public record SystemDialogStyles() implements CssGroup<SystemDialogStyles> {
     /** The frame is centred by its own transform — placement, which is the component's, not motion. */
     public record sd_frame() implements CssClass<SystemDialogStyles> {
         @Override public Set<CssVar> runtimeVars() { return Set.of(new CssVar("--sd-w"), new CssVar("--sd-h")); }
-        @Override public List<CssClass<?>> wears() { return List.of(new base_color_surface(), new body_color_ink(), new raised_color_edge(), new raised_shape_rule(), new raised_shape_corner(), new overlay_shape_shadow()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Base.class, Color.Surface.class), of(Body.class, Color.Ink.class), of(Raised.class, Color.Edge.class), of(Raised.class, Shape.Rule.class), of(Raised.class, Shape.Corner.class), of(Overlay.class, Shape.Shadow.class)); }
         @Override public String body() { return """
             position: fixed;
             left: 50%;
@@ -63,11 +56,11 @@ public record SystemDialogStyles() implements CssGroup<SystemDialogStyles> {
     }
     /** The focused frame: the focus ring, as edge and glow. Applied beside sd_frame. */
     public record sd_glow() implements CssClass<SystemDialogStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new focus_color_edge(), new focus_shape_shadow()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Focus.class, Color.Edge.class), of(Focus.class, Shape.Shadow.class)); }
         @Override public String body() { return ""; }
     }
     public record sd_title() implements CssClass<SystemDialogStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new inverted_color_surface(), new hairline_color_edge(), new hairline_shape_rule()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Inverted.class, Color.Surface.class), of(Hairline.class, Color.Edge.class), of(Hairline.class, Shape.Rule.class)); }
         @Override public String body() { return """
             display: flex;
             align-items: center;
@@ -78,7 +71,7 @@ public record SystemDialogStyles() implements CssGroup<SystemDialogStyles> {
             """; }
     }
     public record sd_title_label() implements CssClass<SystemDialogStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new kicker_type_scale(), new kicker_type_weight(), new kicker_type_treatment(), new on_inverted_muted_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Kicker.class, Type.Scale.class), of(Kicker.class, Type.Weight.class), of(Kicker.class, Type.Treatment.class), of(OnInvertedMuted.class, Color.Ink.class)); }
         @Override public String body() { return """
             flex: 1;
             overflow: hidden;
@@ -87,7 +80,7 @@ public record SystemDialogStyles() implements CssGroup<SystemDialogStyles> {
             """; }
     }
     public record sd_close() implements CssClass<SystemDialogStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new on_inverted_color_ink(), new interactive_affordance_cursor(), new label_type_scale()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(OnInverted.class, Color.Ink.class), of(Interactive.class, Affordance.Cursor.class), of(Label.class, Type.Scale.class)); }
         @Override public String body() { return """
             font: inherit;
             line-height: 1;
@@ -106,7 +99,7 @@ public record SystemDialogStyles() implements CssGroup<SystemDialogStyles> {
             """; }
     }
     public record sd_actions() implements CssClass<SystemDialogStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new raised_color_surface(), new cap_color_edge(), new cap_shape_rule()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Cap.class, Color.Edge.class), of(Cap.class, Shape.Rule.class)); }
         @Override public String body() { return """
             flex: 0 0 auto;
             display: flex;
@@ -117,7 +110,7 @@ public record SystemDialogStyles() implements CssGroup<SystemDialogStyles> {
             """; }
     }
     public record sd_action() implements CssClass<SystemDialogStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new base_color_surface(), new body_color_ink(), new raised_color_edge(), new raised_shape_rule(), new control_shape_corner(), new caption_type_scale(), new interactive_affordance_cursor()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Base.class, Color.Surface.class), of(Body.class, Color.Ink.class), of(Raised.class, Color.Edge.class), of(Raised.class, Shape.Rule.class), of(Control.class, Shape.Corner.class), of(Caption.class, Type.Scale.class), of(Interactive.class, Affordance.Cursor.class)); }
         @Override public String body() { return """
             font: inherit;
             padding: 4px 12px;
@@ -125,11 +118,11 @@ public record SystemDialogStyles() implements CssGroup<SystemDialogStyles> {
     }
     /** The primary action: on the primary surface, in its ink. Applied beside sd_action; its surface, ink and edge win by order. */
     public record sd_action_primary() implements CssClass<SystemDialogStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new primary_color_surface(), new primary_color_edge(), new on_primary_color_ink(), new label_type_weight()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Primary.class, Color.Surface.class), of(Primary.class, Color.Edge.class), of(OnPrimary.class, Color.Ink.class), of(Label.class, Type.Weight.class)); }
         @Override public String body() { return ""; }
     }
     public record sd_action_off() implements CssClass<SystemDialogStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new inert_effect_opacity(), new inert_affordance_cursor()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Inert.class, Effect.Opacity.class), of(Inert.class, Affordance.Cursor.class)); }
         @Override public String body() { return ""; }
     }
 

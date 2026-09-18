@@ -53,7 +53,7 @@ public record CssGroupContentProvider<C extends CssGroup<C>>(
             // The design classes this class wears travel with the handle, as tokens:
             // the manager adds them to the element beside the class itself.
             String wears = cls.wears().isEmpty() ? "" : cls.wears().stream()
-                    .map(w -> "\"" + CssClassName.toCssName(w.getClass()) + "\"")
+                    .map(w -> "\"" + w.cssName() + "\"")
                     .collect(java.util.stream.Collectors.joining(", ", ", [", "]"));
             if (variants.isEmpty()) {
                 lines.add("const " + recordName + " = _css.cls(\"" + cssName + "\"" + (wears.isEmpty() ? "" : ", null" + wears) + ");");

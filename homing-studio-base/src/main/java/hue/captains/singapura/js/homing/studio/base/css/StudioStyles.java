@@ -2,49 +2,25 @@ package hue.captains.singapura.js.homing.studio.base.css;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
+import hue.captains.singapura.js.homing.core.Wearable;
 import hue.captains.singapura.js.homing.core.InLayer;
 import hue.captains.singapura.js.homing.core.Layout;
 import hue.captains.singapura.js.homing.core.Reset;
 
 import java.util.List;
 
-import static hue.captains.singapura.js.homing.design.Box.Control.*;
-import static hue.captains.singapura.js.homing.design.Box.Inline.*;
-import static hue.captains.singapura.js.homing.design.Brand.House.*;
-import static hue.captains.singapura.js.homing.design.Emphasis.Muted.*;
-import static hue.captains.singapura.js.homing.design.Emphasis.Primary.*;
-import static hue.captains.singapura.js.homing.design.Emphasis.Secondary.*;
-import static hue.captains.singapura.js.homing.design.Emphasis.Tertiary.*;
-import static hue.captains.singapura.js.homing.design.Feedback.Danger.*;
-import static hue.captains.singapura.js.homing.design.Feedback.Success.*;
-import static hue.captains.singapura.js.homing.design.Feedback.Warning.*;
-import static hue.captains.singapura.js.homing.design.Interaction.Current.*;
-import static hue.captains.singapura.js.homing.design.Interaction.Interactive.*;
-import static hue.captains.singapura.js.homing.design.Interaction.Selected.*;
-import static hue.captains.singapura.js.homing.design.Layer.Base.*;
-import static hue.captains.singapura.js.homing.design.Layer.Inverted.*;
-import static hue.captains.singapura.js.homing.design.Layer.Raised.*;
-import static hue.captains.singapura.js.homing.design.Layer.Recessed.*;
-import static hue.captains.singapura.js.homing.design.Pairing.OnInverted.*;
-import static hue.captains.singapura.js.homing.design.Pairing.OnInvertedMuted.*;
-import static hue.captains.singapura.js.homing.design.Pairing.OnPrimary.*;
-import static hue.captains.singapura.js.homing.design.Structure.Bar.*;
-import static hue.captains.singapura.js.homing.design.Structure.Cap.*;
-import static hue.captains.singapura.js.homing.design.Structure.Divider.*;
-import static hue.captains.singapura.js.homing.design.Structure.Hairline.*;
-import static hue.captains.singapura.js.homing.design.Structure.Marker.*;
-import static hue.captains.singapura.js.homing.design.Structure.Spine.*;
-import static hue.captains.singapura.js.homing.design.Text.Body.*;
-import static hue.captains.singapura.js.homing.design.Text.Caption.*;
-import static hue.captains.singapura.js.homing.design.Text.Code.*;
-import static hue.captains.singapura.js.homing.design.Text.Display.*;
-import static hue.captains.singapura.js.homing.design.Text.Heading.*;
-import static hue.captains.singapura.js.homing.design.Text.Kicker.*;
-import static hue.captains.singapura.js.homing.design.Text.Label.*;
-import static hue.captains.singapura.js.homing.design.Text.Lede.*;
-import static hue.captains.singapura.js.homing.design.Text.Link.*;
-import static hue.captains.singapura.js.homing.design.Text.Numeral.*;
-import static hue.captains.singapura.js.homing.design.Text.Prose.*;
+import static hue.captains.singapura.js.homing.design.DesignClass.of;
+import static hue.captains.singapura.js.homing.design.Target.*;
+import static hue.captains.singapura.js.homing.design.Box.*;
+import static hue.captains.singapura.js.homing.design.Brand.*;
+import static hue.captains.singapura.js.homing.design.Emphasis.*;
+import static hue.captains.singapura.js.homing.design.Feedback.*;
+import static hue.captains.singapura.js.homing.design.Interaction.*;
+import static hue.captains.singapura.js.homing.design.Layer.*;
+import static hue.captains.singapura.js.homing.design.Pairing.*;
+import static hue.captains.singapura.js.homing.design.Structure.*;
+import static hue.captains.singapura.js.homing.design.Text.*;
+
 
 /**
  * The studio's chrome and reading surfaces — <b>structure only</b>. Every
@@ -82,7 +58,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
 
     /** The root every studio page mounts on: the base layer, the body's ink and face. */
     public record st_root() implements CssClass<StudioStyles>, InLayer<Layout> {
-        @Override public List<CssClass<?>> wears() { return List.of(new base_color_surface(), new base_color_scrollbar(), new body_color_ink(), new body_type_face()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Base.class, Color.Surface.class), of(Base.class, Color.Scrollbar.class), of(Body.class, Color.Ink.class), of(Body.class, Type.Face.class)); }
         @Override public String body() { return """
             min-height: 100vh;
             display: flex;
@@ -91,7 +67,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_header() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new inverted_color_surface(), new divider_color_edge(), new divider_shape_rule()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Inverted.class, Color.Surface.class), of(Divider.class, Color.Edge.class), of(Divider.class, Shape.Rule.class)); }
         @Override public String body() { return """
             padding: 14px 32px;
             display: flex;
@@ -115,7 +91,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_brand() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new on_inverted_color_ink(), new link_type_decoration()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(OnInverted.class, Color.Ink.class), of(Link.class, Type.Decoration.class)); }
         @Override public String body() { return """
             display: flex;
             align-items: center;
@@ -124,7 +100,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_brand_dot() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new primary_color_surface()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Primary.class, Color.Surface.class)); }
         @Override public String body() { return """
             width: 12px;
             height: 12px;
@@ -133,7 +109,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
     }
     /** Wrapper for a typed SVG logo (StudioBrand.logo): a fixed 22×22 box the child fills; overflow hidden clips an unsized SVG. */
     public record st_brand_logo() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new interactive_motion_ease(), new interactive_motion_transform()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Interactive.class, Motion.Ease.class), of(Interactive.class, Motion.Transform.class)); }
         @Override public String body() { return """
             width: 22px;
             height: 22px;
@@ -148,11 +124,11 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
     }
     /** The house word beside the mark: the brand's own setting. */
     public record st_brand_word() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new on_inverted_color_ink(), new house_type_face(), new house_type_scale(), new house_type_treatment()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(OnInverted.class, Color.Ink.class), of(House.class, Type.Face.class), of(House.class, Type.Scale.class), of(House.class, Type.Treatment.class)); }
         @Override public String body() { return ""; }
     }
     public record st_breadcrumbs() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new on_inverted_muted_color_ink(), new caption_type_scale()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(OnInvertedMuted.class, Color.Ink.class), of(Caption.class, Type.Scale.class)); }
         @Override public String body() { return """
             display: flex;
             align-items: center;
@@ -161,11 +137,11 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_crumb() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new on_inverted_muted_color_ink(), new link_type_decoration(), new link_motion_ease()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(OnInvertedMuted.class, Color.Ink.class), of(Link.class, Type.Decoration.class), of(Link.class, Motion.Ease.class)); }
         @Override public String body() { return ""; }
     }
     public record st_crumb_sep() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new muted_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Muted.class, Color.Ink.class)); }
         @Override public String body() { return ""; }
     }
     public record st_main() implements CssClass<StudioStyles>, InLayer<Layout> {
@@ -182,25 +158,25 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
     }
     /** The reading-page slab: a main with a document in it sits on the raised layer. Applied beside st_main by the document renderers. */
     public record st_main_slab() implements CssClass<StudioStyles>, InLayer<Layout> {
-        @Override public List<CssClass<?>> wears() { return List.of(new raised_color_surface(), new raised_shape_corner(), new raised_shape_shadow()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Raised.class, Shape.Corner.class), of(Raised.class, Shape.Shadow.class)); }
         @Override public String body() { return ""; }
     }
     public record st_kicker() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new kicker_type_scale(), new kicker_type_weight(), new kicker_type_treatment(), new kicker_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Kicker.class, Type.Scale.class), of(Kicker.class, Type.Weight.class), of(Kicker.class, Type.Treatment.class), of(Kicker.class, Color.Ink.class)); }
         @Override public String body() { return """
             margin: 0 0 12px 0;
             """;
         }
     }
     public record st_title() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new display_type_face(), new display_type_scale(), new display_type_weight(), new display_type_treatment(), new display_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Display.class, Type.Face.class), of(Display.class, Type.Scale.class), of(Display.class, Type.Weight.class), of(Display.class, Type.Treatment.class), of(Display.class, Color.Ink.class)); }
         @Override public String body() { return """
             margin: 0 0 12px 0;
             """;
         }
     }
     public record st_subtitle() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new lede_color_ink(), new lede_type_scale(), new lede_type_treatment()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Lede.class, Color.Ink.class), of(Lede.class, Type.Scale.class), of(Lede.class, Type.Treatment.class)); }
         @Override public String body() { return """
             margin: 0 0 32px 0;
             max-width: 760px;
@@ -214,7 +190,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_section_title() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new kicker_type_face(), new kicker_type_scale(), new kicker_type_weight(), new kicker_type_treatment(), new heading_color_ink(), new divider_color_edge(), new divider_shape_rule()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Kicker.class, Type.Face.class), of(Kicker.class, Type.Scale.class), of(Kicker.class, Type.Weight.class), of(Kicker.class, Type.Treatment.class), of(Heading.class, Color.Ink.class), of(Divider.class, Color.Edge.class), of(Divider.class, Shape.Rule.class)); }
         @Override public String body() { return """
             margin: 0 0 16px 0;
             padding-bottom: 8px;
@@ -239,7 +215,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_list_item() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new raised_color_surface(), new raised_shape_corner(), new bar_color_edge(), new bar_shape_rule(), new body_color_ink(), new link_type_decoration()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Raised.class, Shape.Corner.class), of(Bar.class, Color.Edge.class), of(Bar.class, Shape.Rule.class), of(Body.class, Color.Ink.class), of(Link.class, Type.Decoration.class)); }
         @Override public String body() { return """
             padding: 12px 16px;
             display: flex;
@@ -265,26 +241,26 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_list_item_label() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new heading_type_face(), new heading_type_weight(), new heading_color_ink(), new label_type_scale()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Heading.class, Type.Face.class), of(Heading.class, Type.Weight.class), of(Heading.class, Color.Ink.class), of(Label.class, Type.Scale.class)); }
         @Override public String body() { return """
             margin: 0 0 4px 0;
             """;
         }
     }
     public record st_list_item_desc() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new caption_type_scale(), new muted_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Caption.class, Type.Scale.class), of(Muted.class, Color.Ink.class)); }
         @Override public String body() { return """
             margin: 0;
             """;
         }
     }
     public record st_list_item_met() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new success_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Success.class, Color.Ink.class)); }
         @Override public String body() { return ""; }
     }
     public record st_card() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new raised_color_surface(), new raised_shape_corner(), new bar_color_edge(), new bar_shape_rule(),
-                new body_color_ink(), new link_type_decoration(), new interactive_shape_shadow(), new interactive_motion_ease(), new interactive_motion_transform(), new interactive_affordance_cursor()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Raised.class, Shape.Corner.class), of(Bar.class, Color.Edge.class), of(Bar.class, Shape.Rule.class),
+                of(Body.class, Color.Ink.class), of(Link.class, Type.Decoration.class), of(Interactive.class, Shape.Shadow.class), of(Interactive.class, Motion.Ease.class), of(Interactive.class, Motion.Transform.class), of(Interactive.class, Affordance.Cursor.class)); }
         @Override public String body() { return """
             padding: 18px 20px;
             display: flex;
@@ -294,14 +270,14 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_card_title() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new heading_type_face(), new heading_type_scale(), new heading_type_weight(), new heading_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Heading.class, Type.Face.class), of(Heading.class, Type.Scale.class), of(Heading.class, Type.Weight.class), of(Heading.class, Color.Ink.class)); }
         @Override public String body() { return """
             margin: 0 0 6px 0;
             """;
         }
     }
     public record st_card_summary() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new caption_type_scale(), new muted_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Caption.class, Type.Scale.class), of(Muted.class, Color.Ink.class)); }
         @Override public String body() { return """
             margin: 0;
             flex: 1;
@@ -309,7 +285,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_card_meta() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new cap_color_edge(), new cap_shape_rule(), new caption_type_scale(), new muted_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Cap.class, Color.Edge.class), of(Cap.class, Shape.Rule.class), of(Caption.class, Type.Scale.class), of(Muted.class, Color.Ink.class)); }
         @Override public String body() { return """
             display: flex;
             justify-content: space-between;
@@ -320,12 +296,12 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_card_link() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new kicker_type_scale(), new kicker_type_weight(), new kicker_type_treatment(), new kicker_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Kicker.class, Type.Scale.class), of(Kicker.class, Type.Weight.class), of(Kicker.class, Type.Treatment.class), of(Kicker.class, Color.Ink.class)); }
         @Override public String body() { return ""; }
     }
     /** A badge: inline, small, loud. Its colour comes from the class beside it. */
     public record st_badge() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new kicker_type_scale(), new kicker_type_weight(), new kicker_type_treatment(), new inline_shape_corner()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Kicker.class, Type.Scale.class), of(Kicker.class, Type.Weight.class), of(Kicker.class, Type.Treatment.class), of(Inline.class, Shape.Corner.class)); }
         @Override public String body() { return """
             display: inline-block;
             padding: 3px 8px;
@@ -333,31 +309,31 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_badge_whitepaper() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new inverted_color_surface(), new primary_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Inverted.class, Color.Surface.class), of(Primary.class, Color.Ink.class)); }
         @Override public String body() { return ""; }
     }
     public record st_badge_brochure() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new primary_color_surface(), new on_primary_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Primary.class, Color.Surface.class), of(OnPrimary.class, Color.Ink.class)); }
         @Override public String body() { return ""; }
     }
     public record st_badge_rfc() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new inverted_color_surface(), new on_inverted_muted_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Inverted.class, Color.Surface.class), of(OnInvertedMuted.class, Color.Ink.class)); }
         @Override public String body() { return ""; }
     }
     public record st_badge_brand() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new secondary_color_surface(), new heading_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Secondary.class, Color.Surface.class), of(Heading.class, Color.Ink.class)); }
         @Override public String body() { return ""; }
     }
     public record st_badge_session() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new recessed_color_surface(), new body_color_ink(), new raised_color_edge(), new raised_shape_rule()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Recessed.class, Color.Surface.class), of(Body.class, Color.Ink.class), of(Raised.class, Color.Edge.class), of(Raised.class, Shape.Rule.class)); }
         @Override public String body() { return ""; }
     }
     public record st_badge_reference() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new tertiary_color_surface(), new heading_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Tertiary.class, Color.Surface.class), of(Heading.class, Color.Ink.class)); }
         @Override public String body() { return ""; }
     }
     public record st_badge_rename() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new secondary_color_surface(), new on_inverted_muted_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Secondary.class, Color.Surface.class), of(OnInvertedMuted.class, Color.Ink.class)); }
         @Override public String body() { return ""; }
     }
     public record st_search_wrap() implements CssClass<StudioStyles> {
@@ -372,8 +348,8 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
     }
     /** The search field: a raised control whose edge answers focus. */
     public record st_search() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new raised_color_surface(), new raised_color_edge(), new raised_shape_rule(), new raised_shape_corner(), new raised_shape_shadow(),
-                new body_color_ink(), new body_type_face(), new label_type_scale(), new interactive_motion_ease()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Raised.class, Color.Edge.class), of(Raised.class, Shape.Rule.class), of(Raised.class, Shape.Corner.class), of(Raised.class, Shape.Shadow.class),
+                of(Body.class, Color.Ink.class), of(Body.class, Type.Face.class), of(Label.class, Type.Scale.class), of(Interactive.class, Motion.Ease.class)); }
         @Override public String body() { return """
             flex: 1;
             min-width: 280px;
@@ -392,9 +368,9 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
     }
     /** A filter chip: a small raised control the pointer can press. */
     public record st_filter_btn() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new raised_color_surface(), new raised_color_edge(), new raised_shape_rule(), new control_shape_corner(),
-                new body_color_ink(), new body_type_face(), new kicker_type_scale(), new kicker_type_weight(), new kicker_type_treatment(),
-                new interactive_affordance_cursor(), new interactive_motion_ease()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Raised.class, Color.Edge.class), of(Raised.class, Shape.Rule.class), of(Control.class, Shape.Corner.class),
+                of(Body.class, Color.Ink.class), of(Body.class, Type.Face.class), of(Kicker.class, Type.Scale.class), of(Kicker.class, Type.Weight.class), of(Kicker.class, Type.Treatment.class),
+                of(Interactive.class, Affordance.Cursor.class), of(Interactive.class, Motion.Ease.class)); }
         @Override public String body() { return """
             padding: 6px 12px;
             """;
@@ -402,7 +378,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
     }
     /** The active filter chip: selected. Applied beside st_filter_btn; the selected surface, ink and edge win by order. */
     public record st_filter_btn_active() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new selected_color_surface(), new selected_color_ink(), new selected_color_edge()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Selected.class, Color.Surface.class), of(Selected.class, Color.Ink.class), of(Selected.class, Color.Edge.class)); }
         @Override public String body() { return ""; }
     }
     public record st_layout() implements CssClass<StudioStyles>, InLayer<Layout> {
@@ -430,14 +406,14 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_sidebar_title() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new kicker_type_scale(), new kicker_type_weight(), new kicker_type_treatment(), new kicker_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Kicker.class, Type.Scale.class), of(Kicker.class, Type.Weight.class), of(Kicker.class, Type.Treatment.class), of(Kicker.class, Color.Ink.class)); }
         @Override public String body() { return """
             margin: 0 0 12px 0;
             """;
         }
     }
     public record st_toc() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new spine_color_edge(), new spine_shape_rule()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Spine.class, Color.Edge.class), of(Spine.class, Shape.Rule.class)); }
         @Override public String body() { return """
             display: flex;
             flex-direction: column;
@@ -447,7 +423,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
     }
     /** A contents entry: a quiet link whose leading marker lights on hover. */
     public record st_toc_item() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new caption_type_scale(), new link_color_ink(), new link_type_decoration(), new link_motion_ease(), new marker_color_edge(), new marker_shape_rule()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Caption.class, Type.Scale.class), of(Link.class, Color.Ink.class), of(Link.class, Type.Decoration.class), of(Link.class, Motion.Ease.class), of(Marker.class, Color.Edge.class), of(Marker.class, Shape.Rule.class)); }
         @Override public String body() { return """
             display: block;
             padding: 4px 12px;
@@ -456,7 +432,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_toc_h1() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new heading_type_weight(), new heading_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Heading.class, Type.Weight.class), of(Heading.class, Color.Ink.class)); }
         @Override public String body() { return "padding-left: 12px;"; }
     }
     public record st_toc_h2() implements CssClass<StudioStyles> {
@@ -466,11 +442,11 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         @Override public String body() { return "padding-left: 36px;"; }
     }
     public record st_toc_active() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new current_color_ink(), new current_color_surface(), new current_color_edge()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Current.class, Color.Ink.class), of(Current.class, Color.Surface.class), of(Current.class, Color.Edge.class)); }
         @Override public String body() { return ""; }
     }
     public record st_mermaid() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new raised_color_surface(), new raised_color_edge(), new raised_shape_rule(), new raised_shape_corner()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Raised.class, Color.Edge.class), of(Raised.class, Shape.Rule.class), of(Raised.class, Shape.Corner.class)); }
         @Override public String body() { return """
             margin: 16px 0;
             padding: 12px;
@@ -480,7 +456,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_mermaid_note() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new muted_color_ink(), new caption_type_scale(), new caption_type_treatment()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Muted.class, Color.Ink.class), of(Caption.class, Type.Scale.class), of(Caption.class, Type.Treatment.class)); }
         @Override public String body() { return """
             margin: 6px 0 0;
             text-align: left;
@@ -489,13 +465,13 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
     }
     /** The section the reader is in: current, marked by its surface and an inset line along its leading edge. */
     public record st_doc_section_active() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new current_color_surface(), new current_shape_shadow()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Current.class, Color.Surface.class), of(Current.class, Shape.Shadow.class)); }
         @Override public String body() { return ""; }
     }
     /** The document: rendered markdown, no class on anything inside. Its prose is set by the design, per element, inside the one class it wears. */
     public record st_doc() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new prose_color_ink(), new prose_type_scale(), new prose_type_face(), new prose_type_weight(), new prose_type_treatment(),
-                new prose_type_decoration(), new prose_color_surface(), new prose_color_edge(), new prose_shape_rule(), new prose_shape_corner()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Prose.class, Color.Ink.class), of(Prose.class, Type.Scale.class), of(Prose.class, Type.Face.class), of(Prose.class, Type.Weight.class), of(Prose.class, Type.Treatment.class),
+                of(Prose.class, Type.Decoration.class), of(Prose.class, Color.Surface.class), of(Prose.class, Color.Edge.class), of(Prose.class, Shape.Rule.class), of(Prose.class, Shape.Corner.class)); }
         @Override public String body() { return """
             max-width: 820px;
             h1, h2, h3, h4 { margin: 1.6em 0 0.6em 0; scroll-margin-top: 24px; }
@@ -516,14 +492,14 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_doc_category() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new muted_color_ink(), new kicker_type_scale(), new kicker_type_treatment()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Muted.class, Color.Ink.class), of(Kicker.class, Type.Scale.class), of(Kicker.class, Type.Treatment.class)); }
         @Override public String body() { return """
             margin-left: 12px;
             """;
         }
     }
     public record st_doc_meta() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new hairline_color_edge(), new hairline_shape_rule()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Hairline.class, Color.Edge.class), of(Hairline.class, Shape.Rule.class)); }
         @Override public String body() { return """
             margin-bottom: 24px;
             padding-bottom: 20px;
@@ -535,7 +511,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_loading() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new muted_color_ink(), new caption_type_treatment(), new label_type_scale()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Muted.class, Color.Ink.class), of(Caption.class, Type.Treatment.class), of(Label.class, Type.Scale.class)); }
         @Override public String body() { return """
             text-align: center;
             padding: 48px 16px;
@@ -543,7 +519,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_error() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new danger_color_surface(), new danger_color_edge(), new bar_shape_rule(), new raised_shape_corner(), new danger_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Danger.class, Color.Surface.class), of(Danger.class, Color.Edge.class), of(Bar.class, Shape.Rule.class), of(Raised.class, Shape.Corner.class), of(Danger.class, Color.Ink.class)); }
         @Override public String body() { return """
             padding: 16px 20px;
             margin: 16px 0;
@@ -560,7 +536,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_doc_empty() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new muted_color_ink(), new caption_type_treatment()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Muted.class, Color.Ink.class), of(Caption.class, Type.Treatment.class)); }
         @Override public String body() { return """
             padding: 24px 8px;
             max-width: 640px;
@@ -568,7 +544,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_table() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new base_color_surface(), new body_color_ink(), new label_type_scale()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Base.class, Color.Surface.class), of(Body.class, Color.Ink.class), of(Label.class, Type.Scale.class)); }
         @Override public String body() { return """
             width: 100%;
             border-collapse: collapse;
@@ -577,11 +553,11 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_thead() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new recessed_color_surface()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Recessed.class, Color.Surface.class)); }
         @Override public String body() { return ""; }
     }
     public record st_th() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new divider_color_edge(), new divider_shape_rule(), new body_color_ink(), new label_type_weight()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Divider.class, Color.Edge.class), of(Divider.class, Shape.Rule.class), of(Body.class, Color.Ink.class), of(Label.class, Type.Weight.class)); }
         @Override public String body() { return """
             text-align: left;
             padding: 10px 14px;
@@ -589,7 +565,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_td() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new hairline_color_edge(), new hairline_shape_rule()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Hairline.class, Color.Edge.class), of(Hairline.class, Shape.Rule.class)); }
         @Override public String body() { return """
             padding: 10px 14px;
             vertical-align: top;
@@ -607,23 +583,23 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
     }
     /** A feedback badge in a table cell: inline, small, edged, and coloured by what it says. */
     public record st_td_badge_success() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new success_color_surface(), new success_color_ink(), new success_color_edge(), new kicker_type_scale(), new kicker_type_weight(), new kicker_type_treatment(), new inline_shape_corner(), new inline_shape_rule()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Success.class, Color.Surface.class), of(Success.class, Color.Ink.class), of(Success.class, Color.Edge.class), of(Kicker.class, Type.Scale.class), of(Kicker.class, Type.Weight.class), of(Kicker.class, Type.Treatment.class), of(Inline.class, Shape.Corner.class), of(Inline.class, Shape.Rule.class)); }
         @Override public String body() { return TD_BADGE; }
     }
     public record st_td_badge_warning() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new warning_color_surface(), new warning_color_ink(), new warning_color_edge(), new kicker_type_scale(), new kicker_type_weight(), new kicker_type_treatment(), new inline_shape_corner(), new inline_shape_rule()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Warning.class, Color.Surface.class), of(Warning.class, Color.Ink.class), of(Warning.class, Color.Edge.class), of(Kicker.class, Type.Scale.class), of(Kicker.class, Type.Weight.class), of(Kicker.class, Type.Treatment.class), of(Inline.class, Shape.Corner.class), of(Inline.class, Shape.Rule.class)); }
         @Override public String body() { return TD_BADGE; }
     }
     public record st_td_badge_error() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new danger_color_surface(), new danger_color_ink(), new danger_color_edge(), new kicker_type_scale(), new kicker_type_weight(), new kicker_type_treatment(), new inline_shape_corner(), new inline_shape_rule()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Danger.class, Color.Surface.class), of(Danger.class, Color.Ink.class), of(Danger.class, Color.Edge.class), of(Kicker.class, Type.Scale.class), of(Kicker.class, Type.Weight.class), of(Kicker.class, Type.Treatment.class), of(Inline.class, Shape.Corner.class), of(Inline.class, Shape.Rule.class)); }
         @Override public String body() { return TD_BADGE; }
     }
     public record st_td_strong() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new heading_type_weight()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Heading.class, Type.Weight.class)); }
         @Override public String body() { return ""; }
     }
     public record st_td_muted() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new muted_effect_opacity(), new caption_type_treatment()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Muted.class, Effect.Opacity.class), of(Caption.class, Type.Treatment.class)); }
         @Override public String body() { return ""; }
     }
     public record st_image_figure() implements CssClass<StudioStyles> {
@@ -636,7 +612,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_image_img() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new raised_shape_corner(), new raised_shape_shadow()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Shape.Corner.class), of(Raised.class, Shape.Shadow.class)); }
         @Override public String body() { return """
             max-width: 100%;
             height: auto;
@@ -644,7 +620,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_image_caption() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new caption_type_scale(), new muted_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Caption.class, Type.Scale.class), of(Muted.class, Color.Ink.class)); }
         @Override public String body() { return """
             margin-top: 8px;
             text-align: center;
@@ -652,8 +628,8 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_footer() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new cap_color_edge(), new cap_shape_rule(), new muted_color_ink(), new kicker_type_scale(),
-                new code_type_face(), new code_color_surface(), new code_color_ink(), new code_shape_corner()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Cap.class, Color.Edge.class), of(Cap.class, Shape.Rule.class), of(Muted.class, Color.Ink.class), of(Kicker.class, Type.Scale.class),
+                of(Code.class, Type.Face.class), of(Code.class, Color.Surface.class), of(Code.class, Color.Ink.class), of(Code.class, Shape.Corner.class)); }
         @Override public String body() { return """
             margin-top: 64px;
             padding-top: 24px;
@@ -662,8 +638,8 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_app_pill() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new raised_color_surface(), new raised_shape_corner(), new bar_color_edge(), new bar_shape_rule(),
-                new body_color_ink(), new link_type_decoration(), new interactive_shape_shadow(), new interactive_motion_ease(), new interactive_motion_transform(), new interactive_affordance_cursor()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Raised.class, Shape.Corner.class), of(Bar.class, Color.Edge.class), of(Bar.class, Shape.Rule.class),
+                of(Body.class, Color.Ink.class), of(Link.class, Type.Decoration.class), of(Interactive.class, Shape.Shadow.class), of(Interactive.class, Motion.Ease.class), of(Interactive.class, Motion.Transform.class), of(Interactive.class, Affordance.Cursor.class)); }
         @Override public String body() { return """
             padding: 22px 24px;
             display: flex;
@@ -674,23 +650,23 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
     }
     /** The dark pill: on the inverted layer. Its children wear their own dark variants, applied by the builder beside their class. */
     public record st_app_pill_dark() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new inverted_color_surface(), new on_inverted_muted_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Inverted.class, Color.Surface.class), of(OnInvertedMuted.class, Color.Ink.class)); }
         @Override public String body() { return ""; }
     }
     public record st_app_pill_icon_dark() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new primary_color_surface(), new on_primary_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Primary.class, Color.Surface.class), of(OnPrimary.class, Color.Ink.class)); }
         @Override public String body() { return ""; }
     }
     public record st_app_pill_label_dark() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new on_inverted_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(OnInverted.class, Color.Ink.class)); }
         @Override public String body() { return ""; }
     }
     public record st_app_pill_desc_dark() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new on_inverted_muted_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(OnInvertedMuted.class, Color.Ink.class)); }
         @Override public String body() { return ""; }
     }
     public record st_app_pill_icon() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new primary_color_surface(), new heading_color_ink(), new raised_shape_corner(), new numeral_type_face(), new numeral_type_weight(), new numeral_type_scale(), new numeral_type_treatment()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Primary.class, Color.Surface.class), of(Heading.class, Color.Ink.class), of(Raised.class, Shape.Corner.class), of(Numeral.class, Type.Face.class), of(Numeral.class, Type.Weight.class), of(Numeral.class, Type.Scale.class), of(Numeral.class, Type.Treatment.class)); }
         @Override public String body() { return """
             flex: 0 0 56px;
             height: 56px;
@@ -701,21 +677,21 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_app_pill_label() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new heading_type_face(), new heading_type_scale(), new heading_type_weight(), new heading_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Heading.class, Type.Face.class), of(Heading.class, Type.Scale.class), of(Heading.class, Type.Weight.class), of(Heading.class, Color.Ink.class)); }
         @Override public String body() { return """
             margin: 0 0 4px 0;
             """;
         }
     }
     public record st_app_pill_desc() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new caption_type_scale(), new muted_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Caption.class, Type.Scale.class), of(Muted.class, Color.Ink.class)); }
         @Override public String body() { return """
             margin: 0;
             """;
         }
     }
     public record st_overall_progress() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new inverted_color_surface(), new on_inverted_muted_color_ink(), new bar_color_edge(), new bar_shape_rule(), new raised_shape_corner()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Inverted.class, Color.Surface.class), of(OnInvertedMuted.class, Color.Ink.class), of(Bar.class, Color.Edge.class), of(Bar.class, Shape.Rule.class), of(Raised.class, Shape.Corner.class)); }
         @Override public String body() { return """
             padding: 18px 24px;
             margin: 0 0 24px 0;
@@ -726,7 +702,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_overall_bar() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new recessed_color_surface(), new recessed_shape_corner()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Recessed.class, Color.Surface.class), of(Recessed.class, Shape.Corner.class)); }
         @Override public String body() { return """
             flex: 1;
             height: 12px;
@@ -735,22 +711,22 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_overall_fill() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new primary_color_surface(), new primary_motion_ease()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Primary.class, Color.Surface.class), of(Primary.class, Motion.Ease.class)); }
         @Override public String body() { return """
             height: 100%;
             """;
         }
     }
     public record st_overall_pct() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new numeral_type_face(), new numeral_type_weight(), new numeral_type_scale(), new primary_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Numeral.class, Type.Face.class), of(Numeral.class, Type.Weight.class), of(Numeral.class, Type.Scale.class), of(Primary.class, Color.Ink.class)); }
         @Override public String body() { return """
             flex: 0 0 auto;
             """;
         }
     }
     public record st_step_card() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new raised_color_surface(), new raised_shape_corner(), new bar_color_edge(), new bar_shape_rule(),
-                new body_color_ink(), new link_type_decoration(), new interactive_shape_shadow(), new interactive_motion_ease(), new interactive_motion_transform()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Raised.class, Shape.Corner.class), of(Bar.class, Color.Edge.class), of(Bar.class, Shape.Rule.class),
+                of(Body.class, Color.Ink.class), of(Link.class, Type.Decoration.class), of(Interactive.class, Shape.Shadow.class), of(Interactive.class, Motion.Ease.class), of(Interactive.class, Motion.Transform.class)); }
         @Override public String body() { return """
             padding: 18px 22px;
             margin-bottom: 12px;
@@ -768,14 +744,14 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_step_id() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new kicker_type_face(), new kicker_type_weight(), new kicker_type_treatment(), new kicker_color_ink(), new caption_type_scale()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Kicker.class, Type.Face.class), of(Kicker.class, Type.Weight.class), of(Kicker.class, Type.Treatment.class), of(Kicker.class, Color.Ink.class), of(Caption.class, Type.Scale.class)); }
         @Override public String body() { return """
             flex: 0 0 auto;
             """;
         }
     }
     public record st_step_label() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new heading_type_face(), new heading_type_scale(), new heading_type_weight(), new heading_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Heading.class, Type.Face.class), of(Heading.class, Type.Scale.class), of(Heading.class, Type.Weight.class), of(Heading.class, Color.Ink.class)); }
         @Override public String body() { return """
             margin: 0;
             flex: 1;
@@ -783,7 +759,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_step_summary() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new caption_type_scale(), new muted_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Caption.class, Type.Scale.class), of(Muted.class, Color.Ink.class)); }
         @Override public String body() { return """
             margin: 0 0 10px 0;
             """;
@@ -799,7 +775,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_step_progress_bar() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new recessed_color_surface(), new recessed_shape_corner()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Recessed.class, Color.Surface.class), of(Recessed.class, Shape.Corner.class)); }
         @Override public String body() { return """
             flex: 1;
             height: 6px;
@@ -808,14 +784,14 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_step_progress_fill() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new primary_color_surface(), new primary_motion_ease()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Primary.class, Color.Surface.class), of(Primary.class, Motion.Ease.class)); }
         @Override public String body() { return """
             height: 100%;
             """;
         }
     }
     public record st_step_meta() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new caption_type_scale(), new muted_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Caption.class, Type.Scale.class), of(Muted.class, Color.Ink.class)); }
         @Override public String body() { return """
             display: flex;
             gap: 10px;
@@ -825,7 +801,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_status_badge() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new kicker_type_scale(), new kicker_type_weight(), new kicker_type_treatment(), new inline_shape_corner()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Kicker.class, Type.Scale.class), of(Kicker.class, Type.Weight.class), of(Kicker.class, Type.Treatment.class), of(Inline.class, Shape.Corner.class)); }
         @Override public String body() { return """
             display: inline-block;
             padding: 3px 8px;
@@ -833,23 +809,23 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_status_not_started() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new tertiary_color_surface(), new body_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Tertiary.class, Color.Surface.class), of(Body.class, Color.Ink.class)); }
         @Override public String body() { return ""; }
     }
     public record st_status_in_progress() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new primary_color_surface(), new on_primary_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Primary.class, Color.Surface.class), of(OnPrimary.class, Color.Ink.class)); }
         @Override public String body() { return ""; }
     }
     public record st_status_blocked() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new danger_color_surface(), new danger_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Danger.class, Color.Surface.class), of(Danger.class, Color.Ink.class)); }
         @Override public String body() { return ""; }
     }
     public record st_status_done() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new success_color_surface(), new success_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Success.class, Color.Surface.class), of(Success.class, Color.Ink.class)); }
         @Override public String body() { return ""; }
     }
     public record st_panel() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new raised_color_surface(), new raised_color_edge(), new raised_shape_rule(), new raised_shape_corner(), new raised_shape_shadow()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Raised.class, Color.Edge.class), of(Raised.class, Shape.Rule.class), of(Raised.class, Shape.Corner.class), of(Raised.class, Shape.Shadow.class)); }
         @Override public String body() { return """
             padding: 18px 22px;
             margin-bottom: 16px;
@@ -857,7 +833,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_panel_title() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new kicker_type_face(), new kicker_type_scale(), new kicker_type_weight(), new kicker_type_treatment(), new kicker_color_ink()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Kicker.class, Type.Face.class), of(Kicker.class, Type.Scale.class), of(Kicker.class, Type.Weight.class), of(Kicker.class, Type.Treatment.class), of(Kicker.class, Color.Ink.class)); }
         @Override public String body() { return """
             margin: 0 0 12px 0;
             """;
@@ -872,7 +848,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_task_item() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new body_color_ink(), new label_type_scale()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Body.class, Color.Ink.class), of(Label.class, Type.Scale.class)); }
         @Override public String body() { return """
             display: flex;
             align-items: flex-start;
@@ -883,15 +859,15 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
     }
     /** A done task: muted and struck; its box wears the done variant, applied by the builder. */
     public record st_task_done() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new muted_color_ink(), new muted_type_decoration()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Muted.class, Color.Ink.class), of(Muted.class, Type.Decoration.class)); }
         @Override public String body() { return ""; }
     }
     public record st_task_box_done() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new primary_color_surface(), new primary_color_edge(), new on_primary_color_ink(), new heading_type_weight()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Primary.class, Color.Surface.class), of(Primary.class, Color.Edge.class), of(OnPrimary.class, Color.Ink.class), of(Heading.class, Type.Weight.class)); }
         @Override public String body() { return ""; }
     }
     public record st_task_box() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new raised_color_surface(), new muted_color_edge(), new control_shape_rule(), new code_shape_corner(), new on_inverted_color_ink(), new caption_type_scale()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Muted.class, Color.Edge.class), of(Control.class, Shape.Rule.class), of(Code.class, Shape.Corner.class), of(OnInverted.class, Color.Ink.class), of(Caption.class, Type.Scale.class)); }
         @Override public String body() { return """
             flex: 0 0 16px;
             width: 16px;
@@ -904,7 +880,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_dep() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new recessed_color_surface(), new raised_color_edge(), new raised_shape_rule(), new code_shape_corner(), new caption_type_scale(), new heading_color_ink(), new link_type_decoration()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Recessed.class, Color.Surface.class), of(Raised.class, Color.Edge.class), of(Raised.class, Shape.Rule.class), of(Code.class, Shape.Corner.class), of(Caption.class, Type.Scale.class), of(Heading.class, Color.Ink.class), of(Link.class, Type.Decoration.class)); }
         @Override public String body() { return """
             display: inline-block;
             margin: 4px 6px 4px 0;
@@ -913,11 +889,11 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_acceptance() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new body_color_ink(), new label_type_scale()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Body.class, Color.Ink.class), of(Label.class, Type.Scale.class)); }
         @Override public String body() { return ""; }
     }
     public record st_effort() implements CssClass<StudioStyles> {
-        @Override public List<CssClass<?>> wears() { return List.of(new kicker_type_face(), new kicker_color_ink(), new label_type_scale(), new lede_type_treatment()); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Kicker.class, Type.Face.class), of(Kicker.class, Color.Ink.class), of(Label.class, Type.Scale.class), of(Lede.class, Type.Treatment.class)); }
         @Override public String body() { return ""; }
     }
 
