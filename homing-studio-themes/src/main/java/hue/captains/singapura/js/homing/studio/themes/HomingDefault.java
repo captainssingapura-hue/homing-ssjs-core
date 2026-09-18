@@ -29,6 +29,9 @@ public record HomingDefault() implements Design {
         return pair.onColourPlane() ? SeedPalette.HOUSE.impl(pair) : DefaultDesign.WORDS.get(pair);
     }
 
+    /** Worn in the house colours by default — the first seed palette, in its own name. */
+    @Override public hue.captains.singapura.js.homing.design.Palette palette() { return SeedPalette.HOUSE; }
+
     @Override public String slug()  { return "default"; }
     @Override public String label() { return "Default"; }
     @Override public String group() { return "Neutral"; }

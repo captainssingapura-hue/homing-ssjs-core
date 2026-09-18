@@ -22,4 +22,11 @@ public interface Design extends Theme {
 
     /** The fulfilment of a design class under this design; {@code null} when it has no word for it. */
     Impl impl(DesignClass<?> pair);
+
+    /**
+     * The colours this design is worn in by default — its own colour plane,
+     * unless it was written as a physique over a palette of its own, in which
+     * case that palette, by its own name.
+     */
+    default Palette palette() { return new Composed.Colours(this); }
 }

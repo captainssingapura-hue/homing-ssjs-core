@@ -19,14 +19,14 @@ package hue.captains.singapura.js.homing.design;
  * designs are already three physiques and three palettes.</p>
  *
  * @param physique the design answering every pair off the colour plane
- * @param palette  the design answering every pair on it
+ * @param palette  the palette answering every pair on it — also what {@link #palette()} names, as it should
  */
-public record Composed(Design physique, Design palette) implements Design {
+public record Composed(Design physique, Palette palette) implements Design {
 
     public static Composed of(Design physique, Design palette) { return new Composed(physiqueOf(physique), paletteOf(palette)); }
 
     /** The physique's own slug when the palette is its own — the whole design, not a cross. */
-    public boolean isDiagonal() { return physique.slug().equals(palette.slug()); }
+    public boolean isDiagonal() { return paletteOf(physique).slug().equals(palette.slug()); }
 
     @Override public Impl impl(DesignClass<?> pair) {
         return pair.onColourPlane() ? palette.impl(pair) : physique.impl(pair);
@@ -48,7 +48,7 @@ public record Composed(Design physique, Design palette) implements Design {
     public static Palette paletteOf(Design d) {
         if (d instanceof Palette p) return p;
         if (d instanceof Plane p) return paletteOf(p.whole);
-        return new Colours(d);
+        return d.palette();
     }
 
     /** The physique plane of a whole design. */

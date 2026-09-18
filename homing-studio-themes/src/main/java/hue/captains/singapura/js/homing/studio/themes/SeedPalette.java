@@ -65,6 +65,12 @@ public record SeedPalette(String slug, String label, String inspiration, Seeds l
             new Seeds("#FFF5EB", "#FFFFFF", "#F5E8DA", "#7A2E2E", "#4A2D1A", "#8B6F4E", "#FFFFFF", "#FFD4A8", "#B85450", "#FF8C42", "#D2691E", "#7A2E2E", "#E8D5C0"),
             new Seeds("#1A0F08", "#2A1A10", "#3A2418", "#7A2E2E", "#FFE4D1", "#C9A78B", "#FFE4D1", "#FFB67A", "#E89580", "#FF8C42", "#FFA363", "#7A2E2E", "#4A3424"));
 
+    /** One grey-blue clay — the raised layer the same colour as the page, which is what neumorphism moulds. */
+    public static final SeedPalette CLAY = new SeedPalette("clay", "Clay",
+            "One grey-blue clay, the raised layer the same colour as the page.",
+            new Seeds("#E0E5EC", "#E0E5EC", "#D6DBE3", "#D1D9E6", "#3B4A5E", "#7C8A9E", "#3B4A5E", "#6B7A90", "#2D3A4B", "#6C8CFF", "#4F6FE0", "#FFFFFF", "#CBD3DF"),
+            new Seeds("#2B2F36", "#2B2F36", "#262A30", "#1F2328", "#D5DAE2", "#8B93A1", "#D5DAE2", "#8B93A1", "#E6EAF0", "#8FA5FF", "#6C8CFF", "#1B1F26", "#3A3F48"));
+
     private static final Map<String, Map<DesignClass<?>, Impl>> WORDS = new java.util.concurrent.ConcurrentHashMap<>();
 
     @Override public Impl impl(DesignClass<?> pair) {
