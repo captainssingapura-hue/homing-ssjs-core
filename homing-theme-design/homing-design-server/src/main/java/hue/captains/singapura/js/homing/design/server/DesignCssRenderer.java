@@ -9,7 +9,6 @@ import hue.captains.singapura.js.homing.design.Sheets;
 import hue.captains.singapura.js.homing.design.Target;
 import hue.captains.singapura.js.homing.server.CssRenderer;
 
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -48,17 +47,23 @@ public final class DesignCssRenderer implements CssRenderer {
                 .orElse(designs.isEmpty() ? null : designs.get(0));
         if (design == null) return Optional.of("/* no design registered */\n");
 
-        Set<DesignClass<?>> required = new LinkedHashSet<>();
-        for (DesignClass<?> p : worn) if (p.target() == target.getClass()) required.add(p);
-        var resolution = new Deployment(required, design, extensions).resolve();
+        // Resolve the whole requirement set — a word on this target may read a
+        // variable bound on another (a shadow reads the palette's ink), and
+        // only the whole set can say whether that reference lands — then cut
+        // this target's sheet from it.
+        var whole = new Deployment(worn, design, extensions).resolve();
+        var mine = new java.util.LinkedHashMap<DesignClass<?>, hue.captains.singapura.js.homing.design.Impl>();
+        whole.impls().forEach((p, i) -> { if (p.target() == target.getClass()) mine.put(p, i); });
+        var resolution = new Deployment.Resolution(mine, whole.findings());
 
         var sb = new StringBuilder("/* ").append(target.token()).append(" under ").append(design.slug()).append(" */\n");
         sb.append(Sheets.rootSheet(resolution));
         String rules = Sheets.targetSheets(resolution).get(target.token());
         if (rules != null) sb.append(rules);
-        // What did not resolve, for the reader of the sheet — never for the browser's behaviour.
+        // What did not resolve on this target, for the reader of the sheet — never for the browser's behaviour.
         resolution.findings().stream()
                 .filter(f -> f.kind() != Deployment.Finding.Kind.MISSING)
+                .filter(f -> f.designClass() != null && f.designClass().target() == target.getClass())
                 .forEach(f -> sb.append("/* ").append(f).append(" */\n"));
         return Optional.of(sb.toString());
     }

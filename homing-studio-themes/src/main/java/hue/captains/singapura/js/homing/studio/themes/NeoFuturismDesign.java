@@ -65,8 +65,12 @@ final class NeoFuturismDesign {
     /** A luminous plate: a hairline of the light around, and a soft drop beneath. */
     static String plate(String cyan, int ring, String drop) { return "0 0 0 1px " + glow(cyan, ring) + ", " + drop; }
 
-    static final String DROP   = "0 12px 32px rgba(11, 16, 32, 0.10)";
-    static final String DROP_D = "0 12px 32px rgba(0, 0, 0, 0.55)";
+    // ── the palette, by reference: the light is whatever the palette makes primary; the plate and the glow are that light,
+    //    and the drop beneath is the palette's space (its inverted surface), thinned in daylight and deep at night ──
+    static final String LIGHT_REF = of(Primary.class, Color.Surface.class).var("background-color");
+    static final String SPACE_REF = of(Inverted.class, Color.Surface.class).var("background-color");
+    static final String DROP   = "0 12px 32px " + glow(SPACE_REF, 10);
+    static final String DROP_D = "0 12px 32px " + glow(SPACE_REF, 55);
 
     static final Map<DesignClass<?>, Impl> WORDS = Map.ofEntries(
             // ── layers: glass over space ────────────────────────────────
@@ -79,10 +83,9 @@ final class NeoFuturismDesign {
             rule(of(Raised.class, Shape.Rule.class), "1px", "solid"),
             one(of(Raised.class, Shape.Corner.class), "2px"),
             Map.entry(of(Raised.class, Shape.Shadow.class), Impl.Bindings
-                    .of(plate(CYAN, 14, DROP))
-                    .at(State.FOCUS, "0 0 0 3px " + glow(CYAN, 35))
-                    .in(Mode.DARK, State.REST, plate(CYAN_D, 18, DROP_D))
-                    .in(Mode.DARK, State.FOCUS, "0 0 0 3px " + glow(CYAN_D, 40))),
+                    .of(plate(LIGHT_REF, 14, DROP))
+                    .at(State.FOCUS, "0 0 0 3px " + glow(LIGHT_REF, 35))
+                    .in(Mode.DARK, State.REST, plate(LIGHT_REF, 18, DROP_D))),
             surface(of(Recessed.class, Color.Surface.class), RECESSED, RECESSED_D),
             one(of(Recessed.class, Shape.Corner.class), "2px"),
             surface(of(Inverted.class, Color.Surface.class), INVERTED, INVERTED_D),
@@ -150,12 +153,11 @@ final class NeoFuturismDesign {
                     .at(State.HOVER, "translateY(-1px) scale(1.01)")
                     .at(State.ACTIVE, "scale(0.985)")),
             Map.entry(of(Interactive.class, Shape.Shadow.class), Impl.Bindings
-                    .of(plate(CYAN, 14, DROP))
-                    .at(State.HOVER, "0 0 0 1px " + glow(CYAN, 60) + ", 0 0 28px " + glow(CYAN, 30) + ", " + DROP)
-                    .at(State.ACTIVE, "0 0 0 1px " + glow(CYAN, 60) + ", 0 0 10px " + glow(CYAN, 25))
-                    .in(Mode.DARK, State.REST, plate(CYAN_D, 18, DROP_D))
-                    .in(Mode.DARK, State.HOVER, "0 0 0 1px " + glow(CYAN_D, 70) + ", 0 0 32px " + glow(CYAN_D, 35) + ", " + DROP_D)
-                    .in(Mode.DARK, State.ACTIVE, "0 0 0 1px " + glow(CYAN_D, 70) + ", 0 0 12px " + glow(CYAN_D, 30))),
+                    .of(plate(LIGHT_REF, 14, DROP))
+                    .at(State.HOVER, "0 0 0 1px " + glow(LIGHT_REF, 60) + ", 0 0 28px " + glow(LIGHT_REF, 30) + ", " + DROP)
+                    .at(State.ACTIVE, "0 0 0 1px " + glow(LIGHT_REF, 60) + ", 0 0 10px " + glow(LIGHT_REF, 25))
+                    .in(Mode.DARK, State.REST, plate(LIGHT_REF, 18, DROP_D))
+                    .in(Mode.DARK, State.HOVER, "0 0 0 1px " + glow(LIGHT_REF, 70) + ", 0 0 32px " + glow(LIGHT_REF, 35) + ", " + DROP_D)),
             surface(of(Interactive.class, Color.Surface.class), glow(CYAN, 10), glow(CYAN_D, 12)),
             edge(of(Interactive.class, Color.Edge.class), glow(CYAN, 35), glow(CYAN_D, 40)),
             surface(of(Selected.class, Color.Surface.class), CYAN, CYAN_D),
@@ -164,7 +166,7 @@ final class NeoFuturismDesign {
             surface(of(Current.class, Color.Surface.class), glow(CYAN, 8), glow(CYAN_D, 10)),
             one(of(Current.class, Color.Ink.class), CYAN_INK, CYAN_INK_D),
             edge(of(Current.class, Color.Edge.class), glow(CYAN, 50), glow(CYAN_D, 55)),
-            one(of(Current.class, Shape.Shadow.class), "inset 2px 0 0 " + CYAN + ", 0 0 16px " + glow(CYAN, 18), "inset 2px 0 0 " + CYAN_D + ", 0 0 16px " + glow(CYAN_D, 22)),
+            one(of(Current.class, Shape.Shadow.class), "inset 2px 0 0 " + LIGHT_REF + ", 0 0 16px " + glow(LIGHT_REF, 20)),
 
             // ── structure: every line is a filament ─────────────────────
             edge(of(Divider.class, Color.Edge.class), glow(CYAN, 55), glow(CYAN_D, 55)),
@@ -183,11 +185,11 @@ final class NeoFuturismDesign {
             rule(of(Rail.class, Shape.Rule.class), "0 1px 0 0", "solid"),
 
             // ── the veil: frosted space ─────────────────────────────────
-            one(of(Overlay.class, Shape.Shadow.class), "0 24px 64px rgba(11, 16, 32, 0.35), 0 0 0 1px " + glow(CYAN, 30), "0 24px 64px rgba(0, 0, 0, 0.7), 0 0 0 1px " + glow(CYAN_D, 35)),
+            one(of(Overlay.class, Shape.Shadow.class), "0 24px 64px " + glow(SPACE_REF, 35) + ", 0 0 0 1px " + glow(LIGHT_REF, 30), "0 24px 64px " + glow(SPACE_REF, 70) + ", 0 0 0 1px " + glow(LIGHT_REF, 35)),
             Map.entry(of(Overlay.class, Effect.Filter.class), Impl.Bindings.none().at(State.REST, "backdrop-filter", "blur(14px) saturate(1.4) brightness(0.7)")),
             edge(of(Focus.class, Color.Edge.class), CYAN, CYAN_D),
-            one(of(Focus.class, Shape.Shadow.class), "0 24px 64px rgba(11, 16, 32, 0.35), 0 0 0 1px " + CYAN + ", 0 0 40px " + glow(CYAN, 35),
-                                                     "0 24px 64px rgba(0, 0, 0, 0.7), 0 0 0 1px " + CYAN_D + ", 0 0 48px " + glow(CYAN_D, 40)),
+            one(of(Focus.class, Shape.Shadow.class), "0 24px 64px " + glow(SPACE_REF, 35) + ", 0 0 0 1px " + LIGHT_REF + ", 0 0 40px " + glow(LIGHT_REF, 35),
+                                                     "0 24px 64px " + glow(SPACE_REF, 70) + ", 0 0 0 1px " + LIGHT_REF + ", 0 0 48px " + glow(LIGHT_REF, 40)),
             one(of(Inert.class, Effect.Opacity.class), "0.4"),
             one(of(Inert.class, Affordance.Cursor.class), "not-allowed"),
 

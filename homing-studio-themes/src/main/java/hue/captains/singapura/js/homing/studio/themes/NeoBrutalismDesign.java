@@ -41,7 +41,11 @@ final class NeoBrutalismDesign {
     static final String DISPLAY_FACE = "\"Arial Black\", \"Impact\", \"Helvetica Neue\", Arial, sans-serif";
     static final String SNAP = "transform 70ms steps(2, end), box-shadow 70ms steps(2, end), background-color 70ms steps(2, end)";
 
-    static String shadow(int px) { return px + "px " + px + "px 0 " + INK; }
+    // ── the palette, by reference: the shadow is the ink, offset; the ring is the focus edge ──
+    static final String INK_REF   = of(Body.class, Color.Ink.class).var();
+    static final String FOCUS_REF = of(Focus.class, Color.Edge.class).var("border-color");
+
+    static String shadow(int px) { return px + "px " + px + "px 0 " + INK_REF; }
 
     static final Map<DesignClass<?>, Impl> WORDS = Map.ofEntries(
             // ── layers: paper, and everything edged in ink ──────────────
@@ -111,7 +115,7 @@ final class NeoBrutalismDesign {
             Map.entry(of(Interactive.class, Motion.Transform.class), Impl.Bindings.none()
                     .at(State.HOVER, "translate(-2px, -2px)")
                     .at(State.ACTIVE, "translate(5px, 5px)")),
-            states(of(Interactive.class, Shape.Shadow.class), shadow(4), shadow(8), "0 0 0 " + INK),
+            states(of(Interactive.class, Shape.Shadow.class), shadow(4), shadow(8), "0 0 0 " + INK_REF),
             surface(of(Interactive.class, Color.Surface.class), SIGNAL),
             edge(of(Interactive.class, Color.Edge.class), INK, INK_D),
             surface(of(Selected.class, Color.Surface.class), INK, "#FFFFFF"),
@@ -120,7 +124,7 @@ final class NeoBrutalismDesign {
             surface(of(Current.class, Color.Surface.class), SIGNAL),
             one(of(Current.class, Color.Ink.class), INK),
             edge(of(Current.class, Color.Edge.class), INK),
-            one(of(Current.class, Shape.Shadow.class), "inset 6px 0 0 " + INK),
+            one(of(Current.class, Shape.Shadow.class), "inset 6px 0 0 " + INK_REF),
 
             // ── structure: every line is a rule ─────────────────────────
             edge(of(Divider.class, Color.Edge.class), RULE, RULE_D),
@@ -144,7 +148,7 @@ final class NeoBrutalismDesign {
             Map.entry(of(Overlay.class, Effect.Filter.class), Impl.Bindings.none().at(State.REST, "backdrop-filter", "grayscale(1) contrast(1.4)")),
             surfaceImage(of(Overlay.class, Color.Surface.class), "transparent", "repeating-linear-gradient(45deg, color-mix(in srgb, " + INK + " 22%, transparent) 0 7px, transparent 7px 14px)"),
             edge(of(Focus.class, Color.Edge.class), RISO_BLUE),
-            one(of(Focus.class, Shape.Shadow.class), shadow(12) + ", 0 0 0 4px " + RISO_BLUE),
+            one(of(Focus.class, Shape.Shadow.class), shadow(12) + ", 0 0 0 4px " + FOCUS_REF),
             one(of(Inert.class, Effect.Opacity.class), "0.4"),
             one(of(Inert.class, Affordance.Cursor.class), "not-allowed"),
 

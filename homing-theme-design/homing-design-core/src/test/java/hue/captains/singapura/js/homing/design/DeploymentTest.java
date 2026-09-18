@@ -155,4 +155,70 @@ class DeploymentTest {
     void wornBy_collectsThePairsOfAClosure() {
         assertEquals(Set.of(DANGER_SURFACE, ON_DANGER_INK), Deployment.wornBy(List.of(Wearer.INSTANCE)));
     }
+
+    // ── two planes: a physique and a palette, composed ───────────────────
+    static final DesignClass<Target.Shape.Shadow> LIFT = of(Interaction.Interactive.class, Target.Shape.Shadow.class);
+
+    /** A physique whose shadow is "the danger surface, offset" — a colour by reference, never by value. */
+    record Hard() implements Design {
+        static final Map<DesignClass<?>, Impl> WORDS = Map.of(
+                LIFT, Impl.Bindings.of("6px 6px 0 " + DANGER_SURFACE.var("background-color")),
+                CORNER, Impl.Bindings.of("0"),
+                PRESS, Impl.Bindings.none().at(State.ACTIVE, "translate(6px, 6px)"),
+                EASE, Impl.Bindings.of("transform 70ms steps(2)"),
+                INSET, Impl.Bindings.of("8px 16px"),
+                FACE, Impl.Bindings.of("Arial Black, sans-serif"));
+        @Override public String slug() { return "hard"; }
+        @Override public Impl impl(DesignClass<?> pair) { return WORDS.get(pair); }
+    }
+
+    @Test
+    void aDesign_isTwoPlanes_andAnyPhysiqueTakesAnyPalette() {
+        Set<DesignClass<?>> required = Set.of(DANGER_SURFACE, ON_DANGER_INK, PRESS, EASE, CORNER, INSET, FACE, LIFT);
+        // Hard's physique under Plain's colours: every pair answered, the shadow reads Plain's danger surface.
+        var r = Deployment.of(required, Composed.of(new Hard(), new Plain())).resolve();
+        assertEquals(List.of(), r.findings(), r.findings().toString());
+        assertEquals("#B00020", ((Impl.Bindings) r.impls().get(DANGER_SURFACE)).values().get(Mode.LIGHT).get(State.REST).get("background-color"));
+        assertEquals("0", ((Impl.Bindings) r.impls().get(CORNER)).values().get(Mode.LIGHT).get(State.REST).get(Impl.Bindings.SOLE));
+        assertTrue(((Impl.Bindings) r.impls().get(LIFT)).values().get(Mode.LIGHT).get(State.REST).get(Impl.Bindings.SOLE)
+                .contains("var(--danger-color-surface-background-color)"));
+        // and the sheet says so: the shadow's root binding is the reference, the surface's is the value
+        String root = Sheets.rootSheet(r);
+        assertTrue(root.contains("--interactive-shape-shadow: 6px 6px 0 var(--danger-color-surface-background-color);"), root);
+        assertTrue(root.contains("--danger-color-surface-background-color: #B00020;"), root);
+        // the same physique under Brutal's colours: the same shadow, now yellow — nothing in the physique changed
+        var yellow = Deployment.of(required, Composed.of(new Hard(), new Brutal())).resolve();
+        assertEquals(List.of(), yellow.findings(), yellow.findings().toString());
+        assertTrue(Sheets.rootSheet(yellow).contains("--danger-color-surface-background-color: #FFE800;"));
+        assertEquals("hard_brutal", Composed.of(new Hard(), new Brutal()).slug());
+    }
+
+    @Test
+    void aPlane_answersOnlyItsOwn() {
+        assertEquals(null, Composed.physiqueOf(new Plain()).impl(DANGER_SURFACE), "a physique has no colour");
+        assertEquals(null, Composed.paletteOf(new Plain()).impl(CORNER), "a palette has no shape");
+        assertTrue(Composed.paletteOf(new Plain()).impl(DANGER_SURFACE) != null);
+        assertTrue(Composed.physiqueOf(Composed.paletteOf(new Plain())).impl(CORNER) != null, "views compose back to the whole's plane, not to nothing");
+    }
+
+    @Test
+    void aReferenceToAPairNobodyRequired_isRefused() {
+        Set<DesignClass<?>> noSurface = Set.of(LIFT, CORNER, PRESS, EASE, INSET, FACE);                        // no danger surface required
+        var r = Deployment.of(noSurface, Composed.of(new Hard(), new Plain())).resolve();
+        var kinds = r.findings().stream().map(Finding::kind).toList();
+        assertEquals(List.of(Finding.Kind.DANGLING_REFERENCE), kinds, r.findings().toString());
+        assertTrue(r.findings().get(0).toString().contains("--danger-color-surface-background-color"));
+    }
+
+    @Test
+    void aReference_isTyped() {
+        assertEquals("var(--danger-color-surface-background-color)", DANGER_SURFACE.var("background-color"));
+        assertEquals("var(--on-danger-color-ink)", ON_DANGER_INK.var());
+        assertTrue(DANGER_SURFACE.onColourPlane());
+        assertTrue(!LIFT.onColourPlane());
+        try { DANGER_SURFACE.var(); throw new AssertionError("a two-property target must name the property"); }
+        catch (IllegalArgumentException expected) { /* named */ }
+        try { CORNER.var("color"); throw new AssertionError("a property the target does not own"); }
+        catch (IllegalArgumentException expected) { /* refused */ }
+    }
 }

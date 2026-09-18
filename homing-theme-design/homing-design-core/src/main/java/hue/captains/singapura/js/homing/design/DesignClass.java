@@ -47,5 +47,28 @@ public record DesignClass<T extends Target & CssGroup<T>>(Class<? extends Semant
     @SuppressWarnings("unchecked")
     public T targetLeaf() { return (T) Trees.targetInstance(target); }
 
+    /** Whether this class is on the colour plane — the {@link Target.Color} branch, the one an orthogonal palette answers. */
+    public boolean onColourPlane() { return Target.Color.class.isAssignableFrom(target); }
+
+    /**
+     * A reference to this class's value at rest, for another word to read:
+     * {@code var(--body-color-ink)}. The way a physique names a colour without
+     * carrying one — a shadow is "the ink, offset", a glow "the primary
+     * surface, blurred" — and the way a dressed body paints a part the DOM
+     * cannot dress. Resolved by the browser against the palette's root
+     * binding, mode included; refused at deployment when the referenced pair
+     * is not required, so a reference never dangles.
+     */
+    public String var() {
+        var owned = targetLeaf().properties();
+        if (owned.size() != 1) throw new IllegalArgumentException(cssName() + " owns " + owned.size() + " properties; name one");
+        return "var(" + Trees.variable(this, owned.iterator().next()) + ")";
+    }
+
+    public String var(String property) {
+        if (!targetLeaf().properties().contains(property)) throw new IllegalArgumentException(cssName() + " does not own " + property);
+        return "var(" + Trees.variable(this, property) + ")";
+    }
+
     @Override public String toString() { return cssName(); }
 }

@@ -49,6 +49,19 @@ class DesignCompletenessTest {
         }
     }
 
+    /** The planes are orthogonal: no physique word carries a colour, so any physique under any palette is the same design in other colours. */
+    @Test
+    void noPhysiqueWord_carriesAColour() {
+        var colour = java.util.regex.Pattern.compile("#[0-9A-Fa-f]{3,8}\\b|rgba?\\(|hsla?\\(");
+        for (Design d : List.of(HomingDefault.INSTANCE, HomingNeoBrutalism.INSTANCE, HomingNeoFuturism.INSTANCE))
+            for (var pair : worn()) {
+                if (pair.onColourPlane()) continue;
+                if (!(d.impl(pair) instanceof hue.captains.singapura.js.homing.design.Impl.Bindings b)) continue;
+                b.values().values().forEach(states -> states.values().forEach(props -> props.values().forEach(v ->
+                        assertFalse(colour.matcher(v).find(), d.slug() + " " + pair + " carries a colour: " + v))));
+            }
+    }
+
     @Test
     void aDesignOverDefault_hasItsOwnWord_forMostOfWhatIsWorn() {
         var worn = worn();
@@ -59,9 +72,12 @@ class DesignCompletenessTest {
     }
 
     @Test
-    void theThreeDesigns_areListedDefaultFirst() {
+    void theThreeDesigns_areListedDefaultFirst_thenTheirCrosses() {
         var slugs = StudioThemeRegistry.INSTANCE.themes().stream().map(Theme::slug).toList();
-        assertEquals(List.of("default", "neo-brutalism", "neo-futurism"), slugs);
+        assertEquals(List.of("default", "neo-brutalism", "neo-futurism",
+                             "default_neo-brutalism", "default_neo-futurism",
+                             "neo-brutalism_default", "neo-brutalism_neo-futurism",
+                             "neo-futurism_default", "neo-futurism_neo-brutalism"), slugs);
         assertFalse(StudioThemeRegistry.INSTANCE.themes().stream().anyMatch(t -> !(t instanceof Design)), "every theme is a design");
     }
 }

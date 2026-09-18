@@ -47,6 +47,11 @@ final class DefaultDesign {
     static final String BODY_FACE    = StudioFonts.BODY;
     static final String MONO_FACE    = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
 
+    // ── the palette, by reference: a shadow is a colour the palette owns, offset ──
+    static final String INK_REF      = of(Heading.class, Color.Ink.class).var();
+    static final String PRIMARY_REF  = of(Primary.class, Color.Surface.class).var("background-color");
+    static final String INVERTED_REF = of(Inverted.class, Color.Surface.class).var("background-color");
+
     static final Map<DesignClass<?>, Impl> WORDS = Map.ofEntries(
             // ── layers ──────────────────────────────────────────────────
             surface(of(Base.class, Color.Surface.class), SURFACE, SURFACE_D),
@@ -58,8 +63,8 @@ final class DefaultDesign {
             rule(of(Raised.class, Shape.Rule.class), "1px", "solid"),
             one(of(Raised.class, Shape.Corner.class), "4px"),
             Map.entry(of(Raised.class, Shape.Shadow.class), hue.captains.singapura.js.homing.design.Impl.Bindings
-                    .of("0 1px 3px color-mix(in srgb, " + NAVY + " 4%, transparent)")
-                    .at(hue.captains.singapura.js.homing.design.State.FOCUS, "0 0 0 3px color-mix(in srgb, " + GOLD + " 18%, transparent)")),
+                    .of("0 1px 3px color-mix(in srgb, " + INK_REF + " 4%, transparent)")
+                    .at(hue.captains.singapura.js.homing.design.State.FOCUS, "0 0 0 3px color-mix(in srgb, " + PRIMARY_REF + " 18%, transparent)")),
             surface(of(Recessed.class, Color.Surface.class), RECESSED, RECESSED_D),
             one(of(Recessed.class, Shape.Corner.class), "6px"),
             surface(of(Inverted.class, Color.Surface.class), INVERTED),
@@ -135,8 +140,8 @@ final class DefaultDesign {
             Map.entry(of(Interactive.class, Motion.Transform.class), hue.captains.singapura.js.homing.design.Impl.Bindings.none()
                     .at(hue.captains.singapura.js.homing.design.State.HOVER, "translateY(-2px)")),
             states(of(Interactive.class, Shape.Shadow.class),
-                    "0 1px 3px color-mix(in srgb, " + NAVY + " 4%, transparent)",
-                    "0 6px 16px color-mix(in srgb, " + NAVY + " 12%, transparent)"),
+                    "0 1px 3px color-mix(in srgb, " + INK_REF + " 4%, transparent)",
+                    "0 6px 16px color-mix(in srgb, " + INK_REF + " 12%, transparent)"),
             one(of(Interactive.class, Affordance.Cursor.class), "pointer"),
             surface(of(Interactive.class, Color.Surface.class), "color-mix(in srgb, " + GOLD + " 15%, transparent)"),
             edge(of(Interactive.class, Color.Edge.class), BORDER, BORDER_D),
@@ -146,7 +151,7 @@ final class DefaultDesign {
             surface(of(Current.class, Color.Surface.class), "color-mix(in srgb, " + GOLD + " 7%, transparent)"),
             one(of(Current.class, Color.Ink.class), NAVY, NAVY_D),
             edge(of(Current.class, Color.Edge.class), GOLD),
-            one(of(Current.class, Shape.Shadow.class), "inset 3px 0 0 color-mix(in srgb, " + GOLD + " 60%, transparent)"),
+            one(of(Current.class, Shape.Shadow.class), "inset 3px 0 0 color-mix(in srgb, " + PRIMARY_REF + " 60%, transparent)"),
 
             // ── structure ───────────────────────────────────────────────
             edge(of(Divider.class, Color.Edge.class), GOLD),
@@ -166,10 +171,10 @@ final class DefaultDesign {
             rule(of(Rail.class, Shape.Rule.class), "0 1px 0 0", "solid"),
             edge(of(OnInverted.class, Color.Edge.class), BORDER, BORDER_D),
             edge(of(Primary.class, Color.Edge.class), GOLD),
-            one(of(Overlay.class, Shape.Shadow.class), "0 10px 30px color-mix(in srgb, " + INVERTED + " 45%, transparent), 0 2px 6px color-mix(in srgb, " + INVERTED + " 30%, transparent)"),
+            one(of(Overlay.class, Shape.Shadow.class), "0 10px 30px color-mix(in srgb, " + INVERTED_REF + " 45%, transparent), 0 2px 6px color-mix(in srgb, " + INVERTED_REF + " 30%, transparent)"),
             Map.entry(of(Overlay.class, Effect.Filter.class), hue.captains.singapura.js.homing.design.Impl.Bindings.none().at(hue.captains.singapura.js.homing.design.State.REST, "backdrop-filter", "brightness(0.45) blur(2px)")),
             edge(of(Focus.class, Color.Edge.class), "color-mix(in srgb, " + GOLD + " 55%, " + BORDER + ")"),
-            one(of(Focus.class, Shape.Shadow.class), "0 10px 30px color-mix(in srgb, " + INVERTED + " 45%, transparent), 0 0 0 1px color-mix(in srgb, " + GOLD + " 28%, transparent), 0 0 36px color-mix(in srgb, " + GOLD + " 30%, transparent)"),
+            one(of(Focus.class, Shape.Shadow.class), "0 10px 30px color-mix(in srgb, " + INVERTED_REF + " 45%, transparent), 0 0 0 1px color-mix(in srgb, " + PRIMARY_REF + " 28%, transparent), 0 0 36px color-mix(in srgb, " + PRIMARY_REF + " 30%, transparent)"),
             one(of(Inert.class, Effect.Opacity.class), "0.45"),
             one(of(Inert.class, Affordance.Cursor.class), "default"),
 

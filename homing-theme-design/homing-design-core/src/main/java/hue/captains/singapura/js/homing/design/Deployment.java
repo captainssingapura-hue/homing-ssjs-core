@@ -50,7 +50,7 @@ public record Deployment(Set<DesignClass<?>> required, Design design, List<Desig
 
     /** One thing that did not resolve, or resolved wrongly. */
     public record Finding(Kind kind, DesignClass<?> designClass, String detail) {
-        public enum Kind { MISSING, DOUBLE, CARRIER_MISMATCH, INVALID_BINDING, INVALID_BODY }
+        public enum Kind { MISSING, DOUBLE, CARRIER_MISMATCH, INVALID_BINDING, INVALID_BODY, DANGLING_REFERENCE }
         @Override public String toString() { return kind + " " + (designClass == null ? "" : designClass) + (detail.isBlank() ? "" : " — " + detail); }
     }
 
@@ -79,6 +79,7 @@ public record Deployment(Set<DesignClass<?>> required, Design design, List<Desig
             validate(pair, impl, findings);
             impls.put(pair, impl);
         }
+        checkReferences(impls, findings);
         return new Resolution(Map.copyOf(impls), List.copyOf(findings));
     }
 
@@ -125,5 +126,45 @@ public record Deployment(Set<DesignClass<?>> required, Design design, List<Desig
             if (prelude.contains(".") || prelude.contains("#"))
                 findings.add(new Finding(Finding.Kind.INVALID_BODY, pair, "body nests a class or id selector: " + prelude));
         }
+    }
+
+    // ── references between words ──────────────────────────────────────────
+
+    private static final Pattern REFERENCE = Pattern.compile("var\\(\\s*(--[A-Za-z0-9_-]+)");
+
+    /**
+     * A word may read another's value — {@link DesignClass#var()} — which is
+     * how a physique names the palette's colour without carrying it. The
+     * browser resolves it against the root binding; here we make sure there
+     * is one: every variable any impl reads is a variable this resolution
+     * emits, at rest, for a pair that is required. Otherwise the reference
+     * dangles, silently, in the browser — so it is a finding here.
+     */
+    private static void checkReferences(Map<DesignClass<?>, Impl> impls, List<Finding> findings) {
+        var emitted = new java.util.HashSet<String>();
+        impls.forEach((dc, impl) -> {
+            if (!(impl instanceof Impl.Bindings b)) return;
+            var owned = dc.targetLeaf().properties();
+            b.values().forEach((mode, states) -> states.forEach((state, props) -> props.keySet().forEach(p -> {
+                // an invalid binding is already a finding; it emits nothing
+                if (p.equals(Impl.Bindings.SOLE) ? owned.size() != 1 : !owned.contains(p)) return;
+                emitted.add(Sheets.variable(dc, Sheets.property(dc, p), state));
+            })));
+        });
+        impls.forEach((dc, impl) -> {
+            for (String text : textsOf(impl)) {
+                Matcher m = REFERENCE.matcher(text);
+                while (m.find()) if (!emitted.contains(m.group(1)))
+                    findings.add(new Finding(Finding.Kind.DANGLING_REFERENCE, dc, "reads " + m.group(1) + ", which no required pair binds"));
+            }
+        });
+    }
+
+    private static List<String> textsOf(Impl impl) {
+        return switch (impl) {
+            case Impl.Bindings b -> { var out = new ArrayList<String>(); b.values().values().forEach(s -> s.values().forEach(p -> out.addAll(p.values()))); yield out; }
+            case Impl.Body body -> List.of(body.css());
+            default -> List.of();
+        };
     }
 }

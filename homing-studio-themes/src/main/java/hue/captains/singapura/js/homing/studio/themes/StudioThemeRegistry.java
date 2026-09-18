@@ -3,6 +3,8 @@ package hue.captains.singapura.js.homing.studio.themes;
 import hue.captains.singapura.js.homing.core.CssGroupImpl;
 import hue.captains.singapura.js.homing.core.PaletteProvision;
 import hue.captains.singapura.js.homing.core.Theme;
+import hue.captains.singapura.js.homing.design.Composed;
+import hue.captains.singapura.js.homing.design.Design;
 import hue.captains.singapura.js.homing.design.server.DesignRegistry;
 import hue.captains.singapura.js.homing.server.CssRenderer;
 import hue.captains.singapura.js.homing.server.ThemeRegistry;
@@ -25,11 +27,24 @@ public final class StudioThemeRegistry implements ThemeRegistry {
     public static final StudioThemeRegistry INSTANCE = new StudioThemeRegistry();
 
     private static final DesignRegistry DESIGNS = new DesignRegistry(
-            List.of(HomingDefault.INSTANCE, HomingNeoBrutalism.INSTANCE, HomingNeoFuturism.INSTANCE),
+            withCompositions(List.of(HomingDefault.INSTANCE, HomingNeoBrutalism.INSTANCE, HomingNeoFuturism.INSTANCE)),
             List.of(),
             List.of(HomingDefault.Palette.INSTANCE, HomingNeoBrutalism.Palette.INSTANCE, HomingNeoFuturism.Palette.INSTANCE,
                     HomingDefault.Fonts.INSTANCE, HomingNeoBrutalism.Fonts.INSTANCE, HomingNeoFuturism.Fonts.INSTANCE),
             List.of());
+
+    /**
+     * The three, then every cross of one physique with another palette — the
+     * planes are orthogonal, so any physique takes any palette; the diagonal
+     * is the three themselves and is not repeated.
+     */
+    static List<Design> withCompositions(List<Design> whole) {
+        var out = new java.util.ArrayList<Design>(whole);
+        for (Design physique : whole)
+            for (Design palette : whole)
+                if (physique != palette) out.add(Composed.of(physique, palette));
+        return List.copyOf(out);
+    }
 
     private StudioThemeRegistry() {}
 
