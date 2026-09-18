@@ -58,11 +58,15 @@ public sealed interface Target permits
     //  Color — what is painted with colour
     // ═════════════════════════════════════════════════════════════════════
     sealed interface Color extends Target permits Color.Surface, Color.Ink, Color.Edge, Color.Fill, Color.Stroke, Color.Scrollbar {
-        /** The face an element presents. */
+        /**
+         * The face an element presents: a colour, and an image layer over it — a
+         * wash (a gradient), or a pattern, which is an image with a tile size and
+         * a repeat. A gradient is an image in CSS, so it goes where an image goes.
+         */
         record Surface() implements Color, CssGroup<Surface> {
             public static final Surface INSTANCE = new Surface();
             @Override public List<CssClass<Surface>> cssClasses() { return List.of(); }
-            @Override public Set<String> properties() { return Set.of("background-color", "background-image"); }
+            @Override public Set<String> properties() { return Set.of("background-color", "background-image", "background-size", "background-repeat"); }
             @Override public Set<State> states() { return INTERACTIVE; }
         }
         /** The colour of what is written on it. */

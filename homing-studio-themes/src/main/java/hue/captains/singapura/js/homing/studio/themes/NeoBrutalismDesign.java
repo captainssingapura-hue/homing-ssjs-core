@@ -76,7 +76,9 @@ final class NeoBrutalismDesign {
 
     static final Map<DesignClass<?>, Impl> WORDS = Map.ofEntries(
             // ── layers: paper, and everything edged in ink ──────────────
-            surface(of(Base.class, Color.Surface.class), PAPER, PAPER_D),
+            // the page: paper under a riso dot screen — the grid behind everything, 12px pitch, ink at a fraction
+            surfacePattern(of(Base.class, Color.Surface.class), PAPER, "radial-gradient(circle, color-mix(in srgb, " + INK + " 14%, transparent) 1px, transparent 1px)", "12px 12px",
+                                                                PAPER_D, "radial-gradient(circle, color-mix(in srgb, " + INK_D + " 14%, transparent) 1px, transparent 1px)"),
             one(of(Base.class, Color.Scrollbar.class), INK + " " + PAPER, INK_D + " " + PAPER_D),
             rule(of(Base.class, Shape.Rule.class), "0", "none"),
             one(of(Base.class, Shape.Corner.class), "0"),

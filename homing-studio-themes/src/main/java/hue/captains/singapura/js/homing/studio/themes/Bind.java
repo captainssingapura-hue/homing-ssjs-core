@@ -52,6 +52,23 @@ final class Bind {
                 .at(State.REST, "background-color", color)
                 .at(State.REST, "background-image", image));
     }
+    /** A Color.Surface painted with a pattern: an image tiled at a size — a dot screen, a grid, a texture — over its colour. */
+    static Map.Entry<DesignClass<?>, Impl> surfacePattern(DesignClass<?> cls, String color, String image, String size) {
+        return Map.entry(cls, Impl.Bindings.none()
+                .at(State.REST, "background-color", color)
+                .at(State.REST, "background-image", image)
+                .at(State.REST, "background-size", size)
+                .at(State.REST, "background-repeat", "repeat"));
+    }
+    static Map.Entry<DesignClass<?>, Impl> surfacePattern(DesignClass<?> cls, String color, String image, String size, String darkColor, String darkImage) {
+        return Map.entry(cls, Impl.Bindings.none()
+                .at(State.REST, "background-color", color)
+                .at(State.REST, "background-image", image)
+                .at(State.REST, "background-size", size)
+                .at(State.REST, "background-repeat", "repeat")
+                .in(Mode.DARK, State.REST, "background-color", darkColor)
+                .in(Mode.DARK, State.REST, "background-image", darkImage));
+    }
 
     /** A Color.Edge: its border colour (one value or four), light and dark, with an optional hover. */
     static Map.Entry<DesignClass<?>, Impl> edge(DesignClass<?> cls, String light, String dark) {
