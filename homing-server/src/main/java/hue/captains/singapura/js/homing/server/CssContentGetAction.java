@@ -43,6 +43,8 @@ public class CssContentGetAction
 
     private final List<CssGroupImpl<?, ?>> impls;
     private final Theme defaultTheme;
+    private final ServedModules served;
+    private final List<CssRenderer> renderers;
 
     /**
      * @param impls every registered {@link CssGroupImpl}; must contain at least
@@ -52,8 +54,18 @@ public class CssContentGetAction
      *                     requests return 404
      */
     public CssContentGetAction(List<CssGroupImpl<?, ?>> impls, Theme defaultTheme) {
+        this(impls, defaultTheme, ServedModules.NONE, List.of());
+    }
+
+    /**
+     * @param served    the deployment's modules by canonical name — a group is resolved by lookup, never by reflection
+     * @param renderers the design side's renderers, asked first; a group none claims renders from its bodies
+     */
+    public CssContentGetAction(List<CssGroupImpl<?, ?>> impls, Theme defaultTheme, ServedModules served, List<CssRenderer> renderers) {
         this.impls = Objects.requireNonNull(impls, "impls");
         this.defaultTheme = defaultTheme;
+        this.served = served == null ? ServedModules.NONE : served;
+        this.renderers = List.copyOf(renderers);
     }
 
     @Override
@@ -76,9 +88,12 @@ public class CssContentGetAction
             return CompletableFuture.failedFuture(ResourceNotFound.missingClass());
         }
         try {
-            Class<?> clazz = Class.forName(query.className());
-            Object instance = resolveInstance(clazz);
-            if (!(instance instanceof CssGroup<?> group)) {
+            var found = served.find(query.className());
+            if (found.isEmpty()) {
+                return CompletableFuture.failedFuture(ResourceNotFound.forClass(query.className(),
+                        new IllegalStateException("group '" + query.className() + "' is not declared in any registered crate")));
+            }
+            if (!(found.get() instanceof CssGroup<?> group)) {
                 return CompletableFuture.failedFuture(ResourceNotFound.wrongType(query.className(), "CssGroup"));
             }
 
@@ -96,6 +111,10 @@ public class CssContentGetAction
             // handles `impl == null` by rendering purely from inline bodies.
             // Theme cascade comes from the palette group (RFC 0066, the prior)
             // and /theme-globals, not from the per-group response.
+            for (CssRenderer r : renderers) {
+                var css = r.render(group, themeSlug);
+                if (css.isPresent()) return CompletableFuture.completedFuture(new CssContent(css.get()));
+            }
             CssGroupImpl<?, ?> impl = findImpl(group, themeSlug);
             return CompletableFuture.completedFuture(new CssContent(renderCss(impl, group)));
         } catch (Exception e) {
@@ -105,13 +124,6 @@ public class CssContentGetAction
 
     // ---- helpers --------------------------------------------------------
 
-    private static Object resolveInstance(Class<?> clazz) throws Exception {
-        try {
-            return clazz.getField("INSTANCE").get(null);
-        } catch (NoSuchFieldException e) {
-            return clazz.getDeclaredConstructor().newInstance();
-        }
-    }
 
     /** First impl whose group() class equals {@code group}'s class AND theme().slug() matches. */
     private CssGroupImpl<?, ?> findImpl(CssGroup<?> group, String themeSlug) {

@@ -1,6 +1,15 @@
 package hue.captains.singapura.js.homing.studio.starter;
 
 import hue.captains.singapura.js.homing.core.AppModule;
+import hue.captains.singapura.js.homing.core.Crate;
+import hue.captains.singapura.js.homing.design.DesignCrate;
+import hue.captains.singapura.js.homing.studio.workspace.StudioWorkspaceCrate;
+import hue.captains.singapura.js.homing.theme.color.ThemeColorCrate;
+import hue.captains.singapura.js.homing.theme.type.ThemeTypeCrate;
+import hue.captains.singapura.js.homing.workspace.WorkspaceCrate;
+import hue.captains.singapura.js.homing.workspace.codecs.WorkspaceCodecsCrate;
+import hue.captains.singapura.js.homing.workspace.persistence.WorkspacePersistenceCrate;
+import hue.captains.singapura.js.homing.workspace.shell.WorkspaceShellCrate;
 import hue.captains.singapura.js.homing.studio.base.DefaultFixtures;
 import hue.captains.singapura.js.homing.studio.base.Fixtures;
 import hue.captains.singapura.js.homing.studio.base.Studio;
@@ -105,6 +114,24 @@ public record StudioStarterFixtures<S extends Studio<?>>(Umbrella<S> umbrella)
     @Override
     public ThemeRegistry themeRegistry() {
         return StudioWorkspaceThemes.INSTANCE;
+    }
+
+    /**
+     * RFC 0044 — the crate roots a starter studio serves: the studio workspace and
+     * every workspace crate it mounts, the palettes, and the design substrate.
+     * Their closure is all a name may resolve to.
+     */
+    @Override
+    public List<Crate> crates() {
+        return List.of(
+                StudioWorkspaceCrate.INSTANCE,
+                WorkspaceShellCrate.INSTANCE,
+                WorkspaceCrate.INSTANCE,
+                WorkspaceCodecsCrate.INSTANCE,
+                WorkspacePersistenceCrate.INSTANCE,
+                ThemeColorCrate.INSTANCE,
+                ThemeTypeCrate.INSTANCE,
+                DesignCrate.INSTANCE);
     }
 
     @Override

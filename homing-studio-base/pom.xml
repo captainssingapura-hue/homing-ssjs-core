@@ -51,6 +51,11 @@
              design core; the studio's themes fill it and its classes read it. -->
         <dependency>
             <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-design-core</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
             <artifactId>homing-theme-color</artifactId>
             <version>${project.parent.version}</version>
         </dependency>

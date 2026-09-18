@@ -2,144 +2,104 @@ package hue.captains.singapura.js.homing.workspace.shell;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
+import hue.captains.singapura.js.homing.core.Wearable;
 
 import java.util.List;
 
+import static hue.captains.singapura.js.homing.design.DesignClass.of;
+import static hue.captains.singapura.js.homing.design.Target.*;
+import static hue.captains.singapura.js.homing.design.Box.*;
+import static hue.captains.singapura.js.homing.design.Emphasis.*;
+import static hue.captains.singapura.js.homing.design.Feedback.*;
+import static hue.captains.singapura.js.homing.design.Interaction.*;
+import static hue.captains.singapura.js.homing.design.Layer.*;
+import static hue.captains.singapura.js.homing.design.Structure.*;
+import static hue.captains.singapura.js.homing.design.Text.*;
+
+
 /**
- * The switcher's detail pane — what the right-hand side of the dialog draws
- * about the selected kind. The frame, scrim, glow and action row are
- * {@code SystemDialogStyles}; the split and the kind tree are
- * {@code MasterDetailStyles}. This sheet is only what neither of those knows:
- * a heading, a list host, a create row, and a maintenance row.
- *
- * <p>Every value is a token. The old control modal painted itself with
- * {@code style.cssText} and colour constants, which no rule could see; this is
- * the same surface with its colours where {@code no-literal-color} can read
- * them and its elements where {@code use-dom-ops-party} can count them.</p>
+ * The workspace switcher's detail pane: a heading, a list of workspaces, a
+ * rename row and a maintenance row. Structure only; the list is a recessed
+ * field whose edge answers focus, the buttons are edged controls, the danger
+ * button wears the danger ink and edge, an unavailable button is inert.
  */
 public record WorkspaceSwitcherStyles() implements CssGroup<WorkspaceSwitcherStyles> {
-
     public static final WorkspaceSwitcherStyles INSTANCE = new WorkspaceSwitcherStyles();
 
-    /** The pane as a column: heading, list (which takes the space), then the rows. */
     public record ws_detail() implements CssClass<WorkspaceSwitcherStyles> {
         @Override public String body() { return """
             display: flex;
             flex-direction: column;
-            gap: var(--space-2);
+            gap: 8px;
             height: 100%;
             min-height: 0;
             """; }
     }
-
     public record ws_head() implements CssClass<WorkspaceSwitcherStyles> {
-        @Override public String body() { return """
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--color-text-title);
-            line-height: 1.3;
-            """; }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Label.class, Type.Weight.class), of(Heading.class, Color.Ink.class), of(Label.class, Type.Scale.class)); }
+        @Override public String body() { return ""; }
     }
-
-    /** Kind id and the "current" marker — small, muted, one line. */
     public record ws_sub() implements CssClass<WorkspaceSwitcherStyles> {
-        @Override public String body() { return """
-            font-size: 11px;
-            color: var(--color-text-muted);
-            letter-spacing: 0.3px;
-            """; }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Kicker.class, Type.Scale.class), of(Muted.class, Color.Ink.class)); }
+        @Override public String body() { return ""; }
     }
-
-    /**
-     * The instance list. A focus stop in its own right — Tab lands here from the
-     * kind tree — so it carries a tabindex and shows a ring while it has the
-     * keyboard, the same way MasterDetail's nav does.
-     */
+    /** The list is a recessed field; its edge answers focus (the raised edge's focus slot). */
     public record ws_list() implements CssClass<WorkspaceSwitcherStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Recessed.class, Color.Surface.class), of(Raised.class, Color.Edge.class), of(Raised.class, Shape.Rule.class), of(Control.class, Shape.Corner.class)); }
         @Override public String body() { return """
             flex: 1 1 auto;
             min-height: 0;
             overflow-y: auto;
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-sm);
-            background: var(--color-surface-recessed);
-            padding: var(--space-1) 0;
+            padding: 4px 0;
             outline: none;
             """; }
     }
-
+    /** Kept for the switcher's JS, which applies it on focus; the design's focus slot on the edge does the painting. */
     public record ws_list_focus() implements CssClass<WorkspaceSwitcherStyles> {
         @Override public String pseudoState() { return ":focus"; }
-        @Override public String body() { return """
-            border-color: color-mix(in srgb, var(--color-accent) 60%, var(--color-border));
-            """; }
+        @Override public String body() { return ""; }
     }
-
     public record ws_note() implements CssClass<WorkspaceSwitcherStyles> {
-        @Override public String body() { return """
-            font-size: 11px;
-            color: var(--color-text-muted);
-            """; }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Kicker.class, Type.Scale.class), of(Muted.class, Color.Ink.class)); }
+        @Override public String body() { return ""; }
     }
-
-    /** A row of controls — the create row, and the maintenance row. */
     public record ws_row() implements CssClass<WorkspaceSwitcherStyles> {
         @Override public String body() { return """
             display: flex;
             align-items: center;
-            gap: var(--space-2);
+            gap: 8px;
             flex-wrap: wrap;
             """; }
     }
-
     public record ws_input() implements CssClass<WorkspaceSwitcherStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Recessed.class, Color.Surface.class), of(Body.class, Color.Ink.class), of(Raised.class, Color.Edge.class), of(Raised.class, Shape.Rule.class), of(Control.class, Shape.Corner.class), of(Caption.class, Type.Scale.class)); }
         @Override public String body() { return """
             flex: 1 1 160px;
             min-width: 0;
             font: inherit;
-            font-size: 13px;
-            padding: var(--space-1) var(--space-2);
-            background: var(--color-surface-recessed);
-            color: var(--color-text-primary);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-sm);
+            padding: 4px 8px;
             """; }
     }
-
-    /** A quiet in-pane button. The dialog's own verbs live in its action row. */
     public record ws_btn() implements CssClass<WorkspaceSwitcherStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Base.class, Color.Surface.class), of(Body.class, Color.Ink.class), of(Raised.class, Color.Edge.class), of(Raised.class, Shape.Rule.class), of(Control.class, Shape.Corner.class), of(Caption.class, Type.Scale.class), of(Interactive.class, Affordance.Cursor.class)); }
         @Override public String body() { return """
             font: inherit;
-            font-size: 12px;
-            padding: var(--space-1) var(--space-3);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-sm);
-            background: var(--color-surface);
-            color: var(--color-text-primary);
-            cursor: pointer;
+            padding: 4px 12px;
             """; }
     }
-
-    /** Destructive: the accent as a border rather than a fill, so it warns without shouting. */
+    /** The destructive action: applied beside ws_btn; the danger ink and edge win by order. */
     public record ws_btn_danger() implements CssClass<WorkspaceSwitcherStyles> {
-        @Override public String body() { return """
-            border-color: color-mix(in srgb, var(--color-accent-emphasis) 60%, var(--color-border));
-            color: var(--color-accent-emphasis);
-            """; }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Danger.class, Color.Ink.class), of(Danger.class, Color.Edge.class)); }
+        @Override public String body() { return ""; }
     }
-
     public record ws_btn_off() implements CssClass<WorkspaceSwitcherStyles> {
-        @Override public String body() { return """
-            opacity: 0.45;
-            cursor: default;
-            """; }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Inert.class, Effect.Opacity.class), of(Inert.class, Affordance.Cursor.class)); }
+        @Override public String body() { return ""; }
     }
-
-    /** Maintenance sits under a rule, apart from selection — it acts on what is open, not on what is chosen. */
     public record ws_maint() implements CssClass<WorkspaceSwitcherStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Cap.class, Color.Edge.class), of(Cap.class, Shape.Rule.class)); }
         @Override public String body() { return """
-            padding-top: var(--space-2);
-            border-top: 1px solid var(--color-border);
+            padding-top: 8px;
             """; }
     }
 

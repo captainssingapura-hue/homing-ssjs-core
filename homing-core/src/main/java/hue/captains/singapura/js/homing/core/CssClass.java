@@ -103,6 +103,18 @@ public interface CssClass<C extends CssGroup<C>> extends Exportable._Constant<C>
     default List<CssClass<?>> dependsOn() { return List.of(); }
 
     /**
+     * What this class's element wears beside it: tokens applied with the
+     * class by the client manager whenever this class is added, and removed
+     * with it — so a component declares once, in Java, what its element means
+     * and where that shows, and its JS adds one class as before. A worn
+     * token's group is a dependency of this class's group, like
+     * {@link #dependsOn()}; unlike it, a worn token is put on the element. This
+     * class's own body carries structure and nothing a worn token says.
+     * Default: none.
+     */
+    default List<? extends Wearable> wears() { return List.of(); }
+
+    /**
      * The group this class belongs to, from its declaration: a {@code CssClass}
      * is a record nested in its group, and the group's {@code INSTANCE} is the
      * one object of that class. Used to derive group dependencies from class

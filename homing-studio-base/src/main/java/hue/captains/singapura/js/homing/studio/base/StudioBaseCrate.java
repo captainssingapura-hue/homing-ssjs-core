@@ -32,7 +32,6 @@ import hue.captains.singapura.js.homing.studio.base.composed.DocTreeRendererModu
 import hue.captains.singapura.js.homing.studio.base.composed.TocSidebarRenderer;
 import hue.captains.singapura.js.homing.studio.base.composed.TocSyncModule;
 import hue.captains.singapura.js.homing.studio.base.css.StudioStyles;
-import hue.captains.singapura.js.homing.studio.base.css.Util;
 import hue.captains.singapura.js.homing.studio.base.export.HtmlExportModule;
 import hue.captains.singapura.js.homing.studio.base.graph.StudioGraphInspector;
 import hue.captains.singapura.js.homing.studio.base.tree.CatalogueTreeView;
@@ -42,6 +41,7 @@ import hue.captains.singapura.js.homing.studio.base.image.ImageViewer;
 import hue.captains.singapura.js.homing.studio.base.image.ImageViewerRenderer;
 import hue.captains.singapura.js.homing.studio.base.table.TableViewer;
 import hue.captains.singapura.js.homing.studio.base.table.TableViewerRenderer;
+import hue.captains.singapura.js.homing.studio.base.theme.ThemeColours;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemePicker;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemePickerModel;
 import hue.captains.singapura.js.homing.studio.base.theme.ThemePickerStyles;
@@ -92,7 +92,8 @@ public final class StudioBaseCrate implements Crate {
     @Override
     public List<Crate> requires() {
         // RFC 0066 - the palette every studio class reads lives in the theme design core.
-        return List.of(CoreJsCrate.INSTANCE, ServerCrate.INSTANCE, LibsCrate.INSTANCE, ThemeColorCrate.INSTANCE, ThemeTypeCrate.INSTANCE);
+        return List.of(CoreJsCrate.INSTANCE, ServerCrate.INSTANCE, LibsCrate.INSTANCE, ThemeColorCrate.INSTANCE, ThemeTypeCrate.INSTANCE,
+                hue.captains.singapura.js.homing.design.DesignCrate.INSTANCE);
     }
 
     @Override
@@ -124,7 +125,6 @@ public final class StudioBaseCrate implements Crate {
                 CrateEntry.of(TocSidebarRenderer.INSTANCE),
                 CrateEntry.of(TocSyncModule.INSTANCE),
                 CrateEntry.of(StudioStyles.INSTANCE),
-                CrateEntry.of(Util.INSTANCE),
                 CrateEntry.of(HtmlExportModule.INSTANCE),
                 CrateEntry.of(StudioGraphInspector.INSTANCE),
                 CrateEntry.of(StudioGraphInspectorRenderer.INSTANCE),
@@ -142,6 +142,7 @@ public final class StudioBaseCrate implements Crate {
                 CrateEntry.of(ThemePreviewRenderer.INSTANCE),
                 CrateEntry.of(ThemePickerStyles.INSTANCE),
                 CrateEntry.of(ThemePickerModel.INSTANCE),
+                CrateEntry.of(ThemeColours.INSTANCE),
                 CrateEntry.of(ThemePicker.INSTANCE),
                 CrateEntry.of(PlanAppHost.INSTANCE),
                 CrateEntry.of(PlanHostRenderer.INSTANCE),

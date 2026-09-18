@@ -23,8 +23,30 @@ import java.util.List;
  */
 public interface ThemeRegistry {
 
-    /** All themes registered for this deployment; the first is the default. */
+    /** All themes registered for this deployment; the first is the default. Every slug a page may wear, crosses included. */
     List<Theme> themes();
+
+    /**
+     * The themes a picker lists — each a base with its own colours. A theme's
+     * crosses with other colours are reached through {@link #dressed}, not
+     * listed. Default: every theme.
+     */
+    default List<Theme> bases() { return themes(); }
+
+    /**
+     * The colours a base may be worn in, beside its own: a registry whose
+     * themes are designs on two orthogonal planes offers every design's own
+     * colours and any palette written as colours alone. Default: none — a
+     * theme is worn in its own colours only.
+     */
+    default List<Theme> colours() { return List.of(); }
+
+    /**
+     * A base worn in some colours: the base itself when the colours are its
+     * own, else the composed theme — the one {@link #themes()} lists under the
+     * composed slug. Default: the base.
+     */
+    default Theme dressed(Theme base, Theme colours) { return base; }
 
     /** Every theme's provisions of the global palettes — one per theme per palette group. */
     List<PaletteProvision<?, ?>> palettes();
@@ -36,6 +58,14 @@ public interface ThemeRegistry {
      * joins the two.
      */
     default List<CssGroupImpl<?, ?>> overrides() { return List.of(); }
+
+    /**
+     * The design side's renderers — asked first by {@code /css-content} for any group,
+     * before the declared-body rendering — given what the deployment serves, since
+     * what a sheet must carry is decided by what the served components wear.
+     * Empty for a registry with no design side.
+     */
+    default List<CssRenderer> renderers(ServedModules served) { return List.of(); }
 
     /** Empty registry — no themes registered. */
     ThemeRegistry EMPTY = new ThemeRegistry() {

@@ -27,6 +27,11 @@
     <dependencies>
         <dependency>
             <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-design-server</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
             <artifactId>homing-studio-workspace</artifactId>
             <version>${project.parent.version}</version>
         </dependency>

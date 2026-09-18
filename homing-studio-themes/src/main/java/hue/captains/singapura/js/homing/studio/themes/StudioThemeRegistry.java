@@ -1,92 +1,47 @@
 package hue.captains.singapura.js.homing.studio.themes;
 
-import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.CssGroupImpl;
 import hue.captains.singapura.js.homing.core.PaletteProvision;
-import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
+import hue.captains.singapura.js.homing.core.Theme;
+import hue.captains.singapura.js.homing.design.server.DesignRegistry;
+import hue.captains.singapura.js.homing.server.CssRenderer;
 import hue.captains.singapura.js.homing.server.ThemeRegistry;
 
 import java.util.List;
 
 /**
- * RFC 0002-ext1 Phase 10 — registry of theme artifacts shipped by
- * {@code homing-studio-base}.
- * <p>Every {@link Theme} the studio supports has a registered
- * {@link GlobalColorPalette.Provision} — its body for the global palette, light
- * and dark, served as the prior of every page — and, when it has more to say
- * than a palette, {@link CssGroupImpl}s carrying per-class overrides
- * (RFC 0066). There is no globals sheet.</p>
+ * The studio's seven designs — {@link HomingDefault}, and {@link HomingNeoBrutalism},
+ * {@link HomingNeoFuturism}, {@link HomingNeumorphism}, {@link HomingGlassmorphism},
+ * {@link HomingRetroFuturism} and {@link HomingSketchy} over it — and two palettes written as
+ * colours alone, {@link SeedPalette#FOREST} and {@link SeedPalette#SUNSET}, as the studio's
+ * theme registry: seven bases, nine colours, sixty-three looks.
+ * A design is a function over the design classes the studio's components wear;
+ * Default is the house word, the other two call it for whatever they have no
+ * word of their own for; a palette answers the colour plane alone.
  *
- * <p>Adding a new theme: implement {@link Theme} + nested {@code Palette}
- * (mirroring {@link HomingDefault}), append both to the lists below, and add
- * an overrides record to {@link #overrides()} only if the theme needs one.</p>
- * three singletons to the lists below.</p>
+ * <p>Until the last group has moved, the legacy palettes and overrides pass
+ * through beside the designs: a group not yet on design classes still reads
+ * the palette's tokens and still takes an override.</p>
  */
 public final class StudioThemeRegistry implements ThemeRegistry {
 
     public static final StudioThemeRegistry INSTANCE = new StudioThemeRegistry();
 
-    @Override public List<Theme> themes() {
-        return List.of(
-                HomingDefault.INSTANCE,
-                HomingCarbon.INSTANCE,
-                HomingForest.INSTANCE,
-                HomingSunset.INSTANCE,
-                HomingBauhaus.INSTANCE,
-                HomingForbiddenCity.INSTANCE,
-                HomingLetterpress.INSTANCE,
-                HomingMapleBridge.INSTANCE,
-                HomingRetro90s.INSTANCE,
-                HomingTurboC.INSTANCE,
-                HomingBrutalist.INSTANCE
-        );
-    }
+    private static final DesignRegistry DESIGNS = new DesignRegistry(
+            List.of(HomingDefault.INSTANCE, HomingNeoBrutalism.INSTANCE, HomingNeoFuturism.INSTANCE, HomingNeumorphism.INSTANCE, HomingGlassmorphism.INSTANCE, HomingRetroFuturism.INSTANCE, HomingSketchy.INSTANCE),
+            List.of(SeedPalette.FOREST, SeedPalette.SUNSET),
+            List.of(),
+            List.of(HomingDefault.Palette.INSTANCE, HomingNeoBrutalism.Palette.INSTANCE, HomingNeoFuturism.Palette.INSTANCE, HomingNeumorphism.Palette.INSTANCE, HomingGlassmorphism.Palette.INSTANCE, HomingRetroFuturism.Palette.INSTANCE, HomingSketchy.Palette.INSTANCE,
+                    HomingDefault.Fonts.INSTANCE, HomingNeoBrutalism.Fonts.INSTANCE, HomingNeoFuturism.Fonts.INSTANCE, HomingNeumorphism.Fonts.INSTANCE, HomingGlassmorphism.Fonts.INSTANCE, HomingRetroFuturism.Fonts.INSTANCE, HomingSketchy.Fonts.INSTANCE),
+            List.of());
 
-    /** Colour and type — one provision per theme per palette group; both priors. */
-    @Override public List<PaletteProvision<?, ?>> palettes() {
-        return List.of(
-                HomingDefault.Palette.INSTANCE,
-                HomingCarbon.Palette.INSTANCE,
-                HomingForest.Palette.INSTANCE,
-                HomingSunset.Palette.INSTANCE,
-                HomingBauhaus.Palette.INSTANCE,
-                HomingForbiddenCity.Palette.INSTANCE,
-                HomingLetterpress.Palette.INSTANCE,
-                HomingMapleBridge.Palette.INSTANCE,
-                HomingRetro90s.Palette.INSTANCE,
-                HomingTurboC.Palette.INSTANCE,
-                HomingBrutalist.Palette.INSTANCE,
-                // RFC 0066 — the type palette: the three faces, per theme.
-                HomingDefault.Fonts.INSTANCE,
-                HomingCarbon.Fonts.INSTANCE,
-                HomingForest.Fonts.INSTANCE,
-                HomingSunset.Fonts.INSTANCE,
-                HomingBauhaus.Fonts.INSTANCE,
-                HomingForbiddenCity.Fonts.INSTANCE,
-                HomingLetterpress.Fonts.INSTANCE,
-                HomingMapleBridge.Fonts.INSTANCE,
-                HomingRetro90s.Fonts.INSTANCE,
-                HomingTurboC.Fonts.INSTANCE,
-                HomingBrutalist.Fonts.INSTANCE
-        );
-    }
+    private StudioThemeRegistry() {}
 
-    /**
-     * RFC 0066 — the per-class overrides the studio's themes carry: five themes
-     * are palette-only and appear nowhere here; the rest say what differs, one
-     * impl per group they touch. Brutalist's word on the workspace's classes is
-     * not here — studio-base cannot see workspace-shell — but in
-     * {@code homing-studio-workspace}, registered by the starter's fixtures.
-     */
-    @Override public List<CssGroupImpl<?, ?>> overrides() {
-        return List.of(
-                HomingLetterpress.Studio.INSTANCE,
-                HomingMapleBridge.Studio.INSTANCE,
-                HomingRetro90s.Studio.INSTANCE,
-                HomingBrutalist.Studio.INSTANCE,
-                HomingBrutalist.Dialog.INSTANCE,
-                HomingBrutalist.Picker.INSTANCE,
-                HomingBrutalist.MasterDetail.INSTANCE
-        );
-    }
+    @Override public List<Theme> themes()  { return DESIGNS.themes(); }
+    @Override public List<Theme> bases()   { return DESIGNS.bases(); }
+    @Override public List<Theme> colours() { return DESIGNS.colours(); }
+    @Override public Theme dressed(Theme base, Theme colours) { return DESIGNS.dressed(base, colours); }
+    @Override public List<PaletteProvision<?, ?>> palettes() { return DESIGNS.palettes(); }
+    @Override public List<CssGroupImpl<?, ?>> overrides() { return DESIGNS.overrides(); }
+    @Override public List<CssRenderer> renderers(hue.captains.singapura.js.homing.server.ServedModules served) { return DESIGNS.renderers(served); }
 }

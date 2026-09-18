@@ -32,7 +32,8 @@ public final class WorkspaceCrate implements Crate {
 
     @Override public List<Crate> requires() {
         // RFC 0066 - the palette its groups read is a crate edge, not a transitive accident.
-        return List.of(CoreJsCrate.INSTANCE, StudioBaseCrate.INSTANCE, ThemeColorCrate.INSTANCE);
+        return List.of(CoreJsCrate.INSTANCE, StudioBaseCrate.INSTANCE, ThemeColorCrate.INSTANCE,
+                hue.captains.singapura.js.homing.design.DesignCrate.INSTANCE);
     }
 
     @Override

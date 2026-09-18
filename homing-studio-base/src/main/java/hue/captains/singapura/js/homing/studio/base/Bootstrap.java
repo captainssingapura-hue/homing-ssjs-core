@@ -217,7 +217,7 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
         // need no rescue.
         var inner = new HomingActionRegistry(
                 nameResolver, appResolver, params.resourceReader(),
-                themeRegistry, appMeta, fixtures.servableModuleClasses());
+                themeRegistry, appMeta, fixtures.crates());
 
         // --- Doc registry — walk DocProviders from apps AND catalogues (RFC 0004 + RFC 0005).
         var docProviders = new ArrayList<DocProvider>();
@@ -247,8 +247,11 @@ public record Bootstrap<S extends Studio<?>, F extends Fixtures<S>>(
 
         // --- Standard studio actions.
         // RFC 0066 - every impl the CSS action resolves comes from the theme
-        // registry: each theme's palette provision and its per-class overrides.
-        var cssContentAction = new CssContentGetAction(themeRegistry.impls(), defaultTheme);
+        // registry: each theme's palette provision and its per-class overrides;
+        // the design side's renderers are asked first. A group is resolved by
+        // name against the crate closure, never by reflection.
+        var served = hue.captains.singapura.js.homing.server.ServedModules.of(fixtures.crates());
+        var cssContentAction = new CssContentGetAction(themeRegistry.impls(), defaultTheme, served, themeRegistry.renderers(served));
         var docAction        = new DocGetAction(docRegistry);
         var themesAction     = new ThemesGetAction(themeRegistry);
         var brandAction      = new BrandGetAction(brand, !catalogues.isEmpty());

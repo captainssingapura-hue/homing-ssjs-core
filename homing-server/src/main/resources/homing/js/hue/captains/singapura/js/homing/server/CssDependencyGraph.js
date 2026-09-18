@@ -37,7 +37,7 @@ function createCssDependencyGraph() {
 
     function node(id) {
         let n = nodes.get(id);
-        if (!n) { n = { deps: [], prior: false, known: false, seq: seq++ }; nodes.set(id, n); }
+        if (!n) { n = { deps: [], prior: false, varies: true, known: false, seq: seq++ }; nodes.set(id, n); }
         return n;
     }
 
@@ -56,6 +56,9 @@ function createCssDependencyGraph() {
             const n = node(id);
             n.known = true;
             if (decl.prior) n.prior = true;
+            // A node the server marks varies:false is served once, without a
+            // theme, and left alone by a switch: its sheet does not change.
+            if (decl.varies === false) n.varies = false;
             for (const d of decl.deps || []) {
                 if (d === id) throw new Error("CssDependencyGraph: " + id + " depends on itself");
                 node(d);
@@ -70,6 +73,7 @@ function createCssDependencyGraph() {
     function has(id)   { return nodes.has(id); }
     function deps(id)  { return nodes.has(id) ? nodes.get(id).deps.slice() : []; }
     function prior(id) { return nodes.has(id) && nodes.get(id).prior; }
+    function varies(id) { return !nodes.has(id) || nodes.get(id).varies; }
     function known(id) { return nodes.has(id) && nodes.get(id).known; }
 
     /** Every node reachable from the ids, the ids included. */
@@ -120,11 +124,11 @@ function createCssDependencyGraph() {
     function snapshot() {
         const out = [];
         for (const [id, n] of nodes) {
-            out.push(Object.freeze({ id: id, deps: Object.freeze(n.deps.slice()), prior: n.prior, known: n.known }));
+            out.push(Object.freeze({ id: id, deps: Object.freeze(n.deps.slice()), prior: n.prior, varies: n.varies, known: n.known }));
         }
         out.sort(function (a, b) { return nodes.get(a.id).seq - nodes.get(b.id).seq; });
         return Object.freeze(out);
     }
 
-    return Object.freeze({ merge, has, deps, prior, known, closureOf, plan, snapshot });
+    return Object.freeze({ merge, has, deps, prior, varies, known, closureOf, plan, snapshot });
 }

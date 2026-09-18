@@ -11,8 +11,8 @@ import io.vertx.ext.web.RoutingContext;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 
 public class EsModuleGetAction
         implements GetAction<RoutingContext, ModuleQuery, EmptyParam.NoHeaders, JsModuleContent> {
@@ -21,41 +21,48 @@ public class EsModuleGetAction
     private final ResourceReader resourceReader;
 
     /**
-     * RFC 0044 — the set of module classes this server is allowed to serve (the
-     * registered crate closure's declared modules), or {@code null} for the legacy
-     * permissive mode (serve any class on the classpath). When non‑null, the HTTP
-     * {@code /module} path refuses a class not in the set — so a module cannot be
-     * served without being registered in a crate, closing the conformance leak.
-     * The in‑process {@link #render(EsModule)} path is never gated (conformance
-     * renders modules it already holds).
+     * RFC 0044 — the modules this server serves, pre-registered by canonical name
+     * from the crate closure ({@link ServedModules}). The HTTP {@code /module} path
+     * resolves a name by lookup and nothing else: a module no crate declared
+     * cannot be served, so conformance cannot be bypassed, and no name is ever
+     * turned into a class by reflection. The in-process {@link #render(EsModule)}
+     * path takes an instance and is never gated.
      */
-    private final Set<String> servable;
+    private final ServedModules served;
 
     /** RFC 0066 — the deployment's priors (its global palette), written into
      *  every served CSS group's dependency subgraph so the client loads them
      *  first by the ordinary plan. Empty when the deployment has none. */
     private final List<CssGroup<?>> priors;
+    private final Predicate<CssGroup<?>> varies;
 
     public EsModuleGetAction(ModuleNameResolver nameResolver) {
         this(nameResolver, ResourceReader.INSTANCE);
     }
 
     public EsModuleGetAction(ModuleNameResolver nameResolver, ResourceReader resourceReader) {
-        this(nameResolver, resourceReader, null);
+        this(nameResolver, resourceReader, ServedModules.NONE, List.of());
     }
 
-    /** With a crate‑closure allow‑list ({@code servable}); {@code null} = permissive. */
-    public EsModuleGetAction(ModuleNameResolver nameResolver, ResourceReader resourceReader, Set<String> servable) {
-        this(nameResolver, resourceReader, servable, List.of());
+    /** With the modules a deployment serves, pre-registered by canonical name from its crates. */
+    public EsModuleGetAction(ModuleNameResolver nameResolver, ResourceReader resourceReader, ServedModules served) {
+        this(nameResolver, resourceReader, served, List.of());
     }
 
-    /** With the deployment's priors (RFC 0066). */
+    /** With the deployment's priors (RFC 0066); every group varies with the theme. */
     public EsModuleGetAction(ModuleNameResolver nameResolver, ResourceReader resourceReader,
-                             Set<String> servable, List<CssGroup<?>> priors) {
+                             ServedModules served, List<CssGroup<?>> priors) {
+        this(nameResolver, resourceReader, served, priors, g -> true);
+    }
+
+    /** @param varies whether a group's sheet changes with the theme — written into each group's subgraph for the client's manager */
+    public EsModuleGetAction(ModuleNameResolver nameResolver, ResourceReader resourceReader,
+                             ServedModules served, List<CssGroup<?>> priors, Predicate<CssGroup<?>> varies) {
         this.nameResolver = nameResolver;
         this.resourceReader = resourceReader;
-        this.servable = (servable == null) ? null : Set.copyOf(servable);
+        this.served = served == null ? ServedModules.NONE : served;
         this.priors = List.copyOf(priors);
+        this.varies = varies;
     }
 
     @Override
@@ -77,15 +84,16 @@ public class EsModuleGetAction
         if (query.className() == null || query.className().isBlank()) {
             return CompletableFuture.failedFuture(ResourceNotFound.missingClass());
         }
-        if (servable != null && !servable.contains(query.className())) {
-            // Registered-crate enforcement: refuse to serve a module no crate declares.
+        var found = served.find(query.className());
+        if (found.isEmpty()) {
+            // Registered-crate enforcement: a name no crate declared is not served, and is never looked up by reflection.
             return CompletableFuture.failedFuture(ResourceNotFound.forClass(query.className(),
                     new IllegalStateException("module '" + query.className()
                             + "' is not declared in any registered crate — refusing to serve"
                             + " (a served module must be crated, so conformance cannot be bypassed)")));
         }
         try {
-            EsModule<?> module = resolveModule(query.className());
+            EsModule<?> module = found.get();
             return CompletableFuture.completedFuture(
                     new JsModuleContent(render(module, query.theme(), query.locale())));
         } catch (Exception e) {
@@ -123,16 +131,6 @@ public class EsModuleGetAction
         return render(module, null, null);
     }
 
-    @SuppressWarnings("unchecked")
-    private <M extends EsModule<M>> M resolveModule(String className) throws Exception {
-        Class<?> clazz = Class.forName(className);
-        try {
-            var instanceField = clazz.getField("INSTANCE");
-            return (M) instanceField.get(null);
-        } catch (NoSuchFieldException e) {
-            return (M) clazz.getDeclaredConstructor().newInstance();
-        }
-    }
 
     @SuppressWarnings("unchecked")
     private <M extends EsModule<M>> EsModuleWriter<M> createWriter(
@@ -147,7 +145,7 @@ public class EsModuleGetAction
         } else if (module instanceof CssGroup) {
             @SuppressWarnings("rawtypes")
             CssGroup css = (CssGroup) module;
-            contentProvider = (ContentProvider<M>) new CssGroupContentProvider<>(css, theme, nameResolver, priors);
+            contentProvider = (ContentProvider<M>) new CssGroupContentProvider<>(css, theme, nameResolver, priors, varies);
         } else if (module instanceof SelfContent self) {
             // Generic self-providing module: the type emits its own JS body.
             // Used by DocGroup (in homing-studio-base) and any future self-contained types

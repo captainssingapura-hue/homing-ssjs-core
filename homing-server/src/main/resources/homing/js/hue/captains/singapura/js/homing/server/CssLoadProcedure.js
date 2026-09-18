@@ -43,6 +43,9 @@ function createCssLoadProcedure(graph, appendLink, hrefFor, notify) {
 
     /** The entry for a node under a theme, appended now if it does not exist. */
     function ensure(id, theme) {
+        // A node whose sheet does not vary is fetched once, without a theme,
+        // and keyed as such: no switch reloads it and no retire removes it.
+        if (!graph.varies(id)) theme = null;
         const k = key(id, theme);
         let e = entries.get(k);
         if (e) return e;

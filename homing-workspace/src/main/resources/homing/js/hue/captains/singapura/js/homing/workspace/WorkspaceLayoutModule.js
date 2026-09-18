@@ -254,8 +254,6 @@ class WorkspaceLayout {
                 css.setClass(btn, wl_ribbon_button);
                 btn.title = item.tooltip || "";
                 btn.textContent = item.icon && item.icon.kind === "emoji" ? item.icon.value : "?";
-                btn.addEventListener("mouseenter", function () { css.addClass(btn, wl_ribbon_button_hover); });
-                btn.addEventListener("mouseleave", function () { css.removeClass(btn, wl_ribbon_button_hover); });
                 btn.addEventListener("click", function () {
                     if (self._onAction) try { self._onAction(item.actionId); } catch (e) { console.error("[WorkspaceLayout] onAction threw:", e); }
                 });

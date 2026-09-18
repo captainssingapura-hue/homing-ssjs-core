@@ -2,60 +2,51 @@ package hue.captains.singapura.js.homing.studio.base.theme;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
-import hue.captains.singapura.js.homing.core.CssGroupImpl;
-import hue.captains.singapura.js.homing.core.Theme;
+import hue.captains.singapura.js.homing.core.CssVar;
+import hue.captains.singapura.js.homing.core.Wearable;
 import hue.captains.singapura.js.homing.studio.base.ui.MasterDetailStyles;
 import hue.captains.singapura.js.homing.studio.base.ui.SystemDialogStyles;
 
 import java.util.List;
+import java.util.Set;
+
+import static hue.captains.singapura.js.homing.design.DesignClass.of;
+import static hue.captains.singapura.js.homing.design.Target.*;
+import static hue.captains.singapura.js.homing.design.Box.*;
+import static hue.captains.singapura.js.homing.design.Emphasis.*;
+import static hue.captains.singapura.js.homing.design.Interaction.*;
+import static hue.captains.singapura.js.homing.design.Layer.*;
+import static hue.captains.singapura.js.homing.design.Pairing.*;
+import static hue.captains.singapura.js.homing.design.Structure.*;
+import static hue.captains.singapura.js.homing.design.Text.*;
+
 
 /**
- * Typed CSS for {@link ThemePicker} — deliberately small.
- *
- * <p>An earlier cut carried nineteen classes: a scrim, a panel, a header, a
- * close button, group headers, carets, rows, dots. All of it re-implemented two
- * things the framework already ships — {@code Modal} for the dialog and
- * {@code TreeRenderer} for the tree — and re-implemented them worse, since
- * neither the collapse behaviour nor the keyboard model came along with it.</p>
- *
- * <p>What remains is only what is genuinely the picker's own: its header
- * trigger, and the containers its tree sits in.</p>
+ * The theme picker: the header button, the picker dialog's body (a
+ * master/detail split over the dialog's body), and the preview pane.
+ * Structure only; every element wears what it means.
  */
 public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
-
     public static final ThemePickerStyles INSTANCE = new ThemePickerStyles();
-/** RFC 0066 — a theme's word on this group: one block per overridden class,     *  appended inside that class's rule after the declared body. */    public interface Overrides<TH extends Theme> extends CssGroupImpl<ThemePickerStyles, TH> {        @Override default ThemePickerStyles group() { return INSTANCE; }    }
 
-    /** The header trigger — reads as chrome, so it paints on inverted tokens. */
+    /** The header button: an outlined control on the inverted band. */
     public record tp_btn() implements CssClass<ThemePickerStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(OnInverted.class, Color.Edge.class), of(Raised.class, Shape.Rule.class), of(Control.class, Shape.Corner.class), of(OnInverted.class, Color.Ink.class), of(Interactive.class, Affordance.Cursor.class)); }
         @Override public String body() { return """
             font: inherit;
             display: inline-flex;
             align-items: center;
-            gap: var(--space-1);
-            border: 1px solid var(--color-border);
+            gap: 4px;
             background: transparent;
-            color: var(--color-text-on-inverted);
-            cursor: pointer;
-            padding: 2px var(--space-2);
-            border-radius: var(--radius-sm);
+            padding: 2px 8px;
             margin-left: auto;
             """; }
     }
-
     public record tp_btn_label() implements CssClass<ThemePickerStyles> {
-        @Override public String body() { return """
-            color: var(--color-text-on-inverted-muted);
-            """; }
+        @Override public List<? extends Wearable> wears() { return List.of(of(OnInvertedMuted.class, Color.Ink.class)); }
+        @Override public String body() { return ""; }
     }
-
-    /**
-     * Column: the tree takes the room, the preview pane sits beside it.
-     * Master/detail at picker scale — the tree says what a theme is, the
-     * frame shows what it looks like.
-     */
     public record tp_body() implements CssClass<ThemePickerStyles> {
-        /** Hosts MasterDetail's split and, in the modal, sits in the dialog's body. */
         @Override public List<CssClass<?>> dependsOn() {
             return List.of(new MasterDetailStyles.md_split(), new SystemDialogStyles.sd_body());
         }
@@ -69,54 +60,26 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
             min-height: 0;
             """; }
     }
-
-
-
-
-
-
-
     public record tp_preview_name() implements CssClass<ThemePickerStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Heading.class, Type.Weight.class), of(Label.class, Type.Scale.class), of(Body.class, Color.Ink.class)); }
         @Override public String body() { return """
             display: flex;
             align-items: baseline;
-            gap: var(--space-2);
-            font-weight: 700;
-            font-size: 15px;
-            color: var(--color-text-primary);
-            margin-bottom: var(--space-2);
+            gap: 8px;
+            margin-bottom: 8px;
             """; }
     }
-
-    /** Shown beside the name when the selected theme is the one in use. */
     public record tp_current() implements CssClass<ThemePickerStyles> {
-        @Override public String body() { return """
-            font-size: 10px;
-            font-weight: 600;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            color: var(--color-accent);
-            """; }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Kicker.class, Type.Scale.class), of(Kicker.class, Type.Weight.class), of(Kicker.class, Type.Treatment.class), of(Primary.class, Color.Ink.class)); }
+        @Override public String body() { return ""; }
     }
-
-    /** The inspiration line, in the pane rather than crowding the row. */
     public record tp_preview_note() implements CssClass<ThemePickerStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Caption.class, Type.Scale.class), of(Muted.class, Color.Ink.class)); }
         @Override public String body() { return """
-            font-size: 12px;
-            line-height: 1.5;
-            color: var(--color-text-muted);
-            margin-bottom: var(--space-4);
+            margin-bottom: 16px;
             """; }
     }
-
-    /**
-     * The content pane as a column filling the master/detail body: the name
-     * and the note take their own height, the frame's wrapper takes the rest.
-     * The body pads its left edge only (its scrollbar sits at the right), so
-     * the pane pads the right to match and the frame sits in from both sides.
-     */
     public record tp_preview_pane() implements CssClass<ThemePickerStyles> {
-        /** Fills the master/detail body it is built into. */
         @Override public List<CssClass<?>> dependsOn() { return List.of(new MasterDetailStyles.md_body()); }
         @Override public String body() { return """
             display: flex;
@@ -124,16 +87,9 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
             height: 100%;
             min-height: 0;
             box-sizing: border-box;
-            padding-right: var(--space-4);
+            padding-right: 16px;
             """; }
     }
-
-    /**
-     * Positions the loading banner over the frame and takes the pane's
-     * remaining height. A column itself, so the frame can flex to fill it
-     * without percentage heights — which resolve to nothing when the pane is
-     * inline and has no height of its own.
-     */
     public record tp_preview_wrap() implements CssClass<ThemePickerStyles> {
         @Override public String body() { return """
             position: relative;
@@ -143,80 +99,95 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
             min-height: 0;
             """; }
     }
-
-    /**
-     * The preview frame — the preview page, wearing the selected theme. Fills
-     * its wrapper; in a dialog that is the rest of the pane, inline it is the
-     * minimum, so the frame is never a sliver. Bordered like the swatch strip
-     * it replaces, so it reads as one object in the pane.
-     */
     public record tp_preview_frame() implements CssClass<ThemePickerStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Base.class, Color.Surface.class), of(Raised.class, Color.Edge.class), of(Raised.class, Shape.Rule.class), of(Control.class, Shape.Corner.class)); }
         @Override public String body() { return """
             display: block;
             box-sizing: border-box;
             width: 100%;
             flex: 1 1 0;
             min-height: 420px;
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-sm);
-            background: var(--color-surface);
             """; }
     }
-
-    /**
-     * The loading banner: covers the frame while a page is on its way. Kept
-     * transparent to the pointer and faded rather than removed, so a fast load
-     * barely registers and a slow one reads as "on its way" rather than broken.
-     * The modifier below turns it on; the base is the off state.
-     */
+    /** The loading veil over the preview: hidden until the component shows it — visibility is the component's. */
     public record tp_preview_loading() implements CssClass<ThemePickerStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Muted.class, Color.Ink.class), of(Caption.class, Type.Scale.class), of(Control.class, Shape.Corner.class)); }
         @Override public String body() { return """
             position: absolute;
             inset: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: var(--radius-sm);
-            background: var(--color-surface-raised);
-            color: var(--color-text-muted);
-            font-size: 12px;
-            letter-spacing: 0.04em;
             pointer-events: none;
             opacity: 0;
             transition: opacity 120ms ease;
             """; }
     }
-
-    /** The banner while a page is loading. Emitted after the base, so it wins. */
     public record tp_preview_loading_on() implements CssClass<ThemePickerStyles> {
         @Override public String body() { return """
             opacity: 0.92;
             """; }
     }
-
-    /**
-     * Inline variant — the themes app hosts the tree in the page rather than a
-     * modal, so it supplies the frame the modal would otherwise have given.
-     * Wide enough for the preview pane to show a page rather than a sliver:
-     * the tree is a narrow column of names and the rest is the frame.
-     */
     public record tp_inline() implements CssClass<ThemePickerStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Raised.class, Effect.Filter.class), of(Raised.class, Color.Edge.class), of(Raised.class, Shape.Rule.class), of(Raised.class, Shape.Corner.class)); }
         @Override public String body() { return """
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-md);
-            background: var(--color-surface-raised);
             max-width: 760px;
             overflow: hidden;
             """; }
     }
-
     public record tp_inline_head() implements CssClass<ThemePickerStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Hairline.class, Color.Edge.class), of(Hairline.class, Shape.Rule.class), of(Label.class, Type.Weight.class), of(Body.class, Color.Ink.class)); }
         @Override public String body() { return """
-            padding: var(--space-3) 14px;
-            border-bottom: 1px solid var(--color-border);
-            font-weight: 600;
-            color: var(--color-text-primary);
+            padding: 12px 14px;
             """; }
+    }
+
+    /** The colour control in the preview pane: a kicker and a row of swatch buttons. */
+    public record tp_colours() implements CssClass<ThemePickerStyles> {
+        @Override public String body() { return """
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+            """; }
+    }
+    public record tp_colours_label() implements CssClass<ThemePickerStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Kicker.class, Type.Scale.class), of(Kicker.class, Type.Weight.class), of(Kicker.class, Type.Treatment.class), of(Muted.class, Color.Ink.class)); }
+        @Override public String body() { return """
+            margin-right: 4px;
+            """; }
+    }
+    /** One palette: a control edged in the interactive edge, which the design colours in when it is checked. */
+    public record tp_swatch() implements CssClass<ThemePickerStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Interactive.class, Color.Edge.class), of(Control.class, Shape.Rule.class), of(Control.class, Shape.Corner.class), of(Body.class, Color.Ink.class), of(Body.class, Type.Face.class), of(Caption.class, Type.Scale.class), of(Interactive.class, Affordance.Cursor.class), of(Interactive.class, Motion.Ease.class)); }
+        @Override public String body() { return """
+            font: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 8px 3px 4px;
+            """; }
+    }
+    public record tp_swatch_dots() implements CssClass<ThemePickerStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Hairline.class, Color.Edge.class), of(Hairline.class, Shape.Rule.class), of(Inline.class, Shape.Corner.class)); }
+        @Override public String body() { return """
+            display: inline-flex;
+            overflow: hidden;
+            """; }
+    }
+    /** A dot of the palette: its colour is DATA, set per dot by the module (RFC 0044). */
+    public record tp_swatch_dot() implements CssClass<ThemePickerStyles> {
+        @Override public Set<CssVar> runtimeVars() { return Set.of(new CssVar("--tp-dot")); }
+        @Override public String body() { return """
+            width: 10px;
+            height: 16px;
+            background-color: var(--tp-dot);
+            """; }
+    }
+    public record tp_swatch_own() implements CssClass<ThemePickerStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Muted.class, Color.Ink.class), of(Kicker.class, Type.Scale.class)); }
+        @Override public String body() { return ""; }
     }
 
     @Override
@@ -226,7 +197,8 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
                 new tp_body(), new tp_inline(), new tp_inline_head(),
                 new tp_preview_name(), new tp_current(), new tp_preview_note(),
                 new tp_preview_pane(), new tp_preview_frame(), new tp_preview_wrap(),
-                new tp_preview_loading(), new tp_preview_loading_on()
+                new tp_preview_loading(), new tp_preview_loading_on(),
+                new tp_colours(), new tp_colours_label(), new tp_swatch(), new tp_swatch_dots(), new tp_swatch_dot(), new tp_swatch_own()
         );
     }
 }

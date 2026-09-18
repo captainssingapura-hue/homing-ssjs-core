@@ -86,7 +86,7 @@ function _draw(root, data, brand) {
         var rows = themes.map(function (t) {
             return ListItem({
                 href:        _activateUrl(t.slug),
-                marker:      _swatchStrip(t.palette),
+                marker:      _swatchStrip(t.swatches),
                 label:       t.label + (t.slug === currentSlug ? "  (active)" : ""),
                 description: "?theme=" + t.slug,
                 met:         t.slug === currentSlug
@@ -135,8 +135,8 @@ function _swatchStrip(palette) {
         "display:flex; gap:0; border-radius:3px; overflow:hidden; "
         + "border:1px solid var(--color-border); flex-shrink:0;";
 
-    var keys = ["surface", "surface-inverted", "accent", "text-link",
-                "text-primary", "text-muted", "border-emphasis"];
+    var keys = ["surface", "inverted", "accent", "link",
+                "text", "muted", "edge"];
     for (var i = 0; i < keys.length; i++) {
         var v = palette && palette[keys[i]];
         if (!v) continue;

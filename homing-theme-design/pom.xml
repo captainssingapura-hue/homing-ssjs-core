@@ -19,6 +19,8 @@
         semantic tree grows (RFC 0066 Episode 2).
     </description>
     <modules>
+        <module>homing-design-core</module>
+        <module>homing-design-server</module>
         <module>homing-theme-color</module>
         <module>homing-theme-type</module>
     </modules>

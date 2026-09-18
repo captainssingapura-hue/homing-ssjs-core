@@ -4,7 +4,9 @@ import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
 import hue.captains.singapura.js.homing.theme.color.HomingVars;
 import hue.captains.singapura.js.homing.theme.type.GlobalTypePalette;
-import hue.captains.singapura.js.homing.core.Theme;
+import hue.captains.singapura.js.homing.design.Design;
+import hue.captains.singapura.js.homing.design.DesignClass;
+import hue.captains.singapura.js.homing.design.Impl;
 
 import java.util.Map;
 
@@ -18,9 +20,17 @@ import java.util.Map;
  * theme once re-shipped lives in {@code StudioStyles} as agnostic classes;
  * this theme overrides none of them, which is what makes it the default.</p>
  */
-public record HomingDefault() implements Theme {
+public record HomingDefault() implements Design {
 
     public static final HomingDefault INSTANCE = new HomingDefault();
+
+    /** The design as a function: the house physique off the colour plane, the house seeds on it; none for what neither has. */
+    @Override public Impl impl(DesignClass<?> pair) {
+        return pair.onColourPlane() ? SeedPalette.HOUSE.impl(pair) : DefaultDesign.WORDS.get(pair);
+    }
+
+    /** Worn in the house colours by default — the first seed palette, in its own name. */
+    @Override public hue.captains.singapura.js.homing.design.Palette palette() { return SeedPalette.HOUSE; }
 
     @Override public String slug()  { return "default"; }
     @Override public String label() { return "Default"; }

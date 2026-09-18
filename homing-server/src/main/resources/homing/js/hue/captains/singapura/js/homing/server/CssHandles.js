@@ -16,7 +16,13 @@
 // =============================================================================
 
 class CssClass {
-    constructor(name) { this.name = name; }
+    /**
+     * @param {string} name    kebab-case class name
+     * @param {string[]} wears the design-class tokens this class wears — added to
+     *                         the element with it, removed with it; declared once,
+     *                         in Java, by the class (CssClass.wears()).
+     */
+    constructor(name, wears) { this.name = name; this.wears = Object.freeze((wears || []).slice()); }
     toString() { return this.name; }
 }
 
@@ -50,8 +56,8 @@ class CssUtility extends CssClass {
      *
      * Use site: `cn(bg_accent, bg_accent.hover)` — property access, no parens.
      */
-    constructor(name, variants) {
-        super(name);
+    constructor(name, variants, wears) {
+        super(name, wears);
         const states = Object.keys(variants || {});
         for (const state of states) {
             const VariantClass = VARIANT_CLASSES[state] || CssClass;

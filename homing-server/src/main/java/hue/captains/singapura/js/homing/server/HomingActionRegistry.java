@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.server;
 
 import hue.captains.singapura.js.homing.core.ModuleNameResolver;
+import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CssGroup;
 import hue.captains.singapura.js.homing.core.SimpleAppResolver;
 import hue.captains.singapura.js.homing.core.Theme;
@@ -53,28 +54,36 @@ public class HomingActionRegistry implements ActionRegistry<RoutingContext> {
         this(nameResolver, appResolver, resourceReader, themeRegistry, meta, null);
     }
 
-    /** RFC 0044: {@code servable} is the registered crate closure's module classes —
-     *  when non‑null, {@code /module} refuses to serve a class outside it (a served
-     *  module must be crated). {@code null} keeps the legacy permissive behaviour. */
+    /** RFC 0044: {@code crates} are the deployment's crate roots; their closure is
+     *  what {@code /module} and {@code /css-content} serve, by canonical name, and
+     *  nothing else. {@code null} serves nothing by name (in-process rendering only). */
     public HomingActionRegistry(ModuleNameResolver nameResolver, SimpleAppResolver appResolver,
                                 ResourceReader resourceReader, ThemeRegistry themeRegistry,
-                                AppMeta meta, java.util.Set<String> servable) {
+                                AppMeta meta, java.util.Collection<? extends Crate> crates) {
         if (themeRegistry == null) themeRegistry = ThemeRegistry.EMPTY;
         if (meta == null) meta = AppMeta.DEFAULT;
         this.appAction = new AppHtmlGetAction(nameResolver, appResolver, themeRegistry, meta);
+        ServedModules served = crates == null ? ServedModules.NONE : ServedModules.of(crates);
         // RFC 0066 - the palettes are the priors every served group leans on; the
         // module action writes it into each group's subgraph. /theme-vars is gone:
         // the palette is a group, served by /css-content like any other.
         List<CssGroup<?>> priors = themeRegistry.priors();
-        this.moduleAction = new EsModuleGetAction(nameResolver, resourceReader, servable, priors);
+        // A group varies with the theme when it is a prior, when a theme has an impl
+        // for it, or when a design-side renderer owns it and says so; every other
+        // group is served once, without a theme, and left alone by a switch.
+        var impls = themeRegistry.impls();
+        var renderers = themeRegistry.renderers(served);
+        java.util.function.Predicate<CssGroup<?>> varies = g ->
+                priors.stream().anyMatch(p -> p.getClass() == g.getClass())
+                || impls.stream().anyMatch(i -> i.group().getClass() == g.getClass())
+                || renderers.stream().anyMatch(r -> r.owns(g) && r.varies(g));
+        this.moduleAction = new EsModuleGetAction(nameResolver, resourceReader, served, priors, varies);
         // RFC 0066 - the base registry renders every group from its inline bodies,
-        // and fills the palette from the theme registry's provisions: a deployment
-        // with a theme registry and no studio is themed by this action alone. The
-        // first theme listed is the default a request without ?theme= gets; an
-        // outer registry (the studio's Bootstrap) overrides the route to add its
-        // own CssGroupImpls. RFC 0002 §3.6 still holds: no file-based fallback.
+        // and fills the palette from the theme registry's provisions; the design
+        // side's renderers are asked first. The first theme listed is the default a
+        // request without ?theme= gets. RFC 0002 §3.6 still holds: no file-based fallback.
         Theme defaultTheme = themeRegistry.themes().isEmpty() ? null : themeRegistry.themes().get(0);
-        this.cssContentAction = new CssContentGetAction(themeRegistry.impls(), defaultTheme);
+        this.cssContentAction = new CssContentGetAction(themeRegistry.impls(), defaultTheme, served, renderers);
     }
 
     /** Backwards-compatible constructor for callers that don't yet use {@code SimpleAppResolver}. */

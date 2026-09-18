@@ -1,65 +1,68 @@
 package hue.captains.singapura.js.homing.studio.base.theme;
 
 import hue.captains.singapura.js.homing.core.CssVar;
-import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
-import hue.captains.singapura.js.homing.theme.color.HomingVars;
-import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.PaletteProvision;
+import hue.captains.singapura.js.homing.core.Theme;
+import hue.captains.singapura.js.homing.design.Design;
+import hue.captains.singapura.js.homing.design.DesignClass;
+import hue.captains.singapura.js.homing.design.Emphasis;
+import hue.captains.singapura.js.homing.design.Impl;
+import hue.captains.singapura.js.homing.design.Layer;
+import hue.captains.singapura.js.homing.design.Mode;
+import hue.captains.singapura.js.homing.design.State;
+import hue.captains.singapura.js.homing.design.Target;
+import hue.captains.singapura.js.homing.design.Text;
 import hue.captains.singapura.js.homing.server.EmptyParam;
 import hue.captains.singapura.js.homing.server.ThemeRegistry;
 import hue.captains.singapura.js.homing.studio.base.DocContent;
+import hue.captains.singapura.js.homing.theme.color.GlobalColorPalette;
+import hue.captains.singapura.js.homing.theme.color.HomingVars;
 import hue.captains.singapura.tao.http.action.GetAction;
 import hue.captains.singapura.tao.http.action.ParamMarshaller;
 import io.vertx.ext.web.RoutingContext;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * {@code GET /themes} — emits a JSON catalogue of every registered {@link Theme}
- * with its key palette swatches, consumed by the {@code ThemesIntro} page.
+ * {@code GET /themes} — the registry on its two axes, for the picker: the
+ * bases a page may wear, the colours each may be worn in, and for every
+ * (base, colours) the slug that names the pair. The picker composes nothing;
+ * it reads the slug off the entry the user chose.
  *
- * <p>The selected swatch keys cover the page's preview surface — page bg,
- * header band, accent, link, primary text, muted text, and the emphasis
- * border. Every theme guarantees these via the semantic vocabulary in
- * {@link HomingVars}.</p>
- *
- * <p>Response shape:</p>
  * <pre>{@code
  * {
- *   "themes": [
- *     {
- *       "slug":  "default",
- *       "label": "Default",
- *       "palette": {
- *         "surface":          "#FAFBFC",
- *         "surface-inverted": "#1B1F3A",
- *         "accent":           "#D4A04C",
- *         "text-link":        "#2545B0",
- *         "text-primary":     "#1F2447",
- *         "text-muted":       "#6B6F8E",
- *         "border-emphasis":  "#D4A04C"
- *       }
- *     },
- *     ...
- *   ]
+ *   "themes": [ { "slug": "neo-brutalism", "label": …, "group": …, "inspiration": …,
+ *                 "swatches": { "surface": "#FFFFFF", "inverted": "#000000", "accent": "#FFE800",
+ *                               "link": "#2B4CFF", "text": "#000000", "muted": "#4A4A4A", "edge": "#000000" },
+ *                 "colours": [ { "palette": "neo-brutalism", "slug": "neo-brutalism", "own": true },
+ *                              { "palette": "forest",        "slug": "neo-brutalism_forest" }, … ] }, … ],
+ *   "palettes": [ { "slug": "forest", "label": "Forest", "inspiration": …, "swatches": { … } }, … ]
  * }
  * }</pre>
+ *
+ * <p>Swatches are read off the design's own words — the base surface, the
+ * inverted surface, the primary surface, the link, body and muted inks, the
+ * primary edge — and, for a registry not yet on designs, off its legacy
+ * palette provision under the same seven names.</p>
  */
 public class ThemesGetAction
         implements GetAction<RoutingContext, EmptyParam.NoQuery, EmptyParam.NoHeaders, DocContent> {
 
-    /** Subset of HomingVars used in the page swatches. Order = render order. */
-    private static final List<CssVar> PALETTE_KEYS = List.of(
-            HomingVars.COLOR_SURFACE,
-            HomingVars.COLOR_SURFACE_INVERTED,
-            HomingVars.COLOR_ACCENT,
-            HomingVars.COLOR_TEXT_LINK,
-            HomingVars.COLOR_TEXT_PRIMARY,
-            HomingVars.COLOR_TEXT_MUTED,
-            HomingVars.COLOR_BORDER_EMPHASIS
+    /** The seven swatches, as (name, pair, property) — the design-side reading. */
+    private record Swatch(String name, DesignClass<?> pair, String property, CssVar legacy) {}
+
+    private static final List<Swatch> SWATCHES = List.of(
+            new Swatch("surface",  DesignClass.of(Layer.Base.class,        Target.Color.Surface.class), "background-color", HomingVars.COLOR_SURFACE),
+            new Swatch("inverted", DesignClass.of(Layer.Inverted.class,    Target.Color.Surface.class), "background-color", HomingVars.COLOR_SURFACE_INVERTED),
+            new Swatch("accent",   DesignClass.of(Emphasis.Primary.class,  Target.Color.Surface.class), "background-color", HomingVars.COLOR_ACCENT),
+            new Swatch("link",     DesignClass.of(Text.Link.class,         Target.Color.Ink.class),     Impl.Bindings.SOLE,  HomingVars.COLOR_TEXT_LINK),
+            new Swatch("text",     DesignClass.of(Text.Body.class,         Target.Color.Ink.class),     Impl.Bindings.SOLE,  HomingVars.COLOR_TEXT_PRIMARY),
+            new Swatch("muted",    DesignClass.of(Emphasis.Muted.class,    Target.Color.Ink.class),     Impl.Bindings.SOLE,  HomingVars.COLOR_TEXT_MUTED),
+            new Swatch("edge",     DesignClass.of(Emphasis.Primary.class,  Target.Color.Edge.class),    "border-color",     HomingVars.COLOR_BORDER_EMPHASIS)
     );
 
     private final ThemeRegistry registry;
@@ -87,35 +90,63 @@ public class ThemesGetAction
     String serialize() {
         StringBuilder sb = new StringBuilder("{\"themes\":[");
         boolean first = true;
-        for (Theme theme : registry.themes()) {
+        for (Theme base : registry.bases()) {
             if (!first) sb.append(',');
             first = false;
-            PaletteProvision<?, ?> vars = registry.paletteForSlug(theme.slug(), GlobalColorPalette.INSTANCE);
-            Map<CssVar, String> values = vars != null ? vars.values() : Map.of();
-
-            sb.append("{\"slug\":") .append(jstr(theme.slug())) .append(',')
-              .append("\"label\":").append(jstr(theme.label())).append(',')
-              .append("\"group\":").append(jstr(theme.group())).append(',')
-              .append("\"inspiration\":").append(jstr(theme.inspiration())).append(',')
-              .append("\"palette\":{");
-            boolean firstKey = true;
-            for (CssVar k : PALETTE_KEYS) {
-                if (!firstKey) sb.append(',');
-                firstKey = false;
-                sb.append(jstr(stripVarPrefix(k.name())))
-                  .append(':')
-                  .append(jstr(values.getOrDefault(k, "")));
+            sb.append('{').append(identity(base)).append(',')
+              .append("\"swatches\":").append(swatches(base)).append(',')
+              .append("\"colours\":[");
+            boolean firstColour = true;
+            for (Theme colours : registry.colours()) {
+                Theme worn = registry.dressed(base, colours);
+                if (!firstColour) sb.append(',');
+                firstColour = false;
+                sb.append("{\"palette\":").append(jstr(colours.slug()))
+                  .append(",\"slug\":").append(jstr(worn.slug()))
+                  .append(worn == base ? ",\"own\":true" : "")
+                  .append('}');
             }
-            sb.append("}}");
+            sb.append("]}");
         }
-        sb.append("]}");
-        return sb.toString();
+        sb.append("],\"palettes\":[");
+        first = true;
+        for (Theme colours : registry.colours()) {
+            if (!first) sb.append(',');
+            first = false;
+            sb.append('{').append(identity(colours)).append(',')
+              .append("\"swatches\":").append(swatches(colours)).append('}');
+        }
+        return sb.append("]}").toString();
     }
 
-    /** Strip the leading "--" so the JSON keys read as friendly names ("surface" not "--color-surface"). */
-    private static String stripVarPrefix(String name) {
-        String n = name.startsWith("--") ? name.substring(2) : name;
-        return n.startsWith("color-") ? n.substring("color-".length()) : n;
+    private static String identity(Theme t) {
+        return "\"slug\":" + jstr(t.slug()) + ",\"label\":" + jstr(t.label()) + ",\"group\":" + jstr(t.group())
+             + ",\"inspiration\":" + jstr(t.inspiration());
+    }
+
+    /** The seven swatches of a theme, in daylight: off its words when it is a design, off its provision otherwise. */
+    private String swatches(Theme t) {
+        var out = new LinkedHashMap<String, String>();
+        PaletteProvision<?, ?> legacy = t instanceof Design ? null : registry.paletteForSlug(t.slug(), GlobalColorPalette.INSTANCE);
+        for (Swatch s : SWATCHES) {
+            String v = t instanceof Design d ? word(d, s) : legacy != null ? legacy.values().getOrDefault(s.legacy(), "") : "";
+            out.put(s.name(), v == null ? "" : v);
+        }
+        var sb = new StringBuilder("{");
+        boolean first = true;
+        for (var e : out.entrySet()) {
+            if (!first) sb.append(',');
+            first = false;
+            sb.append(jstr(e.getKey())).append(':').append(jstr(e.getValue()));
+        }
+        return sb.append('}').toString();
+    }
+
+    private static String word(Design d, Swatch s) {
+        if (!(d.impl(s.pair()) instanceof Impl.Bindings b)) return "";
+        var rest = b.values().getOrDefault(Mode.LIGHT, Map.of()).getOrDefault(State.REST, Map.of());
+        String v = rest.get(s.property());
+        return v != null ? v : rest.getOrDefault(Impl.Bindings.SOLE, "");
     }
 
     private static String jstr(String s) {

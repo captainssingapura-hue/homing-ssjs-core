@@ -53,6 +53,11 @@
              default; a bespoke Fixtures may install its own instead. -->
         <dependency>
             <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-design-core</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
             <artifactId>homing-studio-themes</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
