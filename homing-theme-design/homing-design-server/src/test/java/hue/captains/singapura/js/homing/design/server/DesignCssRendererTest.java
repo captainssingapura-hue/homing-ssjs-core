@@ -55,8 +55,12 @@ class DesignCssRendererTest {
     static final DesignRegistry REGISTRY = new DesignRegistry(List.of(new Plain(), new Brutal()), List.of());
 
     @Test
-    void theRegistryListsDesignsAsThemes_andOneRenderer() {
-        assertEquals(List.of("plain", "brutal"), REGISTRY.themes().stream().map(t -> t.slug()).toList());
+    void theRegistryListsDesignsAsThemes_theirCrosses_andOneRenderer() {
+        assertEquals(List.of("plain", "brutal"), REGISTRY.bases().stream().map(t -> t.slug()).toList());
+        assertEquals(List.of("plain", "brutal"), REGISTRY.colours().stream().map(t -> t.slug()).toList(), "each design's own colours");
+        assertEquals(List.of("plain", "brutal", "plain_brutal", "brutal_plain"), REGISTRY.themes().stream().map(t -> t.slug()).toList(), "the closure: bases, then every cross");
+        assertEquals("plain_brutal", REGISTRY.dressed(REGISTRY.bases().get(0), REGISTRY.colours().get(1)).slug());
+        assertEquals("plain", REGISTRY.dressed(REGISTRY.bases().get(0), REGISTRY.colours().get(0)).slug(), "its own colours: the base itself");
         var renderers = REGISTRY.renderers(SERVED);
         assertEquals(1, renderers.size());
         assertTrue(renderers.get(0).owns(Target.Color.Surface.INSTANCE));

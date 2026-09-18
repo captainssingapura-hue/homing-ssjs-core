@@ -46,11 +46,14 @@ function renderThemePreview() {
     // The name and the inspiration line come from the registry, so the page
     // says which theme it is wearing. Everything below renders before the
     // fetch answers — the elements are the preview, the name is a caption.
-    fetchThemes().then(function (themes) {
-        var t = themeBySlug(themes, activeThemeSlug()) || themes[0];
+    fetchRegistry().then(function (reg) {
+        var at = decompose(reg.themes, activeThemeSlug()) || { theme: reg.themes[0], palette: null };
+        var t = at.theme;
         if (!t) return;
-        title.textContent = t.label || t.slug;
-        subtitle.textContent = t.inspiration || "";
+        var p = null;
+        for (var i = 0; i < reg.palettes.length; i++) if (reg.palettes[i].slug === at.palette) p = reg.palettes[i];
+        title.textContent = (t.label || t.slug) + (p ? " in " + (p.label || p.slug) : "");
+        subtitle.textContent = p ? (t.inspiration || "") + " " + (p.inspiration || "") : (t.inspiration || "");
     }).catch(function () { title.textContent = "Theme"; });
 
     main.appendChild(Section({

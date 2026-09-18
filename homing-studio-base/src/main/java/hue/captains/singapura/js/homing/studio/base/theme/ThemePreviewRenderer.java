@@ -33,8 +33,8 @@ public record ThemePreviewRenderer() implements DomModule<ThemePreviewRenderer> 
                         DomOpsPartyModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new ThemePickerModel.activeThemeSlug(),
-                        new ThemePickerModel.fetchThemes(),
-                        new ThemePickerModel.themeBySlug()
+                        new ThemePickerModel.fetchRegistry(),
+                        new ThemePickerModel.decompose()
                 ), ThemePickerModel.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new StudioElements.Card(),

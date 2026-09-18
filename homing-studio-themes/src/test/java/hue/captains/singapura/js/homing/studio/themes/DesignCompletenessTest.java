@@ -72,12 +72,17 @@ class DesignCompletenessTest {
     }
 
     @Test
-    void theThreeDesigns_areListedDefaultFirst_thenTheirCrosses() {
-        var slugs = StudioThemeRegistry.INSTANCE.themes().stream().map(Theme::slug).toList();
-        assertEquals(List.of("default", "neo-brutalism", "neo-futurism",
-                             "default_neo-brutalism", "default_neo-futurism",
-                             "neo-brutalism_default", "neo-brutalism_neo-futurism",
-                             "neo-futurism_default", "neo-futurism_neo-brutalism"), slugs);
+    void theThreeBases_areListedDefaultFirst_thenEveryCross() {
+        var r = StudioThemeRegistry.INSTANCE;
+        assertEquals(List.of("default", "neo-brutalism", "neo-futurism"), r.bases().stream().map(Theme::slug).toList());
+        assertEquals(List.of("default", "neo-brutalism", "neo-futurism", "forest", "sunset"), r.colours().stream().map(Theme::slug).toList());
+        var slugs = r.themes().stream().map(Theme::slug).toList();
+        assertEquals(3 + 3 * 4, slugs.size(), "three bases, each in the four other colours: " + slugs);
+        assertEquals(List.of("default", "neo-brutalism", "neo-futurism"), slugs.subList(0, 3));
+        assertTrue(slugs.contains("neo-brutalism_forest") && slugs.contains("default_sunset"), slugs.toString());
+        // dressed: the base in its own colours is the base; in another's, the cross the registry lists
+        assertEquals("neo-futurism", r.dressed(r.bases().get(2), r.colours().get(2)).slug());
+        assertEquals("neo-futurism_forest", r.dressed(r.bases().get(2), r.colours().get(3)).slug());
         assertFalse(StudioThemeRegistry.INSTANCE.themes().stream().anyMatch(t -> !(t instanceof Design)), "every theme is a design");
     }
 }

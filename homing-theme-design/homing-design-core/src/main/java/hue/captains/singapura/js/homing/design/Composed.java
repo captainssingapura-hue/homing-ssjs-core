@@ -25,6 +25,9 @@ public record Composed(Design physique, Design palette) implements Design {
 
     public static Composed of(Design physique, Design palette) { return new Composed(physiqueOf(physique), paletteOf(palette)); }
 
+    /** The physique's own slug when the palette is its own — the whole design, not a cross. */
+    public boolean isDiagonal() { return physique.slug().equals(palette.slug()); }
+
     @Override public Impl impl(DesignClass<?> pair) {
         return pair.onColourPlane() ? palette.impl(pair) : physique.impl(pair);
     }
@@ -36,22 +39,32 @@ public record Composed(Design physique, Design palette) implements Design {
 
     /** The design restricted to the physique plane: its word off the colour branch, none on it. */
     public static Design physiqueOf(Design d) {
-        if (d instanceof Plane p) return p.colour ? physiqueOf(p.whole) : p;
-        return new Plane(d, false);
+        if (d instanceof Plane p) return p;
+        if (d instanceof Colours c) return physiqueOf(c.whole);
+        return new Plane(d);
     }
 
-    /** The design restricted to the colour plane: its word on the colour branch, none off it. */
-    public static Design paletteOf(Design d) {
-        if (d instanceof Plane p) return p.colour ? p : paletteOf(p.whole);
-        return new Plane(d, true);
+    /** The design restricted to the colour plane: its word on the colour branch, none off it. A palette already, as itself. */
+    public static Palette paletteOf(Design d) {
+        if (d instanceof Palette p) return p;
+        if (d instanceof Plane p) return paletteOf(p.whole);
+        return new Colours(d);
     }
 
-    /** One plane of a whole design. */
-    record Plane(Design whole, boolean colour) implements Design {
-        @Override public Impl impl(DesignClass<?> pair) { return pair.onColourPlane() == colour ? whole.impl(pair) : null; }
+    /** The physique plane of a whole design. */
+    record Plane(Design whole) implements Design {
+        @Override public Impl impl(DesignClass<?> pair) { return pair.onColourPlane() ? null : whole.impl(pair); }
         @Override public String slug()  { return whole.slug(); }
         @Override public String label() { return whole.label(); }
         @Override public String group() { return whole.group(); }
+        @Override public String inspiration() { return whole.inspiration(); }
+    }
+
+    /** The colour plane of a whole design: the design's own colours, as a palette any physique may wear. */
+    record Colours(Design whole) implements Palette {
+        @Override public Impl impl(DesignClass<?> pair) { return pair.onColourPlane() ? whole.impl(pair) : null; }
+        @Override public String slug()  { return whole.slug(); }
+        @Override public String label() { return whole.label(); }
         @Override public String inspiration() { return whole.inspiration(); }
     }
 }

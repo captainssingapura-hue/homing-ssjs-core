@@ -159,7 +159,9 @@ final class NeoFuturismDesign {
                     .in(Mode.DARK, State.REST, plate(LIGHT_REF, 18, DROP_D))
                     .in(Mode.DARK, State.HOVER, "0 0 0 1px " + glow(LIGHT_REF, 70) + ", 0 0 32px " + glow(LIGHT_REF, 35) + ", " + DROP_D)),
             surface(of(Interactive.class, Color.Surface.class), glow(CYAN, 10), glow(CYAN_D, 12)),
-            edge(of(Interactive.class, Color.Edge.class), glow(CYAN, 35), glow(CYAN_D, 40)),
+            Map.entry(of(Interactive.class, Color.Edge.class), Impl.Bindings.none()
+                    .at(State.REST, "border-color", glow(CYAN, 35)).at(State.CHECKED, "border-color", CYAN)
+                    .in(Mode.DARK, State.REST, "border-color", glow(CYAN_D, 40)).in(Mode.DARK, State.CHECKED, "border-color", CYAN_D)),
             surface(of(Selected.class, Color.Surface.class), CYAN, CYAN_D),
             one(of(Selected.class, Color.Ink.class), ON_CYAN),
             edge(of(Selected.class, Color.Edge.class), CYAN, CYAN_D),

@@ -53,8 +53,11 @@ public record ThemePicker() implements DomModule<ThemePicker> {
         return ImportsFor.<ThemePicker>builder()
                 .add(new ModuleImports<>(List.of(
                         new ThemePickerModel.activeThemeSlug(),
-                        new ThemePickerModel.fetchThemes(),
+                        new ThemePickerModel.fetchRegistry(),
+                        new ThemePickerModel.colourwayOf(),
+                        new ThemePickerModel.decompose(),
                         new ThemePickerModel.themeBySlug(),
+                        // fetchThemes stays exported for other surfaces; the picker reads the registry whole
                         new ThemePickerModel.themeTreeData(),
                         new ThemePickerModel.slugOfSelection(),
                         new ThemePickerModel.switchToTheme(),
@@ -68,6 +71,8 @@ public record ThemePicker() implements DomModule<ThemePicker> {
                         MasterDetail.INSTANCE))
                 .add(new ModuleImports<>(List.of(new SystemDialog.openSystemDialog()),
                         SystemDialog.INSTANCE))
+                .add(new ModuleImports<>(List.of(new ThemeColours.mountColourStrip()),
+                        ThemeColours.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new ThemePickerStyles.tp_btn(),
                         new ThemePickerStyles.tp_btn_label(),

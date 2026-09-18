@@ -30,14 +30,54 @@ function themeBySlug(themes, slug) {
     return null;
 }
 
-/** GET /themes. The endpoint answers an object with a themes array, not a bare array. */
-function fetchThemes() {
+/**
+ * GET /themes: the registry on its two axes — { themes: [base…], palettes: [colours…] }.
+ * A base carries `colours`, one entry per palette with the slug that names the
+ * base worn in it (`own: true` for its own), so the client composes nothing.
+ */
+function fetchRegistry() {
     return fetch("/themes").then(function (r) {
         if (!r.ok) throw new Error("/themes HTTP " + r.status);
         return r.json().then(function (j) {
-            return (j && j.themes) ? j.themes : (Array.isArray(j) ? j : []);
+            return { themes: (j && j.themes) || [], palettes: (j && j.palettes) || [] };
         });
     });
+}
+
+/** GET /themes, unwrapped to the bases alone. */
+function fetchThemes() {
+    return fetchRegistry().then(function (reg) { return reg.themes; });
+}
+
+/**
+ * A base worn in some colours: the base's entry for the palette slug, or its own
+ * entry when `paletteSlug` is null or names its own colours. Null when the base
+ * has no such entry.
+ */
+function colourwayOf(theme, paletteSlug) {
+    var list = (theme && theme.colours) || [];
+    var own = null;
+    for (var i = 0; i < list.length; i++) {
+        if (list[i].own) own = list[i];
+        if (paletteSlug && list[i].palette === paletteSlug) return list[i];
+    }
+    return paletteSlug ? null : own;
+}
+
+/**
+ * The base and palette a worn slug names: search every base's colourways for it.
+ * `{ theme, palette }` with `palette` null for a base in its own colours; null
+ * when no base wears it.
+ */
+function decompose(themes, slug) {
+    for (var i = 0; i < themes.length; i++) {
+        var list = themes[i].colours || [];
+        for (var j = 0; j < list.length; j++) {
+            if (list[j].slug === slug) return { theme: themes[i], palette: list[j].own ? null : list[j].palette };
+        }
+        if (themes[i].slug === slug) return { theme: themes[i], palette: null };
+    }
+    return null;
 }
 
 /**

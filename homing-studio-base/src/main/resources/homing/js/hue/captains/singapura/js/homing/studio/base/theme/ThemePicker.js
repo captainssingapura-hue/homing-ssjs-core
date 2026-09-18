@@ -43,10 +43,11 @@ var _seq = 0;
  * what makes the preview honest: the page comes back wearing the theme,
  * palette and all, exactly as a navigation would deliver it.
  */
-function _previewPane(branch, host, seq) {
-    // A column filling the pane: name and note take their height, the frame
-    // takes the rest. Inline, where the pane has no height of its own, the
-    // frame falls back to its minimum and the column is as tall as that.
+function _previewPane(branch, host, seq, palettes, onPickColours) {
+    // A column filling the pane: name, note and the colour control take their
+    // height, the frame takes the rest. Inline, where the pane has no height
+    // of its own, the frame falls back to its minimum and the column is as
+    // tall as that.
     var pane = branch.createElement("pvp" + seq, "div");
     css.addClass(pane, tp_preview_pane);
     host.appendChild(pane);
@@ -66,6 +67,9 @@ function _previewPane(branch, host, seq) {
     var note = branch.createElement("pvi" + seq, "div");
     css.addClass(note, tp_preview_note);
     pane.appendChild(note);
+
+    // The colours are the other axis: the tree picks the base, this the palette.
+    var colours = mountColourStrip(branch, pane, seq, palettes, onPickColours);
 
     // The frame and its loading banner share a positioned wrapper: the banner
     // covers the frame while a page is on its way and fades once it lands.
@@ -88,17 +92,31 @@ function _previewPane(branch, host, seq) {
 
     var shown = null;   // the slug the frame is showing — re-selecting it is free
 
-    return function (theme, activeSlug) {
+    // `palette` null is the base's own colours; the slug shown and switched to
+    // is the registry's entry for the pair, so the frame previews exactly what
+    // OK would apply.
+    return function (theme, palette, activeSlug) {
         if (!theme) return;
-        nameText.textContent = theme.label || theme.slug;
-        chip.hidden = (theme.slug !== activeSlug);
+        var way = colourwayOf(theme, palette) || colourwayOf(theme, null);
+        var slug = way ? way.slug : theme.slug;
+        nameText.textContent = wornLabel(theme, palette, palettes);
+        chip.hidden = (slug !== activeSlug);
         note.textContent = theme.inspiration || "";
-        if (theme.slug === shown) return;
-        shown = theme.slug;
-        banner.textContent = "Loading " + (theme.label || theme.slug) + "…";
+        colours(theme, palette);
+        if (slug === shown) return;
+        shown = slug;
+        banner.textContent = "Loading " + nameText.textContent + "…";
         css.addClass(banner, tp_preview_loading_on);
-        frame.src = previewUrl(theme.slug);
+        frame.src = previewUrl(slug);
     };
+}
+
+/** "Neo-Brutalism", or "Neo-Brutalism in Forest" when worn in another's colours. */
+function wornLabel(theme, palette, palettes) {
+    var base = theme.label || theme.slug;
+    if (!palette) return base;
+    for (var i = 0; i < palettes.length; i++) if (palettes[i].slug === palette) return base + " in " + (palettes[i].label || palette);
+    return base + " in " + palette;
 }
 
 /**
@@ -106,15 +124,22 @@ function _previewPane(branch, host, seq) {
  * the caller needs afterwards: the renderer (to forward keydown) and the tree
  * host (to focus).
  */
-function _buildPanes(branch, wrap, themes, active, seq, onSwitch, onPick) {
+function _buildPanes(branch, wrap, reg, active, seq, onSwitch, onPick) {
     // The same MasterDetail the catalogue listing uses. What differs is only
     // what the body draws, which is this module's business and stays here.
+    var themes = reg.themes;
     var update = null;
-    var picked = active;
+    // The pick is a pair: the base from the tree, the palette from the strip
+    // (null: the base's own). The slug is the registry's entry for the pair.
+    var at = decompose(themes, active) || { theme: themes[0], palette: null };
+    var base = at.theme, palette = at.palette;
+    function slugOf() { var way = colourwayOf(base, palette) || colourwayOf(base, null); return way ? way.slug : base.slug; }
+    function show() { if (update) update(base, palette, active); if (onPick) onPick(slugOf()); }
+
     var pair = mountMasterDetail({
         branch:      branch,
         host:        wrap,
-        data:        themeTreeData(themes, active),
+        data:        themeTreeData(themes, base.slug),
         expandDepth: 2,
         // Neither. A row is its name and nothing else — the description and the
         // in-use marker live in the content pane, which is what keeps the tree
@@ -123,29 +148,31 @@ function _buildPanes(branch, wrap, themes, active, seq, onSwitch, onPick) {
         showNote:    false,
         showRoot:    false,
         onSelect:    function (bodyEl, sel) {
-            var slug = slugOfSelection(sel);
-            var t = themeBySlug(themes, slug);
+            var t = themeBySlug(themes, slugOfSelection(sel));
             if (!t) return;                  // a group row selects nothing
-            picked = slug;
-            if (update) update(t, active);
-            if (onPick) onPick(slug);
+            base = t;
+            show();
         },
         onActivate:  function (sel) {
-            var slug = slugOfSelection(sel);
-            if (slug) onSwitch(slug);
+            if (slugOfSelection(sel)) onSwitch(slugOf());
         }
     });
 
-    update = _previewPane(branch, pair.bodyEl, seq);
-    update(themeBySlug(themes, active) || themes[0], active);
+    update = _previewPane(branch, pair.bodyEl, seq, reg.palettes, function (paletteSlug) {
+        // The base's own colours are "no palette" — the pair is then the base itself.
+        var own = colourwayOf(base, null);
+        palette = (own && own.palette === paletteSlug) ? null : paletteSlug;
+        show();
+    });
+    update(base, palette, active);
 
     return { treeHost: pair.navEl, renderer: pair.renderer,
-             selected: function () { return picked; },
+             selected: slugOf,
              // The theme the page wears has moved — from this dialog, or from
              // elsewhere — so the "in use" chip moves with it (RFC 0064).
              markActive: function (slug) {
                  active = slug;
-                 update(themeBySlug(themes, picked) || themeBySlug(themes, slug), active);
+                 update(base, palette, active);
              } };
 }
 
@@ -160,7 +187,7 @@ function mountThemePickerTree(host, opts) {
     var mySeq = _seq;
     var boxed = !opts || opts.boxed !== false;
 
-    return fetchThemes().then(function (themes) {
+    return fetchRegistry().then(function (reg) {
         var active = activeThemeSlug();
 
         var wrap = branch.createElement("wrap" + mySeq, "div");
@@ -178,7 +205,7 @@ function mountThemePickerTree(host, opts) {
         wrap.appendChild(body);
         host.appendChild(wrap);
 
-        var panes = _buildPanes(branch, body, themes, active, mySeq,
+        var panes = _buildPanes(branch, body, reg, active, mySeq,
             function (slug) { switchToTheme(slug); });
         // The chip follows the page — a switch from here or from anywhere.
         css.onThemeApplied(function (change) { panes.markActive(change.to); });
@@ -213,10 +240,13 @@ function mountThemePickerButton(host, opts) {
     branch.activate(_btnOwner);
     var mySeq = _seq;
 
-    return fetchThemes().then(function (themes) {
-        if (!themes || themes.length < 2) return null;   // nothing to switch between
+    return fetchRegistry().then(function (reg) {
+        var themes = reg.themes;
+        if (!themes || (themes.length < 2 && reg.palettes.length < 2)) return null;   // nothing to switch between
         var active = activeThemeSlug();
-        if (!themeBySlug(themes, active)) active = themes[0].slug;
+        if (!decompose(themes, active)) active = themes[0].slug;
+        // The label reads the pair the slug names: "Neo-Brutalism", or "Neo-Brutalism in Forest".
+        function labelOf(slug) { var at = decompose(themes, slug); return at ? wornLabel(at.theme, at.palette, reg.palettes) : slug; }
 
         var btn = branch.createElement("btn" + mySeq, "button");
         btn.type = "button";
@@ -229,8 +259,7 @@ function mountThemePickerButton(host, opts) {
         btn.appendChild(cap);
 
         var now = branch.createElement("now" + mySeq, "span");
-        var activeTheme = themeBySlug(themes, active);
-        now.textContent = activeTheme ? (activeTheme.label || activeTheme.slug) : "";
+        now.textContent = labelOf(active);
         btn.appendChild(now);
 
         var caret = branch.createElement("bcrt" + mySeq, "span");
@@ -253,8 +282,7 @@ function mountThemePickerButton(host, opts) {
         // The page wears another theme now — from Apply, or from anywhere.
         function wear(slug) {
             active = slug;
-            var t = themeBySlug(themes, slug);
-            now.textContent = t ? (t.label || t.slug) : slug;
+            now.textContent = labelOf(slug);
             if (panes) { panes.markActive(slug); refresh(panes.selected() !== active); }
         }
         css.onThemeApplied(function (change) { wear(change.to); });
@@ -281,7 +309,7 @@ function mountThemePickerButton(host, opts) {
                 size:           { w: 1100, h: 780 },
                 restoreFocusTo: btn,
                 content: function (pb, bodyEl) {
-                    panes = _buildPanes(pb, bodyEl, themes, active, mySeq,
+                    panes = _buildPanes(pb, bodyEl, reg, active, mySeq,
                         // Enter on a row is the primary action, so it means OK.
                         function () { applyPicked(false); },
                         function (slug) { refresh(slug !== active); });

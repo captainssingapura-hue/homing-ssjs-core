@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.studio.themes;
 
 import hue.captains.singapura.js.homing.design.DesignClass;
 import hue.captains.singapura.js.homing.design.Impl;
+import hue.captains.singapura.js.homing.design.Mode;
 import hue.captains.singapura.js.homing.design.State;
 
 import java.util.Map;
@@ -117,7 +118,9 @@ final class NeoBrutalismDesign {
                     .at(State.ACTIVE, "translate(5px, 5px)")),
             states(of(Interactive.class, Shape.Shadow.class), shadow(4), shadow(8), "0 0 0 " + INK_REF),
             surface(of(Interactive.class, Color.Surface.class), SIGNAL),
-            edge(of(Interactive.class, Color.Edge.class), INK, INK_D),
+            Map.entry(of(Interactive.class, Color.Edge.class), Impl.Bindings.none()
+                    .at(State.REST, "border-color", INK).at(State.CHECKED, "border-color", RISO_BLUE)
+                    .in(Mode.DARK, State.REST, "border-color", INK_D).in(Mode.DARK, State.CHECKED, "border-color", RISO_BLUE)),
             surface(of(Selected.class, Color.Surface.class), INK, "#FFFFFF"),
             one(of(Selected.class, Color.Ink.class), SIGNAL, INK),
             edge(of(Selected.class, Color.Edge.class), INK, "#FFFFFF"),

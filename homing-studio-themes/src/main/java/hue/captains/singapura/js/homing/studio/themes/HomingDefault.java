@@ -24,8 +24,10 @@ public record HomingDefault() implements Design {
 
     public static final HomingDefault INSTANCE = new HomingDefault();
 
-    /** The design as a function: its word for a design class the studio's components wear, or none. */
-    @Override public Impl impl(DesignClass<?> pair) { return DefaultDesign.WORDS.get(pair); }
+    /** The design as a function: the house physique off the colour plane, the house seeds on it; none for what neither has. */
+    @Override public Impl impl(DesignClass<?> pair) {
+        return pair.onColourPlane() ? SeedPalette.HOUSE.impl(pair) : DefaultDesign.WORDS.get(pair);
+    }
 
     @Override public String slug()  { return "default"; }
     @Override public String label() { return "Default"; }

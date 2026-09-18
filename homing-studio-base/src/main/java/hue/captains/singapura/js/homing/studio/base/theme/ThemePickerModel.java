@@ -26,8 +26,17 @@ public record ThemePickerModel() implements DomModule<ThemePickerModel> {
     /** The active theme's slug, read from the current URL. */
     public record activeThemeSlug() implements Exportable._Constant<ThemePickerModel> {}
 
-    /** GET /themes, unwrapped to a plain array. */
+    /** GET /themes: the registry on its two axes, { themes, palettes }. */
+    public record fetchRegistry() implements Exportable._Constant<ThemePickerModel> {}
+
+    /** GET /themes, unwrapped to the bases alone. */
     public record fetchThemes() implements Exportable._Constant<ThemePickerModel> {}
+
+    /** A base worn in some colours: its entry for a palette slug, or its own. */
+    public record colourwayOf() implements Exportable._Constant<ThemePickerModel> {}
+
+    /** The base and palette a worn slug names. */
+    public record decompose() implements Exportable._Constant<ThemePickerModel> {}
 
     /** Find a theme record by slug, or null. */
     public record themeBySlug() implements Exportable._Constant<ThemePickerModel> {}
@@ -64,7 +73,7 @@ public record ThemePickerModel() implements DomModule<ThemePickerModel> {
     @Override
     public ExportsOf<ThemePickerModel> exports() {
         return new ExportsOf<>(INSTANCE, List.of(
-                new activeThemeSlug(), new fetchThemes(), new themeBySlug(),
+                new activeThemeSlug(), new fetchRegistry(), new fetchThemes(), new colourwayOf(), new decompose(), new themeBySlug(),
                 new themeTreeData(), new slugOfSelection(), new switchToTheme(),
                 new previewUrl()));
     }
