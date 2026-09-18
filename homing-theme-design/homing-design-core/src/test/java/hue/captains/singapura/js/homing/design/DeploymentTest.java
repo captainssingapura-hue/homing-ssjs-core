@@ -125,7 +125,8 @@ class DeploymentTest {
                 DANGER_INK, Impl.Bindings.none().at(State.REST, "background-color", "#000"),    // ink does not own background
                 CORNER, Impl.Bindings.none().at(State.HOVER, "0"),                               // corner offers no hover slot
                 DANGER_SURFACE, Impl.Bindings.of("#000"),                                        // SOLE on a two-property target
-                SUCCESS_SURFACE, new Impl.Body("background-color: #0A7D3A;\npadding-top: 4px;\n& .st-card { color: red; }\n"));
+                SUCCESS_SURFACE, new Impl.Body("background-color: #0A7D3A;\npadding-top: 4px;\n& .st-card { color: red; }\n"
+                        + "tr:nth-child(even) td { background-color: #EEE; }\n"));                  // a selector with a pseudo-class, not a `tr` property
         @Override public String slug() { return "wrong"; }
         @Override public Impl impl(DesignClass<?> pair) { return WORDS.get(pair); }
     }

@@ -110,7 +110,8 @@ public record Deployment(Set<DesignClass<?>> required, Design design, List<Desig
         }));
     }
 
-    private static final Pattern DECLARATION = Pattern.compile("(?m)^\\s*([a-z-]+)\\s*:");
+    // A declaration is `property: value;` on its own line — `tr:nth-child(even) td {` is a selector, not a `tr` property.
+    private static final Pattern DECLARATION = Pattern.compile("(?m)^\\s*([a-z-]+)\\s*:\\s*[^{;\\n]*;");
     private static final Pattern NESTED = Pattern.compile("(?m)^\\s*([^{;\\n]+?)\\s*\\{");
 
     private static void validateBody(DesignClass<?> pair, Target target, Impl.Body body, List<Finding> findings) {

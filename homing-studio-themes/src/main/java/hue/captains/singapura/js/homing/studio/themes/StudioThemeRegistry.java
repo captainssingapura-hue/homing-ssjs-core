@@ -10,11 +10,11 @@ import hue.captains.singapura.js.homing.server.ThemeRegistry;
 import java.util.List;
 
 /**
- * The studio's two designs — {@link HomingDefault} and {@link HomingNeoBrutalism}
+ * The studio's three designs — {@link HomingDefault}, {@link HomingNeoBrutalism} and {@link HomingNeoFuturism}
  * over it — as the studio's theme registry. The nine other themes are retired
  * with the palette-and-override contract they were written in; a design is a
- * set of providers over the design classes the studio's components wear, and
- * the two that remain are being rewritten onto that, group by group.
+ * function over the design classes the studio's components wear; Default is the
+ * house word, the other two call it for whatever they have no word of their own for.
  *
  * <p>Until the last group has moved, the legacy palettes and overrides pass
  * through beside the designs: a group not yet on design classes still reads
@@ -25,10 +25,10 @@ public final class StudioThemeRegistry implements ThemeRegistry {
     public static final StudioThemeRegistry INSTANCE = new StudioThemeRegistry();
 
     private static final DesignRegistry DESIGNS = new DesignRegistry(
-            List.of(HomingDefault.INSTANCE, HomingNeoBrutalism.INSTANCE),
+            List.of(HomingDefault.INSTANCE, HomingNeoBrutalism.INSTANCE, HomingNeoFuturism.INSTANCE),
             List.of(),
-            List.of(HomingDefault.Palette.INSTANCE, HomingNeoBrutalism.Palette.INSTANCE,
-                    HomingDefault.Fonts.INSTANCE, HomingNeoBrutalism.Fonts.INSTANCE),
+            List.of(HomingDefault.Palette.INSTANCE, HomingNeoBrutalism.Palette.INSTANCE, HomingNeoFuturism.Palette.INSTANCE,
+                    HomingDefault.Fonts.INSTANCE, HomingNeoBrutalism.Fonts.INSTANCE, HomingNeoFuturism.Fonts.INSTANCE),
             List.of());
 
     private StudioThemeRegistry() {}
