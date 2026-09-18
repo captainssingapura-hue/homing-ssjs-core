@@ -159,7 +159,7 @@ public record SynthwavePalette() implements Palette {
             surface(of(Current.class, Color.Surface.class), "rgba(0, 146, 168, 0.10)", "rgba(0, 240, 255, 0.10)"),
             one(of(Current.class, Color.Ink.class), CYAN, CYAN_D),
             edge(of(Current.class, Color.Edge.class), CYAN, CYAN_D),
-            edge(of(Focus.class, Color.Edge.class), CYAN, CYAN_D),
+            ring(of(Focus.class, Color.Edge.class), CYAN, CYAN_D),
 
             // ── structure: neon rules ───────────────────────────────────
             edge(of(Divider.class, Color.Edge.class), MAGENTA, MAGENTA_D),
@@ -167,6 +167,8 @@ public record SynthwavePalette() implements Palette {
             edge(of(Cap.class, Color.Edge.class), HAIR, HAIR_D),
             edge(of(Spine.class, Color.Edge.class), HAIR, HAIR_D),
             edge(of(Rail.class, Color.Edge.class), HAIR, HAIR_D),
+            edge(of(Lattice.class, Color.Edge.class), HAIR, HAIR_D),
+            surface(of(Backdrop.class, Color.Surface.class), "rgba(42, 10, 74, 0.55)", "rgba(5, 1, 15, 0.65)"),
             edgeHover(of(Marker.class, Color.Edge.class), "transparent", CYAN),
             edgeHover(of(Bar.class, Color.Edge.class), HAIR + " " + HAIR + " " + HAIR + " " + MAGENTA, HAIR + " " + HAIR + " " + HAIR + " " + CYAN),
 

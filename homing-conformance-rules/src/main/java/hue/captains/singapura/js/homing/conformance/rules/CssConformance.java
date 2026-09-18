@@ -7,6 +7,7 @@ import hue.captains.singapura.js.homing.core.CssGroup;
 import hue.captains.singapura.js.homing.core.CssGroupResolver;
 import hue.captains.singapura.js.homing.core.CssImportsFor;
 import hue.captains.singapura.js.homing.core.CssVar;
+import hue.captains.singapura.js.homing.core.Wearable;
 import hue.captains.singapura.js.homing.core.EsModule;
 import hue.captains.singapura.js.homing.core.PaletteClass;
 import hue.captains.singapura.js.homing.core.PaletteProvision;
@@ -250,6 +251,20 @@ public final class CssConformance {
             }
         }
         return out;
+    }
+
+    /**
+     * A design word the class wears or reads, named by its variable: {@code --<pair>} or
+     * {@code --<pair>-<property>}, a state suffix or not. The binding is the design's, emitted
+     * with the pair; the body only reads it.
+     */
+    static boolean readsWord(CssClass<?> c, CssVar v) {
+        for (var list : List.of(c.wears(), c.reads()))
+            for (Wearable w : list) {
+                String stem = "--" + w.cssName();
+                if (v.name().equals(stem) || v.name().startsWith(stem + "-")) return true;
+            }
+        return false;
     }
 
     /** A class name inside a body: a nested selector naming another class. */

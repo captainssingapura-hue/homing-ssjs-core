@@ -42,13 +42,14 @@ public record Deployment(Set<DesignClass<?>> required, Design design, List<Desig
         return new Deployment(required, design, List.of());
     }
 
-    /** The requirement set of a closure: every pair any class of any group in it wears. */
+    /** The requirement set of a closure: every pair any class of any group in it wears — or reads, since a reference needs a binding to land on. */
     public static Set<DesignClass<?>> wornBy(Collection<? extends CssGroup<?>> groups) {
         var out = new LinkedHashSet<DesignClass<?>>();
         for (CssGroup<?> g : groups)
-            for (CssClass<?> c : g.cssClasses())
-                for (Wearable w : c.wears())
-                    if (w instanceof DesignClass<?> dc) out.add(dc);
+            for (CssClass<?> c : g.cssClasses()) {
+                for (Wearable w : c.wears()) if (w instanceof DesignClass<?> dc) out.add(dc);
+                for (Wearable w : c.reads()) if (w instanceof DesignClass<?> dc) out.add(dc);   // read by reference: the word must exist and its binding be emitted
+            }
         return out;
     }
 

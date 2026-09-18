@@ -28,5 +28,14 @@ public interface Structure extends Semantic {
     /** The rail: a one-pixel line along the trailing edge of a column — a nav beside its detail. */
     record Rail() implements Structure {}
 
+    /**
+     * The lattice: the lines between the cells of a grid. Every cell draws its
+     * trailing edge and its bottom edge, and the cells tile into the lines —
+     * so a grid keeps its lattice under a sticky header, which a collapsed
+     * border cannot. A design says how heavy the lines are, or that there are
+     * none.
+     */
+    record Lattice() implements Structure {}
+
     record Backdrop() implements Structure {}
 }

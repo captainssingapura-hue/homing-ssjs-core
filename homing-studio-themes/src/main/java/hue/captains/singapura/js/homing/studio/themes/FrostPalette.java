@@ -154,7 +154,7 @@ public record FrostPalette() implements Palette {
             surface(of(Current.class, Color.Surface.class), "rgba(255, 255, 255, 0.2)", "rgba(255, 255, 255, 0.07)"),
             one(of(Current.class, Color.Ink.class), INK_BLUE, INK_BLUE_D),
             edge(of(Current.class, Color.Edge.class), BLUE, BLUE_D),
-            edge(of(Focus.class, Color.Edge.class), BLUE, BLUE_D),
+            ring(of(Focus.class, Color.Edge.class), BLUE, BLUE_D),
 
             // ── structure: rims of light, hairlines of shadow ───────────
             edge(of(Divider.class, Color.Edge.class), "rgba(255, 255, 255, 0.6)", "rgba(255, 255, 255, 0.2)"),
@@ -162,6 +162,8 @@ public record FrostPalette() implements Palette {
             edge(of(Cap.class, Color.Edge.class), RIM, RIM_D),
             edge(of(Spine.class, Color.Edge.class), HAIR, HAIR_D),
             edge(of(Rail.class, Color.Edge.class), HAIR, HAIR_D),
+            edge(of(Lattice.class, Color.Edge.class), HAIR, HAIR_D),
+            surface(of(Backdrop.class, Color.Surface.class), "rgba(255, 255, 255, 0.55)", "rgba(15, 22, 48, 0.6)"),
             edgeHover(of(Marker.class, Color.Edge.class), "transparent", BLUE),
             edgeHover(of(Bar.class, Color.Edge.class), RIM + " " + RIM + " " + RIM + " " + BLUE, RIM + " " + RIM + " " + RIM + " " + VIOLET),
 
