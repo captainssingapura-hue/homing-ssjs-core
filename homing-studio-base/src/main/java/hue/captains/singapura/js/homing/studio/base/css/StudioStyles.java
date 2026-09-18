@@ -564,6 +564,18 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
             """;
         }
     }
+    /**
+     * An interactive row of a plain table: every state is a slot of the pairs
+     * it wears — {@code :hover}, {@code [aria-selected]}, {@code [aria-current]},
+     * {@code :focus-visible} — so one class covers rest and every state and the
+     * attribute is the source of truth. A row takes a surface, an ink, an edge
+     * and a rule; a browser paints no shadow and no transform on a table row,
+     * so depth is not worn here.
+     */
+    public record st_tr() implements CssClass<StudioStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Interactive.class, Color.Surface.class), of(Interactive.class, Color.Ink.class), of(Interactive.class, Color.Edge.class), of(Interactive.class, Shape.Rule.class), of(Interactive.class, Motion.Ease.class), of(Interactive.class, Affordance.Cursor.class)); }
+        @Override public String body() { return ""; }
+    }
     public record st_td() implements CssClass<StudioStyles> {
         @Override public List<? extends Wearable> wears() { return List.of(of(Hairline.class, Color.Edge.class), of(Hairline.class, Shape.Rule.class)); }
         @Override public String body() { return """
@@ -935,7 +947,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
                 new st_panel(), new st_panel_title(),
                 new st_task_list(), new st_task_item(), new st_task_done(), new st_task_box(), new st_task_box_done(),
                 new st_dep(), new st_acceptance(), new st_effort(),
-                new st_table(), new st_thead(), new st_th(), new st_td(),
+                new st_table(), new st_thead(), new st_th(), new st_tr(), new st_td(),
                 new st_td_align_left(), new st_td_align_center(), new st_td_align_right(),
                 new st_td_badge_success(), new st_td_badge_warning(), new st_td_badge_error(),
                 new st_td_strong(), new st_td_muted(),

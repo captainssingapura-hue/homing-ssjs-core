@@ -56,7 +56,16 @@ public record ThemePreviewRenderer() implements DomModule<ThemePreviewRenderer> 
                         new StudioStyles.st_title(),
                         new StudioStyles.st_subtitle(),
                         new StudioStyles.st_badge_rfc(),
-                        new StudioStyles.st_badge_brand()
+                        new StudioStyles.st_badge_brand(),
+                        new StudioStyles.st_table(),
+                        new StudioStyles.st_thead(),
+                        new StudioStyles.st_th(),
+                        new StudioStyles.st_tr(),
+                        new StudioStyles.st_td(),
+                        new StudioStyles.st_td_align_right(),
+                        new StudioStyles.st_td_badge_success(),
+                        new StudioStyles.st_td_badge_warning(),
+                        new StudioStyles.st_td_badge_error()
                 ), StudioStyles.INSTANCE))
                 .build();
     }

@@ -117,10 +117,30 @@ final class NeoBrutalismDesign {
                     .at(State.HOVER, "translate(-2px, -2px)")
                     .at(State.ACTIVE, "translate(5px, 5px)")),
             states(of(Interactive.class, Shape.Shadow.class), shadow(4), shadow(8), "0 0 0 " + INK_REF),
-            surface(of(Interactive.class, Color.Surface.class), SIGNAL),
+            // nothing at rest; hover is the signal with an ink rule, selected is ink with signal on it, current is signal-edged
+            Map.entry(of(Interactive.class, Color.Surface.class), Impl.Bindings.none()
+                    .at(State.REST, "background-color", "transparent")
+                    .at(State.HOVER, "background-color", SIGNAL)
+                    .at(State.SELECTED, "background-color", INK)
+                    .at(State.CURRENT, "background-color", GREY)
+                    .in(Mode.DARK, State.SELECTED, "background-color", INK_D)
+                    .in(Mode.DARK, State.CURRENT, "background-color", GREY_D)),
+            Map.entry(of(Interactive.class, Color.Ink.class), Impl.Bindings.of("inherit")
+                    .at(State.HOVER, INK).at(State.SELECTED, SIGNAL)
+                    .in(Mode.DARK, State.SELECTED, INK)),
             Map.entry(of(Interactive.class, Color.Edge.class), Impl.Bindings.none()
-                    .at(State.REST, "border-color", INK).at(State.CHECKED, "border-color", RISO_BLUE)
-                    .in(Mode.DARK, State.REST, "border-color", INK_D).in(Mode.DARK, State.CHECKED, "border-color", RISO_BLUE)),
+                    .at(State.REST, "border-color", "transparent")
+                    .at(State.HOVER, "border-color", INK)
+                    .at(State.SELECTED, "border-color", INK)
+                    .at(State.CURRENT, "border-color", INK)
+                    .at(State.CHECKED, "border-color", RISO_BLUE)
+                    .at(State.FOCUS, "outline-color", RISO_BLUE)
+                    .in(Mode.DARK, State.HOVER, "border-color", INK_D)
+                    .in(Mode.DARK, State.SELECTED, "border-color", INK_D)
+                    .in(Mode.DARK, State.CURRENT, "border-color", INK_D)),
+            Map.entry(of(Interactive.class, Shape.Rule.class), Impl.Bindings.none()
+                    .at(State.REST, "border-width", "3px").at(State.REST, "border-style", "solid")
+                    .at(State.FOCUS, "outline-width", "4px").at(State.FOCUS, "outline-style", "solid").at(State.FOCUS, "outline-offset", "-4px")),
             surface(of(Selected.class, Color.Surface.class), INK, "#FFFFFF"),
             one(of(Selected.class, Color.Ink.class), SIGNAL, INK),
             edge(of(Selected.class, Color.Edge.class), INK, "#FFFFFF"),

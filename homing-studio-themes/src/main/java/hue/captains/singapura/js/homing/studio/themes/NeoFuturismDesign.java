@@ -158,10 +158,33 @@ final class NeoFuturismDesign {
                     .at(State.ACTIVE, "0 0 0 1px " + glow(LIGHT_REF, 60) + ", 0 0 10px " + glow(LIGHT_REF, 25))
                     .in(Mode.DARK, State.REST, plate(LIGHT_REF, 18, DROP_D))
                     .in(Mode.DARK, State.HOVER, "0 0 0 1px " + glow(LIGHT_REF, 70) + ", 0 0 32px " + glow(LIGHT_REF, 35) + ", " + DROP_D)),
-            surface(of(Interactive.class, Color.Surface.class), glow(CYAN, 10), glow(CYAN_D, 12)),
+            // nothing at rest; hover lights faintly, selected is the light itself, current a filament
+            Map.entry(of(Interactive.class, Color.Surface.class), Impl.Bindings.none()
+                    .at(State.REST, "background-color", "transparent")
+                    .at(State.HOVER, "background-color", glow(CYAN, 10))
+                    .at(State.SELECTED, "background-color", CYAN)
+                    .at(State.CURRENT, "background-color", glow(CYAN, 6))
+                    .in(Mode.DARK, State.HOVER, "background-color", glow(CYAN_D, 12))
+                    .in(Mode.DARK, State.SELECTED, "background-color", CYAN_D)
+                    .in(Mode.DARK, State.CURRENT, "background-color", glow(CYAN_D, 8))),
+            Map.entry(of(Interactive.class, Color.Ink.class), Impl.Bindings.of("inherit")
+                    .at(State.SELECTED, ON_CYAN).at(State.CURRENT, CYAN_INK)
+                    .in(Mode.DARK, State.CURRENT, CYAN_INK_D)),
             Map.entry(of(Interactive.class, Color.Edge.class), Impl.Bindings.none()
-                    .at(State.REST, "border-color", glow(CYAN, 35)).at(State.CHECKED, "border-color", CYAN)
-                    .in(Mode.DARK, State.REST, "border-color", glow(CYAN_D, 40)).in(Mode.DARK, State.CHECKED, "border-color", CYAN_D)),
+                    .at(State.REST, "border-color", "transparent")
+                    .at(State.HOVER, "border-color", glow(CYAN, 35))
+                    .at(State.SELECTED, "border-color", CYAN)
+                    .at(State.CURRENT, "border-color", glow(CYAN, 55))
+                    .at(State.CHECKED, "border-color", CYAN)
+                    .at(State.FOCUS, "outline-color", CYAN)
+                    .in(Mode.DARK, State.HOVER, "border-color", glow(CYAN_D, 40))
+                    .in(Mode.DARK, State.SELECTED, "border-color", CYAN_D)
+                    .in(Mode.DARK, State.CURRENT, "border-color", glow(CYAN_D, 55))
+                    .in(Mode.DARK, State.CHECKED, "border-color", CYAN_D)
+                    .in(Mode.DARK, State.FOCUS, "outline-color", CYAN_D)),
+            Map.entry(of(Interactive.class, Shape.Rule.class), Impl.Bindings.none()
+                    .at(State.REST, "border-width", "1px").at(State.REST, "border-style", "solid")
+                    .at(State.FOCUS, "outline-width", "1px").at(State.FOCUS, "outline-style", "solid").at(State.FOCUS, "outline-offset", "-1px")),
             surface(of(Selected.class, Color.Surface.class), CYAN, CYAN_D),
             one(of(Selected.class, Color.Ink.class), ON_CYAN),
             edge(of(Selected.class, Color.Edge.class), CYAN, CYAN_D),

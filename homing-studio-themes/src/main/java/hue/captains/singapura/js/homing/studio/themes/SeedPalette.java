@@ -126,11 +126,32 @@ public record SeedPalette(String slug, String label, String inspiration, Seeds l
         put.accept(one(of(Warning.class, Color.Ink.class), "#713F12", "#FDE68A"));
         put.accept(edge(of(Warning.class, Color.Edge.class), "rgba(202, 138, 4, 0.35)"));
 
-        // interaction — the accent, tinted; a checked control is edged in it
-        put.accept(sfc(of(Interactive.class, Color.Surface.class), tint(l.accent, 15), tint(d.accent, 15)));
+        // interaction — nothing at rest; the states are the slots. Hover tints in
+        // the accent, selected inverts, current tints lightly, checked and focus
+        // edge in the accent. One class on the element, the attribute says the rest.
+        put.accept(Map.entry(of(Interactive.class, Color.Surface.class), Impl.Bindings.none()
+                .at(State.REST, "background-color", "transparent")
+                .at(State.HOVER, "background-color", tint(l.accent, 15))
+                .at(State.SELECTED, "background-color", l.inverted)
+                .at(State.CURRENT, "background-color", tint(l.accent, 7))
+                .in(Mode.DARK, State.HOVER, "background-color", tint(d.accent, 15))
+                .in(Mode.DARK, State.SELECTED, "background-color", d.inverted)
+                .in(Mode.DARK, State.CURRENT, "background-color", tint(d.accent, 7))));
+        put.accept(Map.entry(of(Interactive.class, Color.Ink.class), Impl.Bindings.of("inherit")
+                .at(State.SELECTED, l.onInverted).at(State.CURRENT, l.title)
+                .in(Mode.DARK, State.SELECTED, d.onInverted).in(Mode.DARK, State.CURRENT, d.title)));
         put.accept(Map.entry(of(Interactive.class, Color.Edge.class), Impl.Bindings.none()
-                .at(State.REST, "border-color", l.border).at(State.CHECKED, "border-color", l.accent)
-                .in(Mode.DARK, State.REST, "border-color", d.border).in(Mode.DARK, State.CHECKED, "border-color", d.accent)));
+                .at(State.REST, "border-color", "transparent")
+                .at(State.HOVER, "border-color", l.border)
+                .at(State.SELECTED, "border-color", l.inverted)
+                .at(State.CURRENT, "border-color", l.accent)
+                .at(State.CHECKED, "border-color", l.accent)
+                .at(State.FOCUS, "outline-color", l.accent)
+                .in(Mode.DARK, State.HOVER, "border-color", d.border)
+                .in(Mode.DARK, State.SELECTED, "border-color", d.inverted)
+                .in(Mode.DARK, State.CURRENT, "border-color", d.accent)
+                .in(Mode.DARK, State.CHECKED, "border-color", d.accent)
+                .in(Mode.DARK, State.FOCUS, "outline-color", d.accent)));
         put.accept(sfc(of(Selected.class, Color.Surface.class), l.inverted, d.inverted));
         put.accept(Map.entry(of(Selected.class, Color.Ink.class), Impl.Bindings.of(l.onInverted).at(State.HOVER, l.accent)
                 .in(Mode.DARK, State.REST, d.onInverted).in(Mode.DARK, State.HOVER, d.accent)));

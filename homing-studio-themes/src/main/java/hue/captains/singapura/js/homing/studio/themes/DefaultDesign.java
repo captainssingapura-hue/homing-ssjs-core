@@ -99,6 +99,13 @@ final class DefaultDesign {
                     "0 1px 3px color-mix(in srgb, " + INK_REF + " 4%, transparent)",
                     "0 6px 16px color-mix(in srgb, " + INK_REF + " 12%, transparent)"),
             one(of(Interactive.class, Affordance.Cursor.class), "pointer"),
+            // a hairline that the palette colours only in a state; a 2px ring, inset, on focus
+            Map.entry(of(Interactive.class, Shape.Rule.class), hue.captains.singapura.js.homing.design.Impl.Bindings.none()
+                    .at(hue.captains.singapura.js.homing.design.State.REST, "border-width", "1px")
+                    .at(hue.captains.singapura.js.homing.design.State.REST, "border-style", "solid")
+                    .at(hue.captains.singapura.js.homing.design.State.FOCUS, "outline-width", "2px")
+                    .at(hue.captains.singapura.js.homing.design.State.FOCUS, "outline-style", "solid")
+                    .at(hue.captains.singapura.js.homing.design.State.FOCUS, "outline-offset", "-2px")),
             one(of(Current.class, Shape.Shadow.class), "inset 3px 0 0 color-mix(in srgb, " + PRIMARY_REF + " 60%, transparent)"),
 
             // ── structure ───────────────────────────────────────────────

@@ -70,7 +70,6 @@ public record WorkspaceLayoutModule() implements DomModule<WorkspaceLayoutModule
                                 new WorkspaceLayoutStyles.wl_ribbon_title(),
                                 new WorkspaceLayoutStyles.wl_ribbon_items(),
                                 new WorkspaceLayoutStyles.wl_ribbon_button(),
-                                new WorkspaceLayoutStyles.wl_ribbon_button_hover(),
                                 new WorkspaceLayoutStyles.wl_ribbon_separator(),
                                 new WorkspaceLayoutStyles.wl_ribbon_label(),
                                 new WorkspaceLayoutStyles.wl_ribbon_fs(),

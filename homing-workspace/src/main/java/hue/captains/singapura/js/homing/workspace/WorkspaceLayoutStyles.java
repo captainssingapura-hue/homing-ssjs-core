@@ -63,9 +63,9 @@ public record WorkspaceLayoutStyles() implements CssGroup<WorkspaceLayoutStyles>
                 flex: 1;
                 """; }
     }
-    /** A ghost control: no surface and no edge until the hover class beside it says so. */
+    /** A ghost control: the interactive surface and edge, which are nothing at rest and appear on hover — the state is the design's slot, not a class applied beside. */
     public record wl_ribbon_button() implements CssClass<WorkspaceLayoutStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Body.class, Color.Ink.class), of(Body.class, Type.Face.class), of(Label.class, Type.Scale.class), of(Control.class, Shape.Corner.class), of(Interactive.class, Affordance.Cursor.class)); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Body.class, Color.Ink.class), of(Body.class, Type.Face.class), of(Label.class, Type.Scale.class), of(Control.class, Shape.Corner.class), of(Interactive.class, Color.Surface.class), of(Interactive.class, Color.Edge.class), of(Interactive.class, Affordance.Cursor.class)); }
         @Override public String body() { return """
                 display: inline-flex;
                 align-items: center;
@@ -76,11 +76,6 @@ public record WorkspaceLayoutStyles() implements CssGroup<WorkspaceLayoutStyles>
                 background: transparent;
                 line-height: 1;
                 """; }
-    }
-    /** The hovered ghost control: the interactive surface and edge, applied by the ribbon while the pointer is over it. */
-    public record wl_ribbon_button_hover() implements CssClass<WorkspaceLayoutStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Interactive.class, Color.Surface.class), of(Interactive.class, Color.Edge.class)); }
-        @Override public String body() { return ""; }
     }
     public record wl_ribbon_separator() implements CssClass<WorkspaceLayoutStyles> {
         @Override public List<? extends Wearable> wears() { return List.of(of(Tertiary.class, Color.Surface.class)); }
@@ -182,7 +177,6 @@ public record WorkspaceLayoutStyles() implements CssGroup<WorkspaceLayoutStyles>
                 new wl_ribbon_title(),
                 new wl_ribbon_items(),
                 new wl_ribbon_button(),
-                new wl_ribbon_button_hover(),
                 new wl_ribbon_separator(),
                 new wl_ribbon_label(),
                 new wl_ribbon_fs(),

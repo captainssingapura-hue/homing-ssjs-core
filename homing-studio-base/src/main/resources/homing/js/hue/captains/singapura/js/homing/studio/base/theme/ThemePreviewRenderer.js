@@ -69,6 +69,12 @@ function renderThemePreview() {
     }));
 
     main.appendChild(Section({
+        title: "Table",
+        gridless: true,
+        children: [ _table(branch) ]
+    }));
+
+    main.appendChild(Section({
         title: "Status",
         gridless: true,
         children: [
@@ -106,6 +112,61 @@ function renderThemePreview() {
     main.appendChild(Footer({ children: [ NavLink({ href: "#top", text: "A footer link" }) ] }));
 
     return root;
+}
+
+/**
+ * A plain HTML table whose rows are interactive: one is selected, one is
+ * current, all take focus. Every state is a pseudo-class or an attribute the
+ * row's pairs have a slot for, so the design says how a hovered, selected,
+ * current or focused row looks and the row carries one class.
+ */
+function _table(branch) {
+    var table = branch.createElement("tbl", "table");
+    css.addClass(table, st_table);
+
+    var thead = branch.createElement("tblh", "thead");
+    css.addClass(thead, st_thead);
+    var hr = branch.createElement("tblhr", "tr");
+    ["Module", "Findings", "Status"].forEach(function (h, i) {
+        var th = branch.createElement("tblth" + i, "th");
+        css.addClass(th, st_th);
+        th.textContent = h;
+        hr.appendChild(th);
+    });
+    thead.appendChild(hr);
+    table.appendChild(thead);
+
+    var rows = [
+        ["CssClassManager",  "0", ["Done",        st_td_badge_success]],
+        ["ThemePicker",      "2", ["In progress", st_td_badge_warning], "selected"],
+        ["WorkspaceLayout",  "0", ["Done",        st_td_badge_success]],
+        ["PartyMonitor",     "5", ["Blocked",     st_td_badge_error],   "current"],
+        ["TreeRenderer",     "1", ["In progress", st_td_badge_warning]]
+    ];
+    var tbody = branch.createElement("tblb", "tbody");
+    rows.forEach(function (r, i) {
+        var tr = branch.createElement("tblr" + i, "tr");
+        css.addClass(tr, st_tr);
+        tr.tabIndex = 0;                                     // rows take focus: :focus-visible is a slot too
+        if (r[3] === "selected") tr.setAttribute("aria-selected", "true");
+        if (r[3] === "current")  tr.setAttribute("aria-current", "true");
+        var name = branch.createElement("tblc" + i + "a", "td");
+        css.addClass(name, st_td);
+        name.textContent = r[0];
+        var count = branch.createElement("tblc" + i + "b", "td");
+        css.addClass(count, st_td, st_td_align_right);
+        count.textContent = r[1];
+        var status = branch.createElement("tblc" + i + "c", "td");
+        css.addClass(status, st_td);
+        var badge = branch.createElement("tblc" + i + "d", "span");
+        css.addClass(badge, r[2][1]);
+        badge.textContent = r[2][0];
+        status.appendChild(badge);
+        tr.appendChild(name); tr.appendChild(count); tr.appendChild(status);
+        tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    return table;
 }
 
 /** The four status badges in a row, in their own element so they wrap as one. */
