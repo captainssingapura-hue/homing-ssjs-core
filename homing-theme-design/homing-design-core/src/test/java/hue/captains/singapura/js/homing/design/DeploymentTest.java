@@ -138,6 +138,37 @@ class DeploymentTest {
         assertTrue(kinds.contains(Finding.Kind.CARRIER_MISMATCH), kinds.toString());
         assertEquals(3, kinds.stream().filter(k -> k == Finding.Kind.INVALID_BINDING).count(), r.findings().toString());
         assertEquals(2, kinds.stream().filter(k -> k == Finding.Kind.INVALID_BODY).count(), "padding-top and the nested class: " + r.findings());
+        assertEquals(2, kinds.stream().filter(k -> k == Finding.Kind.LITERAL_COLOUR).count(), "#0A7D3A and #EEE in a body: " + r.findings());
+    }
+
+    // ── where a colour may be said ───────────────────────────────────────
+    record Painted() implements Design {
+        static final Map<DesignClass<?>, Impl> WORDS = Map.of(
+                DANGER_SURFACE, Impl.Bindings.none().at(State.REST, "background-color", "#B00020"),          // the palette's word: allowed
+                LIFT, Impl.Bindings.of("6px 6px 0 rgba(0, 0, 0, 0.4)"),                                       // a physique carrying a colour: refused
+                SUCCESS_SURFACE, new Impl.Body("code { background-color: " + DANGER_SURFACE.var("background-color") + "; }\n"),  // a body by reference: allowed
+                ON_DANGER_INK, Impl.Bindings.of("currentColor"),                                              // a keyword: allowed
+                CORNER, Impl.Bindings.of("0"));
+        @Override public String slug() { return "painted"; }
+        @Override public Impl impl(DesignClass<?> pair) { return WORDS.get(pair); }
+    }
+
+    @Test
+    void aColourLiteral_isValidOnlyInAColourPlaneBinding() {
+        Set<DesignClass<?>> required = Set.of(DANGER_SURFACE, LIFT, SUCCESS_SURFACE, ON_DANGER_INK, CORNER);
+        var r = Deployment.of(required, new Painted()).resolve();
+        assertEquals(1, r.findings().size(), r.findings().toString());
+        assertEquals(Finding.Kind.LITERAL_COLOUR, r.findings().get(0).kind());
+        assertEquals(LIFT, r.findings().get(0).designClass());
+        assertTrue(r.findings().get(0).detail().contains("rgba("), r.findings().get(0).detail());
+    }
+
+    @Test
+    void aReference_mayNameAState() {
+        assertEquals("var(--danger-color-surface-background-color-hover)", DANGER_SURFACE.var("background-color", State.HOVER));
+        assertEquals("var(--on-danger-color-ink-selected)", ON_DANGER_INK.var(State.SELECTED));
+        try { CORNER.var(State.HOVER); throw new AssertionError("a corner offers no hover slot"); }
+        catch (IllegalArgumentException expected) { /* refused */ }
     }
 
     // ── the requirement set is what the closure wears ────────────────────

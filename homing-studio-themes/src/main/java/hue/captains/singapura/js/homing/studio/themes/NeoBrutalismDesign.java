@@ -181,7 +181,7 @@ final class NeoBrutalismDesign {
             one(of(Inline.class, Shape.Corner.class), "0"),
             rule(of(Inline.class, Shape.Rule.class), "2px", "solid"),
 
-            // ── prose in ink ────────────────────────────────────────────
+            // ── prose in ink — by reference, so it follows the palette worn ────────────────────────────────────────────────────
             body(of(Prose.class, Color.Ink.class), """
                 color: %s;
                 h1, h2, h3, h4 { color: %s; }
@@ -192,7 +192,10 @@ final class NeoBrutalismDesign {
                 pre { color: %s; }
                 pre code { color: inherit; }
                 th { color: %s; }
-                """.formatted(INK, INK, RISO_BLUE, RISO_RED, MUTED, INK, PAPER, PAPER)),
+                """.formatted(of(Body.class, Color.Ink.class).var(), of(Heading.class, Color.Ink.class).var(),
+                              of(Link.class, Color.Ink.class).var(), of(Link.class, Color.Ink.class).var(State.HOVER),
+                              of(Muted.class, Color.Ink.class).var(), of(Code.class, Color.Ink.class).var(),
+                              of(OnInverted.class, Color.Ink.class).var(), of(OnInverted.class, Color.Ink.class).var())),
             body(of(Prose.class, Type.Face.class), """
                 h1, h2, h3, h4 { font-family: %s; }
                 code, pre { font-family: %s; }
@@ -205,10 +208,12 @@ final class NeoBrutalismDesign {
                 pre code { background-color: transparent; }
                 th { background-color: %s; }
                 tr:nth-child(even) td { background-color: %s; }
-                """.formatted(GREY, INK, INK, GREY)),
+                """.formatted(of(Recessed.class, Color.Surface.class).var("background-color"), of(Inverted.class, Color.Surface.class).var("background-color"),
+                              of(Inverted.class, Color.Surface.class).var("background-color"), of(Recessed.class, Color.Surface.class).var("background-color"))),
             body(of(Prose.class, Color.Edge.class), """
-                h1, blockquote, th, td, hr { border-color: %s; }
-                """.formatted(INK)),
+                h1, blockquote, hr { border-color: %s; }
+                th, td { border-color: %s; }
+                """.formatted(of(Divider.class, Color.Edge.class).var("border-color"), of(Hairline.class, Color.Edge.class).var("border-color"))),
             body(of(Prose.class, Shape.Rule.class), """
                 h1 { border-width: 0 0 4px 0; border-style: solid; }
                 blockquote { border-width: 0 0 0 6px; border-style: solid; }

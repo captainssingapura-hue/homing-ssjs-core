@@ -58,15 +58,18 @@ class SheetsTest {
             @Override public String slug() { return "odd"; }
             @Override public Impl impl(DesignClass<?> pair) {
                 if (pair.equals(DeploymentTest.PRESS)) return Impl.Silence.css();
-                if (pair.equals(DeploymentTest.DANGER_SURFACE)) return new Impl.Body("background-color: #B00020;\nbackground-image: url(hatch.svg);\n&:hover { background-color: #C51F31; }\n");
+                // a body says its colour by reference — to the success surface, bound below
+                if (pair.equals(DeploymentTest.DANGER_SURFACE)) return new Impl.Body("background-color: " + DeploymentTest.SUCCESS_SURFACE.var("background-color") + ";\nbackground-image: url(hatch.svg);\n&:hover { background-color: " + DeploymentTest.SUCCESS_SURFACE.var("background-color", State.HOVER) + "; }\n");
+                if (pair.equals(DeploymentTest.SUCCESS_SURFACE)) return Impl.Bindings.none().at(State.REST, "background-color", "#0A7D3A").at(State.HOVER, "background-color", "#0C9A47");
                 return null;
             }
         }
-        var r = Deployment.of(Set.of(DeploymentTest.PRESS, DeploymentTest.DANGER_SURFACE), new Odd()).resolve();
-        assertEquals(List.of(), r.findings());
+        Set<DesignClass<?>> required = Set.of(DeploymentTest.PRESS, DeploymentTest.DANGER_SURFACE, DeploymentTest.SUCCESS_SURFACE);
+        var r = Deployment.of(required, new Odd()).resolve();
+        assertEquals(List.of(), r.findings(), r.findings().toString());
         var sheets = Sheets.targetSheets(r);
         assertFalse(sheets.containsKey("motion-transform"), "silence emits nothing");
-        assertTrue(sheets.get("color-surface").contains(".danger-color-surface {\n    background-color: #B00020;\n    background-image: url(hatch.svg);\n    &:hover { background-color: #C51F31; }\n}"), sheets.get("color-surface"));
-        assertEquals("", Sheets.rootSheet(r), "a body binds no variable");
+        assertTrue(sheets.get("color-surface").contains(".danger-color-surface {\n    background-color: var(--success-color-surface-background-color);\n    background-image: url(hatch.svg);\n    &:hover { background-color: var(--success-color-surface-background-color-hover); }\n}"), sheets.get("color-surface"));
+        assertFalse(Sheets.rootSheet(r).contains("--danger-color-surface"), "a body binds no variable of its own");
     }
 }

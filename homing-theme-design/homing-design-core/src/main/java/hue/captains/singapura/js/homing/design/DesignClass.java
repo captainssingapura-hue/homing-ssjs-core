@@ -70,5 +70,18 @@ public record DesignClass<T extends Target & CssGroup<T>>(Class<? extends Semant
         return "var(" + Trees.variable(this, property) + ")";
     }
 
+    /** The reference at a state — {@code var(--link-color-ink-hover)} — for a word that wants another's hover, selected, … value. */
+    public String var(State state) {
+        var owned = targetLeaf().properties();
+        if (owned.size() != 1) throw new IllegalArgumentException(cssName() + " owns " + owned.size() + " properties; name one");
+        return var(owned.iterator().next(), state);
+    }
+
+    public String var(String property, State state) {
+        if (!targetLeaf().properties().contains(property)) throw new IllegalArgumentException(cssName() + " does not own " + property);
+        if (!targetLeaf().states().contains(state)) throw new IllegalArgumentException(cssName() + " offers no slot for " + state);
+        return "var(" + Trees.variable(this, property) + state.suffix() + ")";
+    }
+
     @Override public String toString() { return cssName(); }
 }

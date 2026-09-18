@@ -174,7 +174,8 @@ public record SeedPalette(String slug, String label, String inspiration, Seeds l
                 .at(State.REST, "border-color", bar(l.border, l.accent)).at(State.HOVER, "border-color", bar(l.border, l.accentEmphasis))
                 .in(Mode.DARK, State.REST, "border-color", bar(d.border, d.accent)).in(Mode.DARK, State.HOVER, "border-color", bar(d.border, d.accentEmphasis))));
 
-        // prose — the document's elements, in the seeds
+        // prose — the document's elements, by reference to the pairs above: every colour
+        // stays a variable, so prose follows dark mode and a live palette like the rest
         put.accept(body(of(Prose.class, Color.Ink.class), """
                 color: %s;
                 h1, h2, h3 { color: %s; }
@@ -186,22 +187,27 @@ public record SeedPalette(String slug, String label, String inspiration, Seeds l
                 pre { color: %s; }
                 pre code { color: inherit; }
                 th { color: %s; }
-                """.formatted(l.text, l.title, l.accentEmphasis, l.accentEmphasis, l.title, l.muted, l.title, l.onInvertedMuted, l.onInverted)));
+                """.formatted(ink(Body.class), ink(Heading.class), ink(Kicker.class), ink(Kicker.class), ink(Heading.class), ink(Muted.class), ink(Code.class), ink(OnInvertedMuted.class), ink(OnInverted.class))));
         put.accept(body(of(Prose.class, Color.Surface.class), """
                 code { background-color: %s; }
                 pre { background-color: %s; }
                 pre code { background-color: transparent; }
                 th { background-color: %s; }
                 tr:nth-child(even) td { background-color: %s; }
-                """.formatted(l.recessed, l.inverted, l.inverted, l.recessed)));
+                """.formatted(sfc(Recessed.class), sfc(Inverted.class), sfc(Inverted.class), sfc(Recessed.class))));
         put.accept(body(of(Prose.class, Color.Edge.class), """
                 h1 { border-color: %s; }
                 blockquote { border-color: %s; }
                 th, td { border-color: %s; }
                 hr { border-color: %s; }
-                """.formatted(l.accent, l.accent, l.border, l.border)));
+                """.formatted(edg(Primary.class), edg(Primary.class), edg(Hairline.class), edg(Hairline.class))));
         return Map.copyOf(w);
     }
+
+    // ── references: a prose body reads the pair, never the seed ──────────
+    private static String ink(Class<? extends hue.captains.singapura.js.homing.design.Semantic> s) { return of(s, Color.Ink.class).var(); }
+    private static String sfc(Class<? extends hue.captains.singapura.js.homing.design.Semantic> s) { return of(s, Color.Surface.class).var("background-color"); }
+    private static String edg(Class<? extends hue.captains.singapura.js.homing.design.Semantic> s) { return of(s, Color.Edge.class).var("border-color"); }
 
     // ── small words: a dark re-binding only where it differs ─────────────
     private static Map.Entry<DesignClass<?>, Impl> sfc(DesignClass<?> c, String l, String d) { return l.equals(d) ? surface(c, l) : surface(c, l, d); }

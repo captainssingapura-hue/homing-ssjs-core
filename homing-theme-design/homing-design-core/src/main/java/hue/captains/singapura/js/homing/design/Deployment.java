@@ -50,7 +50,7 @@ public record Deployment(Set<DesignClass<?>> required, Design design, List<Desig
 
     /** One thing that did not resolve, or resolved wrongly. */
     public record Finding(Kind kind, DesignClass<?> designClass, String detail) {
-        public enum Kind { MISSING, DOUBLE, CARRIER_MISMATCH, INVALID_BINDING, INVALID_BODY, DANGLING_REFERENCE }
+        public enum Kind { MISSING, DOUBLE, CARRIER_MISMATCH, INVALID_BINDING, INVALID_BODY, DANGLING_REFERENCE, LITERAL_COLOUR }
         @Override public String toString() { return kind + " " + (designClass == null ? "" : designClass) + (detail.isBlank() ? "" : " — " + detail); }
     }
 
@@ -80,6 +80,7 @@ public record Deployment(Set<DesignClass<?>> required, Design design, List<Desig
             impls.put(pair, impl);
         }
         checkReferences(impls, findings);
+        checkColourLiterals(impls, findings);
         return new Resolution(Map.copyOf(impls), List.copyOf(findings));
     }
 
@@ -156,6 +157,32 @@ public record Deployment(Set<DesignClass<?>> required, Design design, List<Desig
                 Matcher m = REFERENCE.matcher(text);
                 while (m.find()) if (!emitted.contains(m.group(1)))
                     findings.add(new Finding(Finding.Kind.DANGLING_REFERENCE, dc, "reads " + m.group(1) + ", which no required pair binds"));
+            }
+        });
+    }
+
+    // ── where a colour may be said ────────────────────────────────────────
+
+    private static final Pattern COLOUR_LITERAL = Pattern.compile("#[0-9A-Fa-f]{3,8}\\b|\\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\\(");
+
+    /**
+     * A colour literal is valid in exactly one place: a {@link Impl.Bindings}
+     * on the colour plane — the palette's own word, bound to a variable. A body
+     * on any plane, and any word off the colour plane, says a colour by
+     * reference ({@link DesignClass#var()}) or not at all. That is what keeps
+     * the planes orthogonal — a physique carries no colour, so any palette
+     * colours it — and keeps every colour a variable, so a palette can be
+     * changed under a page without touching a rule.
+     */
+    private static void checkColourLiterals(Map<DesignClass<?>, Impl> impls, List<Finding> findings) {
+        impls.forEach((dc, impl) -> {
+            boolean allowed = impl instanceof Impl.Bindings && dc.onColourPlane();
+            if (allowed) return;
+            for (String text : textsOf(impl)) {
+                Matcher m = COLOUR_LITERAL.matcher(text);
+                while (m.find())
+                    findings.add(new Finding(Finding.Kind.LITERAL_COLOUR, dc, (impl instanceof Impl.Body ? "body" : "word off the colour plane")
+                            + " carries " + m.group() + (m.group().endsWith("(") ? "…)" : "") + " — say it by reference, or bind it on the colour plane"));
             }
         });
     }

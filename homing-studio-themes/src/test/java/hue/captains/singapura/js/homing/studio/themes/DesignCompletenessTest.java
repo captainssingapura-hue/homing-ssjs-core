@@ -38,6 +38,12 @@ class DesignCompletenessTest {
         assertTrue(worn.size() > 100, "the studio's ten groups wear over a hundred pairs; found " + worn.size());
     }
 
+    /**
+     * Every design, over everything the studio wears: no pair missing, no answer
+     * invalid, no reference dangling — and no colour literal outside a
+     * colour-plane binding, which is the substrate's rule that keeps the planes
+     * orthogonal and every colour a variable.
+     */
     @Test
     void everyDesign_answersEveryPairTheStudioWears_validly() {
         var worn = worn();
@@ -47,19 +53,6 @@ class DesignCompletenessTest {
             assertEquals(List.of(), r.findings(), () -> d.slug() + ": " + r.findings());
             assertEquals(worn.size(), r.impls().size(), d.slug() + " resolved fewer pairs than worn");
         }
-    }
-
-    /** The planes are orthogonal: no physique word carries a colour, so any physique under any palette is the same design in other colours. */
-    @Test
-    void noPhysiqueWord_carriesAColour() {
-        var colour = java.util.regex.Pattern.compile("#[0-9A-Fa-f]{3,8}\\b|rgba?\\(|hsla?\\(");
-        for (Design d : List.of(HomingDefault.INSTANCE, HomingNeoBrutalism.INSTANCE, HomingNeoFuturism.INSTANCE))
-            for (var pair : worn()) {
-                if (pair.onColourPlane()) continue;
-                if (!(d.impl(pair) instanceof hue.captains.singapura.js.homing.design.Impl.Bindings b)) continue;
-                b.values().values().forEach(states -> states.values().forEach(props -> props.values().forEach(v ->
-                        assertFalse(colour.matcher(v).find(), d.slug() + " " + pair + " carries a colour: " + v))));
-            }
     }
 
     @Test
