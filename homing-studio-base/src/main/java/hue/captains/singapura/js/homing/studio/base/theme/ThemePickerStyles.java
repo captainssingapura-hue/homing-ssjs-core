@@ -238,6 +238,35 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
             """; }
     }
 
+    // ── the Themes page: a row per design and per palette ─────────────────
+
+    /** A palette's colours on a listing row — the picker's dots, at the row's height. */
+    public record tp_intro_dot() implements CssClass<ThemePickerStyles> {
+        @Override public Set<CssVar> runtimeVars() { return Set.of(new CssVar("--tp-dot")); }
+        @Override public String body() { return """
+            width: 14px;
+            height: 30px;
+            background-color: var(--tp-dot);
+            """; }
+    }
+    /** A row's description: the inspiration, then the line saying what it is worn in or crafted for. */
+    public record tp_intro_desc() implements CssClass<ThemePickerStyles> {
+        @Override public String body() { return """
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            """; }
+    }
+    public record tp_intro_offer() implements CssClass<ThemePickerStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Kicker.class, Type.Scale.class), of(Muted.class, Color.Ink.class)); }
+        @Override public String body() { return """
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            """; }
+    }
+
     @Override
     public List<CssClass<ThemePickerStyles>> cssClasses() {
         return List.of(
@@ -247,7 +276,8 @@ public record ThemePickerStyles() implements CssGroup<ThemePickerStyles> {
                 new tp_preview_pane(), new tp_preview_frame(), new tp_preview_wrap(),
                 new tp_preview_loading(), new tp_preview_loading_on(),
                 new tp_colours(), new tp_colours_label(), new tp_colours_scrim(), new tp_colours_menu(), new tp_colours_item(),
-                new tp_swatch_dots(), new tp_swatch_dot(), new tp_swatch_own(), new tp_swatch_for()
+                new tp_swatch_dots(), new tp_swatch_dot(), new tp_swatch_own(), new tp_swatch_for(),
+                new tp_intro_dot(), new tp_intro_desc(), new tp_intro_offer()
         );
     }
 }
