@@ -29,7 +29,7 @@ final class DefaultDesign {
 
     private DefaultDesign() {}
 
-    // The house colours live in SeedPalette.HOUSE — this is the physique: shape, type, motion, depth.───────────────────────────
+    // The house colours live in SeedPalette.HOUSE — this is the physique: shape, type, motion, depth.──────────────────────────
 
     static final String DISPLAY_FACE = StudioFonts.DISPLAY;
     static final String BODY_FACE    = StudioFonts.BODY;
@@ -114,6 +114,11 @@ final class DefaultDesign {
                     .at(hue.captains.singapura.js.homing.design.State.FOCUS, "outline-width", "2px")
                     .at(hue.captains.singapura.js.homing.design.State.FOCUS, "outline-style", "solid")
                     .at(hue.captains.singapura.js.homing.design.State.FOCUS, "outline-offset", "-2px")),
+            // the Selected semantic in depth — for a component that says "lifted" with a class of its own
+            one(of(Selected.class, Shape.Shadow.class), "0 8px 20px color-mix(in srgb, " + INK_REF + " 18%, transparent)"),
+            one(of(Selected.class, Motion.Transform.class), "translateY(-2px)"),
+            Map.entry(of(Selected.class, Effect.Filter.class), hue.captains.singapura.js.homing.design.Impl.Bindings.none()
+                    .at(hue.captains.singapura.js.homing.design.State.REST, "filter", "drop-shadow(0 6px 10px color-mix(in srgb, " + INK_REF + " 18%, transparent))")),
             one(of(Current.class, Shape.Shadow.class), "inset 3px 0 0 color-mix(in srgb, " + PRIMARY_REF + " 60%, transparent)"),
 
             // ── structure ───────────────────────────────────────────────
