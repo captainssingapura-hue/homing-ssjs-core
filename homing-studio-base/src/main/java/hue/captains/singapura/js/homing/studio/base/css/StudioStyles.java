@@ -124,7 +124,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
     }
     /** The house word beside the mark: the brand's own setting. */
     public record st_brand_word() implements CssClass<StudioStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(OnInverted.class, Color.Ink.class), of(House.class, Type.Face.class), of(House.class, Type.Scale.class), of(House.class, Type.Treatment.class)); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(OnInverted.class, Color.Ink.class), of(House.class, Type.Face.class), of(House.class, Type.Decoration.class), of(House.class, Type.Scale.class), of(House.class, Type.Treatment.class)); }
         @Override public String body() { return ""; }
     }
     public record st_breadcrumbs() implements CssClass<StudioStyles> {
@@ -169,7 +169,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_title() implements CssClass<StudioStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Display.class, Type.Face.class), of(Display.class, Type.Scale.class), of(Display.class, Type.Weight.class), of(Display.class, Type.Treatment.class), of(Display.class, Color.Ink.class)); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Display.class, Type.Face.class), of(Display.class, Type.Decoration.class), of(Display.class, Type.Scale.class), of(Display.class, Type.Weight.class), of(Display.class, Type.Treatment.class), of(Display.class, Color.Ink.class)); }
         @Override public String body() { return """
             margin: 0 0 12px 0;
             """;

@@ -58,7 +58,7 @@ class DesignCompletenessTest {
     @Test
     void aDesignOverDefault_hasItsOwnWord_forMostOfWhatIsWorn() {
         var worn = worn();
-        for (Design d : List.of(HomingNeoBrutalism.INSTANCE, HomingNeoFuturism.INSTANCE, HomingNeumorphism.INSTANCE, HomingGlassmorphism.INSTANCE)) {
+        for (Design d : List.of(HomingNeoBrutalism.INSTANCE, HomingNeoFuturism.INSTANCE, HomingNeumorphism.INSTANCE, HomingGlassmorphism.INSTANCE, HomingRetroFuturism.INSTANCE)) {
             long own = worn.stream().filter(p -> !d.impl(p).equals(HomingDefault.INSTANCE.impl(p))).count();
             assertTrue(own * 2 > worn.size(), d.slug() + " says only " + own + " of " + worn.size() + " pairs in its own words");
         }
@@ -67,15 +67,15 @@ class DesignCompletenessTest {
     @Test
     void theThreeBases_areListedDefaultFirst_thenEveryCross() {
         var r = StudioThemeRegistry.INSTANCE;
-        assertEquals(List.of("default", "neo-brutalism", "neo-futurism", "neumorphism", "glassmorphism"), r.bases().stream().map(Theme::slug).toList());
-        assertEquals(List.of("default", "neo-brutalism", "neo-futurism", "clay", "frost", "forest", "sunset"), r.colours().stream().map(Theme::slug).toList());
+        assertEquals(List.of("default", "neo-brutalism", "neo-futurism", "neumorphism", "glassmorphism", "retro-futurism"), r.bases().stream().map(Theme::slug).toList());
+        assertEquals(List.of("default", "neo-brutalism", "neo-futurism", "clay", "frost", "synthwave", "forest", "sunset"), r.colours().stream().map(Theme::slug).toList());
         var slugs = r.themes().stream().map(Theme::slug).toList();
-        assertEquals(5 + 5 * 6, slugs.size(), "five bases, each in the six other colours: " + slugs);
-        assertEquals(List.of("default", "neo-brutalism", "neo-futurism", "neumorphism", "glassmorphism"), slugs.subList(0, 5));
+        assertEquals(6 + 6 * 7, slugs.size(), "six bases, each in the seven other colours: " + slugs);
+        assertEquals(List.of("default", "neo-brutalism", "neo-futurism", "neumorphism", "glassmorphism", "retro-futurism"), slugs.subList(0, 6));
         assertTrue(slugs.contains("neo-brutalism_forest") && slugs.contains("default_sunset"), slugs.toString());
         // dressed: the base in its own colours is the base; in another's, the cross the registry lists
         assertEquals("neo-futurism", r.dressed(r.bases().get(2), r.colours().get(2)).slug());
-        assertEquals("neo-futurism_forest", r.dressed(r.bases().get(2), r.colours().get(5)).slug());
+        assertEquals("neo-futurism_forest", r.dressed(r.bases().get(2), r.colours().get(6)).slug());
         assertFalse(StudioThemeRegistry.INSTANCE.themes().stream().anyMatch(t -> !(t instanceof Design)), "every theme is a design");
     }
 }

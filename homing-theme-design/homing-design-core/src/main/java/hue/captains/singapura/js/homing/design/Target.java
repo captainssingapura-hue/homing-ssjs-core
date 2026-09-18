@@ -195,7 +195,7 @@ public sealed interface Target permits
         record Decoration() implements Type, CssGroup<Decoration> {
             public static final Decoration INSTANCE = new Decoration();
             @Override public List<CssClass<Decoration>> cssClasses() { return List.of(); }
-            @Override public Set<String> properties() { return Set.of("text-decoration-line", "text-decoration-style", "text-decoration-thickness", "text-underline-offset"); }
+            @Override public Set<String> properties() { return Set.of("text-decoration-line", "text-decoration-style", "text-decoration-thickness", "text-underline-offset", "text-shadow"); }   // a glow or a relief is a decoration of the letters too
             @Override public Set<State> states() { return POINTER; }
         }
     }

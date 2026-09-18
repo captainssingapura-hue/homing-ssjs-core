@@ -53,6 +53,9 @@ final class DefaultDesign {
             // a plate and the masthead offer a filter slot — glass frosts it; the house says nothing there
             silence(of(Raised.class, Effect.Filter.class)),
             silence(of(Inverted.class, Effect.Filter.class)),
+            // the title and the house word offer a decoration slot — a glow, a relief; the house says nothing there
+            silence(of(Display.class, Type.Decoration.class)),
+            silence(of(House.class, Type.Decoration.class)),
 
             // ── text ────────────────────────────────────────────────────
             one(of(Body.class, Type.Face.class), BODY_FACE),
