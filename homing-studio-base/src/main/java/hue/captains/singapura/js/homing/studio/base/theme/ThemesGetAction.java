@@ -9,6 +9,7 @@ import hue.captains.singapura.js.homing.design.Emphasis;
 import hue.captains.singapura.js.homing.design.Impl;
 import hue.captains.singapura.js.homing.design.Layer;
 import hue.captains.singapura.js.homing.design.Mode;
+import hue.captains.singapura.js.homing.design.Palette;
 import hue.captains.singapura.js.homing.design.State;
 import hue.captains.singapura.js.homing.design.Target;
 import hue.captains.singapura.js.homing.design.Text;
@@ -31,16 +32,20 @@ import java.util.concurrent.CompletableFuture;
  * {@code GET /themes} — the registry on its two axes, for the picker: the
  * bases a page may wear, the colours each may be worn in, and for every
  * (base, colours) the slug that names the pair. The picker composes nothing;
- * it reads the slug off the entry the user chose.
+ * it reads the slug off the entry the user chose. Every pair is listed, so a
+ * page wearing any cross decomposes; {@code fits} marks the ones the picker
+ * offers unasked — the base's own colours, and the palettes that say they
+ * suit it — and a palette's {@code anchor} names the base it was crafted for.
  *
  * <pre>{@code
  * {
  *   "themes": [ { "slug": "neo-brutalism", "label": …, "group": …, "inspiration": …,
  *                 "swatches": { "surface": "#FFFFFF", "inverted": "#000000", "accent": "#FFE800",
  *                               "link": "#2B4CFF", "text": "#000000", "muted": "#4A4A4A", "edge": "#000000" },
- *                 "colours": [ { "palette": "neo-brutalism", "slug": "neo-brutalism", "own": true },
- *                              { "palette": "forest",        "slug": "neo-brutalism_forest" }, … ] }, … ],
- *   "palettes": [ { "slug": "forest", "label": "Forest", "inspiration": …, "swatches": { … } }, … ]
+ *                 "colours": [ { "palette": "neo-brutalism", "slug": "neo-brutalism", "own": true, "fits": true },
+ *                              { "palette": "marker",        "slug": "neo-brutalism_marker", "fits": true },
+ *                              { "palette": "frost",         "slug": "neo-brutalism_frost" }, … ] }, … ],
+ *   "palettes": [ { "slug": "marker", "label": "Marker", "inspiration": …, "anchor": "sketchy", "swatches": { … } }, … ]
  * }
  * }</pre>
  *
@@ -104,6 +109,7 @@ public class ThemesGetAction
                 sb.append("{\"palette\":").append(jstr(colours.slug()))
                   .append(",\"slug\":").append(jstr(worn.slug()))
                   .append(worn == base ? ",\"own\":true" : "")
+                  .append(registry.fits(base, colours) ? ",\"fits\":true" : "")
                   .append('}');
             }
             sb.append("]}");
@@ -113,8 +119,9 @@ public class ThemesGetAction
         for (Theme colours : registry.colours()) {
             if (!first) sb.append(',');
             first = false;
-            sb.append('{').append(identity(colours)).append(',')
-              .append("\"swatches\":").append(swatches(colours)).append('}');
+            sb.append('{').append(identity(colours)).append(',');
+            if (colours instanceof Palette p) sb.append("\"anchor\":").append(jstr(p.anchor().slug())).append(',');
+            sb.append("\"swatches\":").append(swatches(colours)).append('}');
         }
         return sb.append("]}").toString();
     }

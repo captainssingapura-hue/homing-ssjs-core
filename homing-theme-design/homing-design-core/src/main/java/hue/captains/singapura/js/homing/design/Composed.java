@@ -26,13 +26,13 @@ public record Composed(Design physique, Palette palette) implements Design {
     public static Composed of(Design physique, Design palette) { return new Composed(physiqueOf(physique), paletteOf(palette)); }
 
     /** The physique's own slug when the palette is its own — the whole design, not a cross. */
-    public boolean isDiagonal() { return paletteOf(physique).slug().equals(palette.slug()); }
+    public boolean isDiagonal() { return paletteOf(physique).id().equals(palette.id()); }
 
     @Override public Impl impl(DesignClass<?> pair) {
         return pair.onColourPlane() ? palette.impl(pair) : physique.impl(pair);
     }
 
-    @Override public String slug()  { return physique.slug() + "_" + palette.slug(); }
+    @Override public DesignId id()  { return DesignId.cross(physique.id(), palette.id()); }
     @Override public String label() { return physique.label() + " in " + palette.label(); }
     @Override public String group() { return "Composed"; }
     @Override public String inspiration() { return physique.label() + "'s physique under " + palette.label() + "'s colours."; }
@@ -54,16 +54,17 @@ public record Composed(Design physique, Palette palette) implements Design {
     /** The physique plane of a whole design. */
     record Plane(Design whole) implements Design {
         @Override public Impl impl(DesignClass<?> pair) { return pair.onColourPlane() ? null : whole.impl(pair); }
-        @Override public String slug()  { return whole.slug(); }
+        @Override public DesignId id()  { return whole.id(); }
         @Override public String label() { return whole.label(); }
         @Override public String group() { return whole.group(); }
         @Override public String inspiration() { return whole.inspiration(); }
     }
 
-    /** The colour plane of a whole design: the design's own colours, as a palette any physique may wear. */
+    /** The colour plane of a whole design: the design's own colours, as a palette any physique may wear — anchored to it, suiting no other by declaration. */
     record Colours(Design whole) implements Palette {
         @Override public Impl impl(DesignClass<?> pair) { return pair.onColourPlane() ? whole.impl(pair) : null; }
-        @Override public String slug()  { return whole.slug(); }
+        @Override public DesignId id()  { return whole.id(); }
+        @Override public DesignId anchor() { return whole.id(); }
         @Override public String label() { return whole.label(); }
         @Override public String inspiration() { return whole.inspiration(); }
     }

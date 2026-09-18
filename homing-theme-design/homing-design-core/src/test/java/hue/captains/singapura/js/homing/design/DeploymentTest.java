@@ -42,7 +42,7 @@ class DeploymentTest {
                 CORNER, Impl.Bindings.of("4px"),
                 INSET, Impl.Bindings.of("6px 12px"),
                 FACE, Impl.Bindings.of("system-ui, sans-serif"));
-        @Override public String slug() { return "plain"; }
+        @Override public DesignId id() { return new DesignId("plain"); }
         @Override public Impl impl(DesignClass<?> pair) { return WORDS.get(pair); }
     }
 
@@ -52,7 +52,7 @@ class DeploymentTest {
                 DANGER_SURFACE, Impl.Bindings.none().at(State.REST, "background-color", "#FFE800"),
                 CORNER, Impl.Bindings.of("0"),
                 PRESS, Impl.Silence.css());
-        @Override public String slug() { return "brutal"; }
+        @Override public DesignId id() { return new DesignId("brutal"); }
         @Override public Impl impl(DesignClass<?> pair) {
             Impl own = OWN.get(pair);
             return own != null ? own : new Plain().impl(pair);
@@ -127,7 +127,7 @@ class DeploymentTest {
                 DANGER_SURFACE, Impl.Bindings.of("#000"),                                        // SOLE on a two-property target
                 SUCCESS_SURFACE, new Impl.Body("background-color: #0A7D3A;\npadding-top: 4px;\n& .st-card { color: red; }\n"
                         + "tr:nth-child(even) td { background-color: #EEE; }\n"));                  // a selector with a pseudo-class, not a `tr` property
-        @Override public String slug() { return "wrong"; }
+        @Override public DesignId id() { return new DesignId("wrong"); }
         @Override public Impl impl(DesignClass<?> pair) { return WORDS.get(pair); }
     }
 
@@ -149,7 +149,7 @@ class DeploymentTest {
                 SUCCESS_SURFACE, new Impl.Body("code { background-color: " + DANGER_SURFACE.var("background-color") + "; }\n"),  // a body by reference: allowed
                 ON_DANGER_INK, Impl.Bindings.of("currentColor"),                                              // a keyword: allowed
                 CORNER, Impl.Bindings.of("0"));
-        @Override public String slug() { return "painted"; }
+        @Override public DesignId id() { return new DesignId("painted"); }
         @Override public Impl impl(DesignClass<?> pair) { return WORDS.get(pair); }
     }
 
@@ -199,7 +199,7 @@ class DeploymentTest {
                 EASE, Impl.Bindings.of("transform 70ms steps(2)"),
                 INSET, Impl.Bindings.of("8px 16px"),
                 FACE, Impl.Bindings.of("Arial Black, sans-serif"));
-        @Override public String slug() { return "hard"; }
+        @Override public DesignId id() { return new DesignId("hard"); }
         @Override public Impl impl(DesignClass<?> pair) { return WORDS.get(pair); }
     }
 

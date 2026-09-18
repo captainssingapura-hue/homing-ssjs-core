@@ -48,6 +48,15 @@ public interface ThemeRegistry {
      */
     default Theme dressed(Theme base, Theme colours) { return base; }
 
+    /**
+     * Whether a picker offers a base in some colours. Its own colours, always;
+     * another palette when it says it suits the base — crafted for it, or
+     * named compatible by its author. Advisory: every pair {@link #dressed}
+     * answers stays wearable by slug, this only decides what is put in front
+     * of a user unasked. Default: everything offered.
+     */
+    default boolean fits(Theme base, Theme colours) { return true; }
+
     /** Every theme's provisions of the global palettes — one per theme per palette group. */
     List<PaletteProvision<?, ?>> palettes();
 

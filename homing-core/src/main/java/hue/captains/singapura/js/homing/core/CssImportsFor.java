@@ -29,6 +29,7 @@ public record CssImportsFor<C extends CssGroup<C>>(
             var depGroups = new ArrayList<CssGroup<?>>();
             for (CssClass<?> dep : cls.dependsOn()) depGroups.add(CssClass.groupOf(dep));
             for (Wearable w : cls.wears()) depGroups.add(w.group());
+            for (Wearable w : cls.reads()) depGroups.add(w.group());
             for (CssGroup<?> g : depGroups) {
                 if (g.getClass() == group.getClass()) continue;
                 boolean seen = false;

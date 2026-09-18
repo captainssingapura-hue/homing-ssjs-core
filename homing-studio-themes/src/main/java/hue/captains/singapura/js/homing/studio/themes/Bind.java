@@ -106,6 +106,24 @@ final class Bind {
                 .at(State.FOCUS, "outline-offset", ringOffset));
     }
 
+    /** An edge that is also a ring: one colour on the border and the outline, so a focus ring reads the same drawn either way. */
+    static Map.Entry<DesignClass<?>, Impl> ring(DesignClass<?> cls, String light, String dark) {
+        return Map.entry(cls, Impl.Bindings.none()
+                .at(State.REST, "border-color", light).at(State.REST, "outline-color", light)
+                .in(Mode.DARK, State.REST, "border-color", dark).in(Mode.DARK, State.REST, "outline-color", dark));
+    }
+    static Map.Entry<DesignClass<?>, Impl> ring(DesignClass<?> cls, String light) {
+        return Map.entry(cls, Impl.Bindings.none()
+                .at(State.REST, "border-color", light).at(State.REST, "outline-color", light));
+    }
+    /** A Shape.Rule that is a ring at rest: an outline's width, style and offset — the mark on the thing that has the focus, wherever it is drawn. */
+    static Map.Entry<DesignClass<?>, Impl> outline(DesignClass<?> cls, String width, String style, String offset) {
+        return Map.entry(cls, Impl.Bindings.none()
+                .at(State.REST, "outline-width", width)
+                .at(State.REST, "outline-style", style)
+                .at(State.REST, "outline-offset", offset));
+    }
+
     /** A Type.Scale: size and line height. */
     static Map.Entry<DesignClass<?>, Impl> scale(DesignClass<?> cls, String size, String lineHeight) {
         return Map.entry(cls, Impl.Bindings.none()

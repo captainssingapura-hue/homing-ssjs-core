@@ -116,6 +116,7 @@ final class SketchyDesign {
             silence(of(Selected.class, Effect.Filter.class)),
             silence(of(Current.class, Shape.Shadow.class)),
             silence(of(Focus.class, Shape.Shadow.class)),
+            outline(of(Focus.class, Shape.Rule.class), "2px", "dashed", "-3px"),   // the ring is drawn by hand: a dashed line just inside
             silence(of(Overlay.class, Shape.Shadow.class)),
             silence(of(Overlay.class, Effect.Filter.class)),
             one(of(Inert.class, Effect.Opacity.class), "0.5"),
@@ -129,6 +130,7 @@ final class SketchyDesign {
             rule(of(Marker.class, Shape.Rule.class), "0 0 0 3px", "solid"),
             rule(of(Bar.class, Shape.Rule.class), "2px", "solid"),
             rule(of(Rail.class, Shape.Rule.class), "0 2px 0 0", "solid"),
+            rule(of(Lattice.class, Shape.Rule.class), "0 2px 2px 0", "solid"),
 
             // ── boxes: drawn without a ruler ────────────────────────────
             one(of(Control.class, Shape.Corner.class), WOBBLE_CONTROL),
@@ -140,7 +142,7 @@ final class SketchyDesign {
             body(of(Prose.class, Type.Face.class), """
                 h1, h2, h3, h4 { font-family: %s; }
                 code, pre { font-family: %s; }
-                """.formatted(DISPLAY_FACE, DefaultDesign.MONO_FACE)),
+                """.formatted(DISPLAY_FACE, EditorialDesign.MONO_FACE)),
             body(of(Prose.class, Type.Weight.class), "h1, h2, h3, h4, th { font-weight: 700; }\n"),
             body(of(Prose.class, Type.Treatment.class), """
                 h4 { letter-spacing: 0.06em; text-transform: uppercase; }

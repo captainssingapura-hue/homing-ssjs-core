@@ -12,15 +12,17 @@ import hue.captains.singapura.js.homing.core.SelfContent;
 import java.util.List;
 
 /**
- * A single intro page that lists every registered {@link hue.captains.singapura.js.homing.core.Theme}
- * with its key palette swatches and a one-click activator. Reachable from any
- * studio that wires it into its catalogues; URL: {@code /app?app=themes}.
+ * The Themes page: the registry on its two planes — every design, with the
+ * colours it is offered, and every palette, with the design it was crafted
+ * for and the others it suits — plus the shared picker to wear a pair.
+ * Reachable from any studio that wires it into its catalogues; URL:
+ * {@code /app?app=themes}.
  *
- * <p>Stateless — the AppModule emits a tiny JS shim that fetches
- * {@link ThemesGetAction} ({@code GET /themes}) and hands the JSON to
- * {@link ThemesIntroRenderer}. The page-level theme picker (in the sticky
- * header) and the page's own activator links both flow through {@code href},
- * so the user's chosen theme is sticky across navigation.</p>
+ * <p>Stateless — the AppModule emits a tiny JS shim that hands the page to
+ * {@link ThemesIntroRenderer}, which reads {@link ThemesGetAction}
+ * ({@code GET /themes}). The picker in the sticky header, the picker on the
+ * page and the rows' links all end in the same switch, so the pair the user
+ * wears is sticky across navigation.</p>
  */
 @LegacyAppMain(reason = "Theme picker page; tiny body; opportunistic migration.")
 public record ThemesIntro() implements AppModule<AppModule._None, ThemesIntro>, SelfContent {

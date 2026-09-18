@@ -71,7 +71,7 @@ public record ThemePicker() implements DomModule<ThemePicker> {
                         MasterDetail.INSTANCE))
                 .add(new ModuleImports<>(List.of(new SystemDialog.openSystemDialog()),
                         SystemDialog.INSTANCE))
-                .add(new ModuleImports<>(List.of(new ThemeColours.mountColourStrip()),
+                .add(new ModuleImports<>(List.of(new ThemeColours.mountColourMenu()),
                         ThemeColours.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new ThemePickerStyles.tp_btn(),

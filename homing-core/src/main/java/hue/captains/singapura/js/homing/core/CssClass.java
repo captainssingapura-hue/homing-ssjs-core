@@ -115,6 +115,21 @@ public interface CssClass<C extends CssGroup<C>> extends Exportable._Constant<C>
     default List<? extends Wearable> wears() { return List.of(); }
 
     /**
+     * What this class's element READS of a design without wearing it: the
+     * pairs whose variables its body names by reference — {@code var(--…)}
+     * of the pair's root binding — where wearing would not do. Two places:
+     * a pseudo-state rule, which a worn pair cannot condition, so a frame
+     * lit under {@code :focus-within} reads the design's ring colour into
+     * its own rule; and a channel of the component's own, a custom property
+     * an ancestor sets and every slot beneath reads, whose value is the
+     * design's word passed down. Read, not worn: the pair's group is a
+     * dependency and its binding is emitted, and nothing is put on the
+     * element. The value is still the design's — a body reads a word, it
+     * never says one. Default: none.
+     */
+    default List<? extends Wearable> reads() { return List.of(); }
+
+    /**
      * The group this class belongs to, from its declaration: a {@code CssClass}
      * is a record nested in its group, and the group's {@code INSTANCE} is the
      * one object of that class. Used to derive group dependencies from class

@@ -1,12 +1,14 @@
 package hue.captains.singapura.js.homing.studio.themes;
 
 import hue.captains.singapura.js.homing.design.DesignClass;
+import hue.captains.singapura.js.homing.design.DesignId;
 import hue.captains.singapura.js.homing.design.Impl;
 import hue.captains.singapura.js.homing.design.Mode;
 import hue.captains.singapura.js.homing.design.Palette;
 import hue.captains.singapura.js.homing.design.State;
 
 import java.util.Map;
+import java.util.Set;
 
 import static hue.captains.singapura.js.homing.design.DesignClass.of;
 import static hue.captains.singapura.js.homing.design.Target.*;
@@ -31,7 +33,13 @@ public record FrostPalette() implements Palette {
 
     public static final FrostPalette INSTANCE = new FrostPalette();
 
-    @Override public String slug()  { return "frost"; }
+    public static final DesignId ID = new DesignId("frost");
+
+    /** Glassmorphism's — the aurora and the glass are what its blur shows through; also chrome over an aurora, and Editorial's flat plates over one. */
+    @Override public DesignId id() { return ID; }
+    @Override public DesignId anchor() { return HomingGlassmorphism.ID; }
+    @Override public Set<DesignId> compatible() { return COMPATIBLE; }
+    private static final Set<DesignId> COMPATIBLE = Set.of(HomingNeoFuturism.ID, HomingEditorial.ID);
     @Override public String label() { return "Frost"; }
     @Override public String inspiration() { return "An aurora behind plates of frosted glass — white at a fraction, rimmed in light."; }
 
@@ -146,7 +154,7 @@ public record FrostPalette() implements Palette {
             surface(of(Current.class, Color.Surface.class), "rgba(255, 255, 255, 0.2)", "rgba(255, 255, 255, 0.07)"),
             one(of(Current.class, Color.Ink.class), INK_BLUE, INK_BLUE_D),
             edge(of(Current.class, Color.Edge.class), BLUE, BLUE_D),
-            edge(of(Focus.class, Color.Edge.class), BLUE, BLUE_D),
+            ring(of(Focus.class, Color.Edge.class), BLUE, BLUE_D),
 
             // ── structure: rims of light, hairlines of shadow ───────────
             edge(of(Divider.class, Color.Edge.class), "rgba(255, 255, 255, 0.6)", "rgba(255, 255, 255, 0.2)"),
@@ -154,6 +162,8 @@ public record FrostPalette() implements Palette {
             edge(of(Cap.class, Color.Edge.class), RIM, RIM_D),
             edge(of(Spine.class, Color.Edge.class), HAIR, HAIR_D),
             edge(of(Rail.class, Color.Edge.class), HAIR, HAIR_D),
+            edge(of(Lattice.class, Color.Edge.class), HAIR, HAIR_D),
+            surface(of(Backdrop.class, Color.Surface.class), "rgba(255, 255, 255, 0.55)", "rgba(15, 22, 48, 0.6)"),
             edgeHover(of(Marker.class, Color.Edge.class), "transparent", BLUE),
             edgeHover(of(Bar.class, Color.Edge.class), RIM + " " + RIM + " " + RIM + " " + BLUE, RIM + " " + RIM + " " + RIM + " " + VIOLET),
 

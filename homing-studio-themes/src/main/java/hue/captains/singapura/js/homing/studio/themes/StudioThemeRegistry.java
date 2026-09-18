@@ -10,13 +10,14 @@ import hue.captains.singapura.js.homing.server.ThemeRegistry;
 import java.util.List;
 
 /**
- * The studio's seven designs — {@link HomingDefault}, and {@link HomingNeoBrutalism},
+ * The studio's seven designs — {@link HomingEditorial}, and {@link HomingNeoBrutalism},
  * {@link HomingNeoFuturism}, {@link HomingNeumorphism}, {@link HomingGlassmorphism},
  * {@link HomingRetroFuturism} and {@link HomingSketchy} over it — and two palettes written as
  * colours alone, {@link SeedPalette#FOREST} and {@link SeedPalette#SUNSET}, as the studio's
- * theme registry: seven bases, nine colours, sixty-three looks.
+ * theme registry: seven bases, nine colours, sixty-three looks — every one wearable by
+ * slug, and the picker offered the twenty-odd each palette says it was crafted for or suits.
  * A design is a function over the design classes the studio's components wear;
- * Default is the house word, the other two call it for whatever they have no
+ * Editorial is the house word, the other six call it for whatever they have no
  * word of their own for; a palette answers the colour plane alone.
  *
  * <p>Until the last group has moved, the legacy palettes and overrides pass
@@ -28,11 +29,11 @@ public final class StudioThemeRegistry implements ThemeRegistry {
     public static final StudioThemeRegistry INSTANCE = new StudioThemeRegistry();
 
     private static final DesignRegistry DESIGNS = new DesignRegistry(
-            List.of(HomingDefault.INSTANCE, HomingNeoBrutalism.INSTANCE, HomingNeoFuturism.INSTANCE, HomingNeumorphism.INSTANCE, HomingGlassmorphism.INSTANCE, HomingRetroFuturism.INSTANCE, HomingSketchy.INSTANCE),
+            List.of(HomingEditorial.INSTANCE, HomingNeoBrutalism.INSTANCE, HomingNeoFuturism.INSTANCE, HomingNeumorphism.INSTANCE, HomingGlassmorphism.INSTANCE, HomingRetroFuturism.INSTANCE, HomingSketchy.INSTANCE),
             List.of(SeedPalette.FOREST, SeedPalette.SUNSET),
             List.of(),
-            List.of(HomingDefault.Palette.INSTANCE, HomingNeoBrutalism.Palette.INSTANCE, HomingNeoFuturism.Palette.INSTANCE, HomingNeumorphism.Palette.INSTANCE, HomingGlassmorphism.Palette.INSTANCE, HomingRetroFuturism.Palette.INSTANCE, HomingSketchy.Palette.INSTANCE,
-                    HomingDefault.Fonts.INSTANCE, HomingNeoBrutalism.Fonts.INSTANCE, HomingNeoFuturism.Fonts.INSTANCE, HomingNeumorphism.Fonts.INSTANCE, HomingGlassmorphism.Fonts.INSTANCE, HomingRetroFuturism.Fonts.INSTANCE, HomingSketchy.Fonts.INSTANCE),
+            List.of(HomingEditorial.Palette.INSTANCE, HomingNeoBrutalism.Palette.INSTANCE, HomingNeoFuturism.Palette.INSTANCE, HomingNeumorphism.Palette.INSTANCE, HomingGlassmorphism.Palette.INSTANCE, HomingRetroFuturism.Palette.INSTANCE, HomingSketchy.Palette.INSTANCE,
+                    HomingEditorial.Fonts.INSTANCE, HomingNeoBrutalism.Fonts.INSTANCE, HomingNeoFuturism.Fonts.INSTANCE, HomingNeumorphism.Fonts.INSTANCE, HomingGlassmorphism.Fonts.INSTANCE, HomingRetroFuturism.Fonts.INSTANCE, HomingSketchy.Fonts.INSTANCE),
             List.of());
 
     private StudioThemeRegistry() {}
@@ -41,6 +42,7 @@ public final class StudioThemeRegistry implements ThemeRegistry {
     @Override public List<Theme> bases()   { return DESIGNS.bases(); }
     @Override public List<Theme> colours() { return DESIGNS.colours(); }
     @Override public Theme dressed(Theme base, Theme colours) { return DESIGNS.dressed(base, colours); }
+    @Override public boolean fits(Theme base, Theme colours) { return DESIGNS.fits(base, colours); }
     @Override public List<PaletteProvision<?, ?>> palettes() { return DESIGNS.palettes(); }
     @Override public List<CssGroupImpl<?, ?>> overrides() { return DESIGNS.overrides(); }
     @Override public List<CssRenderer> renderers(hue.captains.singapura.js.homing.server.ServedModules served) { return DESIGNS.renderers(served); }

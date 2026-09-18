@@ -211,14 +211,18 @@ final class NeoBrutalismDesign {
             rule(of(Bar.class, Shape.Rule.class), "3px 3px 3px 8px", "solid"),
 
             edge(of(Rail.class, Color.Edge.class), RULE, RULE_D),
+            edge(of(Lattice.class, Color.Edge.class), RULE, RULE_D),
+            surface(of(Backdrop.class, Color.Surface.class), "color-mix(in srgb, " + PAPER + " 64%, transparent)", "color-mix(in srgb, " + PAPER_D + " 64%, transparent)"),
             rule(of(Rail.class, Shape.Rule.class), "0 3px 0 0", "solid"),
+            rule(of(Lattice.class, Shape.Rule.class), "0 2px 2px 0", "solid"),
             edge(of(OnInverted.class, Color.Edge.class), PAPER, INK),
             edge(of(Primary.class, Color.Edge.class), INK),
             one(of(Overlay.class, Shape.Shadow.class), shadow(12)),
             Map.entry(of(Overlay.class, Effect.Filter.class), Impl.Bindings.none().at(State.REST, "backdrop-filter", "grayscale(1) contrast(1.4)")),
             surfaceImage(of(Overlay.class, Color.Surface.class), "transparent", "repeating-linear-gradient(45deg, color-mix(in srgb, " + INK + " 22%, transparent) 0 7px, transparent 7px 14px)"),
-            edge(of(Focus.class, Color.Edge.class), RISO_BLUE),
+            ring(of(Focus.class, Color.Edge.class), RISO_BLUE),
             one(of(Focus.class, Shape.Shadow.class), shadow(12) + ", 0 0 0 4px " + FOCUS_REF),
+            outline(of(Focus.class, Shape.Rule.class), "3px", "solid", "-3px"),
             one(of(Inert.class, Effect.Opacity.class), "0.4"),
             one(of(Inert.class, Affordance.Cursor.class), "not-allowed"),
 
@@ -246,7 +250,7 @@ final class NeoBrutalismDesign {
             body(of(Prose.class, Type.Face.class), """
                 h1, h2, h3, h4 { font-family: %s; }
                 code, pre { font-family: %s; }
-                """.formatted(DISPLAY_FACE, DefaultDesign.MONO_FACE)),
+                """.formatted(DISPLAY_FACE, EditorialDesign.MONO_FACE)),
             body(of(Prose.class, Type.Weight.class), "h1, h2, h3, h4, th { font-weight: 900; }\n"),
             body(of(Prose.class, Type.Decoration.class), "a { text-decoration-line: underline; text-underline-offset: 3px; text-decoration-thickness: 3px; }\n"),
             body(of(Prose.class, Color.Surface.class), """

@@ -124,6 +124,7 @@ final class RetroFuturismDesign {
             Map.entry(of(Selected.class, Effect.Filter.class), Impl.Bindings.none().at(State.REST, "filter", "drop-shadow(0 0 12px " + glow(NEON_REF, 70) + ")")),
             one(of(Current.class, Shape.Shadow.class), "inset 2px 0 0 " + NEON2_REF + ", 0 0 12px " + glow(NEON2_REF, 35)),
             one(of(Focus.class, Shape.Shadow.class), frame(NEON2_REF, 40, 70) + ", 0 24px 64px " + glow(NEON_REF, 30)),
+            outline(of(Focus.class, Shape.Rule.class), "1px", "solid", "-1px"),   // a filament of a ring
             one(of(Overlay.class, Shape.Shadow.class), "0 0 48px " + glow(NEON_REF, 45) + ", 0 24px 64px " + glow(VOID_REF, 60)),
             Map.entry(of(Overlay.class, Effect.Filter.class), Impl.Bindings.none().at(State.REST, "backdrop-filter", "blur(4px) contrast(1.2)")),
             one(of(Inert.class, Effect.Opacity.class), "0.4"),
@@ -148,7 +149,7 @@ final class RetroFuturismDesign {
             body(of(Prose.class, Type.Face.class), """
                 h1, h2, h3, h4 { font-family: %s; }
                 code, pre { font-family: %s; }
-                """.formatted(DISPLAY_FACE, DefaultDesign.MONO_FACE)),
+                """.formatted(DISPLAY_FACE, EditorialDesign.MONO_FACE)),
             body(of(Prose.class, Type.Weight.class), "h1, h2, h3, h4, th { font-weight: 700; }\n"),
             body(of(Prose.class, Type.Treatment.class), """
                 h1, h2 { letter-spacing: 0.08em; text-transform: uppercase; }

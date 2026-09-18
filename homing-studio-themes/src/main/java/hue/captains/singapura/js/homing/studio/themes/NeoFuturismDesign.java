@@ -250,14 +250,17 @@ final class NeoFuturismDesign {
             edgeHover(of(Bar.class, Color.Edge.class), BORDER + " " + BORDER + " " + BORDER + " " + CYAN, BORDER + " " + BORDER + " " + BORDER + " " + VIOLET),
             rule(of(Bar.class, Shape.Rule.class), "1px 1px 1px 3px", "solid"),
             edge(of(Rail.class, Color.Edge.class), BORDER, BORDER_D),
+            edge(of(Lattice.class, Color.Edge.class), BORDER, BORDER_D),
+            surface(of(Backdrop.class, Color.Surface.class), "color-mix(in srgb, " + SURFACE + " 64%, transparent)", "color-mix(in srgb, " + SURFACE_D + " 64%, transparent)"),
             rule(of(Rail.class, Shape.Rule.class), "0 1px 0 0", "solid"),
 
             // ── the veil: frosted space ─────────────────────────────────
             one(of(Overlay.class, Shape.Shadow.class), "0 24px 64px " + glow(SPACE_REF, 35) + ", 0 0 0 1px " + glow(LIGHT_REF, 30), "0 24px 64px " + glow(SPACE_REF, 70) + ", 0 0 0 1px " + glow(LIGHT_REF, 35)),
             Map.entry(of(Overlay.class, Effect.Filter.class), Impl.Bindings.none().at(State.REST, "backdrop-filter", "blur(14px) saturate(1.4) brightness(0.7)")),
-            edge(of(Focus.class, Color.Edge.class), CYAN, CYAN_D),
+            ring(of(Focus.class, Color.Edge.class), CYAN, CYAN_D),
             one(of(Focus.class, Shape.Shadow.class), "0 24px 64px " + glow(SPACE_REF, 35) + ", 0 0 0 1px " + LIGHT_REF + ", 0 0 40px " + glow(LIGHT_REF, 35),
                                                      "0 24px 64px " + glow(SPACE_REF, 70) + ", 0 0 0 1px " + LIGHT_REF + ", 0 0 48px " + glow(LIGHT_REF, 40)),
+            outline(of(Focus.class, Shape.Rule.class), "1px", "solid", "-1px"),   // a filament of a ring
             one(of(Inert.class, Effect.Opacity.class), "0.4"),
             one(of(Inert.class, Affordance.Cursor.class), "not-allowed"),
 
@@ -285,7 +288,7 @@ final class NeoFuturismDesign {
             body(of(Prose.class, Type.Face.class), """
                 h1, h2, h3, h4 { font-family: %s; }
                 code, pre { font-family: %s; }
-                """.formatted(DISPLAY_FACE, DefaultDesign.MONO_FACE)),
+                """.formatted(DISPLAY_FACE, EditorialDesign.MONO_FACE)),
             body(of(Prose.class, Type.Weight.class), "h1, h2 { font-weight: 300; }\nh3, h4, th { font-weight: 600; }\n"),
             body(of(Prose.class, Type.Treatment.class), """
                 h1, h2 { letter-spacing: 0.06em; text-transform: uppercase; }

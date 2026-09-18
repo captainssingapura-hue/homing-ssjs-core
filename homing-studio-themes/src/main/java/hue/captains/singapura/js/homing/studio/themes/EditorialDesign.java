@@ -25,11 +25,11 @@ import static hue.captains.singapura.js.homing.studio.themes.Bind.*;
  * shadow names them by reference and carries none. Every value here was a
  * token or a literal in a class body until the components stopped painting.
  */
-final class DefaultDesign {
+final class EditorialDesign {
 
-    private DefaultDesign() {}
+    private EditorialDesign() {}
 
-    // The house colours live in SeedPalette.HOUSE — this is the physique: shape, type, motion, depth.
+    // The house colours live in SeedPalette.HARBOUR — this is the physique: shape, type, motion, depth.
 
     static final String DISPLAY_FACE = StudioFonts.DISPLAY;
     static final String BODY_FACE    = StudioFonts.BODY;
@@ -86,6 +86,7 @@ final class DefaultDesign {
             decoration(of(Link.class, Type.Decoration.class), "none"),
             one(of(Link.class, Motion.Ease.class), "color 140ms ease, border-color 140ms ease"),
             one(of(Code.class, Type.Face.class), MONO_FACE),
+            scale(of(Code.class, Type.Scale.class), "12px", "1.5"),
             one(of(Code.class, Shape.Corner.class), "3px"),
 
             // ── emphasis ────────────────────────────────────────────────
@@ -156,9 +157,11 @@ final class DefaultDesign {
             rule(of(Marker.class, Shape.Rule.class), "0 0 0 2px", "solid"),
             rule(of(Bar.class, Shape.Rule.class), "1px 1px 1px 4px", "solid"),
             rule(of(Rail.class, Shape.Rule.class), "0 1px 0 0", "solid"),
+            rule(of(Lattice.class, Shape.Rule.class), "0 1px 1px 0", "solid"),
             one(of(Overlay.class, Shape.Shadow.class), "0 10px 30px color-mix(in srgb, " + INVERTED_REF + " 45%, transparent), 0 2px 6px color-mix(in srgb, " + INVERTED_REF + " 30%, transparent)"),
             Map.entry(of(Overlay.class, Effect.Filter.class), hue.captains.singapura.js.homing.design.Impl.Bindings.none().at(hue.captains.singapura.js.homing.design.State.REST, "backdrop-filter", "brightness(0.45) blur(2px)")),
             one(of(Focus.class, Shape.Shadow.class), "0 10px 30px color-mix(in srgb, " + INVERTED_REF + " 45%, transparent), 0 0 0 1px color-mix(in srgb, " + PRIMARY_REF + " 28%, transparent), 0 0 36px color-mix(in srgb, " + PRIMARY_REF + " 30%, transparent)"),
+            outline(of(Focus.class, Shape.Rule.class), "2px", "solid", "-2px"),   // the ring, where a component draws it as one: a grid's cursor, a tree's current row
             one(of(Inert.class, Effect.Opacity.class), "0.45"),
             one(of(Inert.class, Affordance.Cursor.class), "default"),
 
