@@ -67,7 +67,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_header() implements CssClass<StudioStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Inverted.class, Color.Surface.class), of(Divider.class, Color.Edge.class), of(Divider.class, Shape.Rule.class)); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Inverted.class, Color.Surface.class), of(Inverted.class, Effect.Filter.class), of(Divider.class, Color.Edge.class), of(Divider.class, Shape.Rule.class)); }
         @Override public String body() { return """
             padding: 14px 32px;
             display: flex;
@@ -158,7 +158,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
     }
     /** The reading-page slab: a main with a document in it sits on the raised layer. Applied beside st_main by the document renderers. */
     public record st_main_slab() implements CssClass<StudioStyles>, InLayer<Layout> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Raised.class, Shape.Corner.class), of(Raised.class, Shape.Shadow.class)); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Raised.class, Effect.Filter.class), of(Raised.class, Shape.Corner.class), of(Raised.class, Shape.Shadow.class)); }
         @Override public String body() { return ""; }
     }
     public record st_kicker() implements CssClass<StudioStyles> {
@@ -259,7 +259,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         @Override public String body() { return ""; }
     }
     public record st_card() implements CssClass<StudioStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Raised.class, Shape.Corner.class), of(Bar.class, Color.Edge.class), of(Bar.class, Shape.Rule.class),
+        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Raised.class, Effect.Filter.class), of(Raised.class, Shape.Corner.class), of(Bar.class, Color.Edge.class), of(Bar.class, Shape.Rule.class),
                 of(Body.class, Color.Ink.class), of(Link.class, Type.Decoration.class), of(Interactive.class, Shape.Shadow.class), of(Interactive.class, Motion.Ease.class), of(Interactive.class, Motion.Transform.class), of(Interactive.class, Affordance.Cursor.class)); }
         @Override public String body() { return """
             padding: 18px 20px;
@@ -741,7 +741,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         }
     }
     public record st_step_card() implements CssClass<StudioStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Raised.class, Shape.Corner.class), of(Bar.class, Color.Edge.class), of(Bar.class, Shape.Rule.class),
+        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Raised.class, Effect.Filter.class), of(Raised.class, Shape.Corner.class), of(Bar.class, Color.Edge.class), of(Bar.class, Shape.Rule.class),
                 of(Body.class, Color.Ink.class), of(Link.class, Type.Decoration.class), of(Interactive.class, Shape.Shadow.class), of(Interactive.class, Motion.Ease.class), of(Interactive.class, Motion.Transform.class)); }
         @Override public String body() { return """
             padding: 18px 22px;
@@ -841,7 +841,7 @@ public record StudioStyles() implements CssGroup<StudioStyles> {
         @Override public String body() { return ""; }
     }
     public record st_panel() implements CssClass<StudioStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Raised.class, Color.Edge.class), of(Raised.class, Shape.Rule.class), of(Raised.class, Shape.Corner.class), of(Raised.class, Shape.Shadow.class)); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Raised.class, Effect.Filter.class), of(Raised.class, Color.Edge.class), of(Raised.class, Shape.Rule.class), of(Raised.class, Shape.Corner.class), of(Raised.class, Shape.Shadow.class)); }
         @Override public String body() { return """
             padding: 18px 22px;
             margin-bottom: 16px;

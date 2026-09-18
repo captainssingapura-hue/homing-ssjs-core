@@ -10,10 +10,10 @@ import hue.captains.singapura.js.homing.server.ThemeRegistry;
 import java.util.List;
 
 /**
- * The studio's four designs — {@link HomingDefault}, and {@link HomingNeoBrutalism},
- * {@link HomingNeoFuturism} and {@link HomingNeumorphism} over it — and two palettes written as
- * colours alone, {@link SeedPalette#FOREST} and {@link SeedPalette#SUNSET}, as the studio's theme
- * registry: four bases, six colours, twenty-four looks.
+ * The studio's five designs — {@link HomingDefault}, and {@link HomingNeoBrutalism},
+ * {@link HomingNeoFuturism}, {@link HomingNeumorphism} and {@link HomingGlassmorphism} over it —
+ * and two palettes written as colours alone, {@link SeedPalette#FOREST} and {@link SeedPalette#SUNSET},
+ * as the studio's theme registry: five bases, seven colours, thirty-five looks.
  * A design is a function over the design classes the studio's components wear;
  * Default is the house word, the other two call it for whatever they have no
  * word of their own for; a palette answers the colour plane alone.
@@ -27,11 +27,11 @@ public final class StudioThemeRegistry implements ThemeRegistry {
     public static final StudioThemeRegistry INSTANCE = new StudioThemeRegistry();
 
     private static final DesignRegistry DESIGNS = new DesignRegistry(
-            List.of(HomingDefault.INSTANCE, HomingNeoBrutalism.INSTANCE, HomingNeoFuturism.INSTANCE, HomingNeumorphism.INSTANCE),
+            List.of(HomingDefault.INSTANCE, HomingNeoBrutalism.INSTANCE, HomingNeoFuturism.INSTANCE, HomingNeumorphism.INSTANCE, HomingGlassmorphism.INSTANCE),
             List.of(SeedPalette.FOREST, SeedPalette.SUNSET),
             List.of(),
-            List.of(HomingDefault.Palette.INSTANCE, HomingNeoBrutalism.Palette.INSTANCE, HomingNeoFuturism.Palette.INSTANCE, HomingNeumorphism.Palette.INSTANCE,
-                    HomingDefault.Fonts.INSTANCE, HomingNeoBrutalism.Fonts.INSTANCE, HomingNeoFuturism.Fonts.INSTANCE, HomingNeumorphism.Fonts.INSTANCE),
+            List.of(HomingDefault.Palette.INSTANCE, HomingNeoBrutalism.Palette.INSTANCE, HomingNeoFuturism.Palette.INSTANCE, HomingNeumorphism.Palette.INSTANCE, HomingGlassmorphism.Palette.INSTANCE,
+                    HomingDefault.Fonts.INSTANCE, HomingNeoBrutalism.Fonts.INSTANCE, HomingNeoFuturism.Fonts.INSTANCE, HomingNeumorphism.Fonts.INSTANCE, HomingGlassmorphism.Fonts.INSTANCE),
             List.of());
 
     private StudioThemeRegistry() {}

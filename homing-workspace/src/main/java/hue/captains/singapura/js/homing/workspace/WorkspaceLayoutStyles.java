@@ -41,7 +41,7 @@ public record WorkspaceLayoutStyles() implements CssGroup<WorkspaceLayoutStyles>
                 """; }
     }
     public record wl_ribbon() implements CssClass<WorkspaceLayoutStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Hairline.class, Color.Edge.class), of(Hairline.class, Shape.Rule.class), of(Body.class, Color.Ink.class), of(Body.class, Type.Face.class), of(Caption.class, Type.Scale.class)); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Raised.class, Effect.Filter.class), of(Hairline.class, Color.Edge.class), of(Hairline.class, Shape.Rule.class), of(Body.class, Color.Ink.class), of(Body.class, Type.Face.class), of(Caption.class, Type.Scale.class)); }
         @Override public String body() { return """
                 display: flex;
                 align-items: center;
@@ -111,7 +111,7 @@ public record WorkspaceLayoutStyles() implements CssGroup<WorkspaceLayoutStyles>
                 """; }
     }
     public record wl_footer() implements CssClass<WorkspaceLayoutStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Cap.class, Color.Edge.class), of(Cap.class, Shape.Rule.class), of(Muted.class, Color.Ink.class), of(Body.class, Type.Face.class), of(Kicker.class, Type.Scale.class)); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Raised.class, Effect.Filter.class), of(Cap.class, Color.Edge.class), of(Cap.class, Shape.Rule.class), of(Muted.class, Color.Ink.class), of(Body.class, Type.Face.class), of(Kicker.class, Type.Scale.class)); }
         @Override public String body() { return """
                 display: flex;
                 align-items: center;

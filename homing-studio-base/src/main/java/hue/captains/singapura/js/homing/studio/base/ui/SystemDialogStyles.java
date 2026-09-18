@@ -39,7 +39,7 @@ public record SystemDialogStyles() implements CssGroup<SystemDialogStyles> {
     /** The frame is centred by its own transform — placement, which is the component's, not motion. */
     public record sd_frame() implements CssClass<SystemDialogStyles> {
         @Override public Set<CssVar> runtimeVars() { return Set.of(new CssVar("--sd-w"), new CssVar("--sd-h")); }
-        @Override public List<? extends Wearable> wears() { return List.of(of(Base.class, Color.Surface.class), of(Body.class, Color.Ink.class), of(Raised.class, Color.Edge.class), of(Raised.class, Shape.Rule.class), of(Raised.class, Shape.Corner.class), of(Overlay.class, Shape.Shadow.class)); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Base.class, Color.Surface.class), of(Raised.class, Effect.Filter.class), of(Body.class, Color.Ink.class), of(Raised.class, Color.Edge.class), of(Raised.class, Shape.Rule.class), of(Raised.class, Shape.Corner.class), of(Overlay.class, Shape.Shadow.class)); }
         @Override public String body() { return """
             position: fixed;
             left: 50%;

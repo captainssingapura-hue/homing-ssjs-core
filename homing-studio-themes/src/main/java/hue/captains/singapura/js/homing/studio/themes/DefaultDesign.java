@@ -29,7 +29,7 @@ final class DefaultDesign {
 
     private DefaultDesign() {}
 
-    // The house colours live in SeedPalette.HOUSE — this is the physique: shape, type, motion, depth.──────────────────────────
+    // The house colours live in SeedPalette.HOUSE — this is the physique: shape, type, motion, depth.
 
     static final String DISPLAY_FACE = StudioFonts.DISPLAY;
     static final String BODY_FACE    = StudioFonts.BODY;
@@ -50,6 +50,9 @@ final class DefaultDesign {
                     .of("0 1px 3px color-mix(in srgb, " + INK_REF + " 4%, transparent)")
                     .at(hue.captains.singapura.js.homing.design.State.FOCUS, "0 0 0 3px color-mix(in srgb, " + PRIMARY_REF + " 18%, transparent)")),
             one(of(Recessed.class, Shape.Corner.class), "6px"),
+            // a plate and the masthead offer a filter slot — glass frosts it; the house says nothing there
+            silence(of(Raised.class, Effect.Filter.class)),
+            silence(of(Inverted.class, Effect.Filter.class)),
 
             // ── text ────────────────────────────────────────────────────
             one(of(Body.class, Type.Face.class), BODY_FACE),
