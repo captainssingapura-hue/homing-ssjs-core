@@ -149,6 +149,22 @@ public record MpaStyles() implements CssGroup<MpaStyles> {
         }
     }
 
+    /**
+     * The slot as a full-bleed column: no reading width, no padding, its
+     * children stacked and the last one free to fill it. An app that lays
+     * itself out — a shell of panes — adds this to the slot it is given.
+     */
+    public record mpa_main_full() implements CssClass<MpaStyles>, InLayer<Layout> {
+        @Override public String body() { return """
+            max-width: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            """;
+        }
+    }
+
     // ── Preferences ───────────────────────────────────────────────────────────
 
     /** The anchor the menu hangs from; at the bar's end. */
@@ -185,7 +201,7 @@ public record MpaStyles() implements CssGroup<MpaStyles> {
         return List.of(
                 new mpa_page(), new mpa_root(), new mpa_header(),
                 new mpa_brand(), new mpa_brand_mark(), new mpa_brand_word(),
-                new mpa_crumbs(), new mpa_crumb(), new mpa_crumb_sep(), new mpa_main(),
+                new mpa_crumbs(), new mpa_crumb(), new mpa_crumb_sep(), new mpa_main(), new mpa_main_full(),
                 new mpa_prefs(), new mpa_prefs_btn(), new mpa_prefs_btn_label());
     }
 }
