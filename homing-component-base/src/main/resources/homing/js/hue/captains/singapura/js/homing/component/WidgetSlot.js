@@ -1,0 +1,101 @@
+// =============================================================================
+// WidgetSlot — hosts widgets the way the workspace does: any number
+// constructed and kept, one of them in the DOM.
+//
+//   createWidgetSlot({ branch, host }) → slot
+//       branch   the slot's own, ACTIVATED by the caller; each widget gets a
+//                child of it, named by its key, handed unactivated
+//       host     the element the shown widget's root is attached to
+//
+//   slot.show(key, construct, params, ctx) → controller
+//       the first show of a key calls construct(branch, params, ctx) and keeps
+//       what comes back; every show attaches the kept root to the host, after
+//       taking the shown one out. setActive(false) is told to the one going
+//       out, setActive(true) to the one coming in, when they have it.
+//   slot.hide()                    takes the shown widget out; keeps it
+//   slot.current()                 the key shown, or null
+//   slot.has(key), slot.keys()
+//   slot.dispose(key)              hides it if shown; dispose() if it has one;
+//                                  then its branch dissolves and the key is gone
+//   slot.disposeAll()
+//
+// The contract a widget meets is the base's Widget: construct returns a plain
+// object with root, and optionally setActive(bool) and dispose(). The root is
+// the only element the slot ever touches; a widget's branch is the only thing
+// the slot ever dissolves. Attaching and detaching is how a widget is shown
+// and hidden — not display, not visibility — so a hidden widget can neither
+// be focused nor found, which is what hidden means.
+// =============================================================================
+
+function createWidgetSlot(opts) {
+    if (!opts || !opts.branch) throw new Error("createWidgetSlot: opts.branch is required");
+    if (!opts.host)            throw new Error("createWidgetSlot: opts.host is required");
+    var branch = opts.branch, host = opts.host;
+    var kept = new Map();      // key → { branch, controller }
+    var shown = null;          // the key in the DOM, or null
+
+    function validate(key, controller) {
+        if (!controller || !controller.root) {
+            throw new Error("[WidgetSlot] widget '" + key + "': construct must return { root, setActive?, dispose? } — got " + controller);
+        }
+        return controller;
+    }
+
+    function tell(entry, active) {
+        if (entry && typeof entry.controller.setActive === "function") {
+            try { entry.controller.setActive(active); } catch (e) { console.error("[WidgetSlot] setActive threw", e); }
+        }
+    }
+
+    function hide() {
+        if (shown === null) return;
+        var entry = kept.get(shown);
+        tell(entry, false);
+        if (entry.controller.root.parentNode === host) host.removeChild(entry.controller.root);
+        shown = null;
+    }
+
+    function show(key, construct, params, ctx) {
+        if (typeof key !== "string" || !key) throw new Error("[WidgetSlot] show: key must be a non-empty string");
+        var entry = kept.get(key);
+        if (!entry) {
+            if (typeof construct !== "function") throw new Error("[WidgetSlot] show: no widget kept as '" + key + "' and no construct given");
+            var own = branch.createBranch(key);
+            var controller = validate(key, construct(own, params || {}, ctx || {}));
+            entry = { branch: own, controller: controller };
+            kept.set(key, entry);
+        }
+        if (shown === key) return entry.controller;
+        hide();
+        host.appendChild(entry.controller.root);
+        shown = key;
+        tell(entry, true);
+        return entry.controller;
+    }
+
+    function dispose(key) {
+        var entry = kept.get(key);
+        if (!entry) return;
+        if (shown === key) hide();
+        if (typeof entry.controller.dispose === "function") {
+            try { entry.controller.dispose(); } catch (e) { console.error("[WidgetSlot] dispose threw", e); }
+        }
+        try { branch.dissolveBranch(key); } catch (e) { console.error("[WidgetSlot] dissolve threw", e); }
+        kept.delete(key);
+    }
+
+    function disposeAll() {
+        Array.from(kept.keys()).forEach(dispose);
+    }
+
+    return Object.freeze({
+        show: show,
+        hide: hide,
+        current: function () { return shown; },
+        has: function (key) { return kept.has(key); },
+        keys: function () { return Array.from(kept.keys()); },
+        controller: function (key) { var e = kept.get(key); return e ? e.controller : null; },
+        dispose: dispose,
+        disposeAll: disposeAll
+    });
+}

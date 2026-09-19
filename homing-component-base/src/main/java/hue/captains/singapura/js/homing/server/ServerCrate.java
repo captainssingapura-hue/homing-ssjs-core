@@ -2,6 +2,8 @@ package hue.captains.singapura.js.homing.server;
 
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
+import hue.captains.singapura.js.homing.core.StandardJsModuleType;
+import hue.captains.singapura.js.homing.component.WidgetSlot;
 
 import java.util.List;
 
@@ -29,6 +31,11 @@ public final class ServerCrate implements Crate {
                 CrateEntry.of(PreferenceSteward.INSTANCE),
                 CrateEntry.of(CssDependencyGraph.INSTANCE),
                 CrateEntry.of(CssHandles.INSTANCE),
-                CrateEntry.of(CssLoadProcedure.INSTANCE));
+                CrateEntry.of(CssLoadProcedure.INSTANCE),
+                // RFC 0066 E3 - the component base's own: the widget slot, a
+                // primitive that places and removes a root and mints nothing.
+                // Declared here because a Maven module has one crate, and this
+                // crate is the base's until the rename sweep.
+                CrateEntry.of(WidgetSlot.INSTANCE, StandardJsModuleType.PRIMITIVE));
     }
 }
