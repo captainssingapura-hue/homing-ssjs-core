@@ -3,6 +3,7 @@
 // split sharing its space by ratio, a draggable divider between neighbours.
 //
 //   mountSplitPane({ branch, host, layout, minPanePx?, onEvent? }) → split
+//     host: a flex box; the splitter is its item and fills it.
 //
 //   layout:  { kind: "leaf", slotId }
 //          | { kind: "split", orientation: "horizontal" | "vertical",

@@ -41,13 +41,14 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
 
     public static final PaneStyles INSTANCE = new PaneStyles();
 
-    /** The pane: a column of strip over content, filling what it is given. */
+    /** The pane: a column of strip over content, filling its host by growing — so the host is a flex column and the pane its item. */
     public record mtp_pane() implements CssClass<PaneStyles> {
         @Override public List<? extends Wearable> wears() { return List.of(of(Base.class, Color.Surface.class), of(Body.class, Color.Ink.class), of(Body.class, Type.Face.class)); }
         @Override public String body() { return """
             display: flex;
             flex-direction: column;
-            height: 100%;
+            flex: 1 1 auto;
+            align-self: stretch;
             min-height: 0;
             position: relative;
             """;

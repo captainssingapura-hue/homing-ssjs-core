@@ -29,13 +29,20 @@ public record SplitStyles() implements CssGroup<SplitStyles> {
 
     public static final SplitStyles INSTANCE = new SplitStyles();
 
-    /** The root: fills what it is given; {@code --sp-min} is the smallest a pane may be, set once here. */
+    /**
+     * The root: fills its host by growing and stretching, so the host is a
+     * flex box — a column or a row — and the splitter is its item. Never a
+     * percentage height, which a flex host cannot resolve and which would
+     * keep the root from stretching. {@code --sp-min} is the smallest a pane
+     * may be, set once here.
+     */
     public record sp_root() implements CssClass<SplitStyles> {
         @Override public Set<CssVar> runtimeVars() { return Set.of(new CssVar("--sp-min")); }
         @Override public String body() { return """
             display: flex;
             width: 100%;
-            height: 100%;
+            flex: 1 1 auto;
+            align-self: stretch;
             min-width: 0;
             min-height: 0;
             """;

@@ -3,6 +3,7 @@
 // each tab holding a widget constructed by the base's contract.
 //
 //   mountMultiTabPane({ branch, host, slotId?, budget?, addable?, onEvent? }) → pane
+//     host: a flex column; the pane is its item and fills it.
 //
 //   pane.addTab({ id, title, widget, pinned?, closable? })  → index; the widget
 //       is what construct(branch, params) returned: { root, setActive?, dispose? }.
