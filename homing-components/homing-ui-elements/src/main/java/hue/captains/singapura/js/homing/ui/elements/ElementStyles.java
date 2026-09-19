@@ -13,6 +13,7 @@ import static hue.captains.singapura.js.homing.design.Emphasis.Muted;
 import static hue.captains.singapura.js.homing.design.Emphasis.Primary;
 import static hue.captains.singapura.js.homing.design.Emphasis.Secondary;
 import static hue.captains.singapura.js.homing.design.Interaction.Focus;
+import static hue.captains.singapura.js.homing.design.Interaction.Inert;
 import static hue.captains.singapura.js.homing.design.Interaction.Interactive;
 import static hue.captains.singapura.js.homing.design.Layer.Raised;
 import static hue.captains.singapura.js.homing.design.Pairing.OnPrimary;
@@ -68,6 +69,12 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
         @Override public String body() { return ""; }
     }
 
+    /** A button that is off: inert, and says so. Toggled beside {@code disabled}. */
+    public record el_button_off() implements CssClass<ElementStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Inert.class, Effect.Opacity.class), of(Inert.class, Affordance.Cursor.class)); }
+        @Override public String body() { return ""; }
+    }
+
     // ── Card ──────────────────────────────────────────────────────────────────
 
     /** The card: a raised box with a bar for an edge. */
@@ -116,7 +123,7 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
 
     @Override
     public List<CssClass<ElementStyles>> cssClasses() {
-        return List.of(new el_button(), new el_button_primary(), new el_button_plain(),
+        return List.of(new el_button(), new el_button_primary(), new el_button_plain(), new el_button_off(),
                        new el_card(), new el_card_title(), new el_badge(), new el_card_text(), new el_card_link());
     }
 }

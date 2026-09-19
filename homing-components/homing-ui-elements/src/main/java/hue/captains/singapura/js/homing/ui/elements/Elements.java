@@ -19,8 +19,9 @@ import java.util.List;
  */
 public record Elements() implements DomModule<Elements> {
 
-    public record Button() implements Exportable._Constant<Elements> {}
-    public record Card()   implements Exportable._Constant<Elements> {}
+    public record Button()        implements Exportable._Constant<Elements> {}
+    public record setButtonOn()   implements Exportable._Constant<Elements> {}
+    public record Card()          implements Exportable._Constant<Elements> {}
 
     public static final Elements INSTANCE = new Elements();
 
@@ -32,6 +33,7 @@ public record Elements() implements DomModule<Elements> {
                         new ElementStyles.el_button(),
                         new ElementStyles.el_button_primary(),
                         new ElementStyles.el_button_plain(),
+                        new ElementStyles.el_button_off(),
                         new ElementStyles.el_card(),
                         new ElementStyles.el_card_title(),
                         new ElementStyles.el_badge(),
@@ -43,6 +45,6 @@ public record Elements() implements DomModule<Elements> {
 
     @Override
     public ExportsOf<Elements> exports() {
-        return new ExportsOf<>(INSTANCE, List.of(new Button(), new Card()));
+        return new ExportsOf<>(INSTANCE, List.of(new Button(), new setButtonOn(), new Card()));
     }
 }

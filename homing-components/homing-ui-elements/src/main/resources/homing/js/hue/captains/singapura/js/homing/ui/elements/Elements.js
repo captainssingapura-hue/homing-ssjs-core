@@ -2,6 +2,7 @@
 // Elements — a button and a card, as builders.
 //
 //   Button(branch, name, { label, kind?, onClick? })            → <button>
+//   setButtonOn(button, on)                                      a button switched off is inert and says so
 //   Card(branch, name, { title, text?, badge?, link? })         → <div>
 //       link: { href, label? }
 //
@@ -31,6 +32,11 @@ function Button(branch, name, props) {
     btn.textContent = p.label == null ? "" : String(p.label);
     if (typeof p.onClick === "function") btn.addEventListener("click", p.onClick);
     return btn;
+}
+
+function setButtonOn(btn, on) {
+    btn.disabled = !on;
+    css.toggleClass(btn, el_button_off, !on);
 }
 
 function Card(branch, name, props) {
