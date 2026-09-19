@@ -11,6 +11,11 @@
     <modules>
         <module>homing-core</module>
         <module>homing-core-js</module>
+        <!-- RFC 0066 Episode 3, layer 1 — the component base: the headless
+             runtime every DOM-level component is built on, moved out of
+             homing-server file for file, its package kept until the old
+             structure retires. -->
+        <module>homing-component-base</module>
         <module>homing-server</module>
         <module>homing-libs</module>
         <!-- RFC 0065 layer 3 / RFC 0066 — the theme design core, one sub-module per

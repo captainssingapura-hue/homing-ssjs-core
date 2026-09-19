@@ -8,43 +8,39 @@
         <artifactId>homing.js</artifactId>
         <version>LOCAL-SNAPSHOT</version>
     </parent>
-
-    <artifactId>homing-server</artifactId>
-
+    <artifactId>homing-component-base</artifactId>
+    <description>
+        RFC 0066 Episode 3, layer 1 - the component base: the headless
+        runtime every DOM-level component is built on. The CSS manager and
+        its three helpers, the href manager and the preference steward, with
+        the crate that declares them. Moved here file for file from
+        homing-server, which now depends on this module: the package
+        (hue.captains.singapura.js.homing.server) and the crate name are the
+        old ones on purpose, so that nothing which imports the runtime -
+        the server's injection, every studio module, every downstream repo,
+        the conformance baseline - changes while the new structure is
+        established. They are renamed in one sweep when the old structure
+        retires, and not before. What arrives next, as the components that
+        need it are cut: focus mechanics, keyboard scope, the widget
+        scaffold, the ask channel.
+    </description>
     <dependencies>
         <dependency>
             <groupId>io.github.captainssingapura-hue.homing.js</groupId>
             <artifactId>homing-core</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
-        <!-- RFC 0066 E3 - the client runtime (CSS manager, href manager, steward)
-             and ServerCrate live in the component base now, same package, same
-             names; the server injects and serves them from there. -->
-        <dependency>
-            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
-            <artifactId>homing-component-base</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.github.captainssingapura-hue.tong.ja-http</groupId>
-            <artifactId>vertx-host</artifactId>
-            <version>${ja-http.version}</version>
-        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
-        <!-- RFC 0044 — Crate conformance checks (junit-free; deps only homing-core),
-             for this module's own crate test. Test scope: ServerCrate needs only homing-core. -->
         <dependency>
             <groupId>io.github.captainssingapura-hue.homing.js</groupId>
             <artifactId>homing-conformance-rules</artifactId>
             <version>${project.parent.version}</version>
             <scope>test</scope>
         </dependency>
-        <!-- RFC 0064 — the JS test harness, for the preference steward's own test:
-             the raw module evaluated as a script against a shimmed window. -->
         <dependency>
             <groupId>io.github.captainssingapura-hue.homing.js</groupId>
             <artifactId>homing-ssjs-test-fixtures</artifactId>
@@ -52,5 +48,4 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
 </project>
