@@ -102,7 +102,7 @@ public record SynthwavePalette() implements Palette {
                     .in(Mode.DARK, State.REST, "background-color", SKY_D)
                     .in(Mode.DARK, State.REST, "background-image", SUN_D + ", " + GRID_D)),
             one(of(Base.class, Color.Scrollbar.class), MAGENTA + " transparent", MAGENTA_D + " transparent"),
-            surface(of(Raised.class, Color.Surface.class), PLATE, PLATE_D),
+            anchored(surface(of(Raised.class, Color.Surface.class), PLATE, PLATE_D), "background-color", WELL, WELL_D, "transparent", "transparent"),   // elevation: the well, the void, the plate
             Map.entry(of(Raised.class, Color.Edge.class), Impl.Bindings.none()
                     .at(State.REST, "border-color", "rgba(230, 0, 126, 0.55)").at(State.FOCUS, "border-color", CYAN)
                     .in(Mode.DARK, State.REST, "border-color", "rgba(255, 45, 149, 0.6)").in(Mode.DARK, State.FOCUS, "border-color", CYAN_D)),
@@ -121,8 +121,8 @@ public record SynthwavePalette() implements Palette {
             one(of(Code.class, Color.Ink.class), CYAN, CYAN_D),
 
             // ── emphasis ────────────────────────────────────────────────
-            surface(of(Primary.class, Color.Surface.class), MAGENTA, MAGENTA_D),
-            one(of(Primary.class, Color.Ink.class), MAGENTA, MAGENTA_D),
+            anchored(surface(of(Primary.class, Color.Surface.class), MAGENTA, MAGENTA_D), "background-color", HAIR, HAIR_D, "transparent", "transparent"),
+            anchored(one(of(Primary.class, Color.Ink.class), MAGENTA, MAGENTA_D), "*", MUTED, MUTED_D, TEXT, TEXT_D),
             edge(of(Primary.class, Color.Edge.class), MAGENTA, MAGENTA_D),
             one(of(OnPrimary.class, Color.Ink.class), ON_MAGENTA, ON_MAGENTA_D),
             surface(of(Secondary.class, Color.Surface.class), CYAN, CYAN_D),
@@ -136,7 +136,7 @@ public record SynthwavePalette() implements Palette {
             edge(of(OnInverted.class, Color.Edge.class), "rgba(255, 45, 149, 0.5)"),
 
             // ── feedback: chrome yellow for the alarm, mint and hot pink ─
-            surface(of(Danger.class, Color.Surface.class), "rgba(255, 56, 96, 0.14)", "rgba(255, 56, 96, 0.22)"),
+            anchored(surface(of(Danger.class, Color.Surface.class), "rgba(255, 56, 96, 0.14)", "rgba(255, 56, 96, 0.22)"), "background-color", "rgba(61, 255, 176, 0.16)", "rgba(61, 255, 176, 0.18)", "transparent", "transparent"),
             one(of(Danger.class, Color.Ink.class), "#C40036", "#FF6B8F"),
             edge(of(Danger.class, Color.Edge.class), "#FF3860"),
             surface(of(Success.class, Color.Surface.class), "rgba(61, 255, 176, 0.16)", "rgba(61, 255, 176, 0.18)"),
@@ -144,7 +144,7 @@ public record SynthwavePalette() implements Palette {
             edge(of(Success.class, Color.Edge.class), "#3DFFB0"),
             surface(of(Warning.class, Color.Surface.class), "rgba(255, 183, 0, 0.18)", "rgba(255, 183, 0, 0.22)"),
             one(of(Warning.class, Color.Ink.class), "#8A5F00", "#FFB700"),
-            edge(of(Warning.class, Color.Edge.class), "#FFB700"),
+            anchored(edge(of(Warning.class, Color.Edge.class), "#FFB700"), "border-color", "#3DFFB0", HAIR),
 
             // ── interaction — Interactive and Selectable in the one word ─
             Map.entry(of(Interactive.class, Color.Surface.class), INTERACTIVE_SURFACE),

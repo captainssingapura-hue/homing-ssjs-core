@@ -124,7 +124,8 @@ public record SeedPalette(DesignId id, String label, String inspiration, DesignI
         // layers
         put.accept(sfc(of(Base.class, Color.Surface.class), l.surface, d.surface));
         put.accept(ink(of(Base.class, Color.Scrollbar.class), l.muted + " " + l.surface, d.muted + " " + d.surface));
-        put.accept(sfc(of(Raised.class, Color.Surface.class), l.raised, d.raised));
+        // a raised surface scales into elevation: recessed at -1, the page at 0, raised at 1
+        put.accept(anchored(sfc(of(Raised.class, Color.Surface.class), l.raised, d.raised), "background-color", l.recessed, d.recessed, l.surface, d.surface));
         put.accept(Map.entry(of(Raised.class, Color.Edge.class), Impl.Bindings.none()
                 .at(State.REST, "border-color", l.border).at(State.FOCUS, "border-color", l.accent)
                 .in(Mode.DARK, State.REST, "border-color", d.border).in(Mode.DARK, State.FOCUS, "border-color", d.accent)));
@@ -143,8 +144,9 @@ public record SeedPalette(DesignId id, String label, String inspiration, DesignI
         put.accept(ink(of(Code.class, Color.Ink.class), l.title, d.title));
 
         // emphasis
-        put.accept(sfc(of(Primary.class, Color.Surface.class), l.accent, d.accent));
-        put.accept(ink(of(Primary.class, Color.Ink.class), l.accent, d.accent));
+        // the accent scales into emphasis: a grey fill or the muted ink at -1, nothing or the body ink at 0
+        put.accept(anchored(sfc(of(Primary.class, Color.Surface.class), l.accent, d.accent), "background-color", l.border, d.border, "transparent", "transparent"));
+        put.accept(anchored(ink(of(Primary.class, Color.Ink.class), l.accent, d.accent), "*", l.muted, d.muted, l.text, d.text));
         put.accept(edg(of(Primary.class, Color.Edge.class), l.accent, d.accent));
         put.accept(ink(of(OnPrimary.class, Color.Ink.class), l.accentOn, d.accentOn));
         put.accept(sfc(of(Secondary.class, Color.Surface.class), l.accentEmphasis, d.accentEmphasis));
@@ -159,7 +161,7 @@ public record SeedPalette(DesignId id, String label, String inspiration, DesignI
         put.accept(edg(of(OnInverted.class, Color.Edge.class), l.border, d.border));
 
         // feedback — the same signals in every seed palette
-        put.accept(surface(of(Danger.class, Color.Surface.class), "rgba(220, 38, 38, 0.10)"));
+        put.accept(anchored(surface(of(Danger.class, Color.Surface.class), "rgba(220, 38, 38, 0.10)"), "background-color", "rgba(34, 139, 34, 0.12)", "transparent"));   // scales: success's wash at -1, nothing at 0
         put.accept(one(of(Danger.class, Color.Ink.class), "#7F1D1D", "#FCA5A5"));
         put.accept(edge(of(Danger.class, Color.Edge.class), "rgba(220, 38, 38, 0.35) rgba(220, 38, 38, 0.35) rgba(220, 38, 38, 0.35) #DC2626"));
         put.accept(surface(of(Success.class, Color.Surface.class), "rgba(34, 139, 34, 0.12)"));
@@ -168,7 +170,7 @@ public record SeedPalette(DesignId id, String label, String inspiration, DesignI
         put.accept(edge(of(Success.class, Color.Edge.class), "rgba(34, 139, 34, 0.35)"));
         put.accept(surface(of(Warning.class, Color.Surface.class), "rgba(202, 138, 4, 0.12)"));
         put.accept(one(of(Warning.class, Color.Ink.class), "#713F12", "#FDE68A"));
-        put.accept(edge(of(Warning.class, Color.Edge.class), "rgba(202, 138, 4, 0.35)"));
+        put.accept(anchored(edge(of(Warning.class, Color.Edge.class), "rgba(202, 138, 4, 0.35)"), "border-color", "rgba(34, 139, 34, 0.35)", "rgba(34, 139, 34, 0.35)", l.border, d.border));   // scales: all clear at -1, the hairline at 0
 
         // interaction — nothing at rest; the states are the slots. Hover tints in
         // the accent, selected inverts, current tints lightly, checked and focus
