@@ -4,7 +4,9 @@
 //
 //   createWidgetSlot({ branch, host }) → slot
 //       branch   the slot's own, ACTIVATED by the caller; each widget gets a
-//                child of it, named by its key, handed unactivated
+//                child of it, named from its key, handed unactivated. A key is
+//                any string; the branch name is the key with what the party
+//                does not allow replaced, made distinct if two keys collide
 //       host     the element the shown widget's root is attached to
 //
 //   slot.show(key, construct, params) → controller
@@ -34,8 +36,16 @@ function createWidgetSlot(opts) {
     if (!opts || !opts.branch) throw new Error("createWidgetSlot: opts.branch is required");
     if (!opts.host)            throw new Error("createWidgetSlot: opts.host is required");
     var branch = opts.branch, host = opts.host;
-    var kept = new Map();      // key → { branch, controller }
+    var kept = new Map();      // key → { name, controller }
     var shown = null;          // the key in the DOM, or null
+    var names = new Set();     // branch names in use, for a key that sanitises like another
+
+    function branchNameFor(key) {
+        var base = key.replace(/[^A-Za-z0-9_-]/g, "_") || "w", name = base, n = 1;
+        while (names.has(name)) name = base + "_" + (++n);
+        names.add(name);
+        return name;
+    }
 
     function validate(key, controller) {
         if (!controller || !controller.root) {
@@ -63,9 +73,10 @@ function createWidgetSlot(opts) {
         var entry = kept.get(key);
         if (!entry) {
             if (typeof construct !== "function") throw new Error("[WidgetSlot] show: no widget kept as '" + key + "' and no construct given");
-            var own = branch.createBranch(key);
+            var name = branchNameFor(key);
+            var own = branch.createBranch(name);
             var controller = validate(key, construct(own, params || {}));
-            entry = { branch: own, controller: controller };
+            entry = { name: name, controller: controller };
             kept.set(key, entry);
         }
         if (shown === key) return entry.controller;
@@ -83,7 +94,8 @@ function createWidgetSlot(opts) {
         if (typeof entry.controller.dispose === "function") {
             try { entry.controller.dispose(); } catch (e) { console.error("[WidgetSlot] dispose threw", e); }
         }
-        try { branch.dissolveBranch(key); } catch (e) { console.error("[WidgetSlot] dissolve threw", e); }
+        try { branch.dissolveBranch(entry.name); } catch (e) { console.error("[WidgetSlot] dissolve threw", e); }
+        names.delete(entry.name);
         kept.delete(key);
     }
 

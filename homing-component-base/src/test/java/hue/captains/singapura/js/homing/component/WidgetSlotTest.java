@@ -109,6 +109,14 @@ class WidgetSlotTest extends JsModuleTestBase {
     }
 
     @Test
+    void aKeyIsAnyStringAndTheBranchNameIsMadeFromIt() {
+        eval("var seen = []; var b2 = fakeBranch('s2'); b2.createBranch = function (n) { seen.push(n); return fakeBranch(n); }; b2.dissolveBranch = function () {};");
+        eval("var s2 = createWidgetSlot({ branch: b2, host: host }); s2.show('a/b', widget('x')); s2.show('a_b', widget('y')); s2.show('theme', widget('z'))");
+        assertEquals("a_b a_b_2 theme", eval("seen.join(' ')").asString(), "slashes replaced, a collision made distinct");
+        assertTrue(eval("s2.has('a/b') && s2.has('a_b')").asBoolean());
+    }
+
+    @Test
     void refusesAWidgetWithoutARoot() {
         var ex = eval("(function () { try { slot.show('x', function () { return {}; }); return null; } catch (e) { return e.message; } })()");
         assertTrue(ex.asString().contains("must return { root"), ex.asString());

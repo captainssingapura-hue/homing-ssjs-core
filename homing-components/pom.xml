@@ -22,5 +22,6 @@
     <modules>
         <module>homing-ui-elements</module>
         <module>homing-ui-dialog</module>
+        <module>homing-preferences</module>
     </modules>
 </project>
