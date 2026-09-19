@@ -140,7 +140,7 @@ public record SynthwavePalette() implements Palette {
             one(of(Danger.class, Color.Ink.class), "#C40036", "#FF6B8F"),
             edge(of(Danger.class, Color.Edge.class), "#FF3860"),
             surface(of(Success.class, Color.Surface.class), "rgba(61, 255, 176, 0.16)", "rgba(61, 255, 176, 0.18)"),
-            scaled(of(Success.class, Color.Ink.class), "#C40036", "#FF6B8F", MUTED, MUTED_D, "#0B7A55", "#3DFFB0"),   // scales: danger's ink at -1, muted at 0
+            scaled(of(Success.class, Color.Ink.class), "#C40036", "#FF6B8F", MUTED, MUTED_D, "#0B7A55", "#3DFFB0"),   // scales: failure's ink at -1, an unremarkable mark's at 0
             edge(of(Success.class, Color.Edge.class), "#3DFFB0"),
             surface(of(Warning.class, Color.Surface.class), "rgba(255, 183, 0, 0.18)", "rgba(255, 183, 0, 0.22)"),
             one(of(Warning.class, Color.Ink.class), "#8A5F00", "#FFB700"),

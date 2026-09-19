@@ -161,16 +161,16 @@ public record SeedPalette(DesignId id, String label, String inspiration, DesignI
         put.accept(edg(of(OnInverted.class, Color.Edge.class), l.border, d.border));
 
         // feedback — the same signals in every seed palette
-        put.accept(anchored(surface(of(Danger.class, Color.Surface.class), "rgba(220, 38, 38, 0.10)"), "background-color", "rgba(34, 139, 34, 0.12)", "transparent"));   // scales: success's wash at -1, nothing at 0
+        put.accept(anchored(surface(of(Danger.class, Color.Surface.class), "rgba(220, 38, 38, 0.10)"), "background-color", "rgba(34, 139, 34, 0.12)", "transparent"));   // scales: safety's wash at -1, nothing at 0 — safety is the other end of danger, whatever colour a design gives it
         put.accept(one(of(Danger.class, Color.Ink.class), "#7F1D1D", "#FCA5A5"));
         put.accept(edge(of(Danger.class, Color.Edge.class), "rgba(220, 38, 38, 0.35) rgba(220, 38, 38, 0.35) rgba(220, 38, 38, 0.35) #DC2626"));
         put.accept(surface(of(Success.class, Color.Surface.class), "rgba(34, 139, 34, 0.12)"));
-        // the one word that scales, for now: a good mark at 1, a bad one at -1 (danger's ink), an unremarkable one at 0 (the muted ink)
+        // success scales: a good mark at 1, a failed one at -1, an unremarkable one at 0 — failure is the other end of success, not danger's word; the same red here is this palette's choice
         put.accept(scaled(of(Success.class, Color.Ink.class), "#7F1D1D", "#FCA5A5", l.muted, d.muted, "#1B5E20", "#86EFAC"));
         put.accept(edge(of(Success.class, Color.Edge.class), "rgba(34, 139, 34, 0.35)"));
         put.accept(surface(of(Warning.class, Color.Surface.class), "rgba(202, 138, 4, 0.12)"));
         put.accept(one(of(Warning.class, Color.Ink.class), "#713F12", "#FDE68A"));
-        put.accept(anchored(edge(of(Warning.class, Color.Edge.class), "rgba(202, 138, 4, 0.35)"), "border-color", "rgba(34, 139, 34, 0.35)", "rgba(34, 139, 34, 0.35)", l.border, d.border));   // scales: all clear at -1, the hairline at 0
+        put.accept(anchored(edge(of(Warning.class, Color.Edge.class), "rgba(202, 138, 4, 0.35)"), "border-color", "rgba(34, 139, 34, 0.35)", "rgba(34, 139, 34, 0.35)", l.border, d.border));   // scales: calm at -1, the hairline at 0
 
         // interaction — nothing at rest; the states are the slots. Hover tints in
         // the accent, selected inverts, current tints lightly, checked and focus

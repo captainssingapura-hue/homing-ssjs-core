@@ -6,7 +6,10 @@ package hue.captains.singapura.js.homing.design;
  * its full extent, {@link #FULL}; a design that wants the word to scale
  * anchors it at {@link #ZERO} — neutral: <i>none of this meaning</i>, which
  * is not always transparent, so it is the design's to say — and at
- * {@link #NEG} — the meaning turned the other way: good at −1 is bad. The
+ * {@link #NEG} — the meaning turned the other way: success at −1 is failure,
+ * danger at −1 is safety. Each semantic is its own axis, with an opposite of
+ * its own; no two semantics are declared opposites of each other, and a
+ * design that colours failure as it colours danger is choosing to. The
  * browser interpolates between the anchors it has, in oklab — rectangular, so
  * the way from a low-chroma neutral to a saturated pole never turns through a
  * third hue — choosing the pole by the sign of the extent and walking from the
