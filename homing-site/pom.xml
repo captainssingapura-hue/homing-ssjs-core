@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+        <artifactId>homing.js</artifactId>
+        <version>LOCAL-SNAPSHOT</version>
+    </parent>
+    <artifactId>homing-site</artifactId>
+    <packaging>pom</packaging>
+    <description>
+        RFC 0066 Episode 3, layer 4 — the site base: the contracts a served
+        site is made of, and nothing that dresses one. A Navigable is a
+        destination whose whole public contract is "given the query it was
+        reached with, possibly none, the page"; a Router takes a path in and
+        hands a Navigable out; a Site is a router with a name; a SiteHost
+        serves one. How a navigable comes by its HTML — a JS app behind the
+        server's scaffold, a template, a string — is the navigable's own
+        business and not the contract's. The nested demo modules are the
+        proof: each a site of a few pages on the base alone.
+    </description>
+    <modules>
+        <module>homing-site-base</module>
+        <module>homing-site-demo</module>
+    </modules>
+</project>

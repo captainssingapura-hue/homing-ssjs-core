@@ -16,6 +16,10 @@
         <!-- RFC 0065 layer 3 / RFC 0066 — the theme design core, one sub-module per
              design vocabulary; colour first. -->
         <module>homing-theme-design</module>
+        <!-- RFC 0066 Episode 3, layer 4 — the site base: Navigable, Router,
+             Site and the host that serves one, plus the nested demo modules
+             that prove the contract on the base alone. -->
+        <module>homing-site</module>
         <!-- The Meta-Function ontology — four typed interfaces naming the
              objects involved in code-generated codecs (ObjectDefinition,
              TransformationFunctions, FunctionsCodeGen, DefinitionCodeGen).

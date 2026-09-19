@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+        <artifactId>homing-site</artifactId>
+        <version>LOCAL-SNAPSHOT</version>
+    </parent>
+    <artifactId>homing-site-demo</artifactId>
+    <packaging>pom</packaging>
+    <description>
+        The site base's demos, one module each, every one a runnable server
+        on homing-site-base alone. The first is hello: three pages and a
+        router, which is the whole contract in use.
+    </description>
+    <modules>
+        <module>homing-site-demo-hello</module>
+    </modules>
+</project>
