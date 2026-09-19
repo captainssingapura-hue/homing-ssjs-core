@@ -11,6 +11,7 @@ import static hue.captains.singapura.js.homing.design.Box.Control;
 import static hue.captains.singapura.js.homing.design.Box.Inline;
 import static hue.captains.singapura.js.homing.design.Emphasis.Muted;
 import static hue.captains.singapura.js.homing.design.Emphasis.Primary;
+import static hue.captains.singapura.js.homing.design.Emphasis.Secondary;
 import static hue.captains.singapura.js.homing.design.Interaction.Focus;
 import static hue.captains.singapura.js.homing.design.Interaction.Interactive;
 import static hue.captains.singapura.js.homing.design.Layer.Raised;
@@ -92,10 +93,14 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
         }
     }
 
-    /** A short upper-case tag beside a title. */
+    /** A short upper-case tag beside a title: a chip on the secondary surface, as the studio's badges are. */
     public record el_badge() implements CssClass<ElementStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Kicker.class, Type.Scale.class), of(Kicker.class, Type.Weight.class), of(Kicker.class, Type.Treatment.class), of(Muted.class, Color.Ink.class), of(Inline.class, Shape.Corner.class)); }
-        @Override public String body() { return "margin-left: auto;"; }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Secondary.class, Color.Surface.class), of(Heading.class, Color.Ink.class), of(Kicker.class, Type.Scale.class), of(Kicker.class, Type.Weight.class), of(Kicker.class, Type.Treatment.class), of(Inline.class, Shape.Corner.class)); }
+        @Override public String body() { return """
+            margin-left: auto;
+            padding: 2px 8px;
+            """;
+        }
     }
 
     public record el_card_text() implements CssClass<ElementStyles> {
