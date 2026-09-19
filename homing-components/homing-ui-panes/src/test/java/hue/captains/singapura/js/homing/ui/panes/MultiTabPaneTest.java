@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class MultiTabPaneTest extends JsModuleTestBase {
 
+    private static final String EVENTS = "/homing/js/hue/captains/singapura/js/homing/ui/panes/PaneEventsModule.js";
     private static final String STRIP  = "/homing/js/hue/captains/singapura/js/homing/ui/panes/TabStrip.js";
     private static final String MODULE = "/homing/js/hue/captains/singapura/js/homing/ui/panes/MultiTabPane.js";
 
@@ -71,13 +72,19 @@ class MultiTabPaneTest extends JsModuleTestBase {
                      dispose: function () { log.push(key + ":disposed"); } };
         }
         function tab(id, extra) { var t = { id: id, title: id.toUpperCase(), widget: widget(id) }; for (var k in (extra || {})) t[k] = extra[k]; return t; }
+        var events = [];
         var pane = mountMultiTabPane({ branch: branch, host: host, slotId: "s1", budget: 4,
-            onAddTab:       function (s) { log.push("add?" + s); },
-            onTabAdded:     function (s, t, i) { log.push("added:" + s + ":" + t.id + "@" + i); },
-            onTabRemoved:   function (s, t, i) { log.push("removed:" + s + ":" + t.id + "@" + i); },
-            onTabMoved:     function (s, t, si, d, di) { log.push("moved:" + s + ":" + t.id + "@" + si + "->" + d + "@" + di); },
-            onTabActivated: function (s, id) { log.push("active:" + s + ":" + id); },
-            onTabAttached:  function (s, t, i) { log.push("attached:" + s + ":" + t.id + "@" + i); } });
+            onEvent: function (ev) {
+                events.push(ev);
+                switch (ev.kind) {
+                    case "AddRequested": log.push("add?" + ev.slotId); break;
+                    case "TabAdded":     log.push("added:" + ev.slotId + ":" + ev.tab.id + "@" + ev.index); break;
+                    case "TabRemoved":   log.push("removed:" + ev.slotId + ":" + ev.tab.id + "@" + ev.fromIndex); break;
+                    case "TabMoved":     log.push("moved:" + ev.srcSlotId + ":" + ev.tab.id + "@" + ev.srcIndex + "->" + ev.destSlotId + "@" + ev.destIndex); break;
+                    case "TabActivated": log.push("active:" + ev.slotId + ":" + ev.tabId); break;
+                    case "TabAttached":  log.push("attached:" + ev.slotId + ":" + ev.tab.id + "@" + ev.atIndex); break;
+                    default: log.push("?" + ev.kind);
+                } } });
         function chips() { return pane.el.children[0].children.filter(function (c) { return c.has("mtp_chip"); }).map(function (c) { return c.children[0].textContent; }).join(","); }
         function panels() { return pane.el.children[1].children.filter(function (c) { return c.has("mtp_tab_content"); }).map(function (c) { return c.children[0].tag + (c.has("mtp_tab_content_hidden") ? "-" : "+"); }).join(","); }
         function selected() { return pane.el.children[0].children.filter(function (c) { return c.getAttribute("aria-selected") === "true"; }).map(function (c) { return c.children[0].textContent; }).join(","); }
@@ -86,6 +93,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
     @BeforeEach
     void load() {
         js = buildContext();
+        loadModule(EVENTS);
         loadModule(STRIP);
         loadModule(MODULE);
         js.eval("js", SHIM);

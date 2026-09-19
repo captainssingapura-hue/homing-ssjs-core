@@ -40,17 +40,20 @@ class UiPanesCrateConformanceTest {
         }
     }
 
-    /** The primitive lane over both sources: no inline style, no raw DOM, no literal colour, no destruction, under the line limit. */
+    /** Each served JS module under the lane its crate entry declares: the primitives' DOM-owner discipline, the events' no-DOM one, the line limit for all. */
     @Test
-    void thePaneAndTheStripKeepThePrimitiveDiscipline() {
-        for (Class<?> m : List.of(MultiTabPane.class, TabStrip.class)) {
-            String path = "homing/js/" + m.getName().replace('.', '/') + ".js";
-            String src = String.join("\n", ResourceReader.INSTANCE.getStringsFromResource(path));
-            var served = ServedModule.of(m.getName(), StandardJsModuleType.PRIMITIVE, src);
-            var findings = DefaultJsRulePolicy.INSTANCE.rulesFor(StandardJsModuleType.PRIMITIVE).checkAll(served);
-            assertEquals(List.of(), findings, () -> m.getSimpleName() + ": "
+    void everyServedModuleKeepsItsLanesDiscipline() {
+        int checked = 0;
+        for (var entry : UiPanesCrate.INSTANCE.entries()) {
+            if (!(entry.declaredType() instanceof StandardJsModuleType type) || type == StandardJsModuleType.GENERATED_CSS) continue;
+            String m = entry.moduleClass();
+            String src = String.join("\n", ResourceReader.INSTANCE.getStringsFromResource("homing/js/" + m.replace('.', '/') + ".js"));
+            var findings = DefaultJsRulePolicy.INSTANCE.rulesFor(type).checkAll(ServedModule.of(m, type, src));
+            assertEquals(List.of(), findings, () -> m + ": "
                     + findings.stream().map(f -> f.rule().value() + "@" + f.line() + ": " + f.message()).toList());
+            checked++;
         }
+        assertEquals(3, checked, "the pane, the strip and the events");
     }
 
     @Test

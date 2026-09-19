@@ -2,36 +2,36 @@
 // MultiTabPane — one pane of tabs: a strip of chips over one content area,
 // each tab holding a widget constructed by the base's contract.
 //
-//   mountMultiTabPane({ branch, host, slotId?, budget?, addable?,
-//                       onAddTab?, onTabAdded?, onTabRemoved?, onTabMoved?,
-//                       onTabActivated?, onTabAttached? })                → pane
+//   mountMultiTabPane({ branch, host, slotId?, budget?, addable?, onEvent? }) → pane
 //
 //   pane.addTab({ id, title, widget, pinned?, closable? })  → index; the widget
 //       is what construct(branch, params) returned: { root, setActive?, dispose? }.
 //       Its root is appended to the tab's panel once and never detached; a
-//       switch shows one panel and hides the rest. Reports onTabAdded, then
-//       onTabActivated if the tab became the active one.
+//       switch shows one panel and hides the rest. Reports TabAdded, then
+//       TabActivated if the tab became the active one.
 //   pane.attachTab(tab, index)   → index; the same from outside (a re-dock, a
-//       programmatic re-parent), reported as onTabAttached instead.
+//       programmatic re-parent), reported as TabAttached instead.
 //   pane.removeTab(id)           → the tab; the widget is disposed, then
-//       onTabRemoved(slotId, tab, fromIndex); a neighbour is activated after.
+//       TabRemoved(slotId, tab, fromIndex); a neighbour is activated after.
 //   pane.detachTab(id)           → the tab, NOT disposed and not reported: it
 //       travels on, widget and all, to be attached elsewhere.
-//   pane.switchTab(id)           → onTabActivated(slotId, id)
-//   pane.moveTab(id, destIndex)  → onTabMoved(slotId, tab, srcIndex, slotId, destIndex),
+//   pane.switchTab(id)           → TabActivated(slotId, id)
+//   pane.moveTab(id, destIndex)  → TabMoved(slotId, tab, srcIndex, slotId, destIndex),
 //       destIndex being where the tab ends up. A drag on the strip is this.
 //   pane.tabs() .activeTab() .has(id) .tabIndexOf(id) .count()
 //   pane.budget() .canAdd() .setAddEnabled(b)
 //   pane.contentElOf(id) .widgetOf(id) .getState() .el .slotId
 //   pane.dispose()               → every widget disposed in order, the branch dissolved
 //
-// The callback names and argument shapes are the studio pane's, so what
-// records its mutations records these; slotId is the pane's own, given or
-// "main", and appears where the studio's slot did — for a move within one
-// pane, as both source and destination.
+// Every mutation is one event on one sink, onEvent(ev): a frozen object from
+// PaneEvents tagged by kind — TabAdded, TabRemoved, TabMoved, TabActivated,
+// TabAttached, AddRequested — whose fields are the Java PaneEvent records'
+// components. The vocabulary is the studio pane's; the shape is data, so an
+// event goes into a log or a checkpoint as it is. slotId is the pane's own,
+// given or "main"; a move within one pane names it as both ends.
 //
 // The pane never calls setActive: which tab's widget is active is the
-// holder's to decide, from onTabActivated, as the studio's focus machinery
+// holder's to decide, from TabActivated, as the studio's focus machinery
 // decides it there. Pinned tabs sit first, cannot be closed and are not
 // dragged; a drop never lands before them.
 //
@@ -48,7 +48,8 @@ function mountMultiTabPane(opts) {
     if (!opts.host) throw new Error("[MultiTabPane] opts.host is required");
     var slotId = opts.slotId == null ? "main" : String(opts.slotId);
     var budget = opts.budget == null ? _DEFAULT_BUDGET : Math.max(1, opts.budget | 0);
-    var addEnabled = opts.addable !== false && typeof opts.onAddTab === "function";
+    var addEnabled = opts.addable !== false;
+    var sink = typeof opts.onEvent === "function" ? opts.onEvent : null;
     var branchName = "mtp_" + slotId.replace(/[^A-Za-z0-9_-]/g, "_") + "_" + (++_seq);
     var branch = opts.branch.createBranch(branchName);
     branch.activate(_paneOwner);
@@ -62,7 +63,7 @@ function mountMultiTabPane(opts) {
     css.addClass(root, mtp_pane);
 
     var strip = createTabStrip(branch, {
-        onAdd: typeof opts.onAddTab === "function" ? function () { if (canAdd()) _fire(opts.onAddTab, "onAddTab", [slotId]); } : null,
+        onAdd: opts.addable === false ? null : function () { if (canAdd()) _fire(PaneEvents.AddRequested(slotId)); },
         onDrop: function (chip, dest) { var i = _findChip(chip); if (i >= 0) moveTab(tabs[i].id, dest); }
     });
     root.appendChild(strip.el);
@@ -80,10 +81,10 @@ function mountMultiTabPane(opts) {
     _refresh();
 
     // ── Reporting ─────────────────────────────────────────────────────────
-    function _fire(cb, name, args) {
-        if (typeof cb !== "function") return;
-        try { cb.apply(null, args); }
-        catch (e) { console.error("[MultiTabPane] " + name + " threw:", e); }
+    function _fire(ev) {
+        if (!sink) return;
+        try { sink(ev); }
+        catch (e) { console.error("[MultiTabPane] onEvent threw on " + ev.kind + ":", e); }
     }
 
     // ── State ─────────────────────────────────────────────────────────────
@@ -173,14 +174,14 @@ function mountMultiTabPane(opts) {
     function addTab(tab) {
         _validate(tab);
         var index = _place(_build(tab), null);
-        _fire(opts.onTabAdded, "onTabAdded", [slotId, tab, index]);
+        _fire(PaneEvents.TabAdded(slotId, tab, index));
         if (activeId === null) switchTab(tab.id);
         return index;
     }
     function attachTab(tab, index) {
         _validate(tab);
         var at = _place(_build(tab), index == null ? null : index | 0);
-        _fire(opts.onTabAttached, "onTabAttached", [slotId, tab, at]);
+        _fire(PaneEvents.TabAttached(slotId, tab, at));
         if (activeId === null) switchTab(tab.id);
         return at;
     }
@@ -190,7 +191,7 @@ function mountMultiTabPane(opts) {
         if (typeof entry.widget.dispose === "function") {
             try { entry.widget.dispose(); } catch (e) { console.error("[MultiTabPane] widget.dispose threw:", e); }
         }
-        _fire(opts.onTabRemoved, "onTabRemoved", [slotId, entry.tab, i]);
+        _fire(PaneEvents.TabRemoved(slotId, entry.tab, i));
         _activateNeighbour(i);
         return entry.tab;
     }
@@ -205,7 +206,7 @@ function mountMultiTabPane(opts) {
         _require(id);
         if (activeId === id) return;
         _show(id);
-        _fire(opts.onTabActivated, "onTabActivated", [slotId, id]);
+        _fire(PaneEvents.TabActivated(slotId, id));
     }
     function moveTab(id, destIndex) {
         var src = _require(id);
@@ -217,7 +218,7 @@ function mountMultiTabPane(opts) {
         tabs.splice(src, 1);
         tabs.splice(dest, 0, entry);
         _refresh();
-        _fire(opts.onTabMoved, "onTabMoved", [slotId, entry.tab, src, slotId, dest]);
+        _fire(PaneEvents.TabMoved(slotId, entry.tab, src, slotId, dest));
         return true;
     }
     function canAdd() { return addEnabled && tabs.length < budget; }

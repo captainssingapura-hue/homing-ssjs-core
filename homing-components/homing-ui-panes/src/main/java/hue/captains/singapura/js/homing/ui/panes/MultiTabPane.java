@@ -20,14 +20,13 @@ import java.util.List;
  * — whose root the pane appends once and never detaches; a switch hides
  * and shows panels. The pane disposes the widget on a real close and never
  * on a detach, and never calls {@code setActive}: that is the holder's,
- * told through {@code onTabActivated}.</p>
+ * told through {@code TabActivated}.</p>
  *
- * <p>The callbacks are the studio pane's, by name and by argument shape —
- * {@code onTabAdded(slotId, tab, index)}, {@code onTabRemoved(slotId, tab,
- * fromIndex)}, {@code onTabMoved(srcSlotId, tab, srcIndex, destSlotId,
- * destIndex)}, {@code onTabActivated(slotId, tabId)}, {@code
- * onTabAttached(slotId, tab, index)}, {@code onAddTab(slotId)} — so what
- * records that pane's mutations records this one's. Built fresh beside
+ * <p>Every mutation is one {@link PaneEvent} on one sink, {@code onEvent(ev)}:
+ * a frozen object tagged by kind whose fields are the record's components,
+ * built by {@link PaneEventsModule}. The vocabulary is the studio pane's —
+ * added, removed, moved, activated, attached, add requested — and the shape
+ * is data, so an event goes into a log or a checkpoint as it is. Built fresh beside
  * {@code MultiTabPaneModule}, which stays as it is; the strip, its chips and
  * the drag that reorders are {@link TabStrip}'s. The split of panes and the
  * drag between them are rounds of their own.</p>
@@ -42,6 +41,7 @@ public record MultiTabPane() implements DomModule<MultiTabPane> {
     public ImportsFor<MultiTabPane> imports() {
         return ImportsFor.<MultiTabPane>builder()
                 .add(new ModuleImports<>(List.of(new TabStrip.createTabStrip()), TabStrip.INSTANCE))
+                .add(new ModuleImports<>(List.of(new PaneEventsModule.PaneEvents()), PaneEventsModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new PaneStyles.mtp_pane(),
                         new PaneStyles.mtp_content(),
