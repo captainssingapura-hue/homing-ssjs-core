@@ -108,26 +108,6 @@ hue.captains.singapura.js.homing.core.js.TreeRendererModule [no-literal-color] l
 hue.captains.singapura.js.homing.core.js.TreeRendererModule [no-literal-color] literal colour (use a theme token var(--...), not a baked hex/rgb): entry.rowEl.style.background = 'rgba(59,130,246,0.20)';
 hue.captains.singapura.js.homing.core.js.TreeRendererModule [no-literal-color] literal colour (use a theme token var(--...), not a baked hex/rgb): if (self._selectedEntry !== entry) row.style.background = 'rgba(0,0,0,0.05)';
 hue.captains.singapura.js.homing.core.js.TreeRendererModule [no-raw-href] raw href operation (use href.* API): label.setAttribute('href', this._hrefForPath(path, namePath) || '#');
-hue.captains.singapura.js.homing.grid.GridColumnOpsModule [no-raw-css] raw CSS operation (use css.* API): caret.className = "hgr-th-caret";                              // the th's predicate lights one
-hue.captains.singapura.js.homing.grid.GridColumnOpsModule [no-raw-css] raw CSS operation (use css.* API): dn.className = "hgr-th-caret-dn"; dn.textContent = "▼";
-hue.captains.singapura.js.homing.grid.GridColumnOpsModule [no-raw-css] raw CSS operation (use css.* API): if (parts.indexOf(c) < 0) el.className = parts.concat(c).join(" ");
-hue.captains.singapura.js.homing.grid.GridColumnOpsModule [no-raw-css] raw CSS operation (use css.* API): pin.className = "hgr-th-pin";
-hue.captains.singapura.js.homing.grid.GridColumnOpsModule [no-raw-css] raw CSS operation (use css.* API): rank.className = "hgr-th-rank";                                // empty, and hidden, unless ranked
-hue.captains.singapura.js.homing.grid.GridColumnOpsModule [no-raw-css] raw CSS operation (use css.* API): return !!(el && typeof el.className === "string"
-hue.captains.singapura.js.homing.grid.GridColumnOpsModule [no-raw-css] raw CSS operation (use css.* API): slot.className = "hgr-th-ops";
-hue.captains.singapura.js.homing.grid.GridColumnOpsModule [no-raw-css] raw CSS operation (use css.* API): up.className = "hgr-th-caret-up"; up.textContent = "▲";
-hue.captains.singapura.js.homing.grid.GridColumnOpsModule [no-raw-css] stylesheet minted from JS (author a CssGroup the server serves, not a <style> element): var s = document.createElement("style");
-hue.captains.singapura.js.homing.grid.GridHeaderDragModule [no-raw-css] raw CSS operation (use css.* API): el.className = el.className.split(" ").filter(function (x) { return x !== c; }).join(" ");
-hue.captains.singapura.js.homing.grid.GridHeaderDragModule [no-raw-css] raw CSS operation (use css.* API): guide.className = "hgr-resize-guide";
-hue.captains.singapura.js.homing.grid.GridHeaderDragModule [no-raw-css] raw CSS operation (use css.* API): handle.className = "hgr-resize-handle";
-hue.captains.singapura.js.homing.grid.GridHeaderDragModule [no-raw-css] raw CSS operation (use css.* API): if (guide) guide.className = "hgr-drop-band";     // the LANDING SLOT
-hue.captains.singapura.js.homing.grid.GridHeaderDragModule [no-raw-css] raw CSS operation (use css.* API): if (parts.indexOf(c) < 0) el.className = parts.concat(c).join(" ");
-hue.captains.singapura.js.homing.grid.GridLayoutModule [no-raw-css] raw CSS operation (use css.* API): el.className = el.className.split(" ").filter(function (x) { return x !== c; }).join(" ");
-hue.captains.singapura.js.homing.grid.GridLayoutModule [no-raw-css] raw CSS operation (use css.* API): if (parts.indexOf(c) < 0) el.className = parts.concat(c).join(" ");
-hue.captains.singapura.js.homing.grid.GridLayoutModule [no-raw-css] raw CSS operation (use css.* API): td.className = "hgr-td";
-hue.captains.singapura.js.homing.grid.GridLayoutModule [no-raw-css] raw CSS operation (use css.* API): th.className = "hgr-th";
-hue.captains.singapura.js.homing.grid.GridLayoutModule [no-raw-css] raw CSS operation (use css.* API): this._table.className = "hgr-table";
-hue.captains.singapura.js.homing.grid.GridLayoutModule [no-raw-css] stylesheet minted from JS (author a CssGroup the server serves, not a <style> element): var s = document.createElement("style");
 hue.captains.singapura.js.homing.server.CssClassManager [use-dom-ops-party] raw DOM factory (use branch.createElement via the DomOpsParty, not document.create*): const link = document.createElement("link");
 hue.captains.singapura.js.homing.server.HrefManager [no-raw-css] raw CSS operation (use css.* API): if (opts.className != null) a.className = opts.className;
 hue.captains.singapura.js.homing.server.HrefManager [use-dom-ops-party] raw DOM factory (use branch.createElement via the DomOpsParty, not document.create*): const a = document.createElement("a");
