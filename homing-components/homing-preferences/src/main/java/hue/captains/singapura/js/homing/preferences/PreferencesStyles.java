@@ -2,9 +2,11 @@ package hue.captains.singapura.js.homing.preferences;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
+import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.core.Wearable;
 
 import java.util.List;
+import java.util.Set;
 
 import static hue.captains.singapura.js.homing.design.DesignClass.of;
 import static hue.captains.singapura.js.homing.design.Box.Control;
@@ -209,6 +211,33 @@ public record PreferencesStyles() implements CssGroup<PreferencesStyles> {
         @Override public String body() { return "margin: 8px 0 0;"; }
     }
 
+    // ── The list master ───────────────────────────────────────────────────────
+
+    /** The flat tree: a listbox with a focus ring of its own. */
+    public record pv_list() implements CssClass<PreferencesStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Focus.class, Shape.Rule.class), of(Focus.class, Color.Edge.class)); }
+        @Override public String body() { return """
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            outline-offset: 2px;
+            """;
+        }
+    }
+
+    /** A row of the flat tree: selectable, indented by its depth, which is data on the row. */
+    public record pv_list_row() implements CssClass<PreferencesStyles> {
+        @Override public Set<CssVar> runtimeVars() { return Set.of(new CssVar("--pv-depth")); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Selectable.class, Color.Surface.class), of(Selectable.class, Color.Ink.class), of(Selectable.class, Color.Edge.class), of(Selectable.class, Shape.Rule.class), of(Control.class, Shape.Corner.class), of(Selectable.class, Motion.Ease.class), of(Selectable.class, Affordance.Cursor.class), of(Body.class, Type.Face.class), of(Caption.class, Type.Scale.class)); }
+        @Override public String body() { return """
+            padding: 6px 10px 6px calc(10px + var(--pv-depth, 0) * 16px);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            """;
+        }
+    }
+
     // ── Overview ──────────────────────────────────────────────────────────────
 
     public record pv_children() implements CssClass<PreferencesStyles> {
@@ -242,6 +271,7 @@ public record PreferencesStyles() implements CssGroup<PreferencesStyles> {
                        new pv_options(), new pv_option(), new pv_option_note(),
                        new pv_switch(), new pv_switch_track(), new pv_switch_knob(),
                        new pv_range(), new pv_readout(),
+                       new pv_list(), new pv_list_row(),
                        new pv_children(), new pv_child());
     }
 }

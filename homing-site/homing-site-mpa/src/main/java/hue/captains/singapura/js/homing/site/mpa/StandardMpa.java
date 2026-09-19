@@ -8,6 +8,7 @@ import hue.captains.singapura.js.homing.core.EsModule;
 import hue.captains.singapura.js.homing.core.ModuleNameResolver;
 import hue.captains.singapura.js.homing.core.SimpleAppResolver;
 import hue.captains.singapura.js.homing.core.util.ResourceReader;
+import hue.captains.singapura.js.homing.preferences.PreferencesRegistry;
 import hue.captains.singapura.js.homing.server.AppMeta;
 import hue.captains.singapura.js.homing.server.HomingActionRegistry;
 import hue.captains.singapura.js.homing.server.QueryParamResolver;
@@ -48,14 +49,16 @@ public final class StandardMpa {
 
     private final Brand brand;
     private final ThemeRegistry themes;
+    private final PreferencesRegistry preferences;
     private final List<Crate> crates;
     private final ModuleNameResolver names;
     private final HomingActionRegistry framework;
     private final ThemesGetAction themesAction;
 
-    private StandardMpa(Brand brand, ThemeRegistry themes, List<Crate> crates) {
+    private StandardMpa(Brand brand, ThemeRegistry themes, PreferencesRegistry preferences, List<Crate> crates) {
         this.brand  = Objects.requireNonNull(brand, "StandardMpa.brand");
         this.themes = themes == null ? ThemeRegistry.EMPTY : themes;
+        this.preferences = preferences == null ? DefaultPreferences.INSTANCE : preferences;
         var all = new ArrayList<Crate>(crates);
         if (all.stream().noneMatch(c -> c == MpaCrate.INSTANCE)) all.add(MpaCrate.INSTANCE);
         priorsCrate(this.themes, ServedModules.of(all)).ifPresent(all::add);
@@ -89,14 +92,26 @@ public final class StandardMpa {
         });
     }
 
-    /** A site's MPA: the brand on the bar, the themes it offers, the crates whose modules it serves. */
+    /** A site's MPA: the brand on the bar, the themes it offers, the crates whose modules it serves; the default preferences. */
     public static StandardMpa of(Brand brand, ThemeRegistry themes, Crate... crates) {
-        return new StandardMpa(brand, themes, List.of(crates));
+        return new StandardMpa(brand, themes, null, List.of(crates));
+    }
+
+    /**
+     * As {@link #of(Brand, ThemeRegistry, Crate...)}, with the site's own
+     * preferences: a {@link PreferencesRegistry} the site extends, whose
+     * instance the site's crate declares. The bar's button opens it.
+     */
+    public static StandardMpa of(Brand brand, ThemeRegistry themes, PreferencesRegistry preferences, Crate... crates) {
+        return new StandardMpa(brand, themes, preferences, List.of(crates));
     }
 
     public Brand brand() { return brand; }
 
     public ThemeRegistry themes() { return themes; }
+
+    /** The preferences the bar's button opens: the site's, or the default. */
+    public PreferencesRegistry preferences() { return preferences; }
 
     /** The registry's default — first listed — when it lists any. */
     public Optional<String> defaultTheme() {

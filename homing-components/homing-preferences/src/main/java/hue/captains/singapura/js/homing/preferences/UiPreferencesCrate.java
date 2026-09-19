@@ -34,6 +34,7 @@ public final class UiPreferencesCrate implements Crate {
                 CrateEntry.of(ToggleWidget.INSTANCE),
                 CrateEntry.of(ScaleWidget.INSTANCE),
                 CrateEntry.of(OverviewWidget.INSTANCE),
+                CrateEntry.of(ListMasterWidget.INSTANCE),
                 CrateEntry.of(PreferencesStyles.INSTANCE));
     }
 }

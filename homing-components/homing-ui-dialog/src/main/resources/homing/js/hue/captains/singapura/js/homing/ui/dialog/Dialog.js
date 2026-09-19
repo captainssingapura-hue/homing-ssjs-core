@@ -8,9 +8,11 @@
 //   branch          (required) a DomOpsParty branch; the dialog mints a CHILD
 //                   per open, named by the clock and a counter, and dissolves
 //                   it on close — each dialog's namespace and lifetime is its own
-//   content         (required) function(branch, bodyEl) → { onKeydown?, focusEl? }
+//   content         (required) function(branch, bodyEl) → { onKeydown?, focusEl?, dispose? }
 //                   builds the body INTO the dialog's branch; may return a key
-//                   handler (ev → bool) and the element to focus on open
+//                   handler (ev → bool), the element to focus on open, and a
+//                   dispose() called first on close, before the branch dissolves,
+//                   for what dissolving cannot release - the widget's word for it
 //   title           string
 //   modal           boolean, default true — scrim, inert, keyboard capture
 //   glow            boolean, default = modal — the focus ring on the frame
@@ -167,6 +169,7 @@ function openDialog(opts) {
     function close() {
         if (closed) return;
         closed = true;
+        if (typeof built.dispose === "function") { try { built.dispose(); } catch (e) { console.error("[dialog] content dispose threw", e); } }
         try { branch.dissolve(); } catch (e) {}     // frame, scrim and content go together
         if (release) release();
         else if (restoreTo && restoreTo.focus && document.contains(restoreTo)) restoreTo.focus();

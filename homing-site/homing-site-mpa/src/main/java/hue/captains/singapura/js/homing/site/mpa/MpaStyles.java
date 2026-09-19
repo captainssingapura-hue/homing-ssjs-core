@@ -2,14 +2,12 @@ package hue.captains.singapura.js.homing.site.mpa;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
-import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.core.InLayer;
 import hue.captains.singapura.js.homing.core.Layout;
 import hue.captains.singapura.js.homing.core.Reset;
 import hue.captains.singapura.js.homing.core.Wearable;
 
 import java.util.List;
-import java.util.Set;
 
 import static hue.captains.singapura.js.homing.design.DesignClass.of;
 import static hue.captains.singapura.js.homing.design.Box.Control;
@@ -17,10 +15,8 @@ import static hue.captains.singapura.js.homing.design.Brand.House;
 import static hue.captains.singapura.js.homing.design.Emphasis.Muted;
 import static hue.captains.singapura.js.homing.design.Emphasis.Primary;
 import static hue.captains.singapura.js.homing.design.Interaction.Interactive;
-import static hue.captains.singapura.js.homing.design.Interaction.Selectable;
 import static hue.captains.singapura.js.homing.design.Layer.Base;
 import static hue.captains.singapura.js.homing.design.Layer.Inverted;
-import static hue.captains.singapura.js.homing.design.Layer.Overlay;
 import static hue.captains.singapura.js.homing.design.Layer.Raised;
 import static hue.captains.singapura.js.homing.design.Pairing.OnInverted;
 import static hue.captains.singapura.js.homing.design.Pairing.OnInvertedMuted;
@@ -33,7 +29,6 @@ import static hue.captains.singapura.js.homing.design.Target.Shape;
 import static hue.captains.singapura.js.homing.design.Target.Type;
 import static hue.captains.singapura.js.homing.design.Text.Body;
 import static hue.captains.singapura.js.homing.design.Text.Caption;
-import static hue.captains.singapura.js.homing.design.Text.Kicker;
 import static hue.captains.singapura.js.homing.design.Text.Link;
 
 /**
@@ -43,8 +38,8 @@ import static hue.captains.singapura.js.homing.design.Text.Link;
  *
  * <p>The words are the ones a page chrome needs and nothing more — the
  * inverted bar, the house word, the muted crumbs, a control for the
- * preferences button, a raised menu of selectable rows. A design that binds
- * the studio's vocabulary binds all of these.</p>
+ * preferences button. A design that binds the studio's vocabulary binds all
+ * of these; the preferences dialog wears its own.</p>
  */
 public record MpaStyles() implements CssGroup<MpaStyles> {
 
@@ -185,121 +180,12 @@ public record MpaStyles() implements CssGroup<MpaStyles> {
         @Override public String body() { return ""; }
     }
 
-    /** Catches the click outside; carries no look. */
-    public record mpa_prefs_scrim() implements CssClass<MpaStyles> {
-        @Override public String body() { return """
-            position: fixed;
-            inset: 0;
-            z-index: 60;
-            """;
-        }
-    }
-
-    /** The menu: a raised panel under the button, over everything. */
-    public record mpa_prefs_menu() implements CssClass<MpaStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Raised.class, Effect.Filter.class), of(Raised.class, Color.Edge.class), of(Raised.class, Shape.Rule.class), of(Control.class, Shape.Corner.class), of(Overlay.class, Shape.Shadow.class), of(Body.class, Color.Ink.class), of(Body.class, Type.Face.class)); }
-        @Override public String body() { return """
-            position: absolute;
-            right: 0;
-            top: calc(100% + 8px);
-            z-index: 61;
-            width: 340px;
-            max-width: calc(100vw - 32px);
-            padding: 10px;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            """;
-        }
-    }
-
-    /** A section's label: a kicker. */
-    public record mpa_prefs_label() implements CssClass<MpaStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Kicker.class, Type.Scale.class), of(Kicker.class, Type.Weight.class), of(Kicker.class, Type.Treatment.class), of(Muted.class, Color.Ink.class)); }
-        @Override public String body() { return "padding: 2px 6px;"; }
-    }
-
-    public record mpa_prefs_list() implements CssClass<MpaStyles> {
-        @Override public String body() { return """
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            margin: 0;
-            padding: 0;
-            list-style: none;
-            """;
-        }
-    }
-
-    /** A row: selectable, marked by aria-selected. */
-    public record mpa_prefs_item() implements CssClass<MpaStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Selectable.class, Color.Surface.class), of(Selectable.class, Color.Ink.class), of(Selectable.class, Color.Edge.class), of(Selectable.class, Shape.Rule.class), of(Control.class, Shape.Corner.class), of(Selectable.class, Motion.Ease.class), of(Selectable.class, Affordance.Cursor.class), of(Body.class, Type.Face.class), of(Caption.class, Type.Scale.class)); }
-        @Override public String body() { return """
-            font: inherit;
-            display: flex;
-            align-items: baseline;
-            gap: 8px;
-            padding: 6px 8px;
-            text-align: left;
-            width: 100%;
-            box-sizing: border-box;
-            min-width: 0;
-            """;
-        }
-    }
-
-    /** A row's name: never squeezed. */
-    public record mpa_prefs_name() implements CssClass<MpaStyles> {
-        @Override public String body() { return "flex: 0 0 auto;"; }
-    }
-
-    /** Beside a row's name: the inspiration, or that these are the design's own colours; truncated before the name is. */
-    public record mpa_prefs_note() implements CssClass<MpaStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Muted.class, Color.Ink.class), of(Kicker.class, Type.Scale.class)); }
-        @Override public String body() { return """
-            margin-left: auto;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            flex: 0 1 auto;
-            min-width: 0;
-            """;
-        }
-    }
-
-    /** The swatch dots beside a row. */
-    public record mpa_prefs_dots() implements CssClass<MpaStyles> {
-        @Override public String body() { return """
-            display: inline-flex;
-            gap: 3px;
-            flex: 0 0 auto;
-            align-self: center;
-            """;
-        }
-    }
-
-    /** One dot: its colour is DATA, the theme's own, set per dot by the module through the runtime var. */
-    public record mpa_prefs_dot() implements CssClass<MpaStyles> {
-        @Override public Set<CssVar> runtimeVars() { return Set.of(new CssVar("--mpa-dot")); }
-        @Override public String body() { return """
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            display: inline-block;
-            background-color: var(--mpa-dot);
-            """;
-        }
-    }
-
     @Override
     public List<CssClass<MpaStyles>> cssClasses() {
         return List.of(
                 new mpa_page(), new mpa_root(), new mpa_header(),
                 new mpa_brand(), new mpa_brand_mark(), new mpa_brand_word(),
                 new mpa_crumbs(), new mpa_crumb(), new mpa_crumb_sep(), new mpa_main(),
-                new mpa_prefs(), new mpa_prefs_btn(), new mpa_prefs_btn_label(), new mpa_prefs_scrim(),
-                new mpa_prefs_menu(), new mpa_prefs_label(), new mpa_prefs_list(), new mpa_prefs_item(),
-                new mpa_prefs_name(), new mpa_prefs_note(), new mpa_prefs_dots(), new mpa_prefs_dot());
+                new mpa_prefs(), new mpa_prefs_btn(), new mpa_prefs_btn_label());
     }
 }

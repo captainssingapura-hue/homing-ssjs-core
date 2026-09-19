@@ -52,6 +52,7 @@ const CssClassManagerInstance = (() => {
     const procedure = createCssLoadProcedure(graph, appendLink, hrefFor, tell);
 
     let worn = null;          // the theme the page wears, once anything has loaded
+    let pageDefault = null;   // the server's default, as the first loaded group carried it
     let changing = null;      // the switch in flight, if one is
     const listeners = new Set();
 
@@ -68,6 +69,7 @@ const CssClassManagerInstance = (() => {
     async function loadCss(cssBeing, fallbackTheme, subgraph) {
         graph.merge(subgraph || { [cssBeing]: { deps: [] } });
         if (changing) await changing.catch(() => {});
+        if (!pageDefault && fallbackTheme) pageDefault = fallbackTheme;
         const theme = themeFor(fallbackTheme);
         await procedure.load(graph.closureOf([cssBeing]), theme);
         if (!worn) worn = theme;
@@ -109,9 +111,11 @@ const CssClassManagerInstance = (() => {
     }
 
     // Follow the store: a pick here or in another tab. The address's override
-    // still wins inside resolve(), so a tab pinned by ?theme= stays put.
+    // still wins inside resolve(), so a tab pinned by ?theme= stays put. A pick
+    // FORGOTTEN resolves to the page's default, not to what is worn: the way
+    // back to the site's default is the store emptying, and the page follows.
     PreferenceViewInstance.onChange(() => {
-        const next = PreferenceViewInstance.resolve("theme", worn);
+        const next = PreferenceViewInstance.resolve("theme", pageDefault || worn);
         if (worn && next && next !== worn) switchTheme(next).catch(e => console.error("[css] switch failed", e));
     });
 

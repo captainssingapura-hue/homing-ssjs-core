@@ -178,6 +178,20 @@ class CssClassManagerTest extends JsModuleTestBase {
     }
 
     @Test
+    void aPickForgotten_goesBackToThePagesDefault() {
+        pageUnderDefault();
+        js.eval("js", "globalThis.stored = 'carbon'; changeListeners.forEach(fn => fn()); undefined");
+        tick();
+        fireAll("carbon");
+        assertEquals("carbon", theme());
+        js.eval("js", "globalThis.stored = null; changeListeners.forEach(fn => fn()); undefined");
+        tick();
+        assertTrue(live().stream().anyMatch(l -> l.contains("theme=default not all")), "the default arrives again: " + live());
+        fireAll("default");
+        assertEquals("default", theme());
+    }
+
+    @Test
     void aChangeThatResolvesToTheThemeWorn_doesNothing() {
         pageUnderDefault();
         js.eval("js", "globalThis.stored = 'default'; changeListeners.forEach(fn => fn()); undefined");

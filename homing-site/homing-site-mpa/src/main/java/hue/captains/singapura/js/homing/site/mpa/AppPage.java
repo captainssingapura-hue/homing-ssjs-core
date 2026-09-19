@@ -24,6 +24,10 @@ import java.util.Objects;
  * slot and its params. The app is any {@code AppModule}, mounted where it
  * always is; it extends nothing to be a page here.</p>
  *
+ * <p>The chrome data names the brand, the trail and the site's preferences
+ * registry by its served address; the bar imports the registry only when its
+ * button is pressed.</p>
+ *
  * <p>Params: the binding's win, the query fills in the rest, and the app's
  * own codec decides what the page receives — so the page gets the app's
  * params and nothing else that happened to be in the address. The theme on
@@ -50,6 +54,7 @@ public record AppPage<P extends AppModule._Param, M extends AppModule<P, M>>(
         String brand   = "Object.freeze({label:" + StampedParams.jsString(mpa.brand().label())
                        + ",href:" + StampedParams.jsString(mpa.brand().home()) + "})";
         String theme   = mpa.defaultTheme().map(StampedParams::jsString).orElse("null");
+        String prefs   = "Object.freeze({module:" + StampedParams.jsString(mpa.moduleUrl(mpa.preferences())) + "})";
 
         return new HtmlPageContent("""
                 <!DOCTYPE html>
@@ -67,7 +72,7 @@ public record AppPage<P extends AppModule._Param, M extends AppModule<P, M>>(
                         // wears is the client's to resolve (address, then store, then this).
                         const theme = %s;
                         const themed = u => theme ? u + "&theme=" + encodeURIComponent(theme) : u;
-                        const chrome = Object.freeze({ brand: %s, crumbs: %s });
+                        const chrome = Object.freeze({ brand: %s, crumbs: %s, preferences: %s });
                         %s
                         const { mountChrome } = await import(themed(%s));
                         const main = mountChrome(document.getElementById("app"), chrome);
@@ -78,7 +83,7 @@ public record AppPage<P extends AppModule._Param, M extends AppModule<P, M>>(
                 </html>
                 """.formatted(
                         Html.escape(title + " · " + mpa.brand().label()),
-                        theme, brand, crumbs,
+                        theme, brand, crumbs, prefs,
                         stamped == null ? "" : "const params = " + stamped + ";",
                         StampedParams.jsString(mpa.moduleUrl(MpaChrome.INSTANCE)),
                         StampedParams.jsString(mpa.moduleUrl(app)),

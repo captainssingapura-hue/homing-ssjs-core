@@ -5,7 +5,7 @@
 // mountChrome(root, chrome) → the slot element
 //
 // `chrome` is what the server stamped into the page, frozen:
-//   { brand: { label, href }, crumbs: [ { text, href } ] }
+//   { brand: { label, href }, crumbs: [ { text, href } ], preferences: { module } }
 // The crumbs are the trail the router wrote down; the last one is this
 // page and carries no link. No crumbs means the address said nothing about
 // position, and the bar shows the brand alone.
@@ -30,7 +30,7 @@ function mountChrome(root, chrome) {
     css.addClass(bar, mpa_header);
     bar.appendChild(_brand(branch, chrome && chrome.brand));
     bar.appendChild(_crumbs(branch, chrome && chrome.crumbs));
-    mountPreferences(branch, bar);
+    mountPreferences(branch, bar, chrome);
     column.appendChild(bar);
 
     var main = branch.createElement("main", "main");
