@@ -18,5 +18,6 @@
     <modules>
         <module>homing-site-demo-hello</module>
         <module>homing-site-demo-library</module>
+        <module>homing-site-demo-gallery</module>
     </modules>
 </project>
