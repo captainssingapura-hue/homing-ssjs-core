@@ -32,50 +32,6 @@ public final class HomingConformance {
 
     /** homing-ssjs-core's documented, intentional exceptions (not debt). */
     public static final List<Allowance> ALLOWANCES = List.of(
-            // ── RFC 0050 — the Relation Grid family ──────────────────────
-            // Deliberate design decisions recorded in the RFC, not debt: they
-            // are ALLOWANCES (reasoned, permanent) rather than baseline entries
-            // (grandfathered, meant to shrink). Each names its own reason; none
-            // rests on "it is a primitive" — a type is a role, not an exemption
-            // — nor on what MultiTabPane / SplitPane do, which is baselined debt.
-            new Allowance(
-                    "hue.captains.singapura.js.homing.grid.GridLayoutModule",
-                    new RuleId("use-dom-ops-party"),
-                    "RFC 0050: the layout branch owns the <table> skeleton itself and depends only "
-                            + "on homing-core, so the grid stays portable outside a DomOpsParty host. "
-                            + "The party discipline applies to the CELLS branch, which does mint "
-                            + "through a handed-in branch — that is the ownership boundary RFC 0050 "
-                            + "is built on. A special case with a reason, not a primitive's right."),
-            new Allowance(
-                    "hue.captains.singapura.js.homing.grid.GridLayoutModule",
-                    new RuleId("view-doctrine"),
-                    "The single lookup is getElementById on the grid's own injected <style> tag — "
-                            + "the idempotence check that keeps N grids from injecting N stylesheets. "
-                            + "It reads infrastructure this module authored, never view content."),
-            new Allowance(
-                    "hue.captains.singapura.js.homing.grid.GridHeaderDragModule",
-                    new RuleId("use-dom-ops-party"),
-                    "Split out of GridLayout by the line ratchet; it mints the same layout-branch "
-                            + "chrome (resize handle, drop band) under the same RFC 0050 decision — "
-                            + "one ownership boundary, three modules."),
-            new Allowance(
-                    "hue.captains.singapura.js.homing.grid.GridColumnOpsModule",
-                    new RuleId("use-dom-ops-party"),
-                    "The header ops slot and the caret tier's glyph, rank and pin are LAYOUT-branch "
-                            + "chrome inside the layout's own <th> — the same RFC 0050 decision one band "
-                            + "over. The party discipline applies to the CELLS branch."),
-            new Allowance(
-                    "hue.captains.singapura.js.homing.grid.StockCellsModule",
-                    new RuleId("use-dom-ops-party"),
-                    "A cell mints its OWN editor (input / select) inside its own element. The cell "
-                            + "element itself came from the cells branch; the editor is a sub-life of "
-                            + "that cell, created and removed within one edit."),
-            new Allowance(
-                    "hue.captains.singapura.js.homing.grid.StockCellsModule",
-                    new RuleId("no-dom-destruction"),
-                    "textContent = \"\" clears the cell's OWN text before mounting its editor, and "
-                            + "restores it after — the narrowest possible scope, on an element the "
-                            + "cell owns outright. Not a wholesale wipe of anything foreign."),
             new Allowance(
                     "hue.captains.singapura.js.homing.studio.base.ui.layout.ModalModule",
                     new RuleId("no-dom-destruction"),
