@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.studio.themes;
 
 import hue.captains.singapura.js.homing.design.DesignClass;
+import hue.captains.singapura.js.homing.design.Extent;
 import hue.captains.singapura.js.homing.design.Impl;
 import hue.captains.singapura.js.homing.design.Mode;
 import hue.captains.singapura.js.homing.design.State;
@@ -122,6 +123,36 @@ final class Bind {
                 .at(State.REST, "outline-width", width)
                 .at(State.REST, "outline-style", style)
                 .at(State.REST, "outline-offset", offset));
+    }
+
+    /**
+     * A single-property colour word at every extent — the meaning turned the
+     * other way, neutral, and the word itself — light and dark: the three
+     * anchors a design owes a word some component scales. Order: −1, 0, 1.
+     */
+    static Map.Entry<DesignClass<?>, Impl> scaled(DesignClass<?> cls, String negLight, String negDark, String zeroLight, String zeroDark, String light, String dark) {
+        return Map.entry(cls, Impl.Bindings.of(light).in(Mode.DARK, State.REST, dark)
+                .at(Extent.ZERO, State.REST, zeroLight).in(Mode.DARK, Extent.ZERO, State.REST, zeroDark)
+                .at(Extent.NEG, State.REST, negLight).in(Mode.DARK, Extent.NEG, State.REST, negDark));
+    }
+    static Map.Entry<DesignClass<?>, Impl> scaled(DesignClass<?> cls, String neg, String zero, String full) {
+        return Map.entry(cls, Impl.Bindings.of(full).at(Extent.ZERO, State.REST, zero).at(Extent.NEG, State.REST, neg));
+    }
+
+    /**
+     * A word, anchored at the other two extents for one of its properties — the
+     * meaning turned the other way at −1, neutral at 0 — light and dark. The
+     * word itself is the anchor at 1, untouched.
+     */
+    static Map.Entry<DesignClass<?>, Impl> anchored(Map.Entry<DesignClass<?>, Impl> word, String property, String negLight, String negDark, String zeroLight, String zeroDark) {
+        var b = (Impl.Bindings) word.getValue();
+        return Map.entry(word.getKey(), b
+                .at(Extent.ZERO, State.REST, property, zeroLight).in(Mode.DARK, Extent.ZERO, State.REST, property, zeroDark)
+                .at(Extent.NEG, State.REST, property, negLight).in(Mode.DARK, Extent.NEG, State.REST, property, negDark));
+    }
+    static Map.Entry<DesignClass<?>, Impl> anchored(Map.Entry<DesignClass<?>, Impl> word, String property, String neg, String zero) {
+        var b = (Impl.Bindings) word.getValue();
+        return Map.entry(word.getKey(), b.at(Extent.ZERO, State.REST, property, zero).at(Extent.NEG, State.REST, property, neg));
     }
 
     /** A Type.Scale: size and line height. */

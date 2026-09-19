@@ -114,4 +114,61 @@ class SheetsTest {
         assertTrue(details.stream().anyMatch(d -> d.contains("class or id")), "a class on self is refused: " + details);
         // aria-selected, ::after, :hover on self and td:hover below all pass
     }
+
+    /**
+     * A word anchored at zero and at −1 scales: the rule interpolates by the
+     * element's extent — the pole by its sign, then from neutral by its
+     * magnitude, in oklch — the root sheet carries all three anchors, and the
+     * sheet registers the extent as a non-inherited number that is 1 by default.
+     * A word without anchors renders as it always did, and a pair worn with an
+     * extent whose word lacks an anchor is a finding; anchors off the colour
+     * plane are refused.
+     */
+    @Test
+    void anAnchoredWord_scalesByTheExtent_andAnUnanchoredOne_isAFinding() {
+        var success = DesignClass.of(Feedback.Success.class, Target.Color.Ink.class);
+        var corner  = DesignClass.of(Box.Control.class, Target.Shape.Corner.class);
+        record Graded() implements Design {
+            @Override public Impl impl(DesignClass<?> pair) {
+                if (pair.semantic() == Feedback.Success.class && pair.target() == Target.Color.Ink.class)
+                    return Impl.Bindings.of("#1B5E20").at(State.HOVER, "#2E7D32")
+                            .at(Extent.ZERO, State.REST, "#64748B").at(Extent.NEG, State.REST, "#7F1D1D")
+                            .in(Mode.DARK, State.REST, "#86EFAC").in(Mode.DARK, Extent.NEG, State.REST, "#FCA5A5").in(Mode.DARK, Extent.ZERO, State.REST, "#94A3B8");
+                if (pair.semantic() == Box.Control.class && pair.target() == Target.Shape.Corner.class)
+                    return Impl.Bindings.of("4px").at(Extent.ZERO, State.REST, "0").at(Extent.NEG, State.REST, "0");
+                return null;
+            }
+            @Override public DesignId id() { return new DesignId("graded"); }
+            @Override public String label() { return "Graded"; }
+            @Override public String group() { return "t"; }
+            @Override public String inspiration() { return ""; }
+        }
+        var r = Deployment.of(Set.of(success), Set.of(success), new Graded()).resolve();
+        assertEquals(List.of(), r.findings(), r.findings().toString());
+        String ink = Sheets.targetSheets(r).get("color-ink");
+        assertTrue(ink.startsWith("/* color-ink — generated; the template is the target's, the values the design's */\n@property --extent { syntax: \"<number>\"; inherits: false; initial-value: 1; }\n"), ink);
+        assertTrue(ink.contains("    color: color-mix(in oklab, var(--success-color-ink-zero) calc((1 - abs(var(--extent))) * 100%), "
+                + "color-mix(in oklab, var(--success-color-ink-neg) calc((1 - sign(var(--extent))) / 2 * 100%), var(--success-color-ink)));"), ink);
+        // a state falls back to the rest anchors, extent by extent
+        assertTrue(ink.contains("        color: color-mix(in oklab, var(--success-color-ink-hover-zero, var(--success-color-ink-zero)) calc((1 - abs(var(--extent))) * 100%), "
+                + "color-mix(in oklab, var(--success-color-ink-hover-neg, var(--success-color-ink-neg)) calc((1 - sign(var(--extent))) / 2 * 100%), "
+                + "var(--success-color-ink-hover, var(--success-color-ink))));"), ink);
+        String root = Sheets.rootSheet(r);
+        assertTrue(root.contains("    --success-color-ink: #1B5E20;\n") && root.contains("    --success-color-ink-neg: #7F1D1D;\n") && root.contains("    --success-color-ink-zero: #64748B;\n"), root);
+        assertTrue(root.contains("        --success-color-ink-neg: #FCA5A5;"), root);
+
+        // unanchored, worn plainly: as it always was
+        var plain = Deployment.of(DeploymentTest.DANGER_BUTTON, new DeploymentTest.Plain()).resolve();
+        assertFalse(Sheets.targetSheets(plain).get("color-ink").contains("@property"), "no scaled word, no registration");
+        assertTrue(Sheets.targetSheets(plain).get("color-ink").contains("color: var(--on-danger-color-ink);"));
+
+        // worn with an extent, but the word has no anchors: a finding per missing anchor
+        var onDanger = DesignClass.of(Pairing.OnDanger.class, Target.Color.Ink.class);
+        var missing = Deployment.of(DeploymentTest.DANGER_BUTTON, Set.of(onDanger), new DeploymentTest.Plain()).resolve();
+        assertEquals(2, missing.findings().stream().filter(f -> f.kind() == Deployment.Finding.Kind.MISSING_ANCHOR).count(), missing.findings().toString());
+
+        // anchors off the colour plane: refused
+        var off = Deployment.of(Set.of(corner), new Graded()).resolve();
+        assertTrue(off.findings().stream().anyMatch(f -> f.kind() == Deployment.Finding.Kind.INVALID_BINDING && f.detail().contains("extent")), off.findings().toString());
+    }
 }

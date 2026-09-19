@@ -108,7 +108,7 @@ final class NeoFuturismDesign {
             one(of(Base.class, Color.Scrollbar.class), glow(CYAN, 45) + " transparent", glow(CYAN_D, 45) + " transparent"),
             rule(of(Base.class, Shape.Rule.class), "0", "none"),
             one(of(Base.class, Shape.Corner.class), "0"),
-            surface(of(Raised.class, Color.Surface.class), RAISED, RAISED_D),
+            anchored(surface(of(Raised.class, Color.Surface.class), RAISED, RAISED_D), "background-color", RECESSED, RECESSED_D, SURFACE, SURFACE_D),   // elevation
             edgeFocus(of(Raised.class, Color.Edge.class), BORDER, CYAN),
             rule(of(Raised.class, Shape.Rule.class), "1px", "solid"),
             one(of(Raised.class, Shape.Corner.class), "2px"),
@@ -150,8 +150,8 @@ final class NeoFuturismDesign {
             one(of(Code.class, Shape.Corner.class), "2px"),
 
             // ── emphasis: the light, and the second voice ───────────────
-            surface(of(Primary.class, Color.Surface.class), CYAN, CYAN_D),
-            one(of(Primary.class, Color.Ink.class), CYAN_INK, CYAN_INK_D),
+            anchored(surface(of(Primary.class, Color.Surface.class), CYAN, CYAN_D), "background-color", BORDER, BORDER_D, "transparent", "transparent"),
+            anchored(one(of(Primary.class, Color.Ink.class), CYAN_INK, CYAN_INK_D), "*", MUTED, MUTED_D, TEXT, TEXT_D),
             edge(of(Primary.class, Color.Edge.class), CYAN, CYAN_D),
             one(of(OnPrimary.class, Color.Ink.class), ON_CYAN),
             surface(of(Secondary.class, Color.Surface.class), VIOLET, VIOLET_D),
@@ -166,16 +166,16 @@ final class NeoFuturismDesign {
             edge(of(OnInverted.class, Color.Edge.class), glow(CYAN_D, 30), glow(CYAN_D, 35)),
 
             // ── feedback: lit from within ───────────────────────────────
-            surface(of(Danger.class, Color.Surface.class), glow(MAGENTA, 10), glow(MAGENTA_D, 14)),
+            anchored(surface(of(Danger.class, Color.Surface.class), glow(MAGENTA, 10), glow(MAGENTA_D, 14)), "background-color", glow(MINT, 12), glow(MINT_D, 12), "transparent", "transparent"),
             one(of(Danger.class, Color.Ink.class), MAGENTA, MAGENTA_D),
             edge(of(Danger.class, Color.Edge.class), glow(MAGENTA, 45) + " " + glow(MAGENTA, 45) + " " + glow(MAGENTA, 45) + " " + MAGENTA,
                                                      glow(MAGENTA_D, 45) + " " + glow(MAGENTA_D, 45) + " " + glow(MAGENTA_D, 45) + " " + MAGENTA_D),
             surface(of(Success.class, Color.Surface.class), glow(MINT, 12), glow(MINT_D, 12)),
-            one(of(Success.class, Color.Ink.class), MINT, MINT_D),
+            scaled(of(Success.class, Color.Ink.class), MAGENTA, MAGENTA_D, MUTED, MUTED_D, MINT, MINT_D),   // scales: failure in magenta at -1, unremarkable in the muted ink at 0, success in mint at 1
             edge(of(Success.class, Color.Edge.class), glow(MINT, 45), glow(MINT_D, 45)),
             surface(of(Warning.class, Color.Surface.class), glow(AMBER, 12), glow(AMBER_D, 12)),
             one(of(Warning.class, Color.Ink.class), AMBER, AMBER_D),
-            edge(of(Warning.class, Color.Edge.class), glow(AMBER, 45), glow(AMBER_D, 45)),
+            anchored(edge(of(Warning.class, Color.Edge.class), glow(AMBER, 45), glow(AMBER_D, 45)), "border-color", glow(MINT, 45), glow(MINT_D, 45), BORDER, BORDER_D),
 
             // ── interaction: the glow comes up ──────────────────────────
             one(of(Interactive.class, Motion.Ease.class), EASE),

@@ -30,12 +30,19 @@ public final class DesignCssRenderer implements CssRenderer {
     private final List<Design> designs;
     private final List<DesignExtension> extensions;
     private final Set<DesignClass<?>> worn;
+    private final Set<DesignClass<?>> scaled;
 
     /** @param worn every pair the served components wear — the requirement set the sheets are cut to */
     public DesignCssRenderer(List<Design> designs, List<DesignExtension> extensions, Set<DesignClass<?>> worn) {
+        this(designs, extensions, worn, Set.of());
+    }
+
+    /** @param scaled the pairs some component wears with an extent — the design must anchor them, and the sheet interpolates them */
+    public DesignCssRenderer(List<Design> designs, List<DesignExtension> extensions, Set<DesignClass<?>> worn, Set<DesignClass<?>> scaled) {
         this.designs = List.copyOf(designs);
         this.extensions = List.copyOf(extensions);
         this.worn = Set.copyOf(worn);
+        this.scaled = Set.copyOf(scaled);
     }
 
     @Override public boolean owns(CssGroup<?> group) { return group instanceof Target; }
@@ -51,7 +58,7 @@ public final class DesignCssRenderer implements CssRenderer {
         // variable bound on another (a shadow reads the palette's ink), and
         // only the whole set can say whether that reference lands — then cut
         // this target's sheet from it.
-        var whole = new Deployment(worn, design, extensions).resolve();
+        var whole = new Deployment(worn, scaled, design, extensions).resolve();
         var mine = new java.util.LinkedHashMap<DesignClass<?>, hue.captains.singapura.js.homing.design.Impl>();
         whole.impls().forEach((p, i) -> { if (p.target() == target.getClass()) mine.put(p, i); });
         var resolution = new Deployment.Resolution(mine, whole.findings());

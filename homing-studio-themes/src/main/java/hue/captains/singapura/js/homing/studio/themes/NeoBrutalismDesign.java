@@ -82,7 +82,7 @@ final class NeoBrutalismDesign {
             one(of(Base.class, Color.Scrollbar.class), INK + " " + PAPER, INK_D + " " + PAPER_D),
             rule(of(Base.class, Shape.Rule.class), "0", "none"),
             one(of(Base.class, Shape.Corner.class), "0"),
-            surface(of(Raised.class, Color.Surface.class), PAPER, PAPER_D),
+            anchored(surface(of(Raised.class, Color.Surface.class), PAPER, PAPER_D), "background-color", GREY, GREY_D, "transparent", "transparent"),   // elevation: grey, the paper, white
             edge(of(Raised.class, Color.Edge.class), RULE, RULE_D),
             ruleWithFocusRing(of(Raised.class, Shape.Rule.class), "3px", "solid", "4px", "4px"),
             one(of(Raised.class, Shape.Corner.class), "0"),
@@ -116,8 +116,8 @@ final class NeoBrutalismDesign {
             one(of(Code.class, Shape.Corner.class), "0"),
 
             // ── emphasis: the signal ────────────────────────────────────
-            surface(of(Primary.class, Color.Surface.class), SIGNAL),
-            one(of(Primary.class, Color.Ink.class), RISO_RED),
+            anchored(surface(of(Primary.class, Color.Surface.class), SIGNAL), "background-color", GREY, "transparent"),
+            anchored(one(of(Primary.class, Color.Ink.class), RISO_RED), "*", MUTED, INK),
             one(of(OnPrimary.class, Color.Ink.class), INK),
             surface(of(Secondary.class, Color.Surface.class), RISO_RED),
             surface(of(Tertiary.class, Color.Surface.class), GREY, GREY_D),
@@ -129,15 +129,15 @@ final class NeoBrutalismDesign {
             states(of(OnInvertedMuted.class, Color.Ink.class), "#D9D9D9", SIGNAL),
 
             // ── feedback: flat, loud ────────────────────────────────────
-            surface(of(Danger.class, Color.Surface.class), RISO_RED),
+            anchored(surface(of(Danger.class, Color.Surface.class), RISO_RED), "background-color", "#7CFF6B", "transparent"),
             one(of(Danger.class, Color.Ink.class), INK),
             edge(of(Danger.class, Color.Edge.class), INK),
             surface(of(Success.class, Color.Surface.class), "#7CFF6B"),
-            one(of(Success.class, Color.Ink.class), INK),
+            scaled(of(Success.class, Color.Ink.class), RISO_RED, MUTED, INK),   // scales: a bad mark in riso red, an unremarkable one muted, a good one in ink
             edge(of(Success.class, Color.Edge.class), INK),
             surface(of(Warning.class, Color.Surface.class), SIGNAL),
             one(of(Warning.class, Color.Ink.class), INK),
-            edge(of(Warning.class, Color.Edge.class), INK),
+            anchored(edge(of(Warning.class, Color.Edge.class), INK), "border-color", "#7CFF6B", RULE),
 
             // ── interaction: the press ──────────────────────────────────
             one(of(Interactive.class, Motion.Ease.class), SNAP),

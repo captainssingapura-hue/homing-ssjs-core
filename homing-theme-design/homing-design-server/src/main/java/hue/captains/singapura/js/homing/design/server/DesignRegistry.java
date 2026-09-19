@@ -105,6 +105,6 @@ public final class DesignRegistry implements ThemeRegistry {
     public List<CssRenderer> renderers(ServedModules served) {
         var groups = new ArrayList<CssGroup<?>>();
         for (var m : served.byName().values()) if (m instanceof CssGroup<?> g) groups.add(g);
-        return List.of(new DesignCssRenderer(List.copyOf(bySlug.values()), extensions, Deployment.wornBy(groups)));
+        return List.of(new DesignCssRenderer(List.copyOf(bySlug.values()), extensions, Deployment.wornBy(groups), Deployment.scaledBy(groups)));
     }
 }
