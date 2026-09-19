@@ -46,7 +46,7 @@ public record SplitPane() implements DomModule<SplitPane> {
                         new SplitStyles.sp_divider(),
                         new SplitStyles.sp_divider_h(),
                         new SplitStyles.sp_divider_v(),
-                        new SplitStyles.sp_divider_dragging()
+                        new SplitStyles.sp_divider_lit()
                 ), SplitStyles.INSTANCE))
                 .build();
     }

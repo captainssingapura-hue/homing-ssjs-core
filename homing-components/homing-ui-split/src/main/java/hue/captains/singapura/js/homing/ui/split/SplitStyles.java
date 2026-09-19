@@ -23,7 +23,8 @@ import static hue.captains.singapura.js.homing.design.Target.Shape;
  * is a box its holder fills. The divider between two side-by-side panes is
  * a spine — the design's line along the leading edge of a column — and
  * between two stacked panes a divider, its rule between things; the handle
- * around the line is layout. The bodies hold nothing that could be a value.
+ * around the line is layout, and shows the primary surface by extent as it
+ * is hovered and held. The bodies hold nothing that could be a value.
  */
 public record SplitStyles() implements CssGroup<SplitStyles> {
 
@@ -104,7 +105,7 @@ public record SplitStyles() implements CssGroup<SplitStyles> {
         }
     }
 
-    /** The handle between two neighbours: a few pixels to grab, the design's line along one edge. */
+    /** The handle between two neighbours: a few pixels to grab, the design's line along one edge; nothing of its own at rest. */
     public record sp_divider() implements CssClass<SplitStyles> {
         @Override public List<? extends Wearable> wears() { return List.of(of(Interactive.class, Motion.Ease.class)); }
         @Override public String body() { return """
@@ -126,6 +127,18 @@ public record SplitStyles() implements CssGroup<SplitStyles> {
         }
     }
 
+    /**
+     * The handle lit: the primary surface by extent, worn while the pointer
+     * is over it or holds it — part of the way from the design's neutral
+     * on hover, at full while held. The splitter sets the number and takes
+     * the class off at rest; the design owns the anchors.
+     */
+    public record sp_divider_lit() implements CssClass<SplitStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Primary.class, Color.Surface.class)); }
+        @Override public List<? extends Wearable> extents() { return List.of(of(Primary.class, Color.Surface.class)); }
+        @Override public String body() { return ""; }
+    }
+
     /** Between stacked panes: a divider, the rule between things. */
     public record sp_divider_v() implements CssClass<SplitStyles> {
         @Override public List<? extends Wearable> wears() { return List.of(of(Divider.class, Color.Edge.class), of(Divider.class, Shape.Rule.class)); }
@@ -136,15 +149,9 @@ public record SplitStyles() implements CssGroup<SplitStyles> {
         }
     }
 
-    /** The handle while it is held: the primary surface, as the drop mark is. */
-    public record sp_divider_dragging() implements CssClass<SplitStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Primary.class, Color.Surface.class)); }
-        @Override public String body() { return ""; }
-    }
-
     @Override
     public List<CssClass<SplitStyles>> cssClasses() {
         return List.of(new sp_root(), new sp_split(), new sp_split_h(), new sp_split_v(), new sp_child(), new sp_child_h(), new sp_child_v(),
-                       new sp_leaf(), new sp_divider(), new sp_divider_h(), new sp_divider_v(), new sp_divider_dragging());
+                       new sp_leaf(), new sp_divider(), new sp_divider_h(), new sp_divider_v(), new sp_divider_lit());
     }
 }

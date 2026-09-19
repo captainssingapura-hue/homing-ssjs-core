@@ -50,10 +50,12 @@ class SplitPaneTest extends JsModuleTestBase {
         }
         var css = { addClass: function (e) { for (var i = 1; i < arguments.length; i++) e.classList.add(arguments[i]); },
                     removeClass: function (e) { for (var i = 1; i < arguments.length; i++) e.classList.remove(arguments[i]); },
-                    toggleClass: function (e, c, f) { e.classList.toggle(c, f); } };
+                    toggleClass: function (e, c, f) { e.classList.toggle(c, f); },
+                    extent: function (e, t) { if (t == null) e.style.setProperty("--extent", ""); else e.style.setProperty("--extent", String(t)); } };
         var sp_root = "sp_root", sp_split = "sp_split", sp_split_h = "sp_split_h", sp_split_v = "sp_split_v", sp_child = "sp_child",
             sp_child_h = "sp_child_h", sp_child_v = "sp_child_v", sp_leaf = "sp_leaf", sp_divider = "sp_divider", sp_divider_h = "sp_divider_h",
-            sp_divider_v = "sp_divider_v", sp_divider_dragging = "sp_divider_dragging";
+            sp_divider_v = "sp_divider_v", sp_divider_lit = "sp_divider_lit";
+        function lit(d) { return (d.has("sp_divider_lit") ? "lit@" + d.style.getPropertyValue("--extent") : "unlit"); }
         var console = { error: function (m) { log.push("error:" + m); } };
         var host = el("div"), branch = fakeBranch("page");
         var LAYOUT = { kind: "split", orientation: "horizontal", children: [
@@ -126,10 +128,26 @@ class SplitPaneTest extends JsModuleTestBase {
         assertEquals("0.90,0.10", eval("shares(rootSplit)").asString(), "a cancel puts the shares back");
         assertEquals("", log(), "and says nothing");
         eval("var d = divider(rootSplit, 0); d.fire('pointerdown', { button: 0, clientX: 900, clientY: 0, pointerId: 1 })");
-        assertTrue(eval("d.has('sp_divider_dragging')").asBoolean(), "the handle is marked while held");
+        assertEquals("lit@1", eval("lit(d)").asString(), "the handle wears the primary surface at full while held");
         eval("d.fire('pointerup', { type: 'pointerup' })");
-        assertTrue(eval("!d.has('sp_divider_dragging')").asBoolean());
+        assertEquals("unlit", eval("lit(d)").asString(), "and nothing of its own again");
         assertEquals("", log(), "a press without a move is not a change");
+    }
+
+    @Test
+    void theHandleWearsThePrimarySurfaceByExtentAsItIsHoveredAndHeld() {
+        eval("var d = divider(rootSplit, 0)");
+        assertEquals("unlit", eval("lit(d)").asString(), "nothing of its own at rest");
+        eval("d.fire('pointerenter', {})");
+        assertEquals("lit@0.4", eval("lit(d)").asString(), "part of the way while hovered");
+        eval("d.fire('pointerdown', { button: 0, clientX: 250, clientY: 0, pointerId: 1 })");
+        assertEquals("lit@1", eval("lit(d)").asString(), "at full while held");
+        eval("d.fire('pointerleave', {})");
+        assertEquals("lit@1", eval("lit(d)").asString(), "held is held, wherever the pointer goes");
+        eval("d.fire('pointerup', { type: 'pointerup' })");
+        assertEquals("unlit", eval("lit(d)").asString(), "released off the handle: rest");
+        eval("d.fire('pointerenter', {}); d.fire('pointerdown', { button: 0, clientX: 250, clientY: 0, pointerId: 1 }); d.fire('pointerup', { type: 'pointerup' })");
+        assertEquals("lit@0.4", eval("lit(d)").asString(), "released on the handle: hover");
     }
 
     @Test

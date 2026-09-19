@@ -28,11 +28,16 @@
 // A drag moves the divider between two neighbours and re-shares those two,
 // each kept at the minimum; the change is reported once, on release, as
 // SplitEvents.RatioChanged(path, ratios), path naming the split by child
-// indexes from the root. `css` is injected with the styles import.
+// indexes from the root. Hovered or held, the handle is lit: it wears the
+// primary surface by extent — part of the way from the design's neutral
+// while hovered, at full while held — and wears nothing of its own at rest.
+// The splitter sets the number; the design owns what each looks like.
+// `css` is injected with the styles import.
 // =============================================================================
 
 const _splitOwner = Object.freeze({ toString: () => "splitPane" });
 var _seq = 0;
+var _HOVER = 0.4, _HELD = 1;   // the lit handle's extent of the primary surface
 
 function mountSplitPane(opts) {
     if (!opts || !opts.branch) throw new Error("[SplitPane] opts.branch is required");
@@ -131,10 +136,17 @@ function mountSplitPane(opts) {
         return out;
     }
 
-    // ── Drag a divider ────────────────────────────────────────────────────
+    // ── Hover and drag a divider ──────────────────────────────────────────
     function _armDrag(divider, path, before) {
+        var hovering = false, held = false;
+        function paint() {
+            if (held || hovering) { css.addClass(divider, sp_divider_lit); css.extent(divider, held ? _HELD : _HOVER); }
+            else { css.removeClass(divider, sp_divider_lit); css.extent(divider, null); }
+        }
+        divider.addEventListener("pointerenter", function () { hovering = true; paint(); });
+        divider.addEventListener("pointerleave", function () { hovering = false; paint(); });
         divider.addEventListener("pointerdown", function (down) {
-            if (down.button !== 0) return;
+            if (down.button !== 0 || held) return;
             var entry = splits.get(path), horizontal = entry.orientation === "horizontal";
             var a = entry.children[before], b = entry.children[before + 1];
             var start = horizontal ? down.clientX : down.clientY;
@@ -143,7 +155,8 @@ function mountSplitPane(opts) {
             if (!(size > 0)) return;
             var minShare = Math.min(minPx / size, (a0 + b0) / 2);
             var moved = false;
-            css.addClass(divider, sp_divider_dragging);
+            held = true;
+            paint();
             try { divider.setPointerCapture(down.pointerId); } catch (err) {}
             function onMove(e) {
                 var delta = ((horizontal ? e.clientX : e.clientY) - start) / size;
@@ -159,7 +172,8 @@ function mountSplitPane(opts) {
                 divider.removeEventListener("pointermove", onMove);
                 divider.removeEventListener("pointerup", onEnd);
                 divider.removeEventListener("pointercancel", onEnd);
-                css.removeClass(divider, sp_divider_dragging);
+                held = false;
+                paint();
                 try { divider.releasePointerCapture(down.pointerId); } catch (err) {}
                 if (e.type !== "pointerup") { _apply(path, _restore(entry, before, a0, b0)); return; }
                 if (moved) _fire(SplitEvents.RatioChanged(path, _ratiosOf(path)));
