@@ -135,7 +135,7 @@ public record FrostPalette() implements Palette {
             one(of(Danger.class, Color.Ink.class), "#B3123A", "#FF8FA6"),
             edge(of(Danger.class, Color.Edge.class), "rgba(255, 77, 109, 0.6)"),
             surface(of(Success.class, Color.Surface.class), "rgba(35, 196, 140, 0.2)", "rgba(35, 196, 140, 0.25)"),
-            one(of(Success.class, Color.Ink.class), "#0E7A55", "#7BE8C0"),
+            scaled(of(Success.class, Color.Ink.class), "#B3123A", "#FF8FA6", MUTED, MUTED_D, "#0E7A55", "#7BE8C0"),   // scales: danger's ink at -1, muted at 0
             edge(of(Success.class, Color.Edge.class), "rgba(35, 196, 140, 0.6)"),
             surface(of(Warning.class, Color.Surface.class), "rgba(255, 190, 60, 0.25)", "rgba(255, 190, 60, 0.28)"),
             one(of(Warning.class, Color.Ink.class), "#8A5A00", "#FFD37A"),

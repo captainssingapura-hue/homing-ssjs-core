@@ -130,6 +130,17 @@ public interface CssClass<C extends CssGroup<C>> extends Exportable._Constant<C>
     default List<? extends Wearable> reads() { return List.of(); }
 
     /**
+     * The colour pairs this class wears with an EXTENT: its element sets one
+     * — {@code css.extent(el, t)}, a number from −1 to 1 — and the design's
+     * word for each pair scales with it, from the meaning turned the other
+     * way through neutral to the meaning at full. A subset of
+     * {@link #wears()}. Naming a pair here is a claim on the design: it must
+     * anchor the word at zero and at −1, and the deployment holds it to
+     * that. Default: none.
+     */
+    default List<? extends Wearable> extents() { return List.of(); }
+
+    /**
      * The group this class belongs to, from its declaration: a {@code CssClass}
      * is a record nested in its group, and the group's {@code INSTANCE} is the
      * one object of that class. Used to derive group dependencies from class

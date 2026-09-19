@@ -63,6 +63,7 @@ public final class Sheets {
             if (entries.isEmpty() || target.carrier() != Carrier.CSS) return;
             entries.sort(Map.Entry.comparingByKey(BY_PRECEDENCE));
             var sb = new StringBuilder("/* ").append(target.token()).append(" — generated; the template is the target's, the values the design's */\n");
+            if (entries.stream().anyMatch(e -> scales(e.getValue()))) sb.append(Extent.PROPERTY).append('\n');
             for (var e : entries) sb.append(rule(e.getKey(), e.getValue()));
             out.put(target.token(), sb.toString());
         });
@@ -87,17 +88,50 @@ public final class Sheets {
         if (slots.isEmpty()) return "";
         var sb = new StringBuilder(".").append(dc.cssName()).append(" {\n");
         for (String p : slots.getOrDefault(State.REST, java.util.Set.of()))
-            sb.append("    ").append(p).append(": var(").append(variable(dc, p, State.REST)).append(");\n");
+            sb.append("    ").append(p).append(": ").append(value(dc, b, p, State.REST, false)).append(";\n");
         slots.forEach((state, props) -> {
             if (state == State.REST) return;
             sb.append("    ").append(state.selector()).append(" {\n");
             for (String p : props)
-                sb.append("        ").append(p).append(": var(").append(variable(dc, p, state))
-                  .append(rest.containsKey(p) || rest.containsKey(Impl.Bindings.SOLE) ? ", var(" + variable(dc, p, State.REST) + ")" : "")
-                  .append(");\n");
+                sb.append("        ").append(p).append(": ")
+                  .append(value(dc, b, p, state, rest.containsKey(p) || rest.containsKey(Impl.Bindings.SOLE))).append(";\n");
             sb.append("    }\n");
         });
         return sb.append("}\n").toString();
+    }
+
+    /** Whether any property of the word is anchored at both ends — and so renders as an interpolation. */
+    static boolean scales(Impl impl) {
+        if (!(impl instanceof Impl.Bindings b)) return false;
+        var rest = b.values().getOrDefault(Mode.LIGHT, Map.of()).getOrDefault(State.REST, Map.of());
+        return rest.keySet().stream().anyMatch(k -> b.anchored(Extent.ZERO, k) && b.anchored(Extent.NEG, k));
+    }
+
+    /**
+     * One property's value in the rule: the variable, falling back to rest for
+     * a state — or, for a property anchored at zero and at −1, the
+     * interpolation the element's extent drives: the pole by the sign of the
+     * extent, then from the neutral by its magnitude, in oklab — rectangular, so
+     * a low-chroma neutral and a saturated pole meet along a straight line and
+     * the way between them never turns through a third hue. The pole is
+     * chosen first so a colour at −½ is the negative pole at half strength,
+     * never a hue between the two poles.
+     */
+    private static String value(DesignClass<?> dc, Impl.Bindings b, String property, State state, boolean fallsBackToRest) {
+        String key = b.values().getOrDefault(Mode.LIGHT, Map.of()).getOrDefault(State.REST, Map.of()).containsKey(Impl.Bindings.SOLE) ? Impl.Bindings.SOLE : property;
+        if (!(b.anchored(Extent.ZERO, key) && b.anchored(Extent.NEG, key))) return ref(dc, property, state, Extent.FULL, fallsBackToRest);
+        String full = ref(dc, property, state, Extent.FULL, fallsBackToRest);
+        String zero = ref(dc, property, state, Extent.ZERO, fallsBackToRest);
+        String neg  = ref(dc, property, state, Extent.NEG,  fallsBackToRest);
+        return "color-mix(in oklab, " + zero + " calc((1 - abs(var(" + Extent.VAR + "))) * 100%), "
+             + "color-mix(in oklab, " + neg + " calc((1 - sign(var(" + Extent.VAR + "))) / 2 * 100%), " + full + "))";
+    }
+
+    /** {@code var(--…)} for one anchor at one state, falling back to the rest anchor where the rest binds it. */
+    private static String ref(DesignClass<?> dc, String property, State state, Extent extent, boolean fallsBackToRest) {
+        String own = variable(dc, property, state) + extent.suffix();
+        if (state == State.REST || !fallsBackToRest) return "var(" + own + ")";
+        return "var(" + own + ", var(" + variable(dc, property, State.REST) + extent.suffix() + "))";
     }
 
     /** The root sheet: the design's bindings as custom properties, per mode. */
@@ -105,8 +139,9 @@ public final class Sheets {
         var perMode = new EnumMap<Mode, Map<String, String>>(Mode.class);
         resolution.impls().forEach((dc, impl) -> {
             if (!(impl instanceof Impl.Bindings b)) return;
-            b.values().forEach((mode, states) -> states.forEach((state, props) -> props.forEach((p, v) ->
-                    perMode.computeIfAbsent(mode, m -> new TreeMap<>()).put(variable(dc, property(dc, p), state), v))));
+            for (Extent extent : Extent.values())
+                b.anchors(extent).forEach((mode, states) -> states.forEach((state, props) -> props.forEach((p, v) ->
+                        perMode.computeIfAbsent(mode, m -> new TreeMap<>()).put(variable(dc, property(dc, p), state) + extent.suffix(), v))));
         });
         var sb = new StringBuilder();
         perMode.forEach((mode, vars) -> {

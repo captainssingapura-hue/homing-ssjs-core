@@ -27,19 +27,29 @@ import java.util.regex.Pattern;
  * the target's properties and nests only on self and elements.</p>
  *
  * @param required   the design classes the closure wears
+ * @param scaled     those of them some class wears with an {@link Extent} — its element sets one — so the design must anchor them at zero and at −1
  * @param design     the design to fulfil them
  * @param extensions the products' fulfilments of their own classes
  */
-public record Deployment(Set<DesignClass<?>> required, Design design, List<DesignExtension> extensions) {
+public record Deployment(Set<DesignClass<?>> required, Set<DesignClass<?>> scaled, Design design, List<DesignExtension> extensions) {
 
     public Deployment {
         // in order — the order of resolution is the order the closure wore them; the sheet has its own (Sheets.PRECEDENCE)
         required = java.util.Collections.unmodifiableSet(new LinkedHashSet<>(required));
+        scaled = java.util.Collections.unmodifiableSet(new LinkedHashSet<>(scaled));
         extensions = List.copyOf(extensions);
     }
 
+    public Deployment(Set<DesignClass<?>> required, Design design, List<DesignExtension> extensions) {
+        this(required, Set.of(), design, extensions);
+    }
+
     public static Deployment of(Set<DesignClass<?>> required, Design design) {
-        return new Deployment(required, design, List.of());
+        return new Deployment(required, Set.of(), design, List.of());
+    }
+
+    public static Deployment of(Set<DesignClass<?>> required, Set<DesignClass<?>> scaled, Design design) {
+        return new Deployment(required, scaled, design, List.of());
     }
 
     /** The requirement set of a closure: every pair any class of any group in it wears — or reads, since a reference needs a binding to land on. */
@@ -53,9 +63,18 @@ public record Deployment(Set<DesignClass<?>> required, Design design, List<Desig
         return out;
     }
 
+    /** The pairs some class in the closure wears with an {@link Extent}: a subset of {@link #wornBy}, each of which the design must anchor at every extent. */
+    public static Set<DesignClass<?>> scaledBy(Collection<? extends CssGroup<?>> groups) {
+        var out = new LinkedHashSet<DesignClass<?>>();
+        for (CssGroup<?> g : groups)
+            for (CssClass<?> c : g.cssClasses())
+                for (Wearable w : c.extents()) if (w instanceof DesignClass<?> dc) out.add(dc);
+        return out;
+    }
+
     /** One thing that did not resolve, or resolved wrongly. */
     public record Finding(Kind kind, DesignClass<?> designClass, String detail) {
-        public enum Kind { MISSING, DOUBLE, CARRIER_MISMATCH, INVALID_BINDING, INVALID_BODY, DANGLING_REFERENCE, LITERAL_COLOUR }
+        public enum Kind { MISSING, DOUBLE, CARRIER_MISMATCH, INVALID_BINDING, INVALID_BODY, DANGLING_REFERENCE, LITERAL_COLOUR, MISSING_ANCHOR }
         @Override public String toString() { return kind + " " + (designClass == null ? "" : designClass) + (detail.isBlank() ? "" : " — " + detail); }
     }
 
@@ -82,6 +101,7 @@ public record Deployment(Set<DesignClass<?>> required, Design design, List<Desig
             Impl impl = own != null ? own : fromExtensions.isEmpty() ? null : fromExtensions.get(0).getValue();
             if (impl == null) { findings.add(new Finding(Finding.Kind.MISSING, pair, "no answer from " + design.slug())); continue; }
             validate(pair, impl, findings);
+            if (scaled.contains(pair)) checkAnchors(pair, impl, findings);
             impls.put(pair, impl);
         }
         checkReferences(impls, findings);
@@ -104,7 +124,34 @@ public record Deployment(Set<DesignClass<?>> required, Design design, List<Desig
     }
 
     private static void validateBindings(DesignClass<?> pair, Target target, Impl.Bindings b, List<Finding> findings) {
-        b.values().forEach((mode, states) -> states.forEach((state, props) -> {
+        for (Extent extent : Extent.values()) {
+            if (extent != Extent.FULL && !b.anchors(extent).isEmpty() && !pair.onColourPlane())
+                findings.add(new Finding(Finding.Kind.INVALID_BINDING, pair, "anchored at " + extent + " — an extent is a colour's; " + target.token() + " is not on the colour plane"));
+            validateSlots(pair, target, b.anchors(extent), findings);
+        }
+    }
+
+    /**
+     * A pair a class wears with an extent must be anchored at zero and at −1 for
+     * every property its word binds at rest — the design says what neutral looks
+     * like here and what the meaning turned the other way looks like; neither
+     * is defaulted, because neutral is not always transparent and not every
+     * meaning has an opposite.
+     */
+    private static void checkAnchors(DesignClass<?> pair, Impl impl, List<Finding> findings) {
+        if (!(impl instanceof Impl.Bindings b)) {
+            findings.add(new Finding(Finding.Kind.MISSING_ANCHOR, pair, "worn with an extent, but the word is " + (impl instanceof Impl.Body ? "a body" : "silence") + " — only bindings anchor"));
+            return;
+        }
+        var rest = b.values().getOrDefault(Mode.LIGHT, Map.of()).getOrDefault(State.REST, Map.of());
+        for (String key : rest.keySet())
+            for (Extent extent : List.of(Extent.ZERO, Extent.NEG))
+                if (!b.anchored(extent, key))
+                    findings.add(new Finding(Finding.Kind.MISSING_ANCHOR, pair, "worn with an extent, but " + Sheets.property(pair, key) + " has no anchor at " + extent.value()));
+    }
+
+    private static void validateSlots(DesignClass<?> pair, Target target, Map<Mode, Map<State, Map<String, String>>> values, List<Finding> findings) {
+        values.forEach((mode, states) -> states.forEach((state, props) -> {
             if (!target.states().contains(state))
                 findings.add(new Finding(Finding.Kind.INVALID_BINDING, pair, target.token() + " offers no slot for state " + state));
             props.keySet().forEach(p -> {
@@ -169,11 +216,12 @@ public record Deployment(Set<DesignClass<?>> required, Design design, List<Desig
         impls.forEach((dc, impl) -> {
             if (!(impl instanceof Impl.Bindings b)) return;
             var owned = dc.targetLeaf().properties();
-            b.values().forEach((mode, states) -> states.forEach((state, props) -> props.keySet().forEach(p -> {
-                // an invalid binding is already a finding; it emits nothing
-                if (p.equals(Impl.Bindings.SOLE) ? owned.size() != 1 : !owned.contains(p)) return;
-                emitted.add(Sheets.variable(dc, Sheets.property(dc, p), state));
-            })));
+            for (Extent extent : Extent.values())
+                b.anchors(extent).forEach((mode, states) -> states.forEach((state, props) -> props.keySet().forEach(p -> {
+                    // an invalid binding is already a finding; it emits nothing
+                    if (p.equals(Impl.Bindings.SOLE) ? owned.size() != 1 : !owned.contains(p)) return;
+                    emitted.add(Sheets.variable(dc, Sheets.property(dc, p), state) + extent.suffix());
+                })));
         });
         impls.forEach((dc, impl) -> {
             for (String text : textsOf(impl)) {
@@ -212,7 +260,11 @@ public record Deployment(Set<DesignClass<?>> required, Design design, List<Desig
 
     private static List<String> textsOf(Impl impl) {
         return switch (impl) {
-            case Impl.Bindings b -> { var out = new ArrayList<String>(); b.values().values().forEach(s -> s.values().forEach(p -> out.addAll(p.values()))); yield out; }
+            case Impl.Bindings b -> {
+                var out = new ArrayList<String>();
+                for (Extent extent : Extent.values()) b.anchors(extent).values().forEach(s -> s.values().forEach(p -> out.addAll(p.values())));
+                yield out;
+            }
             case Impl.Body body -> List.of(body.css());
             default -> List.of();
         };

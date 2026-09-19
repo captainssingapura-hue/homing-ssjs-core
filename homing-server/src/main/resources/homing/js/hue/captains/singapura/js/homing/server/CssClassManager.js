@@ -165,6 +165,19 @@ const CssClassManagerInstance = (() => {
         },
         setClass(el, ...classes)            { el.className = classes.flatMap(tokensOf).join(" "); },
         hasClass(el, c)                     { return el.classList.contains(resolve(c)); },
-        className(c)                        { return resolve(c); }
+        className(c)                        { return resolve(c); },
+        /**
+         * The element's EXTENT: how much of the meaning its coloured words
+         * carry, from -1 (the meaning turned the other way) through 0
+         * (neutral) to 1 (the word at full — the default, and what null
+         * restores). The one number a component may set on an element:
+         * a design's word for every pair the class names in extents()
+         * interpolates by it. Clamped; not inherited by the children.
+         */
+        extent(el, t) {
+            if (t == null) { el.style.removeProperty("--extent"); return; }
+            const n = Math.max(-1, Math.min(1, Number(t)));
+            el.style.setProperty("--extent", String(Number.isFinite(n) ? n : 1));
+        }
     };
 })();

@@ -37,14 +37,59 @@ public sealed interface Impl permits Impl.Css, Impl.Audio, Impl.Asset, Impl.Sile
      * slot falls back to. A property the target does not own, or a state its
      * template does not offer, is refused at resolution — not here, because
      * bindings are built without a class in hand.
+     *
+     * <p>{@code values} is the word at its full {@link Extent}; {@code anchors}
+     * holds the word at {@link Extent#ZERO} and {@link Extent#NEG}, in the same
+     * shape, for a colour word a design lets scale. A property anchored at
+     * both renders as an interpolation the element's extent drives; a
+     * property anchored at neither renders as it always has.</p>
      */
-    record Bindings(Map<Mode, Map<State, Map<String, String>>> values) implements Css {
-        public Bindings { values = deepCopy(values); }
+    record Bindings(Map<Mode, Map<State, Map<String, String>>> values,
+                    Map<Extent, Map<Mode, Map<State, Map<String, String>>>> anchors) implements Css {
+        public Bindings {
+            values = deepCopy(values);
+            var a = new EnumMap<Extent, Map<Mode, Map<State, Map<String, String>>>>(Extent.class);
+            anchors.forEach((e, v) -> { if (e != Extent.FULL) a.put(e, deepCopy(v)); });
+            anchors = a;
+        }
+
+        /** The word at full extent only. */
+        public Bindings(Map<Mode, Map<State, Map<String, String>>> values) { this(values, Map.of()); }
 
         /** One property (the target owns exactly one), at rest, in light. */
         public static Bindings of(String value) { return new Bindings(Map.of()).at(State.REST, value); }
 
         public static Bindings none() { return new Bindings(Map.of()); }
+
+        /** Anchor the target's single property at an extent, at a state, in light. */
+        public Bindings at(Extent extent, State state, String value) { return in(Mode.LIGHT, extent, state, SOLE, value); }
+
+        /** Anchor a named property at an extent, at a state, in light. */
+        public Bindings at(Extent extent, State state, String property, String value) { return in(Mode.LIGHT, extent, state, property, value); }
+
+        /** Anchor the target's single property at an extent, at a state, in a mode. */
+        public Bindings in(Mode mode, Extent extent, State state, String value) { return in(mode, extent, state, SOLE, value); }
+
+        public Bindings in(Mode mode, Extent extent, State state, String property, String value) {
+            if (extent == Extent.FULL) return in(mode, state, property, value);
+            var copy = new EnumMap<Extent, Map<Mode, Map<State, Map<String, String>>>>(Extent.class);
+            anchors.forEach((e, v) -> copy.put(e, deepCopy(v)));
+            copy.computeIfAbsent(extent, x -> new EnumMap<>(Mode.class))
+                .computeIfAbsent(mode, m -> new EnumMap<>(State.class))
+                .computeIfAbsent(state, s -> new LinkedHashMap<>())
+                .put(property, value);
+            return new Bindings(values, copy);
+        }
+
+        /** The anchors of one extent — empty for {@link Extent#FULL}, whose word is {@link #values()}. */
+        public Map<Mode, Map<State, Map<String, String>>> anchors(Extent extent) {
+            return extent == Extent.FULL ? values : anchors.getOrDefault(extent, Map.of());
+        }
+
+        /** Whether a property is anchored at an extent, at rest, in light — which is what lets it scale. */
+        public boolean anchored(Extent extent, String property) {
+            return anchors(extent).getOrDefault(Mode.LIGHT, Map.of()).getOrDefault(State.REST, Map.of()).containsKey(property);
+        }
 
         /** Bind the target's single property at a state, in light. */
         public Bindings at(State state, String value) { return in(Mode.LIGHT, state, Bindings.SOLE, value); }
@@ -60,7 +105,7 @@ public sealed interface Impl permits Impl.Css, Impl.Audio, Impl.Asset, Impl.Sile
             copy.computeIfAbsent(mode, m -> new EnumMap<>(State.class))
                 .computeIfAbsent(state, s -> new LinkedHashMap<>())
                 .put(property, value);
-            return new Bindings(copy);
+            return new Bindings(copy, anchors);
         }
 
         /** The marker for "the target's only property", resolved against the class at render. */

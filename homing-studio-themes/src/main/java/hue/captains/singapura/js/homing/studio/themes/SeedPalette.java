@@ -163,7 +163,8 @@ public record SeedPalette(DesignId id, String label, String inspiration, DesignI
         put.accept(one(of(Danger.class, Color.Ink.class), "#7F1D1D", "#FCA5A5"));
         put.accept(edge(of(Danger.class, Color.Edge.class), "rgba(220, 38, 38, 0.35) rgba(220, 38, 38, 0.35) rgba(220, 38, 38, 0.35) #DC2626"));
         put.accept(surface(of(Success.class, Color.Surface.class), "rgba(34, 139, 34, 0.12)"));
-        put.accept(one(of(Success.class, Color.Ink.class), "#1B5E20", "#86EFAC"));
+        // the one word that scales, for now: a good mark at 1, a bad one at -1 (danger's ink), an unremarkable one at 0 (the muted ink)
+        put.accept(scaled(of(Success.class, Color.Ink.class), "#7F1D1D", "#FCA5A5", l.muted, d.muted, "#1B5E20", "#86EFAC"));
         put.accept(edge(of(Success.class, Color.Edge.class), "rgba(34, 139, 34, 0.35)"));
         put.accept(surface(of(Warning.class, Color.Surface.class), "rgba(202, 138, 4, 0.12)"));
         put.accept(one(of(Warning.class, Color.Ink.class), "#713F12", "#FDE68A"));

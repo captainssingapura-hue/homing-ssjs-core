@@ -133,7 +133,7 @@ final class NeoBrutalismDesign {
             one(of(Danger.class, Color.Ink.class), INK),
             edge(of(Danger.class, Color.Edge.class), INK),
             surface(of(Success.class, Color.Surface.class), "#7CFF6B"),
-            one(of(Success.class, Color.Ink.class), INK),
+            scaled(of(Success.class, Color.Ink.class), RISO_RED, MUTED, INK),   // scales: a bad mark in riso red, an unremarkable one muted, a good one in ink
             edge(of(Success.class, Color.Edge.class), INK),
             surface(of(Warning.class, Color.Surface.class), SIGNAL),
             one(of(Warning.class, Color.Ink.class), INK),

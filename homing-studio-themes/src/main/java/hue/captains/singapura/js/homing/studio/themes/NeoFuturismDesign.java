@@ -171,7 +171,7 @@ final class NeoFuturismDesign {
             edge(of(Danger.class, Color.Edge.class), glow(MAGENTA, 45) + " " + glow(MAGENTA, 45) + " " + glow(MAGENTA, 45) + " " + MAGENTA,
                                                      glow(MAGENTA_D, 45) + " " + glow(MAGENTA_D, 45) + " " + glow(MAGENTA_D, 45) + " " + MAGENTA_D),
             surface(of(Success.class, Color.Surface.class), glow(MINT, 12), glow(MINT_D, 12)),
-            one(of(Success.class, Color.Ink.class), MINT, MINT_D),
+            scaled(of(Success.class, Color.Ink.class), MAGENTA, MAGENTA_D, MUTED, MUTED_D, MINT, MINT_D),   // scales: magenta at -1, muted at 0, mint at 1
             edge(of(Success.class, Color.Edge.class), glow(MINT, 45), glow(MINT_D, 45)),
             surface(of(Warning.class, Color.Surface.class), glow(AMBER, 12), glow(AMBER_D, 12)),
             one(of(Warning.class, Color.Ink.class), AMBER, AMBER_D),
