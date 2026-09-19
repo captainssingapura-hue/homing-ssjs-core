@@ -1,7 +1,8 @@
 // =============================================================================
 // CounterApp — a counter that starts where its params say. appMain(el, params)
 // receives the stamped params the server decoded through the app's codec:
-// { start: "7" } — strings, as they travel on the wire.
+// { start: "7" } — strings, as they travel on the wire. Its buttons are the
+// shared Button builder; the page owns the row they sit in.
 // =============================================================================
 
 const _owner = Object.freeze({ toString: () => "counter" });
@@ -35,26 +36,15 @@ function appMain(el, params) {
     count.setAttribute("aria-live", "polite");
     el.appendChild(count);
 
+    function draw() { count.textContent = String(value); }
+
+    // The three buttons are the shared Button builder: primary for the two
+    // that count, plain for the way back.
     var buttons = branch.createElement("buttons", "div");
     css.addClass(buttons, ga_buttons);
-    var minus = branch.createElement("minus", "button");
-    var plus  = branch.createElement("plus", "button");
-    var reset = branch.createElement("reset", "button");
-    minus.type = plus.type = reset.type = "button";
-    css.addClass(minus, ga_button);
-    css.addClass(plus, ga_button);
-    css.addClass(reset, ga_button);
-    minus.textContent = "−";
-    plus.textContent = "+";
-    reset.textContent = "reset";
-    buttons.appendChild(minus);
-    buttons.appendChild(plus);
-    buttons.appendChild(reset);
+    buttons.appendChild(Button(branch, "minus", { label: "−",     onClick: function () { value -= 1; draw(); } }));
+    buttons.appendChild(Button(branch, "plus",  { label: "+",     onClick: function () { value += 1; draw(); } }));
+    buttons.appendChild(Button(branch, "reset", { label: "reset", kind: "plain", onClick: function () { value = start; draw(); } }));
     el.appendChild(buttons);
-
-    function draw() { count.textContent = String(value); }
-    minus.addEventListener("click", function () { value -= 1; draw(); });
-    plus.addEventListener("click",  function () { value += 1; draw(); });
-    reset.addEventListener("click", function () { value = start; draw(); });
     draw();
 }

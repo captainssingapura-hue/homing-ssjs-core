@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+        <artifactId>homing.js</artifactId>
+        <version>LOCAL-SNAPSHOT</version>
+    </parent>
+    <artifactId>homing-components</artifactId>
+    <packaging>pom</packaging>
+    <description>
+        RFC 0066 Episode 3, layer 2 - the DOM-level components, one module
+        each, every one on layer 1 alone: core, core-js, the component base
+        and the design core. A component here owns its elements through a
+        branch it is handed, wears words and paints nothing, and has a crate.
+        Built fresh beside what the studio has, not cut from it; a demo
+        switches to a component here when it is good enough, and the studio's
+        own retires only then. The first is the elements: a button and a card.
+    </description>
+    <modules>
+        <module>homing-ui-elements</module>
+    </modules>
+</project>

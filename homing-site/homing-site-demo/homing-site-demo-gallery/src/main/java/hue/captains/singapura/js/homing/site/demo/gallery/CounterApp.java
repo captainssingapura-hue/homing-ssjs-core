@@ -8,6 +8,7 @@ import hue.captains.singapura.js.homing.core.ParamCodec;
 import hue.captains.singapura.js.homing.core.QueryString;
 import hue.captains.singapura.js.homing.core.js.DomOpsPartyModule;
 import hue.captains.singapura.js.homing.core.js.domOpsParty;
+import hue.captains.singapura.js.homing.ui.elements.Elements;
 
 import java.util.List;
 import java.util.Map;
@@ -46,13 +47,13 @@ public record CounterApp() implements AppModule<CounterApp.Params, CounterApp> {
     public ImportsFor<CounterApp> imports() {
         return ImportsFor.<CounterApp>builder()
                 .add(new ModuleImports<>(List.of(new domOpsParty()), DomOpsPartyModule.INSTANCE))
+                .add(new ModuleImports<>(List.of(new Elements.Button()), Elements.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new GalleryStyles.ga_kicker(),
                         new GalleryStyles.ga_title(),
                         new GalleryStyles.ga_lede(),
                         new GalleryStyles.ga_count(),
-                        new GalleryStyles.ga_buttons(),
-                        new GalleryStyles.ga_button()
+                        new GalleryStyles.ga_buttons()
                 ), GalleryStyles.INSTANCE))
                 .build();
     }

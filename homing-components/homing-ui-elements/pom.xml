@@ -5,15 +5,16 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>io.github.captainssingapura-hue.homing.js</groupId>
-        <artifactId>homing-site-demo</artifactId>
+        <artifactId>homing-components</artifactId>
         <version>LOCAL-SNAPSHOT</version>
     </parent>
-    <artifactId>homing-site-demo-gallery</artifactId>
+    <artifactId>homing-ui-elements</artifactId>
     <description>
-        Gallery - two JS apps served as pages under the standard MPA, with
-        the seven studio designs to switch between. The site's own router
-        binds one page's trail by hand: no catalogue anywhere. Run with
-        GalleryServer; listens on 8096.
+        The elements: a button and a card, as builders a page calls with the
+        branch that will own them. Each wears design words and holds only
+        layout; a button asks the base for css and nothing else, a card for
+        css and href. The smallest component there is, and the proof that
+        the base is enough.
     </description>
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
@@ -23,22 +24,33 @@
     <dependencies>
         <dependency>
             <groupId>io.github.captainssingapura-hue.homing.js</groupId>
-            <artifactId>homing-site-mpa</artifactId>
+            <artifactId>homing-core</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
             <groupId>io.github.captainssingapura-hue.homing.js</groupId>
-            <artifactId>homing-ui-elements</artifactId>
+            <artifactId>homing-core-js</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
             <groupId>io.github.captainssingapura-hue.homing.js</groupId>
-            <artifactId>homing-studio-themes</artifactId>
+            <artifactId>homing-component-base</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-design-core</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-conformance-rules</artifactId>
+            <version>${project.parent.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

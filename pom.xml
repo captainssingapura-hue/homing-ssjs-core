@@ -25,6 +25,9 @@
              Site and the host that serves one, plus the nested demo modules
              that prove the contract on the base alone. -->
         <module>homing-site</module>
+        <!-- RFC 0066 Episode 3, layer 2 — the DOM-level components, one module
+             each, on layer 1 alone; built fresh beside the studio's own. -->
+        <module>homing-components</module>
         <!-- The Meta-Function ontology — four typed interfaces naming the
              objects involved in code-generated codecs (ObjectDefinition,
              TransformationFunctions, FunctionsCodeGen, DefinitionCodeGen).

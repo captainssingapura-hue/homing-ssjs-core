@@ -6,7 +6,7 @@ import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
 import hue.captains.singapura.js.homing.core.js.DomOpsPartyModule;
 import hue.captains.singapura.js.homing.core.js.domOpsParty;
-import hue.captains.singapura.js.homing.server.HrefManager;
+import hue.captains.singapura.js.homing.ui.elements.Elements;
 
 import java.util.List;
 
@@ -17,7 +17,8 @@ import java.util.List;
  *
  * <p>A plain {@code AppModule}: {@code appMain(el)} and nothing else. It
  * becomes a page under the chrome by being handed to {@code StandardMpa.page},
- * not by extending anything.</p>
+ * not by extending anything. Its cards are the shared {@code Card} from
+ * homing-ui-elements; the page owns only the grid they sit in.</p>
  */
 public record WelcomeApp() implements AppModule<AppModule._None, WelcomeApp> {
 
@@ -32,16 +33,12 @@ public record WelcomeApp() implements AppModule<AppModule._None, WelcomeApp> {
     public ImportsFor<WelcomeApp> imports() {
         return ImportsFor.<WelcomeApp>builder()
                 .add(new ModuleImports<>(List.of(new domOpsParty()), DomOpsPartyModule.INSTANCE))
-                .add(new ModuleImports<>(List.of(new HrefManager.HrefManagerInstance()), HrefManager.INSTANCE))
+                .add(new ModuleImports<>(List.of(new Elements.Card()), Elements.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new GalleryStyles.ga_kicker(),
                         new GalleryStyles.ga_title(),
                         new GalleryStyles.ga_lede(),
-                        new GalleryStyles.ga_cards(),
-                        new GalleryStyles.ga_card(),
-                        new GalleryStyles.ga_card_title(),
-                        new GalleryStyles.ga_card_text(),
-                        new GalleryStyles.ga_link()
+                        new GalleryStyles.ga_cards()
                 ), GalleryStyles.INSTANCE))
                 .build();
     }
