@@ -10,27 +10,31 @@ import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
  * one function,
  *
  * <pre>
- *   construct(branch, params, ask) → { root, setActive?, tell?, dispose? }
+ *   construct(branch, params) → { root, setActive?, dispose?, … }
  * </pre>
  *
  * <p>{@code branch} is the widget's own, handed unactivated; the widget
  * activates it with its owner and mints everything it makes on it. {@code
- * params} are its typed params, decoded — everything the widget IS, data.
- * {@code ask} is the one function the host gave (RFC 0050 E2's channel): a
- * NOTIFICATION handed over and never waited on, a QUESTION waited on. What
- * a widget may send is the host's protocol, declared once as records; a
- * host with nothing to offer passes nothing, and a widget that asks nothing
- * never calls it.</p>
+ * params} are its typed params, decoded — everything the widget IS.</p>
  *
  * <p>The controller is a plain object. {@code root} is the element the host
  * attaches, and the only one the host ever touches: the host puts it in the
  * DOM to show the widget and takes it out to hide it, and the widget stays
  * constructed in between — one host may hold many constructed widgets and
  * have one of them mounted. {@code setActive(bool)}, if present, is told
- * each time that happens. {@code tell(message)}, if present, is the host's
- * way in — the channel's other direction, an answer nobody asked for.
- * {@code dispose()}, if present, is called before the widget's branch is
- * dissolved, for what dissolving cannot release: a subscription, a timer.</p>
+ * each time that happens. {@code dispose()}, if present, is called before
+ * the widget's branch is dissolved, for what dissolving cannot release: a
+ * subscription, a timer. Whatever else the controller carries is the
+ * widget's own surface, for a holder that knows what it holds.</p>
+ *
+ * <p>There is no channel and no context in the contract. A widget talks to
+ * the world in one of two ways: it JOINS a party — the steward, a workspace
+ * party — and writes and listens there, which is how a preference widget
+ * writes a preference and how everyone else learns of it; or it lets its
+ * holder OPERATE it directly, through the controller, which is how a dialog
+ * drives the widget it holds. A host that needs to reach a widget it holds
+ * has the controller; a widget that needs to reach beyond its holder has the
+ * party. Neither needs the contract to carry a bag or a function.</p>
  *
  * <p>This is the shape the workspace has hosted widgets by since RFC 0025
  * ({@code WorkspaceWidget.construct}), without that class's generated body:
@@ -40,9 +44,7 @@ import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
  * {@link WidgetSlot}. The studio's {@code Widget} and the workspace's
  * {@code WorkspaceWidget} are untouched and keep serving their hosts until
  * each swaps. How params travel — in an address, in a store — is a host's
- * concern and arrives with the host that has it. There is no context
- * object: what a widget needs from where it is mounted, it asks for or is
- * told, and both are messages.</p>
+ * concern and arrives with the host that has it.</p>
  *
  * @param <P> the widget's params record
  * @param <W> self

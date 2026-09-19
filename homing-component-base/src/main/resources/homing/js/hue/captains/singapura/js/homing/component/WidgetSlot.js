@@ -7,24 +7,23 @@
 //                child of it, named by its key, handed unactivated
 //       host     the element the shown widget's root is attached to
 //
-//   slot.show(key, construct, params, ask) → controller
-//       the first show of a key calls construct(branch, params, ask) and keeps
+//   slot.show(key, construct, params) → controller
+//       the first show of a key calls construct(branch, params) and keeps
 //       what comes back; every show attaches the kept root to the host, after
 //       taking the shown one out. setActive(false) is told to the one going
 //       out, setActive(true) to the one coming in, when they have it.
 //   slot.hide()                    takes the shown widget out; keeps it
 //   slot.current()                 the key shown, or null
 //   slot.has(key), slot.keys()
-//   slot.tell(key, message)        the host's way in: the kept widget's tell(message),
-//                                  when it has one; a widget not kept is not told
+//   slot.controller(key)           the kept controller, for a holder that operates
+//                                  its widget directly; null when not kept
 //   slot.dispose(key)              hides it if shown; dispose() if it has one;
 //                                  then its branch dissolves and the key is gone
 //   slot.disposeAll()
 //
-// The contract a widget meets is the base's Widget: construct(branch, params,
-// ask) returns a plain object with root, and optionally setActive(bool),
-// tell(message) and dispose(). ask is the one function the host gave and the
-// slot passes through untouched; there is no context object. The root is
+// The contract a widget meets is the base's Widget: construct(branch, params)
+// returns a plain object with root, optionally setActive(bool) and dispose(),
+// and whatever surface the widget offers a holder that knows it. The root is
 // the only element the slot ever touches; a widget's branch is the only thing
 // the slot ever dissolves. Attaching and detaching is how a widget is shown
 // and hidden — not display, not visibility — so a hidden widget can neither
@@ -59,13 +58,13 @@ function createWidgetSlot(opts) {
         shown = null;
     }
 
-    function show(key, construct, params, ask) {
+    function show(key, construct, params) {
         if (typeof key !== "string" || !key) throw new Error("[WidgetSlot] show: key must be a non-empty string");
         var entry = kept.get(key);
         if (!entry) {
             if (typeof construct !== "function") throw new Error("[WidgetSlot] show: no widget kept as '" + key + "' and no construct given");
             var own = branch.createBranch(key);
-            var controller = validate(key, construct(own, params || {}, ask));
+            var controller = validate(key, construct(own, params || {}));
             entry = { branch: own, controller: controller };
             kept.set(key, entry);
         }
@@ -92,13 +91,6 @@ function createWidgetSlot(opts) {
         Array.from(kept.keys()).forEach(dispose);
     }
 
-    function tellWidget(key, message) {
-        var entry = kept.get(key);
-        if (!entry || typeof entry.controller.tell !== "function") return false;
-        entry.controller.tell(message);
-        return true;
-    }
-
     return Object.freeze({
         show: show,
         hide: hide,
@@ -106,7 +98,6 @@ function createWidgetSlot(opts) {
         has: function (key) { return kept.has(key); },
         keys: function () { return Array.from(kept.keys()); },
         controller: function (key) { var e = kept.get(key); return e ? e.controller : null; },
-        tell: tellWidget,
         dispose: dispose,
         disposeAll: disposeAll
     });

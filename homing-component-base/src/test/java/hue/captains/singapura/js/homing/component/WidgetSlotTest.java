@@ -36,18 +36,15 @@ class WidgetSlotTest extends JsModuleTestBase {
         var branch = fakeBranch("slot");
         var built = {};
         function widget(key) {
-            return function (b, params, ask) {
+            return function (b, params) {
                 built[key] = (built[key] || 0) + 1;
                 var root = { tag: key, parentNode: null };
-                if (ask) ask({ kind: "hello", from: key });
                 return { root: root,
                          setActive: function (on) { log.push(key + ":" + (on ? "on" : "off")); },
-                         tell: function (m) { log.push(key + ":told:" + m.kind); },
-                         dispose: function () { log.push(key + ":disposed"); } };
+                         setValue:  function (v)  { log.push(key + ":set:" + v); },   // the widget's own surface
+                         dispose:   function ()   { log.push(key + ":disposed"); } };
             };
         }
-        var asked = [];
-        function ask(m) { asked.push(m.from + ":" + m.kind); }
         var slot = createWidgetSlot({ branch: branch, host: host });
         """;
 
@@ -104,12 +101,11 @@ class WidgetSlotTest extends JsModuleTestBase {
     }
 
     @Test
-    void theChannelRunsBothWays() {
-        eval("slot.show('a', widget('a'), {}, ask)");
-        assertEquals("a:hello", eval("asked.join(' ')").asString(), "the widget asked through the one function the host gave");
-        assertTrue(eval("slot.tell('a', { kind: 'changed' })").asBoolean());
-        assertFalse(eval("slot.tell('nobody', { kind: 'changed' })").asBoolean());
-        assertEquals("a:on a:told:changed", log());
+    void theHolderOperatesAKeptWidgetDirectly() {
+        eval("slot.show('a', widget('a')); slot.hide()");
+        eval("slot.controller('a').setValue(7)");
+        assertTrue(eval("slot.controller('nobody') === null").asBoolean());
+        assertEquals("a:on a:off a:set:7", log(), "hidden or shown, the controller is the holder's to drive");
     }
 
     @Test

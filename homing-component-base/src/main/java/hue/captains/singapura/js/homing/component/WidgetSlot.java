@@ -13,8 +13,8 @@ import java.util.List;
  *
  * <pre>
  *   createWidgetSlot({ branch, host }) → slot
- *   slot.show(key, construct, params, ask)   constructs on first show, then shows what it kept
- *   slot.tell(key, message)                  the host's way in, when the widget has a tell
+ *   slot.show(key, construct, params)        constructs on first show, then shows what it kept
+ *   slot.controller(key)                     the kept controller, for a holder that operates it
  *   slot.hide()                              takes the shown widget out of the DOM, keeps it
  *   slot.current()                           the key shown, or null
  *   slot.has(key), slot.keys()
@@ -22,10 +22,9 @@ import java.util.List;
  * </pre>
  *
  * <p>Headless: the slot mints nothing and wears nothing. It hands each
- * widget a branch of its own under the slot's and the host's {@code ask},
- * attaches and detaches the root the widget returned, tells {@code
- * setActive} on the way in and out, passes a message to a widget's {@code
- * tell}, and dissolves on disposal. That is the whole of hosting a widget, and it
+ * widget a branch of its own under the slot's, attaches and detaches the
+ * root the widget returned, tells {@code setActive} on the way in and out,
+ * keeps the controller for the holder, and dissolves on disposal. That is the whole of hosting a widget, and it
  * is the same for a dialog pane, a single-widget workspace and a tab.</p>
  */
 public record WidgetSlot() implements EsModule<WidgetSlot> {
