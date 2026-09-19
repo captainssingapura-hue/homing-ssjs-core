@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.site.catalogue;
 
+import hue.captains.singapura.js.homing.site.Placed;
+import hue.captains.singapura.js.homing.site.Trail;
 import hue.captains.singapura.js.homing.server.HtmlPageContent;
 import hue.captains.singapura.js.homing.site.Html;
 import hue.captains.singapura.js.homing.site.Query;

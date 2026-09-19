@@ -1,4 +1,4 @@
-package hue.captains.singapura.js.homing.site.catalogue;
+package hue.captains.singapura.js.homing.site;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,7 +9,7 @@ import java.util.Objects;
  * address it is served at. The last crumb is the page itself.
  *
  * <p>A trail is read off the path, never looked up: the router that resolved
- * the address already walked every vertex on it, and the trail is that walk
+ * the address already walked every step of it, and the trail is that walk
  * written down. So a trail cannot disagree with the address bar, and a page
  * reached some other way — a flat address, a link from outside — has
  * {@link #NONE}, which is the honest answer to "where am I" when the address

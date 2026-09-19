@@ -2,7 +2,7 @@ package hue.captains.singapura.js.homing.site.demo.library;
 
 import hue.captains.singapura.js.homing.server.HtmlPageContent;
 import hue.captains.singapura.js.homing.site.Html;
-import hue.captains.singapura.js.homing.site.catalogue.Trail;
+import hue.captains.singapura.js.homing.site.Trail;
 
 /** The demo's page shell and its crumb bar, for the pages that are not listings. */
 final class Shell {

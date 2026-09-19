@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.site.catalogue;
 
+import hue.captains.singapura.js.homing.site.Placed;
+
 /**
  * How a vertex is shown: the page for a catalogue, given the router that
  * knows its children and their addresses.

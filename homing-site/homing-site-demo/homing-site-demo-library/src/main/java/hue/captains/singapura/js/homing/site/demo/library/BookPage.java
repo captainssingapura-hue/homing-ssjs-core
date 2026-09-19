@@ -3,8 +3,8 @@ package hue.captains.singapura.js.homing.site.demo.library;
 import hue.captains.singapura.js.homing.server.HtmlPageContent;
 import hue.captains.singapura.js.homing.site.Html;
 import hue.captains.singapura.js.homing.site.Query;
-import hue.captains.singapura.js.homing.site.catalogue.Placed;
-import hue.captains.singapura.js.homing.site.catalogue.Trail;
+import hue.captains.singapura.js.homing.site.Placed;
+import hue.captains.singapura.js.homing.site.Trail;
 
 /**
  * A book: a {@link Placed} page, so the router tells it where it is and it
