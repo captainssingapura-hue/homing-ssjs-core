@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+        <artifactId>homing-site</artifactId>
+        <version>LOCAL-SNAPSHOT</version>
+    </parent>
+    <artifactId>homing-site-catalogue</artifactId>
+    <description>
+        The default router: a catalogue tree, and the Router that serves it at
+        a mount. A catalogue is a typed vertex whose sub-catalogues and leaves
+        it declares; a leaf is a slug over a Navigable; a path is the slugs
+        from the root, and each vertex and each navigable has at most one.
+        Rebuilt fresh on homing-site-base, with the studio's catalogue family
+        as the shape to keep and its doc, plan and JS-host ties left behind.
+        Depends on homing-site-base and homing-rigid-tree (for NodeName).
+    </description>
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-site-base</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-rigid-tree</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

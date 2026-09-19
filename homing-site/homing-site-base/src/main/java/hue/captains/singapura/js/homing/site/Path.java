@@ -80,6 +80,25 @@ public record Path(List<String> segments) {
         return new Path(out);
     }
 
+    /** This path with {@code other}'s segments on the end. */
+    public Path plus(Path other) {
+        if (other.segments.isEmpty()) return this;
+        var out = new ArrayList<>(segments);
+        out.addAll(other.segments);
+        return new Path(out);
+    }
+
+    /**
+     * The rest of this path below {@code prefix}, or empty when this path does
+     * not start with it. {@code /cat/a/b} under {@code /cat} is {@code /a/b};
+     * anything under {@link #ROOT} is itself.
+     */
+    public Optional<Path> under(Path prefix) {
+        int n = prefix.segments.size();
+        if (n > segments.size() || !segments.subList(0, n).equals(prefix.segments)) return Optional.empty();
+        return Optional.of(n == 0 ? this : new Path(segments.subList(n, segments.size())));
+    }
+
     /** The address form: a leading slash, each segment percent-encoded. */
     @Override
     public String toString() {

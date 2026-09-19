@@ -23,6 +23,7 @@
     </description>
     <modules>
         <module>homing-site-base</module>
+        <module>homing-site-catalogue</module>
         <module>homing-site-demo</module>
     </modules>
 </project>
