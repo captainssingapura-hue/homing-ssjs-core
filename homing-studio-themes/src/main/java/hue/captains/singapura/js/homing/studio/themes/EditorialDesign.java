@@ -180,7 +180,7 @@ final class EditorialDesign {
             inset(of(Container.Card.class, Size.Inset.class), "18px", "20px", 1.3),
             gap(of(Container.Card.class, Size.Gap.class), "8px", 1.3),
             measure(of(Container.Card.class, Size.Extent.class), "280px", 1.3),
-            proportion(of(Container.Card.class, Size.Proportion.class), "3 / 2"),
+            proportion(of(Container.Card.class, Size.Proportion.class), 2),
             inset(of(Inline.class, Size.Inset.class), "2px", "8px", 1.3),
             one(of(Inline.class, Shape.Corner.class), "2px"),
             rule(of(Inline.class, Shape.Rule.class), "1px", "solid"),

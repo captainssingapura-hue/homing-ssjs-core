@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.studio.themes;
 
 import hue.captains.singapura.js.homing.design.DesignClass;
 import hue.captains.singapura.js.homing.design.Extent;
+import hue.captains.singapura.js.homing.design.Growth;
 import hue.captains.singapura.js.homing.design.Impl;
 import hue.captains.singapura.js.homing.design.Mode;
 import hue.captains.singapura.js.homing.design.State;
@@ -207,9 +208,9 @@ final class Bind {
     static Map.Entry<DesignClass<?>, Impl> gap(DesignClass<?> cls, String gap, double ratio) {
         return Map.entry(cls, Impl.Bindings.of(gap).grows(ratio));
     }
-    /** A Size.Proportion: width to height, {@code "3 / 2"}; a proportion does not grow. */
-    static Map.Entry<DesignClass<?>, Impl> proportion(DesignClass<?> cls, String ratio) {
-        return Map.entry(cls, Impl.Bindings.of(ratio).grows(1));
+    /** A Size.Proportion: square at aspect 0, {@code widest} to one at +1, one to {@code widest} at −1 — the box's aspect is the element's number. */
+    static Map.Entry<DesignClass<?>, Impl> proportion(DesignClass<?> cls, double widest) {
+        return Map.entry(cls, Impl.Bindings.of("1").grows(widest, Growth.ASPECT));
     }
     /** A Size.Extent that is the box's own measure inline, growing by {@code ratio}; the block follows its proportion. */
     static Map.Entry<DesignClass<?>, Impl> measure(DesignClass<?> cls, String inlineSize, double ratio) {

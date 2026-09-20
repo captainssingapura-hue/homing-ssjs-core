@@ -152,6 +152,16 @@ public interface CssClass<C extends CssGroup<C>> extends Exportable._Constant<C>
     default List<? extends Wearable> sizes() { return List.of(); }
 
     /**
+     * The pairs this class wears with an ASPECT: its element sets one —
+     * {@code css.aspect(el, a)}, a number from −1 to 1, 0 square — and the
+     * design's proportion for each pair is the design's widest to the power
+     * of it: +1 the widest the design allows, −1 the tallest. A subset of
+     * {@link #wears()}; the same claim on the design as {@link #sizes()},
+     * on the aspect axis. Default: none.
+     */
+    default List<? extends Wearable> aspects() { return List.of(); }
+
+    /**
      * The group this class belongs to, from its declaration: a {@code CssClass}
      * is a record nested in its group, and the group's {@code INSTANCE} is the
      * one object of that class. Used to derive group dependencies from class

@@ -194,6 +194,18 @@ const CssClassManagerInstance = (() => {
             if (s == null) { el.style.removeProperty("--size"); return; }
             const n = Math.max(-1, Math.min(1, Number(s)));
             el.style.setProperty("--size", String(Number.isFinite(n) ? n : 0));
+        },
+        /**
+         * The element's ASPECT: how wide a box whose measure is its own, from
+         * -1 (the tallest the design allows) through 0 (square - the default,
+         * and what null restores) to 1 (the widest). The design's proportion
+         * for the pairs the class names in aspects() is its widest to the
+         * power of it. Clamped; not inherited.
+         */
+        aspect(el, a) {
+            if (a == null) { el.style.removeProperty("--aspect"); return; }
+            const n = Math.max(-1, Math.min(1, Number(a)));
+            el.style.setProperty("--aspect", String(Number.isFinite(n) ? n : 0));
         }
     };
 })();

@@ -91,14 +91,15 @@ class ComponentsConformanceTest {
         assertEquals(6, groups.size(), "one style group per crate");
         var worn = Deployment.wornBy(groups);
         var scaled = Deployment.scaledBy(groups);
-        var sized = Deployment.sizedBy(groups);
+        var grown = Deployment.grownBy(groups);
         assertTrue(worn.size() > 50, "the six groups wear many distinct pairs; found " + worn.size());
         assertTrue(scaled.size() >= 1, "the splitter's lit handle is worn with an extent");
-        assertTrue(sized.size() >= 1, "the button is worn with a size");
+        assertTrue(grown.get(hue.captains.singapura.js.homing.design.Growth.SIZE).size() >= 1, "the button is worn with a size");
+        assertTrue(grown.get(hue.captains.singapura.js.homing.design.Growth.ASPECT).size() >= 1, "the card is worn with an aspect");
         List<Design> designs = ComponentsConformance.designs();
         assertTrue(designs.size() >= 7, "the seven designs, each in the palettes that fit it; found " + designs.size());
         for (Design d : designs) {
-            var r = Deployment.of(worn, scaled, sized, d).resolve();
+            var r = Deployment.of(worn, scaled, grown, d).resolve();
             assertEquals(List.of(), r.findings(), () -> d.slug() + ": " + r.findings());
         }
     }

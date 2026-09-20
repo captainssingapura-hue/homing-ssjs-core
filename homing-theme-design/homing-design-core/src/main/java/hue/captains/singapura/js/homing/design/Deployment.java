@@ -34,38 +34,40 @@ import java.util.regex.Pattern;
  *
  * @param required   the design classes the closure wears
  * @param scaled     those of them some class wears with an {@link Extent} — its element sets one — so the design must anchor them at zero and at −1
- * @param sized      those of them some class wears with a {@link Growth size} — its element sets one — so the design must give every property a ratio
+ * @param grown      those of them some class wears with a number on a {@link Growth} axis — its element sets one — so the design must give every property a ratio on that axis
  * @param design     the design to fulfil them
  * @param extensions the products' fulfilments of their own classes
  */
-public record Deployment(Set<DesignClass<?>> required, Set<DesignClass<?>> scaled, Set<DesignClass<?>> sized, Design design, List<DesignExtension> extensions) {
+public record Deployment(Set<DesignClass<?>> required, Set<DesignClass<?>> scaled, Map<Growth, Set<DesignClass<?>>> grown, Design design, List<DesignExtension> extensions) {
 
     public Deployment {
         // in order — the order of resolution is the order the closure wore them; the sheet has its own (Sheets.PRECEDENCE)
         required = java.util.Collections.unmodifiableSet(new LinkedHashSet<>(required));
         scaled = java.util.Collections.unmodifiableSet(new LinkedHashSet<>(scaled));
-        sized = java.util.Collections.unmodifiableSet(new LinkedHashSet<>(sized));
+        var g = new java.util.EnumMap<Growth, Set<DesignClass<?>>>(Growth.class);
+        grown.forEach((axis, pairs) -> g.put(axis, java.util.Collections.unmodifiableSet(new LinkedHashSet<>(pairs))));
+        grown = java.util.Collections.unmodifiableMap(g);
         extensions = List.copyOf(extensions);
     }
 
     public Deployment(Set<DesignClass<?>> required, Set<DesignClass<?>> scaled, Design design, List<DesignExtension> extensions) {
-        this(required, scaled, Set.of(), design, extensions);
+        this(required, scaled, Map.of(), design, extensions);
     }
 
     public Deployment(Set<DesignClass<?>> required, Design design, List<DesignExtension> extensions) {
-        this(required, Set.of(), Set.of(), design, extensions);
+        this(required, Set.of(), Map.of(), design, extensions);
     }
 
     public static Deployment of(Set<DesignClass<?>> required, Design design) {
-        return new Deployment(required, Set.of(), Set.of(), design, List.of());
+        return new Deployment(required, Set.of(), Map.of(), design, List.of());
     }
 
     public static Deployment of(Set<DesignClass<?>> required, Set<DesignClass<?>> scaled, Design design) {
-        return new Deployment(required, scaled, Set.of(), design, List.of());
+        return new Deployment(required, scaled, Map.of(), design, List.of());
     }
 
-    public static Deployment of(Set<DesignClass<?>> required, Set<DesignClass<?>> scaled, Set<DesignClass<?>> sized, Design design) {
-        return new Deployment(required, scaled, sized, design, List.of());
+    public static Deployment of(Set<DesignClass<?>> required, Set<DesignClass<?>> scaled, Map<Growth, Set<DesignClass<?>>> grown, Design design) {
+        return new Deployment(required, scaled, grown, design, List.of());
     }
 
     /** The requirement set of a closure: every pair any class of any group in it wears — or reads, since a reference needs a binding to land on. */
@@ -79,12 +81,15 @@ public record Deployment(Set<DesignClass<?>> required, Set<DesignClass<?>> scale
         return out;
     }
 
-    /** The pairs some class in the closure wears with a {@link Growth size}: a subset of {@link #wornBy}, each of whose properties the design must give a ratio. */
-    public static Set<DesignClass<?>> sizedBy(Collection<? extends CssGroup<?>> groups) {
-        var out = new LinkedHashSet<DesignClass<?>>();
+    /** The pairs some class in the closure wears with a number on each {@link Growth} axis — {@code sizes()}, {@code aspects()}: subsets of {@link #wornBy}, each of whose properties the design must give a ratio on that axis. */
+    public static Map<Growth, Set<DesignClass<?>>> grownBy(Collection<? extends CssGroup<?>> groups) {
+        var out = new java.util.EnumMap<Growth, Set<DesignClass<?>>>(Growth.class);
+        for (Growth axis : Growth.values()) out.put(axis, new LinkedHashSet<>());
         for (CssGroup<?> g : groups)
-            for (CssClass<?> c : g.cssClasses())
-                for (Wearable w : c.sizes()) if (w instanceof DesignClass<?> dc) out.add(dc);
+            for (CssClass<?> c : g.cssClasses()) {
+                for (Wearable w : c.sizes()) if (w instanceof DesignClass<?> dc) out.get(Growth.SIZE).add(dc);
+                for (Wearable w : c.aspects()) if (w instanceof DesignClass<?> dc) out.get(Growth.ASPECT).add(dc);
+            }
         return out;
     }
 
@@ -139,7 +144,8 @@ public record Deployment(Set<DesignClass<?>> required, Set<DesignClass<?>> scale
             }
             validate(pair, impl, findings);
             if (scaled.contains(pair)) checkAnchors(pair, impl, findings);
-            if (sized.contains(pair)) checkRatios(pair, impl, findings);
+            for (Growth axis : Growth.values())
+                if (grown.getOrDefault(axis, Set.of()).contains(pair)) checkRatios(pair, impl, axis, findings);
             impls.put(pair, impl);
         }
         checkReferences(impls, findings);
@@ -183,10 +189,10 @@ public record Deployment(Set<DesignClass<?>> required, Set<DesignClass<?>> scale
      * border-style stays beside a border-width that grows.
      */
     private static void checkRatiosAreOnLengths(DesignClass<?> pair, Impl.Bindings b, List<Finding> findings) {
-        if (b.ratios().isEmpty()) return;
+        if (b.ratios().values().stream().allMatch(Map::isEmpty)) return;
         if (pair.onColourPlane()) { findings.add(new Finding(Finding.Kind.INVALID_BINDING, pair, "a ratio is a length's; " + pair.targetLeaf().token() + " is on the colour plane")); return; }
         var rest = b.values().getOrDefault(Mode.LIGHT, Map.of()).getOrDefault(State.REST, Map.of());
-        b.ratios().forEach((key, ratio) -> {
+        b.ratios().forEach((axis, byProperty) -> byProperty.forEach((key, ratio) -> {
             if (ratio <= 0) findings.add(new Finding(Finding.Kind.INVALID_BINDING, pair, Sheets.property(pair, key) + " grows by " + ratio + " — a ratio is positive"));
             if (!rest.containsKey(key)) { findings.add(new Finding(Finding.Kind.INVALID_BINDING, pair, Sheets.property(pair, key) + " has a ratio but no value at rest")); return; }
             if (ratio == 1.0) return;   // stays: renders plainly, so a keyword may hold — border-style: solid, ratio 1
@@ -195,23 +201,25 @@ public record Deployment(Set<DesignClass<?>> required, Set<DesignClass<?>> scale
                 if (v != null && !LENGTH.matcher(v.strip()).matches())
                     findings.add(new Finding(Finding.Kind.INVALID_BINDING, pair, Sheets.property(pair, key) + " grows, but its value" + (state == State.REST ? "" : " on " + state) + (mode == Mode.LIGHT ? "" : " in " + mode) + " is not one length: '" + v + "'"));
             }));
-        });
+        }));
     }
 
     /**
-     * A pair a class wears with a size must have a ratio for every property
-     * its word binds at rest — 1 to say the property stays — so a design
-     * decides what grows and what holds, and nothing is left to a default.
+     * A pair a class wears with a number on an axis must have a ratio on
+     * that axis for every property its word binds at rest — 1 to say the
+     * property stays — so a design decides what grows and what holds, and
+     * nothing is left to a default.
      */
-    private static void checkRatios(DesignClass<?> pair, Impl impl, List<Finding> findings) {
+    private static void checkRatios(DesignClass<?> pair, Impl impl, Growth axis, List<Finding> findings) {
+        String worn = "worn with " + (axis == Growth.SIZE ? "a size" : "an aspect");
         if (!(impl instanceof Impl.Bindings b)) {
-            findings.add(new Finding(Finding.Kind.MISSING_RATIO, pair, "worn with a size, but the word is " + (impl instanceof Impl.Body ? "a body" : "silence") + " — only bindings grow"));
+            findings.add(new Finding(Finding.Kind.MISSING_RATIO, pair, worn + ", but the word is " + (impl instanceof Impl.Body ? "a body" : "silence") + " — only bindings grow"));
             return;
         }
         var rest = b.values().getOrDefault(Mode.LIGHT, Map.of()).getOrDefault(State.REST, Map.of());
         for (String key : rest.keySet())
-            if (b.ratio(key) == null)
-                findings.add(new Finding(Finding.Kind.MISSING_RATIO, pair, "worn with a size, but " + Sheets.property(pair, key) + " has no ratio — 1 says it stays"));
+            if (b.ratio(key, axis) == null)
+                findings.add(new Finding(Finding.Kind.MISSING_RATIO, pair, worn + ", but " + Sheets.property(pair, key) + " has no ratio on " + axis.var() + " — 1 says it stays"));
     }
 
     /**

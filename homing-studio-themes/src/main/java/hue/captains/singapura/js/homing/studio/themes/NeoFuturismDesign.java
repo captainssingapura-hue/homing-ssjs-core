@@ -284,7 +284,7 @@ final class NeoFuturismDesign {
             inset(of(Container.Card.class, Size.Inset.class), "16px", "18px", 1.25),
             gap(of(Container.Card.class, Size.Gap.class), "8px", 1.25),
             measure(of(Container.Card.class, Size.Extent.class), "320px", 1.25),
-            proportion(of(Container.Card.class, Size.Proportion.class), "16 / 9"),
+            proportion(of(Container.Card.class, Size.Proportion.class), 2.4),
             inset(of(Inline.class, Size.Inset.class), "2px", "8px", 1.25),
             one(of(Inline.class, Shape.Corner.class), "1px"),
             rule(of(Inline.class, Shape.Rule.class), "1px", "solid"),

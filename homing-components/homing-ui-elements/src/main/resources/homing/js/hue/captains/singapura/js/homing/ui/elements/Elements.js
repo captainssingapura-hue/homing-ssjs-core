@@ -38,15 +38,17 @@
 //   Card — a BRANCH component, made through its builder: it takes a sub-branch
 //   the caller made for it and mints its own tree on it. One card per branch.
 //     var card = new CardBuilder().title("Grid").badge("new").text("…").link(to, label?)
-//                                 .size(0).onClick(fn?).build(branch.createBranch("card"));
+//                                 .size(0).aspect(0).onClick(fn?).build(branch.createBranch("card"));
 //       .root            the element the caller appends
 //       .body            the bounded region inside; a caller with more than text mints there
 //       .size(s)         the size, live, on the card and its parts
+//       .aspect(a)       the aspect, live: −1 the tallest the design allows, 0 square, 1 the widest
 //       .title(text?)    read, or set
 //       .dispose()       dissolves the branch
-//   The card is a hard frame: its inline size is its host's, its block size
-//   follows the design's proportion, and the body scrolls beyond what the head
-//   and the foot leave. It lifts, presses and rings as the design has an
+//   The card is a hard frame: its inline size is the design's, grown by its
+//   size; its block size follows its aspect — the design's widest to the power
+//   of it, square at 0; a host may only cap it; and the body scrolls beyond
+//   what the head and the foot leave. It lifts, presses and rings as the design has an
 //   interactive thing do; with onClick it is a button to the keyboard too
 //   (role, tabindex, Enter and Space); without, nothing happens on a press.
 //
@@ -151,6 +153,7 @@ class Card {
         branch.activate(_cardOwner);
         this.branch = branch;
         this._size = 0;
+        this._aspect = 0;
         var card = branch.createElement("card", "article");
         css.addClass(card, el_card);
 
@@ -206,6 +209,15 @@ class Card {
         this._parts = [card, head].concat(badge ? [badge] : [], text ? [text] : [], a ? [a] : []);
         this._parts.push(title);
         this.size(p.size == null ? 0 : p.size);
+        this.aspect(p.aspect == null ? 0 : p.aspect);
+    }
+
+    /** The aspect: on the card alone, since only its frame has a proportion. */
+    aspect(a) {
+        var n = Math.max(-1, Math.min(1, Number(a)));
+        this._aspect = Number.isFinite(n) ? n : 0;
+        css.aspect(this.root, this._aspect === 0 ? null : this._aspect);
+        return this;
     }
 
     /** The size, on the card and on every part it minted: the size is an element's, not inherited, so the card carries it to its own. */
@@ -227,12 +239,13 @@ class Card {
 }
 
 class CardBuilder {
-    constructor() { this._props = { size: 0 }; }
+    constructor() { this._props = { size: 0, aspect: 0 }; }
     title(text)      { this._props.title = text; return this; }
     badge(text)      { this._props.badge = text; return this; }
     text(text)       { this._props.text = text; return this; }
     link(to, label)  { this._props.link = { to: to, label: label }; return this; }
     size(s)          { this._props.size = s; return this; }
+    aspect(a)        { this._props.aspect = a; return this; }
     onClick(fn)      { this._props.onClick = fn; return this; }
     build(branch) {
         if (!branch) throw new Error("[CardBuilder] build wants the sub-branch the caller made for the card");

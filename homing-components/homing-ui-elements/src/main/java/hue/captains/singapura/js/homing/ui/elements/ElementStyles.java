@@ -144,8 +144,8 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
     /**
      * The card: {@code Container.Card.Base} — a raised box whose measure is its
      * own: the design's inline size, grown by the element's size, its block
-     * size following the design's proportion; a host may cap it, never
-     * stretch it. What is inside fits it: the head and the foot are fixed, the
+     * size following its aspect — square at 0, the design's widest at +1, its
+     * tallest at −1; a host may cap it, never stretch it. What is inside fits it: the head and the foot are fixed, the
      * body takes the rest and scrolls. Hover, press and focus as the design
      * gives an interactive thing; whether a press does anything is the caller's,
      * and only a card with an action is focusable ({@link el_card_action}).
@@ -157,7 +157,8 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
                            of(Raised.class, Color.Surface.class), of(Raised.class, Color.Edge.class), of(Raised.class, Effect.Filter.class),
                            of(Interactive.class, Motion.Transform.class), of(Interactive.class, Shape.Shadow.class), of(Interactive.class, Motion.Ease.class));
         }
-        @Override public List<? extends Wearable> sizes() { return List.of(of(Container.Card.Base.class, Size.Inset.class), of(Container.Card.Base.class, Size.Gap.class), of(Container.Card.Base.class, Size.Extent.class), of(Container.Card.Base.class, Size.Proportion.class)); }
+        @Override public List<? extends Wearable> sizes() { return List.of(of(Container.Card.Base.class, Size.Inset.class), of(Container.Card.Base.class, Size.Gap.class), of(Container.Card.Base.class, Size.Extent.class)); }
+        @Override public List<? extends Wearable> aspects() { return List.of(of(Container.Card.Base.class, Size.Proportion.class)); }
         @Override public String body() { return """
             display: flex;
             flex-direction: column;

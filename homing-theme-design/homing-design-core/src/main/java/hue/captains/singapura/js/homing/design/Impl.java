@@ -44,21 +44,24 @@ public sealed interface Impl permits Impl.Css, Impl.Audio, Impl.Asset, Impl.Sile
      * both renders as an interpolation the element's extent drives; a
      * property anchored at neither renders as it always has.</p>
      *
-     * <p>{@code ratios} holds, per property, how much a length grows per
-     * unit of the element's {@link Growth size}: a property with a ratio
-     * renders as {@code calc(value * pow(ratio, var(--size)))}; one without
-     * renders as it always has. A ratio belongs to a length, never to a
-     * colour, and applies at every state alike.</p>
+     * <p>{@code ratios} holds, per {@link Growth axis} and per property, how
+     * much a length grows per unit of the element's number on that axis: a
+     * property with a ratio renders as {@code calc(value * pow(ratio,
+     * var(--size)))}, one on two axes as the product; one without renders as
+     * it always has. A ratio belongs to a length, never to a colour, and
+     * applies at every state alike.</p>
      */
     record Bindings(Map<Mode, Map<State, Map<String, String>>> values,
                     Map<Extent, Map<Mode, Map<State, Map<String, String>>>> anchors,
-                    Map<String, Double> ratios) implements Css {
+                    Map<Growth, Map<String, Double>> ratios) implements Css {
         public Bindings {
             values = deepCopy(values);
             var a = new EnumMap<Extent, Map<Mode, Map<State, Map<String, String>>>>(Extent.class);
             anchors.forEach((e, v) -> { if (e != Extent.FULL) a.put(e, deepCopy(v)); });
             anchors = a;
-            ratios = new LinkedHashMap<>(ratios);
+            var r = new EnumMap<Growth, Map<String, Double>>(Growth.class);
+            ratios.forEach((axis, m) -> r.put(axis, new LinkedHashMap<>(m)));
+            ratios = r;
         }
 
         /** Anchored or not, nothing grows. */
@@ -68,17 +71,30 @@ public sealed interface Impl permits Impl.Css, Impl.Audio, Impl.Asset, Impl.Sile
         public Bindings(Map<Mode, Map<State, Map<String, String>>> values) { this(values, Map.of(), Map.of()); }
 
         /** Let a named property grow by {@code ratio} per unit of size; 1 says it stays. */
-        public Bindings grows(String property, double ratio) {
-            var copy = new LinkedHashMap<>(ratios);
-            copy.put(property, ratio);
+        public Bindings grows(String property, double ratio) { return grows(property, ratio, Growth.SIZE); }
+
+        /** Let the target's single property grow by {@code ratio} per unit of size. */
+        public Bindings grows(double ratio) { return grows(SOLE, ratio, Growth.SIZE); }
+
+        /** Let a named property grow by {@code ratio} per unit of the element's number on {@code axis}; 1 says it stays. */
+        public Bindings grows(String property, double ratio, Growth axis) {
+            var copy = new EnumMap<Growth, Map<String, Double>>(Growth.class);
+            ratios.forEach((ax, m) -> copy.put(ax, new LinkedHashMap<>(m)));
+            copy.computeIfAbsent(axis, ax -> new LinkedHashMap<>()).put(property, ratio);
             return new Bindings(values, anchors, copy);
         }
 
-        /** Let the target's single property grow by {@code ratio} per unit of size. */
-        public Bindings grows(double ratio) { return grows(SOLE, ratio); }
+        /** Let the target's single property grow by {@code ratio} per unit of the element's number on {@code axis}. */
+        public Bindings grows(double ratio, Growth axis) { return grows(SOLE, ratio, axis); }
 
-        /** The ratio a property grows by, or null where it does not grow. */
-        public Double ratio(String property) { return ratios.get(property); }
+        /** The ratio a property grows by on the size axis, or null where it does not grow. */
+        public Double ratio(String property) { return ratio(property, Growth.SIZE); }
+
+        /** The ratio a property grows by on an axis, or null where it does not grow along it. */
+        public Double ratio(String property, Growth axis) { return ratios.getOrDefault(axis, Map.of()).get(property); }
+
+        /** The ratios on one axis, by property. */
+        public Map<String, Double> ratios(Growth axis) { return ratios.getOrDefault(axis, Map.of()); }
 
         /** One property (the target owns exactly one), at rest, in light. */
         public static Bindings of(String value) { return new Bindings(Map.of()).at(State.REST, value); }

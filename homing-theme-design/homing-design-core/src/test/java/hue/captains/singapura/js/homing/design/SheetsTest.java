@@ -112,6 +112,7 @@ class SheetsTest {
         var scale = DesignClass.of(Text.Label.class, Target.Type.Scale.class);
         var corner = DesignClass.of(Box.Control.class, Target.Shape.Corner.class);
         var rule = DesignClass.of(Box.Control.class, Target.Shape.Rule.class);
+        var proportion = DesignClass.of(Box.Container.Card.class, Target.Size.Proportion.class);
         record Grown() implements Design {
             @Override public Impl impl(DesignClass<?> pair) {
                 if (pair.semantic() == Box.Control.Button.class && pair.target() == Target.Size.Inset.class)
@@ -122,6 +123,8 @@ class SheetsTest {
                     return Impl.Bindings.none().at(State.REST, "border-width", "1px").at(State.REST, "border-style", "solid").at(State.HOVER, "border-width", "2px").grows("border-width", 1.5).grows("border-style", 1);
                 if (pair.semantic() == Box.Control.class && pair.target() == Target.Shape.Corner.class)
                     return Impl.Bindings.of("4px");
+                if (pair.semantic() == Box.Container.Card.class && pair.target() == Target.Size.Proportion.class)   // square at 0, 2:1 at +1, 1:2 at −1
+                    return Impl.Bindings.of("1").grows(2, Growth.ASPECT);
                 return null;
             }
             @Override public DesignId id() { return new DesignId("grown"); }
@@ -129,7 +132,7 @@ class SheetsTest {
             @Override public String group() { return "t"; }
             @Override public String inspiration() { return ""; }
         }
-        var r = Deployment.of(Set.of(inset, scale, corner, rule), Set.of(), Set.of(inset, scale, rule), new Grown()).resolve();
+        var r = Deployment.of(Set.of(inset, scale, corner, rule, proportion), Set.of(), Map.of(Growth.SIZE, Set.of(inset, scale, rule), Growth.ASPECT, Set.of(proportion)), new Grown()).resolve();
         assertEquals(List.of(), r.findings(), r.findings().toString());
         String sheet = Sheets.targetSheets(r).get("size-inset");
         assertTrue(sheet.contains("@property --size { syntax: \"<number>\"; inherits: false; initial-value: 0; }\n"), sheet);
@@ -144,9 +147,17 @@ class SheetsTest {
         String root = Sheets.rootSheet(r);
         assertTrue(root.contains("    --control-button-size-inset-padding-block-ratio: 1.3;\n") && root.contains("    --label-type-scale-font-size-ratio: 1.25;\n"), root);
         assertFalse(root.contains("line-height-ratio"), "a ratio of 1 is not carried: " + root);
+        // the aspect axis: its own number, its own registration, its own ratio
+        String prop = Sheets.targetSheets(r).get("size-proportion");
+        assertTrue(prop.contains("@property --aspect { syntax: \"<number>\"; inherits: false; initial-value: 0; }\n") && !prop.contains("@property --size"), prop);
+        assertTrue(prop.contains("    aspect-ratio: calc(var(--container-card-size-proportion) * pow(var(--container-card-size-proportion-ratio-aspect), var(--aspect)));\n"), prop);
+        assertTrue(root.contains("    --container-card-size-proportion-ratio-aspect: 2;\n"), root);
+        // worn with an aspect, but the word has no ratio on that axis: a finding
+        var noAspect = Deployment.of(Set.of(inset), Set.of(), Map.of(Growth.ASPECT, Set.of(inset)), new Grown()).resolve();
+        assertEquals(2, noAspect.findings().stream().filter(f -> f.kind() == Deployment.Finding.Kind.MISSING_RATIO && f.detail().contains("--aspect")).count(), noAspect.findings().toString());
 
         // worn with a size, but the word has no ratio: a finding per property
-        var bare = Deployment.of(Set.of(corner), Set.of(), Set.of(corner), new Grown()).resolve();
+        var bare = Deployment.of(Set.of(corner), Set.of(), Map.of(Growth.SIZE, Set.of(corner)), new Grown()).resolve();
         assertEquals(1, bare.findings().stream().filter(f -> f.kind() == Deployment.Finding.Kind.MISSING_RATIO).count(), bare.findings().toString());
 
         // a ratio on a colour, or on a value that is not one length: refused
