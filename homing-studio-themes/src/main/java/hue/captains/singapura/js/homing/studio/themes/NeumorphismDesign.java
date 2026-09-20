@@ -151,6 +151,9 @@ final class NeumorphismDesign {
             measure(of(Container.Card.class, Size.Extent.class), "300px", 1.3),
             proportion(of(Container.Card.class, Size.Proportion.class), 1.8),
             inset(of(Inline.class, Size.Inset.class), "3px", "10px", 1.3),
+            // a pane: its air is its head's; the widget fills the rest
+            inset(of(Container.Pane.class, Size.Inset.class), "6px", "14px", 1.3),
+            gap(of(Container.Pane.class, Size.Gap.class), "8px", 1.3),
             one(of(Inline.class, Shape.Corner.class), "8px"),
             rule(of(Inline.class, Shape.Rule.class), "0", "none"),
 

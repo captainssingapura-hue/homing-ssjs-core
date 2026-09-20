@@ -249,6 +249,9 @@ final class NeoBrutalismDesign {
             measure(of(Container.Card.class, Size.Extent.class), "280px", 1.5),
             proportion(of(Container.Card.class, Size.Proportion.class), 1.6),
             inset(of(Inline.class, Size.Inset.class), "2px", "8px", 1.5),
+            // a pane: its air is its head's; the widget fills the rest
+            inset(of(Container.Pane.class, Size.Inset.class), "6px", "12px", 1.5),
+            gap(of(Container.Pane.class, Size.Gap.class), "10px", 1.5),
             one(of(Inline.class, Shape.Corner.class), "0"),
             rule(of(Inline.class, Shape.Rule.class), "2px", "solid"),
 

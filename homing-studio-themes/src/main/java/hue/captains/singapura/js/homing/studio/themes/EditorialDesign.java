@@ -182,6 +182,10 @@ final class EditorialDesign {
             measure(of(Container.Card.class, Size.Extent.class), "280px", 1.3),
             proportion(of(Container.Card.class, Size.Proportion.class), 2),
             inset(of(Inline.class, Size.Inset.class), "2px", "8px", 1.3),
+            // a pane: its air is its head's; the widget fills the rest
+            inset(of(Container.Pane.class, Size.Inset.class), "5px", "12px", 1.3),
+            gap(of(Container.Pane.class, Size.Gap.class), "8px", 1.3),
+            one(of(Dragging.class, Affordance.Cursor.class), "grab"),   // a thing that can be dragged by the hand on it
             one(of(Inline.class, Shape.Corner.class), "2px"),
             rule(of(Inline.class, Shape.Rule.class), "1px", "solid"),
 

@@ -34,6 +34,11 @@ public interface Box extends Semantic {
             /** The regular card: a heading, a bounded body, a footer; hover, press and focus as the design gives them; what a press does is the caller's. */
             public record Base() implements Box {}
         }
+        /** A pane: a container that holds a widget by the base's contract — a tab's, a split's leaf, a floating one. Its air is its chrome's; the widget fills the rest. */
+        public record Pane() implements Box {
+            /** The floating pane: raised above the page, moved by its head, sized by its user; the active one is the ring drawn now. */
+            public record Floating() implements Box {}
+        }
     }
 
     record Section() implements Box {}

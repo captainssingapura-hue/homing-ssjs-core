@@ -286,6 +286,9 @@ final class NeoFuturismDesign {
             measure(of(Container.Card.class, Size.Extent.class), "320px", 1.25),
             proportion(of(Container.Card.class, Size.Proportion.class), 2.4),
             inset(of(Inline.class, Size.Inset.class), "2px", "8px", 1.25),
+            // a pane: its air is its head's; the widget fills the rest
+            inset(of(Container.Pane.class, Size.Inset.class), "4px", "10px", 1.25),
+            gap(of(Container.Pane.class, Size.Gap.class), "8px", 1.25),
             one(of(Inline.class, Shape.Corner.class), "1px"),
             rule(of(Inline.class, Shape.Rule.class), "1px", "solid"),
 
