@@ -2,9 +2,11 @@ package hue.captains.singapura.js.homing.conformance.studio;
 
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.Crate;
+import hue.captains.singapura.js.homing.server.ThemeRegistry;
 import hue.captains.singapura.js.homing.studio.base.DefaultFixtures;
 import hue.captains.singapura.js.homing.studio.base.Fixtures;
 import hue.captains.singapura.js.homing.studio.base.Umbrella;
+import hue.captains.singapura.js.homing.studio.themes.StudioWorkspaceThemes;
 import hue.captains.singapura.js.homing.workspace.shell.GenericWorkspace;
 import hue.captains.singapura.js.homing.workspace.shell.WorkspaceGroupApp;
 import hue.captains.singapura.js.homing.workspace.shell.WorkspaceGroupRegistry;
@@ -34,8 +36,10 @@ import java.util.Objects;
  *   <li>{@link #harnessGetActions()} adds {@code GET /crate-tree}, the
  *       Navigator's feed over the top-level crates' modules.</li>
  * </ul>
- * Brand, themes, and the catalogue harness come from the defaults (brand from
- * the studio's {@code standaloneBrand()} via {@link #umbrella()}).
+ * Brand and the catalogue harness come from the defaults (brand from the
+ * studio's {@code standaloneBrand()} via {@link #umbrella()}); the themes are
+ * the studio bundle's ({@link StudioWorkspaceThemes}), as the starter installs
+ * them — a conformance studio wears what the studios it grades wear.
  *
  * @param umbrella the studio identity (landing + brand)
  * @param topLevel the owned crates the studio browses
@@ -71,6 +75,12 @@ public record ConformanceStudioFixtures(Umbrella<ConformanceStudio> umbrella, Li
         actions.put("/crate-conformance", new CrateConformanceGetAction(topLevel));
         actions.put("/conformance-report", new ConformanceReportGetAction());
         return Map.copyOf(actions);
+    }
+
+    /** RFC 0066 — the studio bundle's themes, so the report is read under any of them. */
+    @Override
+    public ThemeRegistry themeRegistry() {
+        return StudioWorkspaceThemes.INSTANCE;
     }
 
     @Override
