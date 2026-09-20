@@ -10,12 +10,13 @@ import java.util.List;
 
 /**
  * {@code TabStrip}, the row of chips over a pane. {@code new TabStrip(branch,
- * {onAdd?, onDrop})} builds the strip — chips with a label and a cross, the tail
- * with the add button and the count, the drop mark — and the drag that
- * reorders: a drop lands at the count of the other chips whose middle is
- * left of the pointer, never before the pinned ones. It holds no tab
- * state; the pane arranges, selects and counts, and turns a drop into a
- * move.
+ * {onAdd?, onDrop, onDragOut?})} builds the strip — chips with a label and a
+ * cross, the tail with the add button and the count, the mark for a tab
+ * offered from outside — and the drag that is a browser's: the chip pressed
+ * goes where the hand goes, the others stepping aside live, and lands on the
+ * slot it is nearest, never before the pinned ones; pulled off the strip by
+ * more than two thirds it leaves, with the grab. It holds no tab state; the
+ * pane arranges, selects and counts, and turns a drop into a move.
  */
 public record TabStripModule() implements DomModule<TabStripModule> {
 
@@ -29,6 +30,7 @@ public record TabStripModule() implements DomModule<TabStripModule> {
         return ImportsFor.<TabStripModule>builder()
                 .add(new ModuleImports<>(List.of(
                         new PaneStyles.mtp_strip(),
+                        new PaneStyles.mtp_strip_dragging(),
                         new PaneStyles.mtp_strip_tail(),
                         new PaneStyles.mtp_add(),
                         new PaneStyles.mtp_add_off(),
@@ -37,8 +39,10 @@ public record TabStripModule() implements DomModule<TabStripModule> {
                         new PaneStyles.mtp_chip(),
                         new PaneStyles.mtp_chip_label(),
                         new PaneStyles.mtp_chip_close(),
-                        new PaneStyles.mtp_chip_dragging()
+                        new PaneStyles.mtp_chip_dragging(),
+                        new PaneStyles.mtp_chip_shifted()
                 ), PaneStyles.INSTANCE))
+                .add(new ModuleImports<>(List.of(new TabDragModule.TabDrag()), TabDragModule.INSTANCE))
                 .build();
     }
 

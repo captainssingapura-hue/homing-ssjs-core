@@ -10,11 +10,14 @@
 //
 //   docking.desk                 the desk; open a floating tab on it as usual
 //   docking.addDock(pane)        a multi-tab pane becomes a dock; give the pane
-//                                onDragOut: (tab, e) => docking.undock(pane, tab, e)
+//                                onDragOut: (tab, e, grab) => docking.undock(pane, tab, e, grab)
 //   docking.removeDock(pane)
-//   docking.undock(dock, tab, e) the tab leaves the dock, NOT disposed, and floats
+//   docking.undock(dock, tab, e, grab?)
+//                                the tab leaves the dock, NOT disposed, and floats
 //                                under the hand that pulled it — the pane opens
-//                                where the pointer is and takes the drag over.
+//                                where the pointer is, its head under the hand at
+//                                the grab, the press's offset within the chip, when
+//                                given — and takes the drag over.
 //                                Undocked(tabId, slotId), after the desk's Opened
 //   docking.dock(paneId, dock, index?)
 //                                the floating tab leaves the desk (Released) and
@@ -57,12 +60,13 @@ class Docking {
     docks() { return this._docks.slice(); }
 
     /** A chip pulled off a dock's strip: the tab floats under the same hand. */
-    undock(dock, tab, e) {
+    undock(dock, tab, e, grab) {
         var t = dock.detachTab(tab.id);
         var r = Docking._rect(this.desk.root);
+        var gx = grab && grab.x >= 0 ? grab.x : _GRIP_X, gy = grab && grab.y >= 0 ? grab.y : _GRIP_Y;
         var pane = this.desk.open({
             id: t.id, title: t.title == null ? t.id : t.title, widget: t.widget, closable: t.closable !== false,
-            x: e.clientX - r.left - _GRIP_X, y: e.clientY - r.top - _GRIP_Y, w: _FLOAT_W, h: _FLOAT_H
+            x: e.clientX - r.left - gx, y: e.clientY - r.top - gy, w: _FLOAT_W, h: _FLOAT_H
         });
         this._fire(DockEvents.Undocked(t.id, dock.slotId));
         pane.grab(e.pointerId, e.clientX, e.clientY);

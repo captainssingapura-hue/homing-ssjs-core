@@ -62,7 +62,7 @@ class DockingTest extends JsModuleTestBase {
                     size: function (e, s) { if (s == null) e.style.removeProperty("--size"); else e.style.setProperty("--size", String(s)); } };
         var fp_desk = "fp_desk", fp_desk_layer = "fp_desk_layer", fp_frame = "fp_frame", fp_hoverable = "fp_hoverable", fp_held = "fp_held", fp_active = "fp_active",
             fp_head = "fp_head", fp_head_held = "fp_head_held", fp_title = "fp_title", fp_close = "fp_close", fp_body = "fp_body", fp_grip = "fp_grip";
-        var mtp_pane = "mtp_pane", mtp_strip = "mtp_strip", mtp_chip = "mtp_chip", mtp_chip_label = "mtp_chip_label", mtp_chip_dragging = "mtp_chip_dragging",
+        var mtp_pane = "mtp_pane", mtp_strip = "mtp_strip", mtp_strip_dragging = "mtp_strip_dragging", mtp_chip = "mtp_chip", mtp_chip_label = "mtp_chip_label", mtp_chip_dragging = "mtp_chip_dragging", mtp_chip_shifted = "mtp_chip_shifted",
             mtp_chip_close = "mtp_chip_close", mtp_drop_mark = "mtp_drop_mark", mtp_strip_tail = "mtp_strip_tail", mtp_add = "mtp_add", mtp_add_off = "mtp_add_off",
             mtp_pill = "mtp_pill", mtp_content = "mtp_content", mtp_tab_content = "mtp_tab_content", mtp_tab_content_hidden = "mtp_tab_content_hidden",
             mtp_empty = "mtp_empty", mtp_dock_target = "mtp_dock_target";
@@ -89,7 +89,7 @@ class DockingTest extends JsModuleTestBase {
         docking.desk.root.clientWidth = 800; docking.desk.root.clientHeight = 600;
         function dock(slotId, rect) {
             var h = el("div");
-            var d = new MultiTabPane(page.createBranch(slotId), { host: h, slotId: slotId, onEvent: sink, onDragOut: function (tab, e) { docking.undock(d, tab, e); } });
+            var d = new MultiTabPane(page.createBranch(slotId), { host: h, slotId: slotId, onEvent: sink, onDragOut: function (tab, e, grab) { docking.undock(d, tab, e, grab); } });
             d.el.rect = rect;
             d.el.children[0].rect = { left: rect.left, top: rect.top, right: rect.right, bottom: rect.top + 30, width: rect.right - rect.left, height: 30 };
             docking.addDock(d);
@@ -112,6 +112,7 @@ class DockingTest extends JsModuleTestBase {
         loadModule(P + "floating/FloatingPaneModule.js");
         loadModule(P + "floating/DeskModule.js");
         loadModule(P + "panes/PaneEventsModule.js");
+        loadModule(P + "panes/TabDragModule.js");
         loadModule(P + "panes/TabStripModule.js");
         loadModule(P + "panes/MultiTabPaneModule.js");
         loadModule(P + "docking/DockEventsModule.js");
@@ -124,25 +125,34 @@ class DockingTest extends JsModuleTestBase {
 
     @Test
     void aDragAlongTheStripReorders_andUpOrSidewaysNeverDetaches() {
-        // press on Two, wander far to the right, far above the strip, then back over One: still a reorder, and it lands there
-        eval("var c = chipOf(A, 'Two'); c.fire('pointerdown', { button: 0, pointerId: 7, clientX: 100, clientY: 15, target: c });"
-           + "c.fire('pointermove', { clientX: 106, clientY: 15 }); c.fire('pointermove', { clientX: 900, clientY: 15 }); c.fire('pointermove', { clientX: 100, clientY: -200 });"
-           + "c.fire('pointermove', { clientX: 50, clientY: 40 }); c.fire('pointerup', { clientX: 50, clientY: 40 });");
+        // press on Two (its slot 120..200, One's 40..120), 20px in; wander far to the right, far above the strip, then back over One's slot
+        eval("var c = chipOf(A, 'Two'); c.fire('pointerdown', { button: 0, pointerId: 7, clientX: 140, clientY: 15, target: c });"
+           + "c.fire('pointermove', { clientX: 146, clientY: 15 }); c.fire('pointermove', { clientX: 900, clientY: 15 });");
+        assertEquals("0px,0px", eval("c.prop('--mtp-drag-x') + ',' + c.prop('--mtp-drag-y')").asString(), "far right: kept within the row, on its own slot");
+        assertTrue(eval("c.has('mtp_chip_dragging') && A.el.children[0].has('mtp_strip_dragging')").asBoolean());
+        eval("c.fire('pointermove', { clientX: 110, clientY: -200 });");
+        assertEquals("-30px,0px", eval("c.prop('--mtp-drag-x') + ',' + c.prop('--mtp-drag-y')").asString(), "far above: never above its slot; part way to One's slot, still nearest its own");
+        assertFalse(eval("chipOf(A, 'One').has('mtp_chip_shifted')").asBoolean());
+        eval("c.fire('pointermove', { clientX: 50, clientY: 20 });");
+        assertEquals("-80px,5px", eval("c.prop('--mtp-drag-x') + ',' + c.prop('--mtp-drag-y')").asString(), "over One's slot, kept at the row's start; a little down, a sixth off, still on");
+        assertEquals("80px", eval("chipOf(A, 'One').prop('--mtp-shift-x')").asString(), "One steps aside, one pitch right, live");
+        eval("c.fire('pointerup', { clientX: 50, clientY: 20 });");
         assertEquals("active:a:t2 capture:div TabMoved", log(), "the press activates, then a move and nothing else: no float opened, nothing undocked");
         assertEquals("t2,t1", eval("A.tabs().join(',')").asString(), "the drag reordered the dock");
+        assertTrue(eval("!c.has('mtp_chip_dragging') && !A.el.children[0].has('mtp_strip_dragging') && c.prop('--mtp-drag-x') == null && !chipOf(A, 'One').has('mtp_chip_shifted') && chipOf(A, 'One').prop('--mtp-shift-x') == null").asBoolean(), "let go, nothing of the drag remains");
         assertEquals("0", eval("docking.desk.panes().length + ''").asString());
     }
 
     @Test
     void aChipPulledOffTheStripFloatsUnderTheSameHand() {
-        // press on the chip, drag 6px along the strip (a reorder), then 60px below it — more than the strip's own height: out
-        eval("var c = chipOf(A, 'Two'); c.fire('pointerdown', { button: 0, pointerId: 7, clientX: 100, clientY: 15, target: c });"
-           + "c.fire('pointermove', { clientX: 106, clientY: 15 }); c.fire('pointermove', { clientX: 120, clientY: 90 });");
+        // press on the chip 20px in and 15 down, drag 6px along the strip (a reorder), then 75px down: the chip wholly off the strip, more than two thirds — out
+        eval("var c = chipOf(A, 'Two'); c.fire('pointerdown', { button: 0, pointerId: 7, clientX: 140, clientY: 15, target: c });"
+           + "c.fire('pointermove', { clientX: 146, clientY: 15 }); c.fire('pointermove', { clientX: 160, clientY: 90 });");
         assertEquals("active:a:t2 capture:div active:a:t1 opened:t2 raised:t2 undocked:t2<a capture:header", log(), "the press activates it; detached, the dock activates the neighbour it left; the desk opens it, then the undock is said; the hand is taken over");
         assertEquals("t1", eval("A.tabs().join(',')").asString(), "the dock lost the tab");
         assertEquals("w-w2", eval("docking.desk.pane('t2').body.children[0].tag").asString(), "the widget travelled, root and all");
         assertTrue(eval("docking.desk.pane('t2').root.has('fp_held')").asBoolean(), "the float is in the hand");
-        assertEquals("60,76", eval("var b = docking.desk.pane('t2').bounds(); b.x + ',' + b.y").asString(), "the head sits under the pointer");
+        assertEquals("140,75", eval("var b = docking.desk.pane('t2').bounds(); b.x + ',' + b.y").asString(), "the frame sits under the hand at the grab: the press's 20 and 15 within the chip");
     }
 
     @Test

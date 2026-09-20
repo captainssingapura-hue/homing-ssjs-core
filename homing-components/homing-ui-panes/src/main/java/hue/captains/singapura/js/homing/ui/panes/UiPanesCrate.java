@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * The panes' crate: the multi-tab pane, its strip, its events and their styles, on the runtime
  * ({@code ServerCrate}, the base's crate under its old name) and the design
- * targets. The pane and the strip are primitives, owning the DOM on their branch; the events are pure logic.
+ * targets. The pane and the strip are primitives, owning the DOM on their branch; the events and the drag's arithmetic are pure logic.
  */
 public final class UiPanesCrate implements Crate {
 
@@ -30,6 +30,7 @@ public final class UiPanesCrate implements Crate {
                 CrateEntry.of(MultiTabPaneModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
                 CrateEntry.of(TabStripModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
                 CrateEntry.of(PaneEventsModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
+                CrateEntry.of(TabDragModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(PaneStyles.INSTANCE));
     }
 }

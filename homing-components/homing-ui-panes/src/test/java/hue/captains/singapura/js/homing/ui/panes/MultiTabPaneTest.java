@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class MultiTabPaneTest extends JsModuleTestBase {
 
     private static final String EVENTS = "/homing/js/hue/captains/singapura/js/homing/ui/panes/PaneEventsModule.js";
+    private static final String DRAG   = "/homing/js/hue/captains/singapura/js/homing/ui/panes/TabDragModule.js";
     private static final String STRIP  = "/homing/js/hue/captains/singapura/js/homing/ui/panes/TabStripModule.js";
     private static final String MODULE = "/homing/js/hue/captains/singapura/js/homing/ui/panes/MultiTabPaneModule.js";
 
@@ -62,7 +63,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
                     hasClass: function (e, c) { return e.classList.contains(c); },
                     size: function (e, s) { e.size = s; }, aspect: function (e, a) { e.aspect = a; } };
         var mtp_pane = "mtp_pane", mtp_strip = "mtp_strip", mtp_chip = "mtp_chip", mtp_chip_label = "mtp_chip_label",
-            mtp_chip_dragging = "mtp_chip_dragging", mtp_chip_close = "mtp_chip_close", mtp_drop_mark = "mtp_drop_mark",
+            mtp_chip_dragging = "mtp_chip_dragging", mtp_chip_shifted = "mtp_chip_shifted", mtp_strip_dragging = "mtp_strip_dragging", mtp_chip_close = "mtp_chip_close", mtp_drop_mark = "mtp_drop_mark",
             mtp_strip_tail = "mtp_strip_tail", mtp_add = "mtp_add", mtp_add_off = "mtp_add_off", mtp_pill = "mtp_pill",
             mtp_content = "mtp_content", mtp_tab_content = "mtp_tab_content", mtp_tab_content_hidden = "mtp_tab_content_hidden",
             mtp_empty = "mtp_empty", mtp_dock_target = "mtp_dock_target";
@@ -97,6 +98,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
     void load() {
         js = buildContext();
         loadModule(EVENTS);
+        loadModule(DRAG);
         loadModule(STRIP);
         loadModule(MODULE);
         js.eval("js", SHIM);

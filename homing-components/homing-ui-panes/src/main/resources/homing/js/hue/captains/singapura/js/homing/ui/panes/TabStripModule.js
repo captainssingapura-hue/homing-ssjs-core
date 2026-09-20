@@ -6,7 +6,7 @@
 // where a dragged chip landed. A branch component: the pane makes a
 // sub-branch for it and hands it in.
 //
-//   new TabStrip(branch, { onAdd?, onDrop(chip, dest), onDragOut?(chip, pointerEvent) })
+//   new TabStrip(branch, { onAdd?, onDrop(chip, dest), onDragOut?(chip, pointerEvent, grab) })
 //     strip.el
 //     strip.chip({ id, title, pinned, closable }, { onSelect, onClose }, branch?) → chipEl
 //                                   minted on the branch given — the tab's own,
@@ -18,6 +18,7 @@
 //     strip.markAt(clientX)         the mark where a tab from outside would land → index
 //     strip.unmark()
 //     strip.size(s?)                the chips' size, −1..1, 0 the design's; every chip, now and later
+//     strip.dispose()
 //     strip.aspect(a?)              the chips' aspect, −1..1, 0 the design's proportion — wide,
 //                                   a browser's tab — narrower at −1, wider at +1
 //
@@ -28,21 +29,29 @@
 // release, and the chip in the hand — pressed, dragged, pulled off — is the
 // selected one throughout; nothing else selects while it is held.
 //
-// A drag along the strip reorders and only reorders: how far up or sideways
-// the hand wanders changes nothing. A chip pulled DOWN off the strip — below
-// it by more than the strip's own height — leaves it: the drag is dropped
-// here, and onDragOut is told with the pointer event, so whoever holds the
-// pane can float the tab under the same hand. Pulling up never detaches.
-// Pinned chips are not dragged and never leave.
+// The drag is a browser's: the chip pressed is lifted and goes where the
+// hand goes — the press remembered as an offset within the chip, so the
+// chip is placed and never the hand — kept within the row and never above
+// its slot; the slot it is nearest is where it will land, and the chips
+// between step aside, live, as it passes them. TabDrag does the arithmetic.
+// Let go, the chip lands: onDrop(chip, dest), and the pane turns that into
+// a move. Pulled down across the strip's edge until more of the chip is
+// out than in — two thirds — it leaves: the drag is dropped here, and
+// onDragOut is told with the pointer event and the grab, the press's
+// offset within the chip, so whoever holds the pane can float the tab
+// under the same hand at the same place in it. Pinned chips are not
+// dragged and never leave.
 //
-// A drop lands at the count of the other chips whose middle is left of the
-// pointer, never before the pinned ones; the pane turns that into a move.
-// The mark is a bar inserted between chips while the drag is on; nothing is
-// positioned by hand. `css` is injected with the styles import.
+// A tab offered from outside is marked where it would land: a bar inserted
+// between chips, at the count of those whose middle is left of the point,
+// never before the pinned ones. Nothing is positioned by hand: the chip in
+// the hand carries --mtp-drag-x/y, a chip stepping aside --mtp-shift-x.
+// `css` is injected with the styles import.
 // =============================================================================
 
 const _stripOwner = Object.freeze({ toString: () => "tabStrip" });
 var _DRAG_THRESHOLD = 4;
+var _DETACH = 2 / 3;         // the part of the chip that must be off the strip before it leaves
 
 class TabStrip {
     constructor(branch, opts) {
@@ -122,6 +131,11 @@ class TabStrip {
         else this._armDrag(c, closeBtn);
         return c;
     }
+    /** The strip taken down: its element removed, its branch dissolved; chips minted on branches of their own are their owners'. */
+    dispose() {
+        if (this.el.parentNode) this.el.parentNode.removeChild(this.el);
+        this._branch.dissolve();
+    }
     size(s) {
         this._size = s == null ? null : Math.max(-1, Math.min(1, Number(s)));
         for (var i = 0; i < this._order.length; i++) css.size(this._order[i], this._size);
@@ -151,51 +165,84 @@ class TabStrip {
         }
     }
 
-    // ── Drag to reorder ───────────────────────────────────────────────────
+    // ── The chip in the hand ──────────────────────────────────────────────
     _armDrag(c, closeBtn) {
         var self = this;
         c.addEventListener("pointerdown", function (down) {
             if (down.button !== 0) return;
             if (closeBtn && closeBtn.contains(down.target)) return;
-            var startX = down.clientX, dragging = false, dest = -1;
+            var startX = down.clientX, startY = down.clientY, dragging = false;
+            var slots = null, origin = null, strip = null, grab = null, lo = 0, from = -1, dest = -1;
+            function begin() {
+                dragging = true;
+                slots = self._order.map(TabStrip._rect);
+                from = self._order.indexOf(c);
+                origin = slots[from];
+                strip = TabStrip._rect(self.el);
+                grab = { x: startX - origin.left, y: startY - origin.top };
+                lo = self._pinned.size;
+                dest = from;
+                css.addClass(c, mtp_chip_dragging);
+                css.addClass(self.el, mtp_strip_dragging);
+                try { c.setPointerCapture(down.pointerId); } catch (err) {}
+            }
+            /** The chip under the hand at the remembered offset, within the row and never above its slot; the others stepping aside; how much of it is off the strip. */
+            function place(x, y) {
+                var left = TabDrag.clamp(x - grab.x, slots, lo);
+                var top = Math.max(origin.top, y - grab.y);
+                c.style.setProperty("--mtp-drag-x", (left - origin.left) + "px");
+                c.style.setProperty("--mtp-drag-y", (top - origin.top) + "px");
+                var d = TabDrag.dest(left, slots, lo);
+                if (d !== dest) { dest = d; self._stepAside(from, dest, TabDrag.pitch(slots)); }
+                return TabDrag.outside(top, origin.height, strip.top, strip.bottom);
+            }
             function letGo() {
                 c.removeEventListener("pointermove", onMove);
                 c.removeEventListener("pointerup", onEnd);
                 c.removeEventListener("pointercancel", onEnd);
+                if (!dragging) return;
                 css.removeClass(c, mtp_chip_dragging);
-                if (self._mark.parentNode) self._mark.parentNode.removeChild(self._mark);
+                css.removeClass(self.el, mtp_strip_dragging);
+                c.style.removeProperty("--mtp-drag-x");
+                c.style.removeProperty("--mtp-drag-y");
+                self._stepAside(from, from, 0);
                 try { c.releasePointerCapture(down.pointerId); } catch (err) {}
             }
             function onMove(e) {
                 if (!dragging) {
-                    if (Math.abs(e.clientX - startX) < _DRAG_THRESHOLD) return;
-                    dragging = true;
-                    css.addClass(c, mtp_chip_dragging);
-                    try { c.setPointerCapture(down.pointerId); } catch (err) {}
+                    if (Math.abs(e.clientX - startX) < _DRAG_THRESHOLD && Math.abs(e.clientY - startY) < _DRAG_THRESHOLD) return;
+                    begin();
                 }
-                if (self._onDragOut && self._isPulledDown(e.clientY)) { letGo(); self._onDragOut(c, e); return; }
-                dest = self._destAt(c, e.clientX);
-                self._markAt(c, dest);
+                var out = place(e.clientX, e.clientY);
+                if (self._onDragOut && out > _DETACH) { letGo(); self._onDragOut(c, e, grab); }
             }
             function onEnd(e) {
-                if (!dragging) { letGo(); return; }
+                var landed = dragging && e.type === "pointerup" && dest !== from;
                 letGo();
-                if (e.type === "pointerup" && dest >= 0 && self._onDrop) self._onDrop(c, dest);
+                if (landed && self._onDrop) self._onDrop(c, dest);
             }
             c.addEventListener("pointermove", onMove);
             c.addEventListener("pointerup", onEnd);
             c.addEventListener("pointercancel", onEnd);
         });
     }
+    /** The chips between the slot left and the slot aimed at step one pitch aside; the rest, and all of them once it is over, stand where they are. */
+    _stepAside(from, to, pitch) {
+        for (var j = 0; j < this._order.length; j++) {
+            if (j === from) continue;
+            var s = TabDrag.shift(j, from, to), chip = this._order[j];
+            if (s === 0) { css.removeClass(chip, mtp_chip_shifted); chip.style.removeProperty("--mtp-shift-x"); }
+            else { css.addClass(chip, mtp_chip_shifted); chip.style.setProperty("--mtp-shift-x", (s * pitch) + "px"); }
+        }
+    }
+    static _rect(el) {
+        var r = el.getBoundingClientRect();
+        return { left: r.left, top: r.top, width: r.width, height: r.height, right: r.left + r.width, bottom: r.top + r.height };
+    }
     _others(c) {
         var out = [];
         for (var i = 0; i < this._order.length; i++) if (this._order[i] !== c) out.push(this._order[i]);
         return out;
-    }
-    /** Below the strip by more than its own height: pulled down and off. Up or sideways never is. */
-    _isPulledDown(y) {
-        var r = this.el.getBoundingClientRect();
-        return y > r.bottom + r.height;
     }
     /** The mark where a tab from outside would land, and the index it would take. */
     markAt(x) { var dest = this._destAt(null, x); this._markAt(null, dest); return dest; }

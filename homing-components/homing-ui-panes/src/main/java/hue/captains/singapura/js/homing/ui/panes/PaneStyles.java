@@ -2,14 +2,17 @@ package hue.captains.singapura.js.homing.ui.panes;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
+import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.core.Wearable;
 
 import java.util.List;
+import java.util.Set;
 
 import static hue.captains.singapura.js.homing.design.DesignClass.of;
 import static hue.captains.singapura.js.homing.design.Box.Control;
 import static hue.captains.singapura.js.homing.design.Emphasis.Muted;
 import static hue.captains.singapura.js.homing.design.Emphasis.Primary;
+import static hue.captains.singapura.js.homing.design.Interaction.Dragging;
 import static hue.captains.singapura.js.homing.design.Interaction.DropTarget;
 import static hue.captains.singapura.js.homing.design.Interaction.Focus;
 import static hue.captains.singapura.js.homing.design.Interaction.Inert;
@@ -114,10 +117,40 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
         }
     }
 
-    /** The chip in flight: inert until it lands. */
+    /**
+     * The chip in the hand: lifted over the row and under the hand, where
+     * {@code --mtp-drag-x/y} put it — its own translate, so the design's
+     * transform stays what the state says — with the design's shadow and
+     * cursor for a thing being dragged.
+     */
     public record mtp_chip_dragging() implements CssClass<PaneStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Inert.class, Effect.Opacity.class), of(Inert.class, Affordance.Cursor.class)); }
-        @Override public String body() { return ""; }
+        @Override public Set<CssVar> runtimeVars() { return Set.of(new CssVar("--mtp-drag-x"), new CssVar("--mtp-drag-y")); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Dragging.class, Shape.Shadow.class), of(Dragging.class, Affordance.Cursor.class)); }
+        @Override public String body() { return """
+            position: relative;
+            z-index: 2;
+            translate: var(--mtp-drag-x, 0px) var(--mtp-drag-y, 0px);
+            """;
+        }
+    }
+
+    /** A chip stepping aside for the one in the hand: one pitch over, {@code --mtp-shift-x}, eased by the design as any move of a selectable. */
+    public record mtp_chip_shifted() implements CssClass<PaneStyles> {
+        @Override public Set<CssVar> runtimeVars() { return Set.of(new CssVar("--mtp-shift-x")); }
+        @Override public String body() { return """
+            transform: translateX(var(--mtp-shift-x, 0px));
+            """;
+        }
+    }
+
+    /** The strip while a chip is in the hand: nothing clipped, so the chip is seen wherever the hand takes it, over the content. */
+    public record mtp_strip_dragging() implements CssClass<PaneStyles> {
+        @Override public String body() { return """
+            overflow: visible;
+            position: relative;
+            z-index: 2;
+            """;
+        }
     }
 
     /** The cross on a chip that can be closed. */
@@ -233,7 +266,7 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
 
     @Override
     public List<CssClass<PaneStyles>> cssClasses() {
-        return List.of(new mtp_pane(), new mtp_strip(), new mtp_chip(), new mtp_chip_label(), new mtp_chip_dragging(),
+        return List.of(new mtp_pane(), new mtp_strip(), new mtp_strip_dragging(), new mtp_chip(), new mtp_chip_label(), new mtp_chip_dragging(), new mtp_chip_shifted(),
                        new mtp_chip_close(), new mtp_drop_mark(), new mtp_strip_tail(), new mtp_add(), new mtp_add_off(),
                        new mtp_pill(), new mtp_content(), new mtp_tab_content(), new mtp_empty(), new mtp_dock_target(),
                        new mtp_tab_content_hidden());   // last, so hidden wins over what a panel or the empty note says of its display

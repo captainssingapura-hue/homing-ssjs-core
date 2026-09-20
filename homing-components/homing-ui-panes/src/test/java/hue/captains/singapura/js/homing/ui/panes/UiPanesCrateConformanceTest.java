@@ -53,7 +53,7 @@ class UiPanesCrateConformanceTest {
                     + findings.stream().map(f -> f.rule().value() + "@" + f.line() + ": " + f.message()).toList());
             checked++;
         }
-        assertEquals(3, checked, "the pane, the strip and the events");
+        assertEquals(4, checked, "the pane, the strip, the events and the drag");
     }
 
     @Test
