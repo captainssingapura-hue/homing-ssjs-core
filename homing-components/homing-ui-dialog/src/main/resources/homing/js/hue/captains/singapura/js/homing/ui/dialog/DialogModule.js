@@ -1,8 +1,12 @@
 // =============================================================================
-// Dialog — a frame that owns the screen until dismissed, or, non-modal, one
-// that does not. A branch component: the caller makes a sub-branch for the
-// dialog's life and hands it in; close dissolves it, so the frame, the scrim
-// and whatever the content built go together.
+// Dialog — a floating pane that owns the screen until dismissed, or, non-modal,
+// one that does not. Built on FloatingPane: the frame, the head that names it
+// and moves it, the body, the grip that sizes it are the pane's; the dialog
+// adds the layer it floats in (the viewport, as a desk of one), the scrim and
+// the hold when modal, the action foot, and the keys. A branch component: the
+// caller makes a sub-branch for the dialog's life and hands it in; close
+// dissolves it, so the layer, the scrim, the pane and whatever the content
+// built go together.
 //
 //   new Dialog(branch, opts)
 //
@@ -14,16 +18,18 @@
 //                   for what dissolving cannot release - the widget's word for it
 //   title           string
 //   modal           boolean, default true — scrim, inert, keyboard capture
-//   glow            boolean, default = modal — the focus ring on the frame
+//   glow            boolean, default = modal — the ring drawn now, on the frame
 //   actions         [{ id, label, primary?, onClick(dialog) }] — omit for no row.
 //                   The buttons are the elements' Button: the primary one
 //                   primary, the rest plain
-//   size            { w?, h? } px; default 1/φ of each viewport axis, clamped
+//   size            { w?, h? } px; default 1/φ of each viewport axis, clamped.
+//                   Opened centred; the hand may move it by the head and size
+//                   it by the grip afterwards
 //   restoreFocusTo  element focused on close; default whatever had focus
 //   onClose         function() — fires on EVERY close path, exactly once
 //
 // the instance:
-//   el, bodyEl, branch
+//   el, bodyEl, branch, pane
 //   close()
 //   actionEl(id)                       the button element, an owned reference
 //   setAction(id, { enabled?, label? })
@@ -57,39 +63,35 @@ class Dialog {
         this._primary = null;
         this._hold = null;
 
-        // ── frame ────────────────────────────────────────────────────────────
-        var frame = branch.createElement("frame", "div");
-        css.addClass(frame, dl_frame);
-        if (glow) css.addClass(frame, dl_glow);
+        // ── the layer, and the scrim behind it when modal ────────────────────
+        var scrim = null;
+        if (modal) {
+            scrim = branch.createElement("scrim", "div");
+            css.addClass(scrim, dl_scrim);
+            scrim.addEventListener("mousedown", function () { self.close(); });
+            document.body.appendChild(scrim);
+        }
+        var layer = branch.createElement("layer", "div");
+        css.addClass(layer, dl_layer);
+        document.body.appendChild(layer);
+
+        // ── the pane, centred ────────────────────────────────────────────────
+        var sz = Dialog._size(opts);
+        var vw = window.innerWidth || 1024, vh = window.innerHeight || 768;
+        var pane = new FloatingPane(branch.createBranch("pane"), {
+            id: "dialog-" + seq, title: opts.title || "",
+            x: Math.max(0, Math.round((vw - sz.w) / 2)), y: Math.max(0, Math.round((vh - sz.h) / 2)), w: sz.w, h: sz.h, z: 1,
+            closable: true, onClose: function () { self.close(); }
+        });
+        var frame = pane.root;
+        css.addClass(frame, dl_float);
         frame.setAttribute("role", "dialog");
         frame.setAttribute("aria-modal", modal ? "true" : "false");
-        frame.setAttribute("tabindex", "-1");
-        var sz = Dialog._size(opts);
-        frame.style.setProperty("--dl-w", sz.w + "px");     // DATA, via the runtime vars (RFC 0044)
-        frame.style.setProperty("--dl-h", sz.h + "px");
+        if (glow) pane.setActive(true);
+        layer.appendChild(frame);
+        this.pane = pane;
         this.el = frame;
-
-        var title = branch.createElement("title", "div");
-        css.addClass(title, dl_title);
-        var label = branch.createElement("label", "span");
-        css.addClass(label, dl_title_label);
-        label.textContent = opts.title || "";
-        label.id = "dialog-title-" + seq;
-        frame.setAttribute("aria-labelledby", label.id);
-        title.appendChild(label);
-        var x = branch.createElement("close", "button");
-        x.type = "button";
-        css.addClass(x, dl_close);
-        x.textContent = "×";
-        x.setAttribute("aria-label", "Close");
-        x.addEventListener("click", function () { self.close(); });
-        title.appendChild(x);
-        frame.appendChild(title);
-
-        var body = branch.createElement("body", "div");
-        css.addClass(body, dl_body);
-        frame.appendChild(body);
-        this.bodyEl = body;
+        this.bodyEl = pane.body;
 
         // ── actions ──────────────────────────────────────────────────────────
         if (opts.actions && opts.actions.length) {
@@ -99,23 +101,13 @@ class Dialog {
             frame.appendChild(row);
         }
 
-        // ── on the page ──────────────────────────────────────────────────────
-        var scrim = null;
-        if (modal) {
-            scrim = branch.createElement("scrim", "div");
-            css.addClass(scrim, dl_scrim);
-            scrim.addEventListener("mousedown", function () { self.close(); });
-            document.body.appendChild(scrim);
-        }
-        document.body.appendChild(frame);
-
         // ── content ──────────────────────────────────────────────────────────
-        this._built = opts.content(branch, body) || {};
+        this._built = opts.content(branch, this.bodyEl) || {};
 
         // ── keys ─────────────────────────────────────────────────────────────
         this._restoreTo = opts.restoreFocusTo || document.activeElement;
         if (modal) {
-            this._hold = new Modality(frame, { keep: [scrim], onKeydown: function (ev) { return self._keys(ev); }, restoreTo: this._restoreTo });
+            this._hold = new Modality(layer, { keep: [scrim], onKeydown: function (ev) { return self._keys(ev); }, restoreTo: this._restoreTo });
         } else {
             frame.addEventListener("keydown", function (ev) {
                 if (self._keys(ev)) { ev.preventDefault(); ev.stopPropagation(); }
@@ -175,7 +167,7 @@ class Dialog {
         this._closed = true;
         var built = this._built;
         if (typeof built.dispose === "function") { try { built.dispose(); } catch (e) { console.error("[dialog] content dispose threw", e); } }
-        try { this.branch.dissolve(); } catch (e) {}     // frame, scrim and content go together
+        try { this.branch.dissolve(); } catch (e) {}     // layer, scrim, pane and content go together
         if (this._hold) this._hold.release();
         else if (this._restoreTo && this._restoreTo.focus && document.contains(this._restoreTo)) this._restoreTo.focus();
         if (this._opts.onClose) this._opts.onClose();

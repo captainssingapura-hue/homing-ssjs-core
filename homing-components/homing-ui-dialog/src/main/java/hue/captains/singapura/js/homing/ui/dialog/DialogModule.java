@@ -6,17 +6,18 @@ import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
 import hue.captains.singapura.js.homing.ui.elements.Elements;
+import hue.captains.singapura.js.homing.ui.floating.FloatingPaneModule;
 
 import java.util.List;
 
 /**
- * {@code Dialog}. {@code new Dialog(branch, opts)} builds a frame on the
- * sub-branch the caller made for it — a title bar, the body the caller's
- * content fills, an action row of the elements' buttons — puts it over the
- * page, holds the screen through {@link ModalityModule Modality} when modal,
- * and is the instance that closes it. Every close path dissolves the branch,
- * so the frame, the scrim and whatever the content built go together. A
- * branch component.
+ * {@code Dialog}. {@code new Dialog(branch, opts)} opens a floating pane on
+ * the sub-branch the caller made for it — the pane's head, body and grip;
+ * the caller's content fills the body; an action foot of the elements'
+ * buttons — in a layer over the viewport, holds the screen through
+ * {@link ModalityModule Modality} when modal, and is the instance that
+ * closes it. Every close path dissolves the branch, so the layer, the scrim,
+ * the pane and whatever the content built go together. A branch component.
  *
  * <p>The contract is the studio's {@code SystemDialog}'s, kept on purpose:
  * {@code content(branch, bodyEl) → {onKeydown?, focusEl?}}, {@code actions}
@@ -35,15 +36,12 @@ public record DialogModule() implements DomModule<DialogModule> {
     public ImportsFor<DialogModule> imports() {
         return ImportsFor.<DialogModule>builder()
                 .add(new ModuleImports<>(List.of(new ModalityModule.Modality()), ModalityModule.INSTANCE))
+                .add(new ModuleImports<>(List.of(new FloatingPaneModule.FloatingPane()), FloatingPaneModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new Elements.ButtonBuilder()), Elements.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new DialogStyles.dl_scrim(),
-                        new DialogStyles.dl_frame(),
-                        new DialogStyles.dl_glow(),
-                        new DialogStyles.dl_title(),
-                        new DialogStyles.dl_title_label(),
-                        new DialogStyles.dl_close(),
-                        new DialogStyles.dl_body(),
+                        new DialogStyles.dl_layer(),
+                        new DialogStyles.dl_float(),
                         new DialogStyles.dl_actions()
                 ), DialogStyles.INSTANCE))
                 .build();

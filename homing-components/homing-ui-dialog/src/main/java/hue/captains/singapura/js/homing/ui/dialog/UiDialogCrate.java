@@ -5,13 +5,14 @@ import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.design.DesignCrate;
 import hue.captains.singapura.js.homing.server.ServerCrate;
 import hue.captains.singapura.js.homing.ui.elements.UiElementsCrate;
+import hue.captains.singapura.js.homing.ui.floating.UiFloatingCrate;
 
 import java.util.List;
 
 /**
  * The dialog's crate: the dialog, its modality and its styles, on the
  * runtime ({@code ServerCrate}, the base's crate under its old name), the
- * design targets, and the elements whose buttons the action row is made of.
+ * design targets, the floating pane it is built on, and the elements whose buttons the action row is made of.
  */
 public final class UiDialogCrate implements Crate {
 
@@ -22,7 +23,7 @@ public final class UiDialogCrate implements Crate {
     @Override public String name() { return "homing-ui-dialog"; }
 
     @Override public List<Crate> requires() {
-        return List.of(ServerCrate.INSTANCE, DesignCrate.INSTANCE, UiElementsCrate.INSTANCE);
+        return List.of(ServerCrate.INSTANCE, DesignCrate.INSTANCE, UiElementsCrate.INSTANCE, UiFloatingCrate.INSTANCE);
     }
 
     @Override public List<CrateEntry> entries() {
