@@ -154,11 +154,16 @@ public sealed interface Target permits
             @Override public Set<String> properties() { return Set.of("gap"); }
             @Override public Set<State> states() { return REST_ONLY; }
         }
-        /** The minimum a control or a row must be to be usable — a design's density, not a layout's size. */
+        /**
+         * The extent of a box: the least a control or a row must be to be
+         * usable, or — for a box whose measure is its own, a card — the
+         * measure itself. A design's density, not a layout's size; a host may
+         * cap it, never stretch it.
+         */
         record Extent() implements Size, CssGroup<Extent> {
             public static final Extent INSTANCE = new Extent();
             @Override public List<CssClass<Extent>> cssClasses() { return List.of(); }
-            @Override public Set<String> properties() { return Set.of("min-height", "min-width"); }
+            @Override public Set<String> properties() { return Set.of("min-height", "min-width", "inline-size", "block-size"); }
             @Override public Set<State> states() { return REST_ONLY; }
         }
         /**

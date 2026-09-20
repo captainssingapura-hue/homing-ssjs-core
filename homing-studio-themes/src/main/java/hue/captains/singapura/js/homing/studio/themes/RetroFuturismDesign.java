@@ -151,7 +151,7 @@ final class RetroFuturismDesign {
             ruleWithFocusRing(of(Container.class, Shape.Rule.class), "1px", "solid", "1px", "solid", "-1px"),
             inset(of(Container.Card.class, Size.Inset.class), "18px", "20px", 1.3),
             gap(of(Container.Card.class, Size.Gap.class), "8px", 1.3),
-            minWidth(of(Container.Card.class, Size.Extent.class), "180px", 1.3),
+            measure(of(Container.Card.class, Size.Extent.class), "280px", 1.3),
             proportion(of(Container.Card.class, Size.Proportion.class), "3 / 2"),
             inset(of(Inline.class, Size.Inset.class), "2px", "8px", 1.3),
             one(of(Inline.class, Shape.Corner.class), "2px"),

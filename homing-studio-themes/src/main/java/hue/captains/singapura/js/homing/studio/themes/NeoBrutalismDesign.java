@@ -246,7 +246,7 @@ final class NeoBrutalismDesign {
             ruleWithFocusRing(of(Container.class, Shape.Rule.class), "3px", "solid", "3px", "solid", "-3px"),
             inset(of(Container.Card.class, Size.Inset.class), "18px", "20px", 1.5),
             gap(of(Container.Card.class, Size.Gap.class), "10px", 1.5),
-            minWidth(of(Container.Card.class, Size.Extent.class), "180px", 1.5),
+            measure(of(Container.Card.class, Size.Extent.class), "280px", 1.5),
             proportion(of(Container.Card.class, Size.Proportion.class), "5 / 4"),
             inset(of(Inline.class, Size.Inset.class), "2px", "8px", 1.5),
             one(of(Inline.class, Shape.Corner.class), "0"),

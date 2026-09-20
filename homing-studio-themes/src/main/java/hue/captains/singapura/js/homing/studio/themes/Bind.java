@@ -211,6 +211,10 @@ final class Bind {
     static Map.Entry<DesignClass<?>, Impl> proportion(DesignClass<?> cls, String ratio) {
         return Map.entry(cls, Impl.Bindings.of(ratio).grows(1));
     }
+    /** A Size.Extent that is the box's own measure inline, growing by {@code ratio}; the block follows its proportion. */
+    static Map.Entry<DesignClass<?>, Impl> measure(DesignClass<?> cls, String inlineSize, double ratio) {
+        return Map.entry(cls, Impl.Bindings.none().at(State.REST, "inline-size", inlineSize).grows("inline-size", ratio));
+    }
     /** A Size.Extent: the least a box may be inline, growing by {@code ratio}. */
     static Map.Entry<DesignClass<?>, Impl> minWidth(DesignClass<?> cls, String minWidth, double ratio) {
         return Map.entry(cls, Impl.Bindings.none().at(State.REST, "min-width", minWidth).grows("min-width", ratio));

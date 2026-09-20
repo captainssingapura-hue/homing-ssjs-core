@@ -144,7 +144,7 @@ final class SketchyDesign {
             ruleWithFocusRing(of(Container.class, Shape.Rule.class), "2px", "solid", "2px", "dashed", "-3px"),
             inset(of(Container.Card.class, Size.Inset.class), "16px", "18px", 1.35),
             gap(of(Container.Card.class, Size.Gap.class), "8px", 1.35),
-            minWidth(of(Container.Card.class, Size.Extent.class), "180px", 1.35),
+            measure(of(Container.Card.class, Size.Extent.class), "280px", 1.35),
             proportion(of(Container.Card.class, Size.Proportion.class), "3 / 2"),
             inset(of(Inline.class, Size.Inset.class), "2px", "8px", 1.35),
             one(of(Inline.class, Shape.Corner.class), WOBBLE_TAG),

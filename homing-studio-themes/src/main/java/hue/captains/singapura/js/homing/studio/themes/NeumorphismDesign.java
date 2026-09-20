@@ -148,7 +148,7 @@ final class NeumorphismDesign {
             ruleWithFocusRing(of(Container.class, Shape.Rule.class), "0", "none", "2px", "solid", "-2px"),
             inset(of(Container.Card.class, Size.Inset.class), "20px", "22px", 1.3),
             gap(of(Container.Card.class, Size.Gap.class), "8px", 1.3),
-            minWidth(of(Container.Card.class, Size.Extent.class), "200px", 1.3),
+            measure(of(Container.Card.class, Size.Extent.class), "300px", 1.3),
             proportion(of(Container.Card.class, Size.Proportion.class), "4 / 3"),
             inset(of(Inline.class, Size.Inset.class), "3px", "10px", 1.3),
             one(of(Inline.class, Shape.Corner.class), "8px"),

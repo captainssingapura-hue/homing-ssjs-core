@@ -283,7 +283,7 @@ final class NeoFuturismDesign {
             ruleWithFocusRing(of(Container.class, Shape.Rule.class), "1px", "solid", "1px", "solid", "-1px"),
             inset(of(Container.Card.class, Size.Inset.class), "16px", "18px", 1.25),
             gap(of(Container.Card.class, Size.Gap.class), "8px", 1.25),
-            minWidth(of(Container.Card.class, Size.Extent.class), "180px", 1.25),
+            measure(of(Container.Card.class, Size.Extent.class), "320px", 1.25),
             proportion(of(Container.Card.class, Size.Proportion.class), "16 / 9"),
             inset(of(Inline.class, Size.Inset.class), "2px", "8px", 1.25),
             one(of(Inline.class, Shape.Corner.class), "1px"),

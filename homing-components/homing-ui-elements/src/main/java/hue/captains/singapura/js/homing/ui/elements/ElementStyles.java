@@ -143,9 +143,10 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
 
     /**
      * The card: {@code Container.Card.Base} — a raised box whose measure is its
-     * own. Its inline size is its host's, its block size follows the design's
-     * proportion, and what is inside fits it: the head and the foot are fixed,
-     * the body takes the rest and scrolls. Hover, press and focus as the design
+     * own: the design's inline size, grown by the element's size, its block
+     * size following the design's proportion; a host may cap it, never
+     * stretch it. What is inside fits it: the head and the foot are fixed, the
+     * body takes the rest and scrolls. Hover, press and focus as the design
      * gives an interactive thing; whether a press does anything is the caller's,
      * and only a card with an action is focusable ({@link el_card_action}).
      */
@@ -161,6 +162,8 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
+            flex: none;
+            max-inline-size: 100%;
             min-height: 0;
             overflow: hidden;
             """;
