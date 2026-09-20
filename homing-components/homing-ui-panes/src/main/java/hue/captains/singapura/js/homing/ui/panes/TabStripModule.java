@@ -15,8 +15,9 @@ import java.util.List;
  * offered from outside — and the drag that is a browser's: the chip pressed
  * goes where the hand goes, the others stepping aside live, and lands on the
  * slot it is nearest, never before the pinned ones; pulled off the strip by
- * more than two thirds it leaves, with the grab. It holds no tab state; the
- * pane arranges, selects and counts, and turns a drop into a move.
+ * more than two thirds it leaves — handed off with the grab, or, with
+ * {@code floating}, kept as the strip's own and afloat. It holds no tab
+ * state; the pane arranges, selects and counts, and turns a drop into a move.
  */
 public record TabStripModule() implements DomModule<TabStripModule> {
 
@@ -30,7 +31,7 @@ public record TabStripModule() implements DomModule<TabStripModule> {
         return ImportsFor.<TabStripModule>builder()
                 .add(new ModuleImports<>(List.of(
                         new PaneStyles.mtp_strip(),
-                        new PaneStyles.mtp_strip_dragging(),
+                        new PaneStyles.mtp_strip_loose(),
                         new PaneStyles.mtp_strip_tail(),
                         new PaneStyles.mtp_add(),
                         new PaneStyles.mtp_add_off(),
@@ -39,9 +40,13 @@ public record TabStripModule() implements DomModule<TabStripModule> {
                         new PaneStyles.mtp_chip(),
                         new PaneStyles.mtp_chip_label(),
                         new PaneStyles.mtp_chip_close(),
+                        new PaneStyles.mtp_chip_seated(),
                         new PaneStyles.mtp_chip_dragging(),
-                        new PaneStyles.mtp_chip_shifted()
+                        new PaneStyles.mtp_chip_shifted(),
+                        new PaneStyles.mtp_chip_floating(),
+                        new PaneStyles.mtp_chip_afloat()
                 ), PaneStyles.INSTANCE))
+                .add(new ModuleImports<>(List.of(new TabHandModule.TabHand()), TabHandModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new TabDragModule.TabDrag()), TabDragModule.INSTANCE))
                 .build();
     }

@@ -19,6 +19,7 @@ import static hue.captains.singapura.js.homing.design.Interaction.Inert;
 import static hue.captains.singapura.js.homing.design.Interaction.Interactive;
 import static hue.captains.singapura.js.homing.design.Interaction.Selectable;
 import static hue.captains.singapura.js.homing.design.Layer.Base;
+import static hue.captains.singapura.js.homing.design.Layer.Overlay;
 import static hue.captains.singapura.js.homing.design.Layer.Raised;
 import static hue.captains.singapura.js.homing.design.Structure.Divider;
 import static hue.captains.singapura.js.homing.design.Target.Affordance;
@@ -89,7 +90,7 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
             return List.of(of(Control.Tab.class, Shape.Rule.class), of(Control.Tab.class, Shape.Corner.class),
                            of(Control.Tab.class, Size.Inset.class), of(Control.Tab.class, Size.Gap.class), of(Control.Tab.class, Size.Extent.class), of(Control.Tab.class, Size.Proportion.class),
                            of(Selectable.class, Color.Surface.class), of(Selectable.class, Color.Ink.class), of(Selectable.class, Color.Edge.class),
-                           of(Selectable.class, Motion.Transform.class), of(Selectable.class, Shape.Shadow.class), of(Selectable.class, Motion.Ease.class), of(Selectable.class, Affordance.Cursor.class),
+                           of(Selectable.class, Motion.Ease.class), of(Selectable.class, Affordance.Cursor.class),
                            of(Caption.class, Type.Scale.class));
         }
         @Override public List<? extends Wearable> sizes() { return List.of(of(Control.Tab.class, Size.Inset.class), of(Control.Tab.class, Size.Gap.class), of(Control.Tab.class, Size.Extent.class), of(Caption.class, Type.Scale.class)); }
@@ -118,20 +119,48 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
     }
 
     /**
+     * A chip in its seat — in the row, not in the hand: the design's lift and
+     * shadow by state, hover, press and selected. Taken off while the chip is
+     * in the hand or afloat, so the design's word for those is the one seen.
+     */
+    public record mtp_chip_seated() implements CssClass<PaneStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Selectable.class, Motion.Transform.class), of(Selectable.class, Shape.Shadow.class)); }
+        @Override public String body() { return ""; }
+    }
+
+    /**
      * The chip in the hand: lifted over the row and under the hand, where
      * {@code --mtp-drag-x/y} put it — its own translate, so the design's
-     * transform stays what the state says — with the design's shadow and
-     * cursor for a thing being dragged.
+     * transform is the one for a thing being dragged, with its shadow and
+     * cursor.
      */
     public record mtp_chip_dragging() implements CssClass<PaneStyles> {
         @Override public Set<CssVar> runtimeVars() { return Set.of(new CssVar("--mtp-drag-x"), new CssVar("--mtp-drag-y")); }
-        @Override public List<? extends Wearable> wears() { return List.of(of(Dragging.class, Shape.Shadow.class), of(Dragging.class, Affordance.Cursor.class)); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Dragging.class, Motion.Transform.class), of(Dragging.class, Shape.Shadow.class), of(Dragging.class, Affordance.Cursor.class)); }
         @Override public String body() { return """
             position: relative;
             z-index: 2;
             translate: var(--mtp-drag-x, 0px) var(--mtp-drag-y, 0px);
             """;
         }
+    }
+
+    /** A chip afloat: out of the row, which closes behind it, at {@code --mtp-float-x/y} in the strip's frame. Later in the sheet than the hand, so it stays out of the row while held. */
+    public record mtp_chip_floating() implements CssClass<PaneStyles> {
+        @Override public Set<CssVar> runtimeVars() { return Set.of(new CssVar("--mtp-float-x"), new CssVar("--mtp-float-y")); }
+        @Override public String body() { return """
+            position: absolute;
+            left: var(--mtp-float-x, 0px);
+            top: var(--mtp-float-y, 0px);
+            z-index: 1;
+            """;
+        }
+    }
+
+    /** A chip afloat and let go: over everything, with the design's shadow for a thing that floats. */
+    public record mtp_chip_afloat() implements CssClass<PaneStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Overlay.class, Shape.Shadow.class)); }
+        @Override public String body() { return ""; }
     }
 
     /** A chip stepping aside for the one in the hand: one pitch over, {@code --mtp-shift-x}, eased by the design as any move of a selectable. */
@@ -143,8 +172,8 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
         }
     }
 
-    /** The strip while a chip is in the hand: nothing clipped, so the chip is seen wherever the hand takes it, over the content. */
-    public record mtp_strip_dragging() implements CssClass<PaneStyles> {
+    /** The strip while a chip is loose — in the hand, or afloat: nothing clipped, so the chip is seen wherever it is, over the content. */
+    public record mtp_strip_loose() implements CssClass<PaneStyles> {
         @Override public String body() { return """
             overflow: visible;
             position: relative;
@@ -266,7 +295,7 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
 
     @Override
     public List<CssClass<PaneStyles>> cssClasses() {
-        return List.of(new mtp_pane(), new mtp_strip(), new mtp_strip_dragging(), new mtp_chip(), new mtp_chip_label(), new mtp_chip_dragging(), new mtp_chip_shifted(),
+        return List.of(new mtp_pane(), new mtp_strip(), new mtp_strip_loose(), new mtp_chip(), new mtp_chip_label(), new mtp_chip_seated(), new mtp_chip_dragging(), new mtp_chip_shifted(), new mtp_chip_floating(), new mtp_chip_afloat(),
                        new mtp_chip_close(), new mtp_drop_mark(), new mtp_strip_tail(), new mtp_add(), new mtp_add_off(),
                        new mtp_pill(), new mtp_content(), new mtp_tab_content(), new mtp_empty(), new mtp_dock_target(),
                        new mtp_tab_content_hidden());   // last, so hidden wins over what a panel or the empty note says of its display

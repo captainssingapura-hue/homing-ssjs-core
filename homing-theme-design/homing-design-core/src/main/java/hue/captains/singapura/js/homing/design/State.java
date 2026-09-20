@@ -11,11 +11,16 @@ package hue.captains.singapura.js.homing.design;
  * slot with no aria behind it is {@link #HIGHLIGHTED}: a thing lit from
  * elsewhere is a state every list, table and tree has, and none of aria's
  * words is it.</p>
+ *
+ * <p>The order here is the cascade: a sheet emits a word's states in it, and
+ * a later one wins where two apply at once. The hover yields to what the
+ * thing is — selected, current, checked — and the press, {@link #ACTIVE},
+ * comes last of all, so a press shows on a thing however else it is: a
+ * selected tab pressed is seen pressed.</p>
  */
 public enum State {
     REST(""),
     HOVER("&:hover"),
-    ACTIVE("&:active"),
     FOCUS("&:focus-visible"),
     DISABLED("&:disabled, &[aria-disabled=\"true\"]"),
     SELECTED("&[aria-selected=\"true\"]"),
@@ -24,7 +29,9 @@ public enum State {
     INVALID("&:invalid, &[aria-invalid=\"true\"]"),
     EXPANDED("&[aria-expanded=\"true\"]"),
     /** Lit from elsewhere — a search hit, the rows a chart points at. No aria state says it, so the slot reads {@code data-highlighted}. */
-    HIGHLIGHTED("&[data-highlighted]");
+    HIGHLIGHTED("&[data-highlighted]"),
+    /** Pressed: last, so it is seen whatever else the thing is. */
+    ACTIVE("&:active");
 
     private final String selector;
 

@@ -62,7 +62,8 @@ class DockingTest extends JsModuleTestBase {
                     size: function (e, s) { if (s == null) e.style.removeProperty("--size"); else e.style.setProperty("--size", String(s)); } };
         var fp_desk = "fp_desk", fp_desk_layer = "fp_desk_layer", fp_frame = "fp_frame", fp_hoverable = "fp_hoverable", fp_held = "fp_held", fp_active = "fp_active",
             fp_head = "fp_head", fp_head_held = "fp_head_held", fp_title = "fp_title", fp_close = "fp_close", fp_body = "fp_body", fp_grip = "fp_grip";
-        var mtp_pane = "mtp_pane", mtp_strip = "mtp_strip", mtp_strip_dragging = "mtp_strip_dragging", mtp_chip = "mtp_chip", mtp_chip_label = "mtp_chip_label", mtp_chip_dragging = "mtp_chip_dragging", mtp_chip_shifted = "mtp_chip_shifted",
+        var mtp_pane = "mtp_pane", mtp_strip = "mtp_strip", mtp_strip_loose = "mtp_strip_loose", mtp_chip = "mtp_chip", mtp_chip_label = "mtp_chip_label", mtp_chip_dragging = "mtp_chip_dragging", mtp_chip_shifted = "mtp_chip_shifted",
+            mtp_chip_seated = "mtp_chip_seated", mtp_chip_floating = "mtp_chip_floating", mtp_chip_afloat = "mtp_chip_afloat",
             mtp_chip_close = "mtp_chip_close", mtp_drop_mark = "mtp_drop_mark", mtp_strip_tail = "mtp_strip_tail", mtp_add = "mtp_add", mtp_add_off = "mtp_add_off",
             mtp_pill = "mtp_pill", mtp_content = "mtp_content", mtp_tab_content = "mtp_tab_content", mtp_tab_content_hidden = "mtp_tab_content_hidden",
             mtp_empty = "mtp_empty", mtp_dock_target = "mtp_dock_target";
@@ -113,6 +114,7 @@ class DockingTest extends JsModuleTestBase {
         loadModule(P + "floating/DeskModule.js");
         loadModule(P + "panes/PaneEventsModule.js");
         loadModule(P + "panes/TabDragModule.js");
+        loadModule(P + "panes/TabHandModule.js");
         loadModule(P + "panes/TabStripModule.js");
         loadModule(P + "panes/MultiTabPaneModule.js");
         loadModule(P + "docking/DockEventsModule.js");
@@ -129,7 +131,7 @@ class DockingTest extends JsModuleTestBase {
         eval("var c = chipOf(A, 'Two'); c.fire('pointerdown', { button: 0, pointerId: 7, clientX: 140, clientY: 15, target: c });"
            + "c.fire('pointermove', { clientX: 146, clientY: 15 }); c.fire('pointermove', { clientX: 900, clientY: 15 });");
         assertEquals("0px,0px", eval("c.prop('--mtp-drag-x') + ',' + c.prop('--mtp-drag-y')").asString(), "far right: kept within the row, on its own slot");
-        assertTrue(eval("c.has('mtp_chip_dragging') && A.el.children[0].has('mtp_strip_dragging')").asBoolean());
+        assertTrue(eval("c.has('mtp_chip_dragging') && !c.has('mtp_chip_seated') && A.el.children[0].has('mtp_strip_loose')").asBoolean(), "in the hand: the design's word for a thing dragged, not for a thing seated");
         eval("c.fire('pointermove', { clientX: 110, clientY: -200 });");
         assertEquals("-30px,0px", eval("c.prop('--mtp-drag-x') + ',' + c.prop('--mtp-drag-y')").asString(), "far above: never above its slot; part way to One's slot, still nearest its own");
         assertFalse(eval("chipOf(A, 'One').has('mtp_chip_shifted')").asBoolean());
@@ -139,7 +141,7 @@ class DockingTest extends JsModuleTestBase {
         eval("c.fire('pointerup', { clientX: 50, clientY: 20 });");
         assertEquals("active:a:t2 capture:div TabMoved", log(), "the press activates, then a move and nothing else: no float opened, nothing undocked");
         assertEquals("t2,t1", eval("A.tabs().join(',')").asString(), "the drag reordered the dock");
-        assertTrue(eval("!c.has('mtp_chip_dragging') && !A.el.children[0].has('mtp_strip_dragging') && c.prop('--mtp-drag-x') == null && !chipOf(A, 'One').has('mtp_chip_shifted') && chipOf(A, 'One').prop('--mtp-shift-x') == null").asBoolean(), "let go, nothing of the drag remains");
+        assertTrue(eval("!c.has('mtp_chip_dragging') && c.has('mtp_chip_seated') && !A.el.children[0].has('mtp_strip_loose') && c.prop('--mtp-drag-x') == null && !chipOf(A, 'One').has('mtp_chip_shifted') && chipOf(A, 'One').prop('--mtp-shift-x') == null").asBoolean(), "let go, nothing of the drag remains; seated again");
         assertEquals("0", eval("docking.desk.panes().length + ''").asString());
     }
 
