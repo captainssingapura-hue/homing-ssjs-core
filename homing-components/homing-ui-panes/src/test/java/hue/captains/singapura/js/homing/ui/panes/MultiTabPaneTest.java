@@ -47,13 +47,13 @@ class MultiTabPaneTest extends JsModuleTestBase {
                 has: function (c) { return classes.has(c); } };
             return node;
         }
-        function fakeBranch(name) {
-            var kids = new Map();
+        function fakeBranch(name, deregister) {
+            var kids = new Map(), names = new Set();
             return { name: name, dissolved: [],
-                createElement: function (n, tag) { return el(tag); },
-                createBranch: function (n) { var b = fakeBranch(n); kids.set(n, b); return b; },
-                dissolveBranch: function (n) { this.dissolved.push(n); kids.delete(n); },
-                dissolve: function () { this.dissolved.push(name); },
+                createElement: function (n, tag) { if (names.has(n)) throw new RangeError("name " + n + " is already in use on branch " + name); names.add(n); return el(tag); },
+                createBranch: function (n) { if (kids.has(n)) throw new RangeError("branch " + n + " is already in use on " + name); var b = fakeBranch(n, function () { kids.delete(n); }); kids.set(n, b); return b; },
+                dissolveBranch: function (n) { var b = kids.get(n); if (b) b.dissolve(); },
+                dissolve: function () { kids.forEach(function (b) { b.dissolve(); }); this.dissolved.push(name); if (deregister) deregister(); },
                 activate: function (owner) { this.owner = String(owner); } };
         }
         var css = { addClass: function (e) { for (var i = 1; i < arguments.length; i++) e.classList.add(arguments[i]); },
@@ -127,8 +127,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
         assertEquals("active:s1:b", log());
         eval("pane.switchTab('b')");
         assertEquals("active:s1:b", log(), "switching to the active tab says nothing");
-        assertEquals("0", eval("pane.el.children[0].children[1].getAttribute('tabindex')").asString());
-        assertEquals("-1", eval("pane.el.children[0].children[0].getAttribute('tabindex')").asString());
+        assertEquals("0,0", eval("[0, 1].map(function (i) { return pane.el.children[0].children[i].getAttribute('tabindex'); }).join(',')").asString(), "every chip is in the tab order, not only the active one");
     }
 
     @Test
@@ -169,8 +168,10 @@ class MultiTabPaneTest extends JsModuleTestBase {
         assertEquals("w-a", eval("gone.widget.root.tag").asString());
         assertNull(eval("gone.widget.root.parentNode").asString(), "its root is out of the panel, ready to be attached");
         eval("log = []; pane.attachTab(gone, 0)");
-        assertEquals("A,B", chips());
+        assertEquals("A,B", chips(), "the same id back in the same pane: its chip and panel minted afresh on a branch of its own");
         assertEquals("attached:s1:a@0", log());
+        eval("pane.removeTab('a'); log = []; pane.addTab(tab('a'))");
+        assertEquals("B,A", chips(), "and again after a close");
     }
 
     @Test

@@ -56,13 +56,14 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
         }
     }
 
-    /** The strip: raised, a divider under it, scrolling sideways when the chips overflow. */
+    /** The strip: raised, a divider under it, scrolling sideways when the chips overflow; room above and below for a chip to lift. */
     public record mtp_strip() implements CssClass<PaneStyles> {
         @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Divider.class, Color.Edge.class), of(Divider.class, Shape.Rule.class)); }
         @Override public String body() { return """
             display: flex;
             align-items: stretch;
             flex-shrink: 0;
+            padding-block: 3px;
             overflow-x: auto;
             overflow-y: hidden;
             user-select: none;
@@ -70,9 +71,9 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
         }
     }
 
-    /** A chip: selectable, the design's rest, hover, selected and focus (Selectable carries the ring). Dragged by the pointer, so no touch scrolling on it. */
+    /** A chip: selectable — the design's rest, hover, press, selected and focus ring, its lift and shadow with them. Dragged by the pointer, so no touch scrolling on it. */
     public record mtp_chip() implements CssClass<PaneStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Selectable.class, Color.Surface.class), of(Selectable.class, Color.Ink.class), of(Selectable.class, Color.Edge.class), of(Selectable.class, Shape.Rule.class), of(Selectable.class, Motion.Ease.class), of(Selectable.class, Affordance.Cursor.class), of(Caption.class, Type.Scale.class)); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Selectable.class, Color.Surface.class), of(Selectable.class, Color.Ink.class), of(Selectable.class, Color.Edge.class), of(Selectable.class, Shape.Rule.class), of(Selectable.class, Motion.Transform.class), of(Selectable.class, Shape.Shadow.class), of(Selectable.class, Motion.Ease.class), of(Selectable.class, Affordance.Cursor.class), of(Caption.class, Type.Scale.class)); }
         @Override public String body() { return """
             display: inline-flex;
             align-items: center;
@@ -185,6 +186,7 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
         }
     }
 
+    /** A panel not shown, or the empty note while there are tabs: last in the sheet, so it wins the display. */
     public record mtp_tab_content_hidden() implements CssClass<PaneStyles> {
         @Override public String body() { return "display: none;"; }
     }
@@ -212,6 +214,7 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
     public List<CssClass<PaneStyles>> cssClasses() {
         return List.of(new mtp_pane(), new mtp_strip(), new mtp_chip(), new mtp_chip_label(), new mtp_chip_dragging(),
                        new mtp_chip_close(), new mtp_drop_mark(), new mtp_strip_tail(), new mtp_add(), new mtp_add_off(),
-                       new mtp_pill(), new mtp_content(), new mtp_tab_content(), new mtp_tab_content_hidden(), new mtp_empty(), new mtp_dock_target());
+                       new mtp_pill(), new mtp_content(), new mtp_tab_content(), new mtp_empty(), new mtp_dock_target(),
+                       new mtp_tab_content_hidden());   // last, so hidden wins over what a panel or the empty note says of its display
     }
 }

@@ -100,6 +100,7 @@ final class SketchyDesign {
             // Selectable — a row, a cell, an option: a line drawn around the one, dashed around the ones pointed at
             one(of(Selectable.class, Motion.Ease.class), EASE),
             Map.entry(of(Selectable.class, Motion.Transform.class), Impl.Bindings.none()
+                    .at(State.ACTIVE, "translateY(1px) rotate(0.4deg)")
                     .at(State.SELECTED, "rotate(-0.4deg)")
                     .at(State.HIGHLIGHTED, "rotate(0.4deg)")),
             silence(of(Selectable.class, Shape.Shadow.class)),

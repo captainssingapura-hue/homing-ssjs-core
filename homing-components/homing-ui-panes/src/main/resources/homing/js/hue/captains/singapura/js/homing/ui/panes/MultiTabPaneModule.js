@@ -48,6 +48,11 @@
 // decides it there. Pinned tabs sit first, cannot be closed and are not
 // dragged; a drop never lands before them.
 //
+// A tab's chip and panel are minted on a sub-branch of the pane's, tab-<id>,
+// dissolved when the tab is removed or detached — so a tab that leaves and
+// comes back, the same id to the same pane, is minted afresh; the widget's
+// root is its holder's and only passes through.
+//
 // The strip is TabStrip's; `css` is injected with the styles import.
 // =============================================================================
 
@@ -132,12 +137,14 @@ class MultiTabPane {
     // ── The chips and the panels ──────────────────────────────────────────
     _build(tab) {
         var self = this;
-        var chip = this._strip.chip(tab, { onSelect: function () { self.switchTab(tab.id); }, onClose: function () { self.removeTab(tab.id); } });
-        var panel = this._branch.createElement("panel-" + tab.id.replace(/[^A-Za-z0-9_-]/g, "_"), "div");
+        var own = this._branch.createBranch("tab-" + tab.id.replace(/[^A-Za-z0-9_-]/g, "_"));
+        own.activate(_paneOwner);
+        var chip = this._strip.chip(tab, { onSelect: function () { self.switchTab(tab.id); }, onClose: function () { self.removeTab(tab.id); } }, own);
+        var panel = own.createElement("panel", "div");
         css.addClass(panel, mtp_tab_content, mtp_tab_content_hidden);
         panel.setAttribute("role", "tabpanel");
         panel.appendChild(tab.widget.root);
-        return { id: tab.id, tab: tab, pinned: !!tab.pinned, widget: tab.widget, chip: chip, panel: panel };
+        return { id: tab.id, tab: tab, pinned: !!tab.pinned, widget: tab.widget, chip: chip, panel: panel, branch: own };
     }
     /** Into the state at index, clamped to the pinned block or after it; then the strip follows. */
     _place(entry, index) {
@@ -207,6 +214,7 @@ class MultiTabPane {
         if (typeof entry.widget.dispose === "function") {
             try { entry.widget.dispose(); } catch (e) { console.error("[MultiTabPane] widget.dispose threw:", e); }
         }
+        entry.branch.dissolve();
         this._fire(PaneEvents.TabRemoved(this.slotId, entry.tab, i));
         this._activateNeighbour(i);
         return entry.tab;
@@ -215,6 +223,7 @@ class MultiTabPane {
         var i = this._require(id);
         var entry = this._takeOut(i);
         entry.panel.removeChild(entry.widget.root);
+        entry.branch.dissolve();
         this._activateNeighbour(i);
         return entry.tab;
     }

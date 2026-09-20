@@ -123,8 +123,19 @@ class DockingTest extends JsModuleTestBase {
     private String log() { return eval("log.join(' ')").asString(); }
 
     @Test
+    void aDragAlongTheStripReorders_andUpOrSidewaysNeverDetaches() {
+        // press on Two, wander far to the right, far above the strip, then back over One: still a reorder, and it lands there
+        eval("var c = chipOf(A, 'Two'); c.fire('pointerdown', { button: 0, pointerId: 7, clientX: 100, clientY: 15, target: c });"
+           + "c.fire('pointermove', { clientX: 106, clientY: 15 }); c.fire('pointermove', { clientX: 900, clientY: 15 }); c.fire('pointermove', { clientX: 100, clientY: -200 });"
+           + "c.fire('pointermove', { clientX: 50, clientY: 40 }); c.fire('pointerup', { clientX: 50, clientY: 40 });");
+        assertEquals("capture:div TabMoved", log(), "a move and nothing else: no float opened, nothing undocked");
+        assertEquals("t2,t1", eval("A.tabs().join(',')").asString(), "the drag reordered the dock");
+        assertEquals("0", eval("docking.desk.panes().length + ''").asString());
+    }
+
+    @Test
     void aChipPulledOffTheStripFloatsUnderTheSameHand() {
-        // press on the chip, drag 6px along the strip (a reorder), then 60px below it: out
+        // press on the chip, drag 6px along the strip (a reorder), then 60px below it — more than the strip's own height: out
         eval("var c = chipOf(A, 'Two'); c.fire('pointerdown', { button: 0, pointerId: 7, clientX: 100, clientY: 15, target: c });"
            + "c.fire('pointermove', { clientX: 106, clientY: 15 }); c.fire('pointermove', { clientX: 120, clientY: 90 });");
         assertEquals("capture:div opened:t2 raised:t2 undocked:t2<a capture:header", log().replace("active:a:t1 ", ""), "the desk opens it, then the undock is said; the hand is taken over");

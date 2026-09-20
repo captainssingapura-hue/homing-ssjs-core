@@ -105,11 +105,13 @@ final class GlassmorphismDesign {
             one(of(Selectable.class, Motion.Ease.class), EASE),
             Map.entry(of(Selectable.class, Motion.Transform.class), Impl.Bindings.none()
                     .at(State.HOVER, "translateY(-1px)")
+                    .at(State.ACTIVE, "translateY(0)")
                     .at(State.SELECTED, "translateY(-2px)")
                     .at(State.HIGHLIGHTED, "translateY(-1px)")),
             Map.entry(of(Selectable.class, Shape.Shadow.class), Impl.Bindings.none()
                     .at(State.REST, "none")
                     .at(State.HOVER, drop(4, 14, 10))
+                    .at(State.ACTIVE, drop(2, 8, 10) + ", " + TOP_LIGHT)
                     .at(State.SELECTED, drop(8, 24, 16) + ", " + TOP_LIGHT)
                     .at(State.HIGHLIGHTED, "0 4px 14px color-mix(in srgb, " + LIGHT_REF + " 35%, transparent)")),
             Map.entry(of(Selectable.class, Effect.Filter.class), Impl.Bindings.none()
