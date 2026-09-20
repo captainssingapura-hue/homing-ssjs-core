@@ -52,7 +52,7 @@ public record AppPage<P extends AppModule._Param, M extends AppModule<P, M>>(
         String stamped = stampParams(query);
         String crumbs  = stampCrumbs(trail);
         String brand   = "Object.freeze({label:" + StampedParams.jsString(mpa.brand().label())
-                       + ",href:" + StampedParams.jsString(mpa.brand().home()) + "})";
+                       + ",home:" + StampedParams.jsString(mpa.brand().home()) + "})";
         String theme   = mpa.defaultTheme().map(StampedParams::jsString).orElse("null");
         String prefs   = "Object.freeze({module:" + StampedParams.jsString(mpa.moduleUrl(mpa.preferences())) + "})";
 
@@ -108,7 +108,7 @@ public record AppPage<P extends AppModule._Param, M extends AppModule<P, M>>(
             if (!first) sb.append(',');
             first = false;
             sb.append("Object.freeze({text:").append(StampedParams.jsString(c.text()))
-              .append(",href:").append(StampedParams.jsString(c.href())).append("})");
+              .append(",to:").append(StampedParams.jsString(c.href())).append("})");
         }
         return sb.append("])").toString();
     }

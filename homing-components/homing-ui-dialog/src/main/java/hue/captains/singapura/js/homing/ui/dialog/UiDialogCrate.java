@@ -2,7 +2,6 @@ package hue.captains.singapura.js.homing.ui.dialog;
 
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
-import hue.captains.singapura.js.homing.core.StandardJsModuleType;
 import hue.captains.singapura.js.homing.design.DesignCrate;
 import hue.captains.singapura.js.homing.server.ServerCrate;
 import hue.captains.singapura.js.homing.ui.elements.UiElementsCrate;
@@ -29,7 +28,7 @@ public final class UiDialogCrate implements Crate {
     @Override public List<CrateEntry> entries() {
         return List.of(
                 CrateEntry.of(Dialog.INSTANCE),
-                CrateEntry.of(Modality.INSTANCE, StandardJsModuleType.PURE_LOGIC),
+                CrateEntry.of(Modality.INSTANCE),
                 CrateEntry.of(DialogStyles.INSTANCE));
     }
 }

@@ -25,5 +25,6 @@
         <module>homing-preferences</module>
         <module>homing-ui-split</module>
         <module>homing-ui-panes</module>
+        <module>homing-components-conformance</module>
     </modules>
 </project>

@@ -4,7 +4,7 @@
 //   Button(branch, name, { label, kind?, onClick? })            → <button>
 //   setButtonOn(button, on)                                      a button switched off is inert and says so
 //   Card(branch, name, { title, text?, badge?, link? })         → <div>
-//       link: { href, label? }
+//       link: { to, label? }
 //
 // `branch` is the DomOpsParty branch that will own the element; `name` is
 // the element's name on it, and the card's parts are named under it
@@ -15,13 +15,12 @@
 // plain. Its type is "button" unless the caller says otherwise afterwards,
 // so a button inside a form does not submit it by accident. A card is a
 // raised box: a heading with an optional badge, a line of text, and a link
-// pushed to the bottom, set through href so a typed address stays typed.
+// pushed to the bottom, its address set through the manager so a typed
+// address stays typed.
 //
-// `css` is injected with the styles import; `href` is aliased from the
+// `css` is injected with the styles import; the manager comes in by its
 // explicit HrefManager import.
 // =============================================================================
-
-var href = HrefManagerInstance;
 
 function Button(branch, name, props) {
     var p = props || {};
@@ -64,11 +63,11 @@ function Card(branch, name, props) {
         card.appendChild(text);
     }
 
-    if (p.link && p.link.href) {
+    if (p.link && p.link.to) {
         var a = branch.createElement(name + "-link", "a");
         css.addClass(a, el_card_link);
-        href.set(a, p.link.href);
-        a.textContent = p.link.label == null ? String(p.link.href) : String(p.link.label);
+        HrefManagerInstance.set(a, p.link.to);
+        a.textContent = p.link.label == null ? String(p.link.to) : String(p.link.label);
         card.appendChild(a);
     }
     return card;

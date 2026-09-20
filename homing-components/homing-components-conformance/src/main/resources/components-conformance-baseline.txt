@@ -1,0 +1,3 @@
+# The components' conformance baseline: fingerprints of grandfathered findings, one per line.
+# Empty on purpose. These modules were cut on the substrate and carry no debt; a finding is a
+# regression and fails the build. Add a line here only with a reason the studio can show.

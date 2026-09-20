@@ -5,17 +5,15 @@
 // mountChrome(root, chrome) → the slot element
 //
 // `chrome` is what the server stamped into the page, frozen:
-//   { brand: { label, href }, crumbs: [ { text, href } ], preferences: { module } }
+//   { brand: { label, home }, crumbs: [ { text, to } ], preferences: { module } }
 // The crumbs are the trail the router wrote down; the last one is this
 // page and carries no link. No crumbs means the address said nothing about
 // position, and the bar shows the brand alone.
 //
 // Everything the bar draws is on one branch, owned by the chrome; the app
 // gets its own slot and never touches the bar. `css` is injected with the
-// styles import; `href` is aliased from the explicit HrefManager import.
+// styles import; the href manager comes in by its explicit import.
 // =============================================================================
-
-var href = HrefManagerInstance;
 
 const _chromeOwner = Object.freeze({ toString: () => "mpaChrome" });
 
@@ -44,7 +42,7 @@ function mountChrome(root, chrome) {
 function _brand(branch, brand) {
     var a = branch.createElement("brand", "a");
     css.addClass(a, mpa_brand);
-    href.set(a, (brand && brand.href) || "/");
+    HrefManagerInstance.set(a, (brand && brand.home) || "/");
     var mark = branch.createElement("brandMark", "span");
     css.addClass(mark, mpa_brand_mark);
     var word = branch.createElement("brandWord", "span");
@@ -73,7 +71,7 @@ function _crumbs(branch, crumbs) {
         css.addClass(el, mpa_crumb);
         el.textContent = crumbs[i].text;
         if (last) el.setAttribute("aria-current", "page");
-        else href.set(el, crumbs[i].href);
+        else HrefManagerInstance.set(el, crumbs[i].to);
         nav.appendChild(el);
     }
     return nav;

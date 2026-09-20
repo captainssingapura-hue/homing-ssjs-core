@@ -10,6 +10,7 @@ import java.util.Set;
 
 import static hue.captains.singapura.js.homing.design.DesignClass.of;
 import static hue.captains.singapura.js.homing.design.Box.Control;
+import static hue.captains.singapura.js.homing.design.Box.Inline;
 import static hue.captains.singapura.js.homing.design.Emphasis.Muted;
 import static hue.captains.singapura.js.homing.design.Emphasis.Primary;
 import static hue.captains.singapura.js.homing.design.Interaction.Focus;
@@ -152,24 +153,22 @@ public record PreferencesStyles() implements CssGroup<PreferencesStyles> {
 
     /** The switch: a control whose track is raised and whose knob is primary when on. */
     public record pv_switch() implements CssClass<PreferencesStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Raised.class, Color.Edge.class), of(Control.class, Shape.Rule.class), of(Interactive.class, Affordance.Cursor.class), of(Interactive.class, Motion.Ease.class), of(Focus.class, Shape.Rule.class), of(Focus.class, Color.Edge.class)); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Raised.class, Color.Edge.class), of(Control.class, Shape.Rule.class), of(Inline.class, Shape.Corner.class),of(Interactive.class, Affordance.Cursor.class), of(Interactive.class, Motion.Ease.class), of(Focus.class, Shape.Rule.class), of(Focus.class, Color.Edge.class)); }
         @Override public String body() { return """
             font: inherit;
             display: inline-flex;
             align-items: center;
             gap: 12px;
             padding: 6px 10px;
-            border-radius: 999px;
             """;
         }
     }
 
     public record pv_switch_track() implements CssClass<PreferencesStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Muted.class, Color.Ink.class)); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Muted.class, Color.Ink.class), of(Inline.class, Shape.Corner.class)); }
         @Override public String body() { return """
             width: 36px;
             height: 20px;
-            border-radius: 999px;
             position: relative;
             opacity: .35;
             """;
@@ -178,14 +177,13 @@ public record PreferencesStyles() implements CssGroup<PreferencesStyles> {
 
     /** The knob: primary when on, muted when off; it slides. */
     public record pv_switch_knob() implements CssClass<PreferencesStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Primary.class, Color.Surface.class), of(Interactive.class, Motion.Ease.class)); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Primary.class, Color.Surface.class), of(Interactive.class, Motion.Ease.class), of(Inline.class, Shape.Corner.class)); }
         @Override public String body() { return """
             position: absolute;
             top: 2px;
             left: 2px;
             width: 16px;
             height: 16px;
-            border-radius: 50%;
             transition-property: transform, opacity;
             opacity: .45;
             [aria-checked="true"] & { transform: translateX(16px); opacity: 1; }
