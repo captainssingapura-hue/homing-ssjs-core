@@ -27,6 +27,7 @@
         <module>homing-ui-panes</module>
         <module>homing-ui-floating</module>
         <module>homing-ui-docking</module>
+        <module>homing-ui-splitgrid</module>
         <module>homing-components-conformance</module>
     </modules>
 </project>
