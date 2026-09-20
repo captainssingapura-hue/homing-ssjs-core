@@ -4,14 +4,20 @@
 // a sub-branch per pane. It owns the stack: z-order, the active one, the host
 // they float in. The workspace's substrate.
 //
-//   new Desk(branch, { host, onEvent?, minW?, minH? })
-//     host   a flex box; the desk is its item and fills it.
+//   new Desk(branch, { host, layer?, onEvent?, minW?, minH?, onDragMove?, onDragEnd? })
+//     host   a flex box; the desk is its item and fills it — or, with layer,
+//            a positioned box the desk lies over, the hand passing through it
+//            except on a pane: a desk over docks.
 //
 //   desk.open({ id?, title, x?, y?, w?, h?, closable?, widget?, params? })  → the pane
 //       id defaults to "pane-N"; x, y cascade when not given. `widget` is a
-//       class by the base's contract: new widget(branch, params) → root,
-//       setActive?, dispose?; its root goes in the pane's body. Reports
+//       class by the base's contract — new widget(branch, params) → root,
+//       setActive?, dispose? — or an instance already made, a tab's, whose
+//       branch is its holder's; its root goes in the pane's body. Reports
 //       Opened, then Raised, since a new pane is the active one.
+//   desk.release(id)    → { id, title, widget, closable }: the tab leaves the desk
+//                         for a dock, widget and all, NOT disposed; the frame
+//                         goes; Released(id), and the next on the stack raised
 //   desk.raise(id)      → Raised(id) when it was not already on top; the one
 //                         leaving is told setActive(false), the one coming in
 //                         setActive(true), pane and widget both
@@ -23,8 +29,10 @@
 //
 // The hand: a press anywhere on a pane raises it; focus into it raises it;
 // Escape while it is active closes it if it can be closed; the cross closes
-// it. A pane's own Moved and Resized come through the same sink. Every
-// mutation is one FloatEvents object on one sink, onEvent(ev).
+// it. A pane's own Moved and Resized come through the same sink; a pane's
+// drag is watched through onDragMove(pane, x, y) and onDragEnd(pane, x, y,
+// ok), for a holder that offers it to a dock. Every mutation is one
+// FloatEvents object on one sink, onEvent(ev).
 // =============================================================================
 
 const _deskOwner = Object.freeze({ toString: () => "desk" });
@@ -39,13 +47,15 @@ class Desk {
         this._sink = typeof opts.onEvent === "function" ? opts.onEvent : null;
         this._minW = opts.minW;
         this._minH = opts.minH;
+        this._onDragMove = typeof opts.onDragMove === "function" ? opts.onDragMove : null;
+        this._onDragEnd = typeof opts.onDragEnd === "function" ? opts.onDragEnd : null;
         this._panes = new Map();          // id → { pane, widget, closable }
         this._order = [];                 // ids, bottom to top
         this._top = 0;
         this._active = null;
         this._n = 0;
         var root = branch.createElement("desk", "div");
-        css.addClass(root, fp_desk);
+        css.addClass(root, opts.layer ? fp_desk_layer : fp_desk);
         opts.host.appendChild(root);
         this.root = root;
     }
@@ -63,14 +73,14 @@ class Desk {
             w: s.w, h: s.h, z: ++this._top, closable: s.closable !== false,
             minW: this._minW, minH: this._minH,
             onEvent: function (ev) { self._fire(ev); },
-            onClose: function () { self.close(id); }
+            onClose: function () { self.close(id); },
+            onDragMove: this._onDragMove, onDragEnd: this._onDragEnd
         });
         this.root.appendChild(pane.root);
         var entry = { pane: pane, widget: null, closable: s.closable !== false };
-        if (typeof s.widget === "function") {
-            entry.widget = new s.widget(paneBranch.createBranch("widget"), s.params || {});
-            pane.body.appendChild(entry.widget.root);
-        }
+        if (typeof s.widget === "function") entry.widget = new s.widget(paneBranch.createBranch("widget"), s.params || {});
+        else if (s.widget && typeof s.widget === "object" && s.widget.root) entry.widget = s.widget;
+        if (entry.widget) pane.body.appendChild(entry.widget.root);
         pane.root.addEventListener("pointerdown", function () { self.raise(id); });
         pane.root.addEventListener("focusin", function () { self.raise(id); });
         pane.root.addEventListener("keydown", function (e) {
@@ -109,6 +119,24 @@ class Desk {
         this._fire(FloatEvents.Closed(id));
         if (this._active === null && this._order.length) this._activate(this._order[this._order.length - 1], true);
         return entry.pane;
+    }
+
+    /** The tab leaves the desk for a dock: the frame goes, the widget travels on, not disposed. */
+    release(id) {
+        var entry = this._panes.get(id);
+        if (!entry) return null;
+        var tab = { id: id, title: entry.pane.title(), widget: entry.widget, closable: entry.closable };
+        if (entry.widget && entry.widget.root.parentNode === entry.pane.body) entry.pane.body.removeChild(entry.widget.root);
+        if (this._active === id) { entry.pane.setActive(false); this._active = null; }
+        var root = entry.pane.root;
+        if (root.parentNode) root.parentNode.removeChild(root);
+        entry.pane.dispose();
+        this._panes.delete(id);
+        var i = this._order.indexOf(id);
+        if (i >= 0) this._order.splice(i, 1);
+        this._fire(FloatEvents.Released(id));
+        if (this._active === null && this._order.length) this._activate(this._order[this._order.length - 1], true);
+        return tab;
     }
 
     pane(id) { var e = this._panes.get(id); return e ? e.pane : null; }

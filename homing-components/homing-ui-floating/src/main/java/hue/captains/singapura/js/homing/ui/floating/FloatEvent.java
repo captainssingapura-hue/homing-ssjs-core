@@ -10,7 +10,7 @@ import java.util.Objects;
  * its fields; {@code FloatEventsTest} holds the two together, so a kind or
  * a field cannot be added, dropped or reordered on one side alone.
  *
- * <p>Five kinds: a pane opened, moved, resized, raised and closed. Positions
+ * <p>Six kinds: a pane opened, moved, resized, raised, closed and released to a dock. Positions
  * and measures are whole pixels within the desk; a move or a resize is
  * reported once, when the hand lets go or the method returns, never per
  * pixel of a drag.</p>
@@ -62,5 +62,10 @@ public sealed interface FloatEvent {
     /** A pane was closed — the cross, Escape, or {@code close}; its widget is already disposed. */
     record Closed(String id) implements FloatEvent {
         public Closed { requireId(id, "Closed.id"); }
+    }
+
+    /** A pane left the desk for a dock — {@code release}; its widget travels on, not disposed. */
+    record Released(String id) implements FloatEvent {
+        public Released { requireId(id, "Released.id"); }
     }
 }

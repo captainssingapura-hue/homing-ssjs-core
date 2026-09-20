@@ -59,6 +59,17 @@ public record FloatingStyles() implements CssGroup<FloatingStyles> {
         }
     }
 
+    /** The desk as a layer over docks: it lies over its positioned host, and the hand passes through it except on a pane. */
+    public record fp_desk_layer() implements CssClass<FloatingStyles> {
+        @Override public String body() { return """
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+            """;
+        }
+    }
+
     /**
      * The frame: a raised box above the desk with the overlay's shadow, at the
      * place and measure its user gave it — {@code --fp-x}, {@code --fp-y},
@@ -79,6 +90,7 @@ public record FloatingStyles() implements CssGroup<FloatingStyles> {
             inline-size: var(--fp-w);
             block-size: var(--fp-h);
             z-index: var(--fp-z);
+            pointer-events: auto;
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
@@ -196,6 +208,6 @@ public record FloatingStyles() implements CssGroup<FloatingStyles> {
 
     @Override
     public List<CssClass<FloatingStyles>> cssClasses() {
-        return List.of(new fp_desk(), new fp_frame(), new fp_hoverable(), new fp_held(), new fp_active(), new fp_head(), new fp_head_held(), new fp_title(), new fp_close(), new fp_body(), new fp_grip());
+        return List.of(new fp_desk(), new fp_desk_layer(), new fp_frame(), new fp_hoverable(), new fp_held(), new fp_active(), new fp_head(), new fp_head_held(), new fp_title(), new fp_close(), new fp_body(), new fp_grip());
     }
 }

@@ -266,6 +266,8 @@ final class NeoFuturismDesign {
             one(of(Overlay.class, Shape.Shadow.class), "0 24px 64px " + glow(SPACE_REF, 35) + ", 0 0 0 1px " + glow(LIGHT_REF, 30), "0 24px 64px " + glow(SPACE_REF, 70) + ", 0 0 0 1px " + glow(LIGHT_REF, 35)),
             Map.entry(of(Overlay.class, Effect.Filter.class), Impl.Bindings.none().at(State.REST, "backdrop-filter", "blur(14px) saturate(1.4) brightness(0.7)")),
             ring(of(Focus.class, Color.Edge.class), CYAN, CYAN_D),
+            surface(of(DropTarget.class, Color.Surface.class), glow(CYAN, 12), glow(CYAN_D, 14)),
+            ring(of(DropTarget.class, Color.Edge.class), CYAN, CYAN_D),
             focusRing(of(Control.class, Color.Edge.class), CYAN, CYAN_D),
             focusRing(of(Container.class, Color.Edge.class), CYAN, CYAN_D),
             one(of(Focus.class, Shape.Shadow.class), "0 24px 64px " + glow(SPACE_REF, 35) + ", 0 0 0 1px " + LIGHT_REF + ", 0 0 40px " + glow(LIGHT_REF, 35),

@@ -162,6 +162,8 @@ public record FrostPalette() implements Palette {
             one(of(Current.class, Color.Ink.class), INK_BLUE, INK_BLUE_D),
             edge(of(Current.class, Color.Edge.class), BLUE, BLUE_D),
             ring(of(Focus.class, Color.Edge.class), BLUE, BLUE_D),
+            surface(of(DropTarget.class, Color.Surface.class), "rgba(91, 124, 255, 0.12)"),
+            ring(of(DropTarget.class, Color.Edge.class), BLUE, BLUE_D),
             focusRing(of(Control.class, Color.Edge.class), BLUE, BLUE_D),
             focusRing(of(Container.class, Color.Edge.class), BLUE, BLUE_D),
 

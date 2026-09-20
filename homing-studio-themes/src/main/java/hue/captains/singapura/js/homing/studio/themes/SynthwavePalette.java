@@ -167,6 +167,8 @@ public record SynthwavePalette() implements Palette {
             one(of(Current.class, Color.Ink.class), CYAN, CYAN_D),
             edge(of(Current.class, Color.Edge.class), CYAN, CYAN_D),
             ring(of(Focus.class, Color.Edge.class), CYAN, CYAN_D),
+            surface(of(DropTarget.class, Color.Surface.class), "rgba(0, 240, 255, 0.10)"),
+            ring(of(DropTarget.class, Color.Edge.class), CYAN, CYAN_D),
             focusRing(of(Control.class, Color.Edge.class), CYAN, CYAN_D),
             focusRing(of(Container.class, Color.Edge.class), CYAN, CYAN_D),
 

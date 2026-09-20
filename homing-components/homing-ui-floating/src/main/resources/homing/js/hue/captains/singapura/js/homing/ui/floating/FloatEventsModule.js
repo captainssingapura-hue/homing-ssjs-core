@@ -10,6 +10,7 @@
 //   FloatEvents.Resized(id, w, h)
 //   FloatEvents.Raised(id)
 //   FloatEvents.Closed(id)
+//   FloatEvents.Released(id)
 //   FloatEvents.KINDS                       the kinds, in this order
 //
 // Data, not classes: an event goes into a log, a checkpoint, a replay, and
@@ -37,7 +38,7 @@ function _positive(v, what) {
 }
 
 class FloatEvents {
-    static KINDS = Object.freeze(["Opened", "Moved", "Resized", "Raised", "Closed"]);
+    static KINDS = Object.freeze(["Opened", "Moved", "Resized", "Raised", "Closed", "Released"]);
 
     /** A pane was opened on the desk, at this place and measure, and is the active one. */
     static Opened(id, title, x, y, w, h) {
@@ -59,5 +60,9 @@ class FloatEvents {
     /** A pane was closed — the cross, Escape, or close; its widget is already disposed. */
     static Closed(id) {
         return Object.freeze({ kind: "Closed", id: _id(id, "Closed.id") });
+    }
+    /** A pane left the desk for a dock — release; its widget travels on, not disposed. */
+    static Released(id) {
+        return Object.freeze({ kind: "Released", id: _id(id, "Released.id") });
     }
 }

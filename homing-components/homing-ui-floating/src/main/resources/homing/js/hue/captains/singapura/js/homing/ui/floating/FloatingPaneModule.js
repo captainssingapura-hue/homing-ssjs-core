@@ -7,7 +7,8 @@
 // larger, movable card in the hand: its place and its measure are its user's,
 // carried in --fp-x, --fp-y, --fp-w, --fp-h on the frame, never the design's.
 //
-//   new FloatingPane(branch, { id, title, x, y, w, h, z, closable?, onEvent?, minW?, minH? })
+//   new FloatingPane(branch, { id, title, x, y, w, h, z, closable?, onEvent?, minW?, minH?,
+//                              onDragMove?(pane, clientX, clientY), onDragEnd?(pane, clientX, clientY, ok) })
 //     branch   the pane's own, handed unactivated
 //     x, y     its place within the desk, in px; w, h its measure; z its place on the stack
 //
@@ -22,6 +23,8 @@
 //   pane.raise(z)            its place on the stack; the desk's to call
 //   pane.setActive(on)       the ring drawn now, on the active one
 //   pane.size(s)             the size axis, on the head and its parts
+//   pane.grab(pointerId, clientX, clientY)   take over a drag already under way — a chip
+//                            pulled off a strip — as if the head had been pressed there
 //   pane.dispose()           dissolves the branch
 //
 // The hand: over the head, the whole frame wears the interactive word and
@@ -29,11 +32,14 @@
 // drag moves it, live, the frame in the hand (Dragging) and the head lit by
 // extent, and reports Moved once when it lets go. A press on the grip and a
 // drag sizes it, live, and reports Resized once. A press on the cross reports
-// nothing: it asks the desk, through `onClose`, to close it.
+// nothing: it asks the desk, through `onClose`, to close it. While a drag is
+// on, onDragMove is told every position and onDragEnd the last, with whether
+// the hand let go (true) or the drag was cancelled — for a holder that offers
+// the pane to a dock under the pointer; neither is an event.
 // Every report is one FloatEvents object on one sink, onEvent(ev).
 // =============================================================================
 
-const _paneOwner = Object.freeze({ toString: () => "floatingPane" });
+const _floatingOwner = Object.freeze({ toString: () => "floatingPane" });
 var _HELD = 0.6;
 var _MIN_W = 160, _MIN_H = 96;
 var _KEEP = 48;          // how much of the head must stay within the desk, inline
@@ -43,11 +49,13 @@ class FloatingPane {
         if (!branch) throw new Error("[FloatingPane] a branch of its own is required");
         if (!opts || !opts.id) throw new Error("[FloatingPane] opts.id is required");
         var self = this;
-        branch.activate(_paneOwner);
+        branch.activate(_floatingOwner);
         this.branch = branch;
         this.id = String(opts.id);
         this._sink = typeof opts.onEvent === "function" ? opts.onEvent : null;
         this._onClose = typeof opts.onClose === "function" ? opts.onClose : null;
+        this._onDragMove = typeof opts.onDragMove === "function" ? opts.onDragMove : null;
+        this._onDragEnd = typeof opts.onDragEnd === "function" ? opts.onDragEnd : null;
         this._minW = opts.minW == null ? _MIN_W : Math.max(24, opts.minW | 0);
         this._minH = opts.minH == null ? _MIN_H : Math.max(24, opts.minH | 0);
         this._x = 0; this._y = 0; this._w = this._minW; this._h = this._minH;
@@ -164,47 +172,61 @@ class FloatingPane {
 
     _fire(ev) { if (this._sink) this._sink(ev); }
 
+    /** Take over a drag already under way, as if the head had been pressed at this point: the pane follows this hand until it lets go. */
+    grab(pointerId, clientX, clientY) {
+        this._over = true;
+        this._beginMove({ pointerId: pointerId, clientX: clientX, clientY: clientY });
+        return this;
+    }
+
     // ── the hand on the head: move ──────────────────────────────────────────
+    _lift() {   // in the hand: Dragging; under the hand: Interactive, the frame being hovered through its head; else nothing
+        css.toggleClass(this.root, fp_held, this._held);
+        css.toggleClass(this.root, fp_hoverable, this._over && !this._held);
+    }
     _armMove(head) {
         var self = this;
-        var frame = this.root, over = false, held = false;
-        function lift() {   // in the hand: Dragging; under the hand: Interactive, the frame being hovered through its head; else nothing
-            css.toggleClass(frame, fp_held, held);
-            css.toggleClass(frame, fp_hoverable, over && !held);
-        }
-        head.addEventListener("pointerenter", function () { over = true; lift(); });
-        head.addEventListener("pointerleave", function () { over = false; lift(); });
+        this._over = false; this._held = false;
+        head.addEventListener("pointerenter", function () { self._over = true; self._lift(); });
+        head.addEventListener("pointerleave", function () { self._over = false; self._lift(); });
         head.addEventListener("pointerdown", function (down) {
-            if (down.button !== 0 || held) return;
+            if (down.button !== 0 || self._held) return;
             if (self._close && (down.target === self._close || (self._close.contains && self._close.contains(down.target)))) return;
-            var x0 = self._x, y0 = self._y, cx = down.clientX, cy = down.clientY, moved = false;
-            held = true;
-            lift();
-            css.addClass(head, fp_head_held);
-            css.extent(head, _HELD);
-            try { head.setPointerCapture(down.pointerId); } catch (err) {}
-            function onMove(e) {
-                var nx = x0 + (e.clientX - cx), ny = y0 + (e.clientY - cy);
-                self._set(nx, ny, self._w, self._h, true);
-                moved = true;
-            }
-            function onEnd(e) {
-                head.removeEventListener("pointermove", onMove);
-                head.removeEventListener("pointerup", onEnd);
-                head.removeEventListener("pointercancel", onEnd);
-                held = false;
-                lift();
-                css.removeClass(head, fp_head_held);
-                css.extent(head, null);
-                try { head.releasePointerCapture(down.pointerId); } catch (err) {}
-                if (e.type !== "pointerup") { self._set(x0, y0, self._w, self._h, false); return; }
-                if (moved && (self._x !== x0 || self._y !== y0)) self._fire(FloatEvents.Moved(self.id, self._x, self._y));
-            }
-            head.addEventListener("pointermove", onMove);
-            head.addEventListener("pointerup", onEnd);
-            head.addEventListener("pointercancel", onEnd);
+            self._beginMove(down);
             if (down.preventDefault) down.preventDefault();
         });
+    }
+    _beginMove(down) {
+        var self = this, head = this.head;
+        var x0 = this._x, y0 = this._y, cx = down.clientX, cy = down.clientY, moved = false;
+        this._held = true;
+        this._lift();
+        css.addClass(head, fp_head_held);
+        css.extent(head, _HELD);
+        try { head.setPointerCapture(down.pointerId); } catch (err) {}
+        function onMove(e) {
+            var nx = x0 + (e.clientX - cx), ny = y0 + (e.clientY - cy);
+            self._set(nx, ny, self._w, self._h, true);
+            moved = true;
+            if (self._onDragMove) self._onDragMove(self, e.clientX, e.clientY);
+        }
+        function onEnd(e) {
+            head.removeEventListener("pointermove", onMove);
+            head.removeEventListener("pointerup", onEnd);
+            head.removeEventListener("pointercancel", onEnd);
+            self._held = false;
+            self._lift();
+            css.removeClass(head, fp_head_held);
+            css.extent(head, null);
+            try { head.releasePointerCapture(down.pointerId); } catch (err) {}
+            var ok = e.type === "pointerup";
+            if (!ok) self._set(x0, y0, self._w, self._h, false);
+            if (self._onDragEnd) self._onDragEnd(self, e.clientX, e.clientY, ok);   // a holder may take the pane off the desk here: docked, it has not "moved"
+            if (ok && moved && self.root.parentNode && (self._x !== x0 || self._y !== y0)) self._fire(FloatEvents.Moved(self.id, self._x, self._y));
+        }
+        head.addEventListener("pointermove", onMove);
+        head.addEventListener("pointerup", onEnd);
+        head.addEventListener("pointercancel", onEnd);
     }
 
     // ── the hand on the grip: resize ────────────────────────────────────────

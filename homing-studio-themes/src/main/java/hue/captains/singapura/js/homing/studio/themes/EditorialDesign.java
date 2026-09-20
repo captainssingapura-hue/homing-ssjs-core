@@ -166,7 +166,8 @@ final class EditorialDesign {
             one(of(Overlay.class, Shape.Shadow.class), "0 10px 30px color-mix(in srgb, " + INVERTED_REF + " 45%, transparent), 0 2px 6px color-mix(in srgb, " + INVERTED_REF + " 30%, transparent)"),
             Map.entry(of(Overlay.class, Effect.Filter.class), hue.captains.singapura.js.homing.design.Impl.Bindings.none().at(hue.captains.singapura.js.homing.design.State.REST, "backdrop-filter", "brightness(0.45) blur(2px)")),
             one(of(Focus.class, Shape.Shadow.class), "0 10px 30px color-mix(in srgb, " + INVERTED_REF + " 45%, transparent), 0 0 0 1px color-mix(in srgb, " + PRIMARY_REF + " 28%, transparent), 0 0 36px color-mix(in srgb, " + PRIMARY_REF + " 30%, transparent)"),
-            outline(of(Focus.class, Shape.Rule.class), "2px", "solid", "-2px"),   // the ring, where a component draws it as one: a grid's cursor, a tree's current row
+            outline(of(Focus.class, Shape.Rule.class), "2px", "solid", "-2px"),
+            outline(of(DropTarget.class, Shape.Rule.class), "2px", "dashed", "-2px"),   // a place you can drop on: a dashed ring, drawn now   // the ring, where a component draws it as one: a grid's cursor, a tree's current row
             one(of(Inert.class, Effect.Opacity.class), "0.45"),
             one(of(Inert.class, Affordance.Cursor.class), "default"),
 

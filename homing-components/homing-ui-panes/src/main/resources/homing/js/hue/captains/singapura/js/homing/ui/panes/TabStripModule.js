@@ -6,13 +6,20 @@
 // where a dragged chip landed. A branch component: the pane makes a
 // sub-branch for it and hands it in.
 //
-//   new TabStrip(branch, { onAdd?, onDrop(chip, dest) })
+//   new TabStrip(branch, { onAdd?, onDrop(chip, dest), onDragOut?(chip, pointerEvent) })
 //     strip.el
 //     strip.chip({ id, title, pinned, closable }, { onSelect, onClose }) → chipEl
 //     strip.arrange(chips)          the chips in order, before the tail
 //     strip.remove(chip)
 //     strip.select(chips, active)   aria-selected and the roving tabindex
 //     strip.count(n, budget, addOn) the pill, and the add button on or off
+//     strip.markAt(clientX)         the mark where a tab from outside would land → index
+//     strip.unmark()
+//
+// A chip dragged off the strip — beyond it, by more than its own height —
+// leaves it: the drag is dropped here, and onDragOut is told with the
+// pointer event, so whoever holds the pane can float the tab under the same
+// hand. Pinned chips are not dragged and never leave.
 //
 // A drop lands at the count of the other chips whose middle is left of the
 // pointer, never before the pinned ones; the pane turns that into a move.
@@ -22,6 +29,7 @@
 
 const _stripOwner = Object.freeze({ toString: () => "tabStrip" });
 var _DRAG_THRESHOLD = 4;
+var _OUT_MARGIN = 28;        // how far beyond the strip a chip is pulled before it leaves
 
 class TabStrip {
     constructor(branch, opts) {
@@ -30,6 +38,7 @@ class TabStrip {
         branch.activate(_stripOwner);
         this._branch = branch;
         this._onDrop = opts && typeof opts.onDrop === "function" ? opts.onDrop : null;
+        this._onDragOut = opts && typeof opts.onDragOut === "function" ? opts.onDragOut : null;
         this._order = [];                 // the chips as last arranged
         this._pinned = new Set();         // the chips that are pinned
 
@@ -125,6 +134,14 @@ class TabStrip {
             if (down.button !== 0) return;
             if (closeBtn && closeBtn.contains(down.target)) return;
             var startX = down.clientX, dragging = false, dest = -1;
+            function letGo() {
+                c.removeEventListener("pointermove", onMove);
+                c.removeEventListener("pointerup", onEnd);
+                c.removeEventListener("pointercancel", onEnd);
+                css.removeClass(c, mtp_chip_dragging);
+                if (self._mark.parentNode) self._mark.parentNode.removeChild(self._mark);
+                try { c.releasePointerCapture(down.pointerId); } catch (err) {}
+            }
             function onMove(e) {
                 if (!dragging) {
                     if (Math.abs(e.clientX - startX) < _DRAG_THRESHOLD) return;
@@ -132,17 +149,13 @@ class TabStrip {
                     css.addClass(c, mtp_chip_dragging);
                     try { c.setPointerCapture(down.pointerId); } catch (err) {}
                 }
+                if (self._onDragOut && self._isOut(e.clientX, e.clientY)) { letGo(); self._onDragOut(c, e); return; }
                 dest = self._destAt(c, e.clientX);
                 self._markAt(c, dest);
             }
             function onEnd(e) {
-                c.removeEventListener("pointermove", onMove);
-                c.removeEventListener("pointerup", onEnd);
-                c.removeEventListener("pointercancel", onEnd);
-                if (!dragging) return;
-                css.removeClass(c, mtp_chip_dragging);
-                if (self._mark.parentNode) self._mark.parentNode.removeChild(self._mark);
-                try { c.releasePointerCapture(down.pointerId); } catch (err) {}
+                if (!dragging) { letGo(); return; }
+                letGo();
                 if (e.type === "pointerup" && dest >= 0 && self._onDrop) self._onDrop(c, dest);
             }
             c.addEventListener("pointermove", onMove);
@@ -155,6 +168,14 @@ class TabStrip {
         for (var i = 0; i < this._order.length; i++) if (this._order[i] !== c) out.push(this._order[i]);
         return out;
     }
+    /** Beyond the strip by more than the margin, on any side. */
+    _isOut(x, y) {
+        var r = this.el.getBoundingClientRect();
+        return x < r.left - _OUT_MARGIN || x > r.right + _OUT_MARGIN || y < r.top - _OUT_MARGIN || y > r.bottom + _OUT_MARGIN;
+    }
+    /** The mark where a tab from outside would land, and the index it would take. */
+    markAt(x) { var dest = this._destAt(null, x); this._markAt(null, dest); return dest; }
+    unmark() { if (this._mark.parentNode) this._mark.parentNode.removeChild(this._mark); }
     /** Where the chip would land: the count of the other chips whose middle is left of x, never before the pinned. */
     _destAt(c, x) {
         var others = this._others(c), k = 0;

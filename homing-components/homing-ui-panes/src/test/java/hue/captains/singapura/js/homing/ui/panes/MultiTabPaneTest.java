@@ -64,7 +64,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
             mtp_chip_dragging = "mtp_chip_dragging", mtp_chip_close = "mtp_chip_close", mtp_drop_mark = "mtp_drop_mark",
             mtp_strip_tail = "mtp_strip_tail", mtp_add = "mtp_add", mtp_add_off = "mtp_add_off", mtp_pill = "mtp_pill",
             mtp_content = "mtp_content", mtp_tab_content = "mtp_tab_content", mtp_tab_content_hidden = "mtp_tab_content_hidden",
-            mtp_empty = "mtp_empty";
+            mtp_empty = "mtp_empty", mtp_dock_target = "mtp_dock_target";
         var console = { error: function (m, e) { log.push("error:" + m); } };
         var host = el("div");
         var branch = fakeBranch("page");

@@ -26,7 +26,7 @@ public record DeskModule() implements DomModule<DeskModule> {
         return ImportsFor.<DeskModule>builder()
                 .add(new ModuleImports<>(List.of(new FloatingPaneModule.FloatingPane()), FloatingPaneModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new FloatEventsModule.FloatEvents()), FloatEventsModule.INSTANCE))
-                .add(new ModuleImports<>(List.of(new FloatingStyles.fp_desk()), FloatingStyles.INSTANCE))
+                .add(new ModuleImports<>(List.of(new FloatingStyles.fp_desk(), new FloatingStyles.fp_desk_layer()), FloatingStyles.INSTANCE))
                 .build();
     }
 

@@ -14,6 +14,7 @@ import hue.captains.singapura.js.homing.site.mpa.MpaCrate;
 import hue.captains.singapura.js.homing.studio.themes.StudioThemeRegistry;
 import hue.captains.singapura.js.homing.ui.dialog.UiDialogCrate;
 import hue.captains.singapura.js.homing.ui.elements.UiElementsCrate;
+import hue.captains.singapura.js.homing.ui.docking.UiDockingCrate;
 import hue.captains.singapura.js.homing.ui.floating.UiFloatingCrate;
 import hue.captains.singapura.js.homing.ui.panes.UiPanesCrate;
 import hue.captains.singapura.js.homing.ui.split.UiSplitCrate;
@@ -57,12 +58,13 @@ public final class ComponentsConformance {
             UiSplitCrate.INSTANCE,
             UiPanesCrate.INSTANCE,
             UiFloatingCrate.INSTANCE,
+            UiDockingCrate.INSTANCE,
             MpaCrate.INSTANCE);
 
     /** One class per Maven module, for the coverage check: nothing served from these modules may be uncrated. */
     public static final List<Class<?>> ANCHORS = List.of(
             UiElementsCrate.class, UiDialogCrate.class, UiPreferencesCrate.class,
-            UiSplitCrate.class, UiPanesCrate.class, UiFloatingCrate.class, MpaCrate.class);
+            UiSplitCrate.class, UiPanesCrate.class, UiFloatingCrate.class, UiDockingCrate.class, MpaCrate.class);
 
     /** The framework's policy, unextended: the components declare no types of their own. */
     public static final JsRulePolicy POLICY = DefaultJsRulePolicy.INSTANCE;

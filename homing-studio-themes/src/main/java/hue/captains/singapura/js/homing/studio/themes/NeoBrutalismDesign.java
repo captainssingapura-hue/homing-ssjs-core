@@ -230,10 +230,13 @@ final class NeoBrutalismDesign {
             Map.entry(of(Overlay.class, Effect.Filter.class), Impl.Bindings.none().at(State.REST, "backdrop-filter", "grayscale(1) contrast(1.4)")),
             surfaceImage(of(Overlay.class, Color.Surface.class), "transparent", "repeating-linear-gradient(45deg, color-mix(in srgb, " + INK + " 22%, transparent) 0 7px, transparent 7px 14px)"),
             ring(of(Focus.class, Color.Edge.class), RISO_BLUE),
+            surface(of(DropTarget.class, Color.Surface.class), SIGNAL),
+            ring(of(DropTarget.class, Color.Edge.class), INK),
             focusRing(of(Control.class, Color.Edge.class), RISO_BLUE),
             focusRing(of(Container.class, Color.Edge.class), RISO_BLUE),
             one(of(Focus.class, Shape.Shadow.class), shadow(12) + ", 0 0 0 4px " + FOCUS_REF),
             outline(of(Focus.class, Shape.Rule.class), "3px", "solid", "-3px"),
+            outline(of(DropTarget.class, Shape.Rule.class), "3px", "dashed", "-3px"),
             one(of(Inert.class, Effect.Opacity.class), "0.4"),
             one(of(Inert.class, Affordance.Cursor.class), "not-allowed"),
 

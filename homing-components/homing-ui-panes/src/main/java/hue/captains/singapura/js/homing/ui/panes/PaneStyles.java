@@ -10,6 +10,7 @@ import static hue.captains.singapura.js.homing.design.DesignClass.of;
 import static hue.captains.singapura.js.homing.design.Box.Control;
 import static hue.captains.singapura.js.homing.design.Emphasis.Muted;
 import static hue.captains.singapura.js.homing.design.Emphasis.Primary;
+import static hue.captains.singapura.js.homing.design.Interaction.DropTarget;
 import static hue.captains.singapura.js.homing.design.Interaction.Focus;
 import static hue.captains.singapura.js.homing.design.Interaction.Inert;
 import static hue.captains.singapura.js.homing.design.Interaction.Interactive;
@@ -188,6 +189,12 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
         @Override public String body() { return "display: none;"; }
     }
 
+    /** The pane while a tab from outside is offered to it: the drop-target word, on its surface, its edge and its rule. */
+    public record mtp_dock_target() implements CssClass<PaneStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(DropTarget.class, Color.Surface.class), of(DropTarget.class, Color.Edge.class), of(DropTarget.class, Shape.Rule.class)); }
+        @Override public String body() { return ""; }
+    }
+
     /** What an empty pane says. */
     public record mtp_empty() implements CssClass<PaneStyles> {
         @Override public List<? extends Wearable> wears() { return List.of(of(Muted.class, Color.Ink.class), of(Caption.class, Type.Scale.class)); }
@@ -205,6 +212,6 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
     public List<CssClass<PaneStyles>> cssClasses() {
         return List.of(new mtp_pane(), new mtp_strip(), new mtp_chip(), new mtp_chip_label(), new mtp_chip_dragging(),
                        new mtp_chip_close(), new mtp_drop_mark(), new mtp_strip_tail(), new mtp_add(), new mtp_add_off(),
-                       new mtp_pill(), new mtp_content(), new mtp_tab_content(), new mtp_tab_content_hidden(), new mtp_empty());
+                       new mtp_pill(), new mtp_content(), new mtp_tab_content(), new mtp_tab_content_hidden(), new mtp_empty(), new mtp_dock_target());
     }
 }

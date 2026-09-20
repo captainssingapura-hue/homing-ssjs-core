@@ -60,7 +60,7 @@ class DeskTest extends JsModuleTestBase {
                     hasClass: function (e, c) { return e.classList.contains(c); },
                     extent: function (e, t) { if (t == null) e.style.removeProperty("--extent"); else e.style.setProperty("--extent", String(t)); },
                     size: function (e, s) { if (s == null) e.style.removeProperty("--size"); else e.style.setProperty("--size", String(s)); } };
-        var fp_desk = "fp_desk", fp_frame = "fp_frame", fp_hoverable = "fp_hoverable", fp_held = "fp_held", fp_active = "fp_active", fp_head = "fp_head", fp_head_held = "fp_head_held",
+        var fp_desk = "fp_desk", fp_desk_layer = "fp_desk_layer", fp_frame = "fp_frame", fp_hoverable = "fp_hoverable", fp_held = "fp_held", fp_active = "fp_active", fp_head = "fp_head", fp_head_held = "fp_head_held",
             fp_title = "fp_title", fp_close = "fp_close", fp_body = "fp_body", fp_grip = "fp_grip";
         var console = { error: function (m, e) { log.push("error:" + m); } };
         var host = el("div");

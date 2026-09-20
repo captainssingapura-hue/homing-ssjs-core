@@ -49,7 +49,8 @@ public record MultiTabPaneModule() implements DomModule<MultiTabPaneModule> {
                         new PaneStyles.mtp_content(),
                         new PaneStyles.mtp_tab_content(),
                         new PaneStyles.mtp_tab_content_hidden(),
-                        new PaneStyles.mtp_empty()
+                        new PaneStyles.mtp_empty(),
+                        new PaneStyles.mtp_dock_target()
                 ), PaneStyles.INSTANCE))
                 .build();
     }

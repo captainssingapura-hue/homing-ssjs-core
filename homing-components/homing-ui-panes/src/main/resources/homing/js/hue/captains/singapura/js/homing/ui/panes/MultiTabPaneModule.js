@@ -4,7 +4,7 @@
 // component: the caller makes a sub-branch for it and hands it in; dispose()
 // dissolves it.
 //
-//   new MultiTabPane(branch, { host, slotId?, budget?, addable?, onEvent? })
+//   new MultiTabPane(branch, { host, slotId?, budget?, addable?, onEvent?, onDragOut? })
 //     branch: the pane's own, handed unactivated
 //     host:   a flex column; the pane is its item and fills it.
 //
@@ -26,6 +26,15 @@
 //   pane.budget() .canAdd() .setAddEnabled(b)
 //   pane.contentElOf(id) .widgetOf(id) .getState() .el .slotId
 //   pane.dispose()               → every widget disposed in order, the branch dissolved
+//
+// The pane is a dock. A chip pulled off the strip is reported to onDragOut(tab,
+// pointerEvent) — the tab still in the pane, for the holder to detach and float
+// under the same hand. A tab from outside is offered by dropAt(clientX, clientY):
+// over the strip — the dock's landing, not its content, since docks may tile
+// a box and a float let go over content stays afloat — it marks where the tab
+// would land and answers the index, elsewhere −1; the pane wears the drop-
+// target word while an offer stands, and dropClear() ends it. attachTab is the
+// drop.
 //
 // Every mutation is one event on one sink, onEvent(ev): a frozen object from
 // PaneEvents tagged by kind — TabAdded, TabRemoved, TabMoved, TabActivated,
@@ -56,6 +65,7 @@ class MultiTabPane {
         this._budget = opts.budget == null ? _DEFAULT_BUDGET : Math.max(1, opts.budget | 0);
         this._addEnabled = opts.addable !== false;
         this._sink = typeof opts.onEvent === "function" ? opts.onEvent : null;
+        this._onDragOut = typeof opts.onDragOut === "function" ? opts.onDragOut : null;
         this._tabs = [];          // entries in strip order: { id, tab, pinned, widget, chip, panel }
         this._activeId = null;
         this._disposed = false;
@@ -67,7 +77,8 @@ class MultiTabPane {
 
         this._strip = new TabStrip(branch.createBranch("strip"), {
             onAdd: opts.addable === false ? null : function () { if (self.canAdd()) self._fire(PaneEvents.AddRequested(self.slotId)); },
-            onDrop: function (chip, dest) { var i = self._findChip(chip); if (i >= 0) self.moveTab(self._tabs[i].id, dest); }
+            onDrop: function (chip, dest) { var i = self._findChip(chip); if (i >= 0) self.moveTab(self._tabs[i].id, dest); },
+            onDragOut: function (chip, e) { var i = self._findChip(chip); if (i >= 0 && self._onDragOut) self._onDragOut(self._tabs[i].tab, e); }
         });
         root.appendChild(this._strip.el);
 
@@ -207,6 +218,15 @@ class MultiTabPane {
         this._activateNeighbour(i);
         return entry.tab;
     }
+    /** A tab from outside, offered at a point: the index it would take on the strip, or −1 when the point is not on the strip. */
+    dropAt(x, y) {
+        var s = this._strip.el.getBoundingClientRect();
+        if (x < s.left || x > s.right || y < s.top || y > s.bottom) { this.dropClear(); return -1; }
+        var index = this._strip.markAt(x);
+        css.addClass(this.el, mtp_dock_target);
+        return index;
+    }
+    dropClear() { this._strip.unmark(); css.removeClass(this.el, mtp_dock_target); }
     switchTab(id) {
         this._require(id);
         if (this._activeId === id) return;

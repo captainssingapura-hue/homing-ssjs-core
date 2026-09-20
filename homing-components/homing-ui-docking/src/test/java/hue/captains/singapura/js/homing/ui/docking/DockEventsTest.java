@@ -1,4 +1,4 @@
-package hue.captains.singapura.js.homing.ui.floating;
+package hue.captains.singapura.js.homing.ui.docking;
 
 import hue.captains.singapura.js.homing.ssjs.test.JsModuleTestBase;
 import org.graalvm.polyglot.PolyglotException;
@@ -22,9 +22,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * list is the permitted subclasses in declaration order; both sides refuse
  * the same bad arguments; the objects are frozen.
  */
-class FloatEventsTest extends JsModuleTestBase {
+class DockEventsTest extends JsModuleTestBase {
 
-    private static final String MODULE = "/homing/js/hue/captains/singapura/js/homing/ui/floating/FloatEventsModule.js";
+    private static final String MODULE = "/homing/js/hue/captains/singapura/js/homing/ui/docking/DockEventsModule.js";
 
     @BeforeEach
     void load() {
@@ -35,7 +35,7 @@ class FloatEventsTest extends JsModuleTestBase {
     private Value eval(String src) { return js.eval("js", src); }
 
     private static List<Class<?>> records() {
-        return Arrays.asList(FloatEvent.class.getPermittedSubclasses());
+        return Arrays.asList(DockEvent.class.getPermittedSubclasses());
     }
 
     /** A sample argument for a component: the JS expression that stands for it. */
@@ -49,12 +49,12 @@ class FloatEventsTest extends JsModuleTestBase {
     void everyRecordIsAFactoryWhoseObjectHasKindThenTheComponentsInOrder() {
         for (Class<?> r : records()) {
             String kind = r.getSimpleName();
-            assertTrue(eval("typeof FloatEvents." + kind).asString().equals("function"), kind + " has no JS factory");
+            assertTrue(eval("typeof DockEvents." + kind).asString().equals("function"), kind + " has no JS factory");
             var args = new ArrayList<String>();
             var expected = new ArrayList<String>();
             expected.add("kind");
             for (RecordComponent c : r.getRecordComponents()) { args.add(sample(c)); expected.add(c.getName()); }
-            String call = "FloatEvents." + kind + "(" + String.join(", ", args) + ")";
+            String call = "DockEvents." + kind + "(" + String.join(", ", args) + ")";
             assertEquals(expected.toString(), eval("JSON.stringify(Object.keys(" + call + "))").asString().replace("\"", "").replace(",", ", "), kind + " fields");
             assertEquals(kind, eval(call + ".kind").asString());
             assertTrue(eval("Object.isFrozen(" + call + ")").asBoolean(), kind + " is not frozen");
@@ -64,31 +64,25 @@ class FloatEventsTest extends JsModuleTestBase {
     @Test
     void theKindsAreThePermittedSubclassesInOrder() {
         var java = records().stream().map(Class::getSimpleName).toList();
-        assertEquals(java.toString(), eval("'[' + FloatEvents.KINDS.join(', ') + ']'").asString());
-        assertEquals(6, java.size());
+        assertEquals(java.toString(), eval("'[' + DockEvents.KINDS.join(', ') + ']'").asString());
+        assertEquals(2, java.size());
     }
 
     @Test
     void theFieldsCarryWhatWasGiven() {
-        assertEquals("p1|Notes|24|52|320|220", eval("var e = FloatEvents.Opened('p1', 'Notes', 24, 52, 320, 220); [e.id, e.title, e.x, e.y, e.w, e.h].join('|')").asString());
-        assertEquals("p1|-10|0", eval("var m = FloatEvents.Moved('p1', -10, 0); [m.id, m.x, m.y].join('|')").asString());
-        assertEquals("p1|200|100", eval("var r = FloatEvents.Resized('p1', 200, 100); [r.id, r.w, r.h].join('|')").asString());
+        assertEquals("t1|main|2", eval("var d = DockEvents.Docked('t1', 'main', 2); [d.tabId, d.slotId, d.index].join('|')").asString());
+        assertEquals("t1|main", eval("var u = DockEvents.Undocked('t1', 'main'); [u.tabId, u.slotId].join('|')").asString());
     }
 
     @Test
     void bothSidesRefuseTheSameBadArguments() {
-        for (String bad : List.of("FloatEvents.Opened('', 'T', 0, 0, 1, 1)", "FloatEvents.Opened('p', null, 0, 0, 1, 1)", "FloatEvents.Opened('p', 'T', 0.5, 0, 1, 1)",
-                                  "FloatEvents.Opened('p', 'T', 0, 0, 0, 1)", "FloatEvents.Resized('p', 10, -1)", "FloatEvents.Moved('p', 1, '2')",
-                                  "FloatEvents.Raised('')", "FloatEvents.Closed(undefined)")) {
+        for (String bad : List.of("DockEvents.Docked('', 's', 0)", "DockEvents.Docked('t', null, 0)", "DockEvents.Docked('t', 's', -1)", "DockEvents.Docked('t', 's', 1.5)", "DockEvents.Undocked('t', '')")) {
             var ex = assertThrows(PolyglotException.class, () -> eval(bad), bad);
-            assertTrue(ex.getMessage().startsWith("Error: [FloatEvents] "), bad + " → " + ex.getMessage());
+            assertTrue(ex.getMessage().startsWith("Error: [DockEvents] "), bad + " → " + ex.getMessage());
         }
-        assertThrows(NullPointerException.class, () -> new FloatEvent.Opened(null, "T", 0, 0, 1, 1));
-        assertThrows(NullPointerException.class, () -> new FloatEvent.Opened("p", null, 0, 0, 1, 1));
-        assertThrows(IllegalArgumentException.class, () -> new FloatEvent.Opened("", "T", 0, 0, 1, 1));
-        assertThrows(IllegalArgumentException.class, () -> new FloatEvent.Opened("p", "T", 0, 0, 0, 1));
-        assertThrows(IllegalArgumentException.class, () -> new FloatEvent.Resized("p", 10, -1));
-        assertThrows(IllegalArgumentException.class, () -> new FloatEvent.Raised(""));
-        assertEquals("Moved", new FloatEvent.Moved("p", -10, 0).kind());
+        assertThrows(NullPointerException.class, () -> new DockEvent.Docked(null, "s", 0));
+        assertThrows(IllegalArgumentException.class, () -> new DockEvent.Docked("t", "s", -1));
+        assertThrows(IllegalArgumentException.class, () -> new DockEvent.Undocked("t", ""));
+        assertEquals("Undocked", new DockEvent.Undocked("t", "s").kind());
     }
 }
