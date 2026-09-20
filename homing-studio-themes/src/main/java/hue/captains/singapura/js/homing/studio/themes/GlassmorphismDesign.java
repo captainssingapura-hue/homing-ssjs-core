@@ -145,6 +145,14 @@ final class GlassmorphismDesign {
             inset(of(Control.Button.class, Size.Inset.class), "10px", "22px", 1.3),
             gap(of(Control.Button.class, Size.Gap.class), "8px", 1.3),
             minWidth(of(Control.Button.class, Size.Extent.class), "64px", 1.3),
+            // a container, and the card: a glass plate, fuller than wide
+            one(of(Container.class, Shape.Corner.class), "18px"),
+            ruleWithFocusRing(of(Container.class, Shape.Rule.class), "1px", "solid", "2px", "solid", "-2px"),
+            inset(of(Container.Card.class, Size.Inset.class), "20px", "22px", 1.3),
+            gap(of(Container.Card.class, Size.Gap.class), "8px", 1.3),
+            minWidth(of(Container.Card.class, Size.Extent.class), "200px", 1.3),
+            proportion(of(Container.Card.class, Size.Proportion.class), "4 / 3"),
+            inset(of(Inline.class, Size.Inset.class), "3px", "10px", 1.3),
             one(of(Inline.class, Shape.Corner.class), "8px"),
             rule(of(Inline.class, Shape.Rule.class), "1px", "solid"),
 

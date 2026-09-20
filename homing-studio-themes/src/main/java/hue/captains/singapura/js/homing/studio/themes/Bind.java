@@ -207,6 +207,10 @@ final class Bind {
     static Map.Entry<DesignClass<?>, Impl> gap(DesignClass<?> cls, String gap, double ratio) {
         return Map.entry(cls, Impl.Bindings.of(gap).grows(ratio));
     }
+    /** A Size.Proportion: width to height, {@code "3 / 2"}; a proportion does not grow. */
+    static Map.Entry<DesignClass<?>, Impl> proportion(DesignClass<?> cls, String ratio) {
+        return Map.entry(cls, Impl.Bindings.of(ratio).grows(1));
+    }
     /** A Size.Extent: the least a box may be inline, growing by {@code ratio}. */
     static Map.Entry<DesignClass<?>, Impl> minWidth(DesignClass<?> cls, String minWidth, double ratio) {
         return Map.entry(cls, Impl.Bindings.none().at(State.REST, "min-width", minWidth).grows("min-width", ratio));

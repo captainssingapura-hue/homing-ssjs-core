@@ -61,7 +61,7 @@ final class EditorialDesign {
             one(of(Body.class, Type.Face.class), BODY_FACE),
             one(of(Heading.class, Type.Face.class), DISPLAY_FACE),
             one(of(Heading.class, Type.Weight.class), "700"),
-            scale(of(Heading.class, Type.Scale.class), "18px", "1.25"),
+            scale(of(Heading.class, Type.Scale.class), "18px", "1.25", 1.2),   // grows with the box it heads
             one(of(Display.class, Type.Face.class), DISPLAY_FACE),
             one(of(Display.class, Type.Weight.class), "700"),
             scale(of(Display.class, Type.Scale.class), "44px", "1.1"),
@@ -70,9 +70,9 @@ final class EditorialDesign {
             treatment(of(Lede.class, Type.Treatment.class), null, null, "italic"),
             one(of(Kicker.class, Type.Face.class), DISPLAY_FACE),
             one(of(Kicker.class, Type.Weight.class), "700"),
-            scale(of(Kicker.class, Type.Scale.class), "11px", "1.4"),
+            scale(of(Kicker.class, Type.Scale.class), "11px", "1.4", 1.15),
             treatment(of(Kicker.class, Type.Treatment.class), "2px", "uppercase", null),
-            scale(of(Caption.class, Type.Scale.class), "13px", "1.5"),
+            scale(of(Caption.class, Type.Scale.class), "13px", "1.5", 1.2),
             treatment(of(Caption.class, Type.Treatment.class), null, null, "italic"),
             scale(of(Label.class, Type.Scale.class), "14px", "1.5", 1.25),   // grows with the control it labels
             one(of(Label.class, Type.Weight.class), "600"),
@@ -174,6 +174,14 @@ final class EditorialDesign {
             inset(of(Control.Button.class, Size.Inset.class), "8px", "18px", 1.3),
             gap(of(Control.Button.class, Size.Gap.class), "8px", 1.3),
             minWidth(of(Control.Button.class, Size.Extent.class), "56px", 1.3),
+            // a container, and the card: an index card: three by two, a soft corner
+            one(of(Container.class, Shape.Corner.class), "6px"),
+            ruleWithFocusRing(of(Container.class, Shape.Rule.class), "1px", "solid", "2px", "solid", "-2px"),
+            inset(of(Container.Card.class, Size.Inset.class), "18px", "20px", 1.3),
+            gap(of(Container.Card.class, Size.Gap.class), "8px", 1.3),
+            minWidth(of(Container.Card.class, Size.Extent.class), "180px", 1.3),
+            proportion(of(Container.Card.class, Size.Proportion.class), "3 / 2"),
+            inset(of(Inline.class, Size.Inset.class), "2px", "8px", 1.3),
             one(of(Inline.class, Shape.Corner.class), "2px"),
             rule(of(Inline.class, Shape.Rule.class), "1px", "solid"),
 

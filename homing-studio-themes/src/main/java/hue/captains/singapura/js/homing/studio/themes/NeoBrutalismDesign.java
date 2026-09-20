@@ -228,6 +228,7 @@ final class NeoBrutalismDesign {
             surfaceImage(of(Overlay.class, Color.Surface.class), "transparent", "repeating-linear-gradient(45deg, color-mix(in srgb, " + INK + " 22%, transparent) 0 7px, transparent 7px 14px)"),
             ring(of(Focus.class, Color.Edge.class), RISO_BLUE),
             focusRing(of(Control.class, Color.Edge.class), RISO_BLUE),
+            focusRing(of(Container.class, Color.Edge.class), RISO_BLUE),
             one(of(Focus.class, Shape.Shadow.class), shadow(12) + ", 0 0 0 4px " + FOCUS_REF),
             outline(of(Focus.class, Shape.Rule.class), "3px", "solid", "-3px"),
             one(of(Inert.class, Effect.Opacity.class), "0.4"),
@@ -240,6 +241,14 @@ final class NeoBrutalismDesign {
             inset(of(Control.Button.class, Size.Inset.class), "10px", "20px", 1.5),
             gap(of(Control.Button.class, Size.Gap.class), "10px", 1.5),
             minWidth(of(Control.Button.class, Size.Extent.class), "64px", 1.5),
+            // a container, and the card: a squarish print, hard-edged
+            one(of(Container.class, Shape.Corner.class), "0"),
+            ruleWithFocusRing(of(Container.class, Shape.Rule.class), "3px", "solid", "3px", "solid", "-3px"),
+            inset(of(Container.Card.class, Size.Inset.class), "18px", "20px", 1.5),
+            gap(of(Container.Card.class, Size.Gap.class), "10px", 1.5),
+            minWidth(of(Container.Card.class, Size.Extent.class), "180px", 1.5),
+            proportion(of(Container.Card.class, Size.Proportion.class), "5 / 4"),
+            inset(of(Inline.class, Size.Inset.class), "2px", "8px", 1.5),
             one(of(Inline.class, Shape.Corner.class), "0"),
             rule(of(Inline.class, Shape.Rule.class), "2px", "solid"),
 

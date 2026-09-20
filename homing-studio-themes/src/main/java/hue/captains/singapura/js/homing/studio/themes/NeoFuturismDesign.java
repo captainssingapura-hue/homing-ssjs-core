@@ -264,6 +264,7 @@ final class NeoFuturismDesign {
             Map.entry(of(Overlay.class, Effect.Filter.class), Impl.Bindings.none().at(State.REST, "backdrop-filter", "blur(14px) saturate(1.4) brightness(0.7)")),
             ring(of(Focus.class, Color.Edge.class), CYAN, CYAN_D),
             focusRing(of(Control.class, Color.Edge.class), CYAN, CYAN_D),
+            focusRing(of(Container.class, Color.Edge.class), CYAN, CYAN_D),
             one(of(Focus.class, Shape.Shadow.class), "0 24px 64px " + glow(SPACE_REF, 35) + ", 0 0 0 1px " + LIGHT_REF + ", 0 0 40px " + glow(LIGHT_REF, 35),
                                                      "0 24px 64px " + glow(SPACE_REF, 70) + ", 0 0 0 1px " + LIGHT_REF + ", 0 0 48px " + glow(LIGHT_REF, 40)),
             outline(of(Focus.class, Shape.Rule.class), "1px", "solid", "-1px"),   // a filament of a ring
@@ -277,6 +278,14 @@ final class NeoFuturismDesign {
             inset(of(Control.Button.class, Size.Inset.class), "7px", "16px", 1.25),
             gap(of(Control.Button.class, Size.Gap.class), "8px", 1.25),
             minWidth(of(Control.Button.class, Size.Extent.class), "56px", 1.25),
+            // a container, and the card: a wide panel, a filament of a ring
+            one(of(Container.class, Shape.Corner.class), "2px"),
+            ruleWithFocusRing(of(Container.class, Shape.Rule.class), "1px", "solid", "1px", "solid", "-1px"),
+            inset(of(Container.Card.class, Size.Inset.class), "16px", "18px", 1.25),
+            gap(of(Container.Card.class, Size.Gap.class), "8px", 1.25),
+            minWidth(of(Container.Card.class, Size.Extent.class), "180px", 1.25),
+            proportion(of(Container.Card.class, Size.Proportion.class), "16 / 9"),
+            inset(of(Inline.class, Size.Inset.class), "2px", "8px", 1.25),
             one(of(Inline.class, Shape.Corner.class), "1px"),
             rule(of(Inline.class, Shape.Rule.class), "1px", "solid"),
 

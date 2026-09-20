@@ -168,6 +168,7 @@ public record SynthwavePalette() implements Palette {
             edge(of(Current.class, Color.Edge.class), CYAN, CYAN_D),
             ring(of(Focus.class, Color.Edge.class), CYAN, CYAN_D),
             focusRing(of(Control.class, Color.Edge.class), CYAN, CYAN_D),
+            focusRing(of(Container.class, Color.Edge.class), CYAN, CYAN_D),
 
             // ── structure: neon rules ───────────────────────────────────
             edge(of(Divider.class, Color.Edge.class), MAGENTA, MAGENTA_D),

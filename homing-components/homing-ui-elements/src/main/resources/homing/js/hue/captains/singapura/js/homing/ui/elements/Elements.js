@@ -35,17 +35,26 @@
 //   design gives that target. Plain is not semantic — raised, in body ink —
 //   and does not scale.
 //
-//   Card — a BRANCH component: it takes a sub-branch the caller made for it
-//   and mints its own tree on it. One card per branch.
-//     new Card(branch, { title, text?, badge?, link? })    link: { to, label? }
+//   Card — a BRANCH component, made through its builder: it takes a sub-branch
+//   the caller made for it and mints its own tree on it. One card per branch.
+//     var card = new CardBuilder().title("Grid").badge("new").text("…").link(to, label?)
+//                                 .size(0).onClick(fn?).build(branch.createBranch("card"));
 //       .root            the element the caller appends
+//       .body            the bounded region inside; a caller with more than text mints there
+//       .size(s)         the size, live, on the card and its parts
+//       .title(text?)    read, or set
+//       .dispose()       dissolves the branch
+//   The card is a hard frame: its inline size is its host's, its block size
+//   follows the design's proportion, and the body scrolls beyond what the head
+//   and the foot leave. It lifts, presses and rings as the design has an
+//   interactive thing do; with onClick it is a button to the keyboard too
+//   (role, tabindex, Enter and Space); without, nothing happens on a press.
 //
 // A button's type is "button" unless the caller says otherwise afterwards,
-// so a button inside a form does not submit it by accident. A card is a
-// raised box: a heading with an optional badge, a line of text, and a link
-// pushed to the bottom, its address set through the manager so a typed
-// address stays typed. `css` is injected with the styles import; the
-// manager comes in by its explicit HrefManager import.
+// so a button inside a form does not submit it by accident. A card's link
+// has its address set through the manager so a typed address stays typed.
+// `css` is injected with the styles import; the manager comes in by its
+// explicit HrefManager import.
 // =============================================================================
 
 const _cardOwner = Object.freeze({ toString: () => "card" });
@@ -134,37 +143,99 @@ class ButtonBuilder {
 }
 
 class Card {
+    /** The builder's; a caller makes a card through CardBuilder. */
     constructor(branch, props) {
         if (!branch) throw new Error("[Card] a branch of its own is required");
+        var self = this;
         var p = props || {};
         branch.activate(_cardOwner);
-        var card = branch.createElement("card", "div");
+        this.branch = branch;
+        this._size = 0;
+        var card = branch.createElement("card", "article");
         css.addClass(card, el_card);
+
+        var head = branch.createElement("head", "header");
+        css.addClass(head, el_card_head);
         var title = branch.createElement("title", "h2");
         css.addClass(title, el_card_title);
-        var titleText = branch.createElement("title-text", "span");
-        titleText.textContent = p.title == null ? "" : String(p.title);
-        title.appendChild(titleText);
+        this._title = branch.createElement("title-text", "span");
+        this._title.textContent = p.title == null ? "" : String(p.title);
+        title.appendChild(this._title);
+        head.appendChild(title);
         if (p.badge) {
             var badge = branch.createElement("badge", "span");
             css.addClass(badge, el_badge);
             badge.textContent = String(p.badge);
-            title.appendChild(badge);
+            head.appendChild(badge);
         }
-        card.appendChild(title);
+        card.appendChild(head);
+
+        var body = branch.createElement("body", "div");
+        css.addClass(body, el_card_body);
         if (p.text) {
             var text = branch.createElement("text", "p");
             css.addClass(text, el_card_text);
             text.textContent = String(p.text);
-            card.appendChild(text);
+            body.appendChild(text);
         }
+        card.appendChild(body);
+
         if (p.link && p.link.to) {
+            var foot = branch.createElement("foot", "footer");
+            css.addClass(foot, el_card_foot);
             var a = branch.createElement("link", "a");
             css.addClass(a, el_card_link);
             HrefManagerInstance.set(a, p.link.to);
             a.textContent = p.link.label == null ? String(p.link.to) : String(p.link.label);
-            card.appendChild(a);
+            foot.appendChild(a);
+            card.appendChild(foot);
         }
+
+        if (typeof p.onClick === "function") {   // an action: the card is a button to the keyboard too
+            css.addClass(card, el_card_action);
+            card.setAttribute("role", "button");
+            card.tabIndex = 0;
+            card.addEventListener("click", p.onClick);
+            card.addEventListener("keydown", function (e) {
+                if (e.key === "Enter" || e.key === " ") { e.preventDefault(); card.click(); }
+            });
+        }
+
         this.root = card;
+        this.body = body;
+        this._parts = [card, head].concat(badge ? [badge] : [], text ? [text] : [], a ? [a] : []);
+        this._parts.push(title);
+        this.size(p.size == null ? 0 : p.size);
+    }
+
+    /** The size, on the card and on every part it minted: the size is an element's, not inherited, so the card carries it to its own. */
+    size(s) {
+        var n = Math.max(-1, Math.min(1, Number(s)));
+        this._size = Number.isFinite(n) ? n : 0;
+        var v = this._size === 0 ? null : this._size;
+        this._parts.forEach(function (el) { css.size(el, v); });
+        return this;
+    }
+
+    title(text) {
+        if (text !== undefined) this._title.textContent = String(text);
+        return this._title.textContent;
+    }
+
+    /** The card and everything on its branch go together. */
+    dispose() { try { this.branch.dissolve(); } catch (e) {} }
+}
+
+class CardBuilder {
+    constructor() { this._props = { size: 0 }; }
+    title(text)      { this._props.title = text; return this; }
+    badge(text)      { this._props.badge = text; return this; }
+    text(text)       { this._props.text = text; return this; }
+    link(to, label)  { this._props.link = { to: to, label: label }; return this; }
+    size(s)          { this._props.size = s; return this; }
+    onClick(fn)      { this._props.onClick = fn; return this; }
+    build(branch) {
+        if (!branch) throw new Error("[CardBuilder] build wants the sub-branch the caller made for the card");
+        return new Card(branch, this._props);
     }
 }

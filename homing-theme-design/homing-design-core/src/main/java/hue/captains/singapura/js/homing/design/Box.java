@@ -28,7 +28,13 @@ public interface Box extends Semantic {
 
     record Inline() implements Box {}
 
-    record Container() implements Box {}
+    record Container() implements Box {
+        /** A card: a container whose measure is its own, and whose content fits it. Its kinds will refine it; for now, one. */
+        public record Card() implements Box {
+            /** The regular card: a heading, a bounded body, a footer; hover, press and focus as the design gives them; what a press does is the caller's. */
+            public record Base() implements Box {}
+        }
+    }
 
     record Section() implements Box {}
 }

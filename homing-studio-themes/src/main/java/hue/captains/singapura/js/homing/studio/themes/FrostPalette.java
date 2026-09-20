@@ -163,6 +163,7 @@ public record FrostPalette() implements Palette {
             edge(of(Current.class, Color.Edge.class), BLUE, BLUE_D),
             ring(of(Focus.class, Color.Edge.class), BLUE, BLUE_D),
             focusRing(of(Control.class, Color.Edge.class), BLUE, BLUE_D),
+            focusRing(of(Container.class, Color.Edge.class), BLUE, BLUE_D),
 
             // ── structure: rims of light, hairlines of shadow ───────────
             edge(of(Divider.class, Color.Edge.class), "rgba(255, 255, 255, 0.6)", "rgba(255, 255, 255, 0.2)"),

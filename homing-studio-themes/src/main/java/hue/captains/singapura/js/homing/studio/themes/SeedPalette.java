@@ -221,7 +221,8 @@ public record SeedPalette(DesignId id, String label, String inspiration, DesignI
         put.accept(sfc(of(Current.class, Color.Surface.class), tint(l.accent, 7), tint(d.accent, 7)));
         put.accept(ink(of(Current.class, Color.Ink.class), l.title, d.title));
         put.accept(edg(of(Current.class, Color.Edge.class), l.accent, d.accent));
-        put.accept(focusRing(of(Control.class, Color.Edge.class), "color-mix(in srgb, " + l.accent + " 55%, " + l.border + ")", "color-mix(in srgb, " + d.accent + " 55%, " + d.border + ")"));   // a control's ring, on focus only; its edge stays its word's
+        put.accept(focusRing(of(Control.class, Color.Edge.class), "color-mix(in srgb, " + l.accent + " 55%, " + l.border + ")", "color-mix(in srgb, " + d.accent + " 55%, " + d.border + ")"));
+        put.accept(focusRing(of(Container.class, Color.Edge.class), "color-mix(in srgb, " + l.accent + " 55%, " + l.border + ")", "color-mix(in srgb, " + d.accent + " 55%, " + d.border + ")"));   // a card that can be focused wears the same ring   // a control's ring, on focus only; its edge stays its word's
         put.accept(ring(of(Focus.class, Color.Edge.class), "color-mix(in srgb, " + l.accent + " 55%, " + l.border + ")", "color-mix(in srgb, " + d.accent + " 55%, " + d.border + ")"));
         put.accept(sfc(of(Backdrop.class, Color.Surface.class), tint(l.surface, 64), tint(d.surface, 64)));   // the wash a mask lays over what is waiting
 

@@ -140,7 +140,7 @@ public sealed interface Target permits
     // ═════════════════════════════════════════════════════════════════════
     //  Size — density; the space a design owns inside and between
     // ═════════════════════════════════════════════════════════════════════
-    sealed interface Size extends Target permits Size.Inset, Size.Gap, Size.Extent {
+    sealed interface Size extends Target permits Size.Inset, Size.Gap, Size.Extent, Size.Proportion {
         /** The air inside a box — block and inline, each one length, so each can grow with the element's size. */
         record Inset() implements Size, CssGroup<Inset> {
             public static final Inset INSTANCE = new Inset();
@@ -159,6 +159,18 @@ public sealed interface Target permits
             public static final Extent INSTANCE = new Extent();
             @Override public List<CssClass<Extent>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("min-height", "min-width"); }
+            @Override public Set<State> states() { return REST_ONLY; }
+        }
+        /**
+         * The proportion of a box whose measure is its own, not its content's
+         * — a card: its inline size is its host's, its block size follows from
+         * this, and what is inside fits the box. A design's: an index card,
+         * a square tile, a wide plate.
+         */
+        record Proportion() implements Size, CssGroup<Proportion> {
+            public static final Proportion INSTANCE = new Proportion();
+            @Override public List<CssClass<Proportion>> cssClasses() { return List.of(); }
+            @Override public Set<String> properties() { return Set.of("aspect-ratio"); }
             @Override public Set<State> states() { return REST_ONLY; }
         }
     }

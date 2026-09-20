@@ -7,6 +7,7 @@ import hue.captains.singapura.js.homing.core.Wearable;
 import java.util.List;
 
 import static hue.captains.singapura.js.homing.design.DesignClass.of;
+import static hue.captains.singapura.js.homing.design.Box.Container;
 import static hue.captains.singapura.js.homing.design.Box.Control;
 import static hue.captains.singapura.js.homing.design.Box.Inline;
 import static hue.captains.singapura.js.homing.design.Emphasis.Muted;
@@ -15,7 +16,6 @@ import static hue.captains.singapura.js.homing.design.Emphasis.Secondary;
 import static hue.captains.singapura.js.homing.design.Feedback.Danger;
 import static hue.captains.singapura.js.homing.design.Feedback.Success;
 import static hue.captains.singapura.js.homing.design.Feedback.Warning;
-import static hue.captains.singapura.js.homing.design.Interaction.Focus;
 import static hue.captains.singapura.js.homing.design.Interaction.Inert;
 import static hue.captains.singapura.js.homing.design.Interaction.Interactive;
 import static hue.captains.singapura.js.homing.design.Layer.Raised;
@@ -24,7 +24,6 @@ import static hue.captains.singapura.js.homing.design.Pairing.OnPrimary;
 import static hue.captains.singapura.js.homing.design.Pairing.OnSecondary;
 import static hue.captains.singapura.js.homing.design.Pairing.OnSuccess;
 import static hue.captains.singapura.js.homing.design.Pairing.OnWarning;
-import static hue.captains.singapura.js.homing.design.Structure.Bar;
 import static hue.captains.singapura.js.homing.design.Target.Affordance;
 import static hue.captains.singapura.js.homing.design.Target.Color;
 import static hue.captains.singapura.js.homing.design.Target.Effect;
@@ -142,54 +141,112 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
 
     // ── Card ──────────────────────────────────────────────────────────────────
 
-    /** The card: a raised box with a bar for an edge. */
+    /**
+     * The card: {@code Container.Card.Base} — a raised box whose measure is its
+     * own. Its inline size is its host's, its block size follows the design's
+     * proportion, and what is inside fits it: the head and the foot are fixed,
+     * the body takes the rest and scrolls. Hover, press and focus as the design
+     * gives an interactive thing; whether a press does anything is the caller's,
+     * and only a card with an action is focusable ({@link el_card_action}).
+     */
     public record el_card() implements CssClass<ElementStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Raised.class, Effect.Filter.class), of(Raised.class, Shape.Corner.class), of(Bar.class, Color.Edge.class), of(Bar.class, Shape.Rule.class)); }
+        @Override public List<? extends Wearable> wears() {
+            return List.of(of(Container.Card.Base.class, Shape.Corner.class), of(Container.Card.Base.class, Shape.Rule.class), of(Container.Card.Base.class, Color.Edge.class),
+                           of(Container.Card.Base.class, Size.Inset.class), of(Container.Card.Base.class, Size.Gap.class), of(Container.Card.Base.class, Size.Extent.class), of(Container.Card.Base.class, Size.Proportion.class),
+                           of(Raised.class, Color.Surface.class), of(Raised.class, Color.Edge.class), of(Raised.class, Effect.Filter.class),
+                           of(Interactive.class, Motion.Transform.class), of(Interactive.class, Shape.Shadow.class), of(Interactive.class, Motion.Ease.class));
+        }
+        @Override public List<? extends Wearable> sizes() { return List.of(of(Container.Card.Base.class, Size.Inset.class), of(Container.Card.Base.class, Size.Gap.class), of(Container.Card.Base.class, Size.Extent.class), of(Container.Card.Base.class, Size.Proportion.class)); }
         @Override public String body() { return """
-            padding: 18px 20px;
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            box-sizing: border-box;
+            min-height: 0;
+            overflow: hidden;
+            """;
+        }
+    }
+
+    /** A card with an action: a pointer over it; the caller made it focusable. */
+    public record el_card_action() implements CssClass<ElementStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Interactive.class, Affordance.Cursor.class)); }
+        @Override public String body() { return ""; }
+    }
+
+    /** The head: the title and, beside it, a badge; fixed. */
+    public record el_card_head() implements CssClass<ElementStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Container.Card.Base.class, Size.Gap.class)); }
+        @Override public List<? extends Wearable> sizes() { return List.of(of(Container.Card.Base.class, Size.Gap.class)); }
+        @Override public String body() { return """
+            flex: none;
+            display: flex;
+            align-items: baseline;
+            min-width: 0;
             """;
         }
     }
 
     public record el_card_title() implements CssClass<ElementStyles> {
         @Override public List<? extends Wearable> wears() { return List.of(of(Heading.class, Type.Face.class), of(Heading.class, Type.Scale.class), of(Heading.class, Type.Weight.class), of(Heading.class, Color.Ink.class)); }
+        @Override public List<? extends Wearable> sizes() { return List.of(of(Heading.class, Type.Scale.class)); }
         @Override public String body() { return """
             margin: 0;
-            display: flex;
-            align-items: baseline;
-            gap: 8px;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
             """;
         }
     }
 
-    /** A short upper-case tag beside a title: a chip on the secondary surface, as the studio's badges are. */
+    /** A short upper-case tag beside a title: an inline box on the secondary surface, as the studio's badges are. */
     public record el_badge() implements CssClass<ElementStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Secondary.class, Color.Surface.class), of(Heading.class, Color.Ink.class), of(Kicker.class, Type.Scale.class), of(Kicker.class, Type.Weight.class), of(Kicker.class, Type.Treatment.class), of(Inline.class, Shape.Corner.class)); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Secondary.class, Color.Surface.class), of(Heading.class, Color.Ink.class), of(Inline.class, Size.Inset.class), of(Kicker.class, Type.Scale.class), of(Kicker.class, Type.Weight.class), of(Kicker.class, Type.Treatment.class), of(Inline.class, Shape.Corner.class)); }
+        @Override public List<? extends Wearable> sizes() { return List.of(of(Inline.class, Size.Inset.class), of(Kicker.class, Type.Scale.class)); }
         @Override public String body() { return """
             margin-left: auto;
-            padding: 2px 8px;
+            flex: none;
+            """;
+        }
+    }
+
+    /** The body: what is inside, bounded by the card — it takes what the head and the foot leave and scrolls beyond it. */
+    public record el_card_body() implements CssClass<ElementStyles> {
+        @Override public String body() { return """
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: auto;
             """;
         }
     }
 
     public record el_card_text() implements CssClass<ElementStyles> {
         @Override public List<? extends Wearable> wears() { return List.of(of(Caption.class, Type.Scale.class), of(Muted.class, Color.Ink.class)); }
+        @Override public List<? extends Wearable> sizes() { return List.of(of(Caption.class, Type.Scale.class)); }
         @Override public String body() { return "margin: 0;"; }
     }
 
-    /** The card's link, last, pushed to the bottom of the box. */
+    /** The foot: the link, and later the actions; fixed at the bottom. */
+    public record el_card_foot() implements CssClass<ElementStyles> {
+        @Override public String body() { return """
+            flex: none;
+            display: flex;
+            align-items: baseline;
+            """;
+        }
+    }
+
+    /** The card's link: a link, its ring the link's own on focus. */
     public record el_card_link() implements CssClass<ElementStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Link.class, Color.Ink.class), of(Link.class, Type.Decoration.class), of(Link.class, Motion.Ease.class), of(Focus.class, Shape.Rule.class), of(Focus.class, Color.Edge.class)); }
-        @Override public String body() { return "margin-top: auto;"; }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Link.class, Color.Ink.class), of(Link.class, Type.Decoration.class), of(Link.class, Motion.Ease.class), of(Caption.class, Type.Scale.class)); }
+        @Override public List<? extends Wearable> sizes() { return List.of(of(Caption.class, Type.Scale.class)); }
+        @Override public String body() { return ""; }
     }
 
     @Override
     public List<CssClass<ElementStyles>> cssClasses() {
         return List.of(new el_button(), new el_button_primary(), new el_button_secondary(), new el_button_danger(), new el_button_warning(), new el_button_success(),
                        new el_button_plain(), new el_button_on(), new el_button_off(),
-                       new el_card(), new el_card_title(), new el_badge(), new el_card_text(), new el_card_link());
+                       new el_card(), new el_card_action(), new el_card_head(), new el_card_title(), new el_badge(), new el_card_body(), new el_card_text(), new el_card_foot(), new el_card_link());
     }
 }
