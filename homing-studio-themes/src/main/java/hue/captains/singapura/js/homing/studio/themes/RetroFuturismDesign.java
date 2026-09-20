@@ -141,7 +141,7 @@ final class RetroFuturismDesign {
 
             // ── boxes: barely cut ───────────────────────────────────────
             one(of(Control.class, Shape.Corner.class), "3px"),
-            rule(of(Control.class, Shape.Rule.class), "1px", "solid"),
+            ruleWithFocusRing(of(Control.class, Shape.Rule.class), "1px", "solid", "1px", "solid", "-1px"),
             one(of(Inline.class, Shape.Corner.class), "2px"),
             rule(of(Inline.class, Shape.Rule.class), "1px", "solid"),
 

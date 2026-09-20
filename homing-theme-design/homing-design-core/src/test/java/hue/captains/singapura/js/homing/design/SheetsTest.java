@@ -128,6 +128,7 @@ class SheetsTest {
     void anAnchoredWord_scalesByTheExtent_andAnUnanchoredOne_isAFinding() {
         var success = DesignClass.of(Feedback.Success.class, Target.Color.Ink.class);
         var corner  = DesignClass.of(Box.Control.class, Target.Shape.Corner.class);
+        var edge    = DesignClass.of(Feedback.Danger.class, Target.Color.Edge.class);
         record Graded() implements Design {
             @Override public Impl impl(DesignClass<?> pair) {
                 if (pair.semantic() == Feedback.Success.class && pair.target() == Target.Color.Ink.class)
@@ -136,6 +137,9 @@ class SheetsTest {
                             .in(Mode.DARK, State.REST, "#86EFAC").in(Mode.DARK, Extent.NEG, State.REST, "#FCA5A5").in(Mode.DARK, Extent.ZERO, State.REST, "#94A3B8");
                 if (pair.semantic() == Box.Control.class && pair.target() == Target.Shape.Corner.class)
                     return Impl.Bindings.of("4px").at(Extent.ZERO, State.REST, "0").at(Extent.NEG, State.REST, "0");
+                if (pair.semantic() == Feedback.Danger.class && pair.target() == Target.Color.Edge.class)   // a colour per side: not one colour
+                    return Impl.Bindings.none().at(State.REST, "border-color", "rgba(220, 38, 38, 0.35) rgba(220, 38, 38, 0.35) rgba(220, 38, 38, 0.35) #DC2626")
+                            .at(Extent.ZERO, State.REST, "border-color", "#E2E8F0").at(Extent.NEG, State.REST, "border-color", "rgba(34, 139, 34, 0.35)");
                 return null;
             }
             @Override public DesignId id() { return new DesignId("graded"); }
@@ -170,5 +174,12 @@ class SheetsTest {
         // anchors off the colour plane: refused
         var off = Deployment.of(Set.of(corner), new Graded()).resolve();
         assertTrue(off.findings().stream().anyMatch(f -> f.kind() == Deployment.Finding.Kind.INVALID_BINDING && f.detail().contains("extent")), off.findings().toString());
+
+        // an anchored value that is a list — a colour per side — cannot be mixed: refused, whether or not anyone wears it with an extent
+        var listed = Deployment.of(Set.of(edge), new Graded()).resolve();
+        assertEquals(1, listed.findings().size(), listed.findings().toString());
+        assertTrue(listed.findings().get(0).kind() == Deployment.Finding.Kind.INVALID_BINDING && listed.findings().get(0).detail().contains("is a list of 4"), listed.findings().toString());
+        assertEquals(1, Deployment.topLevelTokens("color-mix(in srgb, #FF0000 55%, rgba(1, 2, 3, 0.4))"));
+        assertEquals(2, Deployment.topLevelTokens("  #FFF   rgba(1, 2, 3, 0.4) "));
     }
 }

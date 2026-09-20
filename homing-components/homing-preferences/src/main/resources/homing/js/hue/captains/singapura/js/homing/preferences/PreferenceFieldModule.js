@@ -54,8 +54,9 @@ class PreferenceField {
         root.appendChild(this._note);
         var actions = branch.createElement("actions", "div");
         css.addClass(actions, pv_actions);
-        this._reset = new Button(branch.createElement("reset", Button.TAG), { label: "Use the site's default", kind: "plain",
-                                 onClick: function () { PreferenceStewardInstance.forget(self._name); } });
+        var reset = new ButtonBuilder().label("Use the site's default").plain()
+                .onClick(function () { PreferenceStewardInstance.forget(self._name); });
+        this._reset = reset.build(branch.createElement("reset", reset.tag));
         actions.appendChild(this._reset.el);
         root.appendChild(actions);
         this.root = root;

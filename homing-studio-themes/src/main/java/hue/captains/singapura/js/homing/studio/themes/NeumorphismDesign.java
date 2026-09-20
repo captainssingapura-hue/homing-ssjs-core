@@ -138,7 +138,7 @@ final class NeumorphismDesign {
 
             // ── boxes: everything is a pill ─────────────────────────────
             one(of(Control.class, Shape.Corner.class), "12px"),
-            rule(of(Control.class, Shape.Rule.class), "0", "none"),
+            ruleWithFocusRing(of(Control.class, Shape.Rule.class), "0", "none", "2px", "solid", "-2px"),
             one(of(Inline.class, Shape.Corner.class), "8px"),
             rule(of(Inline.class, Shape.Rule.class), "0", "none"),
 

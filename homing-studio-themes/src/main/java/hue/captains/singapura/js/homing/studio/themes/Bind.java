@@ -107,6 +107,31 @@ final class Bind {
                 .at(State.FOCUS, "outline-offset", ringOffset));
     }
 
+    /** A Shape.Rule that is also the focus ring, in the ring's own style: for Sketchy's dashed one. */
+    static Map.Entry<DesignClass<?>, Impl> ruleWithFocusRing(DesignClass<?> cls, String width, String style, String ringWidth, String ringStyle, String ringOffset) {
+        return Map.entry(cls, Impl.Bindings.none()
+                .at(State.REST, "border-width", width)
+                .at(State.REST, "border-style", style)
+                .at(State.FOCUS, "outline-width", ringWidth)
+                .at(State.FOCUS, "outline-style", ringStyle)
+                .at(State.FOCUS, "outline-offset", ringOffset));
+    }
+
+    /**
+     * The ring alone, on focus: the outline colour and nothing at rest, so a
+     * control's edge stays its word's and the ring appears only when the
+     * control has the focus. What a focusable control wears; {@code ring} is
+     * for the element that IS the focus and draws it now.
+     */
+    static Map.Entry<DesignClass<?>, Impl> focusRing(DesignClass<?> cls, String light, String dark) {
+        return Map.entry(cls, Impl.Bindings.none()
+                .at(State.FOCUS, "outline-color", light)
+                .in(Mode.DARK, State.FOCUS, "outline-color", dark));
+    }
+    static Map.Entry<DesignClass<?>, Impl> focusRing(DesignClass<?> cls, String light) {
+        return Map.entry(cls, Impl.Bindings.none().at(State.FOCUS, "outline-color", light));
+    }
+
     /** An edge that is also a ring: one colour on the border and the outline, so a focus ring reads the same drawn either way. */
     static Map.Entry<DesignClass<?>, Impl> ring(DesignClass<?> cls, String light, String dark) {
         return Map.entry(cls, Impl.Bindings.none()

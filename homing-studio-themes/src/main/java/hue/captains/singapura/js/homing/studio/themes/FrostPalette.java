@@ -14,6 +14,7 @@ import static hue.captains.singapura.js.homing.design.DesignClass.of;
 import static hue.captains.singapura.js.homing.design.Target.*;
 import static hue.captains.singapura.js.homing.design.Emphasis.*;
 import static hue.captains.singapura.js.homing.design.Feedback.*;
+import static hue.captains.singapura.js.homing.design.Box.*;
 import static hue.captains.singapura.js.homing.design.Interaction.*;
 import static hue.captains.singapura.js.homing.design.Layer.*;
 import static hue.captains.singapura.js.homing.design.Pairing.*;
@@ -118,9 +119,12 @@ public record FrostPalette() implements Palette {
             // ── emphasis ────────────────────────────────────────────────
             anchored(surface(of(Primary.class, Color.Surface.class), BLUE, BLUE_D), "background-color", HAIR, HAIR_D, "transparent", "transparent"),
             anchored(one(of(Primary.class, Color.Ink.class), INK_BLUE, INK_BLUE_D), "*", MUTED, MUTED_D, TEXT, TEXT_D),
-            edge(of(Primary.class, Color.Edge.class), "rgba(91, 124, 255, 0.8)", "rgba(111, 140, 255, 0.8)"),
-            one(of(OnPrimary.class, Color.Ink.class), ON_BLUE),
-            surface(of(Secondary.class, Color.Surface.class), "#B85CFF", "#A06BFF"),
+            anchored(edge(of(Primary.class, Color.Edge.class), "rgba(91, 124, 255, 0.8)", "rgba(111, 140, 255, 0.8)"), "border-color", HAIR, HAIR_D, HAIR, HAIR_D),
+            anchored(one(of(OnPrimary.class, Color.Ink.class), ON_BLUE), "*", TEXT, TEXT_D, TEXT, TEXT_D),
+            // the secondary as a surface complete: violet glass, white on it, its rim; scales as the primary does
+            anchored(surface(of(Secondary.class, Color.Surface.class), "#B85CFF", "#A06BFF"), "background-color", HAIR, HAIR_D, "transparent", "transparent"),
+            anchored(one(of(OnSecondary.class, Color.Ink.class), ON_BLUE), "*", TEXT, TEXT_D, TEXT, TEXT_D),
+            anchored(edge(of(Secondary.class, Color.Edge.class), "rgba(184, 92, 255, 0.8)", "rgba(160, 107, 255, 0.8)"), "border-color", HAIR, HAIR_D, HAIR, HAIR_D),
             surface(of(Tertiary.class, Color.Surface.class), "rgba(255, 255, 255, 0.4)", "rgba(255, 255, 255, 0.12)"),
             one(of(Muted.class, Color.Ink.class), MUTED, MUTED_D),
             edge(of(Muted.class, Color.Edge.class), HAIR, HAIR_D),
@@ -133,12 +137,15 @@ public record FrostPalette() implements Palette {
             // ── feedback: tinted glass ──────────────────────────────────
             anchored(surface(of(Danger.class, Color.Surface.class), "rgba(255, 77, 109, 0.18)", "rgba(255, 77, 109, 0.25)"), "background-color", "rgba(35, 196, 140, 0.2)", "rgba(35, 196, 140, 0.25)", "transparent", "transparent"),
             one(of(Danger.class, Color.Ink.class), "#B3123A", "#FF8FA6"),
-            edge(of(Danger.class, Color.Edge.class), "rgba(255, 77, 109, 0.6)"),
-            surface(of(Success.class, Color.Surface.class), "rgba(35, 196, 140, 0.2)", "rgba(35, 196, 140, 0.25)"),
+            anchored(one(of(OnDanger.class, Color.Ink.class), "#B3123A", "#FF8FA6"), "*", "#0E7A55", "#7BE8C0", TEXT, TEXT_D),
+            anchored(edge(of(Danger.class, Color.Edge.class), "rgba(255, 77, 109, 0.6)"), "border-color", "rgba(35, 196, 140, 0.6)", "rgba(35, 196, 140, 0.6)", HAIR, HAIR_D),
+            anchored(surface(of(Success.class, Color.Surface.class), "rgba(35, 196, 140, 0.2)", "rgba(35, 196, 140, 0.25)"), "background-color", "rgba(255, 77, 109, 0.18)", "rgba(255, 77, 109, 0.25)", "transparent", "transparent"),
+            anchored(one(of(OnSuccess.class, Color.Ink.class), "#0E7A55", "#7BE8C0"), "*", "#B3123A", "#FF8FA6", TEXT, TEXT_D),
             scaled(of(Success.class, Color.Ink.class), "#B3123A", "#FF8FA6", MUTED, MUTED_D, "#0E7A55", "#7BE8C0"),   // scales: failure's ink at -1, an unremarkable mark's at 0
-            edge(of(Success.class, Color.Edge.class), "rgba(35, 196, 140, 0.6)"),
-            surface(of(Warning.class, Color.Surface.class), "rgba(255, 190, 60, 0.25)", "rgba(255, 190, 60, 0.28)"),
+            anchored(edge(of(Success.class, Color.Edge.class), "rgba(35, 196, 140, 0.6)"), "border-color", "rgba(255, 77, 109, 0.6)", "rgba(255, 77, 109, 0.6)", HAIR, HAIR_D),
+            anchored(surface(of(Warning.class, Color.Surface.class), "rgba(255, 190, 60, 0.25)", "rgba(255, 190, 60, 0.28)"), "background-color", "rgba(35, 196, 140, 0.2)", "rgba(35, 196, 140, 0.25)", "transparent", "transparent"),
             one(of(Warning.class, Color.Ink.class), "#8A5A00", "#FFD37A"),
+            anchored(one(of(OnWarning.class, Color.Ink.class), "#8A5A00", "#FFD37A"), "*", "#0E7A55", "#7BE8C0", TEXT, TEXT_D),
             anchored(edge(of(Warning.class, Color.Edge.class), "rgba(255, 190, 60, 0.6)"), "border-color", "rgba(35, 196, 140, 0.6)", HAIR),
 
             // ── interaction — Interactive and Selectable in the one word ─
@@ -155,6 +162,7 @@ public record FrostPalette() implements Palette {
             one(of(Current.class, Color.Ink.class), INK_BLUE, INK_BLUE_D),
             edge(of(Current.class, Color.Edge.class), BLUE, BLUE_D),
             ring(of(Focus.class, Color.Edge.class), BLUE, BLUE_D),
+            focusRing(of(Control.class, Color.Edge.class), BLUE, BLUE_D),
 
             // ── structure: rims of light, hairlines of shadow ───────────
             edge(of(Divider.class, Color.Edge.class), "rgba(255, 255, 255, 0.6)", "rgba(255, 255, 255, 0.2)"),

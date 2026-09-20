@@ -152,9 +152,12 @@ final class NeoFuturismDesign {
             // ── emphasis: the light, and the second voice ───────────────
             anchored(surface(of(Primary.class, Color.Surface.class), CYAN, CYAN_D), "background-color", BORDER, BORDER_D, "transparent", "transparent"),
             anchored(one(of(Primary.class, Color.Ink.class), CYAN_INK, CYAN_INK_D), "*", MUTED, MUTED_D, TEXT, TEXT_D),
-            edge(of(Primary.class, Color.Edge.class), CYAN, CYAN_D),
-            one(of(OnPrimary.class, Color.Ink.class), ON_CYAN),
-            surface(of(Secondary.class, Color.Surface.class), VIOLET, VIOLET_D),
+            anchored(edge(of(Primary.class, Color.Edge.class), CYAN, CYAN_D), "border-color", BORDER, BORDER_D, BORDER, BORDER_D),
+            anchored(one(of(OnPrimary.class, Color.Ink.class), ON_CYAN), "*", TEXT, TEXT_D, TEXT, TEXT_D),
+            // the secondary as a surface complete: violet, the same dark ink on it, its edge; scales as the primary does
+            anchored(surface(of(Secondary.class, Color.Surface.class), VIOLET, VIOLET_D), "background-color", BORDER, BORDER_D, "transparent", "transparent"),
+            anchored(one(of(OnSecondary.class, Color.Ink.class), ON_INVERTED), "*", TEXT, TEXT_D, TEXT, TEXT_D),
+            anchored(edge(of(Secondary.class, Color.Edge.class), VIOLET, VIOLET_D), "border-color", BORDER, BORDER_D, BORDER, BORDER_D),
             surface(of(Tertiary.class, Color.Surface.class), BORDER, BORDER_D),
             one(of(Muted.class, Color.Ink.class), MUTED, MUTED_D),
             edge(of(Muted.class, Color.Edge.class), BORDER, BORDER_D),
@@ -168,13 +171,15 @@ final class NeoFuturismDesign {
             // ── feedback: lit from within ───────────────────────────────
             anchored(surface(of(Danger.class, Color.Surface.class), glow(MAGENTA, 10), glow(MAGENTA_D, 14)), "background-color", glow(MINT, 12), glow(MINT_D, 12), "transparent", "transparent"),
             one(of(Danger.class, Color.Ink.class), MAGENTA, MAGENTA_D),
-            edge(of(Danger.class, Color.Edge.class), glow(MAGENTA, 45) + " " + glow(MAGENTA, 45) + " " + glow(MAGENTA, 45) + " " + MAGENTA,
-                                                     glow(MAGENTA_D, 45) + " " + glow(MAGENTA_D, 45) + " " + glow(MAGENTA_D, 45) + " " + MAGENTA_D),
-            surface(of(Success.class, Color.Surface.class), glow(MINT, 12), glow(MINT_D, 12)),
+            anchored(one(of(OnDanger.class, Color.Ink.class), MAGENTA, MAGENTA_D), "*", MINT, MINT_D, TEXT, TEXT_D),
+            anchored(edge(of(Danger.class, Color.Edge.class), glow(MAGENTA, 45), glow(MAGENTA_D, 45)), "border-color", glow(MINT, 45), glow(MINT_D, 45), BORDER, BORDER_D),
+            anchored(surface(of(Success.class, Color.Surface.class), glow(MINT, 12), glow(MINT_D, 12)), "background-color", glow(MAGENTA, 10), glow(MAGENTA_D, 14), "transparent", "transparent"),
+            anchored(one(of(OnSuccess.class, Color.Ink.class), MINT, MINT_D), "*", MAGENTA, MAGENTA_D, TEXT, TEXT_D),
             scaled(of(Success.class, Color.Ink.class), MAGENTA, MAGENTA_D, MUTED, MUTED_D, MINT, MINT_D),   // scales: failure in magenta at -1, unremarkable in the muted ink at 0, success in mint at 1
-            edge(of(Success.class, Color.Edge.class), glow(MINT, 45), glow(MINT_D, 45)),
-            surface(of(Warning.class, Color.Surface.class), glow(AMBER, 12), glow(AMBER_D, 12)),
+            anchored(edge(of(Success.class, Color.Edge.class), glow(MINT, 45), glow(MINT_D, 45)), "border-color", glow(MAGENTA, 45), glow(MAGENTA_D, 45), BORDER, BORDER_D),
+            anchored(surface(of(Warning.class, Color.Surface.class), glow(AMBER, 12), glow(AMBER_D, 12)), "background-color", glow(MINT, 12), glow(MINT_D, 12), "transparent", "transparent"),
             one(of(Warning.class, Color.Ink.class), AMBER, AMBER_D),
+            anchored(one(of(OnWarning.class, Color.Ink.class), AMBER, AMBER_D), "*", MINT, MINT_D, TEXT, TEXT_D),
             anchored(edge(of(Warning.class, Color.Edge.class), glow(AMBER, 45), glow(AMBER_D, 45)), "border-color", glow(MINT, 45), glow(MINT_D, 45), BORDER, BORDER_D),
 
             // ── interaction: the glow comes up ──────────────────────────
@@ -258,6 +263,7 @@ final class NeoFuturismDesign {
             one(of(Overlay.class, Shape.Shadow.class), "0 24px 64px " + glow(SPACE_REF, 35) + ", 0 0 0 1px " + glow(LIGHT_REF, 30), "0 24px 64px " + glow(SPACE_REF, 70) + ", 0 0 0 1px " + glow(LIGHT_REF, 35)),
             Map.entry(of(Overlay.class, Effect.Filter.class), Impl.Bindings.none().at(State.REST, "backdrop-filter", "blur(14px) saturate(1.4) brightness(0.7)")),
             ring(of(Focus.class, Color.Edge.class), CYAN, CYAN_D),
+            focusRing(of(Control.class, Color.Edge.class), CYAN, CYAN_D),
             one(of(Focus.class, Shape.Shadow.class), "0 24px 64px " + glow(SPACE_REF, 35) + ", 0 0 0 1px " + LIGHT_REF + ", 0 0 40px " + glow(LIGHT_REF, 35),
                                                      "0 24px 64px " + glow(SPACE_REF, 70) + ", 0 0 0 1px " + LIGHT_REF + ", 0 0 48px " + glow(LIGHT_REF, 40)),
             outline(of(Focus.class, Shape.Rule.class), "1px", "solid", "-1px"),   // a filament of a ring
@@ -266,7 +272,7 @@ final class NeoFuturismDesign {
 
             // ── boxes ───────────────────────────────────────────────────
             one(of(Control.class, Shape.Corner.class), "2px"),
-            rule(of(Control.class, Shape.Rule.class), "1px", "solid"),
+            ruleWithFocusRing(of(Control.class, Shape.Rule.class), "1px", "solid", "1px", "solid", "-1px"),
             one(of(Inline.class, Shape.Corner.class), "1px"),
             rule(of(Inline.class, Shape.Rule.class), "1px", "solid"),
 

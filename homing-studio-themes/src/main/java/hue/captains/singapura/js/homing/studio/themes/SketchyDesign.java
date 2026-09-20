@@ -134,7 +134,7 @@ final class SketchyDesign {
 
             // ── boxes: drawn without a ruler ────────────────────────────
             one(of(Control.class, Shape.Corner.class), WOBBLE_CONTROL),
-            rule(of(Control.class, Shape.Rule.class), "2px", "solid"),
+            ruleWithFocusRing(of(Control.class, Shape.Rule.class), "2px", "solid", "2px", "dashed", "-3px"),
             one(of(Inline.class, Shape.Corner.class), WOBBLE_TAG),
             rule(of(Inline.class, Shape.Rule.class), "2px", "solid"),
 

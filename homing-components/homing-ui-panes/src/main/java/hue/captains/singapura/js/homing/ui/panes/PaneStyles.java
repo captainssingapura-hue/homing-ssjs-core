@@ -69,9 +69,9 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
         }
     }
 
-    /** A chip: selectable, the design's rest, hover, selected and focus. Dragged by the pointer, so no touch scrolling on it. */
+    /** A chip: selectable, the design's rest, hover, selected and focus (Selectable carries the ring). Dragged by the pointer, so no touch scrolling on it. */
     public record mtp_chip() implements CssClass<PaneStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Selectable.class, Color.Surface.class), of(Selectable.class, Color.Ink.class), of(Selectable.class, Color.Edge.class), of(Selectable.class, Shape.Rule.class), of(Selectable.class, Motion.Ease.class), of(Selectable.class, Affordance.Cursor.class), of(Focus.class, Shape.Rule.class), of(Focus.class, Color.Edge.class), of(Caption.class, Type.Scale.class)); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Selectable.class, Color.Surface.class), of(Selectable.class, Color.Ink.class), of(Selectable.class, Color.Edge.class), of(Selectable.class, Shape.Rule.class), of(Selectable.class, Motion.Ease.class), of(Selectable.class, Affordance.Cursor.class), of(Caption.class, Type.Scale.class)); }
         @Override public String body() { return """
             display: inline-flex;
             align-items: center;
@@ -138,9 +138,9 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
         }
     }
 
-    /** The add button: a control that is interactive and shows a focus ring. */
+    /** The add button: a control that is interactive; Control carries its focus ring. */
     public record mtp_add() implements CssClass<PaneStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Body.class, Color.Ink.class), of(Raised.class, Color.Edge.class), of(Control.class, Shape.Rule.class), of(Control.class, Shape.Corner.class), of(Interactive.class, Affordance.Cursor.class), of(Interactive.class, Motion.Ease.class), of(Focus.class, Shape.Rule.class), of(Focus.class, Color.Edge.class)); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Body.class, Color.Ink.class), of(Raised.class, Color.Edge.class), of(Control.class, Shape.Rule.class), of(Control.class, Shape.Corner.class), of(Interactive.class, Affordance.Cursor.class), of(Interactive.class, Motion.Ease.class), of(Control.class, Color.Edge.class)); }
         @Override public String body() { return """
             font: inherit;
             line-height: 1;

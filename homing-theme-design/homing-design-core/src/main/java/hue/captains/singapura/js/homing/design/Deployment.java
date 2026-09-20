@@ -129,6 +129,43 @@ public record Deployment(Set<DesignClass<?>> required, Set<DesignClass<?>> scale
                 findings.add(new Finding(Finding.Kind.INVALID_BINDING, pair, "anchored at " + extent + " — an extent is a colour's; " + target.token() + " is not on the colour plane"));
             validateSlots(pair, target, b.anchors(extent), findings);
         }
+        checkInterpolatedValuesAreOneColour(pair, b, findings);
+    }
+
+    /**
+     * A word anchored at both ends renders as an interpolation, and
+     * {@code color-mix} takes one colour: a value that is a list — a colour
+     * per side of a border — cannot be mixed, and the browser drops the whole
+     * declaration. Which side is strong is the rule's shape to say, not the
+     * word's colour; the design is told so rather than left with an edge that
+     * silently falls back to the ink.
+     */
+    private static void checkInterpolatedValuesAreOneColour(DesignClass<?> pair, Impl.Bindings b, List<Finding> findings) {
+        var rest = b.values().getOrDefault(Mode.LIGHT, Map.of()).getOrDefault(State.REST, Map.of());
+        for (String key : rest.keySet()) {
+            if (!(b.anchored(Extent.ZERO, key) && b.anchored(Extent.NEG, key))) continue;
+            for (Extent extent : Extent.values())
+                b.anchors(extent).forEach((mode, states) -> states.forEach((state, props) -> {
+                    String v = props.get(key);
+                    int n = v == null ? 1 : topLevelTokens(v);
+                    if (n > 1)
+                        findings.add(new Finding(Finding.Kind.INVALID_BINDING, pair, Sheets.property(pair, key) + " at " + extent.value() + (state == State.REST ? "" : " on " + state) + (mode == Mode.LIGHT ? "" : " in " + mode)
+                                + " is a list of " + n + " — an interpolation mixes one colour; a colour per side is the rule's shape, not the word's colour"));
+                }));
+        }
+    }
+
+    /** How many values a CSS value is: tokens separated by whitespace outside parentheses, so {@code rgba(1, 2, 3, .4)} is one. */
+    static int topLevelTokens(String value) {
+        int n = 0, depth = 0; boolean inToken = false;
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (c == '(') depth++;
+            else if (c == ')') depth--;
+            if (Character.isWhitespace(c) && depth == 0) { inToken = false; continue; }
+            if (!inToken) { inToken = true; n++; }
+        }
+        return n;
     }
 
     /**

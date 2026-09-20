@@ -35,7 +35,7 @@ public record DialogModule() implements DomModule<DialogModule> {
     public ImportsFor<DialogModule> imports() {
         return ImportsFor.<DialogModule>builder()
                 .add(new ModuleImports<>(List.of(new ModalityModule.Modality()), ModalityModule.INSTANCE))
-                .add(new ModuleImports<>(List.of(new Elements.Button()), Elements.INSTANCE))
+                .add(new ModuleImports<>(List.of(new Elements.ButtonBuilder()), Elements.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new DialogStyles.dl_scrim(),
                         new DialogStyles.dl_frame(),

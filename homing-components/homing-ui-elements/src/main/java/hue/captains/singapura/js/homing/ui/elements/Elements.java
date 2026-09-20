@@ -10,10 +10,12 @@ import hue.captains.singapura.js.homing.server.HrefManager;
 import java.util.List;
 
 /**
- * The elements: two classes, one of each shape. {@code Button} is an
- * element component — the caller mints a {@code Button.TAG} element on its
- * own branch and hands it in; the button dresses it and offers
- * {@code setOn}. {@code Card} is a branch component — the caller makes a
+ * The elements. {@code Button} is an element component made through
+ * {@code ButtonBuilder}: the builder tells the caller its tag, the caller
+ * mints the element on its own branch, sets the properties progressively
+ * and builds; the button dresses the element and is adjusted live — a
+ * colour word, complete as a semantic surface, and the extent that scales
+ * every visual surface of it together. {@code Card} is a branch component — the caller makes a
  * sub-branch for it; the card mints its tree on it and offers {@code root}.
  * Nothing here holds state, fetches, or navigates on its own — a card's
  * link is set through the href manager, and that is the only thing beyond
@@ -21,8 +23,10 @@ import java.util.List;
  */
 public record Elements() implements DomModule<Elements> {
 
-    /** An element component: {@code new Button(el, props)}, the element minted by the caller with {@code Button.TAG}. */
+    /** An element component, made through its builder; adjusted live: colour, extent, label, setOn. */
     public record Button()        implements Exportable._Constant<Elements> {}
+    /** The builder: {@code new ButtonBuilder()} tells its tag; the properties set progressively; {@code build(el)}. */
+    public record ButtonBuilder() implements Exportable._Constant<Elements> {}
     /** A branch component: {@code new Card(branch, props)}, on a sub-branch of its own; {@code root} is what the caller appends. */
     public record Card()          implements Exportable._Constant<Elements> {}
 
@@ -35,6 +39,10 @@ public record Elements() implements DomModule<Elements> {
                 .add(new ModuleImports<>(List.of(
                         new ElementStyles.el_button(),
                         new ElementStyles.el_button_primary(),
+                        new ElementStyles.el_button_secondary(),
+                        new ElementStyles.el_button_danger(),
+                        new ElementStyles.el_button_warning(),
+                        new ElementStyles.el_button_success(),
                         new ElementStyles.el_button_plain(),
                         new ElementStyles.el_button_off(),
                         new ElementStyles.el_card(),
@@ -48,6 +56,6 @@ public record Elements() implements DomModule<Elements> {
 
     @Override
     public ExportsOf<Elements> exports() {
-        return new ExportsOf<>(INSTANCE, List.of(new Button(), new Card()));
+        return new ExportsOf<>(INSTANCE, List.of(new Button(), new ButtonBuilder(), new Card()));
     }
 }

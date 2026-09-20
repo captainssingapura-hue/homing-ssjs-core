@@ -140,7 +140,7 @@ final class GlassmorphismDesign {
 
             // ── boxes: rounded, rimmed ──────────────────────────────────
             one(of(Control.class, Shape.Corner.class), "12px"),
-            rule(of(Control.class, Shape.Rule.class), "1px", "solid"),
+            ruleWithFocusRing(of(Control.class, Shape.Rule.class), "1px", "solid", "2px", "solid", "-2px"),
             one(of(Inline.class, Shape.Corner.class), "8px"),
             rule(of(Inline.class, Shape.Rule.class), "1px", "solid"),
 

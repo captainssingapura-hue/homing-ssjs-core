@@ -14,6 +14,7 @@ import static hue.captains.singapura.js.homing.design.DesignClass.of;
 import static hue.captains.singapura.js.homing.design.Target.*;
 import static hue.captains.singapura.js.homing.design.Emphasis.*;
 import static hue.captains.singapura.js.homing.design.Feedback.*;
+import static hue.captains.singapura.js.homing.design.Box.*;
 import static hue.captains.singapura.js.homing.design.Interaction.*;
 import static hue.captains.singapura.js.homing.design.Layer.*;
 import static hue.captains.singapura.js.homing.design.Pairing.*;
@@ -123,9 +124,12 @@ public record SynthwavePalette() implements Palette {
             // ── emphasis ────────────────────────────────────────────────
             anchored(surface(of(Primary.class, Color.Surface.class), MAGENTA, MAGENTA_D), "background-color", HAIR, HAIR_D, "transparent", "transparent"),
             anchored(one(of(Primary.class, Color.Ink.class), MAGENTA, MAGENTA_D), "*", MUTED, MUTED_D, TEXT, TEXT_D),
-            edge(of(Primary.class, Color.Edge.class), MAGENTA, MAGENTA_D),
-            one(of(OnPrimary.class, Color.Ink.class), ON_MAGENTA, ON_MAGENTA_D),
-            surface(of(Secondary.class, Color.Surface.class), CYAN, CYAN_D),
+            anchored(edge(of(Primary.class, Color.Edge.class), MAGENTA, MAGENTA_D), "border-color", HAIR, HAIR_D, HAIR, HAIR_D),
+            anchored(one(of(OnPrimary.class, Color.Ink.class), ON_MAGENTA, ON_MAGENTA_D), "*", TEXT, TEXT_D, TEXT, TEXT_D),
+            // the secondary as a surface complete: the cyan, the same ink on it, its edge; scales as the primary does
+            anchored(surface(of(Secondary.class, Color.Surface.class), CYAN, CYAN_D), "background-color", HAIR, HAIR_D, "transparent", "transparent"),
+            anchored(one(of(OnSecondary.class, Color.Ink.class), ON_MAGENTA_D, ON_MAGENTA_D), "*", TEXT, TEXT_D, TEXT, TEXT_D),
+            anchored(edge(of(Secondary.class, Color.Edge.class), CYAN, CYAN_D), "border-color", HAIR, HAIR_D, HAIR, HAIR_D),
             surface(of(Tertiary.class, Color.Surface.class), "#D9C8F5", "#2A1656"),
             one(of(Muted.class, Color.Ink.class), MUTED, MUTED_D),
             edge(of(Muted.class, Color.Edge.class), MUTED, MUTED_D),
@@ -138,12 +142,15 @@ public record SynthwavePalette() implements Palette {
             // ── feedback: chrome yellow for the alarm, mint and hot pink ─
             anchored(surface(of(Danger.class, Color.Surface.class), "rgba(255, 56, 96, 0.14)", "rgba(255, 56, 96, 0.22)"), "background-color", "rgba(61, 255, 176, 0.16)", "rgba(61, 255, 176, 0.18)", "transparent", "transparent"),
             one(of(Danger.class, Color.Ink.class), "#C40036", "#FF6B8F"),
-            edge(of(Danger.class, Color.Edge.class), "#FF3860"),
-            surface(of(Success.class, Color.Surface.class), "rgba(61, 255, 176, 0.16)", "rgba(61, 255, 176, 0.18)"),
+            anchored(one(of(OnDanger.class, Color.Ink.class), "#C40036", "#FF6B8F"), "*", "#0B7A55", "#3DFFB0", TEXT, TEXT_D),
+            anchored(edge(of(Danger.class, Color.Edge.class), "#FF3860"), "border-color", "#3DFFB0", "#3DFFB0", HAIR, HAIR_D),
+            anchored(surface(of(Success.class, Color.Surface.class), "rgba(61, 255, 176, 0.16)", "rgba(61, 255, 176, 0.18)"), "background-color", "rgba(255, 56, 96, 0.14)", "rgba(255, 56, 96, 0.22)", "transparent", "transparent"),
+            anchored(one(of(OnSuccess.class, Color.Ink.class), "#0B7A55", "#3DFFB0"), "*", "#C40036", "#FF6B8F", TEXT, TEXT_D),
             scaled(of(Success.class, Color.Ink.class), "#C40036", "#FF6B8F", MUTED, MUTED_D, "#0B7A55", "#3DFFB0"),   // scales: failure's ink at -1, an unremarkable mark's at 0
-            edge(of(Success.class, Color.Edge.class), "#3DFFB0"),
-            surface(of(Warning.class, Color.Surface.class), "rgba(255, 183, 0, 0.18)", "rgba(255, 183, 0, 0.22)"),
+            anchored(edge(of(Success.class, Color.Edge.class), "#3DFFB0"), "border-color", "#FF3860", "#FF3860", HAIR, HAIR_D),
+            anchored(surface(of(Warning.class, Color.Surface.class), "rgba(255, 183, 0, 0.18)", "rgba(255, 183, 0, 0.22)"), "background-color", "rgba(61, 255, 176, 0.16)", "rgba(61, 255, 176, 0.18)", "transparent", "transparent"),
             one(of(Warning.class, Color.Ink.class), "#8A5F00", "#FFB700"),
+            anchored(one(of(OnWarning.class, Color.Ink.class), "#8A5F00", "#FFB700"), "*", "#0B7A55", "#3DFFB0", TEXT, TEXT_D),
             anchored(edge(of(Warning.class, Color.Edge.class), "#FFB700"), "border-color", "#3DFFB0", HAIR),
 
             // ── interaction — Interactive and Selectable in the one word ─
@@ -160,6 +167,7 @@ public record SynthwavePalette() implements Palette {
             one(of(Current.class, Color.Ink.class), CYAN, CYAN_D),
             edge(of(Current.class, Color.Edge.class), CYAN, CYAN_D),
             ring(of(Focus.class, Color.Edge.class), CYAN, CYAN_D),
+            focusRing(of(Control.class, Color.Edge.class), CYAN, CYAN_D),
 
             // ── structure: neon rules ───────────────────────────────────
             edge(of(Divider.class, Color.Edge.class), MAGENTA, MAGENTA_D),

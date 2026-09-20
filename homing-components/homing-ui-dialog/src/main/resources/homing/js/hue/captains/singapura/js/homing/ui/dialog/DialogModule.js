@@ -149,11 +149,9 @@ class Dialog {
 
     _action(row, a) {
         var self = this;
-        var btn = new Button(this.branch.createElement("act_" + a.id, Button.TAG), {
-            label: a.label,
-            kind: a.primary ? "primary" : "plain",
-            onClick: function () { if (!btn.el.disabled) a.onClick(self); }
-        });
+        var b = new ButtonBuilder().label(a.label).colour(a.primary ? "primary" : "plain")
+                .onClick(function () { if (!btn.el.disabled) a.onClick(self); });
+        var btn = b.build(this.branch.createElement("act_" + a.id, b.tag));
         if (a.primary) this._primary = a;
         row.appendChild(btn.el);
         this._buttons[a.id] = btn;

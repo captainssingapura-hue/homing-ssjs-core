@@ -118,8 +118,11 @@ final class NeoBrutalismDesign {
             // ── emphasis: the signal ────────────────────────────────────
             anchored(surface(of(Primary.class, Color.Surface.class), SIGNAL), "background-color", GREY, "transparent"),
             anchored(one(of(Primary.class, Color.Ink.class), RISO_RED), "*", MUTED, INK),
-            one(of(OnPrimary.class, Color.Ink.class), INK),
-            surface(of(Secondary.class, Color.Surface.class), RISO_RED),
+            anchored(one(of(OnPrimary.class, Color.Ink.class), INK), "*", INK, INK),
+            // the secondary as a surface complete: riso red, ink on it, its rule; scales as the primary does
+            anchored(surface(of(Secondary.class, Color.Surface.class), RISO_RED), "background-color", GREY, "transparent"),
+            anchored(one(of(OnSecondary.class, Color.Ink.class), INK), "*", INK, INK),
+            anchored(edge(of(Secondary.class, Color.Edge.class), INK), "border-color", RULE, RULE),
             surface(of(Tertiary.class, Color.Surface.class), GREY, GREY_D),
             one(of(Muted.class, Color.Ink.class), MUTED, MUTED_D),
             edge(of(Muted.class, Color.Edge.class), INK, INK_D),
@@ -131,12 +134,15 @@ final class NeoBrutalismDesign {
             // ── feedback: flat, loud ────────────────────────────────────
             anchored(surface(of(Danger.class, Color.Surface.class), RISO_RED), "background-color", "#7CFF6B", "transparent"),
             one(of(Danger.class, Color.Ink.class), INK),
-            edge(of(Danger.class, Color.Edge.class), INK),
-            surface(of(Success.class, Color.Surface.class), "#7CFF6B"),
+            anchored(one(of(OnDanger.class, Color.Ink.class), INK), "*", INK, INK),   // ink is ink here, on any wash
+            anchored(edge(of(Danger.class, Color.Edge.class), INK), "border-color", INK, RULE),
+            anchored(surface(of(Success.class, Color.Surface.class), "#7CFF6B"), "background-color", RISO_RED, "transparent"),   // scales: failure in riso red at -1
+            anchored(one(of(OnSuccess.class, Color.Ink.class), INK), "*", INK, INK),
             scaled(of(Success.class, Color.Ink.class), RISO_RED, MUTED, INK),   // scales: a bad mark in riso red, an unremarkable one muted, a good one in ink
-            edge(of(Success.class, Color.Edge.class), INK),
-            surface(of(Warning.class, Color.Surface.class), SIGNAL),
+            anchored(edge(of(Success.class, Color.Edge.class), INK), "border-color", INK, RULE),
+            anchored(surface(of(Warning.class, Color.Surface.class), SIGNAL), "background-color", "#7CFF6B", "transparent"),   // scales: all clear in green at -1
             one(of(Warning.class, Color.Ink.class), INK),
+            anchored(one(of(OnWarning.class, Color.Ink.class), INK), "*", INK, INK),
             anchored(edge(of(Warning.class, Color.Edge.class), INK), "border-color", "#7CFF6B", RULE),
 
             // ── interaction: the press ──────────────────────────────────
@@ -216,11 +222,12 @@ final class NeoBrutalismDesign {
             rule(of(Rail.class, Shape.Rule.class), "0 3px 0 0", "solid"),
             rule(of(Lattice.class, Shape.Rule.class), "0 2px 2px 0", "solid"),
             edge(of(OnInverted.class, Color.Edge.class), PAPER, INK),
-            edge(of(Primary.class, Color.Edge.class), INK),
+            anchored(edge(of(Primary.class, Color.Edge.class), INK), "border-color", RULE, RULE),
             one(of(Overlay.class, Shape.Shadow.class), shadow(12)),
             Map.entry(of(Overlay.class, Effect.Filter.class), Impl.Bindings.none().at(State.REST, "backdrop-filter", "grayscale(1) contrast(1.4)")),
             surfaceImage(of(Overlay.class, Color.Surface.class), "transparent", "repeating-linear-gradient(45deg, color-mix(in srgb, " + INK + " 22%, transparent) 0 7px, transparent 7px 14px)"),
             ring(of(Focus.class, Color.Edge.class), RISO_BLUE),
+            focusRing(of(Control.class, Color.Edge.class), RISO_BLUE),
             one(of(Focus.class, Shape.Shadow.class), shadow(12) + ", 0 0 0 4px " + FOCUS_REF),
             outline(of(Focus.class, Shape.Rule.class), "3px", "solid", "-3px"),
             one(of(Inert.class, Effect.Opacity.class), "0.4"),
@@ -228,7 +235,7 @@ final class NeoBrutalismDesign {
 
             // ── boxes ───────────────────────────────────────────────────
             one(of(Control.class, Shape.Corner.class), "0"),
-            rule(of(Control.class, Shape.Rule.class), "3px", "solid"),
+            ruleWithFocusRing(of(Control.class, Shape.Rule.class), "3px", "solid", "3px", "solid", "-3px"),
             one(of(Inline.class, Shape.Corner.class), "0"),
             rule(of(Inline.class, Shape.Rule.class), "2px", "solid"),
 

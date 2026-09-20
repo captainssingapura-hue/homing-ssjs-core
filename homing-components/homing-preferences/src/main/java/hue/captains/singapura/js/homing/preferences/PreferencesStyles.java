@@ -123,7 +123,7 @@ public record PreferencesStyles() implements CssGroup<PreferencesStyles> {
 
     /** An option: selectable, marked by aria-selected. */
     public record pv_option() implements CssClass<PreferencesStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Selectable.class, Color.Surface.class), of(Selectable.class, Color.Ink.class), of(Selectable.class, Color.Edge.class), of(Selectable.class, Shape.Rule.class), of(Control.class, Shape.Corner.class), of(Selectable.class, Motion.Ease.class), of(Selectable.class, Affordance.Cursor.class), of(Body.class, Type.Face.class), of(Focus.class, Shape.Rule.class), of(Focus.class, Color.Edge.class)); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Selectable.class, Color.Surface.class), of(Selectable.class, Color.Ink.class), of(Selectable.class, Color.Edge.class), of(Selectable.class, Shape.Rule.class), of(Control.class, Shape.Corner.class), of(Selectable.class, Motion.Ease.class), of(Selectable.class, Affordance.Cursor.class), of(Body.class, Type.Face.class)); }
         @Override public String body() { return """
             font: inherit;
             display: flex;
@@ -153,7 +153,7 @@ public record PreferencesStyles() implements CssGroup<PreferencesStyles> {
 
     /** The switch: a control whose track is raised and whose knob is primary when on. */
     public record pv_switch() implements CssClass<PreferencesStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Raised.class, Color.Edge.class), of(Control.class, Shape.Rule.class), of(Inline.class, Shape.Corner.class),of(Interactive.class, Affordance.Cursor.class), of(Interactive.class, Motion.Ease.class), of(Focus.class, Shape.Rule.class), of(Focus.class, Color.Edge.class)); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Raised.class, Color.Edge.class), of(Control.class, Shape.Rule.class), of(Inline.class, Shape.Corner.class), of(Interactive.class, Affordance.Cursor.class), of(Interactive.class, Motion.Ease.class), of(Control.class, Color.Edge.class)); }
         @Override public String body() { return """
             font: inherit;
             display: inline-flex;

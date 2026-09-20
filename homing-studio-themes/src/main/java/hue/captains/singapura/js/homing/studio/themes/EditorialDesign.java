@@ -167,7 +167,7 @@ final class EditorialDesign {
 
             // ── boxes ───────────────────────────────────────────────────
             one(of(Control.class, Shape.Corner.class), "3px"),
-            rule(of(Control.class, Shape.Rule.class), "1.5px", "solid"),
+            ruleWithFocusRing(of(Control.class, Shape.Rule.class), "1.5px", "solid", "2px", "solid", "-2px"),
             one(of(Inline.class, Shape.Corner.class), "2px"),
             rule(of(Inline.class, Shape.Rule.class), "1px", "solid"),
 

@@ -48,9 +48,10 @@ class OverviewWidget {
 
         var actions = branch.createElement("actions", "div");
         css.addClass(actions, pv_actions);
-        this._reset = new Button(branch.createElement("reset", Button.TAG), { label: "Use the site's defaults for all of these", kind: "plain", onClick: function () {
+        var reset = new ButtonBuilder().label("Use the site's defaults for all of these").plain().onClick(function () {
             settings.forEach(function (s) { PreferenceStewardInstance.forget(s.name); });
-        } });
+        });
+        this._reset = reset.build(branch.createElement("reset", reset.tag));
         actions.appendChild(this._reset.el);
         root.appendChild(actions);
         this.root = root;

@@ -15,6 +15,7 @@ import static hue.captains.singapura.js.homing.design.DesignClass.of;
 import static hue.captains.singapura.js.homing.design.Target.*;
 import static hue.captains.singapura.js.homing.design.Emphasis.*;
 import static hue.captains.singapura.js.homing.design.Feedback.*;
+import static hue.captains.singapura.js.homing.design.Box.*;
 import static hue.captains.singapura.js.homing.design.Interaction.*;
 import static hue.captains.singapura.js.homing.design.Layer.*;
 import static hue.captains.singapura.js.homing.design.Pairing.*;
@@ -147,9 +148,12 @@ public record SeedPalette(DesignId id, String label, String inspiration, DesignI
         // the accent scales into emphasis: a grey fill or the muted ink at -1, nothing or the body ink at 0
         put.accept(anchored(sfc(of(Primary.class, Color.Surface.class), l.accent, d.accent), "background-color", l.border, d.border, "transparent", "transparent"));
         put.accept(anchored(ink(of(Primary.class, Color.Ink.class), l.accent, d.accent), "*", l.muted, d.muted, l.text, d.text));
-        put.accept(edg(of(Primary.class, Color.Edge.class), l.accent, d.accent));
-        put.accept(ink(of(OnPrimary.class, Color.Ink.class), l.accentOn, d.accentOn));
-        put.accept(sfc(of(Secondary.class, Color.Surface.class), l.accentEmphasis, d.accentEmphasis));
+        put.accept(anchored(edg(of(Primary.class, Color.Edge.class), l.accent, d.accent), "border-color", l.border, d.border, l.border, d.border));
+        put.accept(anchored(ink(of(OnPrimary.class, Color.Ink.class), l.accentOn, d.accentOn), "*", l.text, d.text, l.text, d.text));   // the ink on the surface follows it: body ink once the accent is gone
+        // the secondary as a surface complete, scaling as the primary does — its ink and its edge with it
+        put.accept(anchored(sfc(of(Secondary.class, Color.Surface.class), l.accentEmphasis, d.accentEmphasis), "background-color", l.border, d.border, "transparent", "transparent"));
+        put.accept(anchored(ink(of(OnSecondary.class, Color.Ink.class), l.accentOn, d.accentOn), "*", l.text, d.text, l.text, d.text));
+        put.accept(anchored(edg(of(Secondary.class, Color.Edge.class), l.accentEmphasis, d.accentEmphasis), "border-color", l.border, d.border, l.border, d.border));
         put.accept(sfc(of(Tertiary.class, Color.Surface.class), l.border, d.border));
         put.accept(ink(of(Muted.class, Color.Ink.class), l.muted, d.muted));
         put.accept(edg(of(Muted.class, Color.Edge.class), l.muted, d.muted));
@@ -163,13 +167,17 @@ public record SeedPalette(DesignId id, String label, String inspiration, DesignI
         // feedback — the same signals in every seed palette
         put.accept(anchored(surface(of(Danger.class, Color.Surface.class), "rgba(220, 38, 38, 0.10)"), "background-color", "rgba(34, 139, 34, 0.12)", "transparent"));   // scales: safety's wash at -1, nothing at 0 — safety is the other end of danger, whatever colour a design gives it
         put.accept(one(of(Danger.class, Color.Ink.class), "#7F1D1D", "#FCA5A5"));
-        put.accept(edge(of(Danger.class, Color.Edge.class), "rgba(220, 38, 38, 0.35) rgba(220, 38, 38, 0.35) rgba(220, 38, 38, 0.35) #DC2626"));
-        put.accept(surface(of(Success.class, Color.Surface.class), "rgba(34, 139, 34, 0.12)"));
+        // each feedback word a surface complete: on the wash, the word's ink; on the other meaning's wash, its ink; on nothing, the body's
+        put.accept(anchored(one(of(OnDanger.class, Color.Ink.class), "#7F1D1D", "#FCA5A5"), "*", "#1B5E20", "#86EFAC", l.text, d.text));
+        put.accept(anchored(edge(of(Danger.class, Color.Edge.class), "rgba(220, 38, 38, 0.35)"), "border-color", "rgba(34, 139, 34, 0.35)", "rgba(34, 139, 34, 0.35)", l.border, d.border));   // one colour, on the wash ladder of its siblings: a strong side is the rule's to draw
+        put.accept(anchored(surface(of(Success.class, Color.Surface.class), "rgba(34, 139, 34, 0.12)"), "background-color", "rgba(220, 38, 38, 0.10)", "transparent"));   // scales: failure's wash at -1
+        put.accept(anchored(one(of(OnSuccess.class, Color.Ink.class), "#1B5E20", "#86EFAC"), "*", "#7F1D1D", "#FCA5A5", l.text, d.text));
         // success scales: a good mark at 1, a failed one at -1, an unremarkable one at 0 — failure is the other end of success, not danger's word; the same red here is this palette's choice
         put.accept(scaled(of(Success.class, Color.Ink.class), "#7F1D1D", "#FCA5A5", l.muted, d.muted, "#1B5E20", "#86EFAC"));
-        put.accept(edge(of(Success.class, Color.Edge.class), "rgba(34, 139, 34, 0.35)"));
-        put.accept(surface(of(Warning.class, Color.Surface.class), "rgba(202, 138, 4, 0.12)"));
+        put.accept(anchored(edge(of(Success.class, Color.Edge.class), "rgba(34, 139, 34, 0.35)"), "border-color", "rgba(220, 38, 38, 0.35)", "rgba(220, 38, 38, 0.35)", l.border, d.border));
+        put.accept(anchored(surface(of(Warning.class, Color.Surface.class), "rgba(202, 138, 4, 0.12)"), "background-color", "rgba(34, 139, 34, 0.12)", "transparent"));   // scales: calm at -1
         put.accept(one(of(Warning.class, Color.Ink.class), "#713F12", "#FDE68A"));
+        put.accept(anchored(one(of(OnWarning.class, Color.Ink.class), "#713F12", "#FDE68A"), "*", "#1B5E20", "#86EFAC", l.text, d.text));
         put.accept(anchored(edge(of(Warning.class, Color.Edge.class), "rgba(202, 138, 4, 0.35)"), "border-color", "rgba(34, 139, 34, 0.35)", "rgba(34, 139, 34, 0.35)", l.border, d.border));   // scales: calm at -1, the hairline at 0
 
         // interaction — nothing at rest; the states are the slots. Hover tints in
@@ -213,6 +221,7 @@ public record SeedPalette(DesignId id, String label, String inspiration, DesignI
         put.accept(sfc(of(Current.class, Color.Surface.class), tint(l.accent, 7), tint(d.accent, 7)));
         put.accept(ink(of(Current.class, Color.Ink.class), l.title, d.title));
         put.accept(edg(of(Current.class, Color.Edge.class), l.accent, d.accent));
+        put.accept(focusRing(of(Control.class, Color.Edge.class), "color-mix(in srgb, " + l.accent + " 55%, " + l.border + ")", "color-mix(in srgb, " + d.accent + " 55%, " + d.border + ")"));   // a control's ring, on focus only; its edge stays its word's
         put.accept(ring(of(Focus.class, Color.Edge.class), "color-mix(in srgb, " + l.accent + " 55%, " + l.border + ")", "color-mix(in srgb, " + d.accent + " 55%, " + d.border + ")"));
         put.accept(sfc(of(Backdrop.class, Color.Surface.class), tint(l.surface, 64), tint(d.surface, 64)));   // the wash a mask lays over what is waiting
 
