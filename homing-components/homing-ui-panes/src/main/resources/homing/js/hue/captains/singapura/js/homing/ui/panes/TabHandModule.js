@@ -18,6 +18,13 @@
 // left it, eased as the design eases a selectable, and the strip is told
 // where it landed. Nothing is positioned by hand: --mtp-drag-x on the chip,
 // which the strip's class reads.
+//
+// The pointer is captured at the press, not at the first move: a capture
+// asked for mid-gesture is not always granted, and without it the chip
+// hears the hand only while the hand is over it — it lags, a quick hand
+// escapes it, and a release elsewhere is never heard, so the chip keeps
+// following a hand that let go. Should the capture be lost all the same,
+// the window hears the release and the drag ends there.
 // =============================================================================
 
 var _DRAG_THRESHOLD = 4;
@@ -36,6 +43,8 @@ class TabHand {
             if (closeBtn && closeBtn.contains(down.target)) return;
             var startX = down.clientX, dragging = false;
             var slots = null, origin = null, grabX = 0, lo = 0, from = -1, dest = -1, left = 0;
+            var win = typeof window !== "undefined" ? window : null;
+            try { c.setPointerCapture(down.pointerId); } catch (err) {}
             function begin() {
                 dragging = true;
                 self._held = c;
@@ -48,7 +57,6 @@ class TabHand {
                 lo = strip._pinned.size;
                 dest = from;
                 strip._grip(c);
-                try { c.setPointerCapture(down.pointerId); } catch (err) {}
             }
             /** Under the hand at the remembered offset, along the rail and within it; the others stepping aside. */
             function place(x) {
@@ -61,6 +69,8 @@ class TabHand {
                 c.removeEventListener("pointermove", onMove);
                 c.removeEventListener("pointerup", onEnd);
                 c.removeEventListener("pointercancel", onEnd);
+                c.removeEventListener("lostpointercapture", onEnd);
+                if (win) { win.removeEventListener("pointerup", onEnd); win.removeEventListener("pointercancel", onEnd); win.removeEventListener("blur", onEnd); }
                 if (!dragging) return;
                 self._held = null;
                 c.style.removeProperty("--mtp-drag-x");
@@ -86,6 +96,8 @@ class TabHand {
             c.addEventListener("pointermove", onMove);
             c.addEventListener("pointerup", onEnd);
             c.addEventListener("pointercancel", onEnd);
+            c.addEventListener("lostpointercapture", onEnd);
+            if (win) { win.addEventListener("pointerup", onEnd); win.addEventListener("pointercancel", onEnd); win.addEventListener("blur", onEnd); }
         });
     }
 
