@@ -9,15 +9,15 @@
 //            only within it.
 //
 //   docking.desk                 the desk; open a floating tab on it as usual
-//   docking.addDock(pane)        a multi-tab pane becomes a dock; give the pane
-//                                onDragOut: (tab, e, grab) => docking.undock(pane, tab, e, grab)
+//   docking.addDock(pane)        a multi-tab pane becomes a dock
 //   docking.removeDock(pane)
 //   docking.undock(dock, tab, e, grab?)
-//                                the tab leaves the dock, NOT disposed, and floats
-//                                under the hand that pulled it — the pane opens
-//                                where the pointer is, its head under the hand at
-//                                the grab, the press's offset within the chip, when
-//                                given — and takes the drag over.
+//                                by call, with a pointer event: the tab leaves the
+//                                dock, NOT disposed, and floats under the hand —
+//                                the pane opens where the pointer is, its head
+//                                under the hand at the grab, an offset within the
+//                                chip, when given — and takes the drag over. The
+//                                strip does not pull a tab off yet; a holder may.
 //                                Undocked(tabId, slotId), after the desk's Opened
 //   docking.dock(paneId, dock, index?)
 //                                the floating tab leaves the desk (Released) and

@@ -9,13 +9,13 @@ import java.util.List;
 /**
  * {@code TabDrag}: the arithmetic of a chip in the hand — the bar as a row
  * of slots at one pitch, the chip placed by the press remembered as an
- * offset within it, the slot it is nearest, how the others step aside, and
- * how much of it is off the bar — with no element in sight. Headless, so
- * the strip draws what it says and the rules are tested without a browser.
+ * offset within it, the slot it is nearest, and how the others step aside —
+ * with no element in sight. Headless, so the strip draws what it says and
+ * the rules are tested without a browser.
  */
 public record TabDragModule() implements EsModule<TabDragModule> {
 
-    /** The class of statics: {@code pitch}, {@code clamp}, {@code dest}, {@code shift}, {@code outside}. */
+    /** The class of statics: {@code pitch}, {@code clamp}, {@code dest}, {@code shift}. */
     public record TabDrag() implements Exportable._Constant<TabDragModule> {}
 
     public static final TabDragModule INSTANCE = new TabDragModule();

@@ -5,18 +5,14 @@
 // the press remembered as an offset within it, so the chip is placed and
 // the hand never asked where on it the press was; the slot nearest the
 // chip is where it will land, and the chips between its own slot and that
-// one step aside, live; pulled across the bar and off it — more of the
-// chip out than in, by the threshold — it leaves. Headless, so a strip
-// draws what these say and they are tested without a browser.
+// one, step aside, live. Headless, so a strip draws what these say and they
+// are tested without a browser.
 //
 //   TabDrag.pitch(slots)                  → the distance from one slot's left to the next; one slot, its width
 //   TabDrag.clamp(left, slots, lo)        → the left kept within the slots from lo to the last
 //   TabDrag.dest(left, slots, lo)         → the slot a chip at `left` is nearest, lo..n−1
 //   TabDrag.shift(j, from, to)            → how many slots the chip at j steps when the one
 //                                           at `from` is taken to `to`: −1, 0 or +1
-//   TabDrag.outside(top, height, stripTop, stripBottom)
-//                                         → the part of the chip outside the strip, across:
-//                                           0 wholly in, 1 wholly out
 //
 // A slot is { left, top, width, height }: a chip's rectangle as the bar laid
 // it, in order. lo is the count of pinned chips, which sit first and are
@@ -43,10 +39,5 @@ class TabDrag {
         if (from < to && j > from && j <= to) return -1;
         if (to < from && j >= to && j < from) return 1;
         return 0;
-    }
-    static outside(top, height, stripTop, stripBottom) {
-        if (!(height > 0)) return 0;
-        var overlap = Math.min(top + height, stripBottom) - Math.max(top, stripTop);
-        return 1 - Math.max(0, Math.min(height, overlap)) / height;
     }
 }

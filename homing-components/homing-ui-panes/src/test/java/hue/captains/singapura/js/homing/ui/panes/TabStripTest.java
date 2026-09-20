@@ -9,22 +9,22 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * The strip alone with {@code floating}, over a fake DOM that knows its
- * rectangles: a chip pulled off the row stays the strip's own and floats
- * under the hand, the row closing behind it; let go, it is afloat where
- * it is; pressed again and brought back onto the strip, it is seated and
- * lands as any chip does.
+ * The strip alone over a fake DOM that knows its rectangles: the drag is a
+ * rail — the chip follows the hand along the row at the press's offset,
+ * within the slots, never off the rail however the hand wanders; the
+ * chips it passes step aside and step back; let go, it lands on the slot
+ * it is nearest and the strip says so; every step is taken back at once.
  */
 class TabStripTest extends JsModuleTestBase {
 
     private static final String P = "/homing/js/hue/captains/singapura/js/homing/ui/panes/";
 
-    // three chips of 80 at a pitch of 80 on a strip 30 tall, the chips on its bottom edge
+    // three chips of 80 at a pitch of 80 on a strip 30 tall; the second is pinned in one test
     private static final String SHIM = """
         var log = [];
         function el(tag) {
             var classes = new Set(), attrs = {}, props = {};
-            var node = { tag: tag, children: [], parentNode: null, listeners: {}, textContent: "", rect: { left: 0, top: 0, width: 0, height: 0 },
+            var node = { tag: tag, children: [], parentNode: null, listeners: {}, textContent: "", rect: { left: 0, top: 0, width: 0, height: 0 }, cancelled: 0,
                 style: { setProperty: function (k, v) { props[k] = v; }, removeProperty: function (k) { delete props[k]; }, getPropertyValue: function (k) { return props[k] == null ? "" : props[k]; } },
                 classList: { add: function () { for (var i = 0; i < arguments.length; i++) classes.add(arguments[i]); },
                              remove: function () { for (var i = 0; i < arguments.length; i++) classes.delete(arguments[i]); },
@@ -37,6 +37,8 @@ class TabStripTest extends JsModuleTestBase {
                 removeEventListener: function (t, fn) { var l = this.listeners[t] || []; var i = l.indexOf(fn); if (i >= 0) l.splice(i, 1); },
                 contains: function (c) { return c === this; },
                 getBoundingClientRect: function () { return this.rect; },
+                getAnimations: function () { var self = this; return [{ cancel: function () { self.cancelled++; } }]; },
+                animate: function (frames, opts) { log.push("settle:" + this.children[0].textContent + ":" + frames[0].translate + "->" + frames[1].translate + "/" + opts.duration); },
                 setPointerCapture: function () {}, releasePointerCapture: function () {},
                 fire: function (t, ev) { var e = ev || {}; e.type = t; e.stopPropagation = e.stopPropagation || function () {}; e.preventDefault = e.preventDefault || function () {}; (this.listeners[t] || []).slice().forEach(function (fn) { fn(e); }); },
                 has: function (c) { return classes.has(c); }, prop: function (k) { return props[k]; } };
@@ -46,24 +48,25 @@ class TabStripTest extends JsModuleTestBase {
         var css = { addClass: function (e) { for (var i = 1; i < arguments.length; i++) e.classList.add(arguments[i]); },
                     removeClass: function (e) { for (var i = 1; i < arguments.length; i++) e.classList.remove(arguments[i]); },
                     toggleClass: function (e, c, f) { e.classList.toggle(c, f); } };
+        var getComputedStyle = function () { return { transitionDuration: "0.16s, 0.16s" }; };
         var mtp_strip = "mtp_strip", mtp_strip_loose = "mtp_strip_loose", mtp_chip = "mtp_chip", mtp_chip_label = "mtp_chip_label", mtp_chip_seated = "mtp_chip_seated",
-            mtp_chip_dragging = "mtp_chip_dragging", mtp_chip_shifted = "mtp_chip_shifted", mtp_chip_floating = "mtp_chip_floating", mtp_chip_afloat = "mtp_chip_afloat",
+            mtp_chip_dragging = "mtp_chip_dragging", mtp_chip_shifted = "mtp_chip_shifted",
             mtp_chip_close = "mtp_chip_close", mtp_drop_mark = "mtp_drop_mark", mtp_strip_tail = "mtp_strip_tail", mtp_add = "mtp_add", mtp_add_off = "mtp_add_off", mtp_pill = "mtp_pill";
-        var strip = new TabStrip(fakeBranch("strip"), { floating: true,
-            onDrop: function (c, dest) { log.push("drop:" + c.children[0].textContent + "@" + dest); },
-            onFloat: function (c, e, grab) { log.push("float:" + c.children[0].textContent + " grab " + grab.x + "," + grab.y); },
-            onLand: function (c, at) { log.push("land:" + c.children[0].textContent + " at " + at.x + "," + at.y); },
-            onDragOut: function () { log.push("dragout"); } });
-        strip.el.rect = { left: 0, top: 0, width: 400, height: 30, right: 400, bottom: 30 };
-        var chips = ["A", "B", "C"].map(function (n, i) {
-            var c = strip.chip({ id: n.toLowerCase(), title: n }, { onSelect: function () { log.push("select:" + n); }, onClose: function () {} });
-            c.rect = { left: 40 + 80 * i, top: 0, width: 80, height: 30 };
-            return c;
-        });
+        var strip = new TabStrip(fakeBranch("strip"), { onDrop: function (c, dest) { log.push("drop:" + c.children[0].textContent + "@" + dest); } });
+        strip.el.rect = { left: 0, top: 0, width: 400, height: 30 };
+        function make(names, pinned) {
+            return names.map(function (n, i) {
+                var c = strip.chip({ id: n.toLowerCase(), title: n, pinned: pinned && i === 0 }, { onSelect: function () { log.push("select:" + n); }, onClose: function () {} });
+                c.rect = { left: 40 + 80 * i, top: 0, width: 80, height: 30 };
+                return c;
+            });
+        }
+        var chips = make(["A", "B", "C"], false);
         strip.arrange(chips);
-        var B = chips[1];
-        function vars(c) { return ["--mtp-drag-x", "--mtp-drag-y", "--mtp-float-x", "--mtp-float-y", "--mtp-shift-x"].map(function (k) { return c.prop(k) == null ? "-" : c.prop(k); }).join(" "); }
-        function state(c) { return ["mtp_chip_seated", "mtp_chip_dragging", "mtp_chip_shifted", "mtp_chip_floating", "mtp_chip_afloat"].filter(function (k) { return c.has(k); }).join("+") || "none"; }
+        var A = chips[0], B = chips[1], C = chips[2];
+        function x(c) { return c.prop("--mtp-drag-x") == null ? "-" : c.prop("--mtp-drag-x"); }
+        function shifts() { return chips.map(function (c) { return c.has("mtp_chip_shifted") ? c.prop("--mtp-shift-x") : "."; }).join(" "); }
+        function state(c) { return ["mtp_chip_seated", "mtp_chip_dragging", "mtp_chip_shifted"].filter(function (k) { return c.has(k); }).join("+") || "none"; }
         """;
 
     @BeforeEach
@@ -79,60 +82,53 @@ class TabStripTest extends JsModuleTestBase {
     private String log() { return eval("log.join(' ')").asString(); }
 
     @Test
-    void aChipPulledOffTheRowFloats_theRowClosingBehindIt_andIsLeftWhereTheHandLetsGo() {
-        assertEquals("mtp_chip_seated", eval("state(B)").asString(), "seated to begin with");
-        // press B 20 in and 10 down; a move along, then straight down until 25 of its 30 are off the strip
-        eval("B.fire('pointerdown', { button: 0, pointerId: 1, clientX: 140, clientY: 10, target: B }); B.fire('pointermove', { clientX: 146, clientY: 10 });");
-        assertEquals("mtp_chip_dragging", eval("state(B)").asString(), "in the hand: not seated");
+    void theChipFollowsTheHandAlongTheRail_neverOffIt_theOthersSteppingAsideLive() {
+        assertEquals("mtp_chip_seated", eval("state(A)").asString());
+        // press A 20 in; 6 along starts the drag; the hand wanders 200 down and 50 up: only x matters
+        eval("A.fire('pointerdown', { button: 0, pointerId: 1, clientX: 60, clientY: 10, target: A }); A.fire('pointermove', { clientX: 66, clientY: 10 });");
+        assertEquals("mtp_chip_dragging", eval("state(A)").asString(), "in the hand: the design's word for a thing dragged");
         assertTrue(eval("strip.el.has('mtp_strip_loose')").asBoolean());
-        eval("B.fire('pointermove', { clientX: 150, clientY: 25 });");
-        assertEquals("10px 15px - - -", eval("vars(B)").asString(), "half off: still in the row, under the hand");
-        eval("log.length = 0; B.fire('pointermove', { clientX: 150, clientY: 35 });");
-        assertEquals("float:B grab 20,10", log(), "more than two thirds off: afloat, the strip's own still; no hand-off");
-        assertEquals("mtp_chip_dragging+mtp_chip_floating", eval("state(B)").asString());
-        assertEquals("- - 130px 25px -", eval("vars(B)").asString(), "where it was, in the strip's frame: 120 + 10 across, 25 down");
-        assertTrue(eval("strip.floating(B) && !strip.floating(chips[0])").asBoolean());
-        eval("B.fire('pointermove', { clientX: 300, clientY: 200 });");
-        assertEquals("- - 280px 190px -", eval("vars(B)").asString(), "free under the hand, at the grab");
-        eval("log.length = 0; B.fire('pointerup', { clientX: 300, clientY: 200 });");
-        assertEquals("land:B at 280,190", log());
-        assertEquals("mtp_chip_floating+mtp_chip_afloat", eval("state(B)").asString(), "afloat where it was let go");
-        assertTrue(eval("strip.el.has('mtp_strip_loose')").asBoolean(), "the strip clips nothing while a chip is afloat");
-        assertEquals("A,C", eval("strip._seated().map(function (c) { return c.children[0].textContent; }).join(',')").asString(), "the row closed behind it");
+        eval("A.fire('pointermove', { clientX: 90, clientY: 210 });");
+        assertEquals("30px", eval("x(A)").asString(), "30 along, the 200 down nothing");
+        assertEquals(". . .", eval("shifts()").asString(), "under half a pitch: nobody moves");
+        eval("A.fire('pointermove', { clientX: 110, clientY: -40 });");
+        assertEquals("50px", eval("x(A)").asString());
+        assertEquals(". -80px .", eval("shifts()").asString(), "past half a pitch: B steps one pitch left, live");
+        eval("A.fire('pointermove', { clientX: 900, clientY: 10 });");
+        assertEquals("160px", eval("x(A)").asString(), "kept within the rail: the last slot");
+        assertEquals(". -80px -80px", eval("shifts()").asString());
+        eval("A.fire('pointermove', { clientX: 125, clientY: 10 });");
+        assertEquals("65px", eval("x(A)").asString());
+        assertEquals(". -80px .", eval("shifts()").asString(), "back under two: C steps back");
     }
 
     @Test
-    void aChipAfloatPressedAgainIsInTheHand_andBroughtBackOntoTheStripIsSeatedAndLands() {
-        eval("B.fire('pointerdown', { button: 0, pointerId: 1, clientX: 140, clientY: 10, target: B }); B.fire('pointermove', { clientX: 146, clientY: 10 }); B.fire('pointermove', { clientX: 150, clientY: 35 }); B.fire('pointerup', { clientX: 300, clientY: 200 });");
-        eval("B.rect = { left: 280, top: 190, width: 80, height: 30 }; log.length = 0;");
-        // press the floating chip 10 in and 5 down, carry it up until more than half of it is on the strip, over A's slot
-        eval("B.fire('pointerdown', { button: 0, pointerId: 2, clientX: 290, clientY: 195, target: B }); B.fire('pointermove', { clientX: 296, clientY: 195 });");
-        assertEquals("mtp_chip_dragging+mtp_chip_floating", eval("state(B)").asString(), "in the hand, still afloat");
-        eval("B.fire('pointermove', { clientX: 60, clientY: 30 });");
-        assertEquals("mtp_chip_dragging+mtp_chip_floating", eval("state(B)").asString(), "25 down of 30: only a sixth on, still afloat");
-        eval("B.rect = { left: 120, top: 0, width: 80, height: 30 }; B.fire('pointermove', { clientX: 60, clientY: 15 });");
-        assertEquals("mtp_chip_dragging", eval("state(B)").asString(), "10 down: two thirds on — seated again, in the hand");
-        assertEquals("A,B,C", eval("strip._seated().map(function (c) { return c.children[0].textContent; }).join(',')").asString(), "back in the row at its place in the order");
-        assertEquals("-70px 10px - - -", eval("vars(B)").asString(), "under the hand at the grab, over A's slot");
-        assertEquals("80px", eval("chips[0].prop('--mtp-shift-x')").asString(), "A steps aside");
-        eval("B.fire('pointerup', { clientX: 60, clientY: 15 });");
-        assertEquals("select:B drop:B@0", log(), "landed on A's slot");
-        assertEquals("mtp_chip_seated", eval("state(B)").asString());
-        assertTrue(eval("!strip.el.has('mtp_strip_loose')").asBoolean(), "nothing loose: the strip clips again");
+    void letGo_theChipSettlesOntoItsSlot_everyStepTakenBackAtOnce_andTheStripSaysWhereItLanded() {
+        eval("A.fire('pointerdown', { button: 0, pointerId: 1, clientX: 60, clientY: 10, target: A }); A.fire('pointermove', { clientX: 66, clientY: 10 }); A.fire('pointermove', { clientX: 150, clientY: 10 }); log.length = 0;");
+        eval("A.fire('pointerup', { clientX: 150, clientY: 10 });");
+        assertEquals("drop:A@1 settle:A:10px 0->0 0/160", log(), "landed on B's slot, then the last leg: from 10 past the slot onto it, in the design's 160ms");
+        assertEquals("mtp_chip_seated", eval("state(A)").asString());
+        assertEquals("-", eval("x(A)").asString());
+        assertEquals(". . .", eval("shifts()").asString(), "B's step taken back");
+        assertEquals("1", eval("String(B.cancelled)").asString(), "and not eased: B is where the arrangement puts it, not sliding there");
+        assertTrue(eval("!strip.el.has('mtp_strip_loose')").asBoolean());
+        // a drag that goes nowhere says nothing, and a cancelled one neither
+        eval("log.length = 0; A.fire('pointerdown', { button: 0, pointerId: 2, clientX: 60, clientY: 10, target: A }); A.fire('pointermove', { clientX: 66, clientY: 10 }); A.fire('pointerup', { clientX: 66, clientY: 10 });");
+        assertEquals("select:A settle:A:6px 0->0 0/160", log(), "its own slot: no drop, the settle only");
+        eval("log.length = 0; A.fire('pointerdown', { button: 0, pointerId: 3, clientX: 60, clientY: 10, target: A }); A.fire('pointermove', { clientX: 150, clientY: 10 }); A.fire('pointercancel', {});");
+        assertEquals("select:A settle:A:90px 0->0 0/160", log(), "cancelled: back onto its own slot, no drop");
+        assertEquals(". . .", eval("shifts()").asString());
     }
 
     @Test
-    void seat_putsAFloatingChipBackInTheRow_andWithoutFloatingTheHandOffIsAsBefore() {
-        eval("B.fire('pointerdown', { button: 0, pointerId: 1, clientX: 140, clientY: 10, target: B }); B.fire('pointermove', { clientX: 146, clientY: 10 }); B.fire('pointermove', { clientX: 150, clientY: 35 }); B.fire('pointerup', { clientX: 300, clientY: 200 });");
-        eval("strip.seat(B)");
-        assertEquals("mtp_chip_seated", eval("state(B)").asString());
-        assertEquals("A,B,C", eval("strip._seated().map(function (c) { return c.children[0].textContent; }).join(',')").asString());
-        assertEquals("- - - - -", eval("vars(B)").asString());
-        // a strip that does not float hands the chip off instead
-        eval("var plain = new TabStrip(fakeBranch('plain'), { onDrop: function () {}, onDragOut: function (c, e, grab) { log.push('dragout:' + grab.x + ',' + grab.y); } });"
-           + "plain.el.rect = strip.el.rect; var P = plain.chip({ id: 'p', title: 'P' }, { onSelect: function () {}, onClose: function () {} }); P.rect = { left: 40, top: 0, width: 80, height: 30 }; plain.arrange([P]); log.length = 0;"
-           + "P.fire('pointerdown', { button: 0, pointerId: 3, clientX: 60, clientY: 10, target: P }); P.fire('pointermove', { clientX: 66, clientY: 10 }); P.fire('pointermove', { clientX: 66, clientY: 35 });");
-        assertEquals("dragout:20,10", log());
-        assertEquals("mtp_chip_seated", eval("state(P)").asString(), "handed off: the strip's part is over, the chip seated as far as it is concerned");
+    void aPinnedChipIsNeitherDraggedNorPassed() {
+        eval("chips = make(['P', 'Q', 'R'], true); strip.arrange(chips); var Pc = chips[0], Q = chips[1]; log.length = 0;");
+        eval("Pc.fire('pointerdown', { button: 0, pointerId: 1, clientX: 60, clientY: 10, target: Pc }); Pc.fire('pointermove', { clientX: 200, clientY: 10 }); Pc.fire('pointerup', { clientX: 200, clientY: 10 });");
+        assertEquals("select:P", log(), "pinned: selected, never dragged");
+        eval("log.length = 0; Q.fire('pointerdown', { button: 0, pointerId: 2, clientX: 140, clientY: 10, target: Q }); Q.fire('pointermove', { clientX: 134, clientY: 10 }); Q.fire('pointermove', { clientX: 0, clientY: 10 });");
+        assertEquals("0px", eval("x(Q)").asString(), "never before the pinned one: held at its own slot");
+        assertEquals(". . .", eval("shifts()").asString());
+        eval("Q.fire('pointerup', { clientX: 0, clientY: 10 });");
+        assertEquals("select:Q", log(), "on its own slot already: nothing to settle");
     }
 }

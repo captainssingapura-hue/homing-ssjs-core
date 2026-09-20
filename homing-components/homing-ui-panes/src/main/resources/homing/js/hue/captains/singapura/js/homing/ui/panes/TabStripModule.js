@@ -6,8 +6,7 @@
 // where a dragged chip landed. A branch component: the pane makes a
 // sub-branch for it and hands it in.
 //
-//   new TabStrip(branch, { onAdd?, onDrop(chip, dest), onDragOut?(chip, pointerEvent, grab),
-//                          floating?, onFloat?(chip, pointerEvent, grab), onLand?(chip, at) })
+//   new TabStrip(branch, { onAdd?, onDrop(chip, dest) })
 //     strip.el
 //     strip.chip({ id, title, pinned, closable }, { onSelect, onClose }, branch?) → chipEl
 //                                   minted on the branch given — the tab's own,
@@ -22,8 +21,6 @@
 //     strip.dispose()
 //     strip.aspect(a?)              the chips' aspect, −1..1, 0 the design's proportion — wide,
 //                                   a browser's tab — narrower at −1, wider at +1
-//     strip.floating(chip)          → whether the chip is afloat
-//     strip.seat(chip)              a floating chip back in the row, at its place in the order
 //
 // Every chip is in the tab order — the Tab key walks the strip, Enter or
 // Space selects — and the design draws the hover, the press, the selected
@@ -32,36 +29,21 @@
 // release, and the chip in the hand — pressed, dragged, pulled off — is the
 // selected one throughout; nothing else selects while it is held.
 //
-// The drag is a browser's: the chip pressed is lifted and goes where the
-// hand goes — the press remembered as an offset within the chip, so the
-// chip is placed and never the hand — kept within the row and never above
-// its slot; the slot it is nearest is where it will land, and the chips
-// between step aside, live, as it passes them. TabHand is the hand, TabDrag
-// the arithmetic.
-// Let go, the chip lands: onDrop(chip, dest), and the pane turns that into
-// a move. Pulled down across the strip's edge until more of the chip is
-// out than in — two thirds — it leaves the row, one of two ways:
+// The drag is a browser's, along a rail: the chip pressed is lifted and goes
+// where the hand goes along the row — the press remembered as an offset
+// within the chip, so the chip is placed and never the hand — kept within
+// the row, and never off it; the slot it is nearest is where it will land,
+// and the chips between step aside, live, as it passes them. Let go, it
+// settles onto its slot, and the pane is told: onDrop(chip, dest), a move.
+// TabHand is the hand, TabDrag the arithmetic. Leaving the row — a tab
+// that detaches and floats — is not here yet; the pane's dock takes a tab
+// by call. Pinned chips are not dragged.
 //
-//   floating: false   the drag is dropped here and onDragOut is told, with the
-//                     pointer event and the grab — the press's offset within
-//                     the chip — for a holder that takes the tab away and
-//                     floats it under the same hand at the same place in it.
-//   floating: true    the chip stays the strip's own, the same element, now
-//                     afloat: out of the row, which closes behind it, free
-//                     under the hand — onFloat(chip, e, grab) — and left where
-//                     the hand lets go, onLand(chip, { x, y }) in the strip's
-//                     frame. Pressed again it is in the hand again; brought
-//                     back until more of it is on the strip than off, it is
-//                     seated: in the row, stepping the others aside, landing
-//                     as any chip does. The strip clips nothing while a chip
-//                     is loose.
-//
-// Pinned chips are not dragged and never leave. A tab offered from outside
-// is marked where it would land: a bar inserted between the seated chips,
-// at the count of those whose middle is left of the point, never before the
-// pinned ones. Nothing is positioned by hand: the chip in the hand carries
-// --mtp-drag-x/y, a chip stepping aside --mtp-shift-x, a chip afloat
-// --mtp-float-x/y. `css` is injected with the styles import.
+// A tab offered from outside is marked where it would land: a bar inserted
+// between chips, at the count of those whose middle is left of the point,
+// never before the pinned ones. Nothing is positioned by hand: the chip in
+// the hand carries --mtp-drag-x, a chip stepping aside --mtp-shift-x. `css`
+// is injected with the styles import.
 // =============================================================================
 
 const _stripOwner = Object.freeze({ toString: () => "tabStrip" });
@@ -73,11 +55,6 @@ class TabStrip {
         branch.activate(_stripOwner);
         this._branch = branch;
         this._onDrop = opts && typeof opts.onDrop === "function" ? opts.onDrop : null;
-        this._onDragOut = opts && typeof opts.onDragOut === "function" ? opts.onDragOut : null;
-        this._floats = !!(opts && opts.floating);
-        this._onFloat = opts && typeof opts.onFloat === "function" ? opts.onFloat : null;
-        this._onLand = opts && typeof opts.onLand === "function" ? opts.onLand : null;
-        this._afloat = new Set();         // the chips afloat
         this._hand = new TabHand(this);   // the one hand on the strip's chips
         this._order = [];                 // the chips as last arranged
         this._pinned = new Set();         // the chips that are pinned
@@ -169,8 +146,6 @@ class TabStrip {
     }
     remove(c) {
         this._pinned.delete(c);
-        this._afloat.delete(c);
-        this._loose();
         if (c.parentNode === this.el) this.el.removeChild(c);
     }
     select(chips, active) {
@@ -186,60 +161,42 @@ class TabStrip {
     }
 
     // ── The chip in the hand: the hand's, and what it asks of the strip ──
+    /** Taken: the design's word for a thing dragged, in place of the seated one; the strip clips nothing meanwhile. */
     _grip(c) {
-        css.removeClass(c, mtp_chip_seated, mtp_chip_afloat);
+        css.removeClass(c, mtp_chip_seated);
         css.addClass(c, mtp_chip_dragging);
-        this._loose();
+        css.addClass(this.el, mtp_strip_loose);
     }
-    _release(c, afloat) {
+    _release(c) {
         css.removeClass(c, mtp_chip_dragging);
-        css.toggleClass(c, mtp_chip_afloat, afloat);
-        css.toggleClass(c, mtp_chip_seated, !afloat);
-        this._loose();
+        css.addClass(c, mtp_chip_seated);
+        css.removeClass(this.el, mtp_strip_loose);
     }
-    /** The chips between the slot left and the slot aimed at step one pitch aside; the rest, and all of them once it is over, stand where they are. */
+    /**
+     * The chips between the slot left and the slot aimed at step one pitch
+     * aside, eased by the design; the rest stand. Over — the hand let go —
+     * every step is taken back at once, not eased: the row is about to be
+     * arranged, and a chip must not be seen sliding to where it already is.
+     */
     _stepAside(from, to, pitch) {
-        var seated = this._seated();
-        for (var j = 0; j < seated.length; j++) {
+        var over = to === from;
+        for (var j = 0; j < this._order.length; j++) {
             if (j === from) continue;
-            var s = TabDrag.shift(j, from, to), chip = seated[j];
-            if (s === 0) { css.removeClass(chip, mtp_chip_shifted); chip.style.removeProperty("--mtp-shift-x"); }
+            var s = TabDrag.shift(j, from, to), chip = this._order[j];
+            if (s === 0) { css.removeClass(chip, mtp_chip_shifted); chip.style.removeProperty("--mtp-shift-x"); if (over) TabStrip._snap(chip); }
             else { css.addClass(chip, mtp_chip_shifted); chip.style.setProperty("--mtp-shift-x", (s * pitch) + "px"); }
         }
     }
-    /** A chip afloat at a point in the strip's frame. */
-    _float(c, x, y) {
-        this._afloat.add(c);
-        css.addClass(c, mtp_chip_floating);
-        c.style.setProperty("--mtp-float-x", x + "px");
-        c.style.setProperty("--mtp-float-y", y + "px");
-        this._loose();
+    /** Whatever the chip was easing towards, it is there now. */
+    static _snap(chip) {
+        if (typeof chip.getAnimations !== "function") return;
+        try { chip.getAnimations().forEach(function (a) { a.cancel(); }); } catch (err) {}
     }
-    _seat(c) {
-        this._afloat.delete(c);
-        css.removeClass(c, mtp_chip_floating, mtp_chip_afloat);
-        c.style.removeProperty("--mtp-float-x");
-        c.style.removeProperty("--mtp-float-y");
-        css.addClass(c, mtp_chip_seated);
-        this._loose();
-    }
-    /** Where a chip afloat is, in the strip's frame. */
-    _at(c) {
-        return { x: parseFloat(c.style.getPropertyValue("--mtp-float-x") || "0"), y: parseFloat(c.style.getPropertyValue("--mtp-float-y") || "0") };
-    }
-    /** The strip clips nothing while a chip is loose: in the hand, or afloat. */
-    _loose() { css.toggleClass(this.el, mtp_strip_loose, !!this._hand.held() || this._afloat.size > 0); }
-    floating(c) { return this._afloat.has(c); }
-    seat(c) { if (this._afloat.has(c) && this._hand.held() !== c) this._seat(c); }
-    /** The chips in the row, in order: every chip arranged that is not afloat. */
-    _seated() {
-        var out = [];
-        for (var i = 0; i < this._order.length; i++) if (!this._afloat.has(this._order[i])) out.push(this._order[i]);
-        return out;
-    }
+    /** The chips in the row, in order. */
+    _seated() { return this._order.slice(); }
     _others(c) {
-        var out = [], seated = this._seated();
-        for (var i = 0; i < seated.length; i++) if (seated[i] !== c) out.push(seated[i]);
+        var out = [];
+        for (var i = 0; i < this._order.length; i++) if (this._order[i] !== c) out.push(this._order[i]);
         return out;
     }
     /** The mark where a tab from outside would land, and the index it would take. */

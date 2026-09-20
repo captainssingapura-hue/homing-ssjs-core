@@ -65,7 +65,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
                     size: function (e, s) { e.size = s; }, aspect: function (e, a) { e.aspect = a; } };
         var mtp_pane = "mtp_pane", mtp_strip = "mtp_strip", mtp_chip = "mtp_chip", mtp_chip_label = "mtp_chip_label",
             mtp_chip_dragging = "mtp_chip_dragging", mtp_chip_shifted = "mtp_chip_shifted", mtp_strip_loose = "mtp_strip_loose", mtp_chip_close = "mtp_chip_close", mtp_drop_mark = "mtp_drop_mark",
-            mtp_chip_seated = "mtp_chip_seated", mtp_chip_floating = "mtp_chip_floating", mtp_chip_afloat = "mtp_chip_afloat",
+            mtp_chip_seated = "mtp_chip_seated",
             mtp_strip_tail = "mtp_strip_tail", mtp_add = "mtp_add", mtp_add_off = "mtp_add_off", mtp_pill = "mtp_pill",
             mtp_content = "mtp_content", mtp_tab_content = "mtp_tab_content", mtp_tab_content_hidden = "mtp_tab_content_hidden",
             mtp_empty = "mtp_empty", mtp_dock_target = "mtp_dock_target";

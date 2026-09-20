@@ -4,7 +4,7 @@
 // component: the caller makes a sub-branch for it and hands it in; dispose()
 // dissolves it.
 //
-//   new MultiTabPane(branch, { host, slotId?, budget?, addable?, onEvent?, onDragOut?(tab, pointerEvent, grab) })
+//   new MultiTabPane(branch, { host, slotId?, budget?, addable?, onEvent? })
 //     branch: the pane's own, handed unactivated
 //     host:   a flex column; the pane is its item and fills it.
 //
@@ -28,9 +28,9 @@
 //   pane.contentElOf(id) .widgetOf(id) .getState() .el .slotId
 //   pane.dispose()               → every widget disposed in order, the branch dissolved
 //
-// The pane is a dock. A chip pulled off the strip is reported to onDragOut(tab,
-// pointerEvent, grab) — the tab still in the pane, for the holder to detach and
-// float under the same hand, grab being the press's offset within the chip. A tab from outside is offered by dropAt(clientX, clientY):
+// The pane is a dock. A tab leaves it by call — detachTab, for a holder that
+// floats it — the strip's own drag staying on its rail for now. A tab from
+// outside is offered by dropAt(clientX, clientY):
 // over the strip — the dock's landing, not its content, since docks may tile
 // a box and a float let go over content stays afloat — it marks where the tab
 // would land and answers the index, elsewhere −1; the pane wears the drop-
@@ -73,7 +73,6 @@ class MultiTabPane {
         this._budget = opts.budget == null ? _DEFAULT_BUDGET : Math.max(1, opts.budget | 0);
         this._addEnabled = opts.addable !== false;
         this._sink = typeof opts.onEvent === "function" ? opts.onEvent : null;
-        this._onDragOut = typeof opts.onDragOut === "function" ? opts.onDragOut : null;
         this._tabs = [];          // entries in strip order: { id, tab, pinned, widget, chip, panel }
         this._activeId = null;
         this._disposed = false;
@@ -85,8 +84,7 @@ class MultiTabPane {
 
         this._strip = new TabStrip(branch.createBranch("strip"), {
             onAdd: opts.addable === false ? null : function () { if (self.canAdd()) self._fire(PaneEvents.AddRequested(self.slotId)); },
-            onDrop: function (chip, dest) { var i = self._findChip(chip); if (i >= 0) self.moveTab(self._tabs[i].id, dest); },
-            onDragOut: function (chip, e, grab) { var i = self._findChip(chip); if (i >= 0 && self._onDragOut) self._onDragOut(self._tabs[i].tab, e, grab); }
+            onDrop: function (chip, dest) { var i = self._findChip(chip); if (i >= 0) self.moveTab(self._tabs[i].id, dest); }
         });
         root.appendChild(this._strip.el);
 

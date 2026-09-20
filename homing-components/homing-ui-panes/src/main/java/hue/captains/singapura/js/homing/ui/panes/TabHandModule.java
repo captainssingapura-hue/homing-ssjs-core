@@ -9,11 +9,11 @@ import hue.captains.singapura.js.homing.core.ModuleImports;
 import java.util.List;
 
 /**
- * {@code TabHand}, the hand on a strip's chip: the press, the drag in the
- * row, the drag afloat, the crossing between them by the two-thirds rule,
- * and the letting go. The strip arms each chip with it and keeps the state
- * and the classes; the hand reads rectangles, asks {@code TabDrag} for the
- * arithmetic, writes the chip's position as custom properties and tells the
+ * {@code TabHand}, the hand on a strip's chip: the press, the drag along
+ * the row as along a rail, and the letting go, the chip settling onto its
+ * slot. The strip arms each chip with it and keeps the state and the
+ * classes; the hand reads rectangles, asks {@code TabDrag} for the
+ * arithmetic, writes the chip's position as a custom property and tells the
  * strip what happened. It mints nothing of its own.
  */
 public record TabHandModule() implements DomModule<TabHandModule> {

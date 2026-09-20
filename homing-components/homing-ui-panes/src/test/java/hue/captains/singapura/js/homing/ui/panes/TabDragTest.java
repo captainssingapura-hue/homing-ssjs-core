@@ -9,8 +9,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * The drag's arithmetic, headless: the bar as slots at one pitch, the chip
- * kept within them and placed by its left, the slot it is nearest, how the
- * others step aside, and how much of it is off the strip.
+ * kept within them and placed by its left, the slot it is nearest, and how
+ * the others step aside.
  */
 class TabDragTest extends JsModuleTestBase {
 
@@ -57,14 +57,5 @@ class TabDragTest extends JsModuleTestBase {
         // the one at 3 taken to 1: 1 and 2 step right
         assertEquals("0,1,1,-2,0", eval("[0, 1, 2, 3, 4].map(function (j) { return TabDrag.shift(j, 3, 1); }).join(',')").asString());
         assertEquals("0,0,0,0,0", eval("[0, 1, 2, 3, 4].map(function (j) { return TabDrag.shift(j, 2, 2); }).join(',')").asString(), "back on its own slot, everyone stands");
-    }
-
-    @Test
-    void howMuchOfTheChipIsOffTheStrip() {
-        assertEquals("0", eval("String(TabDrag.outside(4, 28, 0, 34))").asString(), "on the strip");
-        assertEquals("0.5", eval("String(TabDrag.outside(20, 28, 0, 34))").asString(), "half over the edge");
-        assertEquals("true", eval("String(TabDrag.outside(25, 28, 0, 34) > 2 / 3 && TabDrag.outside(24, 28, 0, 34) < 2 / 3)").asString(), "the threshold at two thirds: 19 of 28 out is over it, 18 is not");
-        assertEquals("1", eval("String(TabDrag.outside(100, 28, 0, 34))").asString(), "wholly off");
-        assertEquals("0", eval("String(TabDrag.outside(4, 0, 0, 34))").asString(), "no height, nothing out");
     }
 }

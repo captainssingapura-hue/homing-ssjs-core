@@ -1,30 +1,26 @@
 // =============================================================================
-// TabHand — the hand on a strip's chip: the press, the drag in the row, the
-// drag afloat, the crossing between them, and the letting go. The strip
-// arms each chip with it and keeps the state — which chips are seated,
-// which afloat, which is held — and the classes; the hand reads the
-// rectangles, does the arithmetic through TabDrag, writes the chip's
-// position as custom properties, and tells the strip what happened. One
-// hand per strip; it holds at most one chip.
+// TabHand — the hand on a strip's chip: the press, the drag along the row,
+// and the letting go. The strip arms each chip with it and keeps the state
+// — which chip is held — and the classes; the hand reads the rectangles,
+// does the arithmetic through TabDrag, writes the chip's position as a
+// custom property, and tells the strip what happened. One hand per strip;
+// it holds at most one chip.
 //
 //   new TabHand(strip)
 //     hand.arm(chip, closeBtn?)   the chip answers the hand from now on
 //     hand.held()                 → the chip in the hand, or null
 //
-// In the row the chip goes where the hand goes at the press's offset
-// within it, kept within the slots and never above its own; the slot it is
-// nearest is its destination, and the strip is told who steps aside. Off
-// the strip by more than two thirds it leaves the row: handed off through
-// the strip's onDragOut, or, on a strip that floats, set afloat where it is
-// and free under the hand from then on. A chip afloat is seated again when
-// more than half of it is back over the strip; let go afloat, it stays.
-// Nothing is positioned by hand: --mtp-drag-x/y in the row, --mtp-float-x/y
-// afloat, both the strip's classes read.
+// The row is a rail. The chip goes where the hand goes along it, at the
+// press's offset within the chip, kept within the slots — never before a
+// pinned one — and never off the rail: the hand's height is nothing. The
+// slot the chip is nearest is its destination, and the strip is told who
+// steps aside. Let go, the chip settles onto its slot from where the hand
+// left it, eased as the design eases a selectable, and the strip is told
+// where it landed. Nothing is positioned by hand: --mtp-drag-x on the chip,
+// which the strip's class reads.
 // =============================================================================
 
 var _DRAG_THRESHOLD = 4;
-var _DETACH = 2 / 3;         // the part of the chip that must be off the strip before it leaves the row
-var _REENTER = 1 / 2;        // and how little must be off before a chip afloat is seated again: more than half on
 
 class TabHand {
     constructor(strip) {
@@ -38,63 +34,28 @@ class TabHand {
         c.addEventListener("pointerdown", function (down) {
             if (down.button !== 0 || self._held) return;
             if (closeBtn && closeBtn.contains(down.target)) return;
-            var startX = down.clientX, startY = down.clientY, dragging = false, afloat = false;
-            var slots = null, origin = null, bar = null, grab = null, lo = 0, from = -1, dest = -1;
+            var startX = down.clientX, dragging = false;
+            var slots = null, origin = null, grabX = 0, lo = 0, from = -1, dest = -1, left = 0;
             function begin() {
                 dragging = true;
                 self._held = c;
-                afloat = strip.floating(c);
-                bar = TabHand._rect(strip.el);
-                origin = TabHand._rect(c);
-                grab = { x: startX - origin.left, y: startY - origin.top };
-                lo = strip._pinned.size;
-                strip._grip(c);
-                if (!afloat) row();
-                try { c.setPointerCapture(down.pointerId); } catch (err) {}
-            }
-            /** The row measured with the chip in it: the slots, its own among them. */
-            function row() {
                 var seated = strip._seated();
                 slots = seated.map(TabHand._rect);
                 from = seated.indexOf(c);
                 origin = slots[from];
+                left = origin.left;
+                grabX = startX - origin.left;
+                lo = strip._pinned.size;
                 dest = from;
+                strip._grip(c);
+                try { c.setPointerCapture(down.pointerId); } catch (err) {}
             }
-            /** In the row: under the hand at the remembered offset, within the row and never above its slot; the others stepping aside. */
-            function placeInRow(x, y) {
-                var left = TabDrag.clamp(x - grab.x, slots, lo);
-                var top = Math.max(origin.top, y - grab.y);
+            /** Under the hand at the remembered offset, along the rail and within it; the others stepping aside. */
+            function place(x) {
+                left = TabDrag.clamp(x - grabX, slots, lo);
                 c.style.setProperty("--mtp-drag-x", (left - origin.left) + "px");
-                c.style.setProperty("--mtp-drag-y", (top - origin.top) + "px");
                 var d = TabDrag.dest(left, slots, lo);
                 if (d !== dest) { dest = d; strip._stepAside(from, dest, TabDrag.pitch(slots)); }
-                return TabDrag.outside(top, origin.height, bar.top, bar.bottom);
-            }
-            /** Afloat: under the hand, free, in the strip's frame. */
-            function placeAfloat(x, y) {
-                var left = x - grab.x, top = y - grab.y;
-                strip._float(c, left - bar.left, top - bar.top);
-                return TabDrag.outside(top, origin.height, bar.top, bar.bottom);
-            }
-            /** Out of the row, where it is: the row closes behind it. */
-            function leave() {
-                afloat = true;
-                var left = origin.left + parseFloat(c.style.getPropertyValue("--mtp-drag-x") || "0");
-                var top = origin.top + parseFloat(c.style.getPropertyValue("--mtp-drag-y") || "0");
-                clearRow();
-                strip._float(c, left - bar.left, top - bar.top);
-            }
-            /** Back in the row: seated at its place in the order, the row re-measured with it, then under the hand as before. */
-            function reenter() {
-                afloat = false;
-                strip._seat(c);
-                strip._grip(c);
-                row();
-            }
-            function clearRow() {
-                c.style.removeProperty("--mtp-drag-x");
-                c.style.removeProperty("--mtp-drag-y");
-                strip._stepAside(from, from, 0);
             }
             function letGo() {
                 c.removeEventListener("pointermove", onMove);
@@ -102,29 +63,25 @@ class TabHand {
                 c.removeEventListener("pointercancel", onEnd);
                 if (!dragging) return;
                 self._held = null;
-                if (!afloat) clearRow();
-                strip._release(c, afloat);
+                c.style.removeProperty("--mtp-drag-x");
+                strip._stepAside(from, from, 0);
+                strip._release(c);
                 try { c.releasePointerCapture(down.pointerId); } catch (err) {}
             }
             function onMove(e) {
                 if (!dragging) {
-                    if (Math.abs(e.clientX - startX) < _DRAG_THRESHOLD && Math.abs(e.clientY - startY) < _DRAG_THRESHOLD) return;
+                    if (Math.abs(e.clientX - startX) < _DRAG_THRESHOLD) return;
                     begin();
                 }
-                if (afloat) {
-                    if (placeAfloat(e.clientX, e.clientY) < _REENTER) { reenter(); placeInRow(e.clientX, e.clientY); }
-                    return;
-                }
-                if (placeInRow(e.clientX, e.clientY) <= _DETACH) return;
-                if (strip._floats) { leave(); if (strip._onFloat) strip._onFloat(c, e, grab); }
-                else if (strip._onDragOut) { letGo(); strip._onDragOut(c, e, grab); }
+                place(e.clientX);
             }
             function onEnd(e) {
-                var wasAfloat = afloat, landed = dragging && !afloat && e.type === "pointerup" && dest !== from;
+                var landed = dragging && e.type === "pointerup" && dest !== from;
+                var slotLeft = dragging ? slots[landed ? dest : from].left : 0, fromLeft = left;
                 letGo();
                 if (!dragging) return;
-                if (wasAfloat) { if (strip._onLand) strip._onLand(c, strip._at(c)); }
-                else if (landed && strip._onDrop) strip._onDrop(c, dest);
+                if (landed && strip._onDrop) strip._onDrop(c, dest);
+                TabHand._settle(c, fromLeft - slotLeft);
             }
             c.addEventListener("pointermove", onMove);
             c.addEventListener("pointerup", onEnd);
@@ -132,8 +89,22 @@ class TabHand {
         });
     }
 
+    /** From where the hand left it onto its slot, eased as the design eases the chip: the last leg, drawn once the row is arranged. */
+    static _settle(c, dx) {
+        if (!(Math.abs(dx) > 0.5) || typeof c.animate !== "function") return;
+        var ms = TabHand._easeMs(c);
+        if (!(ms > 0)) return;
+        try { c.animate([{ translate: dx + "px 0" }, { translate: "0 0" }], { duration: ms, easing: "ease" }); } catch (err) {}
+    }
+    /** The design's ease for the chip, in milliseconds: the first duration of its transition. */
+    static _easeMs(c) {
+        if (typeof getComputedStyle !== "function") return 0;
+        var d = String(getComputedStyle(c).transitionDuration || "").split(",")[0].trim();
+        if (!d) return 0;
+        return d.endsWith("ms") ? parseFloat(d) : parseFloat(d) * 1000;
+    }
     static _rect(el) {
         var r = el.getBoundingClientRect();
-        return { left: r.left, top: r.top, width: r.width, height: r.height, right: r.left + r.width, bottom: r.top + r.height };
+        return { left: r.left, top: r.top, width: r.width, height: r.height };
     }
 }
