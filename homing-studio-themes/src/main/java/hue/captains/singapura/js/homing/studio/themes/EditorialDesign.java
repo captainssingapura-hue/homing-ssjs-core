@@ -74,7 +74,7 @@ final class EditorialDesign {
             treatment(of(Kicker.class, Type.Treatment.class), "2px", "uppercase", null),
             scale(of(Caption.class, Type.Scale.class), "13px", "1.5"),
             treatment(of(Caption.class, Type.Treatment.class), null, null, "italic"),
-            scale(of(Label.class, Type.Scale.class), "14px", "1.5"),
+            scale(of(Label.class, Type.Scale.class), "14px", "1.5", 1.25),   // grows with the control it labels
             one(of(Label.class, Type.Weight.class), "600"),
             one(of(Numeral.class, Type.Face.class), DISPLAY_FACE),
             one(of(Numeral.class, Type.Weight.class), "700"),
@@ -170,6 +170,10 @@ final class EditorialDesign {
             // ── boxes ───────────────────────────────────────────────────
             one(of(Control.class, Shape.Corner.class), "3px"),
             ruleWithFocusRing(of(Control.class, Shape.Rule.class), "1.5px", "solid", "2px", "solid", "-2px"),
+            // the button's density: a button's density: it grows a step of 1.3 per unit of size, the type a gentler 1.25
+            inset(of(Control.Button.class, Size.Inset.class), "8px", "18px", 1.3),
+            gap(of(Control.Button.class, Size.Gap.class), "8px", 1.3),
+            minWidth(of(Control.Button.class, Size.Extent.class), "56px", 1.3),
             one(of(Inline.class, Shape.Corner.class), "2px"),
             rule(of(Inline.class, Shape.Rule.class), "1px", "solid"),
 

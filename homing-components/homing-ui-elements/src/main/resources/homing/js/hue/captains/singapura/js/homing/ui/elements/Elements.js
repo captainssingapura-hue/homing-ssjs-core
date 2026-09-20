@@ -12,6 +12,9 @@
 //                                   "danger", "warning", "success", "plain"; and the extent
 //                                   of it, −1 … 1, default 1
 //     .extent(t)                    the extent alone
+//     .size(s)                      the size: −1 the smallest, 0 regular (the default), 1 the
+//                                   biggest — every length the design gives the button grows
+//                                   by its own ratio to the power of it
 //     .plain()                      colour("plain")
 //     .onClick(fn)
 //     .build(el)                    → the Button, dressing the element it was given
@@ -23,6 +26,7 @@
 //                                   the design binds it, 0 the design's neutral, −1
 //                                   the meaning turned the other way — safety for
 //                                   danger, calm for warning, failure for success
+//     .size(s)                      the size, live
 //     .label(text?)                 read, or set
 //     .setOn(on)                    on lifts and presses as the design has it; off is inert and says so
 //
@@ -66,11 +70,13 @@ class Button {
         this.el = el;
         this._colour = null;
         this._extent = 1;
+        this._size = 0;
         el.type = "button";
         css.addClass(el, el_button);
         css.addClass(el, el_button_on);
         this.label(p.label == null ? "" : p.label);
         this.colour(p.colour || "primary", p.extent == null ? 1 : p.extent);
+        this.size(p.size == null ? 0 : p.size);
         if (typeof p.onClick === "function") el.addEventListener("click", p.onClick);
     }
 
@@ -90,6 +96,13 @@ class Button {
         return this;
     }
 
+    size(s) {
+        var n = Math.max(-1, Math.min(1, Number(s)));
+        this._size = Number.isFinite(n) ? n : 0;
+        css.size(this.el, this._size === 0 ? null : this._size);
+        return this;
+    }
+
     label(text) {
         if (text !== undefined) this.el.textContent = String(text);
         return this.el.textContent;
@@ -106,11 +119,12 @@ class Button {
 class ButtonBuilder {
     constructor() {
         this.tag = Button.TAG;
-        this._props = { colour: "primary", extent: 1 };
+        this._props = { colour: "primary", extent: 1, size: 0 };
     }
     label(text)          { this._props.label = text; return this; }
     colour(word, extent) { if (!_COLOURS[word]) throw new Error("[ButtonBuilder] no colour word '" + word + "'"); this._props.colour = word; if (extent != null) this._props.extent = extent; return this; }
     extent(t)            { this._props.extent = t; return this; }
+    size(s)              { this._props.size = s; return this; }
     plain()              { return this.colour("plain"); }
     onClick(fn)          { this._props.onClick = fn; return this; }
     build(el) {

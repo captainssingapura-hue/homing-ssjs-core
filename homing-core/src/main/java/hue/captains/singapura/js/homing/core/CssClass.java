@@ -141,6 +141,17 @@ public interface CssClass<C extends CssGroup<C>> extends Exportable._Constant<C>
     default List<? extends Wearable> extents() { return List.of(); }
 
     /**
+     * The length pairs this class wears with a SIZE: its element sets one —
+     * {@code css.size(el, s)}, a number from −1 to 1, 0 the regular size —
+     * and every length of the design's word for each pair grows by its own
+     * ratio to the power of it. A subset of {@link #wears()}. Naming a pair
+     * here is a claim on the design: it must give every property of the
+     * word a ratio (1 to say it stays), and the deployment holds it to
+     * that. Default: none.
+     */
+    default List<? extends Wearable> sizes() { return List.of(); }
+
+    /**
      * The group this class belongs to, from its declaration: a {@code CssClass}
      * is a record nested in its group, and the group's {@code INSTANCE} is the
      * one object of that class. Used to derive group dependencies from class

@@ -135,6 +135,10 @@ final class SketchyDesign {
             // ── boxes: drawn without a ruler ────────────────────────────
             one(of(Control.class, Shape.Corner.class), WOBBLE_CONTROL),
             ruleWithFocusRing(of(Control.class, Shape.Rule.class), "2px", "solid", "2px", "dashed", "-3px"),
+            // the button's density: a hand-drawn box, a little uneven in its growth
+            inset(of(Control.Button.class, Size.Inset.class), "8px", "16px", 1.35),
+            gap(of(Control.Button.class, Size.Gap.class), "8px", 1.35),
+            minWidth(of(Control.Button.class, Size.Extent.class), "56px", 1.35),
             one(of(Inline.class, Shape.Corner.class), WOBBLE_TAG),
             rule(of(Inline.class, Shape.Rule.class), "2px", "solid"),
 

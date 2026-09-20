@@ -64,6 +64,7 @@ public final class Sheets {
             entries.sort(Map.Entry.comparingByKey(BY_PRECEDENCE));
             var sb = new StringBuilder("/* ").append(target.token()).append(" — generated; the template is the target's, the values the design's */\n");
             if (entries.stream().anyMatch(e -> scales(e.getValue()))) sb.append(Extent.PROPERTY).append('\n');
+            if (entries.stream().anyMatch(e -> grows(e.getValue()))) sb.append(Growth.PROPERTY).append('\n');
             for (var e : entries) sb.append(rule(e.getKey(), e.getValue()));
             out.put(target.token(), sb.toString());
         });
@@ -100,6 +101,11 @@ public final class Sheets {
         return sb.append("}\n").toString();
     }
 
+    /** Whether any property of the word has a ratio other than 1 — and so renders as a power of the element's size. */
+    static boolean grows(Impl impl) {
+        return impl instanceof Impl.Bindings b && b.ratios().values().stream().anyMatch(r -> r != 1.0);
+    }
+
     /** Whether any property of the word is anchored at both ends — and so renders as an interpolation. */
     static boolean scales(Impl impl) {
         if (!(impl instanceof Impl.Bindings b)) return false;
@@ -119,6 +125,9 @@ public final class Sheets {
      */
     private static String value(DesignClass<?> dc, Impl.Bindings b, String property, State state, boolean fallsBackToRest) {
         String key = b.values().getOrDefault(Mode.LIGHT, Map.of()).getOrDefault(State.REST, Map.of()).containsKey(Impl.Bindings.SOLE) ? Impl.Bindings.SOLE : property;
+        Double ratio = b.ratio(key);
+        if (ratio != null && ratio != 1.0)   // a length that grows: the value, to the power of the element's size; the ratio is the word's, at every state
+            return "calc(" + ref(dc, property, state, Extent.FULL, fallsBackToRest) + " * pow(var(" + variable(dc, property, State.REST) + Growth.RATIO + "), var(" + Growth.VAR + ")))";
         if (!(b.anchored(Extent.ZERO, key) && b.anchored(Extent.NEG, key))) return ref(dc, property, state, Extent.FULL, fallsBackToRest);
         String full = ref(dc, property, state, Extent.FULL, fallsBackToRest);
         String zero = ref(dc, property, state, Extent.ZERO, fallsBackToRest);
@@ -142,6 +151,7 @@ public final class Sheets {
             for (Extent extent : Extent.values())
                 b.anchors(extent).forEach((mode, states) -> states.forEach((state, props) -> props.forEach((p, v) ->
                         perMode.computeIfAbsent(mode, m -> new TreeMap<>()).put(variable(dc, property(dc, p), state) + extent.suffix(), v))));
+            b.ratios().forEach((p, r) -> { if (r != 1.0) perMode.computeIfAbsent(Mode.LIGHT, m -> new TreeMap<>()).put(variable(dc, property(dc, p), State.REST) + Growth.RATIO, trim(r)); });
         });
         var sb = new StringBuilder();
         perMode.forEach((mode, vars) -> {
@@ -152,6 +162,12 @@ public final class Sheets {
             sb.append(pad).append("}\n").append(mode == Mode.LIGHT ? "" : "}\n");
         });
         return sb.toString();
+    }
+
+    /** {@code 1.3}, never {@code 1.3000000000000000444}; an integer ratio without its point. */
+    private static String trim(double r) {
+        String s = java.math.BigDecimal.valueOf(r).stripTrailingZeros().toPlainString();
+        return s;
     }
 
     // ── names ─────────────────────────────────────────────────────────────

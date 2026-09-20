@@ -186,6 +186,31 @@ final class Bind {
                 .at(State.REST, "font-size", size)
                 .at(State.REST, "line-height", lineHeight));
     }
+    /** A Type.Scale that grows with the element's size: the font by {@code ratio} per unit, the line height holding its proportion. */
+    static Map.Entry<DesignClass<?>, Impl> scale(DesignClass<?> cls, String size, String lineHeight, double ratio) {
+        return Map.entry(cls, Impl.Bindings.none()
+                .at(State.REST, "font-size", size)
+                .at(State.REST, "line-height", lineHeight)
+                .grows("font-size", ratio).grows("line-height", 1));
+    }
+
+    // ── density: the space a design gives a box, each length growing with the element's size ──
+
+    /** A Size.Inset: the air inside, block and inline, both growing by {@code ratio}. */
+    static Map.Entry<DesignClass<?>, Impl> inset(DesignClass<?> cls, String block, String inline, double ratio) {
+        return Map.entry(cls, Impl.Bindings.none()
+                .at(State.REST, "padding-block", block)
+                .at(State.REST, "padding-inline", inline)
+                .grows("padding-block", ratio).grows("padding-inline", ratio));
+    }
+    /** A Size.Gap, growing by {@code ratio}. */
+    static Map.Entry<DesignClass<?>, Impl> gap(DesignClass<?> cls, String gap, double ratio) {
+        return Map.entry(cls, Impl.Bindings.of(gap).grows(ratio));
+    }
+    /** A Size.Extent: the least a box may be inline, growing by {@code ratio}. */
+    static Map.Entry<DesignClass<?>, Impl> minWidth(DesignClass<?> cls, String minWidth, double ratio) {
+        return Map.entry(cls, Impl.Bindings.none().at(State.REST, "min-width", minWidth).grows("min-width", ratio));
+    }
 
     /** A Type.Treatment: any of tracking, case, style. Null skips. */
     static Map.Entry<DesignClass<?>, Impl> treatment(DesignClass<?> cls, String letterSpacing, String textTransform, String fontStyle) {

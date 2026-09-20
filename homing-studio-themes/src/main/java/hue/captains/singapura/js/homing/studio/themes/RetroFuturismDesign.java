@@ -142,6 +142,10 @@ final class RetroFuturismDesign {
             // ── boxes: barely cut ───────────────────────────────────────
             one(of(Control.class, Shape.Corner.class), "3px"),
             ruleWithFocusRing(of(Control.class, Shape.Rule.class), "1px", "solid", "1px", "solid", "-1px"),
+            // the button's density: a console key
+            inset(of(Control.Button.class, Size.Inset.class), "8px", "18px", 1.3),
+            gap(of(Control.Button.class, Size.Gap.class), "8px", 1.3),
+            minWidth(of(Control.Button.class, Size.Extent.class), "56px", 1.3),
             one(of(Inline.class, Shape.Corner.class), "2px"),
             rule(of(Inline.class, Shape.Rule.class), "1px", "solid"),
 

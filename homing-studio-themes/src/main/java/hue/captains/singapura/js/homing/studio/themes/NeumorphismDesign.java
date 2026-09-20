@@ -139,6 +139,10 @@ final class NeumorphismDesign {
             // ── boxes: everything is a pill ─────────────────────────────
             one(of(Control.class, Shape.Corner.class), "12px"),
             ruleWithFocusRing(of(Control.class, Shape.Rule.class), "0", "none", "2px", "solid", "-2px"),
+            // the button's density: soft and roomy
+            inset(of(Control.Button.class, Size.Inset.class), "10px", "20px", 1.3),
+            gap(of(Control.Button.class, Size.Gap.class), "8px", 1.3),
+            minWidth(of(Control.Button.class, Size.Extent.class), "64px", 1.3),
             one(of(Inline.class, Shape.Corner.class), "8px"),
             rule(of(Inline.class, Shape.Rule.class), "0", "none"),
 

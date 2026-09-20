@@ -40,7 +40,7 @@ class DeploymentTest {
                 PRESS, Impl.Bindings.none().at(State.ACTIVE, "scale(.97)"),
                 EASE, Impl.Bindings.of("transform 80ms, background-color 80ms"),
                 CORNER, Impl.Bindings.of("4px"),
-                INSET, Impl.Bindings.of("6px 12px"),
+                INSET, Impl.Bindings.none().at(State.REST, "padding-block", "6px").at(State.REST, "padding-inline", "12px"),
                 FACE, Impl.Bindings.of("system-ui, sans-serif"));
         @Override public DesignId id() { return new DesignId("plain"); }
         @Override public Impl impl(DesignClass<?> pair) { return WORDS.get(pair); }
@@ -197,10 +197,64 @@ class DeploymentTest {
                 CORNER, Impl.Bindings.of("0"),
                 PRESS, Impl.Bindings.none().at(State.ACTIVE, "translate(6px, 6px)"),
                 EASE, Impl.Bindings.of("transform 70ms steps(2)"),
-                INSET, Impl.Bindings.of("8px 16px"),
+                INSET, Impl.Bindings.none().at(State.REST, "padding-block", "8px").at(State.REST, "padding-inline", "16px"),
                 FACE, Impl.Bindings.of("Arial Black, sans-serif"));
         @Override public DesignId id() { return new DesignId("hard"); }
         @Override public Impl impl(DesignClass<?> pair) { return WORDS.get(pair); }
+    }
+
+    /**
+     * A refined word is asked for up its lineage: the base button's corner
+     * is Control's where the design says nothing more precise, the button's
+     * where it speaks for buttons, its own where it speaks for it; an
+     * extension answering at the level the design answers is still a double;
+     * and nothing at any level is missing, named to the top.
+     */
+    @Test
+    void aRefinedWord_resolvesUpItsLineage() {
+        var base = of(Box.Control.Button.Base.class, Target.Shape.Corner.class);
+        var button = of(Box.Control.Button.class, Target.Shape.Corner.class);
+        assertEquals("control-button-base-shape-corner", base.cssName());
+        assertEquals(List.of(base, button, CORNER), base.lineage());
+
+        // Plain binds Control only: Base takes it
+        var r = Deployment.of(Set.of(base), new Plain()).resolve();
+        assertEquals(List.of(), r.findings(), r.findings().toString());
+        assertEquals("4px", ((Impl.Bindings) r.impls().get(base)).values().get(Mode.LIGHT).get(State.REST).get(Impl.Bindings.SOLE));
+
+        // a design that speaks for buttons: Base takes the button's, not Control's
+        record Buttoned() implements Design {
+            @Override public DesignId id() { return new DesignId("buttoned"); }
+            @Override public Impl impl(DesignClass<?> pair) {
+                if (pair.semantic() == Box.Control.Button.class && pair.target() == Target.Shape.Corner.class) return Impl.Bindings.of("999px");
+                return new Plain().impl(pair);
+            }
+        }
+        var b = Deployment.of(Set.of(base), new Buttoned()).resolve();
+        assertEquals("999px", ((Impl.Bindings) b.impls().get(base)).values().get(Mode.LIGHT).get(State.REST).get(Impl.Bindings.SOLE));
+
+        // an extension answering Control while the design answers Control: a double, said at the level it happened
+        record AtControl() implements DesignExtension {
+            @Override public String slug() { return "at-control"; }
+            @Override public Impl impl(DesignClass<?> pair) { return pair.equals(CORNER) ? Impl.Bindings.of("1px") : null; }
+        }
+        var d = new Deployment(Set.of(base), new Plain(), List.of(new AtControl())).resolve();
+        assertEquals(1, d.findings().size(), d.findings().toString());
+        assertTrue(d.findings().get(0).kind() == Finding.Kind.DOUBLE && d.findings().get(0).detail().contains("at control-shape-corner"), d.findings().toString());
+
+        // an extension answering Base while the design answers Control: the more precise level wins, no double
+        record AtBase() implements DesignExtension {
+            @Override public String slug() { return "at-base"; }
+            @Override public Impl impl(DesignClass<?> pair) { return pair.semantic() == Box.Control.Button.Base.class && pair.target() == Target.Shape.Corner.class ? Impl.Bindings.of("2px") : null; }
+        }
+        var p = new Deployment(Set.of(base), new Plain(), List.of(new AtBase())).resolve();
+        assertEquals(List.of(), p.findings(), p.findings().toString());
+        assertEquals("2px", ((Impl.Bindings) p.impls().get(base)).values().get(Mode.LIGHT).get(State.REST).get(Impl.Bindings.SOLE));
+
+        // nothing at any level
+        var m = Deployment.of(Set.of(of(Box.Control.Button.Base.class, Target.Shape.Clip.class)), new Plain()).resolve();
+        assertEquals(1, m.findings().size(), m.findings().toString());
+        assertTrue(m.findings().get(0).kind() == Finding.Kind.MISSING && m.findings().get(0).detail().contains("nor at control-shape-clip"), m.findings().toString());
     }
 
     @Test

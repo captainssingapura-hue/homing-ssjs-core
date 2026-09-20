@@ -236,6 +236,10 @@ final class NeoBrutalismDesign {
             // ── boxes ───────────────────────────────────────────────────
             one(of(Control.class, Shape.Corner.class), "0"),
             ruleWithFocusRing(of(Control.class, Shape.Rule.class), "3px", "solid", "3px", "solid", "-3px"),
+            // the button's density: chunky, and it jumps: 1.5 per unit
+            inset(of(Control.Button.class, Size.Inset.class), "10px", "20px", 1.5),
+            gap(of(Control.Button.class, Size.Gap.class), "10px", 1.5),
+            minWidth(of(Control.Button.class, Size.Extent.class), "64px", 1.5),
             one(of(Inline.class, Shape.Corner.class), "0"),
             rule(of(Inline.class, Shape.Rule.class), "2px", "solid"),
 

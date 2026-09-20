@@ -31,6 +31,22 @@ public final class Trees {
             throw new IllegalArgumentException(s.getName() + ": a semantic coordinate is a leaf (a record), not a branch");
         if (branchesOf(s).size() != 1)
             throw new IllegalArgumentException(s.getName() + ": a semantic leaf has exactly one branch; found " + branchesOf(s));
+        Class<?> parent = parentOf(s);
+        if (parent != null && branchesOf(parent).get(0) != branchesOf(s).get(0))
+            throw new IllegalArgumentException(s.getName() + ": a refinement stays on its parent's branch; " + parent.getSimpleName() + " is " + branchesOf(parent).get(0).getSimpleName() + ", this is " + branchesOf(s).get(0).getSimpleName());
+    }
+
+    /** The leaf this one refines — the semantic leaf it is nested in — or null for a word at the top of its branch. */
+    public static Class<?> parentOf(Class<?> leaf) {
+        Class<?> e = leaf.getEnclosingClass();
+        return e != null && e.isRecord() && Semantic.class.isAssignableFrom(e) ? e : null;
+    }
+
+    /** The leaf and its parents, most precise first: {@code [Base, Button, Control]}. */
+    public static List<Class<?>> lineage(Class<?> leaf) {
+        var out = new ArrayList<Class<?>>();
+        for (Class<?> c = leaf; c != null; c = parentOf(c)) out.add(c);
+        return out;
     }
 
     /** The branches a leaf directly implements — {@code Semantic} itself excluded. */
@@ -47,8 +63,13 @@ public final class Trees {
         return branchesOf(leaf).get(0);
     }
 
-    /** {@code OnDanger} → {@code on-danger}. */
-    public static String semanticToken(Class<?> leaf) { return kebab(leaf.getSimpleName()); }
+    /** {@code OnDanger} → {@code on-danger}; a refinement is its path, {@code Control.Button.Base} → {@code control-button-base}. */
+    public static String semanticToken(Class<?> leaf) {
+        var lineage = lineage(leaf);
+        var sb = new StringBuilder();
+        for (int i = lineage.size() - 1; i >= 0; i--) sb.append(i == lineage.size() - 1 ? "" : "-").append(kebab(lineage.get(i).getSimpleName()));
+        return sb.toString();
+    }
 
     // ── target leaves ─────────────────────────────────────────────────────
 

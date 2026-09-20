@@ -98,6 +98,76 @@ class SheetsTest {
         assertTrue(expected.indexOf("selected-color-surface") > expected.indexOf("raised-color-surface"));
     }
 
+    /**
+     * A length with a ratio grows: the rule multiplies the value by the ratio
+     * to the power of the element's size, at every state alike; the sheet
+     * registers the size as a non-inherited number that is 0 by default; the
+     * root carries the ratio; a ratio of 1 renders plainly. A pair worn with a
+     * size whose word lacks a ratio for any property is a finding; a ratio on
+     * a colour, or on a value that is not one length, is refused.
+     */
+    @Test
+    void aLengthWithARatio_growsByTheSize() {
+        var inset = DesignClass.of(Box.Control.Button.class, Target.Size.Inset.class);
+        var scale = DesignClass.of(Text.Label.class, Target.Type.Scale.class);
+        var corner = DesignClass.of(Box.Control.class, Target.Shape.Corner.class);
+        var rule = DesignClass.of(Box.Control.class, Target.Shape.Rule.class);
+        record Grown() implements Design {
+            @Override public Impl impl(DesignClass<?> pair) {
+                if (pair.semantic() == Box.Control.Button.class && pair.target() == Target.Size.Inset.class)
+                    return Impl.Bindings.none().at(State.REST, "padding-block", "8px").at(State.REST, "padding-inline", "18px").grows("padding-block", 1.3).grows("padding-inline", 1.3);
+                if (pair.semantic() == Text.Label.class && pair.target() == Target.Type.Scale.class)
+                    return Impl.Bindings.none().at(State.REST, "font-size", "14px").at(State.REST, "line-height", "1.5").grows("font-size", 1.25).grows("line-height", 1);
+                if (pair.semantic() == Box.Control.class && pair.target() == Target.Shape.Rule.class)   // a width that grows, a style that stays, a state that grows with the width
+                    return Impl.Bindings.none().at(State.REST, "border-width", "1px").at(State.REST, "border-style", "solid").at(State.HOVER, "border-width", "2px").grows("border-width", 1.5).grows("border-style", 1);
+                if (pair.semantic() == Box.Control.class && pair.target() == Target.Shape.Corner.class)
+                    return Impl.Bindings.of("4px");
+                return null;
+            }
+            @Override public DesignId id() { return new DesignId("grown"); }
+            @Override public String label() { return "Grown"; }
+            @Override public String group() { return "t"; }
+            @Override public String inspiration() { return ""; }
+        }
+        var r = Deployment.of(Set.of(inset, scale, corner, rule), Set.of(), Set.of(inset, scale, rule), new Grown()).resolve();
+        assertEquals(List.of(), r.findings(), r.findings().toString());
+        String sheet = Sheets.targetSheets(r).get("size-inset");
+        assertTrue(sheet.contains("@property --size { syntax: \"<number>\"; inherits: false; initial-value: 0; }\n"), sheet);
+        assertTrue(sheet.contains("    padding-block: calc(var(--control-button-size-inset-padding-block) * pow(var(--control-button-size-inset-padding-block-ratio), var(--size)));\n"), sheet);
+        String type = Sheets.targetSheets(r).get("type-scale");
+        assertTrue(type.contains("    font-size: calc(var(--label-type-scale-font-size) * pow(var(--label-type-scale-font-size-ratio), var(--size)));\n"), type);
+        assertTrue(type.contains("    line-height: var(--label-type-scale-line-height);\n"), "a ratio of 1 renders plainly: " + type);
+        String ruleSheet = Sheets.targetSheets(r).get("shape-rule");
+        assertTrue(ruleSheet.contains("        border-width: calc(var(--control-shape-rule-border-width-hover, var(--control-shape-rule-border-width)) * pow(var(--control-shape-rule-border-width-ratio), var(--size)));\n"), "a state grows by the same ratio: " + ruleSheet);
+        assertTrue(ruleSheet.contains("    border-style: var(--control-shape-rule-border-style);\n"), "a keyword with a ratio of 1 holds: " + ruleSheet);
+        assertFalse(Sheets.targetSheets(r).get("shape-corner").contains("@property --size"), "no growing word, no registration");
+        String root = Sheets.rootSheet(r);
+        assertTrue(root.contains("    --control-button-size-inset-padding-block-ratio: 1.3;\n") && root.contains("    --label-type-scale-font-size-ratio: 1.25;\n"), root);
+        assertFalse(root.contains("line-height-ratio"), "a ratio of 1 is not carried: " + root);
+
+        // worn with a size, but the word has no ratio: a finding per property
+        var bare = Deployment.of(Set.of(corner), Set.of(), Set.of(corner), new Grown()).resolve();
+        assertEquals(1, bare.findings().stream().filter(f -> f.kind() == Deployment.Finding.Kind.MISSING_RATIO).count(), bare.findings().toString());
+
+        // a ratio on a colour, or on a value that is not one length: refused
+        var ink = DesignClass.of(Text.Label.class, Target.Color.Ink.class);
+        var ease = DesignClass.of(Interaction.Interactive.class, Target.Motion.Ease.class);
+        record Wrong() implements Design {
+            @Override public Impl impl(DesignClass<?> pair) {
+                if (pair.target() == Target.Color.Ink.class) return Impl.Bindings.of("#000").grows(1.2);
+                if (pair.target() == Target.Motion.Ease.class) return Impl.Bindings.of("transform 80ms ease").grows(1.2);
+                return null;
+            }
+            @Override public DesignId id() { return new DesignId("wrong"); }
+            @Override public String label() { return "Wrong"; }
+            @Override public String group() { return "t"; }
+            @Override public String inspiration() { return ""; }
+        }
+        var w = Deployment.of(Set.of(ink, ease), new Wrong()).resolve();
+        assertEquals(2, w.findings().stream().filter(f -> f.kind() == Deployment.Finding.Kind.INVALID_BINDING).count(), w.findings().toString());
+        assertTrue(w.findings().stream().anyMatch(f -> f.detail().contains("colour plane")) && w.findings().stream().anyMatch(f -> f.detail().contains("not one length")), w.findings().toString());
+    }
+
     @Test
     void aBody_mayNestOnlyAStateOrAPseudoElement_onSelf() {
         var surface = DeploymentTest.DANGER_SURFACE;

@@ -182,6 +182,18 @@ const CssClassManagerInstance = (() => {
             if (t == null) { el.style.removeProperty("--extent"); return; }
             const n = Math.max(-1, Math.min(1, Number(t)));
             el.style.setProperty("--extent", String(Number.isFinite(n) ? n : 1));
+        },
+        /**
+         * The element's SIZE: from -1 (the smallest) through 0 (regular —
+         * the default, and what null restores) to 1 (the biggest). The other
+         * number a component may set on an element: every length of a
+         * design's word for the pairs the class names in sizes() grows by
+         * the word's ratio to the power of it. Clamped; not inherited.
+         */
+        size(el, s) {
+            if (s == null) { el.style.removeProperty("--size"); return; }
+            const n = Math.max(-1, Math.min(1, Number(s)));
+            el.style.setProperty("--size", String(Number.isFinite(n) ? n : 0));
         }
     };
 })();

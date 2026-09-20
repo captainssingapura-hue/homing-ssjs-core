@@ -30,11 +30,13 @@ import static hue.captains.singapura.js.homing.design.Target.Color;
 import static hue.captains.singapura.js.homing.design.Target.Effect;
 import static hue.captains.singapura.js.homing.design.Target.Motion;
 import static hue.captains.singapura.js.homing.design.Target.Shape;
+import static hue.captains.singapura.js.homing.design.Target.Size;
 import static hue.captains.singapura.js.homing.design.Target.Type;
 import static hue.captains.singapura.js.homing.design.Text.Body;
 import static hue.captains.singapura.js.homing.design.Text.Caption;
 import static hue.captains.singapura.js.homing.design.Text.Heading;
 import static hue.captains.singapura.js.homing.design.Text.Kicker;
+import static hue.captains.singapura.js.homing.design.Text.Label;
 import static hue.captains.singapura.js.homing.design.Text.Link;
 
 /**
@@ -52,17 +54,26 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
 
     // ── Button ────────────────────────────────────────────────────────────────
 
-    /** What every button is: a control, interactive; Control carries the ring on focus and leaves the edge to the colour word. */
+    /**
+     * What every button is: the base button — {@code Control.Button.Base}, the
+     * control that completes a task — interactive, labelled. Its rule carries
+     * the ring on focus and leaves the edge to the colour word; its density
+     * (inset, gap, least width) and its label's type are the design's, and
+     * grow with the element's size.
+     */
     public record el_button() implements CssClass<ElementStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Control.class, Shape.Rule.class), of(Control.class, Shape.Corner.class), of(Interactive.class, Affordance.Cursor.class), of(Interactive.class, Motion.Ease.class), of(Control.class, Color.Edge.class), of(Heading.class, Type.Face.class)); }
+        @Override public List<? extends Wearable> wears() {
+            return List.of(of(Control.Button.Base.class, Shape.Rule.class), of(Control.Button.Base.class, Shape.Corner.class), of(Control.Button.Base.class, Color.Edge.class),
+                           of(Control.Button.Base.class, Size.Inset.class), of(Control.Button.Base.class, Size.Gap.class), of(Control.Button.Base.class, Size.Extent.class),
+                           of(Label.class, Type.Scale.class), of(Heading.class, Type.Face.class),
+                           of(Interactive.class, Affordance.Cursor.class), of(Interactive.class, Motion.Ease.class));
+        }
+        @Override public List<? extends Wearable> sizes() { return List.of(of(Control.Button.Base.class, Size.Inset.class), of(Control.Button.Base.class, Size.Gap.class), of(Control.Button.Base.class, Size.Extent.class), of(Label.class, Type.Scale.class)); }
         @Override public String body() { return """
             font: inherit;
-            padding: 8px 18px;
-            min-width: 56px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
             """;
         }
     }

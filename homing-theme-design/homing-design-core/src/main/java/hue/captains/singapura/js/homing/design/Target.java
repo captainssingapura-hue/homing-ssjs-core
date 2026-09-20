@@ -141,10 +141,11 @@ public sealed interface Target permits
     //  Size — density; the space a design owns inside and between
     // ═════════════════════════════════════════════════════════════════════
     sealed interface Size extends Target permits Size.Inset, Size.Gap, Size.Extent {
+        /** The air inside a box — block and inline, each one length, so each can grow with the element's size. */
         record Inset() implements Size, CssGroup<Inset> {
             public static final Inset INSTANCE = new Inset();
             @Override public List<CssClass<Inset>> cssClasses() { return List.of(); }
-            @Override public Set<String> properties() { return Set.of("padding"); }
+            @Override public Set<String> properties() { return Set.of("padding-block", "padding-inline"); }
             @Override public Set<State> states() { return REST_ONLY; }
         }
         record Gap() implements Size, CssGroup<Gap> {

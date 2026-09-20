@@ -273,6 +273,10 @@ final class NeoFuturismDesign {
             // ── boxes ───────────────────────────────────────────────────
             one(of(Control.class, Shape.Corner.class), "2px"),
             ruleWithFocusRing(of(Control.class, Shape.Rule.class), "1px", "solid", "1px", "solid", "-1px"),
+            // the button's density: tight, and it grows little
+            inset(of(Control.Button.class, Size.Inset.class), "7px", "16px", 1.25),
+            gap(of(Control.Button.class, Size.Gap.class), "8px", 1.25),
+            minWidth(of(Control.Button.class, Size.Extent.class), "56px", 1.25),
             one(of(Inline.class, Shape.Corner.class), "1px"),
             rule(of(Inline.class, Shape.Rule.class), "1px", "solid"),
 

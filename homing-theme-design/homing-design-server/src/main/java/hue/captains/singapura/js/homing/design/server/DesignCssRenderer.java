@@ -31,18 +31,31 @@ public final class DesignCssRenderer implements CssRenderer {
     private final List<DesignExtension> extensions;
     private final Set<DesignClass<?>> worn;
     private final Set<DesignClass<?>> scaled;
+    private final Set<DesignClass<?>> sized;
 
     /** @param worn every pair the served components wear — the requirement set the sheets are cut to */
     public DesignCssRenderer(List<Design> designs, List<DesignExtension> extensions, Set<DesignClass<?>> worn) {
         this(designs, extensions, worn, Set.of());
     }
 
-    /** @param scaled the pairs some component wears with an extent — the design must anchor them, and the sheet interpolates them */
+    /**
+     * @param scaled the pairs some component wears with an extent — the design must anchor them, and the sheet interpolates them
+     * @param sized  the pairs some component wears with a size — the design must give every property a ratio, and the sheet raises them to it
+     */
+    public DesignCssRenderer(List<Design> designs, List<DesignExtension> extensions, Set<DesignClass<?>> worn, Set<DesignClass<?>> scaled, Set<DesignClass<?>> sized) {
+        this.designs = List.copyOf(designs);
+        this.extensions = List.copyOf(extensions);
+        this.worn = Set.copyOf(worn);
+        this.scaled = Set.copyOf(scaled);
+        this.sized = Set.copyOf(sized);
+    }
+
     public DesignCssRenderer(List<Design> designs, List<DesignExtension> extensions, Set<DesignClass<?>> worn, Set<DesignClass<?>> scaled) {
         this.designs = List.copyOf(designs);
         this.extensions = List.copyOf(extensions);
         this.worn = Set.copyOf(worn);
         this.scaled = Set.copyOf(scaled);
+        this.sized = Set.of();
     }
 
     @Override public boolean owns(CssGroup<?> group) { return group instanceof Target; }
@@ -58,7 +71,7 @@ public final class DesignCssRenderer implements CssRenderer {
         // variable bound on another (a shadow reads the palette's ink), and
         // only the whole set can say whether that reference lands — then cut
         // this target's sheet from it.
-        var whole = new Deployment(worn, scaled, design, extensions).resolve();
+        var whole = new Deployment(worn, scaled, sized, design, extensions).resolve();
         var mine = new java.util.LinkedHashMap<DesignClass<?>, hue.captains.singapura.js.homing.design.Impl>();
         whole.impls().forEach((p, i) -> { if (p.target() == target.getClass()) mine.put(p, i); });
         var resolution = new Deployment.Resolution(mine, whole.findings());
