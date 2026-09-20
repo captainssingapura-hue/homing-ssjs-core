@@ -12,6 +12,7 @@
 //     layout: SplitGridTree's — { kind: "cell", id } | { kind: "split", orientation, children: [{ node, ratio? }] }
 //
 //   grid.el
+//   grid.box()                 → { w, h }: the grid's box in px, for a mirror to reflect
 //   grid.cell(id)              → the cell's element, the box the owner fills (a
 //                                flex column; what is put in it is its item)
 //   grid.cells()               → the ids, in tree order
@@ -154,20 +155,17 @@ class SplitGrid {
             var size = horizontal ? entry.el.getBoundingClientRect().width : entry.el.getBoundingClientRect().height;
             var a0 = a.node.ratio, b0 = b.node.ratio;
             if (!(size > 0)) return;
-            var minShare = Math.min(self._minPx / size, (a0 + b0) / 2);
             var moved = false;
             held = true;
             paint();
             try { divider.setPointerCapture(down.pointerId); } catch (err) {}
             function onMove(e) {
-                var delta = ((horizontal ? e.clientX : e.clientY) - start) / size;
-                var na = Math.min(Math.max(a0 + delta, minShare), a0 + b0 - minShare);
-                var nb = a0 + b0 - na;
-                if (na === a.node.ratio) return;
+                var pair = SplitGridGeometry.reshare(a0, b0, (horizontal ? e.clientX : e.clientY) - start, size, self._minPx);
+                if (pair[0] === a.node.ratio) return;
                 moved = true;
-                a.node.ratio = na; b.node.ratio = nb;
-                a.el.style.setProperty("--sg-ratio", String(na));
-                b.el.style.setProperty("--sg-ratio", String(nb));
+                a.node.ratio = pair[0]; b.node.ratio = pair[1];
+                a.el.style.setProperty("--sg-ratio", String(pair[0]));
+                b.el.style.setProperty("--sg-ratio", String(pair[1]));
             }
             function onEnd(e) {
                 divider.removeEventListener("pointermove", onMove);
@@ -191,6 +189,7 @@ class SplitGrid {
     }
 
     // ── The surface ───────────────────────────────────────────────────────
+    box() { var r = this.el.getBoundingClientRect(); return { w: r.width, h: r.height }; }
     cell(id) { return this._cells.get(id) || null; }
     cells() { return SplitGridTree.cells(this._tree); }
     layout() { return SplitGridTree.copy(this._tree); }

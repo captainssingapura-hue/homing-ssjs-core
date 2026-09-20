@@ -83,6 +83,7 @@ class SplitGridTest extends JsModuleTestBase {
         js = buildContext();
         loadModule(P + "SplitGridEventsModule.js");
         loadModule(P + "SplitGridTreeModule.js");
+        loadModule(P + "SplitGridGeometryModule.js");
         loadModule(P + "SplitGridModule.js");
         js.eval("js", SHIM);
     }

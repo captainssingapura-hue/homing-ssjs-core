@@ -53,12 +53,12 @@ class UiSplitGridCrateConformanceTest {
                     + findings.stream().map(f -> f.rule().value() + "@" + f.line() + ": " + f.message()).toList());
             checked++;
         }
-        assertEquals(3, checked, "the grid, the tree and the events");
+        assertEquals(5, checked, "the grid, the mirror, the tree, the geometry and the events");
     }
 
     @Test
     void theSplitterImportsEveryClassDeclared() {
-        var imported = java.util.stream.Stream.of(SplitGridModule.INSTANCE.imports())
+        var imported = java.util.stream.Stream.of(SplitGridModule.INSTANCE.imports(), SplitGridMirrorModule.INSTANCE.imports())
                 .flatMap(im -> im.getAllImports().values().stream())
                 .flatMap(mi -> mi.allImports().stream()).map(e -> e.getClass().getSimpleName()).toList();
         for (CssClass<SplitGridStyles> c : SplitGridStyles.INSTANCE.cssClasses())

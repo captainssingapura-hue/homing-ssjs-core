@@ -28,6 +28,7 @@ public record SplitGridModule() implements DomModule<SplitGridModule> {
         return ImportsFor.<SplitGridModule>builder()
                 .add(new ModuleImports<>(List.of(new SplitGridEventsModule.SplitGridEvents()), SplitGridEventsModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new SplitGridTreeModule.SplitGridTree()), SplitGridTreeModule.INSTANCE))
+                .add(new ModuleImports<>(List.of(new SplitGridGeometryModule.SplitGridGeometry()), SplitGridGeometryModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new SplitGridStyles.sg_root(),
                         new SplitGridStyles.sg_split(),

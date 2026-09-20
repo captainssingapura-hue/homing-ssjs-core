@@ -8,6 +8,8 @@
 //   SplitGridEvents.TracksChanged(path, ratios)      a split re-shared; the ratios sum to one
 //   SplitGridEvents.Subdivided(cellId, newCellId, side)   a new, empty cell beside one
 //   SplitGridEvents.Removed(cellId)                  a cell gone, its room to its neighbour
+//   SplitGridEvents.CursorMoved(cellId, by)          a mirror's cursor at a cell: by an arrow
+//                                                    (left, right, up, down), a pointer, or a call
 //   SplitGridEvents.KINDS                            the kinds, in this order
 //
 // A path names a split by child indexes from the root, joined by "/"; the
@@ -17,6 +19,7 @@
 
 var _PATH = /^(\d+(\/\d+)*)?$/;
 var _SIDES = Object.freeze(["left", "right", "top", "bottom"]);
+var _BY = Object.freeze(["left", "right", "up", "down", "pointer", "call"]);
 
 function _path(v, what) {
     if (typeof v !== "string" || !_PATH.test(v)) throw new Error("[SplitGridEvents] " + what + " must be child indexes joined by '/', or empty");
@@ -40,9 +43,13 @@ function _side(v, what) {
     if (_SIDES.indexOf(v) < 0) throw new Error("[SplitGridEvents] " + what + " must be left, right, top or bottom");
     return v;
 }
+function _by(v, what) {
+    if (_BY.indexOf(v) < 0) throw new Error("[SplitGridEvents] " + what + " must be left, right, up, down, pointer or call");
+    return v;
+}
 
 class SplitGridEvents {
-    static KINDS = Object.freeze(["TracksChanged", "Subdivided", "Removed"]);
+    static KINDS = Object.freeze(["TracksChanged", "Subdivided", "Removed", "CursorMoved"]);
     static SIDES = _SIDES;
 
     /** A split's children were re-shared, by a divider drag or by setRatios; the ratios sum to one. */
@@ -56,5 +63,9 @@ class SplitGridEvents {
     /** A cell was removed: its room went to its neighbour, and a split left with one child gave way to it. */
     static Removed(cellId) {
         return Object.freeze({ kind: "Removed", cellId: _id(cellId, "Removed.cellId") });
+    }
+    /** A mirror's cursor is at a cell: moved there by an arrow, a pointer, or a call. */
+    static CursorMoved(cellId, by) {
+        return Object.freeze({ kind: "CursorMoved", cellId: _id(cellId, "CursorMoved.cellId"), by: _by(by, "CursorMoved.by") });
     }
 }

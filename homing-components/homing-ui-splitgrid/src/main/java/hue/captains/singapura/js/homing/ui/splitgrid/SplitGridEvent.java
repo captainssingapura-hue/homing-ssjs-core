@@ -10,9 +10,10 @@ import java.util.Objects;
  * object tagged by {@code kind}; {@code SplitGridEventsTest} holds the two
  * together.
  *
- * <p>Three kinds: a split's tracks re-shared, a cell subdivided, a cell
- * removed. A path names a split by child indexes from the root, joined by
- * {@code /}; the root split's path is empty.</p>
+ * <p>Four kinds: a split's tracks re-shared, a cell subdivided, a cell
+ * removed, and a mirror's cursor moved to a cell. A path names a split by
+ * child indexes from the root, joined by {@code /}; the root split's path is
+ * empty.</p>
  */
 public sealed interface SplitGridEvent {
 
@@ -55,5 +56,14 @@ public sealed interface SplitGridEvent {
     /** A cell was removed: its room went to its neighbour, and a split left with one child gave way to it. */
     record Removed(String cellId) implements SplitGridEvent {
         public Removed { requireId(cellId, "Removed.cellId"); }
+    }
+
+    /** A mirror's cursor is at a cell: moved there by an arrow — left, right, up, down — a pointer, or a call. */
+    record CursorMoved(String cellId, String by) implements SplitGridEvent {
+        public CursorMoved {
+            requireId(cellId, "CursorMoved.cellId");
+            Objects.requireNonNull(by, "CursorMoved.by");
+            if (!List.of("left", "right", "up", "down", "pointer", "call").contains(by)) throw new IllegalArgumentException("CursorMoved.by: left, right, up, down, pointer or call");
+        }
     }
 }

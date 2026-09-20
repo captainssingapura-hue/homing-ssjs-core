@@ -32,6 +32,7 @@ class SplitGridEventsTest extends JsModuleTestBase {
 
     private static String sample(RecordComponent c) {
         if (c.getName().equals("side")) return "'right'";
+        if (c.getName().equals("by")) return "'left'";
         if (c.getName().equals("path")) return "'0/1'";
         if (c.getType() == String.class) return "'" + c.getName() + "'";
         if (c.getType() == List.class) return "[0.25, 0.75]";
@@ -74,6 +75,9 @@ class SplitGridEventsTest extends JsModuleTestBase {
         }
         assertThrows(IllegalArgumentException.class, () -> new SplitGridEvent.Subdivided("a", "b", "up"));
         assertThrows(IllegalArgumentException.class, () -> new SplitGridEvent.Removed(""));
+        assertThrows(IllegalArgumentException.class, () -> new SplitGridEvent.CursorMoved("a", "sideways"));
+        assertEquals("a|pointer", eval("var m = SplitGridEvents.CursorMoved('a', 'pointer'); [m.cellId, m.by].join('|')").asString());
+        assertTrue(assertThrows(PolyglotException.class, () -> eval("SplitGridEvents.CursorMoved('a', 'sideways')")).getMessage().startsWith("Error: [SplitGridEvents] "));
         assertEquals("a|b|top", eval("var s = SplitGridEvents.Subdivided('a', 'b', 'top'); [s.cellId, s.newCellId, s.side].join('|')").asString());
     }
 }

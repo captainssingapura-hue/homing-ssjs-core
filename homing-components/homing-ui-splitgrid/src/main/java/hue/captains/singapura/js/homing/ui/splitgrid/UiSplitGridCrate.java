@@ -8,9 +8,10 @@ import hue.captains.singapura.js.homing.server.ServerCrate;
 import java.util.List;
 
 /**
- * The split grid's crate: the grid, its tree algebra, its events and its
- * styles, on the runtime and the design targets. The grid is a primitive,
- * owning the DOM on its branch; the tree and the events are pure logic.
+ * The split grid's crate: the grid, the mirror, the tree algebra, the
+ * geometry, the events and the styles, on the runtime and the design targets.
+ * The grid and the mirror are primitives, owning the DOM on their branches;
+ * the tree, the geometry and the events are pure logic.
  */
 public final class UiSplitGridCrate implements Crate {
     public static final UiSplitGridCrate INSTANCE = new UiSplitGridCrate();
@@ -25,7 +26,9 @@ public final class UiSplitGridCrate implements Crate {
     @Override public List<CrateEntry> entries() {
         return List.of(
                 CrateEntry.of(SplitGridModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
+                CrateEntry.of(SplitGridMirrorModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
                 CrateEntry.of(SplitGridTreeModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
+                CrateEntry.of(SplitGridGeometryModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(SplitGridEventsModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(SplitGridStyles.INSTANCE));
     }
