@@ -24,7 +24,7 @@
 //                                   the meaning turned the other way — safety for
 //                                   danger, calm for warning, failure for success
 //     .label(text?)                 read, or set
-//     .setOn(on)                    off is inert and says so
+//     .setOn(on)                    on lifts and presses as the design has it; off is inert and says so
 //
 //   A colour word is a semantic surface, complete: its surface, the ink on it
 //   and its edge move together with the extent, each along the anchors the
@@ -68,6 +68,7 @@ class Button {
         this._extent = 1;
         el.type = "button";
         css.addClass(el, el_button);
+        css.addClass(el, el_button_on);
         this.label(p.label == null ? "" : p.label);
         this.colour(p.colour || "primary", p.extent == null ? 1 : p.extent);
         if (typeof p.onClick === "function") el.addEventListener("click", p.onClick);
@@ -96,6 +97,7 @@ class Button {
 
     setOn(on) {
         this.el.disabled = !on;
+        css.toggleClass(this.el, el_button_on, on);
         css.toggleClass(this.el, el_button_off, !on);
         return this;
     }

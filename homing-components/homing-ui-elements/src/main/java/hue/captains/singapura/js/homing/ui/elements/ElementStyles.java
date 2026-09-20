@@ -113,7 +113,17 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
         @Override public String body() { return ""; }
     }
 
-    /** A button that is off: inert, and says so. Toggled beside {@code disabled}. */
+    /**
+     * A button that is on: what the design does to an interactive thing on
+     * hover and on press — a lift and a shadow, a shift, a glow, a wobble —
+     * worn only while on, so an off button neither lifts nor presses.
+     */
+    public record el_button_on() implements CssClass<ElementStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Interactive.class, Motion.Transform.class), of(Interactive.class, Shape.Shadow.class)); }
+        @Override public String body() { return ""; }
+    }
+
+    /** A button that is off: inert, and says so. Toggled beside {@code disabled}, in place of {@link el_button_on}. */
     public record el_button_off() implements CssClass<ElementStyles> {
         @Override public List<? extends Wearable> wears() { return List.of(of(Inert.class, Effect.Opacity.class), of(Inert.class, Affordance.Cursor.class)); }
         @Override public String body() { return ""; }
@@ -168,7 +178,7 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
     @Override
     public List<CssClass<ElementStyles>> cssClasses() {
         return List.of(new el_button(), new el_button_primary(), new el_button_secondary(), new el_button_danger(), new el_button_warning(), new el_button_success(),
-                       new el_button_plain(), new el_button_off(),
+                       new el_button_plain(), new el_button_on(), new el_button_off(),
                        new el_card(), new el_card_title(), new el_badge(), new el_card_text(), new el_card_link());
     }
 }

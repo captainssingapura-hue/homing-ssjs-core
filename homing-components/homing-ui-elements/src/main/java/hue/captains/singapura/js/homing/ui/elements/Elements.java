@@ -44,6 +44,7 @@ public record Elements() implements DomModule<Elements> {
                         new ElementStyles.el_button_warning(),
                         new ElementStyles.el_button_success(),
                         new ElementStyles.el_button_plain(),
+                        new ElementStyles.el_button_on(),
                         new ElementStyles.el_button_off(),
                         new ElementStyles.el_card(),
                         new ElementStyles.el_card_title(),
