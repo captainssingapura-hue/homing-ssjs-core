@@ -46,7 +46,9 @@
 //
 // The pane never calls setActive: which tab's widget is active is the
 // holder's to decide, from TabActivated, as the studio's focus machinery
-// decides it there. Pinned tabs sit first, cannot be closed and are not
+// decides it there. A chip is activated when it is pressed — before any
+// release — so the tab in the hand is the active one through a reorder or
+// a pull off the strip. Pinned tabs sit first, cannot be closed and are not
 // dragged; a drop never lands before them.
 //
 // A tab's chip and panel are minted on a sub-branch of the pane's, tab-<id>,

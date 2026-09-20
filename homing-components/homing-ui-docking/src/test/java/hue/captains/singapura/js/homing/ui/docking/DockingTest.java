@@ -128,7 +128,7 @@ class DockingTest extends JsModuleTestBase {
         eval("var c = chipOf(A, 'Two'); c.fire('pointerdown', { button: 0, pointerId: 7, clientX: 100, clientY: 15, target: c });"
            + "c.fire('pointermove', { clientX: 106, clientY: 15 }); c.fire('pointermove', { clientX: 900, clientY: 15 }); c.fire('pointermove', { clientX: 100, clientY: -200 });"
            + "c.fire('pointermove', { clientX: 50, clientY: 40 }); c.fire('pointerup', { clientX: 50, clientY: 40 });");
-        assertEquals("capture:div TabMoved", log(), "a move and nothing else: no float opened, nothing undocked");
+        assertEquals("active:a:t2 capture:div TabMoved", log(), "the press activates, then a move and nothing else: no float opened, nothing undocked");
         assertEquals("t2,t1", eval("A.tabs().join(',')").asString(), "the drag reordered the dock");
         assertEquals("0", eval("docking.desk.panes().length + ''").asString());
     }
@@ -138,7 +138,7 @@ class DockingTest extends JsModuleTestBase {
         // press on the chip, drag 6px along the strip (a reorder), then 60px below it — more than the strip's own height: out
         eval("var c = chipOf(A, 'Two'); c.fire('pointerdown', { button: 0, pointerId: 7, clientX: 100, clientY: 15, target: c });"
            + "c.fire('pointermove', { clientX: 106, clientY: 15 }); c.fire('pointermove', { clientX: 120, clientY: 90 });");
-        assertEquals("capture:div opened:t2 raised:t2 undocked:t2<a capture:header", log().replace("active:a:t1 ", ""), "the desk opens it, then the undock is said; the hand is taken over");
+        assertEquals("active:a:t2 capture:div active:a:t1 opened:t2 raised:t2 undocked:t2<a capture:header", log(), "the press activates it; detached, the dock activates the neighbour it left; the desk opens it, then the undock is said; the hand is taken over");
         assertEquals("t1", eval("A.tabs().join(',')").asString(), "the dock lost the tab");
         assertEquals("w-w2", eval("docking.desk.pane('t2').body.children[0].tag").asString(), "the widget travelled, root and all");
         assertTrue(eval("docking.desk.pane('t2').root.has('fp_held')").asBoolean(), "the float is in the hand");

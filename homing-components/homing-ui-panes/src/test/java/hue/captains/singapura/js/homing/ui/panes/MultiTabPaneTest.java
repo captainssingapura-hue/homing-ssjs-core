@@ -214,10 +214,12 @@ class MultiTabPaneTest extends JsModuleTestBase {
     }
 
     @Test
-    void theCrossClosesAndAChipClickSwitches() {
+    void theCrossClosesAndAChipPressSwitches() {
         eval("pane.addTab(tab('a')); pane.addTab(tab('b')); log = []");
-        eval("pane.el.children[0].children[1].fire('click')");
-        assertEquals("active:s1:b", log());
+        eval("var chip = pane.el.children[0].children[1]; chip.fire('pointerdown', { button: 0, target: chip, clientX: 0, clientY: 0 })");
+        assertEquals("active:s1:b", log(), "the press selects, before any release");
+        eval("log = []; chip.fire('pointerdown', { button: 2, target: chip, clientX: 0, clientY: 0 }); chip.fire('click')");
+        assertEquals("", log(), "a secondary button or a bare click is nothing");
         eval("log = []; pane.el.children[0].children[1].children[1].fire('click')");
         assertEquals("b:disposed removed:s1:b@1 active:s1:a", log());
     }

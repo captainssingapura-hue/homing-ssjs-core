@@ -23,7 +23,10 @@
 //
 // Every chip is in the tab order — the Tab key walks the strip, Enter or
 // Space selects — and the design draws the hover, the press, the selected
-// one and the focus ring, since the chip wears Selectable.
+// one and the focus ring, since the chip wears Selectable. The press is the
+// selection: a chip is selected the moment it is pressed, before any
+// release, and the chip in the hand — pressed, dragged, pulled off — is the
+// selected one throughout; nothing else selects while it is held.
 //
 // A drag along the strip reorders and only reorders: how far up or sideways
 // the hand wanders changes nothing. A chip pulled DOWN off the strip — below
@@ -106,7 +109,10 @@ class TabStrip {
             closeBtn.addEventListener("click", function (ev) { ev.stopPropagation(); handlers.onClose(); });
             c.appendChild(closeBtn);
         }
-        c.addEventListener("click", function () { handlers.onSelect(); });
+        c.addEventListener("pointerdown", function (ev) {
+            if (ev.button !== 0 || (closeBtn && closeBtn.contains(ev.target))) return;
+            handlers.onSelect();
+        });
         c.addEventListener("keydown", function (ev) {
             if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); handlers.onSelect(); }
         });
