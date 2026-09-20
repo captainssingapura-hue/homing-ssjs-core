@@ -238,6 +238,9 @@ final class NeoFuturismDesign {
             // the Selected semantic in depth — the light itself, glowing
             one(of(Selected.class, Shape.Shadow.class), "0 0 0 1px " + LIGHT_REF + ", 0 0 36px " + glow(LIGHT_REF, 45)),
             one(of(Selected.class, Motion.Transform.class), "translateY(-1px)"),
+            // in the hand: lit brighter, a little larger
+            one(of(Dragging.class, Motion.Transform.class), "translateY(-2px) scale(1.015)"),
+            one(of(Dragging.class, Shape.Shadow.class), "0 0 0 1px " + LIGHT_REF + ", 0 0 40px " + glow(LIGHT_REF, 55) + ", " + DROP),
             Map.entry(of(Selected.class, Effect.Filter.class), Impl.Bindings.none().at(State.REST, "filter", "drop-shadow(0 0 14px " + glow(LIGHT_REF, 60) + ")")),
             one(of(Current.class, Shape.Shadow.class), "inset 2px 0 0 " + LIGHT_REF + ", 0 0 16px " + glow(LIGHT_REF, 20)),
 

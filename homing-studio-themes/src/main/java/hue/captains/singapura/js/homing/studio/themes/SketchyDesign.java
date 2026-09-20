@@ -113,6 +113,9 @@ final class SketchyDesign {
             // the Selected semantic in depth — nothing; a selected thing is filled, not lifted
             silence(of(Selected.class, Shape.Shadow.class)),
             one(of(Selected.class, Motion.Transform.class), "rotate(-0.4deg)"),
+            // in the hand: tilted in the hand
+            one(of(Dragging.class, Motion.Transform.class), "translateY(-2px) rotate(-1deg)"),
+            silence(of(Dragging.class, Shape.Shadow.class)),
             silence(of(Selected.class, Effect.Filter.class)),
             silence(of(Current.class, Shape.Shadow.class)),
             silence(of(Focus.class, Shape.Shadow.class)),

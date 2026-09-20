@@ -147,6 +147,9 @@ final class EditorialDesign {
             // the Selected semantic in depth — for a component that says "lifted" with a class of its own
             one(of(Selected.class, Shape.Shadow.class), "0 8px 20px color-mix(in srgb, " + INK_REF + " 18%, transparent)"),
             one(of(Selected.class, Motion.Transform.class), "translateY(-2px)"),
+            // in the hand: lifted clear of the page
+            one(of(Dragging.class, Motion.Transform.class), "translateY(-4px)"),
+            one(of(Dragging.class, Shape.Shadow.class), "0 14px 30px color-mix(in srgb, " + INK_REF + " 20%, transparent)"),
             Map.entry(of(Selected.class, Effect.Filter.class), hue.captains.singapura.js.homing.design.Impl.Bindings.none()
                     .at(hue.captains.singapura.js.homing.design.State.REST, "filter", "drop-shadow(0 6px 10px color-mix(in srgb, " + INK_REF + " 18%, transparent))")),
             one(of(Current.class, Shape.Shadow.class), "inset 3px 0 0 color-mix(in srgb, " + PRIMARY_REF + " 60%, transparent)"),

@@ -27,6 +27,8 @@ public record FloatingPaneModule() implements DomModule<FloatingPaneModule> {
                 .add(new ModuleImports<>(List.of(new FloatEventsModule.FloatEvents()), FloatEventsModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new FloatingStyles.fp_frame(),
+                        new FloatingStyles.fp_hoverable(),
+                        new FloatingStyles.fp_held(),
                         new FloatingStyles.fp_active(),
                         new FloatingStyles.fp_head(),
                         new FloatingStyles.fp_head_held(),

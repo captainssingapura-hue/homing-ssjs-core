@@ -89,6 +89,23 @@ public record FloatingStyles() implements CssGroup<FloatingStyles> {
         }
     }
 
+    /**
+     * The frame while the hand is on its head: it wears the interactive word,
+     * and since the head is inside it the frame is hovered — so the design's
+     * own hover lifts it. Off the head, the class is gone, and the pointer
+     * over the body lifts nothing.
+     */
+    public record fp_hoverable() implements CssClass<FloatingStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Interactive.class, Motion.Transform.class), of(Interactive.class, Shape.Shadow.class), of(Interactive.class, Motion.Ease.class)); }
+        @Override public String body() { return ""; }
+    }
+
+    /** The frame in the hand: what the design does to a thing being dragged — higher than hover, moving. */
+    public record fp_held() implements CssClass<FloatingStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Dragging.class, Motion.Transform.class), of(Dragging.class, Shape.Shadow.class), of(Interactive.class, Motion.Ease.class)); }
+        @Override public String body() { return ""; }
+    }
+
     /** The active pane: the ring drawn now, on its edge and as its glow. */
     public record fp_active() implements CssClass<FloatingStyles> {
         @Override public List<? extends Wearable> wears() { return List.of(of(Focus.class, Color.Edge.class), of(Focus.class, Shape.Shadow.class)); }
@@ -179,6 +196,6 @@ public record FloatingStyles() implements CssGroup<FloatingStyles> {
 
     @Override
     public List<CssClass<FloatingStyles>> cssClasses() {
-        return List.of(new fp_desk(), new fp_frame(), new fp_active(), new fp_head(), new fp_head_held(), new fp_title(), new fp_close(), new fp_body(), new fp_grip());
+        return List.of(new fp_desk(), new fp_frame(), new fp_hoverable(), new fp_held(), new fp_active(), new fp_head(), new fp_head_held(), new fp_title(), new fp_close(), new fp_body(), new fp_grip());
     }
 }

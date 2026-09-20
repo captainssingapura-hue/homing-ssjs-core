@@ -121,6 +121,9 @@ final class GlassmorphismDesign {
             // the Selected semantic in depth — the lifted pane, for a component that says so with a class of its own
             one(of(Selected.class, Shape.Shadow.class), drop(8, 24, 16) + ", " + TOP_LIGHT),
             one(of(Selected.class, Motion.Transform.class), "translateY(-2px)"),
+            // in the hand: the glass raised higher
+            one(of(Dragging.class, Motion.Transform.class), "translateY(-4px)"),
+            one(of(Dragging.class, Shape.Shadow.class), drop(16, 40, 22) + ", " + TOP_LIGHT),
             Map.entry(of(Selected.class, Effect.Filter.class), Impl.Bindings.none().at(State.REST, "filter", "drop-shadow(" + drop(8, 16, 18) + ")")),
             one(of(Current.class, Shape.Shadow.class), "inset 3px 0 0 " + LIGHT_REF),
             one(of(Focus.class, Shape.Shadow.class), drop(24, 80, 30) + ", 0 0 0 3px color-mix(in srgb, " + LIGHT_REF + " 40%, transparent)"),

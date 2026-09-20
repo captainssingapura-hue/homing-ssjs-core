@@ -199,6 +199,9 @@ final class NeoBrutalismDesign {
             // the Selected semantic in depth — a component saying "lifted" with a class of its own sits up on the ink
             one(of(Selected.class, Shape.Shadow.class), shadow(6)),
             one(of(Selected.class, Motion.Transform.class), "translate(-3px, -3px)"),
+            // in the hand: shifted hard against its offset
+            one(of(Dragging.class, Motion.Transform.class), "translate(-4px, -4px)"),
+            one(of(Dragging.class, Shape.Shadow.class), shadow(10)),
             Map.entry(of(Selected.class, Effect.Filter.class), Impl.Bindings.none().at(State.REST, "filter", "drop-shadow(6px 6px 0 " + INK_REF + ")")),
             one(of(Current.class, Shape.Shadow.class), "inset 6px 0 0 " + INK_REF),
 

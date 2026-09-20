@@ -24,10 +24,12 @@
 //   pane.size(s)             the size axis, on the head and its parts
 //   pane.dispose()           dissolves the branch
 //
-// The hand: a press on the head and a drag moves it, live, and reports Moved
-// once when it lets go; the head is lit by extent while held. A press on the
-// grip and a drag sizes it, live, and reports Resized once. A press on the
-// cross reports nothing: it asks the desk, through `onClose`, to close it.
+// The hand: over the head, the whole frame wears the interactive word and
+// lifts as the design has a hovered thing lift; a press on the head and a
+// drag moves it, live, the frame in the hand (Dragging) and the head lit by
+// extent, and reports Moved once when it lets go. A press on the grip and a
+// drag sizes it, live, and reports Resized once. A press on the cross reports
+// nothing: it asks the desk, through `onClose`, to close it.
 // Every report is one FloatEvents object on one sink, onEvent(ev).
 // =============================================================================
 
@@ -165,10 +167,19 @@ class FloatingPane {
     // ── the hand on the head: move ──────────────────────────────────────────
     _armMove(head) {
         var self = this;
+        var frame = this.root, over = false, held = false;
+        function lift() {   // in the hand: Dragging; under the hand: Interactive, the frame being hovered through its head; else nothing
+            css.toggleClass(frame, fp_held, held);
+            css.toggleClass(frame, fp_hoverable, over && !held);
+        }
+        head.addEventListener("pointerenter", function () { over = true; lift(); });
+        head.addEventListener("pointerleave", function () { over = false; lift(); });
         head.addEventListener("pointerdown", function (down) {
-            if (down.button !== 0) return;
+            if (down.button !== 0 || held) return;
             if (self._close && (down.target === self._close || (self._close.contains && self._close.contains(down.target)))) return;
             var x0 = self._x, y0 = self._y, cx = down.clientX, cy = down.clientY, moved = false;
+            held = true;
+            lift();
             css.addClass(head, fp_head_held);
             css.extent(head, _HELD);
             try { head.setPointerCapture(down.pointerId); } catch (err) {}
@@ -181,6 +192,8 @@ class FloatingPane {
                 head.removeEventListener("pointermove", onMove);
                 head.removeEventListener("pointerup", onEnd);
                 head.removeEventListener("pointercancel", onEnd);
+                held = false;
+                lift();
                 css.removeClass(head, fp_head_held);
                 css.extent(head, null);
                 try { head.releasePointerCapture(down.pointerId); } catch (err) {}

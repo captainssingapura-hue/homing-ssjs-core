@@ -119,6 +119,9 @@ final class NeumorphismDesign {
             // the Selected semantic in depth — concave, for a component that says "lifted" with a class of its own
             one(of(Selected.class, Shape.Shadow.class), concave(5)),
             silence(of(Selected.class, Motion.Transform.class)),
+            // in the hand: higher relief
+            one(of(Dragging.class, Motion.Transform.class), "translateY(-2px)"),
+            one(of(Dragging.class, Shape.Shadow.class), convex(10)),
             Map.entry(of(Selected.class, Effect.Filter.class), Impl.Bindings.none().at(State.REST, "filter", relief(4))),
             one(of(Current.class, Shape.Shadow.class), concave(3)),
             one(of(Focus.class, Shape.Shadow.class), convex(10) + ", 0 0 0 3px color-mix(in srgb, " + ACCENT_REF + " 35%, transparent)"),

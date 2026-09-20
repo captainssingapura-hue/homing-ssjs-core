@@ -60,7 +60,7 @@ class DeskTest extends JsModuleTestBase {
                     hasClass: function (e, c) { return e.classList.contains(c); },
                     extent: function (e, t) { if (t == null) e.style.removeProperty("--extent"); else e.style.setProperty("--extent", String(t)); },
                     size: function (e, s) { if (s == null) e.style.removeProperty("--size"); else e.style.setProperty("--size", String(s)); } };
-        var fp_desk = "fp_desk", fp_frame = "fp_frame", fp_active = "fp_active", fp_head = "fp_head", fp_head_held = "fp_head_held",
+        var fp_desk = "fp_desk", fp_frame = "fp_frame", fp_hoverable = "fp_hoverable", fp_held = "fp_held", fp_active = "fp_active", fp_head = "fp_head", fp_head_held = "fp_head_held",
             fp_title = "fp_title", fp_close = "fp_close", fp_body = "fp_body", fp_grip = "fp_grip";
         var console = { error: function (m, e) { log.push("error:" + m); } };
         var host = el("div");
@@ -151,8 +151,12 @@ class DeskTest extends JsModuleTestBase {
     void aDragOnTheHeadMoves_clampedToTheDesk_reportedOnceWhenTheHandLetsGo() {
         eval("desk.open({ id: 'a', title: 'A' }); log.length = 0;");
         String head = "headOf('a')";
+        String lift = "var f = desk.pane('a').root; f.has('fp_held') ? 'held' + (f.has('fp_hoverable') ? '+hover' : '') : f.has('fp_hoverable') ? 'hoverable' : 'rest'";
+        eval(head + ".fire('pointerenter', {});");
+        assertEquals("hoverable", eval(lift).asString(), "over the head: the frame wears the interactive word");
         eval(head + ".fire('pointerdown', { button: 0, pointerId: 1, clientX: 100, clientY: 100 });");
         assertTrue(eval(head + ".has('fp_head_held')").asBoolean(), "held while the hand is on it");
+        assertEquals("held", eval(lift).asString(), "in the hand: the frame wears Dragging, not Interactive");
         assertEquals("0.6", eval(head + ".prop('--extent')").asString());
         eval(head + ".fire('pointermove', { clientX: 150, clientY: 130 }); " + head + ".fire('pointermove', { clientX: 2000, clientY: 2000 });");
         assertEquals("", log(), "nothing per pixel");
@@ -160,6 +164,9 @@ class DeskTest extends JsModuleTestBase {
         eval(head + ".fire('pointerup', { clientX: 2000, clientY: 2000 });");
         assertEquals("moved:a@752,552", log());
         assertFalse(eval(head + ".has('fp_head_held')").asBoolean());
+        assertEquals("hoverable", eval(lift).asString(), "let go, still over the head: back to hover");
+        eval(head + ".fire('pointerleave', {});");
+        assertEquals("rest", eval(lift).asString(), "off the head: nothing");
         assertEquals("752px", eval("desk.pane('a').root.prop('--fp-x')").asString());
     }
 

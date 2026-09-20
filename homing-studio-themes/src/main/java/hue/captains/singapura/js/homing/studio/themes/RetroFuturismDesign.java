@@ -121,6 +121,9 @@ final class RetroFuturismDesign {
             // the Selected semantic in depth — lit, for a component that says so with a class of its own
             one(of(Selected.class, Shape.Shadow.class), frame(NEON_REF, 28, 70)),
             one(of(Selected.class, Motion.Transform.class), "translateY(-1px)"),
+            // in the hand: the neon frame at full
+            one(of(Dragging.class, Motion.Transform.class), "translateY(-3px)"),
+            one(of(Dragging.class, Shape.Shadow.class), frame(NEON_REF, 36, 80)),
             Map.entry(of(Selected.class, Effect.Filter.class), Impl.Bindings.none().at(State.REST, "filter", "drop-shadow(0 0 12px " + glow(NEON_REF, 70) + ")")),
             one(of(Current.class, Shape.Shadow.class), "inset 2px 0 0 " + NEON2_REF + ", 0 0 12px " + glow(NEON2_REF, 35)),
             one(of(Focus.class, Shape.Shadow.class), frame(NEON2_REF, 40, 70) + ", 0 24px 64px " + glow(NEON_REF, 30)),
