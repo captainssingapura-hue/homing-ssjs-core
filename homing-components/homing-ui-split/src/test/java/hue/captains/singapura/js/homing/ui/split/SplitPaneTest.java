@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class SplitPaneTest extends JsModuleTestBase {
 
     private static final String EVENTS = "/homing/js/hue/captains/singapura/js/homing/ui/split/SplitEventsModule.js";
-    private static final String MODULE = "/homing/js/hue/captains/singapura/js/homing/ui/split/SplitPane.js";
+    private static final String MODULE = "/homing/js/hue/captains/singapura/js/homing/ui/split/SplitPaneModule.js";
 
     // Elements with children, classes, attributes, custom properties and a
     // measurable size along either axis; a branch; the css manager; the class names.
@@ -46,7 +46,7 @@ class SplitPaneTest extends JsModuleTestBase {
         }
         function fakeBranch(name) {
             return { name: name, dissolved: [], createElement: function (n, tag) { return el(tag); },
-                     createBranch: function (n) { return fakeBranch(n); }, dissolveBranch: function (n) { this.dissolved.push(n); }, activate: function () {} };
+                     createBranch: function (n) { return fakeBranch(n); }, dissolveBranch: function (n) { this.dissolved.push(n); }, dissolve: function () { this.dissolved.push(name); }, activate: function () {} };
         }
         var css = { addClass: function (e) { for (var i = 1; i < arguments.length; i++) e.classList.add(arguments[i]); },
                     removeClass: function (e) { for (var i = 1; i < arguments.length; i++) e.classList.remove(arguments[i]); },
@@ -63,7 +63,7 @@ class SplitPaneTest extends JsModuleTestBase {
             { pane: { kind: "split", orientation: "vertical", children: [
                 { pane: { kind: "leaf", slotId: "demo" }, ratio: 3 },
                 { pane: { kind: "leaf", slotId: "explain" }, ratio: 1 } ] }, ratio: 3 } ] };
-        var split = mountSplitPane({ branch: branch, host: host, layout: LAYOUT, minPanePx: 100,
+        var split = new SplitPane(branch.createBranch("split"), { host: host, layout: LAYOUT, minPanePx: 100,
             onEvent: function (ev) { log.push(ev.kind + ":" + ev.path + ":" + ev.ratios.map(function (r) { return r.toFixed(2); }).join(",")); } });
         var rootSplit = split.el.children[0];
         function shares(s) { return s.children.filter(function (c) { return c.has("sp_child"); }).map(function (c) { return (+c.style.getPropertyValue("--sp-ratio")).toFixed(2); }).join(","); }
@@ -169,7 +169,7 @@ class SplitPaneTest extends JsModuleTestBase {
                 "{ kind: 'split', orientation: 'horizontal', children: [ { pane: { kind: 'leaf', slotId: 'a' } } ] }",
                 "{ kind: 'split', orientation: 'horizontal', children: [ { pane: { kind: 'leaf', slotId: 'a' } }, { pane: { kind: 'leaf', slotId: 'a' } } ] }",
                 "{ kind: 'split', orientation: 'horizontal', children: [ { pane: { kind: 'leaf', slotId: 'a' }, ratio: -1 }, { pane: { kind: 'leaf', slotId: 'b' } } ] }" }) {
-            var h = "var h2 = el('div'); mountSplitPane({ branch: branch, host: h2, layout: " + bad + " })";
+            var h = "var h2 = el('div'); new SplitPane(branch.createBranch('s'), { host: h2, layout: " + bad + " })";
             var ex = assertThrows(PolyglotException.class, () -> eval(h), bad);
             assertTrue(ex.getMessage().startsWith("Error: [SplitPane] "), ex.getMessage());
             assertEquals(0, eval("h2.children.length").asInt(), "nothing was attached");
@@ -180,7 +180,7 @@ class SplitPaneTest extends JsModuleTestBase {
     void disposeTakesTheRootOutAndDissolvesTheBranch() {
         eval("split.dispose()");
         assertEquals(0, eval("host.children.length").asInt());
-        assertEquals("split_1", eval("branch.dissolved[0]").asString());
+        assertEquals("split", eval("split._branch.dissolved[0]").asString(), "the branch it was given is dissolved");
         assertEquals("", eval("split.slots().join(',')").asString());
     }
 }

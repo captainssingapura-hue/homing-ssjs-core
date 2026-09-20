@@ -9,14 +9,15 @@ import hue.captains.singapura.js.homing.core.ModuleImports;
 import java.util.List;
 
 /**
- * One pane of tabs. {@code mountMultiTabPane(opts)} builds a strip of chips
- * over one content area on a child of the caller's branch, appends it to
- * the host and returns the pane: {@code addTab}, {@code attachTab},
- * {@code removeTab}, {@code detachTab}, {@code switchTab}, {@code moveTab},
- * the readers, {@code dispose}.
+ * {@code MultiTabPane}, one pane of tabs. {@code new MultiTabPane(branch,
+ * {host, …})} builds a strip of chips over one content area on the
+ * sub-branch the caller made for it, appends it to the host, and is the
+ * pane: {@code addTab}, {@code attachTab}, {@code removeTab},
+ * {@code detachTab}, {@code switchTab}, {@code moveTab}, the readers,
+ * {@code dispose}. A branch component.
  *
- * <p>A tab holds a widget by the base's contract — what {@code
- * construct(branch, params)} returned, {@code {root, setActive?, dispose?}}
+ * <p>A tab holds a widget by the base's contract — an instance with
+ * {@code root, setActive?, dispose?}
  * — whose root the pane appends once and never detaches; a switch hides
  * and shows panels. The pane disposes the widget on a real close and never
  * on a detach, and never calls {@code setActive}: that is the holder's,
@@ -31,16 +32,17 @@ import java.util.List;
  * the drag that reorders are {@link TabStrip}'s. The split of panes and the
  * drag between them are rounds of their own.</p>
  */
-public record MultiTabPane() implements DomModule<MultiTabPane> {
+public record MultiTabPaneModule() implements DomModule<MultiTabPaneModule> {
 
-    public record mountMultiTabPane() implements Exportable._Constant<MultiTabPane> {}
+    /** The class. */
+    public record MultiTabPane() implements Exportable._Constant<MultiTabPaneModule> {}
 
-    public static final MultiTabPane INSTANCE = new MultiTabPane();
+    public static final MultiTabPaneModule INSTANCE = new MultiTabPaneModule();
 
     @Override
-    public ImportsFor<MultiTabPane> imports() {
-        return ImportsFor.<MultiTabPane>builder()
-                .add(new ModuleImports<>(List.of(new TabStrip.createTabStrip()), TabStrip.INSTANCE))
+    public ImportsFor<MultiTabPaneModule> imports() {
+        return ImportsFor.<MultiTabPaneModule>builder()
+                .add(new ModuleImports<>(List.of(new TabStripModule.TabStrip()), TabStripModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new PaneEventsModule.PaneEvents()), PaneEventsModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new PaneStyles.mtp_pane(),
@@ -53,7 +55,7 @@ public record MultiTabPane() implements DomModule<MultiTabPane> {
     }
 
     @Override
-    public ExportsOf<MultiTabPane> exports() {
-        return new ExportsOf<>(INSTANCE, List.of(new mountMultiTabPane()));
+    public ExportsOf<MultiTabPaneModule> exports() {
+        return new ExportsOf<>(INSTANCE, List.of(new MultiTabPane()));
     }
 }

@@ -27,8 +27,8 @@ public final class UiDialogCrate implements Crate {
 
     @Override public List<CrateEntry> entries() {
         return List.of(
-                CrateEntry.of(Dialog.INSTANCE),
-                CrateEntry.of(Modality.INSTANCE),
+                CrateEntry.of(DialogModule.INSTANCE),
+                CrateEntry.of(ModalityModule.INSTANCE),
                 CrateEntry.of(DialogStyles.INSTANCE));
     }
 }

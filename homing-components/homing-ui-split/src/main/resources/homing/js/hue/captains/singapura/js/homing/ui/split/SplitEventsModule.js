@@ -1,6 +1,6 @@
 // =============================================================================
 // SplitEventsModule — SplitEvents, the closed vocabulary of a splitter's
-// mutations, as data.
+// mutations, as data: a class of static factories, one per kind.
 //
 //   SplitEvents.RatioChanged(path, ratios)   a split's children re-shared
 //   SplitEvents.KINDS
@@ -27,11 +27,11 @@ function _ratios(v, what) {
     return Object.freeze(v.slice());
 }
 
-var SplitEvents = Object.freeze({
-    KINDS: Object.freeze(["RatioChanged"]),
+class SplitEvents {
+    static KINDS = Object.freeze(["RatioChanged"]);
 
     /** A split's children were re-shared: by a divider drag, or by setRatios. */
-    RatioChanged: function (path, ratios) {
+    static RatioChanged(path, ratios) {
         return Object.freeze({ kind: "RatioChanged", path: _path(path, "RatioChanged.path"), ratios: _ratios(ratios, "RatioChanged.ratios") });
     }
-});
+}

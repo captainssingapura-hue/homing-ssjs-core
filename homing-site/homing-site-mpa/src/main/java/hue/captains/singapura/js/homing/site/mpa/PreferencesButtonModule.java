@@ -6,8 +6,8 @@ import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
 import hue.captains.singapura.js.homing.core.js.ServingContextModule;
-import hue.captains.singapura.js.homing.preferences.PreferencesView;
-import hue.captains.singapura.js.homing.ui.dialog.Dialog;
+import hue.captains.singapura.js.homing.preferences.PreferencesViewModule;
+import hue.captains.singapura.js.homing.ui.dialog.DialogModule;
 
 import java.util.List;
 
@@ -23,17 +23,18 @@ import java.util.List;
  * writes through the steward, and the page follows the store as it always
  * has, so a theme picked in the dialog is worn behind it as it is picked.</p>
  */
-public record Preferences() implements DomModule<Preferences> {
+public record PreferencesButtonModule() implements DomModule<PreferencesButtonModule> {
 
-    public record mountPreferences() implements Exportable._Constant<Preferences> {}
+    /** The class. */
+    public record PreferencesButton() implements Exportable._Constant<PreferencesButtonModule> {}
 
-    public static final Preferences INSTANCE = new Preferences();
+    public static final PreferencesButtonModule INSTANCE = new PreferencesButtonModule();
 
     @Override
-    public ImportsFor<Preferences> imports() {
-        return ImportsFor.<Preferences>builder()
-                .add(new ModuleImports<>(List.of(new Dialog.openDialog()), Dialog.INSTANCE))
-                .add(new ModuleImports<>(List.of(new PreferencesView.mountPreferencesView()), PreferencesView.INSTANCE))
+    public ImportsFor<PreferencesButtonModule> imports() {
+        return ImportsFor.<PreferencesButtonModule>builder()
+                .add(new ModuleImports<>(List.of(new DialogModule.Dialog()), DialogModule.INSTANCE))
+                .add(new ModuleImports<>(List.of(new PreferencesViewModule.PreferencesView()), PreferencesViewModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new ServingContextModule.withServingContext()), ServingContextModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new MpaStyles.mpa_prefs(),
@@ -44,7 +45,7 @@ public record Preferences() implements DomModule<Preferences> {
     }
 
     @Override
-    public ExportsOf<Preferences> exports() {
-        return new ExportsOf<>(INSTANCE, List.of(new mountPreferences()));
+    public ExportsOf<PreferencesButtonModule> exports() {
+        return new ExportsOf<>(INSTANCE, List.of(new PreferencesButton()));
     }
 }

@@ -14,24 +14,25 @@ import java.util.List;
  * What every setting's widget has in common: the header (kicker, title,
  * summary), the body the control goes in, the note under it saying where
  * the value came from, and the way back to the site's default. Built on
- * the steward: {@code preferenceField(branch, params)} reads the value,
+ * the steward: {@code new PreferenceField(branch, params, opts)} reads the value,
  * writes a pick, forgets on reset, and follows the store so a change made
  * anywhere is drawn here.
  */
-public record PreferenceField() implements DomModule<PreferenceField> {
+public record PreferenceFieldModule() implements DomModule<PreferenceFieldModule> {
 
-    public record preferenceField() implements Exportable._Constant<PreferenceField> {}
+    /** The class. */
+    public record PreferenceField() implements Exportable._Constant<PreferenceFieldModule> {}
 
-    public static final PreferenceField INSTANCE = new PreferenceField();
+    public static final PreferenceFieldModule INSTANCE = new PreferenceFieldModule();
 
     @Override
-    public ImportsFor<PreferenceField> imports() {
-        return ImportsFor.<PreferenceField>builder()
+    public ImportsFor<PreferenceFieldModule> imports() {
+        return ImportsFor.<PreferenceFieldModule>builder()
                 .add(new ModuleImports<>(List.of(
                         new PreferenceSteward.PreferenceStewardInstance(),
                         new PreferenceSteward.PreferenceViewInstance()
                 ), PreferenceSteward.INSTANCE))
-                .add(new ModuleImports<>(List.of(new Elements.Button(), new Elements.setButtonOn()), Elements.INSTANCE))
+                .add(new ModuleImports<>(List.of(new Elements.Button()), Elements.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new PreferencesStyles.pv_kicker(),
                         new PreferencesStyles.pv_title(),
@@ -43,7 +44,7 @@ public record PreferenceField() implements DomModule<PreferenceField> {
     }
 
     @Override
-    public ExportsOf<PreferenceField> exports() {
-        return new ExportsOf<>(INSTANCE, List.of(new preferenceField()));
+    public ExportsOf<PreferenceFieldModule> exports() {
+        return new ExportsOf<>(INSTANCE, List.of(new PreferenceField()));
     }
 }

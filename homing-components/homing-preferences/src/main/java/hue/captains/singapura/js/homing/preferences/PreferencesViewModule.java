@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.preferences;
 
-import hue.captains.singapura.js.homing.component.WidgetSlot;
+import hue.captains.singapura.js.homing.component.WidgetSlotModule;
 import hue.captains.singapura.js.homing.core.DomModule;
 import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
@@ -15,7 +15,7 @@ import java.util.List;
  * a detail slot on the right holding one widget per node, every widget
  * loaded the first time it is needed and kept until the view is disposed.
  *
- * <p>{@code mountPreferencesView(branch, host, registry) → {select, dispose}}.
+ * <p>{@code new PreferencesView(branch, host, registry)}: select, ready, dispose. A branch component.
  * The registry is a site's {@link PreferencesRegistry}; the view reads it
  * and holds what it constructs. It knows the master by the surface a tree
  * widget offers it — {@code onSelect(fn)}, {@code select(path)} — and knows
@@ -23,16 +23,17 @@ import java.util.List;
  * params and shows its root. What a widget writes, it writes through the
  * steward; the view neither carries nor forwards a value.</p>
  */
-public record PreferencesView() implements DomModule<PreferencesView> {
+public record PreferencesViewModule() implements DomModule<PreferencesViewModule> {
 
-    public record mountPreferencesView() implements Exportable._Constant<PreferencesView> {}
+    /** The class. */
+    public record PreferencesView() implements Exportable._Constant<PreferencesViewModule> {}
 
-    public static final PreferencesView INSTANCE = new PreferencesView();
+    public static final PreferencesViewModule INSTANCE = new PreferencesViewModule();
 
     @Override
-    public ImportsFor<PreferencesView> imports() {
-        return ImportsFor.<PreferencesView>builder()
-                .add(new ModuleImports<>(List.of(new WidgetSlot.createWidgetSlot()), WidgetSlot.INSTANCE))
+    public ImportsFor<PreferencesViewModule> imports() {
+        return ImportsFor.<PreferencesViewModule>builder()
+                .add(new ModuleImports<>(List.of(new WidgetSlotModule.WidgetSlot()), WidgetSlotModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new ServingContextModule.withServingContext()), ServingContextModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new PreferencesStyles.pv_root(),
@@ -43,7 +44,7 @@ public record PreferencesView() implements DomModule<PreferencesView> {
     }
 
     @Override
-    public ExportsOf<PreferencesView> exports() {
-        return new ExportsOf<>(INSTANCE, List.of(new mountPreferencesView()));
+    public ExportsOf<PreferencesViewModule> exports() {
+        return new ExportsOf<>(INSTANCE, List.of(new PreferencesView()));
     }
 }

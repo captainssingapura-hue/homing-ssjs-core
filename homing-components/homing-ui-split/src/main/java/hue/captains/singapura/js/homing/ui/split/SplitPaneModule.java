@@ -9,12 +9,12 @@ import hue.captains.singapura.js.homing.core.ModuleImports;
 import java.util.List;
 
 /**
- * The splitter. {@code mountSplitPane({branch, host, layout, minPanePx?,
- * onEvent?})} renders a tree of panes — side by side or stacked, each split
+ * {@code SplitPane}, the splitter. {@code new SplitPane(branch, {host, layout,
+ * minPanePx?, onEvent?})} renders a tree of panes — side by side or stacked, each split
  * sharing its space by ratio, a draggable divider between neighbours — on a
- * child of the caller's branch, and returns the leaves by slot id as the
- * hosts for whatever fills them, the layout as it stands, and
- * {@code setRatios}.
+ * sub-branch the caller made for it, and offers the leaves by slot id as the
+ * hosts for whatever fills them, the layout as it stands, {@code setRatios}
+ * and {@code dispose}. A branch component.
  *
  * <p>The tree is the caller's and fixed for the splitter's life; the shares
  * are the user's, and every change is one {@link SplitEvent} on
@@ -24,15 +24,16 @@ import java.util.List;
  * multi-tab pane that needs them. Built fresh beside the studio's
  * {@code SplitPaneModule}, which stays as it is.</p>
  */
-public record SplitPane() implements DomModule<SplitPane> {
+public record SplitPaneModule() implements DomModule<SplitPaneModule> {
 
-    public record mountSplitPane() implements Exportable._Constant<SplitPane> {}
+    /** The class. */
+    public record SplitPane() implements Exportable._Constant<SplitPaneModule> {}
 
-    public static final SplitPane INSTANCE = new SplitPane();
+    public static final SplitPaneModule INSTANCE = new SplitPaneModule();
 
     @Override
-    public ImportsFor<SplitPane> imports() {
-        return ImportsFor.<SplitPane>builder()
+    public ImportsFor<SplitPaneModule> imports() {
+        return ImportsFor.<SplitPaneModule>builder()
                 .add(new ModuleImports<>(List.of(new SplitEventsModule.SplitEvents()), SplitEventsModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new SplitStyles.sp_root(),
@@ -52,7 +53,7 @@ public record SplitPane() implements DomModule<SplitPane> {
     }
 
     @Override
-    public ExportsOf<SplitPane> exports() {
-        return new ExportsOf<>(INSTANCE, List.of(new mountSplitPane()));
+    public ExportsOf<SplitPaneModule> exports() {
+        return new ExportsOf<>(INSTANCE, List.of(new SplitPane()));
     }
 }

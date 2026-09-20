@@ -11,18 +11,19 @@ import java.util.List;
  * A preference that is a number in a range: a slider with a readout.
  * Params: {@code name, label, summary?, default?, min, max, step?, unit?}.
  */
-public record ScaleWidget() implements Widget<Widget._None, ScaleWidget> {
+public record ScaleWidgetModule() implements Widget<Widget._None, ScaleWidgetModule> {
 
-    public record construct() implements Widget._Construct<Widget._None, ScaleWidget> {}
+    /** The class. */
+    public record ScaleWidget() implements Widget._Class<Widget._None, ScaleWidgetModule> {}
 
-    public static final ScaleWidget INSTANCE = new ScaleWidget();
+    public static final ScaleWidgetModule INSTANCE = new ScaleWidgetModule();
 
     @Override public String title() { return "Scale"; }
 
     @Override
-    public ImportsFor<ScaleWidget> imports() {
-        return ImportsFor.<ScaleWidget>builder()
-                .add(new ModuleImports<>(List.of(new PreferenceField.preferenceField()), PreferenceField.INSTANCE))
+    public ImportsFor<ScaleWidgetModule> imports() {
+        return ImportsFor.<ScaleWidgetModule>builder()
+                .add(new ModuleImports<>(List.of(new PreferenceFieldModule.PreferenceField()), PreferenceFieldModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new PreferencesStyles.pv_range(),
                         new PreferencesStyles.pv_readout()
@@ -31,7 +32,7 @@ public record ScaleWidget() implements Widget<Widget._None, ScaleWidget> {
     }
 
     @Override
-    public ExportsOf<ScaleWidget> exports() {
-        return new ExportsOf<>(INSTANCE, List.of(new construct()));
+    public ExportsOf<ScaleWidgetModule> exports() {
+        return new ExportsOf<>(INSTANCE, List.of(new ScaleWidget()));
     }
 }

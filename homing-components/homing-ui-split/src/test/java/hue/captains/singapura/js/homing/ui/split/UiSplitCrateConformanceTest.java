@@ -58,7 +58,7 @@ class UiSplitCrateConformanceTest {
 
     @Test
     void theSplitterImportsEveryClassDeclared() {
-        var imported = java.util.stream.Stream.of(SplitPane.INSTANCE.imports())
+        var imported = java.util.stream.Stream.of(SplitPaneModule.INSTANCE.imports())
                 .flatMap(im -> im.getAllImports().values().stream())
                 .flatMap(mi -> mi.allImports().stream()).map(e -> e.getClass().getSimpleName()).toList();
         for (CssClass<SplitStyles> c : SplitStyles.INSTANCE.cssClasses())

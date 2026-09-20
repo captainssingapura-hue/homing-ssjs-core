@@ -11,13 +11,13 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * The slot against a shimmed host and party: a widget is constructed once
- * and kept, shown by attaching its root and hidden by detaching it, told
+ * The slot against a shimmed host and party: a widget class is constructed
+ * once and kept, shown by attaching its root and hidden by detaching it, told
  * setActive on the way in and out, and disposed before its branch goes.
  */
 class WidgetSlotTest extends JsModuleTestBase {
 
-    private static final String MODULE = "/homing/js/hue/captains/singapura/js/homing/component/WidgetSlot.js";
+    private static final String MODULE = "/homing/js/hue/captains/singapura/js/homing/component/WidgetSlotModule.js";
 
     // A host element that only knows its children, and a party branch that only
     // knows its children and whether it was dissolved.
@@ -35,17 +35,16 @@ class WidgetSlotTest extends JsModuleTestBase {
         }
         var branch = fakeBranch("slot");
         var built = {};
+        // A widget class per key: the constructor takes (branch, params), the instance has a root.
         function widget(key) {
-            return function (b, params) {
-                built[key] = (built[key] || 0) + 1;
-                var root = { tag: key, parentNode: null };
-                return { root: root,
-                         setActive: function (on) { log.push(key + ":" + (on ? "on" : "off")); },
-                         setValue:  function (v)  { log.push(key + ":set:" + v); },   // the widget's own surface
-                         dispose:   function ()   { log.push(key + ":disposed"); } };
+            return class {
+                constructor(b, params) { built[key] = (built[key] || 0) + 1; this.root = { tag: key, parentNode: null }; }
+                setActive(on) { log.push(key + ":" + (on ? "on" : "off")); }
+                setValue(v)   { log.push(key + ":set:" + v); }   // the widget's own surface
+                dispose()     { log.push(key + ":disposed"); }
             };
         }
-        var slot = createWidgetSlot({ branch: branch, host: host });
+        var slot = new WidgetSlot({ branch: branch, host: host });
         """;
 
     @BeforeEach
@@ -103,22 +102,22 @@ class WidgetSlotTest extends JsModuleTestBase {
     @Test
     void theHolderOperatesAKeptWidgetDirectly() {
         eval("slot.show('a', widget('a')); slot.hide()");
-        eval("slot.controller('a').setValue(7)");
-        assertTrue(eval("slot.controller('nobody') === null").asBoolean());
-        assertEquals("a:on a:off a:set:7", log(), "hidden or shown, the controller is the holder's to drive");
+        eval("slot.widget('a').setValue(7)");
+        assertTrue(eval("slot.widget('nobody') === null").asBoolean());
+        assertEquals("a:on a:off a:set:7", log(), "hidden or shown, the widget is the holder's to drive");
     }
 
     @Test
     void aKeyIsAnyStringAndTheBranchNameIsMadeFromIt() {
         eval("var seen = []; var b2 = fakeBranch('s2'); b2.createBranch = function (n) { seen.push(n); return fakeBranch(n); }; b2.dissolveBranch = function () {};");
-        eval("var s2 = createWidgetSlot({ branch: b2, host: host }); s2.show('a/b', widget('x')); s2.show('a_b', widget('y')); s2.show('theme', widget('z'))");
+        eval("var s2 = new WidgetSlot({ branch: b2, host: host }); s2.show('a/b', widget('x')); s2.show('a_b', widget('y')); s2.show('theme', widget('z'))");
         assertEquals("a_b a_b_2 theme", eval("seen.join(' ')").asString(), "slashes replaced, a collision made distinct");
         assertTrue(eval("s2.has('a/b') && s2.has('a_b')").asBoolean());
     }
 
     @Test
     void refusesAWidgetWithoutARoot() {
-        var ex = eval("(function () { try { slot.show('x', function () { return {}; }); return null; } catch (e) { return e.message; } })()");
-        assertTrue(ex.asString().contains("must return { root"), ex.asString());
+        var ex = eval("(function () { try { slot.show('x', class { constructor() {} }); return null; } catch (e) { return e.message; } })()");
+        assertTrue(ex.asString().contains("with a root"), ex.asString());
     }
 }

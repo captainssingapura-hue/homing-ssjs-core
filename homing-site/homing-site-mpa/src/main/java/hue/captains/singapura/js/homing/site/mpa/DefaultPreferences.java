@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.site.mpa;
 
-import hue.captains.singapura.js.homing.preferences.ListMasterWidget;
-import hue.captains.singapura.js.homing.preferences.OverviewWidget;
+import hue.captains.singapura.js.homing.preferences.ListMasterWidgetModule;
+import hue.captains.singapura.js.homing.preferences.OverviewWidgetModule;
 import hue.captains.singapura.js.homing.preferences.PreferenceNode;
 import hue.captains.singapura.js.homing.preferences.PreferenceTree;
 import hue.captains.singapura.js.homing.preferences.PreferencesRegistry;
@@ -20,12 +20,12 @@ public final class DefaultPreferences extends PreferencesRegistry {
 
     static final PreferenceTree TREE = PreferenceTree.of(
             PreferenceNode.of("preferences", "Preferences", "What this site remembers for you, in this browser.",
-                    WidgetProvider.of(OverviewWidget.INSTANCE, Map.of(
+                    WidgetProvider.of(OverviewWidgetModule.INSTANCE, Map.of(
                             "label", "Preferences",
                             "summary", "What this site remembers for you, in this browser: the design it wears.",
                             "settings", List.of(Map.of("name", "theme", "label", "Theme")))),
                     PreferenceNode.of("theme", "Theme", "The design this site wears, and the colours it wears it in.",
-                            WidgetProvider.of(ThemeWidget.INSTANCE, Map.of(
+                            WidgetProvider.of(ThemeWidgetModule.INSTANCE, Map.of(
                                     "name", "theme", "label", "Theme",
                                     "summary", "The designs this site offers, each in the colours that suit it. A pick switches every sheet on the page; another tab follows.")))));
 
@@ -33,6 +33,6 @@ public final class DefaultPreferences extends PreferencesRegistry {
     public static final DefaultPreferences INSTANCE = new DefaultPreferences();
 
     private DefaultPreferences() {
-        super(TREE, WidgetProvider.of(ListMasterWidget.INSTANCE));
+        super(TREE, WidgetProvider.of(ListMasterWidgetModule.INSTANCE));
     }
 }

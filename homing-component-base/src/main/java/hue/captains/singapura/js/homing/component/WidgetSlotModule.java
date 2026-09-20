@@ -8,13 +8,13 @@ import hue.captains.singapura.js.homing.core.ImportsFor;
 import java.util.List;
 
 /**
- * A slot that hosts widgets the way the workspace does: any number
- * constructed and kept, one of them in the DOM.
+ * {@code WidgetSlot}: a slot that hosts widgets the way the workspace does —
+ * any number constructed and kept, one of them in the DOM.
  *
  * <pre>
- *   createWidgetSlot({ branch, host }) → slot
- *   slot.show(key, construct, params)        constructs on first show, then shows what it kept
- *   slot.controller(key)                     the kept controller, for a holder that operates it
+ *   new WidgetSlot({ branch, host })
+ *   slot.show(key, Widget, params)           constructs `new Widget(branch, params)` on first show, then shows what it kept
+ *   slot.widget(key)                         the kept widget, for a holder that operates it
  *   slot.hide()                              takes the shown widget out of the DOM, keeps it
  *   slot.current()                           the key shown, or null
  *   slot.has(key), slot.keys()
@@ -23,20 +23,22 @@ import java.util.List;
  *
  * <p>Headless: the slot mints nothing and wears nothing. It hands each
  * widget a branch of its own under the slot's, attaches and detaches the
- * root the widget returned, tells {@code setActive} on the way in and out,
- * keeps the controller for the holder, and dissolves on disposal. That is the whole of hosting a widget, and it
- * is the same for a dialog pane, a single-widget workspace and a tab.</p>
+ * root the widget holds, tells {@code setActive} on the way in and out,
+ * keeps the widget for the holder, and dissolves on disposal. That is the
+ * whole of hosting a widget, and it is the same for a dialog pane, a
+ * single-widget workspace and a tab.</p>
  */
-public record WidgetSlot() implements EsModule<WidgetSlot> {
+public record WidgetSlotModule() implements EsModule<WidgetSlotModule> {
 
-    public record createWidgetSlot() implements Exportable._Constant<WidgetSlot> {}
+    /** The class. */
+    public record WidgetSlot() implements Exportable._Constant<WidgetSlotModule> {}
 
-    public static final WidgetSlot INSTANCE = new WidgetSlot();
+    public static final WidgetSlotModule INSTANCE = new WidgetSlotModule();
 
-    @Override public ImportsFor<WidgetSlot> imports() { return ImportsFor.noImports(); }
+    @Override public ImportsFor<WidgetSlotModule> imports() { return ImportsFor.noImports(); }
 
     @Override
-    public ExportsOf<WidgetSlot> exports() {
-        return new ExportsOf<>(INSTANCE, List.of(new createWidgetSlot()));
+    public ExportsOf<WidgetSlotModule> exports() {
+        return new ExportsOf<>(INSTANCE, List.of(new WidgetSlot()));
     }
 }

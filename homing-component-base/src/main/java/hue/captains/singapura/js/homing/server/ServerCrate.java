@@ -3,7 +3,7 @@ package hue.captains.singapura.js.homing.server;
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.core.StandardJsModuleType;
-import hue.captains.singapura.js.homing.component.WidgetSlot;
+import hue.captains.singapura.js.homing.component.WidgetSlotModule;
 
 import java.util.List;
 
@@ -36,6 +36,6 @@ public final class ServerCrate implements Crate {
                 // primitive that places and removes a root and mints nothing.
                 // Declared here because a Maven module has one crate, and this
                 // crate is the base's until the rename sweep.
-                CrateEntry.of(WidgetSlot.INSTANCE, StandardJsModuleType.PRIMITIVE));
+                CrateEntry.of(WidgetSlotModule.INSTANCE, StandardJsModuleType.PRIMITIVE));
     }
 }

@@ -15,17 +15,18 @@ import java.util.List;
  * {@code onSelect(fn)}, {@code select(path)} — so a real tree view is one
  * provider away. Params: {@code tree, labels}, as the registry stamps them.
  */
-public record ListMasterWidget() implements Widget<Widget._None, ListMasterWidget> {
+public record ListMasterWidgetModule() implements Widget<Widget._None, ListMasterWidgetModule> {
 
-    public record construct() implements Widget._Construct<Widget._None, ListMasterWidget> {}
+    /** The class. */
+    public record ListMasterWidget() implements Widget._Class<Widget._None, ListMasterWidgetModule> {}
 
-    public static final ListMasterWidget INSTANCE = new ListMasterWidget();
+    public static final ListMasterWidgetModule INSTANCE = new ListMasterWidgetModule();
 
     @Override public String title() { return "Preferences list"; }
 
     @Override
-    public ImportsFor<ListMasterWidget> imports() {
-        return ImportsFor.<ListMasterWidget>builder()
+    public ImportsFor<ListMasterWidgetModule> imports() {
+        return ImportsFor.<ListMasterWidgetModule>builder()
                 .add(new ModuleImports<>(List.of(
                         new PreferencesStyles.pv_list(),
                         new PreferencesStyles.pv_list_row()
@@ -34,7 +35,7 @@ public record ListMasterWidget() implements Widget<Widget._None, ListMasterWidge
     }
 
     @Override
-    public ExportsOf<ListMasterWidget> exports() {
-        return new ExportsOf<>(INSTANCE, List.of(new construct()));
+    public ExportsOf<ListMasterWidgetModule> exports() {
+        return new ExportsOf<>(INSTANCE, List.of(new ListMasterWidget()));
     }
 }

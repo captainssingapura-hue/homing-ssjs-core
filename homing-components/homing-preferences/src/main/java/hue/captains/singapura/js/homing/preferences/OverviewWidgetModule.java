@@ -15,22 +15,23 @@ import java.util.List;
  * {@code label, summary?, settings: [{name, label}]} — the settings below
  * the group, flattened by the site when it declares the tree.
  */
-public record OverviewWidget() implements Widget<Widget._None, OverviewWidget> {
+public record OverviewWidgetModule() implements Widget<Widget._None, OverviewWidgetModule> {
 
-    public record construct() implements Widget._Construct<Widget._None, OverviewWidget> {}
+    /** The class. */
+    public record OverviewWidget() implements Widget._Class<Widget._None, OverviewWidgetModule> {}
 
-    public static final OverviewWidget INSTANCE = new OverviewWidget();
+    public static final OverviewWidgetModule INSTANCE = new OverviewWidgetModule();
 
     @Override public String title() { return "Overview"; }
 
     @Override
-    public ImportsFor<OverviewWidget> imports() {
-        return ImportsFor.<OverviewWidget>builder()
+    public ImportsFor<OverviewWidgetModule> imports() {
+        return ImportsFor.<OverviewWidgetModule>builder()
                 .add(new ModuleImports<>(List.of(
                         new PreferenceSteward.PreferenceStewardInstance(),
                         new PreferenceSteward.PreferenceViewInstance()
                 ), PreferenceSteward.INSTANCE))
-                .add(new ModuleImports<>(List.of(new Elements.Button(), new Elements.setButtonOn()), Elements.INSTANCE))
+                .add(new ModuleImports<>(List.of(new Elements.Button()), Elements.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new PreferencesStyles.pv_kicker(),
                         new PreferencesStyles.pv_title(),
@@ -44,7 +45,7 @@ public record OverviewWidget() implements Widget<Widget._None, OverviewWidget> {
     }
 
     @Override
-    public ExportsOf<OverviewWidget> exports() {
-        return new ExportsOf<>(INSTANCE, List.of(new construct()));
+    public ExportsOf<OverviewWidgetModule> exports() {
+        return new ExportsOf<>(INSTANCE, List.of(new OverviewWidget()));
     }
 }

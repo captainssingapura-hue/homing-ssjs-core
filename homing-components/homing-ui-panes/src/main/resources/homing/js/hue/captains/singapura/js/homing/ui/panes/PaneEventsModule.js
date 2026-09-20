@@ -1,8 +1,9 @@
 // =============================================================================
 // PaneEventsModule — PaneEvents, the closed vocabulary of a pane's mutations, as data.
 //
-// Each factory validates what the Java sealed sum PaneEvent validates in its
-// compact constructors and returns a frozen plain object tagged by `kind`:
+// A class of static factories, one per kind. Each validates what the Java
+// sealed sum PaneEvent validates in its compact constructors and returns a
+// frozen plain object tagged by `kind`:
 //
 //   PaneEvents.TabAdded(slotId, tab, index)
 //   PaneEvents.TabRemoved(slotId, tab, fromIndex)
@@ -32,32 +33,32 @@ function _index(v, what) {
     return v;
 }
 
-var PaneEvents = Object.freeze({
-    KINDS: Object.freeze(["TabAdded", "TabRemoved", "TabMoved", "TabActivated", "TabAttached", "AddRequested"]),
+class PaneEvents {
+    static KINDS = Object.freeze(["TabAdded", "TabRemoved", "TabMoved", "TabActivated", "TabAttached", "AddRequested"]);
 
     /** A tab was added at the end of its block via addTab. */
-    TabAdded: function (slotId, tab, index) {
+    static TabAdded(slotId, tab, index) {
         return Object.freeze({ kind: "TabAdded", slotId: _slot(slotId, "TabAdded.slotId"), tab: _tab(tab, "TabAdded.tab"), index: _index(index, "TabAdded.index") });
-    },
+    }
     /** A tab was closed via removeTab — the cross or the holder; its widget is already disposed. */
-    TabRemoved: function (slotId, tab, fromIndex) {
+    static TabRemoved(slotId, tab, fromIndex) {
         return Object.freeze({ kind: "TabRemoved", slotId: _slot(slotId, "TabRemoved.slotId"), tab: _tab(tab, "TabRemoved.tab"), fromIndex: _index(fromIndex, "TabRemoved.fromIndex") });
-    },
+    }
     /** A tab moved, within a pane or between two; destIndex is where it ended up. */
-    TabMoved: function (srcSlotId, tab, srcIndex, destSlotId, destIndex) {
+    static TabMoved(srcSlotId, tab, srcIndex, destSlotId, destIndex) {
         return Object.freeze({ kind: "TabMoved", srcSlotId: _slot(srcSlotId, "TabMoved.srcSlotId"), tab: _tab(tab, "TabMoved.tab"),
                                srcIndex: _index(srcIndex, "TabMoved.srcIndex"), destSlotId: _slot(destSlotId, "TabMoved.destSlotId"), destIndex: _index(destIndex, "TabMoved.destIndex") });
-    },
+    }
     /** The active tab changed — a chip, a key, or switchTab. */
-    TabActivated: function (slotId, tabId) {
+    static TabActivated(slotId, tabId) {
         return Object.freeze({ kind: "TabActivated", slotId: _slot(slotId, "TabActivated.slotId"), tabId: _slot(tabId, "TabActivated.tabId") });
-    },
+    }
     /** A tab was attached from outside via attachTab — a re-dock, a programmatic re-parent. */
-    TabAttached: function (slotId, tab, atIndex) {
+    static TabAttached(slotId, tab, atIndex) {
         return Object.freeze({ kind: "TabAttached", slotId: _slot(slotId, "TabAttached.slotId"), tab: _tab(tab, "TabAttached.tab"), atIndex: _index(atIndex, "TabAttached.atIndex") });
-    },
+    }
     /** The add button was pressed while a tab could be added; the holder decides what that means. */
-    AddRequested: function (slotId) {
+    static AddRequested(slotId) {
         return Object.freeze({ kind: "AddRequested", slotId: _slot(slotId, "AddRequested.slotId") });
     }
-});
+}

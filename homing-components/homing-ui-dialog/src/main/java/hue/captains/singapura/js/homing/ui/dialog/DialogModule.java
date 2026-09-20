@@ -10,30 +10,32 @@ import hue.captains.singapura.js.homing.ui.elements.Elements;
 import java.util.List;
 
 /**
- * The dialog. {@code openDialog(opts)} builds a frame on a child of the
- * caller's branch — a title bar, the body the caller's content fills, an
- * action row of the elements' buttons — puts it over the page, holds the
- * screen through {@link Modality} when modal, and returns a handle that
- * closes it. Every close path dissolves the branch, so the frame, the scrim
- * and whatever the content built go together.
+ * {@code Dialog}. {@code new Dialog(branch, opts)} builds a frame on the
+ * sub-branch the caller made for it — a title bar, the body the caller's
+ * content fills, an action row of the elements' buttons — puts it over the
+ * page, holds the screen through {@link ModalityModule Modality} when modal,
+ * and is the instance that closes it. Every close path dissolves the branch,
+ * so the frame, the scrim and whatever the content built go together. A
+ * branch component.
  *
  * <p>The contract is the studio's {@code SystemDialog}'s, kept on purpose:
  * {@code content(branch, bodyEl) → {onKeydown?, focusEl?}}, {@code actions}
  * with an {@code id}, a {@code label}, {@code primary} and {@code
- * onClick(handle)}, and a handle with {@code close}, {@code actionEl} and
- * {@code setAction}. A caller of the one is a caller of the other.</p>
+ * onClick(dialog)}, and an instance with {@code close}, {@code actionEl}
+ * and {@code setAction}. A caller of the one is a caller of the other.</p>
  */
-public record Dialog() implements DomModule<Dialog> {
+public record DialogModule() implements DomModule<DialogModule> {
 
-    public record openDialog() implements Exportable._Constant<Dialog> {}
+    /** The class. */
+    public record Dialog() implements Exportable._Constant<DialogModule> {}
 
-    public static final Dialog INSTANCE = new Dialog();
+    public static final DialogModule INSTANCE = new DialogModule();
 
     @Override
-    public ImportsFor<Dialog> imports() {
-        return ImportsFor.<Dialog>builder()
-                .add(new ModuleImports<>(List.of(new Modality.holdModality()), Modality.INSTANCE))
-                .add(new ModuleImports<>(List.of(new Elements.Button(), new Elements.setButtonOn()), Elements.INSTANCE))
+    public ImportsFor<DialogModule> imports() {
+        return ImportsFor.<DialogModule>builder()
+                .add(new ModuleImports<>(List.of(new ModalityModule.Modality()), ModalityModule.INSTANCE))
+                .add(new ModuleImports<>(List.of(new Elements.Button()), Elements.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new DialogStyles.dl_scrim(),
                         new DialogStyles.dl_frame(),
@@ -48,7 +50,7 @@ public record Dialog() implements DomModule<Dialog> {
     }
 
     @Override
-    public ExportsOf<Dialog> exports() {
-        return new ExportsOf<>(INSTANCE, List.of(new openDialog()));
+    public ExportsOf<DialogModule> exports() {
+        return new ExportsOf<>(INSTANCE, List.of(new Dialog()));
     }
 }

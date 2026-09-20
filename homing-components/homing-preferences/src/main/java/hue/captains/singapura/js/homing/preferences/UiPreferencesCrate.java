@@ -28,13 +28,13 @@ public final class UiPreferencesCrate implements Crate {
 
     @Override public List<CrateEntry> entries() {
         return List.of(
-                CrateEntry.of(PreferencesView.INSTANCE),
-                CrateEntry.of(PreferenceField.INSTANCE),
-                CrateEntry.of(ChoiceWidget.INSTANCE),
-                CrateEntry.of(ToggleWidget.INSTANCE),
-                CrateEntry.of(ScaleWidget.INSTANCE),
-                CrateEntry.of(OverviewWidget.INSTANCE),
-                CrateEntry.of(ListMasterWidget.INSTANCE),
+                CrateEntry.of(PreferencesViewModule.INSTANCE),
+                CrateEntry.of(PreferenceFieldModule.INSTANCE),
+                CrateEntry.of(ChoiceWidgetModule.INSTANCE),
+                CrateEntry.of(ToggleWidgetModule.INSTANCE),
+                CrateEntry.of(ScaleWidgetModule.INSTANCE),
+                CrateEntry.of(OverviewWidgetModule.INSTANCE),
+                CrateEntry.of(ListMasterWidgetModule.INSTANCE),
                 CrateEntry.of(PreferencesStyles.INSTANCE));
     }
 }

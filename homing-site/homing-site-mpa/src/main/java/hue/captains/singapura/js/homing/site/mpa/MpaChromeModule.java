@@ -5,8 +5,6 @@ import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
-import hue.captains.singapura.js.homing.core.js.DomOpsPartyModule;
-import hue.captains.singapura.js.homing.core.js.domOpsParty;
 import hue.captains.singapura.js.homing.server.HrefManager;
 
 import java.util.List;
@@ -22,18 +20,18 @@ import java.util.List;
  * under this chrome. {@code chrome} is what the server stamped: the brand
  * and the crumbs, both frozen data.</p>
  */
-public record MpaChrome() implements DomModule<MpaChrome> {
+public record MpaChromeModule() implements DomModule<MpaChromeModule> {
 
-    public record mountChrome() implements Exportable._Constant<MpaChrome> {}
+    /** The class. */
+    public record MpaChrome() implements Exportable._Constant<MpaChromeModule> {}
 
-    public static final MpaChrome INSTANCE = new MpaChrome();
+    public static final MpaChromeModule INSTANCE = new MpaChromeModule();
 
     @Override
-    public ImportsFor<MpaChrome> imports() {
-        return ImportsFor.<MpaChrome>builder()
-                .add(new ModuleImports<>(List.of(new domOpsParty()), DomOpsPartyModule.INSTANCE))
+    public ImportsFor<MpaChromeModule> imports() {
+        return ImportsFor.<MpaChromeModule>builder()
                 .add(new ModuleImports<>(List.of(new HrefManager.HrefManagerInstance()), HrefManager.INSTANCE))
-                .add(new ModuleImports<>(List.of(new Preferences.mountPreferences()), Preferences.INSTANCE))
+                .add(new ModuleImports<>(List.of(new PreferencesButtonModule.PreferencesButton()), PreferencesButtonModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new MpaStyles.mpa_page(),
                         new MpaStyles.mpa_root(),
@@ -50,7 +48,7 @@ public record MpaChrome() implements DomModule<MpaChrome> {
     }
 
     @Override
-    public ExportsOf<MpaChrome> exports() {
-        return new ExportsOf<>(INSTANCE, List.of(new mountChrome()));
+    public ExportsOf<MpaChromeModule> exports() {
+        return new ExportsOf<>(INSTANCE, List.of(new MpaChrome()));
     }
 }

@@ -23,13 +23,13 @@ class PreferencesRegistryTest {
 
     static PreferenceTree tree() {
         return PreferenceTree.of(PreferenceNode.of("preferences", "Preferences", "All of them",
-                WidgetProvider.of(OverviewWidget.INSTANCE, Map.of("label", "Preferences", "settings", List.of())),
-                PreferenceNode.of("theme", "Theme", "", WidgetProvider.of(ChoiceWidget.INSTANCE,
+                WidgetProvider.of(OverviewWidgetModule.INSTANCE, Map.of("label", "Preferences", "settings", List.of())),
+                PreferenceNode.of("theme", "Theme", "", WidgetProvider.of(ChoiceWidgetModule.INSTANCE,
                         Map.of("name", "theme", "options", List.of(Map.of("value", "a", "label", "A"))))),
-                PreferenceNode.of("editor", "Editor", "How text is shown", WidgetProvider.of(OverviewWidget.INSTANCE),
-                        PreferenceNode.of("font-size", "Font size", "", WidgetProvider.of(ScaleWidget.INSTANCE,
+                PreferenceNode.of("editor", "Editor", "How text is shown", WidgetProvider.of(OverviewWidgetModule.INSTANCE),
+                        PreferenceNode.of("font-size", "Font size", "", WidgetProvider.of(ScaleWidgetModule.INSTANCE,
                                 Map.of("name", "editor/font-size", "min", 12, "max", 24, "default", 16))),
-                        PreferenceNode.of("wrap", "Wrap lines", "", WidgetProvider.of(ToggleWidget.INSTANCE,
+                        PreferenceNode.of("wrap", "Wrap lines", "", WidgetProvider.of(ToggleWidgetModule.INSTANCE,
                                 Map.of("name", "editor/wrap", "default", true))))));
     }
 
@@ -47,24 +47,24 @@ class PreferencesRegistryTest {
     @Test
     void refusesTwoSiblingsWithOneSegment() {
         var ex = assertThrows(IllegalArgumentException.class, () -> PreferenceTree.of(
-                PreferenceNode.of("p", "P", "", WidgetProvider.of(OverviewWidget.INSTANCE),
-                        PreferenceNode.of("x", "X1", "", WidgetProvider.of(ToggleWidget.INSTANCE)),
-                        PreferenceNode.of("x", "X2", "", WidgetProvider.of(ToggleWidget.INSTANCE)))));
+                PreferenceNode.of("p", "P", "", WidgetProvider.of(OverviewWidgetModule.INSTANCE),
+                        PreferenceNode.of("x", "X1", "", WidgetProvider.of(ToggleWidgetModule.INSTANCE)),
+                        PreferenceNode.of("x", "X2", "", WidgetProvider.of(ToggleWidgetModule.INSTANCE)))));
         assertTrue(ex.getMessage().contains("share the segment 'x'"), ex.getMessage());
     }
 
     @Test
     void stampsEveryNodeWithItsWidgetModuleExportAndParams() {
-        var reg = new PreferencesRegistry(tree(), WidgetProvider.of(ChoiceWidget.INSTANCE, Map.of("folder", true))) {};
+        var reg = new PreferencesRegistry(tree(), WidgetProvider.of(ChoiceWidgetModule.INSTANCE, Map.of("folder", true))) {};
         String json = reg.json(RESOLVER);
         // the rigid tree, canonical
         assertTrue(json.startsWith("{\"tree\":{\"level\":\"L0\",\"segment\":\"preferences\""), json.substring(0, 80));
         assertTrue(json.contains("{\"key\":\"displayLabel\",\"valueTag\":\"name\",\"text\":\"Font size\"}"), json);
         // the master: the provider's params plus the tree and the labels
-        assertTrue(json.contains("\"master\":{\"module\":\"/module?class=hue.captains.singapura.js.homing.preferences.ChoiceWidget\",\"export\":\"construct\",\"params\":{\"folder\":true,\"tree\":{"), json);
+        assertTrue(json.contains("\"master\":{\"module\":\"/module?class=hue.captains.singapura.js.homing.preferences.ChoiceWidgetModule\",\"export\":\"ChoiceWidget\",\"params\":{\"folder\":true,\"tree\":{"), json);
         assertTrue(json.contains("\"labels\":{\"preferences\":\"Preferences\",\"preferences/theme\":\"Theme\""), json);
         // a node: label, summary, widget with typed params
-        assertTrue(json.contains("\"preferences/editor/font-size\":{\"label\":\"Font size\",\"summary\":\"\",\"widget\":{\"module\":\"/module?class=hue.captains.singapura.js.homing.preferences.ScaleWidget\",\"export\":\"construct\",\"params\":{"), json);
+        assertTrue(json.contains("\"preferences/editor/font-size\":{\"label\":\"Font size\",\"summary\":\"\",\"widget\":{\"module\":\"/module?class=hue.captains.singapura.js.homing.preferences.ScaleWidgetModule\",\"export\":\"ScaleWidget\",\"params\":{"), json);
         assertTrue(json.contains("\"min\":12") && json.contains("\"default\":true"), json);
         // the module itself defines the constant
         var lines = reg.selfContent(RESOLVER);

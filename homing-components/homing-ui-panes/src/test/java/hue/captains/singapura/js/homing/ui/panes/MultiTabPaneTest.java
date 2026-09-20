@@ -21,8 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class MultiTabPaneTest extends JsModuleTestBase {
 
     private static final String EVENTS = "/homing/js/hue/captains/singapura/js/homing/ui/panes/PaneEventsModule.js";
-    private static final String STRIP  = "/homing/js/hue/captains/singapura/js/homing/ui/panes/TabStrip.js";
-    private static final String MODULE = "/homing/js/hue/captains/singapura/js/homing/ui/panes/MultiTabPane.js";
+    private static final String STRIP  = "/homing/js/hue/captains/singapura/js/homing/ui/panes/TabStripModule.js";
+    private static final String MODULE = "/homing/js/hue/captains/singapura/js/homing/ui/panes/MultiTabPaneModule.js";
 
     // Elements that know their children, classes and attributes; a party
     // branch that mints them; a css manager over classList; the typed class
@@ -53,6 +53,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
                 createElement: function (n, tag) { return el(tag); },
                 createBranch: function (n) { var b = fakeBranch(n); kids.set(n, b); return b; },
                 dissolveBranch: function (n) { this.dissolved.push(n); kids.delete(n); },
+                dissolve: function () { this.dissolved.push(name); },
                 activate: function (owner) { this.owner = String(owner); } };
         }
         var css = { addClass: function (e) { for (var i = 1; i < arguments.length; i++) e.classList.add(arguments[i]); },
@@ -73,7 +74,8 @@ class MultiTabPaneTest extends JsModuleTestBase {
         }
         function tab(id, extra) { var t = { id: id, title: id.toUpperCase(), widget: widget(id) }; for (var k in (extra || {})) t[k] = extra[k]; return t; }
         var events = [];
-        var pane = mountMultiTabPane({ branch: branch, host: host, slotId: "s1", budget: 4,
+        var paneBranch = branch.createBranch("mtp_s1");
+        var pane = new MultiTabPane(paneBranch, { host: host, slotId: "s1", budget: 4,
             onEvent: function (ev) {
                 events.push(ev);
                 switch (ev.kind) {
@@ -227,7 +229,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
         eval("log = []; pane.dispose()");
         assertEquals("b:disposed a:disposed", log());
         assertEquals("0", eval("host.children.length").toString());
-        assertEquals("mtp_s1_1", eval("branch.dissolved[0]").asString());
+        assertEquals("mtp_s1", eval("paneBranch.dissolved[0]").asString(), "the branch it was given is dissolved");
         eval("pane.dispose()");
         assertEquals("b:disposed a:disposed", log(), "a second dispose is nothing");
     }

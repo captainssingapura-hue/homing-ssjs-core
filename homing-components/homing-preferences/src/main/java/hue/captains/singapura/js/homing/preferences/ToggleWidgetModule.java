@@ -12,18 +12,19 @@ import java.util.List;
  * in the store. Params: {@code name, label, summary?, default?, on?, off?} —
  * the last two the words shown beside the switch in each state.
  */
-public record ToggleWidget() implements Widget<Widget._None, ToggleWidget> {
+public record ToggleWidgetModule() implements Widget<Widget._None, ToggleWidgetModule> {
 
-    public record construct() implements Widget._Construct<Widget._None, ToggleWidget> {}
+    /** The class. */
+    public record ToggleWidget() implements Widget._Class<Widget._None, ToggleWidgetModule> {}
 
-    public static final ToggleWidget INSTANCE = new ToggleWidget();
+    public static final ToggleWidgetModule INSTANCE = new ToggleWidgetModule();
 
     @Override public String title() { return "Toggle"; }
 
     @Override
-    public ImportsFor<ToggleWidget> imports() {
-        return ImportsFor.<ToggleWidget>builder()
-                .add(new ModuleImports<>(List.of(new PreferenceField.preferenceField()), PreferenceField.INSTANCE))
+    public ImportsFor<ToggleWidgetModule> imports() {
+        return ImportsFor.<ToggleWidgetModule>builder()
+                .add(new ModuleImports<>(List.of(new PreferenceFieldModule.PreferenceField()), PreferenceFieldModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new PreferencesStyles.pv_switch(),
                         new PreferencesStyles.pv_switch_track(),
@@ -33,7 +34,7 @@ public record ToggleWidget() implements Widget<Widget._None, ToggleWidget> {
     }
 
     @Override
-    public ExportsOf<ToggleWidget> exports() {
-        return new ExportsOf<>(INSTANCE, List.of(new construct()));
+    public ExportsOf<ToggleWidgetModule> exports() {
+        return new ExportsOf<>(INSTANCE, List.of(new ToggleWidget()));
     }
 }

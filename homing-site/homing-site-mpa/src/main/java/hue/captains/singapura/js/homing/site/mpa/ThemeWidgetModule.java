@@ -4,7 +4,7 @@ import hue.captains.singapura.js.homing.component.Widget;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
-import hue.captains.singapura.js.homing.preferences.PreferenceField;
+import hue.captains.singapura.js.homing.preferences.PreferenceFieldModule;
 import hue.captains.singapura.js.homing.preferences.PreferencesStyles;
 
 import java.util.List;
@@ -16,18 +16,19 @@ import java.util.List;
  * follows the store as it always has. Built on the generic field, so the
  * header, the note and the reset are the same as every other setting's.
  */
-public record ThemeWidget() implements Widget<Widget._None, ThemeWidget> {
+public record ThemeWidgetModule() implements Widget<Widget._None, ThemeWidgetModule> {
 
-    public record construct() implements Widget._Construct<Widget._None, ThemeWidget> {}
+    /** The class. */
+    public record ThemeWidget() implements Widget._Class<Widget._None, ThemeWidgetModule> {}
 
-    public static final ThemeWidget INSTANCE = new ThemeWidget();
+    public static final ThemeWidgetModule INSTANCE = new ThemeWidgetModule();
 
     @Override public String title() { return "Theme"; }
 
     @Override
-    public ImportsFor<ThemeWidget> imports() {
-        return ImportsFor.<ThemeWidget>builder()
-                .add(new ModuleImports<>(List.of(new PreferenceField.preferenceField()), PreferenceField.INSTANCE))
+    public ImportsFor<ThemeWidgetModule> imports() {
+        return ImportsFor.<ThemeWidgetModule>builder()
+                .add(new ModuleImports<>(List.of(new PreferenceFieldModule.PreferenceField()), PreferenceFieldModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new PreferencesStyles.pv_kicker(),
                         new PreferencesStyles.pv_options(),
@@ -38,7 +39,7 @@ public record ThemeWidget() implements Widget<Widget._None, ThemeWidget> {
     }
 
     @Override
-    public ExportsOf<ThemeWidget> exports() {
-        return new ExportsOf<>(INSTANCE, List.of(new construct()));
+    public ExportsOf<ThemeWidgetModule> exports() {
+        return new ExportsOf<>(INSTANCE, List.of(new ThemeWidget()));
     }
 }

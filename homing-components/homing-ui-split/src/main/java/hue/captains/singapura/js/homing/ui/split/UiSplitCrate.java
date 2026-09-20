@@ -28,7 +28,7 @@ public final class UiSplitCrate implements Crate {
 
     @Override public List<CrateEntry> entries() {
         return List.of(
-                CrateEntry.of(SplitPane.INSTANCE, StandardJsModuleType.PRIMITIVE),
+                CrateEntry.of(SplitPaneModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
                 CrateEntry.of(SplitEventsModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(SplitStyles.INSTANCE));
     }

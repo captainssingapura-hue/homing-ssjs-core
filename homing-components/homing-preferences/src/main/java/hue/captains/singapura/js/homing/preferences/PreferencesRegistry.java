@@ -99,7 +99,7 @@ public abstract class PreferencesRegistry implements EsModule<PreferencesRegistr
     private static Map<String, Object> provider(ModuleNameResolver resolver, WidgetProvider p, Map<String, Object> params) {
         var out = new LinkedHashMap<String, Object>();
         out.put("module", resolver.resolve(p.widget()).basePath());
-        out.put("export", "construct");
+        out.put("export", p.widget().exports().exports().get(0).getClass().getSimpleName());   // the widget's class
         out.put("params", params);
         return out;
     }

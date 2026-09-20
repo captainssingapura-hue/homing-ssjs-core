@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.ParamCodec;
 import hue.captains.singapura.js.homing.core.QueryString;
 import hue.captains.singapura.js.homing.core.StampedParams;
+import hue.captains.singapura.js.homing.core.js.DomOpsPartyModule;
 import hue.captains.singapura.js.homing.server.HtmlPageContent;
 import hue.captains.singapura.js.homing.site.Html;
 import hue.captains.singapura.js.homing.site.Placed;
@@ -19,9 +20,9 @@ import java.util.Objects;
  * {@code AppModule} bound to its params becomes.
  *
  * <p>The page is the scaffold the studio's flat route writes, redrawn for a
- * site: one document that imports the chrome module, mounts the bar with
- * the brand and the trail it was told, then imports the app and hands it the
- * slot and its params. The app is any {@code AppModule}, mounted where it
+ * site: one document that imports the party and the chrome module, makes
+ * the chrome a branch and constructs it with the brand and the trail it was
+ * told, then imports the app and hands it the slot and its params. The app is any {@code AppModule}, mounted where it
  * always is; it extends nothing to be a page here.</p>
  *
  * <p>The chrome data names the brand, the trail and the site's preferences
@@ -74,8 +75,9 @@ public record AppPage<P extends AppModule._Param, M extends AppModule<P, M>>(
                         const themed = u => theme ? u + "&theme=" + encodeURIComponent(theme) : u;
                         const chrome = Object.freeze({ brand: %s, crumbs: %s, preferences: %s });
                         %s
-                        const { mountChrome } = await import(themed(%s));
-                        const main = mountChrome(document.getElementById("app"), chrome);
+                        const { domOpsParty } = await import(themed(%s));
+                        const { MpaChrome } = await import(themed(%s));
+                        const main = new MpaChrome(domOpsParty.createBranch("mpaChrome"), document.getElementById("app"), chrome).main;
                         const { appMain } = await import(themed(%s));
                         appMain(main%s);
                     </script>
@@ -85,7 +87,8 @@ public record AppPage<P extends AppModule._Param, M extends AppModule<P, M>>(
                         Html.escape(title + " · " + mpa.brand().label()),
                         theme, brand, crumbs, prefs,
                         stamped == null ? "" : "const params = " + stamped + ";",
-                        StampedParams.jsString(mpa.moduleUrl(MpaChrome.INSTANCE)),
+                        StampedParams.jsString(mpa.moduleUrl(DomOpsPartyModule.INSTANCE)),
+                        StampedParams.jsString(mpa.moduleUrl(MpaChromeModule.INSTANCE)),
                         StampedParams.jsString(mpa.moduleUrl(app)),
                         stamped == null ? "" : ", params"));
     }

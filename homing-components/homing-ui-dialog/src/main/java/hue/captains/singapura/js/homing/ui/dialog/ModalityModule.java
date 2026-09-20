@@ -8,26 +8,28 @@ import hue.captains.singapura.js.homing.core.ImportsFor;
 import java.util.List;
 
 /**
- * Modality, headless: what it takes for one element to own the screen.
- * {@code holdModality(frame, opts)} makes everything else inert, captures
- * the keyboard on the document, and returns the release that undoes both
- * and gives the focus back. It mints nothing and wears nothing — the scrim
- * is the dialog's, and so is every look.
+ * {@code Modality}, headless: what it takes for one element to own the
+ * screen. {@code new Modality(frame, opts)} makes everything else inert and
+ * captures the keyboard on the document; {@code release()} undoes both and
+ * gives the focus back. It mints nothing and wears nothing — the scrim is
+ * the dialog's, and so is every look. An element component of a kind: the
+ * frame comes in by the constructor, minted by whoever holds the screen.
  *
  * <p>Kept as a module of its own inside the dialog's, because a second
  * component will want exactly this — a popover, a menu — and then it moves
  * into the component base as a file, not a rewrite.</p>
  */
-public record Modality() implements EsModule<Modality> {
+public record ModalityModule() implements EsModule<ModalityModule> {
 
-    public record holdModality() implements Exportable._Constant<Modality> {}
+    /** The class. */
+    public record Modality() implements Exportable._Constant<ModalityModule> {}
 
-    public static final Modality INSTANCE = new Modality();
+    public static final ModalityModule INSTANCE = new ModalityModule();
 
-    @Override public ImportsFor<Modality> imports() { return ImportsFor.noImports(); }
+    @Override public ImportsFor<ModalityModule> imports() { return ImportsFor.noImports(); }
 
     @Override
-    public ExportsOf<Modality> exports() {
-        return new ExportsOf<>(INSTANCE, List.of(new holdModality()));
+    public ExportsOf<ModalityModule> exports() {
+        return new ExportsOf<>(INSTANCE, List.of(new Modality()));
     }
 }

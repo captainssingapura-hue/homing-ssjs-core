@@ -58,7 +58,7 @@ class UiPanesCrateConformanceTest {
 
     @Test
     void thePaneAndTheStripImportEveryClassDeclared() {
-        var imported = java.util.stream.Stream.of(MultiTabPane.INSTANCE.imports(), TabStrip.INSTANCE.imports())
+        var imported = java.util.stream.Stream.of(MultiTabPaneModule.INSTANCE.imports(), TabStripModule.INSTANCE.imports())
                 .flatMap(im -> im.getAllImports().values().stream())
                 .flatMap(mi -> mi.allImports().stream()).map(e -> e.getClass().getSimpleName()).toList();
         for (CssClass<PaneStyles> c : PaneStyles.INSTANCE.cssClasses())

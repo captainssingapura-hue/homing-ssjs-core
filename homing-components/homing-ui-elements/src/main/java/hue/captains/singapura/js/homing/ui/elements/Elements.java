@@ -10,17 +10,20 @@ import hue.captains.singapura.js.homing.server.HrefManager;
 import java.util.List;
 
 /**
- * The elements: builders a page calls with the branch that will own what
- * they make. {@code Button(branch, name, props)} and {@code Card(branch,
- * name, props)} each return one node; the caller places it. Nothing here
- * holds state, fetches, or navigates on its own — a card's link is set
- * through the href manager, and that is the only thing beyond {@code css}
- * either builder asks of the base.
+ * The elements: two classes, one of each shape. {@code Button} is an
+ * element component — the caller mints a {@code Button.TAG} element on its
+ * own branch and hands it in; the button dresses it and offers
+ * {@code setOn}. {@code Card} is a branch component — the caller makes a
+ * sub-branch for it; the card mints its tree on it and offers {@code root}.
+ * Nothing here holds state, fetches, or navigates on its own — a card's
+ * link is set through the href manager, and that is the only thing beyond
+ * {@code css} either asks of the base.
  */
 public record Elements() implements DomModule<Elements> {
 
+    /** An element component: {@code new Button(el, props)}, the element minted by the caller with {@code Button.TAG}. */
     public record Button()        implements Exportable._Constant<Elements> {}
-    public record setButtonOn()   implements Exportable._Constant<Elements> {}
+    /** A branch component: {@code new Card(branch, props)}, on a sub-branch of its own; {@code root} is what the caller appends. */
     public record Card()          implements Exportable._Constant<Elements> {}
 
     public static final Elements INSTANCE = new Elements();
@@ -45,6 +48,6 @@ public record Elements() implements DomModule<Elements> {
 
     @Override
     public ExportsOf<Elements> exports() {
-        return new ExportsOf<>(INSTANCE, List.of(new Button(), new setButtonOn(), new Card()));
+        return new ExportsOf<>(INSTANCE, List.of(new Button(), new Card()));
     }
 }

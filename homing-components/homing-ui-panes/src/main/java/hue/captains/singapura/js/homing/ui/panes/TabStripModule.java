@@ -9,23 +9,24 @@ import hue.captains.singapura.js.homing.core.ModuleImports;
 import java.util.List;
 
 /**
- * The row of chips over a pane. {@code createTabStrip(branch, {onAdd?,
- * onDrop})} builds the strip — chips with a label and a cross, the tail
+ * {@code TabStrip}, the row of chips over a pane. {@code new TabStrip(branch,
+ * {onAdd?, onDrop})} builds the strip — chips with a label and a cross, the tail
  * with the add button and the count, the drop mark — and the drag that
  * reorders: a drop lands at the count of the other chips whose middle is
  * left of the pointer, never before the pinned ones. It holds no tab
  * state; the pane arranges, selects and counts, and turns a drop into a
  * move.
  */
-public record TabStrip() implements DomModule<TabStrip> {
+public record TabStripModule() implements DomModule<TabStripModule> {
 
-    public record createTabStrip() implements Exportable._Constant<TabStrip> {}
+    /** The class. */
+    public record TabStrip() implements Exportable._Constant<TabStripModule> {}
 
-    public static final TabStrip INSTANCE = new TabStrip();
+    public static final TabStripModule INSTANCE = new TabStripModule();
 
     @Override
-    public ImportsFor<TabStrip> imports() {
-        return ImportsFor.<TabStrip>builder()
+    public ImportsFor<TabStripModule> imports() {
+        return ImportsFor.<TabStripModule>builder()
                 .add(new ModuleImports<>(List.of(
                         new PaneStyles.mtp_strip(),
                         new PaneStyles.mtp_strip_tail(),
@@ -42,7 +43,7 @@ public record TabStrip() implements DomModule<TabStrip> {
     }
 
     @Override
-    public ExportsOf<TabStrip> exports() {
-        return new ExportsOf<>(INSTANCE, List.of(new createTabStrip()));
+    public ExportsOf<TabStripModule> exports() {
+        return new ExportsOf<>(INSTANCE, List.of(new TabStrip()));
     }
 }

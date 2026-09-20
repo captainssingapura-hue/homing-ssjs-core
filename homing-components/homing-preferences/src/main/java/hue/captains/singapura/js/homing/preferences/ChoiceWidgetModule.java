@@ -12,18 +12,19 @@ import java.util.List;
  * note, drawn as a listbox; the chosen one is written through the steward.
  * Params: {@code name, label, summary?, default?, options: [{value, label, note?}]}.
  */
-public record ChoiceWidget() implements Widget<Widget._None, ChoiceWidget> {
+public record ChoiceWidgetModule() implements Widget<Widget._None, ChoiceWidgetModule> {
 
-    public record construct() implements Widget._Construct<Widget._None, ChoiceWidget> {}
+    /** The class. */
+    public record ChoiceWidget() implements Widget._Class<Widget._None, ChoiceWidgetModule> {}
 
-    public static final ChoiceWidget INSTANCE = new ChoiceWidget();
+    public static final ChoiceWidgetModule INSTANCE = new ChoiceWidgetModule();
 
     @Override public String title() { return "Choice"; }
 
     @Override
-    public ImportsFor<ChoiceWidget> imports() {
-        return ImportsFor.<ChoiceWidget>builder()
-                .add(new ModuleImports<>(List.of(new PreferenceField.preferenceField()), PreferenceField.INSTANCE))
+    public ImportsFor<ChoiceWidgetModule> imports() {
+        return ImportsFor.<ChoiceWidgetModule>builder()
+                .add(new ModuleImports<>(List.of(new PreferenceFieldModule.PreferenceField()), PreferenceFieldModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new PreferencesStyles.pv_options(),
                         new PreferencesStyles.pv_option(),
@@ -33,7 +34,7 @@ public record ChoiceWidget() implements Widget<Widget._None, ChoiceWidget> {
     }
 
     @Override
-    public ExportsOf<ChoiceWidget> exports() {
-        return new ExportsOf<>(INSTANCE, List.of(new construct()));
+    public ExportsOf<ChoiceWidgetModule> exports() {
+        return new ExportsOf<>(INSTANCE, List.of(new ChoiceWidget()));
     }
 }

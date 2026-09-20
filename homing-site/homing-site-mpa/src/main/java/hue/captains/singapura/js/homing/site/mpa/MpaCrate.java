@@ -34,9 +34,9 @@ public final class MpaCrate implements Crate {
 
     @Override public List<CrateEntry> entries() {
         return List.of(
-                CrateEntry.of(MpaChrome.INSTANCE),
-                CrateEntry.of(Preferences.INSTANCE),
-                CrateEntry.of(ThemeWidget.INSTANCE),
+                CrateEntry.of(MpaChromeModule.INSTANCE),
+                CrateEntry.of(PreferencesButtonModule.INSTANCE),
+                CrateEntry.of(ThemeWidgetModule.INSTANCE),
                 CrateEntry.of(DefaultPreferences.INSTANCE),
                 CrateEntry.of(MpaStyles.INSTANCE));
     }
