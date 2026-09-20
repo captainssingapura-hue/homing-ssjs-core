@@ -180,6 +180,12 @@ final class EditorialDesign {
             inset(of(Control.Button.class, Size.Inset.class), "8px", "18px", 1.3),
             gap(of(Control.Button.class, Size.Gap.class), "8px", 1.3),
             minWidth(of(Control.Button.class, Size.Extent.class), "56px", 1.3),
+            // the tab: a browser's — a hard frame six to one, the label ellipsised within; cut at the top, flush where it meets the row
+            one(of(Control.Tab.class, Shape.Corner.class), "4px 4px 0 0"),
+            inset(of(Control.Tab.class, Size.Inset.class), "0", "12px", 1.3),
+            gap(of(Control.Tab.class, Size.Gap.class), "8px", 1.3),
+            measure(of(Control.Tab.class, Size.Extent.class), "168px", 1.3),
+            proportion(of(Control.Tab.class, Size.Proportion.class), "6", 1.5),
             // a container, and the card: an index card: three by two, a soft corner
             one(of(Container.class, Shape.Corner.class), "6px"),
             ruleWithFocusRing(of(Container.class, Shape.Rule.class), "1px", "solid", "2px", "solid", "-2px"),

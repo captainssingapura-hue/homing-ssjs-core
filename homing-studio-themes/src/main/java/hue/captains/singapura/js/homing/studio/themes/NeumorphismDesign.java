@@ -146,6 +146,12 @@ final class NeumorphismDesign {
             inset(of(Control.Button.class, Size.Inset.class), "10px", "20px", 1.3),
             gap(of(Control.Button.class, Size.Gap.class), "8px", 1.3),
             minWidth(of(Control.Button.class, Size.Extent.class), "64px", 1.3),
+            // the tab: a moulded key, rounded at the top
+            one(of(Control.Tab.class, Shape.Corner.class), "10px 10px 0 0"),
+            inset(of(Control.Tab.class, Size.Inset.class), "0", "14px", 1.3),
+            gap(of(Control.Tab.class, Size.Gap.class), "8px", 1.3),
+            measure(of(Control.Tab.class, Size.Extent.class), "168px", 1.3),
+            proportion(of(Control.Tab.class, Size.Proportion.class), "5", 1.5),
             // a container, and the card: a soft slab, no rule
             one(of(Container.class, Shape.Corner.class), "16px"),
             ruleWithFocusRing(of(Container.class, Shape.Rule.class), "0", "none", "2px", "solid", "-2px"),

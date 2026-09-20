@@ -59,7 +59,8 @@ class MultiTabPaneTest extends JsModuleTestBase {
         var css = { addClass: function (e) { for (var i = 1; i < arguments.length; i++) e.classList.add(arguments[i]); },
                     removeClass: function (e) { for (var i = 1; i < arguments.length; i++) e.classList.remove(arguments[i]); },
                     toggleClass: function (e, c, f) { e.classList.toggle(c, f); },
-                    hasClass: function (e, c) { return e.classList.contains(c); } };
+                    hasClass: function (e, c) { return e.classList.contains(c); },
+                    size: function (e, s) { e.size = s; }, aspect: function (e, a) { e.aspect = a; } };
         var mtp_pane = "mtp_pane", mtp_strip = "mtp_strip", mtp_chip = "mtp_chip", mtp_chip_label = "mtp_chip_label",
             mtp_chip_dragging = "mtp_chip_dragging", mtp_chip_close = "mtp_chip_close", mtp_drop_mark = "mtp_drop_mark",
             mtp_strip_tail = "mtp_strip_tail", mtp_add = "mtp_add", mtp_add_off = "mtp_add_off", mtp_pill = "mtp_pill",
@@ -172,6 +173,14 @@ class MultiTabPaneTest extends JsModuleTestBase {
         assertEquals("attached:s1:a@0", log());
         eval("pane.removeTab('a'); log = []; pane.addTab(tab('a'))");
         assertEquals("B,A", chips(), "and again after a close");
+    }
+
+    @Test
+    void theSizeAndAspectReachEveryChip_nowAndLater() {
+        eval("pane.addTab(tab('a')); pane.size(0.5); pane.aspect(-2); pane.addTab(tab('b'))");
+        assertEquals("0.5/-1 0.5/-1", eval("pane.el.children[0].children.filter(function (c) { return c.has('mtp_chip'); }).map(function (c) { return c.size + '/' + c.aspect; }).join(' ')").asString(), "clamped to −1..1; a chip made after gets them too");
+        eval("pane.size(null); pane.aspect(null)");
+        assertEquals("null/null", eval("var c = pane.el.children[0].children[0]; c.size + '/' + c.aspect").asString(), "null gives the design's back");
     }
 
     @Test

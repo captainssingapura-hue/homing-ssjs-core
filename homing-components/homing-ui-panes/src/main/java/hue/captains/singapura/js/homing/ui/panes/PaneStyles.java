@@ -23,6 +23,7 @@ import static hue.captains.singapura.js.homing.design.Target.Color;
 import static hue.captains.singapura.js.homing.design.Target.Effect;
 import static hue.captains.singapura.js.homing.design.Target.Motion;
 import static hue.captains.singapura.js.homing.design.Target.Shape;
+import static hue.captains.singapura.js.homing.design.Target.Size;
 import static hue.captains.singapura.js.homing.design.Target.Type;
 import static hue.captains.singapura.js.homing.design.Text.Body;
 import static hue.captains.singapura.js.homing.design.Text.Caption;
@@ -56,14 +57,14 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
         }
     }
 
-    /** The strip: raised, a divider under it, scrolling sideways when the chips overflow; room above and below for a chip to lift. */
+    /** The strip: raised, a divider under it, scrolling sideways when the chips overflow. The chips sit on its bottom edge, with room above for a lift. */
     public record mtp_strip() implements CssClass<PaneStyles> {
         @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Divider.class, Color.Edge.class), of(Divider.class, Shape.Rule.class)); }
         @Override public String body() { return """
             display: flex;
-            align-items: stretch;
+            align-items: flex-end;
             flex-shrink: 0;
-            padding-block: 3px;
+            padding-block: 4px 0;
             overflow-x: auto;
             overflow-y: hidden;
             user-select: none;
@@ -71,24 +72,42 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
         }
     }
 
-    /** A chip: selectable — the design's rest, hover, press, selected and focus ring, its lift and shadow with them. Dragged by the pointer, so no touch scrolling on it. */
+    /**
+     * A chip: {@code Control.Tab} to the design — a hard frame whose inline
+     * measure is the design's, grown by the element's size, its block size
+     * following its proportion, wide and low, widened or narrowed by the
+     * element's aspect; its corners cut at the top, its rule and ring a
+     * control's. Selectable for its colour and motion: the design's rest,
+     * hover, press, selected and focus. The label is ellipsised within.
+     * Dragged by the pointer, so no touch scrolling on it.
+     */
     public record mtp_chip() implements CssClass<PaneStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Selectable.class, Color.Surface.class), of(Selectable.class, Color.Ink.class), of(Selectable.class, Color.Edge.class), of(Selectable.class, Shape.Rule.class), of(Selectable.class, Motion.Transform.class), of(Selectable.class, Shape.Shadow.class), of(Selectable.class, Motion.Ease.class), of(Selectable.class, Affordance.Cursor.class), of(Caption.class, Type.Scale.class)); }
+        @Override public List<? extends Wearable> wears() {
+            return List.of(of(Control.Tab.class, Shape.Rule.class), of(Control.Tab.class, Shape.Corner.class),
+                           of(Control.Tab.class, Size.Inset.class), of(Control.Tab.class, Size.Gap.class), of(Control.Tab.class, Size.Extent.class), of(Control.Tab.class, Size.Proportion.class),
+                           of(Selectable.class, Color.Surface.class), of(Selectable.class, Color.Ink.class), of(Selectable.class, Color.Edge.class),
+                           of(Selectable.class, Motion.Transform.class), of(Selectable.class, Shape.Shadow.class), of(Selectable.class, Motion.Ease.class), of(Selectable.class, Affordance.Cursor.class),
+                           of(Caption.class, Type.Scale.class));
+        }
+        @Override public List<? extends Wearable> sizes() { return List.of(of(Control.Tab.class, Size.Inset.class), of(Control.Tab.class, Size.Gap.class), of(Control.Tab.class, Size.Extent.class), of(Caption.class, Type.Scale.class)); }
+        @Override public List<? extends Wearable> aspects() { return List.of(of(Control.Tab.class, Size.Proportion.class)); }
         @Override public String body() { return """
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            padding: 6px 10px;
-            max-width: 220px;
+            box-sizing: border-box;
+            overflow: hidden;
             white-space: nowrap;
-            flex-shrink: 0;
+            flex: none;
             touch-action: none;
             """;
         }
     }
 
+    /** The label in a chip: takes the room the cross leaves, and ellipsises. */
     public record mtp_chip_label() implements CssClass<PaneStyles> {
         @Override public String body() { return """
+            flex: 1 1 auto;
+            min-width: 0;
             overflow: hidden;
             text-overflow: ellipsis;
             """;
@@ -110,6 +129,7 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
             padding: 0 4px;
             background: transparent;
             border: 0;
+            flex: none;
             """;
         }
     }
@@ -132,6 +152,7 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
         @Override public String body() { return """
             display: flex;
             align-items: center;
+            align-self: center;
             gap: 8px;
             margin-left: auto;
             padding: 0 8px;

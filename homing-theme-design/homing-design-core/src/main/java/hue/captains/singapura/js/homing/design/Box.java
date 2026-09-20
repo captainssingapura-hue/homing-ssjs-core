@@ -24,6 +24,15 @@ public interface Box extends Semantic {
             /** The button that completes a task — OK, Save, Apply, and the plain action beside them. */
             public record Base() implements Box {}
         }
+        /**
+         * A tab: a control in a row that selects what is shown, like a button
+         * with three differences. Its measure is its own, not its label's — a
+         * hard frame, every tab in the row the same, the label ellipsised
+         * within, as a browser's tabs are; its proportion is the design's and
+         * wide, the element's aspect widening or narrowing it from there; and
+         * its corners are cut where it meets the row, not where it sits on it.
+         */
+        public record Tab() implements Box {}
     }
 
     record Inline() implements Box {}

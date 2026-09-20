@@ -210,7 +210,11 @@ final class Bind {
     }
     /** A Size.Proportion: square at aspect 0, {@code widest} to one at +1, one to {@code widest} at −1 — the box's aspect is the element's number. */
     static Map.Entry<DesignClass<?>, Impl> proportion(DesignClass<?> cls, double widest) {
-        return Map.entry(cls, Impl.Bindings.of("1").grows(widest, Growth.ASPECT));
+        return proportion(cls, "1", widest);
+    }
+    /** A Size.Proportion whose rest is the design's own — a tab's, wide — {@code room} times wider at aspect +1, {@code room} times narrower at −1. */
+    static Map.Entry<DesignClass<?>, Impl> proportion(DesignClass<?> cls, String rest, double room) {
+        return Map.entry(cls, Impl.Bindings.of(rest).grows(room, Growth.ASPECT));
     }
     /** A Size.Extent that is the box's own measure inline, growing by {@code ratio}; the block follows its proportion. */
     static Map.Entry<DesignClass<?>, Impl> measure(DesignClass<?> cls, String inlineSize, double ratio) {

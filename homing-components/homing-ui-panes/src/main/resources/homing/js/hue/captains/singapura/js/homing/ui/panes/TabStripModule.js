@@ -17,6 +17,9 @@
 //     strip.count(n, budget, addOn) the pill, and the add button on or off
 //     strip.markAt(clientX)         the mark where a tab from outside would land → index
 //     strip.unmark()
+//     strip.size(s?)                the chips' size, −1..1, 0 the design's; every chip, now and later
+//     strip.aspect(a?)              the chips' aspect, −1..1, 0 the design's proportion — wide,
+//                                   a browser's tab — narrower at −1, wider at +1
 //
 // Every chip is in the tab order — the Tab key walks the strip, Enter or
 // Space selects — and the design draws the hover, the press, the selected
@@ -48,6 +51,8 @@ class TabStrip {
         this._onDragOut = opts && typeof opts.onDragOut === "function" ? opts.onDragOut : null;
         this._order = [];                 // the chips as last arranged
         this._pinned = new Set();         // the chips that are pinned
+        this._size = null;                // the chips' size and aspect, null the design's
+        this._aspect = null;
 
         var el = branch.createElement("strip", "div");
         css.addClass(el, mtp_strip);
@@ -105,9 +110,19 @@ class TabStrip {
         c.addEventListener("keydown", function (ev) {
             if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); handlers.onSelect(); }
         });
+        if (this._size != null) css.size(c, this._size);
+        if (this._aspect != null) css.aspect(c, this._aspect);
         if (tab.pinned) this._pinned.add(c);
         else this._armDrag(c, closeBtn);
         return c;
+    }
+    size(s) {
+        this._size = s == null ? null : Math.max(-1, Math.min(1, Number(s)));
+        for (var i = 0; i < this._order.length; i++) css.size(this._order[i], this._size);
+    }
+    aspect(a) {
+        this._aspect = a == null ? null : Math.max(-1, Math.min(1, Number(a)));
+        for (var i = 0; i < this._order.length; i++) css.aspect(this._order[i], this._aspect);
     }
 
     arrange(chips) {

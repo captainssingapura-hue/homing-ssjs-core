@@ -144,6 +144,16 @@ final class SketchyDesign {
             inset(of(Control.Button.class, Size.Inset.class), "8px", "16px", 1.35),
             gap(of(Control.Button.class, Size.Gap.class), "8px", 1.35),
             minWidth(of(Control.Button.class, Size.Extent.class), "56px", 1.35),
+            // the tab: a paper tab, its top corners wobbled, the pen a touch heavier on the selected one
+            one(of(Control.Tab.class, Shape.Corner.class), "8px 6px 0 0 / 6px 8px 0 0"),
+            Map.entry(of(Control.Tab.class, Shape.Rule.class), Impl.Bindings.none()
+                    .at(State.REST, "border-width", "2px").at(State.REST, "border-style", "solid")
+                    .at(State.SELECTED, "border-width", "3px")
+                    .at(State.FOCUS, "outline-width", "2px").at(State.FOCUS, "outline-style", "dashed").at(State.FOCUS, "outline-offset", "-3px")),
+            inset(of(Control.Tab.class, Size.Inset.class), "0", "12px", 1.35),
+            gap(of(Control.Tab.class, Size.Gap.class), "8px", 1.35),
+            measure(of(Control.Tab.class, Size.Extent.class), "160px", 1.35),
+            proportion(of(Control.Tab.class, Size.Proportion.class), "5", 1.5),
             // a container, and the card: a hand-cut card, its corners uneven
             one(of(Container.class, Shape.Corner.class), WOBBLE_PLATE),
             ruleWithFocusRing(of(Container.class, Shape.Rule.class), "2px", "solid", "2px", "dashed", "-3px"),

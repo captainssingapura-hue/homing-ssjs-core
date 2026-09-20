@@ -24,6 +24,7 @@
 //       destIndex being where the tab ends up. A drag on the strip is this.
 //   pane.tabs() .activeTab() .has(id) .tabIndexOf(id) .count()
 //   pane.budget() .canAdd() .setAddEnabled(b)
+//   pane.size(s?) .aspect(a?)    the chips' size and aspect, −1..1, null the design's
 //   pane.contentElOf(id) .widgetOf(id) .getState() .el .slotId
 //   pane.dispose()               → every widget disposed in order, the branch dissolved
 //
@@ -263,6 +264,8 @@ class MultiTabPane {
     budget() { return this._budget; }
     canAdd() { return this._addEnabled && this._tabs.length < this._budget; }
     setAddEnabled(on) { this._addEnabled = !!on; this._refresh(); }
+    size(s) { this._strip.size(s); }
+    aspect(a) { this._strip.aspect(a); }
     contentElOf(id) { var i = this._find(id); return i < 0 ? null : this._tabs[i].panel; }
     widgetOf(id) { var i = this._find(id); return i < 0 ? null : this._tabs[i].widget; }
     getState() {

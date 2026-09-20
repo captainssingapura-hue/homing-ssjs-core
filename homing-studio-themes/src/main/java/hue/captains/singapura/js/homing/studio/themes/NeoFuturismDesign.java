@@ -285,6 +285,12 @@ final class NeoFuturismDesign {
             inset(of(Control.Button.class, Size.Inset.class), "7px", "16px", 1.25),
             gap(of(Control.Button.class, Size.Gap.class), "8px", 1.25),
             minWidth(of(Control.Button.class, Size.Extent.class), "56px", 1.25),
+            // the tab: a long low blade, barely cut
+            one(of(Control.Tab.class, Shape.Corner.class), "2px 2px 0 0"),
+            inset(of(Control.Tab.class, Size.Inset.class), "0", "14px", 1.25),
+            gap(of(Control.Tab.class, Size.Gap.class), "8px", 1.25),
+            measure(of(Control.Tab.class, Size.Extent.class), "184px", 1.25),
+            proportion(of(Control.Tab.class, Size.Proportion.class), "6.5", 1.5),
             // a container, and the card: a wide panel, a filament of a ring
             one(of(Container.class, Shape.Corner.class), "2px"),
             ruleWithFocusRing(of(Container.class, Shape.Rule.class), "1px", "solid", "1px", "solid", "-1px"),

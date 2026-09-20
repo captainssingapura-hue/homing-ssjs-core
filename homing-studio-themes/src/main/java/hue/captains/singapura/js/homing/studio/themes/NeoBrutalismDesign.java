@@ -249,6 +249,12 @@ final class NeoBrutalismDesign {
             inset(of(Control.Button.class, Size.Inset.class), "10px", "20px", 1.5),
             gap(of(Control.Button.class, Size.Gap.class), "10px", 1.5),
             minWidth(of(Control.Button.class, Size.Extent.class), "64px", 1.5),
+            // the tab: a square-cut block, five to one
+            one(of(Control.Tab.class, Shape.Corner.class), "0"),
+            inset(of(Control.Tab.class, Size.Inset.class), "0", "12px", 1.5),
+            gap(of(Control.Tab.class, Size.Gap.class), "10px", 1.5),
+            measure(of(Control.Tab.class, Size.Extent.class), "160px", 1.5),
+            proportion(of(Control.Tab.class, Size.Proportion.class), "5", 1.5),
             // a container, and the card: a squarish print, hard-edged
             one(of(Container.class, Shape.Corner.class), "0"),
             ruleWithFocusRing(of(Container.class, Shape.Rule.class), "3px", "solid", "3px", "solid", "-3px"),
