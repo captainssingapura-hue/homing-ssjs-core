@@ -177,13 +177,13 @@ final class NeoBrutalismDesign {
             one(of(Selectable.class, Motion.Ease.class), SNAP),
             Map.entry(of(Selectable.class, Motion.Transform.class), Impl.Bindings.none()
                     .at(State.HOVER, "translate(-2px, -2px)")
-                    .at(State.ACTIVE, "translate(0, 0)")
+                    .at(State.ACTIVE, "translate(-4px, -4px)")                        // pressed is grabbed: it lifts off its shadow, as Dragging does
                     .at(State.SELECTED, "translate(-3px, -3px)")
                     .at(State.HIGHLIGHTED, "translate(-2px, -2px)")),
             Map.entry(of(Selectable.class, Shape.Shadow.class), Impl.Bindings.none()
                     .at(State.REST, "none")
                     .at(State.HOVER, shadow(4))
-                    .at(State.ACTIVE, "none")
+                    .at(State.ACTIVE, shadow(10))
                     .at(State.SELECTED, shadow(6))
                     .at(State.HIGHLIGHTED, shadow(5))),
             Map.entry(of(Selectable.class, Effect.Filter.class), Impl.Bindings.none()

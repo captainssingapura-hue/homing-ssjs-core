@@ -103,11 +103,12 @@ final class NeumorphismDesign {
                     .at(State.FOCUS, "outline-width", "3px").at(State.FOCUS, "outline-style", "solid").at(State.FOCUS, "outline-offset", "2px")),
             // Selectable — a row, a cell, an option: flush with the surface until it is the one, then pressed INTO it
             one(of(Selectable.class, Motion.Ease.class), EASE),
-            silence(of(Selectable.class, Motion.Transform.class)),        // a moulded thing does not move; it presses in
+            Map.entry(of(Selectable.class, Motion.Transform.class), Impl.Bindings.none()
+                    .at(State.ACTIVE, "translateY(-2px)")),                         // a moulded thing does not move for a hover or a selection; grabbed, it rises, as Dragging does
             Map.entry(of(Selectable.class, Shape.Shadow.class), Impl.Bindings.none()
                     .at(State.REST, "none")
                     .at(State.HOVER, convex(3))
-                    .at(State.ACTIVE, concave(3))
+                    .at(State.ACTIVE, convex(10))
                     .at(State.SELECTED, concave(5))
                     .at(State.HIGHLIGHTED, convex(4))),
             Map.entry(of(Selectable.class, Effect.Filter.class), Impl.Bindings.none()

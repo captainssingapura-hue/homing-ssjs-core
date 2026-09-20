@@ -128,13 +128,13 @@ final class EditorialDesign {
             one(of(Selectable.class, Affordance.Cursor.class), "pointer"),
             Map.entry(of(Selectable.class, Motion.Transform.class), hue.captains.singapura.js.homing.design.Impl.Bindings.none()
                     .at(hue.captains.singapura.js.homing.design.State.HOVER, "translateY(-1px)")
-                    .at(hue.captains.singapura.js.homing.design.State.ACTIVE, "translateY(0)")
+                    .at(hue.captains.singapura.js.homing.design.State.ACTIVE, "translateY(-4px)")                              // pressed is grabbed: it lifts into the hand, as Dragging does
                     .at(hue.captains.singapura.js.homing.design.State.SELECTED, "translateY(-2px)")
                     .at(hue.captains.singapura.js.homing.design.State.HIGHLIGHTED, "translateY(-1px)")),
             Map.entry(of(Selectable.class, Shape.Shadow.class), hue.captains.singapura.js.homing.design.Impl.Bindings.none()
                     .at(hue.captains.singapura.js.homing.design.State.REST, "none")
                     .at(hue.captains.singapura.js.homing.design.State.HOVER, "0 4px 12px color-mix(in srgb, " + INK_REF + " 10%, transparent)")
-                    .at(hue.captains.singapura.js.homing.design.State.ACTIVE, "0 1px 2px color-mix(in srgb, " + INK_REF + " 8%, transparent)")
+                    .at(hue.captains.singapura.js.homing.design.State.ACTIVE, "0 14px 30px color-mix(in srgb, " + INK_REF + " 20%, transparent)")
                     .at(hue.captains.singapura.js.homing.design.State.SELECTED, "0 8px 20px color-mix(in srgb, " + INK_REF + " 18%, transparent)")
                     .at(hue.captains.singapura.js.homing.design.State.HIGHLIGHTED, "0 4px 12px color-mix(in srgb, " + PRIMARY_REF + " 35%, transparent)")),
             Map.entry(of(Selectable.class, Effect.Filter.class), hue.captains.singapura.js.homing.design.Impl.Bindings.none()

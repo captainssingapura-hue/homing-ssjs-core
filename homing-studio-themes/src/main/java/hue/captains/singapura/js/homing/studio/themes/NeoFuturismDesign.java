@@ -216,13 +216,13 @@ final class NeoFuturismDesign {
             one(of(Selectable.class, Motion.Ease.class), EASE),
             Map.entry(of(Selectable.class, Motion.Transform.class), Impl.Bindings.none()
                     .at(State.HOVER, "translateY(-1px)")
-                    .at(State.ACTIVE, "scale(0.985)")
+                    .at(State.ACTIVE, "translateY(-2px) scale(1.015)")                // pressed is grabbed: it lifts and glows, as Dragging does
                     .at(State.SELECTED, "translateY(-1px)")
                     .at(State.HIGHLIGHTED, "translateY(-1px)")),
             Map.entry(of(Selectable.class, Shape.Shadow.class), Impl.Bindings.none()
                     .at(State.REST, "none")
                     .at(State.HOVER, "0 0 0 1px " + glow(LIGHT_REF, 45) + ", 0 0 16px " + glow(LIGHT_REF, 25))
-                    .at(State.ACTIVE, "0 0 0 1px " + glow(LIGHT_REF, 60) + ", 0 0 10px " + glow(LIGHT_REF, 25))
+                    .at(State.ACTIVE, "0 0 0 1px " + LIGHT_REF + ", 0 0 40px " + glow(LIGHT_REF, 55) + ", " + DROP)
                     .at(State.SELECTED, "0 0 0 1px " + LIGHT_REF + ", 0 0 36px " + glow(LIGHT_REF, 45) + ", " + DROP)
                     .at(State.HIGHLIGHTED, "0 0 0 1px " + glow(LIGHT_REF, 70) + ", 0 0 20px " + glow(LIGHT_REF, 35))),
             Map.entry(of(Selectable.class, Effect.Filter.class), Impl.Bindings.none()

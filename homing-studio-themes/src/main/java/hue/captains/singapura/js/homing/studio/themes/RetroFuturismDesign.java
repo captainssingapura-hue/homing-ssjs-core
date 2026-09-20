@@ -106,12 +106,12 @@ final class RetroFuturismDesign {
             // Selectable — a row, a cell, an option: dark until it is the one, then lit in neon
             one(of(Selectable.class, Motion.Ease.class), EASE),
             Map.entry(of(Selectable.class, Motion.Transform.class), Impl.Bindings.none()
-                    .at(State.ACTIVE, "translateY(1px)")
+                    .at(State.ACTIVE, "translateY(-3px)")                              // pressed is grabbed: it lifts, as Dragging does
                     .at(State.SELECTED, "translateY(-1px)")),
             Map.entry(of(Selectable.class, Shape.Shadow.class), Impl.Bindings.none()
                     .at(State.REST, "none")
                     .at(State.HOVER, frame(NEON_REF, 10, 30))
-                    .at(State.ACTIVE, frame(NEON_REF, 6, 40))
+                    .at(State.ACTIVE, frame(NEON_REF, 36, 80))
                     .at(State.SELECTED, frame(NEON_REF, 28, 70))
                     .at(State.HIGHLIGHTED, frame(NEON2_REF, 18, 55))),
             Map.entry(of(Selectable.class, Effect.Filter.class), Impl.Bindings.none()
