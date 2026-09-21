@@ -14,6 +14,7 @@ import hue.captains.singapura.js.homing.core.CssGroup;
 import hue.captains.singapura.js.homing.design.Deployment;
 import hue.captains.singapura.js.homing.design.Design;
 import hue.captains.singapura.js.homing.tree.TreeLevel;
+import hue.captains.singapura.js.homing.ui.menu.ContextMenuRegistry;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -131,5 +132,8 @@ class ComponentsConformanceTest {
         assertEquals(10, root.vehicleCount());
         assertEquals(23, root.componentCount(), "the components declared so far: 2 elements, 1 icon, 1 dialog, 7 preferences, 1 split, 2 panes, 2 floating, 2 split grid, 2 menus, 3 chrome");
         assertTrue(composed.root().children().stream().allMatch(v -> v.level() == TreeLevel.L1.INSTANCE), "every vehicle grafted one under the root");
+        // what the components need of a page is derived from the catalogue: nothing invisible, nothing nameless
+        assertEquals(List.of(), ContextMenuRegistry.validate(ComponentsConformance.TOP_LEVEL));
+        assertEquals(List.of(), ContextMenuRegistry.requiredBy(ComponentsConformance.TOP_LEVEL).kinds(), "no core component opens a menu yet; the tab pane is next");
     }
 }

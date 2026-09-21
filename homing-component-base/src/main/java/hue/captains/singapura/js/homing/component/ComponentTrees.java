@@ -72,6 +72,17 @@ public final class ComponentTrees {
         return closure(topLevel).stream().filter(c -> c instanceof ComponentVehicle).toList();
     }
 
+    /** Every catalogued component in the closure, in tree order: what a page's facilities are derived from. */
+    public static List<UiComponent<?>> components(List<Crate> topLevel) {
+        var out = new ArrayList<UiComponent<?>>();
+        for (Crate crate : vehicles(topLevel)) collect(((ComponentVehicle) crate).components(), out);
+        return List.copyOf(out);
+    }
+    private static void collect(ComponentCatalogue<?> cat, List<UiComponent<?>> out) {
+        for (ComponentCatalogue<?> sub : cat.subCatalogues()) collect(sub, out);
+        for (ComponentEntry<?> e : cat.leaves()) out.add(((ComponentEntry.OfComponent<?, ?>) e).component());
+    }
+
     // ── composition ───────────────────────────────────────────────────────
 
     /** The site's root with every vehicle's catalogue grafted under it, derived from the closure. */
