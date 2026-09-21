@@ -258,6 +258,16 @@ final class NeoBrutalismDesign {
             gap(of(Control.Tab.class, Size.Gap.class), "10px", 1.5),
             measure(of(Control.Tab.class, Size.Extent.class), "160px", 1.5),
             proportion(of(Control.Tab.class, Size.Proportion.class), "5", 1.5),
+            // a slider: the track's length and the room its knob needs; the groove, the knob, the notch
+            measureAndHeight(of(Control.Slider.class, Size.Extent.class), "240px", "28px", 1.3),
+            inset(of(Control.Slider.class, Size.Inset.class), "4px", "0", 1.3),
+            gap(of(Control.Slider.class, Size.Gap.class), "12px", 1.3),
+            thickness(of(Control.Slider.Track.class, Size.Extent.class), "10px", 1.3),
+            one(of(Control.Slider.Track.class, Shape.Corner.class), "0"),
+            rule(of(Control.Slider.Track.class, Shape.Rule.class), "3px", "solid"),
+            square(of(Control.Slider.Knob.class, Size.Extent.class), "20px", 1.3),
+            one(of(Control.Slider.Knob.class, Shape.Corner.class), "0"),
+            extent(of(Detent.class, Size.Extent.class), "3px", "18px", 1.3),
             // a menu: a container of options that opens at a point; an option: one row of it
             one(of(Container.Menu.class, Shape.Corner.class), "0"),
             inset(of(Container.Menu.class, Size.Inset.class), "6px", "0", 1.5),

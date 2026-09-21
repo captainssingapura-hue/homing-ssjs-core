@@ -153,6 +153,16 @@ final class NeumorphismDesign {
             gap(of(Control.Tab.class, Size.Gap.class), "8px", 1.3),
             measure(of(Control.Tab.class, Size.Extent.class), "168px", 1.3),
             proportion(of(Control.Tab.class, Size.Proportion.class), "5", 1.5),
+            // a slider: the track's length and the room its knob needs; the groove, the knob, the notch
+            measureAndHeight(of(Control.Slider.class, Size.Extent.class), "220px", "28px", 1.3),
+            inset(of(Control.Slider.class, Size.Inset.class), "4px", "0", 1.3),
+            gap(of(Control.Slider.class, Size.Gap.class), "12px", 1.3),
+            thickness(of(Control.Slider.Track.class, Size.Extent.class), "8px", 1.3),
+            one(of(Control.Slider.Track.class, Shape.Corner.class), "999px"),
+            rule(of(Control.Slider.Track.class, Shape.Rule.class), "0", "solid"),
+            square(of(Control.Slider.Knob.class, Size.Extent.class), "22px", 1.3),
+            one(of(Control.Slider.Knob.class, Shape.Corner.class), "50%"),
+            extent(of(Detent.class, Size.Extent.class), "2px", "10px", 1.3),
             // a menu: a container of options that opens at a point; an option: one row of it
             one(of(Container.Menu.class, Shape.Corner.class), "14px"),
             inset(of(Container.Menu.class, Size.Inset.class), "8px", "0", 1.3),

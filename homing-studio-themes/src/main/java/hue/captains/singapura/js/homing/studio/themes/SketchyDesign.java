@@ -155,6 +155,16 @@ final class SketchyDesign {
             gap(of(Control.Tab.class, Size.Gap.class), "8px", 1.35),
             measure(of(Control.Tab.class, Size.Extent.class), "160px", 1.35),
             proportion(of(Control.Tab.class, Size.Proportion.class), "5", 1.5),
+            // a slider: the track's length and the room its knob needs; the groove, the knob, the notch
+            measureAndHeight(of(Control.Slider.class, Size.Extent.class), "220px", "26px", 1.35),
+            inset(of(Control.Slider.class, Size.Inset.class), "4px", "0", 1.35),
+            gap(of(Control.Slider.class, Size.Gap.class), "12px", 1.35),
+            thickness(of(Control.Slider.Track.class, Size.Extent.class), "5px", 1.35),
+            one(of(Control.Slider.Track.class, Shape.Corner.class), "6px 4px 5px 7px / 4px 6px 7px 5px"),
+            rule(of(Control.Slider.Track.class, Shape.Rule.class), "2px", "solid"),
+            square(of(Control.Slider.Knob.class, Size.Extent.class), "18px", 1.35),
+            one(of(Control.Slider.Knob.class, Shape.Corner.class), "50% 45% 55% 50% / 45% 55% 50% 50%"),
+            extent(of(Detent.class, Size.Extent.class), "2px", "14px", 1.35),
             // a menu: a container of options that opens at a point; an option: one row of it
             one(of(Container.Menu.class, Shape.Corner.class), "8px 6px 7px 9px / 6px 8px 9px 7px"),
             inset(of(Container.Menu.class, Size.Inset.class), "8px", "0", 1.35),

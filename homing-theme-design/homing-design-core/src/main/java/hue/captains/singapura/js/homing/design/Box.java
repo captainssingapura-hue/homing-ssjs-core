@@ -39,6 +39,18 @@ public interface Box extends Semantic {
          * for the wash the design lays under the cursor.
          */
         public record Option() implements Box {}
+        /**
+         * A slider: a control that sets a number by a knob on a track. Its
+         * measure is its own — the track's length, and the least height a
+         * knob needs, both grown by the size — its inset the air around the
+         * parts, its gap between label, track and readout.
+         */
+        public record Slider() implements Box {
+            /** The track: the groove the knob runs in — its thickness, its corner, its rule; a design sinks it. */
+            public record Track() implements Box {}
+            /** The knob: what the hand takes — its diameter, its corner, round or square; raised, and ringed by the control's lineage when it has the focus. */
+            public record Knob() implements Box {}
+        }
     }
 
     record Inline() implements Box {}

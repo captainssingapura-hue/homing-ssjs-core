@@ -2,9 +2,11 @@ package hue.captains.singapura.js.homing.ui.elements;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
+import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.core.Wearable;
 
 import java.util.List;
+import java.util.Set;
 
 import static hue.captains.singapura.js.homing.design.DesignClass.of;
 import static hue.captains.singapura.js.homing.design.Box.Container;
@@ -16,9 +18,12 @@ import static hue.captains.singapura.js.homing.design.Emphasis.Secondary;
 import static hue.captains.singapura.js.homing.design.Feedback.Danger;
 import static hue.captains.singapura.js.homing.design.Feedback.Success;
 import static hue.captains.singapura.js.homing.design.Feedback.Warning;
+import static hue.captains.singapura.js.homing.design.Interaction.Dragging;
 import static hue.captains.singapura.js.homing.design.Interaction.Inert;
 import static hue.captains.singapura.js.homing.design.Interaction.Interactive;
 import static hue.captains.singapura.js.homing.design.Layer.Raised;
+import static hue.captains.singapura.js.homing.design.Layer.Recessed;
+import static hue.captains.singapura.js.homing.design.Structure.Detent;
 import static hue.captains.singapura.js.homing.design.Pairing.OnDanger;
 import static hue.captains.singapura.js.homing.design.Pairing.OnPrimary;
 import static hue.captains.singapura.js.homing.design.Pairing.OnSecondary;
@@ -33,6 +38,7 @@ import static hue.captains.singapura.js.homing.design.Target.Size;
 import static hue.captains.singapura.js.homing.design.Target.Type;
 import static hue.captains.singapura.js.homing.design.Text.Body;
 import static hue.captains.singapura.js.homing.design.Text.Caption;
+import static hue.captains.singapura.js.homing.design.Text.Code;
 import static hue.captains.singapura.js.homing.design.Text.Heading;
 import static hue.captains.singapura.js.homing.design.Text.Kicker;
 import static hue.captains.singapura.js.homing.design.Text.Label;
@@ -137,6 +143,142 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
     public record el_button_off() implements CssClass<ElementStyles> {
         @Override public List<? extends Wearable> wears() { return List.of(of(Inert.class, Effect.Opacity.class), of(Inert.class, Affordance.Cursor.class)); }
         @Override public String body() { return ""; }
+    }
+
+    // ── Slider ────────────────────────────────────────────────────────────────
+
+    /** The slider: a row of label, rail and readout — {@code Control.Slider} for its air and its gap. */
+    public record el_slider() implements CssClass<ElementStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Control.Slider.class, Size.Inset.class), of(Control.Slider.class, Size.Gap.class), of(Body.class, Color.Ink.class)); }
+        @Override public String body() { return """
+            display: flex;
+            align-items: center;
+            box-sizing: border-box;
+            """;
+        }
+    }
+
+    /** The label before the rail; a caller stacking sliders gives them one label width, {@code --sl-label}, so the rails align. */
+    public record el_slider_label() implements CssClass<ElementStyles> {
+        @Override public Set<CssVar> runtimeVars() { return Set.of(new CssVar("--sl-label")); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Label.class, Type.Scale.class)); }
+        @Override public String body() { return """
+            flex: none;
+            inline-size: var(--sl-label, auto);
+            """;
+        }
+    }
+
+    /**
+     * The rail: the box the hand works in — the control's measure inline,
+     * the least height its knob needs — holding the track, the detent and
+     * the knob at their places; the fractions of the length are set on it
+     * — {@code --sl-value}, {@code --sl-rest}, {@code --sl-from},
+     * {@code --sl-span} — and read by the parts that draw them.
+     */
+    public record el_slider_rail() implements CssClass<ElementStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Control.Slider.class, Size.Extent.class), of(Interactive.class, Affordance.Cursor.class)); }
+        @Override public String body() { return """
+            position: relative;
+            flex: none;
+            touch-action: none;
+            user-select: none;
+            """;
+        }
+    }
+
+    /** The track: the groove, sunk, across the rail at its middle. */
+    public record el_slider_track() implements CssClass<ElementStyles> {
+        @Override public List<? extends Wearable> wears() {
+            return List.of(of(Control.Slider.Track.class, Size.Extent.class), of(Control.Slider.Track.class, Shape.Corner.class), of(Control.Slider.Track.class, Shape.Rule.class),
+                           of(Recessed.class, Color.Surface.class), of(Muted.class, Color.Edge.class));
+        }
+        @Override public String body() { return """
+            position: absolute;
+            inset-inline: 0;
+            top: 50%;
+            translate: 0 -50%;
+            box-sizing: border-box;
+            overflow: hidden;
+            pointer-events: none;
+            """;
+        }
+    }
+
+    /** The fill: the track's inside from the detent to the value, in the primary surface. */
+    public record el_slider_fill() implements CssClass<ElementStyles> {
+        @Override public Set<CssVar> runtimeVars() { return Set.of(new CssVar("--sl-from"), new CssVar("--sl-span")); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Primary.class, Color.Surface.class)); }
+        @Override public String body() { return """
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: var(--sl-from, 0%);
+            width: var(--sl-span, 0%);
+            """;
+        }
+    }
+
+    /** The detent: the notch at the rest, drawn in muted ink at the design's width and height. */
+    public record el_slider_detent() implements CssClass<ElementStyles> {
+        @Override public Set<CssVar> runtimeVars() { return Set.of(new CssVar("--sl-rest")); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Detent.class, Size.Extent.class), of(Muted.class, Color.Ink.class)); }
+        @Override public String body() { return """
+            position: absolute;
+            top: 50%;
+            left: var(--sl-rest, 0%);
+            translate: -50% -50%;
+            background-color: currentColor;
+            pointer-events: none;
+            """;
+        }
+    }
+
+    /**
+     * The knob: raised, its diameter and corner the design's, the control's
+     * rule and ring by lineage — it is the focusable part, role slider —
+     * lifting under the hand as the design has a dragged thing lift.
+     */
+    public record el_slider_knob() implements CssClass<ElementStyles> {
+        @Override public Set<CssVar> runtimeVars() { return Set.of(new CssVar("--sl-value")); }
+        @Override public List<? extends Wearable> wears() {
+            return List.of(of(Control.Slider.Knob.class, Size.Extent.class), of(Control.Slider.Knob.class, Shape.Corner.class), of(Control.Slider.Knob.class, Shape.Rule.class),
+                           of(Raised.class, Color.Surface.class), of(Control.class, Color.Edge.class), of(Raised.class, Shape.Shadow.class),
+                           of(Dragging.class, Affordance.Cursor.class), of(Interactive.class, Motion.Ease.class));
+        }
+        @Override public String body() { return """
+            position: absolute;
+            top: 50%;
+            left: var(--sl-value, 0%);
+            translate: -50% -50%;
+            box-sizing: border-box;
+            outline: none;
+            """;
+        }
+    }
+
+    /** The knob in the hand: the dragged word's lift and shadow. */
+    public record el_slider_held() implements CssClass<ElementStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Dragging.class, Motion.Transform.class), of(Dragging.class, Shape.Shadow.class)); }
+        @Override public String body() { return ""; }
+    }
+
+    /** The readout after the rail: the value as the caller formats it, in a steady face, right-aligned. */
+    public record el_slider_readout() implements CssClass<ElementStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Label.class, Type.Scale.class), of(Code.class, Type.Face.class), of(Muted.class, Color.Ink.class)); }
+        @Override public String body() { return """
+            flex: none;
+            min-width: 4ch;
+            text-align: end;
+            white-space: nowrap;
+            """;
+        }
+    }
+
+    /** A slider that is off: inert, and says so. */
+    public record el_slider_off() implements CssClass<ElementStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Inert.class, Effect.Opacity.class), of(Inert.class, Affordance.Cursor.class)); }
+        @Override public String body() { return "pointer-events: none;"; }
     }
 
     // ── Card ──────────────────────────────────────────────────────────────────
@@ -251,6 +393,8 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
     public List<CssClass<ElementStyles>> cssClasses() {
         return List.of(new el_button(), new el_button_primary(), new el_button_secondary(), new el_button_danger(), new el_button_warning(), new el_button_success(),
                        new el_button_plain(), new el_button_on(), new el_button_off(),
+                       new el_slider(), new el_slider_label(), new el_slider_rail(), new el_slider_track(), new el_slider_fill(), new el_slider_detent(),
+                       new el_slider_knob(), new el_slider_held(), new el_slider_readout(), new el_slider_off(),
                        new el_card(), new el_card_action(), new el_card_head(), new el_card_title(), new el_badge(), new el_card_body(), new el_card_text(), new el_card_foot(), new el_card_link());
     }
 }

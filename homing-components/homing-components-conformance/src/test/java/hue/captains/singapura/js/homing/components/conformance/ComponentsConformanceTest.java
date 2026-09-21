@@ -130,7 +130,7 @@ class ComponentsConformanceTest {
         assertEquals(List.of("ui-elements", "ui-dialog", "ui-floating", "ui-preferences", "ui-split", "ui-panes", "ui-split-grid", "ui-icons", "ui-menu", "mpa"), vehicles, "one vehicle per crate that ships components, in closure order — the dialog requires the floating crate, so floating follows it; docking ships statics only");
         var root = (ComponentDetails.OfComposition) composed.detailsOf(composed.root().identity());
         assertEquals(10, root.vehicleCount());
-        assertEquals(23, root.componentCount(), "the components declared so far: 2 elements, 1 icon, 1 dialog, 7 preferences, 1 split, 2 panes, 2 floating, 2 split grid, 2 menus, 3 chrome");
+        assertEquals(24, root.componentCount(), "the components declared so far: 3 elements, 1 icon, 1 dialog, 7 preferences, 1 split, 2 panes, 2 floating, 2 split grid, 2 menus, 3 chrome");
         assertTrue(composed.root().children().stream().allMatch(v -> v.level() == TreeLevel.L1.INSTANCE), "every vehicle grafted one under the root");
         // what the components need of a page is derived from the catalogue: nothing invisible, nothing nameless
         assertEquals(List.of(), ContextMenuRegistry.validate(ComponentsConformance.TOP_LEVEL));
