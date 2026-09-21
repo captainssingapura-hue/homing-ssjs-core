@@ -46,7 +46,10 @@ class SliderTest extends JsModuleTestBase {
                     removeClass: function (e) { for (var i = 1; i < arguments.length; i++) e.classList.remove(arguments[i]); },
                     toggleClass: function (e, c, f) { e.classList.toggle(c, f); }, size: function (e, s) { e.size = s; }, extent: function () {}, aspect: function () {} };
         var el_slider = "el_slider", el_slider_label = "el_slider_label", el_slider_rail = "el_slider_rail", el_slider_track = "el_slider_track", el_slider_fill = "el_slider_fill",
-            el_slider_detent = "el_slider_detent", el_slider_knob = "el_slider_knob", el_slider_face = "el_slider_face", el_slider_mark = "el_slider_mark", el_slider_held = "el_slider_held", el_slider_face_held = "el_slider_face_held", el_slider_readout = "el_slider_readout", el_slider_off = "el_slider_off";
+            el_slider_detent = "el_slider_detent", el_slider_knob = "el_slider_knob", el_slider_face = "el_slider_face", el_slider_mark = "el_slider_mark", el_slider_held = "el_slider_held", el_slider_face_held = "el_slider_face_held", el_slider_readout = "el_slider_readout", el_slider_off = "el_slider_off",
+            el_slider_vertical = "el_slider_vertical", el_slider_rail_vertical = "el_slider_rail_vertical", el_slider_rail_ticked = "el_slider_rail_ticked", el_slider_track_vertical = "el_slider_track_vertical",
+            el_slider_fill_vertical = "el_slider_fill_vertical", el_slider_detent_vertical = "el_slider_detent_vertical", el_slider_cap = "el_slider_cap", el_slider_cap_face = "el_slider_cap_face", el_slider_cap_mark = "el_slider_cap_mark",
+            el_slider_tick = "el_slider_tick", el_slider_tick_vertical = "el_slider_tick_vertical", el_slider_tick_line = "el_slider_tick_line", el_slider_tick_line_vertical = "el_slider_tick_line_vertical", el_slider_tick_label = "el_slider_tick_label";
         var page = fakeBranch("page");
         var s = new SliderBuilder().label("The tabs' size").axis().format(function (v) { return v.toFixed(1); })
                     .onInput(function (v) { log.push("in:" + v); }).onChange(function (v) { log.push("change:" + v); }).build(page.createBranch("size"));
@@ -125,6 +128,37 @@ class SliderTest extends JsModuleTestBase {
         assertFalse(e.hasMember("defaulted"), "a key that is not the slider's passes");
         eval("log = []; knob.fire('keydown', { key: 'ArrowLeft' });");
         assertEquals("", log(), "at the bottom already: nothing");
+    }
+
+    /**
+     * Stood up as a fader: the value rises from the bottom, the knob is the cap,
+     * a scale of ticks sits beside the track, each at its height with its caption.
+     */
+    @Test
+    void stoodUp_theValueRisesFromTheBottom_theKnobIsTheCap_theTicksAtTheirHeights() {
+        eval("""
+            var f = new SliderBuilder().label("vocals").vertical().range(-60, 10, 1).detent(0).value(0).icon("level")
+                        .ticks([{ at: 10, label: "+10" }, { at: 0, label: "0" }, { at: -20, label: "-20" }, { at: -60, label: "-inf" }, { at: 99, label: "off the scale" }])
+                        .format(function (v) { return v + " dB"; }).onInput(function (v) { log.push("in:" + v); }).build(page.createBranch("vocals"));
+            var vr = f.root.children[1]; vr.rect = { left: 100, top: 0, width: 24, height: 200, right: 124, bottom: 200 };
+            var vk = vr.children[vr.children.length - 1];
+            var vticks = vr.children.filter(function (c) { return c.has("el_slider_tick"); });
+            function ins() { return log.filter(function (l) { return l.indexOf("in:") === 0; }).join(" "); }
+            """);
+        assertTrue(eval("f.root.has('el_slider_vertical') && vr.has('el_slider_rail_vertical') && vr.has('el_slider_rail_ticked')").asBoolean());
+        assertTrue(eval("vk.has('el_slider_cap') && !vk.has('el_slider_knob') && vk.children[0].has('el_slider_cap_face') && vk.children[1].has('el_slider_cap_mark') && vk.children[1].has('ic_level')").asBoolean(), "the cap, its face, its mark");
+        assertEquals("vertical", eval("vk.attr('aria-orientation')").asString());
+        assertEquals("4", eval("String(vticks.length)").asString(), "a tick per value on the scale; one off it is dropped");
+        assertEquals("100.000%,85.714%,57.143%,0.000%", eval("vticks.map(function (t) { return t.prop('--sl-tick'); }).join(',')").asString(), "each at its fraction of the length");
+        assertTrue(eval("vticks[0].has('el_slider_tick_vertical') && vticks[0].children[0].has('el_slider_tick_line_vertical') && vticks[0].children[1].textContent === '+10'").asBoolean());
+        assertEquals("85.714%", eval("vr.prop('--sl-value')").asString(), "at nought: six sevenths up");
+        // the rail is 200 tall from 0: a press at y=50 is three quarters up, which is -60 + 0.75 * 70 = -7.5, so -7 on the step
+        eval("log = []; vr.fire('pointerdown', { button: 0, pointerId: 9, clientX: 112, clientY: 50 });");
+        assertEquals("in:-7", eval("ins()").asString(), "from the bottom, on the step");
+        eval("log = []; vr.fire('pointermove', { clientX: 112, clientY: 200 }); vr.fire('pointerup', {});");
+        assertEquals("in:-60", eval("ins()").asString(), "the bottom is the least");
+        eval("f.size(1);");
+        assertEquals("1", eval("String(vticks[0].size)").asString(), "the ticks take the size with the rest");
     }
 
     @Test

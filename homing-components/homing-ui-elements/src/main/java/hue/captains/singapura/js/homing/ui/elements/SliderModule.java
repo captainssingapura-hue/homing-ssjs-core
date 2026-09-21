@@ -44,6 +44,20 @@ public record SliderModule() implements DomModule<SliderModule> {
                         new ElementStyles.el_slider_held(),
                         new ElementStyles.el_slider_face_held(),
                         new ElementStyles.el_slider_readout(),
+                        new ElementStyles.el_slider_vertical(),
+                        new ElementStyles.el_slider_rail_vertical(),
+                        new ElementStyles.el_slider_rail_ticked(),
+                        new ElementStyles.el_slider_track_vertical(),
+                        new ElementStyles.el_slider_fill_vertical(),
+                        new ElementStyles.el_slider_detent_vertical(),
+                        new ElementStyles.el_slider_cap(),
+                        new ElementStyles.el_slider_cap_face(),
+                        new ElementStyles.el_slider_cap_mark(),
+                        new ElementStyles.el_slider_tick(),
+                        new ElementStyles.el_slider_tick_vertical(),
+                        new ElementStyles.el_slider_tick_line(),
+                        new ElementStyles.el_slider_tick_line_vertical(),
+                        new ElementStyles.el_slider_tick_label(),
                         new ElementStyles.el_slider_off()
                 ), ElementStyles.INSTANCE))
                 .add(new ModuleImports<>(List.of(new IconModule.Icon()), IconModule.INSTANCE))

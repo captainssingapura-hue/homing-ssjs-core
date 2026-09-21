@@ -19,6 +19,10 @@
 //     .value(v)  .detent(v…)   where the knob rests: the fill runs from the first detent, else from min
 //     .icon(name)              the mark on the knob: an Icon word — "size", "aspect", "extent", "level" —
 //                              for what the slider sets; "grip" unless said; null for a bare knob
+//     .vertical()              stood up, as a fader: the value rises upward, the knob is the
+//                              design's cap — wide across the track, low along it — the
+//                              label above, the readout below
+//     .ticks([{ at, label }…]) a scale beside the track: a tick at each value, its caption
 //     .size(s)                 −1 … 1: every length the design gives the slider grows by its ratio
 //     .labelWidth(css)         one width for the labels of sliders that stack, so their rails align
 //   Slider:
@@ -60,9 +64,12 @@ class Slider {
         this._on = true;
         this._size = 0;
         this._pressed = null;    // the value at the press, while a hand is on the rail
+        this._vertical = !!p.vertical;
+        var vertical = this._vertical;
 
         var root = branch.createElement("slider", "div");
         css.addClass(root, el_slider);
+        if (vertical) css.addClass(root, el_slider_vertical);
         this.root = root;
         this._label = branch.createElement("label", "span");
         css.addClass(this._label, el_slider_label);
@@ -71,33 +78,60 @@ class Slider {
 
         var rail = branch.createElement("rail", "div");
         css.addClass(rail, el_slider_rail);
+        if (vertical) css.addClass(rail, el_slider_rail_vertical);
         this._rail = rail;
         var track = branch.createElement("track", "div");
         css.addClass(track, el_slider_track);
+        if (vertical) css.addClass(track, el_slider_track_vertical);
         this._fill = branch.createElement("fill", "div");
         css.addClass(this._fill, el_slider_fill);
+        if (vertical) css.addClass(this._fill, el_slider_fill_vertical);
         track.appendChild(this._fill);
         rail.appendChild(track);
         this._detent = null;
         if (this._detents.length) {
             this._detent = branch.createElement("detent", "div");
             css.addClass(this._detent, el_slider_detent);
+            if (vertical) css.addClass(this._detent, el_slider_detent_vertical);
             rail.appendChild(this._detent);
         }
+        // the scale: a tick at each value named, its caption beside it
+        this._ticks = [];
+        var ticks = Array.isArray(p.ticks) ? p.ticks : [];
+        for (var t = 0; t < ticks.length; t++) {
+            var at = Number(ticks[t] && ticks[t].at != null ? ticks[t].at : ticks[t]);
+            if (!(at >= this._min && at <= this._max)) continue;
+            var tick = branch.createElement("tick-" + t, "div");
+            css.addClass(tick, el_slider_tick);
+            if (vertical) css.addClass(tick, el_slider_tick_vertical);
+            tick.style.setProperty("--sl-tick", (this._fraction(at) * 100).toFixed(3) + "%");
+            var line = branch.createElement("tick-" + t + "-line", "div");
+            css.addClass(line, el_slider_tick_line);
+            if (vertical) css.addClass(line, el_slider_tick_line_vertical);
+            tick.appendChild(line);
+            var caption = branch.createElement("tick-" + t + "-label", "span");
+            css.addClass(caption, el_slider_tick_label);
+            caption.textContent = ticks[t] && ticks[t].label != null ? String(ticks[t].label) : this._format(at);
+            tick.appendChild(caption);
+            rail.appendChild(tick);
+            this._ticks.push(tick, line, caption);
+        }
+        if (this._ticks.length) css.addClass(rail, el_slider_rail_ticked);
+        // the knob — the cap, when stood up
         var knob = branch.createElement("knob", "div");
-        css.addClass(knob, el_slider_knob);
+        css.addClass(knob, vertical ? el_slider_cap : el_slider_knob);
         knob.setAttribute("role", "slider");
         knob.setAttribute("tabindex", "0");
         knob.setAttribute("aria-valuemin", String(this._min));
         knob.setAttribute("aria-valuemax", String(this._max));
-        knob.setAttribute("aria-orientation", "horizontal");
+        knob.setAttribute("aria-orientation", vertical ? "vertical" : "horizontal");
         if (p.label != null) knob.setAttribute("aria-label", String(p.label));
         this._knob = knob;
         this._face = branch.createElement("face", "div");
-        css.addClass(this._face, el_slider_face);
+        css.addClass(this._face, vertical ? el_slider_cap_face : el_slider_face);
         knob.appendChild(this._face);
         this._mark = new Icon(branch.createElement("mark", Icon.TAG), null);
-        css.addClass(this._mark.el, el_slider_mark);
+        css.addClass(this._mark.el, vertical ? el_slider_cap_mark : el_slider_mark);
         knob.appendChild(this._mark.el);
         this.icon(p.icon === undefined ? "grip" : p.icon);
         rail.appendChild(knob);
@@ -106,7 +140,7 @@ class Slider {
         this._readout = branch.createElement("readout", "span");
         css.addClass(this._readout, el_slider_readout);
         root.appendChild(this._readout);
-        this._parts = [root, this._label, rail, track, this._fill, knob, this._face, this._mark.el, this._readout];
+        this._parts = [root, this._label, rail, track, this._fill, knob, this._face, this._mark.el, this._readout].concat(this._ticks);
         if (this._detent) this._parts.push(this._detent);
 
         this._value = this._snap(p.value == null ? this._rest() : Number(p.value), false);
@@ -115,7 +149,7 @@ class Slider {
         if (p.labelWidth != null) this.labelWidth(p.labelWidth);
 
         // the hand: a press anywhere on the rail jumps and grabs; captured at the press
-        this._onMove = function (ev) { self._set(self._fromPointer(ev.clientX), true, false); };
+        this._onMove = function (ev) { self._set(self._fromPointer(ev), true, false); };
         this._onUp = function () { self._release(); };
         rail.addEventListener("pointerdown", function (ev) {
             if (!self._on || (ev.button != null && ev.button !== 0)) return;
@@ -124,7 +158,7 @@ class Slider {
             try { rail.setPointerCapture(ev.pointerId); } catch (e) {}
             css.addClass(knob, el_slider_held);
             css.addClass(self._face, el_slider_face_held);
-            self._set(self._fromPointer(ev.clientX), true, false);
+            self._set(self._fromPointer(ev), true, false);
             try { knob.focus({ preventScroll: true }); } catch (e) {}
             rail.addEventListener("pointermove", self._onMove);
             rail.addEventListener("pointerup", self._onUp);
@@ -161,9 +195,10 @@ class Slider {
         return Math.max(this._min, Math.min(this._max, v));
     }
     _fraction(v) { return (v - this._min) / (this._max - this._min); }
-    _fromPointer(clientX) {
+    /** The value under the pointer: along the rail, from the left — or, stood up, from the bottom. */
+    _fromPointer(ev) {
         var r = this._rail.getBoundingClientRect();
-        var f = r.width > 0 ? (clientX - r.left) / r.width : 0;
+        var f = this._vertical ? (r.height > 0 ? (r.bottom - ev.clientY) / r.height : 0) : (r.width > 0 ? (ev.clientX - r.left) / r.width : 0);
         return this._min + Math.max(0, Math.min(1, f)) * (this._max - this._min);
     }
     _set(raw, bite, commit) {
@@ -249,6 +284,8 @@ class SliderBuilder {
     size(s)               { this._props.size = s; return this; }
     labelWidth(w)         { this._props.labelWidth = w; return this; }
     icon(name)            { this._props.icon = name; return this; }
+    vertical()            { this._props.vertical = true; return this; }
+    ticks(list)           { this._props.ticks = list; return this; }
     build(branch) {
         if (!branch) throw new Error("[SliderBuilder] build wants the sub-branch the caller made for the slider");
         return new Slider(branch, this._props);

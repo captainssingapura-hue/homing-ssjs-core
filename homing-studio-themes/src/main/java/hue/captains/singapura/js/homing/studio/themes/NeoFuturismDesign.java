@@ -295,7 +295,7 @@ final class NeoFuturismDesign {
             measure(of(Control.Tab.class, Size.Extent.class), "184px", 1.25),
             proportion(of(Control.Tab.class, Size.Proportion.class), "6.5", 1.5),
             // a slider: the track's length and the room its knob needs; the groove, the knob, the notch
-            measureAndHeight(of(Control.Slider.class, Size.Extent.class), "240px", "22px", 1.3),
+            extent(of(Control.Slider.class, Size.Extent.class), "240px", "22px", 1.3),
             inset(of(Control.Slider.class, Size.Inset.class), "4px", "0", 1.3),
             gap(of(Control.Slider.class, Size.Gap.class), "12px", 1.3),
             thickness(of(Control.Slider.Track.class, Size.Extent.class), "2px", 1.3),
@@ -307,6 +307,12 @@ final class NeoFuturismDesign {
             one(of(Control.Slider.Knob.class, Shape.Clip.class), "polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%)"),
             one(of(Control.Slider.Knob.class, Effect.Opacity.class), "0"),   // the knob is its mark alone: no face
             scale(of(Control.Slider.Knob.class, Type.Scale.class), "18px", "1", 1.3),   // the mark's size
+            // a vertical slider's cap: low along the track, wide across it; and the ticks of a scale beside a track
+            extent(of(Control.Slider.Cap.class, Size.Extent.class), "12px", "26px", 1.3),
+            one(of(Control.Slider.Cap.class, Shape.Corner.class), "2px"),
+            ruleWithFocusRing(of(Control.Slider.Cap.class, Shape.Rule.class), "0", "none", "1px", "solid", "2px"),
+            scale(of(Control.Slider.Cap.class, Type.Scale.class), "10px", "1", 1.3),
+            extent(of(Tick.class, Size.Extent.class), "1px", "6px", 1.3),
             extent(of(Detent.class, Size.Extent.class), "1px", "10px", 1.3),
             // a menu: a container of options that opens at a point; an option: one row of it
             one(of(Container.Menu.class, Shape.Corner.class), "2px"),

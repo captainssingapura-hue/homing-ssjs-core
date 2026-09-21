@@ -56,6 +56,13 @@ public interface Box extends Semantic {
              * not, so the ring survives any cut; a cut edge carries no rule.
              */
             public record Knob() implements Box {}
+            /**
+             * The cap: what the hand takes on a vertical slider — a fader's,
+             * wide across the track and low along it, so the finger has it;
+             * its extent along and across, its corner, its ring on focus, and
+             * the size of the mark on it. Always a face.
+             */
+            public record Cap() implements Box {}
         }
     }
 

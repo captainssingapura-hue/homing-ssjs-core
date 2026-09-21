@@ -161,7 +161,7 @@ final class SketchyDesign {
             measure(of(Control.Tab.class, Size.Extent.class), "160px", 1.35),
             proportion(of(Control.Tab.class, Size.Proportion.class), "5", 1.5),
             // a slider: the track's length and the room its knob needs; the groove, the knob, the notch
-            measureAndHeight(of(Control.Slider.class, Size.Extent.class), "220px", "26px", 1.35),
+            extent(of(Control.Slider.class, Size.Extent.class), "220px", "26px", 1.35),
             inset(of(Control.Slider.class, Size.Inset.class), "4px", "0", 1.35),
             gap(of(Control.Slider.class, Size.Gap.class), "12px", 1.35),
             thickness(of(Control.Slider.Track.class, Size.Extent.class), "5px", 1.35),
@@ -173,6 +173,12 @@ final class SketchyDesign {
             one(of(Control.Slider.Knob.class, Shape.Clip.class), "none"),
             one(of(Control.Slider.Knob.class, Effect.Opacity.class), "1"),   // a faced knob, the mark inside it
             scale(of(Control.Slider.Knob.class, Type.Scale.class), "12px", "1", 1.35),   // the mark's size
+            // a vertical slider's cap: low along the track, wide across it; and the ticks of a scale beside a track
+            extent(of(Control.Slider.Cap.class, Size.Extent.class), "15px", "30px", 1.35),
+            one(of(Control.Slider.Cap.class, Shape.Corner.class), "5px 3px 4px 6px / 3px 5px 6px 4px"),
+            ruleWithFocusRing(of(Control.Slider.Cap.class, Shape.Rule.class), "0", "none", "2px", "dashed", "3px"),
+            scale(of(Control.Slider.Cap.class, Type.Scale.class), "12px", "1", 1.35),
+            extent(of(Tick.class, Size.Extent.class), "2px", "8px", 1.35),
             extent(of(Detent.class, Size.Extent.class), "2px", "14px", 1.35),
             // a menu: a container of options that opens at a point; an option: one row of it
             one(of(Container.Menu.class, Shape.Corner.class), "8px 6px 7px 9px / 6px 8px 9px 7px"),

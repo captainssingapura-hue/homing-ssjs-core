@@ -154,7 +154,7 @@ final class NeumorphismDesign {
             measure(of(Control.Tab.class, Size.Extent.class), "168px", 1.3),
             proportion(of(Control.Tab.class, Size.Proportion.class), "5", 1.5),
             // a slider: the track's length and the room its knob needs; the groove, the knob, the notch
-            measureAndHeight(of(Control.Slider.class, Size.Extent.class), "220px", "28px", 1.3),
+            extent(of(Control.Slider.class, Size.Extent.class), "220px", "28px", 1.3),
             inset(of(Control.Slider.class, Size.Inset.class), "4px", "0", 1.3),
             gap(of(Control.Slider.class, Size.Gap.class), "12px", 1.3),
             thickness(of(Control.Slider.Track.class, Size.Extent.class), "8px", 1.3),
@@ -166,6 +166,12 @@ final class NeumorphismDesign {
             one(of(Control.Slider.Knob.class, Shape.Clip.class), "none"),
             one(of(Control.Slider.Knob.class, Effect.Opacity.class), "1"),   // a faced knob, the mark inside it
             scale(of(Control.Slider.Knob.class, Type.Scale.class), "12px", "1", 1.3),   // the mark's size
+            // a vertical slider's cap: low along the track, wide across it; and the ticks of a scale beside a track
+            extent(of(Control.Slider.Cap.class, Size.Extent.class), "16px", "30px", 1.3),
+            one(of(Control.Slider.Cap.class, Shape.Corner.class), "6px"),
+            ruleWithFocusRing(of(Control.Slider.Cap.class, Shape.Rule.class), "0", "none", "2px", "solid", "2px"),
+            scale(of(Control.Slider.Cap.class, Type.Scale.class), "11px", "1", 1.3),
+            extent(of(Tick.class, Size.Extent.class), "1px", "6px", 1.3),
             extent(of(Detent.class, Size.Extent.class), "2px", "10px", 1.3),
             // a menu: a container of options that opens at a point; an option: one row of it
             one(of(Container.Menu.class, Shape.Corner.class), "14px"),

@@ -237,7 +237,7 @@ final class Bind {
     static Map.Entry<DesignClass<?>, Impl> measure(DesignClass<?> cls, String inlineSize, double ratio) {
         return Map.entry(cls, Impl.Bindings.none().at(State.REST, "inline-size", inlineSize).grows("inline-size", ratio));
     }
-    /** A Size.Extent in both directions: a box's inline size and its block size, growing by {@code ratio}. */
+    /** A Size.Extent in both directions: a box's inline size and its block size, growing by {@code ratio} — a slider's length and the room across it, a cap's along and across; logical, so a rail stood up turns them with it. */
     static Map.Entry<DesignClass<?>, Impl> extent(DesignClass<?> cls, String inlineSize, String blockSize, double ratio) {
         return Map.entry(cls, Impl.Bindings.none().at(State.REST, "inline-size", inlineSize).at(State.REST, "block-size", blockSize).grows("inline-size", ratio).grows("block-size", ratio));
     }
@@ -249,11 +249,6 @@ final class Bind {
     static Map.Entry<DesignClass<?>, Impl> thickness(DesignClass<?> cls, String blockSize, double ratio) {
         return Map.entry(cls, Impl.Bindings.none().at(State.REST, "block-size", blockSize).grows("block-size", ratio));
     }
-    /** A Size.Extent that is a control's measure inline and the least height it needs — a slider's track and the room its knob takes. */
-    static Map.Entry<DesignClass<?>, Impl> measureAndHeight(DesignClass<?> cls, String inlineSize, String minHeight, double ratio) {
-        return Map.entry(cls, Impl.Bindings.none().at(State.REST, "inline-size", inlineSize).at(State.REST, "min-height", minHeight).grows("inline-size", ratio).grows("min-height", ratio));
-    }
-
     /** A Size.Extent: the least a box may be inline, growing by {@code ratio}. */
     static Map.Entry<DesignClass<?>, Impl> minWidth(DesignClass<?> cls, String minWidth, double ratio) {
         return Map.entry(cls, Impl.Bindings.none().at(State.REST, "min-width", minWidth).grows("min-width", ratio));

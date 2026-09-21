@@ -24,6 +24,7 @@ import static hue.captains.singapura.js.homing.design.Interaction.Interactive;
 import static hue.captains.singapura.js.homing.design.Layer.Raised;
 import static hue.captains.singapura.js.homing.design.Layer.Recessed;
 import static hue.captains.singapura.js.homing.design.Structure.Detent;
+import static hue.captains.singapura.js.homing.design.Structure.Tick;
 import static hue.captains.singapura.js.homing.design.Pairing.OnDanger;
 import static hue.captains.singapura.js.homing.design.Pairing.OnPrimary;
 import static hue.captains.singapura.js.homing.design.Pairing.OnSecondary;
@@ -315,6 +316,184 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
         }
     }
 
+    // ── Slider, vertical: a fader ─────────────────────────────────────────────
+    //
+    // The same words, turned: the rail takes a vertical writing mode, so the
+    // design's extent — its length inline, its room across — stands up with
+    // it, and the parts are placed from the bottom by the same fractions. A
+    // vertical slider's knob is the cap, wide across the track and low along
+    // it; the mark on it is set upright again.
+
+    /** The slider stood up: label above, rail, readout below. */
+    public record el_slider_vertical() implements CssClass<ElementStyles> {
+        @Override public String body() { return """
+            flex-direction: column;
+            align-items: center;
+            """;
+        }
+    }
+
+    /** The rail stood up: the design's inline length runs downward, its block room across. */
+    public record el_slider_rail_vertical() implements CssClass<ElementStyles> {
+        @Override public String body() { return "writing-mode: vertical-lr;"; }
+    }
+
+    /** A rail with a scale beside it leaves the room the ticks' captions take, after it in the block direction: below a flat one, beside a standing one. */
+    public record el_slider_rail_ticked() implements CssClass<ElementStyles> {
+        @Override public String body() { return "margin-block-end: 2.2em;"; }
+    }
+
+    /** The track stood up: across the rail's middle, top to bottom. */
+    public record el_slider_track_vertical() implements CssClass<ElementStyles> {
+        @Override public String body() { return """
+            inset-inline: auto;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            translate: -50% 0;
+            """;
+        }
+    }
+
+    /** The fill stood up: from the detent's height to the value's. */
+    public record el_slider_fill_vertical() implements CssClass<ElementStyles> {
+        @Override public Set<CssVar> runtimeVars() { return Set.of(new CssVar("--sl-from"), new CssVar("--sl-span")); }
+        @Override public String body() { return """
+            left: 0;
+            right: 0;
+            top: auto;
+            width: auto;
+            bottom: var(--sl-from, 0%);
+            height: var(--sl-span, 0%);
+            """;
+        }
+    }
+
+    /** The detent stood up: at its height, across the track. */
+    public record el_slider_detent_vertical() implements CssClass<ElementStyles> {
+        @Override public Set<CssVar> runtimeVars() { return Set.of(new CssVar("--sl-rest")); }
+        @Override public String body() { return """
+            top: auto;
+            left: 50%;
+            bottom: var(--sl-rest, 0%);
+            translate: -50% 50%;
+            """;
+        }
+    }
+
+    /**
+     * The cap: a vertical slider's knob — the box the hand takes and the
+     * keys go to, at the cap's extent (low along the track, wide across it),
+     * ringed on focus by the cap's own rule, placed at the value's height.
+     */
+    public record el_slider_cap() implements CssClass<ElementStyles> {
+        @Override public Set<CssVar> runtimeVars() { return Set.of(new CssVar("--sl-value")); }
+        @Override public List<? extends Wearable> wears() {
+            return List.of(of(Control.Slider.Cap.class, Size.Extent.class), of(Control.Slider.Cap.class, Shape.Rule.class), of(Control.class, Color.Edge.class),
+                           of(Dragging.class, Affordance.Cursor.class), of(Interactive.class, Motion.Ease.class));
+        }
+        @Override public String body() { return """
+            position: absolute;
+            left: 50%;
+            bottom: var(--sl-value, 0%);
+            translate: -50% 50%;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            outline: none;
+            """;
+        }
+    }
+
+    /** The cap's face: always there — a fader is held by its cap — raised, the control's rule and edge, the cap's corner. */
+    public record el_slider_cap_face() implements CssClass<ElementStyles> {
+        @Override public List<? extends Wearable> wears() {
+            return List.of(of(Control.Slider.Cap.class, Shape.Corner.class), of(Control.class, Shape.Rule.class),
+                           of(Raised.class, Color.Surface.class), of(Control.class, Color.Edge.class), of(Raised.class, Shape.Shadow.class), of(Interactive.class, Motion.Ease.class));
+        }
+        @Override public String body() { return """
+            position: absolute;
+            inset: 0;
+            box-sizing: border-box;
+            """;
+        }
+    }
+
+    /** The mark on the cap, upright again, at the size the design gives a cap's mark. */
+    public record el_slider_cap_mark() implements CssClass<ElementStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Control.Slider.Cap.class, Type.Scale.class)); }
+        @Override public String body() { return """
+            position: relative;
+            writing-mode: horizontal-tb;
+            """;
+        }
+    }
+
+    /**
+     * A tick of a scale: a line at a value, its caption beside it; placed
+     * after the rail in the block direction — below a flat slider, in a
+     * column; beside a standing one, in a row. Upright whatever the rail.
+     */
+    public record el_slider_tick() implements CssClass<ElementStyles> {
+        @Override public Set<CssVar> runtimeVars() { return Set.of(new CssVar("--sl-tick")); }
+        @Override public String body() { return """
+            position: absolute;
+            left: var(--sl-tick, 0%);
+            top: 100%;
+            translate: -50% 0;
+            margin-top: 2px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            writing-mode: horizontal-tb;
+            pointer-events: none;
+            """;
+        }
+    }
+
+    /** A tick beside a standing rail: at its height, to the right, a row. */
+    public record el_slider_tick_vertical() implements CssClass<ElementStyles> {
+        @Override public Set<CssVar> runtimeVars() { return Set.of(new CssVar("--sl-tick")); }
+        @Override public String body() { return """
+            left: 100%;
+            top: auto;
+            bottom: var(--sl-tick, 0%);
+            translate: 0 50%;
+            margin-top: 0;
+            margin-left: 3px;
+            flex-direction: row;
+            gap: 4px;
+            """;
+        }
+    }
+
+    /** The tick's line: the design's tick, along and across the track, in muted ink. */
+    public record el_slider_tick_line() implements CssClass<ElementStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Tick.class, Size.Extent.class), of(Muted.class, Color.Ink.class)); }
+        @Override public String body() { return """
+            flex: none;
+            background-color: currentColor;
+            """;
+        }
+    }
+
+    /** The tick's line beside a standing rail: turned with it, so along is up and across is level. */
+    public record el_slider_tick_line_vertical() implements CssClass<ElementStyles> {
+        @Override public String body() { return "writing-mode: vertical-lr;"; }
+    }
+
+    /** The tick's caption: its number, small and muted, in a steady face. */
+    public record el_slider_tick_label() implements CssClass<ElementStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Caption.class, Type.Scale.class), of(Code.class, Type.Face.class), of(Muted.class, Color.Ink.class)); }
+        @Override public String body() { return """
+            line-height: 1;
+            white-space: nowrap;
+            """;
+        }
+    }
+
     /** A slider that is off: inert, and says so. */
     public record el_slider_off() implements CssClass<ElementStyles> {
         @Override public List<? extends Wearable> wears() { return List.of(of(Inert.class, Effect.Opacity.class), of(Inert.class, Affordance.Cursor.class)); }
@@ -434,7 +613,10 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
         return List.of(new el_button(), new el_button_primary(), new el_button_secondary(), new el_button_danger(), new el_button_warning(), new el_button_success(),
                        new el_button_plain(), new el_button_on(), new el_button_off(),
                        new el_slider(), new el_slider_label(), new el_slider_rail(), new el_slider_track(), new el_slider_fill(), new el_slider_detent(),
-                       new el_slider_knob(), new el_slider_face(), new el_slider_mark(), new el_slider_held(), new el_slider_face_held(), new el_slider_readout(), new el_slider_off(),
+                       new el_slider_knob(), new el_slider_face(), new el_slider_mark(), new el_slider_held(), new el_slider_face_held(), new el_slider_readout(),
+                       new el_slider_vertical(), new el_slider_rail_vertical(), new el_slider_rail_ticked(), new el_slider_track_vertical(), new el_slider_fill_vertical(), new el_slider_detent_vertical(),
+                       new el_slider_cap(), new el_slider_cap_face(), new el_slider_cap_mark(), new el_slider_tick(), new el_slider_tick_vertical(), new el_slider_tick_line(), new el_slider_tick_line_vertical(), new el_slider_tick_label(),
+                       new el_slider_off(),
                        new el_card(), new el_card_action(), new el_card_head(), new el_card_title(), new el_badge(), new el_card_body(), new el_card_text(), new el_card_foot(), new el_card_link());
     }
 }
