@@ -50,7 +50,8 @@ public record DefaultJsRulePolicy() implements JsRulePolicy {
      * The full <b>DOM-owner</b> discipline, shared by {@code CONSUMER} and
      * {@code PRIMITIVE}: DOM ownership plus typed css, no inline styling / literal
      * colour / SVG presentation attributes, owned DOM construction (DomOpsParty),
-     * the href manager, no import redeclaration, and the pure-view doctrines.
+     * the href manager, no import redeclaration, the pure-view doctrines, and
+     * the keys through the party — no key listener of a module's own.
      *
      * <p>A consumer view and a structural primitive both <b>build and style
      * DOM</b>, so both owe the same static discipline — otherwise styling simply
@@ -68,7 +69,8 @@ public record DefaultJsRulePolicy() implements JsRulePolicy {
             UseDomOpsPartyRule.INSTANCE,
             NoRawHrefRule.INSTANCE,
             NoManagerRedeclarationRule.INSTANCE,
-            ViewDoctrineRule.INSTANCE);
+            ViewDoctrineRule.INSTANCE,
+            KeysThroughThePartyRule.INSTANCE);
 
     /** No-DOM modules: global + may-not-touch-the-DOM-at-all — the <b>headless lane</b>. */
     public static final List<JsRule> NO_DOM = concat(GLOBAL,
