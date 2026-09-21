@@ -7,7 +7,7 @@
 //   MenuEvents.Opened(menuKind, x, y)      a menu of this kind opened at a point
 //   MenuEvents.Picked(menuKind, itemId)    an item of the open menu was picked
 //   MenuEvents.Closed(menuKind, reason)    it closed: pick | escape | outside |
-//                                          scroll | blur | replaced | owner
+//                                          scroll | blur | taken | replaced | owner
 //   MenuEvents.KINDS                       the kinds, in this order
 //   MenuEvents.REASONS                     the reasons a menu closes
 //
@@ -26,7 +26,7 @@ function _finite(v, what) {
 
 class MenuEvents {
     static KINDS = Object.freeze(["Opened", "Picked", "Closed"]);
-    static REASONS = Object.freeze(["pick", "escape", "outside", "scroll", "blur", "replaced", "owner"]);
+    static REASONS = Object.freeze(["pick", "escape", "outside", "scroll", "blur", "taken", "replaced", "owner"]);
 
     /** A menu of this kind opened, its top-left at this point of the viewport. */
     static Opened(menuKind, x, y) {

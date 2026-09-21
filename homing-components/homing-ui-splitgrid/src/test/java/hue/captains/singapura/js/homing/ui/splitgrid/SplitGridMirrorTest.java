@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -55,12 +56,13 @@ class SplitGridMirrorTest extends JsModuleTestBase {
         var mirror = new SplitGridMirror(branch.createBranch("mirror"), { host: host, scale: 0.5, onEvent: function (ev) { log.push(ev.kind === "CursorMoved" ? "cursor:" + ev.cellId + "/" + ev.by : ev.kind); } });
         mirror.reflect(LAYOUT, { w: 1007, h: 607 });
         function boxes() { return mirror.el.children.map(function (b) { return b.getAttribute("data-cell") + (b.has("sgm_cell_current") ? "*" : "") + "@" + [b.prop("--sgm-x"), b.prop("--sgm-y"), b.prop("--sgm-w"), b.prop("--sgm-h")].join(","); }).join(" "); }
-        function key(k) { mirror.el.fire("keydown", { key: k }); }
+        function key(k) { return mirror.key({ key: k }); }   // from whoever holds the keys for the mirror: no keydown listener of its own
         """;
 
     @BeforeEach
     void load() {
         js = buildContext();
+        loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeysModule.js");
         loadModule(P + "SplitGridEventsModule.js");
         loadModule(P + "SplitGridTreeModule.js");
         loadModule(P + "SplitGridGeometryModule.js");
@@ -84,7 +86,9 @@ class SplitGridMirrorTest extends JsModuleTestBase {
 
     @Test
     void theArrowsMoveTheCursorByTheWorkspacesRule_andStopAtAnEdge() {
-        eval("log.length = 0; key('ArrowRight'); key('ArrowDown'); key('ArrowDown'); key('ArrowLeft'); key('ArrowUp');");
+        assertEquals("0", eval("String((mirror.el.listeners.keydown || []).length)").asString(), "the keys come through the party");
+        assertEquals("true,true,true,true,true", eval("log.length = 0; [key('ArrowRight'), key('ArrowDown'), key('ArrowDown'), key('ArrowLeft'), key('ArrowUp')].join()").asString(), "an arrow is taken, at an edge too");
+        assertFalse(eval("key('Enter')").asBoolean(), "another key is left");
         assertEquals("cursor:demo/right cursor:explain/down cursor:nav/left", log(), "down at the bottom and up at the top move nothing and say nothing");
         assertEquals("nav", eval("mirror.cursor()").asString());
         assertTrue(eval("mirror.el.children[0].has('sgm_cell_current') && mirror.el.children[0].getAttribute('aria-current') === 'true' && !mirror.el.children[1].has('sgm_cell_current')").asBoolean());

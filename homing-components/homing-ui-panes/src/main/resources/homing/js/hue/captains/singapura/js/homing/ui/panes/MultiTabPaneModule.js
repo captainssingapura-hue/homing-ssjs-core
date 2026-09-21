@@ -4,7 +4,7 @@
 // component: the caller makes a sub-branch for it and hands it in; dispose()
 // dissolves it.
 //
-//   new MultiTabPane(branch, { host, slotId?, budget?, addable?, onEvent?, menus? })
+//   new MultiTabPane(branch, { host, slotId?, budget?, addable?, onEvent?, menus?, keyboard?, keyboardId? })
 //     branch: the pane's own, handed unactivated
 //     host:   a flex column; the pane is its item and fills it.
 //     menus:  the page's ContextMenuSteward, when the page offers menus: a
@@ -15,6 +15,13 @@
 //             tab record, the chip. The steward says whether it took the
 //             request; only then is the browser's menu suppressed. What a
 //             pick does — detach, close — is the page's handler for "tab".
+//     keyboard: the page's KeyboardSteward: the pane joins the keyboard party as
+//             keyboardId (its branch's name, unless said) and claims by the
+//             convention — a press or the focus arriving anywhere in it. It holds
+//             the keys for what is inside: a key goes to the strip (Enter, Space,
+//             the menu key on a focused chip), then to the active tab's widget by
+//             its key(ev), when it has one; the strip and the widgets are built
+//             without a steward of their own. No keydown listener of its own.
 //
 //   pane.addTab({ id, title, widget, pinned?, closable? })  → index; the widget
 //       is an instance by the base's contract: root, setActive?, dispose?.
@@ -99,6 +106,12 @@ class MultiTabPane {
             onDrop: function (chip, dest) { var i = self._findChip(chip); if (i >= 0) self.moveTab(self._tabs[i].id, dest); }
         });
         root.appendChild(this._strip.el);
+        this._kb = null; this._kbId = null; this._offKeys = null;
+        if (opts.keyboard) {
+            this._kb = opts.keyboard;
+            this._kbId = this._kb.join(opts.keyboardId != null ? String(opts.keyboardId) : branch.name, { keyDown: function (ev) { return self.key(ev); } });
+            this._offKeys = Keys.claimOn(root, this._kb, this._kbId);
+        }
 
         this._content = branch.createElement("content", "div");
         css.addClass(this._content, mtp_content);
@@ -298,9 +311,18 @@ class MultiTabPane {
         for (var i = 0; i < this._tabs.length; i++) list.push({ id: this._tabs[i].id, title: this._tabs[i].tab.title, pinned: this._tabs[i].pinned });
         return { slotId: this.slotId, activeTabId: this._activeId, tabs: list };
     }
+    /** A keydown while the pane holds the keys: the strip first, then the active tab's widget; true when taken. */
+    key(ev) {
+        if (this._strip.key(ev)) return true;
+        var i = this._activeId === null ? -1 : this._find(this._activeId), w = i < 0 ? null : this._tabs[i].widget;
+        return !!(w && typeof w.key === "function" && w.key(ev));
+    }
+
     dispose() {
         if (this._disposed) return;
         this._disposed = true;
+        if (this._offKeys) { this._offKeys(); this._offKeys = null; }
+        if (this._kb) { this._kb.leave(this._kbId); this._kb = null; }
         for (var i = 0; i < this._tabs.length; i++) {
             var w = this._tabs[i].widget;
             if (typeof w.dispose === "function") {

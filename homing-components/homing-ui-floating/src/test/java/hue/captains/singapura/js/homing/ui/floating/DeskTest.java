@@ -73,7 +73,9 @@ class DeskTest extends JsModuleTestBase {
             };
         }
         var events = [];
-        var desk = new Desk(branch.createBranch("desk"), { host: host, onEvent: function (ev) {
+        var members = {}, kbLog = [];
+        var kb = { join: function (id, h) { members[id] = h; kbLog.push("join:" + id); return id; }, leave: function (id) { delete members[id]; kbLog.push("leave:" + id); }, claim: function (id) { kbLog.push("claim:" + id); }, release: function () {} };
+        var desk = new Desk(branch.createBranch("desk"), { host: host, keyboard: kb, onEvent: function (ev) {
             events.push(ev);
             switch (ev.kind) {
                 case "Opened":  log.push("opened:" + ev.id + "@" + ev.x + "," + ev.y + ":" + ev.w + "x" + ev.h); break;
@@ -92,6 +94,7 @@ class DeskTest extends JsModuleTestBase {
     @BeforeEach
     void load() {
         js = buildContext();
+        loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeysModule.js");
         loadModule(EVENTS);
         loadModule(PANE);
         loadModule(DESK);
@@ -136,11 +139,30 @@ class DeskTest extends JsModuleTestBase {
     }
 
     @Test
+    void theActivePanesWidgetGetsTheKeysFirst_thenTheDesk() {
+        eval("""
+            var w = { root: el("w-k"), key: function (ev) { log.push("w:" + ev.key); return ev.key === "ArrowUp"; } };
+            desk.open({ id: "k", title: "K", widget: w }); desk.open({ id: "n", title: "N" }); log.length = 0;
+            """);
+        assertFalse(eval("members.desk.keyDown({ key: 'ArrowUp' })").asBoolean(), "the active pane has no widget with keys, and ArrowUp is not the desk's");
+        eval("desk.raise('k'); log.length = 0;");
+        assertTrue(eval("members.desk.keyDown({ key: 'ArrowUp' })").asBoolean(), "the active pane's widget took it");
+        assertFalse(eval("members.desk.keyDown({ key: 'Enter' })").asBoolean(), "left by the widget, not the desk's");
+        assertTrue(eval("members.desk.keyDown({ key: 'Escape' })").asBoolean(), "left by the widget: the desk closes the pane");
+        assertEquals("w:ArrowUp w:Enter w:Escape dissolved:k closed:k raised:n", log());
+        eval("kbLog = []; desk.dispose()");
+        assertEquals("leave:desk", eval("kbLog.join(' ')").asString());
+    }
+
+    @Test
     void theCrossAndEscapeClose_EscapeOnlyTheActiveClosableOne() {
         eval("desk.open({ id: 'a', title: 'A', closable: false }); desk.open({ id: 'b', title: 'B' }); log.length = 0;");
-        eval("desk.pane('b').root.fire('keydown', { key: 'Escape' });");
+        assertEquals("join:desk", eval("kbLog.join(' ')").asString(), "the desk joined the party as its branch's name; the convention on its floor");
+        assertEquals("0", eval("String((desk.pane('b').root.listeners.keydown || []).length)").asString(), "no keydown listener on a pane: the keys come through the party");
+        assertTrue(eval("members.desk.keyDown({ key: 'Escape' })").asBoolean(), "Escape, from the steward: the active pane closes");
         assertEquals("dissolved:b closed:b raised:a", log());
-        eval("log.length = 0; desk.pane('a').root.fire('keydown', { key: 'Escape' });");
+        eval("log.length = 0;");
+        assertFalse(eval("members.desk.keyDown({ key: 'Escape' })").asBoolean(), "a pane that cannot be closed leaves Escape");
         assertEquals("", log(), "a pane that cannot be closed ignores Escape");
         assertEquals(1, eval("headOf('a').children.length").asInt(), "no cross on a pane that cannot be closed");
         eval("desk.open({ id: 'c', title: 'C' }); log.length = 0; headOf('c').children[1].fire('click', {});");

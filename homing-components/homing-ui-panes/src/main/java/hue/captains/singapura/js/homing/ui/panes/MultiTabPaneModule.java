@@ -1,6 +1,9 @@
 package hue.captains.singapura.js.homing.ui.panes;
 
 import hue.captains.singapura.js.homing.component.BranchComponent;
+import hue.captains.singapura.js.homing.component.keyboard.KeyBinding;
+import hue.captains.singapura.js.homing.component.keyboard.KeysModule;
+import hue.captains.singapura.js.homing.component.keyboard.NeedKeyboard;
 import hue.captains.singapura.js.homing.core.DomModule;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
@@ -38,10 +41,14 @@ import java.util.Set;
 public record MultiTabPaneModule() implements DomModule<MultiTabPaneModule> {
 
     /** The class. */
-    public record MultiTabPane() implements BranchComponent<MultiTabPaneModule>, NeedContextMenu {
+    public record MultiTabPane() implements BranchComponent<MultiTabPaneModule>, NeedContextMenu, NeedKeyboard {
         @Override public String summary() { return "Tabs in a strip over one panel each; a press selects, a drag reorders along the rail, a right-click offers the tab's menu."; }
         /** The tab menu: opened on a chip when the pane is given a steward ({@code menus}); the site serving the pane serves the kind. */
         @Override public Set<ContextMenuKind<?>> required() { return Set.of(TabMenu.INSTANCE); }
+        /** The pane holds the keys for what is inside: the strip's on a focused chip, and the active tab's widget's, whatever they are. */
+        @Override public List<KeyBinding> keys() {
+            return TabStripModule.TabStrip.KEYS.stream().map(b -> new KeyBinding(b.key(), b.modifiers(), "to the strip: " + b.meaning())).toList();
+        }
     }
 
     public static final MultiTabPaneModule INSTANCE = new MultiTabPaneModule();
@@ -50,6 +57,7 @@ public record MultiTabPaneModule() implements DomModule<MultiTabPaneModule> {
     public ImportsFor<MultiTabPaneModule> imports() {
         return ImportsFor.<MultiTabPaneModule>builder()
                 .add(new ModuleImports<>(List.of(new TabStripModule.TabStrip()), TabStripModule.INSTANCE))
+                .add(new ModuleImports<>(List.of(new KeysModule.Keys()), KeysModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new PaneEventsModule.PaneEvents()), PaneEventsModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new PaneStyles.mtp_pane(),

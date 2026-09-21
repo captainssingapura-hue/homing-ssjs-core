@@ -14,7 +14,7 @@ import java.util.Set;
 public sealed interface MenuEvent {
 
     /** Why a menu closed: a pick, the Escape key, a press outside, a scroll, the window losing focus, another menu replacing it, or its owner. */
-    Set<String> REASONS = Set.of("pick", "escape", "outside", "scroll", "blur", "replaced", "owner");
+    Set<String> REASONS = Set.of("pick", "escape", "outside", "scroll", "blur", "taken", "replaced", "owner");
 
     /** The kind: the record's simple name, the JS object's {@code kind}. */
     default String kind() { return getClass().getSimpleName(); }

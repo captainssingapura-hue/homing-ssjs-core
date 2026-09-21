@@ -72,6 +72,7 @@ class TabStripTest extends JsModuleTestBase {
     @BeforeEach
     void load() {
         js = buildContext();
+        loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeysModule.js");
         loadModule(P + "TabDragModule.js");
         loadModule(P + "TabHandModule.js");
         loadModule(P + "TabStripModule.js");

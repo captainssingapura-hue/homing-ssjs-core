@@ -38,12 +38,17 @@
 //   Card — a BRANCH component, made through its builder: it takes a sub-branch
 //   the caller made for it and mints its own tree on it. One card per branch.
 //     var card = new CardBuilder().title("Grid").badge("new").text("…").link(to, label?)
-//                                 .size(0).aspect(0).onClick(fn?).build(branch.createBranch("card"));
+//                                 .size(0).aspect(0).onClick(fn?).keyboard(steward, id?).build(branch.createBranch("card"));
 //       .root            the element the caller appends
 //       .body            the bounded region inside; a caller with more than text mints there
 //       .size(s)         the size, live, on the card and its parts
 //       .aspect(a)       the aspect, live: −1 the tallest the design allows, 0 square, 1 the widest
 //       .title(text?)    read, or set
+//       .key(ev)         a keydown from whoever holds the keys for it: Enter or Space on a card
+//                        with an action is the action; true when taken. A card handed the page's
+//                        steward (.keyboard) is a member of the keyboard party and claims by the
+//                        convention; one inside a pane or a dialog is built without, and its
+//                        holder hands it the keys. No keydown listener of its own, ever
 //       .dispose()       dissolves the branch
 //   The card is a hard frame: its inline size is the design's, grown by its
 //   size; its block size follows its aspect — the design's widest to the power
@@ -194,14 +199,19 @@ class Card {
             card.appendChild(foot);
         }
 
-        if (typeof p.onClick === "function") {   // an action: the card is a button to the keyboard too
+        this._action = typeof p.onClick === "function";
+        this._kb = null; this._kbId = null; this._offKeys = null;
+        if (this._action) {   // an action: the card is a button to the keyboard too, through the party
             css.addClass(card, el_card_action);
             card.setAttribute("role", "button");
             card.tabIndex = 0;
             card.addEventListener("click", p.onClick);
-            card.addEventListener("keydown", function (e) {
-                if (e.key === "Enter" || e.key === " ") { e.preventDefault(); card.click(); }
-            });
+            if (p.keyboard) {
+                var self = this;
+                this._kb = p.keyboard;
+                this._kbId = this._kb.join(p.keyboardId != null ? String(p.keyboardId) : branch.name, { keyDown: function (ev) { return self.key(ev); } });
+                this._offKeys = Keys.claimOn(card, this._kb, this._kbId);
+            }
         }
 
         this.root = card;
@@ -235,7 +245,18 @@ class Card {
     }
 
     /** The card and everything on its branch go together. */
-    dispose() { try { this.branch.dissolve(); } catch (e) {} }
+    /** A keydown from whoever holds the keys for the card: Enter or Space on the card is the action; true when taken. */
+    key(ev) {
+        if (!this._action || !ev || (ev.key !== "Enter" && ev.key !== " ") || ev.target !== this.root) return false;
+        this.root.click();
+        return true;
+    }
+
+    dispose() {
+        if (this._offKeys) { this._offKeys(); this._offKeys = null; }
+        if (this._kb) { this._kb.leave(this._kbId); this._kb = null; }
+        try { this.branch.dissolve(); } catch (e) {}
+    }
 }
 
 class CardBuilder {
@@ -247,6 +268,7 @@ class CardBuilder {
     size(s)          { this._props.size = s; return this; }
     aspect(a)        { this._props.aspect = a; return this; }
     onClick(fn)      { this._props.onClick = fn; return this; }
+    keyboard(steward, id) { this._props.keyboard = steward; this._props.keyboardId = id; return this; }
     build(branch) {
         if (!branch) throw new Error("[CardBuilder] build wants the sub-branch the caller made for the card");
         return new Card(branch, this._props);

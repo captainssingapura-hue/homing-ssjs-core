@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.site.mpa;
 
 import hue.captains.singapura.js.homing.component.BranchComponent;
+import hue.captains.singapura.js.homing.component.keyboard.KeyboardStewardModule;
 import hue.captains.singapura.js.homing.core.DomModule;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
@@ -34,6 +35,7 @@ public record MpaChromeModule() implements DomModule<MpaChromeModule> {
         return ImportsFor.<MpaChromeModule>builder()
                 .add(new ModuleImports<>(List.of(new HrefManager.HrefManagerInstance()), HrefManager.INSTANCE))
                 .add(new ModuleImports<>(List.of(new PreferencesButtonModule.PreferencesButton()), PreferencesButtonModule.INSTANCE))
+                .add(new ModuleImports<>(List.of(new KeyboardStewardModule.KeyboardSteward()), KeyboardStewardModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new MpaStyles.mpa_page(),
                         new MpaStyles.mpa_root(),

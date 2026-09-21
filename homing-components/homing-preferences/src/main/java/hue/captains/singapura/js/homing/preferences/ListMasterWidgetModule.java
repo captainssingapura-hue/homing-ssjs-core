@@ -1,5 +1,8 @@
 package hue.captains.singapura.js.homing.preferences;
 
+import hue.captains.singapura.js.homing.component.keyboard.Key;
+import hue.captains.singapura.js.homing.component.keyboard.KeyBinding;
+import hue.captains.singapura.js.homing.component.keyboard.NeedKeyboard;
 import hue.captains.singapura.js.homing.component.Widget;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
@@ -18,7 +21,13 @@ import java.util.List;
 public record ListMasterWidgetModule() implements Widget<Widget._None, ListMasterWidgetModule> {
 
     /** The class. */
-    public record ListMasterWidget() implements Widget._Class<Widget._None, ListMasterWidgetModule> {}
+    public record ListMasterWidget() implements Widget._Class<Widget._None, ListMasterWidgetModule>, NeedKeyboard {
+        /** The rows walked, through the party: the view hands the list its keys while the focus is in it. */
+        public static final List<KeyBinding> KEYS = List.of(
+                KeyBinding.of(Key.ARROW_DOWN, "the row below chosen"), KeyBinding.of(Key.ARROW_UP, "the row above chosen"),
+                KeyBinding.of(Key.HOME, "the first row chosen"), KeyBinding.of(Key.END, "the last row chosen"));
+        @Override public List<KeyBinding> keys() { return KEYS; }
+    }
 
     public static final ListMasterWidgetModule INSTANCE = new ListMasterWidgetModule();
 

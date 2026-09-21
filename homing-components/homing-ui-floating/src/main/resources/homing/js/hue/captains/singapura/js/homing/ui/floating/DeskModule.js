@@ -4,10 +4,17 @@
 // a sub-branch per pane. It owns the stack: z-order, the active one, the host
 // they float in. The workspace's substrate.
 //
-//   new Desk(branch, { host, layer?, onEvent?, minW?, minH?, onDragMove?, onDragEnd? })
+//   new Desk(branch, { host, layer?, onEvent?, minW?, minH?, onDragMove?, onDragEnd?, keyboard?, keyboardId? })
 //     host   a flex box; the desk is its item and fills it — or, with layer,
 //            a positioned box the desk lies over, the hand passing through it
 //            except on a pane: a desk over docks.
+//     keyboard  the page's KeyboardSteward: the desk joins the keyboard party as
+//            keyboardId (its branch's name, unless said) and claims by the
+//            convention on its floor — a press or the focus arriving in any pane.
+//            It holds the keys for the panes: a key goes to the active pane's
+//            widget by its key(ev), when it has one, then Escape closes the
+//            active pane if it can be closed. The widgets are built without a
+//            steward of their own. No keydown listener of its own.
 //
 //   desk.open({ id?, title, x?, y?, w?, h?, closable?, widget?, params? })  → the pane
 //       id defaults to "pane-N"; x, y cascade when not given. `widget` is a
@@ -25,10 +32,12 @@
 //                         the next on the stack raised after
 //   desk.pane(id) .panes() (ids, bottom to top) .active() .has(id)
 //   desk.root           the floor
+//   desk.key(ev)        a keydown from whoever holds the keys for the desk: the active pane's
+//                       widget first, then Escape; true when taken
 //   desk.dispose()      every pane closed in order, the floor removed, the branch dissolved
 //
 // The hand: a press anywhere on a pane raises it; focus into it raises it;
-// Escape while it is active closes it if it can be closed; the cross closes
+// Escape, through the party, closes the active one if it can be closed; the cross closes
 // it. A pane's own Moved and Resized come through the same sink; a pane's
 // drag is watched through onDragMove(pane, x, y) and onDragEnd(pane, x, y,
 // ok), for a holder that offers it to a dock. Every mutation is one
@@ -58,6 +67,23 @@ class Desk {
         css.addClass(root, opts.layer ? fp_desk_layer : fp_desk);
         opts.host.appendChild(root);
         this.root = root;
+        // the keys: through the party, when the desk is handed the steward
+        this._kb = null; this._kbId = null; this._offKeys = null;
+        if (opts.keyboard) {
+            var self = this;
+            this._kb = opts.keyboard;
+            this._kbId = this._kb.join(opts.keyboardId != null ? String(opts.keyboardId) : branch.name, { keyDown: function (ev) { return self.key(ev); } });
+            this._offKeys = Keys.claimOn(root, this._kb, this._kbId);
+        }
+    }
+
+    /** A keydown from whoever holds the keys for the desk: the active pane's widget first, then Escape closes the active pane when it can be closed; true when taken. */
+    key(ev) {
+        if (!ev || this._active === null) return false;
+        var entry = this._panes.get(this._active);
+        if (entry.widget && typeof entry.widget.key === "function" && entry.widget.key(ev)) return true;
+        if (ev.key === "Escape" && entry.closable) { this.close(this._active); return true; }
+        return false;
     }
 
     open(spec) {
@@ -83,9 +109,6 @@ class Desk {
         if (entry.widget) pane.body.appendChild(entry.widget.root);
         pane.root.addEventListener("pointerdown", function () { self.raise(id); });
         pane.root.addEventListener("focusin", function () { self.raise(id); });
-        pane.root.addEventListener("keydown", function (e) {
-            if (e.key === "Escape" && entry.closable && self._active === id) { e.stopPropagation(); self.close(id); }
-        });
         this._panes.set(id, entry);
         this._order.push(id);
         var b = pane.bounds();
@@ -147,6 +170,8 @@ class Desk {
     dispose() {
         var self = this;
         this._order.slice().forEach(function (id) { self.close(id); });
+        if (this._offKeys) { this._offKeys(); this._offKeys = null; }
+        if (this._kb) { this._kb.leave(this._kbId); this._kb = null; }
         if (this.root.parentNode) this.root.parentNode.removeChild(this.root);
         try { this.branch.dissolve(); } catch (e) {}
     }

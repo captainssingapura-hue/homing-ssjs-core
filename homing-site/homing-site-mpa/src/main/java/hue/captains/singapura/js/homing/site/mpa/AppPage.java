@@ -77,9 +77,10 @@ public record AppPage<P extends AppModule._Param, M extends AppModule<P, M>>(
                         %s
                         const { domOpsParty } = await import(themed(%s));
                         const { MpaChrome } = await import(themed(%s));
-                        const main = new MpaChrome(domOpsParty.createBranch("mpaChrome"), document.getElementById("app"), chrome).main;
+                        const page = new MpaChrome(domOpsParty.createBranch("mpaChrome"), document.getElementById("app"), chrome);
                         const { appMain } = await import(themed(%s));
-                        appMain(main%s);
+                        // The page adds to the app's params what is the page's: the keyboard steward, one per document.
+                        appMain(page.main, Object.freeze(Object.assign({}, %s, { keyboard: page.keyboard })));
                     </script>
                 </body>
                 </html>
@@ -90,7 +91,7 @@ public record AppPage<P extends AppModule._Param, M extends AppModule<P, M>>(
                         StampedParams.jsString(mpa.moduleUrl(DomOpsPartyModule.INSTANCE)),
                         StampedParams.jsString(mpa.moduleUrl(MpaChromeModule.INSTANCE)),
                         StampedParams.jsString(mpa.moduleUrl(app)),
-                        stamped == null ? "" : ", params"));
+                        stamped == null ? "{}" : "params"));
     }
 
     /** The app's params as a JS object, or null when the app declares no codec. */

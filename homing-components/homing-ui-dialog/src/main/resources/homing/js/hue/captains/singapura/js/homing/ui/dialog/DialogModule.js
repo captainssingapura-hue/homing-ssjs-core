@@ -17,7 +17,7 @@
 //                   dispose() called first on close, before the branch dissolves,
 //                   for what dissolving cannot release - the widget's word for it
 //   title           string
-//   modal           boolean, default true — scrim, inert, keyboard capture
+//   modal           boolean, default true — scrim, inert
 //   glow            boolean, default = modal — the ring drawn now, on the frame
 //   actions         [{ id, label, primary?, onClick(dialog) }] — omit for no row.
 //                   The buttons are the elements' Button: the primary one
@@ -27,6 +27,12 @@
 //                   it by the grip afterwards
 //   restoreFocusTo  element focused on close; default whatever had focus
 //   onClose         function() — fires on EVERY close path, exactly once
+//   keyboard        the page's KeyboardSteward; keyboardId the dialog's name in the party
+//                   (its branch's name, unless said). The dialog joins on open and CLAIMS
+//                   the keys — by call, whoever held is evicted, which is what a dialog
+//                   over the page means — and on close gives them back to who held before
+//                   it opened, when they are still a member. Without a steward the dialog
+//                   has no keys: the page gives every component the one steward it has
 //
 // the instance:
 //   el, bodyEl, branch, pane
@@ -34,12 +40,15 @@
 //   actionEl(id)                       the button element, an owned reference
 //   setAction(id, { enabled?, label? })
 //
-// Keys, modal: captured on the document through Modality, so the page behind
-// never sees them. The content is asked FIRST, Escape included — a popup
-// nested in the dialog takes Escape to close itself, and only an Escape
-// nobody inside wanted closes the dialog. Enter outside a form control fires
-// the primary action. Non-modal: the same handler, bubbling on the frame, so
-// keys reach it only while focus is inside — which is what non-modal means.
+// Keys: through the party. The dialog holds the keys while it is open, modal
+// or not — a non-modal one that loses them to a claim behind it simply stops
+// hearing keys, as non-modal means; a modal one cannot lose them, since
+// Modality makes the page behind inert and nothing there can claim. The
+// content is asked FIRST, Escape included — a popup nested in the dialog, or a
+// widget in it with keys of its own, takes what it wants by key(ev) — and
+// only an Escape nobody inside wanted closes the dialog. Enter outside a form
+// control fires the primary action. No keydown listener of its own, and no
+// capture on the document: Modality only makes the rest inert.
 // =============================================================================
 
 const _dialogOwner = Object.freeze({ toString: () => "dialog" });
@@ -106,12 +115,13 @@ class Dialog {
 
         // ── keys ─────────────────────────────────────────────────────────────
         this._restoreTo = opts.restoreFocusTo || document.activeElement;
-        if (modal) {
-            this._hold = new Modality(layer, { keep: [scrim], onKeydown: function (ev) { return self._keys(ev); }, restoreTo: this._restoreTo });
-        } else {
-            frame.addEventListener("keydown", function (ev) {
-                if (self._keys(ev)) { ev.preventDefault(); ev.stopPropagation(); }
-            });
+        if (modal) this._hold = new Modality(layer, { keep: [scrim], restoreTo: this._restoreTo });
+        this._kb = null; this._kbId = null; this._restoreKeys = null;
+        if (opts.keyboard) {
+            this._kb = opts.keyboard;
+            this._restoreKeys = this._kb.holder();
+            this._kbId = this._kb.join(opts.keyboardId != null ? String(opts.keyboardId) : branch.name, { keyDown: function (ev) { return self._keys(ev); } });
+            this._kb.claim(this._kbId);
         }
 
         var focusEl = this._built.focusEl || frame;
@@ -170,6 +180,12 @@ class Dialog {
         try { this.branch.dissolve(); } catch (e) {}     // layer, scrim, pane and content go together
         if (this._hold) this._hold.release();
         else if (this._restoreTo && this._restoreTo.focus && document.contains(this._restoreTo)) this._restoreTo.focus();
+        if (this._kb) {   // the keys back to who held before, when still a member; the party keeps no memory, so the dialog does
+            var kb = this._kb, held = kb.holder() === this._kbId, back = this._restoreKeys;
+            kb.leave(this._kbId);
+            if (held && back && kb.has(back)) kb.claim(back);
+            this._kb = null;
+        }
         if (this._opts.onClose) this._opts.onClose();
     }
 

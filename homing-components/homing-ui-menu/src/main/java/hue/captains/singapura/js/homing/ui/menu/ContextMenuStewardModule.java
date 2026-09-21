@@ -1,6 +1,9 @@
 package hue.captains.singapura.js.homing.ui.menu;
 
 import hue.captains.singapura.js.homing.component.BranchComponent;
+import hue.captains.singapura.js.homing.component.keyboard.Key;
+import hue.captains.singapura.js.homing.component.keyboard.KeyBinding;
+import hue.captains.singapura.js.homing.component.keyboard.NeedKeyboard;
 import hue.captains.singapura.js.homing.core.DomModule;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
@@ -20,8 +23,16 @@ import java.util.List;
 public record ContextMenuStewardModule() implements DomModule<ContextMenuStewardModule> {
 
     /** The class. */
-    public record ContextMenuSteward() implements BranchComponent<ContextMenuStewardModule> {
+    public record ContextMenuSteward() implements BranchComponent<ContextMenuStewardModule>, NeedKeyboard {
         @Override public String summary() { return "One per page: the kinds, one instance each, the layer, and the one menu active."; }
+        /** Claimed on open, given back on close, closed when taken: the open menu's keys. */
+        public static final List<KeyBinding> KEYS = List.of(
+                KeyBinding.of(Key.ESCAPE, "the menu closed"), KeyBinding.of(Key.TAB, "held: the focus stays in the menu"),
+                KeyBinding.of(Key.ARROW_DOWN, "the next row"), KeyBinding.of(Key.ARROW_UP, "the previous row"),
+                KeyBinding.of(Key.HOME, "the first row"), KeyBinding.of(Key.END, "the last row"),
+                KeyBinding.of(Key.ARROW_RIGHT, "into the row's submenu"), KeyBinding.of(Key.ARROW_LEFT, "back out of a submenu"),
+                KeyBinding.of(Key.ENTER, "the row activated"), KeyBinding.of(Key.SPACE, "the row activated"));
+        @Override public List<KeyBinding> keys() { return KEYS; }
     }
 
     public static final ContextMenuStewardModule INSTANCE = new ContextMenuStewardModule();

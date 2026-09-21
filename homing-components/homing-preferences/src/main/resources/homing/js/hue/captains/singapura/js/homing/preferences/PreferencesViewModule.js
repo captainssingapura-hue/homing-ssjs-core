@@ -6,6 +6,10 @@
 //   new PreferencesView(branch, host, registry)
 //     .select(path) → Promise<widget|null>
 //     .ready        → Promise<master>
+//     .key(ev)      a keydown from whoever holds the keys for the view — the dialog it is
+//                   in: to the master when the focus is in the master pane, to the shown
+//                   detail widget when it is in the detail pane, by their key(ev) when
+//                   they have one; true when taken. No keydown listener of its own
 //     .dispose()
 //
 //   branch     the view's own, handed unactivated
@@ -66,6 +70,7 @@ class PreferencesView {
         root.appendChild(detailPane);
         host.appendChild(root);
         this.root = root;
+        this._masterPane = masterPane; this._detailPane = detailPane;
 
         var masterBranch = branch.createBranch("masterSlot");
         masterBranch.activate(_viewOwner);
@@ -97,6 +102,15 @@ class PreferencesView {
             if (self._disposed || self._wanted !== path) return null;
             return self._detailSlot.show(path, Widget, node.widget.params);
         }).catch(function (e) { console.error("[PreferencesView] widget for '" + path + "' failed", e); return null; });
+    }
+
+    /** A keydown from the dialog: to the master or the shown detail widget, by where the focus is; true when taken. */
+    key(ev) {
+        var t = ev && ev.target, slot = null;
+        if (t && this._masterPane.contains(t)) slot = this._masterSlot;
+        else if (t && this._detailPane.contains(t)) slot = this._detailSlot;
+        var w = slot && slot.current() !== null ? slot.widget(slot.current()) : null;
+        return !!(w && typeof w.key === "function" && w.key(ev));
     }
 
     dispose() {

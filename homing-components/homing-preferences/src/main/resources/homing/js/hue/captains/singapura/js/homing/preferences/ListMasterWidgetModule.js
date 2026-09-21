@@ -1,12 +1,13 @@
 // =============================================================================
 // ListMasterWidget — the rigid tree as a flat listbox, depth as indentation.
 //
-//   new ListMasterWidget(branch, params) → root, onSelect(fn), select(path), setActive(on), dispose()
+//   new ListMasterWidget(branch, params) → root, onSelect(fn), select(path), key(ev), setActive(on), dispose()
 //   params: { tree: <canonical rigid tree JSON>, labels: { path: label } }
 //
 // One row per node in tree order; the row in force is aria-selected, and
-// selecting is choosing. ArrowUp/Down, Home and End move; a click chooses
-// where it lands. The depth is DATA on the row, through the runtime var
+// selecting is choosing. ArrowUp/Down, Home and End move, by key(ev) from
+// whoever holds the keys for the list — the view, in the dialog; no keydown
+// listener of its own — and a click chooses where it lands. The depth is DATA on the row, through the runtime var
 // the row's class indents by.
 // =============================================================================
 
@@ -42,17 +43,20 @@ class ListMasterWidget {
             (node.children || []).forEach(function (c) { walk(c, key, depth + 1); });
         })(params.tree, "", 0);
 
-        list.addEventListener("keydown", function (ev) {
-            var next = null, rows = self._rows, current = self._current;
-            if (ev.key === "ArrowDown") next = Math.min(rows.length - 1, current + 1);
-            else if (ev.key === "ArrowUp") next = Math.max(0, current - 1);
-            else if (ev.key === "Home") next = 0;
-            else if (ev.key === "End") next = rows.length - 1;
-            if (next === null) return;
-            ev.preventDefault();
-            self._choose(next);
-        });
         this.root = list;
+    }
+
+    /** A keydown from whoever holds the keys for the list: the arrows, Home and End move the row in force; true when taken. */
+    key(ev) {
+        var next = null, rows = this._rows, current = this._current;
+        if (!ev) return false;
+        if (ev.key === "ArrowDown") next = Math.min(rows.length - 1, current + 1);
+        else if (ev.key === "ArrowUp") next = Math.max(0, current - 1);
+        else if (ev.key === "Home") next = 0;
+        else if (ev.key === "End") next = rows.length - 1;
+        if (next === null) return false;
+        this._choose(next);
+        return true;
     }
 
     _choose(i) {

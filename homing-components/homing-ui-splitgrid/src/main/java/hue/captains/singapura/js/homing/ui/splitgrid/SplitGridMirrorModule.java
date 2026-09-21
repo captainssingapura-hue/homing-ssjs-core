@@ -1,6 +1,10 @@
 package hue.captains.singapura.js.homing.ui.splitgrid;
 
 import hue.captains.singapura.js.homing.component.BranchComponent;
+import hue.captains.singapura.js.homing.component.keyboard.Key;
+import hue.captains.singapura.js.homing.component.keyboard.KeyBinding;
+import hue.captains.singapura.js.homing.component.keyboard.KeysModule;
+import hue.captains.singapura.js.homing.component.keyboard.NeedKeyboard;
 import hue.captains.singapura.js.homing.core.DomModule;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
@@ -18,8 +22,13 @@ import java.util.List;
 public record SplitGridMirrorModule() implements DomModule<SplitGridMirrorModule> {
 
     /** The class: {@code new SplitGridMirror(branch, {host, scale?, onEvent?})}; {@code reflect(layout, box)}, {@code scale}, {@code cursor}, {@code rects}, {@code dispose}. */
-    public record SplitGridMirror() implements BranchComponent<SplitGridMirrorModule> {
+    public record SplitGridMirror() implements BranchComponent<SplitGridMirrorModule>, NeedKeyboard {
         @Override public String summary() { return "The arrangement of a grid, drawn at a scale, with a cursor the keyboard moves from cell to cell."; }
+        /** The arrows, through the party: the cursor to the cell beside it. */
+        public static final List<KeyBinding> KEYS = List.of(
+                KeyBinding.of(Key.ARROW_LEFT, "the cursor to the cell on the left"), KeyBinding.of(Key.ARROW_RIGHT, "the cursor to the cell on the right"),
+                KeyBinding.of(Key.ARROW_UP, "the cursor to the cell above"), KeyBinding.of(Key.ARROW_DOWN, "the cursor to the cell below"));
+        @Override public List<KeyBinding> keys() { return KEYS; }
     }
 
     public static final SplitGridMirrorModule INSTANCE = new SplitGridMirrorModule();
@@ -30,6 +39,7 @@ public record SplitGridMirrorModule() implements DomModule<SplitGridMirrorModule
                 .add(new ModuleImports<>(List.of(new SplitGridEventsModule.SplitGridEvents()), SplitGridEventsModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new SplitGridTreeModule.SplitGridTree()), SplitGridTreeModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new SplitGridGeometryModule.SplitGridGeometry()), SplitGridGeometryModule.INSTANCE))
+                .add(new ModuleImports<>(List.of(new KeysModule.Keys()), KeysModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new SplitGridStyles.sgm_root(),
                         new SplitGridStyles.sgm_cell(),

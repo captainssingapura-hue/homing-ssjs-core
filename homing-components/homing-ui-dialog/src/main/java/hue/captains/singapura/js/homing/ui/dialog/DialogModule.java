@@ -1,6 +1,9 @@
 package hue.captains.singapura.js.homing.ui.dialog;
 
 import hue.captains.singapura.js.homing.component.BranchComponent;
+import hue.captains.singapura.js.homing.component.keyboard.Key;
+import hue.captains.singapura.js.homing.component.keyboard.KeyBinding;
+import hue.captains.singapura.js.homing.component.keyboard.NeedKeyboard;
 import hue.captains.singapura.js.homing.core.DomModule;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
@@ -28,8 +31,12 @@ import java.util.List;
 public record DialogModule() implements DomModule<DialogModule> {
 
     /** The class. */
-    public record Dialog() implements BranchComponent<DialogModule> {
+    public record Dialog() implements BranchComponent<DialogModule>, NeedKeyboard {
         @Override public String summary() { return "A floating pane that owns the screen until dismissed, or, non-modal, one that does not."; }
+        /** Claimed on open, given back on close; the content is asked first, then these. */
+        @Override public List<KeyBinding> keys() {
+            return List.of(KeyBinding.of(Key.ESCAPE, "the dialog closed, unless the content took it"), KeyBinding.of(Key.ENTER, "the primary action, outside a form control, unless the content took it"));
+        }
     }
 
     public static final DialogModule INSTANCE = new DialogModule();

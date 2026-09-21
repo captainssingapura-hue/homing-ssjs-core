@@ -2,6 +2,8 @@ package hue.captains.singapura.js.homing.preferences;
 
 import hue.captains.singapura.js.homing.component.BranchComponent;
 import hue.captains.singapura.js.homing.component.WidgetSlotModule;
+import hue.captains.singapura.js.homing.component.keyboard.KeyBinding;
+import hue.captains.singapura.js.homing.component.keyboard.NeedKeyboard;
 import hue.captains.singapura.js.homing.core.DomModule;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
@@ -26,8 +28,12 @@ import java.util.List;
 public record PreferencesViewModule() implements DomModule<PreferencesViewModule> {
 
     /** The class. */
-    public record PreferencesView() implements BranchComponent<PreferencesViewModule> {
+    public record PreferencesView() implements BranchComponent<PreferencesViewModule>, NeedKeyboard {
         @Override public String summary() { return "A master slot on the left, a detail slot on the right, over a preferences registry."; }
+        /** The view holds the keys for its two slots: the master's while the focus is in the master pane, the shown detail widget's in the detail pane. */
+        @Override public List<KeyBinding> keys() {
+            return ListMasterWidgetModule.ListMasterWidget.KEYS.stream().map(b -> new KeyBinding(b.key(), b.modifiers(), "to the master: " + b.meaning())).toList();
+        }
     }
 
     public static final PreferencesViewModule INSTANCE = new PreferencesViewModule();

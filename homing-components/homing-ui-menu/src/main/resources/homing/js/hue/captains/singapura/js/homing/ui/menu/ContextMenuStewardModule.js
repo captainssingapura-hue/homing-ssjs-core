@@ -7,8 +7,14 @@
 // holder makes a sub-branch for it and hands it in, and hands the steward
 // to the components that offer menus.
 //
-//   new ContextMenuSteward(branch, { types?, onEvent? })
+//   new ContextMenuSteward(branch, { types?, onEvent?, keyboard?, keyboardId? })
 //     types    kind → { kind, nodes }: a Java ContextMenuRegistry's MENUS
+//     keyboard the page's KeyboardSteward: the steward joins the keyboard party as
+//              keyboardId (its branch's name, unless said) and CLAIMS the keys for
+//              a menu while one is open — by call, on open, evicting whoever held —
+//              gives them back to who held before when it closes, and closes the
+//              menu when they are taken from it: losing the keys is losing the
+//              screen, as on blur. Without a steward a menu has no keys
 //   steward.define(kind)             a kind declared in JS, the same record, held
 //                                    to the same rules (MenuTree.check):
 //       .row(id, label, { icon?, hint? }?)   a row; icon is an Icon word
@@ -28,6 +34,9 @@
 //   steward.close(reason?)           by the owner; reason defaults to "owner"
 //   steward.bound()                  the object while a menu is open, else null
 //   steward.active()                 the kind open, else null
+//   steward.on(fn) → off             another listener for the events; off() removes it —
+//                                    a shell that makes the one steward hands it to its
+//                                    pages, and each listens for what it shows
 //   steward.dispose()
 //
 // open closes whatever is open (replaced), binds the object to the kind's
@@ -39,9 +48,11 @@
 // gesture. Escape closes (escape); a scroll of the page, or of a box that
 // holds the anchor, closes (scroll) — a scroll elsewhere, a log filling
 // behind the menu, does not; a resize closes (scroll); the window losing
-// focus closes (blur). Keys are captured while open — the
-// page behind sees none — and Tab is held. Closing returns the focus to
-// what had it. Every open, pick and close is one MenuEvents object on the
+// focus closes (blur); the keys taken by another claim close it (taken). The
+// keys come through the party while open — the holder is asked first, so the
+// page behind sees none it takes — and Tab is held; no keydown listener of
+// its own, no capture on the document. Closing returns the focus to what had
+// it, and the keys to who held them. Every open, pick and close is one MenuEvents object on the
 // sink; a pick is Picked then Closed(pick), and the handler acts last, so
 // what it opens keeps the focus. `css` is injected with the styles import.
 // =============================================================================
@@ -60,7 +71,8 @@ class ContextMenuSteward {
         var self = this;
         branch.activate(_stewardOwner);
         this._branch = branch;
-        this._sink = opts && typeof opts.onEvent === "function" ? opts.onEvent : null;
+        this._sinks = [];
+        if (opts && typeof opts.onEvent === "function") this.on(opts.onEvent);
         this._types = {};
         var given = opts && opts.types ? opts.types : {};
         for (var k in given) if (Object.prototype.hasOwnProperty.call(given, k)) this._types[k] = given[k];
@@ -75,7 +87,14 @@ class ContextMenuSteward {
         this._restoreTo = null;
         this._anchor = null;
         this._onPress = function (e) { self._press(e); };
-        this._onKey = function (e) { self._key(e); };
+        this._kb = null; this._kbId = null; this._restoreKeys = null;
+        if (opts && opts.keyboard) {
+            this._kb = opts.keyboard;
+            this._kbId = this._kb.join(opts.keyboardId != null ? String(opts.keyboardId) : branch.name, {
+                keyDown: function (ev) { return self._key(ev); },
+                taken: function () { if (self._menu) { self._restoreKeys = null; self._close("taken"); } }
+            });
+        }
         this._onScroll = function (e) { if (self._scrollMoves(e.target)) self._close("scroll"); };
         this._onResize = function () { self._close("scroll"); };
         this._onBlur = function () { self._close("blur"); };
@@ -148,6 +167,7 @@ class ContextMenuSteward {
         document.body.appendChild(layer);
         var p = menu.show(layer, { x: at.x, y: at.y }, { w: window.innerWidth, h: window.innerHeight }, !!(opts && opts.keyboard));
         this._listen(true);
+        if (this._kb) { this._restoreKeys = this._kb.holder() === this._kbId ? this._restoreKeys : this._kb.holder(); this._kb.claim(this._kbId); }
         this._fire(MenuEvents.Opened(kind, p.x, p.y));
         return true;
     }
@@ -166,6 +186,11 @@ class ContextMenuSteward {
         var back = this._restoreTo;
         this._restoreTo = null;
         if (back && back.isConnected !== false && typeof back.focus === "function") { try { back.focus({ preventScroll: true }); } catch (e) {} }
+        if (this._kb && reason !== "replaced") {   // the keys back to who held before the menu, when still a member and not taken meanwhile
+            var keys = this._restoreKeys;
+            this._restoreKeys = null;
+            if (this._kb.holder() === this._kbId) { if (keys && this._kb.has(keys)) this._kb.claim(keys); else this._kb.release(this._kbId); }
+        }
         if (typeof h.close === "function") { try { h.close(reason, object); } catch (e) { console.error("[ContextMenuSteward] close handler threw:", e); } }
         this._fire(MenuEvents.Closed(kind, reason));
     }
@@ -197,7 +222,6 @@ class ContextMenuSteward {
     _listen(on) {
         var f = on ? "addEventListener" : "removeEventListener";
         document[f]("pointerdown", this._onPress, true);
-        document[f]("keydown", this._onKey, true);
         document[f]("scroll", this._onScroll, true);
         window[f]("resize", this._onResize);
         window[f]("blur", this._onBlur);
@@ -233,14 +257,24 @@ class ContextMenuSteward {
         ["pointerup", "mouseup", "click", "dblclick"].forEach(function (t) { document.addEventListener(t, stop, true); });
         timer = setTimeout(off, _SWALLOW_MS);
     }
+    /** A keydown while a menu holds the keys: Escape closes, the menu takes its own, Tab is held; true when taken. */
     _key(e) {
-        if (!this._menu) return;
-        if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); this._close("escape"); return; }
-        if (this._menu.key(e) || e.key === "Tab") { e.preventDefault(); e.stopPropagation(); }
+        if (!this._menu) return false;
+        if (e.key === "Escape") { this._close("escape"); return true; }
+        return !!(this._menu.key(e) || e.key === "Tab");
+    }
+    /** Another listener for the events; the function returned removes it. */
+    on(fn) {
+        if (typeof fn !== "function") throw new Error("[ContextMenuSteward] on wants a function");
+        var sinks = this._sinks;
+        sinks.push(fn);
+        return function () { var i = sinks.indexOf(fn); if (i >= 0) sinks.splice(i, 1); };
     }
     _fire(ev) {
-        if (!this._sink) return;
-        try { this._sink(ev); } catch (e) { console.error("[ContextMenuSteward] onEvent threw on " + ev.kind + ":", e); }
+        var sinks = this._sinks.slice();
+        for (var i = 0; i < sinks.length; i++) {
+            try { sinks[i](ev); } catch (e) { console.error("[ContextMenuSteward] onEvent threw on " + ev.kind + ":", e); }
+        }
     }
 
     dispose() {
@@ -249,6 +283,7 @@ class ContextMenuSteward {
         this._menus = {};
         for (var s = 0; s < this._specimens.length; s++) this._specimens[s].dispose();
         this._specimens = [];
+        if (this._kb) { this._kb.leave(this._kbId); this._kb = null; }
         if (typeof document !== "undefined") _pages.delete(document);
         this._branch.dissolve();
     }

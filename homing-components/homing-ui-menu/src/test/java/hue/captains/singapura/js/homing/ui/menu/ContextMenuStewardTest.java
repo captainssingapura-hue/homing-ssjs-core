@@ -77,7 +77,14 @@ class ContextMenuStewardTest extends JsModuleTestBase {
         // the record a Java registry stamps: three levels, an icon, a section change, a hint
         var MENUS = { animal: { kind: "animal", nodes: [ { id: "rotate", label: "Rotate", icon: "rotate", hint: "a quarter turn" },
                                                           { id: "animal", label: "Animal", section: 1, nodes: [ { id: "cat", label: "Cat" }, { id: "dog", label: "Dog", nodes: [ { id: "big", label: "Big" }, { id: "small", label: "Small" } ] } ] } ] } };
-        var steward = new ContextMenuSteward(page.createBranch("menus"), { types: MENUS, onEvent: sink });
+        // the page's keyboard steward, faked: members and the holder, and the log of what the menu steward asks of it
+        var members = {}, kbLog = [], holder = null;
+        var kb = { join: function (id, h) { members[id] = h; kbLog.push("join:" + id); return id; }, leave: function (id) { delete members[id]; if (holder === id) holder = null; kbLog.push("leave:" + id); },
+                   claim: function (id) { if (!members[id]) throw new Error("no member " + id); kbLog.push("claim:" + id); holder = id; }, release: function (id) { kbLog.push("release:" + id); if (holder === id) holder = null; },
+                   holder: function () { return holder; }, has: function (id) { return !!members[id]; } };
+        /** A key as the steward forwards it to the holder: taken means defaulted and stopped at the document. */
+        function key(init) { var e = init || {}; e.taken = members.menus.keyDown(e); e.stopped = e.defaulted = e.taken; return e; }
+        var steward = new ContextMenuSteward(page.createBranch("menus"), { types: MENUS, onEvent: sink, keyboard: kb });
         // a chip on the page that selects on a press, as the strip's do
         var chip = el("div"); chip.name = "chip"; body.appendChild(chip);
         chip.addEventListener("pointerdown", function () { log.push("chip:pressed"); });
@@ -188,37 +195,56 @@ class ContextMenuStewardTest extends JsModuleTestBase {
     }
 
     @Test
-    void keys_areCapturedWhileOpen_moveTheCursorSkippingDisabled_walkThreeLevels_pickAndEscape() {
+    void keys_throughThePartyWhileOpen_moveTheCursorSkippingDisabled_walkThreeLevels_pickAndEscape() {
+        assertEquals("join:menus", eval("kbLog.join(' ')").asString(), "a member from the start; the keys claimed on open");
         eval("steward.handle('animal', { state: function (id) { return id === 'rotate' ? { disabled: true } : null; } });");
         eval("steward.open('animal', {}, { x: 10, y: 10 }, { keyboard: true }); log.length = 0;");
         assertEquals("animal", eval("cursor()").asString(), "from the keyboard: the first enabled row — Rotate is disabled, the divider is not a row");
-        var down = eval("dispatch(document.body, 'keydown', { key: 'ArrowDown' })");
-        assertTrue(down.getMember("stopped").asBoolean() && down.getMember("defaulted").asBoolean(), "captured: the page behind sees nothing");
+        var down = eval("key({ key: 'ArrowDown' })");
+        assertTrue(down.getMember("taken").asBoolean(), "taken: the page behind sees nothing");
+        assertEquals("menus", eval("holder").asString(), "the menu holds the keys while open");
+        assertEquals("0", eval("String((captureListeners['keydown:c'] || []).length)").asString(), "no capture on the document");
         assertEquals("animal", eval("cursor()").asString(), "the only enabled row: itself");
-        eval("dispatch(document.body, 'keydown', { key: 'ArrowRight' });");
+        eval("key({ key: 'ArrowRight' });");
         assertEquals("true", eval("row('animal').attr('aria-expanded')").asString());
         assertEquals("cat", eval("cursor(sub(0))").asString(), "into the submenu, on its first");
-        eval("dispatch(document.body, 'keydown', { key: 'ArrowDown' });");
+        eval("key({ key: 'ArrowDown' });");
         assertEquals("dog", eval("cursor(sub(0))").asString());
-        eval("dispatch(document.body, 'keydown', { key: 'ArrowRight' });");
+        eval("key({ key: 'ArrowRight' });");
         assertEquals("3", eval("String(menusInDom())").asString(), "a third level: three frames on the path");
         assertEquals("big", eval("cursor(sub(1))").asString(), "into the third level, on its first");
-        eval("dispatch(document.body, 'keydown', { key: 'ArrowLeft' });");
+        eval("key({ key: 'ArrowLeft' });");
         assertEquals("dog", eval("cursor(sub(0))").asString(), "back to the second, on the row that opened the third");
         assertEquals("2", eval("String(menusInDom())").asString());
         eval("dispatch(row('cat', sub(0)), 'pointerenter', {});");
         assertEquals("cat", eval("cursor(sub(0))").asString(), "hovering a row of the second level leaves the second open");
-        eval("dispatch(document.body, 'keydown', { key: 'ArrowUp' });");
+        eval("key({ key: 'ArrowUp' });");
         assertEquals("dog", eval("cursor(sub(0))").asString(), "wrapped");
-        eval("dispatch(document.body, 'keydown', { key: 'ArrowUp' });");
-        eval("dispatch(document.body, 'keydown', { key: 'ArrowLeft' });");
+        eval("key({ key: 'ArrowUp' });");
+        eval("key({ key: 'ArrowLeft' });");
         assertEquals("false", eval("row('animal').attr('aria-expanded')").asString(), "back out");
         assertEquals("animal", eval("cursor()").asString());
-        eval("dispatch(document.body, 'keydown', { key: 'Enter' }); dispatch(document.body, 'keydown', { key: 'Enter' });");
+        eval("key({ key: 'Enter' }); key({ key: 'Enter' });");
         assertEquals("picked:animal/cat focus:body closed:animal/pick", log(), "Enter opens the submenu, Enter picks its first");
-        eval("steward.open('animal', {}, { x: 10, y: 10 }); log.length = 0; var esc = dispatch(document.body, 'keydown', { key: 'Escape' });");
+        eval("steward.open('animal', {}, { x: 10, y: 10 }); log.length = 0; var esc = key({ key: 'Escape' });");
         assertEquals("focus:body closed:animal/escape", log());
-        assertTrue(eval("esc.stopped").asBoolean(), "Escape captured: a dialog behind does not also close");
+        assertTrue(eval("esc.taken").asBoolean(), "Escape taken: a dialog behind does not also close");
+        assertEquals("null", eval("String(holder)").asString(), "closed: the keys given back — to no one, since no one held before");
+    }
+
+    @Test
+    void theKeysTakenCloseTheMenu_andAClosedMenuGivesTheKeysBackToWhoHeldBefore() {
+        eval("members.grid = {}; holder = 'grid'; kbLog = []; steward.open('animal', {}, { x: 10, y: 10 }); log.length = 0;");
+        assertEquals("claim:menus", eval("kbLog.join(' ')").asString());
+        eval("kbLog = []; steward.close();");
+        assertEquals("focus:body closed:animal/owner", log());
+        assertEquals("claim:grid", eval("kbLog.join(' ')").asString(), "the grid held before the menu; it holds again");
+        eval("steward.open('animal', {}, { x: 10, y: 10 }); steward.open('animal', {}, { x: 20, y: 20 }); log.length = 0; kbLog = [];");
+        eval("holder = 'grid'; members.menus.taken('grid');");
+        assertEquals("focus:body closed:animal/taken", log(), "the keys taken from the open menu: losing the keys is losing the screen");
+        assertEquals("", eval("kbLog.join(' ')").asString(), "nothing claimed back: whoever took the keys keeps them");
+        eval("delete members.grid; holder = null; steward.open('animal', {}, { x: 10, y: 10 }); kbLog = []; steward.close();");
+        assertEquals("release:menus", eval("kbLog.join(' ')").asString(), "no one held before: released");
     }
 
     @Test

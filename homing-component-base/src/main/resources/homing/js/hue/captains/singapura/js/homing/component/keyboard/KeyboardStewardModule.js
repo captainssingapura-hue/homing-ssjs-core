@@ -19,6 +19,7 @@
 //   steward.claim(id)                a fact: id holds now, whoever held is told
 //   steward.release(id)              nothing, unless id holds
 //   steward.holder()                 the id, or null
+//   steward.has(id)                  whether id is a member
 //   steward.dispose()
 //
 // One rule is the steward's, since only it sees the target: with physical
@@ -91,6 +92,7 @@ class KeyboardSteward {
         this._party.tellFrom(_STEWARD, { kind: "Release", id: id });
     }
     holder() { return this._holder; }
+    has(id) { return !!this._members[id]; }
     /** Another listener for the events; the function returned removes it. */
     on(fn) {
         if (typeof fn !== "function") throw new Error("[KeyboardSteward] on wants a function");

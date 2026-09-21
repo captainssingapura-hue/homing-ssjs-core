@@ -99,6 +99,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
     @BeforeEach
     void load() {
         js = buildContext();
+        loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeysModule.js");
         loadModule(EVENTS);
         loadModule(DRAG);
         loadModule(HAND);
@@ -247,17 +248,46 @@ class MultiTabPaneTest extends JsModuleTestBase {
             chipA.getBoundingClientRect = function () { return { left: 100, top: 10, right: 180, bottom: 40 }; };
             var ev1 = { clientX: 120, clientY: 30, defaulted: false, preventDefault: function () { this.defaulted = true; }, stopPropagation: function () {} };
             chipA.fire("contextmenu", ev1);
-            var ev2 = { key: "F10", shiftKey: true, defaulted: false, preventDefault: function () { this.defaulted = true; }, stopPropagation: function () {} };
-            chipA.fire("keydown", ev2);
+            var ev2 = { key: "F10", shiftKey: true, target: chipA };
+            var took2 = withMenus.key(ev2);   // from whoever holds the keys for the pane; the chip has no keydown listener of its own
             var ev3 = { clientX: 1, clientY: 2, defaulted: false, preventDefault: function () { this.defaulted = true; }, stopPropagation: function () {} };
             chipR.fire("contextmenu", ev3);
             """);
         assertEquals("tab:a@120,30:bound tab:a@112,38:kb:bound tab:refused@1,2:bound", eval("asked.join(' ')").asString(), "the kind, the tab, the point; the keyboard at the chip; bound to the pane, the tab and the chip");
         assertEquals("active:refused", log(), "the tab under the menu is selected first; a was active already");
-        assertTrue(eval("ev1.defaulted && ev2.defaulted && !ev3.defaulted").asBoolean(), "the browser's menu is suppressed only when the steward took it");
+        assertTrue(eval("ev1.defaulted && took2 && !ev3.defaulted").asBoolean(), "the browser's menu is suppressed only when the steward took it; the key taken likewise");
+        assertEquals("0", eval("String((chipA.listeners.keydown || []).length)").asString(), "no keydown listener on a chip");
         assertEquals("tab", eval("MultiTabPane.MENU").asString());
         eval("var e = { clientX: 0, clientY: 0, defaulted: false, preventDefault: function () { this.defaulted = true; } }; pane.addTab(tab('x')); pane.el.children[0].children[0].fire('contextmenu', e);");
         assertFalse(eval("e.defaulted").asBoolean(), "no steward: a right-click on this pane's chip is nothing");
+    }
+
+    /**
+     * The keys through the party: handed the steward, the pane joins and puts the
+     * convention on its root; a key goes to the strip when it is on a chip, else to
+     * the active tab's widget by its key(ev); neither chip nor pane listens itself.
+     */
+    @Test
+    void handedTheSteward_thePaneHoldsTheKeysForTheStripAndTheActiveWidget() {
+        eval("""
+            var members = {}, kbLog = [];
+            var kb = { join: function (id, h) { members[id] = h; kbLog.push("join:" + id); return id; }, leave: function (id) { delete members[id]; kbLog.push("leave:" + id); }, claim: function () {}, release: function () {} };
+            var keyed = new MultiTabPane(branch.createBranch("mtp_k"), { host: el("div"), slotId: "k", keyboard: kb, keyboardId: "page/dock", onEvent: function (ev) { if (ev.kind === "TabActivated") log.push("active:" + ev.tabId); } });
+            var wa = widget("a"); wa.key = function (ev) { log.push("a:key:" + ev.key); return ev.key === "ArrowUp"; };
+            keyed.addTab({ id: "a", title: "A", widget: wa }); keyed.addTab(tab("b")); keyed.switchTab("a"); log = [];
+            var chipB = keyed.el.children[0].children[1];
+            """);
+        assertEquals("join:page/dock", eval("kbLog.join(' ')").asString(), "the pane joined as said; the strip did not");
+        assertEquals("1,1", eval("[(keyed.el.listeners.pointerdown || []).length, (keyed.el.listeners.focusin || []).length].join()").asString(), "the convention on the root");
+        assertTrue(eval("members['page/dock'].keyDown({ key: 'Enter', target: chipB })").asBoolean(), "Enter on a chip: the strip's");
+        assertEquals("active:b", log());
+        eval("keyed.switchTab('a'); log = []");
+        assertTrue(eval("members['page/dock'].keyDown({ key: 'ArrowUp', target: wa.root })").asBoolean(), "a key not on a chip: the active widget's");
+        assertFalse(eval("members['page/dock'].keyDown({ key: 'Escape', target: wa.root })").asBoolean(), "left when the widget leaves it");
+        assertEquals("a:key:ArrowUp a:key:Escape", log());
+        assertEquals("0,0", eval("[(chipB.listeners.keydown || []).length, (keyed.el.listeners.keydown || []).length].join()").asString());
+        eval("kbLog = []; keyed.dispose()");
+        assertEquals("leave:page/dock", eval("kbLog.join(' ')").asString());
     }
 
     @Test

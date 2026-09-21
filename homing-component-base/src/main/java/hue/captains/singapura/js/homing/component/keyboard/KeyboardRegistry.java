@@ -80,10 +80,14 @@ public record KeyboardRegistry(Map<UiComponent<?>, List<KeyBinding>> byComponent
     /** A key listener registered in any form: {@code addEventListener("keydown", ...)}, or {@code el[f]("keydown", ...)} with the method computed. */
     private static final Pattern OWN_KEYS = Pattern.compile("[\"'](keydown|keyup|keypress)[\"']\\s*,");
 
+    /** A key listener on the document or the window, or in the capture phase: the steward's alone. */
+    private static final Pattern CAPTURES = Pattern.compile("(document|window)\\s*[.\\[]|,\\s*true\\s*\\)");
+
     /**
      * The problems with the closure's declarations: a need on something that
-     * is not a declared component, a need that names no key, and a declared
-     * component whose module still listens to keys itself.
+     * is not a declared component, a need that names no key, a declared
+     * component whose module still listens to keys itself, and any module
+     * but the steward that captures keys on the document or the window.
      */
     public static List<String> validate(List<Crate> topLevel) {
         var problems = new ArrayList<String>();
@@ -98,8 +102,11 @@ public record KeyboardRegistry(Map<UiComponent<?>, List<KeyBinding>> byComponent
                     declared = true;
                     if (n.keys() == null || n.keys().isEmpty()) problems.add(who + " takes keys but names none");
                 }
-                if (declared && listensToKeys(m))
+                var lines = keyListenerLines(m);
+                if (declared && !lines.isEmpty())
                     problems.add(crate.name() + ": " + m.getClass().getSimpleName() + " declares its keys but listens to them itself; keys come through the party");
+                if (lines.stream().anyMatch(line -> CAPTURES.matcher(line).find()))
+                    problems.add(crate.name() + ": " + m.getClass().getSimpleName() + " captures keys on the document; only the steward does");
             }
         }
         return List.copyOf(problems);
@@ -119,13 +126,17 @@ public record KeyboardRegistry(Map<UiComponent<?>, List<KeyBinding>> byComponent
     }
 
     /** Whether the module's own JS adds a key listener; a self-content or CSS module has none, and the steward, the party's one face to the document, is the exception by definition. */
-    static boolean listensToKeys(EsModule<?> m) {
-        if (m instanceof SelfContent || m instanceof CssGroup<?> || m instanceof KeyboardStewardModule) return false;
+    static boolean listensToKeys(EsModule<?> m) { return !keyListenerLines(m).isEmpty(); }
+
+    /** The lines of the module's own JS that register a key listener, in any form; none for the steward, a self-content or a CSS module. */
+    static List<String> keyListenerLines(EsModule<?> m) {
+        if (m instanceof SelfContent || m instanceof CssGroup<?> || m instanceof KeyboardStewardModule) return List.of();
         try {
-            for (String line : new ReadContentFromResources<>(m).content()) if (OWN_KEYS.matcher(line).find()) return true;
-            return false;
+            var out = new ArrayList<String>();
+            for (String line : new ReadContentFromResources<>(m).content()) if (OWN_KEYS.matcher(line).find()) out.add(line);
+            return List.copyOf(out);
         } catch (RuntimeException notAResource) {
-            return false;
+            return List.of();
         }
     }
 }

@@ -3,7 +3,9 @@
 // caller makes a sub-branch for it and hands it in; it owns the desk, as a
 // layer over the docks' host, and a dock is a multi-tab pane given to it.
 //
-//   new Docking(branch, { host, onEvent?, minW?, minH? })
+//   new Docking(branch, { host, onEvent?, minW?, minH?, keyboard?, keyboardId? })
+//     keyboard  the page's KeyboardSteward, handed on to the desk, which joins as
+//               keyboardId (the desk's branch's name, unless said)
 //     host   a positioned box holding the docks; the desk lies over it, the
 //            hand passing through except on a floating pane. A pane floats
 //            only within it.
@@ -53,7 +55,7 @@ class Docking {
         this._target = null;
         this._index = -1;
         this.desk = new Desk(branch.createBranch("desk"), {
-            host: opts.host, layer: true, minW: opts.minW, minH: opts.minH,
+            host: opts.host, layer: true, minW: opts.minW, minH: opts.minH, keyboard: opts.keyboard, keyboardId: opts.keyboardId,
             onEvent: function (ev) { self._fire(ev); },
             onDragMove: function (pane, x, y) { self._offer(x, y); },
             onDragEnd: function (pane, x, y, ok) { self._drop(pane, ok); }

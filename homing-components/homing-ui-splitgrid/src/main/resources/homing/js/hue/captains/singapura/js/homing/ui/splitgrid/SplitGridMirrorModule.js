@@ -5,8 +5,11 @@
 // touches the grid: the owner tells it the layout and the box, and it draws
 // them from the geometry — the same rectangles the grid has, scaled.
 //
-//   new SplitGridMirror(branch, { host, scale?, dividerPx?, minPx?, onEvent? })
-//     host   where the mirror's box goes; scale 0.25 by default
+//   new SplitGridMirror(branch, { host, scale?, dividerPx?, minPx?, onEvent?, keyboard?, keyboardId? })
+//     host      where the mirror's box goes; scale 0.25 by default
+//     keyboard  the page's KeyboardSteward: the mirror joins the keyboard party as
+//               keyboardId (its branch's name, unless said) and claims by the
+//               convention; without, its holder hands it the keys by mirror.key(ev)
 //
 //   mirror.el                    the box; focusable
 //   mirror.reflect(layout, box)  the grid's layout() and its box { w, h }: redrawn
@@ -14,9 +17,11 @@
 //   mirror.cursor(id?)           read, or set: the cell the cursor is at, marked
 //                                Current here; reports CursorMoved(id, "call")
 //   mirror.rects()               the geometry as drawn, unscaled
+//   mirror.key(ev)               a keydown from whoever holds the keys: an arrow moves the
+//                                cursor; true when taken. No keydown listener of its own
 //   mirror.dispose()
 //
-// The keyboard, while the mirror has focus: the arrows move the cursor to the
+// The keyboard, through the party: the arrows move the cursor to the
 // cell beside it by the workspace's rule — SplitGridGeometry.neighbour — and
 // report CursorMoved(id, direction); an outer edge moves nothing and says
 // nothing. A press on a cell puts the cursor there: CursorMoved(id, "pointer").
@@ -52,14 +57,12 @@ class SplitGridMirror {
         el.tabIndex = 0;
         el.setAttribute("role", "group");
         el.setAttribute("aria-label", "Layout");
-        el.addEventListener("keydown", function (e) {
-            var direction = _KEYS[e.key];
-            if (!direction || self._cursor === null) return;
-            var to = SplitGridGeometry.neighbour(self._rects, self._cursor, direction);
-            e.preventDefault();
-            e.stopPropagation();
-            if (to) self._moveCursor(to, direction);
-        });
+        this._kb = null; this._kbId = null; this._offKeys = null;
+        if (opts.keyboard) {
+            this._kb = opts.keyboard;
+            this._kbId = this._kb.join(opts.keyboardId != null ? String(opts.keyboardId) : branch.name, { keyDown: function (ev) { return self.key(ev); } });
+            this._offKeys = Keys.claimOn(el, this._kb, this._kbId);
+        }
         opts.host.appendChild(el);
         this.el = el;
         this._size();
@@ -91,7 +94,18 @@ class SplitGridMirror {
 
     rects() { return this._rects; }
 
+    /** A keydown from whoever holds the keys: an arrow moves the cursor to the cell beside it; true when taken, an outer edge included. */
+    key(ev) {
+        var direction = ev ? _KEYS[ev.key] : null;
+        if (!direction || this._cursor === null) return false;
+        var to = SplitGridGeometry.neighbour(this._rects, this._cursor, direction);
+        if (to) this._moveCursor(to, direction);
+        return true;
+    }
+
     dispose() {
+        if (this._offKeys) { this._offKeys(); this._offKeys = null; }
+        if (this._kb) { this._kb.leave(this._kbId); this._kb = null; }
         if (this.el.parentNode) this.el.parentNode.removeChild(this.el);
         this._cells.clear();
         this._branch.dissolve();

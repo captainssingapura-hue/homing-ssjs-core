@@ -6,8 +6,15 @@
 // where a dragged chip landed. A branch component: the pane makes a
 // sub-branch for it and hands it in.
 //
-//   new TabStrip(branch, { onAdd?, onDrop(chip, dest) })
+//   new TabStrip(branch, { onAdd?, onDrop(chip, dest), keyboard?, keyboardId? })
+//     keyboard   the page's KeyboardSteward, for a strip that stands alone: it joins
+//                the keyboard party as keyboardId (its branch's name, unless said) and
+//                claims by the convention. A strip inside a pane is built without: the
+//                pane holds the keys and hands them to the strip by strip.key(ev)
 //     strip.el
+//     strip.key(ev)                 a keydown, from whoever holds the keys: Enter or Space on
+//                                   a chip selects it, ContextMenu or Shift+F10 asks for its
+//                                   menu; true when taken. No keydown listener of its own
 //     strip.chip({ id, title, pinned, closable }, { onSelect, onClose, onMenu? }, branch?) → chipEl
 //         onMenu(at, keyboard) → boolean: a right-click on the chip, or the
 //         ContextMenu key / Shift+F10 on it, asks for the tab's menu at a point;
@@ -63,11 +70,19 @@ class TabStrip {
         this._pinned = new Set();         // the chips that are pinned
         this._size = null;                // the chips' size and aspect, null the design's
         this._aspect = null;
+        this._handlers = new Map();       // chip → its handlers, for the keys
 
         var el = branch.createElement("strip", "div");
         css.addClass(el, mtp_strip);
         el.setAttribute("role", "tablist");
         this.el = el;
+        // the keys: through the party, when the strip stands alone and is handed the steward
+        this._kb = null; this._kbId = null; this._offKeys = null;
+        if (opts && opts.keyboard) {
+            this._kb = opts.keyboard;
+            this._kbId = this._kb.join(opts.keyboardId != null ? String(opts.keyboardId) : branch.name, { keyDown: function (ev) { return self.key(ev); } });
+            this._offKeys = Keys.claimOn(el, this._kb, this._kbId);
+        }
 
         this._tail = branch.createElement("tail", "div");
         css.addClass(this._tail, mtp_strip_tail);
@@ -120,13 +135,7 @@ class TabStrip {
             if (ev.button !== 0 || (closeBtn && closeBtn.contains(ev.target))) return;
             handlers.onSelect();
         });
-        c.addEventListener("keydown", function (ev) {
-            if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); handlers.onSelect(); return; }
-            if (handlers.onMenu && (ev.key === "ContextMenu" || (ev.shiftKey && ev.key === "F10"))) {
-                var r = c.getBoundingClientRect();
-                if (handlers.onMenu({ x: r.left + 12, y: r.bottom - 2 }, true)) { ev.preventDefault(); ev.stopPropagation(); }
-            }
-        });
+        this._handlers.set(c, handlers);
         if (handlers.onMenu) {
             c.addEventListener("contextmenu", function (ev) {
                 if (handlers.onMenu({ x: ev.clientX, y: ev.clientY }, false)) ev.preventDefault();
@@ -138,8 +147,21 @@ class TabStrip {
         else this._hand.arm(c, closeBtn);
         return c;
     }
+    /** A keydown from whoever holds the keys, on a chip: Enter or Space selects it, ContextMenu or Shift+F10 asks for its menu; true when taken. */
+    key(ev) {
+        var c = ev && ev.target, handlers = c ? this._handlers.get(c) : null;
+        if (!handlers) return false;
+        if (ev.key === "Enter" || ev.key === " ") { handlers.onSelect(); return true; }
+        if (handlers.onMenu && (ev.key === "ContextMenu" || (ev.shiftKey && ev.key === "F10"))) {
+            var r = c.getBoundingClientRect();
+            return !!handlers.onMenu({ x: r.left + 12, y: r.bottom - 2 }, true);
+        }
+        return false;
+    }
     /** The strip taken down: its element removed, its branch dissolved; chips minted on branches of their own are their owners'. */
     dispose() {
+        if (this._offKeys) { this._offKeys(); this._offKeys = null; }
+        if (this._kb) { this._kb.leave(this._kbId); this._kb = null; }
         if (this.el.parentNode) this.el.parentNode.removeChild(this.el);
         this._branch.dissolve();
     }
@@ -158,6 +180,7 @@ class TabStrip {
     }
     remove(c) {
         this._pinned.delete(c);
+        this._handlers.delete(c);
         if (c.parentNode === this.el) this.el.removeChild(c);
     }
     select(chips, active) {

@@ -2,7 +2,10 @@
 // PreferencesButton — the button on the bar, and the dialog it opens. A
 // branch component: the chrome makes a sub-branch for it and hands it in.
 //
-//   new PreferencesButton(branch, bar, chrome)
+//   new PreferencesButton(branch, bar, chrome, keyboard)
+//     keyboard  the page's KeyboardSteward, the chrome's: the dialog claims the keys
+//               on open and hands them to the view, which hands them to the master
+//               or the detail widget by where the focus is
 //     .el      the button's wrap, appended to the bar
 //     .open()  what the button does
 //
@@ -33,8 +36,9 @@ function _loadRegistry(entry) {
 }
 
 class PreferencesButton {
-    constructor(branch, bar, chrome) {
+    constructor(branch, bar, chrome, keyboard) {
         if (!branch) throw new Error("[PreferencesButton] a branch of its own is required");
+        this._keyboard = keyboard || null;
         var self = this;
         branch.activate(_prefsOwner);
         this._branch = branch;
@@ -71,6 +75,7 @@ class PreferencesButton {
         this._open = new Dialog(this._branch.createBranch("dialog" + (++this._opens)), {
             title: "Preferences",
             size: { w: 880, h: 580 },
+            keyboard: this._keyboard, keyboardId: "preferences",
             content: function (b, body) {
                 _loadRegistry(self._entry).then(function (reg) {
                     if (!self._open) return null;
@@ -79,7 +84,7 @@ class PreferencesButton {
                 }).then(function (master) {
                     if (master && typeof master.setActive === "function") master.setActive(true);
                 }).catch(function (e) { console.error("[preferences] could not open", e); });
-                return { dispose: function () { if (view) view.dispose(); view = null; } };
+                return { onKeydown: function (ev) { return !!(view && view.key(ev)); }, dispose: function () { if (view) view.dispose(); view = null; } };
             },
             actions: [{ id: "done", label: "Done", onClick: function (d) { d.close(); } }],
             onClose: function () { self._open = null; self._btn.focus(); }
