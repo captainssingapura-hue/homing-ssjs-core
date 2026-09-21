@@ -157,6 +157,18 @@ class DockingTest extends JsModuleTestBase {
     }
 
     @Test
+    void aTabUndockedAtAPoint_aMenusPick_floatsWithNoHand() {
+        eval("docking.undockAt(A, { id: 't2' }, { x: 160, y: 90 });");
+        assertEquals("opened:t2 raised:t2 undocked:t2<a", log(), "the desk opens it, the undock is said, and no hand is taken");
+        assertEquals("t1", eval("A.tabs().join(',')").asString(), "the dock lost the tab");
+        assertEquals("w-w2", eval("docking.desk.pane('t2').body.children[0].tag").asString(), "the widget travelled");
+        assertFalse(eval("docking.desk.pane('t2').root.has('fp_held')").asBoolean(), "not in any hand");
+        assertEquals("100,76", eval("var b = docking.desk.pane('t2').bounds(); b.x + ',' + b.y").asString(), "its head at the point, the grip's offset in: 160-60, 90-14");
+        eval("docking.undockAt(A, { id: 't1' }, { x: -50, y: -50 });");
+        assertEquals("0,0", eval("var c = docking.desk.pane('t1').bounds(); c.x + ',' + c.y").asString(), "kept within the desk");
+    }
+
+    @Test
     void aFloatDraggedOverADockIsOffered_andDroppedThereBecomesItsTab() {
         eval("docking.desk.open({ id: 'f', title: 'Float', widget: widget('wf'), x: 500, y: 400 }); log.length = 0;");
         eval("var head = docking.desk.pane('f').root.children[0]; head.fire('pointerdown', { button: 0, pointerId: 3, clientX: 520, clientY: 410, target: head });");

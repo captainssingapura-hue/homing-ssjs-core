@@ -5,8 +5,11 @@ import hue.captains.singapura.js.homing.core.DomModule;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
+import hue.captains.singapura.js.homing.ui.menu.NeedContextMenu;
+import hue.captains.singapura.js.homing.ui.menu.tree.ContextMenuKind;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * {@code MultiTabPane}, one pane of tabs. {@code new MultiTabPane(branch,
@@ -35,8 +38,10 @@ import java.util.List;
 public record MultiTabPaneModule() implements DomModule<MultiTabPaneModule> {
 
     /** The class. */
-    public record MultiTabPane() implements BranchComponent<MultiTabPaneModule> {
-        @Override public String summary() { return "Tabs in a strip over one panel each; a press selects, a drag reorders along the rail."; }
+    public record MultiTabPane() implements BranchComponent<MultiTabPaneModule>, NeedContextMenu {
+        @Override public String summary() { return "Tabs in a strip over one panel each; a press selects, a drag reorders along the rail, a right-click offers the tab's menu."; }
+        /** The tab menu: opened on a chip when the pane is given a steward ({@code menus}); the site serving the pane serves the kind. */
+        @Override public Set<ContextMenuKind<?>> required() { return Set.of(TabMenu.INSTANCE); }
     }
 
     public static final MultiTabPaneModule INSTANCE = new MultiTabPaneModule();

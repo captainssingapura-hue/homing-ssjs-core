@@ -12,6 +12,7 @@ import hue.captains.singapura.js.homing.ui.menu.tree.MenuRow;
 import hue.captains.singapura.js.homing.ui.menu.tree.MenuTrees;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -46,11 +47,12 @@ public record ContextMenuRegistry(List<ContextMenuKind<?>> kinds) {
 
     public static ContextMenuRegistry of(ContextMenuKind<?>... kinds) { return new ContextMenuRegistry(List.of(kinds)); }
 
-    /** The kinds the catalogued components of a crate closure need, each once, in catalogue order. */
+    /** The kinds the catalogued components of a crate closure need, each once: in catalogue order between components, by name within one — a set has no order, and a stamped module must. */
     public static ContextMenuRegistry requiredBy(List<Crate> topLevel) {
         var kinds = new LinkedHashMap<Class<?>, ContextMenuKind<?>>();
         for (UiComponent<?> c : ComponentTrees.components(topLevel))
-            if (c instanceof NeedContextMenu n) for (ContextMenuKind<?> k : n.required()) kinds.putIfAbsent(k.getClass(), k);
+            if (c instanceof NeedContextMenu n)
+                for (ContextMenuKind<?> k : n.required().stream().sorted(Comparator.comparing(ContextMenuKind::kind)).toList()) kinds.putIfAbsent(k.getClass(), k);
         return new ContextMenuRegistry(List.copyOf(kinds.values()));
     }
 

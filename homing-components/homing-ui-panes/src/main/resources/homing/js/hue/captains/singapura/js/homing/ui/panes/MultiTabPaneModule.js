@@ -4,9 +4,17 @@
 // component: the caller makes a sub-branch for it and hands it in; dispose()
 // dissolves it.
 //
-//   new MultiTabPane(branch, { host, slotId?, budget?, addable?, onEvent? })
+//   new MultiTabPane(branch, { host, slotId?, budget?, addable?, onEvent?, menus? })
 //     branch: the pane's own, handed unactivated
 //     host:   a flex column; the pane is its item and fills it.
+//     menus:  the page's ContextMenuSteward, when the page offers menus: a
+//             right-click on a chip, or the ContextMenu key / Shift+F10 on it,
+//             asks the steward for MultiTabPane.MENU — the kind "tab", which
+//             the pane's declaration names as its need and any site serving
+//             the pane holds — bound to { pane, tab, anchor }: this pane, the
+//             tab record, the chip. The steward says whether it took the
+//             request; only then is the browser's menu suppressed. What a
+//             pick does — detach, close — is the page's handler for "tab".
 //
 //   pane.addTab({ id, title, widget, pinned?, closable? })  → index; the widget
 //       is an instance by the base's contract: root, setActive?, dispose?.
@@ -63,6 +71,9 @@ var _DEFAULT_BUDGET = 16;
 const _paneOwner = Object.freeze({ toString: () => "multiTabPane" });
 
 class MultiTabPane {
+    /** The kind a chip's menu is asked for: the Java TabMenu's. */
+    static MENU = "tab";
+
     constructor(branch, opts) {
         if (!branch) throw new Error("[MultiTabPane] a branch of its own is required");
         if (!opts || !opts.host) throw new Error("[MultiTabPane] opts.host is required");
@@ -73,6 +84,7 @@ class MultiTabPane {
         this._budget = opts.budget == null ? _DEFAULT_BUDGET : Math.max(1, opts.budget | 0);
         this._addEnabled = opts.addable !== false;
         this._sink = typeof opts.onEvent === "function" ? opts.onEvent : null;
+        this._menus = opts.menus && typeof opts.menus.open === "function" ? opts.menus : null;
         this._tabs = [];          // entries in strip order: { id, tab, pinned, widget, chip, panel }
         this._activeId = null;
         this._disposed = false;
@@ -140,7 +152,14 @@ class MultiTabPane {
         var self = this;
         var own = this._branch.createBranch("tab-" + tab.id.replace(/[^A-Za-z0-9_-]/g, "_"));
         own.activate(_paneOwner);
-        var chip = this._strip.chip(tab, { onSelect: function () { self.switchTab(tab.id); }, onClose: function () { self.removeTab(tab.id); } }, own);
+        var handlers = { onSelect: function () { self.switchTab(tab.id); }, onClose: function () { self.removeTab(tab.id); } };
+        if (this._menus) handlers.onMenu = function (at, keyboard) {
+            var i = self._find(tab.id);
+            if (i < 0) return false;
+            self.switchTab(tab.id);
+            return self._menus.open(MultiTabPane.MENU, { pane: self, tab: self._tabs[i].tab, anchor: self._tabs[i].chip }, at, { anchor: self._tabs[i].chip, keyboard: keyboard });
+        };
+        var chip = this._strip.chip(tab, handlers, own);
         var panel = own.createElement("panel", "div");
         css.addClass(panel, mtp_tab_content, mtp_tab_content_hidden);
         panel.setAttribute("role", "tabpanel");
@@ -211,6 +230,8 @@ class MultiTabPane {
     }
     removeTab(id) {
         var i = this._require(id);
+        // closed from its own chip — the keyboard, or a menu whose close gave the focus back — the focus stays on the strip
+        var hadFocus = typeof document !== "undefined" && document.activeElement === this._tabs[i].chip;
         var entry = this._takeOut(i);
         if (typeof entry.widget.dispose === "function") {
             try { entry.widget.dispose(); } catch (e) { console.error("[MultiTabPane] widget.dispose threw:", e); }
@@ -218,6 +239,10 @@ class MultiTabPane {
         entry.branch.dissolve();
         this._fire(PaneEvents.TabRemoved(this.slotId, entry.tab, i));
         this._activateNeighbour(i);
+        if (hadFocus) {
+            var j = this._find(this._activeId);
+            if (j >= 0) { try { this._tabs[j].chip.focus({ preventScroll: true }); } catch (e) {} }
+        }
         return entry.tab;
     }
     detachTab(id) {

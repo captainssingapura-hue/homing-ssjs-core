@@ -229,6 +229,37 @@ class MultiTabPaneTest extends JsModuleTestBase {
         assertEquals("b:disposed removed:s1:b@1 active:s1:a", log());
     }
 
+    /**
+     * Given a steward, a chip asks it for the tab menu — on a right-click at the
+     * point, on the ContextMenu key or Shift+F10 at the chip — bound to the pane,
+     * the tab and the chip; the tab is selected first; the browser's menu is
+     * suppressed only when the steward took the request. Without a steward a
+     * right-click is nothing.
+     */
+    @Test
+    void givenAStewardAChipAsksForTheTabMenu_boundToPaneTabAndChip() {
+        eval("""
+            var asked = [];
+            var steward = { open: function (kind, object, at, opts) { asked.push(kind + ":" + object.tab.id + "@" + at.x + "," + at.y + (opts.keyboard ? ":kb" : "") + (opts.anchor === object.anchor && object.pane === withMenus ? ":bound" : "")); return object.tab.id !== "refused"; } };
+            var withMenus = new MultiTabPane(branch.createBranch("mtp_s2"), { host: el("div"), slotId: "s2", menus: steward, onEvent: function (ev) { if (ev.kind === "TabActivated") log.push("active:" + ev.tabId); } });
+            withMenus.addTab(tab("a")); withMenus.addTab(tab("refused")); log = [];
+            var chipA = withMenus.el.children[0].children[0], chipR = withMenus.el.children[0].children[1];
+            chipA.getBoundingClientRect = function () { return { left: 100, top: 10, right: 180, bottom: 40 }; };
+            var ev1 = { clientX: 120, clientY: 30, defaulted: false, preventDefault: function () { this.defaulted = true; }, stopPropagation: function () {} };
+            chipA.fire("contextmenu", ev1);
+            var ev2 = { key: "F10", shiftKey: true, defaulted: false, preventDefault: function () { this.defaulted = true; }, stopPropagation: function () {} };
+            chipA.fire("keydown", ev2);
+            var ev3 = { clientX: 1, clientY: 2, defaulted: false, preventDefault: function () { this.defaulted = true; }, stopPropagation: function () {} };
+            chipR.fire("contextmenu", ev3);
+            """);
+        assertEquals("tab:a@120,30:bound tab:a@112,38:kb:bound tab:refused@1,2:bound", eval("asked.join(' ')").asString(), "the kind, the tab, the point; the keyboard at the chip; bound to the pane, the tab and the chip");
+        assertEquals("active:refused", log(), "the tab under the menu is selected first; a was active already");
+        assertTrue(eval("ev1.defaulted && ev2.defaulted && !ev3.defaulted").asBoolean(), "the browser's menu is suppressed only when the steward took it");
+        assertEquals("tab", eval("MultiTabPane.MENU").asString());
+        eval("var e = { clientX: 0, clientY: 0, defaulted: false, preventDefault: function () { this.defaulted = true; } }; pane.addTab(tab('x')); pane.el.children[0].children[0].fire('contextmenu', e);");
+        assertFalse(eval("e.defaulted").asBoolean(), "no steward: a right-click on this pane's chip is nothing");
+    }
+
     @Test
     void refusesADuplicateAWidgetlessTabAndAnUnknownId() {
         eval("pane.addTab(tab('a'))");

@@ -19,6 +19,11 @@
 //                                chip, when given — and takes the drag over. The
 //                                strip does not pull a tab off yet; a holder may.
 //                                Undocked(tabId, slotId), after the desk's Opened
+//   docking.undockAt(dock, tab, at)
+//                                by call, with no hand — a menu's pick: the tab
+//                                leaves the dock, NOT disposed, and floats with
+//                                its head at the point, within the desk; nothing
+//                                is grabbed. Undocked(tabId, slotId), after Opened
 //   docking.dock(paneId, dock, index?)
 //                                the floating tab leaves the desk (Released) and
 //                                is attached to the dock (TabAttached), then
@@ -73,6 +78,22 @@ class Docking {
         return pane;
     }
 
+    /** A tab detached by call with no hand — a menu's pick — floating with its head at the point, kept within the desk. */
+    undockAt(dock, tab, at) {
+        var t = dock.detachTab(tab.id);
+        var r = Docking._rect(this.desk.root);
+        var x = Math.max(0, (at && at.x != null ? at.x : r.left) - r.left - _GRIP_X);
+        var y = Math.max(0, (at && at.y != null ? at.y : r.top) - r.top - _GRIP_Y);
+        if (r.width) x = Math.min(x, Math.max(0, r.width - _FLOAT_W));
+        if (r.height) y = Math.min(y, Math.max(0, r.height - _FLOAT_H));
+        var pane = this.desk.open({
+            id: t.id, title: t.title == null ? t.id : t.title, widget: t.widget, closable: t.closable !== false,
+            x: x, y: y, w: _FLOAT_W, h: _FLOAT_H
+        });
+        this._fire(DockEvents.Undocked(t.id, dock.slotId));
+        return pane;
+    }
+
     /** A floating tab into a dock, at an index or the end. */
     dock(paneId, dock, index) {
         var tab = this.desk.release(paneId);
@@ -108,7 +129,7 @@ class Docking {
     }
 
     static _rect(el) {
-        return el && typeof el.getBoundingClientRect === "function" ? el.getBoundingClientRect() : { left: 0, top: 0 };
+        return el && typeof el.getBoundingClientRect === "function" ? el.getBoundingClientRect() : { left: 0, top: 0, width: 0, height: 0 };
     }
 
     _fire(ev) {

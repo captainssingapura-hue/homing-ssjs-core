@@ -8,7 +8,10 @@
 //
 //   new TabStrip(branch, { onAdd?, onDrop(chip, dest) })
 //     strip.el
-//     strip.chip({ id, title, pinned, closable }, { onSelect, onClose }, branch?) → chipEl
+//     strip.chip({ id, title, pinned, closable }, { onSelect, onClose, onMenu? }, branch?) → chipEl
+//         onMenu(at, keyboard) → boolean: a right-click on the chip, or the
+//         ContextMenu key / Shift+F10 on it, asks for the tab's menu at a point;
+//         true means it was taken and the browser's own menu is suppressed
 //                                   minted on the branch given — the tab's own,
 //                                   dissolved when the tab leaves — else the strip's
 //     strip.arrange(chips)          the chips in order, before the tail
@@ -118,8 +121,17 @@ class TabStrip {
             handlers.onSelect();
         });
         c.addEventListener("keydown", function (ev) {
-            if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); handlers.onSelect(); }
+            if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); handlers.onSelect(); return; }
+            if (handlers.onMenu && (ev.key === "ContextMenu" || (ev.shiftKey && ev.key === "F10"))) {
+                var r = c.getBoundingClientRect();
+                if (handlers.onMenu({ x: r.left + 12, y: r.bottom - 2 }, true)) { ev.preventDefault(); ev.stopPropagation(); }
+            }
         });
+        if (handlers.onMenu) {
+            c.addEventListener("contextmenu", function (ev) {
+                if (handlers.onMenu({ x: ev.clientX, y: ev.clientY }, false)) ev.preventDefault();
+            });
+        }
         if (this._size != null) css.size(c, this._size);
         if (this._aspect != null) css.aspect(c, this._aspect);
         if (tab.pinned) this._pinned.add(c);

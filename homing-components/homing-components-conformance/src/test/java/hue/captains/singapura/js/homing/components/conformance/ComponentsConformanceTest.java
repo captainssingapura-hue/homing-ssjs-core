@@ -134,6 +134,6 @@ class ComponentsConformanceTest {
         assertTrue(composed.root().children().stream().allMatch(v -> v.level() == TreeLevel.L1.INSTANCE), "every vehicle grafted one under the root");
         // what the components need of a page is derived from the catalogue: nothing invisible, nothing nameless
         assertEquals(List.of(), ContextMenuRegistry.validate(ComponentsConformance.TOP_LEVEL));
-        assertEquals(List.of(), ContextMenuRegistry.requiredBy(ComponentsConformance.TOP_LEVEL).kinds(), "no core component opens a menu yet; the tab pane is next");
+        assertEquals(List.of("tab"), ContextMenuRegistry.requiredBy(ComponentsConformance.TOP_LEVEL).kinds().stream().map(k -> k.kind()).toList(), "the tab pane opens the tab menu; a site serving the panes holds it");
     }
 }
