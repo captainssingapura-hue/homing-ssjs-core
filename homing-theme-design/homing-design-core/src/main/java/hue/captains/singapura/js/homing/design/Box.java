@@ -33,6 +33,12 @@ public interface Box extends Semantic {
          * its corners are cut where it meets the row, not where it sits on it.
          */
         public record Tab() implements Box {}
+        /**
+         * An option: one row of a menu or a list, a control that is picked —
+         * its air inside, its gap between mark, label and hint, a soft corner
+         * for the wash the design lays under the cursor.
+         */
+        public record Option() implements Box {}
     }
 
     record Inline() implements Box {}
@@ -48,6 +54,13 @@ public interface Box extends Semantic {
             /** The floating pane: raised above the page, moved by its head, sized by its user; the active one is the ring drawn now. */
             public record Floating() implements Box {}
         }
+        /**
+         * A menu: a container of options that opens at a point and closes
+         * when it is done with — its corner and rule the container's, its
+         * inset the air around the options, its gap between them, its extent
+         * the least it is wide.
+         */
+        public record Menu() implements Box {}
     }
 
     record Section() implements Box {}

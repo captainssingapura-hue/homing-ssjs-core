@@ -153,6 +153,14 @@ final class NeumorphismDesign {
             gap(of(Control.Tab.class, Size.Gap.class), "8px", 1.3),
             measure(of(Control.Tab.class, Size.Extent.class), "168px", 1.3),
             proportion(of(Control.Tab.class, Size.Proportion.class), "5", 1.5),
+            // a menu: a container of options that opens at a point; an option: one row of it
+            one(of(Container.Menu.class, Shape.Corner.class), "14px"),
+            inset(of(Container.Menu.class, Size.Inset.class), "8px", "0", 1.3),
+            gap(of(Container.Menu.class, Size.Gap.class), "2px", 1.3),
+            minWidth(of(Container.Menu.class, Size.Extent.class), "210px", 1.3),
+            one(of(Control.Option.class, Shape.Corner.class), "10px"),
+            inset(of(Control.Option.class, Size.Inset.class), "8px", "14px", 1.3),
+            gap(of(Control.Option.class, Size.Gap.class), "10px", 1.3),
             // a container, and the card: a soft slab, no rule
             one(of(Container.class, Shape.Corner.class), "16px"),
             ruleWithFocusRing(of(Container.class, Shape.Rule.class), "0", "none", "2px", "solid", "-2px"),

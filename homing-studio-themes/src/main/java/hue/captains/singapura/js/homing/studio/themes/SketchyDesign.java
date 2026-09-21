@@ -154,6 +154,14 @@ final class SketchyDesign {
             gap(of(Control.Tab.class, Size.Gap.class), "8px", 1.35),
             measure(of(Control.Tab.class, Size.Extent.class), "160px", 1.35),
             proportion(of(Control.Tab.class, Size.Proportion.class), "5", 1.5),
+            // a menu: a container of options that opens at a point; an option: one row of it
+            one(of(Container.Menu.class, Shape.Corner.class), "8px 6px 7px 9px / 6px 8px 9px 7px"),
+            inset(of(Container.Menu.class, Size.Inset.class), "8px", "0", 1.35),
+            gap(of(Container.Menu.class, Size.Gap.class), "2px", 1.35),
+            minWidth(of(Container.Menu.class, Size.Extent.class), "200px", 1.35),
+            one(of(Control.Option.class, Shape.Corner.class), "6px 4px 5px 7px / 4px 6px 7px 5px"),
+            inset(of(Control.Option.class, Size.Inset.class), "7px", "12px", 1.35),
+            gap(of(Control.Option.class, Size.Gap.class), "10px", 1.35),
             // a container, and the card: a hand-cut card, its corners uneven
             one(of(Container.class, Shape.Corner.class), WOBBLE_PLATE),
             ruleWithFocusRing(of(Container.class, Shape.Rule.class), "2px", "solid", "2px", "dashed", "-3px"),

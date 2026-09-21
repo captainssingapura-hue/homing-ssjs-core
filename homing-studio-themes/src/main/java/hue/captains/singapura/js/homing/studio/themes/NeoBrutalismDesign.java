@@ -258,6 +258,14 @@ final class NeoBrutalismDesign {
             gap(of(Control.Tab.class, Size.Gap.class), "10px", 1.5),
             measure(of(Control.Tab.class, Size.Extent.class), "160px", 1.5),
             proportion(of(Control.Tab.class, Size.Proportion.class), "5", 1.5),
+            // a menu: a container of options that opens at a point; an option: one row of it
+            one(of(Container.Menu.class, Shape.Corner.class), "0"),
+            inset(of(Container.Menu.class, Size.Inset.class), "6px", "0", 1.5),
+            gap(of(Container.Menu.class, Size.Gap.class), "0", 1.5),
+            minWidth(of(Container.Menu.class, Size.Extent.class), "200px", 1.5),
+            one(of(Control.Option.class, Shape.Corner.class), "0"),
+            inset(of(Control.Option.class, Size.Inset.class), "8px", "12px", 1.5),
+            gap(of(Control.Option.class, Size.Gap.class), "10px", 1.5),
             // a container, and the card: a squarish print, hard-edged
             one(of(Container.class, Shape.Corner.class), "0"),
             ruleWithFocusRing(of(Container.class, Shape.Rule.class), "3px", "solid", "3px", "solid", "-3px"),

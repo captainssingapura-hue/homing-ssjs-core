@@ -186,6 +186,14 @@ final class EditorialDesign {
             gap(of(Control.Tab.class, Size.Gap.class), "8px", 1.3),
             measure(of(Control.Tab.class, Size.Extent.class), "168px", 1.3),
             proportion(of(Control.Tab.class, Size.Proportion.class), "6", 1.5),
+            // a menu: a container of options that opens at a point; an option: one row of it
+            one(of(Container.Menu.class, Shape.Corner.class), "6px"),
+            inset(of(Container.Menu.class, Size.Inset.class), "6px", "0", 1.3),
+            gap(of(Container.Menu.class, Size.Gap.class), "2px", 1.3),
+            minWidth(of(Container.Menu.class, Size.Extent.class), "200px", 1.3),
+            one(of(Control.Option.class, Shape.Corner.class), "4px"),
+            inset(of(Control.Option.class, Size.Inset.class), "7px", "12px", 1.3),
+            gap(of(Control.Option.class, Size.Gap.class), "10px", 1.3),
             // a container, and the card: an index card: three by two, a soft corner
             one(of(Container.class, Shape.Corner.class), "6px"),
             ruleWithFocusRing(of(Container.class, Shape.Rule.class), "1px", "solid", "2px", "solid", "-2px"),

@@ -156,6 +156,14 @@ final class GlassmorphismDesign {
             gap(of(Control.Tab.class, Size.Gap.class), "8px", 1.3),
             measure(of(Control.Tab.class, Size.Extent.class), "176px", 1.3),
             proportion(of(Control.Tab.class, Size.Proportion.class), "5.5", 1.5),
+            // a menu: a container of options that opens at a point; an option: one row of it
+            one(of(Container.Menu.class, Shape.Corner.class), "12px"),
+            inset(of(Container.Menu.class, Size.Inset.class), "8px", "0", 1.3),
+            gap(of(Container.Menu.class, Size.Gap.class), "2px", 1.3),
+            minWidth(of(Container.Menu.class, Size.Extent.class), "210px", 1.3),
+            one(of(Control.Option.class, Shape.Corner.class), "8px"),
+            inset(of(Control.Option.class, Size.Inset.class), "8px", "14px", 1.3),
+            gap(of(Control.Option.class, Size.Gap.class), "10px", 1.3),
             // a container, and the card: a glass plate, fuller than wide
             one(of(Container.class, Shape.Corner.class), "18px"),
             ruleWithFocusRing(of(Container.class, Shape.Rule.class), "1px", "solid", "2px", "solid", "-2px"),
