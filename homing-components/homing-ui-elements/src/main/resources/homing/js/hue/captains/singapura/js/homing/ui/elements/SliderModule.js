@@ -2,9 +2,10 @@
 // Slider — a number set by a knob on a track, as a BRANCH component made
 // through its builder: the caller makes a sub-branch for it and hands it in.
 // A label before the rail, a readout after; the track is sunk, the fill runs
-// from the detent to the value, the knob is raised and takes the focus. Every
-// part is a real element wearing a design word, so a design draws the whole
-// of it: no vendor pseudo-element, nothing of the browser's own slider.
+// from the detent to the value, the knob is raised and takes the focus, and
+// carries a mark — an Icon: a grip, or the word for what the slider sets.
+// Every part is a real element wearing a design word, so a design draws the
+// whole of it: no vendor pseudo-element, nothing of the browser's own slider.
 //
 //   var s = new SliderBuilder().label("The tabs' size").axis()          // −1…1 by 0.1, the detent at 0
 //               .format(function (v) { return v.toFixed(1); })
@@ -13,6 +14,8 @@
 //               .build(branch.createBranch("size"));
 //     .range(min, max, step)   any range; .axis() is range(−1, 1, 0.1) with a detent at 0
 //     .value(v)  .detent(v…)   where the knob rests: the fill runs from the first detent, else from min
+//     .icon(name)              the mark on the knob: an Icon word — "size", "aspect", "extent", "level" —
+//                              for what the slider sets; "grip" unless said; null for a bare knob
 //     .size(s)                 −1 … 1: every length the design gives the slider grows by its ratio
 //     .labelWidth(css)         one width for the labels of sliders that stack, so their rails align
 //   Slider:
@@ -21,6 +24,7 @@
 //     .setOn(on)               off is inert and says so
 //     .size(s)                 live, on the slider and its parts
 //     .label(text?)            read, or set
+//     .icon(name?)             read, or set: the knob's mark
 //     .labelWidth(css?)        the label's width: a length, or null for its own
 //     .dispose()
 //   The rail takes the hand anywhere on it: a press jumps and grabs, the
@@ -86,13 +90,16 @@ class Slider {
         knob.setAttribute("aria-orientation", "horizontal");
         if (p.label != null) knob.setAttribute("aria-label", String(p.label));
         this._knob = knob;
+        this._mark = new Icon(branch.createElement("mark", Icon.TAG), null);
+        knob.appendChild(this._mark.el);
+        this.icon(p.icon === undefined ? "grip" : p.icon);
         rail.appendChild(knob);
         root.appendChild(rail);
 
         this._readout = branch.createElement("readout", "span");
         css.addClass(this._readout, el_slider_readout);
         root.appendChild(this._readout);
-        this._parts = [root, this._label, rail, track, this._fill, knob, this._readout];
+        this._parts = [root, this._label, rail, track, this._fill, knob, this._mark.el, this._readout];
         if (this._detent) this._parts.push(this._detent);
 
         this._value = this._snap(p.value == null ? this._rest() : Number(p.value), false);
@@ -205,6 +212,10 @@ class Slider {
         if (text !== undefined) { this._label.textContent = String(text); this._knob.setAttribute("aria-label", String(text)); }
         return this._label.textContent;
     }
+    icon(name) {
+        if (name !== undefined) { if (name == null) this._mark.clear(); else this._mark.set(name); }
+        return this._mark.name();
+    }
     labelWidth(w) {
         if (w == null) this._label.style.removeProperty("--sl-label"); else this._label.style.setProperty("--sl-label", String(w));
         return this;
@@ -228,6 +239,7 @@ class SliderBuilder {
     onChange(fn)          { this._props.onChange = fn; return this; }
     size(s)               { this._props.size = s; return this; }
     labelWidth(w)         { this._props.labelWidth = w; return this; }
+    icon(name)            { this._props.icon = name; return this; }
     build(branch) {
         if (!branch) throw new Error("[SliderBuilder] build wants the sub-branch the caller made for the slider");
         return new Slider(branch, this._props);

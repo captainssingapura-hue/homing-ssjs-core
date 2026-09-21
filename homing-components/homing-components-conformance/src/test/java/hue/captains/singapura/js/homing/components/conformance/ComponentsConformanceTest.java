@@ -127,7 +127,7 @@ class ComponentsConformanceTest {
         assertEquals(List.of(), ComponentTrees.validate(ComponentsConformance.TOP_LEVEL));
         var composed = ComponentTrees.compose("components", ComponentsConformance.TOP_LEVEL);
         var vehicles = composed.root().children().stream().map(n -> n.segment().value()).toList();
-        assertEquals(List.of("ui-elements", "ui-dialog", "ui-floating", "ui-preferences", "ui-split", "ui-panes", "ui-split-grid", "ui-icons", "ui-menu", "mpa"), vehicles, "one vehicle per crate that ships components, in closure order — the dialog requires the floating crate, so floating follows it; docking ships statics only");
+        assertEquals(List.of("ui-elements", "ui-icons", "ui-dialog", "ui-floating", "ui-preferences", "ui-split", "ui-panes", "ui-split-grid", "ui-menu", "mpa"), vehicles, "one vehicle per crate that ships components, in closure order — the elements require the icons (a knob's mark), the dialog the floating crate; docking ships statics only");
         var root = (ComponentDetails.OfComposition) composed.detailsOf(composed.root().identity());
         assertEquals(10, root.vehicleCount());
         assertEquals(24, root.componentCount(), "the components declared so far: 3 elements, 1 icon, 1 dialog, 7 preferences, 1 split, 2 panes, 2 floating, 2 split grid, 2 menus, 3 chrome");

@@ -31,7 +31,7 @@ class SliderTest extends JsModuleTestBase {
                              remove: function () { for (var i = 0; i < arguments.length; i++) classes.delete(arguments[i]); },
                              contains: function (c) { return classes.has(c); }, toggle: function (c, f) { if (f) classes.add(c); else classes.delete(c); } },
                 appendChild: function (c) { this.children.push(c); c.parentNode = this; return c; },
-                setAttribute: function (k, v) { attrs[k] = String(v); }, getAttribute: function (k) { return attrs[k] == null ? null : attrs[k]; },
+                setAttribute: function (k, v) { attrs[k] = String(v); }, getAttribute: function (k) { return attrs[k] == null ? null : attrs[k]; }, removeAttribute: function (k) { delete attrs[k]; },
                 addEventListener: function (t, fn) { (this.listeners[t] = this.listeners[t] || []).push(fn); },
                 removeEventListener: function (t, fn) { var l = this.listeners[t] || []; var i = l.indexOf(fn); if (i >= 0) l.splice(i, 1); },
                 getBoundingClientRect: function () { return this.rect; },
@@ -56,6 +56,9 @@ class SliderTest extends JsModuleTestBase {
     @BeforeEach
     void load() {
         js = buildContext();
+        // the icon component reads ICONS as it loads: the wardrobe's names first, as the served module would import them
+        js.eval("js", "var ic_base = 'ic_base', ICONS = { grip: 'ic_grip', size: 'ic_size', aspect: 'ic_aspect', extent: 'ic_extent', level: 'ic_level' };");
+        loadModule("/homing/js/hue/captains/singapura/js/homing/ui/icons/IconModule.js");
         loadModule(MODULE);
         js.eval("js", SHIM);
     }
@@ -73,6 +76,13 @@ class SliderTest extends JsModuleTestBase {
         assertEquals("-1,1,0,0.0,The tabs' size", eval("[knob.attr('aria-valuemin'), knob.attr('aria-valuemax'), knob.attr('aria-valuenow'), knob.attr('aria-valuetext'), knob.attr('aria-label')].join(',')").asString());
         assertEquals("0.0", eval("readout.textContent").asString());
         assertTrue(eval("detent.has('el_slider_detent') && knob.has('el_slider_knob')").asBoolean());
+        assertTrue(eval("knob.children[0].has('ic_base') && knob.children[0].has('ic_grip')").asBoolean(), "a grip on the knob unless the slider says what it sets");
+        assertEquals("grip", eval("s.icon()").asString());
+        eval("s.icon('size');");
+        assertTrue(eval("knob.children[0].has('ic_size') && !knob.children[0].has('ic_grip')").asBoolean());
+        eval("s.icon(null);");
+        assertTrue(eval("s.icon() === null && !knob.children[0].has('ic_size')").asBoolean(), "a bare knob");
+        assertEquals("aspect", eval("new SliderBuilder().axis().icon('aspect').build(page.createBranch('a')).icon()").asString());
         eval("s.value(-0.7);");
         assertEquals("15.000%,35.000%", eval("rail.prop('--sl-from') + ',' + rail.prop('--sl-span')").asString(), "a value below the detent fills leftwards from it");
         assertEquals("-0.7", eval("String(s.value())").asString());
@@ -125,7 +135,7 @@ class SliderTest extends JsModuleTestBase {
         assertEquals("", log(), "off: neither the hand nor the keys");
         eval("s.setOn(true); s.size(0.5);");
         assertEquals("0.5", eval("String(s.root.size) + '/' + String(knob.size) + '/' + String(readout.size) + '/' + String(detent.size)").asString().split("/")[0]);
-        assertEquals("0.5,0.5,0.5,0.5", eval("[s.root.size, knob.size, readout.size, detent.size].join(',')").asString(), "the size is an element's own, so the slider carries it to every part");
+        assertEquals("0.5,0.5,0.5,0.5,0.5", eval("[s.root.size, knob.size, readout.size, detent.size, knob.children[0].size].join(',')").asString(), "the size is an element's own, so the slider carries it to every part, the mark too");
         eval("s.size(0);");
         assertTrue(eval("s.root.size === null && knob.size === null").asBoolean(), "nought is the design's: no var");
         eval("s.label('Aspect'); s.labelWidth('9em');");

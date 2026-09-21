@@ -237,14 +237,16 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
     /**
      * The knob: raised, its diameter and corner the design's, the control's
      * rule and ring by lineage — it is the focusable part, role slider —
-     * lifting under the hand as the design has a dragged thing lift.
+     * lifting under the hand as the design has a dragged thing lift. It
+     * holds a mark, an {@code Icon}, centred, at the caption's scale so the
+     * glyph sits inside the design's diameter.
      */
     public record el_slider_knob() implements CssClass<ElementStyles> {
         @Override public Set<CssVar> runtimeVars() { return Set.of(new CssVar("--sl-value")); }
         @Override public List<? extends Wearable> wears() {
             return List.of(of(Control.Slider.Knob.class, Size.Extent.class), of(Control.Slider.Knob.class, Shape.Corner.class), of(Control.Slider.Knob.class, Shape.Rule.class),
                            of(Raised.class, Color.Surface.class), of(Control.class, Color.Edge.class), of(Raised.class, Shape.Shadow.class),
-                           of(Dragging.class, Affordance.Cursor.class), of(Interactive.class, Motion.Ease.class));
+                           of(Dragging.class, Affordance.Cursor.class), of(Interactive.class, Motion.Ease.class), of(Kicker.class, Type.Scale.class));
         }
         @Override public String body() { return """
             position: absolute;
@@ -252,6 +254,10 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
             left: var(--sl-value, 0%);
             translate: -50% -50%;
             box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
             outline: none;
             """;
         }

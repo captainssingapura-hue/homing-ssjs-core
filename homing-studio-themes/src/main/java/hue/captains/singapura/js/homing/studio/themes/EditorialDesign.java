@@ -11,7 +11,20 @@ import static hue.captains.singapura.js.homing.design.Box.*;
 import static hue.captains.singapura.js.homing.design.Brand.*;
 import static hue.captains.singapura.js.homing.design.Emphasis.*;
 import static hue.captains.singapura.js.homing.design.Feedback.*;
-import static hue.captains.singapura.js.homing.design.Icon.*;
+import hue.captains.singapura.js.homing.design.Icon;
+import static hue.captains.singapura.js.homing.design.Icon.Add;
+import static hue.captains.singapura.js.homing.design.Icon.Check;
+import static hue.captains.singapura.js.homing.design.Icon.Close;
+import static hue.captains.singapura.js.homing.design.Icon.Detach;
+import static hue.captains.singapura.js.homing.design.Icon.Disclose;
+import static hue.captains.singapura.js.homing.design.Icon.Flip;
+import static hue.captains.singapura.js.homing.design.Icon.Grip;
+import static hue.captains.singapura.js.homing.design.Icon.Level;
+import static hue.captains.singapura.js.homing.design.Icon.Pin;
+import static hue.captains.singapura.js.homing.design.Icon.Remove;
+import static hue.captains.singapura.js.homing.design.Icon.Reset;
+import static hue.captains.singapura.js.homing.design.Icon.Rotate;
+import static hue.captains.singapura.js.homing.design.Icon.Settings;
 import static hue.captains.singapura.js.homing.design.Interaction.*;
 import static hue.captains.singapura.js.homing.design.Layer.*;
 import static hue.captains.singapura.js.homing.design.Pairing.*;
@@ -217,6 +230,11 @@ final class EditorialDesign {
             glyph(of(Reset.class, Type.Glyph.class), "↺"),
             glyph(of(Pin.class, Type.Glyph.class), "⌖"),
             glyph(of(Settings.class, Type.Glyph.class), "⚙"),
+            glyph(of(Grip.class, Type.Glyph.class), "⠿"),
+            glyph(of(Icon.Size.class, Type.Glyph.class), "⤢"),
+            glyph(of(Icon.Aspect.class, Type.Glyph.class), "⬌"),
+            glyph(of(Icon.Extent.class, Type.Glyph.class), "◐"),
+            glyph(of(Level.class, Type.Glyph.class), "≡"),
             // a container, and the card: an index card: three by two, a soft corner
             one(of(Container.class, Shape.Corner.class), "6px"),
             ruleWithFocusRing(of(Container.class, Shape.Rule.class), "1px", "solid", "2px", "solid", "-2px"),

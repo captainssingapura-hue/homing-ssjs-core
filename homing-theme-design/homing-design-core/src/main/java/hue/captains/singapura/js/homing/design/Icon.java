@@ -37,4 +37,14 @@ public interface Icon extends Semantic {
     record Pin() implements Icon {}
     /** The settings behind it. */
     record Settings() implements Icon {}
+    /** Take hold of it: the mark on a knob, a handle, a thing the hand moves. */
+    record Grip() implements Icon {}
+    /** Bigger or smaller: the size axis. */
+    record Size() implements Icon {}
+    /** Wider or taller: the aspect axis. */
+    record Aspect() implements Icon {}
+    /** More or less of the meaning: the extent axis. */
+    record Extent() implements Icon {}
+    /** How much of it: a level, a volume, a gain. */
+    record Level() implements Icon {}
 }

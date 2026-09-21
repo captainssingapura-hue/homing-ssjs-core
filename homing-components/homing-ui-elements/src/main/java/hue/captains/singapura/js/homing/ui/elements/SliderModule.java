@@ -6,14 +6,16 @@ import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
+import hue.captains.singapura.js.homing.ui.icons.IconModule;
 
 import java.util.List;
 
 /**
  * The slider and its builder: a number set by a knob on a track, every part
  * a real element wearing a design word — the track sunk, the fill from the
- * detent to the value, the knob raised and focusable — so a design draws
- * the whole of it and the browser's own slider is nowhere in it.
+ * detent to the value, the knob raised and focusable, with a mark on it: a
+ * grip, or the word for what the slider sets — so a design draws the whole
+ * of it and the browser's own slider is nowhere in it.
  */
 public record SliderModule() implements DomModule<SliderModule> {
 
@@ -41,6 +43,7 @@ public record SliderModule() implements DomModule<SliderModule> {
                         new ElementStyles.el_slider_readout(),
                         new ElementStyles.el_slider_off()
                 ), ElementStyles.INSTANCE))
+                .add(new ModuleImports<>(List.of(new IconModule.Icon()), IconModule.INSTANCE))
                 .build();
     }
 

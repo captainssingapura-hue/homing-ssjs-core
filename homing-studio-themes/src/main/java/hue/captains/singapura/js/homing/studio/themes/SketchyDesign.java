@@ -11,7 +11,12 @@ import static hue.captains.singapura.js.homing.design.Target.*;
 import static hue.captains.singapura.js.homing.design.Box.*;
 import static hue.captains.singapura.js.homing.design.Brand.*;
 import static hue.captains.singapura.js.homing.design.Emphasis.*;
-import static hue.captains.singapura.js.homing.design.Icon.*;
+import static hue.captains.singapura.js.homing.design.Icon.Check;
+import static hue.captains.singapura.js.homing.design.Icon.Close;
+import static hue.captains.singapura.js.homing.design.Icon.Disclose;
+import static hue.captains.singapura.js.homing.design.Icon.Grip;
+import static hue.captains.singapura.js.homing.design.Icon.Pin;
+import static hue.captains.singapura.js.homing.design.Icon.Settings;
 import static hue.captains.singapura.js.homing.design.Interaction.*;
 import static hue.captains.singapura.js.homing.design.Layer.*;
 import static hue.captains.singapura.js.homing.design.Structure.*;
@@ -179,6 +184,7 @@ final class SketchyDesign {
             glyph(of(Close.class, Type.Glyph.class), "✖"),
             glyph(of(Pin.class, Type.Glyph.class), "📌"),
             glyph(of(Settings.class, Type.Glyph.class), "🔧"),
+            glyph(of(Grip.class, Type.Glyph.class), "⁘"),
             // a container, and the card: a hand-cut card, its corners uneven
             one(of(Container.class, Shape.Corner.class), WOBBLE_PLATE),
             ruleWithFocusRing(of(Container.class, Shape.Rule.class), "2px", "solid", "2px", "dashed", "-3px"),
