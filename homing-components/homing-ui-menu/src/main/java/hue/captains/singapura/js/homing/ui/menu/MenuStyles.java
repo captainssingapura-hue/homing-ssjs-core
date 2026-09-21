@@ -54,7 +54,7 @@ public record MenuStyles() implements CssGroup<MenuStyles> {
     /**
      * A frame: {@code Container.Menu} to the design — its corner, rule and
      * ring the container's, its inset, gap and least width its own —
-     * raised, under the overlay shadow, at {@code --cm-x/--cm-y} in the
+     * raised — with the raised layer's filter, the glass's blur where a design has one — under the overlay shadow, at {@code --cm-x/--cm-y} in the
      * layer. Focusable, so the keys have somewhere to go; no ring drawn for
      * that, the cursor is the ring.
      */
@@ -63,7 +63,7 @@ public record MenuStyles() implements CssGroup<MenuStyles> {
         @Override public List<? extends Wearable> wears() {
             return List.of(of(Container.Menu.class, Shape.Corner.class), of(Container.Menu.class, Shape.Rule.class),
                            of(Container.Menu.class, Size.Inset.class), of(Container.Menu.class, Size.Gap.class), of(Container.Menu.class, Size.Extent.class),
-                           of(Raised.class, Color.Surface.class), of(Raised.class, Color.Edge.class), of(Overlay.class, Shape.Shadow.class),
+                           of(Raised.class, Color.Surface.class), of(Raised.class, Color.Edge.class), of(Raised.class, Effect.Filter.class), of(Overlay.class, Shape.Shadow.class),
                            of(Body.class, Color.Ink.class), of(Body.class, Type.Face.class));
         }
         @Override public String body() { return """
