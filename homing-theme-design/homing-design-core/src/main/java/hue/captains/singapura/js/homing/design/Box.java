@@ -48,7 +48,13 @@ public interface Box extends Semantic {
         public record Slider() implements Box {
             /** The track: the groove the knob runs in — its thickness, its corner, its rule; a design sinks it. */
             public record Track() implements Box {}
-            /** The knob: what the hand takes — its diameter, its corner, round or square; raised, and ringed by the control's lineage when it has the focus. */
+            /**
+             * The knob: what the hand takes — its extent, and its face's
+             * silhouette: a corner, round or square, or a clip that cuts it
+             * to a diamond, a hexagon, a pointer; raised, and ringed around
+             * its box when it has the focus. The face is clipped, the box is
+             * not, so the ring survives any cut; a cut edge carries no rule.
+             */
             public record Knob() implements Box {}
         }
     }

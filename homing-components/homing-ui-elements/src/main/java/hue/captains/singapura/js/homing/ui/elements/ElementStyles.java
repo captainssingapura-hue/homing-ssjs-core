@@ -235,18 +235,16 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
     }
 
     /**
-     * The knob: raised, its diameter and corner the design's, the control's
-     * rule and ring by lineage — it is the focusable part, role slider —
-     * lifting under the hand as the design has a dragged thing lift. It
-     * holds a mark, an {@code Icon}, centred, at the caption's scale so the
-     * glyph sits inside the design's diameter.
+     * The knob: the box the hand takes and the keys go to — role slider,
+     * the focusable part — at the design's extent, ringed on focus by the
+     * knob's own rule (no border of its own), lifting under the hand as the
+     * design has a dragged thing lift. Its look is its face's.
      */
     public record el_slider_knob() implements CssClass<ElementStyles> {
         @Override public Set<CssVar> runtimeVars() { return Set.of(new CssVar("--sl-value")); }
         @Override public List<? extends Wearable> wears() {
-            return List.of(of(Control.Slider.Knob.class, Size.Extent.class), of(Control.Slider.Knob.class, Shape.Corner.class), of(Control.Slider.Knob.class, Shape.Rule.class),
-                           of(Raised.class, Color.Surface.class), of(Control.class, Color.Edge.class), of(Raised.class, Shape.Shadow.class),
-                           of(Dragging.class, Affordance.Cursor.class), of(Interactive.class, Motion.Ease.class), of(Kicker.class, Type.Scale.class));
+            return List.of(of(Control.Slider.Knob.class, Size.Extent.class), of(Control.Slider.Knob.class, Shape.Rule.class), of(Control.class, Color.Edge.class),
+                           of(Dragging.class, Affordance.Cursor.class), of(Interactive.class, Motion.Ease.class));
         }
         @Override public String body() { return """
             position: absolute;
@@ -254,16 +252,37 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
             left: var(--sl-value, 0%);
             translate: -50% -50%;
             box-sizing: border-box;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
             outline: none;
             """;
         }
     }
 
-    /** The knob in the hand: the dragged word's lift and shadow. */
+    /**
+     * The face: the knob's silhouette and surface — raised, the control's
+     * rule and edge by lineage, the design's corner, and its clip, which
+     * cuts it to whatever the design draws a knob as. It fills the box and
+     * holds the mark, an {@code Icon}, centred at the kicker's scale so the
+     * glyph sits inside the silhouette.
+     */
+    public record el_slider_face() implements CssClass<ElementStyles> {
+        @Override public List<? extends Wearable> wears() {
+            return List.of(of(Control.Slider.Knob.class, Shape.Corner.class), of(Control.Slider.Knob.class, Shape.Clip.class), of(Control.class, Shape.Rule.class),
+                           of(Raised.class, Color.Surface.class), of(Control.class, Color.Edge.class), of(Raised.class, Shape.Shadow.class),
+                           of(Interactive.class, Motion.Ease.class), of(Kicker.class, Type.Scale.class));
+        }
+        @Override public String body() { return """
+            position: absolute;
+            inset: 0;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            """;
+        }
+    }
+
+    /** The face in the hand: the dragged word's lift and shadow. */
     public record el_slider_held() implements CssClass<ElementStyles> {
         @Override public List<? extends Wearable> wears() { return List.of(of(Dragging.class, Motion.Transform.class), of(Dragging.class, Shape.Shadow.class)); }
         @Override public String body() { return ""; }
@@ -400,7 +419,7 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
         return List.of(new el_button(), new el_button_primary(), new el_button_secondary(), new el_button_danger(), new el_button_warning(), new el_button_success(),
                        new el_button_plain(), new el_button_on(), new el_button_off(),
                        new el_slider(), new el_slider_label(), new el_slider_rail(), new el_slider_track(), new el_slider_fill(), new el_slider_detent(),
-                       new el_slider_knob(), new el_slider_held(), new el_slider_readout(), new el_slider_off(),
+                       new el_slider_knob(), new el_slider_face(), new el_slider_held(), new el_slider_readout(), new el_slider_off(),
                        new el_card(), new el_card_action(), new el_card_head(), new el_card_title(), new el_badge(), new el_card_body(), new el_card_text(), new el_card_foot(), new el_card_link());
     }
 }

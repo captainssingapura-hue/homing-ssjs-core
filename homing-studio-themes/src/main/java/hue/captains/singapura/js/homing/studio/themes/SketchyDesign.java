@@ -169,6 +169,8 @@ final class SketchyDesign {
             rule(of(Control.Slider.Track.class, Shape.Rule.class), "2px", "solid"),
             square(of(Control.Slider.Knob.class, Size.Extent.class), "18px", 1.35),
             one(of(Control.Slider.Knob.class, Shape.Corner.class), "50% 45% 55% 50% / 45% 55% 50% 50%"),
+            ruleWithFocusRing(of(Control.Slider.Knob.class, Shape.Rule.class), "0", "none", "2px", "dashed", "3px"),   // the box: no rule of its own, a ring on focus; the rule is the face's, by lineage
+            one(of(Control.Slider.Knob.class, Shape.Clip.class), "none"),
             extent(of(Detent.class, Size.Extent.class), "2px", "14px", 1.35),
             // a menu: a container of options that opens at a point; an option: one row of it
             one(of(Container.Menu.class, Shape.Corner.class), "8px 6px 7px 9px / 6px 8px 9px 7px"),

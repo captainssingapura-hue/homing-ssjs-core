@@ -39,6 +39,7 @@ public record SliderModule() implements DomModule<SliderModule> {
                         new ElementStyles.el_slider_fill(),
                         new ElementStyles.el_slider_detent(),
                         new ElementStyles.el_slider_knob(),
+                        new ElementStyles.el_slider_face(),
                         new ElementStyles.el_slider_held(),
                         new ElementStyles.el_slider_readout(),
                         new ElementStyles.el_slider_off()

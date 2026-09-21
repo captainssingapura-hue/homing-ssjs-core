@@ -4,6 +4,8 @@
 // A label before the rail, a readout after; the track is sunk, the fill runs
 // from the detent to the value, the knob is raised and takes the focus, and
 // carries a mark — an Icon: a grip, or the word for what the slider sets.
+// The knob's look is its face's: the design's corner, or a clip that cuts it
+// to a diamond, a hexagon, a pointer — the box beneath keeps the ring.
 // Every part is a real element wearing a design word, so a design draws the
 // whole of it: no vendor pseudo-element, nothing of the browser's own slider.
 //
@@ -90,8 +92,11 @@ class Slider {
         knob.setAttribute("aria-orientation", "horizontal");
         if (p.label != null) knob.setAttribute("aria-label", String(p.label));
         this._knob = knob;
+        this._face = branch.createElement("face", "div");
+        css.addClass(this._face, el_slider_face);
+        knob.appendChild(this._face);
         this._mark = new Icon(branch.createElement("mark", Icon.TAG), null);
-        knob.appendChild(this._mark.el);
+        this._face.appendChild(this._mark.el);
         this.icon(p.icon === undefined ? "grip" : p.icon);
         rail.appendChild(knob);
         root.appendChild(rail);
@@ -99,7 +104,7 @@ class Slider {
         this._readout = branch.createElement("readout", "span");
         css.addClass(this._readout, el_slider_readout);
         root.appendChild(this._readout);
-        this._parts = [root, this._label, rail, track, this._fill, knob, this._mark.el, this._readout];
+        this._parts = [root, this._label, rail, track, this._fill, knob, this._face, this._mark.el, this._readout];
         if (this._detent) this._parts.push(this._detent);
 
         this._value = this._snap(p.value == null ? this._rest() : Number(p.value), false);
@@ -115,7 +120,7 @@ class Slider {
             ev.preventDefault();
             self._pressed = self._value;
             try { rail.setPointerCapture(ev.pointerId); } catch (e) {}
-            css.addClass(knob, el_slider_held);
+            css.addClass(self._face, el_slider_held);
             self._set(self._fromPointer(ev.clientX), true, false);
             try { knob.focus({ preventScroll: true }); } catch (e) {}
             rail.addEventListener("pointermove", self._onMove);
@@ -171,7 +176,7 @@ class Slider {
         rail.removeEventListener("pointerup", this._onUp);
         rail.removeEventListener("pointercancel", this._onUp);
         rail.removeEventListener("lostpointercapture", this._onUp);
-        css.removeClass(this._knob, el_slider_held);
+        css.removeClass(this._face, el_slider_held);
         var was = this._pressed;
         this._pressed = null;
         if (was !== null && was !== this._value && this._onChange) this._onChange(this._value);
