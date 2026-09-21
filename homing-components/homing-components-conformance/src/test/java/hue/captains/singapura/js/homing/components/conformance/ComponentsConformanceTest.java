@@ -7,10 +7,13 @@ import hue.captains.singapura.js.homing.conformance.rules.CrateCoverage;
 import hue.captains.singapura.js.homing.conformance.rules.CssConformance;
 import hue.captains.singapura.js.homing.conformance.rules.Finding;
 import hue.captains.singapura.js.homing.conformance.rules.GradedFinding;
+import hue.captains.singapura.js.homing.component.ComponentDetails;
+import hue.captains.singapura.js.homing.component.ComponentTrees;
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CssGroup;
 import hue.captains.singapura.js.homing.design.Deployment;
 import hue.captains.singapura.js.homing.design.Design;
+import hue.captains.singapura.js.homing.tree.TreeLevel;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -36,6 +39,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *   <li><b>the substrate</b>: every one of the seven designs binds every
  *       pair every class in these crates wears, and anchors what is worn
  *       with an extent.</li>
+ *   <li><b>the catalogue</b>: every component a crate exports is listed by
+ *       the crate's own catalogue, once, and the composed tree derived from
+ *       the closure has no two vertices alike.</li>
  * </ol>
  * The export and the served studio grade by the same configuration.
  */
@@ -108,5 +114,22 @@ class ComponentsConformanceTest {
         Finding f = g.finding();
         return f.moduleClass() + " [" + f.rule().value() + "] " + f.message()
                 + (g.note().isBlank() ? "" : "  (" + g.note() + ")");
+    }
+
+    /**
+     * The logical side against the physical: a component is a declared export
+     * of a DOM module, listed by its crate's catalogue; the site's tree is
+     * derived from the closure, every vehicle grafted under one root.
+     */
+    @Test
+    void everyComponentIsCatalogued_andTheCompositionIsSound() {
+        assertEquals(List.of(), ComponentTrees.validate(ComponentsConformance.TOP_LEVEL));
+        var composed = ComponentTrees.compose("components", ComponentsConformance.TOP_LEVEL);
+        var vehicles = composed.root().children().stream().map(n -> n.segment().value()).toList();
+        assertEquals(List.of("ui-elements", "ui-dialog", "ui-floating", "ui-preferences", "ui-split", "ui-panes", "ui-split-grid", "ui-icons", "ui-menu", "mpa"), vehicles, "one vehicle per crate that ships components, in closure order — the dialog requires the floating crate, so floating follows it; docking ships statics only");
+        var root = (ComponentDetails.OfComposition) composed.detailsOf(composed.root().identity());
+        assertEquals(10, root.vehicleCount());
+        assertEquals(23, root.componentCount(), "the components declared so far: 2 elements, 1 icon, 1 dialog, 7 preferences, 1 split, 2 panes, 2 floating, 2 split grid, 2 menus, 3 chrome");
+        assertTrue(composed.root().children().stream().allMatch(v -> v.level() == TreeLevel.L1.INSTANCE), "every vehicle grafted one under the root");
     }
 }

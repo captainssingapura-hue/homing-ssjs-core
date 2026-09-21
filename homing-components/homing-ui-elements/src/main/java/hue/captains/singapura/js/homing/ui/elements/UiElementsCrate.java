@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.ui.elements;
 
+import hue.captains.singapura.js.homing.component.C0_Components;
+import hue.captains.singapura.js.homing.component.ComponentVehicle;
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.design.DesignCrate;
@@ -12,7 +14,7 @@ import java.util.List;
  * ({@code ServerCrate} — the component base's crate, under its old name
  * until the old structure retires) and the design substrate's targets.
  */
-public final class UiElementsCrate implements Crate {
+public final class UiElementsCrate implements Crate, ComponentVehicle {
 
     public static final UiElementsCrate INSTANCE = new UiElementsCrate();
 
@@ -23,6 +25,8 @@ public final class UiElementsCrate implements Crate {
     @Override public List<Crate> requires() {
         return List.of(ServerCrate.INSTANCE, DesignCrate.INSTANCE);
     }
+
+    @Override public C0_Components<?> components() { return UiElementsComponents.INSTANCE; }
 
     @Override public List<CrateEntry> entries() {
         return List.of(

@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.ui.splitgrid;
 
+import hue.captains.singapura.js.homing.component.BranchComponent;
 import hue.captains.singapura.js.homing.core.DomModule;
-import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
@@ -18,7 +18,9 @@ import java.util.List;
 public record SplitGridMirrorModule() implements DomModule<SplitGridMirrorModule> {
 
     /** The class: {@code new SplitGridMirror(branch, {host, scale?, onEvent?})}; {@code reflect(layout, box)}, {@code scale}, {@code cursor}, {@code rects}, {@code dispose}. */
-    public record SplitGridMirror() implements Exportable._Constant<SplitGridMirrorModule> {}
+    public record SplitGridMirror() implements BranchComponent<SplitGridMirrorModule> {
+        @Override public String summary() { return "The arrangement of a grid, drawn at a scale, with a cursor the keyboard moves from cell to cell."; }
+    }
 
     public static final SplitGridMirrorModule INSTANCE = new SplitGridMirrorModule();
 

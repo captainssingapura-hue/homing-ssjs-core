@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.preferences;
 
+import hue.captains.singapura.js.homing.component.C0_Components;
+import hue.captains.singapura.js.homing.component.ComponentVehicle;
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.core.js.CoreJsCrate;
@@ -14,7 +16,7 @@ import java.util.List;
  * and the styles. A site's {@link PreferencesRegistry} instance is the
  * site's to declare, in the site's crate, since its content is the site's.
  */
-public final class UiPreferencesCrate implements Crate {
+public final class UiPreferencesCrate implements Crate, ComponentVehicle {
 
     public static final UiPreferencesCrate INSTANCE = new UiPreferencesCrate();
 
@@ -25,6 +27,8 @@ public final class UiPreferencesCrate implements Crate {
     @Override public List<Crate> requires() {
         return List.of(ServerCrate.INSTANCE, CoreJsCrate.INSTANCE, DesignCrate.INSTANCE, UiElementsCrate.INSTANCE);
     }
+
+    @Override public C0_Components<?> components() { return UiPreferencesComponents.INSTANCE; }
 
     @Override public List<CrateEntry> entries() {
         return List.of(

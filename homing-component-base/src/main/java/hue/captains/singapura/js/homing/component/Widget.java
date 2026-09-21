@@ -77,7 +77,9 @@ public interface Widget<P extends Widget._Param, W extends Widget<P, W>>
      * The class export: a record named as the JS class, so the identifier
      * matches. A widget module exports its class and nothing else.
      */
-    interface _Class<P extends _Param, W extends Widget<P, W>> extends Exportable._Constant<W> {}
+    interface _Class<P extends _Param, W extends Widget<P, W>> extends BranchComponent<W> {
+        @Override default Shape shape() { return Shape.WIDGET; }
+    }
 
     /** The widget's name for a host that keeps widgets by name; kebab-case of the class by default. */
     default String simpleName() {

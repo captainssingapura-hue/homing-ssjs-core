@@ -1,8 +1,8 @@
 package hue.captains.singapura.js.homing.preferences;
 
+import hue.captains.singapura.js.homing.component.BranchComponent;
 import hue.captains.singapura.js.homing.component.WidgetSlotModule;
 import hue.captains.singapura.js.homing.core.DomModule;
-import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
@@ -26,7 +26,9 @@ import java.util.List;
 public record PreferencesViewModule() implements DomModule<PreferencesViewModule> {
 
     /** The class. */
-    public record PreferencesView() implements Exportable._Constant<PreferencesViewModule> {}
+    public record PreferencesView() implements BranchComponent<PreferencesViewModule> {
+        @Override public String summary() { return "A master slot on the left, a detail slot on the right, over a preferences registry."; }
+    }
 
     public static final PreferencesViewModule INSTANCE = new PreferencesViewModule();
 

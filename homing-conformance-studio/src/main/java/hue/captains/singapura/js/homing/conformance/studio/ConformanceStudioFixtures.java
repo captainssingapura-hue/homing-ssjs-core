@@ -34,7 +34,9 @@ import java.util.Objects;
  *       once per JVM, idempotently;</li>
  *   <li>{@link #harnessApps()} appends {@link GenericWorkspace} (the shell app);</li>
  *   <li>{@link #harnessGetActions()} adds {@code GET /crate-tree}, the
- *       Navigator's feed over the top-level crates' modules.</li>
+ *       Navigator's feed over the top-level crates' modules, and
+ *       {@code GET /component-tree}, the components workbench's over their
+ *       catalogues.</li>
  * </ul>
  * Brand and the catalogue harness come from the defaults (brand from the
  * studio's {@code standaloneBrand()} via {@link #umbrella()}); the themes are
@@ -71,6 +73,7 @@ public record ConformanceStudioFixtures(Umbrella<ConformanceStudio> umbrella, Li
     public Map<String, GetAction<RoutingContext, ?, ?, ?>> harnessGetActions() {
         var actions = new LinkedHashMap<>(defaults().harnessGetActions());
         actions.put("/crate-tree", new CrateTreeGetAction(topLevel));
+        actions.put("/component-tree", new ComponentTreeGetAction(topLevel));
         actions.put("/crate-graph", new CrateGraphGetAction(topLevel));
         actions.put("/crate-conformance", new CrateConformanceGetAction(topLevel));
         actions.put("/conformance-report", new ConformanceReportGetAction());

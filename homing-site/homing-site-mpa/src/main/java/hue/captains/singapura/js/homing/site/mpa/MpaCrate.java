@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.site.mpa;
 
+import hue.captains.singapura.js.homing.component.C0_Components;
+import hue.captains.singapura.js.homing.component.ComponentVehicle;
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.core.js.CoreJsCrate;
@@ -19,7 +21,7 @@ import java.util.List;
  * (design-core). {@link StandardMpa} serves this crate beside the site's
  * own without being asked.
  */
-public final class MpaCrate implements Crate {
+public final class MpaCrate implements Crate, ComponentVehicle {
 
     public static final MpaCrate INSTANCE = new MpaCrate();
 
@@ -31,6 +33,8 @@ public final class MpaCrate implements Crate {
         return List.of(CoreJsCrate.INSTANCE, ServerCrate.INSTANCE, DesignCrate.INSTANCE,
                        UiDialogCrate.INSTANCE, UiPreferencesCrate.INSTANCE);
     }
+
+    @Override public C0_Components<?> components() { return MpaComponents.INSTANCE; }
 
     @Override public List<CrateEntry> entries() {
         return List.of(

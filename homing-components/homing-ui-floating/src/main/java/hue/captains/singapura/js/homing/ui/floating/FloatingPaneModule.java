@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.ui.floating;
 
+import hue.captains.singapura.js.homing.component.BranchComponent;
 import hue.captains.singapura.js.homing.core.DomModule;
-import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
@@ -17,7 +17,9 @@ import java.util.List;
 public record FloatingPaneModule() implements DomModule<FloatingPaneModule> {
 
     /** The class: {@code new FloatingPane(branch, {id, title, x, y, w, h, z, closable?, onEvent?})}. */
-    public record FloatingPane() implements Exportable._Constant<FloatingPaneModule> {}
+    public record FloatingPane() implements BranchComponent<FloatingPaneModule> {
+        @Override public String summary() { return "A pane that floats on a desk: a head that names and moves it, a body, a grip that sizes it."; }
+    }
 
     public static final FloatingPaneModule INSTANCE = new FloatingPaneModule();
 

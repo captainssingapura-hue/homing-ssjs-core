@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.ui.dialog;
 
+import hue.captains.singapura.js.homing.component.C0_Components;
+import hue.captains.singapura.js.homing.component.ComponentVehicle;
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.design.DesignCrate;
@@ -14,7 +16,7 @@ import java.util.List;
  * runtime ({@code ServerCrate}, the base's crate under its old name), the
  * design targets, the floating pane it is built on, and the elements whose buttons the action row is made of.
  */
-public final class UiDialogCrate implements Crate {
+public final class UiDialogCrate implements Crate, ComponentVehicle {
 
     public static final UiDialogCrate INSTANCE = new UiDialogCrate();
 
@@ -25,6 +27,8 @@ public final class UiDialogCrate implements Crate {
     @Override public List<Crate> requires() {
         return List.of(ServerCrate.INSTANCE, DesignCrate.INSTANCE, UiElementsCrate.INSTANCE, UiFloatingCrate.INSTANCE);
     }
+
+    @Override public C0_Components<?> components() { return UiDialogComponents.INSTANCE; }
 
     @Override public List<CrateEntry> entries() {
         return List.of(

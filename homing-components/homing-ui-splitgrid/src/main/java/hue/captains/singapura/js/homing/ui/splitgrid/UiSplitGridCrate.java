@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.ui.splitgrid;
 
+import hue.captains.singapura.js.homing.component.C0_Components;
+import hue.captains.singapura.js.homing.component.ComponentVehicle;
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.core.StandardJsModuleType;
@@ -13,7 +15,7 @@ import java.util.List;
  * The grid and the mirror are primitives, owning the DOM on their branches;
  * the tree, the geometry and the events are pure logic.
  */
-public final class UiSplitGridCrate implements Crate {
+public final class UiSplitGridCrate implements Crate, ComponentVehicle {
     public static final UiSplitGridCrate INSTANCE = new UiSplitGridCrate();
     private UiSplitGridCrate() {}
 
@@ -22,6 +24,8 @@ public final class UiSplitGridCrate implements Crate {
     @Override public List<Crate> requires() {
         return List.of(ServerCrate.INSTANCE, DesignCrate.INSTANCE);
     }
+
+    @Override public C0_Components<?> components() { return UiSplitGridComponents.INSTANCE; }
 
     @Override public List<CrateEntry> entries() {
         return List.of(

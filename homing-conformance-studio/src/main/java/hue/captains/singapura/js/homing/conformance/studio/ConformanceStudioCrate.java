@@ -3,13 +3,14 @@ package hue.captains.singapura.js.homing.conformance.studio;
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.core.StandardJsModuleType;
+import hue.captains.singapura.js.homing.design.DesignCrate;
 import hue.captains.singapura.js.homing.core.js.CoreJsCrate;
 
 import java.util.List;
 
 /**
- * RFC 0044 — the {@link Crate} for {@code homing-conformance-studio}: its four
- * workspace widgets. It {@link #requires()} {@link CoreJsCrate} because
+ * RFC 0044 — the {@link Crate} for {@code homing-conformance-studio}: its
+ * workspace widgets, the conformance workbench's and the components one's. It {@link #requires()} {@link CoreJsCrate} because
  * {@link ModuleTreeWidget} imports {@code TreeRendererModule} (a core-js
  * module) — a genuine cross-crate edge. Declaring that one require is what
  * makes the import legal under {@code CrateDependencyRule}; omitting it (or
@@ -37,6 +38,10 @@ public final class ConformanceStudioCrate implements Crate {
                 CrateEntry.of(CrateConformanceWidget.INSTANCE),
                 CrateEntry.of(ModuleConformanceWidget.INSTANCE),
                 CrateEntry.of(ConformanceReportWidget.INSTANCE),
+                // The components workbench: its navigator, its summary pane, their styles.
+                CrateEntry.of(ComponentTreeWidget.INSTANCE),
+                CrateEntry.of(ComponentSummaryWidget.INSTANCE),
+                CrateEntry.of(ComponentsStyles.INSTANCE),
                 // The generated JS codec — headless, no DOM.
                 CrateEntry.of(ReportCodecsModule.INSTANCE, StandardJsModuleType.PURE_LOGIC));
     }
@@ -44,6 +49,7 @@ public final class ConformanceStudioCrate implements Crate {
     @Override
     public List<Crate> requires() {
         // ModuleTreeWidget imports TreeRendererModule ∈ CoreJsCrate — declared directly.
-        return List.of(CoreJsCrate.INSTANCE);
+        // ComponentsStyles wears the design's words, so the design crate is reached directly too.
+        return List.of(CoreJsCrate.INSTANCE, DesignCrate.INSTANCE);
     }
 }

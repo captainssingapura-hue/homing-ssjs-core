@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.ui.elements;
 
+import hue.captains.singapura.js.homing.component.BranchComponent;
+import hue.captains.singapura.js.homing.component.ElementComponent;
 import hue.captains.singapura.js.homing.core.DomModule;
 import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
@@ -24,11 +26,16 @@ import java.util.List;
 public record Elements() implements DomModule<Elements> {
 
     /** An element component, made through its builder; adjusted live: colour, extent, label, setOn. */
-    public record Button()        implements Exportable._Constant<Elements> {}
+    public record Button() implements ElementComponent<Elements> {
+        @Override public String tag() { return "button"; }
+        @Override public String summary() { return "A button in a colour word, at an extent and a size; made through its builder."; }
+    }
     /** The builder: {@code new ButtonBuilder()} tells its tag; the properties set progressively; {@code build(el)}. */
     public record ButtonBuilder() implements Exportable._Constant<Elements> {}
     /** A branch component, made through its builder: {@code root} is what the caller appends, {@code body} where a caller puts more than text; size, title, dispose. */
-    public record Card()          implements Exportable._Constant<Elements> {}
+    public record Card() implements BranchComponent<Elements> {
+        @Override public String summary() { return "A card: a hard frame at the design's measure and aspect, with a head, a body and a foot."; }
+    }
     /** The builder: {@code new CardBuilder()}; title, badge, text, link, size, onClick set progressively; {@code build(branch)} on a sub-branch of the caller's. */
     public record CardBuilder()   implements Exportable._Constant<Elements> {}
 

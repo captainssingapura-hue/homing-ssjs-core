@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.ui.panes;
 
+import hue.captains.singapura.js.homing.component.BranchComponent;
 import hue.captains.singapura.js.homing.core.DomModule;
-import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
@@ -21,7 +21,9 @@ import java.util.List;
 public record TabStripModule() implements DomModule<TabStripModule> {
 
     /** The class. */
-    public record TabStrip() implements Exportable._Constant<TabStripModule> {}
+    public record TabStrip() implements BranchComponent<TabStripModule> {
+        @Override public String summary() { return "The strip of chips on its own: selection, keyboard walk, and the hand that drags a chip."; }
+    }
 
     public static final TabStripModule INSTANCE = new TabStripModule();
 

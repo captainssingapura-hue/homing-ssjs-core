@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.ui.panes;
 
+import hue.captains.singapura.js.homing.component.C0_Components;
+import hue.captains.singapura.js.homing.component.ComponentVehicle;
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.core.StandardJsModuleType;
@@ -13,7 +15,7 @@ import java.util.List;
  * ({@code ServerCrate}, the base's crate under its old name) and the design
  * targets. The pane, the strip and the hand on its chips are primitives, owning the DOM on their branch; the events and the drag's arithmetic are pure logic.
  */
-public final class UiPanesCrate implements Crate {
+public final class UiPanesCrate implements Crate, ComponentVehicle {
 
     public static final UiPanesCrate INSTANCE = new UiPanesCrate();
 
@@ -24,6 +26,8 @@ public final class UiPanesCrate implements Crate {
     @Override public List<Crate> requires() {
         return List.of(ServerCrate.INSTANCE, DesignCrate.INSTANCE);
     }
+
+    @Override public C0_Components<?> components() { return UiPanesComponents.INSTANCE; }
 
     @Override public List<CrateEntry> entries() {
         return List.of(

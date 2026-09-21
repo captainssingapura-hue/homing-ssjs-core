@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.preferences;
 
+import hue.captains.singapura.js.homing.component.BranchComponent;
 import hue.captains.singapura.js.homing.core.DomModule;
-import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
@@ -21,7 +21,9 @@ import java.util.List;
 public record PreferenceFieldModule() implements DomModule<PreferenceFieldModule> {
 
     /** The class. */
-    public record PreferenceField() implements Exportable._Constant<PreferenceFieldModule> {}
+    public record PreferenceField() implements BranchComponent<PreferenceFieldModule> {
+        @Override public String summary() { return "What every setting's widget has in common: the label, the summary, the control's slot."; }
+    }
 
     public static final PreferenceFieldModule INSTANCE = new PreferenceFieldModule();
 

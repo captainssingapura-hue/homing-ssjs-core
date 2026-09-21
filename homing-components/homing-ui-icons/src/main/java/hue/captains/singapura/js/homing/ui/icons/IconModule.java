@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.ui.icons;
 
+import hue.captains.singapura.js.homing.component.ElementComponent;
 import hue.captains.singapura.js.homing.core.DomModule;
-import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
@@ -18,7 +18,10 @@ import java.util.List;
 public record IconModule() implements DomModule<IconModule> {
 
     /** The class. */
-    public record Icon() implements Exportable._Constant<IconModule> {}
+    public record Icon() implements ElementComponent<IconModule> {
+        @Override public String tag() { return "span"; }
+        @Override public String summary() { return "A mark that means a word of the design's Icon vocabulary; the design draws it."; }
+    }
 
     public static final IconModule INSTANCE = new IconModule();
 

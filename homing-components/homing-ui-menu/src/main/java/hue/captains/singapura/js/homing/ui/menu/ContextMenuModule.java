@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.ui.menu;
 
+import hue.captains.singapura.js.homing.component.BranchComponent;
 import hue.captains.singapura.js.homing.core.DomModule;
-import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
@@ -19,7 +19,9 @@ import java.util.List;
 public record ContextMenuModule() implements DomModule<ContextMenuModule> {
 
     /** The class. */
-    public record ContextMenu() implements Exportable._Constant<ContextMenuModule> {}
+    public record ContextMenu() implements BranchComponent<ContextMenuModule> {
+        @Override public String summary() { return "One kind's instance: its tree of frames, bound to an object while open; three levels at most."; }
+    }
 
     public static final ContextMenuModule INSTANCE = new ContextMenuModule();
 

@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.ui.menu;
 
+import hue.captains.singapura.js.homing.component.C0_Components;
+import hue.captains.singapura.js.homing.component.ComponentVehicle;
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.core.StandardJsModuleType;
@@ -18,7 +20,7 @@ import java.util.List;
  * registry module — its kinds as typed trees, stamped as data — is the
  * site's, declared beside it.
  */
-public final class UiMenuCrate implements Crate {
+public final class UiMenuCrate implements Crate, ComponentVehicle {
     public static final UiMenuCrate INSTANCE = new UiMenuCrate();
     private UiMenuCrate() {}
 
@@ -27,6 +29,8 @@ public final class UiMenuCrate implements Crate {
     @Override public List<Crate> requires() {
         return List.of(ServerCrate.INSTANCE, DesignCrate.INSTANCE, UiIconsCrate.INSTANCE);
     }
+
+    @Override public C0_Components<?> components() { return UiMenuComponents.INSTANCE; }
 
     @Override public List<CrateEntry> entries() {
         return List.of(

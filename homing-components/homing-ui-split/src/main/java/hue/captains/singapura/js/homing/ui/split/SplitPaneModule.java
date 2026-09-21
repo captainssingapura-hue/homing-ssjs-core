@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.ui.split;
 
+import hue.captains.singapura.js.homing.component.BranchComponent;
 import hue.captains.singapura.js.homing.core.DomModule;
-import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
@@ -27,7 +27,9 @@ import java.util.List;
 public record SplitPaneModule() implements DomModule<SplitPaneModule> {
 
     /** The class. */
-    public record SplitPane() implements Exportable._Constant<SplitPaneModule> {}
+    public record SplitPane() implements BranchComponent<SplitPaneModule> {
+        @Override public String summary() { return "Two slots and a divider between them, dragged or keyed."; }
+    }
 
     public static final SplitPaneModule INSTANCE = new SplitPaneModule();
 

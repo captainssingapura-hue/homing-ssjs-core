@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.ui.floating;
 
+import hue.captains.singapura.js.homing.component.BranchComponent;
 import hue.captains.singapura.js.homing.core.DomModule;
-import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
@@ -17,7 +17,9 @@ import java.util.List;
 public record DeskModule() implements DomModule<DeskModule> {
 
     /** The class: {@code new Desk(branch, {host, onEvent?, minW?, minH?})}; {@code open(spec)}, {@code raise(id)}, {@code close(id)}, {@code dispose()}. */
-    public record Desk() implements Exportable._Constant<DeskModule> {}
+    public record Desk() implements BranchComponent<DeskModule> {
+        @Override public String summary() { return "The layer floating panes live on: a stack, the frontmost active."; }
+    }
 
     public static final DeskModule INSTANCE = new DeskModule();
 

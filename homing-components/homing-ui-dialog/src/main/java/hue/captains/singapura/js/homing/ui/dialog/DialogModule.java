@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.ui.dialog;
 
+import hue.captains.singapura.js.homing.component.BranchComponent;
 import hue.captains.singapura.js.homing.core.DomModule;
-import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
@@ -28,7 +28,9 @@ import java.util.List;
 public record DialogModule() implements DomModule<DialogModule> {
 
     /** The class. */
-    public record Dialog() implements Exportable._Constant<DialogModule> {}
+    public record Dialog() implements BranchComponent<DialogModule> {
+        @Override public String summary() { return "A floating pane that owns the screen until dismissed, or, non-modal, one that does not."; }
+    }
 
     public static final DialogModule INSTANCE = new DialogModule();
 

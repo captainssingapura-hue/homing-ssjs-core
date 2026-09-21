@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.ui.icons;
 
+import hue.captains.singapura.js.homing.component.C0_Components;
+import hue.captains.singapura.js.homing.component.ComponentVehicle;
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.core.StandardJsModuleType;
@@ -13,7 +15,7 @@ import java.util.List;
  * of words and the styles that wear them. A component that shows a mark
  * requires this crate and asks for a word; a design answers every word.
  */
-public final class UiIconsCrate implements Crate {
+public final class UiIconsCrate implements Crate, ComponentVehicle {
     public static final UiIconsCrate INSTANCE = new UiIconsCrate();
     private UiIconsCrate() {}
 
@@ -22,6 +24,8 @@ public final class UiIconsCrate implements Crate {
     @Override public List<Crate> requires() {
         return List.of(ServerCrate.INSTANCE, DesignCrate.INSTANCE);
     }
+
+    @Override public C0_Components<?> components() { return UiIconsComponents.INSTANCE; }
 
     @Override public List<CrateEntry> entries() {
         return List.of(

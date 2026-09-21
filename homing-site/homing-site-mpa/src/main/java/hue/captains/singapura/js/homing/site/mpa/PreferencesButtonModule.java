@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.site.mpa;
 
+import hue.captains.singapura.js.homing.component.BranchComponent;
 import hue.captains.singapura.js.homing.core.DomModule;
-import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
@@ -26,7 +26,9 @@ import java.util.List;
 public record PreferencesButtonModule() implements DomModule<PreferencesButtonModule> {
 
     /** The class. */
-    public record PreferencesButton() implements Exportable._Constant<PreferencesButtonModule> {}
+    public record PreferencesButton() implements BranchComponent<PreferencesButtonModule> {
+        @Override public String summary() { return "The button on the bar, and the dialog it opens."; }
+    }
 
     public static final PreferencesButtonModule INSTANCE = new PreferencesButtonModule();
 

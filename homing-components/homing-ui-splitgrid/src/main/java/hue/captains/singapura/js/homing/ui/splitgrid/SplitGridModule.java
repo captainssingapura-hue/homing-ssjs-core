@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.ui.splitgrid;
 
+import hue.captains.singapura.js.homing.component.BranchComponent;
 import hue.captains.singapura.js.homing.core.DomModule;
-import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
@@ -19,7 +19,9 @@ import java.util.List;
 public record SplitGridModule() implements DomModule<SplitGridModule> {
 
     /** The class: {@code new SplitGrid(branch, {host, layout, minCellPx?, onEvent?})}; {@code cell}, {@code cells}, {@code layout}, {@code setRatios}, {@code subdivide}, {@code remove}, {@code dispose}. */
-    public record SplitGrid() implements Exportable._Constant<SplitGridModule> {}
+    public record SplitGrid() implements BranchComponent<SplitGridModule> {
+        @Override public String summary() { return "A grid of cells split and re-split, its dividers dragged; the arrangement a tree."; }
+    }
 
     public static final SplitGridModule INSTANCE = new SplitGridModule();
 

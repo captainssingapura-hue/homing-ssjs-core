@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.ui.floating;
 
+import hue.captains.singapura.js.homing.component.C0_Components;
+import hue.captains.singapura.js.homing.component.ComponentVehicle;
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.core.StandardJsModuleType;
@@ -12,7 +14,7 @@ import java.util.List;
  * the runtime and the design targets. The pane and the desk are primitives,
  * owning the DOM on their branches; the events are pure logic.
  */
-public final class UiFloatingCrate implements Crate {
+public final class UiFloatingCrate implements Crate, ComponentVehicle {
     public static final UiFloatingCrate INSTANCE = new UiFloatingCrate();
     private UiFloatingCrate() {}
 
@@ -21,6 +23,8 @@ public final class UiFloatingCrate implements Crate {
     @Override public List<Crate> requires() {
         return List.of(ServerCrate.INSTANCE, DesignCrate.INSTANCE);
     }
+
+    @Override public C0_Components<?> components() { return UiFloatingComponents.INSTANCE; }
 
     @Override public List<CrateEntry> entries() {
         return List.of(

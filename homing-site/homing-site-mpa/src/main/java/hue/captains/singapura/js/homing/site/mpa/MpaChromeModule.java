@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.site.mpa;
 
+import hue.captains.singapura.js.homing.component.BranchComponent;
 import hue.captains.singapura.js.homing.core.DomModule;
-import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
@@ -23,7 +23,9 @@ import java.util.List;
 public record MpaChromeModule() implements DomModule<MpaChromeModule> {
 
     /** The class. */
-    public record MpaChrome() implements Exportable._Constant<MpaChromeModule> {}
+    public record MpaChrome() implements BranchComponent<MpaChromeModule> {
+        @Override public String summary() { return "The page chrome: a bar with the brand, the trail and the preferences button, over the slot the app is mounted in."; }
+    }
 
     public static final MpaChromeModule INSTANCE = new MpaChromeModule();
 

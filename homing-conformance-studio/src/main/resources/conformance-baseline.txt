@@ -816,3 +816,5 @@ hue.captains.singapura.js.homing.workspace.shell.WriteLockGuardModule [use-dom-o
 hue.captains.singapura.js.homing.workspace.shell.WriteLockGuardModule [use-dom-ops-party] raw DOM factory (use branch.createElement via the DomOpsParty, not document.create*): const strong = this._document.createElement('b');
 hue.captains.singapura.js.homing.workspace.shell.WriteLockGuardModule [use-dom-ops-party] raw DOM factory (use branch.createElement via the DomOpsParty, not document.create*): const takeBtn = this._document.createElement('button');
 hue.captains.singapura.js.homing.workspace.shell.WriteLockGuardModule [use-dom-ops-party] raw DOM factory (use branch.createElement via the DomOpsParty, not document.create*): msg.appendChild(this._document.createTextNode(
+hue.captains.singapura.js.homing.conformance.studio.ComponentSummaryWidget [exports-are-classes] exported function 'construct' — a component is a class: function construct(branch, params, workspaceCtx) {
+hue.captains.singapura.js.homing.conformance.studio.ComponentTreeWidget [exports-are-classes] exported function 'construct' — a component is a class: function construct(branch, params, workspaceCtx) {

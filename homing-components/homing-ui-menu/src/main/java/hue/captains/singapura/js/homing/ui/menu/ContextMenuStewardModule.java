@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.ui.menu;
 
+import hue.captains.singapura.js.homing.component.BranchComponent;
 import hue.captains.singapura.js.homing.core.DomModule;
-import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
@@ -20,7 +20,9 @@ import java.util.List;
 public record ContextMenuStewardModule() implements DomModule<ContextMenuStewardModule> {
 
     /** The class. */
-    public record ContextMenuSteward() implements Exportable._Constant<ContextMenuStewardModule> {}
+    public record ContextMenuSteward() implements BranchComponent<ContextMenuStewardModule> {
+        @Override public String summary() { return "One per page: the kinds, one instance each, the layer, and the one menu active."; }
+    }
 
     public static final ContextMenuStewardModule INSTANCE = new ContextMenuStewardModule();
 
