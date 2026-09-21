@@ -11,7 +11,6 @@ import hue.captains.singapura.js.homing.workspace.events.CheckpointStoreModule;
 import hue.captains.singapura.js.homing.workspace.events.CheckpointWorkerModule;
 import hue.captains.singapura.js.homing.workspace.events.WorkspaceEventLogModule;
 import hue.captains.singapura.js.homing.workspace.party.LayoutSecretaryModule;
-import hue.captains.singapura.js.homing.workspace.party.PartyModule;
 import hue.captains.singapura.js.homing.workspace.persistence.WidgetParamsCodecRegistryModule;
 
 import java.util.List;
@@ -33,7 +32,8 @@ public final class WorkspaceCrate implements Crate {
     @Override public List<Crate> requires() {
         // RFC 0066 - the palette its groups read is a crate edge, not a transitive accident.
         return List.of(CoreJsCrate.INSTANCE, StudioBaseCrate.INSTANCE, ThemeColorCrate.INSTANCE,
-                hue.captains.singapura.js.homing.design.DesignCrate.INSTANCE);
+                hue.captains.singapura.js.homing.design.DesignCrate.INSTANCE,
+                hue.captains.singapura.js.homing.server.ServerCrate.INSTANCE);   // the Party primitive is the base's now
     }
 
     @Override
@@ -48,7 +48,6 @@ public final class WorkspaceCrate implements Crate {
                 CrateEntry.of(CheckpointWorkerModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(WorkspaceEventLogModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(LayoutSecretaryModule.INSTANCE, StandardJsModuleType.SECRETARY),
-                CrateEntry.of(PartyModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(WidgetParamsCodecRegistryModule.INSTANCE, StandardJsModuleType.PURE_LOGIC));
     }
 }

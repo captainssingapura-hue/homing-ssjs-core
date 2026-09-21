@@ -5,7 +5,7 @@ import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
-import hue.captains.singapura.js.homing.workspace.party.PartyModule;
+import hue.captains.singapura.js.homing.component.party.PartyModule;
 
 import java.util.List;
 
@@ -13,7 +13,7 @@ import java.util.List;
  * {@code PartyBootstrap} — Phase 2 of the workspace-shell chrome.
  * Walks {@code spec.parties} (each a {@link PartyDecl} on the wire),
  * dynamic-imports each Secretary's JS module, constructs its
- * {@link hue.captains.singapura.js.homing.workspace.party.PartyModule
+ * {@link hue.captains.singapura.js.homing.component.party.PartyModule
  * Party} + initial actors, and exposes constructed Parties under their
  * {@code exposedAs} key on the workspace context object widgets receive.
  *

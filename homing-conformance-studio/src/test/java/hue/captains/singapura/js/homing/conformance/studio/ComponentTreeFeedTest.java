@@ -80,8 +80,10 @@ class ComponentTreeFeedTest {
     }
 
     @Test
-    void theFrameworksOwnCratesShipNoCatalogueYet_soTheFeedIsARootAlone() throws Exception {
+    void theFrameworksOwnCratesCatalogueOneComponent_theKeyboardSteward() throws Exception {
         DocContent tree = new ComponentTreeGetAction(TopLevelCrates.ALL).execute(new ComponentTreeGetAction.Query(null), new EmptyParam.NoHeaders()).get();
-        assertTrue(tree.body().endsWith("\"children\":[]}"), tree.body());
+        assertTrue(tree.body().contains("\"note\":\"1 vehicle 00b7 1 component\"") || tree.body().contains("1 vehicle"), tree.body());
+        assertTrue(tree.body().contains("\"segment\":\"server\",\"display\":{\"label\":\"Base\",\"badge\":\"vehicle\""), tree.body());
+        assertTrue(tree.body().contains("\"segment\":\"keyboard-steward\",\"display\":{\"label\":\"KeyboardSteward\",\"badge\":\"branch\""), tree.body());
     }
 }

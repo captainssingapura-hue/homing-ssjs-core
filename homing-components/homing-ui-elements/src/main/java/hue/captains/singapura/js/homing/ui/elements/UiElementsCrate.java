@@ -33,6 +33,7 @@ public final class UiElementsCrate implements Crate, ComponentVehicle {
         return List.of(
                 CrateEntry.of(Elements.INSTANCE),
                 CrateEntry.of(SliderModule.INSTANCE),
+                CrateEntry.of(SliderGroupModule.INSTANCE),
                 CrateEntry.of(ElementStyles.INSTANCE));
     }
 }

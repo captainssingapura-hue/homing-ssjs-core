@@ -1,4 +1,4 @@
-package hue.captains.singapura.js.homing.workspace.party;
+package hue.captains.singapura.js.homing.component.party;
 
 import hue.captains.singapura.js.homing.core.DomModule;
 import hue.captains.singapura.js.homing.core.Exportable;
@@ -8,8 +8,10 @@ import hue.captains.singapura.js.homing.core.ImportsFor;
 import java.util.List;
 
 /**
- * RFC 0028 cycle 2 — the JS runtime for one Party. Workspaces import
- * the {@link Party} JS class and instantiate one per concern with a
+ * RFC 0028 cycle 2 — the JS runtime for one Party: the base's party
+ * primitive, lifted here from the workspace (RFC 0066 E3, the keyboard
+ * appendix) so a component of the fresh stack may join one. A holder
+ * imports the {@code Party} JS class and instantiates one per concern with a
  * tree of Secretary descriptors (each carrying its own state and
  * behaviour function). The runtime provides registration, dispatch,
  * action execution, and inspection.

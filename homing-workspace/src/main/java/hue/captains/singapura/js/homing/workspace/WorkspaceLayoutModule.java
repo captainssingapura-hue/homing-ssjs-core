@@ -6,7 +6,7 @@ import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
 import hue.captains.singapura.js.homing.workspace.party.LayoutSecretaryModule;
-import hue.captains.singapura.js.homing.workspace.party.PartyModule;
+import hue.captains.singapura.js.homing.component.party.PartyModule;
 
 import java.util.List;
 

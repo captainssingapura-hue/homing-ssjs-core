@@ -1,6 +1,11 @@
 package hue.captains.singapura.js.homing.ui.elements;
 
 import hue.captains.singapura.js.homing.component.BranchComponent;
+import hue.captains.singapura.js.homing.component.keyboard.Key;
+import hue.captains.singapura.js.homing.component.keyboard.KeyBinding;
+import hue.captains.singapura.js.homing.component.keyboard.KeysModule;
+import hue.captains.singapura.js.homing.component.keyboard.Modifier;
+import hue.captains.singapura.js.homing.component.keyboard.NeedKeyboard;
 import hue.captains.singapura.js.homing.core.DomModule;
 import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
@@ -20,8 +25,18 @@ import java.util.List;
 public record SliderModule() implements DomModule<SliderModule> {
 
     /** A branch component, made through its builder: a label, the rail with its detent, a readout; value, setOn, size, label, dispose. */
-    public record Slider() implements BranchComponent<SliderModule> {
+    public record Slider() implements BranchComponent<SliderModule>, NeedKeyboard {
         @Override public String summary() { return "A number set by a knob on a track: a label, the rail with its detent, a readout; the hand and the keys alike."; }
+
+        /** The keys, through the party: a step either way, ten with Shift or by page, the ends. */
+        public static final List<KeyBinding> KEYS = List.of(
+                KeyBinding.of(Key.ARROW_UP, "a step up"), KeyBinding.of(Key.ARROW_RIGHT, "a step up"),
+                KeyBinding.of(Key.ARROW_DOWN, "a step down"), KeyBinding.of(Key.ARROW_LEFT, "a step down"),
+                KeyBinding.of(Key.ARROW_UP, Modifier.SHIFT, "ten steps up"), KeyBinding.of(Key.ARROW_RIGHT, Modifier.SHIFT, "ten steps up"),
+                KeyBinding.of(Key.ARROW_DOWN, Modifier.SHIFT, "ten steps down"), KeyBinding.of(Key.ARROW_LEFT, Modifier.SHIFT, "ten steps down"),
+                KeyBinding.of(Key.PAGE_UP, "ten steps up"), KeyBinding.of(Key.PAGE_DOWN, "ten steps down"),
+                KeyBinding.of(Key.HOME, "the minimum"), KeyBinding.of(Key.END, "the maximum"));
+        @Override public List<KeyBinding> keys() { return KEYS; }
     }
     /** The builder: {@code new SliderBuilder()}; label, range or axis, value, detent, format, onInput, onChange, size set progressively; {@code build(branch)} on a sub-branch of the caller's. */
     public record SliderBuilder() implements Exportable._Constant<SliderModule> {}
@@ -43,6 +58,7 @@ public record SliderModule() implements DomModule<SliderModule> {
                         new ElementStyles.el_slider_mark(),
                         new ElementStyles.el_slider_held(),
                         new ElementStyles.el_slider_face_held(),
+                        new ElementStyles.el_slider_knob_current(),
                         new ElementStyles.el_slider_readout(),
                         new ElementStyles.el_slider_vertical(),
                         new ElementStyles.el_slider_rail_vertical(),
@@ -61,6 +77,7 @@ public record SliderModule() implements DomModule<SliderModule> {
                         new ElementStyles.el_slider_off()
                 ), ElementStyles.INSTANCE))
                 .add(new ModuleImports<>(List.of(new IconModule.Icon()), IconModule.INSTANCE))
+                .add(new ModuleImports<>(List.of(new KeysModule.Keys()), KeysModule.INSTANCE))
                 .build();
     }
 

@@ -17,6 +17,7 @@ public record UiElementsComponents() implements C0_Components<UiElementsComponen
         return List.of(
                 ComponentEntry.of(this, new Elements.Button()),
                 ComponentEntry.of(this, new Elements.Card()),
-                ComponentEntry.of(this, new SliderModule.Slider()));
+                ComponentEntry.of(this, new SliderModule.Slider()),
+                ComponentEntry.of(this, new SliderGroupModule.SliderGroup()));
     }
 }

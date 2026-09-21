@@ -25,6 +25,11 @@
 //     .ticks([{ at, label }…]) a scale beside the track: a tick at each value, its caption
 //     .size(s)                 −1 … 1: every length the design gives the slider grows by its ratio
 //     .labelWidth(css)         one width for the labels of sliders that stack, so their rails align
+//     .keyboard(steward, id?)  the page's KeyboardSteward: the slider joins the keyboard party as
+//                              `id` (its branch's name, unless said) and takes its keys through it,
+//                              claiming on a press or the focus arriving in it; without, it has no
+//                              keys of its own — a slider in a group is built so, and the group
+//                              hands it the keys it holds
 //   Slider:
 //     .root                    the row: label, rail, readout
 //     .value(v?)               read, or set — clamped, on the step, snapped to a detent within its bite
@@ -33,13 +38,17 @@
 //     .label(text?)            read, or set
 //     .icon(name?)             read, or set: the knob's mark
 //     .labelWidth(css?)        the label's width: a length, or null for its own
+//     .key(ev)                 a keydown, from whoever holds the keys for it: true when taken
+//     .current(on)             the one of a group: the knob's ring drawn now
+//     .focusKnob()             physical focus to the knob: a group's, on Tab
 //     .dispose()
 //   The rail takes the hand anywhere on it: a press jumps and grabs, the
 //   pointer captured at the press; the knob is the focusable part (role
-//   slider, the value in aria) and takes the keys: arrows by a step, with
-//   Shift by ten, Home and End, PageUp and PageDown by ten. A detent has a
-//   bite of six tenths of a step: the hand within it rests there. `css` is
-//   injected with the styles import.
+//   slider, the value in aria). The keys, through the party: arrows by a
+//   step, with Shift by ten, Home and End, PageUp and PageDown by ten; no
+//   keydown listener of the slider's own, ever. A detent has a bite of six
+//   tenths of a step: the hand within it rests there. `css` is injected
+//   with the styles import.
 // =============================================================================
 
 const _sliderOwner = Object.freeze({ toString: () => "slider" });
@@ -165,23 +174,39 @@ class Slider {
             rail.addEventListener("pointercancel", self._onUp);
             rail.addEventListener("lostpointercapture", self._onUp);
         });
-        // the keys, on the knob
-        knob.addEventListener("keydown", function (ev) {
-            if (!self._on) return;
-            var by = ev.shiftKey ? 10 : 1, v = null;
-            switch (ev.key) {
-                case "ArrowRight": case "ArrowUp": v = self._value + self._step * by; break;
-                case "ArrowLeft": case "ArrowDown": v = self._value - self._step * by; break;
-                case "PageUp": v = self._value + self._step * 10; break;
-                case "PageDown": v = self._value - self._step * 10; break;
-                case "Home": v = self._min; break;
-                case "End": v = self._max; break;
-                default: return;
-            }
-            ev.preventDefault();
-            self._set(v, false, true);
-        });
+        // the keys: through the party, when the slider is handed the page's steward
+        this._kb = null; this._kbId = null; this._offKeys = null;
+        if (p.keyboard) {
+            this._kb = p.keyboard;
+            this._kbId = this._kb.join(p.keyboardId != null ? String(p.keyboardId) : branch.name, { keyDown: function (ev) { return self.key(ev); } });
+            this._offKeys = Keys.claimOn(this.root, this._kb, this._kbId);
+        }
     }
+
+    // ── the keys ──────────────────────────────────────────────────────────
+    /** A keydown, from whoever holds the keys for this slider: a step, ten, an end; true when taken. */
+    key(ev) {
+        if (!this._on || !ev) return false;
+        var by = ev.shiftKey ? 10 : 1, v = null;
+        switch (ev.key) {
+            case "ArrowRight": case "ArrowUp": v = this._value + this._step * by; break;
+            case "ArrowLeft": case "ArrowDown": v = this._value - this._step * by; break;
+            case "PageUp": v = this._value + this._step * 10; break;
+            case "PageDown": v = this._value - this._step * 10; break;
+            case "Home": v = this._min; break;
+            case "End": v = this._max; break;
+            default: return false;
+        }
+        this._set(v, false, true);
+        return true;
+    }
+    /** The one of a group: the knob's ring drawn now, whether or not it has the focus. */
+    current(on) {
+        if (on) css.addClass(this._knob, el_slider_knob_current); else css.removeClass(this._knob, el_slider_knob_current);
+        return this;
+    }
+    /** Physical focus to the knob, without scrolling: a group's, on Tab. */
+    focusKnob() { try { this._knob.focus({ preventScroll: true }); } catch (e) {} return this; }
 
     // ── the number ────────────────────────────────────────────────────────
     _rest() { return this._detents.length ? this._detents[0] : this._min; }
@@ -266,6 +291,8 @@ class Slider {
     }
     dispose() {
         if (this._pressed !== null) this._release();
+        if (this._offKeys) { this._offKeys(); this._offKeys = null; }
+        if (this._kb) { this._kb.leave(this._kbId); this._kb = null; }
         this.branch.dissolve();
     }
 }
@@ -286,6 +313,7 @@ class SliderBuilder {
     icon(name)            { this._props.icon = name; return this; }
     vertical()            { this._props.vertical = true; return this; }
     ticks(list)           { this._props.ticks = list; return this; }
+    keyboard(steward, id) { this._props.keyboard = steward; this._props.keyboardId = id; return this; }
     build(branch) {
         if (!branch) throw new Error("[SliderBuilder] build wants the sub-branch the caller made for the slider");
         return new Slider(branch, this._props);

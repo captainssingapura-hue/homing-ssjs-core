@@ -46,7 +46,7 @@ class SliderTest extends JsModuleTestBase {
                     removeClass: function (e) { for (var i = 1; i < arguments.length; i++) e.classList.remove(arguments[i]); },
                     toggleClass: function (e, c, f) { e.classList.toggle(c, f); }, size: function (e, s) { e.size = s; }, extent: function () {}, aspect: function () {} };
         var el_slider = "el_slider", el_slider_label = "el_slider_label", el_slider_rail = "el_slider_rail", el_slider_track = "el_slider_track", el_slider_fill = "el_slider_fill",
-            el_slider_detent = "el_slider_detent", el_slider_knob = "el_slider_knob", el_slider_face = "el_slider_face", el_slider_mark = "el_slider_mark", el_slider_held = "el_slider_held", el_slider_face_held = "el_slider_face_held", el_slider_readout = "el_slider_readout", el_slider_off = "el_slider_off",
+            el_slider_detent = "el_slider_detent", el_slider_knob = "el_slider_knob", el_slider_face = "el_slider_face", el_slider_mark = "el_slider_mark", el_slider_held = "el_slider_held", el_slider_face_held = "el_slider_face_held", el_slider_knob_current = "el_slider_knob_current", el_slider_readout = "el_slider_readout", el_slider_off = "el_slider_off",
             el_slider_vertical = "el_slider_vertical", el_slider_rail_vertical = "el_slider_rail_vertical", el_slider_rail_ticked = "el_slider_rail_ticked", el_slider_track_vertical = "el_slider_track_vertical",
             el_slider_fill_vertical = "el_slider_fill_vertical", el_slider_detent_vertical = "el_slider_detent_vertical", el_slider_cap = "el_slider_cap", el_slider_cap_face = "el_slider_cap_face", el_slider_cap_mark = "el_slider_cap_mark",
             el_slider_tick = "el_slider_tick", el_slider_tick_vertical = "el_slider_tick_vertical", el_slider_tick_line = "el_slider_tick_line", el_slider_tick_line_vertical = "el_slider_tick_line_vertical", el_slider_tick_label = "el_slider_tick_label";
@@ -62,6 +62,7 @@ class SliderTest extends JsModuleTestBase {
         // the icon component reads ICONS as it loads: the wardrobe's names first, as the served module would import them
         js.eval("js", "var ic_base = 'ic_base', ICONS = { grip: 'ic_grip', size: 'ic_size', aspect: 'ic_aspect', extent: 'ic_extent', level: 'ic_level' };");
         loadModule("/homing/js/hue/captains/singapura/js/homing/ui/icons/IconModule.js");
+        loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeysModule.js");
         loadModule(MODULE);
         js.eval("js", SHIM);
     }
@@ -118,16 +119,41 @@ class SliderTest extends JsModuleTestBase {
     }
 
     @Test
-    void theKeysOnTheKnob_stepShiftHomeEndAndPages_eachAChange() {
+    void theKeys_stepShiftHomeEndAndPages_eachAChange_takenOrLeft() {
+        assertEquals("0", eval("String(knob.listening('keydown'))").asString(), "no keydown listener of the slider's own: the keys come through the party");
         eval("s.value(0); log = [];");
-        eval("knob.fire('keydown', { key: 'ArrowRight' }); knob.fire('keydown', { key: 'ArrowUp' }); knob.fire('keydown', { key: 'ArrowLeft', shiftKey: true });");
+        assertEquals("true,true,true", eval("[s.key({ key: 'ArrowRight' }), s.key({ key: 'ArrowUp' }), s.key({ key: 'ArrowLeft', shiftKey: true })].join()").asString());
         assertEquals("in:0.1 change:0.1 in:0.2 change:0.2 in:-0.8 change:-0.8", log(), "a step, a step, ten steps back");
-        eval("log = []; knob.fire('keydown', { key: 'End' }); knob.fire('keydown', { key: 'Home' }); knob.fire('keydown', { key: 'PageUp' }); knob.fire('keydown', { key: 'PageDown' });");
+        eval("log = []; s.key({ key: 'End' }); s.key({ key: 'Home' }); s.key({ key: 'PageUp' }); s.key({ key: 'PageDown' });");
         assertEquals("in:1 change:1 in:-1 change:-1 in:0 change:0 in:-1 change:-1", log());
-        var e = eval("knob.fire('keydown', { key: 'Tab' })");
-        assertFalse(e.hasMember("defaulted"), "a key that is not the slider's passes");
-        eval("log = []; knob.fire('keydown', { key: 'ArrowLeft' });");
-        assertEquals("", log(), "at the bottom already: nothing");
+        assertFalse(eval("s.key({ key: 'Tab' })").asBoolean(), "a key that is not the slider's is left");
+        eval("log = [];");
+        assertTrue(eval("s.key({ key: 'ArrowLeft' })").asBoolean(), "taken, though at the bottom already");
+        assertEquals("", log(), "and nothing moved");
+        eval("s.setOn(false)");
+        assertFalse(eval("s.key({ key: 'ArrowRight' })").asBoolean(), "off: left");
+    }
+
+    /** Handed the page's steward, the slider is a member: the convention on its root, the keys through the member's handler, and it leaves on dispose. */
+    @Test
+    void withTheSteward_joinsClaimsByTheConventionAndLeaves() {
+        eval("""
+            var members = {}, kbLog = [];
+            var kb = { join: function (id, h) { members[id] = h; kbLog.push("join:" + id); return id; }, leave: function (id) { delete members[id]; kbLog.push("leave:" + id); },
+                       claim: function (id) { kbLog.push("claim:" + id); }, release: function (id) { kbLog.push("release:" + id); } };
+            var k = new SliderBuilder().axis().onChange(function (v) { log.push("k:" + v); }).keyboard(kb).build(page.createBranch("keyed"));
+            var k2 = new SliderBuilder().axis().keyboard(kb, "other").build(page.createBranch("keyed2"));
+            """);
+        assertEquals("join:keyed join:other", eval("kbLog.join(' ')").asString(), "joined as the branch's name, or as said");
+        assertEquals("1,1,1", eval("[k.root.listening('pointerdown'), k.root.listening('focusin'), k.root.listening('focusout')].join()").asString(), "the convention on the root");
+        eval("kbLog = []; k.root.fire('pointerdown', {}); k.root.fire('focusout', { relatedTarget: null });");
+        assertEquals("claim:keyed release:keyed", eval("kbLog.join(' ')").asString());
+        eval("log = [];");
+        assertTrue(eval("members.keyed.keyDown({ key: 'ArrowUp' })").asBoolean(), "the member's handler is the slider's key()");
+        assertEquals("k:0.1", log());
+        eval("kbLog = []; k.dispose();");
+        assertEquals("leave:keyed", eval("kbLog.join(' ')").asString());
+        assertEquals("0", eval("String(k.root.listening('pointerdown'))").asString(), "the convention removed");
     }
 
     /**

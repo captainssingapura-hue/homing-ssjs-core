@@ -19,6 +19,7 @@ import static hue.captains.singapura.js.homing.design.Feedback.Danger;
 import static hue.captains.singapura.js.homing.design.Feedback.Success;
 import static hue.captains.singapura.js.homing.design.Feedback.Warning;
 import static hue.captains.singapura.js.homing.design.Interaction.Dragging;
+import static hue.captains.singapura.js.homing.design.Interaction.Focus;
 import static hue.captains.singapura.js.homing.design.Interaction.Inert;
 import static hue.captains.singapura.js.homing.design.Interaction.Interactive;
 import static hue.captains.singapura.js.homing.design.Layer.Raised;
@@ -304,6 +305,12 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
         @Override public String body() { return ""; }
     }
 
+    /** The knob of the current slider of a group: the ring drawn now, whether or not the knob has the focus. */
+    public record el_slider_knob_current() implements CssClass<ElementStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Focus.class, Shape.Rule.class), of(Focus.class, Color.Edge.class)); }
+        @Override public String body() { return ""; }
+    }
+
     /** The readout after the rail: the value as the caller formats it, in a steady face, right-aligned. */
     public record el_slider_readout() implements CssClass<ElementStyles> {
         @Override public List<? extends Wearable> wears() { return List.of(of(Label.class, Type.Scale.class), of(Code.class, Type.Face.class), of(Muted.class, Color.Ink.class)); }
@@ -500,6 +507,86 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
         @Override public String body() { return "pointer-events: none;"; }
     }
 
+    // ── Slider group ──────────────────────────────────────────────────────────
+
+    /**
+     * The group: sliders that share the keys, one holder in the party for
+     * all of them and one of them current. A framed column, the header then
+     * the body, wearing the container's frame and the pane's room, so a
+     * design draws it as it draws a pane.
+     */
+    public record el_slider_group() implements CssClass<ElementStyles> {
+        @Override public List<? extends Wearable> wears() {
+            return List.of(of(Container.class, Shape.Corner.class), of(Container.class, Shape.Rule.class), of(Container.class, Color.Edge.class),
+                           of(Container.Pane.class, Size.Inset.class), of(Container.Pane.class, Size.Gap.class),
+                           of(Raised.class, Color.Surface.class), of(Interactive.class, Motion.Ease.class));
+        }
+        @Override public List<? extends Wearable> sizes() { return List.of(of(Container.Pane.class, Size.Inset.class), of(Container.Pane.class, Size.Gap.class)); }
+        @Override public String body() { return """
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            min-width: 0;
+            outline: none;
+            """;
+        }
+    }
+
+    /** The group holding the keys: the ring drawn now, on the frame. */
+    public record el_slider_group_held() implements CssClass<ElementStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Focus.class, Shape.Rule.class), of(Focus.class, Color.Edge.class)); }
+        @Override public String body() { return ""; }
+    }
+
+    /** The header: the title; a press on it makes the group the holder of the keys. */
+    public record el_slider_group_header() implements CssClass<ElementStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Interactive.class, Affordance.Cursor.class), of(Container.Pane.class, Size.Gap.class)); }
+        @Override public String body() { return """
+            flex: none;
+            display: flex;
+            align-items: baseline;
+            min-width: 0;
+            user-select: none;
+            """;
+        }
+    }
+
+    /** The title in the header: a heading. */
+    public record el_slider_group_title() implements CssClass<ElementStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Heading.class, Type.Face.class), of(Heading.class, Type.Scale.class), of(Heading.class, Type.Weight.class), of(Heading.class, Color.Ink.class)); }
+        @Override public List<? extends Wearable> sizes() { return List.of(of(Heading.class, Type.Scale.class)); }
+        @Override public String body() { return """
+            margin: 0;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            """;
+        }
+    }
+
+    /** The body: the sliders, stacked. */
+    public record el_slider_group_body() implements CssClass<ElementStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Container.Pane.class, Size.Gap.class)); }
+        @Override public List<? extends Wearable> sizes() { return List.of(of(Container.Pane.class, Size.Gap.class)); }
+        @Override public String body() { return """
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            """;
+        }
+    }
+
+    /** The body laid across: the sliders side by side, as faders on a mixer, each with the room its scale takes. */
+    public record el_slider_group_body_across() implements CssClass<ElementStyles> {
+        @Override public String body() { return """
+            flex-direction: row;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            """;
+        }
+    }
+
     // ── Card ──────────────────────────────────────────────────────────────────
 
     /**
@@ -613,10 +700,11 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
         return List.of(new el_button(), new el_button_primary(), new el_button_secondary(), new el_button_danger(), new el_button_warning(), new el_button_success(),
                        new el_button_plain(), new el_button_on(), new el_button_off(),
                        new el_slider(), new el_slider_label(), new el_slider_rail(), new el_slider_track(), new el_slider_fill(), new el_slider_detent(),
-                       new el_slider_knob(), new el_slider_face(), new el_slider_mark(), new el_slider_held(), new el_slider_face_held(), new el_slider_readout(),
+                       new el_slider_knob(), new el_slider_face(), new el_slider_mark(), new el_slider_held(), new el_slider_face_held(), new el_slider_knob_current(), new el_slider_readout(),
                        new el_slider_vertical(), new el_slider_rail_vertical(), new el_slider_rail_ticked(), new el_slider_track_vertical(), new el_slider_fill_vertical(), new el_slider_detent_vertical(),
                        new el_slider_cap(), new el_slider_cap_face(), new el_slider_cap_mark(), new el_slider_tick(), new el_slider_tick_vertical(), new el_slider_tick_line(), new el_slider_tick_line_vertical(), new el_slider_tick_label(),
                        new el_slider_off(),
+                       new el_slider_group(), new el_slider_group_held(), new el_slider_group_header(), new el_slider_group_title(), new el_slider_group_body(), new el_slider_group_body_across(),
                        new el_card(), new el_card_action(), new el_card_head(), new el_card_title(), new el_badge(), new el_card_body(), new el_card_text(), new el_card_foot(), new el_card_link());
     }
 }

@@ -3,20 +3,30 @@ package hue.captains.singapura.js.homing.server;
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.core.StandardJsModuleType;
+import hue.captains.singapura.js.homing.component.C0_Components;
+import hue.captains.singapura.js.homing.component.ComponentVehicle;
 import hue.captains.singapura.js.homing.component.WidgetSlotModule;
+import hue.captains.singapura.js.homing.component.keyboard.KeyboardEventsModule;
+import hue.captains.singapura.js.homing.component.keyboard.KeyboardSecretaryModule;
+import hue.captains.singapura.js.homing.component.keyboard.KeyboardStewardModule;
+import hue.captains.singapura.js.homing.component.keyboard.KeysModule;
+import hue.captains.singapura.js.homing.component.party.PartyModule;
 
 import java.util.List;
 
 /**
  * RFC 0044 — the {@link Crate} for {@code homing-server}: the two runtime
- * manager modules it ships. A leaf crate — both modules import nothing, so it
+ * manager modules it ships, the component base's primitives, and the keyboard
+ * party — whose steward is the one component it catalogues. A leaf crate: it
  * requires no other crate.
  */
-public final class ServerCrate implements Crate {
+public final class ServerCrate implements Crate, ComponentVehicle {
 
     public static final ServerCrate INSTANCE = new ServerCrate();
 
     private ServerCrate() {}
+
+    @Override public C0_Components<?> components() { return ServerComponents.INSTANCE; }
 
     @Override
     public String name() {
@@ -36,6 +46,14 @@ public final class ServerCrate implements Crate {
                 // primitive that places and removes a root and mints nothing.
                 // Declared here because a Maven module has one crate, and this
                 // crate is the base's until the rename sweep.
-                CrateEntry.of(WidgetSlotModule.INSTANCE, StandardJsModuleType.PRIMITIVE));
+                CrateEntry.of(WidgetSlotModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
+                // RFC 0066 E3 - the Party primitive (RFC 0028), lifted from the workspace: headless.
+                CrateEntry.of(PartyModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
+                // RFC 0066 E3 - the keyboard party: its secretary, its steward (the DOM face,
+                // one per page), the claiming convention, and its events as data.
+                CrateEntry.of(KeyboardSecretaryModule.INSTANCE, StandardJsModuleType.SECRETARY),
+                CrateEntry.of(KeyboardStewardModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
+                CrateEntry.of(KeysModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
+                CrateEntry.of(KeyboardEventsModule.INSTANCE, StandardJsModuleType.PURE_LOGIC));
     }
 }
