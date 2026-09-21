@@ -263,4 +263,31 @@ class SheetsTest {
         assertEquals(1, Deployment.topLevelTokens("color-mix(in srgb, #FF0000 55%, rgba(1, 2, 3, 0.4))"));
         assertEquals(2, Deployment.topLevelTokens("  #FFF   rgba(1, 2, 3, 0.4) "));
     }
+
+    /**
+     * A leaf that writes on a pseudo-element — Type.Glyph, whose content paints
+     * nowhere but on ::before — nests its declarations under it, state by
+     * state, so an icon word is worn on the mark like any other word.
+     */
+    @Test
+    void aGlyph_isWrittenOnBefore_stateByState() {
+        var check = DesignClass.of(Icon.Check.class, Target.Type.Glyph.class);
+        record Marked() implements Design {
+            @Override public Impl impl(DesignClass<?> pair) {
+                if (pair.semantic() == Icon.Check.class) return Impl.Bindings.of("\"✓\"").in(Mode.LIGHT, State.HOVER, "\"✔\"");
+                return null;
+            }
+            @Override public DesignId id() { return new DesignId("marked"); }
+            @Override public String label() { return "Marked"; }
+            @Override public String group() { return "t"; }
+            @Override public String inspiration() { return ""; }
+        }
+        var r = Deployment.of(Set.of(check), new Marked()).resolve();
+        assertEquals(List.of(), r.findings(), r.findings().toString());
+        String sheet = Sheets.targetSheets(r).get("type-glyph");
+        assertTrue(sheet.contains(".check-type-glyph {\n    &::before {\n        content: var(--check-type-glyph);\n    }\n"), sheet);
+        assertTrue(sheet.contains("    &:hover::before {\n        content: var(--check-type-glyph-hover, var(--check-type-glyph));\n    }\n"), sheet);
+        assertTrue(Sheets.rootSheet(r).contains("    --check-type-glyph: \"✓\";"), Sheets.rootSheet(r));
+        assertEquals("&:hover::before, &[data-x]::before", Sheets.onPseudo("&:hover, &[data-x]", "::before"));
+    }
 }

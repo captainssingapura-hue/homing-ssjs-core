@@ -27,9 +27,10 @@ public record ContextMenuStewardModule() implements DomModule<ContextMenuSteward
     @Override
     public ImportsFor<ContextMenuStewardModule> imports() {
         return ImportsFor.<ContextMenuStewardModule>builder()
-                .add(new ModuleImports<>(List.of(new MenuStyles.cm_layer()), MenuStyles.INSTANCE))
+                .add(new ModuleImports<>(List.of(new MenuStyles.cm_layer(), new MenuStyles.cm_specimen()), MenuStyles.INSTANCE))
                 .add(new ModuleImports<>(List.of(new ContextMenuModule.ContextMenu()), ContextMenuModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new MenuEventsModule.MenuEvents()), MenuEventsModule.INSTANCE))
+                .add(new ModuleImports<>(List.of(new MenuTreeModule.MenuTree()), MenuTreeModule.INSTANCE))
                 .build();
     }
 

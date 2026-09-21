@@ -88,7 +88,7 @@ class ComponentsConformanceTest {
         var groups = new ArrayList<CssGroup<?>>();
         for (Crate c : ComponentsConformance.TOP_LEVEL)
             for (var e : c.entries()) if (e.module() instanceof CssGroup<?> g) groups.add(g);
-        assertEquals(9, groups.size(), "one style group per crate that has styles; docking has none");
+        assertEquals(10, groups.size(), "one style group per crate that has styles; docking has none");
         var worn = Deployment.wornBy(groups);
         var scaled = Deployment.scaledBy(groups);
         var grown = Deployment.grownBy(groups);

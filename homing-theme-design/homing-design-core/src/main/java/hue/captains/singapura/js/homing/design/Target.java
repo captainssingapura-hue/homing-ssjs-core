@@ -45,6 +45,13 @@ public sealed interface Target permits
 
     default Carrier carrier() { return Carrier.CSS; }
 
+    /**
+     * The pseudo-element the leaf's properties are written on, or null for
+     * the element itself: {@code Type.Glyph} writes {@code content} on
+     * {@code ::before}, since content paints nowhere else.
+     */
+    default String pseudo() { return null; }
+
     /** {@code branch-leaf}, from the type. */
     default String token() { return Trees.targetToken(getClass()); }
 
@@ -183,7 +190,7 @@ public sealed interface Target permits
     // ═════════════════════════════════════════════════════════════════════
     //  Type — how text is set
     // ═════════════════════════════════════════════════════════════════════
-    sealed interface Type extends Target permits Type.Face, Type.Weight, Type.Scale, Type.Treatment, Type.Decoration {
+    sealed interface Type extends Target permits Type.Face, Type.Weight, Type.Scale, Type.Treatment, Type.Decoration, Type.Glyph {
         record Face() implements Type, CssGroup<Face> {
             public static final Face INSTANCE = new Face();
             @Override public List<CssClass<Face>> cssClasses() { return List.of(); }
@@ -215,6 +222,19 @@ public sealed interface Target permits
             @Override public List<CssClass<Decoration>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("text-decoration-line", "text-decoration-style", "text-decoration-thickness", "text-underline-offset", "text-shadow"); }   // a glow or a relief is a decoration of the letters too
             @Override public Set<State> states() { return POINTER; }
+        }
+        /**
+         * The glyph a mark shows for a meaning — an {@link Icon} word's
+         * picture: {@code content} on {@code ::before}, a symbol, an emoji or a
+         * {@code url()}. The element that wears it is the mark; what it says is
+         * the design's.
+         */
+        record Glyph() implements Type, CssGroup<Glyph> {
+            public static final Glyph INSTANCE = new Glyph();
+            @Override public List<CssClass<Glyph>> cssClasses() { return List.of(); }
+            @Override public Set<String> properties() { return Set.of("content"); }
+            @Override public Set<State> states() { return INTERACTIVE; }
+            @Override public String pseudo() { return "::before"; }
         }
     }
 

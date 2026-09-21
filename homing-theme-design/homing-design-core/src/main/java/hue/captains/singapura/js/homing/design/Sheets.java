@@ -88,18 +88,30 @@ public final class Sheets {
         b.values().forEach((mode, states) -> states.forEach((state, props) ->
                 props.keySet().forEach(p -> slots.computeIfAbsent(state, s -> new java.util.TreeSet<>()).add(property(dc, p)))));
         if (slots.isEmpty()) return "";
+        // a leaf that writes on a pseudo-element nests its declarations under it, state by state: `&::before { … } &:hover::before { … }`
+        String pseudo = dc.targetLeaf().pseudo();
         var sb = new StringBuilder(".").append(dc.cssName()).append(" {\n");
-        for (String p : slots.getOrDefault(State.REST, java.util.Set.of()))
-            sb.append("    ").append(p).append(": ").append(value(dc, b, p, State.REST, false)).append(";\n");
+        var restProps = slots.getOrDefault(State.REST, java.util.Set.of());
+        if (pseudo != null && !restProps.isEmpty()) sb.append("    &").append(pseudo).append(" {\n");
+        for (String p : restProps)
+            sb.append(pseudo != null ? "        " : "    ").append(p).append(": ").append(value(dc, b, p, State.REST, false)).append(";\n");
+        if (pseudo != null && !restProps.isEmpty()) sb.append("    }\n");
         slots.forEach((state, props) -> {
             if (state == State.REST) return;
-            sb.append("    ").append(state.selector()).append(" {\n");
+            sb.append("    ").append(pseudo == null ? state.selector() : onPseudo(state.selector(), pseudo)).append(" {\n");
             for (String p : props)
                 sb.append("        ").append(p).append(": ")
                   .append(value(dc, b, p, state, rest.containsKey(p) || rest.containsKey(Impl.Bindings.SOLE))).append(";\n");
             sb.append("    }\n");
         });
         return sb.append("}\n").toString();
+    }
+
+    /** A state's selector, each of its alternatives carried onto the pseudo-element: {@code &:hover::before}. */
+    static String onPseudo(String selector, String pseudo) {
+        var parts = selector.split(",");
+        for (int i = 0; i < parts.length; i++) parts[i] = parts[i].trim() + pseudo;
+        return String.join(", ", parts);
     }
 
     /** Whether any property of the word has a ratio other than 1 on an axis — and so renders as a power of the element's number on it. */

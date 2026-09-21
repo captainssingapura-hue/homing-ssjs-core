@@ -11,6 +11,7 @@ import static hue.captains.singapura.js.homing.design.Target.*;
 import static hue.captains.singapura.js.homing.design.Box.*;
 import static hue.captains.singapura.js.homing.design.Brand.*;
 import static hue.captains.singapura.js.homing.design.Emphasis.*;
+import static hue.captains.singapura.js.homing.design.Icon.*;
 import static hue.captains.singapura.js.homing.design.Interaction.*;
 import static hue.captains.singapura.js.homing.design.Layer.*;
 import static hue.captains.singapura.js.homing.design.Structure.*;
@@ -162,6 +163,12 @@ final class SketchyDesign {
             one(of(Control.Option.class, Shape.Corner.class), "6px 4px 5px 7px / 4px 6px 7px 5px"),
             inset(of(Control.Option.class, Size.Inset.class), "7px", "12px", 1.35),
             gap(of(Control.Option.class, Size.Gap.class), "10px", 1.35),
+            // the icons a marker would draw: stickers where a symbol is too clean — the rest fall back to Editorial's
+            glyph(of(Check.class, Type.Glyph.class), "✔"),
+            glyph(of(Disclose.class, Type.Glyph.class), "➤"),
+            glyph(of(Close.class, Type.Glyph.class), "✖"),
+            glyph(of(Pin.class, Type.Glyph.class), "📌"),
+            glyph(of(Settings.class, Type.Glyph.class), "🔧"),
             // a container, and the card: a hand-cut card, its corners uneven
             one(of(Container.class, Shape.Corner.class), WOBBLE_PLATE),
             ruleWithFocusRing(of(Container.class, Shape.Rule.class), "2px", "solid", "2px", "dashed", "-3px"),

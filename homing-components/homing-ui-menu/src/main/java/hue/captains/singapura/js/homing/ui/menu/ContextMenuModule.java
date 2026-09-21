@@ -5,6 +5,7 @@ import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
+import hue.captains.singapura.js.homing.ui.icons.IconModule;
 
 import java.util.List;
 
@@ -27,16 +28,18 @@ public record ContextMenuModule() implements DomModule<ContextMenuModule> {
         return ImportsFor.<ContextMenuModule>builder()
                 .add(new ModuleImports<>(List.of(
                         new MenuStyles.cm_frame(),
+                        new MenuStyles.cm_frame_static(),
                         new MenuStyles.cm_item(),
                         new MenuStyles.cm_item_label(),
-                        new MenuStyles.cm_item_check(),
                         new MenuStyles.cm_item_hint(),
-                        new MenuStyles.cm_item_arrow(),
+                        new MenuStyles.cm_item_disclose(),
                         new MenuStyles.cm_item_disabled(),
                         new MenuStyles.cm_item_hidden(),
                         new MenuStyles.cm_separator()
                 ), MenuStyles.INSTANCE))
                 .add(new ModuleImports<>(List.of(new MenuGeometryModule.MenuGeometry()), MenuGeometryModule.INSTANCE))
+                .add(new ModuleImports<>(List.of(new MenuTreeModule.MenuTree()), MenuTreeModule.INSTANCE))
+                .add(new ModuleImports<>(List.of(new IconModule.Icon()), IconModule.INSTANCE))
                 .build();
     }
 

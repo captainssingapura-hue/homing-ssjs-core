@@ -32,9 +32,11 @@ import static hue.captains.singapura.js.homing.design.Text.Label;
 /**
  * The context menus' styles: the layer they show in, the frame that is
  * {@code Container.Menu}, the rows that are {@code Control.Option} and
- * {@code Selectable}, the marks, the hint, the separator. The frame's place
- * is the geometry's, carried in runtime variables the steward sets. Every
- * look is a design word; the bodies hold layout only.
+ * {@code Selectable}, the marks, the hint, the separator; the static frame
+ * and the host of a specimen. The frame's place is the geometry's, carried
+ * in runtime variables the steward sets. A row's marks are {@code Icon}
+ * components, dressed by the icons' crate; here they only take their place.
+ * Every look is a design word; the bodies hold layout only.
  */
 public record MenuStyles() implements CssGroup<MenuStyles> {
 
@@ -105,15 +107,6 @@ public record MenuStyles() implements CssGroup<MenuStyles> {
         @Override public String body() { return "flex: 1 1 auto;"; }
     }
 
-    /** The mark before the label: the check of a checked row, else blank of the same width so labels align. */
-    public record cm_item_check() implements CssClass<MenuStyles> {
-        @Override public String body() { return """
-            flex: none;
-            inline-size: 1.1em;
-            text-align: center;
-            """;
-        }
-    }
 
     /** The hint after the label, in a muted caption. */
     public record cm_item_hint() implements CssClass<MenuStyles> {
@@ -121,15 +114,10 @@ public record MenuStyles() implements CssGroup<MenuStyles> {
         @Override public String body() { return "flex: none;"; }
     }
 
-    /** The mark after a submenu row: the arrow to its items. */
-    public record cm_item_arrow() implements CssClass<MenuStyles> {
+    /** The mark after a row with rows: the disclose icon, muted, at the end. */
+    public record cm_item_disclose() implements CssClass<MenuStyles> {
         @Override public List<? extends Wearable> wears() { return List.of(of(Muted.class, Color.Ink.class)); }
-        @Override public String body() { return """
-            flex: none;
-            inline-size: 1.1em;
-            text-align: end;
-            """;
-        }
+        @Override public String body() { return "margin-inline-start: auto;"; }
     }
 
     /** A row that cannot be picked now: inert. */
@@ -153,9 +141,30 @@ public record MenuStyles() implements CssGroup<MenuStyles> {
         }
     }
 
+    /** A specimen's frame: in the flow of its host, not at a point — after the frame in the sheet, so it wins the place. */
+    public record cm_frame_static() implements CssClass<MenuStyles> {
+        @Override public String body() { return """
+            position: relative;
+            left: auto;
+            top: auto;
+            """;
+        }
+    }
+
+    /** The host of a specimen: the frames of every level side by side, from the root, wrapping when the room runs out. */
+    public record cm_specimen() implements CssClass<MenuStyles> {
+        @Override public String body() { return """
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            gap: 24px;
+            """;
+        }
+    }
+
     @Override
     public List<CssClass<MenuStyles>> cssClasses() {
-        return List.of(new cm_layer(), new cm_frame(), new cm_item(), new cm_item_label(), new cm_item_check(), new cm_item_hint(),
-                       new cm_item_arrow(), new cm_item_disabled(), new cm_separator(), new cm_item_hidden());
+        return List.of(new cm_layer(), new cm_frame(), new cm_frame_static(), new cm_specimen(), new cm_item(), new cm_item_label(), new cm_item_hint(),
+                       new cm_item_disclose(), new cm_item_disabled(), new cm_separator(), new cm_item_hidden());
     }
 }

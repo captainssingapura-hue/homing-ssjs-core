@@ -11,6 +11,7 @@ import static hue.captains.singapura.js.homing.design.Box.*;
 import static hue.captains.singapura.js.homing.design.Brand.*;
 import static hue.captains.singapura.js.homing.design.Emphasis.*;
 import static hue.captains.singapura.js.homing.design.Feedback.*;
+import static hue.captains.singapura.js.homing.design.Icon.*;
 import static hue.captains.singapura.js.homing.design.Interaction.*;
 import static hue.captains.singapura.js.homing.design.Layer.*;
 import static hue.captains.singapura.js.homing.design.Pairing.*;
@@ -194,6 +195,18 @@ final class EditorialDesign {
             one(of(Control.Option.class, Shape.Corner.class), "4px"),
             inset(of(Control.Option.class, Size.Inset.class), "7px", "12px", 1.3),
             gap(of(Control.Option.class, Size.Gap.class), "10px", 1.3),
+            // the icons: what the design draws for each intent — plain symbols, set in the text's own face
+            glyph(of(Check.class, Type.Glyph.class), "✓"),
+            glyph(of(Disclose.class, Type.Glyph.class), "▸"),
+            glyph(of(Close.class, Type.Glyph.class), "✕"),
+            glyph(of(Detach.class, Type.Glyph.class), "⧉"),
+            glyph(of(Rotate.class, Type.Glyph.class), "↻"),
+            glyph(of(Flip.class, Type.Glyph.class), "⇋"),
+            glyph(of(Add.class, Type.Glyph.class), "+"),
+            glyph(of(Remove.class, Type.Glyph.class), "−"),
+            glyph(of(Reset.class, Type.Glyph.class), "↺"),
+            glyph(of(Pin.class, Type.Glyph.class), "⌖"),
+            glyph(of(Settings.class, Type.Glyph.class), "⚙"),
             // a container, and the card: an index card: three by two, a soft corner
             one(of(Container.class, Shape.Corner.class), "6px"),
             ruleWithFocusRing(of(Container.class, Shape.Rule.class), "1px", "solid", "2px", "solid", "-2px"),

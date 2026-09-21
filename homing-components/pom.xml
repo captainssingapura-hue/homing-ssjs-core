@@ -28,6 +28,7 @@
         <module>homing-ui-floating</module>
         <module>homing-ui-docking</module>
         <module>homing-ui-splitgrid</module>
+        <module>homing-ui-icons</module>
         <module>homing-ui-menu</module>
         <module>homing-components-conformance</module>
     </modules>

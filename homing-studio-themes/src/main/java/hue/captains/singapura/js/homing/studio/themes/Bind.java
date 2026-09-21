@@ -242,6 +242,11 @@ final class Bind {
         return Map.entry(cls, Impl.Bindings.none().at(State.REST, "min-width", minWidth).grows("min-width", ratio));
     }
 
+    /** A Type.Glyph: the symbol drawn for an {@code Icon} word, as {@code content} — a character, an emoji; quoted here, so the design writes only the glyph. */
+    static Map.Entry<DesignClass<?>, Impl> glyph(DesignClass<?> cls, String symbol) {
+        return Map.entry(cls, Impl.Bindings.of("\"" + symbol + "\""));
+    }
+
     /** A Type.Treatment: any of tracking, case, style. Null skips. */
     static Map.Entry<DesignClass<?>, Impl> treatment(DesignClass<?> cls, String letterSpacing, String textTransform, String fontStyle) {
         var b = Impl.Bindings.none();

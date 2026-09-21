@@ -8,9 +8,16 @@
 // to the components that offer menus.
 //
 //   new ContextMenuSteward(branch, { types?, onEvent? })
-//     types    kind → { kind, items }: a Java ContextMenuRegistry's MENUS
-//   steward.define(kind)             a kind declared in JS, the same record:
-//       .item(id, label, { hint? }?) .separator() .submenu(id, label, sub => sub.item(...)) .done() → the steward
+//     types    kind → { kind, nodes }: a Java ContextMenuRegistry's MENUS
+//   steward.define(kind)             a kind declared in JS, the same record, held
+//                                    to the same rules (MenuTree.check):
+//       .row(id, label, { icon?, hint? }?)   a row; icon is an Icon word
+//       .divider()                           the rows after are a new section
+//       .sub(id, label, opts?, sub => sub.row(...))   a row with rows, three levels at most
+//       .done() → the steward
+//   steward.specimen(kind, host, object?) → a static instance of the kind mounted
+//                                    in the host, every level open, bound to the
+//                                    object through the kind's handler; for a gallery
 //   steward.undefine(kind)
 //   steward.has(kind)   steward.kinds()
 //   steward.handle(kind, { pick?(itemId, object), state?(itemId, object), close?(reason, object) })
@@ -59,6 +66,8 @@ class ContextMenuSteward {
         for (var k in given) if (Object.prototype.hasOwnProperty.call(given, k)) this._types[k] = given[k];
         this._handlers = {};
         this._menus = {};
+        this._specimens = [];
+        this._specimenCount = 0;
         this._layer = null;
         this._kind = null;
         this._menu = null;
@@ -74,28 +83,45 @@ class ContextMenuSteward {
 
     // ── the registry ──────────────────────────────────────────────────────
     define(kind) {
-        var self = this, items = [];
+        var self = this, nodes = [];
         if (this._types[kind]) throw new Error("[ContextMenuSteward] kind declared twice: " + kind);
-        function into(list) {
-            return {
-                item: function (id, label, o) { list.push({ id: id, label: label, hint: o && o.hint ? o.hint : undefined }); return this; },
-                separator: function () { list.push({ separator: true }); return this; }
-            };
+        function node(id, label, o, section) {
+            var n = { id: id, label: label, section: section };
+            if (o && o.icon) n.icon = o.icon;
+            if (o && o.hint) n.hint = o.hint;
+            return n;
         }
-        var b = into(items);
-        b.submenu = function (id, label, fill) { var sub = []; fill(into(sub)); items.push({ id: id, label: label, items: sub }); return b; };
-        b.done = function () { ContextMenuSteward._check(kind, items, {}); self._types[kind] = { kind: kind, items: items }; return self; };
+        function into(list, depth) {
+            var section = 0;
+            var b = {
+                row: function (id, label, o) { list.push(node(id, label, o, section)); return b; },
+                divider: function () { section++; return b; },
+                sub: function (id, label, o, fill) {
+                    if (typeof o === "function") { fill = o; o = null; }
+                    if (depth >= MenuTree.MAX_DEPTH) throw new Error("[ContextMenuSteward] " + kind + ": " + id + " is at the last level and lists rows");
+                    var n = node(id, label, o, section);
+                    n.nodes = [];
+                    fill(into(n.nodes, depth + 1));
+                    list.push(n);
+                    return b;
+                }
+            };
+            return b;
+        }
+        var b = into(nodes, 1);
+        b.done = function () { MenuTree.check(kind, nodes); self._types[kind] = { kind: kind, nodes: nodes }; return self; };
         return b;
     }
-    static _check(kind, items, ids) {
-        for (var i = 0; i < items.length; i++) {
-            var it = items[i];
-            if (it.separator) continue;
-            if (typeof it.id !== "string" || !it.id || typeof it.label !== "string" || !it.label) throw new Error("[ContextMenuSteward] " + kind + ": an item needs an id and a label");
-            if (ids[it.id]) throw new Error("[ContextMenuSteward] " + kind + ": item id repeated: " + it.id);
-            ids[it.id] = true;
-            if (it.items) ContextMenuSteward._check(kind, it.items, ids);
-        }
+    specimen(kind, host, object) {
+        if (!this.has(kind)) throw new Error("[ContextMenuSteward] no kind '" + kind + "'");
+        var h = this._handlers[kind] || {};
+        var sub = this._branch.createBranch("specimen-" + kind.replace(/[^A-Za-z0-9_-]/g, "_") + "-" + (++this._specimenCount));
+        var menu = new ContextMenu(sub, this._types[kind], {}, { specimen: true });
+        css.addClass(host, cm_specimen);
+        menu.bind(object === undefined ? null : object, h.state ? function (id, o) { return h.state(id, o); } : null);
+        menu.mount(host);
+        this._specimens.push(menu);
+        return menu;
     }
     undefine(kind) {
         if (this._kind === kind) this._close("owner");
@@ -221,6 +247,8 @@ class ContextMenuSteward {
         if (this._menu) this._close("owner");
         for (var k in this._menus) if (Object.prototype.hasOwnProperty.call(this._menus, k)) this._menus[k].dispose();
         this._menus = {};
+        for (var s = 0; s < this._specimens.length; s++) this._specimens[s].dispose();
+        this._specimens = [];
         if (typeof document !== "undefined") _pages.delete(document);
         this._branch.dissolve();
     }

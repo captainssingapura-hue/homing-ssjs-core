@@ -1,119 +1,123 @@
 // =============================================================================
-// ContextMenu — one kind's instance: the frame, its rows, and the submenu
-// frames of its submenu rows, built once on the branch given and kept; bound
-// to an object while it is shown, and to none after. The steward makes one
-// per kind at the kind's first open and holds it; nothing here is minted
-// twice. A branch component: the steward makes a sub-branch for it and
-// hands it in.
+// ContextMenu — one kind's instance: its tree, built once on the branch
+// given and kept — a frame per node that has rows, the root's and every
+// submenu's — bound to an object while it is shown, and to none after. What
+// is open is a PATH: the root, then the submenu of the row the cursor went
+// into, then that submenu's, three levels at most, each frame beside its
+// row. The steward makes one per kind at the kind's first open and holds
+// it; nothing here is minted twice. A branch component: the steward makes
+// a sub-branch for it and hands it in.
 //
-//   new ContextMenu(branch, type, hooks)
-//     type   { kind, items }: items { id, label, hint?, separator?, items? }
+//   new ContextMenu(branch, type, hooks, opts?)
+//     type   { kind, nodes }: nodes { id, label, icon?, hint?, section?, nodes? }
 //     hooks  { pick(itemId) }
-//   menu.el                       the frame, role=menu, focusable
+//     opts   { specimen: true } — a static display of the whole tree, every
+//            level open beside its row, for a gallery; nothing is picked
+//   menu.el                       the root frame, role=menu, focusable
 //   menu.bind(object, state?)     state(itemId, object) → { disabled?, checked?, hidden? }
 //   menu.unbind()   menu.bound()
 //   menu.show(layer, at, viewport, fromKeyboard) → { x, y } where it was placed
 //   menu.hide()
-//   menu.contains(node)           the frame or an open submenu holds the node
+//   menu.mount(host)              specimen: the frames into the host, all open
+//   menu.contains(node)           a frame on the open path holds the node
 //   menu.key(ev) → boolean        arrows, Home, End, Enter, Space, Left, Right
 //   menu.dispose()
 //
 // The cursor is data-highlighted on a row — the word Selectable draws it —
-// and moves by MenuGeometry.step, skipping disabled and hidden rows and
-// wrapping. A submenu opens beside its row on hover, on Enter and on
-// ArrowRight; it closes when another row is hovered or on ArrowLeft. A
-// checked row shows its check; the labels align on a blank of the same
-// width. `css` is injected with the styles import.
+// and moves by MenuGeometry.step within the deepest open frame, skipping
+// disabled and hidden rows and wrapping. A row with rows opens them beside
+// it on hover, on Enter and on ArrowRight; hovering another row of the same
+// frame closes them, ArrowLeft steps back a level. A row's mark is an Icon:
+// the row's own word, or the check when the row is checked; a row with rows
+// ends in the disclose mark; a divider sits where the section changes.
+// `css` is injected with the styles import.
 // =============================================================================
 
 const _menuOwner = Object.freeze({ toString: () => "contextMenu" });
 
 class ContextMenu {
-    constructor(branch, type, hooks) {
+    constructor(branch, type, hooks, opts) {
         if (!branch) throw new Error("[ContextMenu] a branch of its own is required");
         branch.activate(_menuOwner);
         this._branch = branch;
         this.kind = type.kind;
         this._hooks = hooks || {};
+        this._specimen = !!(opts && opts.specimen);
         this._object = null;
         this._viewport = { w: 0, h: 0 };
-        this._open = null;              // the row whose submenu is shown
-        this.el = this._frame("frame", type.kind);
-        this._rows = this._build(this.el, type.items, "", true);
+        this._path = [];                // the rows whose submenu is open, outermost first
+        this._root = this._level("frame", type.kind, type.nodes, "", 0);
+        this.el = this._root.el;
     }
 
-    _frame(name, label) {
+    // ── built once ────────────────────────────────────────────────────────
+    _level(name, label, nodes, prefix, depth) {
         var f = this._branch.createElement(name, "div");
         css.addClass(f, cm_frame);
+        if (this._specimen) css.addClass(f, cm_frame_static);
         f.setAttribute("role", "menu");
         f.setAttribute("aria-label", label);
         f.setAttribute("tabindex", "-1");
         f.addEventListener("contextmenu", function (e) { e.preventDefault(); });
-        return f;
-    }
-    _build(host, items, prefix, top) {
-        var self = this, rows = [];
-        for (var i = 0; i < items.length; i++) {
-            var it = items[i];
-            if (it.separator) {
+        var level = { el: f, rows: [], cursor: -1, depth: depth };
+        var divided = MenuTree.divided(nodes);
+        for (var i = 0; i < divided.length; i++) {
+            if (divided[i].divider) {
                 var sep = this._branch.createElement(prefix + "sep-" + i, "div");
                 css.addClass(sep, cm_separator);
                 sep.setAttribute("role", "separator");
-                host.appendChild(sep);
-                rows.push({ separator: true, el: sep });
-                continue;
+                f.appendChild(sep);
             }
-            var name = prefix + "row-" + it.id.replace(/[^A-Za-z0-9_-]/g, "_");
-            var el = this._branch.createElement(name, "div");
-            css.addClass(el, cm_item);
-            el.setAttribute("role", "menuitem");
-            el.setAttribute("tabindex", "-1");
-            el.setAttribute("data-id", it.id);
-            var check = this._branch.createElement(name + "-check", "span");
-            css.addClass(check, cm_item_check);
-            check.setAttribute("aria-hidden", "true");
-            el.appendChild(check);
-            var label = this._branch.createElement(name + "-label", "span");
-            css.addClass(label, cm_item_label);
-            label.textContent = it.label;
-            el.appendChild(label);
-            if (it.hint) {
-                var hint = this._branch.createElement(name + "-hint", "span");
-                css.addClass(hint, cm_item_hint);
-                hint.textContent = it.hint;
-                el.appendChild(hint);
-            }
-            var row = { id: it.id, el: el, check: check, sub: null, disabled: false, hidden: false, top: top };
-            if (it.items) {
-                var arrow = this._branch.createElement(name + "-arrow", "span");
-                css.addClass(arrow, cm_item_arrow);
-                arrow.setAttribute("aria-hidden", "true");
-                arrow.textContent = "▸";
-                el.appendChild(arrow);
-                el.setAttribute("aria-haspopup", "menu");
-                el.setAttribute("aria-expanded", "false");
-                var subEl = this._frame(name + "-sub", it.label);
-                row.sub = { el: subEl, rows: this._build(subEl, it.items, name + "-", false), cursor: -1 };
-            }
-            el.addEventListener("pointerenter", function (r) { return function () { self._hover(r); }; }(row));
-            el.addEventListener("click", function (r) { return function (e) { e.preventDefault(); self._activate(r); }; }(row));
-            host.appendChild(el);
-            rows.push(row);
+            level.rows.push(this._row(f, divided[i].node, prefix, level));
         }
-        return rows;
+        return level;
+    }
+    _row(frame, node, prefix, level) {
+        var self = this;
+        var name = prefix + "row-" + node.id.replace(/[^A-Za-z0-9_-]/g, "_");
+        var el = this._branch.createElement(name, "div");
+        css.addClass(el, cm_item);
+        el.setAttribute("role", "menuitem");
+        el.setAttribute("tabindex", "-1");
+        el.setAttribute("data-id", node.id);
+        var mark = new Icon(this._branch.createElement(name + "-mark", Icon.TAG), node.icon ? { name: node.icon } : null);
+        el.appendChild(mark.el);
+        var label = this._branch.createElement(name + "-label", "span");
+        css.addClass(label, cm_item_label);
+        label.textContent = node.label;
+        el.appendChild(label);
+        if (node.hint) {
+            var hint = this._branch.createElement(name + "-hint", "span");
+            css.addClass(hint, cm_item_hint);
+            hint.textContent = node.hint;
+            el.appendChild(hint);
+        }
+        var row = { id: node.id, el: el, mark: mark, icon: node.icon || null, sub: null, disabled: false, hidden: false, level: level };
+        if (node.nodes && node.nodes.length) {
+            var disclose = this._branch.createElement(name + "-disclose", Icon.TAG);
+            css.addClass(disclose, cm_item_disclose);
+            new Icon(disclose, { name: "disclose" });
+            el.appendChild(disclose);
+            el.setAttribute("aria-haspopup", "menu");
+            el.setAttribute("aria-expanded", "false");
+            row.sub = this._level(name + "-sub", node.label, node.nodes, name + "-", level.depth + 1);
+        }
+        el.addEventListener("pointerenter", function () { self._hover(row); });
+        el.addEventListener("click", function (e) { e.preventDefault(); self._activate(row); });
+        frame.appendChild(el);
+        return row;
     }
 
     // ── bound to an object ────────────────────────────────────────────────
     bind(object, state) {
         this._object = object;
-        this._apply(this._rows, object, state);
-        this._cursor = -1;
-        this._closeSub();
+        this._apply(this._root, object, state);
+        this._root.cursor = -1;
+        this._closeTo(0);
     }
-    _apply(rows, object, state) {
-        for (var i = 0; i < rows.length; i++) {
-            var r = rows[i];
-            if (r.separator) continue;
+    _apply(level, object, state) {
+        for (var i = 0; i < level.rows.length; i++) {
+            var r = level.rows[i];
             var s = (typeof state === "function" && state(r.id, object)) || {};
             r.disabled = !!s.disabled;
             r.hidden = !!s.hidden;
@@ -121,11 +125,11 @@ class ContextMenu {
             css.toggleClass(r.el, cm_item_hidden, r.hidden);
             r.el.setAttribute("aria-disabled", r.disabled ? "true" : "false");
             if (s.checked != null) r.el.setAttribute("aria-checked", s.checked ? "true" : "false"); else r.el.removeAttribute("aria-checked");
-            r.check.textContent = s.checked ? "✓" : "";
-            if (r.sub) this._apply(r.sub.rows, object, state);
+            if (s.checked) r.mark.set("check"); else if (r.icon) r.mark.set(r.icon); else r.mark.clear();
+            if (r.sub) this._apply(r.sub, object, state);
         }
     }
-    unbind() { this._object = null; this._closeSub(); this._highlight(this._rows, -1); this._cursor = -1; }
+    unbind() { this._object = null; this._closeTo(0); this._highlight(this._root, -1); }
     bound() { return this._object; }
 
     // ── shown and hidden ──────────────────────────────────────────────────
@@ -141,81 +145,91 @@ class ContextMenu {
         return p;
     }
     hide() {
-        this._closeSub();
+        this._closeTo(0);
         if (this.el.parentNode) this.el.parentNode.removeChild(this.el);
+    }
+    /** A specimen: every frame into the host, in tree order, each row with rows shown open and highlighted, so the whole design is on view. */
+    mount(host) {
+        if (!this._specimen) throw new Error("[ContextMenu] mount is the specimen's; a live menu is shown by the steward");
+        var self = this;
+        (function place(level) {
+            host.appendChild(level.el);
+            for (var i = 0; i < level.rows.length; i++) if (level.rows[i].sub) {
+                level.rows[i].el.setAttribute("aria-expanded", "true");
+                level.rows[i].el.setAttribute("data-highlighted", "true");
+                self._path.push(level.rows[i]);
+                place(level.rows[i].sub);
+            }
+        })(this._root);
     }
     contains(node) {
         if (!node) return false;
         if (this.el.contains(node)) return true;
-        return !!(this._open && this._open.sub.el.contains(node));
+        for (var i = 0; i < this._path.length; i++) if (this._path[i].sub.el.contains(node)) return true;
+        return false;
     }
 
-    // ── the cursor ────────────────────────────────────────────────────────
-    _level() { return this._open ? this._open.sub : null; }
-    _highlight(rows, i) {
-        for (var k = 0; k < rows.length; k++) if (!rows[k].separator) {
-            if (k === i) rows[k].el.setAttribute("data-highlighted", "true"); else rows[k].el.removeAttribute("data-highlighted");
+    // ── the cursor, in the deepest open frame ─────────────────────────────
+    _deepest() { return this._path.length ? this._path[this._path.length - 1].sub : this._root; }
+    _highlight(level, i) {
+        level.cursor = i;
+        for (var k = 0; k < level.rows.length; k++) {
+            if (k === i) level.rows[k].el.setAttribute("data-highlighted", "true"); else level.rows[k].el.removeAttribute("data-highlighted");
         }
     }
-    _enabled(rows) {
+    _enabled(level) {
         var out = [];
-        for (var k = 0; k < rows.length; k++) out.push(!rows[k].separator && !rows[k].disabled && !rows[k].hidden);
+        for (var k = 0; k < level.rows.length; k++) out.push(!level.rows[k].disabled && !level.rows[k].hidden);
         return out;
     }
     _move(dir) {
-        var sub = this._level();
-        if (sub) { sub.cursor = MenuGeometry.step(this._enabled(sub.rows), sub.cursor, dir); this._highlight(sub.rows, sub.cursor); }
-        else { this._cursor = MenuGeometry.step(this._enabled(this._rows), this._cursor, dir); this._highlight(this._rows, this._cursor); }
+        var level = this._deepest();
+        this._highlight(level, MenuGeometry.step(this._enabled(level), level.cursor, dir));
     }
     _end(last) {
-        var sub = this._level(), rows = sub ? sub.rows : this._rows;
-        var i = MenuGeometry.step(this._enabled(rows), -1, last ? -1 : 1);
-        if (sub) { sub.cursor = i; } else { this._cursor = i; }
-        this._highlight(rows, i);
+        var level = this._deepest();
+        this._highlight(level, MenuGeometry.step(this._enabled(level), -1, last ? -1 : 1));
     }
     _current() {
-        var sub = this._level();
-        return sub ? (sub.cursor >= 0 ? sub.rows[sub.cursor] : null) : (this._cursor >= 0 ? this._rows[this._cursor] : null);
+        var level = this._deepest();
+        return level.cursor >= 0 ? level.rows[level.cursor] : null;
     }
     _hover(row) {
-        if (row.top) {
-            this._cursor = this._rows.indexOf(row);
-            this._highlight(this._rows, this._cursor);
-            if (row.sub && !row.disabled) this._openSub(row); else this._closeSub();
-        } else if (this._open) {
-            this._open.sub.cursor = this._open.sub.rows.indexOf(row);
-            this._highlight(this._open.sub.rows, this._open.sub.cursor);
-        }
+        if (this._specimen) { this._highlight(row.level, row.level.rows.indexOf(row)); return; }
+        this._closeTo(row.level.depth);
+        this._highlight(row.level, row.level.rows.indexOf(row));
+        if (row.sub && !row.disabled) this._openSub(row);
     }
     _activate(row) {
-        if (row.disabled) return;
+        if (row.disabled || this._specimen) return;
         if (row.sub) { this._openSub(row); this._move(1); return; }
         if (this._hooks.pick) this._hooks.pick(row.id);
     }
 
-    // ── the submenu ───────────────────────────────────────────────────────
+    // ── the path: a submenu beside its row ────────────────────────────────
     _openSub(row) {
-        if (this._open === row) return;
-        this._closeSub();
+        if (this._path.length && this._path[this._path.length - 1] === row) return;
+        this._closeTo(row.level.depth);
         var layer = this.el.parentNode;
         if (!layer) return;
         layer.appendChild(row.sub.el);
-        var a = row.el.getBoundingClientRect(), r = row.sub.el.getBoundingClientRect(), f = this.el.getBoundingClientRect();
-        var first = ContextMenu._firstRow(row.sub.rows), inset = first ? first.el.getBoundingClientRect().top - r.top : 0;
+        var a = row.el.getBoundingClientRect(), r = row.sub.el.getBoundingClientRect(), f = row.level.el.getBoundingClientRect();
+        var first = row.sub.rows.length ? row.sub.rows[0] : null, inset = first ? first.el.getBoundingClientRect().top - r.top : 0;
         var p = MenuGeometry.beside({ left: f.left, top: a.top, right: f.right, bottom: a.bottom }, { w: r.width, h: r.height }, this._viewport, inset);
         row.sub.el.style.setProperty("--cm-x", p.x + "px");
         row.sub.el.style.setProperty("--cm-y", p.y + "px");
         row.el.setAttribute("aria-expanded", "true");
-        row.sub.cursor = -1;
-        this._highlight(row.sub.rows, -1);
-        this._open = row;
+        this._highlight(row.sub, -1);
+        this._path.push(row);
     }
-    _closeSub() {
-        var row = this._open;
-        if (!row) return;
-        this._open = null;
-        row.el.setAttribute("aria-expanded", "false");
-        if (row.sub.el.parentNode) row.sub.el.parentNode.removeChild(row.sub.el);
+    /** Closes the open path down to a depth: 0 leaves the root alone, 1 keeps the first submenu … */
+    _closeTo(depth) {
+        if (this._specimen) return;             // a specimen is open at every level, and stays so
+        while (this._path.length > depth) {
+            var row = this._path.pop();
+            row.el.setAttribute("aria-expanded", "false");
+            if (row.sub.el.parentNode) row.sub.el.parentNode.removeChild(row.sub.el);
+        }
     }
 
     // ── the keys, forwarded by the steward ────────────────────────────────
@@ -225,13 +239,12 @@ class ContextMenu {
             case "ArrowUp": this._move(-1); return true;
             case "Home": this._end(false); return true;
             case "End": this._end(true); return true;
-            case "ArrowRight": { var r = this._current(); if (r && r.top && r.sub && !r.disabled) { this._openSub(r); this._move(1); } return true; }
-            case "ArrowLeft": { if (this._open) { var back = this._open; this._closeSub(); this._cursor = this._rows.indexOf(back); this._highlight(this._rows, this._cursor); } return true; }
+            case "ArrowRight": { var r = this._current(); if (r && r.sub && !r.disabled) { this._openSub(r); this._move(1); } return true; }
+            case "ArrowLeft": { if (this._path.length) { var back = this._path[this._path.length - 1]; this._closeTo(this._path.length - 1); this._highlight(back.level, back.level.rows.indexOf(back)); } return true; }
             case "Enter": case " ": { var c = this._current(); if (c) this._activate(c); return true; }
             default: return false;
         }
     }
 
-    static _firstRow(rows) { for (var k = 0; k < rows.length; k++) if (!rows[k].separator) return rows[k]; return null; }
-    dispose() { this.hide(); this._branch.dissolve(); }
+    dispose() { if (!this._specimen) this.hide(); this._branch.dissolve(); }
 }

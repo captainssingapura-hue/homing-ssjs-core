@@ -1,116 +1,77 @@
 package hue.captains.singapura.js.homing.ui.menu;
 
 import hue.captains.singapura.js.homing.core.StampedParams;
+import hue.captains.singapura.js.homing.design.Trees;
+import hue.captains.singapura.js.homing.ui.menu.tree.ContextMenuKind;
+import hue.captains.singapura.js.homing.ui.menu.tree.MenuRow;
+import hue.captains.singapura.js.homing.ui.menu.tree.MenuTrees;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 /**
- * The context menus a page offers, declared once as data: the kinds and the
- * constant items each kind carries — never what a pick does, which is the
- * kind's handler at runtime. A site's own {@code EsModule} with
- * {@code SelfContent} holds one and writes {@link #js()} as its body, a
- * module exporting {@code MENUS}: a frozen object of kind → type, the same
- * record the steward's JS builder yields. A kind declared twice, or an item
- * id repeated within a kind, is refused at construction — the setup is
- * deliberate, not accreted.
+ * The context menus a page offers, declared once as typed trees: the kinds,
+ * each a {@link ContextMenuKind} whose rows are classes of their own — never
+ * what a pick does, which is the kind's handler at runtime. Every kind is
+ * validated in Java at construction ({@link MenuTrees#requireValid}), and a
+ * kind declared twice is refused; the setup is deliberate, not accreted. A
+ * site's own {@code EsModule} with {@code SelfContent} holds one and writes
+ * {@link #js()} as its body, a module exporting {@code MENUS}: a frozen
+ * object of kind → type, the same record the steward's JS builder yields —
+ * {@code { kind, nodes: [ { id, label, icon?, hint?, section?, nodes? } ] }}.
  */
-public record ContextMenuRegistry(List<ContextMenuType> types) {
+public record ContextMenuRegistry(List<ContextMenuKind<?>> kinds) {
 
     public ContextMenuRegistry {
-        types = List.copyOf(Objects.requireNonNull(types, "types"));
-        var kinds = new HashSet<String>();
-        for (ContextMenuType t : types)
-            if (!kinds.add(t.kind())) throw new IllegalArgumentException("ContextMenuRegistry: kind declared twice: " + t.kind());
+        kinds = List.copyOf(Objects.requireNonNull(kinds, "kinds"));
+        var names = new HashSet<String>();
+        for (ContextMenuKind<?> k : kinds) {
+            MenuTrees.requireValid(k);
+            if (!names.add(k.kind())) throw new IllegalArgumentException("ContextMenuRegistry: kind declared twice: " + k.kind());
+        }
     }
 
-    public static ContextMenuRegistry of(ContextMenuType... types) { return new ContextMenuRegistry(List.of(types)); }
+    public static ContextMenuRegistry of(ContextMenuKind<?>... kinds) { return new ContextMenuRegistry(List.of(kinds)); }
 
-    /** One kind: its name and its items, in order. */
-    public record ContextMenuType(String kind, List<MenuItem> items) {
-        public ContextMenuType {
-            MenuItem.requireId(kind, "ContextMenuType.kind");
-            items = List.copyOf(Objects.requireNonNull(items, "items"));
-            if (items.isEmpty()) throw new IllegalArgumentException("ContextMenuType " + kind + ": no items");
-            var ids = new HashSet<String>();
-            for (MenuItem i : items) i.collectIds(ids, kind);
-        }
-        public static ContextMenuType of(String kind, MenuItem... items) { return new ContextMenuType(kind, List.of(items)); }
-    }
-
-    /**
-     * One row: an item with an id, a label and an optional hint; a separator;
-     * or a submenu — an item whose pick opens its own items beside it, one
-     * level deep. What varies with the bound object — disabled, checked,
-     * hidden — is the handler's, asked at bind, not the item's.
-     */
-    public record MenuItem(String id, String label, String hint, boolean separator, List<MenuItem> items) {
-        public MenuItem {
-            if (separator) {
-                if (id != null || label != null || hint != null || (items != null && !items.isEmpty()))
-                    throw new IllegalArgumentException("MenuItem: a separator carries nothing");
-                items = List.of();
-            } else {
-                requireId(id, "MenuItem.id");
-                requireId(label, "MenuItem.label");
-                items = items == null ? List.of() : List.copyOf(items);
-                for (MenuItem i : items) if (!i.items().isEmpty()) throw new IllegalArgumentException("MenuItem " + id + ": a submenu holds no submenu");
-            }
-        }
-        public static MenuItem of(String id, String label) { return new MenuItem(id, label, null, false, List.of()); }
-        public static MenuItem of(String id, String label, String hint) { return new MenuItem(id, label, hint, false, List.of()); }
-        public static MenuItem divider() { return new MenuItem(null, null, null, true, List.of()); }
-        public static MenuItem submenu(String id, String label, MenuItem... items) {
-            if (items.length == 0) throw new IllegalArgumentException("MenuItem " + id + ": a submenu with no items");
-            return new MenuItem(id, label, null, false, List.of(items));
-        }
-        public boolean submenu() { return !items.isEmpty(); }
-
-        static String requireId(String v, String what) {
-            Objects.requireNonNull(v, what);
-            if (v.isEmpty()) throw new IllegalArgumentException(what + ": must not be empty");
-            return v;
-        }
-        void collectIds(Set<String> ids, String kind) {
-            if (separator) return;
-            if (!ids.add(id)) throw new IllegalArgumentException("ContextMenuType " + kind + ": item id repeated: " + id);
-            for (MenuItem i : items) i.collectIds(ids, kind);
-        }
+    /** The kind by name, or null. */
+    public ContextMenuKind<?> kind(String name) {
+        for (ContextMenuKind<?> k : kinds) if (k.kind().equals(name)) return k;
+        return null;
     }
 
     /** The registry as the JS module body: {@code const MENUS = Object.freeze({...});}. */
     public List<String> js() {
         var lines = new ArrayList<String>();
         lines.add("// Generated from a ContextMenuRegistry - do not hand-edit. The kinds a page offers");
-        lines.add("// and the items each carries, as data; what a pick does is the kind's handler.");
+        lines.add("// and the rows each carries, as data; what a pick does is the kind's handler.");
         lines.add("const MENUS = Object.freeze(" + json() + ");");
         return lines;
     }
 
-    /** The registry as JSON: kind → { kind, items }. */
+    /** The registry as JSON: kind → { kind, nodes }. */
     public String json() {
         var sb = new StringBuilder("{");
-        for (int i = 0; i < types.size(); i++) {
+        for (int i = 0; i < kinds.size(); i++) {
             if (i > 0) sb.append(',');
-            var t = types.get(i);
-            sb.append(StampedParams.jsString(t.kind())).append(":{\"kind\":").append(StampedParams.jsString(t.kind())).append(",\"items\":");
-            items(sb, t.items());
+            var k = kinds.get(i);
+            sb.append(StampedParams.jsString(k.kind())).append(":{\"kind\":").append(StampedParams.jsString(k.kind())).append(",\"nodes\":");
+            nodes(sb, k.children());
             sb.append('}');
         }
         return sb.append('}').toString();
     }
-    private static void items(StringBuilder sb, List<MenuItem> items) {
+    private static void nodes(StringBuilder sb, List<? extends MenuRow<?, ?>> rows) {
         sb.append('[');
-        for (int i = 0; i < items.size(); i++) {
+        for (int i = 0; i < rows.size(); i++) {
             if (i > 0) sb.append(',');
-            var it = items.get(i);
-            if (it.separator()) { sb.append("{\"separator\":true}"); continue; }
-            sb.append("{\"id\":").append(StampedParams.jsString(it.id())).append(",\"label\":").append(StampedParams.jsString(it.label()));
-            if (it.hint() != null) sb.append(",\"hint\":").append(StampedParams.jsString(it.hint()));
-            if (it.submenu()) { sb.append(",\"items\":"); items(sb, it.items()); }
+            var r = rows.get(i);
+            sb.append("{\"id\":").append(StampedParams.jsString(r.id())).append(",\"label\":").append(StampedParams.jsString(r.label()));
+            if (r.icon() != null) sb.append(",\"icon\":").append(StampedParams.jsString(Trees.semanticToken(r.icon())));
+            if (r.hint() != null) sb.append(",\"hint\":").append(StampedParams.jsString(r.hint()));
+            if (r.section() != 0) sb.append(",\"section\":").append(r.section());
+            if (!r.children().isEmpty()) { sb.append(",\"nodes\":"); nodes(sb, r.children()); }
             sb.append('}');
         }
         sb.append(']');

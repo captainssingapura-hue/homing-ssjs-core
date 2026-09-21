@@ -39,7 +39,7 @@ class UiMenuCrateConformanceTest {
                     + findings.stream().map(f -> f.rule().value() + "@" + f.line() + ": " + f.message()).toList());
             checked++;
         }
-        assertEquals(4, checked, "the steward, the menu, the events and the geometry");
+        assertEquals(5, checked, "the steward, the menu, the events, the geometry and the tree");
     }
 
     @Test

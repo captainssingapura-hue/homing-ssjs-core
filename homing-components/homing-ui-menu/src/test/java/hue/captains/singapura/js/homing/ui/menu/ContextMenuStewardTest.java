@@ -15,7 +15,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * The steward over a fake DOM whose document dispatches in two phases —
  * capture listeners on the document, then the target's — so the press that
  * closes a menu can be shown to reach nothing. The invariants of the
- * appendix, one method each where a fake can hold it.
+ * appendix, one method each where a fake can hold it; the tree three levels
+ * deep, the marks as icons, the specimen.
  */
 class ContextMenuStewardTest extends JsModuleTestBase {
 
@@ -48,8 +49,8 @@ class ContextMenuStewardTest extends JsModuleTestBase {
         var css = { addClass: function (e) { for (var i = 1; i < arguments.length; i++) e.classList.add(arguments[i]); },
                     removeClass: function (e) { for (var i = 1; i < arguments.length; i++) e.classList.remove(arguments[i]); },
                     toggleClass: function (e, c, f) { e.classList.toggle(c, f); } };
-        var cm_layer = "cm_layer", cm_frame = "cm_frame", cm_item = "cm_item", cm_item_label = "cm_item_label", cm_item_check = "cm_item_check", cm_item_hint = "cm_item_hint",
-            cm_item_arrow = "cm_item_arrow", cm_item_disabled = "cm_item_disabled", cm_item_hidden = "cm_item_hidden", cm_separator = "cm_separator";
+        var cm_layer = "cm_layer", cm_frame = "cm_frame", cm_frame_static = "cm_frame_static", cm_specimen = "cm_specimen", cm_item = "cm_item", cm_item_label = "cm_item_label", cm_item_hint = "cm_item_hint",
+            cm_item_disclose = "cm_item_disclose", cm_item_disabled = "cm_item_disabled", cm_item_hidden = "cm_item_hidden", cm_separator = "cm_separator";
         var console = { error: function (m, e) { log.push("error:" + m); } };
         var body = el("body");
         var document = { body: body, activeElement: body, listeners: {},
@@ -73,8 +74,9 @@ class ContextMenuStewardTest extends JsModuleTestBase {
         function listening() { var n = 0; for (var k in captureListeners) n += captureListeners[k].length; for (var w in windowListeners) n += windowListeners[w].length; return n; }
         var page = fakeBranch("page");
         var sink = function (ev) { log.push(ev.kind === "Opened" ? "opened:" + ev.menuKind + "@" + ev.x + "," + ev.y : ev.kind === "Picked" ? "picked:" + ev.menuKind + "/" + ev.itemId : "closed:" + ev.menuKind + "/" + ev.reason); };
-        var MENUS = { animal: { kind: "animal", items: [ { id: "rotate", label: "Rotate", hint: "a quarter turn" }, { separator: true },
-                                                          { id: "animal", label: "Animal", items: [ { id: "cat", label: "Cat" }, { id: "dog", label: "Dog" } ] } ] } };
+        // the record a Java registry stamps: three levels, an icon, a section change, a hint
+        var MENUS = { animal: { kind: "animal", nodes: [ { id: "rotate", label: "Rotate", icon: "rotate", hint: "a quarter turn" },
+                                                          { id: "animal", label: "Animal", section: 1, nodes: [ { id: "cat", label: "Cat" }, { id: "dog", label: "Dog", nodes: [ { id: "big", label: "Big" }, { id: "small", label: "Small" } ] } ] } ] } };
         var steward = new ContextMenuSteward(page.createBranch("menus"), { types: MENUS, onEvent: sink });
         // a chip on the page that selects on a press, as the strip's do
         var chip = el("div"); chip.name = "chip"; body.appendChild(chip);
@@ -84,6 +86,9 @@ class ContextMenuStewardTest extends JsModuleTestBase {
         function frame() { return steward._menus.animal.el; }
         function rows(f) { return (f || frame()).children.filter(function (c) { return c.has("cm_item"); }); }
         function row(id, f) { return rows(f).find(function (r) { return r.attr("data-id") === id; }); }
+        function mark(r) { return r.children[0]; }
+        function sub(i) { return steward._menus.animal._path[i].sub.el; }
+        function dividers(f) { return (f || frame()).children.filter(function (c) { return c.has("cm_separator"); }).length; }
         function cursor(f) { var r = rows(f).find(function (r) { return r.attr("data-highlighted") === "true"; }); return r ? r.attr("data-id") : "-"; }
         function menusInDom() { return body.children.filter(function (c) { return c.has("cm_layer"); }).reduce(function (n, l) { return n + l.children.filter(function (c) { return c.has("cm_frame"); }).length; }, 0); }
         """;
@@ -93,6 +98,10 @@ class ContextMenuStewardTest extends JsModuleTestBase {
         js = buildContext();
         loadModule(P + "MenuEventsModule.js");
         loadModule(P + "MenuGeometryModule.js");
+        loadModule(P + "MenuTreeModule.js");
+        // the icon component reads ICONS as it loads: the wardrobe's names first, as the served module would import them
+        js.eval("js", "var ic_base = 'ic_base', ICONS = { check: 'ic_check', disclose: 'ic_disclose', rotate: 'ic_rotate', flip: 'ic_flip', reset: 'ic_reset' };");
+        loadModule("/homing/js/hue/captains/singapura/js/homing/ui/icons/IconModule.js");
         loadModule(P + "ContextMenuModule.js");
         loadModule(P + "ContextMenuStewardModule.js");
         js.eval("js", SHIM);
@@ -103,7 +112,7 @@ class ContextMenuStewardTest extends JsModuleTestBase {
 
     @Test
     void oneMenuGlobally_aSecondOpenReplacesTheFirst_andThereIsNeverMoreThanOneFrameInTheDocument() {
-        eval("steward.define('card').item('open', 'Open').separator().item('remove', 'Remove').done();");
+        eval("steward.define('card').row('open', 'Open').divider().row('remove', 'Remove').done();");
         assertTrue(eval("steward.open('animal', { id: 1 }, { x: 100, y: 100 })").asBoolean());
         assertEquals("1", eval("String(menusInDom())").asString());
         assertEquals("animal", eval("steward.active()").asString());
@@ -112,6 +121,7 @@ class ContextMenuStewardTest extends JsModuleTestBase {
         assertEquals("focus:body closed:animal/replaced focus:frame opened:card@200,200", log(), "the first is told replaced before the second opens");
         assertEquals("1", eval("String(menusInDom())").asString(), "never two frames in the document");
         assertEquals("2", eval("String(steward.bound().id)").asString());
+        assertEquals("1", eval("String(dividers(steward._menus.card.el))").asString(), "a divider where the builder's section changed");
     }
 
     @Test
@@ -139,6 +149,7 @@ class ContextMenuStewardTest extends JsModuleTestBase {
         assertEquals("", log(), "the release and the click of that gesture reached nothing");
         eval("dispatch(chip, 'click', {});");
         assertEquals("chip:clicked", log(), "the next gesture is the chip's again");
+        assertEquals("1", eval("String(dividers())").asString(), "one divider, where the section changes");
         // a right-press outside: closed and swallowed as a press, and its contextmenu goes through
         eval("steward.open('animal', {}, { x: 10, y: 10 }); log.length = 0; dispatch(chip, 'pointerdown', { button: 2, pointerId: 1 }); dispatch(chip, 'pointerup', { pointerId: 1 }); dispatch(chip, 'contextmenu', {});");
         assertEquals("focus:body closed:animal/outside chip:contextmenu", log());
@@ -159,33 +170,47 @@ class ContextMenuStewardTest extends JsModuleTestBase {
     }
 
     @Test
-    void theStateOfEachRowIsTheHandlers_askedAtBind_andASubmenuOpensBesideItsRow() {
+    void theStateOfEachRowIsTheHandlers_askedAtBind_theMarksAreIcons_andASubmenuOpensBesideItsRow() {
         eval("steward.handle('animal', { state: function (id, o) { return id === 'rotate' ? { disabled: o.fixed } : id === o.animal ? { checked: true } : id === 'dog' ? { hidden: o.noDogs } : null; } });");
         eval("steward.open('animal', { fixed: true, animal: 'cat', noDogs: true }, { x: 10, y: 10 });");
         assertTrue(eval("row('rotate').has('cm_item_disabled') && row('rotate').attr('aria-disabled') === 'true'").asBoolean());
-        eval("var sub = row('animal'); dispatch(sub, 'pointerenter', {});");
-        assertEquals("true", eval("sub.attr('aria-expanded')").asString(), "hovered: the submenu is open");
+        eval("var sub0 = row('animal'); dispatch(sub0, 'pointerenter', {});");
+        assertEquals("true", eval("sub0.attr('aria-expanded')").asString(), "hovered: the submenu is open");
         assertEquals("2", eval("String(menusInDom())").asString(), "the submenu is a second frame in the layer, part of the one menu");
-        assertEquals("✓", eval("row('cat', steward._menus.animal._open.sub.el).children[0].textContent").asString(), "the checked one shows its check");
-        assertTrue(eval("row('dog', steward._menus.animal._open.sub.el).has('cm_item_hidden')").asBoolean());
+        assertTrue(eval("mark(row('cat', sub(0))).has('ic_check') && mark(row('cat', sub(0))).has('ic_base')").asBoolean(), "the checked one's mark is the check icon");
+        assertTrue(eval("mark(row('rotate')).has('ic_rotate')").asBoolean(), "a row's own icon on its mark");
+        assertTrue(eval("!mark(row('animal')).has('ic_rotate') && row('animal').children[row('animal').children.length - 1].has('ic_disclose')").asBoolean(), "a row with rows ends in the disclose mark");
+        assertTrue(eval("row('dog', sub(0)).has('cm_item_hidden')").asBoolean());
         eval("steward.close(); steward.open('animal', { fixed: false, animal: 'dog', noDogs: false }, { x: 10, y: 10 });");
         assertFalse(eval("row('rotate').has('cm_item_disabled')").asBoolean(), "bound afresh: the state is this object's");
         assertEquals("false", eval("row('animal').attr('aria-expanded')").asString(), "no submenu open after a rebind");
+        assertTrue(eval("!mark(row('cat', steward._menus.animal._root.rows[1].sub.el)).has('ic_check')").asBoolean(), "the check off a row no longer checked");
     }
 
     @Test
-    void keys_areCapturedWhileOpen_moveTheCursorSkippingDisabled_openAndCloseTheSubmenu_pickAndEscape() {
+    void keys_areCapturedWhileOpen_moveTheCursorSkippingDisabled_walkThreeLevels_pickAndEscape() {
         eval("steward.handle('animal', { state: function (id) { return id === 'rotate' ? { disabled: true } : null; } });");
         eval("steward.open('animal', {}, { x: 10, y: 10 }, { keyboard: true }); log.length = 0;");
-        assertEquals("animal", eval("cursor()").asString(), "from the keyboard: the first enabled row — Rotate is disabled, the separator is not a row");
+        assertEquals("animal", eval("cursor()").asString(), "from the keyboard: the first enabled row — Rotate is disabled, the divider is not a row");
         var down = eval("dispatch(document.body, 'keydown', { key: 'ArrowDown' })");
         assertTrue(down.getMember("stopped").asBoolean() && down.getMember("defaulted").asBoolean(), "captured: the page behind sees nothing");
         assertEquals("animal", eval("cursor()").asString(), "the only enabled row: itself");
         eval("dispatch(document.body, 'keydown', { key: 'ArrowRight' });");
         assertEquals("true", eval("row('animal').attr('aria-expanded')").asString());
-        assertEquals("cat", eval("cursor(steward._menus.animal._open.sub.el)").asString(), "into the submenu, on its first");
+        assertEquals("cat", eval("cursor(sub(0))").asString(), "into the submenu, on its first");
         eval("dispatch(document.body, 'keydown', { key: 'ArrowDown' });");
-        assertEquals("dog", eval("cursor(steward._menus.animal._open.sub.el)").asString());
+        assertEquals("dog", eval("cursor(sub(0))").asString());
+        eval("dispatch(document.body, 'keydown', { key: 'ArrowRight' });");
+        assertEquals("3", eval("String(menusInDom())").asString(), "a third level: three frames on the path");
+        assertEquals("big", eval("cursor(sub(1))").asString(), "into the third level, on its first");
+        eval("dispatch(document.body, 'keydown', { key: 'ArrowLeft' });");
+        assertEquals("dog", eval("cursor(sub(0))").asString(), "back to the second, on the row that opened the third");
+        assertEquals("2", eval("String(menusInDom())").asString());
+        eval("dispatch(row('cat', sub(0)), 'pointerenter', {});");
+        assertEquals("cat", eval("cursor(sub(0))").asString(), "hovering a row of the second level leaves the second open");
+        eval("dispatch(document.body, 'keydown', { key: 'ArrowUp' });");
+        assertEquals("dog", eval("cursor(sub(0))").asString(), "wrapped");
+        eval("dispatch(document.body, 'keydown', { key: 'ArrowUp' });");
         eval("dispatch(document.body, 'keydown', { key: 'ArrowLeft' });");
         assertEquals("false", eval("row('animal').attr('aria-expanded')").asString(), "back out");
         assertEquals("animal", eval("cursor()").asString());
@@ -197,7 +222,7 @@ class ContextMenuStewardTest extends JsModuleTestBase {
     }
 
     @Test
-    void scrollResizeAndBlurClose_theOwnerCloses_andAKindIsDeclaredOnce() {
+    void scrollResizeAndBlurClose_theOwnerCloses_andAKindIsDeclaredOnce_heldToTheTreesRules() {
         eval("steward.open('animal', {}, { x: 10, y: 10 }); log.length = 0; dispatch(chip, 'scroll', {});");
         assertEquals("", log(), "a scroll of something unrelated — a log filling behind the menu — is nothing");
         eval("dispatch(document, 'scroll', {});");
@@ -211,11 +236,14 @@ class ContextMenuStewardTest extends JsModuleTestBase {
         eval("steward.open('animal', {}, { x: 10, y: 10 }); log.length = 0; steward.close();");
         assertEquals("focus:body closed:animal/owner", log());
         assertFalse(eval("steward.open('nope', {}, { x: 1, y: 1 })").asBoolean(), "an unknown kind is not taken: the browser's menu stays");
-        var ex = assertThrows(PolyglotException.class, () -> eval("steward.define('animal').item('x', 'X').done()"));
+        var ex = assertThrows(PolyglotException.class, () -> eval("steward.define('animal').row('x', 'X').done()"));
         assertTrue(ex.getMessage().contains("declared twice"), ex.getMessage());
-        var dup = assertThrows(PolyglotException.class, () -> eval("steward.define('two').item('x', 'X').submenu('s', 'S', function (sub) { sub.item('x', 'again'); }).done()"));
-        assertTrue(dup.getMessage().contains("item id repeated: x"), dup.getMessage());
-        assertEquals("animal,card", eval("steward.define('card').item('open', 'Open').done().kinds().sort().join(',')").asString());
+        var dup = assertThrows(PolyglotException.class, () -> eval("steward.define('two').row('x', 'X').sub('s', 'S', function (sub) { sub.row('x', 'again'); }).done()"));
+        assertTrue(dup.getMessage().contains("row id repeated: x"), dup.getMessage());
+        var deep = assertThrows(PolyglotException.class, () -> eval("steward.define('deep').sub('a', 'A', function (a) { a.sub('b', 'B', function (b) { b.sub('c', 'C', function (c) { c.sub('d', 'D', function (d) { d.row('e', 'E'); }); }); }); }).done()"));
+        assertTrue(deep.getMessage().contains("last level"), deep.getMessage());
+        assertEquals("animal,card", eval("steward.define('card').row('open', 'Open', { icon: 'reset', hint: 'again' }).done().kinds().sort().join(',')").asString());
+        assertEquals("open,Open,reset,again,0", eval("var n = steward._types.card.nodes[0]; [n.id, n.label, n.icon, n.hint, n.section].join(',')").asString());
     }
 
     @Test
@@ -225,6 +253,24 @@ class ContextMenuStewardTest extends JsModuleTestBase {
         assertEquals("830px,558px", eval("frame().prop('--cm-x') + ',' + frame().prop('--cm-y')").asString());
         eval("log.length = 0; steward.close();");
         assertEquals("focus:chip closed:animal/owner", log(), "the focus goes back to the chip that had it");
+    }
+
+    @Test
+    void aSpecimen_isTheWholeTreeOpenInAHost_boundThroughTheHandler_andPicksNothing() {
+        eval("steward.handle('animal', { pick: function (id) { log.push('act:' + id); }, state: function (id, o) { return id === o.animal ? { checked: true } : id === 'rotate' ? { disabled: true } : null; } });");
+        eval("var host = el('div'); body.appendChild(host); var s = steward.specimen('animal', host, { animal: 'cat' }); log.length = 0;");
+        assertEquals("3", eval("String(host.children.length)").asString(), "the root and both submenus, all in the host");
+        assertTrue(eval("host.children.every(function (f) { return f.has('cm_frame') && f.has('cm_frame_static'); })").asBoolean(), "each frame static: in the host's flow");
+        assertTrue(eval("row('animal', host.children[0]).attr('aria-expanded') === 'true' && row('animal', host.children[0]).attr('data-highlighted') === 'true'").asBoolean(), "a row with rows shown open");
+        assertTrue(eval("mark(row('cat', host.children[1])).has('ic_check') && row('rotate', host.children[0]).has('cm_item_disabled')").asBoolean(), "bound through the kind's handler");
+        eval("dispatch(row('cat', host.children[1]), 'click', {}); dispatch(row('small', host.children[2]), 'pointerenter', {});");
+        assertEquals("", log(), "nothing picked, nothing closed");
+        assertEquals("small", eval("cursor(host.children[2])").asString(), "hover still moves the cursor: the design's highlighted row on view");
+        assertEquals("0", eval("String(menusInDom())").asString(), "no live menu");
+        assertTrue(eval("steward.open('animal', {}, { x: 10, y: 10 })").asBoolean(), "the live instance is another; the specimen stays");
+        assertEquals("3", eval("String(host.children.length)").asString());
+        eval("steward.close(); s.dispose();");
+        assertTrue(log().contains("dissolved:specimen-animal-1"), log());
     }
 
     @Test
