@@ -155,6 +155,9 @@ public record FrostPalette() implements Palette {
             Map.entry(of(Selectable.class,  Color.Ink.class), INTERACTIVE_INK),
             Map.entry(of(Interactive.class, Color.Edge.class), INTERACTIVE_EDGE),
             Map.entry(of(Selectable.class,  Color.Edge.class), INTERACTIVE_EDGE),
+            // a tab: seen at rest — half the hover wash, the hover edge
+            Map.entry(of(Selectable.Tab.class, Color.Surface.class), restingAsHovered(INTERACTIVE_SURFACE, "background-color", 50)),
+            Map.entry(of(Selectable.Tab.class, Color.Edge.class),    restingAsHovered(INTERACTIVE_EDGE, "border-color", 100)),
             surface(of(Selected.class, Color.Surface.class), "rgba(255, 255, 255, 0.55)", "rgba(255, 255, 255, 0.22)"),
             one(of(Selected.class, Color.Ink.class), TEXT, "#FFFFFF"),
             edge(of(Selected.class, Color.Edge.class), "rgba(255, 255, 255, 0.85)", "rgba(255, 255, 255, 0.45)"),

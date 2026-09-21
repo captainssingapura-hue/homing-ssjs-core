@@ -80,15 +80,16 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
      * measure is the design's, grown by the element's size, its block size
      * following its proportion, wide and low, widened or narrowed by the
      * element's aspect; its corners cut at the top, its rule and ring a
-     * control's. Selectable for its colour and motion: the design's rest,
-     * hover, press, selected and focus. The label is ellipsised within.
-     * Dragged by the pointer, so no touch scrolling on it.
+     * control's. Selectable.Tab for its colour — seen at rest, tinted and
+     * edged as a selectable hovered, then the design's hover, press,
+     * selected and focus — and Selectable for its motion. The label is
+     * ellipsised within. Dragged by the pointer, so no touch scrolling on it.
      */
     public record mtp_chip() implements CssClass<PaneStyles> {
         @Override public List<? extends Wearable> wears() {
             return List.of(of(Control.Tab.class, Shape.Rule.class), of(Control.Tab.class, Shape.Corner.class),
                            of(Control.Tab.class, Size.Inset.class), of(Control.Tab.class, Size.Gap.class), of(Control.Tab.class, Size.Extent.class), of(Control.Tab.class, Size.Proportion.class),
-                           of(Selectable.class, Color.Surface.class), of(Selectable.class, Color.Ink.class), of(Selectable.class, Color.Edge.class),
+                           of(Selectable.Tab.class, Color.Surface.class), of(Selectable.Tab.class, Color.Ink.class), of(Selectable.Tab.class, Color.Edge.class),
                            of(Selectable.class, Motion.Ease.class), of(Selectable.class, Affordance.Cursor.class),
                            of(Caption.class, Type.Scale.class));
         }

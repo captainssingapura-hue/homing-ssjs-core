@@ -181,6 +181,23 @@ final class Bind {
         return Map.entry(word.getKey(), b.at(Extent.ZERO, State.REST, property, zero).at(Extent.NEG, State.REST, property, neg));
     }
 
+    /**
+     * A word seen at rest as it is when hovered: REST takes HOVER's value for
+     * {@code property} in every mode that has one, washed to {@code pct}
+     * percent over transparent — 100 takes it whole. A tab on its strip, one
+     * of many but each a thing before it is touched.
+     */
+    static Impl restingAsHovered(Impl impl, String property, int pct) {
+        var b = (Impl.Bindings) impl;
+        for (Mode mode : Mode.values()) {
+            String v = b.values().getOrDefault(mode, Map.of()).getOrDefault(State.HOVER, Map.of()).get(property);
+            if (v == null) continue;
+            String rest = pct >= 100 ? v : "color-mix(in srgb, " + v + " " + pct + "%, transparent)";
+            b = b.in(mode, State.REST, property, rest);
+        }
+        return b;
+    }
+
     /** A Type.Scale: size and line height. */
     static Map.Entry<DesignClass<?>, Impl> scale(DesignClass<?> cls, String size, String lineHeight) {
         return Map.entry(cls, Impl.Bindings.none()

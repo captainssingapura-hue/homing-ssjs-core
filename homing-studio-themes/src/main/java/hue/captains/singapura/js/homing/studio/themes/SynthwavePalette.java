@@ -160,6 +160,9 @@ public record SynthwavePalette() implements Palette {
             Map.entry(of(Selectable.class,  Color.Ink.class), INTERACTIVE_INK),
             Map.entry(of(Interactive.class, Color.Edge.class), INTERACTIVE_EDGE),
             Map.entry(of(Selectable.class,  Color.Edge.class), INTERACTIVE_EDGE),
+            // a tab: seen at rest — half the hover wash, the hover edge
+            Map.entry(of(Selectable.Tab.class, Color.Surface.class), restingAsHovered(INTERACTIVE_SURFACE, "background-color", 50)),
+            Map.entry(of(Selectable.Tab.class, Color.Edge.class),    restingAsHovered(INTERACTIVE_EDGE, "border-color", 100)),
             surface(of(Selected.class, Color.Surface.class), MAGENTA, MAGENTA_D),
             one(of(Selected.class, Color.Ink.class), ON_MAGENTA, ON_MAGENTA_D),
             edge(of(Selected.class, Color.Edge.class), MAGENTA, MAGENTA_D),

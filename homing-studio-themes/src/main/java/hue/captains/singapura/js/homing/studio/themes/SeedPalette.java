@@ -214,6 +214,9 @@ public record SeedPalette(DesignId id, String label, String inspiration, DesignI
         w.put(of(Selectable.class, Color.Surface.class), w.get(of(Interactive.class, Color.Surface.class)));
         w.put(of(Selectable.class, Color.Ink.class),     w.get(of(Interactive.class, Color.Ink.class)));
         w.put(of(Selectable.class, Color.Edge.class),    w.get(of(Interactive.class, Color.Edge.class)));
+        // a tab: seen at rest — half the hover wash, the hover edge
+        w.put(of(Selectable.Tab.class, Color.Surface.class), restingAsHovered(w.get(of(Selectable.class, Color.Surface.class)), "background-color", 50));
+        w.put(of(Selectable.Tab.class, Color.Edge.class),    restingAsHovered(w.get(of(Selectable.class, Color.Edge.class)), "border-color", 100));
         put.accept(sfc(of(Selected.class, Color.Surface.class), l.inverted, d.inverted));
         put.accept(Map.entry(of(Selected.class, Color.Ink.class), Impl.Bindings.of(l.onInverted).at(State.HOVER, l.accent)
                 .in(Mode.DARK, State.REST, d.onInverted).in(Mode.DARK, State.HOVER, d.accent)));
