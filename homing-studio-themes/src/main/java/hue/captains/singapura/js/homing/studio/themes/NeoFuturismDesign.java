@@ -305,6 +305,8 @@ final class NeoFuturismDesign {
             one(of(Control.Slider.Knob.class, Shape.Corner.class), "0"),   // a hexagon by its clip, cut crisp
             ruleWithFocusRing(of(Control.Slider.Knob.class, Shape.Rule.class), "0", "none", "1px", "solid", "2px"),   // the box: no rule of its own, a ring on focus; the rule is the face's, by lineage
             one(of(Control.Slider.Knob.class, Shape.Clip.class), "polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%)"),
+            one(of(Control.Slider.Knob.class, Effect.Opacity.class), "0"),   // the knob is its mark alone: no face
+            scale(of(Control.Slider.Knob.class, Type.Scale.class), "18px", "1", 1.3),   // the mark's size
             extent(of(Detent.class, Size.Extent.class), "1px", "10px", 1.3),
             // a menu: a container of options that opens at a point; an option: one row of it
             one(of(Container.Menu.class, Shape.Corner.class), "2px"),

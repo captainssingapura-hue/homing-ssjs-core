@@ -46,11 +46,11 @@ class SliderTest extends JsModuleTestBase {
                     removeClass: function (e) { for (var i = 1; i < arguments.length; i++) e.classList.remove(arguments[i]); },
                     toggleClass: function (e, c, f) { e.classList.toggle(c, f); }, size: function (e, s) { e.size = s; }, extent: function () {}, aspect: function () {} };
         var el_slider = "el_slider", el_slider_label = "el_slider_label", el_slider_rail = "el_slider_rail", el_slider_track = "el_slider_track", el_slider_fill = "el_slider_fill",
-            el_slider_detent = "el_slider_detent", el_slider_knob = "el_slider_knob", el_slider_face = "el_slider_face", el_slider_held = "el_slider_held", el_slider_readout = "el_slider_readout", el_slider_off = "el_slider_off";
+            el_slider_detent = "el_slider_detent", el_slider_knob = "el_slider_knob", el_slider_face = "el_slider_face", el_slider_mark = "el_slider_mark", el_slider_held = "el_slider_held", el_slider_face_held = "el_slider_face_held", el_slider_readout = "el_slider_readout", el_slider_off = "el_slider_off";
         var page = fakeBranch("page");
         var s = new SliderBuilder().label("The tabs' size").axis().format(function (v) { return v.toFixed(1); })
                     .onInput(function (v) { log.push("in:" + v); }).onChange(function (v) { log.push("change:" + v); }).build(page.createBranch("size"));
-        var rail = s.root.children[1], knob = rail.children[rail.children.length - 1], face = knob.children[0], detent = rail.children[1], readout = s.root.children[2];
+        var rail = s.root.children[1], knob = rail.children[rail.children.length - 1], face = knob.children[0], mark = knob.children[1], detent = rail.children[1], readout = s.root.children[2];
         """;
 
     @BeforeEach
@@ -76,12 +76,12 @@ class SliderTest extends JsModuleTestBase {
         assertEquals("-1,1,0,0.0,The tabs' size", eval("[knob.attr('aria-valuemin'), knob.attr('aria-valuemax'), knob.attr('aria-valuenow'), knob.attr('aria-valuetext'), knob.attr('aria-label')].join(',')").asString());
         assertEquals("0.0", eval("readout.textContent").asString());
         assertTrue(eval("detent.has('el_slider_detent') && knob.has('el_slider_knob')").asBoolean());
-        assertTrue(eval("face.children[0].has('ic_base') && face.children[0].has('ic_grip')").asBoolean(), "a grip on the knob unless the slider says what it sets");
+        assertTrue(eval("mark.has('ic_base') && mark.has('ic_grip')").asBoolean(), "a grip on the knob unless the slider says what it sets");
         assertEquals("grip", eval("s.icon()").asString());
         eval("s.icon('size');");
-        assertTrue(eval("face.children[0].has('ic_size') && !face.children[0].has('ic_grip')").asBoolean());
+        assertTrue(eval("mark.has('ic_size') && !mark.has('ic_grip')").asBoolean());
         eval("s.icon(null);");
-        assertTrue(eval("s.icon() === null && !face.children[0].has('ic_size')").asBoolean(), "a bare knob");
+        assertTrue(eval("s.icon() === null && !mark.has('ic_size')").asBoolean(), "a bare knob");
         assertEquals("aspect", eval("new SliderBuilder().axis().icon('aspect').build(page.createBranch('a')).icon()").asString());
         eval("s.value(-0.7);");
         assertEquals("15.000%,35.000%", eval("rail.prop('--sl-from') + ',' + rail.prop('--sl-span')").asString(), "a value below the detent fills leftwards from it");
@@ -96,7 +96,7 @@ class SliderTest extends JsModuleTestBase {
         // the rail is 200px from 100: a press at 250 is three quarters along → 0.5 on the axis
         eval("log = []; var down = rail.fire('pointerdown', { button: 0, pointerId: 3, clientX: 250 });");
         assertEquals("capture:3 in:0.5 focus:div", log(), "captured at the press, the value set live, the knob focused");
-        assertTrue(eval("down.defaulted && face.has('el_slider_held')").asBoolean());
+        assertTrue(eval("down.defaulted && knob.has('el_slider_held')").asBoolean());
         assertEquals("75.000%", eval("rail.prop('--sl-value')").asString());
         eval("log = []; rail.fire('pointermove', { clientX: 206 });");
         assertEquals("in:0", log(), "206 is 0.06 on the axis: within the detent's bite of six tenths of a step, so it rests at nought");
@@ -106,7 +106,7 @@ class SliderTest extends JsModuleTestBase {
         assertEquals("", log(), "the same value again is nothing");
         eval("log = []; rail.fire('pointerup', {});");
         assertEquals("change:0.1", log(), "released: the change, once, since the value moved from the press");
-        assertFalse(eval("face.has('el_slider_held')").asBoolean());
+        assertFalse(eval("knob.has('el_slider_held')").asBoolean());
         assertEquals("0", eval("String(rail.listening('pointermove'))").asString(), "the hand's listeners are gone");
         eval("log = []; rail.fire('pointerdown', { button: 0, pointerId: 4, clientX: 220 }); rail.fire('pointermove', { clientX: 220 }); rail.fire('pointerup', {});");
         assertEquals("capture:4 in:0.2 focus:div change:0.2", log());
@@ -135,7 +135,7 @@ class SliderTest extends JsModuleTestBase {
         assertEquals("", log(), "off: neither the hand nor the keys");
         eval("s.setOn(true); s.size(0.5);");
         assertEquals("0.5", eval("String(s.root.size) + '/' + String(knob.size) + '/' + String(readout.size) + '/' + String(detent.size)").asString().split("/")[0]);
-        assertEquals("0.5,0.5,0.5,0.5,0.5", eval("[s.root.size, knob.size, readout.size, detent.size, face.children[0].size].join(',')").asString(), "the size is an element's own, so the slider carries it to every part, the mark too");
+        assertEquals("0.5,0.5,0.5,0.5,0.5", eval("[s.root.size, knob.size, readout.size, detent.size, mark.size].join(',')").asString(), "the size is an element's own, so the slider carries it to every part, the mark too");
         eval("s.size(0);");
         assertTrue(eval("s.root.size === null && knob.size === null").asBoolean(), "nought is the design's: no var");
         eval("s.label('Aspect'); s.labelWidth('9em');");

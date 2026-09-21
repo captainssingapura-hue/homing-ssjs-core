@@ -5,7 +5,8 @@
 // from the detent to the value, the knob is raised and takes the focus, and
 // carries a mark — an Icon: a grip, or the word for what the slider sets.
 // The knob's look is its face's: the design's corner, or a clip that cuts it
-// to a diamond, a hexagon, a pointer — the box beneath keeps the ring.
+// to a diamond, a hexagon, a pointer — or no face at all, the mark alone on
+// the track, at the knob's own size; the box beneath keeps the ring.
 // Every part is a real element wearing a design word, so a design draws the
 // whole of it: no vendor pseudo-element, nothing of the browser's own slider.
 //
@@ -96,7 +97,8 @@ class Slider {
         css.addClass(this._face, el_slider_face);
         knob.appendChild(this._face);
         this._mark = new Icon(branch.createElement("mark", Icon.TAG), null);
-        this._face.appendChild(this._mark.el);
+        css.addClass(this._mark.el, el_slider_mark);
+        knob.appendChild(this._mark.el);
         this.icon(p.icon === undefined ? "grip" : p.icon);
         rail.appendChild(knob);
         root.appendChild(rail);
@@ -120,7 +122,8 @@ class Slider {
             ev.preventDefault();
             self._pressed = self._value;
             try { rail.setPointerCapture(ev.pointerId); } catch (e) {}
-            css.addClass(self._face, el_slider_held);
+            css.addClass(knob, el_slider_held);
+            css.addClass(self._face, el_slider_face_held);
             self._set(self._fromPointer(ev.clientX), true, false);
             try { knob.focus({ preventScroll: true }); } catch (e) {}
             rail.addEventListener("pointermove", self._onMove);
@@ -176,7 +179,8 @@ class Slider {
         rail.removeEventListener("pointerup", this._onUp);
         rail.removeEventListener("pointercancel", this._onUp);
         rail.removeEventListener("lostpointercapture", this._onUp);
-        css.removeClass(this._face, el_slider_held);
+        css.removeClass(this._knob, el_slider_held);
+        css.removeClass(this._face, el_slider_face_held);
         var was = this._pressed;
         this._pressed = null;
         if (was !== null && was !== this._value && this._onChange) this._onChange(this._value);

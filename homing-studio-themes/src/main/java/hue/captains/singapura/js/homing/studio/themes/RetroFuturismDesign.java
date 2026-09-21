@@ -168,6 +168,8 @@ final class RetroFuturismDesign {
             one(of(Control.Slider.Knob.class, Shape.Corner.class), "3px"),
             ruleWithFocusRing(of(Control.Slider.Knob.class, Shape.Rule.class), "0", "none", "1px", "solid", "2px"),   // the box: no rule of its own, a ring on focus; the rule is the face's, by lineage
             one(of(Control.Slider.Knob.class, Shape.Clip.class), "polygon(0 0, 100% 0, 100% 62%, 50% 100%, 0 62%)"),
+            one(of(Control.Slider.Knob.class, Effect.Opacity.class), "0"),   // the knob is its mark alone: no face
+            scale(of(Control.Slider.Knob.class, Type.Scale.class), "18px", "1", 1.3),   // the mark's size
             extent(of(Detent.class, Size.Extent.class), "2px", "14px", 1.3),
             // a menu: a container of options that opens at a point; an option: one row of it
             one(of(Container.Menu.class, Shape.Corner.class), "3px"),
