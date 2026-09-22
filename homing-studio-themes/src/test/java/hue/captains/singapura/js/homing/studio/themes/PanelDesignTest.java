@@ -101,7 +101,7 @@ class PanelDesignTest {
     @Test
     void theDesignThatDrawsNoLine_partsThemWithAir() {
         assertEquals("10px", rest(HomingNeumorphism.INSTANCE, of(Container.Panel.class, Size.Gap.class)).get(Impl.Bindings.SOLE));
-        assertEquals("0", rest(HomingEditorial.INSTANCE, of(Container.Panel.class, Size.Gap.class)).get(Impl.Bindings.SOLE), "the line does the parting");
+        assertEquals("0px", rest(HomingEditorial.INSTANCE, of(Container.Panel.class, Size.Gap.class)).get(Impl.Bindings.SOLE), "the line does the parting - and a length, since a bare 0 in a calc is a number, not a gap");
     }
 
     /**

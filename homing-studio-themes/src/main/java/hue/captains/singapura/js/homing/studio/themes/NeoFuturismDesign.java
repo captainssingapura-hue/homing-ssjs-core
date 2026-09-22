@@ -340,7 +340,7 @@ final class NeoFuturismDesign {
             inset(of(Container.Pane.class, Size.Inset.class), "4px", "10px", 1.25),
             gap(of(Container.Pane.class, Size.Gap.class), "8px", 1.25),
             // a panel: a hairline under the head, and no more air than the work needs
-            gap(of(Container.Panel.class, Size.Gap.class), "0", 1.25),
+            gap(of(Container.Panel.class, Size.Gap.class), "0px", 1.25),
             inset(of(Container.Panel.Head.class, Size.Inset.class), "7px", "12px", 1.25),
             gap(of(Container.Panel.Head.class, Size.Gap.class), "8px", 1.25),
             rule(of(Container.Panel.Head.class, Shape.Rule.class), "0 0 1px 0", "solid"),

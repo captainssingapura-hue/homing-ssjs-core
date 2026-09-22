@@ -11,13 +11,14 @@ public record UiElementsComponents() implements C0_Components<UiElementsComponen
     public static final UiElementsComponents INSTANCE = new UiElementsComponents();
 
     @Override public String name() { return "Elements"; }
-    @Override public String summary() { return "The smallest things: a button, a card and a slider, each made through its builder."; }
+    @Override public String summary() { return "The smallest things: a button, a card, a slider and a panel, each made through its builder."; }
 
     @Override public List<ComponentEntry<UiElementsComponents>> leaves() {
         return List.of(
                 ComponentEntry.of(this, new Elements.Button()),
                 ComponentEntry.of(this, new Elements.Card()),
                 ComponentEntry.of(this, new SliderModule.Slider()),
-                ComponentEntry.of(this, new SliderGroupModule.SliderGroup()));
+                ComponentEntry.of(this, new SliderGroupModule.SliderGroup()),
+                ComponentEntry.of(this, new PanelModule.Panel()));
     }
 }

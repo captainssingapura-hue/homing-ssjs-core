@@ -22,9 +22,11 @@ import static hue.captains.singapura.js.homing.design.Interaction.Dragging;
 import static hue.captains.singapura.js.homing.design.Interaction.Focus;
 import static hue.captains.singapura.js.homing.design.Interaction.Inert;
 import static hue.captains.singapura.js.homing.design.Interaction.Interactive;
+import static hue.captains.singapura.js.homing.design.Layer.Base;
 import static hue.captains.singapura.js.homing.design.Layer.Raised;
 import static hue.captains.singapura.js.homing.design.Layer.Recessed;
 import static hue.captains.singapura.js.homing.design.Structure.Detent;
+import static hue.captains.singapura.js.homing.design.Structure.Divider;
 import static hue.captains.singapura.js.homing.design.Structure.Tick;
 import static hue.captains.singapura.js.homing.design.Pairing.OnDanger;
 import static hue.captains.singapura.js.homing.design.Pairing.OnPrimary;
@@ -695,6 +697,105 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
         @Override public String body() { return ""; }
     }
 
+    // ── The panel: a head, a body, and what is mounted in it ──────────────
+
+    /**
+     * The panel: a column of head over body that fills what holds it — a cell,
+     * a pane, a page. Its corner, its rule and its edge are the container's,
+     * which is also where the keys mark comes from, so a panel that holds the
+     * keys says so without a word of its own; its gap is the panel's, and a
+     * design that draws no line under the head parts them with it.
+     */
+    public record el_panel() implements CssClass<ElementStyles> {
+        @Override public List<? extends Wearable> wears() {
+            return List.of(of(Container.Panel.class, Shape.Corner.class), of(Container.Panel.class, Shape.Rule.class), of(Container.Panel.class, Color.Edge.class),
+                           of(Container.Panel.class, Size.Gap.class),
+                           of(Base.class, Color.Surface.class), of(Raised.class, Color.Edge.class), of(Body.class, Color.Ink.class), of(Body.class, Type.Face.class));
+        }
+        @Override public List<? extends Wearable> sizes() { return List.of(of(Container.Panel.class, Size.Gap.class)); }
+        @Override public String body() { return """
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            flex: 1 1 auto;
+            align-self: stretch;
+            min-width: 0;
+            min-height: 0;
+            overflow: hidden;
+            """;
+        }
+    }
+
+    /**
+     * The head: the bar that names the panel and carries what acts on it — its
+     * air, its gap, and the line under it, which is the design's own word about
+     * panels; the line's colour is the divider's, as a strip's is.
+     */
+    public record el_panel_head() implements CssClass<ElementStyles> {
+        @Override public List<? extends Wearable> wears() {
+            return List.of(of(Container.Panel.Head.class, Size.Inset.class), of(Container.Panel.Head.class, Size.Gap.class), of(Container.Panel.Head.class, Shape.Rule.class),
+                           of(Raised.class, Color.Surface.class), of(Divider.class, Color.Edge.class));
+        }
+        @Override public List<? extends Wearable> sizes() { return List.of(of(Container.Panel.Head.class, Size.Inset.class), of(Container.Panel.Head.class, Size.Gap.class)); }
+        @Override public String body() { return """
+            flex: none;
+            display: flex;
+            align-items: center;
+            box-sizing: border-box;
+            min-width: 0;
+            user-select: none;
+            """;
+        }
+    }
+
+    /** The panel's name: a kicker, as a labelled region's is; it ellipsises rather than push out what acts on the panel. */
+    public record el_panel_title() implements CssClass<ElementStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Kicker.class, Type.Face.class), of(Kicker.class, Type.Scale.class), of(Kicker.class, Type.Weight.class), of(Kicker.class, Type.Treatment.class), of(Kicker.class, Color.Ink.class)); }
+        @Override public List<? extends Wearable> sizes() { return List.of(of(Kicker.class, Type.Scale.class)); }
+        @Override public String body() { return """
+            margin: 0;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            """;
+        }
+    }
+
+    /** The slot at the end of the head: what acts on the panel, pushed to the end and never squeezed. */
+    public record el_panel_slot() implements CssClass<ElementStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Container.Panel.Head.class, Size.Gap.class)); }
+        @Override public List<? extends Wearable> sizes() { return List.of(of(Container.Panel.Head.class, Size.Gap.class)); }
+        @Override public String body() { return """
+            margin-inline-start: auto;
+            flex: none;
+            display: flex;
+            align-items: center;
+            """;
+        }
+    }
+
+    /** The body: what the head leaves, flush — for a panel that is filled by what is mounted in it, a dock or a grid, which scrolls on its own. */
+    public record el_panel_body() implements CssClass<ElementStyles> {
+        @Override public String body() { return """
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            min-width: 0;
+            min-height: 0;
+            overflow: hidden;
+            """;
+        }
+    }
+
+    /** The body of a panel that holds content rather than a widget: the design's air around it, its gap between the things in it, and the scroll. */
+    public record el_panel_body_air() implements CssClass<ElementStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Container.Panel.Body.class, Size.Inset.class), of(Container.Panel.Body.class, Size.Gap.class)); }
+        @Override public List<? extends Wearable> sizes() { return List.of(of(Container.Panel.Body.class, Size.Inset.class), of(Container.Panel.Body.class, Size.Gap.class)); }
+        @Override public String body() { return "overflow: auto;"; }
+    }
+
     @Override
     public List<CssClass<ElementStyles>> cssClasses() {
         return List.of(new el_button(), new el_button_primary(), new el_button_secondary(), new el_button_danger(), new el_button_warning(), new el_button_success(),
@@ -705,6 +806,7 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
                        new el_slider_cap(), new el_slider_cap_face(), new el_slider_cap_mark(), new el_slider_tick(), new el_slider_tick_vertical(), new el_slider_tick_line(), new el_slider_tick_line_vertical(), new el_slider_tick_label(),
                        new el_slider_off(),
                        new el_slider_group(), new el_slider_group_held(), new el_slider_group_header(), new el_slider_group_title(), new el_slider_group_body(), new el_slider_group_body_across(),
-                       new el_card(), new el_card_action(), new el_card_head(), new el_card_title(), new el_badge(), new el_card_body(), new el_card_text(), new el_card_foot(), new el_card_link());
+                       new el_card(), new el_card_action(), new el_card_head(), new el_card_title(), new el_badge(), new el_card_body(), new el_card_text(), new el_card_foot(), new el_card_link(),
+                       new el_panel(), new el_panel_head(), new el_panel_title(), new el_panel_slot(), new el_panel_body(), new el_panel_body_air());
     }
 }

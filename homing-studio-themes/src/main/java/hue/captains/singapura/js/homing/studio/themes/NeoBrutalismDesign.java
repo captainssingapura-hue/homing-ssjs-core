@@ -300,7 +300,7 @@ final class NeoBrutalismDesign {
             inset(of(Container.Pane.class, Size.Inset.class), "6px", "12px", 1.5),
             gap(of(Container.Pane.class, Size.Gap.class), "10px", 1.5),
             // a panel: the head is a slab, and the line under it is a bar
-            gap(of(Container.Panel.class, Size.Gap.class), "0", 1.5),
+            gap(of(Container.Panel.class, Size.Gap.class), "0px", 1.5),
             inset(of(Container.Panel.Head.class, Size.Inset.class), "8px", "14px", 1.5),
             gap(of(Container.Panel.Head.class, Size.Gap.class), "10px", 1.5),
             rule(of(Container.Panel.Head.class, Shape.Rule.class), "0 0 3px 0", "solid"),

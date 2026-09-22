@@ -206,7 +206,7 @@ final class SketchyDesign {
             measure(of(Container.Card.class, Size.Extent.class), "280px", 1.35),
             proportion(of(Container.Card.class, Size.Proportion.class), 2),
             // a panel: the head underlined by hand, gone over twice
-            gap(of(Container.Panel.class, Size.Gap.class), "0", 1.35),
+            gap(of(Container.Panel.class, Size.Gap.class), "0px", 1.35),
             inset(of(Container.Panel.Head.class, Size.Inset.class), "10px", "16px", 1.35),
             gap(of(Container.Panel.Head.class, Size.Gap.class), "10px", 1.35),
             rule(of(Container.Panel.Head.class, Shape.Rule.class), "0 0 3px 0", "double"),
