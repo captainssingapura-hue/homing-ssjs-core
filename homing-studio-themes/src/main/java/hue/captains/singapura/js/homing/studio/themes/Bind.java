@@ -143,6 +143,46 @@ final class Bind {
         return Map.entry(cls, Impl.Bindings.none()
                 .at(State.REST, "border-color", light).at(State.REST, "outline-color", light));
     }
+    /**
+     * The keys' mark on a word's Shape.Rule: the outline a thing wears while
+     * the keys are on it — in force (HELD), proposed (CANDIDATE) and lent to
+     * something inside it (LENT) — added to whatever the pair already says.
+     * The outline channel, so nothing moves and no border is fought over.
+     */
+    static Map.Entry<DesignClass<?>, Impl> withKeysMark(Map.Entry<DesignClass<?>, Impl> base,
+                                                        String heldWidth, String heldStyle, String heldOffset,
+                                                        String candidateWidth, String candidateStyle, String candidateOffset,
+                                                        String lentWidth, String lentStyle, String lentOffset) {
+        return Map.entry(base.getKey(), ((Impl.Bindings) base.getValue())
+                .at(State.HELD, "outline-width", heldWidth).at(State.HELD, "outline-style", heldStyle).at(State.HELD, "outline-offset", heldOffset)
+                .at(State.CANDIDATE, "outline-width", candidateWidth).at(State.CANDIDATE, "outline-style", candidateStyle).at(State.CANDIDATE, "outline-offset", candidateOffset)
+                .at(State.LENT, "outline-width", lentWidth).at(State.LENT, "outline-style", lentStyle).at(State.LENT, "outline-offset", lentOffset));
+    }
+
+    /** The keys' mark colour on a word that says nothing else about its edge: only the outline, only while the keys are on it. */
+    static Map.Entry<DesignClass<?>, Impl> keysInk(DesignClass<?> cls, String held, String candidate, String lent) {
+        return withKeysInk(Map.entry(cls, Impl.Bindings.none()), held, candidate, lent);
+    }
+    /** The keys' mark colour, light and dark, on a word that says nothing else about its edge. */
+    static Map.Entry<DesignClass<?>, Impl> keysInk(DesignClass<?> cls, String held, String candidate, String lent, String heldDark, String candidateDark, String lentDark) {
+        return withKeysInk(Map.entry(cls, Impl.Bindings.none()), held, candidate, lent, heldDark, candidateDark, lentDark);
+    }
+
+    /** The keys' mark colour on a word's Color.Edge: the outline's colour in force, proposed and lent. */
+    static Map.Entry<DesignClass<?>, Impl> withKeysInk(Map.Entry<DesignClass<?>, Impl> base, String held, String candidate, String lent) {
+        return Map.entry(base.getKey(), ((Impl.Bindings) base.getValue())
+                .at(State.HELD, "outline-color", held)
+                .at(State.CANDIDATE, "outline-color", candidate)
+                .at(State.LENT, "outline-color", lent));
+    }
+    /** The keys' mark colour, light and dark. */
+    static Map.Entry<DesignClass<?>, Impl> withKeysInk(Map.Entry<DesignClass<?>, Impl> base, String held, String candidate, String lent, String heldDark, String candidateDark, String lentDark) {
+        return Map.entry(base.getKey(), ((Impl.Bindings) withKeysInk(base, held, candidate, lent).getValue())
+                .in(Mode.DARK, State.HELD, "outline-color", heldDark)
+                .in(Mode.DARK, State.CANDIDATE, "outline-color", candidateDark)
+                .in(Mode.DARK, State.LENT, "outline-color", lentDark));
+    }
+
     /** A Shape.Rule that is a ring at rest: an outline's width, style and offset — the mark on the thing that has the focus, wherever it is drawn. */
     static Map.Entry<DesignClass<?>, Impl> outline(DesignClass<?> cls, String width, String style, String offset) {
         return Map.entry(cls, Impl.Bindings.none()

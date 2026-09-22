@@ -83,7 +83,6 @@ public record MultiTabPaneModule() implements DomModule<MultiTabPaneModule> {
                 .add(new ModuleImports<>(List.of(new PaneEventsModule.PaneEvents()), PaneEventsModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new PaneStyles.mtp_pane(),
-                        new PaneStyles.mtp_pane_held(),
                         new PaneStyles.mtp_content(),
                         new PaneStyles.mtp_tab_content(),
                         new PaneStyles.mtp_tab_content_hidden(),

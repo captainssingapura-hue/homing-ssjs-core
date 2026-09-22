@@ -172,8 +172,12 @@ public record SynthwavePalette() implements Palette {
             ring(of(Focus.class, Color.Edge.class), CYAN, CYAN_D),
             surface(of(DropTarget.class, Color.Surface.class), "rgba(0, 240, 255, 0.10)"),
             ring(of(DropTarget.class, Color.Edge.class), CYAN, CYAN_D),
-            focusRing(of(Control.class, Color.Edge.class), CYAN, CYAN_D),
-            focusRing(of(Container.class, Color.Edge.class), CYAN, CYAN_D),
+            withKeysInk(focusRing(of(Control.class, Color.Edge.class), CYAN, CYAN_D),
+                        CYAN, "color-mix(in srgb, " + CYAN + " 45%, transparent)", "color-mix(in srgb, " + CYAN + " 25%, transparent)",
+                        CYAN_D, "color-mix(in srgb, " + CYAN_D + " 45%, transparent)", "color-mix(in srgb, " + CYAN_D + " 25%, transparent)"),
+            withKeysInk(focusRing(of(Container.class, Color.Edge.class), CYAN, CYAN_D),
+                        CYAN, "color-mix(in srgb, " + CYAN + " 45%, transparent)", "color-mix(in srgb, " + CYAN + " 25%, transparent)",
+                        CYAN_D, "color-mix(in srgb, " + CYAN_D + " 45%, transparent)", "color-mix(in srgb, " + CYAN_D + " 25%, transparent)"),
 
             // ── structure: neon rules ───────────────────────────────────
             edge(of(Divider.class, Color.Edge.class), MAGENTA, MAGENTA_D),

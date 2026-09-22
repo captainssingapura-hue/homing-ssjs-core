@@ -237,8 +237,8 @@ final class NeoBrutalismDesign {
             ring(of(Focus.class, Color.Edge.class), RISO_BLUE),
             surface(of(DropTarget.class, Color.Surface.class), SIGNAL),
             ring(of(DropTarget.class, Color.Edge.class), INK),
-            focusRing(of(Control.class, Color.Edge.class), RISO_BLUE),
-            focusRing(of(Container.class, Color.Edge.class), RISO_BLUE),
+            withKeysInk(focusRing(of(Control.class, Color.Edge.class), RISO_BLUE), RISO_BLUE, INK, RULE),
+            withKeysInk(focusRing(of(Container.class, Color.Edge.class), RISO_BLUE), RISO_BLUE, INK, RULE),
             one(of(Focus.class, Shape.Shadow.class), shadow(12) + ", 0 0 0 4px " + FOCUS_REF),
             outline(of(Focus.class, Shape.Rule.class), "3px", "solid", "-3px"),
             outline(of(DropTarget.class, Shape.Rule.class), "3px", "dashed", "-3px"),
@@ -247,7 +247,8 @@ final class NeoBrutalismDesign {
 
             // ── boxes ───────────────────────────────────────────────────
             one(of(Control.class, Shape.Corner.class), "0"),
-            ruleWithFocusRing(of(Control.class, Shape.Rule.class), "3px", "solid", "3px", "solid", "-3px"),
+            withKeysMark(ruleWithFocusRing(of(Control.class, Shape.Rule.class), "3px", "solid", "3px", "solid", "-3px"),
+                         "4px", "solid", "4px", "4px", "dashed", "4px", "4px", "dotted", "4px"),   // the block stands off the thing; a proposal is the same block, drawn open
             // the button's density: chunky, and it jumps: 1.5 per unit
             inset(of(Control.Button.class, Size.Inset.class), "10px", "20px", 1.5),
             gap(of(Control.Button.class, Size.Gap.class), "10px", 1.5),
@@ -288,7 +289,8 @@ final class NeoBrutalismDesign {
             gap(of(Control.Option.class, Size.Gap.class), "10px", 1.5),
             // a container, and the card: a squarish print, hard-edged
             one(of(Container.class, Shape.Corner.class), "0"),
-            ruleWithFocusRing(of(Container.class, Shape.Rule.class), "3px", "solid", "3px", "solid", "-3px"),
+            withKeysMark(ruleWithFocusRing(of(Container.class, Shape.Rule.class), "3px", "solid", "3px", "solid", "-3px"),
+                         "6px", "solid", "6px", "6px", "dashed", "6px", "6px", "dotted", "6px"),   // a region shouts: the same mark, twice the weight
             inset(of(Container.Card.class, Size.Inset.class), "18px", "20px", 1.5),
             gap(of(Container.Card.class, Size.Gap.class), "10px", 1.5),
             measure(of(Container.Card.class, Size.Extent.class), "280px", 1.5),

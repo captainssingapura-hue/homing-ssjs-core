@@ -145,7 +145,8 @@ final class GlassmorphismDesign {
 
             // ── boxes: rounded, rimmed ──────────────────────────────────
             one(of(Control.class, Shape.Corner.class), "12px"),
-            ruleWithFocusRing(of(Control.class, Shape.Rule.class), "1px", "solid", "2px", "solid", "-2px"),
+            withKeysMark(ruleWithFocusRing(of(Control.class, Shape.Rule.class), "1px", "solid", "2px", "solid", "-2px"),
+                         "2px", "solid", "0", "1px", "dashed", "4px", "1px", "solid", "0"),   // held: the rim itself lights; proposed: a hairline off the glass
             // the button's density: roomy, as glass is
             inset(of(Control.Button.class, Size.Inset.class), "10px", "22px", 1.3),
             gap(of(Control.Button.class, Size.Gap.class), "8px", 1.3),
@@ -186,7 +187,8 @@ final class GlassmorphismDesign {
             gap(of(Control.Option.class, Size.Gap.class), "10px", 1.3),
             // a container, and the card: a glass plate, fuller than wide
             one(of(Container.class, Shape.Corner.class), "18px"),
-            ruleWithFocusRing(of(Container.class, Shape.Rule.class), "1px", "solid", "2px", "solid", "-2px"),
+            withKeysMark(ruleWithFocusRing(of(Container.class, Shape.Rule.class), "1px", "solid", "2px", "solid", "-2px"),
+                         "2px", "solid", "0", "1px", "dashed", "6px", "1px", "solid", "0"),
             inset(of(Container.Card.class, Size.Inset.class), "20px", "22px", 1.3),
             gap(of(Container.Card.class, Size.Gap.class), "8px", 1.3),
             measure(of(Container.Card.class, Size.Extent.class), "300px", 1.3),

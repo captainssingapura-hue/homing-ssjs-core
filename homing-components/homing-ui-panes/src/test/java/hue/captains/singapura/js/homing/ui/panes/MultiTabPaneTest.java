@@ -43,6 +43,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
                 insertBefore: function (c, ref) { if (c.parentNode) c.parentNode.removeChild(c); var i = ref ? this.children.indexOf(ref) : -1; if (i < 0) this.children.push(c); else this.children.splice(i, 0, c); c.parentNode = this; return c; },
                 removeChild: function (c) { var i = this.children.indexOf(c); if (i >= 0) this.children.splice(i, 1); c.parentNode = null; return c; },
                 setAttribute: function (k, v) { attrs[k] = String(v); }, getAttribute: function (k) { return attrs[k] == null ? null : attrs[k]; },
+                removeAttribute: function (k) { delete attrs[k]; },
                 addEventListener: function (t, fn) { (this.listeners[t] = this.listeners[t] || []).push(fn); },
                 removeEventListener: function (t, fn) { var l = this.listeners[t] || []; var i = l.indexOf(fn); if (i >= 0) l.splice(i, 1); },
                 contains: function (c) { return c === this; },
@@ -69,7 +70,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
             mtp_chip_seated = "mtp_chip_seated",
             mtp_strip_tail = "mtp_strip_tail", mtp_add = "mtp_add", mtp_add_off = "mtp_add_off", mtp_pill = "mtp_pill",
             mtp_content = "mtp_content", mtp_tab_content = "mtp_tab_content", mtp_tab_content_hidden = "mtp_tab_content_hidden",
-            mtp_empty = "mtp_empty", mtp_dock_target = "mtp_dock_target", mtp_pane_held = "mtp_pane_held";
+            mtp_empty = "mtp_empty", mtp_dock_target = "mtp_dock_target";
         var console = { error: function (m, e) { log.push("error:" + m); } };
         var host = el("div");
         var branch = fakeBranch("page");
@@ -293,7 +294,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
         assertEquals("a,b,c", eval("pane.focus.members.map(function (m) { return m.name; }).join()").asString(), "the widgets are its members");
         eval("pane.el.fire('pointerdown', { target: pane.el })");
         assertEquals("mtp_s1", eval("holder()").asString(), "a press on the frame: the pane holds");
-        assertTrue(eval("pane.el.has('mtp_pane_held')").asBoolean(), "and says so");
+        assertEquals("held", eval("String(pane.el.getAttribute('data-keys'))").asString(), "and says so, once, on the frame: the design answers it on the pane's own word");
         assertTrue(eval("pane.keyDown({ key: 'ArrowRight' })").asBoolean());
         assertEquals("b", eval("pane.activeTab()").asString());
         eval("pane.keyDown({ key: 'ArrowRight' }); pane.keyDown({ key: 'ArrowRight' })");
@@ -315,12 +316,12 @@ class MultiTabPaneTest extends JsModuleTestBase {
         assertTrue(eval("pane.keyDown({ key: 'Enter' })").asBoolean());
         assertEquals("detach?s1:b b:activate", log(), "Enter: the widget activates itself");
         assertEquals("b", eval("holder()").asString(), "and holds - a claim of its own, not the pane's");
-        assertFalse(eval("pane.el.has('mtp_pane_held')").asBoolean());
+        assertEquals("null", eval("String(pane.el.getAttribute('data-keys'))").asString());
         eval("log = []; KeyboardStewardInstance._forward('KeyDown', { key: 'ArrowUp', target: null, preventDefault: function () {}, stopPropagation: function () {} })");
         assertEquals("b:key:ArrowUp", log(), "the keys are the widget's now, through the steward");
         eval("log = []; KeyboardStewardInstance.yield(pane.widgetOf('b').focus)");
         assertEquals("mtp_s1", eval("holder()").asString(), "the widget's yield: the pane catches");
-        assertTrue(eval("pane.el.has('mtp_pane_held')").asBoolean());
+        assertEquals("held", eval("String(pane.el.getAttribute('data-keys'))").asString());
         assertTrue(eval("pane.keyDown({ key: 'Escape' })").asBoolean());
         assertEquals("none", eval("holder()").asString(), "Escape: the pane yields, and nothing above holds");
         assertFalse(eval("pane.keyDown({ key: 'x' })").asBoolean(), "anything else is left");

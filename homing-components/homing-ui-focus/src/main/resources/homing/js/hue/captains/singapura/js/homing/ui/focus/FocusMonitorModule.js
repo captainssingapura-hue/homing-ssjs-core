@@ -36,6 +36,9 @@ class FocusMonitor {
         this.root = root;
         this._offParty = focusParty.on(function () { self.refresh(); });
         this._offSteward = KeyboardStewardInstance.on(function () { self.refresh(); });
+        this._onFocus = function () { self.refresh(); };            // held or lent: the row says which
+        document.addEventListener("focusin", this._onFocus, false);
+        document.addEventListener("focusout", this._onFocus, false);
         this.refresh();
     }
 
@@ -69,7 +72,7 @@ class FocusMonitor {
                 c.textContent = component;
                 el.appendChild(c);
             }
-            if (id !== null && id === holder) { css.addClass(el, fm_row_holder); el.setAttribute("aria-selected", "true"); self._holderRow = el; seen = true; }
+            if (id !== null && id === holder) { css.addClass(el, fm_row_holder); el.setAttribute("aria-selected", "true"); el.setAttribute("data-keys", KeyboardSteward.focused() ? "lent" : "held"); self._holderRow = el; seen = true; }
             self.root.appendChild(el);
         }
         row(0, "root", holder === null ? "no one holds the keys" : "", null, null);
@@ -94,6 +97,8 @@ class FocusMonitor {
     dispose() {
         this._offParty();
         this._offSteward();
+        document.removeEventListener("focusin", this._onFocus, false);
+        document.removeEventListener("focusout", this._onFocus, false);
         if (this.root.parentNode) this.root.parentNode.removeChild(this.root);
         this.branch.dissolve();
     }

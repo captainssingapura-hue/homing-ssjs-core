@@ -29,6 +29,7 @@ class FocusMonitorTest extends JsModuleTestBase {
                 removeChild: function (c) { var i = this.children.indexOf(c); if (i >= 0) this.children.splice(i, 1); c.parentNode = null; return c; },
                 insertBefore: function (c, ref) { var i = this.children.indexOf(ref); this.children.splice(i < 0 ? this.children.length : i, 0, c); c.parentNode = this; return c; },
                 setAttribute: function (k, v) { attrs[k] = String(v); }, getAttribute: function (k) { return attrs[k] == null ? null : attrs[k]; },
+                removeAttribute: function (k) { delete attrs[k]; },
                 addEventListener: function () {}, removeEventListener: function () {},
                 style: { setProperty: function (k, v) { props[k] = v; }, getPropertyValue: function (k) { return props[k] || ""; } },
                 has: function (c) { return classes.has(c); }, prop: function (k) { return props[k]; },
@@ -43,6 +44,9 @@ class FocusMonitorTest extends JsModuleTestBase {
         }
         var css = { addClass: function (e) { for (var i = 1; i < arguments.length; i++) e.classList.add(arguments[i]); }, removeClass: function (e) { for (var i = 1; i < arguments.length; i++) e.classList.remove(arguments[i]); } };
         ["fm_tree", "fm_row", "fm_row_holder", "fm_kind", "fm_name", "fm_component", "fm_outside"].forEach(function (c) { globalThis[c] = c; });
+        var focusListeners = 0;
+        var document = { body: el("body"), activeElement: null, addEventListener: function () { focusListeners++; }, removeEventListener: function () { focusListeners--; } };
+        document.activeElement = document.body;
         class Dock { constructor() {} }
         class Widget { constructor() {} keyDown(ev) { return true; } }
         var host = el("div");
@@ -103,6 +107,7 @@ class FocusMonitorTest extends JsModuleTestBase {
     void disposeStopsListening() {
         eval("log = []; monitor.dispose(); focusParty.root.join('late', new Widget())");
         assertEquals("0", eval("String(host.children.length)").asString(), "the tree taken out of the host");
+        assertEquals(0, eval("focusListeners").asInt(), "the document let go");
         assertTrue(eval("log.join(' ')").asString().endsWith("dissolved:monitor"));
         eval("focusParty.root.dissolve()");
     }

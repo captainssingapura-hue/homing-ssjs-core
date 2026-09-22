@@ -32,7 +32,7 @@ public record FocusMonitorModule() implements DomModule<FocusMonitorModule> {
     public ImportsFor<FocusMonitorModule> imports() {
         return ImportsFor.<FocusMonitorModule>builder()
                 .add(new ModuleImports<>(List.of(new focusParty()), FocusPartyModule.INSTANCE))
-                .add(new ModuleImports<>(List.of(new KeyboardStewardModule.KeyboardStewardInstance()), KeyboardStewardModule.INSTANCE))
+                .add(new ModuleImports<>(List.of(new KeyboardStewardModule.KeyboardSteward(), new KeyboardStewardModule.KeyboardStewardInstance()), KeyboardStewardModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new FocusStyles.fm_tree(),
                         new FocusStyles.fm_row(),

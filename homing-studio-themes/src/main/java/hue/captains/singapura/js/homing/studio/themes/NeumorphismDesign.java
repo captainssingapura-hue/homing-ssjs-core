@@ -142,7 +142,8 @@ final class NeumorphismDesign {
 
             // ── boxes: everything is a pill ─────────────────────────────
             one(of(Control.class, Shape.Corner.class), "12px"),
-            ruleWithFocusRing(of(Control.class, Shape.Rule.class), "0", "none", "2px", "solid", "-2px"),
+            withKeysMark(ruleWithFocusRing(of(Control.class, Shape.Rule.class), "0", "none", "2px", "solid", "-2px"),
+                         "3px", "solid", "-3px", "2px", "dotted", "4px", "2px", "solid", "-3px"),   // pressed in when held, level and outside when proposed
             // the button's density: soft and roomy
             inset(of(Control.Button.class, Size.Inset.class), "10px", "20px", 1.3),
             gap(of(Control.Button.class, Size.Gap.class), "8px", 1.3),
@@ -183,7 +184,8 @@ final class NeumorphismDesign {
             gap(of(Control.Option.class, Size.Gap.class), "10px", 1.3),
             // a container, and the card: a soft slab, no rule
             one(of(Container.class, Shape.Corner.class), "16px"),
-            ruleWithFocusRing(of(Container.class, Shape.Rule.class), "0", "none", "2px", "solid", "-2px"),
+            withKeysMark(ruleWithFocusRing(of(Container.class, Shape.Rule.class), "0", "none", "2px", "solid", "-2px"),
+                         "4px", "solid", "-4px", "2px", "dotted", "5px", "3px", "solid", "-4px"),   // a region is a recess: the deeper channel
             inset(of(Container.Card.class, Size.Inset.class), "20px", "22px", 1.3),
             gap(of(Container.Card.class, Size.Gap.class), "8px", 1.3),
             measure(of(Container.Card.class, Size.Extent.class), "300px", 1.3),

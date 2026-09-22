@@ -10,6 +10,7 @@ import java.util.Set;
 
 import static hue.captains.singapura.js.homing.design.DesignClass.of;
 import static hue.captains.singapura.js.homing.design.Box.Inline;
+import static hue.captains.singapura.js.homing.design.Box.Control;
 import static hue.captains.singapura.js.homing.design.Emphasis.Muted;
 import static hue.captains.singapura.js.homing.design.Interaction.Current;
 import static hue.captains.singapura.js.homing.design.Interaction.Focus;
@@ -39,10 +40,11 @@ public record FocusStyles() implements CssGroup<FocusStyles> {
         }
     }
 
-    /** A row: a node of the tree, indented by its depth through the runtime variable the monitor sets. */
+    /** A row: a node of the tree, indented by its depth through the runtime variable the monitor sets; an option, so a design can mark the one that holds the keys. */
     public record fm_row() implements CssClass<FocusStyles> {
         @Override public Set<CssVar> runtimeVars() { return Set.of(new CssVar("--fm-depth")); }
-        @Override public List<? extends Wearable> wears() { return List.of(of(Interactive.class, Motion.Ease.class), of(Muted.class, Color.Ink.class)); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Interactive.class, Motion.Ease.class), of(Muted.class, Color.Ink.class),
+                                                                          of(Control.Option.class, Shape.Rule.class), of(Control.class, Color.Edge.class)); }
         @Override public String body() { return """
             display: flex;
             align-items: baseline;
@@ -54,9 +56,9 @@ public record FocusStyles() implements CssGroup<FocusStyles> {
         }
     }
 
-    /** The row of the one that holds the keys: the current surface, the ring drawn now, the body's ink. */
+    /** The row of the one that holds the keys: the current surface and the body's ink; the keys' own mark is the design's answer to the row's word, through {@code data-keys}. */
     public record fm_row_holder() implements CssClass<FocusStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Current.class, Color.Surface.class), of(Current.class, Color.Edge.class), of(Focus.class, Shape.Rule.class), of(Focus.class, Color.Edge.class), of(Body.class, Color.Ink.class), of(Inline.class, Shape.Corner.class)); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Current.class, Color.Surface.class), of(Current.class, Color.Edge.class), of(Body.class, Color.Ink.class), of(Inline.class, Shape.Corner.class)); }
         @Override public String body() { return ""; }
     }
 

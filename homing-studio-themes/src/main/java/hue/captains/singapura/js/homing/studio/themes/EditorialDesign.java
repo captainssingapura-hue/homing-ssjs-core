@@ -189,7 +189,8 @@ final class EditorialDesign {
 
             // ── boxes ───────────────────────────────────────────────────
             one(of(Control.class, Shape.Corner.class), "3px"),
-            ruleWithFocusRing(of(Control.class, Shape.Rule.class), "1.5px", "solid", "2px", "solid", "-2px"),
+            withKeysMark(ruleWithFocusRing(of(Control.class, Shape.Rule.class), "1.5px", "solid", "2px", "solid", "-2px"),
+                         "2px", "solid", "-2px", "1px", "dashed", "3px", "1px", "solid", "-2px"),   // held: the ring; proposed: a pencil line outside; lent: the ring, thinned
             // the button's density: a button's density: it grows a step of 1.3 per unit of size, the type a gentler 1.25
             inset(of(Control.Button.class, Size.Inset.class), "8px", "18px", 1.3),
             gap(of(Control.Button.class, Size.Gap.class), "8px", 1.3),
@@ -247,7 +248,8 @@ final class EditorialDesign {
             glyph(of(Level.class, Type.Glyph.class), "≡"),
             // a container, and the card: an index card: three by two, a soft corner
             one(of(Container.class, Shape.Corner.class), "6px"),
-            ruleWithFocusRing(of(Container.class, Shape.Rule.class), "1px", "solid", "2px", "solid", "-2px"),
+            withKeysMark(ruleWithFocusRing(of(Container.class, Shape.Rule.class), "1px", "solid", "2px", "solid", "-2px"),
+                         "2px", "solid", "2px", "1px", "dashed", "5px", "1px", "solid", "2px"),   // a region is marked outside itself, clear of its own rule
             inset(of(Container.Card.class, Size.Inset.class), "18px", "20px", 1.3),
             gap(of(Container.Card.class, Size.Gap.class), "8px", 1.3),
             measure(of(Container.Card.class, Size.Extent.class), "280px", 1.3),

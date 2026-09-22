@@ -10,14 +10,19 @@
 //     Shift+← / →      the active tab moves one slot along the rail, staying active
 //     Shift+↓          the active tab asked to detach: pane.requestDetach()
 //     Enter            the active tab's widget activates itself — a claim of its own
-//     Escape           the pane yields, up the tree
+//     Escape           the pane yields, up the tree: pane.yieldKeys()
 //     Shift+F10, ContextMenu   the active tab's menu, at its chip: pane.menuByKey()
 //   A chord with Ctrl, Alt or Meta is left; so is anything not above.
+//
+// Pure: it imports nothing and touches no DOM. A pure module must not import
+// a DOM module - its imports resolve without the page's theme and would load
+// a second copy of it, and of any one-per-document manager it imports. So
+// the yield goes through the pane, which imports Keys as a DOM module does.
 // =============================================================================
 
 class PaneKeys {
     static keyDown(pane, ev) {
-        if (ev.key === "Escape") { Keys.yield(pane.focus.owner); return true; }
+        if (ev.key === "Escape") { pane.yieldKeys(); return true; }
         var ids = pane.tabs(), n = ids.length, active = pane.activeTab(), i = active === null ? -1 : ids.indexOf(active);
         if (ev.shiftKey) {
             if (ev.key === "ArrowLeft" || ev.key === "ArrowRight") { if (i >= 0) pane.moveTab(active, i + (ev.key === "ArrowLeft" ? -1 : 1)); return true; }

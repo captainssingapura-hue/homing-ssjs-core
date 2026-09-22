@@ -60,8 +60,10 @@
 //   pane.budget() .canAdd() .setAddEnabled(b)
 //   pane.size(s?) .aspect(a?)    the chips' size and aspect, −1..1, null the design's
 //   pane.contentElOf(id) .widgetOf(id) .getState() .el .slotId .focus
-//   pane.keyDown(ev) .wouldHold() .granted(by) .taken(by)   the member's, called by the steward
-//   pane.menuByKey() .requestDetach()   what the keys do, by call
+//   pane.keyDown(ev) .wouldHold() .granted(by) .taken(by)   the member's, called by the steward;
+//       granted and taken write data-keys="held" on the frame, and a design says
+//       what a pane wearing it looks like
+//   pane.menuByKey() .requestDetach() .yieldKeys()   what the keys do, by call
 //   pane.dispose()               → every widget disposed in order, the branches dissolved
 //
 // The pane is a dock. A tab leaves it by call — detachTab, for a holder that
@@ -348,10 +350,13 @@ class MultiTabPane {
     }
     /** The active tab asked to detach and float: DetachRequested, for a holder with a desk. */
     requestDetach() { if (this._activeId !== null) this._fire(PaneEvents.DetachRequested(this.slotId, this._activeId)); }
+    /** The pane yields the keys, up the tree: the first ancestor that would hold, else no one. */
+    yieldKeys() { Keys.yield(this.focus.owner); }
     /** A yield from a widget inside: the pane holds. */
     wouldHold() { return true; }
-    granted() { css.addClass(this.el, mtp_pane_held); }
-    taken() { css.removeClass(this.el, mtp_pane_held); }
+    /** Where the keys are, said once on the frame: the design answers it on the pane's own word. */
+    granted() { this.el.setAttribute("data-keys", "held"); }
+    taken() { this.el.removeAttribute("data-keys"); }
 
     dispose() {
         if (this._disposed) return;

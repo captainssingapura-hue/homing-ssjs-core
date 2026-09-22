@@ -1,11 +1,9 @@
 package hue.captains.singapura.js.homing.ui.panes;
 
-import hue.captains.singapura.js.homing.component.keyboard.KeysModule;
 import hue.captains.singapura.js.homing.core.EsModule;
 import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
-import hue.captains.singapura.js.homing.core.ModuleImports;
 
 import java.util.List;
 
@@ -15,7 +13,10 @@ import java.util.List;
  * Shift+arrows reordering along the rail, Shift+Down asking to detach, Enter
  * having the widget activate itself, Escape yielding, the menu key. What a
  * key means for a container of tabs, and nothing about how the pane is
- * built; the pane's {@code keyDown} is this. Headless.
+ * built; the pane's {@code keyDown} is this. Headless, and pure: it imports
+ * nothing — a pure module importing a DOM module would load a second,
+ * theme-less copy of it and of the one-per-document steward behind it — so
+ * the yield goes through {@code pane.yieldKeys()}.
  */
 public record PaneKeysModule() implements EsModule<PaneKeysModule> {
 
@@ -24,12 +25,7 @@ public record PaneKeysModule() implements EsModule<PaneKeysModule> {
 
     public static final PaneKeysModule INSTANCE = new PaneKeysModule();
 
-    @Override
-    public ImportsFor<PaneKeysModule> imports() {
-        return ImportsFor.<PaneKeysModule>builder()
-                .add(new ModuleImports<>(List.of(new KeysModule.Keys()), KeysModule.INSTANCE))
-                .build();
-    }
+    @Override public ImportsFor<PaneKeysModule> imports() { return ImportsFor.noImports(); }
 
     @Override
     public ExportsOf<PaneKeysModule> exports() {

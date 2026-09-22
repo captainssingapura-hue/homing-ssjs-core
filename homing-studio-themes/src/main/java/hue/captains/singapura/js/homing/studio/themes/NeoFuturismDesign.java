@@ -273,8 +273,12 @@ final class NeoFuturismDesign {
             ring(of(Focus.class, Color.Edge.class), CYAN, CYAN_D),
             surface(of(DropTarget.class, Color.Surface.class), glow(CYAN, 12), glow(CYAN_D, 14)),
             ring(of(DropTarget.class, Color.Edge.class), CYAN, CYAN_D),
-            focusRing(of(Control.class, Color.Edge.class), CYAN, CYAN_D),
-            focusRing(of(Container.class, Color.Edge.class), CYAN, CYAN_D),
+            withKeysInk(focusRing(of(Control.class, Color.Edge.class), CYAN, CYAN_D),
+                        CYAN, "color-mix(in srgb, " + CYAN + " 40%, transparent)", "color-mix(in srgb, " + CYAN + " 22%, transparent)",
+                        CYAN_D, "color-mix(in srgb, " + CYAN_D + " 40%, transparent)", "color-mix(in srgb, " + CYAN_D + " 22%, transparent)"),
+            withKeysInk(focusRing(of(Container.class, Color.Edge.class), CYAN, CYAN_D),
+                        CYAN, "color-mix(in srgb, " + CYAN + " 40%, transparent)", "color-mix(in srgb, " + CYAN + " 22%, transparent)",
+                        CYAN_D, "color-mix(in srgb, " + CYAN_D + " 40%, transparent)", "color-mix(in srgb, " + CYAN_D + " 22%, transparent)"),
             one(of(Focus.class, Shape.Shadow.class), "0 24px 64px " + glow(SPACE_REF, 35) + ", 0 0 0 1px " + LIGHT_REF + ", 0 0 40px " + glow(LIGHT_REF, 35),
                                                      "0 24px 64px " + glow(SPACE_REF, 70) + ", 0 0 0 1px " + LIGHT_REF + ", 0 0 48px " + glow(LIGHT_REF, 40)),
             outline(of(Focus.class, Shape.Rule.class), "1px", "solid", "-1px"),   // a filament of a ring
@@ -283,7 +287,8 @@ final class NeoFuturismDesign {
 
             // ── boxes ───────────────────────────────────────────────────
             one(of(Control.class, Shape.Corner.class), "2px"),
-            ruleWithFocusRing(of(Control.class, Shape.Rule.class), "1px", "solid", "1px", "solid", "-1px"),
+            withKeysMark(ruleWithFocusRing(of(Control.class, Shape.Rule.class), "1px", "solid", "1px", "solid", "-1px"),
+                         "1px", "solid", "3px", "1px", "dashed", "5px", "1px", "solid", "3px"),   // the hairline, held away from the plate
             // the button's density: tight, and it grows little
             inset(of(Control.Button.class, Size.Inset.class), "7px", "16px", 1.25),
             gap(of(Control.Button.class, Size.Gap.class), "8px", 1.25),
@@ -324,7 +329,8 @@ final class NeoFuturismDesign {
             gap(of(Control.Option.class, Size.Gap.class), "10px", 1.25),
             // a container, and the card: a wide panel, a filament of a ring
             one(of(Container.class, Shape.Corner.class), "2px"),
-            ruleWithFocusRing(of(Container.class, Shape.Rule.class), "1px", "solid", "1px", "solid", "-1px"),
+            withKeysMark(ruleWithFocusRing(of(Container.class, Shape.Rule.class), "1px", "solid", "1px", "solid", "-1px"),
+                         "1px", "solid", "4px", "1px", "dashed", "7px", "1px", "solid", "4px"),
             inset(of(Container.Card.class, Size.Inset.class), "16px", "18px", 1.25),
             gap(of(Container.Card.class, Size.Gap.class), "8px", 1.25),
             measure(of(Container.Card.class, Size.Extent.class), "320px", 1.25),

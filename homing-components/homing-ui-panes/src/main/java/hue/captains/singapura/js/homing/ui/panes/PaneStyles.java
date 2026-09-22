@@ -10,6 +10,7 @@ import java.util.Set;
 
 import static hue.captains.singapura.js.homing.design.DesignClass.of;
 import static hue.captains.singapura.js.homing.design.Box.Control;
+import static hue.captains.singapura.js.homing.design.Box.Container;
 import static hue.captains.singapura.js.homing.design.Emphasis.Muted;
 import static hue.captains.singapura.js.homing.design.Emphasis.Primary;
 import static hue.captains.singapura.js.homing.design.Interaction.Dragging;
@@ -48,7 +49,9 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
 
     /** The pane: a column of strip over content, filling its host by growing — so the host is a flex column and the pane its item. */
     public record mtp_pane() implements CssClass<PaneStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Base.class, Color.Surface.class), of(Body.class, Color.Ink.class), of(Body.class, Type.Face.class)); }
+        /** Its own word — a pane — so a design can say what a pane looks like while the keys are on it; the mark is an outline, and moves nothing. */
+        @Override public List<? extends Wearable> wears() { return List.of(of(Base.class, Color.Surface.class), of(Body.class, Color.Ink.class), of(Body.class, Type.Face.class),
+                                                                          of(Container.Pane.class, Color.Edge.class)); }
         @Override public String body() { return """
             display: flex;
             flex-direction: column;
@@ -86,8 +89,9 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
      * ellipsised within. Dragged by the pointer, so no touch scrolling on it.
      */
     public record mtp_chip() implements CssClass<PaneStyles> {
+        /** {@code Control × Color.Edge} is the ring's colour and the keys' mark: bound at those states only, so the chip's own edge is still Selectable.Tab's. */
         @Override public List<? extends Wearable> wears() {
-            return List.of(of(Control.Tab.class, Shape.Rule.class), of(Control.Tab.class, Shape.Corner.class),
+            return List.of(of(Control.Tab.class, Shape.Rule.class), of(Control.Tab.class, Shape.Corner.class), of(Control.class, Color.Edge.class),
                            of(Control.Tab.class, Size.Inset.class), of(Control.Tab.class, Size.Gap.class), of(Control.Tab.class, Size.Extent.class), of(Control.Tab.class, Size.Proportion.class),
                            of(Selectable.Tab.class, Color.Surface.class), of(Selectable.Tab.class, Color.Ink.class), of(Selectable.Tab.class, Color.Edge.class),
                            of(Selectable.class, Motion.Ease.class), of(Selectable.class, Affordance.Cursor.class),
@@ -262,12 +266,6 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
         @Override public String body() { return ""; }
     }
 
-    /** The pane while it holds the keys: the ring drawn now, on the frame — its chips take no native focus, so this is the one sign. */
-    public record mtp_pane_held() implements CssClass<PaneStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Focus.class, Shape.Rule.class), of(Focus.class, Color.Edge.class)); }
-        @Override public String body() { return ""; }
-    }
-
     /** What an empty pane says. */
     public record mtp_empty() implements CssClass<PaneStyles> {
         @Override public List<? extends Wearable> wears() { return List.of(of(Muted.class, Color.Ink.class), of(Caption.class, Type.Scale.class)); }
@@ -285,7 +283,7 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
     public List<CssClass<PaneStyles>> cssClasses() {
         return List.of(new mtp_pane(), new mtp_strip(), new mtp_strip_loose(), new mtp_chip(), new mtp_chip_label(), new mtp_chip_seated(), new mtp_chip_dragging(), new mtp_chip_shifted(),
                        new mtp_chip_close(), new mtp_drop_mark(), new mtp_strip_tail(), new mtp_add(), new mtp_add_off(),
-                       new mtp_pill(), new mtp_content(), new mtp_tab_content(), new mtp_empty(), new mtp_dock_target(), new mtp_pane_held(),
+                       new mtp_pill(), new mtp_content(), new mtp_tab_content(), new mtp_empty(), new mtp_dock_target(),
                        new mtp_tab_content_hidden());   // last, so hidden wins over what a panel or the empty note says of its display
     }
 }

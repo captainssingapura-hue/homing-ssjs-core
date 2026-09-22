@@ -144,7 +144,8 @@ final class SketchyDesign {
 
             // ── boxes: drawn without a ruler ────────────────────────────
             one(of(Control.class, Shape.Corner.class), WOBBLE_CONTROL),
-            ruleWithFocusRing(of(Control.class, Shape.Rule.class), "2px", "solid", "2px", "dashed", "-3px"),
+            withKeysMark(ruleWithFocusRing(of(Control.class, Shape.Rule.class), "2px", "solid", "2px", "dashed", "-3px"),
+                         "3px", "solid", "3px", "2px", "dashed", "5px", "2px", "dotted", "3px"),   // gone over twice when held; the marker's maybe when proposed
             outline(of(DropTarget.class, Shape.Rule.class), "2px", "dotted", "-4px"),
             // the button's density: a hand-drawn box, a little uneven in its growth
             inset(of(Control.Button.class, Size.Inset.class), "8px", "16px", 1.35),
@@ -152,10 +153,11 @@ final class SketchyDesign {
             minWidth(of(Control.Button.class, Size.Extent.class), "56px", 1.35),
             // the tab: a paper tab, its top corners wobbled, the pen a touch heavier on the selected one
             one(of(Control.Tab.class, Shape.Corner.class), "8px 6px 0 0 / 6px 8px 0 0"),
-            Map.entry(of(Control.Tab.class, Shape.Rule.class), Impl.Bindings.none()
+            withKeysMark(Map.entry(of(Control.Tab.class, Shape.Rule.class), Impl.Bindings.none()
                     .at(State.REST, "border-width", "2px").at(State.REST, "border-style", "solid")
                     .at(State.SELECTED, "border-width", "3px")
                     .at(State.FOCUS, "outline-width", "2px").at(State.FOCUS, "outline-style", "dashed").at(State.FOCUS, "outline-offset", "-3px")),
+                         "3px", "solid", "3px", "2px", "dashed", "5px", "2px", "dotted", "3px"),   // a chip is drawn over twice too - the tab says it precisely, so it must say the keys as well
             inset(of(Control.Tab.class, Size.Inset.class), "0", "12px", 1.35),
             gap(of(Control.Tab.class, Size.Gap.class), "8px", 1.35),
             measure(of(Control.Tab.class, Size.Extent.class), "160px", 1.35),
@@ -197,7 +199,8 @@ final class SketchyDesign {
             glyph(of(Grip.class, Type.Glyph.class), "⁘"),
             // a container, and the card: a hand-cut card, its corners uneven
             one(of(Container.class, Shape.Corner.class), WOBBLE_PLATE),
-            ruleWithFocusRing(of(Container.class, Shape.Rule.class), "2px", "solid", "2px", "dashed", "-3px"),
+            withKeysMark(ruleWithFocusRing(of(Container.class, Shape.Rule.class), "2px", "solid", "2px", "dashed", "-3px"),
+                         "3px", "solid", "4px", "2px", "dashed", "6px", "2px", "dotted", "4px"),
             inset(of(Container.Card.class, Size.Inset.class), "16px", "18px", 1.35),
             gap(of(Container.Card.class, Size.Gap.class), "8px", 1.35),
             measure(of(Container.Card.class, Size.Extent.class), "280px", 1.35),

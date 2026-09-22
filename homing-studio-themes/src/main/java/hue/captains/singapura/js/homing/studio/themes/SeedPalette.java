@@ -224,8 +224,12 @@ public record SeedPalette(DesignId id, String label, String inspiration, DesignI
         put.accept(sfc(of(Current.class, Color.Surface.class), tint(l.accent, 7), tint(d.accent, 7)));
         put.accept(ink(of(Current.class, Color.Ink.class), l.title, d.title));
         put.accept(edg(of(Current.class, Color.Edge.class), l.accent, d.accent));
-        put.accept(focusRing(of(Control.class, Color.Edge.class), "color-mix(in srgb, " + l.accent + " 55%, " + l.border + ")", "color-mix(in srgb, " + d.accent + " 55%, " + d.border + ")"));
-        put.accept(focusRing(of(Container.class, Color.Edge.class), "color-mix(in srgb, " + l.accent + " 55%, " + l.border + ")", "color-mix(in srgb, " + d.accent + " 55%, " + d.border + ")"));   // a card that can be focused wears the same ring   // a control's ring, on focus only; its edge stays its word's
+        put.accept(withKeysInk(focusRing(of(Control.class, Color.Edge.class), "color-mix(in srgb, " + l.accent + " 55%, " + l.border + ")", "color-mix(in srgb, " + d.accent + " 55%, " + d.border + ")"),
+                l.accent, "color-mix(in srgb, " + l.accent + " 45%, transparent)", "color-mix(in srgb, " + l.accent + " 25%, transparent)",
+                d.accent, "color-mix(in srgb, " + d.accent + " 45%, transparent)", "color-mix(in srgb, " + d.accent + " 25%, transparent)"));
+        put.accept(withKeysInk(focusRing(of(Container.class, Color.Edge.class), "color-mix(in srgb, " + l.accent + " 55%, " + l.border + ")", "color-mix(in srgb, " + d.accent + " 55%, " + d.border + ")"),
+                l.accent, "color-mix(in srgb, " + l.accent + " 45%, transparent)", "color-mix(in srgb, " + l.accent + " 25%, transparent)",
+                d.accent, "color-mix(in srgb, " + d.accent + " 45%, transparent)", "color-mix(in srgb, " + d.accent + " 25%, transparent)"));   // a card that can be focused wears the same ring   // a control's ring, on focus only; its edge stays its word's
         put.accept(sfc(of(DropTarget.class, Color.Surface.class), tint(l.accent, 10), tint(d.accent, 10)));   // a place you can drop on: the accent, washed, ringed
         put.accept(ring(of(DropTarget.class, Color.Edge.class), l.accent, d.accent));
         put.accept(ring(of(Focus.class, Color.Edge.class), "color-mix(in srgb, " + l.accent + " 55%, " + l.border + ")", "color-mix(in srgb, " + d.accent + " 55%, " + d.border + ")"));

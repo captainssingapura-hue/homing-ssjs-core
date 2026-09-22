@@ -167,8 +167,12 @@ public record FrostPalette() implements Palette {
             ring(of(Focus.class, Color.Edge.class), BLUE, BLUE_D),
             surface(of(DropTarget.class, Color.Surface.class), "rgba(91, 124, 255, 0.12)"),
             ring(of(DropTarget.class, Color.Edge.class), BLUE, BLUE_D),
-            focusRing(of(Control.class, Color.Edge.class), BLUE, BLUE_D),
-            focusRing(of(Container.class, Color.Edge.class), BLUE, BLUE_D),
+            withKeysInk(focusRing(of(Control.class, Color.Edge.class), BLUE, BLUE_D),
+                        BLUE, "color-mix(in srgb, " + BLUE + " 45%, transparent)", "color-mix(in srgb, " + BLUE + " 25%, transparent)",
+                        BLUE_D, "color-mix(in srgb, " + BLUE_D + " 45%, transparent)", "color-mix(in srgb, " + BLUE_D + " 25%, transparent)"),
+            withKeysInk(focusRing(of(Container.class, Color.Edge.class), BLUE, BLUE_D),
+                        BLUE, "color-mix(in srgb, " + BLUE + " 45%, transparent)", "color-mix(in srgb, " + BLUE + " 25%, transparent)",
+                        BLUE_D, "color-mix(in srgb, " + BLUE_D + " 45%, transparent)", "color-mix(in srgb, " + BLUE_D + " 25%, transparent)"),
 
             // ── structure: rims of light, hairlines of shadow ───────────
             edge(of(Divider.class, Color.Edge.class), "rgba(255, 255, 255, 0.6)", "rgba(255, 255, 255, 0.2)"),

@@ -146,7 +146,8 @@ final class RetroFuturismDesign {
 
             // ── boxes: barely cut ───────────────────────────────────────
             one(of(Control.class, Shape.Corner.class), "3px"),
-            ruleWithFocusRing(of(Control.class, Shape.Rule.class), "1px", "solid", "1px", "solid", "-1px"),
+            withKeysMark(ruleWithFocusRing(of(Control.class, Shape.Rule.class), "1px", "solid", "1px", "solid", "-1px"),
+                         "2px", "solid", "2px", "1px", "dashed", "4px", "1px", "solid", "2px"),   // burning when held; the tube present and unlit when proposed
             // the button's density: a console key
             inset(of(Control.Button.class, Size.Inset.class), "8px", "18px", 1.3),
             gap(of(Control.Button.class, Size.Gap.class), "8px", 1.3),
@@ -187,7 +188,8 @@ final class RetroFuturismDesign {
             gap(of(Control.Option.class, Size.Gap.class), "10px", 1.3),
             // a container, and the card: a console card
             one(of(Container.class, Shape.Corner.class), "4px"),
-            ruleWithFocusRing(of(Container.class, Shape.Rule.class), "1px", "solid", "1px", "solid", "-1px"),
+            withKeysMark(ruleWithFocusRing(of(Container.class, Shape.Rule.class), "1px", "solid", "1px", "solid", "-1px"),
+                         "2px", "solid", "3px", "1px", "dashed", "6px", "1px", "solid", "3px"),
             inset(of(Container.Card.class, Size.Inset.class), "18px", "20px", 1.3),
             gap(of(Container.Card.class, Size.Gap.class), "8px", 1.3),
             measure(of(Container.Card.class, Size.Extent.class), "280px", 1.3),
