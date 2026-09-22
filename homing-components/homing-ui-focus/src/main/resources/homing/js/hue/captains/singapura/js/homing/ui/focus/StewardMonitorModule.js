@@ -1,7 +1,8 @@
 // =============================================================================
 // StewardMonitor — the keyboard steward's activeness on view, as one lamp:
-// active, the keys are the holder's; or dormant on the element that has the
-// native focus, whose keys are its own. Redrawn on every event of the steward
+// active, the keys are the holder's; active and offering them, while a walk
+// rests on a member; or dormant on the element that has the native focus,
+// whose keys are its own. Redrawn on every event of the steward
 // and every move of the native focus, so it says at every moment whether the
 // steward is routing keys. Tooling for a page: it reads the document's active
 // element and takes no keys. A branch component: the caller makes a
@@ -38,8 +39,11 @@ class StewardMonitor {
 
     /** The lamp by state. */
     refresh() {
-        var f = KeyboardSteward.focused();
-        this.root.textContent = f ? "dormant on " + StewardMonitor.describe(f) + " — its keys are its own" : "active — the keys are the holder's";
+        var f = KeyboardSteward.focused(), c = f ? null : KeyboardStewardInstance.candidate();
+        var m = c ? focusParty.find(c) : null;
+        this.root.textContent = f ? "dormant on " + StewardMonitor.describe(f) + " — its keys are its own"
+            : c ? "active — the keys are offered to " + (m ? "“" + m.name + "”" : c)
+            : "active — the keys are the holder's";
         css.toggleClass(this.root, sm_lamp_dormant, !!f);
         return this;
     }

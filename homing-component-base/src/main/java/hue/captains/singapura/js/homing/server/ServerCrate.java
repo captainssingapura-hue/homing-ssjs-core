@@ -10,6 +10,7 @@ import hue.captains.singapura.js.homing.component.keyboard.FocusPartyModule;
 import hue.captains.singapura.js.homing.component.keyboard.KeyboardEventsModule;
 import hue.captains.singapura.js.homing.component.keyboard.KeyboardSecretaryModule;
 import hue.captains.singapura.js.homing.component.keyboard.KeyboardStewardModule;
+import hue.captains.singapura.js.homing.component.keyboard.KeyboardWalkModule;
 import hue.captains.singapura.js.homing.component.keyboard.KeysModule;
 import hue.captains.singapura.js.homing.component.party.PartyModule;
 
@@ -51,11 +52,13 @@ public final class ServerCrate implements Crate, ComponentVehicle {
                 // RFC 0066 E3 - the Party primitive (RFC 0028), lifted from the workspace: headless.
                 CrateEntry.of(PartyModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 // RFC 0066 E3 - the keyboard party: its secretary, its steward (the DOM face,
-                // one per page), the claiming convention, and its events as data.
+                // one per page), the walk over the focus tree, the claiming convention, and
+                // its events as data.
                 CrateEntry.of(FocusPartyModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(KeyboardSecretaryModule.INSTANCE, StandardJsModuleType.SECRETARY),
                 CrateEntry.of(KeyboardStewardModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
                 CrateEntry.of(KeysModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
-                CrateEntry.of(KeyboardEventsModule.INSTANCE, StandardJsModuleType.PURE_LOGIC));
+                CrateEntry.of(KeyboardEventsModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
+                CrateEntry.of(KeyboardWalkModule.INSTANCE, StandardJsModuleType.PURE_LOGIC));
     }
 }

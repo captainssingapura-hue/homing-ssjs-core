@@ -54,6 +54,7 @@ class StewardMonitorTest extends JsModuleTestBase {
         loadModule(DIR + "component/keyboard/FocusPartyModule.js");
         loadModule(DIR + "component/keyboard/KeyboardSecretaryModule.js");
         loadModule(DIR + "component/keyboard/KeyboardEventsModule.js");
+        loadModule(DIR + "component/keyboard/KeyboardWalkModule.js");
         loadModule(DIR + "component/keyboard/KeyboardStewardModule.js");
         loadModule(DIR + "ui/focus/StewardMonitorModule.js");
         js.eval("js", SHIM);
@@ -76,6 +77,20 @@ class StewardMonitorTest extends JsModuleTestBase {
         assertEquals(2, eval("focusListeners").asInt(), "focusin and focusout on the document");
         eval("var w = focusParty.root.join('widget', new Widget()); KeyboardStewardInstance.claim(w); w.leave()");
         assertTrue(eval("monitor.lamp()").asString().startsWith("active"), "redrawn on the steward's events, still active");
+    }
+
+    /** A walk on: the lamp names the member the keys are offered to, and is active again when the offer is off. */
+    @Test
+    void theLampNamesTheMemberAWalkOffersTheKeysTo() {
+        eval("var a = focusParty.root.join('alpha', new Widget()), b = focusParty.root.join('beta', new Widget())");
+        eval("KeyboardStewardInstance.offer(b)");
+        assertEquals("active — the keys are offered to “beta”", eval("monitor.lamp()").asString());
+        assertFalse(eval("monitor.root.has('sm_lamp_dormant')").asBoolean(), "a walk is the keyboard's: the steward is active");
+        eval("document.activeElement = el('input'); monitor.refresh()");
+        assertTrue(eval("monitor.lamp()").asString().startsWith("dormant"), "what is focused comes first");
+        eval("document.activeElement = document.body; KeyboardStewardInstance.withdraw()");
+        assertEquals("active — the keys are the holder's", eval("monitor.lamp()").asString());
+        eval("a.leave(); b.leave()");
     }
 
     @Test

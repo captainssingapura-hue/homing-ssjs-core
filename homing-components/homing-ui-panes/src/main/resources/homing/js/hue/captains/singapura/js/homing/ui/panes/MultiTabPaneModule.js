@@ -60,9 +60,10 @@
 //   pane.budget() .canAdd() .setAddEnabled(b)
 //   pane.size(s?) .aspect(a?)    the chips' size and aspect, −1..1, null the design's
 //   pane.contentElOf(id) .widgetOf(id) .getState() .el .slotId .focus
-//   pane.keyDown(ev) .wouldHold() .granted(by) .taken(by)   the member's, called by the steward;
-//       granted and taken write data-keys="held" on the frame, and a design says
-//       what a pane wearing it looks like
+//   pane.keyDown(ev) .wouldHold() .wouldOffer(m) .granted(by) .taken(by) .offered() .withdrawn()
+//       the member's, called by the steward; they write data-keys — held while the
+//       pane has the keys, candidate while the walk rests on it — on the frame,
+//       and a design says what a pane wearing it looks like
 //   pane.menuByKey() .requestDetach() .yieldKeys()   what the keys do, by call
 //   pane.dispose()               → every widget disposed in order, the branches dissolved
 //
@@ -181,8 +182,7 @@ class MultiTabPane {
         if (this._find(tab.id) >= 0) throw new Error("[MultiTabPane] tab '" + tab.id + "' is already in slot '" + this.slotId + "'");
         if (!tab.widget || typeof tab.widget !== "object" || !tab.widget.root)
             throw new Error("[MultiTabPane] tab '" + tab.id + "' has no widget with a root");
-        var f = tab.widget.focus;   // the law: a member of a dock's branch, with activate()
-        if (!f || typeof f !== "object" || typeof f.leave !== "function" || !f.in || typeof tab.widget.activate !== "function")
+        if (!PaneKeys.law(tab.widget))   // a member of a dock's branch, with activate()
             throw new Error("[MultiTabPane] tab '" + tab.id + "': its widget is not logically focusable - it must join the dock's focus branch (widget.focus) and answer activate()");
         if (this._tabs.length >= this._budget) throw new Error("[MultiTabPane] the budget of " + this._budget + " is spent in slot '" + this.slotId + "'");
     }
@@ -354,9 +354,14 @@ class MultiTabPane {
     yieldKeys() { Keys.yield(this.focus.owner); }
     /** A yield from a widget inside: the pane holds. */
     wouldHold() { return true; }
+    /** Asked by the walk about a member of the dock's branch: PaneKeys says which. */
+    wouldOffer(m) { return PaneKeys.wouldOffer(this, m); }
     /** Where the keys are, said once on the frame: the design answers it on the pane's own word. */
     granted() { this.el.setAttribute("data-keys", "held"); }
     taken() { this.el.removeAttribute("data-keys"); }
+    /** The walk rests here: a confirming key would bring the keys. Never over what the pane already says. */
+    offered() { if (this.el.getAttribute("data-keys") === null) this.el.setAttribute("data-keys", "candidate"); }
+    withdrawn() { if (this.el.getAttribute("data-keys") === "candidate") this.el.removeAttribute("data-keys"); }
 
     dispose() {
         if (this._disposed) return;

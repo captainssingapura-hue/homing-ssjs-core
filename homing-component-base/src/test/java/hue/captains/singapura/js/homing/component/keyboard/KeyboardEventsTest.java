@@ -63,7 +63,7 @@ class KeyboardEventsTest extends JsModuleTestBase {
     void theKindsAreThePermittedSubclassesInOrder() {
         var java = records().stream().map(Class::getSimpleName).toList();
         assertEquals(java.toString(), eval("'[' + KeyboardEvents.KINDS.join(', ') + ']'").asString());
-        assertEquals(3, java.size());
+        assertEquals(5, java.size());
     }
 
     @Test

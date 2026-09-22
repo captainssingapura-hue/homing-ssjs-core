@@ -63,6 +63,7 @@ class FocusMonitorTest extends JsModuleTestBase {
         loadModule(DIR + "component/keyboard/FocusPartyModule.js");
         loadModule(DIR + "component/keyboard/KeyboardSecretaryModule.js");
         loadModule(DIR + "component/keyboard/KeyboardEventsModule.js");
+        loadModule(DIR + "component/keyboard/KeyboardWalkModule.js");
         loadModule(DIR + "component/keyboard/KeyboardStewardModule.js");
         loadModule(DIR + "ui/focus/FocusMonitorModule.js");
         js.eval("js", SHIM);
@@ -92,6 +93,18 @@ class FocusMonitorTest extends JsModuleTestBase {
         assertEquals("0:root | 1:branch dock Dock | 1:leaf card Widget* | 1:branch desk Dock | 2:leaf widget Widget", rows(), "a move redraws");
         eval("c.leave()");
         assertEquals("0:root no one holds the keys | 1:branch dock Dock | 1:branch desk Dock | 2:leaf widget Widget", rows(), "the holder left: no one holds, and the row is gone");
+    }
+
+    /** A walk on: the row it rests on says the offer, the holder's still says held, and the offer withdrawn leaves one mark. */
+    @Test
+    void theRowAWalkRestsOnSaysTheOffer() {
+        eval("var w = focusParty.root.join('widget', new Widget()), c = focusParty.root.join('card', new Widget()); KeyboardStewardInstance.claim(w); KeyboardStewardInstance.offer(c)");
+        assertEquals("card", eval("monitor.candidateRow().children[1].textContent").asString());
+        assertEquals("candidate", eval("monitor.candidateRow().getAttribute('data-keys')").asString());
+        assertEquals("held", eval("monitor.holderRow().getAttribute('data-keys')").asString(), "the keys have not moved");
+        eval("KeyboardStewardInstance.withdraw()");
+        assertTrue(eval("monitor.candidateRow() === null").asBoolean(), "the offer off: one mark left, the holder's");
+        eval("w.leave(); c.leave()");
     }
 
     @Test

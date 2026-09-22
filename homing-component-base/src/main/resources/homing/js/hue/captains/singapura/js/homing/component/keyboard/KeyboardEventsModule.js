@@ -8,6 +8,8 @@
 //                                     that reached it, or a member that left (claim unless said)
 //   KeyboardEvents.Taken(id, by)      it lost the keyboard — to `by`, or to no one
 //   KeyboardEvents.Released(id)       it gave the keyboard up, or left
+//   KeyboardEvents.Offered(id)        the walk's cursor rests on it: a confirming key would give it the keys
+//   KeyboardEvents.Withdrawn(id)      the offer is off: the walk moved on, confirmed, or was called off
 //   KeyboardEvents.KINDS              the kinds, in this order
 //
 // The keys themselves are not events of ours: they are the browser's, passed
@@ -20,7 +22,7 @@ function _id(v, what) {
 }
 
 class KeyboardEvents {
-    static KINDS = Object.freeze(["Granted", "Taken", "Released"]);
+    static KINDS = Object.freeze(["Granted", "Taken", "Released", "Offered", "Withdrawn"]);
 
     /** A member holds the keyboard now: by a claim, by a yield that reached it, by a member that left, or by the steward's Tab. */
     static Granted(id, by) {
@@ -35,5 +37,13 @@ class KeyboardEvents {
     /** A member gave the keyboard up, or left the party while holding it. */
     static Released(id) {
         return Object.freeze({ kind: "Released", id: _id(id, "Released.id") });
+    }
+    /** The keys are offered to a member: the walk's cursor rests on it. Never the holder. */
+    static Offered(id) {
+        return Object.freeze({ kind: "Offered", id: _id(id, "Offered.id") });
+    }
+    /** The offer is withdrawn: the walk moved on, was confirmed, or was called off. */
+    static Withdrawn(id) {
+        return Object.freeze({ kind: "Withdrawn", id: _id(id, "Withdrawn.id") });
     }
 }

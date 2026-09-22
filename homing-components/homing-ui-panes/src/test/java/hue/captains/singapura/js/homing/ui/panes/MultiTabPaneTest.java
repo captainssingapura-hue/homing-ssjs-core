@@ -114,6 +114,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
         loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/FocusPartyModule.js");
         loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeyboardSecretaryModule.js");
         loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeyboardEventsModule.js");
+        loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeyboardWalkModule.js");
         loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeyboardStewardModule.js");
         loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeysModule.js");
         loadModule(EVENTS);
@@ -327,6 +328,35 @@ class MultiTabPaneTest extends JsModuleTestBase {
         assertFalse(eval("pane.keyDown({ key: 'x' })").asBoolean(), "anything else is left");
         assertEquals("0,0", eval("[(pane.el.children[0].children[0].listeners.keydown || []).length, (pane.el.listeners.keydown || []).length].join()").asString(), "no keydown listener on a chip or the pane");
         assertEquals("1", eval("String((pane.el.children[0].listeners.mousedown || []).length)").asString(), "the strip stops the press's default");
+    }
+
+    /**
+     * The walk over the focus tree: the pane is offered the keys like any other
+     * member and says so on its frame; of its widgets only the tab on show is
+     * offered — the others are behind it, and the pane's own arrows are the way
+     * to them. Enter takes the offer up.
+     */
+    @Test
+    void theWalkIsOfferedThePane_andOfItsWidgetsOnlyTheTabOnShow() {
+        eval("""
+            pane.addTab(tab('a')); pane.addTab(tab('b')); pane.addTab(tab('c')); log = [];
+            function cand() { var c = KeyboardStewardInstance.candidate(); return c ? focusParty.find(c).name : 'none'; }
+            function tabKey() { KeyboardStewardInstance._forward('KeyDown', { key: 'Tab', target: null, preventDefault: function () {}, stopPropagation: function () {} }); }
+            function enter() { KeyboardStewardInstance._forward('KeyDown', { key: 'Enter', target: null, preventDefault: function () {}, stopPropagation: function () {} }); }
+            """);
+        eval("tabKey()");
+        assertEquals("mtp_s1", eval("cand()").asString(), "the pane is a member like any other");
+        assertEquals("candidate", eval("String(pane.el.getAttribute('data-keys'))").asString(), "and says the offer on its frame");
+        eval("tabKey()");
+        assertEquals("a", eval("cand()").asString(), "the tab on show");
+        assertEquals("null", eval("String(pane.el.getAttribute('data-keys'))").asString(), "the offer moved on");
+        eval("tabKey()");
+        assertEquals("mtp_s1", eval("cand()").asString(), "b and c are behind a: the walk steps over them and comes round");
+        eval("pane.switchTab('c'); log = []; tabKey()");
+        assertEquals("c", eval("cand()").asString(), "what the pane shows is asked afresh");
+        eval("enter()");
+        assertEquals("c", eval("holder()").asString(), "Enter takes the offer up");
+        assertEquals("none", eval("cand()").asString(), "and the walk is over");
     }
 
     /** The law: a tab's widget is a member of a dock's branch with activate(), or the tab is refused; attachTab adopts a membership from elsewhere; a closed tab's widget is out of the tree. */

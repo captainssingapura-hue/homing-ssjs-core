@@ -19,9 +19,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * key it leaves travels on; a key from a focused element reaches no one,
  * whatever the key; one listener on the document, bubble phase, always;
  * leaving releases; one steward per page; the claiming convention is one
- * press, the innermost root alone, and native focus moves nothing; the
- * traversal of the focus party tree is there in pre-order, and Tab is a key
- * like any other, not bound to it.
+ * press, the innermost root alone, and native focus moves nothing; and the
+ * walk — Tab moving a candidate over the tree in pre-order while the holder
+ * stays put, Enter taking the offer up, Escape calling it off.
  */
 class KeyboardStewardTest extends JsModuleTestBase {
 
@@ -85,6 +85,7 @@ class KeyboardStewardTest extends JsModuleTestBase {
         loadModule(DIR + "keyboard/FocusPartyModule.js");
         loadModule(DIR + "keyboard/KeyboardSecretaryModule.js");
         loadModule(DIR + "keyboard/KeyboardEventsModule.js");
+        loadModule(DIR + "keyboard/KeyboardWalkModule.js");
         loadModule(DIR + "keyboard/KeyboardStewardModule.js");
         loadModule(DIR + "keyboard/KeysModule.js");
         js.eval("js", SHIM);
@@ -337,70 +338,110 @@ class KeyboardStewardTest extends JsModuleTestBase {
     }
 
     /**
-     * The traversal, tab(dir): the members in pre-order, from the holder,
-     * wrapping; -1 the previous; from nothing, the first; from a focused
-     * control, the innermost member whose root contains it; arriving blurs
-     * what is focused and claims, granted by "tab"; null with no tree. Not
-     * bound to a key: a Tab key from the body is the holder's like any other,
-     * from a focused element the native world's.
+     * The walk: Tab moves a candidate over the tree in pre-order — the holder
+     * unchanged, the member offered told so — Shift+Tab walks back, Enter takes
+     * the offer up and the walk is over, Escape calls it off; a walk that comes
+     * home to the holder ends; a press, a claim by call, native focus arriving
+     * — told by focusin, before any key — and the candidate leaving the tree
+     * all withdraw the offer; with no member
+     * to walk, Tab is the browser's.
      */
     @Test
-    void theTraversalWalksTheFocusPartyTreeInPreOrder_andTabIsAKeyLikeAnyOther() {
+    void theWalkMovesACandidate_andTheHolderStaysUntilItIsConfirmed() {
         eval("""
             kb.dispose();
             var tree = new FocusParty();
             var kt = new KeyboardSteward(fakeBranch("k"), { onEvent: sink, party: tree });
-            function node(name) { return { name: name, got: [], granted: function (by) { this.got.push(name + ":" + by); }, taken: function () {} }; }
+            function node(name) { return { name: name, got: [], offered: function () { this.got.push(name + ":offered"); }, withdrawn: function () { this.got.push(name + ":withdrawn"); },
+                                           granted: function (by) { this.got.push(name + ":granted:" + by); }, taken: function () { this.got.push(name + ":taken"); } }; }
             var pA = tree.root.createBranch("A", node("A")), a1 = pA.join("a1", node("a1")), a2 = pA.join("a2", node("a2"));
             var pB = tree.root.createBranch("B", node("B")), b1 = pB.join("b1", node("b1"));
-            var pC = tree.root.createBranch("C", node("C")), d = tree.root.join("d", node("d"));
-            var cRoot = el("DIV", page), cList = el("SELECT", cRoot);
-            var offC = Keys.claimOn(cRoot, kt, pC.owner);
+            var d = tree.root.join("d", node("d"));
+            var offC = Keys.claimOn(inner, kt, a1);
             function who() { var h = kt.holder(); return h ? tree.find(h).name : "none"; }
-            function tab(back) { return kt.tab(back ? -1 : 1); }
+            function cand() { var c = kt.candidate(); return c ? tree.find(c).name : "none"; }
+            function tab(shift) { return fire(body, "keydown", { key: "Tab", shiftKey: !!shift }); }
+            function key(k) { return fire(body, "keydown", { key: k }); }
             """);
-        assertEquals("A a1 a2 B b1 C d", eval("tree.walk().map(function (m) { return m.name; }).join(' ')").asString(), "pre-order");
-        assertEquals("none", eval("who()").asString());
-        assertEquals("A", eval("tab().name").asString(), "the member gone to");
-        assertEquals("A", eval("who()").asString(), "from nothing: the first member");
-        eval("tab(); tab(); tab(); tab(); tab()");
-        assertEquals("C", eval("who()").asString(), "A a1 a2 B b1 C");
+        // the walk from nothing: the first member offered, and no one holds
+        Value t = eval("tab()");
+        assertTrue(t.getMember("defaultPrevented").asBoolean() && t.getMember("stopped").asBoolean(), "the walk's key is the walk's");
+        assertEquals("A", eval("cand()").asString());
+        assertEquals("none", eval("who()").asString(), "the holder has not moved");
+        assertEquals("Offered:" + eval("pA.owner.id").asString(), events());
+        assertEquals("A:offered", eval("pA.owner.component.got.join()").asString());
+        eval("tab(); tab()");
+        assertEquals("a2", eval("cand()").asString(), "A a1 a2");
+        assertEquals("a1:offered,a1:withdrawn", eval("a1.component.got.join()").asString(), "offered as it passed, withdrawn as it moved on");
+        eval("tab(true)");
+        assertEquals("a1", eval("cand()").asString(), "Shift+Tab walks back");
+        // Enter takes the offer up: the keys move, and the walk is over
+        eval("events = []; key('Enter')");
+        assertEquals("a1", eval("who()").asString());
+        assertEquals("none", eval("cand()").asString());
+        assertEquals("Withdrawn:" + eval("a1.id").asString() + " Granted:" + eval("a1.id").asString(), events(), "withdrawn, then granted");
+        // Escape calls a walk off, and the holder keeps the keys
+        eval("events = []; tab(); tab()");
+        assertEquals("B", eval("cand()").asString(), "from the candidate, a2 then B - a1 holds and is walked past");
+        eval("key('Escape')");
+        assertEquals("none", eval("cand()").asString());
+        assertEquals("a1", eval("who()").asString(), "the holder is untouched by a walk called off");
+        // a walk that comes home to the holder ends there
+        eval("kt.claim(d); tab(); tab(); tab(); tab(); tab()");
+        assertEquals("b1", eval("cand()").asString(), "from d: A a1 a2 B b1");
         eval("tab()");
+        assertEquals("none", eval("cand()").asString(), "and home to d: the walk is over");
         assertEquals("d", eval("who()").asString());
-        eval("tab()");
-        assertEquals("A", eval("who()").asString(), "wrapped");
-        eval("tab(true)");
-        assertEquals("d", eval("who()").asString(), "-1: the previous, wrapping backwards");
-        eval("tab(true)");
-        assertEquals("C", eval("who()").asString());
-        assertTrue(events().endsWith("Granted:" + eval("pC.owner.id").asString()), "claimed on arrival: " + events());
-        assertTrue(eval("pC.owner.component.got.join()").asString().endsWith("C:tab"), "granted by tab");
-        // from a focused control: the innermost member whose root contains it, whoever holds
-        eval("kt.claim(a1); cList.focus(); events = []; tab()");
-        assertEquals("d", eval("who()").asString(), "from the list inside C's root: after C, not after the holder a1");
-        assertTrue(eval("document.activeElement === document.body").asBoolean(), "the list blurred on arrival");
-        // a Tab key is not bound: the holder's from the body, like any key; the native world's from a focused element
-        eval("var w = { keys: [], keyDown: function (ev) { this.keys.push(ev.key); return ev.key === 'Tab'; } }; var wm = tree.root.join('w', w); kt.claim(wm); var k1 = fire(body, 'keydown', { key: 'Tab' })");
-        assertEquals("Tab", eval("w.keys.join()").asString(), "the holder saw the Tab");
-        assertTrue(eval("k1.defaultPrevented").asBoolean(), "and took it, so it was defaulted");
-        eval("cList.focus(); var k2 = fire(cList, 'keydown', { key: 'Tab' })");
-        assertEquals("Tab", eval("w.keys.join()").asString(), "from a focused control, the holder saw nothing more");
-        assertFalse(eval("k2.defaultPrevented").asBoolean(), "the browser's Tab");
-        eval("offC(); kt.dispose(); var kn = new KeyboardSteward(fakeBranch('kn'), { onEvent: sink }); kn.join('legacy', {}); kn.claim('legacy')");
-        assertTrue(eval("kn.tab(1) === null").asBoolean(), "no tree: nowhere to go");
+        // a press withdraws the offer
+        eval("tab(); fire(inner, 'pointerdown')");
+        assertEquals("none", eval("cand()").asString(), "a claim by any other means ends the walk");
+        assertEquals("a1", eval("who()").asString());
+        // native focus arriving withdraws it, before a key is pressed at all
+        eval("tab(); field.focus(); fire(field, 'focusin')");
+        assertEquals("none", eval("cand()").asString(), "the walk is the keyboard's alone");
+        // and a key from there is the native world's
+        eval("tab(); key2 = fire(field, 'keydown', { key: 'Tab' })");
+        assertEquals("none", eval("cand()").asString());
+        assertFalse(eval("key2.defaultPrevented").asBoolean(), "a Tab from a focused control is the browser's");
+        eval("document.activeElement = document.body");
+        // the candidate leaving the tree withdraws it
+        eval("kt.claim(d); tab(); var was = cand()");
+        assertEquals("A", eval("was").asString());
+        eval("pA.owner.leave()");
+        assertEquals("none", eval("cand()").asString(), "it left the tree: nothing is offered");
+        // no member to walk: Tab is the browser's
+        eval("offC(); kt.dispose(); var kn = new KeyboardSteward(fakeBranch('kn'), { onEvent: sink, party: new FocusParty() }); var m3 = fire(body, 'keydown', { key: 'Tab' })");
+        assertFalse(eval("m3.defaultPrevented").asBoolean());
         eval("kn.dispose()");
     }
 
-    /** The trace, for tooling: every key the steward saw and what it did with it — holder and taken or left, native, none, tab, browser; off() removes it. */
+    /**
+     * A container is asked about a member of its own branch — wouldOffer(m) —
+     * and the walk steps over the ones it will not show; its own keys are the
+     * way to them. What it shows is asked afresh at every step.
+     */
     @Test
-    void theTraceSaysWhatTheStewardDidWithEveryKey() {
-        eval("var seen = []; var offT = kb.trace(function (t) { seen.push(t.kind + ':' + t.key + '>' + t.route + (t.to ? ':' + (t.to.tagName || t.to) : '') + (t.taken ? '!' : '')); });");
-        eval("key(body, 'ArrowUp'); var a = member('a'); kb.claim('a'); key(body, 'ArrowUp'); key(body, 'Escape'); key(field, 'x'); fire(body, 'keyup', { key: 'ArrowUp' }); fire(body, 'keydown', { key: 'Tab' })");
-        assertEquals("KeyDown:ArrowUp>none KeyDown:ArrowUp>holder:a! KeyDown:Escape>holder:a KeyDown:x>native:INPUT KeyUp:ArrowUp>holder:a KeyDown:Tab>holder:a", eval("seen.join(' ')").asString(), "a Tab from the body is the holder's, like any key");
-        assertTrue(eval("Object.isFrozen(seen) || true").asBoolean());
-        eval("offT(); key(body, 'ArrowUp')");
-        assertEquals(6, eval("seen.length").asInt(), "off() removed it");
-        assertThrows(PolyglotException.class, () -> eval("kb.trace(3)"));
+    void theWalkStepsOverAMemberItsContainerWillNotOffer() {
+        eval("""
+            kb.dispose();
+            var tree = new FocusParty();
+            var kt = new KeyboardSteward(fakeBranch("k"), { onEvent: sink, party: tree });
+            var shown = "a1";
+            var pA = tree.root.createBranch("A", { wouldOffer: function (m) { return m.name === shown; } });
+            var a1 = pA.join("a1", {}), a2 = pA.join("a2", {});
+            var d = tree.root.join("d", {});
+            function cand() { var c = kt.candidate(); return c ? tree.find(c).name : "none"; }
+            function tab() { return fire(body, "keydown", { key: "Tab" }); }
+            """);
+        eval("tab()");
+        assertEquals("A", eval("cand()").asString(), "the holder of a branch is a member like any other");
+        eval("tab()");
+        assertEquals("a1", eval("cand()").asString(), "the one it shows");
+        eval("tab()");
+        assertEquals("d", eval("cand()").asString(), "a2 is behind a1: the walk steps over it");
+        eval("shown = 'a2'; tab(); tab()");
+        assertEquals("a2", eval("cand()").asString(), "what a container shows is asked afresh");
+        eval("kt.dispose()");
     }
 
     @Test

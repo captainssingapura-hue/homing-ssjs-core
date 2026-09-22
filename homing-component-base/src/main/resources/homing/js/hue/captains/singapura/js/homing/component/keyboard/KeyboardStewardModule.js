@@ -9,12 +9,16 @@
 //   target is the body — nothing focused anywhere — to the holder's
 //   keyDown/keyUp, defaulted and stopped when taken; target is a focused
 //   element — nothing: the native world had it. The holder is untouched by
-//   native focus and resumes the moment the focused thing blurs. Tab is a
-//   key like any other: not bound. The traversal of the focus party tree —
-//   step(dir), tab(dir): the next (previous) member in pre-order, from the
-//   holder or from the innermost member whose root contains the focused
-//   element, wrapping — is here for a binding still to be designed: a
-//   candidate that Tab moves without claiming, confirmed by a key.
+//   native focus and resumes the moment the focused thing blurs.
+//
+//   THE WALK, while nothing is natively focused, is KeyboardWalk's: it moves
+//   a CANDIDATE — the cursor the steward keeps beside the holder, offered and
+//   withdrawn here — over the focus party tree, and the holder does not
+//   change until a key confirms it. Anything else goes to the holder as
+//   usual. A claim by any other means, native focus arriving, or the
+//   candidate leaving the tree, all withdraw the offer: the walk exists only
+//   while the keyboard has the page — the steward's one focusin listener
+//   withdraws, and never claims.
 //
 // Members: a membership of the focus tree, joined on the party's `joined`
 // notice, its component's keyDown/keyUp/granted/taken the reactors; or, the
@@ -42,18 +46,21 @@ class KeyboardSteward {
         this._traces = [];
         if (opts && typeof opts.onEvent === "function") this.on(opts.onEvent);
         this._holder = null;
+        this._candidate = null;      // the walk's cursor: a member id, or null
         this._members = {};
         this._roots = new WeakMap();     // root element → the id enrolled on it
         this._party = new Party({ name: "keyboard", root: { path: _ROOT, initial: KeyboardSecretary.initial, behavior: KeyboardSecretary.behavior } });
         this._party.joinActor({ id: _STEWARD, parentSecretary: _ROOT, reactors: {} });
         this._onDown = function (ev) { self._forward("KeyDown", ev); };
         this._onUp = function (ev) { self._forward("KeyUp", ev); };
+        this._onFocusIn = function () { self.withdraw(); };   // a walk is the keyboard's alone: native focus ends it. It never claims
         this._listen(true);
         // the focus tree: whoever joins it is a member here, by its membership; whoever leaves it leaves here too
         this._focus = opts && opts.party ? opts.party : null;
         this._offFocus = this._focus ? this._focus.on(function (n) {
             if (n.kind === "joined") { var m = self._focus.find(n.id); if (m && !self._members[m.id]) self.join(m); }
             else if (n.kind === "left" && self._members[n.id]) {
+                if (self._candidate === n.id) self.withdraw();   // nothing is offered to a member that has gone
                 // the leaver yields on its way out, from the parent it had: the first ancestor that would hold, else no one
                 if (self._holder === n.id) self._handOn(self._catcher(n.parent ? self._focus.find(n.parent) : null, null), n.id, "left");
                 self._party.leave(n.id);
@@ -98,7 +105,8 @@ class KeyboardSteward {
         if (id && typeof id === "object" && typeof id.id === "string" && id.component) {   // a membership of the focus tree: the component's methods are the reactors
             var c = id.component;
             handlers = { keyDown: typeof c.keyDown === "function" ? function (ev) { return c.keyDown(ev); } : null, keyUp: typeof c.keyUp === "function" ? function (ev) { return c.keyUp(ev); } : null,
-                         granted: typeof c.granted === "function" ? function (by) { c.granted(by); } : null, taken: typeof c.taken === "function" ? function (by) { c.taken(by); } : null };
+                         granted: typeof c.granted === "function" ? function (by) { c.granted(by); } : null, taken: typeof c.taken === "function" ? function (by) { c.taken(by); } : null,
+                         offered: typeof c.offered === "function" ? function () { c.offered(); } : null, withdrawn: typeof c.withdrawn === "function" ? function () { c.withdrawn(); } : null };
             id = id.id;
         }
         if (typeof id !== "string" || !id) throw new Error("[KeyboardSteward] a member needs an id");
@@ -116,12 +124,13 @@ class KeyboardSteward {
             Granted: function (m) { self._held(id, m.by); if (typeof h.granted === "function") h.granted(m.by == null ? "claim" : m.by); },
             Taken: function (m) { self._lost(id, m.by); if (typeof h.taken === "function") h.taken(m.by); }
         } });
-        this._members[id] = true;
+        this._members[id] = h;
         return id;
     }
     leave(id) {
         id = KeyboardSteward.idOf(id);
         if (!this._members[id]) return;
+        if (this._candidate === id) this.withdraw();
         this._party.tellFrom(_STEWARD, { kind: "Left", id: id });
         this._party.leave(id);
         delete this._members[id];
@@ -154,36 +163,53 @@ class KeyboardSteward {
         return function () { var i = sinks.indexOf(fn); if (i >= 0) sinks.splice(i, 1); };
     }
 
-    // ── the traversal ─────────────────────────────────────────────────────
+    // ── where a walk starts ───────────────────────────────────────────────
     /** What is natively focused, or null when nothing is: the document's active element unless it is the body. */
     static focused() {
         if (typeof document === "undefined") return null;
         var a = document.activeElement;
         return a && a !== document.body && a !== document.documentElement ? a : null;
     }
-    /** The member the traversal starts from: the innermost containing the focused element, else the holder; or null. */
+    /** The member a walk starts from: the candidate while one is on, else the innermost member containing the focused element, else the holder; or null. */
     from() {
+        if (this._candidate) return this._candidate;
         var f = KeyboardSteward.focused();
         var at = f ? this.memberAt(f) : null;
         return at || this._holder;
     }
-    /** The member `dir` steps from `from()` in pre-order, wrapping; null with no tree or no members. */
-    step(dir) {
-        var walk = this._focus ? this._focus.walk() : [];
-        if (!walk.length) return null;
-        var from = this.from(), i = -1;
-        for (var k = 0; k < walk.length; k++) if (walk[k].id === from) { i = k; break; }
-        if (i < 0) return dir > 0 ? walk[0] : walk[walk.length - 1];
-        return walk[(i + dir + walk.length) % walk.length];
+    // ── the walk's cursor: KeyboardWalk moves it, the steward keeps it ────
+    /** The member the walk's cursor rests on, or null. */
+    candidate() { return this._candidate; }
+    /** The walk one step on (dir 1) or back (-1), by call: the member offered, or null when it ended. */
+    walk(dir) { return KeyboardWalk.move(this, dir); }
+    /** The keys offered to a member: the cursor rests on it, and a confirming key would claim it. The holder is never offered. */
+    offer(m) {
+        var id = KeyboardSteward.idOf(m);
+        if (!this._members[id] || id === this._holder || id === this._candidate) return false;
+        this.withdraw();
+        this._candidate = id;
+        var h = this._members[id];
+        if (h && typeof h.offered === "function") { try { h.offered(); } catch (e) { console.error("[KeyboardSteward] offered threw:", e); } }
+        this._fire(KeyboardEvents.Offered(id));
+        return true;
     }
-    /** The traversal, not bound to a key: to the next member of the tree (dir 1) or the previous (-1); whatever is focused blurred, the member claimed. The member, or null when there is none. */
-    tab(dir) {
-        var to = this.step(dir);
-        if (!to) return null;
-        var f = KeyboardSteward.focused();
-        if (f && typeof f.blur === "function") f.blur();
-        this._party.tellFrom(_STEWARD, { kind: "Claim", id: to.id, by: "tab" });
-        return to;
+    /** The offer off: the walk moved on, was confirmed, or was called off. True when there was one. */
+    withdraw() {
+        var id = this._candidate;
+        if (!id) return false;
+        this._candidate = null;
+        var h = this._members[id];
+        if (h && typeof h.withdrawn === "function") { try { h.withdrawn(); } catch (e) { console.error("[KeyboardSteward] withdrawn threw:", e); } }
+        this._fire(KeyboardEvents.Withdrawn(id));
+        return true;
+    }
+    /** The offer taken up: the candidate claims, and the walk is over. True when there was a candidate. */
+    confirm() {
+        var id = this._candidate;
+        if (!id) return false;
+        this.withdraw();
+        this.claim(id);
+        return true;
     }
 
     // ── the trace, for tooling ────────────────────────────────────────────
@@ -209,6 +235,7 @@ class KeyboardSteward {
     // ── what the secretary decided, mirrored for the listeners and the sink ──
     _held(id, by) {
         this._holder = id;
+        this.withdraw();   // the keys have moved: whatever was offered, the walk is over
         this._fire(KeyboardEvents.Granted(id, by == null ? "claim" : by));
     }
     _lost(id, by) {
@@ -222,10 +249,12 @@ class KeyboardSteward {
         var f = on ? "addEventListener" : "removeEventListener";
         document[f]("keydown", this._onDown, false);
         document[f]("keyup", this._onUp, false);
+        document[f]("focusin", this._onFocusIn, false);
     }
-    /** By state: a key from the body goes to the holder; a key from a focused element goes nowhere. Each traced. */
+    /** By state: the walk's keys are the steward's; a key from the body goes to the holder; a key from a focused element goes nowhere. Each traced. */
     _forward(kind, ev) {
-        if (KeyboardSteward.fromAFocusedElement(ev)) { this._traced(kind, ev, "native", ev.target, false); return; }
+        if (KeyboardSteward.fromAFocusedElement(ev)) { this.withdraw(); this._traced(kind, ev, "native", ev.target, false); return; }
+        if (kind === "KeyDown" && KeyboardWalk.keyDown(this, ev)) { ev.preventDefault(); ev.stopPropagation(); this._traced(kind, ev, "walk", this._candidate, true); return; }
         var holder = this._holder;
         if (holder === null) { this._traced(kind, ev, "none", null, false); return; }
         this._party.tellFrom(_STEWARD, { kind: kind, ev: ev });
@@ -247,6 +276,7 @@ class KeyboardSteward {
     dispose() {
         this._listen(false);
         this._holder = null;
+        this._candidate = null;
         this._members = {};
         this._sinks = [];
         this._traces = [];

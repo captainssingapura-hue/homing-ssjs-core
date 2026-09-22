@@ -1,8 +1,8 @@
 // =============================================================================
-// PaneKeys — the pane's keys while it holds them, as one function over the
-// pane's own surface: what a key means for a container of tabs, and nothing
-// about how the pane is built. Level 1 of the two levels: the container's
-// own operations and no more.
+// PaneKeys — the pane in the keyboard party, over the pane's own surface and
+// nothing about how the pane is built: what a key means for a container of
+// tabs (level 1 of the two levels: the container's own operations and no
+// more), what the walk is offered, and the law a tab's widget must keep.
 //
 //   PaneKeys.keyDown(pane, ev) → true when taken
 //     ← →              the active tab moves to the previous / next, at once; no wrap
@@ -13,6 +13,11 @@
 //     Escape           the pane yields, up the tree: pane.yieldKeys()
 //     Shift+F10, ContextMenu   the active tab's menu, at its chip: pane.menuByKey()
 //   A chord with Ctrl, Alt or Meta is left; so is anything not above.
+//
+//   PaneKeys.wouldOffer(pane, m) → whether the walk is offered a member of
+//     the dock's branch: only the tab on show, the rest being behind it
+//   PaneKeys.law(widget) → whether a tab's widget is logically focusable:
+//     a member of a branch, with activate(); level 2 rests on it
 //
 // Pure: it imports nothing and touches no DOM. A pure module must not import
 // a DOM module - its imports resolve without the page's theme and would load
@@ -39,5 +44,18 @@ class PaneKeys {
         if (ev.key === "Enter") { if (i >= 0) pane.widgetOf(active).activate(); return true; }
         if (ev.key === "ContextMenu") return pane.menuByKey();
         return false;
+    }
+
+    /** Asked by the walk about a member of the dock's branch: only the tab on show is offered the keys — the others are behind it, and the pane's own arrows are the way to them. */
+    static wouldOffer(pane, m) {
+        var ids = pane.tabs(), active = pane.activeTab();
+        for (var i = 0; i < ids.length; i++) if (pane.widgetOf(ids[i]) === m.component) return ids[i] === active;
+        return true;   // not a tab's widget: not the pane's business
+    }
+
+    /** The law: a tab's widget is a member of a focus branch of its own and answers activate(), so the keys can be given to it and it can take them. */
+    static law(widget) {
+        var f = widget ? widget.focus : null;
+        return !!f && typeof f === "object" && typeof f.leave === "function" && !!f.in && typeof widget.activate === "function";
     }
 }
