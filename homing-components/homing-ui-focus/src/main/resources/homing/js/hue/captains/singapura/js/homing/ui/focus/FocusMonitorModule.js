@@ -2,22 +2,18 @@
 // FocusMonitor — the page's logical-focus tree as a tree view, the holder of
 // the keys marked. One row per node: the root, every branch (its holder), every
 // leaf — the kind, the name, the component's class — indented by depth; the
-// row of the member that holds the keys is lit. Above the tree, the steward
-// by state: active — nothing natively focused, the keys are the holder's —
-// or dormant on the element that has the focus, whose keys are its own; and
-// where Tab goes next. Redrawn on every notice of the focus party, every
-// event of the steward and every move of the native focus, so it says at
-// every moment exactly which component is in focus and under whom. A holder
-// that is not in the tree — a member by id, the older way — is named below.
-// Tooling for a page: it reads the party, the steward and the document's
-// active element, and takes no keys.
+// row of the member that holds the keys is lit. Redrawn on every notice of
+// the focus party and every event of the steward, so it says at every moment
+// exactly which component is in focus and under whom. A holder that is not
+// in the tree — a member by id, the older way — is named below the tree.
+// Tooling for a page: it reads the party and the steward and takes no keys;
+// the steward's own state is the StewardMonitor's.
 // A branch component: the caller makes a sub-branch for it and hands it in.
 //
 //   new FocusMonitor(branch, { host })
 //     .root           the tree element, appended to the host
 //     .refresh()      redrawn by call; it redraws itself on every change
 //     .holderRow()    the lit row's element, or null
-//     .state()        the state line's text: "active · next: …" or "dormant on …"
 //     .dispose()
 // =============================================================================
 
@@ -38,16 +34,8 @@ class FocusMonitor {
         root.setAttribute("aria-label", "Logical focus");
         opts.host.appendChild(root);
         this.root = root;
-        var state = branch.createElement("state", "div");
-        css.addClass(state, fm_state);
-        state.setAttribute("aria-live", "polite");
-        opts.host.insertBefore(state, root);
-        this._state = state;
         this._offParty = focusParty.on(function () { self.refresh(); });
         this._offSteward = KeyboardStewardInstance.on(function () { self.refresh(); });
-        this._onFocus = function () { self.refresh(); };
-        document.addEventListener("focusin", this._onFocus, false);
-        document.addEventListener("focusout", this._onFocus, false);
         this.refresh();
     }
 
@@ -98,34 +86,14 @@ class FocusMonitor {
             out.textContent = "held outside the tree: " + holder;
             this.root.appendChild(out);
         }
-        this._state.textContent = FocusMonitor.stateOf(KeyboardStewardInstance);
-        css.toggleClass(this._state, fm_state_dormant, !!KeyboardSteward.focused());
         return this;
     }
 
-    /** The steward by state, as a line: dormant on what has the native focus, or active with where Tab goes next. */
-    static stateOf(steward) {
-        var f = KeyboardSteward.focused();
-        if (f) return "dormant on " + FocusMonitor.describe(f) + " — its keys are its own";
-        var next = steward.step(1);
-        return "active — the keys are the holder's" + (next ? " · Tab → " + next.path : "");
-    }
-    /** An element for the eye: its tag, its aria-label or id when it has one. */
-    static describe(el) {
-        var tag = String(el.tagName || "?").toLowerCase();
-        var name = el.getAttribute ? (el.getAttribute("aria-label") || el.id) : "";
-        return name ? tag + " “" + name + "”" : tag;
-    }
-
     holderRow() { return this._holderRow; }
-    state() { return this._state.textContent; }
 
     dispose() {
         this._offParty();
         this._offSteward();
-        document.removeEventListener("focusin", this._onFocus, false);
-        document.removeEventListener("focusout", this._onFocus, false);
-        if (this._state.parentNode) this._state.parentNode.removeChild(this._state);
         if (this.root.parentNode) this.root.parentNode.removeChild(this.root);
         this.branch.dissolve();
     }

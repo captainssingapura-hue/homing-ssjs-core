@@ -19,8 +19,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * key it leaves travels on; a key from a focused element reaches no one,
  * whatever the key; one listener on the document, bubble phase, always;
  * leaving releases; one steward per page; the claiming convention is one
- * press, the innermost root alone, and native focus moves nothing; Tab is
- * the steward's and traverses the focus party tree in pre-order.
+ * press, the innermost root alone, and native focus moves nothing; the
+ * traversal of the focus party tree is there in pre-order, and Tab is a key
+ * like any other, not bound to it.
  */
 class KeyboardStewardTest extends JsModuleTestBase {
 
@@ -336,15 +337,15 @@ class KeyboardStewardTest extends JsModuleTestBase {
     }
 
     /**
-     * Tab traverses the focus party tree: the members in pre-order, from the
-     * holder, wrapping; Shift+Tab the previous; from nothing, the first; from
-     * a focused control, the innermost member whose root contains it; arriving
-     * blurs what is focused and claims, granted by "tab"; a Tab with a modifier,
-     * a Tab stopped before the document, and a Tab with no tree are not the
-     * steward's.
+     * The traversal, tab(dir): the members in pre-order, from the holder,
+     * wrapping; -1 the previous; from nothing, the first; from a focused
+     * control, the innermost member whose root contains it; arriving blurs
+     * what is focused and claims, granted by "tab"; null with no tree. Not
+     * bound to a key: a Tab key from the body is the holder's like any other,
+     * from a focused element the native world's.
      */
     @Test
-    void tabTraversesTheFocusPartyTreeInPreOrder() {
+    void theTraversalWalksTheFocusPartyTreeInPreOrder_andTabIsAKeyLikeAnyOther() {
         eval("""
             kb.dispose();
             var tree = new FocusParty();
@@ -356,12 +357,11 @@ class KeyboardStewardTest extends JsModuleTestBase {
             var cRoot = el("DIV", page), cList = el("SELECT", cRoot);
             var offC = Keys.claimOn(cRoot, kt, pC.owner);
             function who() { var h = kt.holder(); return h ? tree.find(h).name : "none"; }
-            function tab(shift) { return fire(body, "keydown", { key: "Tab", shiftKey: !!shift }); }
+            function tab(back) { return kt.tab(back ? -1 : 1); }
             """);
         assertEquals("A a1 a2 B b1 C d", eval("tree.walk().map(function (m) { return m.name; }).join(' ')").asString(), "pre-order");
         assertEquals("none", eval("who()").asString());
-        Value t = eval("tab()");
-        assertTrue(t.getMember("defaultPrevented").asBoolean() && t.getMember("stopped").asBoolean(), "Tab taken");
+        assertEquals("A", eval("tab().name").asString(), "the member gone to");
         assertEquals("A", eval("who()").asString(), "from nothing: the first member");
         eval("tab(); tab(); tab(); tab(); tab()");
         assertEquals("C", eval("who()").asString(), "A a1 a2 B b1 C");
@@ -370,26 +370,24 @@ class KeyboardStewardTest extends JsModuleTestBase {
         eval("tab()");
         assertEquals("A", eval("who()").asString(), "wrapped");
         eval("tab(true)");
-        assertEquals("d", eval("who()").asString(), "Shift+Tab: the previous, wrapping backwards");
+        assertEquals("d", eval("who()").asString(), "-1: the previous, wrapping backwards");
         eval("tab(true)");
         assertEquals("C", eval("who()").asString());
         assertTrue(events().endsWith("Granted:" + eval("pC.owner.id").asString()), "claimed on arrival: " + events());
         assertTrue(eval("pC.owner.component.got.join()").asString().endsWith("C:tab"), "granted by tab");
         // from a focused control: the innermost member whose root contains it, whoever holds
-        eval("kt.claim(a1); cList.focus(); events = []; fire(cList, 'keydown', { key: 'Tab' })");
+        eval("kt.claim(a1); cList.focus(); events = []; tab()");
         assertEquals("d", eval("who()").asString(), "from the list inside C's root: after C, not after the holder a1");
         assertTrue(eval("document.activeElement === document.body").asBoolean(), "the list blurred on arrival");
-        // not the steward's
-        eval("kt.claim(a1); var m1 = fire(body, 'keydown', { key: 'Tab', ctrlKey: true })");
-        assertEquals("a1", eval("who()").asString(), "a Tab with a modifier is the browser's");
-        assertFalse(eval("m1.defaultPrevented").asBoolean());
-        eval("inner.addEventListener('keydown', function (ev) { ev.stopPropagation(); }, false); fire(inner, 'keydown', { key: 'Tab' })");
-        assertEquals("a1", eval("who()").asString(), "a Tab stopped before the document is not seen");
-        eval("var traced = []; kt.trace(function (t) { traced.push(t.route + ':' + (t.to ? tree.find(t.to).name : '-')); }); tab()");
-        assertEquals("tab:a2", eval("traced.join()").asString(), "a Tab traced with the member it went to");
-        eval("offC(); kt.dispose(); var kn = new KeyboardSteward(fakeBranch('kn'), { onEvent: sink }); kn.join('legacy', {}); kn.claim('legacy'); var m2 = fire(body, 'keydown', { key: 'Tab' })");
-        assertFalse(eval("m2.defaultPrevented").asBoolean(), "no tree: Tab is the browser's");
-        assertEquals("legacy", eval("kn.holder()").asString());
+        // a Tab key is not bound: the holder's from the body, like any key; the native world's from a focused element
+        eval("var w = { keys: [], keyDown: function (ev) { this.keys.push(ev.key); return ev.key === 'Tab'; } }; var wm = tree.root.join('w', w); kt.claim(wm); var k1 = fire(body, 'keydown', { key: 'Tab' })");
+        assertEquals("Tab", eval("w.keys.join()").asString(), "the holder saw the Tab");
+        assertTrue(eval("k1.defaultPrevented").asBoolean(), "and took it, so it was defaulted");
+        eval("cList.focus(); var k2 = fire(cList, 'keydown', { key: 'Tab' })");
+        assertEquals("Tab", eval("w.keys.join()").asString(), "from a focused control, the holder saw nothing more");
+        assertFalse(eval("k2.defaultPrevented").asBoolean(), "the browser's Tab");
+        eval("offC(); kt.dispose(); var kn = new KeyboardSteward(fakeBranch('kn'), { onEvent: sink }); kn.join('legacy', {}); kn.claim('legacy')");
+        assertTrue(eval("kn.tab(1) === null").asBoolean(), "no tree: nowhere to go");
         eval("kn.dispose()");
     }
 
@@ -398,7 +396,7 @@ class KeyboardStewardTest extends JsModuleTestBase {
     void theTraceSaysWhatTheStewardDidWithEveryKey() {
         eval("var seen = []; var offT = kb.trace(function (t) { seen.push(t.kind + ':' + t.key + '>' + t.route + (t.to ? ':' + (t.to.tagName || t.to) : '') + (t.taken ? '!' : '')); });");
         eval("key(body, 'ArrowUp'); var a = member('a'); kb.claim('a'); key(body, 'ArrowUp'); key(body, 'Escape'); key(field, 'x'); fire(body, 'keyup', { key: 'ArrowUp' }); fire(body, 'keydown', { key: 'Tab' })");
-        assertEquals("KeyDown:ArrowUp>none KeyDown:ArrowUp>holder:a! KeyDown:Escape>holder:a KeyDown:x>native:INPUT KeyUp:ArrowUp>holder:a KeyDown:Tab>browser", eval("seen.join(' ')").asString());
+        assertEquals("KeyDown:ArrowUp>none KeyDown:ArrowUp>holder:a! KeyDown:Escape>holder:a KeyDown:x>native:INPUT KeyUp:ArrowUp>holder:a KeyDown:Tab>holder:a", eval("seen.join(' ')").asString(), "a Tab from the body is the holder's, like any key");
         assertTrue(eval("Object.isFrozen(seen) || true").asBoolean());
         eval("offT(); key(body, 'ArrowUp')");
         assertEquals(6, eval("seen.length").asInt(), "off() removed it");

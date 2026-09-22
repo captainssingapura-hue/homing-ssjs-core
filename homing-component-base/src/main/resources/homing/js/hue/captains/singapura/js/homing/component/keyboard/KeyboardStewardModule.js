@@ -6,17 +6,15 @@
 // a component that stops a key's propagation keeps it, and the steward acts
 // only on what the page let through:
 //
-//   Tab, Shift+Tab   the steward's: the next (previous) member of the focus
-//                    party tree in pre-order, from the holder — or, when a
-//                    native control is focused, from the innermost member whose
-//                    root contains it; whatever is focused is blurred, the
-//                    member claimed. Wraps. The one place the steward moves
-//                    native focus, and it only takes it away.
-//   any other key    target is the body — nothing focused anywhere — to the
-//                    holder's keyDown/keyUp, defaulted and stopped when taken;
-//                    target is a focused element — nothing: the native world
-//                    had it. The holder is untouched by native focus and
-//                    resumes the moment the focused thing blurs.
+//   target is the body — nothing focused anywhere — to the holder's
+//   keyDown/keyUp, defaulted and stopped when taken; target is a focused
+//   element — nothing: the native world had it. The holder is untouched by
+//   native focus and resumes the moment the focused thing blurs. Tab is a
+//   key like any other: not bound. The traversal of the focus party tree —
+//   step(dir), tab(dir): the next (previous) member in pre-order, from the
+//   holder or from the innermost member whose root contains the focused
+//   element, wrapping — is here for a binding still to be designed: a
+//   candidate that Tab moves without claiming, confirmed by a key.
 //
 // Members: a membership of the focus tree, joined on the party's `joined`
 // notice, its component's keyDown/keyUp/granted/taken the reactors; or, the
@@ -178,7 +176,7 @@ class KeyboardSteward {
         if (i < 0) return dir > 0 ? walk[0] : walk[walk.length - 1];
         return walk[(i + dir + walk.length) % walk.length];
     }
-    /** Tab: to the next member of the tree, Shift+Tab the previous; whatever is focused blurred, the member claimed. The member, or null when there is none. */
+    /** The traversal, not bound to a key: to the next member of the tree (dir 1) or the previous (-1); whatever is focused blurred, the member claimed. The member, or null when there is none. */
     tab(dir) {
         var to = this.step(dir);
         if (!to) return null;
@@ -191,9 +189,8 @@ class KeyboardSteward {
     // ── the trace, for tooling ────────────────────────────────────────────
     /**
      * Another listener for every key the steward saw and what it did: { kind, key, route, to, taken } —
-     * route "tab" (to: the member's id), "browser" (a Tab with no tree: left), "native" (to: the focused
-     * element; left), "none" (no holder; left), "holder" (to: the holder's id; taken says whether it took it).
-     * The function returned removes it.
+     * route "native" (to: the focused element; left), "none" (no holder; left), "holder" (to: the holder's
+     * id; taken says whether it took it). The function returned removes it.
      */
     trace(fn) {
         if (typeof fn !== "function") throw new Error("[KeyboardSteward] trace wants a function");
@@ -226,14 +223,8 @@ class KeyboardSteward {
         document[f]("keydown", this._onDown, false);
         document[f]("keyup", this._onUp, false);
     }
-    /** By state: Tab is the steward's; a key from the body goes to the holder; a key from a focused element goes nowhere. Each traced. */
+    /** By state: a key from the body goes to the holder; a key from a focused element goes nowhere. Each traced. */
     _forward(kind, ev) {
-        if (kind === "KeyDown" && ev.key === "Tab" && !ev.ctrlKey && !ev.altKey && !ev.metaKey) {
-            var to = this.tab(ev.shiftKey ? -1 : 1);
-            if (to) { ev.preventDefault(); ev.stopPropagation(); }
-            this._traced(kind, ev, to ? "tab" : "browser", to ? to.id : null, !!to);
-            return;
-        }
         if (KeyboardSteward.fromAFocusedElement(ev)) { this._traced(kind, ev, "native", ev.target, false); return; }
         var holder = this._holder;
         if (holder === null) { this._traced(kind, ev, "none", null, false); return; }
