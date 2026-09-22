@@ -205,6 +205,12 @@ final class SketchyDesign {
             gap(of(Container.Card.class, Size.Gap.class), "8px", 1.35),
             measure(of(Container.Card.class, Size.Extent.class), "280px", 1.35),
             proportion(of(Container.Card.class, Size.Proportion.class), 2),
+            // a dock draws no frame of its own - what holds it does, or nothing does - so all its rule says is where the keys are
+            withKeysMark(rule(of(Container.Pane.class, Shape.Rule.class), "0", "none"),
+                         "3px", "solid", "4px", "2px", "dashed", "6px", "2px", "dotted", "4px"),
+            // a float is its own frame, and keeps the container's rule under the same mark
+            withKeysMark(ruleWithFocusRing(of(Container.Pane.Floating.class, Shape.Rule.class), "2px", "solid", "2px", "dashed", "-3px"),
+                         "3px", "solid", "4px", "2px", "dashed", "6px", "2px", "dotted", "4px"),
             // a panel: the head underlined by hand, gone over twice
             gap(of(Container.Panel.class, Size.Gap.class), "0px", 1.35),
             inset(of(Container.Panel.Head.class, Size.Inset.class), "10px", "16px", 1.35),

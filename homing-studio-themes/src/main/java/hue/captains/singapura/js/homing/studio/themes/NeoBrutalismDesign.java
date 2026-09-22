@@ -299,6 +299,12 @@ final class NeoBrutalismDesign {
             // a pane: its air is its head's; the widget fills the rest
             inset(of(Container.Pane.class, Size.Inset.class), "6px", "12px", 1.5),
             gap(of(Container.Pane.class, Size.Gap.class), "10px", 1.5),
+            // a dock draws no frame of its own - what holds it does, or nothing does - so all its rule says is where the keys are
+            withKeysMark(rule(of(Container.Pane.class, Shape.Rule.class), "0", "none"),
+                         "6px", "solid", "6px", "6px", "dashed", "6px", "6px", "dotted", "6px"),
+            // a float is its own frame, and keeps the container's rule under the same mark
+            withKeysMark(ruleWithFocusRing(of(Container.Pane.Floating.class, Shape.Rule.class), "3px", "solid", "3px", "solid", "-3px"),
+                         "6px", "solid", "6px", "6px", "dashed", "6px", "6px", "dotted", "6px"),
             // a panel: the head is a slab, and the line under it is a bar
             gap(of(Container.Panel.class, Size.Gap.class), "0px", 1.5),
             inset(of(Container.Panel.Head.class, Size.Inset.class), "8px", "14px", 1.5),

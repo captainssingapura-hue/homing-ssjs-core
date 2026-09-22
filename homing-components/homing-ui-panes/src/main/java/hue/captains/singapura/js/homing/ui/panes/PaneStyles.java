@@ -49,9 +49,9 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
 
     /** The pane: a column of strip over content, filling its host by growing — so the host is a flex column and the pane its item. */
     public record mtp_pane() implements CssClass<PaneStyles> {
-        /** Its own word — a pane — so a design can say what a pane looks like while the keys are on it; the mark is an outline, and moves nothing. */
+        /** Its own word — a pane — so a design can say what a pane looks like while the keys are on it: the rule gives the mark its geometry and the edge its colour. A dock draws no frame at rest; the mark is an outline, and moves nothing. */
         @Override public List<? extends Wearable> wears() { return List.of(of(Base.class, Color.Surface.class), of(Body.class, Color.Ink.class), of(Body.class, Type.Face.class),
-                                                                          of(Container.Pane.class, Color.Edge.class)); }
+                                                                          of(Container.Pane.class, Shape.Rule.class), of(Container.Pane.class, Color.Edge.class)); }
         @Override public String body() { return """
             display: flex;
             flex-direction: column;

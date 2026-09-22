@@ -339,6 +339,12 @@ final class NeoFuturismDesign {
             // a pane: its air is its head's; the widget fills the rest
             inset(of(Container.Pane.class, Size.Inset.class), "4px", "10px", 1.25),
             gap(of(Container.Pane.class, Size.Gap.class), "8px", 1.25),
+            // a dock draws no frame of its own - what holds it does, or nothing does - so all its rule says is where the keys are
+            withKeysMark(rule(of(Container.Pane.class, Shape.Rule.class), "0", "none"),
+                         "1px", "solid", "4px", "1px", "dashed", "7px", "1px", "solid", "4px"),
+            // a float is its own frame, and keeps the container's rule under the same mark
+            withKeysMark(ruleWithFocusRing(of(Container.Pane.Floating.class, Shape.Rule.class), "1px", "solid", "1px", "solid", "-1px"),
+                         "1px", "solid", "4px", "1px", "dashed", "7px", "1px", "solid", "4px"),
             // a panel: a hairline under the head, and no more air than the work needs
             gap(of(Container.Panel.class, Size.Gap.class), "0px", 1.25),
             inset(of(Container.Panel.Head.class, Size.Inset.class), "7px", "12px", 1.25),

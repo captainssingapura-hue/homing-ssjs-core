@@ -194,6 +194,12 @@ final class RetroFuturismDesign {
             gap(of(Container.Card.class, Size.Gap.class), "8px", 1.3),
             measure(of(Container.Card.class, Size.Extent.class), "280px", 1.3),
             proportion(of(Container.Card.class, Size.Proportion.class), 2),
+            // a dock draws no frame of its own - what holds it does, or nothing does - so all its rule says is where the keys are
+            withKeysMark(rule(of(Container.Pane.class, Shape.Rule.class), "0", "none"),
+                         "2px", "solid", "3px", "1px", "dashed", "6px", "1px", "solid", "3px"),
+            // a float is its own frame, and keeps the container's rule under the same mark
+            withKeysMark(ruleWithFocusRing(of(Container.Pane.Floating.class, Shape.Rule.class), "1px", "solid", "1px", "solid", "-1px"),
+                         "2px", "solid", "3px", "1px", "dashed", "6px", "1px", "solid", "3px"),
             // a panel: a console's header, the rule under it lit by the palette
             gap(of(Container.Panel.class, Size.Gap.class), "0px", 1.3),
             inset(of(Container.Panel.Head.class, Size.Inset.class), "8px", "14px", 1.3),

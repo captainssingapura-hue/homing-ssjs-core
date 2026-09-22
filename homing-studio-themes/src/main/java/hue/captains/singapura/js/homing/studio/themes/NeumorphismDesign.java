@@ -194,6 +194,12 @@ final class NeumorphismDesign {
             // a pane: its air is its head's; the widget fills the rest
             inset(of(Container.Pane.class, Size.Inset.class), "6px", "14px", 1.3),
             gap(of(Container.Pane.class, Size.Gap.class), "8px", 1.3),
+            // a dock draws no frame of its own - what holds it does, or nothing does - so all its rule says is where the keys are
+            withKeysMark(rule(of(Container.Pane.class, Shape.Rule.class), "0", "none"),
+                         "4px", "solid", "-4px", "2px", "dotted", "5px", "3px", "solid", "-4px"),
+            // a float is its own frame, and keeps the container's rule under the same mark
+            withKeysMark(ruleWithFocusRing(of(Container.Pane.Floating.class, Shape.Rule.class), "0", "none", "2px", "solid", "-2px"),
+                         "4px", "solid", "-4px", "2px", "dotted", "5px", "3px", "solid", "-4px"),
             // a panel: no line anywhere - the head is a plate, and the air under it is the division
             gap(of(Container.Panel.class, Size.Gap.class), "10px", 1.3),
             inset(of(Container.Panel.Head.class, Size.Inset.class), "12px", "18px", 1.3),
