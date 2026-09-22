@@ -6,6 +6,7 @@ import hue.captains.singapura.js.homing.core.InLayer;
 import hue.captains.singapura.js.homing.core.Layout;
 import hue.captains.singapura.js.homing.core.Reset;
 import hue.captains.singapura.js.homing.core.Wearable;
+import hue.captains.singapura.js.homing.core.util.CssClassName;
 
 import java.util.List;
 
@@ -165,6 +166,25 @@ public record MpaStyles() implements CssGroup<MpaStyles> {
         }
     }
 
+    /**
+     * The page an app fills. A main that lays itself out ({@link mpa_main_full})
+     * says the page is an app, not a reading column: the document is then
+     * exactly the viewport and does not scroll — the column is pinned to it —
+     * and what scrolls is whatever the app scrolls inside itself. A rule over
+     * the elements no class of ours reaches, keyed off the word the app wears.
+     */
+    public record mpa_page_app() implements CssClass<MpaStyles>, InLayer<Layout> {
+        private static final String APP = "." + CssClassName.toCssName(mpa_main_full.class);
+        private static final String ROOT = "." + CssClassName.toCssName(mpa_root.class);
+        @Override public String selector() { return "html:has(" + APP + ")"; }
+        @Override public String body() { return """
+            overflow: hidden;
+            & body { overflow: hidden; }
+            & %s { position: fixed; inset: 0; min-height: 0; }
+            """.formatted(ROOT);
+        }
+    }
+
     // ── Preferences ───────────────────────────────────────────────────────────
 
     /** The anchor the menu hangs from; at the bar's end. */
@@ -201,7 +221,7 @@ public record MpaStyles() implements CssGroup<MpaStyles> {
         return List.of(
                 new mpa_page(), new mpa_root(), new mpa_header(),
                 new mpa_brand(), new mpa_brand_mark(), new mpa_brand_word(),
-                new mpa_crumbs(), new mpa_crumb(), new mpa_crumb_sep(), new mpa_main(), new mpa_main_full(),
+                new mpa_crumbs(), new mpa_crumb(), new mpa_crumb_sep(), new mpa_main(), new mpa_main_full(), new mpa_page_app(),
                 new mpa_prefs(), new mpa_prefs_btn(), new mpa_prefs_btn_label());
     }
 }

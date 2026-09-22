@@ -46,7 +46,8 @@ public record MpaChromeModule() implements DomModule<MpaChromeModule> {
                         new MpaStyles.mpa_crumbs(),
                         new MpaStyles.mpa_crumb(),
                         new MpaStyles.mpa_crumb_sep(),
-                        new MpaStyles.mpa_main()
+                        new MpaStyles.mpa_main(),
+                        new MpaStyles.mpa_page_app()
                 ), MpaStyles.INSTANCE))
                 .build();
     }
