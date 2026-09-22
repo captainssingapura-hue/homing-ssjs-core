@@ -4,13 +4,16 @@
 // component: the caller makes a sub-branch for it and hands it in; dispose()
 // dissolves it.
 //
-//   new MultiTabPane(branch, { host, slotId?, budget?, addable?, onEvent?, menus?, focus?, focusName? })
+//   new MultiTabPane(branch, { host, slotId?, budget?, addable?, onEvent?, menus?, stripMenu?, focus?, focusName? })
 //     branch: the pane's own, handed unactivated
 //     host:   a flex column; the pane is its item and fills it.
 //     focus:  the focus branch the pane joins — the page's root unless said,
 //             the desk's for a floating dock. The pane holds a branch of its
 //             own under it, pane.focus, named focusName (the branch's name
 //             unless said): THE DOCK'S BRANCH, which every tab's widget joins.
+//     stripMenu: the kind a right-click on the strip's own ground opens, with
+//             { pane } bound - the page's own kind, since what it offers is
+//             about where the pane sits, which the pane knows nothing of
 //     menus:  the page's ContextMenuSteward, when the page offers menus: a
 //             right-click on a chip, or the ContextMenu key / Shift+F10 on it,
 //             asks the steward for MultiTabPane.MENU — the kind "tab", which
@@ -64,7 +67,8 @@
 //       the member's, called by the steward; they write data-keys — held while the
 //       pane has the keys, candidate while the walk rests on it — on the frame,
 //       and a design says what a pane wearing it looks like
-//   pane.menuByKey() .requestDetach() .yieldKeys()   what the keys do, by call
+//   pane.menuByKey() .menuByGround(at) .requestDetach() .yieldKeys()   what the
+//       keys and a right-click do, by call; the menus themselves are PaneMenus'
 //   pane.dispose()               → every widget disposed in order, the branches dissolved
 //
 // The pane is a dock. A tab leaves it by call — detachTab, for a holder that
@@ -104,6 +108,12 @@ var _DEFAULT_BUDGET = 16;
 const _paneOwner = Object.freeze({ toString: () => "multiTabPane" });
 
 class MultiTabPane {
+    /**
+     * The kind a right-click on the strip's own ground asks for, when the
+     * page named one: opened with { pane } bound, and the pane knows nothing
+     * of what it says. Splitting the room a dock sits in, closing the region:
+     * those belong to whoever placed the pane, so the kind is theirs too.
+     */
     /** The kind a chip's menu is asked for: the Java TabMenu's. */
     static MENU = "tab";
 
@@ -118,6 +128,7 @@ class MultiTabPane {
         this._addEnabled = opts.addable !== false;
         this._sink = typeof opts.onEvent === "function" ? opts.onEvent : null;
         this._menus = opts.menus && typeof opts.menus.open === "function" ? opts.menus : null;
+        this._stripMenu = this._menus && typeof opts.stripMenu === "string" && opts.stripMenu ? opts.stripMenu : null;
         this._tabs = [];          // entries in strip order: { id, tab, pinned, widget, chip, panel }
         this._activeId = null;
         this._disposed = false;
@@ -129,7 +140,8 @@ class MultiTabPane {
 
         this._strip = new TabStrip(branch.createBranch("strip"), {
             onAdd: opts.addable === false ? null : function () { if (self.canAdd()) self._fire(PaneEvents.AddRequested(self.slotId)); },
-            onDrop: function (chip, dest) { var i = self._findChip(chip); if (i >= 0) self.moveTab(self._tabs[i].id, dest); }
+            onDrop: function (chip, dest) { var i = self._findChip(chip); if (i >= 0) self.moveTab(self._tabs[i].id, dest); },
+            onGroundMenu: this._stripMenu ? function (at) { return self.menuByGround(at); } : null
         });
         root.appendChild(this._strip.el);
         // the dock's branch of the focus party, held by the pane; a press anywhere in the frame claims for the pane
@@ -193,12 +205,7 @@ class MultiTabPane {
         var own = this._branch.createBranch("tab-" + tab.id.replace(/[^A-Za-z0-9_-]/g, "_"));
         own.activate(_paneOwner);
         var handlers = { onSelect: function () { self.switchTab(tab.id); }, onClose: function () { self.removeTab(tab.id); } };
-        if (this._menus) handlers.onMenu = function (at, keyboard) {
-            var i = self._find(tab.id);
-            if (i < 0) return false;
-            self.switchTab(tab.id);
-            return self._menus.open(MultiTabPane.MENU, { pane: self, tab: self._tabs[i].tab, anchor: self._tabs[i].chip }, at, { anchor: self._tabs[i].chip, keyboard: keyboard });
-        };
+        handlers.onMenu = PaneMenus.forChip(this, tab.id, MultiTabPane.MENU);
         var chip = this._strip.chip(tab, handlers, own);
         var panel = own.createElement("panel", "div");
         css.addClass(panel, mtp_tab_content, mtp_tab_content_hidden);
@@ -341,13 +348,10 @@ class MultiTabPane {
     // ── The member: the keys while the pane holds them ────────────────────
     /** A keydown while the pane holds the keys: the container's own, PaneKeys; true when taken. */
     keyDown(ev) { return PaneKeys.keyDown(this, ev); }
+    /** The strip's ground, right-clicked: the page's own kind, if it named one; PaneMenus says. */
+    menuByGround(at) { return PaneMenus.onGround(this, at); }
     /** The active tab's menu, at its chip, when the page offers menus; true when the steward took it. */
-    menuByKey() {
-        var i = this._activeId === null ? -1 : this._find(this._activeId);
-        if (i < 0 || !this._tabs[i].menu) return false;
-        var r = this._tabs[i].chip.getBoundingClientRect();
-        return !!this._tabs[i].menu({ x: r.left + 12, y: r.bottom - 2 }, true);
-    }
+    menuByKey() { return PaneMenus.byKey(this); }
     /** The active tab asked to detach and float: DetachRequested, for a holder with a desk. */
     requestDetach() { if (this._activeId !== null) this._fire(PaneEvents.DetachRequested(this.slotId, this._activeId)); }
     /** The pane yields the keys, up the tree: the first ancestor that would hold, else no one. */

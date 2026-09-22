@@ -6,7 +6,11 @@
 // where a dragged chip landed. A branch component: the pane makes a
 // sub-branch for it and hands it in.
 //
-//   new TabStrip(branch, { onAdd?, onDrop(chip, dest) })
+//   new TabStrip(branch, { onAdd?, onDrop(chip, dest), onGroundMenu? })
+//     onGroundMenu(at) → boolean: a right-click on the strip's own ground —
+//     the room the chips leave, and the tail — asks whoever holds the pane
+//     for a menu there; true means it was taken and the browser's own menu is
+//     suppressed. A right-click on a chip is the chip's, never the ground's.
 //     strip.el
 //     strip.chip({ id, title, pinned, closable }, { onSelect, onClose, onMenu? }, branch?) → chipEl
 //         onMenu(at, keyboard) → boolean: a right-click on the chip, or the
@@ -74,6 +78,13 @@ class TabStrip {
         // a press on the strip moves no native focus by the browser's default: a chip is not focusable, and the
         // native focus is taken away by the press itself (below), so the pane's keys work after it
         el.addEventListener("mousedown", function (ev) { ev.preventDefault(); });
+        // the strip's own ground: what the chips leave. A chip's own menu is the chip's, so an event that came through one is left alone
+        if (opts && typeof opts.onGroundMenu === "function") {
+            el.addEventListener("contextmenu", function (ev) {
+                for (var x = ev.target; x && x !== el; x = x.parentNode) if (x._chip) return;
+                if (opts.onGroundMenu({ x: ev.clientX, y: ev.clientY })) ev.preventDefault();
+            });
+        }
 
         this._tail = branch.createElement("tail", "div");
         css.addClass(this._tail, mtp_strip_tail);
@@ -102,6 +113,7 @@ class TabStrip {
         var branch = on || this._branch;
         var name = tab.id.replace(/[^A-Za-z0-9_-]/g, "_");
         var c = branch.createElement("chip-" + name, "div");
+        c._chip = true;   // so the strip knows its own ground from a chip's
         css.addClass(c, mtp_chip, mtp_chip_seated);
         c.setAttribute("role", "tab");
         c.setAttribute("aria-selected", "false");

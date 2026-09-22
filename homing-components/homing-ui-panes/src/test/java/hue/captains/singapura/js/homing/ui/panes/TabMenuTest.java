@@ -32,7 +32,9 @@ class TabMenuTest {
         assertEquals(java.util.Set.of(TabMenu.INSTANCE), new MultiTabPaneModule.MultiTabPane().required());
         String js = String.join("\n", ResourceReader.INSTANCE.getStringsFromResource("homing/js/hue/captains/singapura/js/homing/ui/panes/MultiTabPaneModule.js"));
         assertTrue(js.contains("static MENU = \"" + TabMenu.INSTANCE.kind() + "\";"), "the JS constant is the Java kind");
-        assertTrue(js.contains("open(MultiTabPane.MENU,"), "the pane opens by its constant, never a loose string");
+        assertTrue(js.contains("PaneMenus.forChip(this, tab.id, MultiTabPane.MENU)"), "the pane names its kind by its constant, never a loose string");
+        String menus = String.join("\n", ResourceReader.INSTANCE.getStringsFromResource("homing/js/hue/captains/singapura/js/homing/ui/panes/PaneMenusModule.js"));
+        assertTrue(menus.contains("pane._menus.open(kind,"), "and PaneMenus opens the kind it was handed, never one of its own");
         // a site that serves the pane's crate holds the kind, listing nothing
         assertEquals(List.of("tab"), ContextMenuRegistry.requiredBy(List.of(UiPanesCrate.INSTANCE)).kinds().stream().map(k -> k.kind()).toList());
         assertEquals(List.of(), ContextMenuRegistry.validate(List.of(UiPanesCrate.INSTANCE)));

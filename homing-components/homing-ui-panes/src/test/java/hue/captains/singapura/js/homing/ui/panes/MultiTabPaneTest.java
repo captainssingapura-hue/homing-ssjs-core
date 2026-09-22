@@ -25,6 +25,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
     private static final String HAND   = "/homing/js/hue/captains/singapura/js/homing/ui/panes/TabHandModule.js";
     private static final String STRIP  = "/homing/js/hue/captains/singapura/js/homing/ui/panes/TabStripModule.js";
     private static final String KEYS   = "/homing/js/hue/captains/singapura/js/homing/ui/panes/PaneKeysModule.js";
+    private static final String MENUS  = "/homing/js/hue/captains/singapura/js/homing/ui/panes/PaneMenusModule.js";
     private static final String MODULE = "/homing/js/hue/captains/singapura/js/homing/ui/panes/MultiTabPaneModule.js";
 
     // Elements that know their children, classes and attributes; a party
@@ -122,6 +123,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
         loadModule(HAND);
         loadModule(STRIP);
         loadModule(KEYS);
+        loadModule(MENUS);
         loadModule(MODULE);
         js.eval("js", SHIM);
     }
@@ -246,6 +248,42 @@ class MultiTabPaneTest extends JsModuleTestBase {
         assertEquals("", log(), "a secondary button or a bare click is nothing");
         eval("log = []; pane.el.children[0].children[1].children[1].fire('click')");
         assertEquals("b:disposed removed:s1:b@1 active:s1:a", log());
+    }
+
+    /**
+     * The strip's own ground — the room the chips leave — asks for the kind the
+     * PAGE named, bound to the pane alone: what it offers is about where the
+     * pane sits, which the pane knows nothing of. A right-click that came
+     * through a chip is the chip's, never the ground's; a pane told no kind
+     * leaves the ground to the browser.
+     */
+    @Test
+    void theStripsGroundAsksForTheKindThePageNamed_boundToThePaneAlone() {
+        eval("""
+            var asked = [];
+            var steward = { open: function (kind, object, at, opts) { asked.push(kind + "@" + at.x + "," + at.y + (object.pane === withGround ? ":pane" : ":?") + (object.tab ? ":tab" : "") + (opts.anchor === withGround.el ? ":anchored" : "")); return kind !== "refused"; } };
+            var withGround = new MultiTabPane(branch.createBranch("mtp_s3"), { host: el("div"), slotId: "s3", menus: steward, stripMenu: "split" });
+            withGround.addTab(tab("a"));
+            var strip = withGround.el.children[0], chip = strip.children[0];
+            var onGround = { target: strip, clientX: 40, clientY: 8, defaulted: false, preventDefault: function () { this.defaulted = true; } };
+            strip.fire("contextmenu", onGround);
+            var throughAChip = { target: chip, clientX: 5, clientY: 8, defaulted: false, preventDefault: function () { this.defaulted = true; } };
+            strip.fire("contextmenu", throughAChip);
+            """);
+        assertEquals("split@40,8:pane:anchored", eval("asked.join(' ')").asString(), "the page's kind, at the point, the pane bound and the frame the anchor; a chip's event is not the ground's");
+        assertTrue(eval("onGround.defaulted && !throughAChip.defaulted").asBoolean(), "the browser's menu is suppressed only where the steward took it");
+        assertTrue(eval("withGround.menuByGround({ x: 1, y: 2 })").asBoolean(), "by call, as a key would");
+        eval("withGround.dispose()");
+        // a pane told no kind: the ground is the browser's
+        eval("""
+            var plain = new MultiTabPane(branch.createBranch("mtp_s4"), { host: el("div"), slotId: "s4", menus: steward });
+            var e = { target: plain.el.children[0], clientX: 3, clientY: 4, defaulted: false, preventDefault: function () { this.defaulted = true; } };
+            plain.el.children[0].fire("contextmenu", e);
+            """);
+        assertFalse(eval("e.defaulted").asBoolean(), "no kind named: nothing is asked and nothing is suppressed");
+        assertFalse(eval("plain.menuByGround({ x: 1, y: 2 })").asBoolean());
+        assertEquals("0", eval("String((plain.el.children[0].listeners.contextmenu || []).length)").asString(), "and no listener on the strip at all");
+        eval("plain.dispose()");
     }
 
     /**
