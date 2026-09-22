@@ -5,9 +5,10 @@
 //
 //   new MpaChrome(branch, root, chrome)
 //     .main      the slot element the app is mounted in
-//     .keyboard  the page's KeyboardSteward, one per document, made here: the
-//                keyboard is the page's, not an app's. The scaffold hands it to
-//                the app as params.keyboard; the bar's own dialog takes it too
+//     .keyboard  the page's KeyboardSteward, one per document — the manager's
+//                instance, since the keyboard is the page's, not an app's. The
+//                scaffold hands it to the app as params.keyboard; the bar's own
+//                dialog takes it too
 //
 // `chrome` is what the server stamped into the page, frozen:
 //   { brand: { label, home }, crumbs: [ { text, to } ], preferences: { module } }
@@ -34,7 +35,7 @@ class MpaChrome {
         css.addClass(bar, mpa_header);
         bar.appendChild(MpaChrome._brand(branch, chrome && chrome.brand));
         bar.appendChild(MpaChrome._crumbs(branch, chrome && chrome.crumbs));
-        this.keyboard = new KeyboardSteward(branch.createBranch("keyboard"), {});
+        this.keyboard = KeyboardStewardInstance;
         this.preferences = new PreferencesButton(branch.createBranch("prefs"), bar, chrome, this.keyboard);
         column.appendChild(bar);
 

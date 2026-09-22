@@ -6,6 +6,7 @@ import hue.captains.singapura.js.homing.core.StandardJsModuleType;
 import hue.captains.singapura.js.homing.component.C0_Components;
 import hue.captains.singapura.js.homing.component.ComponentVehicle;
 import hue.captains.singapura.js.homing.component.WidgetSlotModule;
+import hue.captains.singapura.js.homing.component.keyboard.FocusPartyModule;
 import hue.captains.singapura.js.homing.component.keyboard.KeyboardEventsModule;
 import hue.captains.singapura.js.homing.component.keyboard.KeyboardSecretaryModule;
 import hue.captains.singapura.js.homing.component.keyboard.KeyboardStewardModule;
@@ -51,6 +52,7 @@ public final class ServerCrate implements Crate, ComponentVehicle {
                 CrateEntry.of(PartyModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 // RFC 0066 E3 - the keyboard party: its secretary, its steward (the DOM face,
                 // one per page), the claiming convention, and its events as data.
+                CrateEntry.of(FocusPartyModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(KeyboardSecretaryModule.INSTANCE, StandardJsModuleType.SECRETARY),
                 CrateEntry.of(KeyboardStewardModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
                 CrateEntry.of(KeysModule.INSTANCE, StandardJsModuleType.PRIMITIVE),

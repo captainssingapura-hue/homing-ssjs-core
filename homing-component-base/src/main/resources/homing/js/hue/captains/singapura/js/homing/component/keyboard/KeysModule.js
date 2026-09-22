@@ -1,29 +1,35 @@
 // =============================================================================
-// Keys — the claiming convention, as one line for a component: a press in
-// its root, or the focus arriving in it, claims the keyboard for it; the
-// focus leaving it for somewhere outside releases. The party is told the
-// result and never the cause; what makes the convention resolve nesting is
-// the CAPTURE phase — capture runs outermost first, so when a press lands in
-// a widget inside a pane inside a dialog, the dialog claims, then the pane,
-// then the widget, and the innermost holds because it claimed last. No one
-// needs to know who contains whom.
+// Keys — what a component talks to about the keys. Never the steward: a
+// component joins a focus branch and calls here; every call goes to the
+// page's steward directly, none touches the party.
 //
-//   var off = Keys.claimOn(root, steward, id, { release?: true });
-//     root      the component's own element
-//     steward   the page's KeyboardSteward, which id has joined
-//     release   whether the focus leaving the root releases (the default), or
-//               the component keeps the keys until the next claim
-//   off()       the listeners removed; a component calls it on dispose
-//
-// A component that claims by call — a shortcut summoning it — calls
-// steward.claim(id) itself; whether it also moves physical focus is its own.
+//   Keys.claimOn(root, m, { release?: true }) → off
+//     the claiming convention, as one line: a press in the root, or the focus
+//     arriving in it, claims the keys for m; the focus leaving it for somewhere
+//     outside releases (unless release: false). The party is told the result
+//     and never the cause; what makes the convention resolve nesting is the
+//     CAPTURE phase — capture runs outermost first, so when a press lands in a
+//     widget inside a pane inside a dialog, the dialog claims, then the pane,
+//     then the widget, and the innermost holds because it claimed last. No
+//     one needs to know who contains whom. off() removes the listeners.
+//   Keys.claim(m)                    by call: a container for a child, a dialog on open
+//   Keys.release(m)                  nothing, unless m holds
+//     m: a membership of the focus tree — or, the older way, the pair
+//     (steward, id): Keys.claimOn(root, steward, id, opts), Keys.claim(steward, id)
 // =============================================================================
+
+function _target(a, b) {
+    return a && typeof a.join === "function" && typeof a.claim === "function" ? { steward: a, id: b } : { steward: KeyboardStewardInstance, id: a };
+}
 
 var Keys = Object.freeze({
 
-    claimOn: function (root, steward, id, opts) {
+    claimOn: function (root, a, b, c) {
         if (!root || typeof root.addEventListener !== "function") throw new Error("[Keys] claimOn wants the component's root element");
+        var t = _target(a, b), opts = t.steward === a ? c : b;
+        var steward = t.steward, id = t.id;
         if (!steward || typeof steward.claim !== "function") throw new Error("[Keys] claimOn wants the page's KeyboardSteward");
+        if (id == null) throw new Error("[Keys] claimOn wants the membership to claim for");
         var release = !opts || opts.release !== false;
         function claim() { steward.claim(id); }
         function out(ev) {
@@ -38,5 +44,8 @@ var Keys = Object.freeze({
             root.removeEventListener("focusin", claim, true);
             root.removeEventListener("focusout", out, true);
         };
-    }
+    },
+
+    claim: function (a, b) { var t = _target(a, b); t.steward.claim(t.id); },
+    release: function (a, b) { var t = _target(a, b); t.steward.release(t.id); }
 });

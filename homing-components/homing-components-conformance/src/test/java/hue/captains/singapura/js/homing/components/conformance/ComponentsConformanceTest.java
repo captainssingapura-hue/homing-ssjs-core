@@ -96,7 +96,7 @@ class ComponentsConformanceTest {
         var groups = new ArrayList<CssGroup<?>>();
         for (Crate c : ComponentsConformance.TOP_LEVEL)
             for (var e : c.entries()) if (e.module() instanceof CssGroup<?> g) groups.add(g);
-        assertEquals(10, groups.size(), "one style group per crate that has styles; docking has none");
+        assertEquals(11, groups.size(), "one style group per crate that has styles; docking has none");
         var worn = Deployment.wornBy(groups);
         var scaled = Deployment.scaledBy(groups);
         var grown = Deployment.grownBy(groups);
@@ -128,10 +128,10 @@ class ComponentsConformanceTest {
         assertEquals(List.of(), ComponentTrees.validate(ComponentsConformance.TOP_LEVEL));
         var composed = ComponentTrees.compose("components", ComponentsConformance.TOP_LEVEL);
         var vehicles = composed.root().children().stream().map(n -> n.segment().value()).toList();
-        assertEquals(List.of("ui-elements", "server", "ui-icons", "ui-dialog", "ui-floating", "ui-preferences", "ui-split", "ui-panes", "ui-split-grid", "ui-menu", "mpa"), vehicles, "one vehicle per crate that ships components, in closure order — the elements require the base (the keyboard steward) and the icons (a knob's mark), the dialog the floating crate; docking ships statics only");
+        assertEquals(List.of("ui-elements", "server", "ui-icons", "ui-dialog", "ui-floating", "ui-preferences", "ui-split", "ui-panes", "ui-split-grid", "ui-focus", "ui-menu", "mpa"), vehicles, "one vehicle per crate that ships components, in closure order — the elements require the base (the keyboard steward) and the icons (a knob's mark), the dialog the floating crate; docking ships statics only");
         var root = (ComponentDetails.OfComposition) composed.detailsOf(composed.root().identity());
-        assertEquals(11, root.vehicleCount());
-        assertEquals(26, root.componentCount(), "the components declared so far: 1 base (the keyboard steward), 4 elements, 1 icon, 1 dialog, 7 preferences, 1 split, 2 panes, 2 floating, 2 split grid, 2 menus, 3 chrome");
+        assertEquals(12, root.vehicleCount());
+        assertEquals(27, root.componentCount(), "the components declared so far: 1 base (the keyboard steward), 4 elements, 1 icon, 1 dialog, 7 preferences, 1 split, 2 panes, 2 floating, 2 split grid, 1 focus monitor, 2 menus, 3 chrome");
         assertTrue(composed.root().children().stream().allMatch(v -> v.level() == TreeLevel.L1.INSTANCE), "every vehicle grafted one under the root");
         // what the components need of a page is derived from the catalogue: nothing invisible, nothing nameless
         assertEquals(List.of(), ContextMenuRegistry.validate(ComponentsConformance.TOP_LEVEL));

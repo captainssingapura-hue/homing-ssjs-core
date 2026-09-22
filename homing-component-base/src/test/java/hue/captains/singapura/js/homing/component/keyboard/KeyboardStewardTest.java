@@ -74,6 +74,7 @@ class KeyboardStewardTest extends JsModuleTestBase {
     void load() {
         js = buildContext();
         loadModule(DIR + "party/PartyModule.js");
+        loadModule(DIR + "keyboard/FocusPartyModule.js");
         loadModule(DIR + "keyboard/KeyboardSecretaryModule.js");
         loadModule(DIR + "keyboard/KeyboardEventsModule.js");
         loadModule(DIR + "keyboard/KeyboardStewardModule.js");
@@ -235,6 +236,34 @@ class KeyboardStewardTest extends JsModuleTestBase {
         assertEquals("Granted", eval("heard.join()").asString(), "the second listener heard the grant, then was removed");
         assertEquals("Granted:a Released:a", events(), "the first listener heard both");
         assertThrows(PolyglotException.class, () -> eval("kb.on(3)"));
+    }
+
+    /**
+     * A member of the focus tree: joined by its membership, its component's
+     * methods the reactors; claimed by the membership; leaving the tree leaves
+     * the steward, and releases if it held; the convention takes a membership.
+     */
+    @Test
+    void aMemberOfTheFocusTreeJoinsByItsMembership_andLeavingTheTreeLeavesHere() {
+        eval("""
+            kb.dispose();
+            var tree = new FocusParty();
+            var kt = new KeyboardSteward(fakeBranch("k"), { onEvent: sink, party: tree });
+            var w = { keys: [], got: [], keyDown: function (ev) { this.keys.push(ev.key); return ev.key === "ArrowUp"; }, granted: function (by) { this.got.push("granted:" + by); }, taken: function (by) { this.got.push("taken:" + by); } };
+            var m = tree.root.join("w", w);   // joined the tree: joined the steward, unasked
+            var off = Keys.claimOn(inner, kt, m);
+            fire(inner, "pointerdown");
+            """);
+        assertEquals(eval("m.id").asString(), eval("kt.holder()").asString(), "the holder is the membership's id");
+        assertTrue(eval("kt.has(m) && kt.has(m.id)").asBoolean());
+        eval("key(inner, 'ArrowUp'); key(inner, 'Enter')");
+        assertEquals("ArrowUp,Enter", eval("w.keys.join()").asString(), "the component's keyDown is the reactor");
+        assertEquals("granted:claim", eval("w.got.join()").asString());
+        eval("events = []; m.leave()");
+        assertEquals("Released:" + eval("m.id").asString(), events(), "left the tree: left the steward, and released");
+        assertFalse(eval("kt.has(m)").asBoolean());
+        assertTrue(eval("kt.holder() === null").asBoolean());
+        eval("off(); kt.dispose()");
     }
 
     @Test

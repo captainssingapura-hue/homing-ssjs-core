@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.component.keyboard;
 import hue.captains.singapura.js.homing.component.BranchComponent;
 import hue.captains.singapura.js.homing.component.party.PartyModule;
 import hue.captains.singapura.js.homing.core.DomModule;
+import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
@@ -21,6 +22,8 @@ public record KeyboardStewardModule() implements DomModule<KeyboardStewardModule
     public record KeyboardSteward() implements BranchComponent<KeyboardStewardModule> {
         @Override public String summary() { return "One per page: the keyboard party, its one holder, and the keys captured for it; lazy, and blind to why."; }
     }
+    /** The page's steward, one per document, bound to the focus party. */
+    public record KeyboardStewardInstance() implements Exportable._Constant<KeyboardStewardModule> {}
 
     public static final KeyboardStewardModule INSTANCE = new KeyboardStewardModule();
 
@@ -30,11 +33,12 @@ public record KeyboardStewardModule() implements DomModule<KeyboardStewardModule
                 .add(new ModuleImports<>(List.of(new PartyModule.Party()), PartyModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new KeyboardSecretaryModule.KeyboardSecretary()), KeyboardSecretaryModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new KeyboardEventsModule.KeyboardEvents()), KeyboardEventsModule.INSTANCE))
+                .add(new ModuleImports<>(List.of(new focusParty()), FocusPartyModule.INSTANCE))
                 .build();
     }
 
     @Override
     public ExportsOf<KeyboardStewardModule> exports() {
-        return new ExportsOf<>(INSTANCE, List.of(new KeyboardSteward()));
+        return new ExportsOf<>(INSTANCE, List.of(new KeyboardSteward(), new KeyboardStewardInstance()));
     }
 }

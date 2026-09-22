@@ -3,23 +3,32 @@
 // owns the party (one secretary, KeyboardSecretary, members flat), captures
 // keys on the document while someone holds the keyboard, and turns them into
 // messages the secretary routes to the holder and nowhere else. Lazy: no
-// listener while no one holds. A branch component: the page's holder makes a
-// sub-branch for it and hands it in.
+// listener while no one holds. One per page, as `KeyboardStewardInstance`,
+// bound to the focus party (FocusParty): a member of the tree is a member
+// here by its membership, and the party's `left` drops it. A page — the log,
+// a monitor — may know the steward; a component never does: it joins a focus
+// branch and calls Keys.
 //
-//   new KeyboardSteward(branch, { onEvent? })
+//   KeyboardStewardInstance          the page's, one per document
+//   new KeyboardSteward(branch?, { onEvent?, party? })   the class, for a test
 //   steward.on(fn) → off           another listener for the events; off() removes it
+//   steward.join(membership)         a member of the focus tree: its component's
+//       keyDown?(ev), keyUp?(ev), granted?(by), taken?(by) are its reactors. Done by
+//       the steward itself on the party's `joined` notice: a component that joins
+//       a focus branch is a member here without a word to the steward
 //   steward.join(id, { keyDown?(ev), keyUp?(ev), granted?(), taken?(by) }) → id
-//       a member: its reactors. keyDown/keyUp return true to TAKE the key —
+//       a member by id, the older way. keyDown/keyUp return true to TAKE the key —
 //       the steward then defaults and stops it, and nothing below the document
 //       sees it — or anything else to leave it, and it travels on its normal
 //       way: to the focused element, then up through its ancestors, so the
 //       containers the holder sits in hear it by bubbling. Neither is called
 //       unless the member holds.
-//   steward.leave(id)                the member is gone; it releases if it held
-//   steward.claim(id)                a fact: id holds now, whoever held is told
-//   steward.release(id)              nothing, unless id holds
-//   steward.holder()                 the id, or null
-//   steward.has(id)                  whether id is a member
+//   steward.leave(m)                 the member is gone; it releases if it held
+//   steward.claim(m)                 a fact: m holds now, whoever held is told
+//   steward.release(m)               nothing, unless m holds
+//   steward.holder()                 the id, or null; a tree member's id is its membership's
+//   steward.has(m)                   whether m is a member
+//       m: an id, or a membership of the focus tree
 //   steward.dispose()
 //
 // One rule is the steward's, since only it sees the target: with physical
@@ -38,14 +47,13 @@ var _STEWARD = "steward", _ROOT = "keyboard";
 
 class KeyboardSteward {
     constructor(branch, opts) {
-        if (!branch) throw new Error("[KeyboardSteward] a branch of its own is required");
         if (typeof document !== "undefined") {
             if (_pages.has(document)) throw new Error("[KeyboardSteward] this page has a steward already: one per page");
             _pages.add(document);
         }
         var self = this;
-        branch.activate(_keyboardOwner);
-        this._branch = branch;
+        if (branch) branch.activate(_keyboardOwner);
+        this._branch = branch || null;
         this._sinks = [];
         if (opts && typeof opts.onEvent === "function") this.on(opts.onEvent);
         this._holder = null;
@@ -55,10 +63,24 @@ class KeyboardSteward {
         this._party.joinActor({ id: _STEWARD, parentSecretary: _ROOT, reactors: {} });
         this._onDown = function (ev) { self._forward("KeyDown", ev); };
         this._onUp = function (ev) { self._forward("KeyUp", ev); };
+        // the focus tree: whoever joins it is a member here, by its membership; whoever leaves it leaves here too
+        this._focus = opts && opts.party ? opts.party : null;
+        this._offFocus = this._focus ? this._focus.on(function (n) {
+            if (n.kind === "joined") { var m = self._focus.find(n.id); if (m && !self._members[m.id]) self.join(m); }
+            else if (n.kind === "left" && self._members[n.id]) self.leave(n.id);
+        }) : null;
     }
+    /** A member's id: a membership's, or the string given. */
+    static idOf(m) { return m && typeof m === "object" && typeof m.id === "string" ? m.id : m; }
 
     // ── the members ───────────────────────────────────────────────────────
     join(id, handlers) {
+        if (id && typeof id === "object" && typeof id.id === "string" && id.component) {   // a membership of the focus tree: the component's methods are the reactors
+            var c = id.component;
+            handlers = { keyDown: typeof c.keyDown === "function" ? function (ev) { return c.keyDown(ev); } : null, keyUp: typeof c.keyUp === "function" ? function (ev) { return c.keyUp(ev); } : null,
+                         granted: typeof c.granted === "function" ? function (by) { c.granted(by); } : null, taken: typeof c.taken === "function" ? function (by) { c.taken(by); } : null };
+            id = id.id;
+        }
         if (typeof id !== "string" || !id) throw new Error("[KeyboardSteward] a member needs an id");
         if (id === _STEWARD || this._members[id]) throw new Error("[KeyboardSteward] member joined twice: " + id);
         var self = this, h = handlers || {};
@@ -71,28 +93,31 @@ class KeyboardSteward {
         this._party.joinActor({ id: id, parentSecretary: _ROOT, reactors: {
             KeyDown: key("KeyDown"),
             KeyUp: key("KeyUp"),
-            Granted: function () { self._held(id); if (typeof h.granted === "function") h.granted(); },
+            Granted: function (m) { self._held(id); if (typeof h.granted === "function") h.granted(m.by == null ? "claim" : m.by); },
             Taken: function (m) { self._lost(id, m.by); if (typeof h.taken === "function") h.taken(m.by); }
         } });
         this._members[id] = true;
         return id;
     }
     leave(id) {
+        id = KeyboardSteward.idOf(id);
         if (!this._members[id]) return;
         this._party.tellFrom(_STEWARD, { kind: "Left", id: id });
         this._party.leave(id);
         delete this._members[id];
     }
     claim(id) {
+        id = KeyboardSteward.idOf(id);
         if (!this._members[id]) throw new Error("[KeyboardSteward] no member '" + id + "'");
         this._party.tellFrom(_STEWARD, { kind: "Claim", id: id });
     }
     release(id) {
+        id = KeyboardSteward.idOf(id);
         if (!this._members[id]) return;
         this._party.tellFrom(_STEWARD, { kind: "Release", id: id });
     }
     holder() { return this._holder; }
-    has(id) { return !!this._members[id]; }
+    has(id) { return !!this._members[KeyboardSteward.idOf(id)]; }
     /** Another listener for the events; the function returned removes it. */
     on(fn) {
         if (typeof fn !== "function") throw new Error("[KeyboardSteward] on wants a function");
@@ -146,7 +171,11 @@ class KeyboardSteward {
         this._holder = null;
         this._members = {};
         this._sinks = [];
+        if (this._offFocus) { this._offFocus(); this._offFocus = null; }
         if (typeof document !== "undefined") _pages.delete(document);
-        this._branch.dissolve();
+        if (this._branch) this._branch.dissolve();
     }
 }
+
+/** The page's steward, one per document, bound to the focus party. */
+const KeyboardStewardInstance = new KeyboardSteward(null, { party: focusParty });
