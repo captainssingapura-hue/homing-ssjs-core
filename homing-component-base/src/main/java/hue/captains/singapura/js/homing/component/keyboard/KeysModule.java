@@ -11,8 +11,10 @@ import java.util.List;
 /**
  * What a component talks to about the keys, never the steward: {@code
  * Keys.claimOn(root, m)} — a press or the focus arriving in the root claims
- * for the membership, in the capture phase so the innermost of nested
- * components claims last and holds; the focus leaving releases — and
+ * for the membership — the innermost of nested roots alone: Keys knows the
+ * roots under the convention, and an outer root stays silent for a press
+ * inside an inner one, so a container is never granted for a press on its
+ * child; the focus leaving releases — and
  * {@code Keys.claim(m)} by call. Every call goes to the page's steward
  * directly; none touches the party. Listens on the component's own element.
  */

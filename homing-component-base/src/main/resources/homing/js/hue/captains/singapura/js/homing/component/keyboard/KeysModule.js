@@ -7,12 +7,14 @@
 //     the claiming convention, as one line: a press in the root, or the focus
 //     arriving in it, claims the keys for m; the focus leaving it for somewhere
 //     outside releases (unless release: false). The party is told the result
-//     and never the cause; what makes the convention resolve nesting is the
-//     CAPTURE phase — capture runs outermost first, so when a press lands in a
-//     widget inside a pane inside a dialog, the dialog claims, then the pane,
-//     then the widget, and the innermost holds because it claimed last. No
-//     one needs to know who contains whom. off() removes the listeners.
-//   Keys.claim(m)                    by call: a container for a child, a dialog on open
+//     and never the cause. Nesting resolves here, not in the components: every
+//     root under the convention is known to Keys, so when a press lands in a
+//     widget inside a pane inside a dialog, the dialog and the pane see it land
+//     in a root inside their own and stay silent, and the widget alone claims —
+//     a container is never granted for a press on its child. The listeners are
+//     in the CAPTURE phase, so a stopPropagation inside a root cannot hide a
+//     press from it. off() removes the listeners and forgets the root.
+//   Keys.claim(m)                    by call: a dialog on open, a shortcut's summons
 //   Keys.yield(m)                    the keys given up: they go up the focus tree to the first
 //                                    ancestor that would hold them (wouldHold), else to no one
 //   Keys.release(m)                  nothing, unless m holds
@@ -24,6 +26,14 @@ function _target(a, b) {
     return a && typeof a.join === "function" && typeof a.claim === "function" ? { steward: a, id: b } : { steward: KeyboardStewardInstance, id: a };
 }
 
+var _roots = new WeakMap();   // root → how many claimOn are on it: the roots under the convention
+
+/** Whether a registered root lies strictly between the target and `root`: the press is that root's member's, not this one's. */
+function _insideAnother(root, target) {
+    for (var x = target; x && x !== root; x = x.parentNode) if (_roots.has(x)) return true;
+    return false;
+}
+
 var Keys = Object.freeze({
 
     claimOn: function (root, a, b, c) {
@@ -33,7 +43,7 @@ var Keys = Object.freeze({
         if (!steward || typeof steward.claim !== "function") throw new Error("[Keys] claimOn wants the page's KeyboardSteward");
         if (id == null) throw new Error("[Keys] claimOn wants the membership to claim for");
         var release = !opts || opts.release !== false;
-        function claim() { steward.claim(id); }
+        function claim(ev) { if (!_insideAnother(root, ev.target)) steward.claim(id); }
         function out(ev) {
             var to = ev.relatedTarget;
             if (release && !(to && typeof root.contains === "function" && root.contains(to))) steward.release(id);
@@ -41,10 +51,13 @@ var Keys = Object.freeze({
         root.addEventListener("pointerdown", claim, true);
         root.addEventListener("focusin", claim, true);
         root.addEventListener("focusout", out, true);
+        _roots.set(root, (_roots.get(root) || 0) + 1);
         return function () {
             root.removeEventListener("pointerdown", claim, true);
             root.removeEventListener("focusin", claim, true);
             root.removeEventListener("focusout", out, true);
+            var n = (_roots.get(root) || 0) - 1;
+            if (n > 0) _roots.set(root, n); else _roots.delete(root);
         };
     },
 

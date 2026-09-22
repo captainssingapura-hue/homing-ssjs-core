@@ -18,8 +18,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * key the holder takes is defaulted and stopped while a key it leaves
  * travels on; no listener while no one holds; a text field keeps its plain
  * keys; leaving releases; one steward per page; the claiming convention
- * resolves nesting by the capture phase, innermost last; physical focus is
- * never touched.
+ * resolves nesting to the innermost root alone; physical focus is never
+ * touched.
  */
 class KeyboardStewardTest extends JsModuleTestBase {
 
@@ -201,15 +201,29 @@ class KeyboardStewardTest extends JsModuleTestBase {
         assertEquals("a", holder());
     }
 
+    /**
+     * Nesting resolves in Keys, which knows the roots under the convention:
+     * a press or the focus arriving inside an inner root is the inner
+     * member's alone — the outer stays silent, never granted for it; a press
+     * in the outer outside the inner is the outer's; a root forgotten by its
+     * off() is no longer inner to anyone.
+     */
     @Test
-    void nestedRootsResolveByTheCapturePhaseInnermostLast() {
+    void nestedRootsResolveToTheInnermostAlone_theOuterNeverGrantedForItsChild() {
         eval("var o = member('o', outer), i = member('i', inner)");
         eval("fire(inner, 'pointerdown')");
-        assertEquals("i", holder(), "a press in the inner root: the outer claimed first, the inner last");
-        assertEquals("Granted:o Taken:o:i Granted:i", events());
+        assertEquals("i", holder(), "a press in the inner root: the inner alone claims");
+        assertEquals("Granted:i", events(), "the outer was not granted on the way");
+        assertEquals(0, eval("o.granted").asInt());
         eval("fire(outer, 'pointerdown')");
-        assertEquals("o", holder(), "a press in the outer root outside the inner: only the outer claims");
+        assertEquals("o", holder(), "a press in the outer root outside the inner: the outer claims");
         assertEquals("o", eval("i.taken.join()").asString(), "the inner was told by whom");
+        eval("events = []; var deep = el('SPAN', inner); fire(deep, 'focusin')");
+        assertEquals("i", holder(), "the focus arriving deep inside the inner root: the inner's, by the same rule");
+        assertEquals("Taken:o:i Granted:i", events());
+        eval("events = []; i.off(); fire(deep, 'pointerdown')");
+        assertEquals("o", holder(), "the inner root forgotten: a press in it is the outer's again");
+        assertEquals("Taken:i:o Granted:o", events());
     }
 
     @Test
