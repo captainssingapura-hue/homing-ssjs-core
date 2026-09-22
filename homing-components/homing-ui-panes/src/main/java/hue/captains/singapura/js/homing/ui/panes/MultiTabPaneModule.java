@@ -1,7 +1,11 @@
 package hue.captains.singapura.js.homing.ui.panes;
 
 import hue.captains.singapura.js.homing.component.BranchComponent;
+import hue.captains.singapura.js.homing.component.keyboard.FocusPartyModule;
+import hue.captains.singapura.js.homing.component.keyboard.Key;
 import hue.captains.singapura.js.homing.component.keyboard.KeyBinding;
+import hue.captains.singapura.js.homing.component.keyboard.Modifier;
+import hue.captains.singapura.js.homing.component.keyboard.focusParty;
 import hue.captains.singapura.js.homing.component.keyboard.KeysModule;
 import hue.captains.singapura.js.homing.component.keyboard.NeedKeyboard;
 import hue.captains.singapura.js.homing.core.DomModule;
@@ -23,11 +27,19 @@ import java.util.Set;
  * {@code dispose}. A branch component.
  *
  * <p>A tab holds a widget by the base's contract — an instance with
- * {@code root, setActive?, dispose?}
- * — whose root the pane appends once and never detaches; a switch hides
- * and shows panels. The pane disposes the widget on a real close and never
- * on a detach, and never calls {@code setActive}: that is the holder's,
- * told through {@code TabActivated}.</p>
+ * {@code root, focus, activate(), setActive?, dispose?} — whose root the
+ * pane appends once and never detaches; a switch hides and shows panels.
+ * The law: a tab's widget is logically focusable — a member of the dock's
+ * branch of the focus party, exposing its membership as {@code focus}, and
+ * answering {@code activate()}; what it contains natively is its own,
+ * encapsulated; {@code addTab} and {@code attachTab} refuse a widget that
+ * is not, and {@code attachTab} adopts a membership from another dock. The
+ * pane is a member holding the dock's branch; its keys, while it holds
+ * them, are the container's own — the tabs walked, reordered and
+ * detached, the widget entered, the pane yielded — and a chip takes no
+ * native focus. The pane disposes the widget on a real close and never on
+ * a detach, and never calls {@code setActive}: that is the holder's, told
+ * through {@code TabActivated}.</p>
  *
  * <p>Every mutation is one {@link PaneEvent} on one sink, {@code onEvent(ev)}:
  * a frozen object tagged by kind whose fields are the record's components,
@@ -45,9 +57,17 @@ public record MultiTabPaneModule() implements DomModule<MultiTabPaneModule> {
         @Override public String summary() { return "Tabs in a strip over one panel each; a press selects, a drag reorders along the rail, a right-click offers the tab's menu."; }
         /** The tab menu: opened on a chip when the pane is given a steward ({@code menus}); the site serving the pane serves the kind. */
         @Override public Set<ContextMenuKind<?>> required() { return Set.of(TabMenu.INSTANCE); }
-        /** The pane holds the keys for what is inside: the strip's on a focused chip, and the active tab's widget's, whatever they are. */
+        /** The container's own, while the pane holds the keys: the tabs walked, reordered and detached; the widget entered; the pane yielded; the menu. */
         @Override public List<KeyBinding> keys() {
-            return TabStripModule.TabStrip.KEYS.stream().map(b -> new KeyBinding(b.key(), b.modifiers(), "to the strip: " + b.meaning())).toList();
+            return List.of(
+                    KeyBinding.of(Key.ARROW_LEFT, "the active tab moves to the previous, at once"), KeyBinding.of(Key.ARROW_RIGHT, "the active tab moves to the next, at once"),
+                    KeyBinding.of(Key.HOME, "the first tab"), KeyBinding.of(Key.END, "the last tab"),
+                    KeyBinding.of(Key.ARROW_LEFT, Modifier.SHIFT, "the active tab moves one slot left along the rail, staying active"),
+                    KeyBinding.of(Key.ARROW_RIGHT, Modifier.SHIFT, "the active tab moves one slot right along the rail, staying active"),
+                    KeyBinding.of(Key.ARROW_DOWN, Modifier.SHIFT, "the active tab asked to detach and float: DetachRequested, for a holder with a desk"),
+                    KeyBinding.of(Key.ENTER, "the active tab's widget activates itself - a claim; the pane never claims for it"),
+                    KeyBinding.of(Key.ESCAPE, "the pane yields, up the tree"),
+                    KeyBinding.of(Key.CONTEXT_MENU, "the active tab's menu"), KeyBinding.of(Key.F10, Modifier.SHIFT, "the active tab's menu"));
         }
     }
 
@@ -57,10 +77,13 @@ public record MultiTabPaneModule() implements DomModule<MultiTabPaneModule> {
     public ImportsFor<MultiTabPaneModule> imports() {
         return ImportsFor.<MultiTabPaneModule>builder()
                 .add(new ModuleImports<>(List.of(new TabStripModule.TabStrip()), TabStripModule.INSTANCE))
+                .add(new ModuleImports<>(List.of(new PaneKeysModule.PaneKeys()), PaneKeysModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new KeysModule.Keys()), KeysModule.INSTANCE))
+                .add(new ModuleImports<>(List.of(new focusParty()), FocusPartyModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new PaneEventsModule.PaneEvents()), PaneEventsModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(
                         new PaneStyles.mtp_pane(),
+                        new PaneStyles.mtp_pane_held(),
                         new PaneStyles.mtp_content(),
                         new PaneStyles.mtp_tab_content(),
                         new PaneStyles.mtp_tab_content_hidden(),

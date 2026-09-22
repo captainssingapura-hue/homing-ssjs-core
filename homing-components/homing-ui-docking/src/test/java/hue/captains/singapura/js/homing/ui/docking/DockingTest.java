@@ -70,7 +70,8 @@ class DockingTest extends JsModuleTestBase {
         var console = { error: function (m, e) { log.push("error:" + m); } };
         var page = fakeBranch("page");
         var host = el("div");
-        function widget(key) { return { root: el("w-" + key), dispose: function () { log.push(key + ":disposed"); } }; }
+        // a widget by the law: a member of the dock the tab is first added to, with activate(); afloat, a widget of the desk's
+        function widget(key, into) { var w = { root: el("w-" + key), activate: function () { log.push(key + ":activate"); }, dispose: function () { log.push(key + ":disposed"); if (w.focus.in) w.focus.leave(); } }; w.focus = (into || A.focus).join(key, w); return w; }
         var sink = function (ev) {
             switch (ev.kind) {
                 case "Opened": log.push("opened:" + ev.id); break;
@@ -98,6 +99,7 @@ class DockingTest extends JsModuleTestBase {
         }
         var A = dock("a", { left: 0, top: 0, right: 400, bottom: 300 });
         var B = dock("b", { left: 400, top: 0, right: 800, bottom: 300 });
+        var afloat = focusParty.root.createBranch("afloat", {});   // where a widget opened on the desk joins, until the desk holds a branch of its own
         A.addTab({ id: "t1", title: "One", widget: widget("w1") });
         A.addTab({ id: "t2", title: "Two", widget: widget("w2") });
         log.length = 0;
@@ -109,6 +111,12 @@ class DockingTest extends JsModuleTestBase {
     @BeforeEach
     void load() {
         js = buildContext();
+        loadModule("/homing/js/hue/captains/singapura/js/homing/component/party/PartyModule.js");
+        loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/FocusPartyModule.js");
+        loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeyboardSecretaryModule.js");
+        loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeyboardEventsModule.js");
+        loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeyboardStewardModule.js");
+        loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeysModule.js");
         loadModule(P + "floating/FloatEventsModule.js");
         loadModule(P + "floating/FloatingPaneModule.js");
         loadModule(P + "floating/DeskModule.js");
@@ -116,6 +124,7 @@ class DockingTest extends JsModuleTestBase {
         loadModule(P + "panes/TabDragModule.js");
         loadModule(P + "panes/TabHandModule.js");
         loadModule(P + "panes/TabStripModule.js");
+        loadModule(P + "panes/PaneKeysModule.js");
         loadModule(P + "panes/MultiTabPaneModule.js");
         loadModule(P + "docking/DockEventsModule.js");
         loadModule(P + "docking/DockingModule.js");
@@ -170,7 +179,7 @@ class DockingTest extends JsModuleTestBase {
 
     @Test
     void aFloatDraggedOverADockIsOffered_andDroppedThereBecomesItsTab() {
-        eval("docking.desk.open({ id: 'f', title: 'Float', widget: widget('wf'), x: 500, y: 400 }); log.length = 0;");
+        eval("docking.desk.open({ id: 'f', title: 'Float', widget: widget('wf', afloat), x: 500, y: 400 }); log.length = 0;");
         eval("var head = docking.desk.pane('f').root.children[0]; head.fire('pointerdown', { button: 0, pointerId: 3, clientX: 520, clientY: 410, target: head });");
         // over B's strip: offered, B lit; over its content: not a landing
         eval("head.fire('pointermove', { clientX: 600, clientY: 20 });");
@@ -189,11 +198,12 @@ class DockingTest extends JsModuleTestBase {
         assertFalse(eval("docking.desk.has('f')").asBoolean());
         assertFalse(eval("A.el.has('mtp_dock_target')").asBoolean(), "the offer is over");
         assertEquals("w-wf", eval("A.contentElOf('f').children[0].tag").asString(), "the widget is in the dock's panel");
+        assertEquals("a", eval("A.widgetOf('f').focus.in.name").asString(), "and its membership adopted into the dock's branch");
     }
 
     @Test
     void aFloatLetGoOffEveryDockStaysAfloat() {
-        eval("docking.desk.open({ id: 'f', title: 'Float', widget: widget('wf'), x: 500, y: 400 }); log.length = 0;");
+        eval("docking.desk.open({ id: 'f', title: 'Float', widget: widget('wf', afloat), x: 500, y: 400 }); log.length = 0;");
         eval("var head = docking.desk.pane('f').root.children[0]; head.fire('pointerdown', { button: 0, pointerId: 3, clientX: 520, clientY: 410, target: head });"
            + "head.fire('pointermove', { clientX: 600, clientY: 20 }); head.fire('pointermove', { clientX: 600, clientY: 500 }); head.fire('pointerup', { clientX: 600, clientY: 500 });");
         assertEquals("capture:header moved:f", log());

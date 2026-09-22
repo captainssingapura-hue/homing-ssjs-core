@@ -1,11 +1,6 @@
 package hue.captains.singapura.js.homing.ui.panes;
 
 import hue.captains.singapura.js.homing.component.BranchComponent;
-import hue.captains.singapura.js.homing.component.keyboard.Key;
-import hue.captains.singapura.js.homing.component.keyboard.KeyBinding;
-import hue.captains.singapura.js.homing.component.keyboard.KeysModule;
-import hue.captains.singapura.js.homing.component.keyboard.Modifier;
-import hue.captains.singapura.js.homing.component.keyboard.NeedKeyboard;
 import hue.captains.singapura.js.homing.core.DomModule;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
@@ -26,13 +21,8 @@ import java.util.List;
 public record TabStripModule() implements DomModule<TabStripModule> {
 
     /** The class. */
-    public record TabStrip() implements BranchComponent<TabStripModule>, NeedKeyboard {
-        @Override public String summary() { return "The strip of chips on its own: selection, keyboard walk, and the hand that drags a chip."; }
-        /** On a chip, through the party; the Tab key that walks the chips is the browser's. */
-        public static final List<KeyBinding> KEYS = List.of(
-                KeyBinding.of(Key.ENTER, "the chip selected"), KeyBinding.of(Key.SPACE, "the chip selected"),
-                KeyBinding.of(Key.CONTEXT_MENU, "the chip's menu"), KeyBinding.of(Key.F10, Modifier.SHIFT, "the chip's menu"));
-        @Override public List<KeyBinding> keys() { return KEYS; }
+    public record TabStrip() implements BranchComponent<TabStripModule> {
+        @Override public String summary() { return "The strip of chips on its own: selection by a press, and the hand that drags a chip along the rail; no chip takes native focus, and the keys over a strip are its pane's."; }
     }
 
     public static final TabStripModule INSTANCE = new TabStripModule();
@@ -57,7 +47,6 @@ public record TabStripModule() implements DomModule<TabStripModule> {
                 ), PaneStyles.INSTANCE))
                 .add(new ModuleImports<>(List.of(new TabHandModule.TabHand()), TabHandModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new TabDragModule.TabDrag()), TabDragModule.INSTANCE))
-                .add(new ModuleImports<>(List.of(new KeysModule.Keys()), KeysModule.INSTANCE))
                 .build();
     }
 

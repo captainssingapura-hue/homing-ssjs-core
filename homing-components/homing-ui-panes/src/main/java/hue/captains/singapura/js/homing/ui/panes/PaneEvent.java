@@ -81,4 +81,12 @@ public sealed interface PaneEvent {
             Objects.requireNonNull(slotId, "AddRequested.slotId");
         }
     }
+
+    /** Shift+Down on the pane while it holds the keys: the active tab asked to detach and float; the holder that has a desk does it. */
+    record DetachRequested(String slotId, String tabId) implements PaneEvent {
+        public DetachRequested {
+            Objects.requireNonNull(slotId, "DetachRequested.slotId");
+            Objects.requireNonNull(tabId, "DetachRequested.tabId");
+        }
+    }
 }

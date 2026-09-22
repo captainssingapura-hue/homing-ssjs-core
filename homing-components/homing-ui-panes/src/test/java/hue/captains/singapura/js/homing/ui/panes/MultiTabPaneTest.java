@@ -24,6 +24,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
     private static final String DRAG   = "/homing/js/hue/captains/singapura/js/homing/ui/panes/TabDragModule.js";
     private static final String HAND   = "/homing/js/hue/captains/singapura/js/homing/ui/panes/TabHandModule.js";
     private static final String STRIP  = "/homing/js/hue/captains/singapura/js/homing/ui/panes/TabStripModule.js";
+    private static final String KEYS   = "/homing/js/hue/captains/singapura/js/homing/ui/panes/PaneKeysModule.js";
     private static final String MODULE = "/homing/js/hue/captains/singapura/js/homing/ui/panes/MultiTabPaneModule.js";
 
     // Elements that know their children, classes and attributes; a party
@@ -68,15 +69,23 @@ class MultiTabPaneTest extends JsModuleTestBase {
             mtp_chip_seated = "mtp_chip_seated",
             mtp_strip_tail = "mtp_strip_tail", mtp_add = "mtp_add", mtp_add_off = "mtp_add_off", mtp_pill = "mtp_pill",
             mtp_content = "mtp_content", mtp_tab_content = "mtp_tab_content", mtp_tab_content_hidden = "mtp_tab_content_hidden",
-            mtp_empty = "mtp_empty", mtp_dock_target = "mtp_dock_target";
+            mtp_empty = "mtp_empty", mtp_dock_target = "mtp_dock_target", mtp_pane_held = "mtp_pane_held";
         var console = { error: function (m, e) { log.push("error:" + m); } };
         var host = el("div");
         var branch = fakeBranch("page");
-        function widget(key) {
-            return { root: el("w-" + key), setActive: function (on) { log.push(key + ":" + (on ? "on" : "off")); },
-                     dispose: function () { log.push(key + ":disposed"); } };
+        var kbEvents = [];
+        KeyboardStewardInstance.on(function (e) { kbEvents.push(e.kind + ":" + (focusParty.find(e.id) ? focusParty.find(e.id).name : e.id)); });
+        // a widget by the law: a member of the dock's branch (the pane's unless said), with activate(); its Escape yields
+        function widget(key, into) {
+            var w = { root: el("w-" + key), setActive: function (on) { log.push(key + ":" + (on ? "on" : "off")); },
+                      activate: function () { log.push(key + ":activate"); KeyboardStewardInstance.claim(w.focus); },
+                      keyDown: function (ev) { log.push(key + ":key:" + ev.key); if (ev.key === "Escape") { KeyboardStewardInstance.yield(w.focus); return true; } return ev.key === "ArrowUp"; },
+                      dispose: function () { log.push(key + ":disposed"); w.focus.leave(); } };
+            w.focus = (into || pane.focus).join(key, w);
+            return w;
         }
-        function tab(id, extra) { var t = { id: id, title: id.toUpperCase(), widget: widget(id) }; for (var k in (extra || {})) t[k] = extra[k]; return t; }
+        function tab(id, extra) { var t = { id: id, title: id.toUpperCase(), widget: widget(id, extra && extra.into) }; for (var k in (extra || {})) if (k !== "into") t[k] = extra[k]; return t; }
+        function holder() { var h = KeyboardStewardInstance.holder(); return h ? focusParty.find(h).name : "none"; }
         var events = [];
         var paneBranch = branch.createBranch("mtp_s1");
         var pane = new MultiTabPane(paneBranch, { host: host, slotId: "s1", budget: 4,
@@ -89,6 +98,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
                     case "TabMoved":     log.push("moved:" + ev.srcSlotId + ":" + ev.tab.id + "@" + ev.srcIndex + "->" + ev.destSlotId + "@" + ev.destIndex); break;
                     case "TabActivated": log.push("active:" + ev.slotId + ":" + ev.tabId); break;
                     case "TabAttached":  log.push("attached:" + ev.slotId + ":" + ev.tab.id + "@" + ev.atIndex); break;
+                    case "DetachRequested": log.push("detach?" + ev.slotId + ":" + ev.tabId); break;
                     default: log.push("?" + ev.kind);
                 } } });
         function chips() { return pane.el.children[0].children.filter(function (c) { return c.has("mtp_chip"); }).map(function (c) { return c.children[0].textContent; }).join(","); }
@@ -99,11 +109,17 @@ class MultiTabPaneTest extends JsModuleTestBase {
     @BeforeEach
     void load() {
         js = buildContext();
+        loadModule("/homing/js/hue/captains/singapura/js/homing/component/party/PartyModule.js");
+        loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/FocusPartyModule.js");
+        loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeyboardSecretaryModule.js");
+        loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeyboardEventsModule.js");
+        loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeyboardStewardModule.js");
         loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeysModule.js");
         loadModule(EVENTS);
         loadModule(DRAG);
         loadModule(HAND);
         loadModule(STRIP);
+        loadModule(KEYS);
         loadModule(MODULE);
         js.eval("js", SHIM);
     }
@@ -134,7 +150,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
         assertEquals("active:s1:b", log());
         eval("pane.switchTab('b')");
         assertEquals("active:s1:b", log(), "switching to the active tab says nothing");
-        assertEquals("0,0", eval("[0, 1].map(function (i) { return pane.el.children[0].children[i].getAttribute('tabindex'); }).join(',')").asString(), "every chip is in the tab order, not only the active one");
+        assertEquals("null,null", eval("[0, 1].map(function (i) { return String(pane.el.children[0].children[i].getAttribute('tabindex')); }).join(',')").asString(), "no chip takes native focus: the keys over the strip are the pane's");
     }
 
     @Test
@@ -248,13 +264,13 @@ class MultiTabPaneTest extends JsModuleTestBase {
             chipA.getBoundingClientRect = function () { return { left: 100, top: 10, right: 180, bottom: 40 }; };
             var ev1 = { clientX: 120, clientY: 30, defaulted: false, preventDefault: function () { this.defaulted = true; }, stopPropagation: function () {} };
             chipA.fire("contextmenu", ev1);
-            var ev2 = { key: "F10", shiftKey: true, target: chipA };
-            var took2 = withMenus.key(ev2);   // from whoever holds the keys for the pane; the chip has no keydown listener of its own
+            var took2 = withMenus.keyDown({ key: "F10", shiftKey: true });   // while the pane holds the keys: the active tab's menu at its chip; no chip listens itself
             var ev3 = { clientX: 1, clientY: 2, defaulted: false, preventDefault: function () { this.defaulted = true; }, stopPropagation: function () {} };
             chipR.fire("contextmenu", ev3);
             """);
         assertEquals("tab:a@120,30:bound tab:a@112,38:kb:bound tab:refused@1,2:bound", eval("asked.join(' ')").asString(), "the kind, the tab, the point; the keyboard at the chip; bound to the pane, the tab and the chip");
         assertEquals("active:refused", log(), "the tab under the menu is selected first; a was active already");
+        eval("withMenus.dispose()");
         assertTrue(eval("ev1.defaulted && took2 && !ev3.defaulted").asBoolean(), "the browser's menu is suppressed only when the steward took it; the key taken likewise");
         assertEquals("0", eval("String((chipA.listeners.keydown || []).length)").asString(), "no keydown listener on a chip");
         assertEquals("tab", eval("MultiTabPane.MENU").asString());
@@ -263,31 +279,71 @@ class MultiTabPaneTest extends JsModuleTestBase {
     }
 
     /**
-     * The keys through the party: handed the steward, the pane joins and puts the
-     * convention on its root; a key goes to the strip when it is on a chip, else to
-     * the active tab's widget by its key(ev); neither chip nor pane listens itself.
+     * The pane is a member holding the dock's branch: a press on the frame claims
+     * it; while it holds, the keys are the container's own — arrows and Home/End
+     * change the active tab at once, Shift+arrows reorder by one with the tab
+     * staying active, Shift+Down asks to detach, Enter has the widget activate
+     * itself, Escape yields; everything else is left. Neither chip nor pane
+     * listens for keys itself.
      */
     @Test
-    void handedTheSteward_thePaneHoldsTheKeysForTheStripAndTheActiveWidget() {
-        eval("""
-            var members = {}, kbLog = [];
-            var kb = { enroll: function (root, id) { root._kb = id; return function () { delete root._kb; }; }, memberAt: function (el) { for (var x = el; x; x = x.parentNode) if (x._kb) return x._kb; return null; }, join: function (id, h) { members[id] = h; kbLog.push("join:" + id); return id; }, leave: function (id) { delete members[id]; kbLog.push("leave:" + id); }, claim: function () {}, release: function () {} };
-            var keyed = new MultiTabPane(branch.createBranch("mtp_k"), { host: el("div"), slotId: "k", keyboard: kb, keyboardId: "page/dock", onEvent: function (ev) { if (ev.kind === "TabActivated") log.push("active:" + ev.tabId); } });
-            var wa = widget("a"); wa.key = function (ev) { log.push("a:key:" + ev.key); return ev.key === "ArrowUp"; };
-            keyed.addTab({ id: "a", title: "A", widget: wa }); keyed.addTab(tab("b")); keyed.switchTab("a"); log = [];
-            var chipB = keyed.el.children[0].children[1];
-            """);
-        assertEquals("join:page/dock", eval("kbLog.join(' ')").asString(), "the pane joined as said; the strip did not");
-        assertEquals("1,0", eval("[(keyed.el.listeners.pointerdown || []).length, (keyed.el.listeners.focusin || []).length].join()").asString(), "the convention on the root: one press");
-        assertTrue(eval("members['page/dock'].keyDown({ key: 'Enter', target: chipB })").asBoolean(), "Enter on a chip: the strip's");
-        assertEquals("active:b", log());
-        eval("keyed.switchTab('a'); log = []");
-        assertTrue(eval("members['page/dock'].keyDown({ key: 'ArrowUp', target: wa.root })").asBoolean(), "a key not on a chip: the active widget's");
-        assertFalse(eval("members['page/dock'].keyDown({ key: 'Escape', target: wa.root })").asBoolean(), "left when the widget leaves it");
-        assertEquals("a:key:ArrowUp a:key:Escape", log());
-        assertEquals("0,0", eval("[(chipB.listeners.keydown || []).length, (keyed.el.listeners.keydown || []).length].join()").asString());
-        eval("kbLog = []; keyed.dispose()");
-        assertEquals("leave:page/dock", eval("kbLog.join(' ')").asString());
+    void whileThePaneHoldsTheKeys_theyAreTheContainersOwn() {
+        eval("pane.addTab(tab('a')); pane.addTab(tab('b')); pane.addTab(tab('c')); log = []; kbEvents = []");
+        assertEquals("mtp_s1", eval("pane.focus.name").asString(), "the dock's branch, named after the pane's");
+        assertEquals("a,b,c", eval("pane.focus.members.map(function (m) { return m.name; }).join()").asString(), "the widgets are its members");
+        eval("pane.el.fire('pointerdown', { target: pane.el })");
+        assertEquals("mtp_s1", eval("holder()").asString(), "a press on the frame: the pane holds");
+        assertTrue(eval("pane.el.has('mtp_pane_held')").asBoolean(), "and says so");
+        assertTrue(eval("pane.keyDown({ key: 'ArrowRight' })").asBoolean());
+        assertEquals("b", eval("pane.activeTab()").asString());
+        eval("pane.keyDown({ key: 'ArrowRight' }); pane.keyDown({ key: 'ArrowRight' })");
+        assertEquals("c", eval("pane.activeTab()").asString(), "the end: no wrap");
+        eval("pane.keyDown({ key: 'Home' })");
+        assertEquals("a", eval("pane.activeTab()").asString());
+        eval("pane.keyDown({ key: 'End' }); pane.keyDown({ key: 'ArrowLeft' })");
+        assertEquals("b", eval("pane.activeTab()").asString());
+        assertEquals("active:s1:b active:s1:c active:s1:a active:s1:c active:s1:b", log());
+        eval("log = []; pane.keyDown({ key: 'ArrowLeft', shiftKey: true })");
+        assertEquals("B,A,C", chips(), "Shift+Left: the active tab one slot left");
+        assertEquals("moved:s1:b@1->s1@0", log());
+        assertEquals("b", eval("pane.activeTab()").asString(), "still active");
+        eval("log = []; pane.keyDown({ key: 'ArrowLeft', shiftKey: true })");
+        assertEquals("", log(), "at the edge: nothing");
+        eval("pane.keyDown({ key: 'ArrowDown', shiftKey: true })");
+        assertEquals("detach?s1:b", log(), "Shift+Down asks; a holder with a desk does it");
+        assertEquals("mtp_s1", eval("holder()").asString(), "the pane holds throughout");
+        assertTrue(eval("pane.keyDown({ key: 'Enter' })").asBoolean());
+        assertEquals("detach?s1:b b:activate", log(), "Enter: the widget activates itself");
+        assertEquals("b", eval("holder()").asString(), "and holds - a claim of its own, not the pane's");
+        assertFalse(eval("pane.el.has('mtp_pane_held')").asBoolean());
+        eval("log = []; KeyboardStewardInstance._forward('KeyDown', { key: 'ArrowUp', target: null, preventDefault: function () {}, stopPropagation: function () {} })");
+        assertEquals("b:key:ArrowUp", log(), "the keys are the widget's now, through the steward");
+        eval("log = []; KeyboardStewardInstance.yield(pane.widgetOf('b').focus)");
+        assertEquals("mtp_s1", eval("holder()").asString(), "the widget's yield: the pane catches");
+        assertTrue(eval("pane.el.has('mtp_pane_held')").asBoolean());
+        assertTrue(eval("pane.keyDown({ key: 'Escape' })").asBoolean());
+        assertEquals("none", eval("holder()").asString(), "Escape: the pane yields, and nothing above holds");
+        assertFalse(eval("pane.keyDown({ key: 'x' })").asBoolean(), "anything else is left");
+        assertEquals("0,0", eval("[(pane.el.children[0].children[0].listeners.keydown || []).length, (pane.el.listeners.keydown || []).length].join()").asString(), "no keydown listener on a chip or the pane");
+        assertEquals("1", eval("String((pane.el.children[0].listeners.mousedown || []).length)").asString(), "the strip stops the press's default");
+    }
+
+    /** The law: a tab's widget is a member of a dock's branch with activate(), or the tab is refused; attachTab adopts a membership from elsewhere; a closed tab's widget is out of the tree. */
+    @Test
+    void theLaw_aTabsWidgetIsLogicallyFocusable() {
+        assertTrue(assertThrows(PolyglotException.class, () -> eval("pane.addTab({ id: 'n', title: 'N', widget: { root: el('w') } })")).getMessage().contains("not logically focusable"));
+        assertTrue(assertThrows(PolyglotException.class, () -> eval("var w2 = widget('m'); delete w2.activate; pane.addTab({ id: 'm', title: 'M', widget: w2 })")).getMessage().contains("not logically focusable"));
+        eval("w2.focus.leave(); var other = focusParty.root.createBranch('other', {}); pane.addTab(tab('a')); pane.attachTab(tab('e', { into: other }), 0)");
+        assertEquals("a,e", eval("pane.focus.members.map(function (m) { return m.name; }).join()").asString(), "attached from another branch: adopted into this dock's");
+        assertEquals("0", eval("String(other.members.length)").asString());
+        eval("log = []; pane.removeTab('e')");
+        assertEquals("a", eval("pane.focus.members.map(function (m) { return m.name; }).join()").asString(), "closed: out of the tree");
+        eval("var w3 = widget('f'); w3.dispose = null; pane.addTab({ id: 'f', title: 'F', widget: w3 }); pane.removeTab('f')");
+        assertEquals("a", eval("pane.focus.members.map(function (m) { return m.name; }).join()").asString(), "a widget that forgot to leave is left by the pane");
+        eval("var d = pane.detachTab('a')");
+        assertEquals("a", eval("pane.focus.members.map(function (m) { return m.name; }).join()").asString(), "detached: the membership stays until the receiver adopts it");
+        eval("d.widget.dispose(); other.owner.leave(); pane.dispose()");
+        assertTrue(eval("pane.focus.owner.in === null").asBoolean(), "disposed: the pane left the tree, its branch dissolved");
     }
 
     @Test

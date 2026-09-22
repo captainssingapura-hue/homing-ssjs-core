@@ -67,7 +67,7 @@ class PaneEventsTest extends JsModuleTestBase {
     void theKindsAreThePermittedSubclassesInOrder() {
         var java = records().stream().map(Class::getSimpleName).toList();
         assertEquals(java.toString(), eval("'[' + PaneEvents.KINDS.join(', ') + ']'").asString());
-        assertEquals(6, java.size());
+        assertEquals(7, java.size());
     }
 
     @Test

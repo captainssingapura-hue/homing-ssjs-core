@@ -11,6 +11,7 @@
 //   PaneEvents.TabActivated(slotId, tabId)
 //   PaneEvents.TabAttached(slotId, tab, atIndex)
 //   PaneEvents.AddRequested(slotId)
+//   PaneEvents.DetachRequested(slotId, tabId)
 //   PaneEvents.KINDS                       the kinds, in this order
 //
 // Data, not classes: an event goes into a log, a checkpoint, a replay, and
@@ -34,7 +35,7 @@ function _index(v, what) {
 }
 
 class PaneEvents {
-    static KINDS = Object.freeze(["TabAdded", "TabRemoved", "TabMoved", "TabActivated", "TabAttached", "AddRequested"]);
+    static KINDS = Object.freeze(["TabAdded", "TabRemoved", "TabMoved", "TabActivated", "TabAttached", "AddRequested", "DetachRequested"]);
 
     /** A tab was added at the end of its block via addTab. */
     static TabAdded(slotId, tab, index) {
@@ -60,5 +61,9 @@ class PaneEvents {
     /** The add button was pressed while a tab could be added; the holder decides what that means. */
     static AddRequested(slotId) {
         return Object.freeze({ kind: "AddRequested", slotId: _slot(slotId, "AddRequested.slotId") });
+    }
+    /** Shift+Down on the pane while it holds the keys: the active tab asked to detach and float; the holder that has a desk does it. */
+    static DetachRequested(slotId, tabId) {
+        return Object.freeze({ kind: "DetachRequested", slotId: _slot(slotId, "DetachRequested.slotId"), tabId: _slot(tabId, "DetachRequested.tabId") });
     }
 }

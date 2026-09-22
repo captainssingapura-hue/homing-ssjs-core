@@ -4,9 +4,13 @@
 // component: the caller makes a sub-branch for it and hands it in; dispose()
 // dissolves it.
 //
-//   new MultiTabPane(branch, { host, slotId?, budget?, addable?, onEvent?, menus?, keyboard?, keyboardId? })
+//   new MultiTabPane(branch, { host, slotId?, budget?, addable?, onEvent?, menus?, focus?, focusName? })
 //     branch: the pane's own, handed unactivated
 //     host:   a flex column; the pane is its item and fills it.
+//     focus:  the focus branch the pane joins — the page's root unless said,
+//             the desk's for a floating dock. The pane holds a branch of its
+//             own under it, pane.focus, named focusName (the branch's name
+//             unless said): THE DOCK'S BRANCH, which every tab's widget joins.
 //     menus:  the page's ContextMenuSteward, when the page offers menus: a
 //             right-click on a chip, or the ContextMenu key / Shift+F10 on it,
 //             asks the steward for MultiTabPane.MENU — the kind "tab", which
@@ -15,16 +19,31 @@
 //             tab record, the chip. The steward says whether it took the
 //             request; only then is the browser's menu suppressed. What a
 //             pick does — detach, close — is the page's handler for "tab".
-//     keyboard: the page's KeyboardSteward: the pane joins the keyboard party as
-//             keyboardId (its branch's name, unless said) and claims by the
-//             convention — a press or the focus arriving anywhere in it. It holds
-//             the keys for what is inside: a key goes to the strip (Enter, Space,
-//             the menu key on a focused chip), then to the active tab's widget by
-//             its key(ev), when it has one; the strip and the widgets are built
-//             without a steward of their own. No keydown listener of its own.
+//
+//   THE LAW: a tab's widget is logically focusable. It is a member of the
+//   dock's branch — it joined pane.focus, or the branch of the dock it came
+//   from, and exposes its membership as widget.focus — and it answers
+//   activate(). What it contains natively is its own affair, encapsulated:
+//   the pane never sees a native control. addTab and attachTab refuse a
+//   widget that is not; attachTab adopts a membership from another dock.
+//
+//   THE KEYS, while the pane holds them — nothing natively focused, the pane
+//   the holder by a press on a chip or the frame, a widget's yield caught, or
+//   a claim on open. Level 1, the container's own, and nothing else:
+//     ← →              the active tab moves to the previous / next, at once
+//     Home / End       the first / last tab
+//     Shift+← / →      the active tab moves one slot along the rail, staying active: moveTab
+//     Shift+↓          DetachRequested(slotId, tabId): the holder with a desk floats it
+//     Enter            the active tab's widget activates itself — a claim; the pane's never for it
+//     Escape           the pane yields, up the tree
+//     Shift+F10, ContextMenu   the active tab's menu, when the page offers menus
+//   Level 2 is the widget's: its own keys, its Escape yielding back — the pane
+//   answers wouldHold yes. A chip takes NO native focus: a press on it selects
+//   the tab, takes the native focus away from whatever had it, and claims the
+//   pane, so ← → work after every mouse press. No keydown listener of its own.
 //
 //   pane.addTab({ id, title, widget, pinned?, closable? })  → index; the widget
-//       is an instance by the base's contract: root, setActive?, dispose?.
+//       is an instance by the base's contract: root, focus, activate(), setActive?, dispose?.
 //       Its root is appended to the tab's panel once and never detached; a
 //       switch shows one panel and hides the rest. Reports TabAdded, then
 //       TabActivated if the tab became the active one.
@@ -40,8 +59,10 @@
 //   pane.tabs() .activeTab() .has(id) .tabIndexOf(id) .count()
 //   pane.budget() .canAdd() .setAddEnabled(b)
 //   pane.size(s?) .aspect(a?)    the chips' size and aspect, −1..1, null the design's
-//   pane.contentElOf(id) .widgetOf(id) .getState() .el .slotId
-//   pane.dispose()               → every widget disposed in order, the branch dissolved
+//   pane.contentElOf(id) .widgetOf(id) .getState() .el .slotId .focus
+//   pane.keyDown(ev) .wouldHold() .granted(by) .taken(by)   the member's, called by the steward
+//   pane.menuByKey() .requestDetach()   what the keys do, by call
+//   pane.dispose()               → every widget disposed in order, the branches dissolved
 //
 // The pane is a dock. A tab leaves it by call — detachTab, for a holder that
 // floats it — the strip's own drag staying on its rail for now. A tab from
@@ -71,7 +92,9 @@
 // comes back, the same id to the same pane, is minted afresh; the widget's
 // root is its holder's and only passes through.
 //
-// The strip is TabStrip's; `css` is injected with the styles import.
+// The strip is TabStrip's, the keys PaneKeys'; `css` is injected with the
+// styles import; the focus party's root, `focusParty`, is the branch a pane
+// joins unless told.
 // =============================================================================
 
 var _DEFAULT_BUDGET = 16;
@@ -106,12 +129,11 @@ class MultiTabPane {
             onDrop: function (chip, dest) { var i = self._findChip(chip); if (i >= 0) self.moveTab(self._tabs[i].id, dest); }
         });
         root.appendChild(this._strip.el);
-        this._kb = null; this._kbId = null; this._offKeys = null;
-        if (opts.keyboard) {
-            this._kb = opts.keyboard;
-            this._kbId = this._kb.join(opts.keyboardId != null ? String(opts.keyboardId) : branch.name, { keyDown: function (ev) { return self.key(ev); } });
-            this._offKeys = Keys.claimOn(root, this._kb, this._kbId);
-        }
+        // the dock's branch of the focus party, held by the pane; a press anywhere in the frame claims for the pane
+        // unless a member inside is nearer
+        var above = opts.focus || focusParty.root;
+        this.focus = above.createBranch(opts.focusName != null ? String(opts.focusName) : branch.name, this);
+        this._offKeys = Keys.claimOn(root, this.focus.owner);
 
         this._content = branch.createElement("content", "div");
         css.addClass(this._content, mtp_content);
@@ -157,6 +179,9 @@ class MultiTabPane {
         if (this._find(tab.id) >= 0) throw new Error("[MultiTabPane] tab '" + tab.id + "' is already in slot '" + this.slotId + "'");
         if (!tab.widget || typeof tab.widget !== "object" || !tab.widget.root)
             throw new Error("[MultiTabPane] tab '" + tab.id + "' has no widget with a root");
+        var f = tab.widget.focus;   // the law: a member of a dock's branch, with activate()
+        if (!f || typeof f !== "object" || typeof f.leave !== "function" || !f.in || typeof tab.widget.activate !== "function")
+            throw new Error("[MultiTabPane] tab '" + tab.id + "': its widget is not logically focusable - it must join the dock's focus branch (widget.focus) and answer activate()");
         if (this._tabs.length >= this._budget) throw new Error("[MultiTabPane] the budget of " + this._budget + " is spent in slot '" + this.slotId + "'");
     }
 
@@ -177,9 +202,9 @@ class MultiTabPane {
         css.addClass(panel, mtp_tab_content, mtp_tab_content_hidden);
         panel.setAttribute("role", "tabpanel");
         panel.appendChild(tab.widget.root);
-        return { id: tab.id, tab: tab, pinned: !!tab.pinned, widget: tab.widget, chip: chip, panel: panel, branch: own };
+        return { id: tab.id, tab: tab, pinned: !!tab.pinned, widget: tab.widget, chip: chip, panel: panel, branch: own, menu: handlers.onMenu || null };
     }
-    /** Into the state at index, clamped to the pinned block or after it; then the strip follows. */
+    /** Into the state at index, clamped to the pinned block or after it; then the strip follows; the widget's membership under this dock. */
     _place(entry, index) {
         var lo = entry.pinned ? 0 : this._pinnedCount();
         var hi = entry.pinned ? this._pinnedCount() : this._tabs.length;
@@ -187,6 +212,7 @@ class MultiTabPane {
         if (index < lo) index = lo;
         this._tabs.splice(index, 0, entry);
         this._content.appendChild(entry.panel);
+        if (entry.widget.focus.in !== this.focus) this.focus.adopt(entry.widget.focus);   // placement follows the rendered UI
         this._refresh();
         return index;
     }
@@ -243,20 +269,19 @@ class MultiTabPane {
     }
     removeTab(id) {
         var i = this._require(id);
-        // closed from its own chip — the keyboard, or a menu whose close gave the focus back — the focus stays on the strip
-        var hadFocus = typeof document !== "undefined" && document.activeElement === this._tabs[i].chip;
         var entry = this._takeOut(i);
-        if (typeof entry.widget.dispose === "function") {
-            try { entry.widget.dispose(); } catch (e) { console.error("[MultiTabPane] widget.dispose threw:", e); }
-        }
+        MultiTabPane._disposeWidget(entry.widget);
         entry.branch.dissolve();
         this._fire(PaneEvents.TabRemoved(this.slotId, entry.tab, i));
         this._activateNeighbour(i);
-        if (hadFocus) {
-            var j = this._find(this._activeId);
-            if (j >= 0) { try { this._tabs[j].chip.focus({ preventScroll: true }); } catch (e) {} }
-        }
         return entry.tab;
+    }
+    /** The widget disposed, and its membership left if it forgot to: a closed tab's widget is out of the tree. */
+    static _disposeWidget(w) {
+        if (typeof w.dispose === "function") {
+            try { w.dispose(); } catch (e) { console.error("[MultiTabPane] widget.dispose threw:", e); }
+        }
+        if (w.focus && w.focus.in) w.focus.leave();
     }
     detachTab(id) {
         var i = this._require(id);
@@ -311,27 +336,32 @@ class MultiTabPane {
         for (var i = 0; i < this._tabs.length; i++) list.push({ id: this._tabs[i].id, title: this._tabs[i].tab.title, pinned: this._tabs[i].pinned });
         return { slotId: this.slotId, activeTabId: this._activeId, tabs: list };
     }
-    /** A keydown while the pane holds the keys: the strip first, then the active tab's widget; true when taken. */
-    key(ev) {
-        if (this._strip.key(ev)) return true;
-        var i = this._activeId === null ? -1 : this._find(this._activeId), w = i < 0 ? null : this._tabs[i].widget;
-        return !!(w && typeof w.key === "function" && w.key(ev));
+    // ── The member: the keys while the pane holds them ────────────────────
+    /** A keydown while the pane holds the keys: the container's own, PaneKeys; true when taken. */
+    keyDown(ev) { return PaneKeys.keyDown(this, ev); }
+    /** The active tab's menu, at its chip, when the page offers menus; true when the steward took it. */
+    menuByKey() {
+        var i = this._activeId === null ? -1 : this._find(this._activeId);
+        if (i < 0 || !this._tabs[i].menu) return false;
+        var r = this._tabs[i].chip.getBoundingClientRect();
+        return !!this._tabs[i].menu({ x: r.left + 12, y: r.bottom - 2 }, true);
     }
+    /** The active tab asked to detach and float: DetachRequested, for a holder with a desk. */
+    requestDetach() { if (this._activeId !== null) this._fire(PaneEvents.DetachRequested(this.slotId, this._activeId)); }
+    /** A yield from a widget inside: the pane holds. */
+    wouldHold() { return true; }
+    granted() { css.addClass(this.el, mtp_pane_held); }
+    taken() { css.removeClass(this.el, mtp_pane_held); }
 
     dispose() {
         if (this._disposed) return;
         this._disposed = true;
         if (this._offKeys) { this._offKeys(); this._offKeys = null; }
-        if (this._kb) { this._kb.leave(this._kbId); this._kb = null; }
-        for (var i = 0; i < this._tabs.length; i++) {
-            var w = this._tabs[i].widget;
-            if (typeof w.dispose === "function") {
-                try { w.dispose(); } catch (e) { console.error("[MultiTabPane] widget.dispose threw:", e); }
-            }
-        }
+        for (var i = 0; i < this._tabs.length; i++) MultiTabPane._disposeWidget(this._tabs[i].widget);
         this._tabs = [];
         this._activeId = null;
         if (this.el.parentNode) this.el.parentNode.removeChild(this.el);
+        if (this.focus.owner.in) this.focus.owner.leave();   // the dock's branch dissolved with it
         this._branch.dissolve();
     }
 }

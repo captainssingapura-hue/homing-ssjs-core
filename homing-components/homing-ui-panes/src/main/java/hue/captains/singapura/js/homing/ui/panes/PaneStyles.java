@@ -262,6 +262,12 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
         @Override public String body() { return ""; }
     }
 
+    /** The pane while it holds the keys: the ring drawn now, on the frame — its chips take no native focus, so this is the one sign. */
+    public record mtp_pane_held() implements CssClass<PaneStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Focus.class, Shape.Rule.class), of(Focus.class, Color.Edge.class)); }
+        @Override public String body() { return ""; }
+    }
+
     /** What an empty pane says. */
     public record mtp_empty() implements CssClass<PaneStyles> {
         @Override public List<? extends Wearable> wears() { return List.of(of(Muted.class, Color.Ink.class), of(Caption.class, Type.Scale.class)); }
@@ -279,7 +285,7 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
     public List<CssClass<PaneStyles>> cssClasses() {
         return List.of(new mtp_pane(), new mtp_strip(), new mtp_strip_loose(), new mtp_chip(), new mtp_chip_label(), new mtp_chip_seated(), new mtp_chip_dragging(), new mtp_chip_shifted(),
                        new mtp_chip_close(), new mtp_drop_mark(), new mtp_strip_tail(), new mtp_add(), new mtp_add_off(),
-                       new mtp_pill(), new mtp_content(), new mtp_tab_content(), new mtp_empty(), new mtp_dock_target(),
+                       new mtp_pill(), new mtp_content(), new mtp_tab_content(), new mtp_empty(), new mtp_dock_target(), new mtp_pane_held(),
                        new mtp_tab_content_hidden());   // last, so hidden wins over what a panel or the empty note says of its display
     }
 }

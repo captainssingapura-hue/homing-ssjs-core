@@ -148,7 +148,7 @@ class ComponentsConformanceTest {
     void keysComeThroughTheParty_andTheMigrationListOnlyShrinks() {
         assertEquals(List.of(), KeyboardRegistry.validate(ComponentsConformance.TOP_LEVEL));
         var map = KeyboardRegistry.requiredBy(ComponentsConformance.TOP_LEVEL);
-        assertEquals(List.of("Card", "ContextMenuSteward", "Desk", "Dialog", "ListMasterWidget", "MultiTabPane", "PreferencesView", "Slider", "SliderGroup", "SplitGridMirror", "TabStrip"),
+        assertEquals(List.of("Card", "ContextMenuSteward", "Desk", "Dialog", "ListMasterWidget", "MultiTabPane", "PreferencesView", "Slider", "SliderGroup", "SplitGridMirror"),
                 map.byComponent().keySet().stream().map(c -> c.getClass().getSimpleName()).sorted().toList(), "the components that take keys: leaves, and the holders that hand keys on to what is inside them");
         assertEquals(6, map.takersOf("ArrowUp").size(), "the slider and its group, the mirror, the list master and the view over it, the menu");
         assertEquals(List.of(), KeyboardRegistry.undeclaredListeners(ComponentsConformance.TOP_LEVEL), "the ledger is empty: every key comes through the party");
