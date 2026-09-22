@@ -23,18 +23,23 @@
 //       way: to the focused element, then up through its ancestors, so the
 //       containers the holder sits in hear it by bubbling. Neither is called
 //       unless the member holds.
-//   steward.leave(m)                 the member is gone; it releases if it held
+//   steward.leave(m)                 the member is gone; it releases if it held — a member of the
+//       tree that leaves while holding yields on its way out, from the parent it had
 //   steward.claim(m)                 a fact: m holds now, whoever held is told
 //   steward.release(m)               nothing, unless m holds
+//   steward.yield(m)                 only from the holder: the keys go up the focus tree to the
+//       first ancestor that would hold them — each asked wouldHold(m) — else to no one;
+//       a member outside the tree releases. One resolution, one change of holder
 //   steward.holder()                 the id, or null; a tree member's id is its membership's
 //   steward.has(m)                   whether m is a member
 //       m: an id, or a membership of the focus tree
 //   steward.dispose()
 //
 // One rule is the steward's, since only it sees the target: with physical
-// focus in a text field — an input, a textarea, an editable — plain keys and
-// arrows are the field's and are not forwarded; a chord with a modifier, and
-// Escape, are. Physical focus is never touched: no focus() is called here.
+// focus in a field — an input, a textarea, a select, an editable — plain keys
+// and arrows are the field's and are not forwarded; a chord with a modifier,
+// and Escape, are. So a natively focused list and a logically focused member
+// live side by side: the list keeps its arrows, the member gets the rest. Physical focus is never touched: no focus() is called here.
 // Every change of holder is one KeyboardEvents object to every listener:
 // Granted, Taken (by whom), Released. The chrome that makes the steward may
 // hand it to the pages it hosts; each listens for what it shows. The convention by which components claim —
@@ -67,8 +72,26 @@ class KeyboardSteward {
         this._focus = opts && opts.party ? opts.party : null;
         this._offFocus = this._focus ? this._focus.on(function (n) {
             if (n.kind === "joined") { var m = self._focus.find(n.id); if (m && !self._members[m.id]) self.join(m); }
-            else if (n.kind === "left" && self._members[n.id]) self.leave(n.id);
+            else if (n.kind === "left" && self._members[n.id]) {
+                // the leaver yields on its way out, from the parent it had: the first ancestor that would hold, else no one
+                if (self._holder === n.id) self._handOn(self._catcher(n.parent ? self._focus.find(n.parent) : null, null), n.id, "left");
+                self._party.leave(n.id);
+                delete self._members[n.id];
+            }
         }) : null;
+    }
+    /** The first of `p` and its ancestors whose component would hold the keys yielded by `from`, or null. */
+    _catcher(p, from) {
+        for (; p; p = p.parent()) {
+            var c = p.component;
+            if (c && typeof c.wouldHold === "function" && c.wouldHold(from) === true) return p;
+        }
+        return null;
+    }
+    /** The keys to `target` with the reason `by`, or, with no target, released by `from`. */
+    _handOn(target, from, by) {
+        if (target) this._party.tellFrom(_STEWARD, { kind: "Claim", id: target.id, by: by });
+        else this._party.tellFrom(_STEWARD, { kind: "Release", id: from });
     }
     /** A member's id: a membership's, or the string given. */
     static idOf(m) { return m && typeof m === "object" && typeof m.id === "string" ? m.id : m; }
@@ -93,7 +116,7 @@ class KeyboardSteward {
         this._party.joinActor({ id: id, parentSecretary: _ROOT, reactors: {
             KeyDown: key("KeyDown"),
             KeyUp: key("KeyUp"),
-            Granted: function (m) { self._held(id); if (typeof h.granted === "function") h.granted(m.by == null ? "claim" : m.by); },
+            Granted: function (m) { self._held(id, m.by); if (typeof h.granted === "function") h.granted(m.by == null ? "claim" : m.by); },
             Taken: function (m) { self._lost(id, m.by); if (typeof h.taken === "function") h.taken(m.by); }
         } });
         this._members[id] = true;
@@ -116,6 +139,14 @@ class KeyboardSteward {
         if (!this._members[id]) return;
         this._party.tellFrom(_STEWARD, { kind: "Release", id: id });
     }
+    /** Only from the holder: up the tree to the first ancestor that would hold, else to no one. True when it was the holder. */
+    yield(id) {
+        id = KeyboardSteward.idOf(id);
+        if (this._holder !== id) return false;
+        var m = this._focus ? this._focus.find(id) : null;
+        this._handOn(m ? this._catcher(m.parent(), m) : null, id, "yield");
+        return true;
+    }
     holder() { return this._holder; }
     has(id) { return !!this._members[KeyboardSteward.idOf(id)]; }
     /** Another listener for the events; the function returned removes it. */
@@ -127,10 +158,10 @@ class KeyboardSteward {
     }
 
     // ── what the secretary decided, mirrored for the listeners and the sink ──
-    _held(id) {
+    _held(id, by) {
         this._holder = id;
         this._listen(true);
-        this._fire(KeyboardEvents.Granted(id));
+        this._fire(KeyboardEvents.Granted(id, by == null ? "claim" : by));
     }
     _lost(id, by) {
         if (this._holder === id) this._holder = null;
@@ -155,7 +186,7 @@ class KeyboardSteward {
     static editable(el) {
         if (!el || typeof el.tagName !== "string") return false;
         var tag = el.tagName.toUpperCase();
-        if (tag === "TEXTAREA") return true;
+        if (tag === "TEXTAREA" || tag === "SELECT") return true;
         if (tag === "INPUT") { var t = String(el.type || "text").toLowerCase(); return ["button", "checkbox", "radio", "range", "submit", "reset", "color", "file", "image"].indexOf(t) < 0; }
         return el.isContentEditable === true;
     }

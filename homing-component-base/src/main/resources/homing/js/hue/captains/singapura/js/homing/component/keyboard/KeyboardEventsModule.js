@@ -4,7 +4,8 @@
 // what the Java sealed sum KeyboardEvent validates and returns a frozen plain
 // object tagged by `kind`.
 //
-//   KeyboardEvents.Granted(id)        a member holds the keyboard now
+//   KeyboardEvents.Granted(id, by)    a member holds the keyboard now: by a claim, a yield
+//                                     that reached it, or a member that left (claim unless said)
 //   KeyboardEvents.Taken(id, by)      it lost the keyboard — to `by`, or to no one
 //   KeyboardEvents.Released(id)       it gave the keyboard up, or left
 //   KeyboardEvents.KINDS              the kinds, in this order
@@ -21,9 +22,10 @@ function _id(v, what) {
 class KeyboardEvents {
     static KINDS = Object.freeze(["Granted", "Taken", "Released"]);
 
-    /** A member holds the keyboard now. */
-    static Granted(id) {
-        return Object.freeze({ kind: "Granted", id: _id(id, "Granted.id") });
+    /** A member holds the keyboard now: by a claim, by a yield that reached it, or by a member that left. */
+    static Granted(id, by) {
+        if (by != null && (typeof by !== "string" || !by)) throw new Error("[KeyboardEvents] Granted.by must be a non-empty string");
+        return Object.freeze({ kind: "Granted", id: _id(id, "Granted.id"), by: by == null ? "claim" : by });
     }
     /** A member lost the keyboard: evicted by `by`, or, when `by` is null, released or gone. */
     static Taken(id, by) {

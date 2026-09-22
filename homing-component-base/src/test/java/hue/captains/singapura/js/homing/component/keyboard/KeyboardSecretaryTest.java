@@ -62,6 +62,13 @@ class KeyboardSecretaryTest extends SecretaryTestBase {
     }
 
     @Test
+    void aClaimMaySayWhatItIsBy_andTheNewHolderIsToldThat() {
+        Value step = dispatch(held("a"), envelope("Claim", Map.of("id", "p", "by", "yield"), "steward"));
+        assertEquals("yield", action(step, 1).getMember("message").getMember("by").asString(), "passed through, read into nothing");
+        assertEquals("claim", action(dispatch(initial(), envelope("Claim", Map.of("id", "p"), "steward")), 0).getMember("message").getMember("by").asString(), "unsaid, a claim");
+    }
+
+    @Test
     void aClaimByTheHolderIsNothing() {
         Value step = dispatch(held("a"), envelope("Claim", Map.of("id", "a"), "steward"));
         assertStateField(step, "holder", "a");

@@ -7,8 +7,11 @@
 // evicts whoever held — who is told. Keys go to the holder and nowhere else.
 //
 //   state              { holder: id | null }
-//   Claim   { id? }    holder := id (the sender, unless said); Taken to the old
-//                      holder, Granted to the new; a claim by the holder is nothing
+//   Claim   { id?, by? } holder := id (the sender, unless said); Taken to the old
+//                      holder, Granted to the new, carrying `by` — claim unless
+//                      said: yield, left — for the new holder's ear; the secretary
+//                      passes it through and reads nothing into it. A claim by the
+//                      holder is nothing
 //   Release { id? }    holder := null, if it was id; Taken to it
 //   Left    { id }     the same as Release: a member that left cannot hold
 //   KeyDown { ev }     to the holder, or nowhere
@@ -33,7 +36,7 @@ var KeyboardSecretary = {
                 if (!who || who === state.holder) return { newState: state, actions: [] };
                 var actions = [];
                 if (state.holder != null) actions.push({ kind: "SendToMember", to: state.holder, message: { kind: "Taken", by: who } });
-                actions.push({ kind: "SendToMember", to: who, message: { kind: "Granted" } });
+                actions.push({ kind: "SendToMember", to: who, message: { kind: "Granted", by: msg.by == null ? "claim" : String(msg.by) } });
                 return { newState: { holder: who }, actions: actions };
             }
 

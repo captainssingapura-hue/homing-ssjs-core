@@ -82,6 +82,9 @@ class KeyboardEventsTest extends JsModuleTestBase {
             assertTrue(ex.getMessage().startsWith("Error: [KeyboardEvents] "), bad + " -> " + ex.getMessage());
         }
         assertThrows(NullPointerException.class, () -> new KeyboardEvent.Granted(null));
+        assertEquals("claim", new KeyboardEvent.Granted("a").by(), "unsaid, a claim");
+        assertEquals("yield", eval("KeyboardEvents.Granted('a', 'yield').by").asString());
+        assertEquals("claim", eval("KeyboardEvents.Granted('a').by").asString(), "unsaid, a claim");
         assertThrows(IllegalArgumentException.class, () -> new KeyboardEvent.Taken("", "b"));
         assertThrows(IllegalArgumentException.class, () -> new KeyboardEvent.Taken("a", ""));
         assertEquals("Taken", new KeyboardEvent.Taken("a", null).kind());

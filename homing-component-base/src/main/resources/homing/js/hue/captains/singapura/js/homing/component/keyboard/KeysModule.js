@@ -13,6 +13,8 @@
 //     then the widget, and the innermost holds because it claimed last. No
 //     one needs to know who contains whom. off() removes the listeners.
 //   Keys.claim(m)                    by call: a container for a child, a dialog on open
+//   Keys.yield(m)                    the keys given up: they go up the focus tree to the first
+//                                    ancestor that would hold them (wouldHold), else to no one
 //   Keys.release(m)                  nothing, unless m holds
 //     m: a membership of the focus tree — or, the older way, the pair
 //     (steward, id): Keys.claimOn(root, steward, id, opts), Keys.claim(steward, id)
@@ -47,5 +49,6 @@ var Keys = Object.freeze({
     },
 
     claim: function (a, b) { var t = _target(a, b); t.steward.claim(t.id); },
+    yield: function (a, b) { var t = _target(a, b); return t.steward.yield(t.id); },
     release: function (a, b) { var t = _target(a, b); t.steward.release(t.id); }
 });

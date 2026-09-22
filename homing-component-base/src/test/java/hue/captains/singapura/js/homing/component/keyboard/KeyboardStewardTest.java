@@ -266,6 +266,64 @@ class KeyboardStewardTest extends JsModuleTestBase {
         eval("off(); kt.dispose()");
     }
 
+    /**
+     * Yield, up the tree: a holder that yields hands the keys to the first
+     * ancestor whose wouldHold says yes — that ancestor told granted by yield,
+     * the leaf told taken by it — or, none saying yes, to no one; a yield by a
+     * non-holder is nothing; a member outside the tree releases; a member
+     * leaving the tree while holding yields on its way out, from the parent
+     * it had.
+     */
+    @Test
+    void aYieldGoesUpToTheFirstAncestorThatWouldHold_orToNoOne() {
+        eval("""
+            kb.dispose();
+            var tree = new FocusParty();
+            var kt = new KeyboardSteward(fakeBranch("k"), { onEvent: sink, party: tree });
+            function node(name, holds) { return { name: name, got: [], asked: [], wouldHold: function (from) { this.asked.push(from ? from.name : "left"); return holds; },
+                granted: function (by) { this.got.push("granted:" + by); }, taken: function (by) { this.got.push("taken:" + by); } }; }
+            var pageC = node("page", false), panelC = node("panelA", true), passC = node("panelB", false), leafA = node("a1", false), leafB = node("b1", false), looseC = node("c", false);
+            var page = tree.root.createBranch("page", pageC);
+            var panelA = page.createBranch("panelA", panelC), panelB = page.createBranch("panelB", passC);
+            var a1 = panelA.join("a1", leafA), b1 = panelB.join("b1", leafB), c = page.join("c", looseC);
+            """);
+        // 2. a catching parent
+        eval("kt.claim(a1); events = []; var y1 = kt.yield(a1)");
+        assertTrue(eval("y1").asBoolean());
+        assertEquals(eval("panelA.owner.id").asString(), eval("kt.holder()").asString(), "panel A would hold: it holds");
+        assertEquals("Taken:" + eval("a1.id").asString() + ":" + eval("panelA.owner.id").asString() + " Granted:" + eval("panelA.owner.id").asString(), events(), "one change of holder");
+        assertEquals("granted:yield", eval("panelC.got.join()").asString(), "told by what");
+        assertEquals("a1", eval("panelC.asked.join()").asString(), "asked about the one that yielded");
+        assertEquals("granted:claim,taken:" + eval("panelA.owner.id").asString(), eval("leafA.got.join()").asString());
+        // 1. no catching parent: panel B passes, the page passes, the root is reached
+        eval("kt.claim(b1); events = []; kt.yield(b1)");
+        assertTrue(eval("kt.holder() === null").asBoolean(), "no one holds");
+        assertEquals("Released:" + eval("b1.id").asString(), events());
+        assertEquals("b1", eval("passC.asked.join()").asString());
+        assertEquals("b1", eval("pageC.asked.join()").asString(), "every ancestor asked in turn, up to the root");
+        eval("kt.claim(c); events = []; kt.yield(c)");
+        assertTrue(eval("kt.holder() === null").asBoolean(), "a loose leaf under a page that would not hold: no one");
+        // a yield by a non-holder is nothing; a member outside the tree releases
+        eval("kt.claim(a1); events = []; var y2 = kt.yield(b1)");
+        assertFalse(eval("y2").asBoolean());
+        assertEquals("", events());
+        eval("kt.join('legacy', {}); kt.claim('legacy'); events = []; kt.yield('legacy')");
+        assertEquals("Released:legacy", events());
+        // leaving while holding: a yield on the way out, from the parent it had
+        eval("kt.claim(a1); events = []; panelC.asked = []; a1.leave()");
+        assertEquals(eval("panelA.owner.id").asString(), eval("kt.holder()").asString(), "the keys went to the parent, not to no one");
+        assertEquals("left", eval("panelC.asked.join()").asString(), "asked with no one to name");
+        assertEquals("granted:yield,taken:" + eval("b1.id").asString() + ",granted:left", eval("panelC.got.join()").asString(), "taken by b1 in between; granted again when a1 left");
+        assertFalse(eval("kt.has(a1)").asBoolean());
+        eval("kt.dispose()");
+    }
+
+    @Test
+    void aSelectKeepsItsPlainKeysAsAFieldDoes() {
+        eval("var a = member('a'); kb.claim('a'); var sel = el('SELECT', page); key(sel, 'ArrowDown'); key(sel, 'Escape'); key(sel, 'ArrowDown', { ctrlKey: true })");
+        assertEquals("a:Escape,a:ArrowDown", eval("a.keys.join()").asString(), "the arrows are the list's; Escape and a chord are forwarded");
+    }
+
     @Test
     void aSinkThatThrowsIsReportedNotPropagated() {
         eval("kb.dispose(); var kb3 = new KeyboardSteward(fakeBranch('k3'), { onEvent: function () { throw new Error('boom'); } }); kb3.join('a', {}); kb3.claim('a')");

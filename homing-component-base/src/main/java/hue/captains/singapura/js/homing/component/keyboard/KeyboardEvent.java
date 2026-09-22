@@ -19,9 +19,10 @@ public sealed interface KeyboardEvent {
         return id;
     }
 
-    /** A member holds the keyboard now. */
-    record Granted(String id) implements KeyboardEvent {
-        public Granted { requireId(id, "Granted.id"); }
+    /** A member holds the keyboard now: by a claim, by a yield that reached it, or by a member that left ({@code claim}, {@code yield}, {@code left}). */
+    record Granted(String id, String by) implements KeyboardEvent {
+        public Granted { requireId(id, "Granted.id"); requireId(by, "Granted.by"); }
+        public Granted(String id) { this(id, "claim"); }
     }
 
     /** A member lost the keyboard: evicted by {@code by}, or, when {@code by} is null, released or gone. */
