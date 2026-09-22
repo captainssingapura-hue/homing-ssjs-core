@@ -5,7 +5,7 @@ package hue.captains.singapura.js.homing.design;
  * density (inset, gap, extent) and shape (corner, rule). A component's own
  * layout says where a box goes; the design says how much air it has and
  * how its corners are cut. {@code Control} is a button or a field;
- * {@code Inline} a chip, tag or badge; {@code Container} a card or panel;
+ * {@code Inline} a chip, tag or badge; {@code Container} a card, a pane or a panel;
  * {@code Section} a region of the page.
  *
  * <p>A word may be refined: a leaf nested in a leaf says what its parent
@@ -78,6 +78,29 @@ public interface Box extends Semantic {
         public record Pane() implements Box {
             /** The floating pane: raised above the page, moved by its head, sized by its user; the active one is the ring drawn now. */
             public record Floating() implements Box {}
+        }
+        /**
+         * A panel: a container that brings a head and a body to whatever
+         * holds it — mounted in a pane, set in a cell of a grid, or standing
+         * on a page. Unlike a card it does not measure itself: it fills what
+         * it is given, so what a design says about it is the air inside and
+         * the line between its parts. Its corner and its edge are a
+         * container's, since what holds it usually draws them; a panel that
+         * stands alone wears them itself, the keys mark included.
+         */
+        public record Panel() implements Box {
+            /**
+             * The head: the bar that names the panel and carries what acts on
+             * it — its air, the gap between the name and the controls, and the
+             * line under it, which is where a design says what a panel is.
+             */
+            public record Head() implements Box {}
+            /**
+             * The body: the working surface under the head — the air around
+             * what it shows and the gap between the things in it. It is the
+             * part that scrolls.
+             */
+            public record Body() implements Box {}
         }
         /**
          * A menu: a container of options that opens at a point and closes

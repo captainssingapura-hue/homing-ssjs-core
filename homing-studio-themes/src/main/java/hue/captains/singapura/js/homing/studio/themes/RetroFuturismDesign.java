@@ -194,6 +194,13 @@ final class RetroFuturismDesign {
             gap(of(Container.Card.class, Size.Gap.class), "8px", 1.3),
             measure(of(Container.Card.class, Size.Extent.class), "280px", 1.3),
             proportion(of(Container.Card.class, Size.Proportion.class), 2),
+            // a panel: a console's header, the rule under it lit by the palette
+            gap(of(Container.Panel.class, Size.Gap.class), "0", 1.3),
+            inset(of(Container.Panel.Head.class, Size.Inset.class), "8px", "14px", 1.3),
+            gap(of(Container.Panel.Head.class, Size.Gap.class), "10px", 1.3),
+            rule(of(Container.Panel.Head.class, Shape.Rule.class), "0 0 1px 0", "solid"),
+            inset(of(Container.Panel.Body.class, Size.Inset.class), "12px", "16px", 1.3),
+            gap(of(Container.Panel.Body.class, Size.Gap.class), "10px", 1.3),
             inset(of(Inline.class, Size.Inset.class), "2px", "8px", 1.3),
             one(of(Inline.class, Shape.Corner.class), "2px"),
             rule(of(Inline.class, Shape.Rule.class), "1px", "solid"),

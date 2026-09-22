@@ -299,6 +299,13 @@ final class NeoBrutalismDesign {
             // a pane: its air is its head's; the widget fills the rest
             inset(of(Container.Pane.class, Size.Inset.class), "6px", "12px", 1.5),
             gap(of(Container.Pane.class, Size.Gap.class), "10px", 1.5),
+            // a panel: the head is a slab, and the line under it is a bar
+            gap(of(Container.Panel.class, Size.Gap.class), "0", 1.5),
+            inset(of(Container.Panel.Head.class, Size.Inset.class), "8px", "14px", 1.5),
+            gap(of(Container.Panel.Head.class, Size.Gap.class), "10px", 1.5),
+            rule(of(Container.Panel.Head.class, Shape.Rule.class), "0 0 3px 0", "solid"),
+            inset(of(Container.Panel.Body.class, Size.Inset.class), "12px", "14px", 1.5),
+            gap(of(Container.Panel.Body.class, Size.Gap.class), "12px", 1.5),
             one(of(Inline.class, Shape.Corner.class), "0"),
             rule(of(Inline.class, Shape.Rule.class), "2px", "solid"),
 

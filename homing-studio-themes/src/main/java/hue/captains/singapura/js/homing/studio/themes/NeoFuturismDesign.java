@@ -339,6 +339,13 @@ final class NeoFuturismDesign {
             // a pane: its air is its head's; the widget fills the rest
             inset(of(Container.Pane.class, Size.Inset.class), "4px", "10px", 1.25),
             gap(of(Container.Pane.class, Size.Gap.class), "8px", 1.25),
+            // a panel: a hairline under the head, and no more air than the work needs
+            gap(of(Container.Panel.class, Size.Gap.class), "0", 1.25),
+            inset(of(Container.Panel.Head.class, Size.Inset.class), "7px", "12px", 1.25),
+            gap(of(Container.Panel.Head.class, Size.Gap.class), "8px", 1.25),
+            rule(of(Container.Panel.Head.class, Shape.Rule.class), "0 0 1px 0", "solid"),
+            inset(of(Container.Panel.Body.class, Size.Inset.class), "10px", "14px", 1.25),
+            gap(of(Container.Panel.Body.class, Size.Gap.class), "8px", 1.25),
             one(of(Inline.class, Shape.Corner.class), "1px"),
             rule(of(Inline.class, Shape.Rule.class), "1px", "solid"),
 

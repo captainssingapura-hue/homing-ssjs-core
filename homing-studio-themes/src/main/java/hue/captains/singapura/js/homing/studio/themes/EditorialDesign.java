@@ -258,6 +258,13 @@ final class EditorialDesign {
             // a pane: its air is its head's; the widget fills the rest
             inset(of(Container.Pane.class, Size.Inset.class), "5px", "12px", 1.3),
             gap(of(Container.Pane.class, Size.Gap.class), "8px", 1.3),
+            // a panel: a running head with a rule under it, and the page below
+            gap(of(Container.Panel.class, Size.Gap.class), "0", 1.3),
+            inset(of(Container.Panel.Head.class, Size.Inset.class), "8px", "14px", 1.3),
+            gap(of(Container.Panel.Head.class, Size.Gap.class), "8px", 1.3),
+            rule(of(Container.Panel.Head.class, Shape.Rule.class), "0 0 1px 0", "solid"),
+            inset(of(Container.Panel.Body.class, Size.Inset.class), "14px", "16px", 1.3),
+            gap(of(Container.Panel.Body.class, Size.Gap.class), "10px", 1.3),
             one(of(Dragging.class, Affordance.Cursor.class), "grab"),   // a thing that can be dragged by the hand on it
             one(of(Inline.class, Shape.Corner.class), "2px"),
             rule(of(Inline.class, Shape.Rule.class), "1px", "solid"),
