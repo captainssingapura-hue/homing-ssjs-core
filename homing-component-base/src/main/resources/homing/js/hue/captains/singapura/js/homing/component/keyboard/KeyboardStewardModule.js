@@ -23,7 +23,8 @@
 // older way, an id with handlers. The roots under the convention are enrolled
 // here (Keys.claimOn does it), so `memberAt(el)` answers the innermost member
 // whose root contains an element — the structural query the press and the
-// traversal both rest on. Claim, yield, release; events out by on(fn).
+// traversal both rest on. Claim, yield, release; events out by on(fn); and
+// for tooling, trace(fn): every key the steward saw and what it did with it.
 // =============================================================================
 
 const _keyboardOwner = Object.freeze({ toString: () => "keyboard" });
@@ -40,6 +41,7 @@ class KeyboardSteward {
         if (branch) branch.activate(_keyboardOwner);
         this._branch = branch || null;
         this._sinks = [];
+        this._traces = [];
         if (opts && typeof opts.onEvent === "function") this.on(opts.onEvent);
         this._holder = null;
         this._members = {};
@@ -176,14 +178,35 @@ class KeyboardSteward {
         if (i < 0) return dir > 0 ? walk[0] : walk[walk.length - 1];
         return walk[(i + dir + walk.length) % walk.length];
     }
-    /** Tab: to the next member of the tree, Shift+Tab the previous; whatever is focused blurred, the member claimed. True when taken. */
+    /** Tab: to the next member of the tree, Shift+Tab the previous; whatever is focused blurred, the member claimed. The member, or null when there is none. */
     tab(dir) {
         var to = this.step(dir);
-        if (!to) return false;
+        if (!to) return null;
         var f = KeyboardSteward.focused();
         if (f && typeof f.blur === "function") f.blur();
         this._party.tellFrom(_STEWARD, { kind: "Claim", id: to.id, by: "tab" });
-        return true;
+        return to;
+    }
+
+    // ── the trace, for tooling ────────────────────────────────────────────
+    /**
+     * Another listener for every key the steward saw and what it did: { kind, key, route, to, taken } —
+     * route "tab" (to: the member's id), "browser" (a Tab with no tree: left), "native" (to: the focused
+     * element; left), "none" (no holder; left), "holder" (to: the holder's id; taken says whether it took it).
+     * The function returned removes it.
+     */
+    trace(fn) {
+        if (typeof fn !== "function") throw new Error("[KeyboardSteward] trace wants a function");
+        var traces = this._traces;
+        traces.push(fn);
+        return function () { var i = traces.indexOf(fn); if (i >= 0) traces.splice(i, 1); };
+    }
+    _traced(kind, ev, route, to, taken) {
+        if (!this._traces.length) return;
+        var t = Object.freeze({ kind: kind, key: ev.key, route: route, to: to, taken: taken === true }), sinks = this._traces.slice();
+        for (var i = 0; i < sinks.length; i++) {
+            try { sinks[i](t); } catch (e) { console.error("[KeyboardSteward] trace threw on " + kind + ":", e); }
+        }
     }
 
     // ── what the secretary decided, mirrored for the listeners and the sink ──
@@ -203,14 +226,19 @@ class KeyboardSteward {
         document[f]("keydown", this._onDown, false);
         document[f]("keyup", this._onUp, false);
     }
-    /** By state: Tab is the steward's; a key from the body goes to the holder; a key from a focused element goes nowhere. */
+    /** By state: Tab is the steward's; a key from the body goes to the holder; a key from a focused element goes nowhere. Each traced. */
     _forward(kind, ev) {
         if (kind === "KeyDown" && ev.key === "Tab" && !ev.ctrlKey && !ev.altKey && !ev.metaKey) {
-            if (this.tab(ev.shiftKey ? -1 : 1)) { ev.preventDefault(); ev.stopPropagation(); }
+            var to = this.tab(ev.shiftKey ? -1 : 1);
+            if (to) { ev.preventDefault(); ev.stopPropagation(); }
+            this._traced(kind, ev, to ? "tab" : "browser", to ? to.id : null, !!to);
             return;
         }
-        if (this._holder === null || KeyboardSteward.fromAFocusedElement(ev)) return;
+        if (KeyboardSteward.fromAFocusedElement(ev)) { this._traced(kind, ev, "native", ev.target, false); return; }
+        var holder = this._holder;
+        if (holder === null) { this._traced(kind, ev, "none", null, false); return; }
         this._party.tellFrom(_STEWARD, { kind: kind, ev: ev });
+        this._traced(kind, ev, "holder", holder, ev.defaultPrevented === true);
     }
     /** Whether the key came from a focused element — anything but the body, the root element or the document itself. */
     static fromAFocusedElement(ev) {
@@ -230,6 +258,7 @@ class KeyboardSteward {
         this._holder = null;
         this._members = {};
         this._sinks = [];
+        this._traces = [];
         if (this._offFocus) { this._offFocus(); this._offFocus = null; }
         if (typeof document !== "undefined") _pages.delete(document);
         if (this._branch) this._branch.dissolve();

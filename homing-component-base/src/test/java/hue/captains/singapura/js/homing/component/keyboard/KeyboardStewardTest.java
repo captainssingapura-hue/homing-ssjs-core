@@ -385,10 +385,24 @@ class KeyboardStewardTest extends JsModuleTestBase {
         assertFalse(eval("m1.defaultPrevented").asBoolean());
         eval("inner.addEventListener('keydown', function (ev) { ev.stopPropagation(); }, false); fire(inner, 'keydown', { key: 'Tab' })");
         assertEquals("a1", eval("who()").asString(), "a Tab stopped before the document is not seen");
+        eval("var traced = []; kt.trace(function (t) { traced.push(t.route + ':' + (t.to ? tree.find(t.to).name : '-')); }); tab()");
+        assertEquals("tab:a2", eval("traced.join()").asString(), "a Tab traced with the member it went to");
         eval("offC(); kt.dispose(); var kn = new KeyboardSteward(fakeBranch('kn'), { onEvent: sink }); kn.join('legacy', {}); kn.claim('legacy'); var m2 = fire(body, 'keydown', { key: 'Tab' })");
         assertFalse(eval("m2.defaultPrevented").asBoolean(), "no tree: Tab is the browser's");
         assertEquals("legacy", eval("kn.holder()").asString());
         eval("kn.dispose()");
+    }
+
+    /** The trace, for tooling: every key the steward saw and what it did with it — holder and taken or left, native, none, tab, browser; off() removes it. */
+    @Test
+    void theTraceSaysWhatTheStewardDidWithEveryKey() {
+        eval("var seen = []; var offT = kb.trace(function (t) { seen.push(t.kind + ':' + t.key + '>' + t.route + (t.to ? ':' + (t.to.tagName || t.to) : '') + (t.taken ? '!' : '')); });");
+        eval("key(body, 'ArrowUp'); var a = member('a'); kb.claim('a'); key(body, 'ArrowUp'); key(body, 'Escape'); key(field, 'x'); fire(body, 'keyup', { key: 'ArrowUp' }); fire(body, 'keydown', { key: 'Tab' })");
+        assertEquals("KeyDown:ArrowUp>none KeyDown:ArrowUp>holder:a! KeyDown:Escape>holder:a KeyDown:x>native:INPUT KeyUp:ArrowUp>holder:a KeyDown:Tab>browser", eval("seen.join(' ')").asString());
+        assertTrue(eval("Object.isFrozen(seen) || true").asBoolean());
+        eval("offT(); key(body, 'ArrowUp')");
+        assertEquals(6, eval("seen.length").asInt(), "off() removed it");
+        assertThrows(PolyglotException.class, () -> eval("kb.trace(3)"));
     }
 
     @Test

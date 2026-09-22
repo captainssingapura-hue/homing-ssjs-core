@@ -30,6 +30,7 @@ public final class UiFocusCrate implements Crate, ComponentVehicle {
     @Override public List<CrateEntry> entries() {
         return List.of(
                 CrateEntry.of(FocusMonitorModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
+                CrateEntry.of(StewardMonitorModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
                 CrateEntry.of(FocusStyles.INSTANCE));
     }
 }

@@ -39,14 +39,19 @@ class UiFocusCrateConformanceTest {
                     + findings.stream().map(f -> f.rule().value() + "@" + f.line() + ": " + f.message()).toList());
             checked++;
         }
-        assertEquals(1, checked, "the monitor; the styles are a sheet");
+        assertEquals(2, checked, "the two monitors; the styles are a sheet");
     }
 
+    /** Every class the sheet declares is imported by one of the two monitors — the fm_ ones by the focus monitor, the sm_ ones by the steward monitor. */
     @Test
-    void theMonitorImportsEveryClassDeclared() {
-        var imported = FocusMonitorModule.INSTANCE.imports().getAllImports().values().stream()
+    void theMonitorsImportEveryClassDeclared() {
+        var byFocus = FocusMonitorModule.INSTANCE.imports().getAllImports().values().stream()
                 .flatMap(mi -> mi.allImports().stream()).map(e -> e.getClass().getSimpleName()).toList();
-        for (CssClass<FocusStyles> c : FocusStyles.INSTANCE.cssClasses())
-            assertTrue(imported.contains(c.getClass().getSimpleName()), c.getClass().getSimpleName() + " is declared but not imported");
+        var bySteward = StewardMonitorModule.INSTANCE.imports().getAllImports().values().stream()
+                .flatMap(mi -> mi.allImports().stream()).map(e -> e.getClass().getSimpleName()).toList();
+        for (CssClass<FocusStyles> c : FocusStyles.INSTANCE.cssClasses()) {
+            String n = c.getClass().getSimpleName();
+            assertTrue((n.startsWith("fm_") ? byFocus : bySteward).contains(n), n + " is declared but not imported by its monitor");
+        }
     }
 }

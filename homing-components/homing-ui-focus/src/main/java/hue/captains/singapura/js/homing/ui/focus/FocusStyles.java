@@ -22,7 +22,7 @@ import static hue.captains.singapura.js.homing.design.Text.Body;
 import static hue.captains.singapura.js.homing.design.Text.Caption;
 import static hue.captains.singapura.js.homing.design.Text.Code;
 
-/** The monitor's classes: a tree of rows, each indented by its depth, the holder's row lit. */
+/** The monitors' classes: the focus monitor's tree of rows, each indented by its depth, the holder's row lit; the steward monitor's lamp and key lines. */
 public record FocusStyles() implements CssGroup<FocusStyles> {
 
     public static final FocusStyles INSTANCE = new FocusStyles();
@@ -92,8 +92,51 @@ public record FocusStyles() implements CssGroup<FocusStyles> {
         @Override public String body() { return "font-style: italic;"; }
     }
 
+    // ── the steward monitor ───────────────────────────────────────────────
+
+    /** The steward monitor: the lamp, then the key lines, in a code face. */
+    public record sm_monitor() implements CssClass<FocusStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Code.class, Type.Face.class), of(Caption.class, Type.Scale.class)); }
+        @Override public String body() { return "display: flex; flex-direction: column; gap: 4px; min-width: 0;"; }
+    }
+
+    /** The lamp: active, the keys are the holder's — the current surface and edge, the body's ink. */
+    public record sm_lamp() implements CssClass<FocusStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Current.class, Color.Surface.class), of(Current.class, Color.Edge.class), of(Focus.class, Shape.Rule.class), of(Body.class, Color.Ink.class), of(Inline.class, Shape.Corner.class), of(Interactive.class, Motion.Ease.class)); }
+        @Override public String body() { return "padding: 4px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"; }
+    }
+
+    /** The lamp while the steward is dormant: the muted ink, the rule gone, so the eye sees the keys are elsewhere. */
+    public record sm_lamp_dormant() implements CssClass<FocusStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Muted.class, Color.Ink.class)); }
+        @Override public String body() { return "font-style: italic; border-color: transparent;"; }
+    }
+
+    /** The key lines, newest first. */
+    public record sm_keys() implements CssClass<FocusStyles> {
+        @Override public String body() { return "display: flex; flex-direction: column; gap: 1px;"; }
+    }
+
+    /** A key line: the key, then where it went. */
+    public record sm_key() implements CssClass<FocusStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Muted.class, Color.Ink.class)); }
+        @Override public String body() { return "display: flex; gap: 8px; padding: 1px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"; }
+    }
+
+    /** The key's name, in a fixed column. */
+    public record sm_key_name() implements CssClass<FocusStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Body.class, Color.Ink.class)); }
+        @Override public String body() { return "flex: none; inline-size: 7em;"; }
+    }
+
+    /** Where the key went. */
+    public record sm_key_route() implements CssClass<FocusStyles> {
+        @Override public String body() { return "overflow: hidden; text-overflow: ellipsis;"; }
+    }
+
     @Override
     public List<CssClass<FocusStyles>> cssClasses() {
-        return List.of(new fm_tree(), new fm_row(), new fm_row_holder(), new fm_kind(), new fm_name(), new fm_component(), new fm_outside(), new fm_state(), new fm_state_dormant());
+        return List.of(new fm_tree(), new fm_row(), new fm_row_holder(), new fm_kind(), new fm_name(), new fm_component(), new fm_outside(), new fm_state(), new fm_state_dormant(),
+                       new sm_monitor(), new sm_lamp(), new sm_lamp_dormant(), new sm_keys(), new sm_key(), new sm_key_name(), new sm_key_route());
     }
 }
