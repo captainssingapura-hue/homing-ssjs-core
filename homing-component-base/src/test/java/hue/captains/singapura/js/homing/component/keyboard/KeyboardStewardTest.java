@@ -319,9 +319,9 @@ class KeyboardStewardTest extends JsModuleTestBase {
     }
 
     @Test
-    void aSelectKeepsItsPlainKeysAsAFieldDoes() {
-        eval("var a = member('a'); kb.claim('a'); var sel = el('SELECT', page); key(sel, 'ArrowDown'); key(sel, 'Escape'); key(sel, 'ArrowDown', { ctrlKey: true })");
-        assertEquals("a:Escape,a:ArrowDown", eval("a.keys.join()").asString(), "the arrows are the list's; Escape and a chord are forwarded");
+    void aSelectKeepsTheKeysThatWalkIt_butEnterConfirmsAndIsForwarded() {
+        eval("var a = member('a'); kb.claim('a'); var sel = el('SELECT', page); key(sel, 'ArrowDown'); key(sel, 'Home'); key(sel, 'c'); key(sel, 'Escape'); key(sel, 'ArrowDown', { ctrlKey: true }); key(sel, 'Enter'); key(field, 'Enter')");
+        assertEquals("a:Escape,a:ArrowDown,a:Enter", eval("a.keys.join()").asString(), "the arrows, Home and a letter are the list's; Escape, a chord and Enter are forwarded; an input keeps its Enter");
     }
 
     @Test

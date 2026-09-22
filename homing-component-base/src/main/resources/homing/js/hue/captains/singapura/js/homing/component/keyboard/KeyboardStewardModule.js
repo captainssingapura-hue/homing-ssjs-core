@@ -1,50 +1,4 @@
 // =============================================================================
-// KeyboardSteward — the keyboard party's face to the DOM, one per page. It
-// owns the party (one secretary, KeyboardSecretary, members flat), captures
-// keys on the document while someone holds the keyboard, and turns them into
-// messages the secretary routes to the holder and nowhere else. Lazy: no
-// listener while no one holds. One per page, as `KeyboardStewardInstance`,
-// bound to the focus party (FocusParty): a member of the tree is a member
-// here by its membership, and the party's `left` drops it. A page — the log,
-// a monitor — may know the steward; a component never does: it joins a focus
-// branch and calls Keys.
-//
-//   KeyboardStewardInstance          the page's, one per document
-//   new KeyboardSteward(branch?, { onEvent?, party? })   the class, for a test
-//   steward.on(fn) → off           another listener for the events; off() removes it
-//   steward.join(membership)         a member of the focus tree: its component's
-//       keyDown?(ev), keyUp?(ev), granted?(by), taken?(by) are its reactors. Done by
-//       the steward itself on the party's `joined` notice: a component that joins
-//       a focus branch is a member here without a word to the steward
-//   steward.join(id, { keyDown?(ev), keyUp?(ev), granted?(), taken?(by) }) → id
-//       a member by id, the older way. keyDown/keyUp return true to TAKE the key —
-//       the steward then defaults and stops it, and nothing below the document
-//       sees it — or anything else to leave it, and it travels on its normal
-//       way: to the focused element, then up through its ancestors, so the
-//       containers the holder sits in hear it by bubbling. Neither is called
-//       unless the member holds.
-//   steward.leave(m)                 the member is gone; it releases if it held — a member of the
-//       tree that leaves while holding yields on its way out, from the parent it had
-//   steward.claim(m)                 a fact: m holds now, whoever held is told
-//   steward.release(m)               nothing, unless m holds
-//   steward.yield(m)                 only from the holder: the keys go up the focus tree to the
-//       first ancestor that would hold them — each asked wouldHold(m) — else to no one;
-//       a member outside the tree releases. One resolution, one change of holder
-//   steward.holder()                 the id, or null; a tree member's id is its membership's
-//   steward.has(m)                   whether m is a member
-//       m: an id, or a membership of the focus tree
-//   steward.dispose()
-//
-// One rule is the steward's, since only it sees the target: with physical
-// focus in a field — an input, a textarea, a select, an editable — plain keys
-// and arrows are the field's and are not forwarded; a chord with a modifier,
-// and Escape, are. So a natively focused list and a logically focused member
-// live side by side: the list keeps its arrows, the member gets the rest. Physical focus is never touched: no focus() is called here.
-// Every change of holder is one KeyboardEvents object to every listener:
-// Granted, Taken (by whom), Released. The chrome that makes the steward may
-// hand it to the pages it hosts; each listens for what it shows. The convention by which components claim —
-// a press or the focus arriving in their root — is Keys.claimOn, theirs.
-// =============================================================================
 
 const _keyboardOwner = Object.freeze({ toString: () => "keyboard" });
 var _pages = new WeakSet();          // the documents that have a steward: one each
@@ -179,10 +133,20 @@ class KeyboardSteward {
     }
     _forward(kind, ev) {
         if (this._holder === null) return;
-        if (KeyboardSteward.editable(ev.target) && !(ev.ctrlKey || ev.metaKey || ev.altKey) && ev.key !== "Escape") return;
+        if (KeyboardSteward.fieldKeeps(ev.target, ev)) return;
         this._party.tellFrom(_STEWARD, { kind: kind, ev: ev });
     }
-    /** A text field: its plain keys are its own. */
+    /**
+     * Whether the key is the field's and goes no further: a plain key in a text field, an input or an editable; in a
+     * select, the keys that walk it — arrows, Home, End, the pages, a typed character — but not Enter, which confirms
+     * a pick and is the holder's to act on. A chord with a modifier, and Escape, are forwarded from any field.
+     */
+    static fieldKeeps(el, ev) {
+        if (!KeyboardSteward.editable(el) || ev.ctrlKey || ev.metaKey || ev.altKey || ev.key === "Escape") return false;
+        if (String(el.tagName).toUpperCase() === "SELECT") return ev.key !== "Enter";
+        return true;
+    }
+    /** A field: a text field, an input, a select, an editable — its plain keys are its own. */
     static editable(el) {
         if (!el || typeof el.tagName !== "string") return false;
         var tag = el.tagName.toUpperCase();
