@@ -28,6 +28,8 @@ class PanelTest extends JsModuleTestBase {
                 classList: { add: function () { for (var i = 0; i < arguments.length; i++) classes.add(arguments[i]); }, remove: function () { for (var i = 0; i < arguments.length; i++) classes.delete(arguments[i]); }, contains: function (c) { return classes.has(c); } },
                 appendChild: function (c) { this.children.push(c); c.parentNode = this; return c; },
                 removeChild: function (c) { var i = this.children.indexOf(c); if (i >= 0) this.children.splice(i, 1); c.parentNode = null; return c; },
+                removeAttribute: function (k) { delete attrs[k]; },
+                contains: function (o) { for (var x = o; x; x = x.parentNode) if (x === this) return true; return false; },
                 setAttribute: function (k, v) { attrs[k] = String(v); }, getAttribute: function (k) { return attrs[k] == null ? null : attrs[k]; },
                 addEventListener: function (t, fn) { (this.listeners[t] = this.listeners[t] || []).push(fn); },
                 classes: function () { return Array.from(classes).join(" "); },
@@ -41,10 +43,10 @@ class PanelTest extends JsModuleTestBase {
         var observers = [];
         function MutationObserver(fn) { this.fn = fn; this.el = null; observers.push(this); }
         MutationObserver.prototype.observe = function (el, opts) { this.el = el; this.opts = opts; el._observer = this; };
+        MutationObserver.prototype.saw = function (target) { this.fn([{ target: target }]); };
         MutationObserver.prototype.disconnect = function () { if (this.el) delete this.el._observer; this.el = null; };
-        function keys(el, v) { if (v === null) { el.setAttribute("data-keys", null); el.getAttribute = (function (g) { return function (k) { return k === "data-keys" ? null : g.call(el, k); }; })(el.getAttribute); }
-                               else el.setAttribute("data-keys", v);
-                               if (el._observer) el._observer.fn(); }
+        function keys(el, v) { el.setAttribute("data-keys", v); for (var x = el; x; x = x.parentNode) if (x._observer) { x._observer.saw(el); return; } }
+        function unkeys(el) { el.removeAttribute("data-keys"); for (var x = el; x; x = x.parentNode) if (x._observer) { x._observer.saw(el); return; } }
         var page = fakeBranch("page");
         var host = el("div");
         var panel = new PanelBuilder().title("Dock A").fills().host(host).build(page.createBranch("dock-a"));
@@ -128,6 +130,12 @@ class PanelTest extends JsModuleTestBase {
         assertTrue(eval("panel.isActive()").asBoolean(), "lent to a control of its own: still the region being worked in");
         eval("keys(dock.root, \"candidate\")");
         assertFalse(eval("panel.isActive()").asBoolean(), "offered is not held");
+        eval("unkeys(dock.root); var inner = el(\"div\"); dock.root.appendChild(inner); keys(inner, \"held\")");
+        assertTrue(eval("panel.isActive()").asBoolean(), "the dock handed the keys to a tab's widget: the region is still the one being worked in");
+        eval("unkeys(inner)");
+        assertFalse(eval("panel.isActive()").asBoolean(), "and quiet when the keys leave it altogether");
+        eval("keys(inner, \"held\"); dock.root.removeChild(inner); keys(dock.root, \"held\"); unkeys(dock.root)");
+        assertFalse(eval("panel.isActive()").asBoolean(), "what was taken out of the panel holds nothing");
         eval("keys(dock.root, \"held\"); panel.unwatch(); keys(dock.root, \"candidate\")");
         assertTrue(eval("panel.isActive()").asBoolean(), "unwatched: it keeps what it says");
         assertEquals(0, eval("dock.root.listening(\"keydown\") + dock.root.listening(\"pointerdown\")").asInt(), "the mounted thing is told nothing and given nothing");

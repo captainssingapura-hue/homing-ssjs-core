@@ -115,11 +115,13 @@ class Panel {
     isActive() { return this._active; }
 
     /**
-     * Follow what is mounted in the panel: while the keys are in it — held, or
-     * lent to a control of its own — the panel is the active region. It reads
-     * one attribute, `data-keys`, which is what a component writes to say
-     * where the keys are; nothing else of the thing is touched, and the thing
-     * is told nothing. A component, or its element.
+     * Follow what is mounted in the panel: while the keys are ANYWHERE IN IT —
+     * held by the thing itself, lent to a control of its own, or held by
+     * something it holds in turn, a dock handing them to a tab's widget — the
+     * panel is the active region. It reads one attribute, `data-keys`, which
+     * is what a component writes to say where the keys are, over the mounted
+     * thing and its subtree; nothing else of it is touched, and it is told
+     * nothing. A component, or its element.
      */
     watch(what) {
         var el = Panel.elementOf(what);
@@ -127,10 +129,21 @@ class Panel {
         this.unwatch();
         var self = this;
         this._watched = el;
-        this._read = function () { var v = el.getAttribute("data-keys"); self.active(v === "held" || v === "lent"); };
+        var inside = [];   // what has said, in the subtree, that the keys are with it; kept from the records, never looked up
+        this._read = function (records) {
+            if (records) records.forEach(function (r) {
+                var t = r.target, v = t === el || !t.getAttribute ? null : t.getAttribute("data-keys");
+                var at = inside.indexOf(t);
+                if (v === "held" || v === "lent") { if (at < 0) inside.push(t); }
+                else if (at >= 0) inside.splice(at, 1);
+            });
+            for (var i = inside.length - 1; i >= 0; i--) if (!el.contains(inside[i])) inside.splice(i, 1);   // what was taken away holds nothing
+            var own = el.getAttribute("data-keys");
+            self.active(own === "held" || own === "lent" || inside.length > 0);
+        };
         if (typeof MutationObserver === "function") {
             this._observer = new MutationObserver(this._read);
-            this._observer.observe(el, { attributes: true, attributeFilter: ["data-keys"] });
+            this._observer.observe(el, { attributes: true, attributeFilter: ["data-keys"], subtree: true });
         }
         this._read();
         return this;
