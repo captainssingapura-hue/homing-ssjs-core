@@ -271,14 +271,14 @@ class MultiTabPaneTest extends JsModuleTestBase {
     void handedTheSteward_thePaneHoldsTheKeysForTheStripAndTheActiveWidget() {
         eval("""
             var members = {}, kbLog = [];
-            var kb = { join: function (id, h) { members[id] = h; kbLog.push("join:" + id); return id; }, leave: function (id) { delete members[id]; kbLog.push("leave:" + id); }, claim: function () {}, release: function () {} };
+            var kb = { enroll: function (root, id) { root._kb = id; return function () { delete root._kb; }; }, memberAt: function (el) { for (var x = el; x; x = x.parentNode) if (x._kb) return x._kb; return null; }, join: function (id, h) { members[id] = h; kbLog.push("join:" + id); return id; }, leave: function (id) { delete members[id]; kbLog.push("leave:" + id); }, claim: function () {}, release: function () {} };
             var keyed = new MultiTabPane(branch.createBranch("mtp_k"), { host: el("div"), slotId: "k", keyboard: kb, keyboardId: "page/dock", onEvent: function (ev) { if (ev.kind === "TabActivated") log.push("active:" + ev.tabId); } });
             var wa = widget("a"); wa.key = function (ev) { log.push("a:key:" + ev.key); return ev.key === "ArrowUp"; };
             keyed.addTab({ id: "a", title: "A", widget: wa }); keyed.addTab(tab("b")); keyed.switchTab("a"); log = [];
             var chipB = keyed.el.children[0].children[1];
             """);
         assertEquals("join:page/dock", eval("kbLog.join(' ')").asString(), "the pane joined as said; the strip did not");
-        assertEquals("1,1", eval("[(keyed.el.listeners.pointerdown || []).length, (keyed.el.listeners.focusin || []).length].join()").asString(), "the convention on the root");
+        assertEquals("1,0", eval("[(keyed.el.listeners.pointerdown || []).length, (keyed.el.listeners.focusin || []).length].join()").asString(), "the convention on the root: one press");
         assertTrue(eval("members['page/dock'].keyDown({ key: 'Enter', target: chipB })").asBoolean(), "Enter on a chip: the strip's");
         assertEquals("active:b", log());
         eval("keyed.switchTab('a'); log = []");

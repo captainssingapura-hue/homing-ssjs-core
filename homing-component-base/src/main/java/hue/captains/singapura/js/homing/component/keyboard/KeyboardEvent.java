@@ -19,7 +19,7 @@ public sealed interface KeyboardEvent {
         return id;
     }
 
-    /** A member holds the keyboard now: by a claim, by a yield that reached it, or by a member that left ({@code claim}, {@code yield}, {@code left}). */
+    /** A member holds the keyboard now: by a claim, by a yield that reached it, by a member that left, or by the steward's Tab ({@code claim}, {@code yield}, {@code left}, {@code tab}). */
     record Granted(String id, String by) implements KeyboardEvent {
         public Granted { requireId(id, "Granted.id"); requireId(by, "Granted.by"); }
         public Granted(String id) { this(id, "claim"); }

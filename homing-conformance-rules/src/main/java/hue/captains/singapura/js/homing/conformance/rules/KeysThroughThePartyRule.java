@@ -6,23 +6,26 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * Keys come through the party. A page has one keyboard party and one
- * steward, and one holder of the keys or none: the steward captures
- * {@code keydown} and {@code keyup} on the document while someone holds and
- * asks the holder first, by its {@code key(ev)}; a key the holder takes stops
- * there, a key it leaves travels on as it would. So no served module
- * registers a key listener of its own — not on its element, not on the
- * document, not in the capture phase: a component that takes keys is a
- * member, or is handed them by the member that holds it. Two listeners on
- * one key are two components responding, which is the thing the party
- * exists to rule out.
+ * Keys come through the party, and only the steward listens to the document.
+ * A page has one keyboard party and one steward, and one holder of the keys
+ * or none: the steward listens to {@code keydown} and {@code keyup} on the
+ * document — always, in the bubble phase — and routes by state: a key with
+ * nothing focused goes to the holder's {@code keyDown(ev)}; a key from a
+ * focused element goes nowhere, the native world had it. So no served module
+ * but the steward registers a key listener on the document, on the window,
+ * or in the capture phase: a second listener there is a second responder,
+ * which is the thing the party exists to rule out.
  *
- * <p>Read from the served text: any registration of a {@code keydown},
- * {@code keyup} or {@code keypress} listener, in whatever form —
- * {@code el.addEventListener("keydown", …)}, {@code document[f]("keydown", …)},
- * {@code el.onkeydown = …}. The message says which of the two it is, since
- * they are paid differently: a document or capture-phase listener is the
- * steward's job, an element's own listener is a {@code key(ev)} to write.
+ * <p>A component's key listener on its own element is allowed: that is the
+ * native world — a slider's arrows on its knob, a panel hearing Enter from
+ * the select inside it — and such a listener can never hear a party key,
+ * since a key with nothing focused has the body as its target and passes
+ * through no component's root.</p>
+ *
+ * <p>Read from the served text: a registration of a {@code keydown},
+ * {@code keyup} or {@code keypress} listener on {@code document} or
+ * {@code window}, or with the capture flag — {@code document[f]("keydown", …)},
+ * {@code window.addEventListener("keyup", …)}, {@code el.addEventListener("keydown", f, true)}.
  * One exemption, by name: the steward, the party's one face to the document.</p>
  */
 public record KeysThroughThePartyRule() implements JsRule {
@@ -39,7 +42,7 @@ public record KeysThroughThePartyRule() implements JsRule {
     private static final Pattern CAPTURES = Pattern.compile("\\b(?:document|window)\\s*[.\\[]|,\\s*true\\s*\\)");
 
     @Override public RuleId      id()     { return new RuleId("keys-through-the-party"); }
-    @Override public String      intent() { return "A module registers no keydown, keyup or keypress listener; keys come through the keyboard party, to the holder's key(ev), and only the steward listens to the document."; }
+    @Override public String      intent() { return "No module but the keyboard steward registers a keydown, keyup or keypress listener on the document, on the window, or in the capture phase; a component listens for keys only on its own elements, and party keys come through the steward to the holder's keyDown(ev)."; }
     @Override public DoctrineRef basis()  { return new DoctrineRef("keyboard-party"); }
 
     @Override
@@ -51,10 +54,8 @@ public record KeysThroughThePartyRule() implements JsRule {
         for (int i = 0; i < code.size(); i++) {
             String line = code.get(i);
             if (!LISTENER.matcher(line).find() || line.contains("removeEventListener")) continue;   // the removal is the pair of an addition already found
-            String what = CAPTURES.matcher(line).find()
-                    ? "captures keys on the document — only the keyboard steward does: "
-                    : "listens for keys itself — keys come through the party, to key(ev): ";
-            findings.add(new Finding(module.moduleClass(), id(), what + raw.get(i).trim(), i));
+            if (!CAPTURES.matcher(line).find()) continue;                                            // a component's own element: the native world's, allowed
+            findings.add(new Finding(module.moduleClass(), id(), "captures keys on the document — only the keyboard steward does: " + raw.get(i).trim(), i));
         }
         return List.copyOf(findings);
     }

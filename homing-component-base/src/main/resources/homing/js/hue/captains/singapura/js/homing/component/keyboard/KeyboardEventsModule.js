@@ -22,7 +22,7 @@ function _id(v, what) {
 class KeyboardEvents {
     static KINDS = Object.freeze(["Granted", "Taken", "Released"]);
 
-    /** A member holds the keyboard now: by a claim, by a yield that reached it, or by a member that left. */
+    /** A member holds the keyboard now: by a claim, by a yield that reached it, by a member that left, or by the steward's Tab. */
     static Granted(id, by) {
         if (by != null && (typeof by !== "string" || !by)) throw new Error("[KeyboardEvents] Granted.by must be a non-empty string");
         return Object.freeze({ kind: "Granted", id: _id(id, "Granted.id"), by: by == null ? "claim" : by });

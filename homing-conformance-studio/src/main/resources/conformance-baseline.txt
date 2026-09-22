@@ -224,7 +224,6 @@ hue.captains.singapura.js.homing.studio.base.composed.ComposedWidget [view-doctr
 hue.captains.singapura.js.homing.studio.base.composed.ComposedWidget [view-doctrine] DOM lookup (Owned References): var tocLinks = tocEl.querySelectorAll('a[data-anchor]');
 hue.captains.singapura.js.homing.studio.base.composed.DocRefsModule [exports-are-classes] exported function 'attachDocRefs' — a component is a class: function attachDocRefs(opts) {
 hue.captains.singapura.js.homing.studio.base.composed.DocTreeRendererModule [exports-are-classes] exported function 'renderDocTree' — a component is a class: function renderDocTree(opts) {
-hue.captains.singapura.js.homing.studio.base.composed.DocTreeRendererModule [keys-through-the-party] listens for keys itself — keys come through the party, to key(ev): keyTarget.addEventListener('keydown', onDocKeydown);
 hue.captains.singapura.js.homing.studio.base.composed.DocTreeRendererModule [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): bodyHost.style.cssText = 'flex:1 1 auto;min-width:0;max-width:820px;';
 hue.captains.singapura.js.homing.studio.base.composed.DocTreeRendererModule [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): if (wrap) wrap.style.display = expanded ? '' : 'none';
 hue.captains.singapura.js.homing.studio.base.composed.DocTreeRendererModule [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): layout.style.cssText = 'display:flex;gap:28px;align-items:flex-start;';
@@ -304,7 +303,6 @@ hue.captains.singapura.js.homing.studio.base.composed.TocSidebarRenderer [no-inl
 hue.captains.singapura.js.homing.studio.base.composed.TocSidebarRenderer [no-raw-href] raw href operation (use href.* API): var href = HrefManagerInstance;
 hue.captains.singapura.js.homing.studio.base.composed.TocSidebarRenderer [view-doctrine] DOM lookup (Owned References): return "var el=document.getElementById('" + anchor
 hue.captains.singapura.js.homing.studio.base.composed.TocSyncModule [exports-are-classes] exported function 'attachTocSync' — a component is a class: function attachTocSync(opts) {
-hue.captains.singapura.js.homing.studio.base.composed.TocSyncModule [keys-through-the-party] listens for keys itself — keys come through the party, to key(ev): navEl.addEventListener("keydown", onKey);
 hue.captains.singapura.js.homing.studio.base.export.HtmlExportModule [exports-are-classes] exported function 'exportPageAsHtml' — a component is a class: function exportPageAsHtml(filename, opts) {
 hue.captains.singapura.js.homing.studio.base.export.HtmlExportModule [no-dom-destruction] wholesale DOM wipe: cloneBody.replaceChildren();
 hue.captains.singapura.js.homing.studio.base.export.HtmlExportModule [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): standalone.style.cssText = 'max-width:' + exportWidth + ';margin:0 auto;'
@@ -363,10 +361,8 @@ hue.captains.singapura.js.homing.studio.base.table.TableViewerRenderer [use-dom-
 hue.captains.singapura.js.homing.studio.base.table.TableViewerRenderer [use-dom-ops-party] raw DOM factory (use branch.createElement via the DomOpsParty, not document.create*): var tr = document.createElement("tr");
 hue.captains.singapura.js.homing.studio.base.table.TableViewerRenderer [use-dom-ops-party] raw DOM factory (use branch.createElement via the DomOpsParty, not document.create*): var trh = document.createElement("tr");
 hue.captains.singapura.js.homing.studio.base.theme.ThemeColours [exports-are-classes] exported function 'mountColourMenu' — a component is a class: function mountColourMenu(branch, wrap, seq, palettes, onPick) {
-hue.captains.singapura.js.homing.studio.base.theme.ThemeColours [keys-through-the-party] listens for keys itself — keys come through the party, to key(ev): wrap.addEventListener("keydown", function (ev) { if (handleKeydown(ev)) { ev.preventDefault(); ev.stopPropagation(); } });
 hue.captains.singapura.js.homing.studio.base.theme.ThemePicker [exports-are-classes] exported function 'mountThemePickerButton' — a component is a class: function mountThemePickerButton(host, opts) {
 hue.captains.singapura.js.homing.studio.base.theme.ThemePicker [exports-are-classes] exported function 'mountThemePickerTree' — a component is a class: function mountThemePickerTree(host, opts) {
-hue.captains.singapura.js.homing.studio.base.theme.ThemePicker [keys-through-the-party] listens for keys itself — keys come through the party, to key(ev): panes.treeHost.addEventListener("keydown", function (ev) {
 hue.captains.singapura.js.homing.studio.base.theme.ThemePickerModel [exports-are-classes] exported function 'activeThemeSlug' — a component is a class: function activeThemeSlug() {
 hue.captains.singapura.js.homing.studio.base.theme.ThemePickerModel [exports-are-classes] exported function 'colourwayOf' — a component is a class: function colourwayOf(theme, paletteSlug) {
 hue.captains.singapura.js.homing.studio.base.theme.ThemePickerModel [exports-are-classes] exported function 'decompose' — a component is a class: function decompose(themes, slug) {
@@ -478,8 +474,6 @@ hue.captains.singapura.js.homing.studio.base.ui.StudioElements [use-dom-ops-part
 hue.captains.singapura.js.homing.studio.base.ui.StudioElements [use-dom-ops-party] raw DOM factory (use branch.createElement via the DomOpsParty, not document.create*): return document.createElement(tag);
 hue.captains.singapura.js.homing.studio.base.ui.SystemDialog [exports-are-classes] exported function 'openSystemDialog' — a component is a class: function openSystemDialog(opts) {
 hue.captains.singapura.js.homing.studio.base.ui.SystemDialog [keys-through-the-party] captures keys on the document — only the keyboard steward does: if (modal) document.addEventListener("keydown", keys, true);
-hue.captains.singapura.js.homing.studio.base.ui.SystemDialog [keys-through-the-party] listens for keys itself — keys come through the party, to key(ev): else       frame.addEventListener("keydown", keys);
-hue.captains.singapura.js.homing.studio.base.ui.layout.FocusManagerModule [keys-through-the-party] listens for keys itself — keys come through the party, to key(ev): this._content.addEventListener("keydown", this._onKey);
 hue.captains.singapura.js.homing.studio.base.ui.layout.ModalModule [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): close()   { this._open = false; this._el.style.display = "none"; return this; }
 hue.captains.singapura.js.homing.studio.base.ui.layout.ModalModule [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): el.style.height = (opts.height != null ? opts.height : 260) + "px";
 hue.captains.singapura.js.homing.studio.base.ui.layout.ModalModule [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): el.style.left   = (opts.x != null ? opts.x : 60) + "px";
@@ -704,7 +698,6 @@ hue.captains.singapura.js.homing.workspace.WidgetPickerModule [use-dom-ops-party
 hue.captains.singapura.js.homing.workspace.WidgetPickerModule [use-dom-ops-party] raw DOM factory (use branch.createElement via the DomOpsParty, not document.create*): var row = document.createElement("div");
 hue.captains.singapura.js.homing.workspace.WidgetPickerModule [use-dom-ops-party] raw DOM factory (use branch.createElement via the DomOpsParty, not document.create*): var tile = document.createElement("div");
 hue.captains.singapura.js.homing.workspace.WorkspaceLayoutModule [keys-through-the-party] captures keys on the document — only the keyboard steward does: document.addEventListener("keydown", this._escHandler);
-hue.captains.singapura.js.homing.workspace.WorkspaceLayoutModule [keys-through-the-party] listens for keys itself — keys come through the party, to key(ev): titleEl.addEventListener("keydown", function (ev) {
 hue.captains.singapura.js.homing.workspace.WorkspaceLayoutModule [max-effective-lines] module exceeds the 250 effective-line limit — split it
 hue.captains.singapura.js.homing.workspace.WorkspaceLayoutModule [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): if (!this._subtitle) separatorEl.style.display = "none";
 hue.captains.singapura.js.homing.workspace.WorkspaceLayoutModule [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): if (!this._subtitle) subtitleEl.style.display = "none";
@@ -813,8 +806,6 @@ hue.captains.singapura.js.homing.workspace.shell.WorkspaceSwitcherModel [exports
 hue.captains.singapura.js.homing.workspace.shell.WorkspaceSwitcherModel [exports-are-classes] exported function 'pathOfInstance' — a component is a class: function pathOfInstance(rows, id) {
 hue.captains.singapura.js.homing.workspace.shell.WorkspaceSwitcherModel [exports-are-classes] exported function 'pathOfKind' — a component is a class: function pathOfKind(kinds, kind) {
 hue.captains.singapura.js.homing.workspace.shell.WorkspaceSwitcherModel [exports-are-classes] exported function 'targetUrl' — a component is a class: function targetUrl(current, o) {
-hue.captains.singapura.js.homing.workspace.shell.WorkspaceSwitcherModule [keys-through-the-party] listens for keys itself — keys come through the party, to key(ev): input.addEventListener("keydown", function (ev) {
-hue.captains.singapura.js.homing.workspace.shell.WriteLockGuardModule [keys-through-the-party] listens for keys itself — keys come through the party, to key(ev): 'keydown', 'keyup', 'keypress', 'wheel', 'touchstart', 'touchmove'
 hue.captains.singapura.js.homing.workspace.shell.WriteLockGuardModule [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): banner.style.cssText =
 hue.captains.singapura.js.homing.workspace.shell.WriteLockGuardModule [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): icon.style.cssText   = 'font-size:14px;';
 hue.captains.singapura.js.homing.workspace.shell.WriteLockGuardModule [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): m.style.cssText =

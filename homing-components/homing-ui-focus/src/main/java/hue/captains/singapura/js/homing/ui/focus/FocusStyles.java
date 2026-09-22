@@ -80,8 +80,20 @@ public record FocusStyles() implements CssGroup<FocusStyles> {
         @Override public String body() { return "margin-top: 6px; padding: 2px 8px; font-style: italic;"; }
     }
 
+    /** The steward by state, above the tree: active, and where Tab goes next; or dormant on what has the native focus. */
+    public record fm_state() implements CssClass<FocusStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Caption.class, Type.Scale.class), of(Muted.class, Color.Ink.class)); }
+        @Override public String body() { return "margin-bottom: 6px; padding: 2px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"; }
+    }
+
+    /** The state line while the steward is dormant: the body's ink, so the eye sees the keys are elsewhere. */
+    public record fm_state_dormant() implements CssClass<FocusStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Body.class, Color.Ink.class)); }
+        @Override public String body() { return "font-style: italic;"; }
+    }
+
     @Override
     public List<CssClass<FocusStyles>> cssClasses() {
-        return List.of(new fm_tree(), new fm_row(), new fm_row_holder(), new fm_kind(), new fm_name(), new fm_component(), new fm_outside());
+        return List.of(new fm_tree(), new fm_row(), new fm_row_holder(), new fm_kind(), new fm_name(), new fm_component(), new fm_outside(), new fm_state(), new fm_state_dormant());
     }
 }

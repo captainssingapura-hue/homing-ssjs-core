@@ -74,7 +74,7 @@ class DeskTest extends JsModuleTestBase {
         }
         var events = [];
         var members = {}, kbLog = [];
-        var kb = { join: function (id, h) { members[id] = h; kbLog.push("join:" + id); return id; }, leave: function (id) { delete members[id]; kbLog.push("leave:" + id); }, claim: function (id) { kbLog.push("claim:" + id); }, release: function () {} };
+        var kb = { enroll: function (root, id) { root._kb = id; return function () { delete root._kb; }; }, memberAt: function (el) { for (var x = el; x; x = x.parentNode) if (x._kb) return x._kb; return null; }, join: function (id, h) { members[id] = h; kbLog.push("join:" + id); return id; }, leave: function (id) { delete members[id]; kbLog.push("leave:" + id); }, claim: function (id) { kbLog.push("claim:" + id); }, release: function () {} };
         var desk = new Desk(branch.createBranch("desk"), { host: host, keyboard: kb, onEvent: function (ev) {
             events.push(ev);
             switch (ev.kind) {

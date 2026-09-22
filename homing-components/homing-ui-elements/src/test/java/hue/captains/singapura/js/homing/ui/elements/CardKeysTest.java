@@ -42,7 +42,7 @@ class CardKeysTest extends JsModuleTestBase {
         ["el_button", "el_button_primary", "el_button_secondary", "el_button_danger", "el_button_warning", "el_button_success", "el_button_plain", "el_button_on", "el_button_off",
          "el_card", "el_card_action", "el_card_head", "el_card_title", "el_card_badge", "el_card_body", "el_card_text", "el_card_foot", "el_card_link"].forEach(function (c) { globalThis[c] = c; });
         var members = {}, kbLog = [];
-        var kb = { join: function (id, h) { members[id] = h; kbLog.push("join:" + id); return id; }, leave: function (id) { delete members[id]; kbLog.push("leave:" + id); },
+        var kb = { enroll: function (root, id) { root._kb = id; return function () { delete root._kb; }; }, memberAt: function (el) { for (var x = el; x; x = x.parentNode) if (x._kb) return x._kb; return null; }, join: function (id, h) { members[id] = h; kbLog.push("join:" + id); return id; }, leave: function (id) { delete members[id]; kbLog.push("leave:" + id); },
                    claim: function (id) { kbLog.push("claim:" + id); }, release: function (id) { kbLog.push("release:" + id); } };
         var page = fakeBranch("page");
         var card = new CardBuilder().title("Act").onClick(function () { log.push("clicked"); }).keyboard(kb).build(page.createBranch("act"));
@@ -74,7 +74,7 @@ class CardKeysTest extends JsModuleTestBase {
     @Test
     void handedTheSteward_joinsAndClaimsByTheConvention_leavesOnDispose() {
         assertEquals("join:act", eval("kbLog.join(' ')").asString(), "the card with the steward joined as its branch's name; the others did not");
-        assertEquals("1,1,1", eval("[card.root.listening('pointerdown'), card.root.listening('focusin'), card.root.listening('focusout')].join()").asString());
+        assertEquals("1,0,0", eval("[card.root.listening('pointerdown'), card.root.listening('focusin'), card.root.listening('focusout')].join()").asString(), "the convention is one press; native focus moves nothing");
         eval("kbLog = []; members.act.keyDown({ key: 'Enter', target: card.root })");
         assertEquals("clicked", log(), "the member's handler is key()");
         eval("card.dispose()");

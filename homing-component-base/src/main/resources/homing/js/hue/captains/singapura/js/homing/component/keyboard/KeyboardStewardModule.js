@@ -1,4 +1,30 @@
 // =============================================================================
+// KeyboardSteward — the keyboard party's face to the DOM, one per document.
+// It owns the holder: the flat secretary, one field, a claim evicts. It reads
+// the focus party's structure and never mutates it. It routes by state, per
+// key, from one listener on the document in the BUBBLE phase, always on — so
+// a component that stops a key's propagation keeps it, and the steward acts
+// only on what the page let through:
+//
+//   Tab, Shift+Tab   the steward's: the next (previous) member of the focus
+//                    party tree in pre-order, from the holder — or, when a
+//                    native control is focused, from the innermost member whose
+//                    root contains it; whatever is focused is blurred, the
+//                    member claimed. Wraps. The one place the steward moves
+//                    native focus, and it only takes it away.
+//   any other key    target is the body — nothing focused anywhere — to the
+//                    holder's keyDown/keyUp, defaulted and stopped when taken;
+//                    target is a focused element — nothing: the native world
+//                    had it. The holder is untouched by native focus and
+//                    resumes the moment the focused thing blurs.
+//
+// Members: a membership of the focus tree, joined on the party's `joined`
+// notice, its component's keyDown/keyUp/granted/taken the reactors; or, the
+// older way, an id with handlers. The roots under the convention are enrolled
+// here (Keys.claimOn does it), so `memberAt(el)` answers the innermost member
+// whose root contains an element — the structural query the press and the
+// traversal both rest on. Claim, yield, release; events out by on(fn).
+// =============================================================================
 
 const _keyboardOwner = Object.freeze({ toString: () => "keyboard" });
 var _pages = new WeakSet();          // the documents that have a steward: one each
@@ -17,11 +43,12 @@ class KeyboardSteward {
         if (opts && typeof opts.onEvent === "function") this.on(opts.onEvent);
         this._holder = null;
         this._members = {};
-        this._listening = false;
+        this._roots = new WeakMap();     // root element → the id enrolled on it
         this._party = new Party({ name: "keyboard", root: { path: _ROOT, initial: KeyboardSecretary.initial, behavior: KeyboardSecretary.behavior } });
         this._party.joinActor({ id: _STEWARD, parentSecretary: _ROOT, reactors: {} });
         this._onDown = function (ev) { self._forward("KeyDown", ev); };
         this._onUp = function (ev) { self._forward("KeyUp", ev); };
+        this._listen(true);
         // the focus tree: whoever joins it is a member here, by its membership; whoever leaves it leaves here too
         this._focus = opts && opts.party ? opts.party : null;
         this._offFocus = this._focus ? this._focus.on(function (n) {
@@ -49,6 +76,22 @@ class KeyboardSteward {
     }
     /** A member's id: a membership's, or the string given. */
     static idOf(m) { return m && typeof m === "object" && typeof m.id === "string" ? m.id : m; }
+
+    // ── the roots under the convention ────────────────────────────────────
+    /** The root enrolled for a member; the function returned forgets it. Keys.claimOn does this. */
+    enroll(root, id) {
+        id = KeyboardSteward.idOf(id);
+        if (!root || typeof root !== "object") throw new Error("[KeyboardSteward] enroll wants the root element");
+        if (typeof id !== "string" || !id) throw new Error("[KeyboardSteward] enroll wants the member's id");
+        var roots = this._roots;
+        roots.set(root, id);
+        return function () { if (roots.get(root) === id) roots.delete(root); };
+    }
+    /** The id of the innermost member whose enrolled root contains `el`, or null. */
+    memberAt(el) {
+        for (var x = el; x; x = x.parentNode) { var id = this._roots.get(x); if (id) return id; }
+        return null;
+    }
 
     // ── the members ───────────────────────────────────────────────────────
     join(id, handlers) {
@@ -111,48 +154,69 @@ class KeyboardSteward {
         return function () { var i = sinks.indexOf(fn); if (i >= 0) sinks.splice(i, 1); };
     }
 
+    // ── the traversal ─────────────────────────────────────────────────────
+    /** What is natively focused, or null when nothing is: the document's active element unless it is the body. */
+    static focused() {
+        if (typeof document === "undefined") return null;
+        var a = document.activeElement;
+        return a && a !== document.body && a !== document.documentElement ? a : null;
+    }
+    /** The member the traversal starts from: the innermost containing the focused element, else the holder; or null. */
+    from() {
+        var f = KeyboardSteward.focused();
+        var at = f ? this.memberAt(f) : null;
+        return at || this._holder;
+    }
+    /** The member `dir` steps from `from()` in pre-order, wrapping; null with no tree or no members. */
+    step(dir) {
+        var walk = this._focus ? this._focus.walk() : [];
+        if (!walk.length) return null;
+        var from = this.from(), i = -1;
+        for (var k = 0; k < walk.length; k++) if (walk[k].id === from) { i = k; break; }
+        if (i < 0) return dir > 0 ? walk[0] : walk[walk.length - 1];
+        return walk[(i + dir + walk.length) % walk.length];
+    }
+    /** Tab: to the next member of the tree, Shift+Tab the previous; whatever is focused blurred, the member claimed. True when taken. */
+    tab(dir) {
+        var to = this.step(dir);
+        if (!to) return false;
+        var f = KeyboardSteward.focused();
+        if (f && typeof f.blur === "function") f.blur();
+        this._party.tellFrom(_STEWARD, { kind: "Claim", id: to.id, by: "tab" });
+        return true;
+    }
+
     // ── what the secretary decided, mirrored for the listeners and the sink ──
     _held(id, by) {
         this._holder = id;
-        this._listen(true);
         this._fire(KeyboardEvents.Granted(id, by == null ? "claim" : by));
     }
     _lost(id, by) {
         if (this._holder === id) this._holder = null;
-        if (by == null) this._listen(false);               // evicted: the new holder's Granted follows at once
         this._fire(by == null ? KeyboardEvents.Released(id) : KeyboardEvents.Taken(id, by));
     }
 
-    // ── the document, while someone holds ─────────────────────────────────
+    // ── the document ──────────────────────────────────────────────────────
     _listen(on) {
-        if (on === this._listening || typeof document === "undefined") return;
+        if (typeof document === "undefined") return;
         var f = on ? "addEventListener" : "removeEventListener";
-        document[f]("keydown", this._onDown, true);
-        document[f]("keyup", this._onUp, true);
-        this._listening = on;
+        document[f]("keydown", this._onDown, false);
+        document[f]("keyup", this._onUp, false);
     }
+    /** By state: Tab is the steward's; a key from the body goes to the holder; a key from a focused element goes nowhere. */
     _forward(kind, ev) {
-        if (this._holder === null) return;
-        if (KeyboardSteward.fieldKeeps(ev.target, ev)) return;
+        if (kind === "KeyDown" && ev.key === "Tab" && !ev.ctrlKey && !ev.altKey && !ev.metaKey) {
+            if (this.tab(ev.shiftKey ? -1 : 1)) { ev.preventDefault(); ev.stopPropagation(); }
+            return;
+        }
+        if (this._holder === null || KeyboardSteward.fromAFocusedElement(ev)) return;
         this._party.tellFrom(_STEWARD, { kind: kind, ev: ev });
     }
-    /**
-     * Whether the key is the field's and goes no further: a plain key in a text field, an input or an editable; in a
-     * select, the keys that walk it — arrows, Home, End, the pages, a typed character — but not Enter, which confirms
-     * a pick and is the holder's to act on. A chord with a modifier, and Escape, are forwarded from any field.
-     */
-    static fieldKeeps(el, ev) {
-        if (!KeyboardSteward.editable(el) || ev.ctrlKey || ev.metaKey || ev.altKey || ev.key === "Escape") return false;
-        if (String(el.tagName).toUpperCase() === "SELECT") return ev.key !== "Enter";
-        return true;
-    }
-    /** A field: a text field, an input, a select, an editable — its plain keys are its own. */
-    static editable(el) {
-        if (!el || typeof el.tagName !== "string") return false;
-        var tag = el.tagName.toUpperCase();
-        if (tag === "TEXTAREA" || tag === "SELECT") return true;
-        if (tag === "INPUT") { var t = String(el.type || "text").toLowerCase(); return ["button", "checkbox", "radio", "range", "submit", "reset", "color", "file", "image"].indexOf(t) < 0; }
-        return el.isContentEditable === true;
+    /** Whether the key came from a focused element — anything but the body, the root element or the document itself. */
+    static fromAFocusedElement(ev) {
+        var t = ev.target;
+        if (!t || typeof document === "undefined") return false;
+        return t !== document && t !== document.body && t !== document.documentElement;
     }
     _fire(ev) {
         var sinks = this._sinks.slice();

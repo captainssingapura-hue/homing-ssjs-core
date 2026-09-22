@@ -56,7 +56,7 @@ class SliderGroupTest extends JsModuleTestBase {
         ].forEach(function (c) { globalThis[c] = c; });
         // a steward that only records: the member's handlers are kept so the test can call them as the steward would
         var members = {}, kbLog = [];
-        var kb = { join: function (id, h) { members[id] = h; kbLog.push("join:" + id); return id; }, leave: function (id) { delete members[id]; kbLog.push("leave:" + id); },
+        var kb = { enroll: function (root, id) { root._kb = id; return function () { delete root._kb; }; }, memberAt: function (el) { for (var x = el; x; x = x.parentNode) if (x._kb) return x._kb; return null; }, join: function (id, h) { members[id] = h; kbLog.push("join:" + id); return id; }, leave: function (id) { delete members[id]; kbLog.push("leave:" + id); },
                    claim: function (id) { kbLog.push("claim:" + id); }, release: function (id) { kbLog.push("release:" + id); } };
         var page = fakeBranch("page");
         var g = new SliderGroupBuilder().title("Mixer").keyboard(kb).across().build(page.createBranch("mixer"));
@@ -139,7 +139,7 @@ class SliderGroupTest extends JsModuleTestBase {
 
     @Test
     void theHeaderPressKeepsTheDefaultOffAndFocusesTheCurrentKnob_theConventionClaims() {
-        assertEquals("1,2,1", eval("[g.root.listening('pointerdown'), g.root.listening('focusin'), g.root.listening('focusout')].join()").asString(), "the convention on the root, and the group's own focusin for the current");
+        assertEquals("1,1,0", eval("[g.root.listening('pointerdown'), g.root.listening('focusin'), g.root.listening('focusout')].join()").asString(), "the convention on the root is one press; the focusin is the group's own, for the current");
         eval("log = []; kbLog = []; g.current(2)");
         var e = eval("header.fire('pointerdown', {})");
         assertTrue(e.getMember("defaulted").asBoolean(), "the press does not blur");

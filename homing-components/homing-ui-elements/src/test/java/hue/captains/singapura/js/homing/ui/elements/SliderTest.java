@@ -37,7 +37,7 @@ class SliderTest extends JsModuleTestBase {
                 getBoundingClientRect: function () { return this.rect; },
                 setPointerCapture: function (id) { log.push("capture:" + id); },
                 focus: function () { log.push("focus:" + this.tag); },
-                fire: function (t, ev) { var e = ev || {}; if (!e.preventDefault) e.preventDefault = function () { e.defaulted = true; }; (this.listeners[t] || []).slice().forEach(function (fn) { fn(e); }); return e; },
+                fire: function (t, ev) { var e = ev || {}; e.target = e.target || this; if (!e.preventDefault) e.preventDefault = function () { e.defaulted = true; }; (this.listeners[t] || []).slice().forEach(function (fn) { fn(e); }); return e; },
                 has: function (c) { return classes.has(c); }, attr: function (k) { return attrs[k]; }, prop: function (k) { return props[k]; }, listening: function (t) { return (this.listeners[t] || []).length; } };
             return node;
         }
@@ -139,15 +139,15 @@ class SliderTest extends JsModuleTestBase {
     void withTheSteward_joinsClaimsByTheConventionAndLeaves() {
         eval("""
             var members = {}, kbLog = [];
-            var kb = { join: function (id, h) { members[id] = h; kbLog.push("join:" + id); return id; }, leave: function (id) { delete members[id]; kbLog.push("leave:" + id); },
+            var kb = { enroll: function (root, id) { root._kb = id; return function () { delete root._kb; }; }, memberAt: function (el) { for (var x = el; x; x = x.parentNode) if (x._kb) return x._kb; return null; }, join: function (id, h) { members[id] = h; kbLog.push("join:" + id); return id; }, leave: function (id) { delete members[id]; kbLog.push("leave:" + id); },
                        claim: function (id) { kbLog.push("claim:" + id); }, release: function (id) { kbLog.push("release:" + id); } };
             var k = new SliderBuilder().axis().onChange(function (v) { log.push("k:" + v); }).keyboard(kb).build(page.createBranch("keyed"));
             var k2 = new SliderBuilder().axis().keyboard(kb, "other").build(page.createBranch("keyed2"));
             """);
         assertEquals("join:keyed join:other", eval("kbLog.join(' ')").asString(), "joined as the branch's name, or as said");
-        assertEquals("1,1,1", eval("[k.root.listening('pointerdown'), k.root.listening('focusin'), k.root.listening('focusout')].join()").asString(), "the convention on the root");
+        assertEquals("1,0,0", eval("[k.root.listening('pointerdown'), k.root.listening('focusin'), k.root.listening('focusout')].join()").asString(), "the convention on the root: one press");
         eval("kbLog = []; k.root.fire('pointerdown', {}); k.root.fire('focusout', { relatedTarget: null });");
-        assertEquals("claim:keyed release:keyed", eval("kbLog.join(' ')").asString());
+        assertEquals("claim:keyed", eval("kbLog.join(' ')").asString(), "a press claims; the focus leaving releases nothing");
         eval("log = [];");
         assertTrue(eval("members.keyed.keyDown({ key: 'ArrowUp' })").asBoolean(), "the member's handler is the slider's key()");
         assertEquals("k:0.1", log());

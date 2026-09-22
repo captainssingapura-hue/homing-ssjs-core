@@ -79,7 +79,7 @@ class ContextMenuStewardTest extends JsModuleTestBase {
                                                           { id: "animal", label: "Animal", section: 1, nodes: [ { id: "cat", label: "Cat" }, { id: "dog", label: "Dog", nodes: [ { id: "big", label: "Big" }, { id: "small", label: "Small" } ] } ] } ] } };
         // the page's keyboard steward, faked: members and the holder, and the log of what the menu steward asks of it
         var members = {}, kbLog = [], holder = null;
-        var kb = { join: function (id, h) { members[id] = h; kbLog.push("join:" + id); return id; }, leave: function (id) { delete members[id]; if (holder === id) holder = null; kbLog.push("leave:" + id); },
+        var kb = { enroll: function (root, id) { root._kb = id; return function () { delete root._kb; }; }, memberAt: function (el) { for (var x = el; x; x = x.parentNode) if (x._kb) return x._kb; return null; }, join: function (id, h) { members[id] = h; kbLog.push("join:" + id); return id; }, leave: function (id) { delete members[id]; if (holder === id) holder = null; kbLog.push("leave:" + id); },
                    claim: function (id) { if (!members[id]) throw new Error("no member " + id); kbLog.push("claim:" + id); holder = id; }, release: function (id) { kbLog.push("release:" + id); if (holder === id) holder = null; },
                    holder: function () { return holder; }, has: function (id) { return !!members[id]; } };
         /** A key as the steward forwards it to the holder: taken means defaulted and stopped at the document. */

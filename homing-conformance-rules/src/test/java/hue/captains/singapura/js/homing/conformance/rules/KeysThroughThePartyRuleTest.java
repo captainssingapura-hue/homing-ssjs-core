@@ -9,11 +9,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Keys come through the party: a module with key(ev) and the convention is
- * clean; a key listener in any form is a finding, worded by where it sits —
- * the document or the capture phase is the steward's job, an element's own
- * is a key(ev) to write; a listener in a comment is nothing; the steward is
- * exempt by name.
+ * Keys come through the party: a module with keyDown(ev) and the convention
+ * is clean; a key listener on the document, on the window or in the capture
+ * phase is a finding — the steward's job; a component's listener on its own
+ * element is the native world's and allowed; a listener in a comment is
+ * nothing; the steward is exempt by name.
  */
 class KeysThroughThePartyRuleTest {
 
@@ -36,17 +36,15 @@ class KeysThroughThePartyRuleTest {
                 "export {Slider};")));
     }
 
+    /** The native world: a slider's knob, a panel hearing its select, a card — their own elements, in the bubble phase. */
     @Test
-    void anElementsOwnListenerIsAFinding_toWriteAsKeyEv() {
-        var findings = KeysThroughThePartyRule.INSTANCE.check(mod(
+    void anElementsOwnListenerIsAllowed_theNativeWorlds() {
+        assertEquals(List.of(), KeysThroughThePartyRule.INSTANCE.check(mod(
                 "knob.addEventListener(\"keydown\", function (ev) { });",
                 "list.addEventListener('keyup', onUp);",
+                "this.root.addEventListener(\"keydown\", function (ev) { if (ev.target === list && ev.key === \"Enter\") self._confirm(); }, false);",
                 "el.onkeydown = function (e) {};",
-                "export {X};"));
-        assertEquals(List.of("listens", "listens", "listens"), kinds(findings));
-        assertEquals(List.of(0, 1, 2), findings.stream().map(Finding::line).toList());
-        assertTrue(findings.stream().allMatch(f -> f.rule().value().equals("keys-through-the-party")));
-        assertTrue(findings.get(0).message().endsWith("knob.addEventListener(\"keydown\", function (ev) { });"), "the offending line in the message");
+                "export {X};")));
     }
 
     @Test
@@ -59,6 +57,9 @@ class KeysThroughThePartyRuleTest {
                 "document.removeEventListener(\"keydown\", this._keys, true);   // the pair of the first: not a second finding",
                 "export {X};"));
         assertEquals(List.of("captures", "captures", "captures", "captures"), kinds(findings));
+        assertEquals(List.of(0, 1, 2, 3), findings.stream().map(Finding::line).toList());
+        assertTrue(findings.stream().allMatch(f -> f.rule().value().equals("keys-through-the-party")));
+        assertTrue(findings.get(0).message().endsWith("document.addEventListener(\"keydown\", this._keys, true);"), "the offending line in the message");
     }
 
     @Test
@@ -73,8 +74,8 @@ class KeysThroughThePartyRuleTest {
     @Test
     void theStewardIsExemptByName() {
         var steward = new ServedModule("hue.captains.singapura.js.homing.component.keyboard.KeyboardStewardModule", StandardJsModuleType.PRIMITIVE, JsSource.of(
-                "document[f](\"keydown\", this._onDown, true);",
-                "document[f](\"keyup\", this._onUp, true);",
+                "document[f](\"keydown\", this._onDown, false);",
+                "document[f](\"keyup\", this._onUp, false);",
                 "export {KeyboardSteward};"));
         assertEquals(List.of(), KeysThroughThePartyRule.INSTANCE.check(steward));
     }

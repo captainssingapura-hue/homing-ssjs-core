@@ -13,12 +13,15 @@
 //   branch.adopt(membership)              the member moved here, its own branch and all;
 //                                           refused under its own descendant
 //   branch.members, branch.owner, branch.path, branch.dissolve()
+//   branch.walk()                         its members in pre-order: each member, then the
+//                                           branch it holds walked in turn - the Tab order
 //   membership.leave()                    gone; a branch it holds is dissolved first
 //   membership.component .name .id .path .in (the branch it is in) .branch (the one it holds)
 //   membership.parent()                   the member holding the branch it is in, or null
 //   focusParty.root                       the root branch
 //   focusParty.on(fn) → off               notices: { kind: joined | left | moved, id, path, parent }
 //   focusParty.inspect()                  the tree as frozen data
+//   focusParty.walk()                     every member in pre-order, the root walked
 //
 // A member is the component itself, by the base's contract, with what the
 // steward reads off it when it holds the keys: keyDown(ev), keyUp(ev),
@@ -96,6 +99,16 @@ class FocusBranch {
         this.party._notify({ kind: "moved", id: m.id, name: m.name, path: m.path, parent: this.owner ? this.owner.id : null });
         return m;
     }
+    /** The members in pre-order: each member, then the branch it holds, walked in turn. */
+    walk() {
+        var out = [];
+        for (var i = 0; i < this.members.length; i++) {
+            var m = this.members[i];
+            out.push(m);
+            if (m.branch) out = out.concat(m.branch.walk());
+        }
+        return out;
+    }
     /** Every member left, leaves last first. */
     dissolve() {
         while (this.members.length) this.members[this.members.length - 1].leave();
@@ -139,6 +152,8 @@ class FocusParty {
         return found;
     }
     inspect() { return this.root.inspect(); }
+    /** Every member in pre-order: the traversal, and the Tab order. */
+    walk() { return this.root.walk(); }
 }
 
 /** The page's, one per document. */

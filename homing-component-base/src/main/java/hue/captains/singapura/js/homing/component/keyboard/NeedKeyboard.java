@@ -14,12 +14,14 @@ import java.util.List;
  * }</pre>
  *
  * <p>That is a declaration, not a registration: at runtime the party knows
- * only members, and a component takes its keys through the party, as a
- * member of the page's {@code KeyboardSteward} claiming by the convention,
- * never through a {@code keydown} listener of its own. {@link KeyboardRegistry}
+ * only members. A container takes its keys through the party, as a member
+ * of the page's {@code KeyboardSteward} claiming by the convention; a small
+ * component takes them natively, by a {@code keydown} listener on its own
+ * element — both declare, so the page's map is whole. {@link KeyboardRegistry}
  * derives a page's keyboard map from the components its crate closure
- * catalogues, checks page shortcuts against each other, and holds a declared
- * component to the party: a module that listens to keys itself is refused.</p>
+ * catalogues, checks page shortcuts against each other, and refuses any
+ * module but the steward that listens on the document or the window or in
+ * the capture phase.</p>
  */
 public interface NeedKeyboard {
 

@@ -26,11 +26,14 @@ import java.util.regex.Pattern;
  * A component's key shadowing a page shortcut is not an error: the holder is
  * asked first; the map shows it.
  *
- * <p>{@link #validate} holds the declared to the party: a module exporting a
- * component that declares {@code NeedKeyboard} listens to no key of its own,
- * its keys arrive by the party. {@link #undeclaredListeners} lists the served
- * modules that listen to keys without a declaration, so a gate can hold the
- * list to the components still to migrate and watch it shrink.</p>
+ * <p>{@link #validate} holds the declared to the party: a need is on a
+ * declared component and names its keys, and no module but the steward
+ * listens to keys on the document, on the window or in the capture phase. A
+ * component's own listener on its own element is the native world's — a
+ * slider's knob, a panel hearing its select — and allowed, declared or not;
+ * {@link #undeclaredListeners} lists the served modules that listen to keys
+ * without a declaration, so a gate can ask that a module which listens says
+ * what for, and the page's map is whole.</p>
  */
 public record KeyboardRegistry(Map<UiComponent<?>, List<KeyBinding>> byComponent, List<KeyBinding> shortcuts) {
 
@@ -85,26 +88,22 @@ public record KeyboardRegistry(Map<UiComponent<?>, List<KeyBinding>> byComponent
 
     /**
      * The problems with the closure's declarations: a need on something that
-     * is not a declared component, a need that names no key, a declared
-     * component whose module still listens to keys itself, and any module
-     * but the steward that captures keys on the document or the window.
+     * is not a declared component, a need that names no key, and any module
+     * but the steward that captures keys on the document or the window or in
+     * the capture phase. A component's listener on its own element is allowed.
      */
     public static List<String> validate(List<Crate> topLevel) {
         var problems = new ArrayList<String>();
         for (Crate crate : ComponentTrees.closure(topLevel)) {
             for (CrateEntry e : crate.entries()) {
                 EsModule<?> m = e.module();
-                boolean declared = false;
                 for (var x : m.exports().exports()) {
                     if (!(x instanceof NeedKeyboard n)) continue;
                     String who = crate.name() + ": " + m.getClass().getSimpleName() + "." + x.getClass().getSimpleName();
                     if (!(x instanceof UiComponent<?>) || !(m instanceof DomModule<?>)) { problems.add(who + " takes keys but is not a declared component"); continue; }
-                    declared = true;
                     if (n.keys() == null || n.keys().isEmpty()) problems.add(who + " takes keys but names none");
                 }
                 var lines = keyListenerLines(m);
-                if (declared && !lines.isEmpty())
-                    problems.add(crate.name() + ": " + m.getClass().getSimpleName() + " declares its keys but listens to them itself; keys come through the party");
                 if (lines.stream().anyMatch(line -> CAPTURES.matcher(line).find()))
                     problems.add(crate.name() + ": " + m.getClass().getSimpleName() + " captures keys on the document; only the steward does");
             }

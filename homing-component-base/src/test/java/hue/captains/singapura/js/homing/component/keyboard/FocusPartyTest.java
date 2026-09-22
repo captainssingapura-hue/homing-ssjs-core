@@ -107,6 +107,16 @@ class FocusPartyTest extends JsModuleTestBase {
         assertTrue(eval("party.find('nope') === null").asBoolean());
     }
 
+    /** The walk is pre-order — a member, then the branch it holds, then the next — and follows a move; a branch walks itself. */
+    @Test
+    void theWalkIsPreOrder_andFollowsAMove() {
+        assertEquals("dock widget desk card", eval("party.walk().map(function (m) { return m.name; }).join(' ')").asString());
+        assertEquals("widget", eval("dockBranch.walk().map(function (m) { return m.name; }).join(' ')").asString(), "a branch walks its own");
+        eval("var inner = deskBranch.createBranch('inner', new Dock('inner')); inner.join('deep', new Widget('deep')); deskBranch.adopt(mw)");
+        assertEquals("dock desk inner deep widget card", eval("party.walk().map(function (m) { return m.name; }).join(' ')").asString(), "adopted: appended to the desk's branch, after inner and its deep");
+        assertTrue(eval("party.walk()[0] === dockBranch.owner").asBoolean(), "memberships, not copies");
+    }
+
     @Test
     void theRootIsAPartyOfItsOwn_andOffRemovesAListener() {
         assertEquals("", eval("focusParty.root.path").asString());
