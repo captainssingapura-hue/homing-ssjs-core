@@ -17,9 +17,12 @@ import java.util.List;
  * between them are the design's; its corner and edge are a container's, which
  * is where the keys mark reaches it.
  *
- * <p>It takes no keys and listens to nothing: a panel is furniture. What is
- * mounted in it may be a member of the keyboard party; the panel neither
- * knows nor interferes.</p>
+ * <p>It takes no keys: a panel is furniture. It can be told it is the active
+ * region — the one being worked in — by call, or it can follow what is
+ * mounted in it: {@code watch(component)} reads the one attribute a component
+ * writes to say where the keys are, so a dock mounted in a panel lights the
+ * panel, and the same dock mounted on a flat surface neither knows nor needs
+ * one.</p>
  */
 public record PanelModule() implements DomModule<PanelModule> {
 
@@ -42,7 +45,8 @@ public record PanelModule() implements DomModule<PanelModule> {
                         new ElementStyles.el_panel_title(),
                         new ElementStyles.el_panel_slot(),
                         new ElementStyles.el_panel_body(),
-                        new ElementStyles.el_panel_body_air()
+                        new ElementStyles.el_panel_body_air(),
+                        new ElementStyles.el_panel_active()
                 ), ElementStyles.INSTANCE))
                 .build();
     }

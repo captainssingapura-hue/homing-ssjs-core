@@ -24,7 +24,7 @@ class PanelTest extends JsModuleTestBase {
         var log = [], sized = [];
         function el(tag) {
             var classes = new Set(), attrs = {};
-            var node = { tag: tag, tagName: tag.toUpperCase(), children: [], parentNode: null, listeners: {}, textContent: "",
+            var node = { tag: tag, tagName: tag.toUpperCase(), nodeType: 1, children: [], parentNode: null, listeners: {}, textContent: "",
                 classList: { add: function () { for (var i = 0; i < arguments.length; i++) classes.add(arguments[i]); }, remove: function () { for (var i = 0; i < arguments.length; i++) classes.delete(arguments[i]); }, contains: function (c) { return classes.has(c); } },
                 appendChild: function (c) { this.children.push(c); c.parentNode = this; return c; },
                 removeChild: function (c) { var i = this.children.indexOf(c); if (i >= 0) this.children.splice(i, 1); c.parentNode = null; return c; },
@@ -37,7 +37,14 @@ class PanelTest extends JsModuleTestBase {
         function fakeBranch(name) { return { name: name, createElement: function (n, tag) { var e = el(tag); e.name = n; return e; }, createBranch: function (n) { return fakeBranch(n); }, dissolve: function () { log.push("dissolved:" + name); }, activate: function () {} }; }
         var css = { addClass: function (e) { for (var i = 1; i < arguments.length; i++) e.classList.add(arguments[i]); }, removeClass: function (e) { for (var i = 1; i < arguments.length; i++) e.classList.remove(arguments[i]); },
                     size: function (e, v) { sized.push(e.name + ":" + v); }, extent: function () {}, aspect: function () {} };
-        ["el_panel", "el_panel_head", "el_panel_title", "el_panel_slot", "el_panel_body", "el_panel_body_air"].forEach(function (c) { globalThis[c] = c; });
+        ["el_panel", "el_panel_head", "el_panel_title", "el_panel_slot", "el_panel_body", "el_panel_body_air", "el_panel_active"].forEach(function (c) { globalThis[c] = c; });
+        var observers = [];
+        function MutationObserver(fn) { this.fn = fn; this.el = null; observers.push(this); }
+        MutationObserver.prototype.observe = function (el, opts) { this.el = el; this.opts = opts; el._observer = this; };
+        MutationObserver.prototype.disconnect = function () { if (this.el) delete this.el._observer; this.el = null; };
+        function keys(el, v) { if (v === null) { el.setAttribute("data-keys", null); el.getAttribute = (function (g) { return function (k) { return k === "data-keys" ? null : g.call(el, k); }; })(el.getAttribute); }
+                               else el.setAttribute("data-keys", v);
+                               if (el._observer) el._observer.fn(); }
         var page = fakeBranch("page");
         var host = el("div");
         var panel = new PanelBuilder().title("Dock A").fills().host(host).build(page.createBranch("dock-a"));
@@ -92,6 +99,40 @@ class PanelTest extends JsModuleTestBase {
         assertEquals("panel:0.5 head:0.5 title:0.5 controls:0.5 body:0.5", eval("sized.join(' ')").asString());
         eval("sized = []; panel.size(0)");
         assertEquals("panel:null head:null title:null controls:null", eval("sized.join(' ')").asString(), "a filled body wears no length to grow");
+    }
+
+    /** The active region, by call: a class on the frame, and nothing else — for a page that wires it itself. */
+    @Test
+    void theActiveRegionIsSaidOnTheFrame() {
+        assertFalse(eval("panel.isActive()").asBoolean());
+        assertFalse(eval("panel.root.classes().indexOf(\"el_panel_active\") >= 0").asBoolean());
+        eval("panel.active(true)");
+        assertTrue(eval("panel.isActive() && panel.root.classes().indexOf(\"el_panel_active\") >= 0").asBoolean());
+        eval("panel.active(false)");
+        assertFalse(eval("panel.root.classes().indexOf(\"el_panel_active\") >= 0").asBoolean());
+    }
+
+    /**
+     * Watching what is mounted: the panel is active while the keys are in it —
+     * held, or lent to a control of its own — and not while they are merely
+     * offered to it. It reads one attribute and tells the mounted thing
+     * nothing; unwatch and dispose stop it.
+     */
+    @Test
+    void itFollowsTheKeysOfWhatIsMountedInIt() {
+        eval("var dock = { root: el(\"div\") }; panel.body.appendChild(dock.root); panel.watch(dock)");
+        assertFalse(eval("panel.isActive()").asBoolean(), "nothing said yet: not active");
+        eval("keys(dock.root, \"held\")");
+        assertTrue(eval("panel.isActive()").asBoolean(), "the keys are in it");
+        eval("keys(dock.root, \"lent\")");
+        assertTrue(eval("panel.isActive()").asBoolean(), "lent to a control of its own: still the region being worked in");
+        eval("keys(dock.root, \"candidate\")");
+        assertFalse(eval("panel.isActive()").asBoolean(), "offered is not held");
+        eval("keys(dock.root, \"held\"); panel.unwatch(); keys(dock.root, \"candidate\")");
+        assertTrue(eval("panel.isActive()").asBoolean(), "unwatched: it keeps what it says");
+        assertEquals(0, eval("dock.root.listening(\"keydown\") + dock.root.listening(\"pointerdown\")").asInt(), "the mounted thing is told nothing and given nothing");
+        assertTrue(eval("panel.watch(dock.root) === panel").asBoolean(), "an element does as well as a component");
+        assertFalse(eval("panel.isActive()").asBoolean(), "read afresh on watching: candidate is not held");
     }
 
     /** Furniture: no listener anywhere, and nothing of the keyboard party. */

@@ -775,6 +775,17 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
         }
     }
 
+    /**
+     * The active panel: the region being worked in — its edge in the ring the
+     * design draws now, and the glow it gives what has the keys, exactly as an
+     * active floating pane is marked. The panel is told this by whatever is
+     * mounted in it; it holds no keys of its own.
+     */
+    public record el_panel_active() implements CssClass<ElementStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Focus.class, Color.Edge.class), of(Focus.class, Shape.Shadow.class)); }
+        @Override public String body() { return ""; }
+    }
+
     /** The body: what the head leaves, flush — for a panel that is filled by what is mounted in it, a dock or a grid, which scrolls on its own. */
     public record el_panel_body() implements CssClass<ElementStyles> {
         @Override public String body() { return """
@@ -807,6 +818,6 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
                        new el_slider_off(),
                        new el_slider_group(), new el_slider_group_held(), new el_slider_group_header(), new el_slider_group_title(), new el_slider_group_body(), new el_slider_group_body_across(),
                        new el_card(), new el_card_action(), new el_card_head(), new el_card_title(), new el_badge(), new el_card_body(), new el_card_text(), new el_card_foot(), new el_card_link(),
-                       new el_panel(), new el_panel_head(), new el_panel_title(), new el_panel_slot(), new el_panel_body(), new el_panel_body_air());
+                       new el_panel(), new el_panel_head(), new el_panel_title(), new el_panel_slot(), new el_panel_body(), new el_panel_body_air(), new el_panel_active());
     }
 }
