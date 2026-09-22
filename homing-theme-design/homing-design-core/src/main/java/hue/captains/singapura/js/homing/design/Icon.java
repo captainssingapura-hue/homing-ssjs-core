@@ -47,4 +47,8 @@ public interface Icon extends Semantic {
     record Extent() implements Icon {}
     /** How much of it: a level, a volume, a gain. */
     record Level() implements Icon {}
+    /** Columns: the room parted side by side, and a new one beside what is here. */
+    record Column() implements Icon {}
+    /** Rows: the room parted one over another, and a new one under what is here. */
+    record Row() implements Icon {}
 }
