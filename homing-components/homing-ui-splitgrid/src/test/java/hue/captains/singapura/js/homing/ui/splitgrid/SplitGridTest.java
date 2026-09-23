@@ -145,6 +145,37 @@ class SplitGridTest extends JsModuleTestBase {
     }
 
     @Test
+    void splitters_areThePanesTheRoomCanGoToWhole() {
+        // nav's one neighbour is a column of two, so the divider beside it is shared: nothing there can take its room whole
+        assertEquals("", eval("grid.splitters('nav').map(function (s) { return s.side + ':' + s.id; }).join(',')").asString());
+        assertEquals("after:explain", eval("grid.splitters('demo').map(function (s) { return s.side + ':' + s.id; }).join(',')").asString());
+        // a same-axis nesting, which a removal leaves behind: the pane facing the divider is found through it, from either side
+        eval("grid.subdivide('explain', 'right', 'note'); grid.remove('demo');");
+        assertEquals("row[nav | row[explain | note]]", eval("shape(root())").asString());
+        assertEquals("after:explain", eval("grid.splitters('nav').map(function (s) { return s.side + ':' + s.id; }).join(',')").asString(),
+                     "the divider is the outer row's, and explain alone faces it");
+        assertEquals("after:note,before:nav", eval("grid.splitters('explain').map(function (s) { return s.side + ':' + s.id; }).join(',')").asString(),
+                     "the same divider from the other side: found by climbing, not by looking at its own siblings");
+        assertEquals("before:explain", eval("grid.splitters('note').map(function (s) { return s.side + ':' + s.id; }).join(',')").asString());
+    }
+
+    @Test
+    void remove_towardACell_givesItTheRoomWholeAcrossASplitter_orLeansToTheNeighbourHoldingIt() {
+        // the neighbour holding the target takes the room, though the one before it is what an unnamed removal would pick
+        eval("grid.subdivide('demo', 'top', 'head'); grid.remove('demo', 'explain');");
+        assertEquals("0.38,0.63", eval("shares(root().children[2].children[0])").asString(), "explain took it, not head");
+        // and across a splitter of their own, the pane facing it takes the whole room: note keeps the size it had
+        eval("grid.subdivide('explain', 'right', 'note'); grid.remove('head');");
+        assertEquals("row[nav | row[explain | note]]", eval("shape(root())").asString());
+        assertEquals("0.25,0.75", eval("shares(root())").asString());
+        eval("log.length = 0; var went = grid.remove('nav', 'explain');");
+        assertEquals("row[explain | note]", eval("shape(root())").asString(), "the row of one gave way");
+        assertEquals("0.63,0.38", eval("shares(root())").asString(), "nav's quarter went to explain alone");
+        assertTrue(eval("went.has('sg_cell') && went.parentNode === null").asBoolean(), "the cell's element is handed back, detached");
+        assertEquals("dissolved:arrangement-5 removed:nav", log());
+    }
+
+    @Test
     void theTracksAreReSharedByADragAndByTheMethod_reportedOnce() {
         eval("log.length = 0; drag(divider(root(), 0), { x: 250, y: 0 }, { x: 500, y: 0 });");
         assertEquals("tracks::0.50,0.50", log());

@@ -24,10 +24,20 @@
 //                                the same row or column when the orientation
 //                                matches, else the cell becomes a split of the
 //                                two. Reports Subdivided
-//   grid.remove(id)            → the cell's element, detached, for the owner to
-//                                move its content on; its room goes to its
-//                                neighbour, a split left with one gives way to
-//                                it; the last cell cannot go. Reports Removed
+//   grid.splitters(id)         → the cells across a splitter of this one's own:
+//                                [ { side, axis, id } ]. At most two — the panes
+//                                its room can go to whole, one per side.
+//   grid.heirs(id, toward?)    → the cells that gain the room if that one goes:
+//                                the pane across the splitter when the cell
+//                                named is it, else the group beside it.
+//   grid.remove(id, toward?)   → the cell's element, detached, for the owner to
+//                                move its content on; a split left with one
+//                                gives way to it; the last cell cannot go.
+//                                Its room goes toward the cell named, if one
+//                                is: the whole of it to that cell when they
+//                                share a splitter, else to the neighbour
+//                                holding it; unnamed, to the one beside it.
+//                                Reports Removed
 //   grid.dispose()
 //
 // The cells are the grid's constant: a cell's element is minted once and kept
@@ -217,8 +227,12 @@ class SplitGrid {
         return fresh;
     }
 
-    remove(id) {
-        this._tree = SplitGridTree.remove(this._tree, id);
+    splitters(id) { return SplitGridTree.splitters(this._tree, id); }
+
+    heirs(id, toward) { return SplitGridTree.heirs(this._tree, id, toward); }
+
+    remove(id, toward) {
+        this._tree = SplitGridTree.remove(this._tree, id, toward);
         var el = this._cells.get(id);
         this._cells.delete(id);
         this._arrange();

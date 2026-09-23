@@ -51,6 +51,8 @@ public interface Icon extends Semantic {
     record Column() implements Icon {}
     /** Rows: the room parted one over another, and a new one under what is here. */
     record Row() implements Icon {}
+    /** Two rooms become one: this one goes and its room is given away. */
+    record Merge() implements Icon {}
     /** You are in here: the work is going on inside this one, not on the bar that names it. */
     record Within() implements Icon {}
 }

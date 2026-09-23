@@ -49,7 +49,7 @@ public record IconStyles() implements CssGroup<IconStyles> {
 
     /** One word, one class: the word on the glyph target. */
     public sealed interface Worded extends CssClass<IconStyles> permits ic_check, ic_disclose, ic_close, ic_detach, ic_rotate, ic_flip, ic_add, ic_remove, ic_reset, ic_pin, ic_settings,
-                                                                          ic_grip, ic_size, ic_aspect, ic_extent, ic_level, ic_column, ic_row, ic_within {
+                                                                          ic_grip, ic_size, ic_aspect, ic_extent, ic_level, ic_column, ic_row, ic_merge, ic_within {
         Class<? extends Icon> word();
         @Override default List<? extends Wearable> wears() { return List.of(of(word(), Type.Glyph.class)); }
         @Override default String body() { return ""; }
@@ -75,6 +75,7 @@ public record IconStyles() implements CssGroup<IconStyles> {
     public record ic_level()    implements Worded { @Override public Class<? extends Icon> word() { return Icon.Level.class; } }
     public record ic_column()   implements Worded { @Override public Class<? extends Icon> word() { return Icon.Column.class; } }
     public record ic_row()      implements Worded { @Override public Class<? extends Icon> word() { return Icon.Row.class; } }
+    public record ic_merge()    implements Worded { @Override public Class<? extends Icon> word() { return Icon.Merge.class; } }
     public record ic_within()   implements Worded { @Override public Class<? extends Icon> word() { return Icon.Within.class; } }
 
     /** The worded classes, in the vocabulary's order. */
@@ -82,7 +83,7 @@ public record IconStyles() implements CssGroup<IconStyles> {
         return List.of(new ic_check(), new ic_disclose(), new ic_close(), new ic_detach(), new ic_rotate(), new ic_flip(),
                        new ic_add(), new ic_remove(), new ic_reset(), new ic_pin(), new ic_settings(),
                        new ic_grip(), new ic_size(), new ic_aspect(), new ic_extent(), new ic_level(),
-                       new ic_column(), new ic_row(), new ic_within());
+                       new ic_column(), new ic_row(), new ic_merge(), new ic_within());
     }
 
     /** The class for a word, if the wardrobe has it. */
