@@ -60,7 +60,7 @@ class DesignCompletenessTest {
     @Test
     void aDesignOverEditorial_hasItsOwnWord_forMostOfWhatIsWorn() {
         var worn = worn();
-        for (Design d : List.of(HomingNeoBrutalism.INSTANCE, HomingNeoFuturism.INSTANCE, HomingNeumorphism.INSTANCE, HomingGlassmorphism.INSTANCE, HomingRetroFuturism.INSTANCE, HomingSketchy.INSTANCE)) {
+        for (Design d : List.of(HomingFlatMorphism.INSTANCE, HomingNeoBrutalism.INSTANCE, HomingNeoFuturism.INSTANCE, HomingNeumorphism.INSTANCE, HomingGlassmorphism.INSTANCE, HomingRetroFuturism.INSTANCE, HomingSketchy.INSTANCE)) {
             long own = worn.stream().filter(p -> !d.impl(p).equals(HomingEditorial.INSTANCE.impl(p))).count();
             assertTrue(own * 2 > worn.size(), d.slug() + " says only " + own + " of " + worn.size() + " pairs in its own words");
         }
@@ -69,15 +69,16 @@ class DesignCompletenessTest {
     @Test
     void theSevenBases_areListedEditorialFirst_thenEveryCross() {
         var r = StudioThemeRegistry.INSTANCE;
-        assertEquals(List.of("editorial", "neo-brutalism", "neo-futurism", "neumorphism", "glassmorphism", "retro-futurism", "sketchy"), r.bases().stream().map(Theme::slug).toList());
-        assertEquals(List.of("harbour", "neo-brutalism", "neo-futurism", "clay", "frost", "synthwave", "marker", "forest", "sunset"), r.colours().stream().map(Theme::slug).toList());
+        assertEquals(List.of("editorial", "flat-morphism", "neo-brutalism", "neo-futurism", "neumorphism", "glassmorphism", "retro-futurism", "sketchy"), r.bases().stream().map(Theme::slug).toList());
+        assertEquals(List.of("harbour", "cardstock", "neo-brutalism", "neo-futurism", "clay", "frost", "synthwave", "marker", "forest", "sunset"), r.colours().stream().map(Theme::slug).toList());
         var slugs = r.themes().stream().map(Theme::slug).toList();
-        assertEquals(7 + 7 * 8, slugs.size(), "seven bases, each in the eight other colours: " + slugs);
-        assertEquals(List.of("editorial", "neo-brutalism", "neo-futurism", "neumorphism", "glassmorphism", "retro-futurism", "sketchy"), slugs.subList(0, 7));
+        assertEquals(8 + 8 * 9, slugs.size(), "eight bases, each in the nine other colours: " + slugs);
+        assertEquals(List.of("editorial", "flat-morphism", "neo-brutalism", "neo-futurism", "neumorphism", "glassmorphism", "retro-futurism", "sketchy"), slugs.subList(0, 8));
         assertTrue(slugs.contains("neo-brutalism_forest") && slugs.contains("editorial_sunset"), slugs.toString());
         // dressed: the base in its own colours is the base; in another's, the cross the registry lists
-        assertEquals("neo-futurism", r.dressed(r.bases().get(2), r.colours().get(2)).slug());
-        assertEquals("neo-futurism_forest", r.dressed(r.bases().get(2), r.colours().get(7)).slug());
+        assertEquals("flat-morphism", r.dressed(r.bases().get(1), r.colours().get(1)).slug(), "a base in its own colours is the base");
+        assertEquals("neo-futurism", r.dressed(r.bases().get(3), r.colours().get(3)).slug());
+        assertEquals("neo-futurism_forest", r.dressed(r.bases().get(3), r.colours().get(8)).slug());
         assertFalse(StudioThemeRegistry.INSTANCE.themes().stream().anyMatch(t -> !(t instanceof Design)), "every theme is a design");
     }
 
@@ -116,7 +117,8 @@ class DesignCompletenessTest {
             Theme b = r.bases().stream().filter(t -> t.slug().equals(slug)).findFirst().orElseThrow();
             return r.colours().stream().filter(c -> r.fits(b, c)).map(Theme::slug).toList();
         };
-        assertEquals(List.of("harbour", "clay", "frost", "marker", "forest", "sunset"), offered.apply("editorial"));
+        assertEquals(List.of("harbour", "cardstock", "clay", "frost", "marker", "forest", "sunset"), offered.apply("editorial"));
+        assertEquals(List.of("cardstock"), offered.apply("flat-morphism"));
         assertEquals(List.of("neo-brutalism", "marker", "forest", "sunset"), offered.apply("neo-brutalism"));
         assertEquals(List.of("harbour", "neo-futurism", "frost", "synthwave"), offered.apply("neo-futurism"));
         assertEquals(List.of("harbour", "clay", "forest", "sunset"), offered.apply("neumorphism"));
@@ -124,7 +126,7 @@ class DesignCompletenessTest {
         assertEquals(List.of("synthwave"), offered.apply("retro-futurism"));
         assertEquals(List.of("harbour", "marker", "forest", "sunset"), offered.apply("sketchy"));
         // and the cross nobody vouches for is still wearable by slug
-        assertEquals("sketchy_frost", r.dressed(r.bases().get(6), r.colours().get(4)).slug());
+        assertEquals("sketchy_frost", r.dressed(r.bases().get(7), r.colours().get(5)).slug());
         assertFalse(r.fits(r.bases().get(6), r.colours().get(4)));
     }
 }

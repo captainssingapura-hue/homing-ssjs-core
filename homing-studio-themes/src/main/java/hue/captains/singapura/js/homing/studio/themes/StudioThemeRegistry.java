@@ -29,11 +29,11 @@ public final class StudioThemeRegistry implements ThemeRegistry {
     public static final StudioThemeRegistry INSTANCE = new StudioThemeRegistry();
 
     private static final DesignRegistry DESIGNS = new DesignRegistry(
-            List.of(HomingEditorial.INSTANCE, HomingNeoBrutalism.INSTANCE, HomingNeoFuturism.INSTANCE, HomingNeumorphism.INSTANCE, HomingGlassmorphism.INSTANCE, HomingRetroFuturism.INSTANCE, HomingSketchy.INSTANCE),
+            List.of(HomingEditorial.INSTANCE, HomingFlatMorphism.INSTANCE, HomingNeoBrutalism.INSTANCE, HomingNeoFuturism.INSTANCE, HomingNeumorphism.INSTANCE, HomingGlassmorphism.INSTANCE, HomingRetroFuturism.INSTANCE, HomingSketchy.INSTANCE),
             List.of(SeedPalette.FOREST, SeedPalette.SUNSET),
             List.of(),
-            List.of(HomingEditorial.Palette.INSTANCE, HomingNeoBrutalism.Palette.INSTANCE, HomingNeoFuturism.Palette.INSTANCE, HomingNeumorphism.Palette.INSTANCE, HomingGlassmorphism.Palette.INSTANCE, HomingRetroFuturism.Palette.INSTANCE, HomingSketchy.Palette.INSTANCE,
-                    HomingEditorial.Fonts.INSTANCE, HomingNeoBrutalism.Fonts.INSTANCE, HomingNeoFuturism.Fonts.INSTANCE, HomingNeumorphism.Fonts.INSTANCE, HomingGlassmorphism.Fonts.INSTANCE, HomingRetroFuturism.Fonts.INSTANCE, HomingSketchy.Fonts.INSTANCE),
+            List.of(HomingEditorial.Palette.INSTANCE, HomingFlatMorphism.Palette.INSTANCE, HomingNeoBrutalism.Palette.INSTANCE, HomingNeoFuturism.Palette.INSTANCE, HomingNeumorphism.Palette.INSTANCE, HomingGlassmorphism.Palette.INSTANCE, HomingRetroFuturism.Palette.INSTANCE, HomingSketchy.Palette.INSTANCE,
+                    HomingEditorial.Fonts.INSTANCE, HomingFlatMorphism.Fonts.INSTANCE, HomingNeoBrutalism.Fonts.INSTANCE, HomingNeoFuturism.Fonts.INSTANCE, HomingNeumorphism.Fonts.INSTANCE, HomingGlassmorphism.Fonts.INSTANCE, HomingRetroFuturism.Fonts.INSTANCE, HomingSketchy.Fonts.INSTANCE),
             List.of());
 
     private StudioThemeRegistry() {}

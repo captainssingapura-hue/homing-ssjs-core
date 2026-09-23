@@ -102,6 +102,20 @@ public record SeedPalette(DesignId id, String label, String inspiration, DesignI
             new Seeds("#2B2F36", "#2B2F36", "#262A30", "#1F2328", "#D5DAE2", "#8B93A1", "#D5DAE2", "#8B93A1", "#E6EAF0", "#8FA5FF", "#6C8CFF", "#1B1F26", "#3A3F48"))
             .fits(HomingEditorial.ID);
 
+    /**
+     * Cardstock — warm off-white paper: a ground, a lighter sheet to lie on it, a sunk face for what is cut into it.
+     * Flat-morphism's, and the colours the hard cast was chosen against; flat and opaque, so brutalism wears it too.
+     */
+    public static final SeedPalette CARDSTOCK = new SeedPalette("cardstock", "Cardstock",
+            "Warm off-white paper — a ground, a sheet to lie on it, and a sunk face cut into it.", HomingFlatMorphism.ID,
+            new Seeds(CardstockPalette.GROUND, CardstockPalette.SHEET, CardstockPalette.SUNK, CardstockPalette.INK,
+                      CardstockPalette.INK, CardstockPalette.INK_2, CardstockPalette.ON_ACCENT, "#A8A69E",
+                      CardstockPalette.INK, CardstockPalette.ACCENT, CardstockPalette.ACCENT_PRESS, CardstockPalette.ON_ACCENT, CardstockPalette.HAIR),
+            new Seeds(CardstockPalette.GROUND_D, CardstockPalette.SHEET_D, CardstockPalette.SUNK_D, CardstockPalette.INK_D,
+                      CardstockPalette.INK_D, CardstockPalette.INK_2_D, CardstockPalette.ON_ACCENT_D, "#5C605C",
+                      CardstockPalette.INK_D, CardstockPalette.ACCENT_D, CardstockPalette.ACCENT_PRESS_D, CardstockPalette.ON_ACCENT_D, CardstockPalette.HAIR_D))
+            .fits(HomingEditorial.ID);
+
     /** Black marker on white paper: one ink for text, lines and the primary alike; a grey for what is said quietly. Sketchy's — and black-on-white brutalism is the classic. */
     public static final SeedPalette MARKER = new SeedPalette("marker", "Marker",
             "Black marker on white paper — one ink for the text, the lines and the primary alike.", HomingSketchy.ID,

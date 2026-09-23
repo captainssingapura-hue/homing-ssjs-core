@@ -711,7 +711,8 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
         @Override public List<? extends Wearable> wears() {
             return List.of(of(Container.Panel.class, Shape.Corner.class), of(Container.Panel.class, Shape.Rule.class), of(Container.Panel.class, Color.Edge.class),
                            of(Container.Panel.class, Size.Gap.class), of(Container.Panel.class, Shape.Shadow.class),
-                           of(Base.class, Color.Surface.class), of(Raised.class, Color.Edge.class), of(Body.class, Color.Ink.class), of(Body.class, Type.Face.class));
+                           // the RAISED face, not the page's: a sheet lies ON something, and has to be able to be seen doing it
+                           of(Raised.class, Color.Surface.class), of(Raised.class, Color.Edge.class), of(Body.class, Color.Ink.class), of(Body.class, Type.Face.class));
         }
         @Override public List<? extends Wearable> sizes() { return List.of(of(Container.Panel.class, Size.Gap.class)); }
         // The panel's depth is the design's to draw and the holder's to set: the shadow is worn plainly here, and
