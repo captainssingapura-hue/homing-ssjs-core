@@ -117,40 +117,78 @@ public record SplitGridStyles() implements CssGroup<SplitGridStyles> {
         @Override public String body() { return """
             flex: 0 0 auto;
             box-sizing: border-box;
+            position: relative;
+            z-index: 1;
             touch-action: none;
             user-select: none;
             """;
         }
     }
 
-    /** Between side-by-side cells: a spine, the line along the leading edge of the pane that follows. */
+    /** Between side-by-side cells: the gutter, and the hand reaching a little past it. */
     public record sg_divider_h() implements CssClass<SplitGridStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Spine.class, Color.Edge.class), of(Spine.class, Shape.Rule.class)); }
         @Override public String body() { return """
             width: 7px;
             cursor: col-resize;
+            &::before { content: ""; position: absolute; inset: 0 -3px; }
             """;
         }
     }
 
     /**
-     * The handle lit: the primary surface by extent, worn while the pointer
-     * is over it or holds it — part of the way from the design's neutral
-     * on hover, at full while held. The splitter sets the number and takes
-     * the class off at rest; the design owns the anchors.
-     */
+      * The handle lit: the primary surface by extent, worn while the pointer
+      * is over it or holds it — part of the way from the design's neutral
+      * when found, at full while held. The splitter sets the number and takes
+      * the class off at rest; the design owns the anchors.
+      *
+      * <p>This is the whole of what a design says about a splitter, and it is
+      * one colour. A splitter is the JOINT between two rooms, not a thing in
+      * one: it is neither above nor below, so depth on it reads as a fault in
+      * the surface; seven pixels cannot carry a methodology, since a bevel, a
+      * blur or a wobble at that size is a smudge; and it is the one part of
+      * the room the hand works directly, so it must not have to be re-learnt
+      * per theme. It therefore wears no shape word at all — there is nothing
+      * left for a design to make un-flat — and its geometry is the
+      * component's. What the design still chooses is the hue.</p>
+      */
     public record sg_divider_lit() implements CssClass<SplitGridStyles> {
         @Override public List<? extends Wearable> wears() { return List.of(of(Primary.class, Color.Surface.class)); }
         @Override public List<? extends Wearable> extents() { return List.of(of(Primary.class, Color.Surface.class)); }
         @Override public String body() { return ""; }
     }
 
-    /** Between stacked cells: a divider, the rule between things. */
+    /**
+      * The two rooms a held splitter re-shares, ringed for as long as it is
+      * held: what the drag is actually trading, which is not a line moving
+      * but two areas swapping room. One pane each side where the splitter is
+      * theirs alone; a whole group where the divider is shared — so a drag
+      * says, in passing, which kind of splitter this is. The ring is drawn
+      * over the rooms rather than under them, since what a cell holds is the
+      * owner's and opaque; flat, like the handle, and gone on release.
+      */
+    public record sg_child_lit() implements CssClass<SplitGridStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Primary.class, Color.Ink.class)); }
+        @Override public List<? extends Wearable> extents() { return List.of(of(Primary.class, Color.Ink.class)); }
+        @Override public String body() { return """
+            position: relative;
+            &::after {
+                content: "";
+                position: absolute;
+                inset: 0;
+                z-index: 2;
+                pointer-events: none;
+                box-shadow: inset 0 0 0 2px currentColor;
+            }
+            """;
+        }
+    }
+
+    /** Between stacked cells: the same gutter, lying the other way. */
     public record sg_divider_v() implements CssClass<SplitGridStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Divider.class, Color.Edge.class), of(Divider.class, Shape.Rule.class)); }
         @Override public String body() { return """
             height: 7px;
             cursor: row-resize;
+            &::before { content: ""; position: absolute; inset: -3px 0; }
             """;
         }
     }
@@ -199,7 +237,7 @@ public record SplitGridStyles() implements CssGroup<SplitGridStyles> {
     @Override
     public List<CssClass<SplitGridStyles>> cssClasses() {
         return List.of(new sg_root(), new sg_split(), new sg_split_h(), new sg_split_v(), new sg_child(), new sg_child_h(), new sg_child_v(),
-                       new sg_cell(), new sg_divider(), new sg_divider_h(), new sg_divider_v(), new sg_divider_lit(),
+                       new sg_cell(), new sg_divider(), new sg_divider_h(), new sg_divider_v(), new sg_divider_lit(), new sg_child_lit(),
                        new sgm_root(), new sgm_cell(), new sgm_cell_current());
     }
 }

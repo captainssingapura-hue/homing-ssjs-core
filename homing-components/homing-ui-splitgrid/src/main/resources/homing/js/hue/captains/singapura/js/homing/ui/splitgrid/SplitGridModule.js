@@ -47,14 +47,18 @@
 // a cell may be is --sg-min on the root. Nothing is positioned by hand.
 //
 // A drag moves the divider between two neighbours and re-shares those two,
-// each kept at the minimum; the change is reported once, on release. Hovered
-// or held, the handle is lit: it wears the primary surface by extent — part
-// of the way while hovered, at full while held — and nothing at rest.
+// each kept at the minimum; the change is reported once, on release. THE
+// SPLITTER HAS NO PRESENCE UNTIL IT IS WANTED: nothing at rest, the gutter
+// between two rooms and their own edges being seam enough; found, the handle
+// is lit — the primary surface, part of the way; held, at full, and the two
+// rooms it is trading are ringed for as long as it is held, which is its
+// coverage. The hand reaches a little past the gutter on either side, so it
+// is found before it is seen.
 // `css` is injected with the styles import.
 // =============================================================================
 
 const _gridOwner = Object.freeze({ toString: () => "splitGrid" });
-var _HOVER = 0.4, _HELD = 1;   // the lit handle's extent of the primary surface
+var _HOVER = 0.4, _HELD = 1, _TRADED = 0.55;   // the lit handle's extent of the primary surface, and the ring on the rooms it trades
 
 class SplitGrid {
     constructor(branch, opts) {
@@ -161,6 +165,8 @@ class SplitGrid {
             if (down.button !== 0 || held) return;
             var entry = self._splits.get(path), horizontal = entry.orientation === "horizontal";
             var a = entry.children[before], b = entry.children[before + 1];
+            // what the drag is trading: the two rooms either side, ringed for as long as it is held
+            [a, b].forEach(function (side) { css.addClass(side.el, sg_child_lit); css.extent(side.el, _TRADED); });
             var start = horizontal ? down.clientX : down.clientY;
             var size = horizontal ? entry.el.getBoundingClientRect().width : entry.el.getBoundingClientRect().height;
             var a0 = a.node.ratio, b0 = b.node.ratio;
@@ -183,6 +189,7 @@ class SplitGrid {
                 divider.removeEventListener("pointercancel", onEnd);
                 held = false;
                 paint();
+                [a, b].forEach(function (side) { css.removeClass(side.el, sg_child_lit); css.extent(side.el, null); });
                 try { divider.releasePointerCapture(down.pointerId); } catch (err) {}
                 if (e.type !== "pointerup") { self._apply(path, SplitGrid._restore(entry, before, a0, b0)); return; }
                 if (moved) self._fire(SplitGridEvents.TracksChanged(path, self._ratiosOf(path)));

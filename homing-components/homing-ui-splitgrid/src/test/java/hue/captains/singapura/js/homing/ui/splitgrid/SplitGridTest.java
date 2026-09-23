@@ -53,7 +53,7 @@ class SplitGridTest extends JsModuleTestBase {
                     extent: function (e, t) { if (t == null) e.style.setProperty("--extent", ""); else e.style.setProperty("--extent", String(t)); } };
         var sg_root = "sg_root", sg_split = "sg_split", sg_split_h = "sg_split_h", sg_split_v = "sg_split_v", sg_child = "sg_child",
             sg_child_h = "sg_child_h", sg_child_v = "sg_child_v", sg_cell = "sg_cell", sg_divider = "sg_divider", sg_divider_h = "sg_divider_h",
-            sg_divider_v = "sg_divider_v", sg_divider_lit = "sg_divider_lit";
+            sg_divider_v = "sg_divider_v", sg_divider_lit = "sg_divider_lit", sg_child_lit = "sg_child_lit";
         var console = { error: function (m) { log.push("error:" + m); } };
         var host = el("div"), branch = fakeBranch("page");
         var LAYOUT = { kind: "split", orientation: "horizontal", children: [
