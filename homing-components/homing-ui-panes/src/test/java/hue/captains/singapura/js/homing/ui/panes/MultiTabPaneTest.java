@@ -117,6 +117,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
         loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeyboardSecretaryModule.js");
         loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeyboardEventsModule.js");
         loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeyboardWalkModule.js");
+        loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeyboardShortcutsModule.js");
         loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeyboardStewardModule.js");
         loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeysModule.js");
         loadModule(EVENTS);
@@ -364,7 +365,8 @@ class MultiTabPaneTest extends JsModuleTestBase {
      * it; while it holds, the keys are the container's own — arrows and Home/End
      * change the active tab at once, Shift+arrows reorder by one with the tab
      * staying active, Shift+Down asks to detach, Enter has the widget activate
-     * itself, Escape yields; everything else is left. Neither chip nor pane
+     * itself, Escape is taken and kept - the dock is the floor; everything
+     * else is left. Neither chip nor pane
      * listens for keys itself.
      */
     @Test
@@ -402,8 +404,11 @@ class MultiTabPaneTest extends JsModuleTestBase {
         eval("log = []; KeyboardStewardInstance.yield(pane.widgetOf('b').focus)");
         assertEquals("mtp_s1", eval("holder()").asString(), "the widget's yield: the pane catches");
         assertEquals("held", eval("String(pane.el.getAttribute('data-keys'))").asString());
-        assertTrue(eval("pane.keyDown({ key: 'Escape' })").asBoolean());
-        assertEquals("none", eval("holder()").asString(), "Escape: the pane yields, and nothing above holds");
+        assertTrue(eval("pane.keyDown({ key: 'Escape' })").asBoolean(), "Escape is taken");
+        assertEquals("mtp_s1", eval("holder()").asString(), "and kept: the dock is the floor, so one key cannot walk you out of the room by accident");
+        assertTrue(eval("pane.keyDown({ key: 'Escape' })").asBoolean() && eval("holder()").asString().equals("mtp_s1"), "again, and again");
+        eval("KeyboardStewardInstance.yield(pane.focus.owner)");
+        assertEquals("none", eval("holder()").asString(), "a yield by call still gives them up: the way out is the holder's to call, not a key to press");
         assertFalse(eval("pane.keyDown({ key: 'x' })").asBoolean(), "anything else is left");
         assertEquals("0,0", eval("[(pane.el.children[0].children[0].listeners.keydown || []).length, (pane.el.listeners.keydown || []).length].join()").asString(), "no keydown listener on a chip or the pane");
         assertEquals("1", eval("String((pane.el.children[0].listeners.mousedown || []).length)").asString(), "the strip stops the press's default");

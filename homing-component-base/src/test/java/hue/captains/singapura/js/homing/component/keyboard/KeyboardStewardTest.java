@@ -86,6 +86,7 @@ class KeyboardStewardTest extends JsModuleTestBase {
         loadModule(DIR + "keyboard/KeyboardSecretaryModule.js");
         loadModule(DIR + "keyboard/KeyboardEventsModule.js");
         loadModule(DIR + "keyboard/KeyboardWalkModule.js");
+        loadModule(DIR + "keyboard/KeyboardShortcutsModule.js");
         loadModule(DIR + "keyboard/KeyboardStewardModule.js");
         loadModule(DIR + "keyboard/KeysModule.js");
         js.eval("js", SHIM);
@@ -335,6 +336,48 @@ class KeyboardStewardTest extends JsModuleTestBase {
         assertEquals("granted:yield,taken:" + eval("b1.id").asString() + ",granted:left", eval("panelC.got.join()").asString(), "taken by b1 in between; granted again when a1 left");
         assertFalse(eval("kt.has(a1)").asBoolean());
         eval("kt.dispose()");
+    }
+
+    /**
+     * The page's own keys, tried before everything: a chord or a function key
+     * reaches the page wherever the hand is — even from a control that has
+     * the native focus, which is the point, since a command that summons
+     * something cannot wait for the focus to come back. A bare key is never
+     * offered: someone is typing it. One that does not take the key leaves it
+     * to the ordinary routing, and off() takes it off the list.
+     */
+    @Test
+    void thePagesOwnKeysComeFirst_andOnlyAsAChordOrAFunctionKey() {
+        eval("""
+            var a = member('a');
+            kb.claim('a');
+            var seen = [];
+            var off = kb.shortcut(function (ev) { seen.push('F6'); return ev.key === 'F6'; });
+            var off2 = kb.shortcut(function (ev) { seen.push('k'); return ev.key === 'k'; });
+            """);
+        Value f6 = eval("fire(body, 'keydown', { key: 'F6' })");
+        assertEquals("F6", eval("seen.join()").asString(), "the function key is offered, and the first to take it ends it");
+        assertTrue(f6.getMember("defaultPrevented").asBoolean() && f6.getMember("stopped").asBoolean(), "taken by the page: defaulted and stopped");
+        assertEquals("Granted:a", events(), "the claim that set the scene, and nothing since: nobody else heard the key");
+        // from a focused control: still the page's
+        eval("seen = []; field.focus(); var inField = fire(field, 'keydown', { key: 'F6' })");
+        assertEquals("F6", eval("seen.join()").asString(), "wherever the hand is");
+        assertTrue(eval("inField.defaultPrevented").asBoolean());
+        // a bare key is never offered, focused or not
+        eval("seen = []; fire(field, 'keydown', { key: 'k' }); document.activeElement = document.body; fire(body, 'keydown', { key: 'k' })");
+        assertEquals("", eval("seen.join()").asString(), "a bare key is someone's typing, never the page's");
+        // a chord nobody takes falls through to the holder
+        eval("""
+            seen = []; keys = [];
+            var withKeys = { keyDown: function (ev) { keys.push(ev.key); return false; } };
+            kb.leave('a'); kb.join('b', withKeys); kb.claim('b');
+            var ctrlK = fire(body, 'keydown', { key: 'j', ctrlKey: true });
+            """);
+        assertEquals("F6,k", eval("seen.join()").asString(), "both were asked");
+        assertEquals("j", eval("keys.join()").asString(), "and the holder heard it, since neither took it");
+        assertFalse(eval("ctrlK.defaultPrevented").asBoolean());
+        eval("off(); off2(); seen = []; fire(body, 'keydown', { key: 'F6' })");
+        assertEquals("", eval("seen.join()").asString(), "off: the page claims it no more");
     }
 
     /**

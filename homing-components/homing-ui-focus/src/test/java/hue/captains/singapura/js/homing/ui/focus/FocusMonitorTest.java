@@ -64,6 +64,7 @@ class FocusMonitorTest extends JsModuleTestBase {
         loadModule(DIR + "component/keyboard/KeyboardSecretaryModule.js");
         loadModule(DIR + "component/keyboard/KeyboardEventsModule.js");
         loadModule(DIR + "component/keyboard/KeyboardWalkModule.js");
+        loadModule(DIR + "component/keyboard/KeyboardShortcutsModule.js");
         loadModule(DIR + "component/keyboard/KeyboardStewardModule.js");
         loadModule(DIR + "ui/focus/FocusMonitorModule.js");
         js.eval("js", SHIM);

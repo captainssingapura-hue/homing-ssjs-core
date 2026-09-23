@@ -10,7 +10,13 @@
 //     Shift+← / →      the active tab moves one slot along the rail, staying active
 //     Shift+↓          the active tab asked to detach: pane.requestDetach()
 //     Enter            the active tab's widget activates itself — a claim of its own
-//     Escape           the pane yields, up the tree: pane.yieldKeys()
+//     Escape           TAKEN AND KEPT: the dock is where Escape stops. Coming
+//                      out of a tab's widget lands on the bar, and pressing it
+//                      again does nothing - one key cannot walk you out of the
+//                      room by accident. Leaving a dock is its own gesture,
+//                      the page's switcher, and never a key you were already
+//                      pressing. pane.yieldKeys() remains, for a holder that
+//                      wants to give them up by call
 //     Shift+F10, ContextMenu   the active tab's menu, at its chip: pane.menuByKey()
 //   A chord with Ctrl, Alt or Meta is left; so is anything not above.
 //
@@ -30,7 +36,7 @@
 
 class PaneKeys {
     static keyDown(pane, ev) {
-        if (ev.key === "Escape") { pane.yieldKeys(); return true; }
+        if (ev.key === "Escape") return true;   // the dock is the floor: Escape comes back to the bar and stops there, so nothing overshoots
         var ids = pane.tabs(), n = ids.length, active = pane.activeTab(), i = active === null ? -1 : ids.indexOf(active);
         if (ev.shiftKey) {
             if (ev.key === "ArrowLeft" || ev.key === "ArrowRight") { if (i >= 0) pane.moveTab(active, i + (ev.key === "ArrowLeft" ? -1 : 1)); return true; }

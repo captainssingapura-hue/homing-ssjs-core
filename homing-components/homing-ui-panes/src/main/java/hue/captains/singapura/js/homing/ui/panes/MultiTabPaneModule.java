@@ -66,7 +66,7 @@ public record MultiTabPaneModule() implements DomModule<MultiTabPaneModule> {
                     KeyBinding.of(Key.ARROW_RIGHT, Modifier.SHIFT, "the active tab moves one slot right along the rail, staying active"),
                     KeyBinding.of(Key.ARROW_DOWN, Modifier.SHIFT, "the active tab asked to detach and float: DetachRequested, for a holder with a desk"),
                     KeyBinding.of(Key.ENTER, "the active tab's widget activates itself - a claim; the pane never claims for it"),
-                    KeyBinding.of(Key.ESCAPE, "the pane yields, up the tree"),
+                    KeyBinding.of(Key.ESCAPE, "taken and kept: the dock is where Escape stops, so nothing overshoots out of the room"),
                     KeyBinding.of(Key.CONTEXT_MENU, "the active tab's menu"), KeyBinding.of(Key.F10, Modifier.SHIFT, "the active tab's menu"));
         }
     }

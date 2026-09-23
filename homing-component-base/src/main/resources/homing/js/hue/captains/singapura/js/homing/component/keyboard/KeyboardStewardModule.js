@@ -6,6 +6,11 @@
 // a component that stops a key's propagation keeps it, and the steward acts
 // only on what the page let through:
 //
+//   THE PAGE'S OWN KEYS come before all of it: a chord or a function key the
+//   page claimed with shortcut(fn) is tried first, wherever the hand is, so a
+//   command that summons something works while a grid's editor has the focus.
+//   Then, by state:
+//
 //   target is the body — nothing focused anywhere — to the holder's
 //   keyDown/keyUp, defaulted and stopped when taken; target is a focused
 //   element — nothing: the native world had it. The holder is untouched by
@@ -51,6 +56,7 @@ class KeyboardSteward {
         if (opts && typeof opts.onEvent === "function") this.on(opts.onEvent);
         this._holder = null;
         this._candidate = null;      // the walk's cursor: a member id, or null
+        this._shortcuts = [];        // the page's own keys, tried before anyone
         this._members = {};
         this._roots = new WeakMap();     // root element → the id enrolled on it
         this._party = new Party({ name: "keyboard", root: { path: _ROOT, initial: KeyboardSecretary.initial, behavior: KeyboardSecretary.behavior } });
@@ -158,6 +164,8 @@ class KeyboardSteward {
         this._handOn(m ? this._catcher(m.parent(), m) : null, id, "yield");
         return true;
     }
+    /** A key of the PAGE's, tried before the native world and before the holder: fn(ev) → true when it took it. A chord or a function key only; the function returned takes it off. */
+    shortcut(fn) { return KeyboardShortcuts.add(this._shortcuts, fn); }
     holder() { return this._holder; }
     has(id) { return !!this._members[KeyboardSteward.idOf(id)]; }
     /** Another listener for the events; the function returned removes it. */
@@ -279,6 +287,11 @@ class KeyboardSteward {
 
     /** By state: the walk's keys are the steward's; a key from the body goes to the holder; a key from a focused element goes nowhere. Each traced. */
     _forward(kind, ev) {
+        if (kind === "KeyDown" && KeyboardShortcuts.took(this._shortcuts, ev)) {   // the page's own, before everything: a command must work wherever the hand is
+            ev.preventDefault(); ev.stopPropagation();
+            this._traced(kind, ev, "page", null, true);
+            return;
+        }
         if (KeyboardSteward.fromAFocusedElement(ev)) { this.withdraw(); this._traced(kind, ev, "native", ev.target, false); return; }
         if (kind === "KeyDown" && KeyboardWalk.keyDown(this, ev)) { ev.preventDefault(); ev.stopPropagation(); this._traced(kind, ev, "walk", this._candidate, true); return; }
         var holder = this._holder;
