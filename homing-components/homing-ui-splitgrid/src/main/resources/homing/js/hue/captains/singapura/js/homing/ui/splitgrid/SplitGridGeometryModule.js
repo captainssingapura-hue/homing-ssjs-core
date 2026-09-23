@@ -7,7 +7,8 @@
 //
 //   SplitGridGeometry.rects(tree, box, opts?)
 //       tree   SplitGridTree's, ratios normalised;  box { w, h } in px
-//       opts   { dividerPx: 7, minPx: 40 }  the divider's thickness and the least a cell may be
+//       opts   { dividerPx: 1, minPx: 40 }  the line's thickness — the splitter IS the
+//              line — and the least a cell may be
 //       → { cells: { id: { x, y, w, h } }, dividers: [ { path, index, orientation, x, y, w, h } ] }
 //     A split shares its axis as flex does: each child ratio × the room left
 //     after the dividers, and a child under the minimum is held there while
@@ -24,7 +25,7 @@
 //   SplitGridGeometry.hit(rects, x, y)  → { kind: "cell", id } | { kind: "divider", path, index } | null
 // =============================================================================
 
-var _DIVIDER = 7, _MIN = 40, _GAP = 24, _EPS = 2;
+var _DIVIDER = 1, _MIN = 40, _GAP = 24, _EPS = 2;
 
 class SplitGridGeometry {
     static rects(tree, box, opts) {

@@ -30,6 +30,7 @@
 //         outside would land at, marked there; −1 when the point is not on it
 //     strip.markAt(clientX)         the mark where a tab from outside would land → index
 //     strip.unmark()
+//     strip.current(on)             the bar lit: this is the dock being worked in
 //     strip.size(s?)                the chips' size, −1..1, 0 the design's; every chip, now and later
 //     strip.dispose()
 //     strip.aspect(a?)              the chips' aspect, −1..1, 0 the design's proportion — wide,
@@ -176,6 +177,12 @@ class TabStrip {
     }
     // Every chip gets the axis and so does the bar: an axis is the element's own, registered not to inherit, and the
     // bar needs one because it keeps a tab's room whether or not it holds a tab to measure.
+    /** The bar of the dock being worked in, lit: a hint across the strip, and nothing that moves. */
+    current(on) {
+        css.toggleClass(this.el, mtp_strip_current, !!on);
+        return this;
+    }
+
     size(s) {
         this._size = s == null ? null : Math.max(-1, Math.min(1, Number(s)));
         css.size(this.el, this._size);

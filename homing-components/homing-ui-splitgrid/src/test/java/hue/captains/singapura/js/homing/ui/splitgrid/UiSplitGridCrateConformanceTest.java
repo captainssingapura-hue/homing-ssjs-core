@@ -34,10 +34,7 @@ class UiSplitGridCrateConformanceTest {
         var worn = Deployment.wornBy(List.of(SplitGridStyles.INSTANCE));
         assertTrue(worn.size() >= 5, "the divider classes wear a handful of pairs; found " + worn.size());
         for (CssClass<SplitGridStyles> c : SplitGridStyles.INSTANCE.cssClasses()) {
-            // One line is allowed to be written here, and only because it is not a line: every room holds a hairline
-            // of nothing open, so that the grid lighting the room it is working in costs no layout and moves nothing.
-            // The colour is the design's, through Current on the lit class; the room only keeps the space for it.
-            String body = c.body().replace("border: 1px solid transparent;", "");
+            String body = c.body();
             assertFalse(body.contains("#") || body.contains("rgb") || body.contains("px solid") || body.contains("var(--color"),
                     c.getClass().getSimpleName() + " holds a value the substrate should bind: " + body);
         }

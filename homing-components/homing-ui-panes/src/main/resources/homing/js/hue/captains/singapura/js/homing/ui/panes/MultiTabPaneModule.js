@@ -61,6 +61,8 @@
 //       destIndex being where the tab ends up. A drag on the strip is this.
 //   pane.tabs() .activeTab() .has(id) .tabIndexOf(id) .count()
 //   pane.budget() .canAdd() .setAddEnabled(b)
+//   pane.current(on)           the bar lit: this is the dock being worked in. What
+//                              that MEANS is the holder's — the pane links it to nothing
 //   pane.size(s?) .aspect(a?)    the chips' size and aspect, −1..1, null the design's
 //   pane.contentElOf(id) .widgetOf(id) .getState() .el .slotId .focus
 //   pane.keyDown(ev) .wouldHold() .wouldOffer(m) .granted(by) .taken(by) .within(on) .offered() .withdrawn()
@@ -333,6 +335,9 @@ class MultiTabPane {
     has(id) { return this._find(id) >= 0; }
     tabIndexOf(id) { return this._find(id); }
     count() { return this._tabs.length; }
+    /** The bar lit: this is the dock being worked in. Said, not decided — what it means is the holder's. */
+    current(on) { this._strip.current(on); return this; }
+
     budget() { return this._budget; }
     canAdd() { return this._addEnabled && this._tabs.length < this._budget; }
     setAddEnabled(on) { this._addEnabled = !!on; this._refresh(); }

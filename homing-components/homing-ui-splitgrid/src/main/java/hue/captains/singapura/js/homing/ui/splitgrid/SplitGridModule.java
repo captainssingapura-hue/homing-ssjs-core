@@ -42,7 +42,6 @@ public record SplitGridModule() implements DomModule<SplitGridModule> {
                         new SplitGridStyles.sg_cell(),
                         new SplitGridStyles.sg_divider(),
                         new SplitGridStyles.sg_child_lit(),
-                        new SplitGridStyles.sg_cell_lit(),
                         new SplitGridStyles.sg_divider_h_seam(),
                         new SplitGridStyles.sg_divider_v_seam(),
                         new SplitGridStyles.sg_divider_h(),

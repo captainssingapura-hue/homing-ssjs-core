@@ -6,10 +6,15 @@
 // holds. A branch component: the caller makes a sub-branch for it and hands
 // it in; dispose() dissolves it.
 //
-//   new SplitGrid(branch, { host, layout, minCellPx?, seam?, onEvent? })
+//   new SplitGrid(branch, { host, layout, minCellPx?, seam?, thickness?, onEvent? })
 //     branch: the grid's own, handed unactivated
 //     host:   a flex box; the grid is its item and fills it.
 //     layout: SplitGridTree's — { kind: "cell", id } | { kind: "split", orientation, children: [{ node, ratio? }] }
+//     thickness: how thick the lines are, in pixels; 1 unless said. The
+//             splitter IS the line — one line shared by two rooms, flush on
+//             both sides — and the hand reaches 3px past it either way, so a
+//             line of one pixel is still seven to grab. 0 draws nothing and
+//             still drags.
 //     seam:   the splitters keep the design's line at rest. Off by default: a
 //             joint has no presence of its own, and a workspace whose panels
 //             carry their own frames wants none. On for a grid whose cells
@@ -31,12 +36,7 @@
 //                                two. Reports Subdivided
 //   grid.seam(on)              the seam at rest, live: the design's line along
 //                                every splitter, or none at all
-//   grid.lit(id) .lit()        the room you are in, drawn by the grid: its
-//                                boundary in the word for the one you are on,
-//                                and nothing on any other. null lights none.
-//                                What a room HOLDS draws no frame of its own —
-//                                the grid owns the lines between rooms, so it
-//                                owns this one too.
+//   grid.thickness(px?)        the lines' thickness, live; read with no argument
 //   grid.splitters(id)         → the cells across a splitter of this one's own:
 //                                [ { side, axis, id } ]. At most two — the panes
 //                                its room can go to whole, one per side.
@@ -82,7 +82,7 @@ class SplitGrid {
         this._branch = branch;
         this._minPx = opts.minCellPx == null ? 40 : Math.max(0, opts.minCellPx | 0);
         this._seam = !!opts.seam;
-        this._lit = null;                // the room being worked in, when its owner says which
+        this._line = opts.thickness == null ? 1 : Math.max(0, opts.thickness | 0);
         this._sink = typeof opts.onEvent === "function" ? opts.onEvent : null;
         this._cells = new Map();         // id → the cell element, kept for the grid's life
         this._splits = new Map();        // path → { el, orientation, children: [{ el, node }] }
@@ -93,6 +93,7 @@ class SplitGrid {
         var root = branch.createElement("root", "div");
         css.addClass(root, sg_root);
         root.style.setProperty("--sg-min", this._minPx + "px");
+        root.style.setProperty("--sg-line", this._line + "px");
         this.el = root;
         this._arrange();
         opts.host.appendChild(root);
@@ -113,7 +114,6 @@ class SplitGrid {
             css.addClass(el, sg_cell);
             el.setAttribute("data-cell", id);
             this._cells.set(id, el);
-            this._mark(id, el);   // a room minted while it is the lit one takes the mark with it
         }
         return el;
     }
@@ -255,14 +255,11 @@ class SplitGrid {
     }
 
     /** The seam at rest, live: the design's line along every splitter, or none at all. */
-    /** The room that is lit, by its cell's id, or null for none: the boundary is the grid's to draw, as every other line between rooms is. */
-    lit(id) {
-        if (arguments.length === 0) return this._lit;
-        var want = id == null ? null : String(id);
-        if (this._lit === want) return this;
-        if (this._lit != null && this._cells.has(this._lit)) css.removeClass(this._cells.get(this._lit), sg_cell_lit);
-        this._lit = want;
-        if (want != null && this._cells.has(want)) css.addClass(this._cells.get(want), sg_cell_lit);
+    /** The lines' thickness in pixels, live; read with no argument. The hand's reach past them does not change with it. */
+    thickness(px) {
+        if (arguments.length === 0) return this._line;
+        this._line = Math.max(0, px | 0);
+        this.el.style.setProperty("--sg-line", this._line + "px");
         return this;
     }
 
@@ -289,8 +286,6 @@ class SplitGrid {
         this._fire(SplitGridEvents.Removed(id));
         return el || null;
     }
-
-    _mark(id, el) { if (this._lit === id) css.addClass(el, sg_cell_lit); return el; }
 
     _freshId() {
         var taken = this.cells(), k = taken.length;

@@ -76,12 +76,12 @@ class SplitGridMirrorTest extends JsModuleTestBase {
     @Test
     void itDrawsTheLayoutFromTheGeometry_atItsScale_withTheCursorOnTheFirstCell() {
         assertEquals("504px x 304px", eval("mirror.el.prop('--sgm-w') + ' x ' + mirror.el.prop('--sgm-h')").asString());
-        assertEquals("nav*@0px,0px,125px,304px demo@129px,0px,375px,225px explain@129px,229px,375px,75px", eval("boxes()").asString());
+        assertEquals("nav*@0px,0px,126px,304px demo@126px,0px,377px,227px explain@126px,228px,377px,76px", eval("boxes()").asString());
         assertEquals("cursor:nav/call", log());
         assertEquals("0", eval("String(mirror.el.tabIndex)").asString(), "focusable");
         eval("mirror.scale(0.25);");
         assertEquals("252px x 152px", eval("mirror.el.prop('--sgm-w') + ' x ' + mirror.el.prop('--sgm-h')").asString());
-        assertEquals("nav*@0px,0px,63px,152px demo@64px,0px,188px,113px explain@64px,114px,188px,38px", eval("boxes()").asString(), "redrawn at the new scale, the cursor kept");
+        assertEquals("nav*@0px,0px,63px,152px demo@63px,0px,189px,114px explain@63px,114px,189px,38px", eval("boxes()").asString(), "redrawn at the new scale, the cursor kept");
     }
 
     @Test
@@ -100,7 +100,7 @@ class SplitGridMirrorTest extends JsModuleTestBase {
         assertEquals("focus cursor:explain/pointer", log());
         eval("log.length = 0; mirror.reflect({ kind: 'split', orientation: 'horizontal', children: [ { node: { kind: 'cell', id: 'nav' } }, { node: { kind: 'cell', id: 'demo' } } ] }, { w: 1007, h: 607 });");
         assertEquals("cursor:nav/call", log());
-        assertEquals("nav*@0px,0px,250px,304px demo@254px,0px,250px,304px", eval("boxes()").asString());
+        assertEquals("nav*@0px,0px,252px,304px demo@252px,0px,252px,304px", eval("boxes()").asString());
         eval("log.length = 0; mirror.cursor('demo'); mirror.cursor('demo');");
         assertEquals("cursor:demo/call", log(), "a call moves it once");
     }

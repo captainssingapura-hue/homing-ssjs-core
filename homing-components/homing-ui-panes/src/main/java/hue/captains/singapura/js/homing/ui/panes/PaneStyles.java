@@ -19,6 +19,7 @@ import static hue.captains.singapura.js.homing.design.Interaction.DropTarget;
 import static hue.captains.singapura.js.homing.design.Interaction.Focus;
 import static hue.captains.singapura.js.homing.design.Interaction.Inert;
 import static hue.captains.singapura.js.homing.design.Interaction.Interactive;
+import static hue.captains.singapura.js.homing.design.Interaction.Current;
 import static hue.captains.singapura.js.homing.design.Interaction.Selectable;
 import static hue.captains.singapura.js.homing.design.Layer.Base;
 import static hue.captains.singapura.js.homing.design.Layer.Raised;
@@ -104,6 +105,20 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
      * selected and focus — and Selectable for its motion. The label is
      * ellipsised within. Dragged by the pointer, so no touch scrolling on it.
      */
+    /**
+     * The bar of the dock being worked in, lit: the word for the one you are
+     * on, across the strip and nothing else. A HINT, not an outline — the
+     * rooms of a workspace are divided by the grid's lines and a second set
+     * of lines around one of them says the same thing twice; a bar that has
+     * come up a shade says where the work is without drawing anything at all.
+     * Colour only, so nothing moves, and it sits over the strip's own raised
+     * face because a design's word for the current thing outranks a layer's.
+     */
+    public record mtp_strip_current() implements CssClass<PaneStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Current.class, Color.Surface.class)); }
+        @Override public String body() { return ""; }
+    }
+
     public record mtp_chip() implements CssClass<PaneStyles> {
         /** {@code Control × Color.Edge} is the ring's colour and the keys' mark: bound at those states only, so the chip's own edge is still Selectable.Tab's. */
         @Override public List<? extends Wearable> wears() {
@@ -362,7 +377,7 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
 
     @Override
     public List<CssClass<PaneStyles>> cssClasses() {
-        return List.of(new mtp_pane(), new mtp_strip(), new mtp_strip_loose(), new mtp_chip(), new mtp_chip_label(), new mtp_chip_mark(), new mtp_chip_mark_on(), new mtp_chip_lifted(), new mtp_chip_seated(), new mtp_chip_dragging(), new mtp_chip_shifted(),
+        return List.of(new mtp_pane(), new mtp_strip(), new mtp_strip_loose(), new mtp_chip(), new mtp_chip_label(), new mtp_strip_current(), new mtp_chip_mark(), new mtp_chip_mark_on(), new mtp_chip_lifted(), new mtp_chip_seated(), new mtp_chip_dragging(), new mtp_chip_shifted(),
                        new mtp_chip_close(), new mtp_drop_mark(), new mtp_strip_tail(), new mtp_add(), new mtp_add_off(),
                        new mtp_pill(), new mtp_content(), new mtp_tab_content(), new mtp_empty(), new mtp_dock_target(),
                        new mtp_tab_content_hidden());   // last, so hidden wins over what a panel or the empty note says of its display
