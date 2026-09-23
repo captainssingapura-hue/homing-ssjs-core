@@ -180,7 +180,7 @@ public record FloatingStyles() implements CssGroup<FloatingStyles> {
         }
     }
 
-    /** The body: what the pane holds, filling what the head leaves, scrolling beyond it. */
+    /** The body: what the pane holds, filling what the head leaves, scrolling beyond it; and the positioning context for it, so a widget that fills its host by absolute inset fills THE BODY and never climbs over the head. */
     public record fp_body() implements CssClass<FloatingStyles> {
         @Override public String body() { return """
             flex: 1 1 auto;
@@ -188,6 +188,7 @@ public record FloatingStyles() implements CssGroup<FloatingStyles> {
             display: flex;
             flex-direction: column;
             overflow: auto;
+            position: relative;
             """;
         }
     }

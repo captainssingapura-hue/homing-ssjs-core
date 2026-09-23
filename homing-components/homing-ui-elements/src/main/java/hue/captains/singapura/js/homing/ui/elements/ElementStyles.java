@@ -786,7 +786,12 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
         @Override public String body() { return ""; }
     }
 
-    /** The body: what the head leaves, flush — for a panel that is filled by what is mounted in it, a dock or a grid, which scrolls on its own. */
+    /**
+     * The body: what the head leaves, flush — for a panel that is filled by
+     * what is mounted in it, a dock or a grid, which scrolls on its own. It is
+     * the positioning context for what it holds, so a widget that fills its
+     * host by absolute inset fills THE BODY and never climbs over the head.
+     */
     public record el_panel_body() implements CssClass<ElementStyles> {
         @Override public String body() { return """
             flex: 1 1 auto;
@@ -796,6 +801,7 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
             min-width: 0;
             min-height: 0;
             overflow: hidden;
+            position: relative;
             """;
         }
     }
