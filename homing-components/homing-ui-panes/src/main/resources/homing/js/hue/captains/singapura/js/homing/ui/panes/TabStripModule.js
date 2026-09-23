@@ -22,8 +22,9 @@
 //     strip.remove(chip)
 //     strip.select(chips, active)   aria-selected on the active one
 //     strip.keys(chip, state)       where the keys are, said on one chip: "held"
-//         while the bar has them, "lent" with the within mark while what the tab
-//         holds has them, null on none — the design answers the state on Control.Tab
+//         while the bar has them — the chip lifted, the colour part of the way —
+//         "lent" while what the tab holds has them — the chip down again, the
+//         colour at full, the within mark on it — or null on none
 //     strip.count(n, budget, addOn) the pill, and the add button on or off
 //     strip.at(clientX, clientY)    a point on the strip: the index a tab from
 //         outside would land at, marked there; −1 when the point is not on it
@@ -64,6 +65,9 @@
 const _stripOwner = Object.freeze({ toString: () => "tabStrip" });
 
 class TabStrip {
+    /** How much of the colour a chip carries while the cursor is on the bar: part of the way, towards what the tab in use carries at full. */
+    static ON_THE_BAR = 0.45;
+
     constructor(branch, opts) {
         if (!branch) throw new Error("[TabStrip] a branch of its own is required");
 
@@ -188,13 +192,24 @@ class TabStrip {
         this._pinned.delete(c);
         if (c.parentNode === this.el) this.el.removeChild(c);
     }
-    /** Where the keys are, said on one chip and on no other: "held", "lent", or null. */
+    /**
+     * Where the keys are, said on one chip and on no other. The whole
+     * operation is lift and shift: the chip the CURSOR is on — the bar has
+     * the keys, and the arrows walk the tabs — is LIFTED off the row, and its
+     * mark carries the colour part of the way; the chip whose tab the keys
+     * are INSIDE sits back down at its regular elevation, and the same mark
+     * carries the same colour at FULL. One colour, two degrees, and the
+     * elevation says which of the two it is. Everything else is a chip like
+     * any other.
+     */
     keys(chip, state) {
         var all = this._order;
         for (var i = 0; i < all.length; i++) {
-            var on = all[i] === chip && (state === "held" || state === "lent");
-            if (on) all[i].setAttribute("data-keys", state); else all[i].removeAttribute("data-keys");
-            if (all[i]._mark) css.toggleClass(all[i]._mark, mtp_chip_mark_on, on && state === "lent");
+            var c = all[i], on = c === chip && (state === "held" || state === "lent");
+            css.toggleClass(c, mtp_chip_lifted, on && state === "held");   // on the bar: picked up. In the tab, or nowhere: down
+            if (!c._mark) continue;
+            css.toggleClass(c._mark, mtp_chip_mark_on, on);
+            css.extent(c._mark, on ? (state === "held" ? TabStrip.ON_THE_BAR : 1) : null);
         }
         return this;
     }

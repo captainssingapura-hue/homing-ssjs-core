@@ -64,9 +64,10 @@ class MultiTabPaneTest extends JsModuleTestBase {
         var css = { addClass: function (e) { for (var i = 1; i < arguments.length; i++) e.classList.add(arguments[i]); },
                     removeClass: function (e) { for (var i = 1; i < arguments.length; i++) e.classList.remove(arguments[i]); },
                     toggleClass: function (e, c, f) { e.classList.toggle(c, f); },
+                    extent: function (e, t) { e._extent = t == null ? null : t; },
                     hasClass: function (e, c) { return e.classList.contains(c); },
                     size: function (e, s) { e.size = s; }, aspect: function (e, a) { e.aspect = a; } };
-        var mtp_pane = "mtp_pane", mtp_strip = "mtp_strip", mtp_chip = "mtp_chip", mtp_chip_label = "mtp_chip_label", mtp_chip_mark = "mtp_chip_mark", mtp_chip_mark_on = "mtp_chip_mark_on",
+        var mtp_pane = "mtp_pane", mtp_strip = "mtp_strip", mtp_chip = "mtp_chip", mtp_chip_label = "mtp_chip_label", mtp_chip_mark = "mtp_chip_mark", mtp_chip_mark_on = "mtp_chip_mark_on", mtp_chip_lifted = "mtp_chip_lifted",
             mtp_chip_dragging = "mtp_chip_dragging", mtp_chip_shifted = "mtp_chip_shifted", mtp_strip_loose = "mtp_strip_loose", mtp_chip_close = "mtp_chip_close", mtp_drop_mark = "mtp_drop_mark",
             mtp_chip_seated = "mtp_chip_seated",
             mtp_strip_tail = "mtp_strip_tail", mtp_add = "mtp_add", mtp_add_off = "mtp_add_off", mtp_pill = "mtp_pill",
@@ -251,40 +252,42 @@ class MultiTabPaneTest extends JsModuleTestBase {
     }
 
     /**
-     * Where the keys are is said twice: on the frame, and on the ACTIVE CHIP.
-     * The pane holds them — the bar is where the work is — and the chip says
-     * held; the keys go into the tab's widget and the steward tells the pane
-     * within, so the chip says lent and wears the mark; they leave and the
-     * chip says nothing. The mark goes with the tab that is shown.
+     * Where the keys are is said twice: on the frame, and on the ACTIVE CHIP —
+     * and the chip says it as lift and shift, not as a mark alone. The cursor
+     * is on the bar: the chip is LIFTED off the row and its mark carries the
+     * colour part of the way. The keys go into the tab: the chip is put back
+     * down at its regular elevation and the same mark carries the same colour
+     * at FULL. They leave: a chip like any other. One colour, two degrees,
+     * and the elevation says which.
      */
     @Test
-    void theActiveChipSaysWhetherTheKeysAreOnTheBarOrInTheTab() {
+    void theActiveChipLiftsOnTheBar_andSitsDownWithTheColourAtFullWhenTheKeysAreInIt() {
         eval("pane.addTab(tab('a')); pane.addTab(tab('b')); pane.switchTab('a')");
         eval("""
             var chips = pane.el.children[0];
-            function chipState(i) { return String(chips.children[i].getAttribute('data-keys')); }
-            function marked(i) { return chips.children[i].children[1].has('mtp_chip_mark_on'); }
+            function chip(i) { return chips.children[i]; }
+            function look(i) { var c = chip(i), m = c.children[1];
+                return (c.has('mtp_chip_lifted') ? 'lifted' : 'down') + '/' + (m.has('mtp_chip_mark_on') ? 'mark' : '-') + '/' + String(m._extent === undefined ? null : m._extent); }
             """);
-        assertEquals("null null", eval("chipState(0) + ' ' + chipState(1)").asString(), "nobody holds: the chips say nothing");
+        assertEquals("down/-/null", eval("look(0)").asString(), "nobody holds: a chip like any other");
         eval("pane.granted()");
-        assertEquals("held", eval("chipState(0)").asString(), "the bar has them, and the active chip says so");
-        assertFalse(eval("marked(0)").asBoolean(), "no mark on the bar: the mark means the keys went in");
+        assertEquals("lifted/mark/0.45", eval("look(0)").asString(), "the cursor is on the bar: picked up, the colour part of the way");
+        assertEquals("down/-/null", eval("look(1)").asString(), "and on no other chip");
         eval("pane.taken(); pane.within(true)");
-        assertEquals("lent", eval("chipState(0)").asString(), "the keys are in the tab: lent");
-        assertTrue(eval("marked(0)").asBoolean(), "and the chip wears the within mark");
-        assertEquals("lent", eval("String(pane.el.getAttribute('data-keys'))").asString(), "and the frame says lent too: the keys are in the dock, lent to what the tab holds - so a dock on a flat surface still reads as the place being worked in");
+        assertEquals("down/mark/1", eval("look(0)").asString(), "the keys are in the tab: put down, the colour at full");
+        assertEquals("lent", eval("String(pane.el.getAttribute('data-keys'))").asString(), "the frame says lent: the keys are in the dock, lent to what the tab holds");
         eval("pane.switchTab('b')");
-        assertEquals("null lent", eval("chipState(0) + ' ' + chipState(1)").asString(), "the mark goes with the tab that is shown");
-        assertTrue(eval("marked(1) && !marked(0)").asBoolean());
+        assertEquals("down/-/null", eval("look(0)").asString(), "what is shown carries it");
+        assertEquals("down/mark/1", eval("look(1)").asString());
         eval("pane.within(false); pane.granted()");
-        assertEquals("held", eval("chipState(1)").asString(), "back on the bar");
-        assertFalse(eval("marked(1)").asBoolean());
+        assertEquals("lifted/mark/0.45", eval("look(1)").asString(), "back on the bar: picked up again");
         eval("pane.taken()");
-        assertEquals("null null", eval("chipState(0) + ' ' + chipState(1)").asString(), "and gone");
+        assertEquals("down/-/null", eval("look(0)").asString());
+        assertEquals("down/-/null", eval("look(1)").asString(), "and gone");
         // the walk's offer is the frame's alone: a chip is not offered anything
         eval("pane.offered()");
         assertEquals("candidate", eval("String(pane.el.getAttribute('data-keys'))").asString());
-        assertEquals("null null", eval("chipState(0) + ' ' + chipState(1)").asString(), "the offer is the pane's, not a tab's");
+        assertEquals("down/-/null", eval("look(0)").asString(), "the offer is the pane's, not a tab's");
         eval("pane.withdrawn()");
     }
 

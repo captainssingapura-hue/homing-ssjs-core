@@ -22,6 +22,7 @@ import static hue.captains.singapura.js.homing.design.Interaction.Interactive;
 import static hue.captains.singapura.js.homing.design.Interaction.Selectable;
 import static hue.captains.singapura.js.homing.design.Layer.Base;
 import static hue.captains.singapura.js.homing.design.Layer.Raised;
+import static hue.captains.singapura.js.homing.design.Pairing.OnPrimary;
 import static hue.captains.singapura.js.homing.design.Structure.Divider;
 import static hue.captains.singapura.js.homing.design.Target.Affordance;
 import static hue.captains.singapura.js.homing.design.Target.Color;
@@ -113,6 +114,27 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
     }
 
     /**
+     * The chip lifted: the whole operation is lift and shift, so the chip the
+     * cursor is on is picked up off the row, and put down again the moment
+     * the work moves into its tab or leaves the bar. It rides over its
+     * neighbours while it is up.
+     *
+     * <p>The lift is its own translate and not the design's transform: a chip
+     * that is selected already wears {@code Selectable.Tab}'s transform at a
+     * state, which nothing plain can out-specify. The drag lifts itself the
+     * same way, along the other axis.</p>
+     */
+    public record mtp_chip_lifted() implements CssClass<PaneStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Selectable.class, Motion.Ease.class)); }
+        @Override public String body() { return """
+            position: relative;
+            z-index: 1;
+            translate: 0 -4px;
+            """;
+        }
+    }
+
+    /**
      * The mark on a chip while the keys are inside its tab: the design's
      * picture for "within", in the chip's own ink and never in the way of the
      * hand. It is there only while the keys are in the tab — the chip says
@@ -120,7 +142,9 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
      * tab holds has them.
      */
     public record mtp_chip_mark() implements CssClass<PaneStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Icon.Within.class, Type.Glyph.class)); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Icon.Within.class, Type.Glyph.class), of(Primary.class, Color.Ink.class)); }
+        /** The one colour, at two degrees: part of the way while the cursor is on the bar, at full while the keys are in the tab. */
+        @Override public List<? extends Wearable> extents() { return List.of(of(Primary.class, Color.Ink.class)); }
         @Override public String body() { return """
             display: none;
             flex: none;
@@ -311,7 +335,7 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
 
     @Override
     public List<CssClass<PaneStyles>> cssClasses() {
-        return List.of(new mtp_pane(), new mtp_strip(), new mtp_strip_loose(), new mtp_chip(), new mtp_chip_label(), new mtp_chip_mark(), new mtp_chip_mark_on(), new mtp_chip_seated(), new mtp_chip_dragging(), new mtp_chip_shifted(),
+        return List.of(new mtp_pane(), new mtp_strip(), new mtp_strip_loose(), new mtp_chip(), new mtp_chip_label(), new mtp_chip_mark(), new mtp_chip_mark_on(), new mtp_chip_lifted(), new mtp_chip_seated(), new mtp_chip_dragging(), new mtp_chip_shifted(),
                        new mtp_chip_close(), new mtp_drop_mark(), new mtp_strip_tail(), new mtp_add(), new mtp_add_off(),
                        new mtp_pill(), new mtp_content(), new mtp_tab_content(), new mtp_empty(), new mtp_dock_target(),
                        new mtp_tab_content_hidden());   // last, so hidden wins over what a panel or the empty note says of its display
