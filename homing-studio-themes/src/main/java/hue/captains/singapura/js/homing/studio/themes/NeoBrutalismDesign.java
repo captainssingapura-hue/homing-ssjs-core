@@ -202,7 +202,8 @@ final class NeoBrutalismDesign {
             edge(of(Selected.class, Color.Edge.class), INK, "#FFFFFF"),
             surface(of(Current.class, Color.Surface.class), SIGNAL),
             one(of(Current.class, Color.Ink.class), INK),
-            edge(of(Current.class, Color.Edge.class), INK),
+            // the current one is the loud one: the signal, not the ink, or a lit border cannot be told from a drawn one
+            edge(of(Current.class, Color.Edge.class), SIGNAL),
             // the Selected semantic in depth — a component saying "lifted" with a class of its own sits up on the ink
             one(of(Selected.class, Shape.Shadow.class), shadow(6)),
             one(of(Selected.class, Motion.Transform.class), "translate(-3px, -3px)"),
