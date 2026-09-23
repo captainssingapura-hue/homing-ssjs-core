@@ -15,6 +15,7 @@ import static hue.captains.singapura.js.homing.design.Interaction.Current;
 import static hue.captains.singapura.js.homing.design.Interaction.Interactive;
 import static hue.captains.singapura.js.homing.design.Layer.Raised;
 import static hue.captains.singapura.js.homing.design.Layer.Recessed;
+import static hue.captains.singapura.js.homing.design.Structure.Hairline;
 import static hue.captains.singapura.js.homing.design.Structure.Divider;
 import static hue.captains.singapura.js.homing.design.Structure.Spine;
 import static hue.captains.singapura.js.homing.design.Target.Affordance;
@@ -159,6 +160,31 @@ public record SplitGridStyles() implements CssGroup<SplitGridStyles> {
     }
 
     /**
+      * The SEAM a splitter keeps at rest, when its owner asks for one: the
+      * design's line along it, between side-by-side rooms. A joint has no
+      * presence of its own — that is what a joint is — but a grid whose cells
+      * bring no edges cannot show where one room ends and the next begins, and
+      * then the seam is not the splitter showing off, it is the ROOM's edge
+      * drawn on the only thing that lies between them. A workspace whose panels
+      * have their own frames wants none of it.
+      */
+    public record sg_divider_h_seam() implements CssClass<SplitGridStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Spine.class, Color.Edge.class), of(Spine.class, Shape.Rule.class)); }
+        @Override public String body() { return ""; }
+    }
+
+    /**
+      * The same seam between stacked rooms: the HAIRLINE, the quiet line under
+      * a thing — not the Divider, which in these designs is an emphatic rule
+      * two pixels thick and in the accent, and reads as a bar rather than a
+      * seam. A spine across, a hairline down, and both of them pale.
+      */
+    public record sg_divider_v_seam() implements CssClass<SplitGridStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Hairline.class, Color.Edge.class), of(Hairline.class, Shape.Rule.class)); }
+        @Override public String body() { return ""; }
+    }
+
+    /**
       * The two rooms a held splitter re-shares, ringed for as long as it is
       * held: what the drag is actually trading, which is not a line moving
       * but two areas swapping room. One pane each side where the splitter is
@@ -239,6 +265,7 @@ public record SplitGridStyles() implements CssGroup<SplitGridStyles> {
     public List<CssClass<SplitGridStyles>> cssClasses() {
         return List.of(new sg_root(), new sg_split(), new sg_split_h(), new sg_split_v(), new sg_child(), new sg_child_h(), new sg_child_v(),
                        new sg_cell(), new sg_divider(), new sg_divider_h(), new sg_divider_v(), new sg_divider_lit(), new sg_child_lit(),
+                       new sg_divider_h_seam(), new sg_divider_v_seam(),
                        new sgm_root(), new sgm_cell(), new sgm_cell_current());
     }
 }
