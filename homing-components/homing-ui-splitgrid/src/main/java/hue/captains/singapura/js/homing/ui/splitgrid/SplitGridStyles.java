@@ -105,6 +105,8 @@ public record SplitGridStyles() implements CssGroup<SplitGridStyles> {
             flex: 1 1 auto;
             min-width: 0;
             min-height: 0;
+            box-sizing: border-box;
+            border: 1px solid transparent;
             position: relative;
             isolation: isolate;
             display: flex;
@@ -156,6 +158,21 @@ public record SplitGridStyles() implements CssGroup<SplitGridStyles> {
     public record sg_divider_lit() implements CssClass<SplitGridStyles> {
         @Override public List<? extends Wearable> wears() { return List.of(of(Primary.class, Color.Surface.class)); }
         @Override public List<? extends Wearable> extents() { return List.of(of(Primary.class, Color.Surface.class)); }
+        @Override public String body() { return ""; }
+    }
+
+    /**
+      * The room that is LIT: its boundary, drawn by the grid, in the word for
+      * the one you are on. Every room keeps a line it does not paint — a
+      * hairline of nothing, held at rest — so lighting one is a COLOUR and
+      * nothing else, and not a pixel moves as it comes and goes. The grid
+      * draws it because
+      * the grid already draws every other line between rooms. One owner for
+      * the lines: the seams say where the rooms divide, this says which of
+      * them you are in, and what a room HOLDS draws no frame at all.
+      */
+    public record sg_cell_lit() implements CssClass<SplitGridStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Current.class, Color.Edge.class)); }
         @Override public String body() { return ""; }
     }
 
@@ -265,7 +282,7 @@ public record SplitGridStyles() implements CssGroup<SplitGridStyles> {
     public List<CssClass<SplitGridStyles>> cssClasses() {
         return List.of(new sg_root(), new sg_split(), new sg_split_h(), new sg_split_v(), new sg_child(), new sg_child_h(), new sg_child_v(),
                        new sg_cell(), new sg_divider(), new sg_divider_h(), new sg_divider_v(), new sg_divider_lit(), new sg_child_lit(),
-                       new sg_divider_h_seam(), new sg_divider_v_seam(),
+                       new sg_divider_h_seam(), new sg_divider_v_seam(), new sg_cell_lit(),
                        new sgm_root(), new sgm_cell(), new sgm_cell_current());
     }
 }

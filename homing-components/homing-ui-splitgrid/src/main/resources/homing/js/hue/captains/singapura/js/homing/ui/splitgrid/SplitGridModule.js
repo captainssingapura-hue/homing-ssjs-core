@@ -31,6 +31,12 @@
 //                                two. Reports Subdivided
 //   grid.seam(on)              the seam at rest, live: the design's line along
 //                                every splitter, or none at all
+//   grid.lit(id) .lit()        the room you are in, drawn by the grid: its
+//                                boundary in the word for the one you are on,
+//                                and nothing on any other. null lights none.
+//                                What a room HOLDS draws no frame of its own —
+//                                the grid owns the lines between rooms, so it
+//                                owns this one too.
 //   grid.splitters(id)         → the cells across a splitter of this one's own:
 //                                [ { side, axis, id } ]. At most two — the panes
 //                                its room can go to whole, one per side.
@@ -76,6 +82,7 @@ class SplitGrid {
         this._branch = branch;
         this._minPx = opts.minCellPx == null ? 40 : Math.max(0, opts.minCellPx | 0);
         this._seam = !!opts.seam;
+        this._lit = null;                // the room being worked in, when its owner says which
         this._sink = typeof opts.onEvent === "function" ? opts.onEvent : null;
         this._cells = new Map();         // id → the cell element, kept for the grid's life
         this._splits = new Map();        // path → { el, orientation, children: [{ el, node }] }
@@ -106,6 +113,7 @@ class SplitGrid {
             css.addClass(el, sg_cell);
             el.setAttribute("data-cell", id);
             this._cells.set(id, el);
+            this._mark(id, el);   // a room minted while it is the lit one takes the mark with it
         }
         return el;
     }
@@ -247,6 +255,17 @@ class SplitGrid {
     }
 
     /** The seam at rest, live: the design's line along every splitter, or none at all. */
+    /** The room that is lit, by its cell's id, or null for none: the boundary is the grid's to draw, as every other line between rooms is. */
+    lit(id) {
+        if (arguments.length === 0) return this._lit;
+        var want = id == null ? null : String(id);
+        if (this._lit === want) return this;
+        if (this._lit != null && this._cells.has(this._lit)) css.removeClass(this._cells.get(this._lit), sg_cell_lit);
+        this._lit = want;
+        if (want != null && this._cells.has(want)) css.addClass(this._cells.get(want), sg_cell_lit);
+        return this;
+    }
+
     seam(on) {
         this._seam = !!on;
         var want = this._seam;
@@ -270,6 +289,8 @@ class SplitGrid {
         this._fire(SplitGridEvents.Removed(id));
         return el || null;
     }
+
+    _mark(id, el) { if (this._lit === id) css.addClass(el, sg_cell_lit); return el; }
 
     _freshId() {
         var taken = this.cells(), k = taken.length;

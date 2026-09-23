@@ -46,7 +46,8 @@ public record PanelModule() implements DomModule<PanelModule> {
                         new ElementStyles.el_panel_slot(),
                         new ElementStyles.el_panel_body(),
                         new ElementStyles.el_panel_body_air(),
-                        new ElementStyles.el_panel_current()
+                        new ElementStyles.el_panel_current(),
+                        new ElementStyles.el_panel_framed()
                 ), ElementStyles.INSTANCE))
                 .build();
     }

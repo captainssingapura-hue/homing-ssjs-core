@@ -6,6 +6,10 @@
 //
 //   PanelBuilder — the properties, set progressively, each returning the builder:
 //     .title(text)          the name in the head; without one there is no head
+//     .bare(on)             no frame and no corner: for a panel whose CONTAINER
+//                           draws the lines — a cell of a grid that already
+//                           draws its seams and marks the room being worked in.
+//                           A sheet draws its own edge; a room's floor does not.
 //     .fills(on)            what is mounted fills the body: no air, and no
 //                           scroll of its own (a dock, a grid). Off, the body
 //                           has the design's air and scrolls — for content.
@@ -85,6 +89,7 @@ class Panel {
 
         var body = branch.createElement("body", "div");
         css.addClass(body, el_panel_body);
+        if (!p.bare) css.addClass(root, el_panel_framed);   // the frame is a class, not an override: a bare panel never wears it
         if (!p.fills) { css.addClass(body, el_panel_body_air); this._parts.push(body); }
         root.appendChild(body);
         this.body = body;
@@ -213,6 +218,7 @@ class PanelBuilder {
     constructor() { this._props = {}; }
     title(text)  { this._props.title = text; return this; }
     fills(on)    { this._props.fills = on === undefined ? true : !!on; return this; }
+    bare(on)     { this._props.bare  = on === undefined ? true : !!on; return this; }
     size(s)      { this._props.size = s; return this; }
     host(el)     { this._props.host = el; return this; }
     build(branch) {

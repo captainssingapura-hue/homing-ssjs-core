@@ -709,10 +709,9 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
      */
     public record el_panel() implements CssClass<ElementStyles> {
         @Override public List<? extends Wearable> wears() {
-            return List.of(of(Container.Panel.class, Shape.Corner.class), of(Container.Panel.class, Shape.Rule.class), of(Container.Panel.class, Color.Edge.class),
-                           of(Container.Panel.class, Size.Gap.class), of(Container.Panel.class, Shape.Shadow.class),
+            return List.of(of(Container.Panel.class, Size.Gap.class), of(Container.Panel.class, Shape.Shadow.class),
                            // the RAISED face, not the page's: a sheet lies ON something, and has to be able to be seen doing it
-                           of(Raised.class, Color.Surface.class), of(Raised.class, Color.Edge.class), of(Body.class, Color.Ink.class), of(Body.class, Type.Face.class));
+                           of(Raised.class, Color.Surface.class), of(Body.class, Color.Ink.class), of(Body.class, Type.Face.class));
         }
         @Override public List<? extends Wearable> sizes() { return List.of(of(Container.Panel.class, Size.Gap.class)); }
         // The panel's depth is the design's to draw and the holder's to set: the shadow is worn plainly here, and
@@ -794,6 +793,24 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
       * moves nothing: the rule it recolours is the rule the panel already
       * wears, so a panel becoming current never shifts a pixel.
       */
+    /**
+      * The panel's FRAME: its rule, its corner and the colour of its edge —
+      * worn unless the panel is bare. A sheet draws its own edge, so a panel
+      * that stands on a ground has this. A panel whose CONTAINER draws the
+      * lines does not: a cell of a split grid already draws the seams between
+      * its rooms and the boundary of the one being worked in, and a room
+      * outlined twice is a mistake, not emphasis. Nothing is overridden to
+      * take a frame away — the frame is a class, and a bare panel is a panel
+      * that never wears it.
+      */
+    public record el_panel_framed() implements CssClass<ElementStyles> {
+        @Override public List<? extends Wearable> wears() {
+            return List.of(of(Container.Panel.class, Shape.Corner.class), of(Container.Panel.class, Shape.Rule.class),
+                           of(Container.Panel.class, Color.Edge.class), of(Raised.class, Color.Edge.class));
+        }
+        @Override public String body() { return ""; }
+    }
+
     public record el_panel_current() implements CssClass<ElementStyles> {
         @Override public List<? extends Wearable> wears() { return List.of(of(Current.class, Color.Edge.class)); }
         @Override public String body() { return ""; }
@@ -837,6 +854,6 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
                        new el_slider_off(),
                        new el_slider_group(), new el_slider_group_held(), new el_slider_group_header(), new el_slider_group_title(), new el_slider_group_body(), new el_slider_group_body_across(),
                        new el_card(), new el_card_action(), new el_card_head(), new el_card_title(), new el_badge(), new el_card_body(), new el_card_text(), new el_card_foot(), new el_card_link(),
-                       new el_panel(), new el_panel_head(), new el_panel_title(), new el_panel_slot(), new el_panel_body(), new el_panel_body_air(), new el_panel_current());
+                       new el_panel(), new el_panel_head(), new el_panel_title(), new el_panel_slot(), new el_panel_body(), new el_panel_body_air(), new el_panel_current(), new el_panel_framed());
     }
 }

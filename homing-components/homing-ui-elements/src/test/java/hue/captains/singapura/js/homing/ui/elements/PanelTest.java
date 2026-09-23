@@ -41,7 +41,7 @@ class PanelTest extends JsModuleTestBase {
                     size: function (e, v) { sized.push(e.name + ":" + v); }, extent: function () {}, aspect: function () {},
                     elevation: function (e, v) { lifted.push(e.name + ":" + v); } };
         var lifted = [];
-        ["el_panel", "el_panel_head", "el_panel_title", "el_panel_slot", "el_panel_body", "el_panel_body_air", "el_panel_current"].forEach(function (c) { globalThis[c] = c; });
+        ["el_panel", "el_panel_head", "el_panel_title", "el_panel_slot", "el_panel_body", "el_panel_body_air", "el_panel_current", "el_panel_framed"].forEach(function (c) { globalThis[c] = c; });
         var observers = [];
         function MutationObserver(fn) { this.fn = fn; this.el = null; observers.push(this); }
         MutationObserver.prototype.observe = function (el, opts) { this.el = el; this.opts = opts; el._observer = this; };
