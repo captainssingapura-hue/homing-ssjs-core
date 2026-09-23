@@ -116,11 +116,16 @@ public record SeedPalette(DesignId id, String label, String inspiration, DesignI
                       CardstockPalette.INK_D, CardstockPalette.ACCENT_D, CardstockPalette.ACCENT_PRESS_D, CardstockPalette.ON_ACCENT_D, CardstockPalette.HAIR_D))
             .fits(HomingEditorial.ID);
 
-    /** Black marker on white paper: one ink for text, lines and the primary alike; a grey for what is said quietly. Sketchy's — and black-on-white brutalism is the classic. */
+    /**
+     * Black marker on white paper — one ink for the text and the lines, a grey for what is said quietly, and ONE RED
+     * PEN for what is being pointed at. Nobody sketches with a single marker: a wireframe, a napkin diagram, a marked
+     * up print are drawn in one pen and annotated in another, and the second pen is the one that makes a sketch
+     * readable. Sketchy's — and black-on-white brutalism is the classic.
+     */
     public static final SeedPalette MARKER = new SeedPalette("marker", "Marker",
-            "Black marker on white paper — one ink for the text, the lines and the primary alike.", HomingSketchy.ID,
-            new Seeds("#FFFFFF", "#FFFFFF", "#F7F7F9", "#333333", "#212529", "#555555", "#FFFFFF", "#CCCCCC", "#212529", "#333333", "#555555", "#FFFFFF", "#333333"),
-            new Seeds("#212529", "#212529", "#2A2C2E", "#F8F9FA", "#DEE2E6", "#ADB5BD", "#212529", "#555555", "#F8F9FA", "#F8F9FA", "#DEE2E6", "#000000", "#DEE2E6"))
+            "Black marker on white paper, and a red pen for what is being pointed at.", HomingSketchy.ID,
+            new Seeds("#FFFFFF", "#FFFFFF", "#F7F7F9", "#333333", "#212529", "#555555", "#FFFFFF", "#CCCCCC", "#212529", "#E03131", "#B02626", "#FFFFFF", "#333333"),
+            new Seeds("#212529", "#212529", "#2A2C2E", "#F8F9FA", "#DEE2E6", "#ADB5BD", "#212529", "#555555", "#F8F9FA", "#FF6B6B", "#E03131", "#212529", "#DEE2E6"))
             .fits(HomingNeoBrutalism.ID, HomingEditorial.ID);
 
     private static final Map<DesignId, Map<DesignClass<?>, Impl>> WORDS = new java.util.concurrent.ConcurrentHashMap<>();
