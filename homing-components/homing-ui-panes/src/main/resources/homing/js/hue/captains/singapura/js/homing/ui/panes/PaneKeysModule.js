@@ -14,6 +14,9 @@
 //     Shift+F10, ContextMenu   the active tab's menu, at its chip: pane.menuByKey()
 //   A chord with Ctrl, Alt or Meta is left; so is anything not above.
 //
+//   PaneKeys.keysState(pane) → which of the four the keys are in: "held" on
+//     the bar, "lent" while they are within a tab, "candidate" while the walk
+//     rests on the pane, or null
 //   PaneKeys.wouldOffer(pane, m) → whether the walk is offered a member of
 //     the dock's branch: only the tab on show, the rest being behind it
 //   PaneKeys.law(widget) → whether a tab's widget is logically focusable:
@@ -51,6 +54,17 @@ class PaneKeys {
         var ids = pane.tabs(), active = pane.activeTab();
         for (var i = 0; i < ids.length; i++) if (pane.widgetOf(ids[i]) === m.component) return ids[i] === active;
         return true;   // not a tab's widget: not the pane's business
+    }
+
+    /**
+     * Which of the four the keys are in, for the pane to say on its frame and
+     * its active chip. The order is the truth of it: the pane HOLDS them — the
+     * bar is where the work is, and the arrows walk the tabs; they are WITHIN
+     * it, in the tab's own widget, which the chip says as lent and marks; the
+     * walk has OFFERED them; or none of those, and nothing is said.
+     */
+    static keysState(pane) {
+        return pane._holds ? "held" : pane._inside ? "lent" : pane._offered ? "candidate" : null;
     }
 
     /** The law: a tab's widget is a member of a focus branch of its own and answers activate(), so the keys can be given to it and it can take them. */

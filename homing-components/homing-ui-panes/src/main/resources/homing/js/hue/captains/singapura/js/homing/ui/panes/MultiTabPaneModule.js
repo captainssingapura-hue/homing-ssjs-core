@@ -63,7 +63,7 @@
 //   pane.budget() .canAdd() .setAddEnabled(b)
 //   pane.size(s?) .aspect(a?)    the chips' size and aspect, −1..1, null the design's
 //   pane.contentElOf(id) .widgetOf(id) .getState() .el .slotId .focus
-//   pane.keyDown(ev) .wouldHold() .wouldOffer(m) .granted(by) .taken(by) .offered() .withdrawn()
+//   pane.keyDown(ev) .wouldHold() .wouldOffer(m) .granted(by) .taken(by) .within(on) .offered() .withdrawn()
 //       the member's, called by the steward; they write data-keys — held while the
 //       pane has the keys, candidate while the walk rests on it — on the frame,
 //       and a design says what a pane wearing it looks like
@@ -244,6 +244,7 @@ class MultiTabPane {
             css.toggleClass(this._tabs[i].panel, mtp_tab_content_hidden, !on);
         }
         this._strip.select(this._chips(), active);
+        if (this._holds || this._inside) this._keys();   // where the keys are goes with the tab that is shown
     }
     _takeOut(i) {
         var entry = this._tabs[i];
@@ -302,9 +303,8 @@ class MultiTabPane {
     }
     /** A tab from outside, offered at a point: the index it would take on the strip, or −1 when the point is not on the strip. */
     dropAt(x, y) {
-        var s = this._strip.el.getBoundingClientRect();
-        if (x < s.left || x > s.right || y < s.top || y > s.bottom) { this.dropClear(); return -1; }
-        var index = this._strip.markAt(x);
+        var index = this._strip.at(x, y);
+        if (index < 0) { css.removeClass(this.el, mtp_dock_target); return -1; }
         css.addClass(this.el, mtp_dock_target);
         return index;
     }
@@ -338,13 +338,10 @@ class MultiTabPane {
     setAddEnabled(on) { this._addEnabled = !!on; this._refresh(); }
     size(s) { this._strip.size(s); }
     aspect(a) { this._strip.aspect(a); }
+    chipOf(i) { return i < 0 || i >= this._tabs.length ? null : this._tabs[i].chip; }
     contentElOf(id) { var i = this._find(id); return i < 0 ? null : this._tabs[i].panel; }
     widgetOf(id) { var i = this._find(id); return i < 0 ? null : this._tabs[i].widget; }
-    getState() {
-        var list = [];
-        for (var i = 0; i < this._tabs.length; i++) list.push({ id: this._tabs[i].id, title: this._tabs[i].tab.title, pinned: this._tabs[i].pinned });
-        return { slotId: this.slotId, activeTabId: this._activeId, tabs: list };
-    }
+    getState() { return PaneEvents.state(this); }
     // ── The member: the keys while the pane holds them ────────────────────
     /** A keydown while the pane holds the keys: the container's own, PaneKeys; true when taken. */
     keyDown(ev) { return PaneKeys.keyDown(this, ev); }
@@ -360,12 +357,18 @@ class MultiTabPane {
     wouldHold() { return true; }
     /** Asked by the walk about a member of the dock's branch: PaneKeys says which. */
     wouldOffer(m) { return PaneKeys.wouldOffer(this, m); }
-    /** Where the keys are, said once on the frame: the design answers it on the pane's own word. */
-    granted() { this.el.setAttribute("data-keys", "held"); }
-    taken() { this.el.removeAttribute("data-keys"); }
-    /** The walk rests here: a confirming key would bring the keys. Never over what the pane already says. */
-    offered() { if (this.el.getAttribute("data-keys") === null) this.el.setAttribute("data-keys", "candidate"); }
-    withdrawn() { if (this.el.getAttribute("data-keys") === "candidate") this.el.removeAttribute("data-keys"); }
+    /** Where the keys are, said on the frame and on the active chip; PaneKeys works out which of the four it is. */
+    granted() { this._holds = true; this._keys(); }
+    taken() { this._holds = false; this._keys(); }
+    /** Told by the steward that the keys are inside the pane — in a tab's widget: the bar is not where the work is. */
+    within(on) { this._inside = !!on; this._keys(); }
+    offered() { this._offered = true; this._keys(); }
+    withdrawn() { this._offered = false; this._keys(); }
+    _keys() {
+        var v = PaneKeys.keysState(this);
+        if (v) this.el.setAttribute("data-keys", v); else this.el.removeAttribute("data-keys");
+        this._strip.keys(this.chipOf(this._activeId === null ? -1 : this._find(this._activeId)), v === "candidate" ? null : v);
+    }
 
     dispose() {
         if (this._disposed) return;

@@ -26,7 +26,7 @@ class IconStylesTest {
     @Test
     void everyWordHasItsClass_andEveryClassItsWord_once() {
         var words = vocabulary();
-        assertEquals(18, words.size(), "the vocabulary: " + words);
+        assertEquals(19, words.size(), "the vocabulary: " + words);
         var worn = IconStyles.worded().stream().map(IconStyles.Worded::word).toList();
         assertEquals(words.size(), worn.stream().distinct().count(), "a word worn twice: " + worn);
         for (Class<?> w : words) assertTrue(worn.contains(w), w.getSimpleName() + " has no class in the wardrobe");
@@ -44,8 +44,8 @@ class IconStylesTest {
         assertEquals("const ICONS = Object.freeze({ \"check\": ic_check, \"disclose\": ic_disclose, \"close\": ic_close, \"detach\": ic_detach, \"rotate\": ic_rotate, \"flip\": ic_flip,"
                    + " \"add\": ic_add, \"remove\": ic_remove, \"reset\": ic_reset, \"pin\": ic_pin, \"settings\": ic_settings,"
                    + " \"grip\": ic_grip, \"size\": ic_size, \"aspect\": ic_aspect, \"extent\": ic_extent, \"level\": ic_level,"
-                   + " \"column\": ic_column, \"row\": ic_row });", body.get(2));
-        assertEquals(List.of("check", "disclose", "close", "detach", "rotate", "flip", "add", "remove", "reset", "pin", "settings", "grip", "size", "aspect", "extent", "level", "column", "row"), IconsModule.names());
+                   + " \"column\": ic_column, \"row\": ic_row, \"within\": ic_within });", body.get(2));
+        assertEquals(List.of("check", "disclose", "close", "detach", "rotate", "flip", "add", "remove", "reset", "pin", "settings", "grip", "size", "aspect", "extent", "level", "column", "row", "within"), IconsModule.names());
         assertTrue(IconStyles.forWord(Icon.Detach.class).isPresent() && IconStyles.forWord(Icon.Detach.class).get().name().equals("detach"));
         var imported = IconsModule.INSTANCE.imports().getAllImports().values().stream().flatMap(mi -> mi.allImports().stream()).map(e -> e.getClass().getSimpleName()).toList();
         for (var c : IconStyles.worded()) assertTrue(imported.contains(c.getClass().getSimpleName()), c.getClass().getSimpleName() + " is in the table but not imported");

@@ -248,6 +248,7 @@ final class EditorialDesign {
             glyph(of(Level.class, Type.Glyph.class), "≡"),
             glyph(of(Icon.Column.class, Type.Glyph.class), "▥"),
             glyph(of(Icon.Row.class, Type.Glyph.class), "▤"),
+            glyph(of(Icon.Within.class, Type.Glyph.class), "◉"),
             // a container, and the card: an index card: three by two, a soft corner
             one(of(Container.class, Shape.Corner.class), "6px"),
             withKeysMark(ruleWithFocusRing(of(Container.class, Shape.Rule.class), "1px", "solid", "2px", "solid", "-2px"),

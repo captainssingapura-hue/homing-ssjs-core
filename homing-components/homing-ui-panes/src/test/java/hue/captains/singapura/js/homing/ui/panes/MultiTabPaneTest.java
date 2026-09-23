@@ -66,7 +66,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
                     toggleClass: function (e, c, f) { e.classList.toggle(c, f); },
                     hasClass: function (e, c) { return e.classList.contains(c); },
                     size: function (e, s) { e.size = s; }, aspect: function (e, a) { e.aspect = a; } };
-        var mtp_pane = "mtp_pane", mtp_strip = "mtp_strip", mtp_chip = "mtp_chip", mtp_chip_label = "mtp_chip_label",
+        var mtp_pane = "mtp_pane", mtp_strip = "mtp_strip", mtp_chip = "mtp_chip", mtp_chip_label = "mtp_chip_label", mtp_chip_mark = "mtp_chip_mark", mtp_chip_mark_on = "mtp_chip_mark_on",
             mtp_chip_dragging = "mtp_chip_dragging", mtp_chip_shifted = "mtp_chip_shifted", mtp_strip_loose = "mtp_strip_loose", mtp_chip_close = "mtp_chip_close", mtp_drop_mark = "mtp_drop_mark",
             mtp_chip_seated = "mtp_chip_seated",
             mtp_strip_tail = "mtp_strip_tail", mtp_add = "mtp_add", mtp_add_off = "mtp_add_off", mtp_pill = "mtp_pill",
@@ -213,8 +213,8 @@ class MultiTabPaneTest extends JsModuleTestBase {
     void pinnedTabsSitFirstCannotCloseAndAreNotPassed() {
         eval("pane.addTab(tab('a')); pane.addTab(tab('p', { pinned: true })); pane.addTab(tab('b')); log = []");
         assertEquals("P,A,B", chips());
-        assertEquals("1", eval("pane.el.children[0].children[0].children.length").toString(), "no cross on the pinned chip");
-        assertEquals("2", eval("pane.el.children[0].children[1].children.length").toString());
+        assertEquals("2", eval("pane.el.children[0].children[0].children.length").toString(), "the label and the within mark, and no cross on the pinned chip");
+        assertEquals("3", eval("pane.el.children[0].children[1].children.length").toString(), "an unpinned chip: the label, the mark and the cross");
         eval("pane.moveTab('b', 0)");
         assertEquals("P,B,A", chips(), "a drop never lands before the pinned");
         assertEquals("moved:s1:b@2->s1@1", log());
@@ -246,8 +246,46 @@ class MultiTabPaneTest extends JsModuleTestBase {
         assertEquals("active:s1:b", log(), "the press selects, before any release");
         eval("log = []; chip.fire('pointerdown', { button: 2, target: chip, clientX: 0, clientY: 0 }); chip.fire('click')");
         assertEquals("", log(), "a secondary button or a bare click is nothing");
-        eval("log = []; pane.el.children[0].children[1].children[1].fire('click')");
+        eval("log = []; pane.el.children[0].children[1].children[2].fire('click')");   // label, mark, cross
         assertEquals("b:disposed removed:s1:b@1 active:s1:a", log());
+    }
+
+    /**
+     * Where the keys are is said twice: on the frame, and on the ACTIVE CHIP.
+     * The pane holds them — the bar is where the work is — and the chip says
+     * held; the keys go into the tab's widget and the steward tells the pane
+     * within, so the chip says lent and wears the mark; they leave and the
+     * chip says nothing. The mark goes with the tab that is shown.
+     */
+    @Test
+    void theActiveChipSaysWhetherTheKeysAreOnTheBarOrInTheTab() {
+        eval("pane.addTab(tab('a')); pane.addTab(tab('b')); pane.switchTab('a')");
+        eval("""
+            var chips = pane.el.children[0];
+            function chipState(i) { return String(chips.children[i].getAttribute('data-keys')); }
+            function marked(i) { return chips.children[i].children[1].has('mtp_chip_mark_on'); }
+            """);
+        assertEquals("null null", eval("chipState(0) + ' ' + chipState(1)").asString(), "nobody holds: the chips say nothing");
+        eval("pane.granted()");
+        assertEquals("held", eval("chipState(0)").asString(), "the bar has them, and the active chip says so");
+        assertFalse(eval("marked(0)").asBoolean(), "no mark on the bar: the mark means the keys went in");
+        eval("pane.taken(); pane.within(true)");
+        assertEquals("lent", eval("chipState(0)").asString(), "the keys are in the tab: lent");
+        assertTrue(eval("marked(0)").asBoolean(), "and the chip wears the within mark");
+        assertEquals("lent", eval("String(pane.el.getAttribute('data-keys'))").asString(), "and the frame says lent too: the keys are in the dock, lent to what the tab holds - so a dock on a flat surface still reads as the place being worked in");
+        eval("pane.switchTab('b')");
+        assertEquals("null lent", eval("chipState(0) + ' ' + chipState(1)").asString(), "the mark goes with the tab that is shown");
+        assertTrue(eval("marked(1) && !marked(0)").asBoolean());
+        eval("pane.within(false); pane.granted()");
+        assertEquals("held", eval("chipState(1)").asString(), "back on the bar");
+        assertFalse(eval("marked(1)").asBoolean());
+        eval("pane.taken()");
+        assertEquals("null null", eval("chipState(0) + ' ' + chipState(1)").asString(), "and gone");
+        // the walk's offer is the frame's alone: a chip is not offered anything
+        eval("pane.offered()");
+        assertEquals("candidate", eval("String(pane.el.getAttribute('data-keys'))").asString());
+        assertEquals("null null", eval("chipState(0) + ' ' + chipState(1)").asString(), "the offer is the pane's, not a tab's");
+        eval("pane.withdrawn()");
     }
 
     /**
@@ -355,7 +393,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
         assertTrue(eval("pane.keyDown({ key: 'Enter' })").asBoolean());
         assertEquals("detach?s1:b b:activate", log(), "Enter: the widget activates itself");
         assertEquals("b", eval("holder()").asString(), "and holds - a claim of its own, not the pane's");
-        assertEquals("null", eval("String(pane.el.getAttribute('data-keys'))").asString());
+        assertEquals("lent", eval("String(pane.el.getAttribute('data-keys'))").asString(), "the pane does not hold them, and the steward told it they are within it: lent");
         eval("log = []; KeyboardStewardInstance._forward('KeyDown', { key: 'ArrowUp', target: null, preventDefault: function () {}, stopPropagation: function () {} })");
         assertEquals("b:key:ArrowUp", log(), "the keys are the widget's now, through the steward");
         eval("log = []; KeyboardStewardInstance.yield(pane.widgetOf('b').focus)");

@@ -21,7 +21,12 @@
 //     strip.arrange(chips)          the chips in order, before the tail
 //     strip.remove(chip)
 //     strip.select(chips, active)   aria-selected on the active one
+//     strip.keys(chip, state)       where the keys are, said on one chip: "held"
+//         while the bar has them, "lent" with the within mark while what the tab
+//         holds has them, null on none — the design answers the state on Control.Tab
 //     strip.count(n, budget, addOn) the pill, and the add button on or off
+//     strip.at(clientX, clientY)    a point on the strip: the index a tab from
+//         outside would land at, marked there; −1 when the point is not on it
 //     strip.markAt(clientX)         the mark where a tab from outside would land → index
 //     strip.unmark()
 //     strip.size(s?)                the chips' size, −1..1, 0 the design's; every chip, now and later
@@ -118,10 +123,16 @@ class TabStrip {
         c.setAttribute("role", "tab");
         c.setAttribute("aria-selected", "false");
         c.title = tab.title == null ? "" : String(tab.title);
+
         var label = branch.createElement("label-" + name, "span");
         css.addClass(label, mtp_chip_label);
         label.textContent = tab.title == null ? tab.id : String(tab.title);
         c.appendChild(label);
+        var mark = branch.createElement("mark-" + name, "span");   // the within mark, after the label: shown only while the keys are in this tab
+        css.addClass(mark, mtp_chip_mark);
+        mark.setAttribute("aria-hidden", "true");
+        c._mark = mark;
+        c.appendChild(mark);
         var closeBtn = null;
         if (tab.closable !== false && !tab.pinned) {
             closeBtn = branch.createElement("close-" + name, "button");
@@ -177,6 +188,17 @@ class TabStrip {
         this._pinned.delete(c);
         if (c.parentNode === this.el) this.el.removeChild(c);
     }
+    /** Where the keys are, said on one chip and on no other: "held", "lent", or null. */
+    keys(chip, state) {
+        var all = this._order;
+        for (var i = 0; i < all.length; i++) {
+            var on = all[i] === chip && (state === "held" || state === "lent");
+            if (on) all[i].setAttribute("data-keys", state); else all[i].removeAttribute("data-keys");
+            if (all[i]._mark) css.toggleClass(all[i]._mark, mtp_chip_mark_on, on && state === "lent");
+        }
+        return this;
+    }
+
     select(chips, active) {
         for (var i = 0; i < chips.length; i++) chips[i].setAttribute("aria-selected", chips[i] === active ? "true" : "false");
     }
@@ -229,6 +251,12 @@ class TabStrip {
         return out;
     }
     /** The mark where a tab from outside would land, and the index it would take. */
+    /** A point on the strip, or not: the index it would land at, marked, else −1 and nothing marked. */
+    at(x, y) {
+        var s = this.el.getBoundingClientRect();
+        if (x < s.left || x > s.right || y < s.top || y > s.bottom) { this.unmark(); return -1; }
+        return this.markAt(x);
+    }
     markAt(x) { var dest = this._destAt(null, x); this._markAt(null, dest); return dest; }
     unmark() { if (this._mark.parentNode) this._mark.parentNode.removeChild(this._mark); }
     /** Where the chip would land: the count of the other chips whose middle is left of x, never before the pinned. */

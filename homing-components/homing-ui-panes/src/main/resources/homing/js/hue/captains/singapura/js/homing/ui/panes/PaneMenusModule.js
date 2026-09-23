@@ -36,7 +36,7 @@ class PaneMenus {
     static byKey(pane) {
         var i = pane.activeTab() === null ? -1 : pane.tabIndexOf(pane.activeTab());
         if (i < 0 || !pane._tabs[i].menu) return false;
-        var r = pane._tabs[i].chip.getBoundingClientRect();
+        var r = pane.chipOf(i).getBoundingClientRect();
         return !!pane._tabs[i].menu({ x: r.left + 12, y: r.bottom - 2 }, true);
     }
 

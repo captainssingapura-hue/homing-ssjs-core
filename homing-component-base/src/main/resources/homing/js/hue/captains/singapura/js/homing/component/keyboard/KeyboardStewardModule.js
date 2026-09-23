@@ -20,6 +20,10 @@
 //   while the keyboard has the page — the steward's one focusin listener
 //   withdraws, and never claims.
 //
+// A member is also told when the keys are INSIDE it — within(on), on the
+// holder's ancestors in the focus tree — so a container can show where the
+// work is going on. Nothing is handed on: it is told, not routed.
+//
 // Members: a membership of the focus tree, joined on the party's `joined`
 // notice, its component's keyDown/keyUp/granted/taken the reactors; or, the
 // older way, an id with handlers. The roots under the convention are enrolled
@@ -106,7 +110,8 @@ class KeyboardSteward {
             var c = id.component;
             handlers = { keyDown: typeof c.keyDown === "function" ? function (ev) { return c.keyDown(ev); } : null, keyUp: typeof c.keyUp === "function" ? function (ev) { return c.keyUp(ev); } : null,
                          granted: typeof c.granted === "function" ? function (by) { c.granted(by); } : null, taken: typeof c.taken === "function" ? function (by) { c.taken(by); } : null,
-                         offered: typeof c.offered === "function" ? function () { c.offered(); } : null, withdrawn: typeof c.withdrawn === "function" ? function () { c.withdrawn(); } : null };
+                         offered: typeof c.offered === "function" ? function () { c.offered(); } : null, withdrawn: typeof c.withdrawn === "function" ? function () { c.withdrawn(); } : null,
+                         within: typeof c.within === "function" ? function (on) { c.within(on); } : null };
             id = id.id;
         }
         if (typeof id !== "string" || !id) throw new Error("[KeyboardSteward] a member needs an id");
@@ -236,10 +241,11 @@ class KeyboardSteward {
     _held(id, by) {
         this._holder = id;
         this.withdraw();   // the keys have moved: whatever was offered, the walk is over
+        this._told();
         this._fire(KeyboardEvents.Granted(id, by == null ? "claim" : by));
     }
     _lost(id, by) {
-        if (this._holder === id) this._holder = null;
+        if (this._holder === id) { this._holder = null; this._told(); }
         this._fire(by == null ? KeyboardEvents.Released(id) : KeyboardEvents.Taken(id, by));
     }
 
@@ -251,6 +257,26 @@ class KeyboardSteward {
         document[f]("keyup", this._onUp, false);
         document[f]("focusin", this._onFocusIn, false);
     }
+    /**
+     * Who the keys are inside: the holder's ancestors in the focus tree, told
+     * when that changes and only if they ask — within(true) as the keys come
+     * into them, within(false) as they leave. Nothing is handed on and no key
+     * is routed: a container that shows where the work is going on wants this,
+     * and it is a fact about state, not a tier of bubbling.
+     */
+    _told() {
+        var now = {}, m = this._holder && this._focus ? this._focus.find(this._holder) : null, id;
+        for (var p = m ? m.parent() : null; p; p = p.parent()) now[p.id] = true;
+        var was = this._inside || {};
+        for (id in was) if (!now[id]) this._tell(id, false);
+        for (id in now) if (!was[id]) this._tell(id, true);
+        this._inside = now;
+    }
+    _tell(id, on) {
+        var h = this._members[id];
+        if (h && typeof h.within === "function") { try { h.within(on); } catch (e) { console.error("[KeyboardSteward] within threw:", e); } }
+    }
+
     /** By state: the walk's keys are the steward's; a key from the body goes to the holder; a key from a focused element goes nowhere. Each traced. */
     _forward(kind, ev) {
         if (KeyboardSteward.fromAFocusedElement(ev)) { this.withdraw(); this._traced(kind, ev, "native", ev.target, false); return; }

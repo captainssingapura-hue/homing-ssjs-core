@@ -10,6 +10,7 @@ import java.util.Set;
 
 import static hue.captains.singapura.js.homing.design.DesignClass.of;
 import static hue.captains.singapura.js.homing.design.Box.Control;
+import hue.captains.singapura.js.homing.design.Icon;
 import static hue.captains.singapura.js.homing.design.Box.Container;
 import static hue.captains.singapura.js.homing.design.Emphasis.Muted;
 import static hue.captains.singapura.js.homing.design.Emphasis.Primary;
@@ -109,6 +110,35 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
             touch-action: none;
             """;
         }
+    }
+
+    /**
+     * The mark on a chip while the keys are inside its tab: the design's
+     * picture for "within", in the chip's own ink and never in the way of the
+     * hand. It is there only while the keys are in the tab — the chip says
+     * *held* while the bar has them, and *lent* with this mark while what the
+     * tab holds has them.
+     */
+    public record mtp_chip_mark() implements CssClass<PaneStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Icon.Within.class, Type.Glyph.class)); }
+        @Override public String body() { return """
+            display: none;
+            flex: none;
+            align-items: center;
+            justify-content: center;
+            inline-size: 1.1em;
+            block-size: 1em;
+            line-height: 1;
+            font-style: normal;
+            pointer-events: none;
+            user-select: none;
+            """;
+        }
+    }
+
+    /** The mark, while the keys are in the tab. */
+    public record mtp_chip_mark_on() implements CssClass<PaneStyles> {
+        @Override public String body() { return "display: inline-flex;"; }
     }
 
     /** The label in a chip: takes the room the cross leaves, and ellipsises. */
@@ -281,7 +311,7 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
 
     @Override
     public List<CssClass<PaneStyles>> cssClasses() {
-        return List.of(new mtp_pane(), new mtp_strip(), new mtp_strip_loose(), new mtp_chip(), new mtp_chip_label(), new mtp_chip_seated(), new mtp_chip_dragging(), new mtp_chip_shifted(),
+        return List.of(new mtp_pane(), new mtp_strip(), new mtp_strip_loose(), new mtp_chip(), new mtp_chip_label(), new mtp_chip_mark(), new mtp_chip_mark_on(), new mtp_chip_seated(), new mtp_chip_dragging(), new mtp_chip_shifted(),
                        new mtp_chip_close(), new mtp_drop_mark(), new mtp_strip_tail(), new mtp_add(), new mtp_add_off(),
                        new mtp_pill(), new mtp_content(), new mtp_tab_content(), new mtp_empty(), new mtp_dock_target(),
                        new mtp_tab_content_hidden());   // last, so hidden wins over what a panel or the empty note says of its display
