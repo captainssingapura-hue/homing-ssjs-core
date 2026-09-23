@@ -51,6 +51,7 @@ public record SplitGridStyles() implements CssGroup<SplitGridStyles> {
             width: 100%;
             flex: 1 1 auto;
             align-self: stretch;
+            box-sizing: border-box;
             min-width: 0;
             min-height: 0;
             """;
@@ -168,36 +169,45 @@ public record SplitGridStyles() implements CssGroup<SplitGridStyles> {
     }
 
     /**
-      * Whether the lattice is DRAWN: the design's line along the splitter,
-      * which at a thickness of one pixel is the whole of it. A joint has no
-      * presence of its own — that is what a joint is — but a grid whose rooms
-      * bring no edges of their own cannot show where one ends and the next
-      * begins, and then the line is not the splitter showing off: it is the
-      * ROOM's edge, drawn on the only thing that lies between them. A grid
-      * whose cells carry their own frames wants none of it.
+      * Whether the lattice is DRAWN: one line, one word, one width, wherever a
+      * line falls in this grid. A joint has no presence of its own — that is
+      * what a joint is — but a grid whose rooms bring no edges of their own
+      * cannot show where one ends and the next begins, and then the line is
+      * not the splitter showing off: it is the ROOM's edge, drawn on the only
+      * thing that lies between them. A grid whose cells carry their own frames
+      * wants none of it.
+      *
+      * <p>READ, not worn: the line is FILLED rather than bordered, because its
+      * thickness is the grid's and a border of the design's width would paint
+      * one pixel of a six-pixel line and leave the rest a gutter — which is
+      * the very thing the splitter stopped being. The grid owns the width, the
+      * design owns the colour. One word for every line, and the HAIRLINE is
+      * it: the quiet line between things, which every design colours exactly
+      * as it colours the spine, so the distinction bought nothing and cost a
+      * reader a moment.</p>
       */
-    public record sg_divider_h_seam() implements CssClass<SplitGridStyles> {
-        /**
-         * READ, not worn: the line is FILLED rather than bordered, because its
-         * thickness is the grid's and a border of the design's width would
-         * paint one pixel of a six-pixel line and leave the rest a gutter —
-         * which is the very thing the splitter stopped being. So the grid owns
-         * the width and the design owns the colour, which is the honest
-         * division when a thing can be dialled.
-         */
-        @Override public List<? extends Wearable> reads() { return List.of(of(Spine.class, Color.Edge.class)); }
-        @Override public String body() { return "background-color: var(--spine-color-edge-border-color);"; }
+    public record sg_divider_seam() implements CssClass<SplitGridStyles> {
+        @Override public List<? extends Wearable> reads() { return List.of(of(Hairline.class, Color.Edge.class)); }
+        @Override public String body() { return "background-color: var(--hairline-color-edge-border-color);"; }
     }
 
     /**
-      * The same seam between stacked rooms: the HAIRLINE, the quiet line under
-      * a thing — not the Divider, which in these designs is an emphatic rule
-      * two pixels thick and in the accent, and reads as a bar rather than a
-      * seam. A spine across, a hairline down, and both of them pale.
+      * The grid's OWN edge, in the same line: so that every side of every room
+      * is the same width and the same colour, whether what lies beyond it is
+      * another room or the end of the workspace. A room at the edge of the
+      * grid should not be able to tell — and a holder that drew its own frame
+      * round the grid would give it away, being a line of the design's width
+      * rather than the one being dialled.
       */
-    public record sg_divider_v_seam() implements CssClass<SplitGridStyles> {
+    public record sg_root_seam() implements CssClass<SplitGridStyles> {
+        @Override public Set<CssVar> runtimeVars() { return Set.of(new CssVar("--sg-line")); }
         @Override public List<? extends Wearable> reads() { return List.of(of(Hairline.class, Color.Edge.class)); }
-        @Override public String body() { return "background-color: var(--hairline-color-edge-border-color);"; }
+        @Override public String body() { return """
+            border-style: solid;
+            border-width: var(--sg-line, 1px);
+            border-color: var(--hairline-color-edge-border-color);
+            """;
+        }
     }
 
     /**
@@ -282,7 +292,7 @@ public record SplitGridStyles() implements CssGroup<SplitGridStyles> {
     public List<CssClass<SplitGridStyles>> cssClasses() {
         return List.of(new sg_root(), new sg_split(), new sg_split_h(), new sg_split_v(), new sg_child(), new sg_child_h(), new sg_child_v(),
                        new sg_cell(), new sg_divider(), new sg_divider_h(), new sg_divider_v(), new sg_divider_lit(), new sg_child_lit(),
-                       new sg_divider_h_seam(), new sg_divider_v_seam(),
+                       new sg_divider_seam(), new sg_root_seam(),
                        new sgm_root(), new sgm_cell(), new sgm_cell_current());
     }
 }

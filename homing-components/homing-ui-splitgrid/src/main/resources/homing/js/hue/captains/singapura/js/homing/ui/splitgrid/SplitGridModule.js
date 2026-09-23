@@ -15,11 +15,12 @@
 //             both sides — and the hand reaches 3px past it either way, so a
 //             line of one pixel is still seven to grab. 0 draws nothing and
 //             still drags.
-//     seam:   the splitters keep the design's line at rest. Off by default: a
-//             joint has no presence of its own, and a workspace whose panels
-//             carry their own frames wants none. On for a grid whose cells
-//             bring no edges, where the line is the ROOM's and the splitter is
-//             only what it is drawn on.
+//     seam:   the lattice is drawn — every splitter, AND the grid's own edge,
+//             in one line of one width and one colour, so that no room can
+//             tell which of its sides has another room beyond it and which has
+//             the end of the workspace. Off by default: a joint has no
+//             presence of its own, and a grid whose cells carry their own
+//             frames wants none.
 //
 //   grid.el
 //   grid.box()                 → { w, h }: the grid's box in px, for a mirror to reflect
@@ -34,8 +35,8 @@
 //                                the same row or column when the orientation
 //                                matches, else the cell becomes a split of the
 //                                two. Reports Subdivided
-//   grid.seam(on)              the seam at rest, live: the design's line along
-//                                every splitter, or none at all
+//   grid.seam(on)              the lattice drawn, live: every splitter and the
+//                                grid's own edge, in one line, or none of them
 //   grid.thickness(px?)        the lines' thickness, live; read with no argument
 //   grid.splitters(id)         → the cells across a splitter of this one's own:
 //                                [ { side, axis, id } ]. At most two — the panes
@@ -61,9 +62,9 @@
 //
 // A drag moves the divider between two neighbours and re-shares those two,
 // each kept at the minimum; the change is reported once, on release. THE
-// SPLITTER HAS NO PRESENCE UNTIL IT IS WANTED: nothing at rest, the gutter
-// between two rooms and their own edges being seam enough — unless the owner
-// asks for one with `seam`, for a grid whose cells bring no edges; found, the handle
+// SPLITTER HAS NO PRESENCE UNTIL IT IS WANTED: nothing at rest, the rooms'
+// own edges being seam enough — unless the owner asks for the lattice with
+// `seam`, for a grid whose cells bring no edges; found, the handle
 // is lit — the primary surface, part of the way; held, at full, and the two
 // rooms it is trading are ringed for as long as it is held, which is its
 // coverage. The hand reaches a little past the gutter on either side, so it
@@ -94,6 +95,7 @@ class SplitGrid {
         css.addClass(root, sg_root);
         root.style.setProperty("--sg-min", this._minPx + "px");
         root.style.setProperty("--sg-line", this._line + "px");
+        if (this._seam) css.addClass(root, sg_root_seam);   // the grid's own edge is a line of the lattice, not the holder's frame
         this.el = root;
         this._arrange();
         opts.host.appendChild(root);
@@ -140,7 +142,7 @@ class SplitGrid {
             if (i > 0) {
                 var divider = branch.createElement("divider-" + name + "-" + i, "div");
                 css.addClass(divider, sg_divider, horizontal ? sg_divider_h : sg_divider_v);
-                if (this._seam) css.addClass(divider, horizontal ? sg_divider_h_seam : sg_divider_v_seam);
+                if (this._seam) css.addClass(divider, sg_divider_seam);
                 this._dividers.push({ el: divider, horizontal: horizontal });
                 divider.setAttribute("role", "separator");
                 divider.setAttribute("aria-orientation", horizontal ? "vertical" : "horizontal");
@@ -254,7 +256,6 @@ class SplitGrid {
         return fresh;
     }
 
-    /** The seam at rest, live: the design's line along every splitter, or none at all. */
     /** The lines' thickness in pixels, live; read with no argument. The hand's reach past them does not change with it. */
     thickness(px) {
         if (arguments.length === 0) return this._line;
@@ -263,13 +264,12 @@ class SplitGrid {
         return this;
     }
 
+    /** The lattice drawn, live: every splitter AND the grid's own edge, or none of them. */
     seam(on) {
         this._seam = !!on;
         var want = this._seam;
-        this._dividers.forEach(function (d) {
-            var word = d.horizontal ? sg_divider_h_seam : sg_divider_v_seam;
-            if (want) css.addClass(d.el, word); else css.removeClass(d.el, word);
-        });
+        css.toggleClass(this.el, sg_root_seam, want);
+        this._dividers.forEach(function (d) { css.toggleClass(d.el, sg_divider_seam, want); });
         return this;
     }
 
