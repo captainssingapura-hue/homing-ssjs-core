@@ -68,14 +68,27 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
 
     /** The strip: raised, a divider under it, scrolling sideways when the chips overflow. The chips sit on its bottom edge, with room above for a lift. */
     public record mtp_strip() implements CssClass<PaneStyles> {
+        /** The axes are set here and the chips inherit them, so the bar can measure a tab by the same numbers they do. */
+        @Override public Set<CssVar> runtimeVars() { return Set.of(new CssVar("--size"), new CssVar("--aspect")); }
         @Override public List<? extends Wearable> wears() { return List.of(of(Raised.class, Color.Surface.class), of(Divider.class, Color.Edge.class), of(Divider.class, Shape.Rule.class)); }
+        /**
+         * The tab's frame, by reference rather than worn: a bar is one tab
+         * tall whether or not it holds one — a dock parted off and still
+         * empty is a bar, not a line — and the height follows the size and
+         * the aspect axes and the theme, because it is the tab's own measure
+         * over the tab's own proportion, not a number written down here.
+         */
+        @Override public List<? extends Wearable> reads() { return List.of(of(Control.Tab.class, Size.Extent.class), of(Control.Tab.class, Size.Proportion.class)); }
         @Override public String body() { return """
             display: flex;
             align-items: flex-end;
             flex-shrink: 0;
             padding-block: 4px 0;
+            min-block-size: calc(var(--control-tab-size-extent-inline-size) * pow(var(--control-tab-size-extent-inline-size-ratio), var(--size, 0))
+                               / (var(--control-tab-size-proportion) * pow(var(--control-tab-size-proportion-ratio-aspect), var(--aspect, 0))));
             overflow-x: auto;
             overflow-y: hidden;
+            scrollbar-width: none;
             user-select: none;
             """;
         }

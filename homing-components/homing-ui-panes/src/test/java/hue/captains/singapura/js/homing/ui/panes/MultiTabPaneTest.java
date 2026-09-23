@@ -204,11 +204,14 @@ class MultiTabPaneTest extends JsModuleTestBase {
     }
 
     @Test
-    void theSizeAndAspectReachEveryChip_nowAndLater() {
+    void theSizeAndAspectReachEveryChip_andTheBar_nowAndLater() {
         eval("pane.addTab(tab('a')); pane.size(0.5); pane.aspect(-2); pane.addTab(tab('b'))");
         assertEquals("0.5/-1 0.5/-1", eval("pane.el.children[0].children.filter(function (c) { return c.has('mtp_chip'); }).map(function (c) { return c.size + '/' + c.aspect; }).join(' ')").asString(), "clamped to −1..1; a chip made after gets them too");
+        assertEquals("0.5/-1", eval("var s = pane.el.children[0]; s.size + '/' + s.aspect").asString(),
+                     "and the bar, which keeps a tab's room while it holds none: an axis does not inherit, so the bar needs its own");
         eval("pane.size(null); pane.aspect(null)");
         assertEquals("null/null", eval("var c = pane.el.children[0].children[0]; c.size + '/' + c.aspect").asString(), "null gives the design's back");
+        assertEquals("null/null", eval("var s = pane.el.children[0]; s.size + '/' + s.aspect").asString());
     }
 
     @Test

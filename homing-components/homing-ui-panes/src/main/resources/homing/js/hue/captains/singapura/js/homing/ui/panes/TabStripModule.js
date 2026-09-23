@@ -174,13 +174,17 @@ class TabStrip {
         if (this.el.parentNode) this.el.parentNode.removeChild(this.el);
         this._branch.dissolve();
     }
+    // Every chip gets the axis and so does the bar: an axis is the element's own, registered not to inherit, and the
+    // bar needs one because it keeps a tab's room whether or not it holds a tab to measure.
     size(s) {
         this._size = s == null ? null : Math.max(-1, Math.min(1, Number(s)));
+        css.size(this.el, this._size);
         for (var i = 0; i < this._order.length; i++) css.size(this._order[i], this._size);
     }
     aspect(a) {
         this._aspect = a == null ? null : Math.max(-1, Math.min(1, Number(a)));
-        for (var i = 0; i < this._order.length; i++) css.aspect(this._order[i], this._aspect);
+        css.aspect(this.el, this._aspect);
+        for (var j = 0; j < this._order.length; j++) css.aspect(this._order[j], this._aspect);
     }
 
     arrange(chips) {
