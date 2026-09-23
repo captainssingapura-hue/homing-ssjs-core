@@ -7,6 +7,7 @@ import hue.captains.singapura.js.homing.design.State;
 import java.util.Map;
 
 import static hue.captains.singapura.js.homing.design.DesignClass.of;
+import hue.captains.singapura.js.homing.design.Icon;
 import static hue.captains.singapura.js.homing.design.Target.*;
 import static hue.captains.singapura.js.homing.design.Box.*;
 import static hue.captains.singapura.js.homing.design.Brand.*;
@@ -49,6 +50,7 @@ final class RetroFuturismDesign {
     static String halo(String neon) { return "0 0 6px " + glow(neon, 80) + ", 0 0 18px " + glow(neon, 50) + ", 0 0 40px " + glow(neon, 25); }
 
     static final Map<DesignClass<?>, Impl> WORDS = Map.ofEntries(
+            glyph(of(Icon.Close.class, Type.Glyph.class), "✘"),   // heavy, like a poster's
             // ── layers: neon frames ─────────────────────────────────────
             rule(of(Base.class, Shape.Rule.class), "0", "none"),
             one(of(Base.class, Shape.Corner.class), "0"),

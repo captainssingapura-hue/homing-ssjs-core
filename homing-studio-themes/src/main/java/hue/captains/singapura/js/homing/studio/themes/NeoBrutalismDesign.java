@@ -8,6 +8,7 @@ import hue.captains.singapura.js.homing.design.State;
 import java.util.Map;
 
 import static hue.captains.singapura.js.homing.design.DesignClass.of;
+import hue.captains.singapura.js.homing.design.Icon;
 import static hue.captains.singapura.js.homing.design.Target.*;
 import static hue.captains.singapura.js.homing.design.Box.*;
 import static hue.captains.singapura.js.homing.design.Brand.*;
@@ -75,6 +76,7 @@ final class NeoBrutalismDesign {
                     .in(Mode.DARK, State.CURRENT, "border-color", INK_D);
 
     static final Map<DesignClass<?>, Impl> WORDS = Map.ofEntries(
+            glyph(of(Icon.Close.class, Type.Glyph.class), "╳"),   // ruled, not drawn: two blunt strokes
             // ── layers: paper, and everything edged in ink ──────────────
             // the page: paper under a riso dot screen — the grid behind everything, 12px pitch, ink at a fraction
             surfacePattern(of(Base.class, Color.Surface.class), PAPER, "radial-gradient(circle, color-mix(in srgb, " + INK + " 14%, transparent) 1px, transparent 1px)", "12px 12px",

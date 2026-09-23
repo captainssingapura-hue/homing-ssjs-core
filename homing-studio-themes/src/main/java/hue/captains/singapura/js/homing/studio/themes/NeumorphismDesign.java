@@ -7,6 +7,7 @@ import hue.captains.singapura.js.homing.design.State;
 import java.util.Map;
 
 import static hue.captains.singapura.js.homing.design.DesignClass.of;
+import hue.captains.singapura.js.homing.design.Icon;
 import static hue.captains.singapura.js.homing.design.Target.*;
 import static hue.captains.singapura.js.homing.design.Box.*;
 import static hue.captains.singapura.js.homing.design.Brand.*;
@@ -53,6 +54,7 @@ final class NeumorphismDesign {
     static String relief(int px) { return "drop-shadow(" + px + "px " + px + "px " + (2 * px) + "px " + SHADE + ") drop-shadow(-" + px + "px -" + px + "px " + (2 * px) + "px " + LIGHT + ")"; }
 
     static final Map<DesignClass<?>, Impl> WORDS = Map.ofEntries(
+            glyph(of(Icon.Close.class, Type.Glyph.class), "✗"),   // a soft hand, to match the soft light
             // ── layers: moulded, not drawn ──────────────────────────────
             rule(of(Base.class, Shape.Rule.class), "0", "none"),
             one(of(Base.class, Shape.Corner.class), "0"),

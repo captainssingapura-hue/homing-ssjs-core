@@ -141,8 +141,7 @@ class TabStrip {
         if (tab.closable !== false && !tab.pinned) {
             closeBtn = branch.createElement("close-" + name, "button");
             closeBtn.type = "button";
-            css.addClass(closeBtn, mtp_chip_close);
-            closeBtn.textContent = "×";
+            css.addClass(closeBtn, mtp_chip_close);   // the cross is the design's, drawn by the class's word
             closeBtn.setAttribute("aria-label", "Close " + label.textContent);
             closeBtn.setAttribute("tabindex", "-1");
             closeBtn.addEventListener("click", function (ev) { ev.stopPropagation(); handlers.onClose(); });

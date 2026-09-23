@@ -8,6 +8,7 @@ import hue.captains.singapura.js.homing.design.State;
 import java.util.Map;
 
 import static hue.captains.singapura.js.homing.design.DesignClass.of;
+import hue.captains.singapura.js.homing.design.Icon;
 import static hue.captains.singapura.js.homing.design.Target.*;
 import static hue.captains.singapura.js.homing.design.Box.*;
 import static hue.captains.singapura.js.homing.design.Brand.*;
@@ -103,6 +104,7 @@ final class NeoFuturismDesign {
                     .in(Mode.DARK, State.FOCUS, "outline-color", CYAN_D);
 
     static final Map<DesignClass<?>, Impl> WORDS = Map.ofEntries(
+            glyph(of(Icon.Close.class, Type.Glyph.class), "⨯"),   // the vector cross: thin, exact
             // ── layers: glass over space ────────────────────────────────
             surface(of(Base.class, Color.Surface.class), SURFACE, SURFACE_D),
             one(of(Base.class, Color.Scrollbar.class), glow(CYAN, 45) + " transparent", glow(CYAN_D, 45) + " transparent"),

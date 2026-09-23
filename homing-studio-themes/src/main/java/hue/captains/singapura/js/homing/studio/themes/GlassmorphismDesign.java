@@ -7,6 +7,7 @@ import hue.captains.singapura.js.homing.design.State;
 import java.util.Map;
 
 import static hue.captains.singapura.js.homing.design.DesignClass.of;
+import hue.captains.singapura.js.homing.design.Icon;
 import static hue.captains.singapura.js.homing.design.Target.*;
 import static hue.captains.singapura.js.homing.design.Box.*;
 import static hue.captains.singapura.js.homing.design.Brand.*;
@@ -48,6 +49,7 @@ final class GlassmorphismDesign {
     static final String TOP_LIGHT = "inset 0 1px 0 color-mix(in srgb, white 60%, transparent)";
 
     static final Map<DesignClass<?>, Impl> WORDS = Map.ofEntries(
+            glyph(of(Icon.Close.class, Type.Glyph.class), "×"),   // the lightest stroke there is, for glass
             // ── layers: every plate frosts what is behind it ────────────
             rule(of(Base.class, Shape.Rule.class), "0", "none"),
             one(of(Base.class, Shape.Corner.class), "0"),

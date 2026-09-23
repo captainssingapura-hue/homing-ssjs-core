@@ -28,6 +28,7 @@ import static hue.captains.singapura.js.homing.design.Target.Affordance;
 import static hue.captains.singapura.js.homing.design.Target.Color;
 import static hue.captains.singapura.js.homing.design.Target.Effect;
 import static hue.captains.singapura.js.homing.design.Target.Motion;
+import static hue.captains.singapura.js.homing.design.Target.Type;
 import static hue.captains.singapura.js.homing.design.Target.Shape;
 import static hue.captains.singapura.js.homing.design.Target.Size;
 import static hue.captains.singapura.js.homing.design.Target.Type;
@@ -222,13 +223,25 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
         }
     }
 
-    /** The cross on a chip that can be closed. */
+    /**
+      * The cross on a chip that can be closed: the design's own close mark,
+      * and nothing drawn around it. The word carries the picture — the design
+      * writes it as content on the mark's ::before — so nothing here is one,
+      * and the chip's own frame is frame enough: a ring of its own would be a
+      * second box inside a box. It takes no keys either, being reached
+      * through the party and not by the tab order, so it wears no ring.
+      */
     public record mtp_chip_close() implements CssClass<PaneStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Muted.class, Color.Ink.class), of(Interactive.class, Affordance.Cursor.class), of(Focus.class, Shape.Rule.class), of(Focus.class, Color.Edge.class)); }
+        @Override public List<? extends Wearable> wears() { return List.of(of(Muted.class, Color.Ink.class), of(Interactive.class, Affordance.Cursor.class), of(Icon.Close.class, Type.Glyph.class)); }
         @Override public String body() { return """
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             font: inherit;
             line-height: 1;
-            padding: 0 4px;
+            inline-size: 1.25em;
+            block-size: 1em;
+            padding: 0;
             background: transparent;
             border: 0;
             flex: none;
