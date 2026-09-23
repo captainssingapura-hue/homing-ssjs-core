@@ -203,6 +203,10 @@ final class RetroFuturismDesign {
             withKeysMark(ruleWithFocusRing(of(Container.Pane.Floating.class, Shape.Rule.class), "1px", "solid", "1px", "solid", "-1px"),
                          "2px", "solid", "3px", "1px", "dashed", "6px", "1px", "solid", "3px"),
             // a panel: a console's header, the rule under it lit by the palette
+            // the panel's depth: the neon burns out over the void, or inward into it
+            Map.entry(of(Container.Panel.class, Shape.Shadow.class), Impl.Bindings.of("none")
+                    .at(State.ELEVATED, "0 0 26px color-mix(in srgb, " + NEON_REF + " 45%, transparent)")
+                    .at(State.SUNKEN, "inset 0 0 18px color-mix(in srgb, " + VOID_REF + " 70%, transparent)")),
             gap(of(Container.Panel.class, Size.Gap.class), "0px", 1.3),
             inset(of(Container.Panel.Head.class, Size.Inset.class), "8px", "14px", 1.3),
             gap(of(Container.Panel.Head.class, Size.Gap.class), "10px", 1.3),

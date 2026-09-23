@@ -269,6 +269,10 @@ final class EditorialDesign {
             withKeysMark(ruleWithFocusRing(of(Container.Pane.Floating.class, Shape.Rule.class), "1px", "solid", "2px", "solid", "-2px"),
                          "2px", "solid", "2px", "1px", "dashed", "5px", "1px", "solid", "2px"),
             // a panel: a running head with a rule under it, and the page below
+            // the panel's depth: a quiet press, a quiet lift; the page is paper and paper does not shout
+            Map.entry(of(Container.Panel.class, Shape.Shadow.class), hue.captains.singapura.js.homing.design.Impl.Bindings.of("none")
+                    .at(hue.captains.singapura.js.homing.design.State.ELEVATED, "0 4px 14px color-mix(in srgb, " + INK_REF + " 13%, transparent)")
+                    .at(hue.captains.singapura.js.homing.design.State.SUNKEN, "inset 0 2px 6px color-mix(in srgb, " + INK_REF + " 10%, transparent)")),
             gap(of(Container.Panel.class, Size.Gap.class), "0px", 1.3),
             inset(of(Container.Panel.Head.class, Size.Inset.class), "8px", "14px", 1.3),
             gap(of(Container.Panel.Head.class, Size.Gap.class), "8px", 1.3),

@@ -308,6 +308,10 @@ final class NeoBrutalismDesign {
             withKeysMark(ruleWithFocusRing(of(Container.Pane.Floating.class, Shape.Rule.class), "3px", "solid", "3px", "solid", "-3px"),
                          "6px", "solid", "6px", "6px", "dashed", "6px", "6px", "dotted", "6px"),
             // a panel: the head is a slab, and the line under it is a bar
+            // the panel's depth: no blur either way — the ink is offset, or it is stamped in
+            Map.entry(of(Container.Panel.class, Shape.Shadow.class), Impl.Bindings.of("none")
+                    .at(State.ELEVATED, "6px 6px 0 " + INK_REF)
+                    .at(State.SUNKEN, "inset 4px 4px 0 " + INK_REF)),
             gap(of(Container.Panel.class, Size.Gap.class), "0px", 1.5),
             inset(of(Container.Panel.Head.class, Size.Inset.class), "8px", "14px", 1.5),
             gap(of(Container.Panel.Head.class, Size.Gap.class), "10px", 1.5),

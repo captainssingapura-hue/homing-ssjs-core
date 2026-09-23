@@ -38,8 +38,10 @@ class PanelTest extends JsModuleTestBase {
         }
         function fakeBranch(name) { return { name: name, createElement: function (n, tag) { var e = el(tag); e.name = n; return e; }, createBranch: function (n) { return fakeBranch(n); }, dissolve: function () { log.push("dissolved:" + name); }, activate: function () {} }; }
         var css = { addClass: function (e) { for (var i = 1; i < arguments.length; i++) e.classList.add(arguments[i]); }, removeClass: function (e) { for (var i = 1; i < arguments.length; i++) e.classList.remove(arguments[i]); },
-                    size: function (e, v) { sized.push(e.name + ":" + v); }, extent: function () {}, aspect: function () {} };
-        ["el_panel", "el_panel_head", "el_panel_title", "el_panel_slot", "el_panel_body", "el_panel_body_air", "el_panel_active"].forEach(function (c) { globalThis[c] = c; });
+                    size: function (e, v) { sized.push(e.name + ":" + v); }, extent: function () {}, aspect: function () {},
+                    elevation: function (e, v) { lifted.push(e.name + ":" + v); } };
+        var lifted = [];
+        ["el_panel", "el_panel_head", "el_panel_title", "el_panel_slot", "el_panel_body", "el_panel_body_air", "el_panel_current"].forEach(function (c) { globalThis[c] = c; });
         var observers = [];
         function MutationObserver(fn) { this.fn = fn; this.el = null; observers.push(this); }
         MutationObserver.prototype.observe = function (el, opts) { this.el = el; this.opts = opts; el._observer = this; };
@@ -103,15 +105,32 @@ class PanelTest extends JsModuleTestBase {
         assertEquals("panel:null head:null title:null controls:null", eval("sized.join(' ')").asString(), "a filled body wears no length to grow");
     }
 
-    /** The active region, by call: a class on the frame, and nothing else — for a page that wires it itself. */
+/**
+     * Two axes, and neither of them means anything by itself: the depth the
+     * design answers in its own plane, the colour that says current. What a
+     * state maps to is the app's, said in the app's code — the panel links
+     * nothing.
+     */
     @Test
-    void theActiveRegionIsSaidOnTheFrame() {
-        assertFalse(eval("panel.isActive()").asBoolean());
-        assertFalse(eval("panel.root.classes().indexOf(\"el_panel_active\") >= 0").asBoolean());
-        eval("panel.active(true)");
-        assertTrue(eval("panel.isActive() && panel.root.classes().indexOf(\"el_panel_active\") >= 0").asBoolean());
-        eval("panel.active(false)");
-        assertFalse(eval("panel.root.classes().indexOf(\"el_panel_active\") >= 0").asBoolean());
+    void theTwoRegistersAndTheColourAreSeparate_andThePanelSaysWhatItIsTold() {
+        assertTrue(eval("panel.elevationOf() === null").asBoolean(), "flat, and no default was ever chosen for it");
+        eval("lifted = []; panel.elevation(\"elevated\")");
+        assertEquals("panel:elevated", eval("lifted.join(' ')").asString());
+        eval("lifted = []; panel.elevation(\"sunken\")");
+        assertEquals("panel:sunken", eval("lifted.join(' ')").asString(), "the other register");
+        eval("lifted = []; panel.elevation(\"lofty\")");
+        assertEquals("panel:null", eval("lifted.join(' ')").asString(), "two registers and flat; anything else is flat");
+        eval("lifted = []; panel.elevation(null)");
+        assertEquals("panel:null", eval("lifted.join(' ')").asString(), "flat says nothing at all: the design rests it where it rests it");
+        assertFalse(eval("panel.isHighlighted()").asBoolean());
+        assertFalse(eval("panel.root.classes().indexOf(\"el_panel_current\") >= 0").asBoolean());
+        eval("panel.highlight(true)");
+        assertTrue(eval("panel.isHighlighted() && panel.root.classes().indexOf(\"el_panel_current\") >= 0").asBoolean());
+        eval("lifted = []; panel.elevation(\"elevated\")");
+        assertTrue(eval("panel.isHighlighted() && panel.root.classes().indexOf(\"el_panel_current\") >= 0").asBoolean(), "orthogonal: the depth does not touch the colour");
+        eval("panel.highlight(false)");
+        assertFalse(eval("panel.root.classes().indexOf(\"el_panel_current\") >= 0").asBoolean());
+        assertEquals("elevated", eval("panel.elevationOf()").asString(), "nor the colour the depth");
     }
 
     /**
@@ -122,25 +141,28 @@ class PanelTest extends JsModuleTestBase {
      */
     @Test
     void itFollowsTheKeysOfWhatIsMountedInIt() {
-        eval("var dock = { root: el(\"div\") }; panel.body.appendChild(dock.root); panel.watch(dock)");
-        assertFalse(eval("panel.isActive()").asBoolean(), "nothing said yet: not active");
+        eval("var said = []; var dock = { root: el(\"div\") }; panel.body.appendChild(dock.root); panel.watch(dock, function (on) { said.push(on); })");
+        assertFalse(eval("panel.isWithin()").asBoolean(), "nothing said yet: not active");
         eval("keys(dock.root, \"held\")");
-        assertTrue(eval("panel.isActive()").asBoolean(), "the keys are in it");
+        assertTrue(eval("panel.isWithin()").asBoolean(), "the keys are in it");
         eval("keys(dock.root, \"lent\")");
-        assertTrue(eval("panel.isActive()").asBoolean(), "lent to a control of its own: still the region being worked in");
+        assertTrue(eval("panel.isWithin()").asBoolean(), "lent to a control of its own: still the region being worked in");
         eval("keys(dock.root, \"candidate\")");
-        assertFalse(eval("panel.isActive()").asBoolean(), "offered is not held");
+        assertFalse(eval("panel.isWithin()").asBoolean(), "offered is not held");
         eval("unkeys(dock.root); var inner = el(\"div\"); dock.root.appendChild(inner); keys(inner, \"held\")");
-        assertTrue(eval("panel.isActive()").asBoolean(), "the dock handed the keys to a tab's widget: the region is still the one being worked in");
+        assertTrue(eval("panel.isWithin()").asBoolean(), "the dock handed the keys to a tab's widget: the region is still the one being worked in");
         eval("unkeys(inner)");
-        assertFalse(eval("panel.isActive()").asBoolean(), "and quiet when the keys leave it altogether");
+        assertFalse(eval("panel.isWithin()").asBoolean(), "and quiet when the keys leave it altogether");
         eval("keys(inner, \"held\"); dock.root.removeChild(inner); keys(dock.root, \"held\"); unkeys(dock.root)");
-        assertFalse(eval("panel.isActive()").asBoolean(), "what was taken out of the panel holds nothing");
+        assertFalse(eval("panel.isWithin()").asBoolean(), "what was taken out of the panel holds nothing");
         eval("keys(dock.root, \"held\"); panel.unwatch(); keys(dock.root, \"candidate\")");
-        assertTrue(eval("panel.isActive()").asBoolean(), "unwatched: it keeps what it says");
+        assertTrue(eval("panel.isWithin()").asBoolean(), "unwatched: it keeps what it says");
         assertEquals(0, eval("dock.root.listening(\"keydown\") + dock.root.listening(\"pointerdown\")").asInt(), "the mounted thing is told nothing and given nothing");
+        assertEquals("true false true false true false true", eval("said.join(' ')").asString(), "it said each turn once, and only on a change");
+        assertFalse(eval("panel.root.classes().indexOf(\"el_panel_current\") >= 0 || panel.elevationOf() !== null").asBoolean(),
+                    "and decided nothing by it: no colour, no depth, until an app says what it means");
         assertTrue(eval("panel.watch(dock.root) === panel").asBoolean(), "an element does as well as a component");
-        assertFalse(eval("panel.isActive()").asBoolean(), "read afresh on watching: candidate is not held");
+        assertFalse(eval("panel.isWithin()").asBoolean(), "read afresh on watching: candidate is not held");
     }
 
     /** Furniture: no listener anywhere, and nothing of the keyboard party. */

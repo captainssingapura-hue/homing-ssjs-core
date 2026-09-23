@@ -212,6 +212,10 @@ final class SketchyDesign {
             withKeysMark(ruleWithFocusRing(of(Container.Pane.Floating.class, Shape.Rule.class), "2px", "solid", "2px", "dashed", "-3px"),
                          "3px", "solid", "4px", "2px", "dashed", "6px", "2px", "dotted", "4px"),
             // a panel: the head underlined by hand, gone over twice
+            // the panel's depth: NONE. Ink casts no shadow here, as Raised already says, so the register is declined
+            // outright rather than answered in a plane this design does not otherwise use. Set either one and the
+            // panel stays where it is; an app that needs the region to read in this theme says it in colour.
+            silence(of(Container.Panel.class, Shape.Shadow.class)),
             gap(of(Container.Panel.class, Size.Gap.class), "0px", 1.35),
             inset(of(Container.Panel.Head.class, Size.Inset.class), "10px", "16px", 1.35),
             gap(of(Container.Panel.Head.class, Size.Gap.class), "10px", 1.35),

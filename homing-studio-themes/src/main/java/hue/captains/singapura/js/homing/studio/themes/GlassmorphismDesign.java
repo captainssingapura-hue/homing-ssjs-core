@@ -206,6 +206,10 @@ final class GlassmorphismDesign {
             withKeysMark(ruleWithFocusRing(of(Container.Pane.Floating.class, Shape.Rule.class), "1px", "solid", "2px", "solid", "-2px"),
                          "2px", "solid", "0", "1px", "dashed", "6px", "1px", "solid", "0"),
             // a panel: a hairline of light under the head, and air around the work
+            // the panel's depth: the plate sinks into the frost, or lifts off it and catches the light along its top edge
+            Map.entry(of(Container.Panel.class, Shape.Shadow.class), Impl.Bindings.of("none")
+                    .at(State.ELEVATED, "0 10px 30px color-mix(in srgb, " + INK_REF + " 20%, transparent), inset 0 1px 0 color-mix(in srgb, " + LIGHT_REF + " 45%, transparent)")
+                    .at(State.SUNKEN, "inset 0 2px 12px color-mix(in srgb, " + INK_REF + " 18%, transparent)")),
             gap(of(Container.Panel.class, Size.Gap.class), "0px", 1.3),
             inset(of(Container.Panel.Head.class, Size.Inset.class), "10px", "18px", 1.3),
             gap(of(Container.Panel.Head.class, Size.Gap.class), "10px", 1.3),

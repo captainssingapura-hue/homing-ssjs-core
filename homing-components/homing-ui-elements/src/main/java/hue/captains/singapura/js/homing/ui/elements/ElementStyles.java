@@ -18,6 +18,7 @@ import static hue.captains.singapura.js.homing.design.Emphasis.Secondary;
 import static hue.captains.singapura.js.homing.design.Feedback.Danger;
 import static hue.captains.singapura.js.homing.design.Feedback.Success;
 import static hue.captains.singapura.js.homing.design.Feedback.Warning;
+import static hue.captains.singapura.js.homing.design.Interaction.Current;
 import static hue.captains.singapura.js.homing.design.Interaction.Dragging;
 import static hue.captains.singapura.js.homing.design.Interaction.Focus;
 import static hue.captains.singapura.js.homing.design.Interaction.Inert;
@@ -709,10 +710,13 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
     public record el_panel() implements CssClass<ElementStyles> {
         @Override public List<? extends Wearable> wears() {
             return List.of(of(Container.Panel.class, Shape.Corner.class), of(Container.Panel.class, Shape.Rule.class), of(Container.Panel.class, Color.Edge.class),
-                           of(Container.Panel.class, Size.Gap.class),
+                           of(Container.Panel.class, Size.Gap.class), of(Container.Panel.class, Shape.Shadow.class),
                            of(Base.class, Color.Surface.class), of(Raised.class, Color.Edge.class), of(Body.class, Color.Ink.class), of(Body.class, Type.Face.class));
         }
         @Override public List<? extends Wearable> sizes() { return List.of(of(Container.Panel.class, Size.Gap.class)); }
+        // The panel's depth is the design's to draw and the holder's to set: the shadow is worn plainly here, and
+        // the design answers it at ELEVATED and SUNKEN — in whatever plane it honestly uses for depth, or not at
+        // all. Nothing here says what a register MEANS; the app says that, in its own code.
         @Override public String body() { return """
             display: flex;
             flex-direction: column;
@@ -781,8 +785,16 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
      * active floating pane is marked. The panel is told this by whatever is
      * mounted in it; it holds no keys of its own.
      */
-    public record el_panel_active() implements CssClass<ElementStyles> {
-        @Override public List<? extends Wearable> wears() { return List.of(of(Focus.class, Color.Edge.class), of(Focus.class, Shape.Shadow.class)); }
+    /**
+      * The panel as the CURRENT one, said in colour and nothing else: its
+      * edge takes the word for the one you are on. The other axis, and the
+      * orthogonal one — depth is the elevation's, colour is this, and a
+      * design may answer either, both or, in the flat case, only this. It
+      * moves nothing: the rule it recolours is the rule the panel already
+      * wears, so a panel becoming current never shifts a pixel.
+      */
+    public record el_panel_current() implements CssClass<ElementStyles> {
+        @Override public List<? extends Wearable> wears() { return List.of(of(Current.class, Color.Edge.class)); }
         @Override public String body() { return ""; }
     }
 
@@ -824,6 +836,6 @@ public record ElementStyles() implements CssGroup<ElementStyles> {
                        new el_slider_off(),
                        new el_slider_group(), new el_slider_group_held(), new el_slider_group_header(), new el_slider_group_title(), new el_slider_group_body(), new el_slider_group_body_across(),
                        new el_card(), new el_card_action(), new el_card_head(), new el_card_title(), new el_badge(), new el_card_body(), new el_card_text(), new el_card_foot(), new el_card_link(),
-                       new el_panel(), new el_panel_head(), new el_panel_title(), new el_panel_slot(), new el_panel_body(), new el_panel_body_air(), new el_panel_active());
+                       new el_panel(), new el_panel_head(), new el_panel_title(), new el_panel_slot(), new el_panel_body(), new el_panel_body_air(), new el_panel_current());
     }
 }

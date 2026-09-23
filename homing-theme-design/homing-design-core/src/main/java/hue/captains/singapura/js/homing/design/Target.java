@@ -59,7 +59,10 @@ public sealed interface Target permits
     Set<State> REST_ONLY    = EnumSet.of(State.REST);
     Set<State> INTERACTIVE  = EnumSet.of(State.REST, State.HOVER, State.ACTIVE, State.FOCUS, State.DISABLED,
                                          State.SELECTED, State.CURRENT, State.CHECKED, State.INVALID, State.EXPANDED, State.HIGHLIGHTED,
-                                         State.CANDIDATE, State.LENT, State.HELD);
+                                         State.CANDIDATE, State.LENT, State.HELD,
+                                         // the physical register: a design answers depth in whatever plane it honestly
+                                         // uses for it - the shadow usually, a lit rim, a step of tone - or in none
+                                         State.ELEVATED, State.SUNKEN);
     Set<State> POINTER      = EnumSet.of(State.REST, State.HOVER, State.ACTIVE, State.FOCUS, State.DISABLED);
 
     // ═════════════════════════════════════════════════════════════════════

@@ -10,7 +10,10 @@ package hue.captains.singapura.js.homing.design;
  * component in a state of its own wears a different design class. The slots
  * with no aria behind them are {@link #HIGHLIGHTED} — a thing lit from
  * elsewhere is a state every list, table and tree has, and none of aria's
- * words is it — and the three the keyboard party keeps: {@link #CANDIDATE},
+ * words is it — the two of the physical register, {@link #ELEVATED} and
+ * {@link #SUNKEN}, which read {@code data-elevation} and say how far off its
+ * own plane a thing sits, its holder having decided what that means — and
+ * the three the keyboard party keeps: {@link #CANDIDATE},
  * {@link #LENT} and {@link #HELD}, which read one attribute,
  * {@code data-keys}, whose values are mutually exclusive. They say where the
  * keys are, and a design answers them on the word that says what the thing
@@ -24,6 +27,17 @@ package hue.captains.singapura.js.homing.design;
  */
 public enum State {
     REST(""),
+    /**
+     * Lifted off its own plane, as far as this word goes in this design. One
+     * of the two the physical register keeps, which read {@code
+     * data-elevation}, whose values are mutually exclusive; rest is flat.
+     * Early in the cascade on purpose: the depth is where a thing SITS, and
+     * everything that happens to it afterwards — hovered, focused, pressed —
+     * is seen over it.
+     */
+    ELEVATED("&[data-elevation=\"elevated\"]"),
+    /** Pressed into its own plane, as far the other way as this word goes here. */
+    SUNKEN("&[data-elevation=\"sunken\"]"),
     HOVER("&:hover"),
     FOCUS("&:focus-visible"),
     DISABLED("&:disabled, &[aria-disabled=\"true\"]"),

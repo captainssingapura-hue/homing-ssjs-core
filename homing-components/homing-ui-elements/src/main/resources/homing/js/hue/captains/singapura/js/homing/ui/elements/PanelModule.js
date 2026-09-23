@@ -22,9 +22,15 @@
 //     .body                 where the caller mounts what the panel shows
 //     .title(text?)         read, or set
 //     .size(s)              the size, live, on the panel and its parts
-//     .active(on) .isActive()   the region being worked in, said on the frame
-//     .watch(component|el)  follow what is mounted: while the keys are in it,
-//                           the panel is the active region. .unwatch() stops.
+//     .elevation(e)         "elevated", "sunken", or null for flat: how far off
+//                           its own plane the design sits it. WHAT A REGISTER
+//                           MEANS IS THE APP'S: the panel links it to nothing.
+//     .highlight(on) .isHighlighted()   the current one, said in colour alone —
+//                           the other axis, orthogonal to the depth, and the
+//                           one a design without depth can still answer
+//     .watch(component|el, onWithin)  follow what is mounted and SAY so:
+//                           onWithin(true|false) as the keys come and go. It
+//                           decides nothing. .isWithin() reads it. .unwatch() stops.
 //     .dispose()            the panel and everything on its branch
 //
 // It takes no keys and claims nothing: a panel is furniture. What is mounted
@@ -46,7 +52,9 @@ class Panel {
         branch.activate(_panelOwner);
         this.branch = branch;
         this._size = 0;
-        this._active = false;
+        this._elevation = null;
+        this._highlight = false;
+        this._within = false;
         this._observer = null;
         this._watched = null;
 
@@ -102,17 +110,36 @@ class Panel {
         return this;
     }
 
-    /** The active region — the one being worked in — said on the frame: the design draws it as it draws the pane you are in. */
-    active(on) {
+    /**
+     * How far off its own plane the panel sits: "elevated", "sunken", or null
+     * for flat, where the design rests it. The design says what those look
+     * like, in whatever plane it uses for depth — and one with no idiom for
+     * depth answers neither, leaving the panel where it is, which is its
+     * right. The panel says nothing about what a register MEANS: an app links
+     * its own states to one, in its own code, and may link them otherwise
+     * tomorrow.
+     */
+    elevation(e) {
+        this._elevation = e === "elevated" || e === "sunken" ? e : null;
+        css.elevation(this.root, this._elevation);
+        return this;
+    }
+    elevationOf() { return this._elevation; }
+
+    /** The current one, said in colour alone: the axis beside the depth, and the one every design has something to say on. */
+    highlight(on) {
         var want = !!on;
-        if (want !== this._active) {
-            this._active = want;
-            if (want) css.addClass(this.root, el_panel_active);
-            else css.removeClass(this.root, el_panel_active);
+        if (want !== this._highlight) {
+            this._highlight = want;
+            if (want) css.addClass(this.root, el_panel_current);
+            else css.removeClass(this.root, el_panel_current);
         }
         return this;
     }
-    isActive() { return this._active; }
+    isHighlighted() { return this._highlight; }
+
+    /** Whether the keys are anywhere in what is mounted, as the last watch read it. */
+    isWithin() { return this._within; }
 
     /**
      * Follow what is mounted in the panel: while the keys are ANYWHERE IN IT —
@@ -122,13 +149,19 @@ class Panel {
      * is what a component writes to say where the keys are, over the mounted
      * thing and its subtree; nothing else of it is touched, and it is told
      * nothing. A component, or its element.
+     *
+     * THE PANEL DECIDES NOTHING BY IT: it says so, through onWithin(on), and
+     * what that means — a lift, a press, a colour, nothing at all — is the
+     * app's to say in its own code. A workspace that wants the region you are
+     * in to come forward writes that line itself.
      */
-    watch(what) {
+    watch(what, onWithin) {
         var el = Panel.elementOf(what);
         if (!el) throw new Error("[Panel] watch wants what is mounted in the panel, or its element");
         this.unwatch();
         var self = this;
         this._watched = el;
+        this._told = typeof onWithin === "function" ? onWithin : null;
         var inside = [];   // what has said, in the subtree, that the keys are with it; kept from the records, never looked up
         this._read = function (records) {
             if (records) records.forEach(function (r) {
@@ -139,7 +172,10 @@ class Panel {
             });
             for (var i = inside.length - 1; i >= 0; i--) if (!el.contains(inside[i])) inside.splice(i, 1);   // what was taken away holds nothing
             var own = el.getAttribute("data-keys");
-            self.active(own === "held" || own === "lent" || inside.length > 0);
+            var now = own === "held" || own === "lent" || inside.length > 0;
+            if (now === self._within) return;
+            self._within = now;
+            if (self._told) self._told(now);
         };
         if (typeof MutationObserver === "function") {
             this._observer = new MutationObserver(this._read);
@@ -154,6 +190,7 @@ class Panel {
         if (this._observer) { this._observer.disconnect(); this._observer = null; }
         this._watched = null;
         this._read = null;
+        this._told = null;
         return this;
     }
 

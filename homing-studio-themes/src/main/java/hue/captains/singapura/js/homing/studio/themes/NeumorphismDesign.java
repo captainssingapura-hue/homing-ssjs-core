@@ -203,6 +203,10 @@ final class NeumorphismDesign {
             withKeysMark(ruleWithFocusRing(of(Container.Pane.Floating.class, Shape.Rule.class), "0", "none", "2px", "solid", "-2px"),
                          "4px", "solid", "-4px", "2px", "dotted", "5px", "3px", "solid", "-4px"),
             // a panel: no line anywhere - the head is a plate, and the air under it is the division
+            // the panel's depth: the clay moulded or the clay pressed — the design's own two gestures, either side of rest
+            Map.entry(of(Container.Panel.class, Shape.Shadow.class), Impl.Bindings.of("none")
+                    .at(State.ELEVATED, convex(7))
+                    .at(State.SUNKEN, concave(7))),
             gap(of(Container.Panel.class, Size.Gap.class), "10px", 1.3),
             inset(of(Container.Panel.Head.class, Size.Inset.class), "12px", "18px", 1.3),
             gap(of(Container.Panel.Head.class, Size.Gap.class), "10px", 1.3),

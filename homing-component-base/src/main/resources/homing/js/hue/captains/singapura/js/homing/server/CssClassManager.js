@@ -206,6 +206,20 @@ const CssClassManagerInstance = (() => {
             if (a == null) { el.style.removeProperty("--aspect"); return; }
             const n = Math.max(-1, Math.min(1, Number(a)));
             el.style.setProperty("--aspect", String(Number.isFinite(n) ? n : 0));
+        },
+        /**
+         * The element's ELEVATION: how far off its own plane it sits -
+         * "elevated", "sunken", or flat, which is null and writes nothing.
+         * One attribute, read by the design as a state on the word that says
+         * what the thing is; a design with no idiom for depth answers neither
+         * register, and the element stays where it is, which is its right.
+         * IT MEANS NOTHING BY ITSELF: what a register stands for is the
+         * caller's, said in the caller's own code.
+         */
+        elevation(el, e) {
+            if (e == null || e === "flat") { el.removeAttribute("data-elevation"); return; }
+            if (e !== "elevated" && e !== "sunken") throw new Error("[css] elevation: 'elevated', 'sunken' or null, not " + e);
+            el.setAttribute("data-elevation", e);
         }
     };
 })();

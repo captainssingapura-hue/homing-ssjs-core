@@ -348,6 +348,10 @@ final class NeoFuturismDesign {
             withKeysMark(ruleWithFocusRing(of(Container.Pane.Floating.class, Shape.Rule.class), "1px", "solid", "1px", "solid", "-1px"),
                          "1px", "solid", "4px", "1px", "dashed", "7px", "1px", "solid", "4px"),
             // a panel: a hairline under the head, and no more air than the work needs
+            // the panel's depth: a plate over the dark, or set into it; the lifted one keeps a hairline of its own light
+            Map.entry(of(Container.Panel.class, Shape.Shadow.class), Impl.Bindings.of("none")
+                    .at(State.ELEVATED, "0 6px 24px color-mix(in srgb, " + SPACE_REF + " 45%, transparent), inset 0 0 0 1px color-mix(in srgb, " + LIGHT_REF + " 30%, transparent)")
+                    .at(State.SUNKEN, "inset 0 1px 10px color-mix(in srgb, " + SPACE_REF + " 55%, transparent)")),
             gap(of(Container.Panel.class, Size.Gap.class), "0px", 1.25),
             inset(of(Container.Panel.Head.class, Size.Inset.class), "7px", "12px", 1.25),
             gap(of(Container.Panel.Head.class, Size.Gap.class), "8px", 1.25),
