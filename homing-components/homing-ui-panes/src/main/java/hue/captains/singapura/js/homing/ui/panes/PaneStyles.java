@@ -331,6 +331,7 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
             min-height: 0;
             overflow: auto;
             position: relative;
+            isolation: isolate;
             """;
         }
     }

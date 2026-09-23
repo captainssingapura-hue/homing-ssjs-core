@@ -64,6 +64,7 @@ public record FloatingStyles() implements CssGroup<FloatingStyles> {
         @Override public String body() { return """
             position: absolute;
             inset: 0;
+            z-index: 1;
             pointer-events: none;
             overflow: hidden;
             """;

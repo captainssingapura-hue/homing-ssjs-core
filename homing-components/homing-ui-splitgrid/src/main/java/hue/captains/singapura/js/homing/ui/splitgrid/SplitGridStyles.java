@@ -105,6 +105,7 @@ public record SplitGridStyles() implements CssGroup<SplitGridStyles> {
             min-width: 0;
             min-height: 0;
             position: relative;
+            isolation: isolate;
             display: flex;
             flex-direction: column;
             """;
