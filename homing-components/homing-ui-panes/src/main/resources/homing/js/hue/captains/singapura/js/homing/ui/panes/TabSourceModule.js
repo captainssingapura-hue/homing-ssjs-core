@@ -9,13 +9,19 @@
 //   new TabSource(branch, { kinds })
 //     branch: the source's own; every tab it mints gets a sub-branch of it, so
 //             the tabs outlive the pane they started in and travel as they must
-//     kinds:  [ { id, label, title?, make(branch, params) } ]
+//     kinds:  [ { id, label, title?, listed?, make(branch, params) } ]
 //             make returns a widget by the pane's law — a member of the branch
-//             handed in params.focus, answering activate(). The kind closes
-//             over whatever else it needs; the source passes only the branch
-//             and the dock's membership, because that is all it knows.
+//             handed in params.focus, answering activate(). It is given the
+//             branch, that membership, the id and title the source settled on,
+//             and THE PANE it is going into: most widgets ignore the pane, and
+//             one that is about the tab itself — an opener that becomes what
+//             you pick — cannot do its job without it.
+//             listed:false keeps a kind out of kinds() while mint still knows
+//             it: the opener is asked for by the plus, not chosen from a list
+//             of things to open, and it must not offer itself.
 //
-//   source.kinds()              → [ { id, label, title } ], frozen: a dropdown's rows
+//   source.kinds()              → [ { id, label, title } ], frozen: a dropdown's rows.
+//                               The listed ones only; mint takes any of them
 //   source.has(kindId)
 //   source.canAdd(pane)         → room in its budget, asked before anything is made. NOT
 //                               the pane's own canAdd(), which is about the strip's plus
@@ -57,15 +63,18 @@ class TabSource {
         if (!k || !k.id) throw new Error("[TabSource] every kind wants an id");
         if (typeof k.make !== "function") throw new Error("[TabSource] kind '" + k.id + "': make(branch, params) is how one is built");
         if (this._by[k.id]) throw new Error("[TabSource] kind '" + k.id + "' is declared twice");
-        var kind = Object.freeze({ id: String(k.id), label: String(k.label == null ? k.id : k.label),
+        var kind = Object.freeze({ id: String(k.id), label: String(k.label == null ? k.id : k.label), listed: k.listed !== false,
                                    title: String(k.title == null ? (k.label == null ? k.id : k.label) : k.title), make: k.make });
         this._by[kind.id] = kind;
         this._kinds.push(kind);
         this._made[kind.id] = 0;
     }
 
-    /** What can be mounted, in the order it was declared: a row apiece for whatever asks. */
-    kinds() { return this._kinds.map(function (k) { return Object.freeze({ id: k.id, label: k.label, title: k.title }); }); }
+    /** What can be CHOSEN, in the order it was declared: a row apiece for whatever asks. Kinds declared listed:false are not among them. */
+    kinds() {
+        return this._kinds.filter(function (k) { return k.listed; })
+                   .map(function (k) { return Object.freeze({ id: k.id, label: k.label, title: k.title }); });
+    }
 
     has(kindId) { return !!this._by[kindId]; }
 
@@ -101,7 +110,7 @@ class TabSource {
         var own = this.branch.createBranch("tab-" + id);
         var widget;
         try {
-            widget = kind.make(own, { focus: pane.focus, id: id, title: title });
+            widget = kind.make(own, { focus: pane.focus, id: id, title: title, pane: pane });
         } catch (e) {
             this._drop(id);
             throw e;

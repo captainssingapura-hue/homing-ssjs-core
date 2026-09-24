@@ -102,8 +102,7 @@ class TabStrip {
         if (opts && typeof opts.onAdd === "function") {
             var addBtn = branch.createElement("add", "button");
             addBtn.type = "button";
-            css.addClass(addBtn, mtp_add);
-            addBtn.textContent = "+";
+            css.addClass(addBtn, mtp_add, mtp_add_mark);   // the glyph is the design's, on the word; nothing is typed in
             addBtn.setAttribute("aria-label", "Add a tab");
             addBtn.addEventListener("click", function () { if (!addBtn.disabled) opts.onAdd(); });
             this._tail.appendChild(addBtn);

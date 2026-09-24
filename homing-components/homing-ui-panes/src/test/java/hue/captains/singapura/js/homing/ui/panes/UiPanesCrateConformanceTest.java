@@ -53,13 +53,13 @@ class UiPanesCrateConformanceTest {
                     + findings.stream().map(f -> f.rule().value() + "@" + f.line() + ": " + f.message()).toList());
             checked++;
         }
-        assertEquals(11, checked, "the pane, the strip, the hand, the thumbs and the add control, the events, the drag, the keys, the menus, the merge and the source");
+        assertEquals(12, checked, "the pane, the strip, the hand, the thumbs, the add control and the opener, the events, the drag, the keys, the menus, the merge and the source");
     }
 
     @Test
     void thePaneAndTheStripImportEveryClassDeclared() {
         var imported = java.util.stream.Stream.of(MultiTabPaneModule.INSTANCE.imports(), TabStripModule.INSTANCE.imports(),
-                                                  PaneThumbsModule.INSTANCE.imports(), AddTabModule.INSTANCE.imports())
+                                                  PaneThumbsModule.INSTANCE.imports(), AddTabModule.INSTANCE.imports(), TabOpenerModule.INSTANCE.imports())
                 .flatMap(im -> im.getAllImports().values().stream())
                 .flatMap(mi -> mi.allImports().stream()).map(e -> e.getClass().getSimpleName()).toList();
         for (CssClass<PaneStyles> c : PaneStyles.INSTANCE.cssClasses())
