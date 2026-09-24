@@ -1,0 +1,145 @@
+// =============================================================================
+// TabSource — where a new tab comes from. A page knows what it can mount; a
+// pane knows how to hold a tab; between them there is one rule nobody owned:
+// a fresh id, a branch to build on, and a widget joined to THE DOCK IT IS
+// GOING INTO rather than the one it was written for. That rule is here, so
+// every way of asking for a tab — a control, the strip's own button, a menu,
+// a restore from a checkpoint — asks for it the same way.
+//
+//   new TabSource(branch, { kinds })
+//     branch: the source's own; every tab it mints gets a sub-branch of it, so
+//             the tabs outlive the pane they started in and travel as they must
+//     kinds:  [ { id, label, title?, make(branch, params) } ]
+//             make returns a widget by the pane's law — a member of the branch
+//             handed in params.focus, answering activate(). The kind closes
+//             over whatever else it needs; the source passes only the branch
+//             and the dock's membership, because that is all it knows.
+//
+//   source.kinds()              → [ { id, label, title } ], frozen: a dropdown's rows
+//   source.has(kindId)
+//   source.canAdd(pane)         → room in its budget, asked before anything is made. NOT
+//                               the pane's own canAdd(), which is about the strip's plus
+//   source.mint(pane, kindId)   → { id, title, widget }, for a caller that places it itself
+//   source.addTo(pane, kindId)  → the index it landed at, or −1 when the pane would not take it
+//   source.release(tabId)       the tab is gone for good: its branch dissolves, which is
+//                               the only way its name comes free again
+//   source.dispose()
+//
+// THE SOURCE DECIDES NOTHING ABOUT WHERE. Which pane is the caller's; a
+// control asks its user, the strip's button would name its own pane, and a
+// restore names the one in the record. The source is asked for a tab and says
+// what a tab is.
+//
+// Nothing here touches the DOM: a widget's constructor does, and that is the
+// kind's. What is made is checked against the law before it is handed on, so a
+// kind that returns the wrong thing is caught where it was written rather than
+// three frames later inside a pane.
+// =============================================================================
+
+const _sourceOwner = Object.freeze({ toString: () => "tabSource" });
+
+class TabSource {
+    /** The page makes one: a branch of its own, and the kinds it can mount. */
+    constructor(branch, opts) {
+        if (!branch) throw new Error("[TabSource] a branch of its own is required");
+        var o = opts || {};
+        branch.activate(_sourceOwner);   // every tab is minted on a sub-branch of it, and only an owned branch may have children
+        this.branch = branch;
+        this._kinds = [];
+        this._by = {};
+        this._made = {};      // per kind, how many have been minted: ids and titles count up and never come back
+        this._disposed = false;
+        (o.kinds || []).forEach(this._declare, this);
+        if (this._kinds.length === 0) throw new Error("[TabSource] a source with no kinds can make nothing");
+    }
+
+    _declare(k) {
+        if (!k || !k.id) throw new Error("[TabSource] every kind wants an id");
+        if (typeof k.make !== "function") throw new Error("[TabSource] kind '" + k.id + "': make(branch, params) is how one is built");
+        if (this._by[k.id]) throw new Error("[TabSource] kind '" + k.id + "' is declared twice");
+        var kind = Object.freeze({ id: String(k.id), label: String(k.label == null ? k.id : k.label),
+                                   title: String(k.title == null ? (k.label == null ? k.id : k.label) : k.title), make: k.make });
+        this._by[kind.id] = kind;
+        this._kinds.push(kind);
+        this._made[kind.id] = 0;
+    }
+
+    /** What can be mounted, in the order it was declared: a row apiece for whatever asks. */
+    kinds() { return this._kinds.map(function (k) { return Object.freeze({ id: k.id, label: k.label, title: k.title }); }); }
+
+    has(kindId) { return !!this._by[kindId]; }
+
+    /**
+     * Whether the pane has ROOM for another — its budget, and nothing else.
+     * Asked before a widget is made, so a refusal costs nothing and leaves
+     * nothing behind.
+     *
+     * NOT the pane's own canAdd(), which answers a different question: whether
+     * the STRIP shows a plus. A dock built with addable:false has no button of
+     * its own and still takes tabs all day — a drop from the desk, a merge, a
+     * re-dock — so reading that flag here would mean a workspace could not
+     * offer one way of adding without offering the other. A page that wants a
+     * particular dock left alone keeps it out of the list it hands the control.
+     */
+    canAdd(pane) { return !!pane && typeof pane.count === "function" && typeof pane.budget === "function" && pane.count() < pane.budget(); }
+
+    /**
+     * A tab of that kind, for that pane, not yet in it: the id is the kind's
+     * with a number after the first, the branch is a sub-branch of the
+     * source's under the same name, and the widget is made with
+     * params.focus = pane.focus — THE DOCK'S BRANCH, which is what makes it a
+     * member of the pane it is about to enter rather than of wherever the
+     * source happens to live.
+     */
+    mint(pane, kindId) {
+        var kind = this._by[kindId];
+        if (!kind) throw new Error("[TabSource] no kind '" + kindId + "'");
+        if (!pane || !pane.focus) throw new Error("[TabSource] mint wants the pane the tab is going into: its focus branch is the widget's");
+        var n = ++this._made[kind.id];
+        var id = n === 1 ? kind.id : kind.id + "-" + n;
+        var title = n === 1 ? kind.title : kind.title + " " + n;
+        var own = this.branch.createBranch("tab-" + id);
+        var widget;
+        try {
+            widget = kind.make(own, { focus: pane.focus, id: id, title: title });
+        } catch (e) {
+            this._drop(id);
+            throw e;
+        }
+        if (!PaneKeys.law(widget)) {
+            this._drop(id);
+            throw new Error("[TabSource] kind '" + kind.id + "' made something a pane cannot hold: a tab's widget joins the branch "
+                          + "handed in params.focus, exposes it as widget.focus, and answers activate()");
+        }
+        return { id: id, title: title, widget: widget };
+    }
+
+    /**
+     * The whole gesture: ask the pane, make the tab, put it in. −1 when the
+     * pane has no room for it, and then nothing was made and nothing has to be
+     * undone.
+     */
+    addTo(pane, kindId) {
+        if (!this.canAdd(pane)) return -1;
+        return pane.addTab(this.mint(pane, kindId));
+    }
+
+    /**
+     * The tab is gone for good — removed rather than detached, its widget
+     * already disposed by the pane. Its branch dissolves here, which is the
+     * only thing that frees the name for the party; a tab that merely left one
+     * dock for another is NOT released, because it is still that tab.
+     */
+    release(tabId) { this._drop(tabId); return this; }
+
+    _drop(tabId) { try { this.branch.dissolveBranch("tab-" + tabId); } catch (e) {} }
+
+    /** The source and every branch under it. The panes dispose their widgets first; this is what is left. */
+    dispose() {
+        if (this._disposed) return;
+        this._disposed = true;
+        this._kinds = [];
+        this._by = {};
+        try { this.branch.dissolve(); } catch (e) {}
+    }
+}

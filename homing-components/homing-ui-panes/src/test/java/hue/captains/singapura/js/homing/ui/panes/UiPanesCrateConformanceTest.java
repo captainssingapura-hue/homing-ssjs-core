@@ -32,7 +32,7 @@ class UiPanesCrateConformanceTest {
     @Test
     void thePanePaintsNothingOfItsOwn() {
         var worn = Deployment.wornBy(List.of(PaneStyles.INSTANCE));
-        assertTrue(worn.size() >= 25, "fifteen classes wear over twenty-five distinct pairs; found " + worn.size());
+        assertTrue(worn.size() >= 30, "the pane's classes wear over thirty distinct pairs; found " + worn.size());
         for (CssClass<PaneStyles> c : PaneStyles.INSTANCE.cssClasses()) {
             String body = c.body();
             assertFalse(body.contains("#") || body.contains("rgb") || body.contains("px solid") || body.contains("var(--color"),
@@ -53,12 +53,13 @@ class UiPanesCrateConformanceTest {
                     + findings.stream().map(f -> f.rule().value() + "@" + f.line() + ": " + f.message()).toList());
             checked++;
         }
-        assertEquals(8, checked, "the pane, the strip, the hand, the events, the drag, the keys, the menus and the merge");
+        assertEquals(11, checked, "the pane, the strip, the hand, the thumbs and the add control, the events, the drag, the keys, the menus, the merge and the source");
     }
 
     @Test
     void thePaneAndTheStripImportEveryClassDeclared() {
-        var imported = java.util.stream.Stream.of(MultiTabPaneModule.INSTANCE.imports(), TabStripModule.INSTANCE.imports())
+        var imported = java.util.stream.Stream.of(MultiTabPaneModule.INSTANCE.imports(), TabStripModule.INSTANCE.imports(),
+                                                  PaneThumbsModule.INSTANCE.imports(), AddTabModule.INSTANCE.imports())
                 .flatMap(im -> im.getAllImports().values().stream())
                 .flatMap(mi -> mi.allImports().stream()).map(e -> e.getClass().getSimpleName()).toList();
         for (CssClass<PaneStyles> c : PaneStyles.INSTANCE.cssClasses())

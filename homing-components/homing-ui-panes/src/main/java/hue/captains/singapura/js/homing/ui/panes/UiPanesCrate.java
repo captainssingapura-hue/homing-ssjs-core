@@ -12,7 +12,8 @@ import hue.captains.singapura.js.homing.ui.icons.UiIconsCrate;
 import java.util.List;
 
 /**
- * The panes' crate: the multi-tab pane, its strip, its events and their styles, on the runtime
+ * The panes' crate: the multi-tab pane, its strip, where a new tab comes from and the control that
+ * puts one somewhere, the events and their styles, on the runtime
  * ({@code ServerCrate}, the base's crate under its old name) and the design
  * targets. The pane, the strip and the hand on its chips are primitives, owning the DOM on their branch; the events and the drag's arithmetic are pure logic.
  */
@@ -35,11 +36,14 @@ public final class UiPanesCrate implements Crate, ComponentVehicle {
                 CrateEntry.of(MultiTabPaneModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
                 CrateEntry.of(TabStripModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
                 CrateEntry.of(TabHandModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
+                CrateEntry.of(PaneThumbsModule.INSTANCE, StandardJsModuleType.CONSUMER),
+                CrateEntry.of(AddTabModule.INSTANCE, StandardJsModuleType.CONSUMER),
                 CrateEntry.of(PaneEventsModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(TabDragModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(PaneKeysModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(PaneMenusModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(PaneMergeModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
+                CrateEntry.of(TabSourceModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(PaneStyles.INSTANCE));
     }
 }
