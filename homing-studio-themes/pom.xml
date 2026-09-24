@@ -30,6 +30,23 @@
             <artifactId>homing-design-server</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+        <!-- The palettes every design here NAMES: GlobalColorPalette, HomingVars,
+             GlobalTypePalette, HomingFonts. They used to arrive through the
+             workspace jar below, which is why demoting that to test scope left
+             this module compiling only against its own stale classes and every
+             consumer's StudioThemeRegistry failing to initialise at runtime.
+             Declared, because they are what a design is made of. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-theme-color</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-theme-type</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
         <!-- TEST SCOPE, and nothing in this module's main code reaches it: the completeness
              test does. At compile it was four workspace jars on the classpath of every
              consumer that wanted a design - the gallery carried them and used none - and a
