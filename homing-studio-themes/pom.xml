@@ -30,10 +30,15 @@
             <artifactId>homing-design-server</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+        <!-- TEST SCOPE, and nothing in this module's main code reaches it: the completeness
+             test does. At compile it was four workspace jars on the classpath of every
+             consumer that wanted a design - the gallery carried them and used none - and a
+             downstream that IS the workspace would have carried a second copy of itself. -->
         <dependency>
             <groupId>io.github.captainssingapura-hue.homing.js</groupId>
             <artifactId>homing-studio-workspace</artifactId>
             <version>${project.parent.version}</version>
+            <scope>test</scope>
         </dependency>
         <!-- RFC 0066 — the completeness law is a conformance rule; the test calls it. -->
         <dependency>
