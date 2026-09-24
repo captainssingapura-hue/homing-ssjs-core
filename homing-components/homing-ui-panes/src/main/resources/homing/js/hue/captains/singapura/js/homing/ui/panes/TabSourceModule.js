@@ -38,6 +38,8 @@
 //                               in the strip itself — the plus — rather than in some
 //                               control they are still standing in.
 //   source.show(pane, tab, how) the same three endings, for a caller that placed the tab itself
+//   source.modes()              → [ { id, label, says } ]: the three, worded, for a control
+//                               that would let its user pick one
 //   source.release(tabId)       the tab is gone for good: its branch dissolves, which is
 //                               the only way its name comes free again
 //   source.dispose()
@@ -63,7 +65,12 @@ const _sourceOwner = Object.freeze({ toString: () => "tabSource" });
  * of the strip — where the asking and the answering are the same place — wants
  * both.
  */
-const _MODES = Object.freeze({ quiet: 1, front: 2, focus: 3 });
+const _MODES = Object.freeze([
+    Object.freeze({ id: "quiet", label: "quietly",                says: "put in the strip and left alone" }),
+    Object.freeze({ id: "front", label: "in front",               says: "shown; the keys stay where they were" }),
+    Object.freeze({ id: "focus", label: "in front, with the keys", says: "shown, and the keys go into it" })
+]);
+const _BY_MODE = _MODES.reduce(function (m, x) { m[x.id] = x; return m; }, {});
 
 class TabSource {
     /** The page makes one: a branch of its own, and the kinds it can mount. */
@@ -100,11 +107,19 @@ class TabSource {
     has(kindId) { return !!this._by[kindId]; }
 
     /** The three ways a tab may arrive, for anyone who would rather name them than spell them. */
-    static get MODES() { return Object.freeze(["quiet", "front", "focus"]); }
+    static get MODES() { return Object.freeze(_MODES.map(function (x) { return x.id; })); }
+
+    /**
+     * The same three, with a word apiece and what each one does — rows for a
+     * control that would let its user choose. The vocabulary belongs to the
+     * source, so a control that offers it asks the source rather than keeping
+     * a list of its own that could fall behind.
+     */
+    modes() { return _MODES.map(function (x) { return Object.freeze({ id: x.id, label: x.label, says: x.says }); }); }
 
     _how(how) {
         var m = how == null ? "front" : String(how);
-        if (!_MODES[m]) throw new Error("[TabSource] '" + m + "' is not how a tab arrives: " + TabSource.MODES.join(", "));
+        if (!_BY_MODE[m]) throw new Error("[TabSource] '" + m + "' is not how a tab arrives: " + TabSource.MODES.join(", "));
         return m;
     }
 

@@ -14,9 +14,16 @@
 //             taking the keys out of your hand and putting them in another
 //             room has answered a question you did not ask. The plus at the
 //             end of a strip is the other case, and it is not this one
+//     modes:  true to put the three on the control as a list of their own, so
+//             whoever is using it can say how rather than being told. OFF by
+//             default, because "how should this arrive?" is a question an app
+//             answers in its code and not one to hand a person who only wanted
+//             a tab — but a page SHOWING the thing, or trying it, wants every
+//             way it can go reachable without an edit and a rebuild
 //
 //   add.refresh()      measure the panes again, and say again what can be done
 //   add.picked()       the pane the control is pointing at, or null
+//   add.kind() .mode() what would be mounted, and how it would arrive
 //   add.dispose()
 //
 // IT IS A CONTROL, NOT A POLICY. It asks the source whether a pane will take
@@ -47,7 +54,7 @@ class AddTab {
         this._source = o.source;
         this._panes = o.panes;
         this._onAdded = typeof o.onAdded === "function" ? o.onAdded : null;
-        this._mode = o.mode == null ? "front" : String(o.mode);
+        this._fixed = o.mode == null ? "front" : String(o.mode);
         this._first = true;
         this._disposed = false;
 
@@ -76,6 +83,25 @@ class AddTab {
         root.appendChild(pick);
         this._pick = pick;
 
+        // HOW, when the holder asked for it to be offered: the words are the source's, so this list cannot fall
+        // behind the three the source actually honours.
+        this._how = null;
+        if (o.modes) {
+            var how = branch.createElement("how", "select");
+            css.addClass(how, mtp_new_pick);
+            how.setAttribute("aria-label", "how it arrives");
+            this._source.modes().forEach(function (m) {
+                var opt = branch.createElement("how-" + m.id, "option");
+                opt.value = m.id;
+                opt.textContent = m.label;
+                opt.title = m.says;
+                how.appendChild(opt);
+            });
+            how.value = self._fixed;
+            root.appendChild(how);
+            this._how = how;
+        }
+
         var go = branch.createElement("go", "button");
         css.addClass(go, mtp_add);
         go.setAttribute("type", "button");
@@ -97,6 +123,9 @@ class AddTab {
     /** The kind that would be mounted, by id. */
     kind() { return this._pick.value; }
 
+    /** How a tab from this control arrives: what the list says when there is one, else what the holder fixed. */
+    mode() { return this._how ? this._how.value : this._fixed; }
+
     /**
      * The gesture, by call: the chosen kind into the chosen pane. Returns the
      * index it landed at, or −1 — no pane chosen, or one that would not take
@@ -107,7 +136,7 @@ class AddTab {
         if (!pane || !this._source.canAdd(pane)) return -1;
         var tab = this._source.mint(pane, this._pick.value);
         var at = pane.addTab(tab);
-        this._source.show(pane, tab, this._mode);   // in front, and the keys stay in the hand that is using this
+        this._source.show(pane, tab, this.mode());
         this.refresh();
         if (this._onAdded) this._onAdded(pane, tab, at);
         return at;
