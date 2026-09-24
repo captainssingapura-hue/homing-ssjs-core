@@ -67,7 +67,15 @@ public record MultiTabPaneModule() implements DomModule<MultiTabPaneModule> {
                     KeyBinding.of(Key.ARROW_DOWN, Modifier.SHIFT, "the active tab asked to detach and float: DetachRequested, for a holder with a desk"),
                     KeyBinding.of(Key.ENTER, "the active tab's widget activates itself - a claim; the pane never claims for it"),
                     KeyBinding.of(Key.ESCAPE, "taken and kept: the dock is where Escape stops, so nothing overshoots out of the room"),
-                    KeyBinding.of(Key.CONTEXT_MENU, "the active tab's menu"), KeyBinding.of(Key.F10, Modifier.SHIFT, "the active tab's menu"));
+                    KeyBinding.of(Key.CONTEXT_MENU, "the active tab's menu"), KeyBinding.of(Key.F10, Modifier.SHIFT, "the active tab's menu"),
+                    // BrowserKeys, the other scheme a pane may be given. Declared here because the map is a PAGE's, and a
+                    // reader of it wants every key the component may answer, not only the ones today's pane was built with.
+                    KeyBinding.of(Key.TAB, Modifier.CTRL, "browser scheme: the next tab, wrapping"),
+                    KeyBinding.of(Key.TAB, java.util.Set.of(Modifier.CTRL, Modifier.SHIFT), "browser scheme: the previous tab, wrapping"),
+                    KeyBinding.of(Key.PAGE_DOWN, Modifier.CTRL, "browser scheme: the next tab"),
+                    KeyBinding.of(Key.PAGE_UP, Modifier.CTRL, "browser scheme: the previous tab"),
+                    KeyBinding.of(Key.ARROW_RIGHT, java.util.Set.of(Modifier.CTRL, Modifier.SHIFT), "browser scheme: the next tab, by a chord a browser does not keep for itself"),
+                    KeyBinding.of(Key.ARROW_LEFT, java.util.Set.of(Modifier.CTRL, Modifier.SHIFT), "browser scheme: the previous tab, by a chord a browser does not keep for itself"));
         }
     }
 
@@ -77,7 +85,7 @@ public record MultiTabPaneModule() implements DomModule<MultiTabPaneModule> {
     public ImportsFor<MultiTabPaneModule> imports() {
         return ImportsFor.<MultiTabPaneModule>builder()
                 .add(new ModuleImports<>(List.of(new TabStripModule.TabStrip()), TabStripModule.INSTANCE))
-                .add(new ModuleImports<>(List.of(new PaneKeysModule.PaneKeys()), PaneKeysModule.INSTANCE))
+                .add(new ModuleImports<>(List.of(new PaneKeysModule.PaneKeys(), new PaneKeysModule.PaneSchemes()), PaneKeysModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new PaneMenusModule.PaneMenus()), PaneMenusModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new KeysModule.Keys()), KeysModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new focusParty()), FocusPartyModule.INSTANCE))

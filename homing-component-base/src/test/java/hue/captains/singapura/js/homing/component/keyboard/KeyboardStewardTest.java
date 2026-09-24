@@ -87,6 +87,7 @@ class KeyboardStewardTest extends JsModuleTestBase {
         loadModule(DIR + "keyboard/KeyboardEventsModule.js");
         loadModule(DIR + "keyboard/KeyboardWalkModule.js");
         loadModule(DIR + "keyboard/KeyboardShortcutsModule.js");
+        loadModule(DIR + "keyboard/KeyboardChordsModule.js");
         loadModule(DIR + "keyboard/KeyboardStewardModule.js");
         loadModule(DIR + "keyboard/KeysModule.js");
         js.eval("js", SHIM);

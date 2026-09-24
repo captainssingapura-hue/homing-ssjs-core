@@ -121,6 +121,7 @@ class DockingTest extends JsModuleTestBase {
         loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeyboardEventsModule.js");
         loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeyboardWalkModule.js");
         loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeyboardShortcutsModule.js");
+        loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeyboardChordsModule.js");
         loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeyboardStewardModule.js");
         loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeysModule.js");
         loadModule(P + "floating/FloatEventsModule.js");

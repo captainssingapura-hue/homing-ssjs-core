@@ -56,6 +56,7 @@ class StewardMonitorTest extends JsModuleTestBase {
         loadModule(DIR + "component/keyboard/KeyboardEventsModule.js");
         loadModule(DIR + "component/keyboard/KeyboardWalkModule.js");
         loadModule(DIR + "component/keyboard/KeyboardShortcutsModule.js");
+        loadModule(DIR + "component/keyboard/KeyboardChordsModule.js");
         loadModule(DIR + "component/keyboard/KeyboardStewardModule.js");
         loadModule(DIR + "ui/focus/StewardMonitorModule.js");
         js.eval("js", SHIM);

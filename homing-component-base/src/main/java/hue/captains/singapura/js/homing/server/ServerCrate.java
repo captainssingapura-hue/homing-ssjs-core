@@ -10,6 +10,7 @@ import hue.captains.singapura.js.homing.component.keyboard.FocusPartyModule;
 import hue.captains.singapura.js.homing.component.keyboard.KeyboardEventsModule;
 import hue.captains.singapura.js.homing.component.keyboard.KeyboardSecretaryModule;
 import hue.captains.singapura.js.homing.component.keyboard.KeyboardStewardModule;
+import hue.captains.singapura.js.homing.component.keyboard.KeyboardChordsModule;
 import hue.captains.singapura.js.homing.component.keyboard.KeyboardShortcutsModule;
 import hue.captains.singapura.js.homing.component.keyboard.KeyboardWalkModule;
 import hue.captains.singapura.js.homing.component.keyboard.KeysModule;
@@ -61,6 +62,7 @@ public final class ServerCrate implements Crate, ComponentVehicle {
                 CrateEntry.of(KeysModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
                 CrateEntry.of(KeyboardEventsModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 CrateEntry.of(KeyboardWalkModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
-                CrateEntry.of(KeyboardShortcutsModule.INSTANCE, StandardJsModuleType.PURE_LOGIC));
+                CrateEntry.of(KeyboardShortcutsModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
+                CrateEntry.of(KeyboardChordsModule.INSTANCE, StandardJsModuleType.PURE_LOGIC));
     }
 }

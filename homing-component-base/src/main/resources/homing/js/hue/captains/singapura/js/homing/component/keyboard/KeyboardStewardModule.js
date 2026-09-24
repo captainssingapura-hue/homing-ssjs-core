@@ -13,7 +13,10 @@
 //
 //   target is the body — nothing focused anywhere — to the holder's
 //   keyDown/keyUp, defaulted and stopped when taken; target is a focused
-//   element — nothing: the native world had it. The holder is untouched by
+//   element — the native world had it, EXCEPT for a chord, which is offered
+//   up the chain from that element: memberAt for where to start, the party
+//   for who is above, chord(ev) on each until one takes it. A letter typed in
+//   a field is nobody else's business; Ctrl+Tab is. The holder is untouched by
 //   native focus and resumes the moment the focused thing blurs.
 //
 //   THE WALK, while nothing is natively focused, is KeyboardWalk's: it moves
@@ -117,7 +120,8 @@ class KeyboardSteward {
             handlers = { keyDown: typeof c.keyDown === "function" ? function (ev) { return c.keyDown(ev); } : null, keyUp: typeof c.keyUp === "function" ? function (ev) { return c.keyUp(ev); } : null,
                          granted: typeof c.granted === "function" ? function (by) { c.granted(by); } : null, taken: typeof c.taken === "function" ? function (by) { c.taken(by); } : null,
                          offered: typeof c.offered === "function" ? function () { c.offered(); } : null, withdrawn: typeof c.withdrawn === "function" ? function () { c.withdrawn(); } : null,
-                         within: typeof c.within === "function" ? function (on) { c.within(on); } : null };
+                         within: typeof c.within === "function" ? function (on) { c.within(on); } : null,
+                         chord: typeof c.chord === "function" ? function (ev) { return c.chord(ev); } : null };
             id = id.id;
         }
         if (typeof id !== "string" || !id) throw new Error("[KeyboardSteward] a member needs an id");
@@ -292,13 +296,16 @@ class KeyboardSteward {
             this._traced(kind, ev, "page", null, true);
             return;
         }
-        if (KeyboardSteward.fromAFocusedElement(ev)) { this.withdraw(); this._traced(kind, ev, "native", ev.target, false); return; }
+        if (KeyboardSteward.fromAFocusedElement(ev)) { this.withdraw(); return this._native(kind, ev); }
         if (kind === "KeyDown" && KeyboardWalk.keyDown(this, ev)) { ev.preventDefault(); ev.stopPropagation(); this._traced(kind, ev, "walk", this._candidate, true); return; }
         var holder = this._holder;
         if (holder === null) { this._traced(kind, ev, "none", null, false); return; }
         this._party.tellFrom(_STEWARD, { kind: kind, ev: ev });
         this._traced(kind, ev, "holder", holder, ev.defaultPrevented === true);
     }
+    /** The native world had it — unless it was a chord, which KeyboardChords offers up the chain from where it was pressed. */
+    _native(kind, ev) { var by = kind === "KeyDown" ? KeyboardChords.took(this, ev) : null; this._traced(kind, ev, by ? "chord" : "native", by || ev.target, !!by); }
+
     /** Whether the key came from a focused element — anything but the body, the root element or the document itself. */
     static fromAFocusedElement(ev) {
         var t = ev.target;

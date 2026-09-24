@@ -21,7 +21,25 @@ import java.util.List;
 public record PaneKeysModule() implements EsModule<PaneKeysModule> {
 
     /** The class of statics: {@code keyDown(pane, ev)}. */
+    /** One, several or none, and the order they are asked in: {@code of}, {@code keyDown}, {@code chord}. */
+    public record PaneSchemes() implements Exportable._Constant<PaneKeysModule> {}
+
     public record PaneKeys() implements Exportable._Constant<PaneKeysModule> {}
+
+    /**
+     * The other scheme that ships: what a browser does. Ctrl+Tab forward,
+     * Ctrl+Shift+Tab back, the page keys the same, and the row WRAPS — which
+     * the container's scheme deliberately does not. It answers on the bar and
+     * through the chord alike, because moving between tabs while you are
+     * typing is the whole of what it imitates.
+     *
+     * <p>A browser keeps Ctrl+Tab and the page keys for its own tabs and does
+     * not hand them to a page, so inside a browser tab this scheme is silent;
+     * the keys arrive in a desktop shell, or under a fullscreen keyboard lock.
+     * It therefore answers Ctrl+Shift+← and Ctrl+Shift+→ as well: the same
+     * movement by a chord nobody reserves.</p>
+     */
+    public record BrowserKeys() implements Exportable._Constant<PaneKeysModule> {}
 
     public static final PaneKeysModule INSTANCE = new PaneKeysModule();
 
@@ -29,6 +47,6 @@ public record PaneKeysModule() implements EsModule<PaneKeysModule> {
 
     @Override
     public ExportsOf<PaneKeysModule> exports() {
-        return new ExportsOf<>(INSTANCE, List.of(new PaneKeys()));
+        return new ExportsOf<>(INSTANCE, List.of(new PaneSchemes(), new PaneKeys(), new BrowserKeys()));
     }
 }

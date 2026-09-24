@@ -4,7 +4,7 @@
 // component: the caller makes a sub-branch for it and hands it in; dispose()
 // dissolves it.
 //
-//   new MultiTabPane(branch, { host, slotId?, budget?, addable?, onEvent?, menus?, stripMenu?, focus?, focusName? })
+//   new MultiTabPane(branch, { host, slotId?, budget?, addable?, onEvent?, menus?, stripMenu?, focus?, focusName?, keys? })
 //     branch: the pane's own, handed unactivated
 //     host:   a flex column; the pane is its item and fills it.
 //     focus:  the focus branch the pane joins — the page's root unless said,
@@ -29,6 +29,13 @@
 //   activate(). What it contains natively is its own affair, encapsulated:
 //   the pane never sees a native control. addTab and attachTab refuse a
 //   widget that is not; attachTab adopts a membership from another dock.
+//
+//   THE KEYS ARE SWAPPABLE. `keys` is a scheme or a list of them, PaneKeys
+//   unless said, and pane.keys(...) swaps them live. A scheme answers two
+//   doors — keyDown(pane, ev) while the pane holds the keys, chord(pane, ev)
+//   while something below it is natively focused and a chord got past — so a
+//   scheme that means to work in both says so once. PaneKeys is below;
+//   BrowserKeys, beside it, is Ctrl+Tab and wraps.
 //
 //   THE KEYS, while the pane holds them — nothing natively focused, the pane
 //   the holder by a press on a chip or the frame, a widget's yield caught, or
@@ -126,6 +133,7 @@ class MultiTabPane {
         this.slotId = opts.slotId == null ? "main" : String(opts.slotId);
         this._budget = opts.budget == null ? _DEFAULT_BUDGET : Math.max(1, opts.budget | 0);
         this._addEnabled = opts.addable !== false;
+        this._schemes = PaneSchemes.of(opts.keys);   // _keys() is the method that writes data-keys; this is the list of schemes
         this._sink = typeof opts.onEvent === "function" ? opts.onEvent : null;
         this._menus = opts.menus && typeof opts.menus.open === "function" ? opts.menus : null;
         this._stripMenu = this._menus && typeof opts.stripMenu === "string" && opts.stripMenu ? opts.stripMenu : null;
@@ -189,15 +197,7 @@ class MultiTabPane {
         while (n < this._tabs.length && this._tabs[n].pinned) n++;
         return n;
     }
-    _validate(tab) {
-        if (!tab || typeof tab.id !== "string" || !tab.id) throw new Error("[MultiTabPane] tab.id must be a non-empty string");
-        if (this._find(tab.id) >= 0) throw new Error("[MultiTabPane] tab '" + tab.id + "' is already in slot '" + this.slotId + "'");
-        if (!tab.widget || typeof tab.widget !== "object" || !tab.widget.root)
-            throw new Error("[MultiTabPane] tab '" + tab.id + "' has no widget with a root");
-        if (!PaneKeys.law(tab.widget))   // a member of a dock's branch, with activate()
-            throw new Error("[MultiTabPane] tab '" + tab.id + "': its widget is not logically focusable - it must join the dock's focus branch (widget.focus) and answer activate()");
-        if (this._tabs.length >= this._budget) throw new Error("[MultiTabPane] the budget of " + this._budget + " is spent in slot '" + this.slotId + "'");
-    }
+    _validate(tab) { PaneKeys.admit(this, tab); }
 
     // ── The chips and the panels ──────────────────────────────────────────
     _build(tab) {
@@ -343,8 +343,30 @@ class MultiTabPane {
     widgetOf(id) { var i = this._find(id); return i < 0 ? null : this._tabs[i].widget; }
     getState() { return PaneEvents.state(this); }
     // ── The member: the keys while the pane holds them ────────────────────
-    /** A keydown while the pane holds the keys: the container's own, PaneKeys; true when taken. */
-    keyDown(ev) { return PaneKeys.keyDown(this, ev); }
+    /**
+     * THE PANE'S KEYS ARE SWAPPABLE, and this is one of the two doors they
+     * come in by: the pane HOLDS them, nothing is natively focused, and the
+     * steward has routed the key here. Each scheme is asked in the order it
+     * was given and the first to take it has it.
+     */
+    keyDown(ev) { return PaneSchemes.keyDown(this._schemes, this, ev); }
+
+    /**
+     * The other door: something BELOW this pane has the browser's focus — a
+     * field in a tab's widget — and a chord got past it and up the party to
+     * here. The pane is not the holder and has no state saying so; the steward
+     * worked out the chain from where the key was pressed, which is why
+     * nothing here has to be remembered.
+     *
+     * A scheme that means to behave like a browser answers here as well as on
+     * the bar, because moving between tabs while you are typing is the whole
+     * of what it is imitating. The container's scheme answers false: an arrow
+     * belongs to the field.
+     */
+    chord(ev) { return PaneSchemes.chord(this._schemes, this, ev); }
+
+    /** The schemes this pane answers, live: a scheme, a list of them, or nothing for the container's own. */
+    keys(schemes) { if (arguments.length === 0) return this._schemes.slice(); this._schemes = PaneSchemes.of(schemes); return this; }
     /** The strip's ground, right-clicked: the page's own kind, if it named one; PaneMenus says. */
     menuByGround(at) { return PaneMenus.onGround(this, at); }
     /** The active tab's menu, at its chip, when the page offers menus; true when the steward took it. */
