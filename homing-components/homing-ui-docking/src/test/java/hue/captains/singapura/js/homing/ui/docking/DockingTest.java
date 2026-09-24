@@ -28,6 +28,9 @@ class DockingTest extends JsModuleTestBase {
         function el(tag) {
             var classes = new Set(), attrs = {}, props = {};
             var node = { tag: tag, children: [], parentNode: null, listeners: {}, textContent: "", rect: { left: 0, top: 0, right: 0, bottom: 0, width: 0, height: 0 },
+                // the bar measures itself to squeeze the row: a style bag and a scroll box, unread by anything else here
+                style: { props: {}, setProperty: function (k, v) { this.props[k] = v; }, removeProperty: function (k) { delete this.props[k]; } },
+                clientWidth: 0, scrollLeft: 0,
                 style: { setProperty: function (k, v) { props[k] = v; }, removeProperty: function (k) { delete props[k]; }, getPropertyValue: function (k) { return props[k] == null ? "" : props[k]; } },
                 classList: { add: function () { for (var i = 0; i < arguments.length; i++) classes.add(arguments[i]); },
                              remove: function () { for (var i = 0; i < arguments.length; i++) classes.delete(arguments[i]); },
@@ -63,7 +66,7 @@ class DockingTest extends JsModuleTestBase {
                     size: function (e, s) { if (s == null) e.style.removeProperty("--size"); else e.style.setProperty("--size", String(s)); } };
         var fp_desk = "fp_desk", fp_desk_layer = "fp_desk_layer", fp_frame = "fp_frame", fp_hoverable = "fp_hoverable", fp_held = "fp_held", fp_active = "fp_active",
             fp_head = "fp_head", fp_head_held = "fp_head_held", fp_title = "fp_title", fp_close = "fp_close", fp_body = "fp_body", fp_grip = "fp_grip";
-        var mtp_pane = "mtp_pane", mtp_strip = "mtp_strip", mtp_strip_loose = "mtp_strip_loose", mtp_chip = "mtp_chip", mtp_chip_label = "mtp_chip_label", mtp_chip_mark = "mtp_chip_mark", mtp_chip_mark_on = "mtp_chip_mark_on", mtp_chip_lifted = "mtp_chip_lifted", mtp_chip_dragging = "mtp_chip_dragging", mtp_chip_shifted = "mtp_chip_shifted",
+        var mtp_pane = "mtp_pane", mtp_strip = "mtp_strip", mtp_rail = "mtp_rail", mtp_strip_loose = "mtp_strip_loose", mtp_chip = "mtp_chip", mtp_chip_label = "mtp_chip_label", mtp_chip_mark = "mtp_chip_mark", mtp_chip_mark_on = "mtp_chip_mark_on", mtp_chip_lifted = "mtp_chip_lifted", mtp_chip_dragging = "mtp_chip_dragging", mtp_chip_shifted = "mtp_chip_shifted",
             mtp_chip_seated = "mtp_chip_seated",
             mtp_chip_close = "mtp_chip_close", mtp_drop_mark = "mtp_drop_mark", mtp_strip_tail = "mtp_strip_tail", mtp_add = "mtp_add", mtp_rail_add = "mtp_rail_add", mtp_add_mark = "mtp_add_mark", mtp_add_off = "mtp_add_off",
             mtp_pill = "mtp_pill", mtp_content = "mtp_content", mtp_tab_content = "mtp_tab_content", mtp_tab_content_hidden = "mtp_tab_content_hidden",
@@ -104,7 +107,7 @@ class DockingTest extends JsModuleTestBase {
         A.addTab({ id: "t1", title: "One", widget: widget("w1") });
         A.addTab({ id: "t2", title: "Two", widget: widget("w2") });
         log.length = 0;
-        function chips(d) { return d.el.children[0].children.filter(function (c) { return c.has("mtp_chip"); }); }
+        function chips(d) { return d.el.children[0].children[0].children.filter(function (c) { return c.has("mtp_chip"); }); }   // strip, rail, chips
         chips(A).forEach(function (c, i) { c.rect = { left: 40 + 80 * i, top: 0, right: 120 + 80 * i, bottom: 30, width: 80, height: 30 }; });
         function chipOf(d, title) { return chips(d).find(function (c) { return c.children[0].textContent === title; }); }
         """;
@@ -125,6 +128,7 @@ class DockingTest extends JsModuleTestBase {
         loadModule(P + "floating/DeskModule.js");
         loadModule(P + "panes/PaneEventsModule.js");
         loadModule(P + "panes/TabDragModule.js");
+        loadModule(P + "panes/TabFitModule.js");
         loadModule(P + "panes/TabHandModule.js");
         loadModule(P + "panes/TabStripModule.js");
         loadModule(P + "panes/PaneKeysModule.js");
@@ -195,7 +199,7 @@ class DockingTest extends JsModuleTestBase {
         eval("head.fire('pointermove', { clientX: 10, clientY: 10 });");
         assertTrue(eval("A.el.has('mtp_dock_target')").asBoolean());
         assertFalse(eval("B.el.has('mtp_dock_target')").asBoolean(), "the offer moved");
-        assertEquals("mtp_drop_mark", eval("A.el.children[0].children[0].has('mtp_drop_mark') ? 'mtp_drop_mark' : A.el.children[0].children[0].tag").asString(), "the mark is first in the strip");
+        assertEquals("mtp_drop_mark", eval("A.el.children[0].children[0].children[0].has('mtp_drop_mark') ? 'mtp_drop_mark' : A.el.children[0].children[0].children[0].tag").asString(), "the mark is first in the rail");
         eval("log.length = 0; head.fire('pointerup', { clientX: 10, clientY: 10 });");
         assertEquals("released:f attached:a:f@0 docked:f@a#0", log());
         assertEquals("f,t1,t2", eval("A.tabs().join(',')").asString());

@@ -85,12 +85,10 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
             display: flex;
             align-items: flex-end;
             flex-shrink: 0;
+            overflow: hidden;
             padding-block: 4px 0;
             min-block-size: calc(var(--control-tab-size-extent-inline-size) * pow(var(--control-tab-size-extent-inline-size-ratio), var(--size, 0))
                                / (var(--control-tab-size-proportion) * pow(var(--control-tab-size-proportion-ratio-aspect), var(--aspect, 0))));
-            overflow-x: auto;
-            overflow-y: hidden;
-            scrollbar-width: none;
             user-select: none;
             """;
         }
@@ -131,6 +129,8 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
         }
         @Override public List<? extends Wearable> sizes() { return List.of(of(Control.Tab.class, Size.Inset.class), of(Control.Tab.class, Size.Gap.class), of(Control.Tab.class, Size.Extent.class), of(Caption.class, Type.Scale.class)); }
         @Override public List<? extends Wearable> aspects() { return List.of(of(Control.Tab.class, Size.Proportion.class)); }
+        /** The squeeze, set on the rail and read here: a cap, so a row that fits keeps the width the design asked for. */
+        @Override public Set<CssVar> runtimeVars() { return Set.of(new CssVar("--chip-fit")); }
         @Override public String body() { return """
             display: inline-flex;
             align-items: center;
@@ -138,6 +138,7 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
             overflow: hidden;
             white-space: nowrap;
             flex: none;
+            max-inline-size: var(--chip-fit, none);
             touch-action: none;
             """;
         }
@@ -292,6 +293,33 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
     }
 
     /** The end of the strip: the add button and the count, pushed right. */
+    /**
+      * THE WINDOW over the row. The strip is the whole bar — the rail, the
+      * plus, the count — and this is the part of it the chips live in, and the
+      * only part that moves. It takes what the bar can spare and no more
+      * ({@code flex: 0 1 auto} over {@code min-inline-size: 0}), so with a few
+      * tabs it is exactly as wide as they are and the plus sits against the
+      * last of them, and with many it is the room that is left and the plus
+      * has stopped following.
+      *
+      * <p>{@code overflow: hidden} rather than {@code auto}: the window is
+      * moved by the strip, in whole tabs, and a scrollbar would offer a
+      * second way of moving it that lands between two. Hidden still scrolls
+      * when {@code scrollLeft} is set — that is the whole mechanism.</p>
+      */
+    public record mtp_rail() implements CssClass<PaneStyles> {
+        /** The width the row is squeezed to, read by every chip in it; none until there are too many. */
+        @Override public Set<CssVar> runtimeVars() { return Set.of(new CssVar("--chip-fit")); }
+        @Override public String body() { return """
+            display: flex;
+            align-items: flex-end;
+            flex: 0 1 auto;
+            min-inline-size: 0;
+            overflow: hidden;
+            """;
+        }
+    }
+
     public record mtp_strip_tail() implements CssClass<PaneStyles> {
         @Override public String body() { return """
             display: flex;
@@ -572,7 +600,7 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
 
     @Override
     public List<CssClass<PaneStyles>> cssClasses() {
-        return List.of(new mtp_pane(), new mtp_strip(), new mtp_strip_loose(), new mtp_chip(), new mtp_chip_label(), new mtp_strip_current(), new mtp_chip_mark(), new mtp_chip_mark_on(), new mtp_chip_lifted(), new mtp_chip_seated(), new mtp_chip_dragging(), new mtp_chip_shifted(),
+        return List.of(new mtp_pane(), new mtp_strip(), new mtp_rail(), new mtp_strip_loose(), new mtp_chip(), new mtp_chip_label(), new mtp_strip_current(), new mtp_chip_mark(), new mtp_chip_mark_on(), new mtp_chip_lifted(), new mtp_chip_seated(), new mtp_chip_dragging(), new mtp_chip_shifted(),
                        new mtp_chip_close(), new mtp_drop_mark(), new mtp_strip_tail(), new mtp_add(), new mtp_rail_add(), new mtp_add_off(),
                        new mtp_pill(), new mtp_content(), new mtp_tab_content(), new mtp_empty(), new mtp_dock_target(),
                        new mtp_opener(), new mtp_opener_note(), new mtp_opener_grid(), new mtp_opener_pick(),

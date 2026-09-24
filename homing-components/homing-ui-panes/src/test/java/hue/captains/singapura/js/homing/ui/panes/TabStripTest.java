@@ -25,6 +25,9 @@ class TabStripTest extends JsModuleTestBase {
         function el(tag) {
             var classes = new Set(), attrs = {}, props = {};
             var node = { tag: tag, children: [], parentNode: null, listeners: {}, textContent: "", rect: { left: 0, top: 0, width: 0, height: 0 }, cancelled: 0,
+                // the bar measures itself to squeeze the row: a style bag and a scroll box, unread by anything else here
+                style: { props: {}, setProperty: function (k, v) { this.props[k] = v; }, removeProperty: function (k) { delete this.props[k]; } },
+                clientWidth: 0, scrollLeft: 0,
                 style: { setProperty: function (k, v) { props[k] = v; }, removeProperty: function (k) { delete props[k]; }, getPropertyValue: function (k) { return props[k] == null ? "" : props[k]; } },
                 classList: { add: function () { for (var i = 0; i < arguments.length; i++) classes.add(arguments[i]); },
                              remove: function () { for (var i = 0; i < arguments.length; i++) classes.delete(arguments[i]); },
@@ -49,7 +52,7 @@ class TabStripTest extends JsModuleTestBase {
                     removeClass: function (e) { for (var i = 1; i < arguments.length; i++) e.classList.remove(arguments[i]); },
                     toggleClass: function (e, c, f) { e.classList.toggle(c, f); } };
         var getComputedStyle = function () { return { transitionDuration: "0.16s, 0.16s" }; };
-        var mtp_strip = "mtp_strip", mtp_strip_loose = "mtp_strip_loose", mtp_chip = "mtp_chip", mtp_chip_label = "mtp_chip_label", mtp_chip_mark = "mtp_chip_mark", mtp_chip_mark_on = "mtp_chip_mark_on", mtp_chip_lifted = "mtp_chip_lifted", mtp_chip_seated = "mtp_chip_seated",
+        var mtp_strip = "mtp_strip", mtp_rail = "mtp_rail", mtp_strip_loose = "mtp_strip_loose", mtp_chip = "mtp_chip", mtp_chip_label = "mtp_chip_label", mtp_chip_mark = "mtp_chip_mark", mtp_chip_mark_on = "mtp_chip_mark_on", mtp_chip_lifted = "mtp_chip_lifted", mtp_chip_seated = "mtp_chip_seated",
             mtp_chip_dragging = "mtp_chip_dragging", mtp_chip_shifted = "mtp_chip_shifted",
             mtp_chip_close = "mtp_chip_close", mtp_drop_mark = "mtp_drop_mark", mtp_strip_tail = "mtp_strip_tail", mtp_add = "mtp_add", mtp_rail_add = "mtp_rail_add", mtp_add_mark = "mtp_add_mark", mtp_add_off = "mtp_add_off", mtp_pill = "mtp_pill";
         var strip = new TabStrip(fakeBranch("strip"), { onDrop: function (c, dest) { log.push("drop:" + c.children[0].textContent + "@" + dest); } });
@@ -74,6 +77,7 @@ class TabStripTest extends JsModuleTestBase {
         js = buildContext();
         loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeysModule.js");
         loadModule(P + "TabDragModule.js");
+        loadModule(P + "TabFitModule.js");
         loadModule(P + "TabHandModule.js");
         loadModule(P + "TabStripModule.js");
         js.eval("js", SHIM);

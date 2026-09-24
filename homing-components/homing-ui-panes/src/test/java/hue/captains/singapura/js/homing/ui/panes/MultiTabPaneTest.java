@@ -22,6 +22,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
 
     private static final String EVENTS = "/homing/js/hue/captains/singapura/js/homing/ui/panes/PaneEventsModule.js";
     private static final String DRAG   = "/homing/js/hue/captains/singapura/js/homing/ui/panes/TabDragModule.js";
+    private static final String FIT    = "/homing/js/hue/captains/singapura/js/homing/ui/panes/TabFitModule.js";
     private static final String HAND   = "/homing/js/hue/captains/singapura/js/homing/ui/panes/TabHandModule.js";
     private static final String STRIP  = "/homing/js/hue/captains/singapura/js/homing/ui/panes/TabStripModule.js";
     private static final String KEYS   = "/homing/js/hue/captains/singapura/js/homing/ui/panes/PaneKeysModule.js";
@@ -36,6 +37,11 @@ class MultiTabPaneTest extends JsModuleTestBase {
         function el(tag) {
             var classes = new Set(), attrs = {};
             var node = { tag: tag, children: [], parentNode: null, listeners: {},
+                // the bar measures itself to squeeze the row: a style bag and a scroll box, unread by anything else here
+                style: { props: {}, setProperty: function (k, v) { this.props[k] = v; }, removeProperty: function (k) { delete this.props[k]; } },
+                clientWidth: 0, scrollLeft: 0,
+                // no layout in this DOM: zeroes, which the strip reads as "not measured yet" and leaves alone
+                getBoundingClientRect: function () { return { left: 0, top: 0, right: 0, bottom: 0, width: 0, height: 0 }; },
                 classList: { add: function () { for (var i = 0; i < arguments.length; i++) classes.add(arguments[i]); },
                              remove: function () { for (var i = 0; i < arguments.length; i++) classes.delete(arguments[i]); },
                              contains: function (c) { return classes.has(c); },
@@ -67,7 +73,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
                     extent: function (e, t) { e._extent = t == null ? null : t; },
                     hasClass: function (e, c) { return e.classList.contains(c); },
                     size: function (e, s) { e.size = s; }, aspect: function (e, a) { e.aspect = a; } };
-        var mtp_pane = "mtp_pane", mtp_strip = "mtp_strip", mtp_chip = "mtp_chip", mtp_chip_label = "mtp_chip_label", mtp_chip_mark = "mtp_chip_mark", mtp_chip_mark_on = "mtp_chip_mark_on", mtp_chip_lifted = "mtp_chip_lifted",
+        var mtp_pane = "mtp_pane", mtp_strip = "mtp_strip", mtp_rail = "mtp_rail", mtp_chip = "mtp_chip", mtp_chip_label = "mtp_chip_label", mtp_chip_mark = "mtp_chip_mark", mtp_chip_mark_on = "mtp_chip_mark_on", mtp_chip_lifted = "mtp_chip_lifted",
             mtp_chip_dragging = "mtp_chip_dragging", mtp_chip_shifted = "mtp_chip_shifted", mtp_strip_loose = "mtp_strip_loose", mtp_chip_close = "mtp_chip_close", mtp_drop_mark = "mtp_drop_mark",
             mtp_chip_seated = "mtp_chip_seated", mtp_strip_current = "mtp_strip_current",
             mtp_strip_tail = "mtp_strip_tail", mtp_add = "mtp_add", mtp_rail_add = "mtp_rail_add", mtp_add_mark = "mtp_add_mark", mtp_add_off = "mtp_add_off", mtp_pill = "mtp_pill",
@@ -104,9 +110,9 @@ class MultiTabPaneTest extends JsModuleTestBase {
                     case "DetachRequested": log.push("detach?" + ev.slotId + ":" + ev.tabId); break;
                     default: log.push("?" + ev.kind);
                 } } });
-        function chips() { return pane.el.children[0].children.filter(function (c) { return c.has("mtp_chip"); }).map(function (c) { return c.children[0].textContent; }).join(","); }
+        function chips() { return pane.el.children[0].children[0].children.filter(function (c) { return c.has("mtp_chip"); }).map(function (c) { return c.children[0].textContent; }).join(","); }
         function panels() { return pane.el.children[1].children.filter(function (c) { return c.has("mtp_tab_content"); }).map(function (c) { return c.children[0].tag + (c.has("mtp_tab_content_hidden") ? "-" : "+"); }).join(","); }
-        function selected() { return pane.el.children[0].children.filter(function (c) { return c.getAttribute("aria-selected") === "true"; }).map(function (c) { return c.children[0].textContent; }).join(","); }
+        function selected() { return pane.el.children[0].children[0].children.filter(function (c) { return c.getAttribute("aria-selected") === "true"; }).map(function (c) { return c.children[0].textContent; }).join(","); }
         """;
 
     @BeforeEach
@@ -122,6 +128,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
         loadModule("/homing/js/hue/captains/singapura/js/homing/component/keyboard/KeysModule.js");
         loadModule(EVENTS);
         loadModule(DRAG);
+        loadModule(FIT);
         loadModule(HAND);
         loadModule(STRIP);
         loadModule(KEYS);
@@ -156,7 +163,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
         assertEquals("active:s1:b", log());
         eval("pane.switchTab('b')");
         assertEquals("active:s1:b", log(), "switching to the active tab says nothing");
-        assertEquals("null,null", eval("[0, 1].map(function (i) { return String(pane.el.children[0].children[i].getAttribute('tabindex')); }).join(',')").asString(), "no chip takes native focus: the keys over the strip are the pane's");
+        assertEquals("null,null", eval("[0, 1].map(function (i) { return String(pane.el.children[0].children[0].children[i].getAttribute('tabindex')); }).join(',')").asString(), "no chip takes native focus: the keys over the strip are the pane's");
     }
 
     @Test
@@ -206,11 +213,11 @@ class MultiTabPaneTest extends JsModuleTestBase {
     @Test
     void theSizeAndAspectReachEveryChip_andTheBar_nowAndLater() {
         eval("pane.addTab(tab('a')); pane.size(0.5); pane.aspect(-2); pane.addTab(tab('b'))");
-        assertEquals("0.5/-1 0.5/-1", eval("pane.el.children[0].children.filter(function (c) { return c.has('mtp_chip'); }).map(function (c) { return c.size + '/' + c.aspect; }).join(' ')").asString(), "clamped to −1..1; a chip made after gets them too");
+        assertEquals("0.5/-1 0.5/-1", eval("pane.el.children[0].children[0].children.filter(function (c) { return c.has('mtp_chip'); }).map(function (c) { return c.size + '/' + c.aspect; }).join(' ')").asString(), "clamped to −1..1; a chip made after gets them too");
         assertEquals("0.5/-1", eval("var s = pane.el.children[0]; s.size + '/' + s.aspect").asString(),
                      "and the bar, which keeps a tab's room while it holds none: an axis does not inherit, so the bar needs its own");
         eval("pane.size(null); pane.aspect(null)");
-        assertEquals("null/null", eval("var c = pane.el.children[0].children[0]; c.size + '/' + c.aspect").asString(), "null gives the design's back");
+        assertEquals("null/null", eval("var c = pane.el.children[0].children[0].children[0]; c.size + '/' + c.aspect").asString(), "null gives the design's back");
         assertEquals("null/null", eval("var s = pane.el.children[0]; s.size + '/' + s.aspect").asString());
     }
 
@@ -218,8 +225,8 @@ class MultiTabPaneTest extends JsModuleTestBase {
     void pinnedTabsSitFirstCannotCloseAndAreNotPassed() {
         eval("pane.addTab(tab('a')); pane.addTab(tab('p', { pinned: true })); pane.addTab(tab('b')); log = []");
         assertEquals("P,A,B", chips());
-        assertEquals("2", eval("pane.el.children[0].children[0].children.length").toString(), "the label and the within mark, and no cross on the pinned chip");
-        assertEquals("3", eval("pane.el.children[0].children[1].children.length").toString(), "an unpinned chip: the label, the mark and the cross");
+        assertEquals("2", eval("pane.el.children[0].children[0].children[0].children.length").toString(), "the label and the within mark, and no cross on the pinned chip");
+        assertEquals("3", eval("pane.el.children[0].children[0].children[1].children.length").toString(), "an unpinned chip: the label, the mark and the cross");
         eval("pane.moveTab('b', 0)");
         assertEquals("P,B,A", chips(), "a drop never lands before the pinned");
         assertEquals("moved:s1:b@2->s1@1", log());
@@ -247,11 +254,11 @@ class MultiTabPaneTest extends JsModuleTestBase {
     @Test
     void theCrossClosesAndAChipPressSwitches() {
         eval("pane.addTab(tab('a')); pane.addTab(tab('b')); log = []");
-        eval("var chip = pane.el.children[0].children[1]; chip.fire('pointerdown', { button: 0, target: chip, clientX: 0, clientY: 0 })");
+        eval("var chip = pane.el.children[0].children[0].children[1]; chip.fire('pointerdown', { button: 0, target: chip, clientX: 0, clientY: 0 })");
         assertEquals("active:s1:b", log(), "the press selects, before any release");
         eval("log = []; chip.fire('pointerdown', { button: 2, target: chip, clientX: 0, clientY: 0 }); chip.fire('click')");
         assertEquals("", log(), "a secondary button or a bare click is nothing");
-        eval("log = []; pane.el.children[0].children[1].children[2].fire('click')");   // label, mark, cross
+        eval("log = []; pane.el.children[0].children[0].children[1].children[2].fire('click')");   // label, mark, cross
         assertEquals("b:disposed removed:s1:b@1 active:s1:a", log());
     }
 
@@ -268,7 +275,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
     void theActiveChipLiftsOnTheBar_andSitsDownWithTheColourAtFullWhenTheKeysAreInIt() {
         eval("pane.addTab(tab('a')); pane.addTab(tab('b')); pane.switchTab('a')");
         eval("""
-            var chips = pane.el.children[0];
+            var chips = pane.el.children[0].children[0];   // the rail: the chips live in the window, not on the bar
             function chip(i) { return chips.children[i]; }
             function look(i) { var c = chip(i), m = c.children[1];
                 return (c.has('mtp_chip_lifted') ? 'lifted' : 'down') + '/' + (m.has('mtp_chip_mark_on') ? 'mark' : '-') + '/' + String(m._extent === undefined ? null : m._extent); }
@@ -309,7 +316,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
             var steward = { open: function (kind, object, at, opts) { asked.push(kind + "@" + at.x + "," + at.y + (object.pane === withGround ? ":pane" : ":?") + (object.tab ? ":tab" : "") + (opts.anchor === withGround.el ? ":anchored" : "")); return kind !== "refused"; } };
             var withGround = new MultiTabPane(branch.createBranch("mtp_s3"), { host: el("div"), slotId: "s3", menus: steward, stripMenu: "split" });
             withGround.addTab(tab("a"));
-            var strip = withGround.el.children[0], chip = strip.children[0];
+            var strip = withGround.el.children[0], chip = strip.children[0].children[0];   // the rail is the strip's first child; the chip is in it
             var onGround = { target: strip, clientX: 40, clientY: 8, defaulted: false, preventDefault: function () { this.defaulted = true; } };
             strip.fire("contextmenu", onGround);
             var throughAChip = { target: chip, clientX: 5, clientY: 8, defaulted: false, preventDefault: function () { this.defaulted = true; } };
@@ -345,7 +352,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
             var steward = { open: function (kind, object, at, opts) { asked.push(kind + ":" + object.tab.id + "@" + at.x + "," + at.y + (opts.keyboard ? ":kb" : "") + (opts.anchor === object.anchor && object.pane === withMenus ? ":bound" : "")); return object.tab.id !== "refused"; } };
             var withMenus = new MultiTabPane(branch.createBranch("mtp_s2"), { host: el("div"), slotId: "s2", menus: steward, onEvent: function (ev) { if (ev.kind === "TabActivated") log.push("active:" + ev.tabId); } });
             withMenus.addTab(tab("a")); withMenus.addTab(tab("refused")); log = [];
-            var chipA = withMenus.el.children[0].children[0], chipR = withMenus.el.children[0].children[1];
+            var chipA = withMenus.el.children[0].children[0].children[0], chipR = withMenus.el.children[0].children[0].children[1];
             chipA.getBoundingClientRect = function () { return { left: 100, top: 10, right: 180, bottom: 40 }; };
             var ev1 = { clientX: 120, clientY: 30, defaulted: false, preventDefault: function () { this.defaulted = true; }, stopPropagation: function () {} };
             chipA.fire("contextmenu", ev1);
@@ -359,7 +366,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
         assertTrue(eval("ev1.defaulted && took2 && !ev3.defaulted").asBoolean(), "the browser's menu is suppressed only when the steward took it; the key taken likewise");
         assertEquals("0", eval("String((chipA.listeners.keydown || []).length)").asString(), "no keydown listener on a chip");
         assertEquals("tab", eval("MultiTabPane.MENU").asString());
-        eval("var e = { clientX: 0, clientY: 0, defaulted: false, preventDefault: function () { this.defaulted = true; } }; pane.addTab(tab('x')); pane.el.children[0].children[0].fire('contextmenu', e);");
+        eval("var e = { clientX: 0, clientY: 0, defaulted: false, preventDefault: function () { this.defaulted = true; } }; pane.addTab(tab('x')); pane.el.children[0].children[0].children[0].fire('contextmenu', e);");
         assertFalse(eval("e.defaulted").asBoolean(), "no steward: a right-click on this pane's chip is nothing");
     }
 
@@ -413,7 +420,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
         eval("KeyboardStewardInstance.yield(pane.focus.owner)");
         assertEquals("none", eval("holder()").asString(), "a yield by call still gives them up: the way out is the holder's to call, not a key to press");
         assertFalse(eval("pane.keyDown({ key: 'x' })").asBoolean(), "anything else is left");
-        assertEquals("0,0", eval("[(pane.el.children[0].children[0].listeners.keydown || []).length, (pane.el.listeners.keydown || []).length].join()").asString(), "no keydown listener on a chip or the pane");
+        assertEquals("0,0", eval("[(pane.el.children[0].children[0].children[0].listeners.keydown || []).length, (pane.el.listeners.keydown || []).length].join()").asString(), "no keydown listener on a chip or the pane");
         assertEquals("1", eval("String((pane.el.children[0].listeners.mousedown || []).length)").asString(), "the strip stops the press's default");
     }
 

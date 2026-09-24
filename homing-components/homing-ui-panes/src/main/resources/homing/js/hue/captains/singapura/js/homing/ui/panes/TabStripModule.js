@@ -23,7 +23,10 @@
 //     strip.select(chips, active)   aria-selected on the active one, and that one
 //         brought into view: a bar wider than its room scrolls, and a tab you
 //         cannot see is a tab you cannot tell you are on
-//     strip.reveal(chip)            that chip in view, by the shortest move that does it
+//     strip.reveal(chip)            that chip in the window, moving it as little as it can
+//     strip.fit()                   the row squeezed to the room and the window measured again:
+//         a tab added or taken, the size axis dialled, the pane resized
+//     strip.step(by)                the window moved by whole tabs; what the wheel asks for
 //     strip.keys(chip, state)       where the keys are, said on one chip: "held"
 //         while the bar has them — the chip lifted, the colour part of the way —
 //         "lent" while what the tab holds has them — the chip down again, the
@@ -99,10 +102,19 @@ class TabStrip {
             });
         }
 
-        // THE PLUS RIDES THE RAIL, after the last chip rather than at the far end of the bar: it is about the end of
-        // the ROW, and a browser has taught everyone where that is. It is a child of the strip, not of the tail, so
-        // the chips insert before IT and it moves along as they come and go — which is why the anchor below is a
-        // question and not this._tail.
+        // THE RAIL IS THE WINDOW. The chips live in it and it is the only thing that moves; it takes what the bar
+        // can spare and no more, so with a few tabs it is exactly as wide as they are — and the plus, sitting
+        // beside it rather than in it, is therefore against the last chip — while with many it is the room that is
+        // left and the plus has stopped following, which is where a browser puts it too.
+        var rail = branch.createElement("rail", "div");
+        css.addClass(rail, mtp_rail);
+        el.appendChild(rail);
+        this._rail = rail;
+        this._per = 0;      // how many chips the window shows; 0 until measured
+        this._w = 0;        // what each of them is, in pixels
+
+        // THE PLUS, after the last chip while they fit and against the far end once they do not: it is about the
+        // end of the ROW, and a browser has taught everyone where that is.
         this._addBtn = null;
         if (opts && typeof opts.onAdd === "function") {
             var addBtn = branch.createElement("add", "button");
@@ -113,21 +125,20 @@ class TabStrip {
             el.appendChild(addBtn);
             this._addBtn = addBtn;
         }
-        // A BAR WIDER THAN ITS ROOM SCROLLS, and then it must behave like one. The wheel moves it along, as a
-        // browser's does, since along is the only way it goes; and it is watched, because the active chip can go
-        // out of view without anybody touching the tabs - the pane narrows, a splitter is dragged, the size axis
-        // is dialled up.
+        var self = this;
+        this._active = null;
+        this._minPx = opts && opts.minTabPx > 0 ? Number(opts.minTabPx) : 0;
+        this._minRatio = opts && opts.minTabRatio > 0 ? Number(opts.minTabRatio) : 0.45;
+        // The wheel moves the window ONE TAB at a time, along, which is the only way it goes. By whole tabs because
+        // that is the only place a window may rest: a fraction of a wheel notch would leave it between two.
         el.addEventListener("wheel", function (ev) {
             if (ev.ctrlKey || ev.altKey || ev.metaKey) return;
             var d = Math.abs(ev.deltaX) > Math.abs(ev.deltaY) ? ev.deltaX : ev.deltaY;
-            if (!d) return;
-            var was = el.scrollLeft;
-            el.scrollLeft = was + d;
-            if (el.scrollLeft !== was) ev.preventDefault();   // taken: the page must not scroll as well
+            if (d && self.step(d > 0 ? 1 : -1)) ev.preventDefault();   // taken: the page must not scroll as well
         }, { passive: false });
-        var self = this;
-        this._active = null;
-        this._sees = typeof ResizeObserver === "function" ? new ResizeObserver(function () { self.reveal(self._active); }) : null;
+        // The room can change with nobody touching the tabs — the pane narrows, a splitter is dragged — and then
+        // the row wants squeezing again and the window wants moving back onto the tab you are on.
+        this._sees = typeof ResizeObserver === "function" ? new ResizeObserver(function () { self.fit(); }) : null;
         if (this._sees) this._sees.observe(el);
 
         this._tail = branch.createElement("tail", "div");
@@ -212,49 +223,80 @@ class TabStrip {
         css.size(this.el, this._size);
         if (this._addBtn) css.size(this._addBtn, this._size);   // it stands in the row, so it grows with the row
         for (var i = 0; i < this._order.length; i++) css.size(this._order[i], this._size);
+        this.fit();
     }
     aspect(a) {
         this._aspect = a == null ? null : Math.max(-1, Math.min(1, Number(a)));
         css.aspect(this.el, this._aspect);
         if (this._addBtn) css.aspect(this._addBtn, this._aspect);   // a tab's height moves with the aspect, and the plus is one tab tall
         for (var j = 0; j < this._order.length; j++) css.aspect(this._order[j], this._aspect);
+        this.fit();
     }
 
     /**
-     * That chip in view, by the shortest move that does it. Every way a tab
+     * THE ROW MADE TO FIT, AND THEN THE WINDOW. Measured at the design's own
+     * width first — the rail is only as wide as its content until the content
+     * is wider than the room, so that one reading says both what a tab wants
+     * and what the bar can give. TabFit says what follows: a width every chip
+     * is capped to, and how many of them the window then holds.
+     *
+     * Called whenever the row or the room changes — a tab added or taken, the
+     * size axis dialled, the pane resized — and it moves the window back onto
+     * the tab that is showing, since squeezing changes where everything is.
+     */
+    fit() {
+        var rail = this._rail, n = this._order.length;
+        rail.style.setProperty("--chip-fit", "none");
+        if (n === 0) { this._per = 0; this._w = 0; return this; }
+        var natural = this._order[0].getBoundingClientRect().width;
+        var room = rail.clientWidth;
+        if (!(natural > 0) || !(room > 0)) return this;   // not laid out yet: the observer will come back to it
+        var got = TabFit.row(n, room, natural, { px: this._minPx, ratio: this._minRatio });
+        rail.style.setProperty("--chip-fit", got.width == null ? "none" : got.width + "px");
+        this._per = got.per;
+        this._w = got.width == null ? natural : got.width;
+        return this.reveal(this._active);
+    }
+
+    /**
+     * That chip in the window, moving it as little as it can. Every way a tab
      * becomes the shown one comes through select, so this is the one place it
      * has to be said: the arrows walk onto a chip past the edge, a new tab
      * lands past it, a merge brings eight at once.
      *
-     * Rects rather than offsets, because a chip's offsetParent is the pane and
-     * not the bar; and the BAR'S OWN scrollLeft rather than scrollIntoView,
-     * which scrolls whatever else it must to obey — a workspace may not move
-     * under a widget because a tab was selected somewhere in it. The last chip
-     * carries the plus with it: bringing one to the edge and leaving the other
-     * past it would be half a move.
+     * The window rests on whole tabs and only on whole tabs, which is what the
+     * squeeze bought — so it is multiplication, not a search, and nothing is
+     * ever half shown at either end. The rail's OWN scrollLeft, never
+     * scrollIntoView, which scrolls whatever else it must to obey: a workspace
+     * may not move under a widget because a tab was selected somewhere in it.
      */
     reveal(chip) {
-        if (!chip || !chip.getBoundingClientRect) return this;
-        var box = this.el, br = box.getBoundingClientRect(), cr = chip.getBoundingClientRect();
-        var last = this._order.length > 0 && this._order[this._order.length - 1] === chip;
-        var right = last && this._addBtn ? this._addBtn.getBoundingClientRect().right : cr.right;
-        if (cr.left < br.left) box.scrollLeft -= br.left - cr.left;
-        else if (right > br.right) box.scrollLeft += right - br.right;
+        var n = this._order.length, j = chip ? this._order.indexOf(chip) : -1;
+        if (j < 0 || !(this._w > 0) || this._per >= n) return this;
+        var at = Math.round(this._rail.scrollLeft / this._w);
+        this._rail.scrollLeft = TabFit.window(at, j, this._per, n) * this._w;
         return this;
     }
 
-    /** What the chips are laid before: the plus when there is one, since it follows the last of them, else the tail. */
-    _after() { return this._addBtn || this._tail; }
+    /** The window moved by whole tabs; true when it moved, so a wheel knows whether it was taken. */
+    step(by) {
+        var n = this._order.length;
+        if (!(this._w > 0) || this._per >= n) return false;
+        var at = Math.round(this._rail.scrollLeft / this._w), to = TabFit.step(at, by, this._per, n);
+        if (to === at) return false;
+        this._rail.scrollLeft = to * this._w;
+        return true;
+    }
 
     arrange(chips) {
         this._order = chips.slice();
-        var after = this._after();
-        for (var i = 0; i < this._order.length; i++) this.el.insertBefore(this._order[i], after);
+        for (var i = 0; i < this._order.length; i++) this._rail.appendChild(this._order[i]);
+        this.fit();
     }
     remove(c) {
         if (this._active === c) this._active = null;
         this._pinned.delete(c);
-        if (c.parentNode === this.el) this.el.removeChild(c);
+        if (c.parentNode === this._rail) this._rail.removeChild(c);
     }
     /**
      * Where the keys are, said on one chip and on no other. The whole
@@ -351,6 +393,6 @@ class TabStrip {
     }
     _markAt(c, dest) {
         var others = this._others(c);
-        this.el.insertBefore(this._mark, dest < others.length ? others[dest] : this._after());
+        this._rail.insertBefore(this._mark, dest < others.length ? others[dest] : null);
     }
 }

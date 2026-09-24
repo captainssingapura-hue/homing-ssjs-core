@@ -32,6 +32,7 @@ public record TabStripModule() implements DomModule<TabStripModule> {
         return ImportsFor.<TabStripModule>builder()
                 .add(new ModuleImports<>(List.of(
                         new PaneStyles.mtp_strip(),
+                        new PaneStyles.mtp_rail(),
                         new PaneStyles.mtp_strip_loose(),
                         new PaneStyles.mtp_strip_tail(),
                         new PaneStyles.mtp_rail_add(),
@@ -51,6 +52,7 @@ public record TabStripModule() implements DomModule<TabStripModule> {
                 ), PaneStyles.INSTANCE))
                 .add(new ModuleImports<>(List.of(new TabHandModule.TabHand()), TabHandModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new TabDragModule.TabDrag()), TabDragModule.INSTANCE))
+                .add(new ModuleImports<>(List.of(new TabFitModule.TabFit()), TabFitModule.INSTANCE))
                 .build();
     }
 
