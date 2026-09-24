@@ -3,7 +3,7 @@
 // them the window is over. Arithmetic only: no DOM, no state. The strip
 // measures, asks, and applies.
 //
-//   TabFit.row(n, room, natural, floor)   → { width, per }
+//   TabFit.row(n, room, natural, least)   → { width, per }
 //   TabFit.window(at, want, per, n)       → the window's first index
 //
 // THE ROW IS MADE TO FIT BEFORE IT IS MADE TO SCROLL. A bar with a few tabs
@@ -21,10 +21,11 @@
 // to stop — shows a sliver of a tab at one end and a gap at the other, and
 // asks a reader to judge which of two half-tabs is the one they are on.
 //
-// The floor is a PROPORTION of the design's own tab, not a number of pixels,
-// so a design with chunky tabs keeps chunky tabs at their narrowest and one
-// with fine tabs keeps fine ones. A caller with a reason may put a pixel
-// floor under it as well; the larger of the two wins.
+// The floor comes in already measured, because what it is made of belongs to
+// whoever holds the ruler: the narrowest a tab may be is an ASPECT — how squat
+// it is allowed to get against its own height — and the height is the design's,
+// so a design with chunky tabs keeps chunky ones at their narrowest and one
+// with fine tabs keeps fine ones, with nothing said here about either.
 // =============================================================================
 
 class TabFit {
@@ -34,19 +35,17 @@ class TabFit {
      *   n        how many tabs there are
      *   room     the bar's room for them, in pixels
      *   natural  the width one tab wants, from the design
-     *   floor    { px, ratio } — the narrowest a tab may be: ratio of natural,
-     *            or px, whichever is larger
+     *   least    the narrowest a tab may be, in pixels, already worked out
      *
      * → { width, per }. width is null when nothing is squeezed — the row fits
      *   as it is — and per is n, which is the strip's own word for "no window".
      */
-    static row(n, room, natural, floor) {
+    static row(n, room, natural, least) {
         if (!(n > 0) || !(room > 0) || !(natural > 0)) return { width: null, per: Math.max(1, n | 0) };
         if (natural * n <= room + 0.5) return { width: null, per: n };   // it fits: leave the design's width alone
-        var f = floor || {};
-        var least = Math.max(f.px > 0 ? f.px : 0, (f.ratio > 0 ? f.ratio : 0.45) * natural);
-        if (least > room) least = room;                                  // a bar narrower than one tab shows one tab
-        var per = Math.max(1, Math.floor(room / least));
+        var floor = least > 0 ? least : natural;
+        if (floor > room) floor = room;                                  // a bar narrower than one tab shows one tab
+        var per = Math.max(1, Math.floor(room / floor));
         if (per >= n) return { width: room / n, per: n };                // squeezed, and all of them still fit
         return { width: room / per, per: per };                          // squeezed to the floor, and a window over the rest
     }

@@ -129,8 +129,23 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
         }
         @Override public List<? extends Wearable> sizes() { return List.of(of(Control.Tab.class, Size.Inset.class), of(Control.Tab.class, Size.Gap.class), of(Control.Tab.class, Size.Extent.class), of(Caption.class, Type.Scale.class)); }
         @Override public List<? extends Wearable> aspects() { return List.of(of(Control.Tab.class, Size.Proportion.class)); }
-        /** The squeeze, set on the rail and read here: a cap, so a row that fits keeps the width the design asked for. */
-        @Override public Set<CssVar> runtimeVars() { return Set.of(new CssVar("--chip-fit")); }
+        /** The squeeze, set on the rail and read here; and the axes, because the height below is written in them. */
+        @Override public Set<CssVar> runtimeVars() { return Set.of(new CssVar("--chip-fit"), new CssVar("--size"), new CssVar("--aspect")); }
+        /**
+         * The tab's frame BY REFERENCE as well as worn, and for one reason:
+         * the height is then WRITTEN DOWN rather than left to the proportion.
+         * {@code Size.Proportion} is an {@code aspect-ratio}, which is exactly
+         * right while a tab is the width the design asked for — and exactly
+         * wrong the moment a crowded row squeezes it, because a ratio given a
+         * narrower width answers with a shorter tab. Eight tabs in a bar meant
+         * for five came out half as tall as the bar they sat in.
+         *
+         * <p>So the height is the design's own number — its extent over its
+         * proportion, the same expression the bar uses to be one tab tall —
+         * and with both sizes given, the ratio has nothing left to drive. The
+         * squeeze is then a width and only ever a width.</p>
+         */
+        @Override public List<? extends Wearable> reads() { return List.of(of(Control.Tab.class, Size.Extent.class), of(Control.Tab.class, Size.Proportion.class)); }
         @Override public String body() { return """
             display: inline-flex;
             align-items: center;
@@ -139,6 +154,8 @@ public record PaneStyles() implements CssGroup<PaneStyles> {
             white-space: nowrap;
             flex: none;
             max-inline-size: var(--chip-fit, none);
+            block-size: calc(var(--control-tab-size-extent-inline-size) * pow(var(--control-tab-size-extent-inline-size-ratio), var(--size, 0))
+                           / (var(--control-tab-size-proportion) * pow(var(--control-tab-size-proportion-ratio-aspect), var(--aspect, 0))));
             touch-action: none;
             """;
         }

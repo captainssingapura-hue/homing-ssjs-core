@@ -27,14 +27,16 @@ import java.util.List;
  * stop — shows a sliver at one end and a gap at the other, and asks a reader
  * to judge which of two half-tabs is the one they are on.</p>
  *
- * <p>The floor is a <b>proportion</b> of the design's own tab rather than a
- * number of pixels, so a design with chunky tabs keeps chunky ones at their
- * narrowest and one with fine tabs keeps fine ones. A caller with a reason may
- * put a pixel floor under it as well; the larger of the two wins.</p>
+ * <p>The floor comes in already measured, because what it is made of belongs
+ * to whoever holds the ruler. The narrowest a tab may be is an <b>aspect</b> —
+ * how squat it is allowed to get against its own height — and that height is
+ * the design's and does not move when the row is crowded, so the squeeze is a
+ * width and only ever a width. A design with chunky tabs therefore keeps
+ * chunky ones at their narrowest, with nothing said about either here.</p>
  */
 public record TabFitModule() implements EsModule<TabFitModule> {
 
-    /** The class of statics: {@code row(n, room, natural, floor)}, {@code window(at, want, per, n)}, {@code step(at, by, per, n)}. */
+    /** The class of statics: {@code row(n, room, natural, least)}, {@code window(at, want, per, n)}, {@code step(at, by, per, n)}. */
     public record TabFit() implements Exportable._Constant<TabFitModule> {}
 
     public static final TabFitModule INSTANCE = new TabFitModule();

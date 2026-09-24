@@ -23,6 +23,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
     private static final String EVENTS = "/homing/js/hue/captains/singapura/js/homing/ui/panes/PaneEventsModule.js";
     private static final String DRAG   = "/homing/js/hue/captains/singapura/js/homing/ui/panes/TabDragModule.js";
     private static final String FIT    = "/homing/js/hue/captains/singapura/js/homing/ui/panes/TabFitModule.js";
+    private static final String WINDOW = "/homing/js/hue/captains/singapura/js/homing/ui/panes/TabWindowModule.js";
     private static final String HAND   = "/homing/js/hue/captains/singapura/js/homing/ui/panes/TabHandModule.js";
     private static final String STRIP  = "/homing/js/hue/captains/singapura/js/homing/ui/panes/TabStripModule.js";
     private static final String KEYS   = "/homing/js/hue/captains/singapura/js/homing/ui/panes/PaneKeysModule.js";
@@ -129,6 +130,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
         loadModule(EVENTS);
         loadModule(DRAG);
         loadModule(FIT);
+        loadModule(WINDOW);
         loadModule(HAND);
         loadModule(STRIP);
         loadModule(KEYS);

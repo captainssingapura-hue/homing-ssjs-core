@@ -52,7 +52,7 @@ public record TabStripModule() implements DomModule<TabStripModule> {
                 ), PaneStyles.INSTANCE))
                 .add(new ModuleImports<>(List.of(new TabHandModule.TabHand()), TabHandModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new TabDragModule.TabDrag()), TabDragModule.INSTANCE))
-                .add(new ModuleImports<>(List.of(new TabFitModule.TabFit()), TabFitModule.INSTANCE))
+                .add(new ModuleImports<>(List.of(new TabWindowModule.TabWindow()), TabWindowModule.INSTANCE))
                 .build();
     }
 

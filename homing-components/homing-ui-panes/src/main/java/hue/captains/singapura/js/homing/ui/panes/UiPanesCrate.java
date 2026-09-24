@@ -36,6 +36,7 @@ public final class UiPanesCrate implements Crate, ComponentVehicle {
                 CrateEntry.of(MultiTabPaneModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
                 CrateEntry.of(TabStripModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
                 CrateEntry.of(TabHandModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
+                CrateEntry.of(TabWindowModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
                 CrateEntry.of(PaneThumbsModule.INSTANCE, StandardJsModuleType.CONSUMER),
                 CrateEntry.of(AddTabModule.INSTANCE, StandardJsModuleType.CONSUMER),
                 CrateEntry.of(TabOpenerModule.INSTANCE, StandardJsModuleType.CONSUMER),
