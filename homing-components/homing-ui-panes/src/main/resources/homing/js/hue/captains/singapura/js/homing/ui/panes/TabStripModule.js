@@ -20,7 +20,10 @@
 //                                   dissolved when the tab leaves — else the strip's
 //     strip.arrange(chips)          the chips in order, before the tail
 //     strip.remove(chip)
-//     strip.select(chips, active)   aria-selected on the active one
+//     strip.select(chips, active)   aria-selected on the active one, and that one
+//         brought into view: a bar wider than its room scrolls, and a tab you
+//         cannot see is a tab you cannot tell you are on
+//     strip.reveal(chip)            that chip in view, by the shortest move that does it
 //     strip.keys(chip, state)       where the keys are, said on one chip: "held"
 //         while the bar has them — the chip lifted, the colour part of the way —
 //         "lent" while what the tab holds has them — the chip down again, the
@@ -110,6 +113,23 @@ class TabStrip {
             el.appendChild(addBtn);
             this._addBtn = addBtn;
         }
+        // A BAR WIDER THAN ITS ROOM SCROLLS, and then it must behave like one. The wheel moves it along, as a
+        // browser's does, since along is the only way it goes; and it is watched, because the active chip can go
+        // out of view without anybody touching the tabs - the pane narrows, a splitter is dragged, the size axis
+        // is dialled up.
+        el.addEventListener("wheel", function (ev) {
+            if (ev.ctrlKey || ev.altKey || ev.metaKey) return;
+            var d = Math.abs(ev.deltaX) > Math.abs(ev.deltaY) ? ev.deltaX : ev.deltaY;
+            if (!d) return;
+            var was = el.scrollLeft;
+            el.scrollLeft = was + d;
+            if (el.scrollLeft !== was) ev.preventDefault();   // taken: the page must not scroll as well
+        }, { passive: false });
+        var self = this;
+        this._active = null;
+        this._sees = typeof ResizeObserver === "function" ? new ResizeObserver(function () { self.reveal(self._active); }) : null;
+        if (this._sees) this._sees.observe(el);
+
         this._tail = branch.createElement("tail", "div");
         css.addClass(this._tail, mtp_strip_tail);
         this._pill = branch.createElement("pill", "span");
@@ -175,6 +195,7 @@ class TabStrip {
     }
     /** The strip taken down: its element removed, its branch dissolved; chips minted on branches of their own are their owners'. */
     dispose() {
+        if (this._sees) { this._sees.disconnect(); this._sees = null; }
         if (this.el.parentNode) this.el.parentNode.removeChild(this.el);
         this._branch.dissolve();
     }
@@ -199,6 +220,29 @@ class TabStrip {
         for (var j = 0; j < this._order.length; j++) css.aspect(this._order[j], this._aspect);
     }
 
+    /**
+     * That chip in view, by the shortest move that does it. Every way a tab
+     * becomes the shown one comes through select, so this is the one place it
+     * has to be said: the arrows walk onto a chip past the edge, a new tab
+     * lands past it, a merge brings eight at once.
+     *
+     * Rects rather than offsets, because a chip's offsetParent is the pane and
+     * not the bar; and the BAR'S OWN scrollLeft rather than scrollIntoView,
+     * which scrolls whatever else it must to obey — a workspace may not move
+     * under a widget because a tab was selected somewhere in it. The last chip
+     * carries the plus with it: bringing one to the edge and leaving the other
+     * past it would be half a move.
+     */
+    reveal(chip) {
+        if (!chip || !chip.getBoundingClientRect) return this;
+        var box = this.el, br = box.getBoundingClientRect(), cr = chip.getBoundingClientRect();
+        var last = this._order.length > 0 && this._order[this._order.length - 1] === chip;
+        var right = last && this._addBtn ? this._addBtn.getBoundingClientRect().right : cr.right;
+        if (cr.left < br.left) box.scrollLeft -= br.left - cr.left;
+        else if (right > br.right) box.scrollLeft += right - br.right;
+        return this;
+    }
+
     /** What the chips are laid before: the plus when there is one, since it follows the last of them, else the tail. */
     _after() { return this._addBtn || this._tail; }
 
@@ -208,6 +252,7 @@ class TabStrip {
         for (var i = 0; i < this._order.length; i++) this.el.insertBefore(this._order[i], after);
     }
     remove(c) {
+        if (this._active === c) this._active = null;
         this._pinned.delete(c);
         if (c.parentNode === this.el) this.el.removeChild(c);
     }
@@ -235,6 +280,8 @@ class TabStrip {
 
     select(chips, active) {
         for (var i = 0; i < chips.length; i++) chips[i].setAttribute("aria-selected", chips[i] === active ? "true" : "false");
+        this._active = active || null;
+        this.reveal(this._active);
     }
     count(n, budget, addOn) {
         this._pill.textContent = n + " / " + budget;
