@@ -172,6 +172,11 @@ public record MpaStyles() implements CssGroup<MpaStyles> {
      * exactly the viewport and does not scroll — the column is pinned to it —
      * and what scrolls is whatever the app scrolls inside itself. A rule over
      * the elements no class of ours reaches, keyed off the word the app wears.
+     *
+     * <p>Twice, because the slot is not always inside the chrome. A page served
+     * by the flat address has no chrome and no root: the app IS the document's
+     * one element, and nothing above it was ever going to give it a height. So
+     * the second rule pins the slot itself when there is no root to pin.</p>
      */
     public record mpa_page_app() implements CssClass<MpaStyles>, InLayer<Layout> {
         private static final String APP = "." + CssClassName.toCssName(mpa_main_full.class);
@@ -180,8 +185,9 @@ public record MpaStyles() implements CssGroup<MpaStyles> {
         @Override public String body() { return """
             overflow: hidden;
             & body { overflow: hidden; }
-            & %s { position: fixed; inset: 0; min-height: 0; }
-            """.formatted(ROOT);
+            & %1$s { position: fixed; inset: 0; min-height: 0; }
+            & body:not(:has(%1$s)) %2$s { position: fixed; inset: 0; min-height: 0; }
+            """.formatted(ROOT, APP);
         }
     }
 
