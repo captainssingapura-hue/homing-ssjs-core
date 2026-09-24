@@ -61,8 +61,6 @@
 //       destIndex being where the tab ends up. A drag on the strip is this.
 //   pane.tabs() .activeTab() .has(id) .tabIndexOf(id) .count()
 //   pane.budget() .canAdd() .setAddEnabled(b)
-//   pane.current(on)           the bar lit: this is the dock being worked in. What
-//                              that MEANS is the holder's — the pane links it to nothing
 //   pane.size(s?) .aspect(a?)    the chips' size and aspect, −1..1, null the design's
 //   pane.contentElOf(id) .widgetOf(id) .getState() .el .slotId .focus
 //   pane.keyDown(ev) .wouldHold() .wouldOffer(m) .granted(by) .taken(by) .within(on) .offered() .withdrawn()
@@ -335,9 +333,6 @@ class MultiTabPane {
     has(id) { return this._find(id) >= 0; }
     tabIndexOf(id) { return this._find(id); }
     count() { return this._tabs.length; }
-    /** The bar lit: this is the dock being worked in. Said, not decided — what it means is the holder's. */
-    current(on) { this._strip.current(on); return this; }
-
     budget() { return this._budget; }
     canAdd() { return this._addEnabled && this._tabs.length < this._budget; }
     setAddEnabled(on) { this._addEnabled = !!on; this._refresh(); }
@@ -373,6 +368,11 @@ class MultiTabPane {
         var v = PaneKeys.keysState(this);
         if (v) this.el.setAttribute("data-keys", v); else this.el.removeAttribute("data-keys");
         this._strip.keys(this.chipOf(this._activeId === null ? -1 : this._find(this._activeId)), v === "candidate" ? null : v);
+        // THE BAR IS LIT WHILE THE WORK IS IN HERE — the pane holding the keys, or a widget in one of its tabs
+        // holding them. The pane is the one that knows: the steward tells it both, and it is already writing where
+        // the keys are on its own word and marking the active chip. This is the same fact wearing a third face, so
+        // it belongs on the same line. Nobody outside has to watch the pane to learn what the pane was told.
+        this._strip.current(this._holds || this._inside);
     }
 
     dispose() {
