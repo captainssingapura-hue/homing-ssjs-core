@@ -70,7 +70,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
         var mtp_pane = "mtp_pane", mtp_strip = "mtp_strip", mtp_chip = "mtp_chip", mtp_chip_label = "mtp_chip_label", mtp_chip_mark = "mtp_chip_mark", mtp_chip_mark_on = "mtp_chip_mark_on", mtp_chip_lifted = "mtp_chip_lifted",
             mtp_chip_dragging = "mtp_chip_dragging", mtp_chip_shifted = "mtp_chip_shifted", mtp_strip_loose = "mtp_strip_loose", mtp_chip_close = "mtp_chip_close", mtp_drop_mark = "mtp_drop_mark",
             mtp_chip_seated = "mtp_chip_seated", mtp_strip_current = "mtp_strip_current",
-            mtp_strip_tail = "mtp_strip_tail", mtp_add = "mtp_add", mtp_add_mark = "mtp_add_mark", mtp_add_off = "mtp_add_off", mtp_pill = "mtp_pill",
+            mtp_strip_tail = "mtp_strip_tail", mtp_add = "mtp_add", mtp_rail_add = "mtp_rail_add", mtp_add_mark = "mtp_add_mark", mtp_add_off = "mtp_add_off", mtp_pill = "mtp_pill",
             mtp_content = "mtp_content", mtp_tab_content = "mtp_tab_content", mtp_tab_content_hidden = "mtp_tab_content_hidden",
             mtp_empty = "mtp_empty", mtp_dock_target = "mtp_dock_target";
         var console = { error: function (m, e) { log.push("error:" + m); } };
@@ -143,7 +143,7 @@ class MultiTabPaneTest extends JsModuleTestBase {
         assertEquals("A", eval("selected()").asString());
         assertEquals("a", eval("pane.activeTab()").asString());
         assertEquals("added:s1:a@0 active:s1:a added:s1:b@1 added:s1:c@2", log());
-        assertEquals("3 / 4", eval("pane.el.children[0].children.slice(-1)[0].children[1].textContent").asString());
+        assertEquals("3 / 4", eval("pane.el.children[0].children.slice(-1)[0].children.filter(function (c) { return c.has('mtp_pill'); })[0].textContent").asString());
         assertTrue(eval("pane.el.children[1].children[0].has('mtp_tab_content_hidden')").asBoolean(), "the empty line is hidden once a tab is in");
     }
 
@@ -229,16 +229,16 @@ class MultiTabPaneTest extends JsModuleTestBase {
     void theBudgetIsAPreconditionAndTheAddButtonFollowsIt() {
         eval("pane.addTab(tab('a')); pane.addTab(tab('b')); pane.addTab(tab('c'))");
         assertTrue(eval("pane.canAdd()").asBoolean());
-        assertFalse(eval("pane.el.children[0].children.slice(-1)[0].children[0].has('mtp_add_off')").asBoolean());
+        assertFalse(eval("pane.el.children[0].children.filter(function (c) { return c.has('mtp_rail_add'); })[0].has('mtp_add_off')").asBoolean());
         eval("pane.addTab(tab('d'))");
         assertFalse(eval("pane.canAdd()").asBoolean());
-        assertTrue(eval("pane.el.children[0].children.slice(-1)[0].children[0].has('mtp_add_off')").asBoolean());
-        assertTrue(eval("pane.el.children[0].children.slice(-1)[0].children[0].disabled").asBoolean());
+        assertTrue(eval("pane.el.children[0].children.filter(function (c) { return c.has('mtp_rail_add'); })[0].has('mtp_add_off')").asBoolean());
+        assertTrue(eval("pane.el.children[0].children.filter(function (c) { return c.has('mtp_rail_add'); })[0].disabled").asBoolean());
         var ex = assertThrows(PolyglotException.class, () -> eval("pane.addTab(tab('e'))"));
         assertTrue(ex.getMessage().contains("budget of 4"), ex.getMessage());
-        eval("log = []; pane.el.children[0].children.slice(-1)[0].children[0].fire('click')");
+        eval("log = []; pane.el.children[0].children.filter(function (c) { return c.has('mtp_rail_add'); })[0].fire('click')");
         assertEquals("", log(), "the add button does nothing when the budget is spent");
-        eval("pane.removeTab('d'); log = []; pane.el.children[0].children.slice(-1)[0].children[0].fire('click')");
+        eval("pane.removeTab('d'); log = []; pane.el.children[0].children.filter(function (c) { return c.has('mtp_rail_add'); })[0].fire('click')");
         assertEquals("add?s1", log());
         eval("pane.setAddEnabled(false)");
         assertFalse(eval("pane.canAdd()").asBoolean());

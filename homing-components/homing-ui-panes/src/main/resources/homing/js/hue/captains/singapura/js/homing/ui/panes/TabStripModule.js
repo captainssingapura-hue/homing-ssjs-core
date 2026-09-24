@@ -96,18 +96,22 @@ class TabStrip {
             });
         }
 
-        this._tail = branch.createElement("tail", "div");
-        css.addClass(this._tail, mtp_strip_tail);
+        // THE PLUS RIDES THE RAIL, after the last chip rather than at the far end of the bar: it is about the end of
+        // the ROW, and a browser has taught everyone where that is. It is a child of the strip, not of the tail, so
+        // the chips insert before IT and it moves along as they come and go — which is why the anchor below is a
+        // question and not this._tail.
         this._addBtn = null;
         if (opts && typeof opts.onAdd === "function") {
             var addBtn = branch.createElement("add", "button");
             addBtn.type = "button";
-            css.addClass(addBtn, mtp_add, mtp_add_mark);   // the glyph is the design's, on the word; nothing is typed in
+            css.addClass(addBtn, mtp_rail_add);   // the glyph is the design's, on the word; nothing is typed in
             addBtn.setAttribute("aria-label", "Add a tab");
             addBtn.addEventListener("click", function () { if (!addBtn.disabled) opts.onAdd(); });
-            this._tail.appendChild(addBtn);
+            el.appendChild(addBtn);
             this._addBtn = addBtn;
         }
+        this._tail = branch.createElement("tail", "div");
+        css.addClass(this._tail, mtp_strip_tail);
         this._pill = branch.createElement("pill", "span");
         css.addClass(this._pill, mtp_pill);
         this._tail.appendChild(this._pill);
@@ -185,17 +189,23 @@ class TabStrip {
     size(s) {
         this._size = s == null ? null : Math.max(-1, Math.min(1, Number(s)));
         css.size(this.el, this._size);
+        if (this._addBtn) css.size(this._addBtn, this._size);   // it stands in the row, so it grows with the row
         for (var i = 0; i < this._order.length; i++) css.size(this._order[i], this._size);
     }
     aspect(a) {
         this._aspect = a == null ? null : Math.max(-1, Math.min(1, Number(a)));
         css.aspect(this.el, this._aspect);
+        if (this._addBtn) css.aspect(this._addBtn, this._aspect);   // a tab's height moves with the aspect, and the plus is one tab tall
         for (var j = 0; j < this._order.length; j++) css.aspect(this._order[j], this._aspect);
     }
 
+    /** What the chips are laid before: the plus when there is one, since it follows the last of them, else the tail. */
+    _after() { return this._addBtn || this._tail; }
+
     arrange(chips) {
         this._order = chips.slice();
-        for (var i = 0; i < this._order.length; i++) this.el.insertBefore(this._order[i], this._tail);
+        var after = this._after();
+        for (var i = 0; i < this._order.length; i++) this.el.insertBefore(this._order[i], after);
     }
     remove(c) {
         this._pinned.delete(c);
@@ -294,6 +304,6 @@ class TabStrip {
     }
     _markAt(c, dest) {
         var others = this._others(c);
-        this.el.insertBefore(this._mark, dest < others.length ? others[dest] : this._tail);
+        this.el.insertBefore(this._mark, dest < others.length ? others[dest] : this._after());
     }
 }
