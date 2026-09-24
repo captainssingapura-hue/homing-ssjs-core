@@ -4,11 +4,16 @@
 // a TabSource can make. Then one button, which does exactly what the strip's
 // own plus would do, through the same source.
 //
-//   new AddTab(branch, { host, source, panes, onAdded?, width?, verb? })
+//   new AddTab(branch, { host, source, panes, onAdded?, width?, verb?, mode? })
 //     source: a TabSource — the kinds, and the rule for minting one
 //     panes:  () → [pane], asked afresh: a workspace is split and merged
 //             while the control stands there
 //     onAdded: (pane, tab, index) after it has landed
+//     mode:   how the tab arrives; "front" unless said. NOT "focus": you are
+//             standing in this control, and a control that answers you by
+//             taking the keys out of your hand and putting them in another
+//             room has answered a question you did not ask. The plus at the
+//             end of a strip is the other case, and it is not this one
 //
 //   add.refresh()      measure the panes again, and say again what can be done
 //   add.picked()       the pane the control is pointing at, or null
@@ -42,6 +47,7 @@ class AddTab {
         this._source = o.source;
         this._panes = o.panes;
         this._onAdded = typeof o.onAdded === "function" ? o.onAdded : null;
+        this._mode = o.mode == null ? "front" : String(o.mode);
         this._first = true;
         this._disposed = false;
 
@@ -101,6 +107,7 @@ class AddTab {
         if (!pane || !this._source.canAdd(pane)) return -1;
         var tab = this._source.mint(pane, this._pick.value);
         var at = pane.addTab(tab);
+        this._source.show(pane, tab, this._mode);   // in front, and the keys stay in the hand that is using this
         this.refresh();
         if (this._onAdded) this._onAdded(pane, tab, at);
         return at;

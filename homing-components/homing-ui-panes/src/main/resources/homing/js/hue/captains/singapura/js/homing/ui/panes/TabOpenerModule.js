@@ -13,7 +13,8 @@
 //             itself among them
 //     tabId:  its own tab's id, so it can find its place and give it up
 //
-//   opener.open(kindId)   → the index the new tab ended at, or −1
+//   opener.open(kindId)   → the index the new tab ended at, or −1. What you pick
+//                         takes the keys, because you were holding them here
 //
 // IT REPLACES RATHER THAN CONTAINS. A widget's root is appended to its tab's
 // panel once and never detached, so an opener that mounted the chosen thing
@@ -97,7 +98,9 @@ class TabOpener {
         var tab = source.mint(pane, kindId);
         var landed = pane.addTab(tab);
         if (at >= 0 && at < landed) { pane.moveTab(tab.id, at); landed = at; }
-        pane.switchTab(tab.id);
+        // THE KEYS WERE HERE. You were standing in this tab when you picked, so what you picked goes on holding
+        // them: the gesture began with the plus, which is in the strip, and ends in the room it made.
+        source.show(pane, tab, "focus");
         return landed;
     }
 

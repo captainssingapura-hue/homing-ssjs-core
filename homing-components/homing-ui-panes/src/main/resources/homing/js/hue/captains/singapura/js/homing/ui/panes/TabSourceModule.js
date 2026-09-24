@@ -26,7 +26,18 @@
 //   source.canAdd(pane)         → room in its budget, asked before anything is made. NOT
 //                               the pane's own canAdd(), which is about the strip's plus
 //   source.mint(pane, kindId)   → { id, title, widget }, for a caller that places it itself
-//   source.addTo(pane, kindId)  → the index it landed at, or −1 when the pane would not take it
+//   source.addTo(pane, kindId, how?)  → the index it landed at, or −1 when the pane
+//                               would not take it. HOW a tab arrives is the third thing
+//                               a caller must say, beside which pane and which kind:
+//                                 "quiet" — put in the strip and left alone
+//                                 "front" — shown, the keys staying where they were
+//                                 "focus" — shown, and the keys go into it
+//                               "front" unless said. A tab somebody asked for should be
+//                               the one they are looking at; taking their KEYS as well is
+//                               another matter, and only right when the asking was done
+//                               in the strip itself — the plus — rather than in some
+//                               control they are still standing in.
+//   source.show(pane, tab, how) the same three endings, for a caller that placed the tab itself
 //   source.release(tabId)       the tab is gone for good: its branch dissolves, which is
 //                               the only way its name comes free again
 //   source.dispose()
@@ -43,6 +54,16 @@
 // =============================================================================
 
 const _sourceOwner = Object.freeze({ toString: () => "tabSource" });
+
+/**
+ * How a new tab ARRIVES. Adding one and showing one are different acts, and
+ * showing one and handing it the keys are different again: a page seeding a
+ * workspace wants neither, a control standing somewhere else wants the tab in
+ * front but not the keys off the hand that is using it, and a plus at the end
+ * of the strip — where the asking and the answering are the same place — wants
+ * both.
+ */
+const _MODES = Object.freeze({ quiet: 1, front: 2, focus: 3 });
 
 class TabSource {
     /** The page makes one: a branch of its own, and the kinds it can mount. */
@@ -77,6 +98,15 @@ class TabSource {
     }
 
     has(kindId) { return !!this._by[kindId]; }
+
+    /** The three ways a tab may arrive, for anyone who would rather name them than spell them. */
+    static get MODES() { return Object.freeze(["quiet", "front", "focus"]); }
+
+    _how(how) {
+        var m = how == null ? "front" : String(how);
+        if (!_MODES[m]) throw new Error("[TabSource] '" + m + "' is not how a tab arrives: " + TabSource.MODES.join(", "));
+        return m;
+    }
 
     /**
      * Whether the pane has ROOM for another — its budget, and nothing else.
@@ -124,13 +154,36 @@ class TabSource {
     }
 
     /**
-     * The whole gesture: ask the pane, make the tab, put it in. −1 when the
-     * pane has no room for it, and then nothing was made and nothing has to be
-     * undone.
+     * The whole gesture: ask the pane, make the tab, put it in, and end it the
+     * way the caller says — quiet, in front, or in front with the keys. −1
+     * when the pane has no room for it, and then nothing was made and nothing
+     * has to be undone. The mode is checked BEFORE anything is built, so a
+     * caller that names one wrongly is told so rather than leaving a tab
+     * behind in a state nobody asked for.
      */
-    addTo(pane, kindId) {
+    addTo(pane, kindId, how) {
+        var mode = this._how(how);
         if (!this.canAdd(pane)) return -1;
-        return pane.addTab(this.mint(pane, kindId));
+        var tab = this.mint(pane, kindId);
+        var at = pane.addTab(tab);
+        this.show(pane, tab, mode);
+        return at;
+    }
+
+    /**
+     * The ending on its own, for a caller that placed the tab itself — the
+     * opener does, because it has a slot to put it back into. "quiet" is a
+     * tab in the strip and nothing more; "front" shows it, which a switch
+     * already refuses to repeat if it is the one showing; "focus" shows it and
+     * asks the WIDGET to activate, which is the widget's own word for taking
+     * the keys and is the only thing here that touches them.
+     */
+    show(pane, tab, how) {
+        var mode = this._how(how);
+        if (mode === "quiet") return this;
+        pane.switchTab(tab.id);
+        if (mode === "focus" && tab.widget && typeof tab.widget.activate === "function") tab.widget.activate();
+        return this;
     }
 
     /**
