@@ -375,13 +375,16 @@ class MultiTabPane {
     requestDetach() { if (this._activeId !== null) this._fire(PaneEvents.DetachRequested(this.slotId, this._activeId)); }
     /** The pane yields the keys, up the tree: the first ancestor that would hold, else no one. */
     yieldKeys() { Keys.yield(this.focus.owner); }
-    /** A yield from a widget inside: the pane holds. */
-    wouldHold() { return true; }
+    /** A yield from a widget inside: the pane holds — unless its scheme says the pane is a road and not a place, and then it is passed above. */
+    wouldHold() { return PaneSchemes.keeps(this._schemes, this); }
     /** Asked by the walk about a member of the dock's branch: PaneKeys says which. */
     wouldOffer(m) { return PaneKeys.wouldOffer(this, m); }
     /** Where the keys are, said on the frame and on the active chip; PaneKeys works out which of the four it is. */
-    granted() { this._holds = true; this._keys(); }
+    granted() { this._holds = true; this._keys(); if (!PaneSchemes.keeps(this._schemes, this) && this._activeId !== null) this.land(this._activeId); }
     taken() { this._holds = false; this._keys(); }
+    /** Landed IN a tab: whatever was natively focused in this pane lets go, and the widget now showing takes the keys. A scheme that is a road rather than a place asks for this. */
+    land(id) { var a = typeof document === "undefined" ? null : document.activeElement; if (a && a !== document.body && a.blur && this.el.contains(a)) a.blur(); var w = this.widgetOf(id); if (w && w.activate) w.activate(); }
+
     /** Told by the steward that the keys are inside the pane — in a tab's widget: the bar is not where the work is. */
     within(on) { this._inside = !!on; this._keys(); }
     offered() { this._offered = true; this._keys(); }

@@ -5,12 +5,17 @@
 //   scheme.keyDown(pane, ev) → true when taken   the pane HOLDS the keys
 //   scheme.chord(pane, ev)   → true when taken   something below it is natively
 //                                                focused and a chord got past
+//   scheme.keeps(pane)       → whether the pane is a PLACE THE KEYS CAN REST
+//                                                at all, or only ever a road to
+//                                                the tab that is showing
 //
 // Two entry points because there are two ways a key can arrive, and a scheme
 // that means to work in both answers both from one table. A pane is given a
-// list and tries them in order; the first to take the key has it. Neither of
-// the two below overlaps the other — arrows against control chords — so a
-// pane may wear both at once, which is the point of the list.
+// list and tries them in order; the first to take the key has it — and the
+// FIRST one also says whether the pane keeps the keys, because that is not a
+// per-key question but a question about what the pane IS. A list is therefore
+// one scheme's character with another's keys added, not two characters at
+// once.
 //
 // PaneKeys — the pane in the keyboard party, over the pane's own surface and
 // nothing about how the pane is built: what a key means for a container of
@@ -67,10 +72,13 @@ class PaneSchemes {
     static of(given) {
         var list = given == null ? [PaneKeys] : (Array.isArray(given) ? given.slice() : [given]);
         for (var i = 0; i < list.length; i++)
-            if (!list[i] || typeof list[i].keyDown !== "function" || typeof list[i].chord !== "function")
-                throw new Error("[PaneSchemes] a scheme answers keyDown(pane, ev) and chord(pane, ev)");
+            if (!list[i] || typeof list[i].keyDown !== "function" || typeof list[i].chord !== "function" || typeof list[i].keeps !== "function")
+                throw new Error("[PaneSchemes] a scheme answers keyDown(pane, ev), chord(pane, ev) and keeps(pane)");
         return list;
     }
+
+    /** Whether the pane is somewhere the keys can rest: the FIRST scheme's answer, since it is the pane's character and not a key. */
+    static keeps(list, pane) { return list.length > 0 && list[0].keeps(pane) === true; }
     static keyDown(list, pane, ev) { for (var i = 0; i < list.length; i++) if (list[i].keyDown(pane, ev) === true) return true; return false; }
     static chord(list, pane, ev) { for (var i = 0; i < list.length; i++) if (list[i].chord(pane, ev) === true) return true; return false; }
 }
@@ -78,6 +86,9 @@ class PaneSchemes {
 class PaneKeys {
     /** Not this scheme's: an arrow belongs to whatever is focused, and this one is all arrows. */
     static chord() { return false; }
+
+    /** The bar is somewhere to be. Its arrows walk the tabs, and the keys rest here until Enter takes them into one. */
+    static keeps() { return true; }
 
     static keyDown(pane, ev) {
         if (ev.key === "Escape") return true;   // the dock is the floor: Escape comes back to the bar and stops there, so nothing overshoots
@@ -160,9 +171,24 @@ class PaneKeys {
  * chord no browser reserves, for a page that wants the behaviour where the
  * faithful keys cannot land.
  */
+/**
+ * BrowserKeys asks the pane to LAND, and the pane does it, because letting go
+ * of a native focus is a DOM act and this module touches no DOM. A caret left
+ * blinking in a field that is no longer on the screen is not a tab switch; it
+ * is a bug you find later.
+ */
 class BrowserKeys {
     static keyDown(pane, ev) { return BrowserKeys._walk(pane, ev); }
     static chord(pane, ev) { return BrowserKeys._walk(pane, ev); }
+
+    /**
+     * NO. A browser's tab strip is not a place you can be — you are always in
+     * a page, and the strip is the road between pages. So a pane wearing this
+     * scheme never rests on the bar: handed the keys, it hands them straight
+     * on to the tab that is showing, and a widget that yields is not caught
+     * here but passed above, because there is nothing here to come back to.
+     */
+    static keeps() { return false; }
 
     static _walk(pane, ev) {
         if (!ev.ctrlKey || ev.altKey || ev.metaKey) return false;
@@ -170,8 +196,9 @@ class BrowserKeys {
         if (by === 0) return false;
         var ids = pane.tabs(), n = ids.length;
         if (!n) return true;   // taken all the same: the scheme is on, and there is simply nowhere to go
-        var i = ids.indexOf(pane.activeTab());
-        pane.switchTab(ids[((i < 0 ? 0 : i) + by + n) % n]);   // and it wraps, which is the difference
+        var i = ids.indexOf(pane.activeTab()), to = ids[((i < 0 ? 0 : i) + by + n) % n];   // and it wraps, which is the difference
+        pane.switchTab(to);
+        pane.land(to);   // A BROWSER LANDS YOU IN THE NEW TAB: the old native focus let go, the new widget holding the keys
         return true;
     }
 

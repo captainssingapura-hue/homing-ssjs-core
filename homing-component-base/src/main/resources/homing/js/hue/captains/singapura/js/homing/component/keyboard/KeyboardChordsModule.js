@@ -4,9 +4,20 @@
 // is the PAGE's own keys, tried before anyone; this one is a container's,
 // tried only when the key came out of something natively focused.
 //
-//   KeyboardChords.took(steward, ev) → the member that took it, or null. It
-//     decides what counts as a chord, walks the chain, and stops the event
-//     itself when one is taken — so the steward's own line stays a line.
+//   KeyboardChords.took(steward, ev)        from where the key was pressed
+//   KeyboardChords.above(steward, id, ev)   from above a member that declined
+//     → the member that took it, or null. Each decides what counts as a
+//     chord, walks the chain, and stops the event itself when one is taken —
+//     so the steward's own lines stay lines.
+//
+// TWO WAYS A CHORD REACHES A CONTAINER, and they are the two ways a key can
+// fail to be a container's. It came out of something NATIVELY focused, and the
+// steward would have dropped it; or it went to the HOLDER, which is a member
+// of the party and simply had no use for it. A holder is not always the
+// outermost thing that cares: a dock whose scheme says the keys rest in the
+// tab and not on the bar hands them straight down, and then the tab is the
+// holder and the dock is its parent. Without the second walk such a dock
+// could never hear a key at all.
 //
 // WHY THIS EXISTS AT ALL. While something is natively focused the keys are
 // its own, and that is the rule a text field is promised. But a browser moves
@@ -47,6 +58,22 @@ class KeyboardChords {
         if (!id) return null;
         var m = s._focus ? s._focus.find(id) : null;
         if (!m) return KeyboardChords.offer(s, id, ev) ? KeyboardChords.stop(ev, id) : null;   // no focus tree: the member at the element, nobody above it
+        return KeyboardChords.up(s, m, ev);
+    }
+
+    /**
+     * From ABOVE a member that did not take it. The holder is a member like
+     * any other and may simply have no use for the key; a container over it
+     * might. The member itself is not asked again — it already said no.
+     */
+    static above(s, id, ev) {
+        if (!KeyboardShortcuts.claimable(ev) || !s._focus) return null;
+        var m = s._focus.find(id);
+        return m ? KeyboardChords.up(s, m.parent(), ev) : null;
+    }
+
+    /** Outward, one member at a time, until one takes it. */
+    static up(s, m, ev) {
         for (; m; m = m.parent()) if (KeyboardChords.offer(s, m.id, ev)) return KeyboardChords.stop(ev, m.id);
         return null;
     }

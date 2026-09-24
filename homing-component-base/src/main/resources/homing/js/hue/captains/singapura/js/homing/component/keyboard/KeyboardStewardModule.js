@@ -16,8 +16,10 @@
 //   element — the native world had it, EXCEPT for a chord, which is offered
 //   up the chain from that element: memberAt for where to start, the party
 //   for who is above, chord(ev) on each until one takes it. A letter typed in
-//   a field is nobody else's business; Ctrl+Tab is. The holder is untouched by
-//   native focus and resumes the moment the focused thing blurs.
+//   a field is nobody else's business; Ctrl+Tab is. A chord the HOLDER had no
+//   use for goes up the same way, since a holder is not always the outermost
+//   thing that cares. The holder is untouched by native focus and resumes the
+//   moment the focused thing blurs.
 //
 //   THE WALK, while nothing is natively focused, is KeyboardWalk's: it moves
 //   a CANDIDATE — the cursor the steward keeps beside the holder, offered and
@@ -300,9 +302,11 @@ class KeyboardSteward {
         if (kind === "KeyDown" && KeyboardWalk.keyDown(this, ev)) { ev.preventDefault(); ev.stopPropagation(); this._traced(kind, ev, "walk", this._candidate, true); return; }
         var holder = this._holder;
         if (holder === null) { this._traced(kind, ev, "none", null, false); return; }
-        this._party.tellFrom(_STEWARD, { kind: kind, ev: ev });
-        this._traced(kind, ev, "holder", holder, ev.defaultPrevented === true);
+        return this._toHolder(kind, ev, holder);
     }
+    /** The holder gets it; and a chord it had no use for goes on up, because a holder is not always the outermost thing that cares. */
+    _toHolder(kind, ev, holder) { this._party.tellFrom(_STEWARD, { kind: kind, ev: ev }); if (kind === "KeyDown" && ev.defaultPrevented !== true) KeyboardChords.above(this, holder, ev); this._traced(kind, ev, "holder", holder, ev.defaultPrevented === true); }
+
     /** The native world had it — unless it was a chord, which KeyboardChords offers up the chain from where it was pressed. */
     _native(kind, ev) { var by = kind === "KeyDown" ? KeyboardChords.took(this, ev) : null; this._traced(kind, ev, by ? "chord" : "native", by || ev.target, !!by); }
 
