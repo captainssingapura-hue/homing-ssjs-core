@@ -159,6 +159,11 @@ final class GlassmorphismDesign {
             gap(of(Control.Tab.class, Size.Gap.class), "8px", 1.3),
             measure(of(Control.Tab.class, Size.Extent.class), "176px", 1.3),
             proportion(of(Control.Tab.class, Size.Proportion.class), "5.5", 1.5),
+            one(of(Control.Tile.class, Shape.Corner.class), "12px"),
+            inset(of(Control.Tile.class, Size.Inset.class), "14px", "12px", 1.3),
+            gap(of(Control.Tile.class, Size.Gap.class), "8px", 1.3),
+            measure(of(Control.Tile.class, Size.Extent.class), "136px", 1.3),
+            proportion(of(Control.Tile.class, Size.Proportion.class), "1.35", 1.5),
             // a slider: the track's length and the room its knob needs; the groove, the knob, the notch
             extent(of(Control.Slider.class, Size.Extent.class), "220px", "26px", 1.3),
             inset(of(Control.Slider.class, Size.Inset.class), "4px", "0", 1.3),

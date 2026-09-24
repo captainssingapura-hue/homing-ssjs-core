@@ -203,6 +203,11 @@ final class FlatMorphismDesign {
             scale(of(Code.class, Type.Scale.class), "13px", "1.5", 1.2),
             measure(of(Control.Tab.class, Size.Extent.class), "168px", 1.25),
             gap(of(Control.Tab.class, Size.Gap.class), "8px", 1.25),
+            one(of(Control.Tile.class, Shape.Corner.class), RADIUS),
+            inset(of(Control.Tile.class, Size.Inset.class), "12px", "10px", 1.25),
+            gap(of(Control.Tile.class, Size.Gap.class), "6px", 1.25),
+            measure(of(Control.Tile.class, Size.Extent.class), "128px", 1.25),
+            proportion(of(Control.Tile.class, Size.Proportion.class), "1.4", 1.5),
             inset(of(Container.Menu.class, Size.Inset.class), "6px", "0px", 1.25),
 
             // ── the type: one grotesque, one mono, nothing display about it ──

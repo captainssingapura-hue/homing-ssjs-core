@@ -40,6 +40,21 @@ public interface Box extends Semantic {
          */
         public record Option() implements Box {}
         /**
+         * A tile: one BOX of a grid, a control that is picked — where an
+         * {@link Option} is one ROW of a list. The difference is the
+         * arrangement and everything that follows from it: a tile's measure is
+         * its own and every tile in the grid carries the same box, so a grid of
+         * them is even however long the labels are; what is in it is stacked,
+         * a mark over a label, not run across; and it is sized to be aimed at
+         * rather than read down.
+         *
+         * <p>Its extent and proportion are the design's, its inset the air
+         * inside, its gap between the mark and the label, its corner and rule
+         * the face it presents when the hand is over it or the keys are on
+         * it.</p>
+         */
+        public record Tile() implements Box {}
+        /**
          * A slider: a control that sets a number by a knob on a track. Its
          * measure is its own — the track's length, and the least height a
          * knob needs, both grown by the size — its inset the air around the

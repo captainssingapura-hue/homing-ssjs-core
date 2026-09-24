@@ -160,6 +160,11 @@ final class RetroFuturismDesign {
             gap(of(Control.Tab.class, Size.Gap.class), "8px", 1.3),
             measure(of(Control.Tab.class, Size.Extent.class), "168px", 1.3),
             proportion(of(Control.Tab.class, Size.Proportion.class), "5.5", 1.5),
+            one(of(Control.Tile.class, Shape.Corner.class), "3px"),
+            inset(of(Control.Tile.class, Size.Inset.class), "12px", "10px", 1.3),
+            gap(of(Control.Tile.class, Size.Gap.class), "6px", 1.3),
+            measure(of(Control.Tile.class, Size.Extent.class), "128px", 1.3),
+            proportion(of(Control.Tile.class, Size.Proportion.class), "1.4", 1.5),
             // a slider: the track's length and the room its knob needs; the groove, the knob, the notch
             extent(of(Control.Slider.class, Size.Extent.class), "220px", "26px", 1.3),
             inset(of(Control.Slider.class, Size.Inset.class), "4px", "0", 1.3),

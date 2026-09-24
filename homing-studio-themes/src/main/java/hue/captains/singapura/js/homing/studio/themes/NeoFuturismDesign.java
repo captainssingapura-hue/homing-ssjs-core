@@ -301,6 +301,11 @@ final class NeoFuturismDesign {
             gap(of(Control.Tab.class, Size.Gap.class), "8px", 1.25),
             measure(of(Control.Tab.class, Size.Extent.class), "184px", 1.25),
             proportion(of(Control.Tab.class, Size.Proportion.class), "6.5", 1.5),
+            one(of(Control.Tile.class, Shape.Corner.class), "2px"),
+            inset(of(Control.Tile.class, Size.Inset.class), "14px", "12px", 1.25),
+            gap(of(Control.Tile.class, Size.Gap.class), "8px", 1.25),
+            measure(of(Control.Tile.class, Size.Extent.class), "140px", 1.25),
+            proportion(of(Control.Tile.class, Size.Proportion.class), "1.45", 1.5),
             // a slider: the track's length and the room its knob needs; the groove, the knob, the notch
             extent(of(Control.Slider.class, Size.Extent.class), "240px", "22px", 1.3),
             inset(of(Control.Slider.class, Size.Inset.class), "4px", "0", 1.3),

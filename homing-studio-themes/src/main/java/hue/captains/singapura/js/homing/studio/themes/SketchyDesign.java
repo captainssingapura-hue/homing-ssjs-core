@@ -162,6 +162,12 @@ final class SketchyDesign {
             gap(of(Control.Tab.class, Size.Gap.class), "8px", 1.35),
             measure(of(Control.Tab.class, Size.Extent.class), "160px", 1.35),
             proportion(of(Control.Tab.class, Size.Proportion.class), "5", 1.5),
+            // the hand-drawn corner, uneven on each side as everything here is
+            one(of(Control.Tile.class, Shape.Corner.class), "10px 6px 9px 7px / 7px 9px 6px 10px"),
+            inset(of(Control.Tile.class, Size.Inset.class), "12px", "10px", 1.35),
+            gap(of(Control.Tile.class, Size.Gap.class), "6px", 1.35),
+            measure(of(Control.Tile.class, Size.Extent.class), "128px", 1.35),
+            proportion(of(Control.Tile.class, Size.Proportion.class), "1.35", 1.5),
             // a slider: the track's length and the room its knob needs; the groove, the knob, the notch
             extent(of(Control.Slider.class, Size.Extent.class), "220px", "26px", 1.35),
             inset(of(Control.Slider.class, Size.Inset.class), "4px", "0", 1.35),

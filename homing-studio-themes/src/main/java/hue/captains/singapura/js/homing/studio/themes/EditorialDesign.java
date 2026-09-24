@@ -201,6 +201,12 @@ final class EditorialDesign {
             gap(of(Control.Tab.class, Size.Gap.class), "8px", 1.3),
             measure(of(Control.Tab.class, Size.Extent.class), "168px", 1.3),
             proportion(of(Control.Tab.class, Size.Proportion.class), "6", 1.5),
+            // a tile: one box of a grid, a mark over a label; the corner is round on every side
+            one(of(Control.Tile.class, Shape.Corner.class), "4px"),
+            inset(of(Control.Tile.class, Size.Inset.class), "12px", "10px", 1.3),
+            gap(of(Control.Tile.class, Size.Gap.class), "6px", 1.3),
+            measure(of(Control.Tile.class, Size.Extent.class), "128px", 1.3),
+            proportion(of(Control.Tile.class, Size.Proportion.class), "1.4", 1.5),
             // a slider: the track's length and the room its knob needs; the groove, the knob, the notch
             extent(of(Control.Slider.class, Size.Extent.class), "220px", "24px", 1.3),
             inset(of(Control.Slider.class, Size.Inset.class), "4px", "0", 1.3),
