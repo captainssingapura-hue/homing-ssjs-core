@@ -23,5 +23,7 @@
         <module>homing-design-server</module>
         <module>homing-theme-color</module>
         <module>homing-theme-type</module>
+        <!-- The framework's designs, and a registry of them alone. -->
+        <module>homing-designs</module>
     </modules>
 </project>

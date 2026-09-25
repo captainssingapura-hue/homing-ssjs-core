@@ -1,0 +1,372 @@
+package hue.captains.singapura.js.homing.designs;
+
+import hue.captains.singapura.js.homing.design.DesignClass;
+import hue.captains.singapura.js.homing.design.Impl;
+import hue.captains.singapura.js.homing.design.Mode;
+import hue.captains.singapura.js.homing.design.State;
+
+import java.util.Map;
+
+import static hue.captains.singapura.js.homing.design.DesignClass.of;
+import hue.captains.singapura.js.homing.design.Icon;
+import static hue.captains.singapura.js.homing.design.Target.*;
+import static hue.captains.singapura.js.homing.design.Box.*;
+import static hue.captains.singapura.js.homing.design.Brand.*;
+import static hue.captains.singapura.js.homing.design.Emphasis.*;
+import static hue.captains.singapura.js.homing.design.Feedback.*;
+import static hue.captains.singapura.js.homing.design.Interaction.*;
+import static hue.captains.singapura.js.homing.design.Layer.*;
+import static hue.captains.singapura.js.homing.design.Pairing.*;
+import static hue.captains.singapura.js.homing.design.Structure.*;
+import static hue.captains.singapura.js.homing.design.Text.*;
+import static hue.captains.singapura.js.homing.designs.Bind.*;
+
+/**
+ * Neo-Brutalism over the house design: ink and paper, a signal yellow, riso
+ * blue and red; every edge a thick black rule, every corner square, every
+ * raised thing on a hard offset shadow; the press is a two-step snap. Said
+ * as bindings — the design's own word where it has one, Default's for the
+ * rest — and never as a class name of any component.
+ */
+final class NeoBrutalismDesign {
+
+    private NeoBrutalismDesign() {}
+
+    static final String INK = "#000000", INK_D = "#FFFFFF";
+    static final String PAPER = "#FFFFFF", PAPER_D = "#0B0B0B";
+    static final String GREY = "#EFEFEF", GREY_D = "#1A1A1A";
+    static final String MUTED = "#4A4A4A", MUTED_D = "#B8B8B8";
+    static final String SIGNAL = "#FFE800";
+    static final String RISO_BLUE = "#2B4CFF";
+    static final String RISO_RED = "#FF3B21";
+    static final String RULE = "#000000", RULE_D = "#FFFFFF";
+    static final String DISPLAY_FACE = "\"Arial Black\", \"Impact\", \"Helvetica Neue\", Arial, sans-serif";
+    static final String SNAP = "transform 70ms steps(2, end), box-shadow 70ms steps(2, end), background-color 70ms steps(2, end)";
+
+    // ── the palette, by reference: the shadow is the ink, offset; the ring is the focus edge ──
+    static final String INK_REF   = of(Body.class, Color.Ink.class).var();
+    static final String FOCUS_REF = of(Focus.class, Color.Edge.class).var("border-color");
+
+    static String shadow(int px) { return px + "px " + px + "px 0 " + INK_REF; }
+
+    // ── the interactive colours, one word each; Interactive and Selectable both wear them ──
+    static final Impl INTERACTIVE_SURFACE = Impl.Bindings.none()
+                    .at(State.REST, "background-color", "transparent")
+                    .at(State.HOVER, "background-color", SIGNAL)
+                    .at(State.SELECTED, "background-color", INK)
+                    .at(State.CURRENT, "background-color", GREY)
+                    .at(State.HIGHLIGHTED, "background-color", "color-mix(in srgb, " + SIGNAL + " 55%, transparent)")
+                    .in(Mode.DARK, State.SELECTED, "background-color", INK_D)
+                    .in(Mode.DARK, State.CURRENT, "background-color", GREY_D);
+    static final Impl INTERACTIVE_INK = Impl.Bindings.of("inherit")
+                    .at(State.HOVER, INK).at(State.SELECTED, SIGNAL)
+                    .at(State.HIGHLIGHTED, INK)
+                    .in(Mode.DARK, State.SELECTED, INK);
+    static final Impl INTERACTIVE_EDGE = Impl.Bindings.none()
+                    .at(State.REST, "border-color", "transparent")
+                    .at(State.HOVER, "border-color", INK)
+                    .at(State.SELECTED, "border-color", INK)
+                    .at(State.CURRENT, "border-color", INK)
+                    .at(State.CHECKED, "border-color", RISO_BLUE)
+                    .at(State.HIGHLIGHTED, "border-color", INK)
+                    .in(Mode.DARK, State.HIGHLIGHTED, "border-color", INK_D)
+                    .at(State.FOCUS, "outline-color", RISO_BLUE)
+                    .in(Mode.DARK, State.HOVER, "border-color", INK_D)
+                    .in(Mode.DARK, State.SELECTED, "border-color", INK_D)
+                    .in(Mode.DARK, State.CURRENT, "border-color", INK_D);
+
+    static final Map<DesignClass<?>, Impl> WORDS = Map.ofEntries(
+            glyph(of(Icon.Close.class, Type.Glyph.class), "╳"),   // ruled, not drawn: two blunt strokes
+            // ── layers: paper, and everything edged in ink ──────────────
+            // the page: paper under a riso dot screen — the grid behind everything, 12px pitch, ink at a fraction
+            surfacePattern(of(Base.class, Color.Surface.class), PAPER, "radial-gradient(circle, color-mix(in srgb, " + INK + " 14%, transparent) 1px, transparent 1px)", "12px 12px",
+                                                                PAPER_D, "radial-gradient(circle, color-mix(in srgb, " + INK_D + " 14%, transparent) 1px, transparent 1px)"),
+            one(of(Base.class, Color.Scrollbar.class), INK + " " + PAPER, INK_D + " " + PAPER_D),
+            rule(of(Base.class, Shape.Rule.class), "0", "none"),
+            one(of(Base.class, Shape.Corner.class), "0"),
+            anchored(surface(of(Raised.class, Color.Surface.class), PAPER, PAPER_D), "background-color", GREY, GREY_D, "transparent", "transparent"),   // elevation: grey, the paper, white
+            edge(of(Raised.class, Color.Edge.class), RULE, RULE_D),
+            ruleWithFocusRing(of(Raised.class, Shape.Rule.class), "3px", "solid", "4px", "4px"),
+            one(of(Raised.class, Shape.Corner.class), "0"),
+            one(of(Raised.class, Shape.Shadow.class), shadow(5)),
+            surface(of(Recessed.class, Color.Surface.class), GREY, GREY_D),
+            one(of(Recessed.class, Shape.Corner.class), "0"),
+            surface(of(Inverted.class, Color.Surface.class), INK, "#FFFFFF"),
+
+            // ── text: black, heavy, tight ───────────────────────────────
+            one(of(Body.class, Color.Ink.class), INK, INK_D),
+            one(of(Heading.class, Color.Ink.class), INK, INK_D),
+            one(of(Heading.class, Type.Face.class), DISPLAY_FACE),
+            one(of(Heading.class, Type.Weight.class), "900"),
+            one(of(Display.class, Color.Ink.class), INK, INK_D),
+            one(of(Display.class, Type.Face.class), DISPLAY_FACE),
+            one(of(Display.class, Type.Weight.class), "900"),
+            treatment(of(Display.class, Type.Treatment.class), "-0.03em", "uppercase", null),
+            one(of(Lede.class, Color.Ink.class), MUTED, MUTED_D),
+            treatment(of(Lede.class, Type.Treatment.class), null, null, null),
+            one(of(Kicker.class, Color.Ink.class), INK, INK_D),
+            one(of(Kicker.class, Type.Face.class), DISPLAY_FACE),
+            one(of(Kicker.class, Type.Weight.class), "900"),
+            treatment(of(Kicker.class, Type.Treatment.class), "0.04em", "uppercase", null),
+            one(of(Numeral.class, Type.Face.class), DISPLAY_FACE),
+            one(of(Numeral.class, Type.Weight.class), "900"),
+            one(of(House.class, Type.Face.class), DISPLAY_FACE),
+            treatment(of(House.class, Type.Treatment.class), "-0.02em", "uppercase", null),
+            states(of(Link.class, Color.Ink.class), RISO_BLUE, RISO_RED),
+            surface(of(Code.class, Color.Surface.class), GREY, GREY_D),
+            one(of(Code.class, Color.Ink.class), INK, INK_D),
+            one(of(Code.class, Shape.Corner.class), "0"),
+
+            // ── emphasis: the signal ────────────────────────────────────
+            anchored(surface(of(Primary.class, Color.Surface.class), SIGNAL), "background-color", GREY, "transparent"),
+            anchored(one(of(Primary.class, Color.Ink.class), RISO_RED), "*", MUTED, INK),
+            anchored(one(of(OnPrimary.class, Color.Ink.class), INK), "*", INK, INK),
+            // the secondary as a surface complete: riso red, ink on it, its rule; scales as the primary does
+            anchored(surface(of(Secondary.class, Color.Surface.class), RISO_RED), "background-color", GREY, "transparent"),
+            anchored(one(of(OnSecondary.class, Color.Ink.class), INK), "*", INK, INK),
+            anchored(edge(of(Secondary.class, Color.Edge.class), INK), "border-color", RULE, RULE),
+            surface(of(Tertiary.class, Color.Surface.class), GREY, GREY_D),
+            one(of(Muted.class, Color.Ink.class), MUTED, MUTED_D),
+            edge(of(Muted.class, Color.Edge.class), INK, INK_D),
+
+            // ── pairings ────────────────────────────────────────────────
+            one(of(OnInverted.class, Color.Ink.class), PAPER, INK),
+            states(of(OnInvertedMuted.class, Color.Ink.class), "#D9D9D9", SIGNAL),
+
+            // ── feedback: flat, loud ────────────────────────────────────
+            anchored(surface(of(Danger.class, Color.Surface.class), RISO_RED), "background-color", "#7CFF6B", "transparent"),
+            one(of(Danger.class, Color.Ink.class), INK),
+            anchored(one(of(OnDanger.class, Color.Ink.class), INK), "*", INK, INK),   // ink is ink here, on any wash
+            anchored(edge(of(Danger.class, Color.Edge.class), INK), "border-color", INK, RULE),
+            anchored(surface(of(Success.class, Color.Surface.class), "#7CFF6B"), "background-color", RISO_RED, "transparent"),   // scales: failure in riso red at -1
+            anchored(one(of(OnSuccess.class, Color.Ink.class), INK), "*", INK, INK),
+            scaled(of(Success.class, Color.Ink.class), RISO_RED, MUTED, INK),   // scales: a bad mark in riso red, an unremarkable one muted, a good one in ink
+            anchored(edge(of(Success.class, Color.Edge.class), INK), "border-color", INK, RULE),
+            anchored(surface(of(Warning.class, Color.Surface.class), SIGNAL), "background-color", "#7CFF6B", "transparent"),   // scales: all clear in green at -1
+            one(of(Warning.class, Color.Ink.class), INK),
+            anchored(one(of(OnWarning.class, Color.Ink.class), INK), "*", INK, INK),
+            anchored(edge(of(Warning.class, Color.Edge.class), INK), "border-color", "#7CFF6B", RULE),
+
+            // ── interaction: the press ──────────────────────────────────
+            one(of(Interactive.class, Motion.Ease.class), SNAP),
+            // the press, and the lift: a selected thing sits up on its shadow, a highlighted one half as far; a row lifts by filter
+            Map.entry(of(Interactive.class, Motion.Transform.class), Impl.Bindings.none()
+                    .at(State.HOVER, "translate(-2px, -2px)")
+                    .at(State.ACTIVE, "translate(5px, 5px)")
+                    .at(State.SELECTED, "translate(-3px, -3px)")
+                    .at(State.HIGHLIGHTED, "translate(-2px, -2px)")),
+            Map.entry(of(Interactive.class, Shape.Shadow.class), Impl.Bindings
+                    .of(shadow(4))
+                    .at(State.HOVER, shadow(8))
+                    .at(State.ACTIVE, "0 0 0 " + INK_REF)
+                    .at(State.SELECTED, shadow(6))
+                    .at(State.HIGHLIGHTED, shadow(5))),
+            Map.entry(of(Interactive.class, Effect.Filter.class), Impl.Bindings.none()
+                    .at(State.SELECTED, "filter", "drop-shadow(6px 6px 0 " + INK_REF + ")")
+                    .at(State.HIGHLIGHTED, "filter", "drop-shadow(4px 4px 0 " + INK_REF + ")")),
+            // nothing at rest; hover is the signal with an ink rule, selected is ink with signal on it, current is signal-edged.
+            // Selectable — a row, a cell, an option — is coloured exactly the same: the one word, under both pairs.
+            Map.entry(of(Interactive.class, Color.Surface.class), INTERACTIVE_SURFACE),
+            Map.entry(of(Selectable.class,  Color.Surface.class), INTERACTIVE_SURFACE),
+            Map.entry(of(Interactive.class, Color.Ink.class), INTERACTIVE_INK),
+            Map.entry(of(Selectable.class,  Color.Ink.class), INTERACTIVE_INK),
+            Map.entry(of(Interactive.class, Color.Edge.class), INTERACTIVE_EDGE),
+            Map.entry(of(Selectable.class,  Color.Edge.class), INTERACTIVE_EDGE),
+            // a tab: seen at rest — half the hover wash, the hover edge
+            Map.entry(of(Selectable.Tab.class, Color.Surface.class), restingAsHovered(INTERACTIVE_SURFACE, "background-color", 50)),
+            Map.entry(of(Selectable.Tab.class, Color.Edge.class),    restingAsHovered(INTERACTIVE_EDGE, "border-color", 100)),
+            Map.entry(of(Interactive.class, Shape.Rule.class), Impl.Bindings.none()
+                    .at(State.REST, "border-width", "3px").at(State.REST, "border-style", "solid")
+                    .at(State.FOCUS, "outline-width", "4px").at(State.FOCUS, "outline-style", "solid").at(State.FOCUS, "outline-offset", "-4px")),
+            // Selectable — a row, a cell, an option: flat on the page until it is the one, then up on the ink
+            one(of(Selectable.class, Motion.Ease.class), SNAP),
+            Map.entry(of(Selectable.class, Motion.Transform.class), Impl.Bindings.none()
+                    .at(State.HOVER, "translate(-2px, -2px)")
+                    .at(State.ACTIVE, "translate(-4px, -4px)")                        // pressed is grabbed: it lifts off its shadow, as Dragging does
+                    .at(State.SELECTED, "translate(-3px, -3px)")
+                    .at(State.HIGHLIGHTED, "translate(-2px, -2px)")),
+            Map.entry(of(Selectable.class, Shape.Shadow.class), Impl.Bindings.none()
+                    .at(State.REST, "none")
+                    .at(State.HOVER, shadow(4))
+                    .at(State.ACTIVE, shadow(10))
+                    .at(State.SELECTED, shadow(6))
+                    .at(State.HIGHLIGHTED, shadow(5))),
+            Map.entry(of(Selectable.class, Effect.Filter.class), Impl.Bindings.none()
+                    .at(State.SELECTED, "filter", "drop-shadow(6px 6px 0 " + INK_REF + ")")
+                    .at(State.HIGHLIGHTED, "filter", "drop-shadow(4px 4px 0 " + INK_REF + ")")),
+            Map.entry(of(Selectable.class, Shape.Rule.class), Impl.Bindings.none()
+                    .at(State.REST, "border-width", "3px").at(State.REST, "border-style", "solid")
+                    .at(State.FOCUS, "outline-width", "4px").at(State.FOCUS, "outline-style", "solid").at(State.FOCUS, "outline-offset", "-4px")),
+            surface(of(Selected.class, Color.Surface.class), INK, "#FFFFFF"),
+            one(of(Selected.class, Color.Ink.class), SIGNAL, INK),
+            edge(of(Selected.class, Color.Edge.class), INK, "#FFFFFF"),
+            surface(of(Current.class, Color.Surface.class), SIGNAL),
+            one(of(Current.class, Color.Ink.class), INK),
+            // the current one is the loud one: the signal, not the ink, or a lit border cannot be told from a drawn one
+            edge(of(Current.class, Color.Edge.class), SIGNAL),
+            // the Selected semantic in depth — a component saying "lifted" with a class of its own sits up on the ink
+            one(of(Selected.class, Shape.Shadow.class), shadow(6)),
+            one(of(Selected.class, Motion.Transform.class), "translate(-3px, -3px)"),
+            // in the hand: shifted hard against its offset
+            one(of(Dragging.class, Motion.Transform.class), "translate(-4px, -4px)"),
+            one(of(Dragging.class, Shape.Shadow.class), shadow(10)),
+            Map.entry(of(Selected.class, Effect.Filter.class), Impl.Bindings.none().at(State.REST, "filter", "drop-shadow(6px 6px 0 " + INK_REF + ")")),
+            one(of(Current.class, Shape.Shadow.class), "inset 6px 0 0 " + INK_REF),
+
+            // ── structure: every line is a rule ─────────────────────────
+            edge(of(Divider.class, Color.Edge.class), RULE, RULE_D),
+            rule(of(Divider.class, Shape.Rule.class), "0 0 4px 0", "solid"),
+            edge(of(Hairline.class, Color.Edge.class), RULE, RULE_D),
+            rule(of(Hairline.class, Shape.Rule.class), "0 0 2px 0", "solid"),
+            edge(of(Cap.class, Color.Edge.class), RULE, RULE_D),
+            rule(of(Cap.class, Shape.Rule.class), "3px 0 0 0", "solid"),
+            edge(of(Spine.class, Color.Edge.class), RULE, RULE_D),
+            rule(of(Spine.class, Shape.Rule.class), "0 0 0 3px", "solid"),
+            edgeHover(of(Marker.class, Color.Edge.class), "transparent", INK),
+            rule(of(Marker.class, Shape.Rule.class), "0 0 0 4px", "solid"),
+            edge(of(Bar.class, Color.Edge.class), RULE, RULE_D),
+            rule(of(Bar.class, Shape.Rule.class), "3px 3px 3px 8px", "solid"),
+
+            edge(of(Rail.class, Color.Edge.class), RULE, RULE_D),
+            edge(of(Lattice.class, Color.Edge.class), RULE, RULE_D),
+            surface(of(Backdrop.class, Color.Surface.class), "color-mix(in srgb, " + PAPER + " 64%, transparent)", "color-mix(in srgb, " + PAPER_D + " 64%, transparent)"),
+            rule(of(Rail.class, Shape.Rule.class), "0 3px 0 0", "solid"),
+            rule(of(Lattice.class, Shape.Rule.class), "0 2px 2px 0", "solid"),
+            edge(of(OnInverted.class, Color.Edge.class), PAPER, INK),
+            anchored(edge(of(Primary.class, Color.Edge.class), INK), "border-color", RULE, RULE),
+            one(of(Overlay.class, Shape.Shadow.class), shadow(12)),
+            Map.entry(of(Overlay.class, Effect.Filter.class), Impl.Bindings.none().at(State.REST, "backdrop-filter", "grayscale(1) contrast(1.4)")),
+            surfaceImage(of(Overlay.class, Color.Surface.class), "transparent", "repeating-linear-gradient(45deg, color-mix(in srgb, " + INK + " 22%, transparent) 0 7px, transparent 7px 14px)"),
+            ring(of(Focus.class, Color.Edge.class), RISO_BLUE),
+            surface(of(DropTarget.class, Color.Surface.class), SIGNAL),
+            ring(of(DropTarget.class, Color.Edge.class), INK),
+            withKeysInk(focusRing(of(Control.class, Color.Edge.class), RISO_BLUE), RISO_BLUE, INK, RULE),
+            withKeysInk(focusRing(of(Container.class, Color.Edge.class), RISO_BLUE), RISO_BLUE, INK, RULE),
+            one(of(Focus.class, Shape.Shadow.class), shadow(12) + ", 0 0 0 4px " + FOCUS_REF),
+            outline(of(Focus.class, Shape.Rule.class), "3px", "solid", "-3px"),
+            outline(of(DropTarget.class, Shape.Rule.class), "3px", "dashed", "-3px"),
+            one(of(Inert.class, Effect.Opacity.class), "0.4"),
+            one(of(Inert.class, Affordance.Cursor.class), "not-allowed"),
+
+            // ── boxes ───────────────────────────────────────────────────
+            one(of(Control.class, Shape.Corner.class), "0"),
+            withKeysMark(ruleWithFocusRing(of(Control.class, Shape.Rule.class), "3px", "solid", "3px", "solid", "-3px"),
+                         "4px", "solid", "4px", "4px", "dashed", "4px", "4px", "dotted", "4px"),   // the block stands off the thing; a proposal is the same block, drawn open
+            // the button's density: chunky, and it jumps: 1.5 per unit
+            inset(of(Control.Button.class, Size.Inset.class), "10px", "20px", 1.5),
+            gap(of(Control.Button.class, Size.Gap.class), "10px", 1.5),
+            minWidth(of(Control.Button.class, Size.Extent.class), "64px", 1.5),
+            // the tab: a square-cut block, five to one
+            one(of(Control.Tab.class, Shape.Corner.class), "0"),
+            inset(of(Control.Tab.class, Size.Inset.class), "0", "12px", 1.5),
+            gap(of(Control.Tab.class, Size.Gap.class), "10px", 1.5),
+            measure(of(Control.Tab.class, Size.Extent.class), "160px", 1.5),
+            proportion(of(Control.Tab.class, Size.Proportion.class), "5", 1.5),
+            one(of(Control.Tile.class, Shape.Corner.class), "0"),
+            inset(of(Control.Tile.class, Size.Inset.class), "14px", "12px", 1.5),
+            gap(of(Control.Tile.class, Size.Gap.class), "8px", 1.5),
+            measure(of(Control.Tile.class, Size.Extent.class), "132px", 1.5),
+            proportion(of(Control.Tile.class, Size.Proportion.class), "1.3", 1.5),
+            // a slider: the track's length and the room its knob needs; the groove, the knob, the notch
+            extent(of(Control.Slider.class, Size.Extent.class), "240px", "28px", 1.3),
+            inset(of(Control.Slider.class, Size.Inset.class), "4px", "0", 1.3),
+            gap(of(Control.Slider.class, Size.Gap.class), "12px", 1.3),
+            thickness(of(Control.Slider.Track.class, Size.Extent.class), "10px", 1.3),
+            one(of(Control.Slider.Track.class, Shape.Corner.class), "0"),
+            rule(of(Control.Slider.Track.class, Shape.Rule.class), "3px", "solid"),
+            square(of(Control.Slider.Knob.class, Size.Extent.class), "20px", 1.3),
+            one(of(Control.Slider.Knob.class, Shape.Corner.class), "0"),
+            ruleWithFocusRing(of(Control.Slider.Knob.class, Shape.Rule.class), "0", "none", "3px", "solid", "3px"),   // the box: no rule of its own, a ring on focus; the rule is the face's, by lineage
+            one(of(Control.Slider.Knob.class, Shape.Clip.class), "none"),
+            one(of(Control.Slider.Knob.class, Effect.Opacity.class), "1"),   // a faced knob, the mark inside it
+            scale(of(Control.Slider.Knob.class, Type.Scale.class), "12px", "1", 1.3),   // the mark's size
+            // a vertical slider's cap: low along the track, wide across it; and the ticks of a scale beside a track
+            extent(of(Control.Slider.Cap.class, Size.Extent.class), "16px", "32px", 1.3),
+            one(of(Control.Slider.Cap.class, Shape.Corner.class), "0"),
+            ruleWithFocusRing(of(Control.Slider.Cap.class, Shape.Rule.class), "0", "none", "3px", "solid", "3px"),
+            scale(of(Control.Slider.Cap.class, Type.Scale.class), "12px", "1", 1.3),
+            extent(of(Tick.class, Size.Extent.class), "2px", "8px", 1.3),
+            extent(of(Detent.class, Size.Extent.class), "3px", "18px", 1.3),
+            // a menu: a container of options that opens at a point; an option: one row of it
+            one(of(Container.Menu.class, Shape.Corner.class), "0"),
+            inset(of(Container.Menu.class, Size.Inset.class), "6px", "0", 1.5),
+            gap(of(Container.Menu.class, Size.Gap.class), "0", 1.5),
+            minWidth(of(Container.Menu.class, Size.Extent.class), "200px", 1.5),
+            one(of(Control.Option.class, Shape.Corner.class), "0"),
+            inset(of(Control.Option.class, Size.Inset.class), "8px", "12px", 1.5),
+            gap(of(Control.Option.class, Size.Gap.class), "10px", 1.5),
+            // a container, and the card: a squarish print, hard-edged
+            one(of(Container.class, Shape.Corner.class), "0"),
+            withKeysMark(ruleWithFocusRing(of(Container.class, Shape.Rule.class), "3px", "solid", "3px", "solid", "-3px"),
+                         "6px", "solid", "6px", "6px", "dashed", "6px", "6px", "dotted", "6px"),   // a region shouts: the same mark, twice the weight
+            inset(of(Container.Card.class, Size.Inset.class), "18px", "20px", 1.5),
+            gap(of(Container.Card.class, Size.Gap.class), "10px", 1.5),
+            measure(of(Container.Card.class, Size.Extent.class), "280px", 1.5),
+            proportion(of(Container.Card.class, Size.Proportion.class), 1.6),
+            inset(of(Inline.class, Size.Inset.class), "2px", "8px", 1.5),
+            // a pane: its air is its head's; the widget fills the rest
+            inset(of(Container.Pane.class, Size.Inset.class), "6px", "12px", 1.5),
+            gap(of(Container.Pane.class, Size.Gap.class), "10px", 1.5),
+            // a dock draws no frame of its own - what holds it does, or nothing does - so all its rule says is where the keys are
+            withKeysMark(rule(of(Container.Pane.class, Shape.Rule.class), "0", "none"),
+                         "6px", "solid", "6px", "6px", "dashed", "6px", "6px", "dotted", "6px"),
+            // a float is its own frame, and keeps the container's rule under the same mark
+            withKeysMark(ruleWithFocusRing(of(Container.Pane.Floating.class, Shape.Rule.class), "3px", "solid", "3px", "solid", "-3px"),
+                         "6px", "solid", "6px", "6px", "dashed", "6px", "6px", "dotted", "6px"),
+            // a panel: the head is a slab, and the line under it is a bar
+            // the panel's depth: no blur either way — the ink is offset, or it is stamped in
+            Map.entry(of(Container.Panel.class, Shape.Shadow.class), Impl.Bindings.of("none")
+                    .at(State.ELEVATED, "6px 6px 0 " + INK_REF)
+                    .at(State.SUNKEN, "inset 4px 4px 0 " + INK_REF)),
+            gap(of(Container.Panel.class, Size.Gap.class), "0px", 1.5),
+            inset(of(Container.Panel.Head.class, Size.Inset.class), "8px", "14px", 1.5),
+            gap(of(Container.Panel.Head.class, Size.Gap.class), "10px", 1.5),
+            rule(of(Container.Panel.Head.class, Shape.Rule.class), "0 0 3px 0", "solid"),
+            inset(of(Container.Panel.Body.class, Size.Inset.class), "12px", "14px", 1.5),
+            gap(of(Container.Panel.Body.class, Size.Gap.class), "12px", 1.5),
+            one(of(Inline.class, Shape.Corner.class), "0"),
+            rule(of(Inline.class, Shape.Rule.class), "2px", "solid"),
+
+            // ── prose in ink — by reference, so it follows the palette worn ────────────────────────────────────────────────────
+            body(of(Prose.class, Color.Ink.class), """
+                color: %s;
+                h1, h2, h3, h4 { color: %s; }
+                a { color: %s; }
+                a:hover { color: %s; }
+                blockquote { color: %s; }
+                code { color: %s; }
+                pre { color: %s; }
+                pre code { color: inherit; }
+                th { color: %s; }
+                """.formatted(of(Body.class, Color.Ink.class).var(), of(Heading.class, Color.Ink.class).var(),
+                              of(Link.class, Color.Ink.class).var(), of(Link.class, Color.Ink.class).var(State.HOVER),
+                              of(Muted.class, Color.Ink.class).var(), of(Code.class, Color.Ink.class).var(),
+                              of(OnInverted.class, Color.Ink.class).var(), of(OnInverted.class, Color.Ink.class).var())),
+            body(of(Prose.class, Type.Face.class), """
+                h1, h2, h3, h4 { font-family: %s; }
+                code, pre { font-family: %s; }
+                """.formatted(DISPLAY_FACE, EditorialDesign.MONO_FACE)),
+            body(of(Prose.class, Type.Weight.class), "h1, h2, h3, h4, th { font-weight: 900; }\n"),
+            body(of(Prose.class, Type.Decoration.class), "a { text-decoration-line: underline; text-underline-offset: 3px; text-decoration-thickness: 3px; }\n"),
+            body(of(Prose.class, Color.Surface.class), """
+                code { background-color: %s; }
+                pre { background-color: %s; }
+                pre code { background-color: transparent; }
+                th { background-color: %s; }
+                tr:nth-child(even) td { background-color: %s; }
+                """.formatted(of(Recessed.class, Color.Surface.class).var("background-color"), of(Inverted.class, Color.Surface.class).var("background-color"),
+                              of(Inverted.class, Color.Surface.class).var("background-color"), of(Recessed.class, Color.Surface.class).var("background-color"))),
+            body(of(Prose.class, Color.Edge.class), """
+                h1, blockquote, hr { border-color: %s; }
+                th, td { border-color: %s; }
+                """.formatted(of(Divider.class, Color.Edge.class).var("border-color"), of(Hairline.class, Color.Edge.class).var("border-color"))),
+            body(of(Prose.class, Shape.Rule.class), """
+                h1 { border-width: 0 0 4px 0; border-style: solid; }
+                blockquote { border-width: 0 0 0 6px; border-style: solid; }
+                th, td { border-width: 0 0 2px 0; border-style: solid; }
+                th { border-width: 0; }
+                hr { border-width: 3px 0 0 0; border-style: solid; }
+                """),
+            body(of(Prose.class, Shape.Corner.class), "code, pre { border-radius: 0; }\n")
+    );
+}

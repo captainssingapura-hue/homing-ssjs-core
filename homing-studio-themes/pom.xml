@@ -30,7 +30,14 @@
             <artifactId>homing-design-server</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
-        <!-- The palettes every design here NAMES: GlobalColorPalette, HomingVars,
+        <!-- The designs themselves: this module is the studio's registry of them,
+             with the legacy palettes its groups still read added on top. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-designs</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <!-- The legacy palettes the provisions here NAME: GlobalColorPalette, HomingVars,
              GlobalTypePalette, HomingFonts. They used to arrive through the
              workspace jar below, which is why demoting that to test scope left
              this module compiling only against its own stale classes and every

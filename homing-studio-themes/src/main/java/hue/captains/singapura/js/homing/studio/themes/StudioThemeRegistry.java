@@ -4,21 +4,19 @@ import hue.captains.singapura.js.homing.core.CssGroupImpl;
 import hue.captains.singapura.js.homing.core.PaletteProvision;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.design.server.DesignRegistry;
+import hue.captains.singapura.js.homing.designs.HomingDesigns;
 import hue.captains.singapura.js.homing.server.CssRenderer;
 import hue.captains.singapura.js.homing.server.ThemeRegistry;
 
 import java.util.List;
 
 /**
- * The studio's seven designs — {@link HomingEditorial}, and {@link HomingNeoBrutalism},
- * {@link HomingNeoFuturism}, {@link HomingNeumorphism}, {@link HomingGlassmorphism},
- * {@link HomingRetroFuturism} and {@link HomingSketchy} over it — and two palettes written as
- * colours alone, {@link SeedPalette#FOREST} and {@link SeedPalette#SUNSET}, as the studio's
- * theme registry: seven bases, nine colours, sixty-three looks — every one wearable by
- * slug, and the picker offered the twenty-odd each palette says it was crafted for or suits.
- * A design is a function over the design classes the studio's components wear;
- * Editorial is the house word, the other six call it for whatever they have no
- * word of their own for; a palette answers the colour plane alone.
+ * The studio's theme registry: the framework's designs and colour palettes —
+ * {@link HomingDesigns#DESIGNS} and {@link HomingDesigns#COLOURS}, from
+ * {@code homing-designs} — every look wearable by slug, and on top of them the
+ * legacy provisions only the studio still needs ({@code HomingEditorialLegacy}
+ * and the rest, here). A site that wears design words alone takes
+ * {@link HomingDesigns#REGISTRY} instead, and nothing of this.
  *
  * <p>Until the last group has moved, the legacy palettes and overrides pass
  * through beside the designs: a group not yet on design classes still reads
@@ -28,12 +26,14 @@ public final class StudioThemeRegistry implements ThemeRegistry {
 
     public static final StudioThemeRegistry INSTANCE = new StudioThemeRegistry();
 
+    // The framework's designs and colours (homing-designs), and on top of them
+    // the legacy provisions the studio's groups still read.
     private static final DesignRegistry DESIGNS = new DesignRegistry(
-            List.of(HomingEditorial.INSTANCE, HomingFlatMorphism.INSTANCE, HomingNeoBrutalism.INSTANCE, HomingNeoFuturism.INSTANCE, HomingNeumorphism.INSTANCE, HomingGlassmorphism.INSTANCE, HomingRetroFuturism.INSTANCE, HomingSketchy.INSTANCE),
-            List.of(SeedPalette.FOREST, SeedPalette.SUNSET),
+            HomingDesigns.DESIGNS,
+            HomingDesigns.COLOURS,
             List.of(),
-            List.of(HomingEditorial.Palette.INSTANCE, HomingFlatMorphism.Palette.INSTANCE, HomingNeoBrutalism.Palette.INSTANCE, HomingNeoFuturism.Palette.INSTANCE, HomingNeumorphism.Palette.INSTANCE, HomingGlassmorphism.Palette.INSTANCE, HomingRetroFuturism.Palette.INSTANCE, HomingSketchy.Palette.INSTANCE,
-                    HomingEditorial.Fonts.INSTANCE, HomingFlatMorphism.Fonts.INSTANCE, HomingNeoBrutalism.Fonts.INSTANCE, HomingNeoFuturism.Fonts.INSTANCE, HomingNeumorphism.Fonts.INSTANCE, HomingGlassmorphism.Fonts.INSTANCE, HomingRetroFuturism.Fonts.INSTANCE, HomingSketchy.Fonts.INSTANCE),
+            List.of(HomingEditorialLegacy.Palette.INSTANCE, HomingFlatMorphismLegacy.Palette.INSTANCE, HomingNeoBrutalismLegacy.Palette.INSTANCE, HomingNeoFuturismLegacy.Palette.INSTANCE, HomingNeumorphismLegacy.Palette.INSTANCE, HomingGlassmorphismLegacy.Palette.INSTANCE, HomingRetroFuturismLegacy.Palette.INSTANCE, HomingSketchyLegacy.Palette.INSTANCE,
+                    HomingEditorialLegacy.Fonts.INSTANCE, HomingFlatMorphismLegacy.Fonts.INSTANCE, HomingNeoBrutalismLegacy.Fonts.INSTANCE, HomingNeoFuturismLegacy.Fonts.INSTANCE, HomingNeumorphismLegacy.Fonts.INSTANCE, HomingGlassmorphismLegacy.Fonts.INSTANCE, HomingRetroFuturismLegacy.Fonts.INSTANCE, HomingSketchyLegacy.Fonts.INSTANCE),
             List.of());
 
     private StudioThemeRegistry() {}

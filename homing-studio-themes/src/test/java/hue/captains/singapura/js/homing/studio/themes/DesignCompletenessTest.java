@@ -1,5 +1,13 @@
 package hue.captains.singapura.js.homing.studio.themes;
 
+import hue.captains.singapura.js.homing.designs.HomingEditorial;
+import hue.captains.singapura.js.homing.designs.HomingFlatMorphism;
+import hue.captains.singapura.js.homing.designs.HomingGlassmorphism;
+import hue.captains.singapura.js.homing.designs.HomingNeoBrutalism;
+import hue.captains.singapura.js.homing.designs.HomingNeoFuturism;
+import hue.captains.singapura.js.homing.designs.HomingNeumorphism;
+import hue.captains.singapura.js.homing.designs.HomingRetroFuturism;
+import hue.captains.singapura.js.homing.designs.HomingSketchy;
 import hue.captains.singapura.js.homing.core.CssGroup;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.design.Deployment;

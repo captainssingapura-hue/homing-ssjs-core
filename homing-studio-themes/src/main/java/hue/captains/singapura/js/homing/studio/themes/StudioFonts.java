@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.studio.themes;
 
+import hue.captains.singapura.js.homing.designs.HouseFonts;
 import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.theme.type.HomingFonts;
 
@@ -16,9 +17,10 @@ import java.util.Map;
  */
 public final class StudioFonts {
 
-    public static final String BODY    = "\"Calibri\", \"Segoe UI\", system-ui, sans-serif";
-    public static final String DISPLAY = "\"Georgia\", serif";
-    public static final String MONO    = "\"Consolas\", \"Courier New\", monospace";
+    // The stacks are the designs' (homing-designs); the legacy type palette provides the same ones.
+    public static final String BODY    = HouseFonts.BODY;
+    public static final String DISPLAY = HouseFonts.DISPLAY;
+    public static final String MONO    = HouseFonts.MONO;
 
     public static final Map<CssVar, String> HOUSE = Map.of(
             HomingFonts.FONT_BODY,    BODY,
