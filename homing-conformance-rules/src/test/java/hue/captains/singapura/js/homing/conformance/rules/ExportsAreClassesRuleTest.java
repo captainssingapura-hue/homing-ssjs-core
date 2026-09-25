@@ -8,7 +8,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Components are classes: an exported class or data constant is clean; an exported function, expression or arrow is a finding; appMain is the scaffold's. */
+/** Components are classes: an exported class or data constant is clean; an exported function, expression or arrow is a finding; appMain and construct are the framework's entries. */
 class ExportsAreClassesRuleTest {
 
     private static ServedModule mod(String... lines) {
@@ -48,6 +48,30 @@ class ExportsAreClassesRuleTest {
         assertEquals(List.of(), ExportsAreClassesRule.INSTANCE.check(mod(
                 "function appMain(el, params) { }",
                 "export {appMain};")));
+    }
+
+    /**
+     * An on-demand widget's module exports {@code construct}: the loader imports
+     * the module when the widget is first opened and calls that one name to have
+     * the widget built. An entry, like appMain, not a component; the widget it
+     * builds is the class, declared and judged where it lives.
+     */
+    @Test
+    void constructIsAnOnDemandWidgetsEntryAndExempt() {
+        assertEquals(List.of(), ExportsAreClassesRule.INSTANCE.check(mod(
+                "function construct(branch, params, host) {",
+                "    return new NoteWidget(branch, params, host);",
+                "}",
+                "export {construct};")));
+    }
+
+    /** The exemption is by name, and only for the entries: any other function beside one is still a finding. */
+    @Test
+    void anEntryDoesNotCoverTheFunctionsBesideIt() {
+        assertEquals(List.of("mountNote"), names(ExportsAreClassesRule.INSTANCE.check(mod(
+                "function construct(branch, params, host) { return mountNote(branch); }",
+                "function mountNote(branch) { return { root: branch.createElement('n', 'div') }; }",
+                "export {construct, mountNote};"))));
     }
 
     @Test

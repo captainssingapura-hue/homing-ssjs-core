@@ -3,10 +3,7 @@
 # The rules are strict: anything NOT here (or allowlisted) is a NEW violation and fails the build.
 # Regenerate deliberately (BaselineRegen, UTF-8 safe); the list should only shrink.
 #
-hue.captains.singapura.js.homing.conformance.studio.ComponentSummaryWidget [exports-are-classes] exported function 'construct' — a component is a class: function construct(branch, params, workspaceCtx) {
-hue.captains.singapura.js.homing.conformance.studio.ComponentTreeWidget [exports-are-classes] exported function 'construct' — a component is a class: function construct(branch, params, workspaceCtx) {
 hue.captains.singapura.js.homing.conformance.studio.ComponentTreeWidget [keys-through-the-party] captures keys on the document — only the keyboard steward does: if (active) document.addEventListener('keydown', __keyHandler);
-hue.captains.singapura.js.homing.conformance.studio.ConformanceReportWidget [exports-are-classes] exported function 'construct' — a component is a class: function construct(branch, params, workspaceCtx) {
 hue.captains.singapura.js.homing.conformance.studio.ConformanceReportWidget [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): h.style.color = !ok ? '#c0392b' : (warned ? '#b7791f' : '#2e7d32');
 hue.captains.singapura.js.homing.conformance.studio.ConformanceReportWidget [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): if (css) d.style.cssText = css;
 hue.captains.singapura.js.homing.conformance.studio.ConformanceReportWidget [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): open = !open; rulesBox.style.display = open ? 'block' : 'none';
@@ -30,7 +27,6 @@ hue.captains.singapura.js.homing.conformance.studio.ConformanceReportWidget [no-
 hue.captains.singapura.js.homing.conformance.studio.ConformanceReportWidget [no-literal-color] literal colour (use a theme token var(--...), not a baked hex/rgb): var meta = TYPE_META[type] || { color: '#888', label: type };
 hue.captains.singapura.js.homing.conformance.studio.ConformanceReportWidget [no-literal-color] literal colour (use a theme token var(--...), not a baked hex/rgb): var toggle = el('div', 'cursor:pointer;user-select:none;color:var(--st-gray-mid,#888);'
 hue.captains.singapura.js.homing.conformance.studio.ConformanceReportWidget [use-dom-ops-party] raw DOM factory (use branch.createElement via the DomOpsParty, not document.create*): var d = document.createElement(tag);
-hue.captains.singapura.js.homing.conformance.studio.CrateConformanceWidget [exports-are-classes] exported function 'construct' — a component is a class: function construct(branch, params, workspaceCtx) {
 hue.captains.singapura.js.homing.conformance.studio.CrateConformanceWidget [no-dom-destruction] wholesale DOM wipe: body.textContent = '';
 hue.captains.singapura.js.homing.conformance.studio.CrateConformanceWidget [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): 'var(--st-gray-mid,#888)', false); e.style.fontStyle = 'italic'; return; }
 hue.captains.singapura.js.homing.conformance.studio.CrateConformanceWidget [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): d.style.cssText = 'margin:2px 0;line-height:1.5;'
@@ -46,7 +42,6 @@ hue.captains.singapura.js.homing.conformance.studio.CrateConformanceWidget [no-l
 hue.captains.singapura.js.homing.conformance.studio.CrateConformanceWidget [no-literal-color] literal colour (use a theme token var(--...), not a baked hex/rgb): if (!items.length) { line('none', 'var(--st-gray-mid,#999)', false).style.fontStyle = 'italic'; }
 hue.captains.singapura.js.homing.conformance.studio.CrateConformanceWidget [no-literal-color] literal colour (use a theme token var(--...), not a baked hex/rgb): var h = line(title + ' (' + items.length + ')', 'var(--st-gray-mid,#888)', false);
 hue.captains.singapura.js.homing.conformance.studio.CrateConformanceWidget [use-dom-ops-party] raw DOM factory (use branch.createElement via the DomOpsParty, not document.create*): var d = document.createElement('div');
-hue.captains.singapura.js.homing.conformance.studio.CrateGraphWidget [exports-are-classes] exported function 'construct' — a component is a class: function construct(branch, params, workspaceCtx) {
 hue.captains.singapura.js.homing.conformance.studio.CrateGraphWidget [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): function fail(msg) { status.style.color = '#c00'; status.textContent = msg; }
 hue.captains.singapura.js.homing.conformance.studio.CrateGraphWidget [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): root.style.cssText = 'height:100%;overflow:auto;box-sizing:border-box;'
 hue.captains.singapura.js.homing.conformance.studio.CrateGraphWidget [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): status.style.cssText = 'padding:8px;color:#888;font-size:13px;text-align:left;';
@@ -54,7 +49,6 @@ hue.captains.singapura.js.homing.conformance.studio.CrateGraphWidget [no-inline-
 hue.captains.singapura.js.homing.conformance.studio.CrateGraphWidget [no-literal-color] literal colour (use a theme token var(--...), not a baked hex/rgb): function fail(msg) { status.style.color = '#c00'; status.textContent = msg; }
 hue.captains.singapura.js.homing.conformance.studio.CrateGraphWidget [no-literal-color] literal colour (use a theme token var(--...), not a baked hex/rgb): status.style.cssText = 'padding:8px;color:#888;font-size:13px;text-align:left;';
 hue.captains.singapura.js.homing.conformance.studio.CrateGraphWidget [use-dom-ops-party] raw DOM factory (use branch.createElement via the DomOpsParty, not document.create*): var wrap = document.createElement('div');
-hue.captains.singapura.js.homing.conformance.studio.ModuleConformanceWidget [exports-are-classes] exported function 'construct' — a component is a class: function construct(branch, params, workspaceCtx) {
 hue.captains.singapura.js.homing.conformance.studio.ModuleConformanceWidget [no-dom-destruction] wholesale DOM wipe: body.textContent = '';
 hue.captains.singapura.js.homing.conformance.studio.ModuleConformanceWidget [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): 'var(--st-gray-mid,#888)', false); e.style.fontStyle = 'italic'; return; }
 hue.captains.singapura.js.homing.conformance.studio.ModuleConformanceWidget [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): d.style.cssText = 'margin:2px 0;line-height:1.5;'
@@ -70,7 +64,6 @@ hue.captains.singapura.js.homing.conformance.studio.ModuleConformanceWidget [no-
 hue.captains.singapura.js.homing.conformance.studio.ModuleConformanceWidget [no-literal-color] literal colour (use a theme token var(--...), not a baked hex/rgb): mr.ok ? '#2e7d32' : '#c0392b', false);
 hue.captains.singapura.js.homing.conformance.studio.ModuleConformanceWidget [no-literal-color] literal colour (use a theme token var(--...), not a baked hex/rgb): var h = line('Findings (' + mr.findings.length + ')', 'var(--st-gray-mid,#888)', false);
 hue.captains.singapura.js.homing.conformance.studio.ModuleConformanceWidget [use-dom-ops-party] raw DOM factory (use branch.createElement via the DomOpsParty, not document.create*): var d = document.createElement('div');
-hue.captains.singapura.js.homing.conformance.studio.ModuleContentWidget [exports-are-classes] exported function 'construct' — a component is a class: function construct(branch, params, workspaceCtx) {
 hue.captains.singapura.js.homing.conformance.studio.ModuleContentWidget [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): header.style.cssText = 'padding:8px 12px;font-size:12px;'
 hue.captains.singapura.js.homing.conformance.studio.ModuleContentWidget [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): pre.style.color = '#c00';
 hue.captains.singapura.js.homing.conformance.studio.ModuleContentWidget [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): pre.style.cssText = 'margin:0;flex:1;overflow:auto;padding:12px;'
@@ -79,7 +72,6 @@ hue.captains.singapura.js.homing.conformance.studio.ModuleContentWidget [no-lite
 hue.captains.singapura.js.homing.conformance.studio.ModuleContentWidget [no-literal-color] literal colour (use a theme token var(--...), not a baked hex/rgb): + 'border-bottom:1px solid var(--color-border,rgba(0,0,0,.12));'
 hue.captains.singapura.js.homing.conformance.studio.ModuleContentWidget [no-literal-color] literal colour (use a theme token var(--...), not a baked hex/rgb): + 'color:var(--st-gray-mid,#666);font-family:ui-monospace,Menlo,Consolas,monospace;';
 hue.captains.singapura.js.homing.conformance.studio.ModuleContentWidget [no-literal-color] literal colour (use a theme token var(--...), not a baked hex/rgb): pre.style.color = '#c00';
-hue.captains.singapura.js.homing.conformance.studio.ModuleSummaryWidget [exports-are-classes] exported function 'construct' — a component is a class: function construct(branch, params, workspaceCtx) {
 hue.captains.singapura.js.homing.conformance.studio.ModuleSummaryWidget [no-dom-destruction] wholesale DOM wipe: badge.textContent = '';
 hue.captains.singapura.js.homing.conformance.studio.ModuleSummaryWidget [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): badge.style.cssText = 'font-size:11px;text-transform:uppercase;'
 hue.captains.singapura.js.homing.conformance.studio.ModuleSummaryWidget [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): card.style.cssText = 'border:1px solid var(--color-border,rgba(0,0,0,.15));'
@@ -94,7 +86,6 @@ hue.captains.singapura.js.homing.conformance.studio.ModuleSummaryWidget [no-lite
 hue.captains.singapura.js.homing.conformance.studio.ModuleSummaryWidget [no-literal-color] literal colour (use a theme token var(--...), not a baked hex/rgb): + 'color:var(--st-gray-mid,#555);word-break:break-all;';
 hue.captains.singapura.js.homing.conformance.studio.ModuleSummaryWidget [no-literal-color] literal colour (use a theme token var(--...), not a baked hex/rgb): + 'letter-spacing:0.06em;color:var(--st-gray-mid,#888);margin-bottom:6px;';
 hue.captains.singapura.js.homing.conformance.studio.ModuleSummaryWidget [no-literal-color] literal colour (use a theme token var(--...), not a baked hex/rgb): card.style.cssText = 'border:1px solid var(--color-border,rgba(0,0,0,.15));'
-hue.captains.singapura.js.homing.conformance.studio.ModuleTreeWidget [exports-are-classes] exported function 'construct' — a component is a class: function construct(branch, params, workspaceCtx) {
 hue.captains.singapura.js.homing.conformance.studio.ModuleTreeWidget [keys-through-the-party] captures keys on the document — only the keyboard steward does: if (active) document.addEventListener('keydown', __keyHandler);
 hue.captains.singapura.js.homing.conformance.studio.ModuleTreeWidget [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): root.style.cssText = 'height:100%;overflow:auto;padding:8px 4px;'
 hue.captains.singapura.js.homing.conformance.studio.ModuleTreeWidget [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): status.style.color = '#c00';
@@ -657,8 +648,6 @@ hue.captains.singapura.js.homing.studio.base.widget.SvgWidget [no-literal-color]
 hue.captains.singapura.js.homing.studio.base.widget.SvgWidget [no-literal-color] literal colour (use a theme token var(--...), not a baked hex/rgb): el.style.cssText = 'padding:40px;color:#900;font-family:sans-serif;';
 hue.captains.singapura.js.homing.studio.base.widget.SvgWidget [use-dom-ops-party] raw DOM factory (use branch.createElement via the DomOpsParty, not document.create*): var inner = document.createElement('div');
 hue.captains.singapura.js.homing.studio.base.widget.SvgWidget [view-doctrine] DOM lookup (Owned References): var svgEl = inner.querySelector('svg');
-hue.captains.singapura.js.homing.studio.workspace.DocContentWidget [exports-are-classes] exported function 'construct' — a component is a class: function construct(branch, params, workspaceCtx) {
-hue.captains.singapura.js.homing.studio.workspace.SummaryWidget [exports-are-classes] exported function 'construct' — a component is a class: function construct(branch, params, workspaceCtx) {
 hue.captains.singapura.js.homing.studio.workspace.SummaryWidget [no-dom-destruction] wholesale DOM wipe: badge.textContent = '';
 hue.captains.singapura.js.homing.studio.workspace.SummaryWidget [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): badge.style.cssText = 'font-size:11px;text-transform:uppercase;'
 hue.captains.singapura.js.homing.studio.workspace.SummaryWidget [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): card.style.cssText = 'border:1px solid var(--color-border,rgba(0,0,0,.15));'
@@ -678,7 +667,6 @@ hue.captains.singapura.js.homing.studio.workspace.SummaryWidget [no-literal-colo
 hue.captains.singapura.js.homing.studio.workspace.SummaryWidget [no-literal-color] literal colour (use a theme token var(--...), not a baked hex/rgb): + 'padding:5px 14px;border:1px solid var(--color-border,rgba(0,0,0,.2));'
 hue.captains.singapura.js.homing.studio.workspace.SummaryWidget [no-literal-color] literal colour (use a theme token var(--...), not a baked hex/rgb): card.style.cssText = 'border:1px solid var(--color-border,rgba(0,0,0,.15));'
 hue.captains.singapura.js.homing.studio.workspace.SummaryWidget [no-raw-href] raw href operation (use href.* API): window.open(url, '_blank', 'noopener');
-hue.captains.singapura.js.homing.studio.workspace.TreeWidget [exports-are-classes] exported function 'construct' — a component is a class: function construct(branch, params, workspaceCtx) {
 hue.captains.singapura.js.homing.studio.workspace.TreeWidget [keys-through-the-party] captures keys on the document — only the keyboard steward does: if (active) document.addEventListener('keydown', __keyHandler);
 hue.captains.singapura.js.homing.studio.workspace.TreeWidget [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): root.style.cssText = 'height:100%;overflow:auto;padding:8px 4px;'
 hue.captains.singapura.js.homing.studio.workspace.TreeWidget [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): status.style.color = '#c00';
@@ -741,8 +729,6 @@ hue.captains.singapura.js.homing.workspace.persistence.WorkspaceStatePersistence
 hue.captains.singapura.js.homing.workspace.persistence.WorkspaceStatePersistenceModule [exports-are-classes] exported function 'createWorkspaceStatePersister' — a component is a class: function createWorkspaceStatePersister(opts) {
 hue.captains.singapura.js.homing.workspace.shell.CheckpointServiceModule [max-effective-lines] module exceeds the 250 effective-line limit — split it
 hue.captains.singapura.js.homing.workspace.shell.CssGraphRendererModule [exports-are-classes] exported function 'renderCssGraph' — a component is a class: function renderCssGraph(branch, host, opts) {
-hue.captains.singapura.js.homing.workspace.shell.CssGraphWorkbenchWidget [exports-are-classes] exported function 'construct' — a component is a class: function construct(branch, params, workspaceCtx) {
-hue.captains.singapura.js.homing.workspace.shell.DomOpsPartyMonitorWidget [exports-are-classes] exported function 'construct' — a component is a class: function construct(branch, params, workspaceCtx) {
 hue.captains.singapura.js.homing.workspace.shell.DomOpsPartyMonitorWidget [keys-through-the-party] captures keys on the document — only the keyboard steward does: if (active) document.addEventListener('keydown', __keyHandler);
 hue.captains.singapura.js.homing.workspace.shell.GenericWorkspace [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): errEl.style.cssText = 'padding:20px;color:#900;background:#fee;border:1px solid #c00;margin:20px;white-space:pre-wrap;font-family:monospace;';
 hue.captains.singapura.js.homing.workspace.shell.GenericWorkspace [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): mainHost.style.display  = 'flex';

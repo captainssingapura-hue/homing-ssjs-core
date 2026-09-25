@@ -21,16 +21,27 @@ import java.util.regex.Pattern;
  * constructor argument.
  *
  * <p>Read from the served text: the names in the emitted {@code export
- * {…};} line, each looked up at its top-level declaration. One exemption,
- * by name: {@code appMain}, an app's page entry, which the framework's
- * scaffold calls as a function by contract.</p>
+ * {…};} line, each looked up at its top-level declaration. Two exemptions,
+ * by name, each an ENTRY the framework calls as a function by contract and
+ * never a component: {@code appMain}, an app's page entry, which the
+ * scaffold calls; and {@code construct}, an on-demand widget's entry — its
+ * module is imported only when the widget is first opened, and the loader,
+ * knowing nothing of the module but that one name, calls
+ * {@code construct(branch, params, host)} to have the widget built. What an
+ * entry builds is the component, and that is held to this rule where it is
+ * declared. The ban is on functions as components — closures with state no
+ * one can name — and an entry is not one.</p>
  */
 public record ExportsAreClassesRule() implements JsRule {
 
     public static final ExportsAreClassesRule INSTANCE = new ExportsAreClassesRule();
 
-    /** The framework's page entry: called by the scaffold, never a component. */
-    public static final Set<String> ENTRY_POINTS = Set.of("appMain");
+    /**
+     * The framework's entries, called as functions by contract and never
+     * components: {@code appMain}, a page's, by the scaffold; {@code construct},
+     * an on-demand widget's, by the loader that imported its module.
+     */
+    public static final Set<String> ENTRY_POINTS = Set.of("appMain", "construct");
 
     private static final Pattern EXPORT_LINE = Pattern.compile("^\\s*export\\s*\\{([^}]*)\\}\\s*;?\\s*$");
 
