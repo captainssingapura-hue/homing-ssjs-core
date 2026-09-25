@@ -10,14 +10,16 @@
     </parent>
     <artifactId>homing-site-mpa</artifactId>
     <description>
-        The standard MPA: a JS app served as a page under the site's chrome,
-        with the user's preferences - the theme first - kept by the steward
-        and switched live. AppPage is the Navigable (Placed, so a router that
-        knows the position can hand it the trail); StandardMpa is the site's
-        one declaration of brand, themes and crates, and mounts the module,
-        CSS and themes routes beside the site's own. Independent of the
-        catalogue: depends on homing-site-base, homing-server, homing-core-js
-        and homing-design-core, and knows nothing of trees.
+        The MPA's DEFINITIONS: what a multi-page app is to a site - Mpa, the
+        one declaration of brand, themes and crates that makes a JS app a
+        page and mounts the framework's routes beside the site's own - the
+        Brand on its bar, and the /themes route the preferences read.
+        The implementation - StandardMpa, its page, its chrome and the
+        preferences the chrome opens - is homing-site-mpa-standard, in the
+        homing-ssjs-ui-components repo, because the chrome is built of the
+        dialog and the preferences components. Core defines; it does not
+        depend on a component. Depends on homing-site-base, homing-server,
+        homing-core-js and homing-design-core, and knows nothing of trees.
     </description>
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
@@ -43,18 +45,6 @@
         <dependency>
             <groupId>io.github.captainssingapura-hue.homing.js</groupId>
             <artifactId>homing-design-core</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-        <!-- The preferences dialog on the bar: the dialog, and the preferences component
-             whose view it holds; the theme widget lives here because /themes does. -->
-        <dependency>
-            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
-            <artifactId>homing-ui-dialog</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
-            <artifactId>homing-preferences</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
