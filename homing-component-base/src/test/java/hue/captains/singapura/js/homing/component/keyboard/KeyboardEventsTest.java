@@ -39,6 +39,7 @@ class KeyboardEventsTest extends JsModuleTestBase {
     }
 
     private static String sample(RecordComponent c) {
+        if (c.getName().equals("state")) return "'held'";   // one of the marker's states: the only strings both sides accept
         if (c.getType() == String.class) return "'" + c.getName() + "'";
         throw new AssertionError("no sample for " + c);
     }
@@ -63,7 +64,7 @@ class KeyboardEventsTest extends JsModuleTestBase {
     void theKindsAreThePermittedSubclassesInOrder() {
         var java = records().stream().map(Class::getSimpleName).toList();
         assertEquals(java.toString(), eval("'[' + KeyboardEvents.KINDS.join(', ') + ']'").asString());
-        assertEquals(5, java.size());
+        assertEquals(6, java.size());
     }
 
     @Test
@@ -88,5 +89,18 @@ class KeyboardEventsTest extends JsModuleTestBase {
         assertThrows(IllegalArgumentException.class, () -> new KeyboardEvent.Taken("", "b"));
         assertThrows(IllegalArgumentException.class, () -> new KeyboardEvent.Taken("a", ""));
         assertEquals("Taken", new KeyboardEvent.Taken("a", null).kind());
+    }
+
+    @Test
+    void theMarkerIsHeldLentOrAway_onBothSides() {
+        assertEquals("a|lent", eval("var m = KeyboardEvents.Marked('a', 'lent'); [m.id, m.state].join('|')").asString());
+        assertEquals(KeyboardEvent.Marked.STATES.toString(), eval("'[' + KeyboardEvents.STATES.join(', ') + ']'").asString());
+        for (String bad : List.of("KeyboardEvents.Marked('a', 'focused')", "KeyboardEvents.Marked('a')", "KeyboardEvents.Marked('', 'held')")) {
+            var ex = assertThrows(PolyglotException.class, () -> eval(bad), bad);
+            assertTrue(ex.getMessage().startsWith("Error: [KeyboardEvents] "), bad + " -> " + ex.getMessage());
+        }
+        assertThrows(IllegalArgumentException.class, () -> new KeyboardEvent.Marked("a", "focused"));
+        assertThrows(IllegalArgumentException.class, () -> new KeyboardEvent.Marked("", "held"));
+        assertEquals("Marked", new KeyboardEvent.Marked("a", "away").kind());
     }
 }

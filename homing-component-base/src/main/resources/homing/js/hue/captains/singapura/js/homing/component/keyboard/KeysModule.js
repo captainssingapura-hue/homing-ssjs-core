@@ -9,10 +9,12 @@
 //     contains the press. The roots under the convention are enrolled with
 //     the steward, so nesting is a structural question and not an order: a
 //     press in a widget inside a pane inside a dialog is the widget's alone,
-//     and a container is never granted for a press on its child. Native focus
-//     is not the convention's business — a member is never natively focused,
-//     and the focus arriving in or leaving a native control inside the root
-//     moves nothing. off() removes the listener and forgets the root.
+//     and a container is never granted for a press on its child. The root
+//     enrolled is also where the member's mark is worn — written by the
+//     steward, never by the member — and what the browser's focus arriving
+//     inside it is measured against: that is the steward's business, not the
+//     convention's (RFC 0066 E3, keyboard §17.5), so the convention listens to
+//     the press alone. off() removes the listener and forgets the root.
 //   Keys.claim(m)                    by call: a dialog on open, a shortcut's summons
 //   Keys.yield(m)                    the keys given up: they go up the focus tree to the first
 //                                    ancestor that would hold them (wouldHold), else to no one

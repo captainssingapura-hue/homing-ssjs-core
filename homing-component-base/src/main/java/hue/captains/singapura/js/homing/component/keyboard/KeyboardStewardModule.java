@@ -14,7 +14,9 @@ import java.util.List;
  * The keyboard party's face to the DOM, one per page: it owns the party,
  * captures keys on the document while someone holds the keyboard, and turns
  * them into messages the secretary routes to the holder. Lazy, and blind to
- * why a member claims. Physical focus is never touched.
+ * why a member claims. Where the focus is — the holder, held or lent to a
+ * native control of its own, or away — is its marker, whose rules and marks
+ * are {@link KeyboardMarkModule}'s (RFC 0066 E3, keyboard §17.5).
  */
 public record KeyboardStewardModule() implements DomModule<KeyboardStewardModule> {
 
@@ -34,6 +36,7 @@ public record KeyboardStewardModule() implements DomModule<KeyboardStewardModule
                 .add(new ModuleImports<>(List.of(new KeyboardSecretaryModule.KeyboardSecretary()), KeyboardSecretaryModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new KeyboardEventsModule.KeyboardEvents()), KeyboardEventsModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new KeyboardWalkModule.KeyboardWalk()), KeyboardWalkModule.INSTANCE))
+                .add(new ModuleImports<>(List.of(new KeyboardMarkModule.KeyboardMark()), KeyboardMarkModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new KeyboardShortcutsModule.KeyboardShortcuts()), KeyboardShortcutsModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new KeyboardChordsModule.KeyboardChords()), KeyboardChordsModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new focusParty()), FocusPartyModule.INSTANCE))

@@ -36,7 +36,11 @@ class KeyboardStewardTest extends JsModuleTestBase {
         var log = [];
         var console = { error: function (m) { log.push("error:" + m); }, warn: function (m) { log.push("warn:" + m); } };
         function el(tag, parent) {
-            var e = { tagName: tag, parentNode: parent || null, _cap: {}, _bub: {}, isContentEditable: false };
+            var e = { tagName: tag, parentNode: parent || null, _cap: {}, _bub: {}, isContentEditable: false, _attrs: {} };
+            e.setAttribute = function (k, v) { e._attrs[k] = String(v); };
+            e.getAttribute = function (k) { return k in e._attrs ? e._attrs[k] : null; };
+            e.removeAttribute = function (k) { delete e._attrs[k]; };
+            e.hasAttribute = function (k) { return k in e._attrs; };
             e.addEventListener = function (t, f, c) { var m = c ? e._cap : e._bub; (m[t] = m[t] || []).push(f); };
             e.removeEventListener = function (t, f, c) { var m = c ? e._cap : e._bub; var a = m[t] || []; var i = a.indexOf(f); if (i >= 0) a.splice(i, 1); };
             e.contains = function (o) { for (var x = o; x; x = x.parentNode) if (x === e) return true; return false; };
@@ -58,8 +62,8 @@ class KeyboardStewardTest extends JsModuleTestBase {
         }
         function key(target, k, props) { return fire(target, "keydown", Object.assign({ key: k }, props || {})); }
         function fakeBranch(name) { return { name: name, dissolved: false, activate: function () {}, dissolve: function () { this.dissolved = true; } }; }
-        var events = [];
-        function sink(e) { events.push(e.kind + ":" + e.id + (e.kind === "Taken" ? ":" + e.by : "")); }
+        var events = [], marks = [];   // the marker's moves apart: KeyboardMarkTest reads them
+        function sink(e) { if (e.kind === "Marked") { marks.push(e.id + ":" + e.state); return; } events.push(e.kind + ":" + e.id + (e.kind === "Taken" ? ":" + e.by : "")); }
         var kb = new KeyboardSteward(fakeBranch("keyboard"), { onEvent: sink });
         var body = document.body, page = el("DIV", body), outer = el("DIV", page), inner = el("DIV", outer), field = el("INPUT", page);
         // a member that takes arrows and leaves everything else
@@ -88,6 +92,7 @@ class KeyboardStewardTest extends JsModuleTestBase {
         loadModule(DIR + "keyboard/KeyboardWalkModule.js");
         loadModule(DIR + "keyboard/KeyboardShortcutsModule.js");
         loadModule(DIR + "keyboard/KeyboardChordsModule.js");
+        loadModule(DIR + "keyboard/KeyboardMarkModule.js");
         loadModule(DIR + "keyboard/KeyboardStewardModule.js");
         loadModule(DIR + "keyboard/KeysModule.js");
         js.eval("js", SHIM);
@@ -189,14 +194,18 @@ class KeyboardStewardTest extends JsModuleTestBase {
         assertEquals("ArrowUp,a,ArrowUp,Escape,Enter,ArrowDown,Enter,Escape,Enter,ArrowUp,Escape", eval("bubbled.join()").asString(), "every key from a focused element travelled on untouched; the holder's left Escape too");
     }
 
-    /** The convention is one press: a press in the root claims; native focus arriving in or leaving the root moves nothing; off() removes it. */
+    /**
+     * The convention is one press: a press in the root claims; the focus arriving in or leaving it is not the
+     * convention's business — it listens to nothing else — and focus outside every member moves no holder (the
+     * steward's rules for the browser's focus are KeyboardMarkTest's); off() removes it.
+     */
     @Test
-    void theConventionClaimsOnAPress_andNativeFocusMovesNothing() {
+    void theConventionClaimsOnAPress_andListensToNothingElse() {
         eval("var a = member('a', outer), b = member('b')");
         eval("fire(outer, 'pointerdown')");
         assertEquals("a", holder());
         eval("kb.claim('b'); fire(inner, 'focusin'); field.focus(); fire(field, 'focusin')");
-        assertEquals("b", holder(), "the focus arriving in the root claims nothing");
+        assertEquals("b", holder(), "a focusin with nothing focused, and the focus on a field under no member: no one claims");
         eval("kb.claim('a'); fire(outer, 'focusout', { relatedTarget: field }); fire(outer, 'focusout', { relatedTarget: null })");
         assertEquals("a", holder(), "the focus leaving the root releases nothing");
         assertEquals(1, eval("outer.listeners('pointerdown') + outer.listeners('focusin') + outer.listeners('focusout')").asInt(), "one listener: the press");
@@ -254,7 +263,7 @@ class KeyboardStewardTest extends JsModuleTestBase {
     @Test
     void moreThanOneListener_eachToldEach_offRemovesOne() {
         eval("var heard = []; var off = kb.on(function (e) { heard.push(e.kind); }); var a = member('a'); kb.claim('a'); off(); kb.release('a')");
-        assertEquals("Granted", eval("heard.join()").asString(), "the second listener heard the grant, then was removed");
+        assertEquals("Granted,Marked", eval("heard.join()").asString(), "the second listener heard the grant and the marker it moved, then was removed");
         assertEquals("Granted:a Released:a", events(), "the first listener heard both");
         assertThrows(PolyglotException.class, () -> eval("kb.on(3)"));
     }

@@ -10,10 +10,15 @@
 //   KeyboardEvents.Released(id)       it gave the keyboard up, or left
 //   KeyboardEvents.Offered(id)        the walk's cursor rests on it: a confirming key would give it the keys
 //   KeyboardEvents.Withdrawn(id)      the offer is off: the walk moved on, confirmed, or was called off
+//   KeyboardEvents.Marked(id, state)  the marker moved (RFC 0066 E3, keyboard §17.5): the holder is id, and
+//                                     it is "held" (nothing natively focused), "lent" (a native control of
+//                                     its own has the browser's focus) or "away" (the browser's focus is
+//                                     outside every member, and nothing is routed)
 //   KeyboardEvents.KINDS              the kinds, in this order
 //
 // The keys themselves are not events of ours: they are the browser's, passed
-// through to the holder. One event per change of holder, on the steward's sink.
+// through to the holder. One event per change of holder, on the steward's sink,
+// and one per move of the marker.
 // =============================================================================
 
 function _id(v, what) {
@@ -22,7 +27,8 @@ function _id(v, what) {
 }
 
 class KeyboardEvents {
-    static KINDS = Object.freeze(["Granted", "Taken", "Released", "Offered", "Withdrawn"]);
+    static KINDS = Object.freeze(["Granted", "Taken", "Released", "Offered", "Withdrawn", "Marked"]);
+    static STATES = Object.freeze(["held", "lent", "away"]);
 
     /** A member holds the keyboard now: by a claim, by a yield that reached it, by a member that left, or by the steward's Tab. */
     static Granted(id, by) {
@@ -45,5 +51,10 @@ class KeyboardEvents {
     /** The offer is withdrawn: the walk moved on, was confirmed, or was called off. */
     static Withdrawn(id) {
         return Object.freeze({ kind: "Withdrawn", id: _id(id, "Withdrawn.id") });
+    }
+    /** The marker moved: the holder is id, held, lent or away. */
+    static Marked(id, state) {
+        if (KeyboardEvents.STATES.indexOf(state) < 0) throw new Error("[KeyboardEvents] Marked.state must be one of " + KeyboardEvents.STATES.join(", ") + ": " + state);
+        return Object.freeze({ kind: "Marked", id: _id(id, "Marked.id"), state: state });
     }
 }
