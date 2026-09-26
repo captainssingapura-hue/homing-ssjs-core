@@ -11,6 +11,11 @@
 // walk steps over the ones it refuses: a pane shows one tab, and the keys are
 // not offered to what the page is not showing.
 //
+// A member may leave the walk altogether: its component answers inWalk()
+// false, and neither it nor anything under it is offered — a container that
+// moves between its members a way of its own, as a desk between its panes.
+// With nothing the walk may offer, and no walk to end, Tab is the browser's.
+//
 // A pure module of statics on a steward, importing nothing, so the rules are
 // read and tested without a browser:
 //
@@ -18,7 +23,8 @@
 //   KeyboardWalk.move(steward, dir)     one step on (1) or back (-1): the
 //       member offered, or null when the walk ended
 //   KeyboardWalk.step(steward, dir)     where that step lands, offered or home
-//   KeyboardWalk.offerable(m)           what the holder of its branch says
+//   KeyboardWalk.offerable(m)           what the holder of its branch says, unless it or a
+//                                       member above it has left the walk
 // =============================================================================
 
 class KeyboardWalk {
@@ -27,8 +33,9 @@ class KeyboardWalk {
     static keyDown(s, ev) {
         if (ev.ctrlKey || ev.altKey || ev.metaKey) return false;
         if (ev.key === "Tab") {
-            if (!s._focus || !s._focus.walk().length) return false;   // no member to walk: Tab is the browser's
-            KeyboardWalk.move(s, ev.shiftKey ? -1 : 1);               // a walk that comes home ends, and the key is still the walk's
+            var dir = ev.shiftKey ? -1 : 1, to = s._focus ? KeyboardWalk.step(s, dir) : null;
+            if (!to || (to.id === s.holder() && !s.candidate())) return false;   // nothing it may offer, no walk to end: Tab is the browser's
+            KeyboardWalk.move(s, dir);                                           // a walk that comes home ends, and the key is still the walk's
             return true;
         }
         if (!s.candidate()) return false;
@@ -60,8 +67,16 @@ class KeyboardWalk {
         return null;
     }
 
-    /** Asked of the holder of the branch a member is in: a container may say the keys are not offered to a member it is not showing. Offered unless it says otherwise. */
+    /**
+     * Asked of the holder of the branch a member is in: a container may say the keys are not offered to a member
+     * it is not showing. Offered unless it says otherwise — and never while the member, or a member above it, has
+     * left the walk (inWalk() false).
+     */
     static offerable(m) {
+        for (var at = m; at; at = at.parent()) {
+            var own = at.component;
+            if (own && typeof own.inWalk === "function" && own.inWalk() === false) return false;
+        }
         var owner = m.in ? m.in.owner : null, c = owner ? owner.component : null;
         return !c || typeof c.wouldOffer !== "function" || c.wouldOffer(m) !== false;
     }

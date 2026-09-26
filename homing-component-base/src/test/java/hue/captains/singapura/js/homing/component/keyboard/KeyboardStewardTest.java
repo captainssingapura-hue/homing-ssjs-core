@@ -488,6 +488,40 @@ class KeyboardStewardTest extends JsModuleTestBase {
         eval("kt.dispose()");
     }
 
+    /**
+     * A member may leave the walk — a container that moves between its members
+     * a way of its own, as a desk between its panes: it is no stop, and nothing
+     * under it is. With nothing left to offer, Tab is the browser's.
+     */
+    @Test
+    void aMemberOutOfTheWalk_isNoStop_andNeitherIsAnythingUnderIt() {
+        eval("""
+            kb.dispose();
+            var tree = new FocusParty();
+            var kt = new KeyboardSteward(fakeBranch("k"), { onEvent: sink, party: tree });
+            var out = true;
+            var desk = tree.root.createBranch("desk", { inWalk: function () { return !out; } });
+            var pane = desk.createBranch("pane", {}); pane.join("w", {});
+            desk.join("resting", {});
+            var d = tree.root.join("d", {});
+            function cand() { var c = kt.candidate(); return c ? tree.find(c).name : "none"; }
+            function tab() { return fire(body, "keydown", { key: "Tab" }); }
+            """);
+        eval("tab()");
+        assertEquals("d", eval("cand()").asString(), "the desk, its pane, what is in the pane and what rests in the desk: stepped over");
+        eval("tab()");
+        assertEquals("d", eval("cand()").asString(), "and round again: d is all the walk has");
+        eval("out = false; tab()");
+        assertEquals("desk", eval("cand()").asString(), "asked afresh at every step");
+        eval("kt.withdraw(); out = true; d.leave(); var t = tab()");
+        assertFalse(eval("t.defaultPrevented").asBoolean(), "nothing the walk may offer: Tab is the browser's");
+        assertEquals("none", eval("cand()").asString());
+        eval("kt.claim(pane.members[0]); var t2 = tab()");
+        assertFalse(eval("t2.defaultPrevented").asBoolean(), "the keys inside it: home is all there is, and the holder is never offered — the browser's still");
+        assertEquals("w", eval("tree.find(kt.holder()).name").asString(), "and they stay where they are");
+        eval("kt.dispose()");
+    }
+
     @Test
     void aSinkThatThrowsIsReportedNotPropagated() {
         eval("kb.dispose(); var kb3 = new KeyboardSteward(fakeBranch('k3'), { onEvent: function () { throw new Error('boom'); } }); kb3.join('a', {}); kb3.claim('a')");
