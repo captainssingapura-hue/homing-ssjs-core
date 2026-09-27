@@ -13,8 +13,12 @@ import java.util.Map;
  *
  * <ul>
  *   <li><b>{@link AppModule} target</b> — calls a shared {@code _homingBuildAppUrl}
- *       helper that emits {@code /app?app=&lt;simpleName&gt;&...params...} and
- *       propagates current {@code theme}/{@code locale} unless explicitly overridden.</li>
+ *       helper that emits {@code /app?app=&lt;simpleName&gt;&...params...}: the
+ *       params the caller passed and nothing else. It used to carry the current
+ *       page's {@code theme}/{@code locale} over; RFC 0064 D20 — a link is what
+ *       its author wrote — retired that stamp from {@code HrefManager}, and this
+ *       was its other half. A {@code theme} or {@code locale} the caller passes
+ *       is written like any other param.</li>
  *   <li><b>{@link ProxyApp} target</b> — interpolates the proxy's
  *       {@link ProxyApp#urlTemplate()} via {@link UrlTemplate#toJsExpression(String)},
  *       producing a function that builds the external URL in the browser.</li>
@@ -58,9 +62,6 @@ public final class NavWriter {
         out.add("    if (params) for (var k in params) {");
         out.add("        if (params[k] != null) u += \"&\" + encodeURIComponent(k) + \"=\" + encodeURIComponent(String(params[k]));");
         out.add("    }");
-        out.add("    var here = new URLSearchParams(window.location.search);");
-        out.add("    if (here.get(\"theme\")  && (!params || params.theme  == null)) u += \"&theme=\"  + encodeURIComponent(here.get(\"theme\"));");
-        out.add("    if (here.get(\"locale\") && (!params || params.locale == null)) u += \"&locale=\" + encodeURIComponent(here.get(\"locale\"));");
         out.add("    return u;");
         out.add("}");
         out.add("const nav = Object.freeze({");

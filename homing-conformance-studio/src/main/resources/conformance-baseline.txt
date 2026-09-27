@@ -366,7 +366,6 @@ hue.captains.singapura.js.homing.studio.base.theme.ThemePickerModel [exports-are
 hue.captains.singapura.js.homing.studio.base.theme.ThemePickerModel [exports-are-classes] exported function 'themeTreeData' — a component is a class: function themeTreeData(themes, active) {
 hue.captains.singapura.js.homing.studio.base.theme.ThemePreviewRenderer [exports-are-classes] exported function 'renderThemePreview' — a component is a class: function renderThemePreview() {
 hue.captains.singapura.js.homing.studio.base.theme.ThemesIntroRenderer [exports-are-classes] exported function 'renderThemesIntro' — a component is a class: function renderThemesIntro() {
-hue.captains.singapura.js.homing.studio.base.tracker.PlanAppHost [no-raw-href] raw href operation (use href.* API): var here = new URLSearchParams(window.location.search);
 hue.captains.singapura.js.homing.studio.base.tracker.PlanHostRenderer [exports-are-classes] exported function 'renderPlanHost' — a component is a class: function renderPlanHost(props) {
 hue.captains.singapura.js.homing.studio.base.tracker.PlanHostRenderer [max-effective-lines] module exceeds the 250 effective-line limit — split it
 hue.captains.singapura.js.homing.studio.base.tracker.PlanHostRenderer [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): box.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:4px;min-width:64px;";
@@ -376,7 +375,6 @@ hue.captains.singapura.js.homing.studio.base.tracker.PlanHostRenderer [no-inline
 hue.captains.singapura.js.homing.studio.base.tracker.PlanHostRenderer [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): notesEl.style.cssText = "white-space: pre-wrap;";
 hue.captains.singapura.js.homing.studio.base.tracker.PlanHostRenderer [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): pct.style.cssText = "font-size:11px;color:var(--color-text-muted);";
 hue.captains.singapura.js.homing.studio.base.tracker.PlanHostRenderer [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): r.style.cssText = "margin-top:6px;font-style:italic;opacity:0.85;";
-hue.captains.singapura.js.homing.studio.base.tracker.PlanHostRenderer [no-raw-href] raw href operation (use href.* API): var here = new URLSearchParams(window.location.search);
 hue.captains.singapura.js.homing.studio.base.tracker.PlanHostRenderer [use-dom-ops-party] raw DOM factory (use branch.createElement via the DomOpsParty, not document.create*): errEl.appendChild(document.createTextNode("Failed to load plan: " + err.message));
 hue.captains.singapura.js.homing.studio.base.tracker.PlanHostRenderer [use-dom-ops-party] raw DOM factory (use branch.createElement via the DomOpsParty, not document.create*): errMsg.appendChild(document.createTextNode("."));
 hue.captains.singapura.js.homing.studio.base.tracker.PlanHostRenderer [use-dom-ops-party] raw DOM factory (use branch.createElement via the DomOpsParty, not document.create*): errMsg.appendChild(document.createTextNode("No plan specified. Use "));
