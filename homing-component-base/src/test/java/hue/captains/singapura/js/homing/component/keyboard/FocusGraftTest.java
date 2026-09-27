@@ -114,6 +114,15 @@ class FocusGraftTest extends JsModuleTestBase {
         assertTrue(str("fails(() => dock.detach('w-1'))").contains("no mobile party"));
     }
 
+    /** The proxy's left is said once it is gone, as a member's is: a listener reading the tree on it reads it without. */
+    @Test
+    void theProxysLeftIsSaidOnceItIsGone_detachedOrDissolved() {
+        eval("var seen = []; function watch(p) { focusParty.on(function (n) { if (n.id === p.id) seen.push(dock.members.length + ':' + mine.isGrafted + ':' + focusParty.find(cell.id)); }); }");
+        eval("watch(dock.graft('w-1', mine)); dock.detach('w-1')");
+        eval("watch(dock.graft('w-2', mine)); mine.dissolve()");
+        assertEquals("0:false:null 0:false:null", str("seen.join(' ')"));
+    }
+
     @Test
     void aMobilePartyDissolved_takesItsProxy_andLeavesThePartyOfParties() {
         eval("dock.graft('w-1', mine); notices = []; mine.dissolve()");

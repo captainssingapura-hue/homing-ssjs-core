@@ -78,16 +78,16 @@ class FocusMembership {
         this.in = null;
         party._notify({ kind: "left", id: this.id, name: this.name, path: branch.path + "/" + this.name, parent: parent ? parent.id : null });
     }
-    /** A proxy dissolved: said left, out of its branch, and its party no longer grafted. */
+    /** A proxy dissolved: out of its branch, its party no longer grafted, and then said left - as a member's leaving is. */
     _release() {
-        var branch = this.in, mobile = this.mobile, parent = this.parent();
-        branch.party._notify({ kind: "left", id: this.id, name: this.name, path: this.path, parent: parent ? parent.id : null });
+        var branch = this.in, mobile = this.mobile, parent = this.parent(), path = this.path;
         var i = branch.members.indexOf(this);
         if (i >= 0) branch.members.splice(i, 1);
         this.in = null;
         this.branch = null;
         this.mobile = null;
         if (mobile) { mobile.root.owner = null; mobile._proxy = null; }
+        branch.party._notify({ kind: "left", id: this.id, name: this.name, path: path, parent: parent ? parent.id : null });
     }
 }
 
