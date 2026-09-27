@@ -1,12 +1,19 @@
 /**
  * DomOpsParty.js
  *
- * Exports the DomOpsParty singleton and all 19 concrete level types
- * (DomOpsParty + DomOpsPartyL1 … DomOpsPartyL18).
+ * Exports the page's party - the domOpsParty singleton - the party of
+ * parties, and the level types: DomOpsParty, a party's root (depth 0), of two
+ * kinds - StationedDomOpsParty, the page's one, and MobileDomOpsParty, any
+ * other, made by the party of parties and grafted into the page's tree - and
+ * DomOpsPartyL1 … DomOpsPartyL18 under either.
  *
  * Structure
  * ─────────
- *   domOpsParty                        ← global singleton (depth 0)
+ *   domOpsParties                      ← the party of parties: the stationed one, and every mobile one
+ *     .stationed                       ← domOpsParty
+ *     .mobile(name)                → MobileDomOpsParty (depth 0 of its own), a stray until grafted
+ *     .strays()                    → the mobile parties no one has grafted, as data
+ *   domOpsParty                        ← the page's stationed party (depth 0)
  *     .createElement(name, tagName)    ← root-level element creation
  *     .createBranch(name)          → DomOpsPartyL1    (depth 1)
  *        .createBranch(name)       → DomOpsPartyL2    (depth 2)
@@ -30,6 +37,12 @@
  *
  *   // Teardown — releases all owned elements and removes branch from party.
  *   branch.dissolve();
+ *
+ *   // A widget's own party, grafted by its host (RFC 0066 E3):
+ *   const mine = domOpsParties.mobile('booksGrid-1');   // the widget's
+ *   mine.activate(widget);
+ *   hostBranch.graft('w-1', mine);                      // the host's: a proxy, fixed to it
+ *   hostBranch.detach('w-1');                           // the proxy dissolved; a stray again
  */
 
 // Framework-vendored. Original module-doc usage example:
@@ -267,16 +280,22 @@ class DomOpsPartyL1 extends _DomOpsPartyBase {
   }
 }
 
-// ── Root (depth 0) ────────────────────────────────────────────────────────────
+// ── Root (depth 0): Stationed or Mobile ───────────────────────────────────────
 
 /**
- * Root party class (depth 0).
- * Instantiated once as the global singleton `domOpsParty`.
- * All other DomOpsPartyLN classes are created exclusively via createBranch().
+ * A party's root (depth 0) — never itself, always one of its two kinds:
+ * StationedDomOpsParty, the page's, or MobileDomOpsParty, any other. Under
+ * either, the DomOpsPartyLN classes are created exclusively via createBranch(),
+ * the levels counted from this root.
  */
 class DomOpsParty extends _DomOpsPartyBase {
-  /** @param {string} [name='root'] */
-  constructor(name = 'root') { super(name, 0); }
+  /** @param {string} name @param {'stationed'|'mobile'} kind */
+  constructor(name, kind) {
+    if (new.target === DomOpsParty) {
+      throw new TypeError("[DomOpsParty] a party is Stationed or Mobile: the page's is domOpsParty, and a mobile one comes from domOpsParties.mobile(name).");
+    }
+    super(name, 0, null, kind);
+  }
 
   /** @param {string} name @returns {DomOpsPartyL1} */
   createBranch(name) {
@@ -285,8 +304,86 @@ class DomOpsParty extends _DomOpsPartyBase {
   }
 }
 
-// ─── Global singleton ────────────────────────────────────────────────────────
-const domOpsParty = new DomOpsParty('root');
+/** Whether the page has its stationed party: one per page, and no second. */
+let _stationedMade = false;
+
+/**
+ * The page's party: the one stationed where the page is, the root of the
+ * page's tree. Made once, as domOpsParty; every other party is mobile.
+ */
+class StationedDomOpsParty extends DomOpsParty {
+  /** @param {string} [name='root'] */
+  constructor(name = 'root') {
+    if (_stationedMade) throw new Error("[DomOpsParty] the page has its stationed party already: domOpsParty.");
+    super(name, 'stationed');
+    _stationedMade = true;
+  }
+}
+
+/** The party of parties' own mark: a mobile party is made by it, and by nothing else. */
+const _MOBILE = Symbol('mobile');
+
+/**
+ * A party of its own — a widget's — made by the party of parties, working on
+ * its own from the moment it is made, and grafted into the page's tree by a
+ * host (branch.graft(name, party)). It takes its orders from above as a
+ * branch does. Dissolved, it leaves the party of parties, and its proxy goes.
+ */
+class MobileDomOpsParty extends DomOpsParty {
+  constructor(mark, name) {
+    if (mark !== _MOBILE) throw new TypeError("[DomOpsParty] a mobile party comes from domOpsParties.mobile(name).");
+    super(name, 'mobile');
+  }
+
+  dissolve() {
+    super.dissolve();
+    domOpsParties._left(this);
+  }
+}
+
+/**
+ * The party of parties: the page's stationed party, and every mobile party
+ * made on the page — each made here, known here from the moment it is made
+ * until it is dissolved, grafted or not. A mobile party no one has grafted is
+ * a STRAY: said by strays(), where no snapshot of the page would see it.
+ */
+class DomOpsParties {
+  /** @param {StationedDomOpsParty} stationed */
+  constructor(stationed) {
+    this._stationed = stationed;
+    this._mobiles = new Map();   // name → a mobile party alive
+  }
+
+  /** The page's stationed party. @returns {StationedDomOpsParty} */
+  get stationed() { return this._stationed; }
+
+  /**
+   * A mobile party, new: depth 0 of its own, a stray until a host grafts it.
+   * Its name is its own, and no other mobile party alive has it.
+   * @param {string} name @returns {MobileDomOpsParty}
+   */
+  mobile(name) {
+    if (this._mobiles.has(name)) throw new RangeError(`[DomOpsParty] a mobile party named "${name}" is alive already.`);
+    const party = new MobileDomOpsParty(_MOBILE, name);
+    this._mobiles.set(name, party);
+    return party;
+  }
+
+  /** Every mobile party alive, grafted or not. @returns {MobileDomOpsParty[]} */
+  mobiles() { return [...this._mobiles.values()]; }
+
+  /** The mobile parties no one has grafted, as data. */
+  strays() { return Object.freeze(this.mobiles().filter(m => !m.isGrafted).map(m => m.snapshot())); }
+
+  /** The page's tree — every grafted party read through its proxy — and the strays beside it, as data. */
+  snapshot() { return Object.freeze({ stationed: this._stationed.snapshot(), strays: this.strays() }); }
+
+  /** A mobile party dissolved leaves. */
+  _left(party) { if (this._mobiles.get(party.name) === party) this._mobiles.delete(party.name); }
+}
+
+// ─── Global singletons ───────────────────────────────────────────────────────
+const domOpsParty = new StationedDomOpsParty('root');
 
 // The root owns itself. There is nothing above it and it cannot dissolve, so
 // "owned by the party" is the truth rather than a sentinel standing in for it —
@@ -295,6 +392,9 @@ const domOpsParty = new DomOpsParty('root');
 // wrong: a module-level const that is neither exported nor captured is not
 // retained by V8, and the root read as leaked on every workspace.
 domOpsParty.activate(domOpsParty, 'partyChief');
+
+/** The page's party of parties: its stationed party, and every mobile party made on the page. */
+const domOpsParties = new DomOpsParties(domOpsParty);
 
 // ─── View ────────────────────────────────────────────────────────────────────
 

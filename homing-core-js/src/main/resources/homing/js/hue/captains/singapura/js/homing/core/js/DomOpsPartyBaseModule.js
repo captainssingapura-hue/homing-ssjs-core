@@ -21,6 +21,22 @@
  *
  * After dissolve(), the entire DOM subtree and party subtree rooted here
  * are clean. No manual element removal is needed.
+ *
+ * Grafting (RFC 0066 E3) — a party of parties
+ * ───────────────────────────────────────────
+ * A page has one STATIONED party, the root of its tree; every other party
+ * instance is MOBILE — a widget's own, made by the party of parties, working
+ * on its own from the moment it is made, and grafted into the page's tree by
+ * a host. Within any instance the levels are as they always were: its root at
+ * 0, its branches by their level classes. A host grafts a mobile party with
+ * branch.graft(name, mobile): a PROXY is made in the branch — a leaf, fixed to
+ * that one party for its whole life — and the party's root stands where the
+ * proxy is, so a node at level n of a party grafted at level m is at level
+ * m + n of the page's tree (`level`; `depth` stays the node's own in its
+ * party). The proxy is transient: detaching the party (branch.detach(name))
+ * or dissolving it dissolves the proxy with it. A grafted party takes its
+ * orders from above as a branch does: a snapshot of the page reads through
+ * the proxy, and a dissolve above it dissolves it.
  */
 
 const VALID_NAME = /^[a-zA-Z0-9_-]+$/;
@@ -54,23 +70,39 @@ class _DomOpsPartyBase {
    */
   #ownerLabel = null;
 
+  /** @type {'branch'|'stationed'|'mobile'|'proxy'} — what this node is: a branch, a party's root of either kind, or a proxy */
+  #kind;
+
+  /** @type {_DomOpsPartyBase} — the root of the party instance this node belongs to; a root's is itself */
+  #home;
+
+  /** @type {_DomOpsPartyBase|null} — on a mobile party's root: the proxy it is grafted at, or null while a stray */
+  #proxy = null;
+
+  /** @type {_DomOpsPartyBase|null} — on a proxy: the one mobile party it stands for, fixed for its life */
+  #mobile = null;
+
+  /** @type {boolean} — on a mobile party's root: dissolved, and never to be grafted again */
+  #dissolved = false;
+
   /**
    * @param {string}         name       - Branch label. [a-zA-Z0-9_-]+
-   * @param {number}         depth      - Distance from root (0 = root, 18 = max).
+   * @param {number}         depth      - Distance from its party's root (0 = root, 18 = max).
    * @param {(() => void)|null} [deregister=null] - Callback to remove this
    *        branch from its parent's map. Supplied by _addBranch(); null for root.
+   * @param {'branch'|'stationed'|'mobile'|'proxy'} [kind='branch'] - A party's root
+   *        says which kind it is; a proxy is made only by graft().
    */
-  constructor(name, depth, deregister = null) {
+  constructor(name, depth, deregister = null, kind = 'branch') {
     if (typeof name !== 'string' || name.trim() === '') {
-      throw new TypeError(
-        `[DomOpsParty] name must be a non-empty string. Received: ${JSON.stringify(name)}`
-      );
+      throw new TypeError(`[DomOpsParty] name must be a non-empty string. Received: ${JSON.stringify(name)}`);
     }
     if (!VALID_NAME.test(name)) {
-      throw new RangeError(
-        `[DomOpsParty] name "${name}" contains invalid characters. ` +
-        `Only letters, digits, underscores, and hyphens are allowed.`
-      );
+      throw new RangeError(`[DomOpsParty] name "${name}" contains invalid characters. ` + `Only letters, digits, underscores, and hyphens are allowed.`);
+    }
+
+    if (!['branch', 'stationed', 'mobile', 'proxy'].includes(kind)) {
+      throw new TypeError(`[DomOpsParty] a node is a branch, a stationed or mobile root, or a proxy - not ${JSON.stringify(kind)}`);
     }
 
     this.#name       = name;
@@ -78,6 +110,8 @@ class _DomOpsPartyBase {
     this.#deregister = deregister;
     this.#elements   = new Map();
     this.#branches   = new Map();
+    this.#kind       = kind;
+    this.#home       = this;
   }
 
   // ── Getters ───────────────────────────────────────────────────────────────
@@ -100,22 +134,43 @@ class _DomOpsPartyBase {
   /** Human-readable label for this party node. @returns {string} */
   get name()  { return this.#name; }
 
-  /** Distance from the root singleton (0 = root, 18 = deepest). @returns {number} */
+  /** Distance from its own party's root (0 = root, 18 = deepest): the levels as they always were. @returns {number} */
   get depth() { return this.#depth; }
+
+  /**
+   * Where this node stands in the page's tree: its depth in its own party,
+   * plus the level that party is grafted at — m + n. The same as depth in the
+   * stationed party, and in a mobile party that is not grafted.
+   * @returns {number}
+   */
+  get level() { return this.#depth + this.#offset(); }
+
+  /** The level this node's party is grafted at: its proxy's, or 0. */
+  #offset() {
+    const proxy = this.#home.#proxy;
+    return proxy ? proxy.level : 0;
+  }
+
+  /** 'branch', 'stationed' or 'mobile' (a party's root), or 'proxy'. @returns {string} */
+  get kind() { return this.#kind; }
+
+  /** Whether this node is a mobile party's root grafted into another party. @returns {boolean} */
+  get isGrafted() { return this.#proxy !== null; }
 
   // ── Activation gate ───────────────────────────────────────────────────────
 
   /**
    * Throws if this branch has not been activated via activate(owner, label).
    * Called by createElement() and createBranch() to enforce the rule that
-   * every branch must have an owner before it can do work.
+   * every branch must have an owner before it can do work. A proxy does no
+   * work of its own: it holds its one party and nothing else.
    */
   #assertActivated() {
+    if (this.#kind === 'proxy') {
+      throw new TypeError(`[DomOpsParty] "${this.#name}" is a proxy: it holds its one mobile party and nothing else.`);
+    }
     if (this.#ownerRef === null) {
-      throw new Error(
-        `[DomOpsParty] Branch "${this.#name}" has not been activated. ` +
-        `Call branch.activate(owner) before using it.`
-      );
+      throw new Error(`[DomOpsParty] Branch "${this.#name}" has not been activated. ` + `Call branch.activate(owner) before using it.`);
     }
   }
 
@@ -139,28 +194,16 @@ class _DomOpsPartyBase {
   createElement(name, tagName) {
     this.#assertActivated();
     if (typeof name !== 'string' || name.trim() === '') {
-      throw new TypeError(
-        `[DomOpsParty] createElement: name must be a non-empty string. ` +
-        `Received: ${JSON.stringify(name)}`
-      );
+      throw new TypeError(`[DomOpsParty] createElement: name must be a non-empty string. ` + `Received: ${JSON.stringify(name)}`);
     }
     if (!VALID_NAME.test(name)) {
-      throw new RangeError(
-        `[DomOpsParty] createElement: name "${name}" contains invalid characters. ` +
-        `Only letters, digits, underscores, and hyphens are allowed.`
-      );
+      throw new RangeError(`[DomOpsParty] createElement: name "${name}" contains invalid characters. ` + `Only letters, digits, underscores, and hyphens are allowed.`);
     }
     if (this.#elements.has(name)) {
-      throw new RangeError(
-        `[DomOpsParty] createElement: name "${name}" is already in use ` +
-        `on branch "${this.#name}".`
-      );
+      throw new RangeError(`[DomOpsParty] createElement: name "${name}" is already in use ` + `on branch "${this.#name}".`);
     }
     if (typeof tagName !== 'string' || tagName.trim() === '') {
-      throw new TypeError(
-        `[DomOpsParty] createElement: tagName must be a non-empty string. ` +
-        `Received: ${JSON.stringify(tagName)}`
-      );
+      throw new TypeError(`[DomOpsParty] createElement: tagName must be a non-empty string. ` + `Received: ${JSON.stringify(tagName)}`);
     }
 
     const el = document.createElement(tagName);
@@ -207,10 +250,8 @@ class _DomOpsPartyBase {
    * @throws {RangeError} Always — maximum depth (18) has been reached.
    */
   createBranch(name) {
-    throw new RangeError(
-      `[DomOpsParty] createBranch: Maximum branch depth (18) reached. ` +
-      `Cannot create branch "${name}".`
-    );
+    this.#assertActivated();   // a proxy is refused as a proxy, not as the deepest level
+    throw new RangeError(`[DomOpsParty] createBranch: Maximum branch depth (18) reached. ` + `Cannot create branch "${name}".`);
   }
 
   /**
@@ -244,9 +285,7 @@ class _DomOpsPartyBase {
   dissolveBranch(name) {
     const branch = this.#branches.get(name);
     if (!branch) {
-      throw new ReferenceError(
-        `[DomOpsParty] dissolveBranch: No branch named "${name}" found at this level.`
-      );
+      throw new ReferenceError(`[DomOpsParty] dissolveBranch: No branch named "${name}" found at this level.`);
     }
     branch._dissolveTree();
     this.#branches.delete(name);
@@ -254,13 +293,82 @@ class _DomOpsPartyBase {
 
   /**
    * Dissolves this branch: recursively releases all elements in the subtree,
-   * clears all sub-branches, then removes this node from its parent.
+   * clears all sub-branches, then removes this node from its parent. A mobile
+   * party dissolved is detached too: its proxy goes with it.
    *
    * This is the preferred single-call teardown. After dissolve(), null your
    * branch reference — the object must not be used again.
    */
   dissolve() {
     this._dissolveTree();
+    if (this.#kind === 'mobile') this.#dissolved = true;
+    if (this.#proxy) this.#proxy.#release();
+    this.#deregister?.();
+  }
+
+  // ── Grafting ──────────────────────────────────────────────────────────────
+
+  /**
+   * Grafts a mobile party here, under `name`. A proxy is made in this branch —
+   * a leaf, fixed to that one party for its whole life — and the party's root
+   * stands where the proxy is: a node at level n of the party is at level
+   * m + n of the page's tree, m the proxy's level. Within the party, its
+   * levels are as they were.
+   *
+   * Refused: a proxy grafting; a name that is taken or bad; anything but a
+   * mobile party's root (the stationed party, a branch); a party grafted
+   * already, not activated, or dissolved; a party grafted inside itself; no
+   * level left for the proxy.
+   *
+   * @param {string} name - The proxy's name in this branch: the host's to choose.
+   * @param {_DomOpsPartyBase} mobile - A mobile party's root, from domOpsParties.mobile(name).
+   * @returns {_DomOpsPartyBase} The proxy.
+   */
+  graft(name, mobile) {
+    this._validateBranchName(name);
+    if (!(mobile instanceof _DomOpsPartyBase) || mobile.#kind !== 'mobile') {
+      throw new TypeError(`[DomOpsParty] graft: only a mobile party's root is grafted, not ${mobile instanceof _DomOpsPartyBase ? 'a ' + mobile.#kind + ' "' + mobile.#name + '"' : String(mobile)}.`);
+    }
+    if (mobile.#proxy) throw new Error(`[DomOpsParty] graft: mobile party "${mobile.#name}" is grafted already - detach it first.`);
+    if (mobile.#dissolved) throw new Error(`[DomOpsParty] graft: mobile party "${mobile.#name}" is dissolved.`);
+    if (mobile.#ownerRef === null) throw new Error(`[DomOpsParty] graft: mobile party "${mobile.#name}" has not been activated.`);
+    for (let h = this.#home; h; h = h.#proxy ? h.#proxy.#home : null) {
+      if (h === mobile) throw new RangeError(`[DomOpsParty] graft: mobile party "${mobile.#name}" cannot be grafted inside itself.`);
+    }
+    if (this.#depth >= 18) throw new RangeError(`[DomOpsParty] graft: no level under depth 18 for the proxy "${name}".`);
+    const branches = this.#branches;
+    const proxy = new _DomOpsPartyBase(name, this.#depth + 1, () => branches.delete(name), 'proxy');
+    proxy.#home = this.#home;
+    proxy.#mobile = mobile;
+    branches.set(name, proxy);
+    mobile.#proxy = proxy;
+    return proxy;
+  }
+
+  /**
+   * Detaches the mobile party grafted here under `name`: its proxy is
+   * dissolved, and the party, whole, is a stray again — to be grafted
+   * elsewhere, or dissolved.
+   *
+   * @param {string} name
+   * @returns {_DomOpsPartyBase} The mobile party's root.
+   * @throws {ReferenceError} If no mobile party is grafted here under that name.
+   */
+  detach(name) {
+    const proxy = this.#branches.get(name);
+    if (!proxy || proxy.#kind !== 'proxy') {
+      throw new ReferenceError(`[DomOpsParty] detach: no mobile party is grafted here as "${name}".`);
+    }
+    const mobile = proxy.#mobile;
+    proxy.#release();
+    return mobile;
+  }
+
+  /** A proxy dissolved: out of its branch, and its party no longer grafted. */
+  #release() {
+    const mobile = this.#mobile;
+    this.#mobile = null;
+    if (mobile) mobile.#proxy = null;
     this.#deregister?.();
   }
 
@@ -301,26 +409,41 @@ class _DomOpsPartyBase {
    * since been collected. Detection depends on the engine having run GC, so
    * `true` means "not collected yet", not "not leaked".
    *
+   * A grafted mobile party is read through its proxy, as one tree: its root
+   * stands at the proxy's place, under the proxy's name, and `mobile` names
+   * the party (null on every other node). `depth` is the page's — the level,
+   * m + n — so a monitor draws the one tree it is shown.
+   *
    * @returns {Readonly<{
-   *   name: string, depth: number, path: readonly string[],
+   *   name: string, depth: number, path: readonly string[], mobile: string|null,
    *   owner: string|null, ownerAlive: boolean|null,
    *   elements: readonly {name: string, tagName: string}[],
    *   branches: readonly object[]
    * }>}
    */
-  snapshot() { return this.#snapshotAt([]); }
+  snapshot() { return this.#snapshotAt([], this.#offset()); }
 
-  /** The walk behind snapshot(); `above` is the path to this node's parent. */
-  #snapshotAt(above) {
-    const path = Object.freeze([...above, this.#name]);
+  /**
+   * The walk behind snapshot(); `above` is the path to this node's parent,
+   * `offset` the level its party is grafted at, and `as` the name it stands
+   * under — its proxy's, for a grafted party's root. A proxy reads as its party.
+   */
+  #snapshotAt(above, offset, as = this.#name) {
+    if (this.#kind === 'proxy') {
+      return this.#mobile ? this.#mobile.#snapshotAt(above, offset + this.#depth, this.#name)
+                          : Object.freeze({ name: as, depth: this.#depth + offset, path: Object.freeze([...above, as]), mobile: null,
+                                            owner: null, ownerAlive: null, elements: Object.freeze([]), branches: Object.freeze([]) });
+    }
+    const path = Object.freeze([...above, as]);
     const elements = Object.freeze(
       this.listElements().map(e => Object.freeze({ name: e.name, tagName: e.tagName })));
     const branches = Object.freeze(
-      [...this.#branches.values()].map(b => b.#snapshotAt(path)));
+      [...this.#branches.values()].map(b => b.#snapshotAt(path, offset)));
     return Object.freeze({
-      name:       this.#name,
-      depth:      this.#depth,
+      name:       as,
+      depth:      this.#depth + offset,
       path,
+      mobile:     this.#kind === 'mobile' ? this.#name : null,
       owner:      this.#ownerLabel,
       ownerAlive: this.isOwnerAlive,
       elements,
@@ -339,8 +462,17 @@ class _DomOpsPartyBase {
    *  - Clears the branch map of this node.
    *
    * Does NOT remove this node from its parent — that is the caller's job.
+   *
+   * On a proxy it is an order from above: the mobile party it stands for is
+   * dissolved, whole.
    */
   _dissolveTree() {
+    if (this.#kind === 'proxy') {
+      const mobile = this.#mobile;
+      this.#mobile = null;
+      if (mobile) { mobile.#proxy = null; mobile.dissolve(); }
+      return;
+    }
     for (const branch of this.#branches.values()) {
       branch._dissolveTree();
     }
@@ -369,21 +501,13 @@ class _DomOpsPartyBase {
   _validateBranchName(name) {
     this.#assertActivated();
     if (typeof name !== 'string' || name.trim() === '') {
-      throw new TypeError(
-        `[DomOpsParty] createBranch: Branch name must be a non-empty string. ` +
-        `Received: ${JSON.stringify(name)}`
-      );
+      throw new TypeError(`[DomOpsParty] createBranch: Branch name must be a non-empty string. ` + `Received: ${JSON.stringify(name)}`);
     }
     if (!VALID_NAME.test(name)) {
-      throw new RangeError(
-        `[DomOpsParty] createBranch: Branch name "${name}" contains invalid characters. ` +
-        `Only letters, digits, underscores, and hyphens are allowed.`
-      );
+      throw new RangeError(`[DomOpsParty] createBranch: Branch name "${name}" contains invalid characters. ` + `Only letters, digits, underscores, and hyphens are allowed.`);
     }
     if (this.#branches.has(name)) {
-      throw new RangeError(
-        `[DomOpsParty] createBranch: A branch named "${name}" already exists at this level.`
-      );
+      throw new RangeError(`[DomOpsParty] createBranch: A branch named "${name}" already exists at this level.`);
     }
   }
 
@@ -413,10 +537,11 @@ class _DomOpsPartyBase {
    * @throws {Error} If the branch has already been activated.
    */
   activate(owner, label = String(owner)) {
+    if (this.#kind === 'proxy') {
+      throw new TypeError(`[DomOpsParty] activate: "${this.#name}" is a proxy - it is its party's, and owned as its party is.`);
+    }
     if (this.#ownerRef !== null) {
-      throw new Error(
-        `[DomOpsParty] activate: Branch "${this.#name}" is already activated.`
-      );
+      throw new Error(`[DomOpsParty] activate: Branch "${this.#name}" is already activated.`);
     }
     this.#ownerRef = new WeakRef(owner);
     this.#ownerLabel = String(label);
@@ -437,6 +562,7 @@ class _DomOpsPartyBase {
   _addBranch(name, BranchClass) {
     const branches = this.#branches;
     const branch = new BranchClass(name, () => branches.delete(name));
+    branch.#home = this.#home;   // the same party instance as this node's
     branches.set(name, branch);
     return branch;
   }

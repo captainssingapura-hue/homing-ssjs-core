@@ -18,6 +18,13 @@ import java.util.List;
  * the next deeper level, giving the type system a static guarantee that
  * branches never exceed depth 18.</p>
  *
+ * <p>RFC 0066 E3, grafting: a party's root is Stationed - the page's one,
+ * {@code domOpsParty} - or Mobile, made by the party of parties
+ * ({@code domOpsParties.mobile(name)}) and grafted into the page's tree by a
+ * host ({@code branch.graft(name, party)}), through a proxy fixed to it. The
+ * levels hold within each party; a node at level n of a party grafted at level
+ * m stands at level m + n of the page's tree.</p>
+ *
  * <p>Components obtain a sub-branch from a parent branch and call
  * {@code branch.createElement(name, tagName)} to mint DOM elements —
  * never {@code document.createElement} directly. {@code branch.dissolve()}
@@ -58,10 +65,21 @@ public record DomOpsPartyModule() implements DomModule<DomOpsPartyModule> {
     public record DomOpsPartyL2()  implements Exportable._Class<DomOpsPartyModule> {}
     public record DomOpsPartyL1()  implements Exportable._Class<DomOpsPartyModule> {}
 
-    /** Root party class (depth 0). Instantiated once as the JS-side
+    /** A party's root (depth 0): never itself, always Stationed or Mobile. */
+    public record DomOpsParty() implements Exportable._Class<DomOpsPartyModule> {}
+
+    /** The page's party, stationed where the page is: made once, as the JS-side
      *  {@code domOpsParty} singleton — see the sibling top-level
      *  {@code domOpsParty} record for the singleton export marker. */
-    public record DomOpsParty() implements Exportable._Class<DomOpsPartyModule> {}
+    public record StationedDomOpsParty() implements Exportable._Class<DomOpsPartyModule> {}
+
+    /** Any other party: a widget's own, made by the party of parties and grafted
+     *  into the page's tree by a host (RFC 0066 E3). */
+    public record MobileDomOpsParty() implements Exportable._Class<DomOpsPartyModule> {}
+
+    /** The party of parties: the stationed party, and every mobile party made on
+     *  the page. Its singleton's marker is the sibling top-level {@code domOpsParties}. */
+    public record DomOpsParties() implements Exportable._Class<DomOpsPartyModule> {}
 
     // The {@code domOpsParty} singleton export marker is intentionally a
     // sibling top-level record (NOT nested here) to avoid a Windows
@@ -91,7 +109,12 @@ public record DomOpsPartyModule() implements DomModule<DomOpsPartyModule> {
                 new DomOpsPartyL6(),  new DomOpsPartyL5(),  new DomOpsPartyL4(),
                 new DomOpsPartyL3(),  new DomOpsPartyL2(),  new DomOpsPartyL1(),
                 new DomOpsParty(),
+                new StationedDomOpsParty(),
+                new MobileDomOpsParty(),
+                new DomOpsParties(),
                 new domOpsParty(),
+                // RFC 0066 E3 — the party of parties: mobile parties are made by it, and grafted.
+                new domOpsParties(),
                 // RFC 0063 — the party tree as data; the only thing a monitor imports.
                 new viewParty()
         ));
