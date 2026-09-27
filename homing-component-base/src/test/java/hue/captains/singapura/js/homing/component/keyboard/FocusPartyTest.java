@@ -26,7 +26,7 @@ class FocusPartyTest extends JsModuleTestBase {
     private static final String SHIM = """
         var console = { error: function (m) { throw new Error(m); } };
         var notices = [];
-        var party = new FocusParty();
+        var party = focusParty;   // the page's stationed party, fresh in each test's context
         party.on(function (n) { notices.push(n.kind + ":" + n.name + "@" + n.path + (n.parent ? "<" + n.parent : "")); });
         class Dock { constructor(n) { this.n = n; } }
         class Widget { constructor(n) { this.n = n; } }
@@ -118,9 +118,11 @@ class FocusPartyTest extends JsModuleTestBase {
     }
 
     @Test
-    void theRootIsAPartyOfItsOwn_andOffRemovesAListener() {
+    void thePageHasOneStationedParty_andOffRemovesAListener() {
         assertEquals("", eval("focusParty.root.path").asString());
-        assertEquals("0", eval("String(focusParty.root.members.length)").asString(), "the page's, untouched by this test's party");
+        assertEquals("stationed", eval("focusParty.kind").asString());
+        assertTrue(eval("(() => { try { new StationedFocusParty(); return false; } catch (e) { return true; } })()").asBoolean(), "one per page");
+        assertTrue(eval("(() => { try { new FocusParty('stationed'); return false; } catch (e) { return true; } })()").asBoolean(), "a party is Stationed or Mobile");
         eval("var heard = 0; var off = party.on(function () { heard++; }); party.root.join('a', {}); off(); party.root.join('b', {})");
         assertEquals(1, eval("heard").asInt());
         assertFalse(eval("mw.holds(mc)").asBoolean());

@@ -21,7 +21,16 @@
 //   Keys.release(m)                  nothing, unless m holds
 //     m: a membership of the focus tree — or, the older way, the pair
 //     (steward, id): Keys.claimOn(root, steward, id), Keys.claim(steward, id)
+//   A member of a mobile focus party that reaches no stationed one - a stray, or
+//   grafted into a stray - only forwards, and has nowhere to forward to: its
+//   claim, yield and release are nothing, and a press in its root claims nothing.
 // =============================================================================
+
+/** A membership whose party reaches no stationed party: nothing it asks of the keys goes anywhere. */
+function _stray(m) {
+    var party = m && typeof m === "object" && m.in ? m.in.party : null;
+    return !!party && typeof party.stationed === "function" && party.stationed() === null;
+}
 
 function _target(a, b) {
     return a && typeof a.join === "function" && typeof a.claim === "function" ? { steward: a, id: b } : { steward: KeyboardStewardInstance, id: a };
@@ -32,11 +41,12 @@ var Keys = Object.freeze({
     claimOn: function (root, a, b) {
         if (!root || typeof root.addEventListener !== "function") throw new Error("[Keys] claimOn wants the component's root element");
         var t = _target(a, b);
-        var steward = t.steward, id = t.id && typeof t.id === "object" && typeof t.id.id === "string" ? t.id.id : t.id;
+        var member = t.id && typeof t.id === "object" ? t.id : null;
+        var steward = t.steward, id = member && typeof member.id === "string" ? member.id : t.id;
         if (!steward || typeof steward.claim !== "function") throw new Error("[Keys] claimOn wants the page's KeyboardSteward");
         if (id == null) throw new Error("[Keys] claimOn wants the membership to claim for");
         var forget = steward.enroll(root, id);
-        function press(ev) { if (steward.memberAt(ev.target) === id) steward.claim(id); }
+        function press(ev) { if (steward.memberAt(ev.target) === id && !_stray(member)) steward.claim(id); }   // a stray's press goes nowhere
         root.addEventListener("pointerdown", press, true);
         return function () {
             root.removeEventListener("pointerdown", press, true);
@@ -44,7 +54,7 @@ var Keys = Object.freeze({
         };
     },
 
-    claim: function (a, b) { var t = _target(a, b); t.steward.claim(t.id); },
-    yield: function (a, b) { var t = _target(a, b); return t.steward.yield(t.id); },
-    release: function (a, b) { var t = _target(a, b); t.steward.release(t.id); }
+    claim: function (a, b) { if (_stray(a)) return; var t = _target(a, b); t.steward.claim(t.id); },
+    yield: function (a, b) { if (_stray(a)) return false; var t = _target(a, b); return t.steward.yield(t.id); },
+    release: function (a, b) { if (_stray(a)) return; var t = _target(a, b); t.steward.release(t.id); }
 });

@@ -85,10 +85,13 @@ class KeyboardSteward {
         this._onFocusIn = function () { self.withdraw(); KeyboardMark.sync(self); };   // a walk is the keyboard's alone: native focus ends it
         this._onFocusOut = function (ev) { KeyboardMark.focusOut(self, ev); };
         this._listen(true);
-        // the focus tree: whoever joins it is a member here, by its membership; whoever leaves it leaves here too
+        // the focus tree: whoever joins it is a member here, by its membership; whoever leaves it leaves here too.
+        // Only the page's stationed party takes the keys from the body; a mobile party's members are here through
+        // their grafts, and a proxy, which only forwards, never is.
         this._focus = opts && opts.party ? opts.party : null;
+        if (this._focus && !(this._focus instanceof StationedFocusParty)) throw new Error("[KeyboardSteward] only the page's stationed focus party takes the keys: focusParty");
         this._offFocus = this._focus ? this._focus.on(function (n) {
-            if (n.kind === "joined") { var m = self._focus.find(n.id); if (m && !self._members[m.id]) self.join(m); }
+            if (n.kind === "joined") { var m = self._focus.find(n.id); if (m && m.kind !== "proxy" && !self._members[m.id]) self.join(m); }
             else if (n.kind === "moved") KeyboardMark.tell(self, true);   // the members above the marker are others now
             else if (n.kind === "left" && self._members[n.id]) {
                 if (self._candidate === n.id) self.withdraw();   // nothing is offered to a member that has gone

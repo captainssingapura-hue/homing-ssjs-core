@@ -18,8 +18,14 @@ import java.util.List;
  */
 public record FocusPartyModule() implements EsModule<FocusPartyModule> {
 
-    /** The tree: {@code root}, {@code on(fn)}, {@code find(id)}, {@code inspect()}. */
+    /** A party's tree: {@code root}, {@code find(id)}, {@code inspect()}, {@code walk()} - never itself, always Stationed or Mobile. */
     public record FocusParty() implements Exportable._Class<FocusPartyModule> {}
+    /** The page's party, {@code focusParty}: the one the steward is bound to, with {@code on(fn)} for its notices. */
+    public record StationedFocusParty() implements Exportable._Class<FocusPartyModule> {}
+    /** Any other party: a widget's own, made by the party of parties, grafted by a host; it only forwards. */
+    public record MobileFocusParty() implements Exportable._Class<FocusPartyModule> {}
+    /** The party of parties: the stationed one and every mobile one; its singleton is {@code focusParties}. */
+    public record FocusParties() implements Exportable._Class<FocusPartyModule> {}
     /** A branch: {@code join(name, component)}, {@code createBranch(name, holder)}, {@code adopt(m)}, {@code dissolve()}, {@code inspect()}. */
     public record FocusBranch() implements Exportable._Class<FocusPartyModule> {}
     /** A member: {@code component}, {@code id}, {@code path}, {@code in}, {@code branch}, {@code parent()}, {@code leave()}. */
@@ -31,6 +37,7 @@ public record FocusPartyModule() implements EsModule<FocusPartyModule> {
 
     @Override
     public ExportsOf<FocusPartyModule> exports() {
-        return new ExportsOf<>(INSTANCE, List.of(new FocusParty(), new FocusBranch(), new FocusMembership(), new focusParty()));
+        return new ExportsOf<>(INSTANCE, List.of(new FocusParty(), new StationedFocusParty(), new MobileFocusParty(), new FocusParties(),
+                new FocusBranch(), new FocusMembership(), new focusParty(), new focusParties()));
     }
 }

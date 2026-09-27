@@ -267,7 +267,7 @@ class KeyboardMarkTest extends JsModuleTestBase {
     void everyoneAboveIsToldOnEveryMove_withTheMarker_andAgainWhenTheTreeMoves() {
         eval("""
             kb.dispose(); events = [];
-            var tree = new FocusParty();
+            var tree = focusParty;   // the page's stationed party: the only one a steward is bound to
             var kt = new KeyboardSteward(fakeBranch("k"), { onEvent: sink, party: tree });
             var told = [];
             function box(name) { return { within: function (on, at) { told.push(name + ":" + on + ":" + (at ? at.state : "none")); } }; }

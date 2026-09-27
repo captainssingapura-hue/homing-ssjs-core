@@ -277,7 +277,7 @@ class KeyboardStewardTest extends JsModuleTestBase {
     void aMemberOfTheFocusTreeJoinsByItsMembership_andLeavingTheTreeLeavesHere() {
         eval("""
             kb.dispose();
-            var tree = new FocusParty();
+            var tree = focusParty;   // the page's stationed party: the only one a steward is bound to
             var kt = new KeyboardSteward(fakeBranch("k"), { onEvent: sink, party: tree });
             var w = { keys: [], got: [], keyDown: function (ev) { this.keys.push(ev.key); return ev.key === "ArrowUp"; }, granted: function (by) { this.got.push("granted:" + by); }, taken: function (by) { this.got.push("taken:" + by); } };
             var m = tree.root.join("w", w);   // joined the tree: joined the steward, unasked
@@ -308,7 +308,7 @@ class KeyboardStewardTest extends JsModuleTestBase {
     void aYieldGoesUpToTheFirstAncestorThatWouldHold_orToNoOne() {
         eval("""
             kb.dispose();
-            var tree = new FocusParty();
+            var tree = focusParty;   // the page's stationed party: the only one a steward is bound to
             var kt = new KeyboardSteward(fakeBranch("k"), { onEvent: sink, party: tree });
             function node(name, holds) { return { name: name, got: [], asked: [], wouldHold: function (from) { this.asked.push(from ? from.name : "left"); return holds; },
                 granted: function (by) { this.got.push("granted:" + by); }, taken: function (by) { this.got.push("taken:" + by); } }; }
@@ -403,7 +403,7 @@ class KeyboardStewardTest extends JsModuleTestBase {
     void theWalkMovesACandidate_andTheHolderStaysUntilItIsConfirmed() {
         eval("""
             kb.dispose();
-            var tree = new FocusParty();
+            var tree = focusParty;   // the page's stationed party: the only one a steward is bound to
             var kt = new KeyboardSteward(fakeBranch("k"), { onEvent: sink, party: tree });
             function node(name) { return { name: name, got: [], offered: function () { this.got.push(name + ":offered"); }, withdrawn: function () { this.got.push(name + ":withdrawn"); },
                                            granted: function (by) { this.got.push(name + ":granted:" + by); }, taken: function () { this.got.push(name + ":taken"); } }; }
@@ -463,7 +463,7 @@ class KeyboardStewardTest extends JsModuleTestBase {
         eval("pA.owner.leave()");
         assertEquals("none", eval("cand()").asString(), "it left the tree: nothing is offered");
         // no member to walk: Tab is the browser's
-        eval("offC(); kt.dispose(); var kn = new KeyboardSteward(fakeBranch('kn'), { onEvent: sink, party: new FocusParty() }); var m3 = fire(body, 'keydown', { key: 'Tab' })");
+        eval("offC(); kt.dispose(); focusParty.root.dissolve(); var kn = new KeyboardSteward(fakeBranch('kn'), { onEvent: sink, party: focusParty }); var m3 = fire(body, 'keydown', { key: 'Tab' })");
         assertFalse(eval("m3.defaultPrevented").asBoolean());
         eval("kn.dispose()");
     }
@@ -477,7 +477,7 @@ class KeyboardStewardTest extends JsModuleTestBase {
     void theWalkStepsOverAMemberItsContainerWillNotOffer() {
         eval("""
             kb.dispose();
-            var tree = new FocusParty();
+            var tree = focusParty;   // the page's stationed party: the only one a steward is bound to
             var kt = new KeyboardSteward(fakeBranch("k"), { onEvent: sink, party: tree });
             var shown = "a1";
             var pA = tree.root.createBranch("A", { wouldOffer: function (m) { return m.name === shown; } });
@@ -506,7 +506,7 @@ class KeyboardStewardTest extends JsModuleTestBase {
     void aMemberOutOfTheWalk_isNoStop_andNeitherIsAnythingUnderIt() {
         eval("""
             kb.dispose();
-            var tree = new FocusParty();
+            var tree = focusParty;   // the page's stationed party: the only one a steward is bound to
             var kt = new KeyboardSteward(fakeBranch("k"), { onEvent: sink, party: tree });
             var out = true;
             var desk = tree.root.createBranch("desk", { inWalk: function () { return !out; } });
@@ -536,5 +536,44 @@ class KeyboardStewardTest extends JsModuleTestBase {
         eval("kb.dispose(); var kb3 = new KeyboardSteward(fakeBranch('k3'), { onEvent: function () { throw new Error('boom'); } }); kb3.join('a', {}); kb3.claim('a')");
         assertEquals("a", eval("kb3.holder()").asString());
         assertTrue(eval("log.join()").asString().contains("onEvent threw on Granted"));
+    }
+
+    /**
+     * Grafting (RFC 0066 E3): only the page's stationed party takes the keys, so a steward is bound to it alone; a
+     * widget's mobile party only forwards - while a stray, its member is no member here, and a press or a claim of
+     * its goes nowhere; grafted, its member is one, and a yield passes the proxy to the holder above it; detached
+     * while it holds, the keys go on to that holder.
+     */
+    @Test
+    void aGraftedPartysMembersAreTheStewards_aStraysAreNot_andTheProxyOnlyForwards() {
+        eval("""
+            kb.dispose();
+            var kt = new KeyboardSteward(fakeBranch("k"), { onEvent: sink, party: focusParty });
+            var dockC = { got: [], wouldHold: function () { return true; }, granted: function (by) { this.got.push("granted:" + by); } };
+            var dock = focusParty.root.createBranch("dock", dockC);
+            var mine = focusParties.mobile("w");
+            var wc = { keys: [], got: [], keyDown: function (ev) { this.keys.push(ev.key); return true; }, granted: function (by) { this.got.push("granted:" + by); } };
+            var wm = mine.root.join("w", wc);
+            var off = Keys.claimOn(inner, kt, wm);
+            fire(inner, "pointerdown");
+            Keys.claim(wm);
+            """);
+        assertTrue(eval("kt.holder() === null && !kt.has(wm)").asBoolean(), "a stray's press and claim go nowhere");
+        eval("var proxy = dock.graft('w-1', mine)");
+        assertTrue(eval("kt.has(wm) && !kt.has(proxy.id)").asBoolean(), "grafted: its member is one here; the proxy never is");
+        eval("fire(inner, 'pointerdown')");
+        assertEquals(eval("wm.id").asString(), eval("kt.holder()").asString());
+        eval("key(body, 'x')");
+        assertEquals("x", eval("wc.keys.join()").asString(), "the keys from the body reach it");
+        eval("kt.yield(wm)");
+        assertEquals(eval("dock.owner.id").asString(), eval("kt.holder()").asString(), "the yield passed the proxy to the dock");
+        eval("kt.claim(wm); dock.detach('w-1')");
+        assertEquals(eval("dock.owner.id").asString(), eval("kt.holder()").asString(), "detached while holding: the keys went on to the dock");
+        assertFalse(eval("kt.has(wm)").asBoolean());
+        eval("fire(inner, 'pointerdown')");
+        assertEquals(eval("dock.owner.id").asString(), eval("kt.holder()").asString(), "a stray again: its press claims nothing");
+        eval("off(); kt.dispose()");
+        assertTrue(eval("(() => { try { new KeyboardSteward(fakeBranch('k9'), { party: mine }); return false; } catch (e) { return /stationed/.test(e.message); } })()").asBoolean(),
+                "a steward is bound to the stationed party alone");
     }
 }
