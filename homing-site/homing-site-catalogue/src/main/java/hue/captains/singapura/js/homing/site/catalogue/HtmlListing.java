@@ -45,7 +45,7 @@ public final class HtmlListing implements Listing {
             }
             body.append("</ul>\n");
         }
-        var leaves = c.leaves();
+        var leaves = tree.leavesOf(c);
         if (!leaves.isEmpty()) {
             body.append("<h2>Pages</h2>\n<ul class=\"entries\">\n");
             for (Leaf<?> leaf : leaves) {

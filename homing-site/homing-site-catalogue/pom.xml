@@ -29,6 +29,12 @@
             <artifactId>homing-site-base</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+        <!-- The MPA a site builds its pages with: a catalogue makes its leaves from the site's, so every page wears one chrome. Definitions only. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-site-mpa</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
         <dependency>
             <groupId>io.github.captainssingapura-hue.homing.js</groupId>
             <artifactId>homing-rigid-tree</artifactId>

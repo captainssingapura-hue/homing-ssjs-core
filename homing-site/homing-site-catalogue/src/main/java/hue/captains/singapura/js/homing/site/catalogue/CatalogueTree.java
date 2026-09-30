@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.site.catalogue;
 
 import hue.captains.singapura.js.homing.site.Navigable;
 import hue.captains.singapura.js.homing.site.Path;
+import hue.captains.singapura.js.homing.site.mpa.Mpa;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -60,15 +61,31 @@ public final class CatalogueTree {
     private final Map<Class<?>, Map<String, Slot>> children = new LinkedHashMap<>();
     private final Map<Navigable, Path> pagePaths = new LinkedHashMap<>();
     private final Map<Class<?>, Graft<?>> grafts = new LinkedHashMap<>();
+    private final Map<Class<?>, List<Leaf<?>>> leaves = new LinkedHashMap<>();
+    private final Mpa mpa;
 
-    private CatalogueTree(L0_Catalogue<?> root) {
+    private CatalogueTree(L0_Catalogue<?> root, Mpa mpa) {
         this.root = Objects.requireNonNull(root, "CatalogueTree.root");
+        this.mpa = Objects.requireNonNull(mpa, "CatalogueTree.mpa");
         walk(root, Path.ROOT);
     }
 
-    /** Reads and checks the tree under {@code root}. */
+    /**
+     * Reads and checks the tree under {@code root}, its pages made with the site's
+     * {@code mpa} - every catalogue's {@link Catalogue#leaves(Mpa)} handed it - so every
+     * page of the site wears one chrome, whichever tree placed it.
+     */
+    public static CatalogueTree of(L0_Catalogue<?> root, Mpa mpa) {
+        return new CatalogueTree(root, mpa);
+    }
+
+    /**
+     * Reads and checks the tree under {@code root} with no MPA: for a tree of pages
+     * that need no site. A catalogue that makes its pages with the site's MPA is
+     * refused, and told to be read with one.
+     */
     public static CatalogueTree of(L0_Catalogue<?> root) {
-        return new CatalogueTree(root);
+        return new CatalogueTree(root, NoMpa.INSTANCE);
     }
 
     private void walk(Catalogue<?> vertex, Path at) {
@@ -123,8 +140,10 @@ public final class CatalogueTree {
             parents.put(r.getClass(), vertex);
         }
 
-        List<? extends Leaf<?>> leaves = vertex.leaves();
+        // the pages, made with the site's MPA - read once, and kept, so a listing shows the very pages the paths name
+        List<? extends Leaf<?>> leaves = vertex.leaves(mpa);
         if (leaves == null) throw new IllegalArgumentException(cls.getName() + " has null leaves()");
+        this.leaves.put(cls, List.copyOf(leaves));
         for (Leaf<?> leaf : leaves) {
             if (leaf == null) throw new IllegalArgumentException(cls.getName() + " lists a null leaf");
             claim(slots, leaf.slug().value(), new Slot.Page(leaf), vertex);
@@ -204,6 +223,15 @@ public final class CatalogueTree {
         return graftOf(c).<Shown>map(g -> new Shown(g.name(), g.summary(), g.badge(), g.icon()))
                          .orElseGet(() -> new Shown(c.name(), c.summary(), c.badge(), c.icon()));
     }
+
+    /** The pages in {@code c}, in display order, as the tree read them - made with its MPA. */
+    public List<Leaf<?>> leavesOf(Catalogue<?> c) {
+        requireIn(c);
+        return leaves.get(c.getClass());
+    }
+
+    /** The MPA the tree's pages were made with; empty when it was read with none. */
+    public Optional<Mpa> mpa() { return mpa == NoMpa.INSTANCE ? Optional.empty() : Optional.of(mpa); }
 
     /** The vertices under {@code c}, in display order: its sub-catalogues, then the roots it grafts. */
     public List<Catalogue<?>> childrenOf(Catalogue<?> c) {

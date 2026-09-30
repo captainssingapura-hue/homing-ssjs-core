@@ -5,6 +5,7 @@ import hue.captains.singapura.js.homing.site.Trail;
 import hue.captains.singapura.js.homing.site.Navigable;
 import hue.captains.singapura.js.homing.site.Path;
 import hue.captains.singapura.js.homing.site.Router;
+import hue.captains.singapura.js.homing.site.mpa.Mpa;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -41,6 +42,14 @@ public final class CatalogueRouter implements Router {
     /** The tree under {@code root}, served at {@code mount}, vertices shown by {@link HtmlListing}. */
     public static CatalogueRouter at(Path mount, L0_Catalogue<?> root) {
         return new CatalogueRouter(CatalogueTree.of(root), mount, HtmlListing.INSTANCE);
+    }
+
+    /**
+     * The tree under {@code root}, its pages made with the site's {@code mpa}, served at
+     * {@code mount}: every page wears the site's one chrome, whichever tree placed it.
+     */
+    public static CatalogueRouter at(Path mount, L0_Catalogue<?> root, Mpa mpa) {
+        return new CatalogueRouter(CatalogueTree.of(root, mpa), mount, HtmlListing.INSTANCE);
     }
 
     /** An already-read tree, served at {@code mount}. */
