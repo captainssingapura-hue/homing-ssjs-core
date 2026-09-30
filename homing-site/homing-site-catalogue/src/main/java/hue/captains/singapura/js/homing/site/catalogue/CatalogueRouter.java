@@ -80,7 +80,7 @@ public final class CatalogueRouter implements Router {
 
     private Trail lineage(Catalogue<?> c) {
         Trail t = Trail.NONE;
-        for (Catalogue<?> at : tree.lineageOf(c)) t = t.then(at.name(), hrefOf(at));
+        for (Catalogue<?> at : tree.lineageOf(c)) t = t.then(tree.shownAs(at).name(), hrefOf(at));
         return t;
     }
 

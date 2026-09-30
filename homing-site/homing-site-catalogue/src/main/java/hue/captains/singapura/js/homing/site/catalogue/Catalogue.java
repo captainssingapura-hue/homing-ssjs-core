@@ -19,6 +19,12 @@ import java.util.List;
  * Stating the edge twice is what lets a catalogue be read on its own — the
  * type says where it sits — while the parent keeps the say over order.</p>
  *
+ * <p>Trees compose by {@link #grafts()}: a catalogue places another tree's
+ * root under itself, and that edge is declared once, by the host, so a tree
+ * written by a module that knows no site can be grafted wherever a site
+ * wants it. The types say where a vertex sits within its own tree; the
+ * composed tree says where it sits in the site.</p>
+ *
  * <p>A catalogue is a stateless singleton, identified by its class. Its slug
  * — the path segment it answers to — derives from the class name, so
  * {@code RfcsCatalogue} is {@code rfcs}; override {@link #slug()} to lock
@@ -50,6 +56,14 @@ public sealed interface Catalogue<Self extends Catalogue<Self>>
 
     /** The catalogues under this one, in display order. Each level narrows the type. */
     default List<? extends Catalogue<?>> subCatalogues() { return List.of(); }
+
+    /**
+     * Whole trees placed under this one - other trees' roots, each written on
+     * its own and grafted here, in display order after the sub-catalogues. The
+     * edge is declared here alone: a grafted root names no parent, and so can
+     * be grafted wherever a site wants it.
+     */
+    default List<Graft<Self>> grafts() { return List.of(); }
 
     /** The pages in this catalogue, in display order. */
     default List<Leaf<Self>> leaves() { return List.of(); }

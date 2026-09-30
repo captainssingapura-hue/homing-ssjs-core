@@ -27,17 +27,21 @@ public final class HtmlListing implements Listing {
     }
 
     private static HtmlPageContent render(Catalogue<?> c, CatalogueRouter router, Trail trail) {
+        var tree = router.tree();
+        var shown = tree.shownAs(c);
         var body = new StringBuilder();
         body.append(crumbs(trail));
-        body.append("<h1>").append(iconAndName(c.icon(), c.name()))
-            .append(" <small>").append(Html.escape(c.badge())).append("</small></h1>\n");
-        if (!c.summary().isBlank()) body.append("<p class=\"summary\">").append(Html.escape(c.summary())).append("</p>\n");
+        body.append("<h1>").append(iconAndName(shown.icon(), shown.name()))
+            .append(" <small>").append(Html.escape(shown.badge())).append("</small></h1>\n");
+        if (!shown.summary().isBlank()) body.append("<p class=\"summary\">").append(Html.escape(shown.summary())).append("</p>\n");
 
-        var subs = c.subCatalogues();
+        // sub-catalogues, then grafted trees - each as it is shown here
+        var subs = tree.childrenOf(c);
         if (!subs.isEmpty()) {
             body.append("<h2>Catalogues</h2>\n<ul class=\"entries\">\n");
             for (Catalogue<?> sub : subs) {
-                body.append(entry(router.hrefOf(sub), sub.icon(), sub.name(), sub.badge(), sub.summary()));
+                var s = tree.shownAs(sub);
+                body.append(entry(router.hrefOf(sub), s.icon(), s.name(), s.badge(), s.summary()));
             }
             body.append("</ul>\n");
         }
@@ -73,7 +77,7 @@ public final class HtmlListing implements Listing {
                 <body>
                 %s</body>
                 </html>
-                """.formatted(Html.escape(c.name()), body));
+                """.formatted(Html.escape(shown.name()), body));
     }
 
     private static String crumbs(Trail trail) {
