@@ -24,7 +24,7 @@ import java.util.UUID;
  * <p><b>Not navigable.</b> A doc's interior nodes are anchors within one page, not
  * pages of their own — RFC 0051 terminates breadcrumbs at the catalogue leaf. So
  * navigability is a property of an identity's KIND rather than of its presence: a
- * {@link hue.captains.singapura.js.homing.studio.base.app.NavKey} names a page, a
+ * {@code NavKey} names a page, a
  * {@code DocNodeIdentity} names a position inside one.</p>
  *
  * @param doc    the owning document's uuid

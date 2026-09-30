@@ -9,7 +9,7 @@ package hue.captains.singapura.js.homing.studio.base.composed;
  *       which already nests through its own {@code DocNode} children (structure),
  *       so a grafted sub-doc buys nothing; the inline-summary use it was reached
  *       for is served by {@link SimpleListSegment}.</li>
- *   <li>{@link DocumentaryWidget} — embedded interactivity. Not worth the extra
+ *   <li>{@code DocumentaryWidget} — embedded interactivity. Not worth the extra
  *       complexity inside a document; interactive widgets are hosted by the
  *       workspace instead.</li>
  * </ul>

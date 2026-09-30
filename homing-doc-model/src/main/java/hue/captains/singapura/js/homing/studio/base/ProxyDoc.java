@@ -16,7 +16,7 @@ import java.util.UUID;
  * invariant is preserved by construction — each appearance is a fresh
  * identity.</p>
  *
- * <p>Server-side resolution is transparent. {@link DocGetAction} serves
+ * <p>Server-side resolution is transparent. {@code DocGetAction} serves
  * the proxy's URL ({@code /doc?id=<proxy-uuid>}); {@link #contents()}
  * delegates to the target so the response body comes from the canonical
  * content; metadata (title, summary, category) come from the proxy

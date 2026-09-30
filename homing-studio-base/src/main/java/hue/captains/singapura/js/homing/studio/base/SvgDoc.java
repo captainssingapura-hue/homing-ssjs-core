@@ -41,7 +41,7 @@ public record SvgDoc<G extends SvgGroup<G>>(
         SvgRef<G> ref,
         String    title,
         String    summary
-) implements Doc {
+) implements SvgSource {
 
     public SvgDoc {
         Objects.requireNonNull(ref,   "SvgDoc.ref");

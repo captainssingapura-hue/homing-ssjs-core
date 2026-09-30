@@ -41,7 +41,7 @@ import java.util.UUID;
 public interface Doc extends Immutable {
 
     /**
-     * Stable surrogate identity for this Doc on the wire. Unique within a {@link DocRegistry}.
+     * Stable surrogate identity for this Doc on the wire. Unique within a {@code DocRegistry}.
      * Generated once and frozen — must not change across Java renames or file moves.
      *
      * <p>Prose Docs use UUID identity; this method is the source of truth for them.
@@ -69,8 +69,14 @@ public interface Doc extends Immutable {
     String title();
 
     /**
-     * The bytes of this Doc as a UTF-8 string. Source of truth — every server endpoint
-     * calls this. The framework places no constraints on where the content originates.
+     * The doc's own text, for a doc whose data IS text - a markdown body, an SVG's markup.
+     * The framework places no constraints on where it originates.
+     *
+     * <p>A doc never decides how it is <i>shown</i>: content is made from a doc by a
+     * {@code Function<Doc, Content>}, the shower's to choose (the studio's legacy viewers
+     * use {@code LegacyDocWire}). A doc whose data is structure - a composed doc, a rigid
+     * tree, a table, an image - has no text of its own, and throws
+     * {@link NoOwnContentException}.</p>
      */
     String contents();
 
@@ -80,7 +86,7 @@ public interface Doc extends Immutable {
     /** Optional category slug used by browsers for filtering / grouping. Default empty. */
     default String category() { return ""; }
 
-    /** MIME type. Default {@code text/markdown}. */
+    /** The media type of {@link #contents()}. Default {@code text/markdown}; a doc with no content of its own throws {@link NoOwnContentException}. */
     default String contentType() { return "text/markdown; charset=utf-8"; }
 
     /** File extension matching the content type, used by the classpath-loading subinterfaces. */
@@ -165,9 +171,10 @@ public interface Doc extends Immutable {
      * leveled-addressing extension (RFC 0004-ext, slated for retirement by
      * RFC 0039).</p>
      *
-     * <p>Default delegates to {@link #contents()} (no leveled-URL emission
-     * needed for leaf docs). ComposedDoc overrides to thread the prefix
-     * through embedded segment URLs.</p>
+     * <p>Default delegates to {@link #contents()}; nothing in the model overrides it -
+     * a doc builds no URLs. The leveled URLs of a composed doc's embedded segments
+     * are made by the studio's legacy wire, from the doc. Kept for any caller or
+     * implementer written against it.</p>
      *
      * @param rootId     the {@code id} parameter of the originating request
      *                   (the root of the containment tree the client is

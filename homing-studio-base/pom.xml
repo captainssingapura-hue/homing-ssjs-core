@@ -26,6 +26,15 @@
     </properties>
 
     <dependencies>
+        <!-- The document model, as data (Doc, the segments, rigid trees, tables,
+             images). Its packages are the ones studio-base always had, so every
+             doc downstream compiles unchanged; what is served is made FROM a doc
+             here (LegacyDocWire). -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-doc-model</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
         <dependency>
             <groupId>io.github.captainssingapura-hue.homing.js</groupId>
             <artifactId>homing-server</artifactId>

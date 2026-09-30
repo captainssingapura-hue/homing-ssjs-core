@@ -1,13 +1,13 @@
 package hue.captains.singapura.js.homing.studio.base.composed;
 
-import hue.captains.singapura.js.homing.studio.base.SvgDoc;
+import hue.captains.singapura.js.homing.studio.base.SvgSource;
 import hue.captains.singapura.js.homing.studio.base.composed.text.Line;
 
 import java.util.Objects;
 import java.util.Optional;
 
 /**
- * RFC 0019 — proxy reference to a registered {@link SvgDoc} embedded
+ * RFC 0019 — proxy reference to a registered {@link SvgSource} (an {@code SvgDoc}, as a rule) embedded
  * inline within a {@link ComposedDoc}.
  *
  * <p>The canonical artifact is the SvgDoc — registered, addressable,
@@ -32,19 +32,19 @@ import java.util.Optional;
  *
  * @since RFC 0019 Phase 1
  */
-public record SvgSegment(SvgDoc<?> doc, Optional<Line.Plain> captionOverride) implements Listable {
+public record SvgSegment(SvgSource doc, Optional<Line.Plain> captionOverride) implements Listable {
     public SvgSegment {
         Objects.requireNonNull(doc,             "SvgSegment.doc");
         Objects.requireNonNull(captionOverride, "SvgSegment.captionOverride (use Optional.empty)");
     }
 
     /** Convenience — no caption override; falls through to the SvgDoc's title. */
-    public SvgSegment(SvgDoc<?> doc) {
+    public SvgSegment(SvgSource doc) {
         this(doc, Optional.empty());
     }
 
     /** Convenience — caption from a raw string (blank becomes no override). */
-    public SvgSegment(SvgDoc<?> doc, String caption) {
+    public SvgSegment(SvgSource doc, String caption) {
         this(doc, Line.optionalPlain(caption));
     }
 

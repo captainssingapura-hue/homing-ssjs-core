@@ -3,7 +3,7 @@ package hue.captains.singapura.js.homing.studio.base.composed;
 /**
  * RFC 0039 — a {@link hue.captains.singapura.js.homing.studio.base.Doc Doc} that
  * supplies its <b>own</b> rigid-tree {@link DocTree}, bypassing the kind-based
- * normalizer dispatch in {@link DocTreeGetAction} / {@link DocTreeContentGetAction}.
+ * normalizer dispatch in {@code DocTreeGetAction} / {@code DocTreeContentGetAction}.
  *
  * <p>The built-in doc kinds ({@code ComposedDoc}, {@code RigidDoc}, markdown) are
  * transformed to a {@link DocTree} by a fixed {@code instanceof} switch. A Doc

@@ -3,7 +3,7 @@ package hue.captains.singapura.js.homing.studio.base.rigid;
 import hue.captains.singapura.js.homing.tree.NodeName;
 import hue.captains.singapura.js.homing.studio.base.Doc;
 import hue.captains.singapura.js.homing.studio.base.composed.DocTreeV2;
-import hue.captains.singapura.js.homing.studio.base.composed.DocTreeV2JsonWriter;
+import hue.captains.singapura.js.homing.studio.base.NoOwnContentException;
 import hue.captains.singapura.js.homing.studio.base.composed.DocTreeV2Source;
 import hue.captains.singapura.js.homing.studio.base.composed.RigidNodeContent;
 import hue.captains.singapura.js.homing.studio.base.composed.graph.RigidNode;
@@ -82,10 +82,9 @@ public final class RigidDocV2 implements Doc, DocTreeV2Source {
     @Override public String summary()     { return summary; }
     @Override public String category()    { return category; }
     @Override public String kind()        { return "composed"; }   // reuses the doc-tree route
-    @Override public String contentType() { return "application/json; charset=utf-8"; }
+    @Override public String contentType() { throw new NoOwnContentException(this); }
     @Override public String fileExtension() { return ""; }
 
-    @Override public String contents() {
-        return DocTreeV2JsonWriter.INSTANCE.write(toDocTreeV2(), id.toString());
-    }
+    /** A rigid doc's data is its tree, not text: content is made from it (the studio's {@code LegacyDocWire}, via the doc-tree writer). */
+    @Override public String contents() { throw new NoOwnContentException(this); }
 }

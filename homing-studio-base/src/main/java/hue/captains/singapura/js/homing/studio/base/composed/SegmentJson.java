@@ -44,16 +44,16 @@ final class SegmentJson {
         switch (s) {
             case MarkdownSegment m -> {
                 sb.append("\"kind\":\"markdown\",");
-                sb.append("\"anchor\":").append(ComposedDoc.jstr(anchor)).append(',');
-                sb.append("\"title\":") .append(ComposedDoc.jstr(m.title().orElse(""))).append(',');
-                sb.append("\"body\":")  .append(ComposedDoc.jstr(m.body()));
+                sb.append("\"anchor\":").append(ComposedDocJson.jstr(anchor)).append(',');
+                sb.append("\"title\":") .append(ComposedDocJson.jstr(m.title().orElse(""))).append(',');
+                sb.append("\"body\":")  .append(ComposedDocJson.jstr(m.body()));
             }
             case TextSegment tx -> {
                 sb.append("\"kind\":\"text\",");
-                sb.append("\"anchor\":").append(ComposedDoc.jstr(anchor)).append(',');
-                sb.append("\"title\":") .append(ComposedDoc.jstr(tx.title().orElse(""))).append(',');
+                sb.append("\"anchor\":").append(ComposedDocJson.jstr(anchor)).append(',');
+                sb.append("\"title\":") .append(ComposedDocJson.jstr(tx.title().orElse(""))).append(',');
                 sb.append("\"blocks\":");
-                ComposedDoc.appendBlocks(sb, tx.parsed());
+                ComposedDocJson.appendBlocks(sb, tx.parsed());
             }
             // One emitter, two callers: the typed mirror is guaranteed to
             // produce the identical object rather than merely intended to.
@@ -61,48 +61,48 @@ final class SegmentJson {
             case TypedCodeSegment tc -> writeCode(sb, anchor, tc.title(), tc.language().tag(), tc.body());
             case SvgSegment v -> {
                 sb.append("\"kind\":\"svg\",");
-                sb.append("\"anchor\":")  .append(ComposedDoc.jstr(anchor)).append(',');
-                sb.append("\"caption\":") .append(ComposedDoc.jstr(v.resolvedCaption())).append(',');
-                sb.append("\"svgUrl\":")  .append(ComposedDoc.jstr(resourceUrl.apply(s)));
+                sb.append("\"anchor\":")  .append(ComposedDocJson.jstr(anchor)).append(',');
+                sb.append("\"caption\":") .append(ComposedDocJson.jstr(v.resolvedCaption())).append(',');
+                sb.append("\"svgUrl\":")  .append(ComposedDocJson.jstr(resourceUrl.apply(s)));
             }
             case TableSegment t -> {
                 sb.append("\"kind\":\"table\",");
-                sb.append("\"anchor\":")   .append(ComposedDoc.jstr(anchor)).append(',');
-                sb.append("\"caption\":")  .append(ComposedDoc.jstr(t.resolvedCaption())).append(',');
-                sb.append("\"tableUrl\":") .append(ComposedDoc.jstr(resourceUrl.apply(s)));
+                sb.append("\"anchor\":")   .append(ComposedDocJson.jstr(anchor)).append(',');
+                sb.append("\"caption\":")  .append(ComposedDocJson.jstr(t.resolvedCaption())).append(',');
+                sb.append("\"tableUrl\":") .append(ComposedDocJson.jstr(resourceUrl.apply(s)));
             }
             case ImageSegment im -> {
                 sb.append("\"kind\":\"image\",");
-                sb.append("\"anchor\":")   .append(ComposedDoc.jstr(anchor)).append(',');
-                sb.append("\"caption\":")  .append(ComposedDoc.jstr(im.resolvedCaption())).append(',');
-                sb.append("\"imageUrl\":") .append(ComposedDoc.jstr(resourceUrl.apply(s)));
+                sb.append("\"anchor\":")   .append(ComposedDocJson.jstr(anchor)).append(',');
+                sb.append("\"caption\":")  .append(ComposedDocJson.jstr(im.resolvedCaption())).append(',');
+                sb.append("\"imageUrl\":") .append(ComposedDocJson.jstr(resourceUrl.apply(s)));
             }
             case UnorderedListSegment ul -> writeList(sb, "ulist", anchor, ul.items(), resourceUrl);
             case OrderedListSegment ol -> writeList(sb, "olist", anchor, ol.items(), resourceUrl);
             case ParagraphSegment p -> {
                 sb.append("\"kind\":\"paragraph\",");
-                sb.append("\"anchor\":").append(ComposedDoc.jstr(anchor)).append(',');
+                sb.append("\"anchor\":").append(ComposedDocJson.jstr(anchor)).append(',');
                 sb.append("\"lines\":[");
                 boolean firstLine = true;
                 for (Line.Plain ln : p.lines()) {
                     if (!firstLine) sb.append(',');
                     firstLine = false;
-                    sb.append(ComposedDoc.jstr(ln.raw()));
+                    sb.append(ComposedDocJson.jstr(ln.raw()));
                 }
                 sb.append(']');
             }
             case RelationSegment rs -> {
                 sb.append("\"kind\":\"relation\",");
-                sb.append("\"anchor\":") .append(ComposedDoc.jstr(anchor)).append(',');
-                sb.append("\"caption\":").append(ComposedDoc.jstr(rs.caption().map(Line.Plain::raw).orElse(""))).append(',');
+                sb.append("\"anchor\":") .append(ComposedDocJson.jstr(anchor)).append(',');
+                sb.append("\"caption\":").append(ComposedDocJson.jstr(rs.caption().map(Line.Plain::raw).orElse(""))).append(',');
                 sb.append("\"headers\":");
-                ComposedDoc.appendStringList(sb, rs.headers());
+                ComposedDocJson.appendStringList(sb, rs.headers());
                 sb.append(",\"rows\":[");
                 boolean firstRow = true;
                 for (List<String> row : rs.rows()) {
                     if (!firstRow) sb.append(',');
                     firstRow = false;
-                    ComposedDoc.appendStringList(sb, row);
+                    ComposedDocJson.appendStringList(sb, row);
                 }
                 sb.append(']');
                 // Sparse articulation side-car — emitted only when present, so a
@@ -117,9 +117,9 @@ final class SegmentJson {
                         firstArt = false;
                         Articulation art = ac.articulation();
                         sb.append("{\"row\":").append(ac.row()).append(",\"col\":").append(ac.col());
-                        art.badge()   .ifPresent(b -> sb.append(",\"badge\":")   .append(ComposedDoc.jstr(b.name().toLowerCase())));
-                        art.align()   .ifPresent(a -> sb.append(",\"align\":")   .append(ComposedDoc.jstr(a.name().toLowerCase())));
-                        art.emphasis().ifPresent(e -> sb.append(",\"emphasis\":").append(ComposedDoc.jstr(e.name().toLowerCase())));
+                        art.badge()   .ifPresent(b -> sb.append(",\"badge\":")   .append(ComposedDocJson.jstr(b.name().toLowerCase())));
+                        art.align()   .ifPresent(a -> sb.append(",\"align\":")   .append(ComposedDocJson.jstr(a.name().toLowerCase())));
+                        art.emphasis().ifPresent(e -> sb.append(",\"emphasis\":").append(ComposedDocJson.jstr(e.name().toLowerCase())));
                         sb.append('}');
                     }
                     sb.append(']');
@@ -130,20 +130,22 @@ final class SegmentJson {
                 // never a content provider — so the doc tree never serializes one.
                 // Retained for exhaustiveness / the legacy caller's parity.
                 sb.append("\"kind\":\"composed\",");
-                sb.append("\"anchor\":")       .append(ComposedDoc.jstr(anchor)).append(',');
-                sb.append("\"caption\":")      .append(ComposedDoc.jstr(cd.resolvedCaption())).append(',');
-                sb.append("\"composedUrl\":")  .append(ComposedDoc.jstr(resourceUrl.apply(s))).append(',');
-                sb.append("\"composedDocId\":").append(ComposedDoc.jstr(cd.doc().uuid().toString()));
+                sb.append("\"anchor\":")       .append(ComposedDocJson.jstr(anchor)).append(',');
+                sb.append("\"caption\":")      .append(ComposedDocJson.jstr(cd.resolvedCaption())).append(',');
+                sb.append("\"composedUrl\":")  .append(ComposedDocJson.jstr(resourceUrl.apply(s))).append(',');
+                sb.append("\"composedDocId\":").append(ComposedDocJson.jstr(cd.doc().uuid().toString()));
             }
             case DocumentaryWidget<?, ?> w -> {
                 sb.append("\"kind\":\"documentary-widget\",");
-                sb.append("\"anchor\":") .append(ComposedDoc.jstr(anchor)).append(',');
-                sb.append("\"caption\":").append(ComposedDoc.jstr(w.resolvedCaption())).append(',');
+                sb.append("\"anchor\":") .append(ComposedDocJson.jstr(anchor)).append(',');
+                sb.append("\"caption\":").append(ComposedDocJson.jstr(w.resolvedCaption())).append(',');
                 sb.append("\"moduleUrl\":")
-                  .append(ComposedDoc.jstr("/module?class=" + w.widget().getClass().getCanonicalName())).append(',');
+                  .append(ComposedDocJson.jstr("/module?class=" + w.widget().getClass().getCanonicalName())).append(',');
                 sb.append("\"params\":");
-                ComposedDoc.appendParamsJson(sb, w.params());
+                ComposedDocJson.appendParamsJson(sb, w.params());
             }
+            case EmbeddedSegment e -> throw new IllegalStateException(
+                    "The legacy composed viewer has no wire shape for " + e.getClass().getName());
         }
         sb.append('}');
     }
@@ -156,10 +158,10 @@ final class SegmentJson {
     private static void writeCode(StringBuilder sb, String anchor,
                                   java.util.Optional<String> title, String language, String body) {
         sb.append("\"kind\":\"code\",");
-        sb.append("\"anchor\":")  .append(ComposedDoc.jstr(anchor)).append(',');
-        sb.append("\"title\":")   .append(ComposedDoc.jstr(title.orElse(""))).append(',');
-        sb.append("\"language\":").append(ComposedDoc.jstr(language)).append(',');
-        sb.append("\"body\":")    .append(ComposedDoc.jstr(body));
+        sb.append("\"anchor\":")  .append(ComposedDocJson.jstr(anchor)).append(',');
+        sb.append("\"title\":")   .append(ComposedDocJson.jstr(title.orElse(""))).append(',');
+        sb.append("\"language\":").append(ComposedDocJson.jstr(language)).append(',');
+        sb.append("\"body\":")    .append(ComposedDocJson.jstr(body));
     }
 
     /**
@@ -171,7 +173,7 @@ final class SegmentJson {
     private static void writeList(StringBuilder sb, String kind, String anchor,
                                   List<Listable> items, Function<Segment, String> resourceUrl) {
         sb.append("\"kind\":\"").append(kind).append("\",");
-        sb.append("\"anchor\":").append(ComposedDoc.jstr(anchor)).append(',');
+        sb.append("\"anchor\":").append(ComposedDocJson.jstr(anchor)).append(',');
         sb.append("\"items\":[");
         for (int i = 0; i < items.size(); i++) {
             if (i > 0) sb.append(',');

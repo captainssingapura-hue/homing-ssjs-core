@@ -79,8 +79,8 @@ public final class OpenContentGetAction
         }
         Doc doc = resolved.get().doc();
         try {
-            return CompletableFuture.completedFuture(
-                    new DocContent(doc.contents(), doc.contentType()));
+            Content content = LegacyDocWire.INSTANCE.apply(doc);
+            return CompletableFuture.completedFuture(new DocContent(content.body(), content.mediaType()));
         } catch (Exception e) {
             return CompletableFuture.failedFuture(notFound(pathStr(path),
                     "Failed to load doc contents: " + e.getMessage()));

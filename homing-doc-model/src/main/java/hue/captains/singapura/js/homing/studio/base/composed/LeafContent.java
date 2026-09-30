@@ -7,7 +7,7 @@ package hue.captains.singapura.js.homing.studio.base.composed;
  * its own stable URL, a bare image, or a future kind — each binds through the
  * same {@code node -> ContentProvider -> LeafContent} seam.
  *
- * <p><b>Sealed on purpose.</b> The doc-tree serializer ({@link DocTreeJsonWriter})
+ * <p><b>Sealed on purpose.</b> The doc-tree serializer ({@code DocTreeJsonWriter})
  * dispatches over this type with an exhaustive switch, so a new leaf-content kind
  * cannot be added without the writer (and, in turn, the renderer) being forced to
  * handle it — <i>Make It Impossible</i>, not "remember to update the writer".</p>

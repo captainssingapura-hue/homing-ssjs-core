@@ -3,7 +3,7 @@ package hue.captains.singapura.js.homing.studio.base.rigid;
 import hue.captains.singapura.js.homing.tree.NodeName;
 import hue.captains.singapura.js.homing.studio.base.Doc;
 import hue.captains.singapura.js.homing.studio.base.DocId;
-import hue.captains.singapura.js.homing.studio.base.composed.DocTreeJsonWriter;
+import hue.captains.singapura.js.homing.studio.base.NoOwnContentException;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -93,17 +93,9 @@ public final class RigidDoc implements Doc, hue.captains.singapura.js.homing.stu
     @Override public String  summary()     { return summary; }
     @Override public String  category()    { return category; }
     @Override public String  kind()        { return "composed"; }   // reuses the doc-tree route
-    @Override public String  contentType() { return "application/json; charset=utf-8"; }
+    @Override public String  contentType() { throw new NoOwnContentException(this); }
     @Override public String  fileExtension() { return ""; }
 
-    /**
-     * The doc rigid-tree payload ({@code {structure, content}}) — the same shape
-     * {@code /doc-tree} serves. A {@code RigidDoc} skips the legacy flat
-     * {@code /doc} viewer entirely; this keeps {@code contents()} a sensible,
-     * parse-clean byte source for any generic caller.
-     */
-    @Override public String contents() {
-        return DocTreeJsonWriter.INSTANCE.write(
-                RigidDocNormalizer.INSTANCE.toDocTree(this), uuid.toString());
-    }
+    /** A rigid doc's data is its tree, not text: content is made from it (the studio's {@code LegacyDocWire}, via the doc-tree writer). */
+    @Override public String contents() { throw new NoOwnContentException(this); }
 }

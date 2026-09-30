@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.studio.base.conformance;
 import hue.captains.singapura.js.homing.studio.base.Doc;
 import hue.captains.singapura.js.homing.studio.base.DocProvider;
 import hue.captains.singapura.js.homing.studio.base.DocRegistry;
+import hue.captains.singapura.js.homing.studio.base.LegacyDocWire;
 import hue.captains.singapura.js.homing.studio.base.Reference;
 import hue.captains.singapura.js.homing.studio.base.composed.MarkdownDocNormalizer;
 import org.junit.jupiter.api.DynamicTest;
@@ -99,10 +100,11 @@ public abstract class DocConformanceTest {
             tests.add(DynamicTest.dynamicTest(
                     "contents() resolves: " + d.getClass().getSimpleName(),
                     () -> {
-                        String body = d.contents();
-                        assertNotNull(body, d.getClass().getName() + " contents() returned null");
+                        // what the studio serves for it: its own text, or the content made from its data
+                        String body = LegacyDocWire.INSTANCE.apply(d).body();
+                        assertNotNull(body, d.getClass().getName() + " content is null");
                         assertFalse(body.isBlank(),
-                                d.getClass().getName() + " contents() returned blank");
+                                d.getClass().getName() + " content is blank");
                     }));
         }
 

@@ -77,7 +77,7 @@ public final class DocTreeJsonWriter {
             if (!first) sb.append(',');
             first = false;
             String key = pathKey(e.getKey());
-            sb.append(ComposedDoc.jstr(key)).append(':');
+            sb.append(ComposedDocJson.jstr(key)).append(':');
             writeLeafContent(sb, e.getValue().content(), key, rootId);
         }
         sb.append("}}");
@@ -103,7 +103,7 @@ public final class DocTreeJsonWriter {
                     // Object form (only when a caption is set): { caption, segments }.
                     // Caption-less nodes keep the legacy array form — the extra field
                     // is optional, so the front-end supports both.
-                    sb.append("{\"caption\":").append(ComposedDoc.jstr(caption.get().raw()))
+                    sb.append("{\"caption\":").append(ComposedDocJson.jstr(caption.get().raw()))
                       .append(",\"segments\":");
                     writeSegments(sb, bundle.contents(), key, rootId);
                     sb.append('}');

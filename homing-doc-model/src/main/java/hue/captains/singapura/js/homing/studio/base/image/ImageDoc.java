@@ -2,11 +2,11 @@ package hue.captains.singapura.js.homing.studio.base.image;
 
 import hue.captains.singapura.js.homing.studio.base.Doc;
 import hue.captains.singapura.js.homing.studio.base.DocId;
+import hue.captains.singapura.js.homing.studio.base.NoOwnContentException;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -14,19 +14,19 @@ import java.util.UUID;
 /**
  * RFC 0020 — first-class Doc subtype carrying a classpath-shipped raster
  * image. Kind = {@code "image"}; viewer is {@code ImageViewer} (extends
- * {@link hue.captains.singapura.js.homing.studio.base.app.DocViewer DocViewer}).
+ * {@code DocViewer}).
  *
  * <p>Raw tier per RFC 0017 — no theming attempted on the raster itself;
  * chrome around it (figure, caption, border) is themed via the framework's
  * tokens.</p>
  *
  * <p>Identity is deterministic by classpath path (same shape as
- * {@link hue.captains.singapura.js.homing.studio.base.SvgDoc SvgDoc}'s
+ * {@code SvgDoc}'s
  * derivation), so the same {@code resourcePath} always produces the same
  * Doc UUID across rebuilds.</p>
  *
- * <p><b>Content shape on the wire</b> — {@link #contents()} returns a JSON
- * envelope:</p>
+ * <p><b>Content shape on the wire</b> — the studio's {@code ImageJson} makes a JSON
+ * envelope from it (the doc itself has no content of its own - {@link #contents()} throws):</p>
  * <pre>{
  *   "alt":      "...",
  *   "caption":  "...",      // empty if absent
@@ -96,55 +96,29 @@ public record ImageDoc(
     @Override public String summary()       { return caption; }
     @Override public String category()      { return "IMAGE"; }
     @Override public String kind()          { return "image"; }
-    @Override public String contentType()   { return "application/json; charset=utf-8"; }
     @Override public String fileExtension() { return ""; }
 
-    @Override public String contents() {
-        // Resolve at request time — class-loader chain reads from the
-        // classpath ClassLoader (works for both maven test/run and jar/war
-        // deployments). Failure surfaces as an IllegalStateException;
-        // DocGetAction translates exceptions to a 404 with the message.
-        byte[] bytes;
+    /** An image's data is its bytes and their framing, not text: content is made from it (the studio's {@code ImageJson}). */
+    @Override public String contents()    { throw new NoOwnContentException(this); }
+    @Override public String contentType() { throw new NoOwnContentException(this); }
+
+    /**
+     * The image's bytes, read from the classpath at call time - through the thread's
+     * context class loader, which works for maven test/run and for jar/war deployments.
+     *
+     * @throws IllegalStateException when the resource is missing or unreadable
+     */
+    public byte[] bytes() {
         try (InputStream in = Thread.currentThread().getContextClassLoader()
                 .getResourceAsStream(resourcePath)) {
             if (in == null) {
                 throw new IllegalStateException(
                         "ImageDoc resource not found on classpath: " + resourcePath);
             }
-            bytes = in.readAllBytes();
+            return in.readAllBytes();
         } catch (IOException e) {
             throw new IllegalStateException(
                     "ImageDoc resource read failed: " + resourcePath, e);
         }
-        String b64 = Base64.getEncoder().encodeToString(bytes);
-
-        var sb = new StringBuilder("{");
-        sb.append("\"alt\":").append(jstr(alt)).append(',');
-        sb.append("\"caption\":").append(jstr(caption)).append(',');
-        width.ifPresent(w  -> sb.append("\"width\":").append(w).append(','));
-        height.ifPresent(h -> sb.append("\"height\":").append(h).append(','));
-        sb.append("\"dataUrl\":\"data:").append(mimeType).append(";base64,").append(b64).append("\"");
-        sb.append("}");
-        return sb.toString();
-    }
-
-    private static String jstr(String v) {
-        var sb = new StringBuilder("\"");
-        for (int i = 0; i < v.length(); i++) {
-            char c = v.charAt(i);
-            switch (c) {
-                case '\\' -> sb.append("\\\\");
-                case '"'  -> sb.append("\\\"");
-                case '\n' -> sb.append("\\n");
-                case '\r' -> sb.append("\\r");
-                case '\t' -> sb.append("\\t");
-                default -> {
-                    if (c < 0x20) sb.append(String.format("\\u%04x", (int) c));
-                    else sb.append(c);
-                }
-            }
-        }
-        sb.append('"');
-        return sb.toString();
     }
 }

@@ -38,7 +38,7 @@ import hue.captains.singapura.tao.ontology.ValueObject;
  *
  * <p><b>Sub-hierarchy:</b> the inline content kinds are grouped under
  * {@link RigidSegment} (the subset a {@code RigidDoc} node may hold);
- * {@link ComposedSegment} (doc-in-doc graft) and {@link DocumentaryWidget}
+ * {@link ComposedSegment} (doc-in-doc graft) and {@link EmbeddedSegment}
  * (embedded interactive widget) sit directly under {@code Segment} and are
  * valid only in a flat {@link ComposedDoc}, not a RigidDoc.</p>
  *
@@ -47,5 +47,5 @@ import hue.captains.singapura.tao.ontology.ValueObject;
 public sealed interface Segment extends ValueObject
         permits RigidSegment,
                 ComposedSegment,
-                DocumentaryWidget {
+                EmbeddedSegment {
 }

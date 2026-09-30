@@ -39,7 +39,7 @@ public record DocumentaryWidget<P extends AppModule._Param,
         M widget,
         P params,
         Optional<Line.Plain> captionOverride
-) implements Segment {
+) implements EmbeddedSegment {
 
     public DocumentaryWidget {
         Objects.requireNonNull(widget,          "DocumentaryWidget.widget");

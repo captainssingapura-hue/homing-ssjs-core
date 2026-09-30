@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.studio.base.table;
 
 import hue.captains.singapura.js.homing.studio.base.Doc;
 import hue.captains.singapura.js.homing.studio.base.DocId;
+import hue.captains.singapura.js.homing.studio.base.NoOwnContentException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
@@ -10,9 +11,9 @@ import java.util.UUID;
 /**
  * RFC 0020 — first-class Doc subtype carrying a {@link TableData}.
  * Kind = {@code "table"}; viewer is {@code TableViewer} (extends
- * {@link hue.captains.singapura.js.homing.studio.base.app.DocViewer DocViewer}).
+ * {@code DocViewer}).
  *
- * <p>Like {@link hue.captains.singapura.js.homing.studio.base.SvgDoc SvgDoc},
+ * <p>Like {@code SvgDoc},
  * every TableDoc is a registered, citable, addressable artifact — even when
  * primarily used inline as a {@code TableSegment} target in a
  * {@link hue.captains.singapura.js.homing.studio.base.composed.ComposedDoc
@@ -22,8 +23,8 @@ import java.util.UUID;
  * {@link #deterministicUuid(String)} helper to derive one from a stable
  * seed (e.g., {@code "phase-status:0.0.103"}).</p>
  *
- * <p>{@link #contents()} returns the JSON envelope; the framework's
- * polymorphic doc router serves it via {@code /doc?id=<uuid>} and
+ * <p>Data only - {@link #contents()} throws: the studio's {@code TableJson} makes the JSON envelope, which the framework's
+ * polymorphic doc router serves via {@code /doc?id=<uuid>} and
  * {@code TableViewer} fetches it client-side and builds the {@code <table>}
  * using the framework's themed cell CSS (RFC 0017 token discipline).</p>
  *
@@ -51,12 +52,11 @@ public record TableDoc(UUID uuid, String title, String summary, TableData data) 
     @Override public String summary()       { return summary; }
     @Override public String category()      { return "TABLE"; }
     @Override public String kind()          { return "table"; }
-    @Override public String contentType()   { return "application/json; charset=utf-8"; }
+    /** A table's data is its cells, not text: content is made from it (the studio's {@code TableJson}). */
+    @Override public String contentType()   { throw new NoOwnContentException(this); }
     @Override public String fileExtension() { return ""; }
 
-    @Override public String contents() {
-        return data.toJson();
-    }
+    @Override public String contents()      { throw new NoOwnContentException(this); }
 
     /** Deterministic UUID derivation for code-defined TableDocs. */
     public static UUID deterministicUuid(String seed) {

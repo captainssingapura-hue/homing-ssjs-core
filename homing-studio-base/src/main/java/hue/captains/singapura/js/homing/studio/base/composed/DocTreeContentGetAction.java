@@ -2,9 +2,11 @@ package hue.captains.singapura.js.homing.studio.base.composed;
 
 import hue.captains.singapura.js.homing.server.EmptyParam;
 import hue.captains.singapura.js.homing.server.ResourceNotFound;
+import hue.captains.singapura.js.homing.studio.base.Content;
 import hue.captains.singapura.js.homing.studio.base.Doc;
 import hue.captains.singapura.js.homing.studio.base.DocContent;
 import hue.captains.singapura.js.homing.studio.base.DocRegistry;
+import hue.captains.singapura.js.homing.studio.base.LegacyDocWire;
 import hue.captains.singapura.js.homing.studio.base.rigid.RigidDoc;
 import hue.captains.singapura.js.homing.studio.base.rigid.RigidDocNormalizer;
 import hue.captains.singapura.tao.http.action.GetAction;
@@ -154,7 +156,8 @@ public final class DocTreeContentGetAction
                     + "' is not a resource-backed inline doc"));
         }
         try {
-            return CompletableFuture.completedFuture(new DocContent(embedded.contents(), embedded.contentType()));
+            Content content = LegacyDocWire.INSTANCE.apply(embedded);
+            return CompletableFuture.completedFuture(new DocContent(content.body(), content.mediaType()));
         } catch (Exception e) {
             return CompletableFuture.failedFuture(notFound(rawId, "Failed to load inline resource: " + e.getMessage()));
         }

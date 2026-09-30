@@ -60,7 +60,7 @@ public final class DocTreeV2JsonWriter {
         for (Map.Entry<String, ContentProvider> e : tree.providers().entrySet()) {
             if (!first) sb.append(',');
             first = false;
-            sb.append(ComposedDoc.jstr(e.getKey())).append(':');
+            sb.append(ComposedDocJson.jstr(e.getKey())).append(':');
             // Same leaf/segment wire shape as V1 — only the key (name-path) differs.
             DocTreeJsonWriter.writeLeafContent(sb, e.getValue().content(), e.getKey(), rootId);
         }

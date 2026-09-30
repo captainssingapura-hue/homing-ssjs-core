@@ -12,8 +12,8 @@ import java.util.Objects;
  * cell alignment. No formulas, no interactivity, no editing
  * (RFC 0020 §2.2 — "tables, not spreadsheets").
  *
- * <p>Serialises to a stable JSON envelope consumed by {@code TableViewer}'s
- * client-side renderer; also constructible from CSV via
+ * <p>Data only: the table viewers' JSON envelope is made from it by {@code TableJson},
+ * in the studio. Constructible from CSV via
  * {@link #fromCsv(String)} for the lazy authoring case.</p>
  *
  * @param headers the header row's cells; may be empty for header-less tables
@@ -138,60 +138,5 @@ public record TableData(List<Cell> headers, List<List<Cell>> rows) implements Va
         }
         out.add(sb.toString());
         return out;
-    }
-
-    // -----------------------------------------------------------------------
-    // JSON serialisation — small enough to hand-roll; matches the renderer's wire shape.
-    // -----------------------------------------------------------------------
-
-    /** Serialise to the stable JSON envelope consumed by {@code TableViewer}'s renderer. */
-    public String toJson() {
-        var sb = new StringBuilder("{\"headers\":[");
-        for (int i = 0; i < headers.size(); i++) {
-            if (i > 0) sb.append(',');
-            appendCell(sb, headers.get(i));
-        }
-        sb.append("],\"rows\":[");
-        for (int r = 0; r < rows.size(); r++) {
-            if (r > 0) sb.append(',');
-            sb.append('[');
-            var row = rows.get(r);
-            for (int c = 0; c < row.size(); c++) {
-                if (c > 0) sb.append(',');
-                appendCell(sb, row.get(c));
-            }
-            sb.append(']');
-        }
-        sb.append("]}");
-        return sb.toString();
-    }
-
-    private static void appendCell(StringBuilder sb, Cell c) {
-        sb.append("{\"text\":").append(jstr(c.text()));
-        if (c.colspan() != 1) sb.append(",\"colspan\":").append(c.colspan());
-        if (c.rowspan() != 1) sb.append(",\"rowspan\":").append(c.rowspan());
-        if (c.badge() != null) sb.append(",\"badge\":").append(jstr(c.badge().name().toLowerCase()));
-        if (c.align() != null) sb.append(",\"align\":").append(jstr(c.align().name().toLowerCase()));
-        sb.append('}');
-    }
-
-    private static String jstr(String v) {
-        var sb = new StringBuilder("\"");
-        for (int i = 0; i < v.length(); i++) {
-            char ch = v.charAt(i);
-            switch (ch) {
-                case '\\' -> sb.append("\\\\");
-                case '"'  -> sb.append("\\\"");
-                case '\n' -> sb.append("\\n");
-                case '\r' -> sb.append("\\r");
-                case '\t' -> sb.append("\\t");
-                default -> {
-                    if (ch < 0x20) sb.append(String.format("\\u%04x", (int) ch));
-                    else sb.append(ch);
-                }
-            }
-        }
-        sb.append('"');
-        return sb.toString();
     }
 }

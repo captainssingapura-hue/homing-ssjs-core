@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.rigid;
 
-import hue.captains.singapura.js.homing.studio.base.SvgDoc;
+import hue.captains.singapura.js.homing.studio.base.SvgSource;
 import hue.captains.singapura.js.homing.studio.base.composed.CodeLanguage;
 import hue.captains.singapura.js.homing.studio.base.composed.CodeSegment;
 import hue.captains.singapura.js.homing.studio.base.composed.TypedCodeSegment;
@@ -125,11 +125,11 @@ public final class Rigid {
             return self();
         }
 
-        /** Attach a registered {@link SvgDoc} inline; caption falls through to the doc's title. */
-        public SELF svg(SvgDoc<?> doc) { content.add(new SvgSegment(doc)); return self(); }
+        /** Attach a registered {@link SvgSource} (an {@code SvgDoc}) inline; caption falls through to the doc's title. */
+        public SELF svg(SvgSource doc) { content.add(new SvgSegment(doc)); return self(); }
 
-        /** Attach a registered {@link SvgDoc} inline with a per-appearance caption override. */
-        public SELF svg(SvgDoc<?> doc, String caption) { content.add(new SvgSegment(doc, caption)); return self(); }
+        /** Attach a registered {@link SvgSource} (an {@code SvgDoc}) inline with a per-appearance caption override. */
+        public SELF svg(SvgSource doc, String caption) { content.add(new SvgSegment(doc, caption)); return self(); }
 
         /** Attach a registered {@link ImageDoc} inline; caption falls through to the doc's caption/alt. */
         public SELF image(ImageDoc doc) { content.add(new ImageSegment(doc)); return self(); }

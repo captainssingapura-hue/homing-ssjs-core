@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+        <artifactId>homing.js</artifactId>
+        <version>LOCAL-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>homing-doc-model</artifactId>
+
+    <description>
+        The document model, as data: what a doc is (identity, title, summary,
+        references) and what it is made of - markdown, the typed text grammar,
+        composed segments, rigid trees, tables, images, and the SVGs and
+        embedded widgets they point at. Pure values and functions: no ES
+        modules, no server, no viewer, no wire format.
+
+        A doc never decides how it is shown. Content is made FROM a doc by a
+        function (Function&lt;Doc, Content&gt;) - the legacy viewers' JSON is one,
+        and it lives with them in homing-studio-base. The packages are the ones
+        the model has always had, so every doc written against them compiles
+        and runs unchanged.
+
+        Depends on nothing but the ontology markers and the rigid tree (itself
+        substrate-free) - so the compiler, not a convention, keeps it pure.
+    </description>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.lang.ontology</groupId>
+            <artifactId>core</artifactId>
+            <version>0.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-rigid-tree</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>

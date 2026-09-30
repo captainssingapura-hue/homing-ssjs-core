@@ -4,7 +4,7 @@ import java.util.List;
 
 /**
  * Marker interface implemented by {@link hue.captains.singapura.js.homing.core.AppModule}s
- * that contribute typed {@link Doc}s to the studio's {@link DocRegistry}.
+ * that contribute typed {@link Doc}s to the studio's {@code DocRegistry}.
  *
  * <p>The boot-time {@code DocRegistry.from(appResolver)} walks the app closure for
  * {@code instanceof DocProvider} and unions every contributor's {@link #docs()} into a
@@ -18,6 +18,6 @@ import java.util.List;
  */
 public interface DocProvider {
 
-    /** Docs this provider contributes to the studio's {@link DocRegistry}. */
+    /** Docs this provider contributes to the studio's {@code DocRegistry}. */
     List<Doc> docs();
 }

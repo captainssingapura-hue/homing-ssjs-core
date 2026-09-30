@@ -103,8 +103,8 @@ public class DocGetAction
             current = next.get();
         }
         try {
-            String body = current.contentsRootedAt(raw, query.path());
-            return CompletableFuture.completedFuture(new DocContent(body, current.contentType()));
+            Content content = LegacyDocWire.rootedAt(raw, query.path()).apply(current);
+            return CompletableFuture.completedFuture(new DocContent(content.body(), content.mediaType()));
         } catch (Exception e) {
             return CompletableFuture.failedFuture(notFound(raw,
                     "Failed to load Doc contents: " + e.getMessage()));
