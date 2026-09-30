@@ -19,7 +19,7 @@ package hue.captains.singapura.js.homing.studio.base;
  *             for existing content; no removal date.
  */
 @Deprecated
-public interface InlineDoc extends Doc {
+public interface InlineDoc extends MarkdownSource {
 
     @Override
     String contents();

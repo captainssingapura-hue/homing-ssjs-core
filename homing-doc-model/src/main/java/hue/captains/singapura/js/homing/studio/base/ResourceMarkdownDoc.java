@@ -21,7 +21,7 @@ import java.nio.charset.StandardCharsets;
  *             path; no removal date.
  */
 @Deprecated
-public interface ResourceMarkdownDoc extends Doc {
+public interface ResourceMarkdownDoc extends MarkdownSource {
 
     /** Explicit classpath path for this Doc's bytes. */
     String resourcePath();

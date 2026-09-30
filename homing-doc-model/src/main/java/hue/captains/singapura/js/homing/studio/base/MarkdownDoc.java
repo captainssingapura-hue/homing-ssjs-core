@@ -37,7 +37,7 @@ import java.util.UUID;
  * @since homing-studio-base — markdown-in-workspace
  */
 public record MarkdownDoc(UUID uuid, String title, String summary, String category, String body)
-        implements Doc {
+        implements MarkdownSource {
 
     public MarkdownDoc {
         if (uuid == null)  throw new IllegalArgumentException("MarkdownDoc.uuid");

@@ -60,7 +60,7 @@ import java.nio.charset.StandardCharsets;
  *             This interface remains supported for existing content; no removal date.
  */
 @Deprecated
-public interface ClasspathMarkdownDoc extends Doc {
+public interface ClasspathMarkdownDoc extends MarkdownSource {
 
     /**
      * Default classpath path for this Doc's bytes: {@code docs/<package-as-path>/<SimpleName>.md}.
