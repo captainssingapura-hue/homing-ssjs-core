@@ -4,9 +4,12 @@ import hue.captains.singapura.js.homing.tree.NodeName;
 import hue.captains.singapura.js.homing.studio.base.Doc;
 import hue.captains.singapura.js.homing.studio.base.DocId;
 import hue.captains.singapura.js.homing.studio.base.NoOwnContentException;
+import hue.captains.singapura.js.homing.studio.base.Reference;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 /**
  * RFC 0042 — a rigid-tree document: {@code ComposedDoc}'s successor. Where a
@@ -37,17 +40,19 @@ public final class RigidDoc implements Doc, hue.captains.singapura.js.homing.stu
     private final String   category;
     private final DocNode  root;
     private final NodeName slug;
+    private final Supplier<List<Reference>> references;
 
     RigidDoc(UUID uuid, String summary, String category, DocNode root) {
-        this(uuid, summary, category, root, null);
+        this(uuid, summary, category, root, null, List::of);
     }
 
-    private RigidDoc(UUID uuid, String summary, String category, DocNode root, NodeName slug) {
+    private RigidDoc(UUID uuid, String summary, String category, DocNode root, NodeName slug, Supplier<List<Reference>> references) {
         this.uuid     = Objects.requireNonNull(uuid, "RigidDoc.uuid");
         this.summary  = (summary  == null) ? "" : summary;
         this.category = (category == null) ? "DOC" : category;
         this.root     = Objects.requireNonNull(root, "RigidDoc.root");
         this.slug     = slug;
+        this.references = Objects.requireNonNull(references, "RigidDoc.references");
     }
 
     /**
@@ -58,7 +63,18 @@ public final class RigidDoc implements Doc, hue.captains.singapura.js.homing.stu
      */
     public RigidDoc withSlug(NodeName authored) {
         Objects.requireNonNull(authored, "RigidDoc.withSlug(authored)");
-        return new RigidDoc(uuid, summary, category, root, authored);
+        return new RigidDoc(uuid, summary, category, root, authored, references);
+    }
+
+    /**
+     * The same doc, declaring the references it cites - each a name, and what it names. Declared
+     * lazily: the docs named are read when the references are asked for, never when this doc is
+     * made. So two docs that name each other can both be made; an eager list would read the other's
+     * constant while it is still being made, and hold null.
+     */
+    public RigidDoc withReferences(Supplier<List<Reference>> references) {
+        Objects.requireNonNull(references, "RigidDoc.withReferences(references)");
+        return new RigidDoc(uuid, summary, category, root, slug, references);
     }
 
     /** Open the leveled builder at the document root (L0). */
@@ -92,6 +108,8 @@ public final class RigidDoc implements Doc, hue.captains.singapura.js.homing.stu
     @Override public NodeName authoredSlug() { return slug; }
     @Override public String  summary()     { return summary; }
     @Override public String  category()    { return category; }
+    /** The references it declares ({@link #withReferences}), read now: none, unless it declares some. */
+    @Override public List<Reference> references() { return List.copyOf(references.get()); }
     @Override public String  kind()        { return "composed"; }   // reuses the doc-tree route
     @Override public String  contentType() { throw new NoOwnContentException(this); }
     @Override public String  fileExtension() { return ""; }

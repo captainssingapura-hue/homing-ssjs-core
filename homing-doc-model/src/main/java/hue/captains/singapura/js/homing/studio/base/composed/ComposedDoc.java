@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.studio.base.composed;
 import hue.captains.singapura.js.homing.tree.NodeName;
 import hue.captains.singapura.js.homing.studio.base.Doc;
 import hue.captains.singapura.js.homing.studio.base.DocId;
+import hue.captains.singapura.js.homing.studio.base.LazyReferences;
 import hue.captains.singapura.js.homing.studio.base.Reference;
 import hue.captains.singapura.js.homing.studio.base.NoOwnContentException;
 
@@ -42,7 +43,8 @@ import java.util.regex.Pattern;
  * @param abstractText longer prose describing the doc; shown on the detail view alongside the doc content. Defaults to {@code summary} when not separately authored, preserving today's behavior.
  * @param category     badge category (e.g. "RFC", "CASE STUDY", "DOCTRINE")
  * @param segments     ordered list of typed segments
- * @param references   typed cross-references; standard {@code [label](#ref:name)} grammar
+ * @param references   typed cross-references; standard {@code [label](#ref:name)} grammar - declared
+ *                     lazily ({@link LazyReferences}) when docs name each other
  *
  * @since RFC 0019 Phase 1; abstract/summary split added post-RFC-0034 session.
  */
@@ -79,7 +81,8 @@ public record ComposedDoc(
         // supplies one through withSlug.
         if (slug         == null) slug         = NodeName.conciseSlug(title);
         segments   = List.copyOf(segments);
-        references = List.copyOf(references);
+        // lazily declared references stay lazy: reading them now would read docs still being made
+        references = references instanceof LazyReferences ? references : List.copyOf(references);
     }
 
     /**
