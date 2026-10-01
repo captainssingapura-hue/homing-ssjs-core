@@ -101,8 +101,8 @@ function renderDocTree(opts) {
         // failure is silent: navigation to one node lands on the other. Checked
         // against what this reader minted — never getElementById, which would
         // trade the module's Owned-References property for a fact it already
-        // holds. Ids inside EMBEDDED content (an SvgSegment's source markup, a
-        // DocumentaryWidget's DOM) do not pass through here and are not covered;
+        // holds. Ids inside EMBEDDED content (an SvgSegment's source markup) do
+        // not pass through here and are not covered;
         // that belongs where they are injected. Loud, not fatal: throwing would
         // cost the reader the whole document over one bad anchor.
         var id = idOf(key);

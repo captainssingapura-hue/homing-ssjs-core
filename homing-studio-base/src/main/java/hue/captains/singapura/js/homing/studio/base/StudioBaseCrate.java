@@ -18,7 +18,6 @@ import hue.captains.singapura.js.homing.studio.base.composed.ComposedViewer;
 import hue.captains.singapura.js.homing.studio.base.composed.ComposedWidget;
 import hue.captains.singapura.js.homing.studio.base.composed.DocRefsModule;
 import hue.captains.singapura.js.homing.studio.base.composed.DocTreeWidget;
-import hue.captains.singapura.js.homing.studio.base.composed.DocumentaryWidgetSegmentRenderer;
 import hue.captains.singapura.js.homing.studio.base.composed.ImageSegmentRenderer;
 import hue.captains.singapura.js.homing.studio.base.composed.ListSegmentRenderer;
 import hue.captains.singapura.js.homing.studio.base.composed.MarkdownSegmentRenderer;
@@ -111,7 +110,6 @@ public final class StudioBaseCrate implements Crate {
                 CrateEntry.of(ComposedWidget.INSTANCE),
                 CrateEntry.of(DocTreeWidget.INSTANCE),
                 CrateEntry.of(DocRefsModule.INSTANCE),
-                CrateEntry.of(DocumentaryWidgetSegmentRenderer.INSTANCE),
                 CrateEntry.of(ImageSegmentRenderer.INSTANCE),
                 CrateEntry.of(ListSegmentRenderer.INSTANCE),
                 CrateEntry.of(MarkdownSegmentRenderer.INSTANCE),

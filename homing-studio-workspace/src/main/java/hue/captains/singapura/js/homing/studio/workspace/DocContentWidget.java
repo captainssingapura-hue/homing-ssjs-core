@@ -6,7 +6,6 @@ import hue.captains.singapura.js.homing.studio.base.composed.DocTreeRendererModu
 import hue.captains.singapura.js.homing.libs.MarkedJs;
 import hue.captains.singapura.js.homing.server.HrefManager;
 import hue.captains.singapura.js.homing.studio.base.composed.CodeSegmentRenderer;
-import hue.captains.singapura.js.homing.studio.base.composed.DocumentaryWidgetSegmentRenderer;
 import hue.captains.singapura.js.homing.studio.base.composed.ImageSegmentRenderer;
 import hue.captains.singapura.js.homing.studio.base.composed.MarkdownSegmentRenderer;
 import hue.captains.singapura.js.homing.studio.base.composed.RelationSegmentRenderer;
@@ -120,9 +119,7 @@ public final class DocContentWidget extends WorkspaceWidget<WorkspaceWidget._Non
                         new ListSegmentRenderer.renderOrderedListSegment()),
                         ListSegmentRenderer.INSTANCE),
                 new ModuleImports<>(List.of(new ParagraphSegmentRenderer.renderParagraphSegment()),
-                        ParagraphSegmentRenderer.INSTANCE),
-                new ModuleImports<>(List.of(new DocumentaryWidgetSegmentRenderer.renderDocumentaryWidgetSegment()),
-                        DocumentaryWidgetSegmentRenderer.INSTANCE));
+                        ParagraphSegmentRenderer.INSTANCE));
     }
 
     @Override
@@ -181,8 +178,6 @@ public final class DocContentWidget extends WorkspaceWidget<WorkspaceWidget._Non
                 "            case 'ulist':    renderUnorderedListSegment(segBranch, host, seg, ctx); break;",
                 "            case 'olist':    renderOrderedListSegment(segBranch, host, seg, ctx); break;",
                 "            case 'paragraph': renderParagraphSegment(segBranch, host, seg, ctx); break;",
-                "            case 'documentary-widget':",
-                "                             renderDocumentaryWidgetSegment(segBranch, host, seg, ctx); break;",
                 "            default:",
                 "                var unk = segBranch.createElement('unknown', 'div');",
                 "                css.addClass(unk, st_error);",

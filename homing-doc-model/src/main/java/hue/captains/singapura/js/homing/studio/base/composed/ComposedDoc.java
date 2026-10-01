@@ -143,8 +143,8 @@ public record ComposedDoc(
     /**
      * Leveled-tree descent — given the local identifier for the next level
      * (a string parsed as an integer segment index), return the embedded
-     * sub-doc at that segment. Markdown / Text / Code / Relation /
-     * embedded segments have no embedded Doc and yield empty.
+     * sub-doc at that segment. Markdown / Text / Code / Relation segments
+     * have no embedded Doc and yield empty.
      *
      * <p>The framework's {@code /doc?id=<root>&l1=...&l2=...} walker calls
      * this for each {@code lN} value in sequence. ComposedSegment yields
@@ -257,12 +257,6 @@ public record ComposedDoc(
                 }
                 case RelationSegment rs -> {
                     rs.caption().ifPresent(cap -> out.add(new TocEntry(2, cap.raw(), anchor)));
-                }
-                case EmbeddedSegment w -> {
-                    String cap = w.resolvedCaption();
-                    if (!cap.isBlank()) {
-                        out.add(new TocEntry(2, cap, anchor));
-                    }
                 }
             }
             segIndex++;

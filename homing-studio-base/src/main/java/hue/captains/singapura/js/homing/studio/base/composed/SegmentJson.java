@@ -135,17 +135,6 @@ final class SegmentJson {
                 sb.append("\"composedUrl\":")  .append(ComposedDocJson.jstr(resourceUrl.apply(s))).append(',');
                 sb.append("\"composedDocId\":").append(ComposedDocJson.jstr(cd.doc().uuid().toString()));
             }
-            case DocumentaryWidget<?, ?> w -> {
-                sb.append("\"kind\":\"documentary-widget\",");
-                sb.append("\"anchor\":") .append(ComposedDocJson.jstr(anchor)).append(',');
-                sb.append("\"caption\":").append(ComposedDocJson.jstr(w.resolvedCaption())).append(',');
-                sb.append("\"moduleUrl\":")
-                  .append(ComposedDocJson.jstr("/module?class=" + w.widget().getClass().getCanonicalName())).append(',');
-                sb.append("\"params\":");
-                ComposedDocJson.appendParamsJson(sb, w.params());
-            }
-            case EmbeddedSegment e -> throw new IllegalStateException(
-                    "The legacy composed viewer has no wire shape for " + e.getClass().getName());
         }
         sb.append('}');
     }

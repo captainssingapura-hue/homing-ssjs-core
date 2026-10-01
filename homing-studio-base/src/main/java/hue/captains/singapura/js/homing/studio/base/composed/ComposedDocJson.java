@@ -147,25 +147,6 @@ public final class ComposedDocJson {
                     sb.append("\"composedUrl\":")  .append(jstr(buildLeveledUrl(rootId, pathPrefix, segIndex))).append(',');
                     sb.append("\"composedDocId\":").append(jstr(cd.doc().uuid().toString()));
                 }
-                case DocumentaryWidget<?, ?> w -> {
-                    sb.append("\"kind\":\"documentary-widget\",");
-                    sb.append("\"anchor\":")    .append(jstr("seg-" + segIndex)).append(',');
-                    sb.append("\"caption\":")   .append(jstr(w.resolvedCaption())).append(',');
-                    // Typed module URL — the wrapped AppModule's JS module.
-                    // Identical for every instance of the same widget *type*; the
-                    // browser caches once. Per-instance variation flows through
-                    // `params` below, not through the URL.
-                    sb.append("\"moduleUrl\":")
-                      .append(jstr("/module?class=" + w.widget().getClass().getCanonicalName())).append(',');
-                    // Typed Params, serialised as a JSON object via record-component
-                    // reflection. Passed to appMain at call site, not encoded in URL
-                    // — the EsModule stays cacheable; param shape varies per segment.
-                    sb.append("\"params\":");
-                    appendParamsJson(sb, w.params());
-                }
-                // An embed only the studio could name: DocumentaryWidget is the one with a wire shape.
-                case EmbeddedSegment e -> throw new IllegalStateException(
-                        "The legacy composed viewer has no wire shape for " + e.getClass().getName());
             }
             sb.append('}');
             segIndex++;
@@ -285,70 +266,6 @@ public final class ComposedDocJson {
     // -----------------------------------------------------------------------
     // JSON string escaping
     // -----------------------------------------------------------------------
-
-    // -----------------------------------------------------------------------
-    // DocumentaryWidget params → JSON. Reflects over the record's components;
-    // each component becomes a key in the emitted object. Supports the same
-    // scalar types ParamsWriter handles for the URL-derived case: String,
-    // boxed/unboxed numerics, boolean, enum (emitted as name), Optional<T>
-    // (emitted as null when empty), List<T> (emitted as array). Other shapes
-    // throw at request time — the caller is constructing the segment in code
-    // anyway, so the failure is loud and immediate.
-    // -----------------------------------------------------------------------
-
-    static void appendParamsJson(StringBuilder sb, Object params) {
-        if (params == null) { sb.append("null"); return; }
-        var cls = params.getClass();
-        if (cls.getRecordComponents() == null) {
-            // _None or non-record — emit empty object
-            sb.append("{}");
-            return;
-        }
-        var components = cls.getRecordComponents();
-        sb.append('{');
-        boolean first = true;
-        for (var rc : components) {
-            if (!first) sb.append(',');
-            first = false;
-            sb.append(jstr(rc.getName())).append(':');
-            try {
-                Object value = rc.getAccessor().invoke(params);
-                appendParamValue(sb, value);
-            } catch (ReflectiveOperationException e) {
-                throw new IllegalStateException(
-                        "Failed reading DocumentaryWidget params component "
-                                + rc.getName() + " on " + cls.getName(), e);
-            }
-        }
-        sb.append('}');
-    }
-
-    private static void appendParamValue(StringBuilder sb, Object v) {
-        if (v == null) { sb.append("null"); return; }
-        if (v instanceof String s)               { sb.append(jstr(s)); return; }
-        if (v instanceof Boolean b)              { sb.append(b ? "true" : "false"); return; }
-        if (v instanceof Number n)               { sb.append(n.toString()); return; }
-        if (v instanceof Enum<?> e)              { sb.append(jstr(e.name())); return; }
-        if (v instanceof java.util.Optional<?> o) {
-            if (o.isEmpty()) { sb.append("null"); return; }
-            appendParamValue(sb, o.get());
-            return;
-        }
-        if (v instanceof java.util.List<?> list) {
-            sb.append('[');
-            boolean first = true;
-            for (var item : list) {
-                if (!first) sb.append(',');
-                first = false;
-                appendParamValue(sb, item);
-            }
-            sb.append(']');
-            return;
-        }
-        throw new IllegalStateException(
-                "Unsupported DocumentaryWidget param value type: "
-                        + v.getClass().getName() + " (value=" + v + ")");
-    }
 
     static void appendStringList(StringBuilder sb, List<String> items) {
         sb.append('[');

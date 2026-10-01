@@ -168,7 +168,6 @@ public final class ComposedDocNormalizer implements TreeNormalizer<ComposedDoc> 
             case TableSegment tb   -> tb.resolvedCaption();
             case ImageSegment im   -> im.resolvedCaption();
             case ComposedSegment cs -> cs.resolvedCaption();
-            case EmbeddedSegment w -> "";
         };
         return (l == null || l.isBlank()) ? kindOf(s) : l;
     }
@@ -187,7 +186,6 @@ public final class ComposedDocNormalizer implements TreeNormalizer<ComposedDoc> 
             case TableSegment tb   -> "table";
             case ImageSegment im   -> "image";
             case ComposedSegment cs -> "composed";
-            case EmbeddedSegment w -> "widget";
         };
     }
 }

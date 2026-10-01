@@ -38,14 +38,13 @@ import hue.captains.singapura.tao.ontology.ValueObject;
  *
  * <p><b>Sub-hierarchy:</b> the inline content kinds are grouped under
  * {@link RigidSegment} (the subset a {@code RigidDoc} node may hold);
- * {@link ComposedSegment} (doc-in-doc graft) and {@link EmbeddedSegment}
- * (embedded interactive widget) sit directly under {@code Segment} and are
- * valid only in a flat {@link ComposedDoc}, not a RigidDoc.</p>
+ * {@link ComposedSegment} (doc-in-doc graft) sits directly under {@code Segment} and is
+ * valid only in a flat {@link ComposedDoc}, not a RigidDoc. An app embedded in a doc is no
+ * segment: what is interactive is a workspace widget, outside the document model.</p>
  *
  * @since RFC 0019 Phase 1 (extended Phase 3 with table + image variants)
  */
 public sealed interface Segment extends ValueObject
         permits RigidSegment,
-                ComposedSegment,
-                EmbeddedSegment {
+                ComposedSegment {
 }

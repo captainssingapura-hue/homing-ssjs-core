@@ -90,8 +90,6 @@ public final class DocTreeWidget extends DocWidget<DocTreeWidget.Params, DocTree
                         ListSegmentRenderer.INSTANCE),
                 new ModuleImports<>(List.of(new ParagraphSegmentRenderer.renderParagraphSegment()),
                         ParagraphSegmentRenderer.INSTANCE),
-                new ModuleImports<>(List.of(new DocumentaryWidgetSegmentRenderer.renderDocumentaryWidgetSegment()),
-                        DocumentaryWidgetSegmentRenderer.INSTANCE),
                 new ModuleImports<>(List.of(new DocRefsModule.attachDocRefs()),
                         DocRefsModule.INSTANCE),
                 new ModuleImports<>(List.of(
@@ -182,8 +180,6 @@ public final class DocTreeWidget extends DocWidget<DocTreeWidget.Params, DocTree
                 "            case 'ulist':    renderUnorderedListSegment(segBranch, host, seg, ctx); break;",
                 "            case 'olist':    renderOrderedListSegment(segBranch, host, seg, ctx); break;",
                 "            case 'paragraph': renderParagraphSegment(segBranch, host, seg, ctx); break;",
-                "            case 'documentary-widget':",
-                "                             renderDocumentaryWidgetSegment(segBranch, host, seg, ctx); break;",
                 "            default:",
                 "                var unk = segBranch.createElement('unknown', 'div');",
                 "                css.addClass(unk, st_error);",
