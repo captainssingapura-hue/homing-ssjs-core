@@ -1,0 +1,29 @@
+# Core's baseline: the debt its crates on the new stack carry - the core.js and server lines
+# of the old conformance studio's ledger. Fixing debt means removing its line.
+hue.captains.singapura.js.homing.core.js.DomOpsPartyBaseModule [use-dom-ops-party] raw DOM factory (use branch.createElement via the DomOpsParty, not document.create*): const el = document.createElement(tagName);
+hue.captains.singapura.js.homing.core.js.DomOpsPartyModule [exports-are-classes] exported function 'viewParty' — a component is a class: const viewParty = () => domOpsParty.snapshot();
+hue.captains.singapura.js.homing.core.js.NodeContentModule [exports-are-classes] exported function 'NodeContent' — a component is a class: function NodeContent(bundle) {
+hue.captains.singapura.js.homing.core.js.ServingContextModule [exports-are-classes] exported function 'servingContext' — a component is a class: function servingContext() {
+hue.captains.singapura.js.homing.core.js.ServingContextModule [exports-are-classes] exported function 'withServingContext' — a component is a class: function withServingContext(url) {
+hue.captains.singapura.js.homing.core.js.TreeRendererModule [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): badge.style.cssText = "flex:0 0 auto;font-size:10px;letter-spacing:.06em;"
+hue.captains.singapura.js.homing.core.js.TreeRendererModule [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): blurb.style.cssText = "flex:1 1 0;white-space:nowrap;overflow:hidden;"
+hue.captains.singapura.js.homing.core.js.TreeRendererModule [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): caret.style.cssText = 'width:21px;display:inline-block;color:#888;font-size:18px;flex:0 0 auto;';
+hue.captains.singapura.js.homing.core.js.TreeRendererModule [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): entry.kidsEl.style.display = expanded ? 'block' : 'none';
+hue.captains.singapura.js.homing.core.js.TreeRendererModule [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): entry.rowEl.style.background = 'rgba(59,130,246,0.20)';
+hue.captains.singapura.js.homing.core.js.TreeRendererModule [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): if (self._selectedEntry !== entry) row.style.background = '';
+hue.captains.singapura.js.homing.core.js.TreeRendererModule [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): if (self._selectedEntry !== entry) row.style.background = 'rgba(0,0,0,0.05)';
+hue.captains.singapura.js.homing.core.js.TreeRendererModule [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): label.style.cssText = 'flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+hue.captains.singapura.js.homing.core.js.TreeRendererModule [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): label.style.cssText = (this._showNote ? "flex:0 1 auto;" : "flex:1;")
+hue.captains.singapura.js.homing.core.js.TreeRendererModule [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): row.style.cssText = 'display:flex;align-items:center;gap:6px;padding:3px 6px;'
+hue.captains.singapura.js.homing.core.js.TreeRendererModule [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): this._selectedEntry.rowEl.style.background = '';
+hue.captains.singapura.js.homing.core.js.TreeRendererModule [no-literal-color] literal colour (use a theme token var(--...), not a baked hex/rgb): + "text-overflow:ellipsis;color:#888;font-size:12px;";
+hue.captains.singapura.js.homing.core.js.TreeRendererModule [no-literal-color] literal colour (use a theme token var(--...), not a baked hex/rgb): + "text-transform:uppercase;color:#888;";
+hue.captains.singapura.js.homing.core.js.TreeRendererModule [no-literal-color] literal colour (use a theme token var(--...), not a baked hex/rgb): caret.style.cssText = 'width:21px;display:inline-block;color:#888;font-size:18px;flex:0 0 auto;';
+hue.captains.singapura.js.homing.core.js.TreeRendererModule [no-literal-color] literal colour (use a theme token var(--...), not a baked hex/rgb): entry.rowEl.style.background = 'rgba(59,130,246,0.20)';
+hue.captains.singapura.js.homing.core.js.TreeRendererModule [no-literal-color] literal colour (use a theme token var(--...), not a baked hex/rgb): if (self._selectedEntry !== entry) row.style.background = 'rgba(0,0,0,0.05)';
+hue.captains.singapura.js.homing.core.js.TreeRendererModule [no-raw-href] raw href operation (use href.* API): label.setAttribute('href', this._hrefForPath(path, namePath) || '#');
+hue.captains.singapura.js.homing.server.CssClassManager [use-dom-ops-party] raw DOM factory (use branch.createElement via the DomOpsParty, not document.create*): const link = document.createElement("link");
+hue.captains.singapura.js.homing.server.CssDependencyGraph [exports-are-classes] exported function 'createCssDependencyGraph' — a component is a class: function createCssDependencyGraph() {
+hue.captains.singapura.js.homing.server.CssLoadProcedure [exports-are-classes] exported function 'createCssLoadProcedure' — a component is a class: function createCssLoadProcedure(graph, appendLink, hrefFor, notify) {
+hue.captains.singapura.js.homing.server.HrefManager [no-raw-css] raw CSS operation (use css.* API): if (opts.className != null) a.className = opts.className;
+hue.captains.singapura.js.homing.server.HrefManager [use-dom-ops-party] raw DOM factory (use branch.createElement via the DomOpsParty, not document.create*): const a = document.createElement("a");

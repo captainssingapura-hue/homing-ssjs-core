@@ -118,7 +118,9 @@
              Sits ABOVE the workspace stack (which is a strict downstream of
              studio-base), so it's the correct home for the assembly defaults. -->
         <module>homing-studio-starter</module>
-        <module>homing-conformance-studio</module>
+        <!-- Core's own conformance: the gate, and the report exported into its jar for the
+             studio repo's studio (8090) to show. Headless. -->
+        <module>homing-conformance-self</module>
         <!-- Pure-JS test fixtures (GraalVM Polyglot + JUnit harness). Lives
              at the substrate position so japjs's own tests and every
              downstream consumer (homing-demo, homing-self-studio, public
