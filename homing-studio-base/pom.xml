@@ -43,6 +43,12 @@
             <artifactId>homing-plan-model</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+        <!-- An SVG asset as a doc (SvgDoc), in its own module so viewers past the old stack can show it. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-svg-doc</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
         <dependency>
             <groupId>io.github.captainssingapura-hue.homing.js</groupId>
             <artifactId>homing-server</artifactId>
