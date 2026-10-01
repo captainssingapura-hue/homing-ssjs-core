@@ -35,6 +35,14 @@
             <artifactId>homing-doc-model</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+        <!-- The plan model, as data (Plan, its phases, decisions, acceptance).
+             The same packages it always had; the legacy plan host and its JSON
+             stay here. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-plan-model</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
         <dependency>
             <groupId>io.github.captainssingapura-hue.homing.js</groupId>
             <artifactId>homing-server</artifactId>
