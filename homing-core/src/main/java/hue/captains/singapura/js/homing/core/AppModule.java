@@ -5,8 +5,12 @@ import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 /**
  * An EsModule that serves as the entry point of a single-page application.
  * <p>By convention, an AppModule exports a function named {@code appMain}
- * that accepts a root DOM element. The generated HTML scaffold imports
- * and invokes this function automatically.</p>
+ * that accepts a root DOM element and the params: {@code appMain(el, params)}.
+ * The generated HTML scaffold imports and invokes this function
+ * automatically. Under the standard MPA the params carry, beside what the
+ * app declared, what is the page's: {@code params.keyboard}, the page's
+ * keyboard steward, one per document, which the app hands to every
+ * component of its own that takes keys.</p>
  *
  * <p>As of RFC 0001, AppModule is also a {@link Linkable} — every AppModule
  * has a {@link #simpleName()} (defaulting to a kebab-case derivation of its

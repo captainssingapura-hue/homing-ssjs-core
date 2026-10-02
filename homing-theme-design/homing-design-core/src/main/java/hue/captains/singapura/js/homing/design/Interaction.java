@@ -18,7 +18,16 @@ public interface Interaction extends Semantic {
     record Interactive() implements Interaction {}
 
     /** A row, a cell, an option, a tile: one of many, flat until it is hovered, selected, current or highlighted. */
-    record Selectable() implements Interaction {}
+    record Selectable() implements Interaction {
+        /**
+         * A tab: a selectable that is seen at rest. A row lies on a surface
+         * and is nothing until touched; a tab sits on a strip among its
+         * fellows and must read as a thing before it is touched — so at rest
+         * it is tinted and edged as the selectable is when hovered, only not
+         * lifted, and every other state is the selectable's.
+         */
+        public record Tab() implements Interaction {}
+    }
 
     record Selected() implements Interaction {}
 

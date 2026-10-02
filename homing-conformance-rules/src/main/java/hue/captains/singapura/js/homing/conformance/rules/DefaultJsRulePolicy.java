@@ -50,7 +50,8 @@ public record DefaultJsRulePolicy() implements JsRulePolicy {
      * The full <b>DOM-owner</b> discipline, shared by {@code CONSUMER} and
      * {@code PRIMITIVE}: DOM ownership plus typed css, no inline styling / literal
      * colour / SVG presentation attributes, owned DOM construction (DomOpsParty),
-     * the href manager, no import redeclaration, and the pure-view doctrines.
+     * the href manager, no import redeclaration, the pure-view doctrines, and
+     * the keys through the party — no key listener of a module's own.
      *
      * <p>A consumer view and a structural primitive both <b>build and style
      * DOM</b>, so both owe the same static discipline — otherwise styling simply
@@ -60,6 +61,7 @@ public record DefaultJsRulePolicy() implements JsRulePolicy {
      * is doctrine rather than a rule.</p>
      */
     public static final List<JsRule> DOM_OWNER_DISCIPLINE = concat(DOM_DISCIPLINE,
+            ExportsAreClassesRule.INSTANCE,
             NoRawCssRule.INSTANCE,
             NoInlineStyleRule.INSTANCE,
             NoLiteralColorRule.INSTANCE,
@@ -67,11 +69,21 @@ public record DefaultJsRulePolicy() implements JsRulePolicy {
             UseDomOpsPartyRule.INSTANCE,
             NoRawHrefRule.INSTANCE,
             NoManagerRedeclarationRule.INSTANCE,
-            ViewDoctrineRule.INSTANCE);
+            ViewDoctrineRule.INSTANCE,
+            KeysThroughThePartyRule.INSTANCE);
 
     /** No-DOM modules: global + may-not-touch-the-DOM-at-all — the <b>headless lane</b>. */
     public static final List<JsRule> NO_DOM = concat(GLOBAL,
             NoDomAccessRule.INSTANCE);
+
+    /**
+     * Pure logic that is not a secretary: headless, and its exports are classes
+     * or data — a vocabulary of events, a codec — never a bag of functions. A
+     * secretary is the one headless module whose export is a function by
+     * doctrine (a reducer body), so it keeps the headless lane alone.
+     */
+    public static final List<JsRule> PURE_LOGIC_DISCIPLINE = concat(NO_DOM,
+            ExportsAreClassesRule.INSTANCE);
 
     private static final JsRuleSet CONSUMER =
             new JsRuleSet(new RuleSetId("consumer"), "Consumer", DOM_OWNER_DISCIPLINE);
@@ -80,7 +92,7 @@ public record DefaultJsRulePolicy() implements JsRulePolicy {
     private static final JsRuleSet SECRETARY =
             new JsRuleSet(new RuleSetId("secretary"), "Secretary", NO_DOM);
     private static final JsRuleSet PURE_LOGIC =
-            new JsRuleSet(new RuleSetId("pure-logic"), "Pure logic", NO_DOM);
+            new JsRuleSet(new RuleSetId("pure-logic"), "Pure logic", PURE_LOGIC_DISCIPLINE);
     private static final JsRuleSet MANAGER_INJECTOR =
             new JsRuleSet(new RuleSetId("manager-injector"), "ManagerInjector", GLOBAL);
     private static final JsRuleSet GENERATED_CSS =

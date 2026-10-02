@@ -17,6 +17,14 @@
             <artifactId>homing-core</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+        <!-- RFC 0066 E3 - the client runtime (CSS manager, href manager, steward)
+             and ServerCrate live in the component base now, same package, same
+             names; the server injects and serves them from there. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-component-base</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
         <dependency>
             <groupId>io.github.captainssingapura-hue.tong.ja-http</groupId>
             <artifactId>vertx-host</artifactId>

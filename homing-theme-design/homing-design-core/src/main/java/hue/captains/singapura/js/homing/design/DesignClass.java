@@ -40,6 +40,13 @@ public record DesignClass<T extends Target & CssGroup<T>>(Class<? extends Semant
     /** {@code <semantic>-<branch>-<leaf>}: the class token on the element and the stem of every variable. */
     @Override public String cssName() { return Trees.semanticToken(semantic) + "-" + Trees.targetToken(target); }
 
+    /** This pair and the same target under each parent of the word, most precise first — the order a deployment asks a design in. */
+    public java.util.List<DesignClass<T>> lineage() {
+        var out = new java.util.ArrayList<DesignClass<T>>();
+        for (Class<?> word : Trees.lineage(semantic)) out.add(word == semantic ? this : new DesignClass<>(word.asSubclass(Semantic.class), target));
+        return out;
+    }
+
     /** The group is the target: virtual, and derived from the pair. */
     @Override public CssGroup<?> group() { return targetLeaf(); }
 

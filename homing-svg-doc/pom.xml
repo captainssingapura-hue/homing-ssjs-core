@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+        <artifactId>homing.js</artifactId>
+        <version>LOCAL-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>homing-svg-doc</artifactId>
+
+    <description>
+        An SVG asset as a doc: SvgDoc, the doc model's SvgSource whose markup is a typed SVG
+        group's resource. It cannot live in the pure doc model, which must not know the
+        ES-module layer's SVG groups, so it lives here, between the two - and not in the old
+        stack, so any viewer can show it: DocView draws it inline wherever a segment holds it.
+
+        The package is the one it always had, so every doc written against it compiles
+        unchanged.
+    </description>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <!-- The doc model: Doc, SvgSource. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-doc-model</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <!-- The typed SVG groups an SvgDoc's markup is read from. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-core</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+    </dependencies>
+
+</project>

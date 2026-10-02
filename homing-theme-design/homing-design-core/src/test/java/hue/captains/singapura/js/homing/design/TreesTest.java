@@ -72,6 +72,7 @@ class TreesTest {
 
     /** Two branches on one leaf. */
     record TwoBranches() implements Feedback, Emphasis {}
+    record OffBranch() implements Feedback { record Refined() implements Emphasis {} }
 
     @Test
     void theGuardsRefuse() {
@@ -79,6 +80,19 @@ class TreesTest {
         assertTrue(e1.getMessage().contains("leaf"), e1.getMessage());
         var e2 = assertThrows(IllegalArgumentException.class, () -> DesignClass.of(TwoBranches.class, Target.Color.Ink.class));
         assertTrue(e2.getMessage().contains("exactly one branch"), e2.getMessage());
+        var e3 = assertThrows(IllegalArgumentException.class, () -> DesignClass.of(OffBranch.Refined.class, Target.Color.Ink.class));
+        assertTrue(e3.getMessage().contains("stays on its parent's branch"), e3.getMessage());
+    }
+
+    /** A leaf nested in a leaf refines it: the token is the path, the lineage climbs to the top, and a top word has no parent. */
+    @Test
+    void aRefinement_isItsPath() {
+        assertEquals("control-button-base", Trees.semanticToken(Box.Control.Button.Base.class));
+        assertEquals("control-button", Trees.semanticToken(Box.Control.Button.class));
+        assertEquals("control", Trees.semanticToken(Box.Control.class));
+        assertEquals(List.of(Box.Control.Button.Base.class, Box.Control.Button.class, Box.Control.class), Trees.lineage(Box.Control.Button.Base.class));
+        assertEquals(null, Trees.parentOf(Box.Control.class));
+        assertEquals(Box.class, Trees.branchOf(Box.Control.Button.Base.class));
     }
 
     @Test

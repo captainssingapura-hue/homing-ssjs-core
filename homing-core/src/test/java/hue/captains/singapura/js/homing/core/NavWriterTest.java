@@ -146,17 +146,15 @@ class NavWriterTest {
     }
 
     @Test
-    @DisplayName("theme/locale propagation appears in the helper")
-    void themePropagation() {
+    @DisplayName("the helper writes what the caller passed and stamps nothing (RFC 0064 D20)")
+    void stampsNothing() {
         var imports = ImportsFor.<TargetA>builder()
                 .add(new ModuleImports<>(List.of(new TargetA.link()), TargetA.INSTANCE))
                 .build();
         var joined = String.join("\n", new NavWriter(imports.getAllImports()).write());
-        assertTrue(joined.contains("here.get(\"theme\")"), joined);
-        assertTrue(joined.contains("here.get(\"locale\")"), joined);
-        // and the override-wins logic
-        assertTrue(joined.contains("params.theme  == null"), joined);
-        assertTrue(joined.contains("params.locale == null"), joined);
+        assertFalse(joined.contains("window.location"), "the page's own address is not read: " + joined);
+        assertFalse(joined.contains("theme"), "no theme carried over: " + joined);
+        assertFalse(joined.contains("locale"), "no locale carried over: " + joined);
     }
 
     @Test

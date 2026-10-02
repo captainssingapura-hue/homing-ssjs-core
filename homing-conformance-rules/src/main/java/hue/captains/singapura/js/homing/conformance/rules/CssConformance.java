@@ -52,7 +52,7 @@ import java.util.regex.Pattern;
  *   <tr><td>{@code css-no-shadowing}</td><td>2</td>
  *       <td>a provision binding a token in a declared family its palette does not declare</td></tr>
  *   <tr><td>{@code css-token-declared}</td><td>1</td>
- *       <td>a body reading a token no palette the class reaches declares, unless the class names it in {@code runtimeVars()}</td></tr>
+ *       <td>a body reading a token no palette the class reaches declares, unless the class names it in {@code runtimeVars()} or the token is a design word it wears or {@code reads()}</td></tr>
  *   <tr><td>{@code css-prior-is-palette}</td><td>—</td>
  *       <td>a prior that holds no {@link PaletteClass}, or that declares dependencies</td></tr>
  *   <tr><td>{@code css-nested-reference-declared}</td><td>4</td>
@@ -241,6 +241,7 @@ public final class CssConformance {
                 while (m.find()) {
                     CssVar v = new CssVar(m.group(1));
                     if (c.runtimeVars().contains(v)) continue;
+                    if (readsWord(c, v)) continue;                  // a design word the class wears or reads: its binding is emitted with the pair
                     if (reachable == null) reachable = g.reachableTokens(group);
                     if (!reachable.contains(v)) undeclared.add(v.name());
                 }

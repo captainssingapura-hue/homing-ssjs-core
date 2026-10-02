@@ -45,13 +45,24 @@ public sealed interface Target permits
 
     default Carrier carrier() { return Carrier.CSS; }
 
+    /**
+     * The pseudo-element the leaf's properties are written on, or null for
+     * the element itself: {@code Type.Glyph} writes {@code content} on
+     * {@code ::before}, since content paints nowhere else.
+     */
+    default String pseudo() { return null; }
+
     /** {@code branch-leaf}, from the type. */
     default String token() { return Trees.targetToken(getClass()); }
 
     // ── helpers for the leaves ────────────────────────────────────────────
     Set<State> REST_ONLY    = EnumSet.of(State.REST);
     Set<State> INTERACTIVE  = EnumSet.of(State.REST, State.HOVER, State.ACTIVE, State.FOCUS, State.DISABLED,
-                                         State.SELECTED, State.CURRENT, State.CHECKED, State.INVALID, State.EXPANDED, State.HIGHLIGHTED);
+                                         State.SELECTED, State.CURRENT, State.CHECKED, State.INVALID, State.EXPANDED, State.HIGHLIGHTED,
+                                         State.CANDIDATE, State.LENT, State.HELD,
+                                         // the physical register: a design answers depth in whatever plane it honestly
+                                         // uses for it - the shadow usually, a lit rim, a step of tone - or in none
+                                         State.ELEVATED, State.SUNKEN);
     Set<State> POINTER      = EnumSet.of(State.REST, State.HOVER, State.ACTIVE, State.FOCUS, State.DISABLED);
 
     // ═════════════════════════════════════════════════════════════════════
@@ -140,11 +151,12 @@ public sealed interface Target permits
     // ═════════════════════════════════════════════════════════════════════
     //  Size — density; the space a design owns inside and between
     // ═════════════════════════════════════════════════════════════════════
-    sealed interface Size extends Target permits Size.Inset, Size.Gap, Size.Extent {
+    sealed interface Size extends Target permits Size.Inset, Size.Gap, Size.Extent, Size.Proportion {
+        /** The air inside a box — block and inline, each one length, so each can grow with the element's size. */
         record Inset() implements Size, CssGroup<Inset> {
             public static final Inset INSTANCE = new Inset();
             @Override public List<CssClass<Inset>> cssClasses() { return List.of(); }
-            @Override public Set<String> properties() { return Set.of("padding"); }
+            @Override public Set<String> properties() { return Set.of("padding-block", "padding-inline"); }
             @Override public Set<State> states() { return REST_ONLY; }
         }
         record Gap() implements Size, CssGroup<Gap> {
@@ -153,11 +165,28 @@ public sealed interface Target permits
             @Override public Set<String> properties() { return Set.of("gap"); }
             @Override public Set<State> states() { return REST_ONLY; }
         }
-        /** The minimum a control or a row must be to be usable — a design's density, not a layout's size. */
+        /**
+         * The extent of a box: the least a control or a row must be to be
+         * usable, or — for a box whose measure is its own, a card — the
+         * measure itself. A design's density, not a layout's size; a host may
+         * cap it, never stretch it.
+         */
         record Extent() implements Size, CssGroup<Extent> {
             public static final Extent INSTANCE = new Extent();
             @Override public List<CssClass<Extent>> cssClasses() { return List.of(); }
-            @Override public Set<String> properties() { return Set.of("min-height", "min-width"); }
+            @Override public Set<String> properties() { return Set.of("min-height", "min-width", "inline-size", "block-size"); }
+            @Override public Set<State> states() { return REST_ONLY; }
+        }
+        /**
+         * The proportion of a box whose measure is its own, not its content's
+         * — a card: its inline size is its host's, its block size follows from
+         * this, and what is inside fits the box. A design's: an index card,
+         * a square tile, a wide plate.
+         */
+        record Proportion() implements Size, CssGroup<Proportion> {
+            public static final Proportion INSTANCE = new Proportion();
+            @Override public List<CssClass<Proportion>> cssClasses() { return List.of(); }
+            @Override public Set<String> properties() { return Set.of("aspect-ratio"); }
             @Override public Set<State> states() { return REST_ONLY; }
         }
     }
@@ -165,7 +194,7 @@ public sealed interface Target permits
     // ═════════════════════════════════════════════════════════════════════
     //  Type — how text is set
     // ═════════════════════════════════════════════════════════════════════
-    sealed interface Type extends Target permits Type.Face, Type.Weight, Type.Scale, Type.Treatment, Type.Decoration {
+    sealed interface Type extends Target permits Type.Face, Type.Weight, Type.Scale, Type.Treatment, Type.Decoration, Type.Glyph {
         record Face() implements Type, CssGroup<Face> {
             public static final Face INSTANCE = new Face();
             @Override public List<CssClass<Face>> cssClasses() { return List.of(); }
@@ -197,6 +226,19 @@ public sealed interface Target permits
             @Override public List<CssClass<Decoration>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("text-decoration-line", "text-decoration-style", "text-decoration-thickness", "text-underline-offset", "text-shadow"); }   // a glow or a relief is a decoration of the letters too
             @Override public Set<State> states() { return POINTER; }
+        }
+        /**
+         * The glyph a mark shows for a meaning — an {@link Icon} word's
+         * picture: {@code content} on {@code ::before}, a symbol, an emoji or a
+         * {@code url()}. The element that wears it is the mark; what it says is
+         * the design's.
+         */
+        record Glyph() implements Type, CssGroup<Glyph> {
+            public static final Glyph INSTANCE = new Glyph();
+            @Override public List<CssClass<Glyph>> cssClasses() { return List.of(); }
+            @Override public Set<String> properties() { return Set.of("content"); }
+            @Override public Set<State> states() { return INTERACTIVE; }
+            @Override public String pseudo() { return "::before"; }
         }
     }
 

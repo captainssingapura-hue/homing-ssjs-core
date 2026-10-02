@@ -19,10 +19,13 @@ import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
  *
  * <p>Two guards the open side does not get from the compiler, both checked
  * by {@link Trees}: a coordinate must be a leaf (a record), and a leaf must
- * have exactly one branch.</p>
+ * have exactly one branch. A leaf nested in a leaf <i>refines</i> it — the
+ * same branch, a more precise meaning — and its token is the path from the
+ * outermost leaf down ({@code control-button-base}); a deployment resolves
+ * a refined word by walking up to the first level a design answers.</p>
  */
 public interface Semantic extends StatelessFunctionalObject {
 
-    /** The leaf's token: its simple name in kebab case ({@code OnDanger} → {@code on-danger}). */
+    /** The leaf's token: its simple name in kebab case ({@code OnDanger} → {@code on-danger}); for a refinement, the path ({@code control-button-base}). */
     default String token() { return Trees.semanticToken(getClass()); }
 }

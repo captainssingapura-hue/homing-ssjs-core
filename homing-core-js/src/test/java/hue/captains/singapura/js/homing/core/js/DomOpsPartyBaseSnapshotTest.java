@@ -59,7 +59,7 @@ class DomOpsPartyBaseSnapshotTest extends JsModuleTestBase {
     private Value tree() {
         return js.eval("js", """
             (() => {
-                const root = new DomOpsParty('root');
+                const root = domOpsParties.mobile('root');   // a party of its own, beside the page's
                 root.activate(root, 'partyChief');               // the root owns itself
                 const nav = root.createBranch('nav');
                 globalThis.__navOwner = Object.freeze({ toString: () => 'shell:nav' });
@@ -185,7 +185,7 @@ class DomOpsPartyBaseSnapshotTest extends JsModuleTestBase {
     void theLabelCanBeGivenExplicitlySoARealOwnerCanBePassed() {
         Value b = js.eval("js", """
             (() => {
-                const root = new DomOpsParty('root');
+                const root = domOpsParties.mobile('root');   // a party of its own, beside the page's
                 root.activate(root, 'partyChief');
                 const tabLike = { id: 'tab:7', title: 'Blotter' };   // no useful toString
                 globalThis.__tab = tabLike;                            // retained, like MTP would

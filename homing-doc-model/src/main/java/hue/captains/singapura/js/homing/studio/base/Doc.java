@@ -1,0 +1,190 @@
+package hue.captains.singapura.js.homing.studio.base;
+
+import hue.captains.singapura.tao.ontology.Immutable;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+/**
+ * A typed reference to a document — markdown, HTML, plain text, JSON, or any other
+ * text-based format the studio reader / browser knows how to display.
+ *
+ * <p>Per <a href="../../../../../../../../../../docs/rfcs/0004-typed-docs-and-doc-visibility.md">
+ * RFC 0004</a>, every Doc is identified by a {@link UUID} (the wire identity, stable across
+ * Java renames and file moves) and provides its own bytes via {@link #contents()}. The framework
+ * never reaches outside the Doc to load anything; the Doc owns its sourcing.</p>
+ *
+ * <p>Most Docs are static markdown shipped on the classpath next to their record class. Use
+ * {@link ClasspathMarkdownDoc} for the dominant case (zero ceremony — record class location
+ * implies file location). Other static cases:</p>
+ *
+ * <ul>
+ *   <li>{@link InlineDoc} — contents inlined as a Java text block; no companion file.</li>
+ *   <li>{@link ResourceMarkdownDoc} — classpath-loaded but at an explicit path, when the
+ *       co-located mirror doesn't fit.</li>
+ * </ul>
+ *
+ * <p>For non-static sources (database, network, generated content), implement {@link Doc}
+ * directly and provide a custom {@link #contents()}.</p>
+ *
+ * <h2>Identity vs. addressability</h2>
+ *
+ * <p>The {@link #uuid()} is the only thing that travels on the wire. Java class names,
+ * package, on-disk file path, and even {@link #title()} are all free to change without
+ * breaking external links / bookmarks / API references. Generate a UUID once with
+ * {@code UUID.randomUUID()} (or a JShell session), paste as a {@code static final UUID}
+ * constant, and never edit it again.</p>
+ *
+ * @since RFC 0004
+ */
+public interface Doc extends Immutable {
+
+    /**
+     * Stable surrogate identity for this Doc on the wire. Unique within a {@code DocRegistry}.
+     * Generated once and frozen — must not change across Java renames or file moves.
+     *
+     * <p>Prose Docs use UUID identity; this method is the source of truth for them.
+     * Future non-prose Doc kinds (PlanDoc, AppDoc per RFC 0015 Phase 3) may carry
+     * non-UUID identity via {@link #id()} and may leave this method unimplemented
+     * once that migration completes. Until then, every Doc supplies a UUID.</p>
+     */
+    UUID uuid();
+
+    /**
+     * RFC 0015 Phase 2 — typed identity for this Doc. Default wraps {@link #uuid()}
+     * as a {@link DocId.ByUuid}. Phase 3 introduces non-UUID variants (PlanDoc,
+     * AppDoc); Doc subtypes that don't rest on UUID identity will override this
+     * default to return their own DocId variant.
+     *
+     * <p>Realises Doc ontology axiom A2 (universality of the identifier) — every
+     * Doc surfaces its identity through this single accessor regardless of which
+     * underlying id shape it uses.</p>
+     */
+    default DocId id() {
+        return new DocId.ByUuid(uuid());
+    }
+
+    /** Display title shown in browsers and reader headers. */
+    String title();
+
+    /**
+     * The doc's own text, for a doc whose data IS text - a markdown body, an SVG's markup.
+     * The framework places no constraints on where it originates.
+     *
+     * <p>A doc never decides how it is <i>shown</i>: content is made from a doc by a
+     * {@code Function<Doc, Content>}, the shower's to choose. A doc whose data is structure - a composed doc, a rigid
+     * tree, a table, an image - has no text of its own, and throws
+     * {@link NoOwnContentException}.</p>
+     */
+    String contents();
+
+    /** Optional one-line summary shown on browser cards. Default empty. */
+    default String summary() { return ""; }
+
+    /** Optional category slug used by browsers for filtering / grouping. Default empty. */
+    default String category() { return ""; }
+
+    /** The media type of {@link #contents()}. Default {@code text/markdown}; a doc with no content of its own throws {@link NoOwnContentException}. */
+    default String contentType() { return "text/markdown; charset=utf-8"; }
+
+    /** File extension matching the content type, used by the classpath-loading subinterfaces. */
+    default String fileExtension() { return ".md"; }
+
+    /**
+     * The content-kind discriminator, used for DISPLAY: catalogue and tree
+     * payloads carry it and the tile renderer switches on it.
+     *
+     * <p>RFC 0051 Phase 6 — it no longer routes anything, and could not:
+     * {@code "composed"} is answered by ComposedDoc, RigidDoc and RigidDocV2,
+     * which open in two different viewers, so kind → viewer is not a function.
+     * A catalogue entry names the app instead. What remains here is framing,
+     * and framing belongs to the placement — so this is queued to follow
+     * {@code category()} onto the leaf.</p>
+     *
+     * <p>Realises Viewer ontology V4 (Doc routing through kind).</p>
+     */
+    default String kind() { return "doc"; }
+
+    /**
+     * Typed cross-references and external citations declared by this Doc, rendered by the
+     * DocReader as a "References" section beneath the markdown body. Each {@link Reference}
+     * is exposed as a stable in-page anchor (id="ref:&lt;name&gt;"); the markdown body cites
+     * them via normal links of the form {@code [label](#ref:<name>)}.
+     *
+     * <p>Per RFC 0004-ext1, every out-of-document URL in the markdown body must resolve to
+     * a Reference declared here — otherwise the {@code DocConformanceTest}'s reference scan
+     * fails. References declared here that aren't cited inline are valid (they appear in the
+     * References section as "further reading" entries).</p>
+     *
+     * <p>Default: empty.</p>
+     */
+    default List<Reference> references() { return List.of(); }
+
+    /**
+     * Grandfathering escape for the heading-length gate (RFC 0059). A heading
+     * becomes a tree node named by its own slug, and a {@code NodeName} is capped
+     * at 48 characters — so an over-long heading is <b>clipped</b>, and a clipped
+     * anchor is a worse anchor. A conformance test therefore fails any markdown
+     * doc carrying one.
+     *
+     * <p>This is <b>debt, not licence.</b> It exists so a corpus written before
+     * the rule can adopt it without a mass rewrite, and every doc that returns
+     * {@code true} is a doc whose headings should be shortened. A heading is a
+     * label, not a sentence; if it does not fit, the fix is almost always to say
+     * it in fewer words rather than to set this.</p>
+     *
+     * <p>New docs must not use it. The gate is the point.</p>
+     */
+    default boolean headingCapExempt() { return false; }
+
+    /**
+     * Resolve a child Doc by its local-to-this-doc level identifier — the
+     * primitive used by the framework's generic tree walker at
+     * {@code GET /doc?id=<root>&l1=...&l2=...&l3=...}. Each {@code lN} value
+     * is passed to the resolver for the doc at that depth; what counts as a
+     * valid identifier is doc-kind-local (ComposedDoc parses int indices;
+     * a hypothetical named-children doc kind would dispatch by name).
+     *
+     * <p>Default: this doc has no children — return empty.</p>
+     *
+     * <p>The shape lets the framework address embedded sub-docs <em>by
+     * containment path</em> instead of by their own UUID; embedded docs
+     * don't need separate registration. The act of being referenced in
+     * a parent's content IS their addressability.</p>
+     *
+     * @since RFC 0004 ext — leveled-tree addressing
+     */
+    default Optional<Doc> resolveChild(String levelId) { return Optional.empty(); }
+
+    /**
+     * Render contents with URLs rooted at the given context — used by the
+     * {@code /doc} handler after walking a path. Sub-doc URLs emitted in
+     * the returned content carry the {@code rootId + pathPrefix} prefix so
+     * the client can navigate further without losing the containment root.
+     *
+     * <p>Deliberately <em>not</em> named {@code contents} — it is a distinct,
+     * leveled variant, not an overload of {@link #contents()}. The single
+     * no-arg {@code contents()} stays the unambiguous "bytes of this Doc"
+     * accessor that test fakes and callers implement; this method is the
+     * leveled-addressing extension (RFC 0004-ext, slated for retirement by
+     * RFC 0039).</p>
+     *
+     * <p>Default delegates to {@link #contents()}; nothing in the model overrides it -
+     * a doc builds no URLs. The leveled URLs of a composed doc's embedded segments
+     * are made by the studio's legacy wire, from the doc. Kept for any caller or
+     * implementer written against it.</p>
+     *
+     * @param rootId     the {@code id} parameter of the originating request
+     *                   (the root of the containment tree the client is
+     *                   navigating in)
+     * @param pathPrefix the sequence of level identifiers consumed so far
+     *                   to reach this doc (a list of {@code lN} values, in
+     *                   order — {@code [l1, l2, l3, …]})
+     *
+     * @since RFC 0004 ext — leveled-tree addressing
+     */
+    default String contentsRootedAt(String rootId, List<String> pathPrefix) {
+        return contents();
+    }
+}

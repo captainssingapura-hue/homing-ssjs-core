@@ -28,6 +28,12 @@ public interface Structure extends Semantic {
     /** The rail: a one-pixel line along the trailing edge of a column — a nav beside its detail. */
     record Rail() implements Structure {}
 
+    /** The detent: the notch on a slider's track where the knob rests — the design's own value, nought on an axis. Its width and height; a design draws it heavy, fine, or not at all. */
+    record Detent() implements Structure {}
+
+    /** The tick: a graduation beside a slider's track, at a value the caller names, with its number in a caption; its length along the track and across it. */
+    record Tick() implements Structure {}
+
     /**
      * The lattice: the lines between the cells of a grid. Every cell draws its
      * trailing edge and its bottom edge, and the cells tile into the lines —

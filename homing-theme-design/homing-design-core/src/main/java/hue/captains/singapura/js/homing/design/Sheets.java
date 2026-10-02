@@ -64,6 +64,8 @@ public final class Sheets {
             entries.sort(Map.Entry.comparingByKey(BY_PRECEDENCE));
             var sb = new StringBuilder("/* ").append(target.token()).append(" — generated; the template is the target's, the values the design's */\n");
             if (entries.stream().anyMatch(e -> scales(e.getValue()))) sb.append(Extent.PROPERTY).append('\n');
+            for (Growth axis : Growth.values())
+                if (entries.stream().anyMatch(e -> grows(e.getValue(), axis))) sb.append(axis.property()).append('\n');
             for (var e : entries) sb.append(rule(e.getKey(), e.getValue()));
             out.put(target.token(), sb.toString());
         });
@@ -86,18 +88,35 @@ public final class Sheets {
         b.values().forEach((mode, states) -> states.forEach((state, props) ->
                 props.keySet().forEach(p -> slots.computeIfAbsent(state, s -> new java.util.TreeSet<>()).add(property(dc, p)))));
         if (slots.isEmpty()) return "";
+        // a leaf that writes on a pseudo-element nests its declarations under it, state by state: `&::before { … } &:hover::before { … }`
+        String pseudo = dc.targetLeaf().pseudo();
         var sb = new StringBuilder(".").append(dc.cssName()).append(" {\n");
-        for (String p : slots.getOrDefault(State.REST, java.util.Set.of()))
-            sb.append("    ").append(p).append(": ").append(value(dc, b, p, State.REST, false)).append(";\n");
+        var restProps = slots.getOrDefault(State.REST, java.util.Set.of());
+        if (pseudo != null && !restProps.isEmpty()) sb.append("    &").append(pseudo).append(" {\n");
+        for (String p : restProps)
+            sb.append(pseudo != null ? "        " : "    ").append(p).append(": ").append(value(dc, b, p, State.REST, false)).append(";\n");
+        if (pseudo != null && !restProps.isEmpty()) sb.append("    }\n");
         slots.forEach((state, props) -> {
             if (state == State.REST) return;
-            sb.append("    ").append(state.selector()).append(" {\n");
+            sb.append("    ").append(pseudo == null ? state.selector() : onPseudo(state.selector(), pseudo)).append(" {\n");
             for (String p : props)
                 sb.append("        ").append(p).append(": ")
                   .append(value(dc, b, p, state, rest.containsKey(p) || rest.containsKey(Impl.Bindings.SOLE))).append(";\n");
             sb.append("    }\n");
         });
         return sb.append("}\n").toString();
+    }
+
+    /** A state's selector, each of its alternatives carried onto the pseudo-element: {@code &:hover::before}. */
+    static String onPseudo(String selector, String pseudo) {
+        var parts = selector.split(",");
+        for (int i = 0; i < parts.length; i++) parts[i] = parts[i].trim() + pseudo;
+        return String.join(", ", parts);
+    }
+
+    /** Whether any property of the word has a ratio other than 1 on an axis — and so renders as a power of the element's number on it. */
+    static boolean grows(Impl impl, Growth axis) {
+        return impl instanceof Impl.Bindings b && b.ratios(axis).values().stream().anyMatch(r -> r != 1.0);
     }
 
     /** Whether any property of the word is anchored at both ends — and so renders as an interpolation. */
@@ -119,6 +138,12 @@ public final class Sheets {
      */
     private static String value(DesignClass<?> dc, Impl.Bindings b, String property, State state, boolean fallsBackToRest) {
         String key = b.values().getOrDefault(Mode.LIGHT, Map.of()).getOrDefault(State.REST, Map.of()).containsKey(Impl.Bindings.SOLE) ? Impl.Bindings.SOLE : property;
+        var powers = new StringBuilder();   // a length that grows: the value, to the power of the element's number on each axis it grows along; the ratio is the word's, at every state
+        for (Growth axis : Growth.values()) {
+            Double ratio = b.ratio(key, axis);
+            if (ratio != null && ratio != 1.0) powers.append(" * pow(var(").append(variable(dc, property, State.REST)).append(axis.suffix()).append("), var(").append(axis.var()).append("))");
+        }
+        if (powers.length() > 0) return "calc(" + ref(dc, property, state, Extent.FULL, fallsBackToRest) + powers + ")";
         if (!(b.anchored(Extent.ZERO, key) && b.anchored(Extent.NEG, key))) return ref(dc, property, state, Extent.FULL, fallsBackToRest);
         String full = ref(dc, property, state, Extent.FULL, fallsBackToRest);
         String zero = ref(dc, property, state, Extent.ZERO, fallsBackToRest);
@@ -142,6 +167,7 @@ public final class Sheets {
             for (Extent extent : Extent.values())
                 b.anchors(extent).forEach((mode, states) -> states.forEach((state, props) -> props.forEach((p, v) ->
                         perMode.computeIfAbsent(mode, m -> new TreeMap<>()).put(variable(dc, property(dc, p), state) + extent.suffix(), v))));
+            b.ratios().forEach((axis, byProperty) -> byProperty.forEach((p, r) -> { if (r != 1.0) perMode.computeIfAbsent(Mode.LIGHT, m -> new TreeMap<>()).put(variable(dc, property(dc, p), State.REST) + axis.suffix(), trim(r)); }));
         });
         var sb = new StringBuilder();
         perMode.forEach((mode, vars) -> {
@@ -152,6 +178,12 @@ public final class Sheets {
             sb.append(pad).append("}\n").append(mode == Mode.LIGHT ? "" : "}\n");
         });
         return sb.toString();
+    }
+
+    /** {@code 1.3}, never {@code 1.3000000000000000444}; an integer ratio without its point. */
+    private static String trim(double r) {
+        String s = java.math.BigDecimal.valueOf(r).stripTrailingZeros().toPlainString();
+        return s;
     }
 
     // ── names ─────────────────────────────────────────────────────────────

@@ -26,30 +26,48 @@ import java.util.regex.Pattern;
  * target: carrier, properties, states, and — for a body — that it writes only
  * the target's properties and nests only on self and elements.</p>
  *
+ * <p>A refined word ({@code Control.Button.Base}) is asked for up its
+ * lineage: the design and the extensions are asked at the word worn, then at
+ * its parent, and the first level with an answer is the answer — so a design
+ * speaks once for every control and again only for the buttons, or the base
+ * button, it has an opinion on.</p>
+ *
  * @param required   the design classes the closure wears
  * @param scaled     those of them some class wears with an {@link Extent} — its element sets one — so the design must anchor them at zero and at −1
+ * @param grown      those of them some class wears with a number on a {@link Growth} axis — its element sets one — so the design must give every property a ratio on that axis
  * @param design     the design to fulfil them
  * @param extensions the products' fulfilments of their own classes
  */
-public record Deployment(Set<DesignClass<?>> required, Set<DesignClass<?>> scaled, Design design, List<DesignExtension> extensions) {
+public record Deployment(Set<DesignClass<?>> required, Set<DesignClass<?>> scaled, Map<Growth, Set<DesignClass<?>>> grown, Design design, List<DesignExtension> extensions) {
 
     public Deployment {
         // in order — the order of resolution is the order the closure wore them; the sheet has its own (Sheets.PRECEDENCE)
         required = java.util.Collections.unmodifiableSet(new LinkedHashSet<>(required));
         scaled = java.util.Collections.unmodifiableSet(new LinkedHashSet<>(scaled));
+        var g = new java.util.EnumMap<Growth, Set<DesignClass<?>>>(Growth.class);
+        grown.forEach((axis, pairs) -> g.put(axis, java.util.Collections.unmodifiableSet(new LinkedHashSet<>(pairs))));
+        grown = java.util.Collections.unmodifiableMap(g);
         extensions = List.copyOf(extensions);
     }
 
+    public Deployment(Set<DesignClass<?>> required, Set<DesignClass<?>> scaled, Design design, List<DesignExtension> extensions) {
+        this(required, scaled, Map.of(), design, extensions);
+    }
+
     public Deployment(Set<DesignClass<?>> required, Design design, List<DesignExtension> extensions) {
-        this(required, Set.of(), design, extensions);
+        this(required, Set.of(), Map.of(), design, extensions);
     }
 
     public static Deployment of(Set<DesignClass<?>> required, Design design) {
-        return new Deployment(required, Set.of(), design, List.of());
+        return new Deployment(required, Set.of(), Map.of(), design, List.of());
     }
 
     public static Deployment of(Set<DesignClass<?>> required, Set<DesignClass<?>> scaled, Design design) {
-        return new Deployment(required, scaled, design, List.of());
+        return new Deployment(required, scaled, Map.of(), design, List.of());
+    }
+
+    public static Deployment of(Set<DesignClass<?>> required, Set<DesignClass<?>> scaled, Map<Growth, Set<DesignClass<?>>> grown, Design design) {
+        return new Deployment(required, scaled, grown, design, List.of());
     }
 
     /** The requirement set of a closure: every pair any class of any group in it wears — or reads, since a reference needs a binding to land on. */
@@ -59,6 +77,18 @@ public record Deployment(Set<DesignClass<?>> required, Set<DesignClass<?>> scale
             for (CssClass<?> c : g.cssClasses()) {
                 for (Wearable w : c.wears()) if (w instanceof DesignClass<?> dc) out.add(dc);
                 for (Wearable w : c.reads()) if (w instanceof DesignClass<?> dc) out.add(dc);   // read by reference: the word must exist and its binding be emitted
+            }
+        return out;
+    }
+
+    /** The pairs some class in the closure wears with a number on each {@link Growth} axis — {@code sizes()}, {@code aspects()}: subsets of {@link #wornBy}, each of whose properties the design must give a ratio on that axis. */
+    public static Map<Growth, Set<DesignClass<?>>> grownBy(Collection<? extends CssGroup<?>> groups) {
+        var out = new java.util.EnumMap<Growth, Set<DesignClass<?>>>(Growth.class);
+        for (Growth axis : Growth.values()) out.put(axis, new LinkedHashSet<>());
+        for (CssGroup<?> g : groups)
+            for (CssClass<?> c : g.cssClasses()) {
+                for (Wearable w : c.sizes()) if (w instanceof DesignClass<?> dc) out.get(Growth.SIZE).add(dc);
+                for (Wearable w : c.aspects()) if (w instanceof DesignClass<?> dc) out.get(Growth.ASPECT).add(dc);
             }
         return out;
     }
@@ -74,7 +104,7 @@ public record Deployment(Set<DesignClass<?>> required, Set<DesignClass<?>> scale
 
     /** One thing that did not resolve, or resolved wrongly. */
     public record Finding(Kind kind, DesignClass<?> designClass, String detail) {
-        public enum Kind { MISSING, DOUBLE, CARRIER_MISMATCH, INVALID_BINDING, INVALID_BODY, DANGLING_REFERENCE, LITERAL_COLOUR, MISSING_ANCHOR }
+        public enum Kind { MISSING, DOUBLE, CARRIER_MISMATCH, INVALID_BINDING, INVALID_BODY, DANGLING_REFERENCE, LITERAL_COLOUR, MISSING_ANCHOR, MISSING_RATIO }
         @Override public String toString() { return kind + " " + (designClass == null ? "" : designClass) + (detail.isBlank() ? "" : " — " + detail); }
     }
 
@@ -87,21 +117,35 @@ public record Deployment(Set<DesignClass<?>> required, Set<DesignClass<?>> scale
         var findings = new ArrayList<Finding>();
         var impls = new LinkedHashMap<DesignClass<?>, Impl>();
         for (var pair : required) {
-            Impl own = design.impl(pair);
-            var fromExtensions = new ArrayList<Map.Entry<String, Impl>>();
-            for (var e : extensions) { Impl i = e.impl(pair); if (i != null) fromExtensions.add(Map.entry(e.slug(), i)); }
-            if (own != null && !fromExtensions.isEmpty()) {
-                findings.add(new Finding(Finding.Kind.DOUBLE, pair, "answered by " + design.slug() + " and " + fromExtensions.get(0).getKey()));
+            Impl impl = null;
+            boolean doubled = false;
+            for (var at : pair.lineage()) {   // the word worn, then its parents: the first level anyone answers
+                Impl own = design.impl(at);
+                var fromExtensions = new ArrayList<Map.Entry<String, Impl>>();
+                for (var e : extensions) { Impl i = e.impl(at); if (i != null) fromExtensions.add(Map.entry(e.slug(), i)); }
+                if (own != null && !fromExtensions.isEmpty()) {
+                    findings.add(new Finding(Finding.Kind.DOUBLE, pair, "answered by " + design.slug() + " and " + fromExtensions.get(0).getKey() + (at == pair ? "" : " at " + at.cssName())));
+                    doubled = true;
+                    break;
+                }
+                if (fromExtensions.size() > 1) {
+                    findings.add(new Finding(Finding.Kind.DOUBLE, pair, "answered by " + fromExtensions.get(0).getKey() + " and " + fromExtensions.get(1).getKey() + (at == pair ? "" : " at " + at.cssName())));
+                    doubled = true;
+                    break;
+                }
+                impl = own != null ? own : fromExtensions.isEmpty() ? null : fromExtensions.get(0).getValue();
+                if (impl != null) break;
+            }
+            if (doubled) continue;
+            if (impl == null) {
+                var lineage = pair.lineage();
+                findings.add(new Finding(Finding.Kind.MISSING, pair, "no answer from " + design.slug() + (lineage.size() == 1 ? "" : ", nor at " + lineage.get(lineage.size() - 1).cssName())));
                 continue;
             }
-            if (fromExtensions.size() > 1) {
-                findings.add(new Finding(Finding.Kind.DOUBLE, pair, "answered by " + fromExtensions.get(0).getKey() + " and " + fromExtensions.get(1).getKey()));
-                continue;
-            }
-            Impl impl = own != null ? own : fromExtensions.isEmpty() ? null : fromExtensions.get(0).getValue();
-            if (impl == null) { findings.add(new Finding(Finding.Kind.MISSING, pair, "no answer from " + design.slug())); continue; }
             validate(pair, impl, findings);
             if (scaled.contains(pair)) checkAnchors(pair, impl, findings);
+            for (Growth axis : Growth.values())
+                if (grown.getOrDefault(axis, Set.of()).contains(pair)) checkRatios(pair, impl, axis, findings);
             impls.put(pair, impl);
         }
         checkReferences(impls, findings);
@@ -129,6 +173,89 @@ public record Deployment(Set<DesignClass<?>> required, Set<DesignClass<?>> scale
                 findings.add(new Finding(Finding.Kind.INVALID_BINDING, pair, "anchored at " + extent + " — an extent is a colour's; " + target.token() + " is not on the colour plane"));
             validateSlots(pair, target, b.anchors(extent), findings);
         }
+        checkInterpolatedValuesAreOneColour(pair, b, findings);
+        checkRatiosAreOnLengths(pair, b, findings);
+    }
+
+    // A length a ratio may multiply: one number with or without a unit — 8px, 1.5, 0, .5rem — never a list, a keyword or a colour.
+    private static final Pattern LENGTH = Pattern.compile("^-?(\\d+\\.?\\d*|\\.\\d+)[a-zA-Z%]*$");
+
+    /**
+     * A ratio multiplies a length: it is refused on the colour plane, on a
+     * property the word does not bind, and on a value that is not one number
+     * — a list, a keyword, {@code auto} — at any state or mode, since the
+     * power applies at every state alike. A ratio of exactly 1 renders the
+     * value plainly, so a keyword may carry one: that is how a design says a
+     * border-style stays beside a border-width that grows.
+     */
+    private static void checkRatiosAreOnLengths(DesignClass<?> pair, Impl.Bindings b, List<Finding> findings) {
+        if (b.ratios().values().stream().allMatch(Map::isEmpty)) return;
+        if (pair.onColourPlane()) { findings.add(new Finding(Finding.Kind.INVALID_BINDING, pair, "a ratio is a length's; " + pair.targetLeaf().token() + " is on the colour plane")); return; }
+        var rest = b.values().getOrDefault(Mode.LIGHT, Map.of()).getOrDefault(State.REST, Map.of());
+        b.ratios().forEach((axis, byProperty) -> byProperty.forEach((key, ratio) -> {
+            if (ratio <= 0) findings.add(new Finding(Finding.Kind.INVALID_BINDING, pair, Sheets.property(pair, key) + " grows by " + ratio + " — a ratio is positive"));
+            if (!rest.containsKey(key)) { findings.add(new Finding(Finding.Kind.INVALID_BINDING, pair, Sheets.property(pair, key) + " has a ratio but no value at rest")); return; }
+            if (ratio == 1.0) return;   // stays: renders plainly, so a keyword may hold — border-style: solid, ratio 1
+            b.values().forEach((mode, states) -> states.forEach((state, props) -> {
+                String v = props.get(key);
+                if (v != null && !LENGTH.matcher(v.strip()).matches())
+                    findings.add(new Finding(Finding.Kind.INVALID_BINDING, pair, Sheets.property(pair, key) + " grows, but its value" + (state == State.REST ? "" : " on " + state) + (mode == Mode.LIGHT ? "" : " in " + mode) + " is not one length: '" + v + "'"));
+            }));
+        }));
+    }
+
+    /**
+     * A pair a class wears with a number on an axis must have a ratio on
+     * that axis for every property its word binds at rest — 1 to say the
+     * property stays — so a design decides what grows and what holds, and
+     * nothing is left to a default.
+     */
+    private static void checkRatios(DesignClass<?> pair, Impl impl, Growth axis, List<Finding> findings) {
+        String worn = "worn with " + (axis == Growth.SIZE ? "a size" : "an aspect");
+        if (!(impl instanceof Impl.Bindings b)) {
+            findings.add(new Finding(Finding.Kind.MISSING_RATIO, pair, worn + ", but the word is " + (impl instanceof Impl.Body ? "a body" : "silence") + " — only bindings grow"));
+            return;
+        }
+        var rest = b.values().getOrDefault(Mode.LIGHT, Map.of()).getOrDefault(State.REST, Map.of());
+        for (String key : rest.keySet())
+            if (b.ratio(key, axis) == null)
+                findings.add(new Finding(Finding.Kind.MISSING_RATIO, pair, worn + ", but " + Sheets.property(pair, key) + " has no ratio on " + axis.var() + " — 1 says it stays"));
+    }
+
+    /**
+     * A word anchored at both ends renders as an interpolation, and
+     * {@code color-mix} takes one colour: a value that is a list — a colour
+     * per side of a border — cannot be mixed, and the browser drops the whole
+     * declaration. Which side is strong is the rule's shape to say, not the
+     * word's colour; the design is told so rather than left with an edge that
+     * silently falls back to the ink.
+     */
+    private static void checkInterpolatedValuesAreOneColour(DesignClass<?> pair, Impl.Bindings b, List<Finding> findings) {
+        var rest = b.values().getOrDefault(Mode.LIGHT, Map.of()).getOrDefault(State.REST, Map.of());
+        for (String key : rest.keySet()) {
+            if (!(b.anchored(Extent.ZERO, key) && b.anchored(Extent.NEG, key))) continue;
+            for (Extent extent : Extent.values())
+                b.anchors(extent).forEach((mode, states) -> states.forEach((state, props) -> {
+                    String v = props.get(key);
+                    int n = v == null ? 1 : topLevelTokens(v);
+                    if (n > 1)
+                        findings.add(new Finding(Finding.Kind.INVALID_BINDING, pair, Sheets.property(pair, key) + " at " + extent.value() + (state == State.REST ? "" : " on " + state) + (mode == Mode.LIGHT ? "" : " in " + mode)
+                                + " is a list of " + n + " — an interpolation mixes one colour; a colour per side is the rule's shape, not the word's colour"));
+                }));
+        }
+    }
+
+    /** How many values a CSS value is: tokens separated by whitespace outside parentheses, so {@code rgba(1, 2, 3, .4)} is one. */
+    static int topLevelTokens(String value) {
+        int n = 0, depth = 0; boolean inToken = false;
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (c == '(') depth++;
+            else if (c == ')') depth--;
+            if (Character.isWhitespace(c) && depth == 0) { inToken = false; continue; }
+            if (!inToken) { inToken = true; n++; }
+        }
+        return n;
     }
 
     /**
