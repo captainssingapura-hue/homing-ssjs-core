@@ -19,8 +19,7 @@
         modules, no server, no viewer, no wire format.
 
         A doc never decides how it is shown. Content is made FROM a doc by a
-        function (Function&lt;Doc, Content&gt;) - the legacy viewers' JSON is one,
-        and it lives with them in homing-studio-base. The packages are the ones
+        function (Function&lt;Doc, Content&gt;). The packages are the ones
         the model has always had, so every doc written against them compiles
         and runs unchanged.
 

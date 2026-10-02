@@ -18,8 +18,7 @@
         format. A plan never decides how it is shown.
 
         The packages are the ones the model has always had, so every plan
-        written against them compiles and runs unchanged; the legacy plan host
-        and its JSON stay with the old stack in homing-studio-base.
+        written against them compiles and runs unchanged.
 
         Depends on nothing but the ontology markers - so the compiler, not a
         convention, keeps it pure.

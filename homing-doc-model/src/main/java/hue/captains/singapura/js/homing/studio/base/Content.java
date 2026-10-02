@@ -9,7 +9,7 @@ import java.util.Objects;
  *
  * <p>Content is made <b>from</b> a doc, by a {@code Function<Doc, Content>} - never by the
  * doc. A doc is data: its identity, its words, its structure. How it travels is the
- * business of whoever shows it - the legacy viewers' JSON is one such function, an
+ * business of whoever shows it - a viewer's wire format is one such function, an
  * export another, a search index a third - and each is free to differ without the doc
  * knowing. A doc whose data is already text (markdown, an SVG) hands that text over
  * through {@link Doc#contents()}; one whose data is structure (a composed doc, a rigid

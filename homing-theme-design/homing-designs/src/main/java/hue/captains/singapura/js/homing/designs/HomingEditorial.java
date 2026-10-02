@@ -17,9 +17,7 @@ import hue.captains.singapura.js.homing.design.Impl;
  * page — by default.
  *
  * <p>RFC 0066 — an identity record: its words are {@link EditorialDesign}'s,
- * its colours {@link SeedPalette#HARBOUR}'s. The legacy global-palette values
- * the studio's older groups still read are the studio's, kept beside its
- * registry ({@code HomingEditorialLegacy}, in {@code homing-studio-themes}).</p>
+ * its colours {@link SeedPalette#HARBOUR}'s.</p>
  */
 public record HomingEditorial() implements Design {
 

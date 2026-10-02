@@ -18,7 +18,7 @@
         stack, so any viewer can show it: DocView draws it inline wherever a segment holds it.
 
         The package is the one it always had, so every doc written against it compiles
-        unchanged; homing-studio-base depends on it, so its old viewers do too.
+        unchanged.
     </description>
 
     <properties>

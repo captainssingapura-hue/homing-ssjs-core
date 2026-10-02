@@ -27,8 +27,7 @@ import java.util.regex.Pattern;
  * anywhere.</p>
  *
  * <p>Data only: a composed doc has no content of its own ({@link #contents()} throws).
- * The studio's {@code LegacyDocWire} makes the JSON bundling the segments
- * and the {@link #toc() TOC}; {@code ComposedViewer} consumes it and
+ * Whoever shows it walks the segments and the {@link #toc() TOC} and
  * dispatches per segment kind.</p>
  *
  * <p>Realises Doc ontology axioms A1–A8 and Viewer ontology V11/V12 via
@@ -132,8 +131,7 @@ public record ComposedDoc(
 
     /**
      * A composed doc's data is its segments, not text: it has no content of its own.
-     * Content is made from it by a {@code Function<Doc, Content>} - the studio's legacy
-     * viewers read the JSON {@code LegacyDocWire} makes. Nothing here builds a URL.
+     * Content is made from it by a {@code Function<Doc, Content>}. Nothing here builds a URL.
      */
     @Override public String contents()    { throw new NoOwnContentException(this); }
     @Override public String contentType() { throw new NoOwnContentException(this); }

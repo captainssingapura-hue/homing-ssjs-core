@@ -20,8 +20,7 @@
         as colours alone. HomingDesigns.REGISTRY is a ThemeRegistry of them
         and nothing else: a site hands it to its MPA and every component that
         wears design words is dressed. Nothing legacy: no global palette
-        provision, no override - those are the studio's, kept in
-        homing-studio-themes, which builds its registry on these designs.
+        provision, no override.
         Depends on homing-design-core and homing-design-server only.
     </description>
 

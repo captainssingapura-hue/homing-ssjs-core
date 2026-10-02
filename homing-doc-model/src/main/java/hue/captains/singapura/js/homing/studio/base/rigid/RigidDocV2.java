@@ -85,6 +85,6 @@ public final class RigidDocV2 implements Doc, DocTreeV2Source {
     @Override public String contentType() { throw new NoOwnContentException(this); }
     @Override public String fileExtension() { return ""; }
 
-    /** A rigid doc's data is its tree, not text: content is made from it (the studio's {@code LegacyDocWire}, via the doc-tree writer). */
+    /** A rigid doc's data is its tree, not text: content is made from it. */
     @Override public String contents() { throw new NoOwnContentException(this); }
 }

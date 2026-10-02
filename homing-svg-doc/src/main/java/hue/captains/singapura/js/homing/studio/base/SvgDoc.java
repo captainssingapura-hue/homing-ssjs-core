@@ -18,8 +18,8 @@ import java.util.UUID;
  * pair always produces the same Doc UUID across rebuilds. The body
  * ({@link #contents()}) is the resolved SVG markup; the URL routes
  * through the framework's registered {@code SvgViewer} AppModule
- * (kind {@code "svg"}; see {@code Fixtures.contentViewers()}). DocView, past the
- * old stack, draws it inline wherever a segment holds it: it is an
+ * (kind {@code "svg"}; see {@code Fixtures.contentViewers()}). DocView draws it
+ * inline wherever a segment holds it: it is an
  * {@link SvgSource} like any other.</p>
  *
  * <p>Realises the Viewer ontology's per-kind dispatch by being kind-tagged

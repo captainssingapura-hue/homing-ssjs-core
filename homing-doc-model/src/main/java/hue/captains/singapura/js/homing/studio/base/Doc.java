@@ -73,8 +73,7 @@ public interface Doc extends Immutable {
      * The framework places no constraints on where it originates.
      *
      * <p>A doc never decides how it is <i>shown</i>: content is made from a doc by a
-     * {@code Function<Doc, Content>}, the shower's to choose (the studio's legacy viewers
-     * use {@code LegacyDocWire}). A doc whose data is structure - a composed doc, a rigid
+     * {@code Function<Doc, Content>}, the shower's to choose. A doc whose data is structure - a composed doc, a rigid
      * tree, a table, an image - has no text of its own, and throws
      * {@link NoOwnContentException}.</p>
      */
