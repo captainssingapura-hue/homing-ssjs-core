@@ -21,7 +21,8 @@
 //   Keys.release(m)                  nothing, unless m holds
 //   Keys.home(m)                     the root's default allocation: where a yield no one would hold
 //                                    goes, and, while no one holds, the keys now - a page names it
-//                                    once it is laid out; Keys.home(null) takes it off
+//                                    once it is laid out; Keys.home(null) takes it off. The home is
+//                                    the anchor: what it gives up comes straight back to it
 //     m: a membership of the focus tree — or, the older way, the pair
 //     (steward, id): Keys.claimOn(root, steward, id), Keys.claim(steward, id)
 //   A member of a mobile focus party that reaches no stationed one - a stray, or

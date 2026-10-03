@@ -166,7 +166,30 @@ class KeyboardLetGoTest extends JsModuleTestBase {
         assertEquals("Granted:catches:yield,Granted:home:yield", s("events.join()"), "caught by the panel; the panel's own Escape, home");
         eval("events = []; kt.yield(home.m)");
         assertEquals("home", s("holder()"), "the home yielding keeps them");
-        assertEquals("", s("events.join()"));
+        assertEquals("Released:home,Granted:home:home", s("events.join()"), "its yield reached the page, and was given straight back: granted anew, by home");
+    }
+
+    /** The home is the anchor: its own control letting go - an Escape by mistake - gives the keys straight back to it, granted anew, so it puts the focus back. */
+    @Test
+    void theHomesOwnControlLettingGo_isUndone_theHomeGrantedAnew() {
+        eval("""
+            var rootT = el("DIV", page), rowT = el("DIV", rootT, { tabindex: "0" });
+            var toc = comp("toc", true); toc.granted = function (by) { toc.got = (toc.got || []).concat([by]); if (by !== "native") rowT.focus(); };
+            toc.m = t.join("toc", toc);
+            Keys.claimOn(rootT, kt, toc.m);
+            Keys.home(kt, toc.m);
+            rowT.focus(); events = []; toc.got = [];
+            """);
+        assertEquals("toc:lent", s("at()"));
+        Value esc = eval("key(rowT, 'Escape')");
+        assertTrue(esc.getMember("defaultPrevented").asBoolean(), "the steward's key");
+        assertEquals("Released:toc,Granted:toc:home", s("events.join()"), "let go, then given back at once");
+        assertEquals("home", s("toc.got.join()"), "granted anew, by home");
+        assertEquals("toc:lent", s("at()"), "and the focus is back where its keys are");
+        assertTrue(eval("document.activeElement === rowT").asBoolean());
+        eval("events = []; rowT.blur(); key(document.body, 'Escape')");
+        assertEquals("Released:toc,Granted:toc:home", s("events.join()"), "held with nothing focused, its own Escape: the same");
+        assertEquals("toc:lent", s("at()"));
     }
 
     /** A home that leaves is no one's default; one already holding while it is named is not disturbed. */

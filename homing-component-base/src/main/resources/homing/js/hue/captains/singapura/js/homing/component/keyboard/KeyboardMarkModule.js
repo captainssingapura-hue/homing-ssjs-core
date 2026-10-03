@@ -25,7 +25,8 @@
 //                                with nothing designed for that is passed by, and the
 //                                keys go on up the tree to the first ancestor that would
 //                                hold them, else to the root's default (the home), else
-//                                to no one. A member outside the tree holds, as ever
+//                                to no one; from the home's own control, the home anew -
+//                                it is the anchor. A member outside the tree holds, as ever
 //   a claim                      the browser's focus that is not in the claimer's
 //                                own area is blurred — a claim is an intention to
 //                                have the focus, and the steward makes it true

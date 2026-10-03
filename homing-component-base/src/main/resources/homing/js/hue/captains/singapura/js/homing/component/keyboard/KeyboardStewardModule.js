@@ -46,7 +46,11 @@
 // says no, or says nothing, and is passed by. A yield no one would hold goes to
 // the ROOT'S DEFAULT ALLOCATION, the home, when the page named one, else to no
 // one; a page names its home once it is laid out (home(m)), and the home holds
-// at once while no one does: entering the page is the user's own act.
+// at once while no one does: entering the page is the user's own act. The home
+// is the page's ANCHOR: what it gives up - its own yield, or its control letting
+// go - reaches the page and is given straight back to it, released and granted
+// anew by "home", so it puts the focus where its keys are again. An Escape in
+// the home, by mistake or not, leaves the keys where they were.
 //
 // A member is also told when the keys are INSIDE it — within(on, at), on the
 // holder's ancestors in the focus tree, at the marker — so a container can
@@ -123,9 +127,15 @@ class KeyboardSteward {
     }
     /** The keys to `target` with the reason `by`; with no target, to the root's default - the home - else released by `from`. */
     _handOn(target, from, by) {
-        if (!target && this._home && this._members[this._home]) target = { id: this._home };   // the home yielding keeps them: a claim by the holder is nothing
+        if (!target && this._home && this._members[this._home]) target = { id: this._home };
+        if (target && target.id === from) return this._reanchor(from);   // the home's yield reached the page: given back to it
         if (target) this._party.tellFrom(_STEWARD, { kind: "Claim", id: target.id, by: by });
         else this._party.tellFrom(_STEWARD, { kind: "Release", id: from });
+    }
+    /** The keys back to the home that gave them up: released to the page and granted anew at once, by "home" - so it puts the focus where its keys are. The yield undone. */
+    _reanchor(id) {
+        this._party.tellFrom(_STEWARD, { kind: "Release", id: id });
+        this._party.tellFrom(_STEWARD, { kind: "Claim", id: id, by: "home" });
     }
     /**
      * A native control the holder lent the keys to let go of them (KeyboardMark.escape): a yield from the control. The
@@ -137,6 +147,7 @@ class KeyboardSteward {
         if (!m || m.kind === "proxy") return;
         var c = this._catcher(m, control);
         if (c !== m) this._handOn(c, id, "yield");
+        else if (id === this._home) this._reanchor(id);   // the home is the anchor: not left holding with nothing focused
     }
     /** A member's id: a membership's, or the string given. */
     static idOf(m) { return m && typeof m === "object" && typeof m.id === "string" ? m.id : m; }
