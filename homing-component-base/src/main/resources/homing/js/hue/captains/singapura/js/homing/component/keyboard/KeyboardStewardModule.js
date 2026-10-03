@@ -50,7 +50,8 @@
 // is the page's ANCHOR: what it gives up - its own yield, or its control letting
 // go - reaches the page and is given straight back to it, released and granted
 // anew by "home", so it puts the focus where its keys are again. An Escape in
-// the home, by mistake or not, leaves the keys where they were.
+// the home, by mistake or not, leaves the keys where they were. The home and a
+// control's let-go are KeyboardHome's; the steward keeps the one field.
 //
 // A member is also told when the keys are INSIDE it — within(on, at), on the
 // holder's ancestors in the focus tree, at the marker — so a container can
@@ -127,28 +128,16 @@ class KeyboardSteward {
     }
     /** The keys to `target` with the reason `by`; with no target, to the root's default - the home - else released by `from`. */
     _handOn(target, from, by) {
-        if (!target && this._home && this._members[this._home]) target = { id: this._home };
-        if (target && target.id === from) return this._reanchor(from);   // the home's yield reached the page: given back to it
+        if (!target && KeyboardHome.reached(this, from, by)) return;   // the page reached: the home's, or given back to it
         if (target) this._party.tellFrom(_STEWARD, { kind: "Claim", id: target.id, by: by });
         else this._party.tellFrom(_STEWARD, { kind: "Release", id: from });
-    }
-    /** The keys back to the home that gave them up: released to the page and granted anew at once, by "home" - so it puts the focus where its keys are. The yield undone. */
-    _reanchor(id) {
-        this._party.tellFrom(_STEWARD, { kind: "Release", id: id });
-        this._party.tellFrom(_STEWARD, { kind: "Claim", id: id, by: "home" });
     }
     /**
      * A native control the holder lent the keys to let go of them (KeyboardMark.escape): a yield from the control. The
      * holder is asked first, wouldHold(control), and keeps them when it says so; otherwise they go on up the tree, as a
      * member's yield does. A member outside the tree holds, as a member always did.
      */
-    _letGo(control) {
-        var id = this._holder, m = id && this._focus ? this._focus.find(id) : null;
-        if (!m || m.kind === "proxy") return;
-        var c = this._catcher(m, control);
-        if (c !== m) this._handOn(c, id, "yield");
-        else if (id === this._home) this._reanchor(id);   // the home is the anchor: not left holding with nothing focused
-    }
+    _letGo(control) { KeyboardHome.letGo(this, control); }
     /** A member's id: a membership's, or the string given. */
     static idOf(m) { return m && typeof m === "object" && typeof m.id === "string" ? m.id : m; }
 
@@ -227,12 +216,7 @@ class KeyboardSteward {
      * ancestor would hold, a leaver's no one would - instead of to no one; and, while no one holds, they go to it now,
      * by "home". A page names it once it is laid out: entering the page is the user's own act. home(null) takes it off.
      */
-    home(m) {
-        var id = m == null ? null : KeyboardSteward.idOf(m);
-        if (id != null && !this._members[id]) throw new Error("[KeyboardSteward] no member '" + id + "' to be the home");
-        this._home = id;
-        if (id != null && this._holder === null) this._party.tellFrom(_STEWARD, { kind: "Claim", id: id, by: "home" });
-    }
+    home(m) { KeyboardHome.name(this, m == null ? null : KeyboardSteward.idOf(m)); }
     /** The home: the member the root allocates the keys to, or null. */
     homed() { return this._home; }
     /** A key of the PAGE's, tried before the native world and before the holder: fn(ev) → true when it took it. A chord or a function key only; the function returned takes it off. */
@@ -240,12 +224,7 @@ class KeyboardSteward {
     holder() { return this._holder; }
     has(id) { return !!this._members[KeyboardSteward.idOf(id)]; }
     /** Another listener for the events; the function returned removes it. */
-    on(fn) {
-        if (typeof fn !== "function") throw new Error("[KeyboardSteward] on wants a function");
-        var sinks = this._sinks;
-        sinks.push(fn);
-        return function () { var i = sinks.indexOf(fn); if (i >= 0) sinks.splice(i, 1); };
-    }
+    on(fn) { return KeyboardEvents.listen(this._sinks, fn, "on"); }
 
     // ── where the focus is ────────────────────────────────────────────────
     /** The marker, read now: { id, state: held | lent | away, root, el }, or null with no holder. */
@@ -306,18 +285,9 @@ class KeyboardSteward {
      * route "native" (to: the focused element; left), "none" (no holder; left), "holder" (to: the holder's
      * id; taken says whether it took it). The function returned removes it.
      */
-    trace(fn) {
-        if (typeof fn !== "function") throw new Error("[KeyboardSteward] trace wants a function");
-        var traces = this._traces;
-        traces.push(fn);
-        return function () { var i = traces.indexOf(fn); if (i >= 0) traces.splice(i, 1); };
-    }
+    trace(fn) { return KeyboardEvents.listen(this._traces, fn, "trace"); }
     _traced(kind, ev, route, to, taken) {
-        if (!this._traces.length) return;
-        var t = Object.freeze({ kind: kind, key: ev.key, route: route, to: to, taken: taken === true }), sinks = this._traces.slice();
-        for (var i = 0; i < sinks.length; i++) {
-            try { sinks[i](t); } catch (e) { console.error("[KeyboardSteward] trace threw on " + kind + ":", e); }
-        }
+        if (this._traces.length) KeyboardEvents.tell(this._traces, Object.freeze({ kind: kind, key: ev.key, route: route, to: to, taken: taken === true }), "trace");
     }
 
     // ── what the secretary decided, mirrored for the listeners and the sink ──
@@ -365,12 +335,7 @@ class KeyboardSteward {
     /** The native world had it — unless it was a chord, which KeyboardChords offers up the chain from where it was pressed. */
     _native(kind, ev) { var by = kind === "KeyDown" ? KeyboardChords.took(this, ev) : null; this._traced(kind, ev, by ? "chord" : "native", by || ev.target, !!by); }
 
-    _fire(ev) {
-        var sinks = this._sinks.slice();
-        for (var i = 0; i < sinks.length; i++) {
-            try { sinks[i](ev); } catch (e) { console.error("[KeyboardSteward] onEvent threw on " + ev.kind + ":", e); }
-        }
-    }
+    _fire(ev) { KeyboardEvents.tell(this._sinks, ev, "onEvent"); }
 
     dispose() {
         this._listen(false);
