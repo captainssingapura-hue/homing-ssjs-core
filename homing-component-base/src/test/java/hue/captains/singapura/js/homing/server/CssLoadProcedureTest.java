@@ -39,7 +39,7 @@ class CssLoadProcedureTest extends JsModuleTestBase {
             };
             globalThis.hrefFor = function (id, theme) { return id + "@" + theme; };
             globalThis.graph = createCssDependencyGraph();
-            graph.merge({ Base: { deps: [], prior: true }, Left: { deps: ["Base"] }, Right: { deps: ["Base"] }, Root: { deps: ["Left", "Right"] } });
+            graph.merge({ Base: { deps: [] }, Left: { deps: ["Base"] }, Right: { deps: ["Base"] }, Root: { deps: ["Left", "Right"] } });
             globalThis.proc = createCssLoadProcedure(graph, appendLink, hrefFor);
             globalThis.outcome = null;
             globalThis.start = function (ids, theme) {
@@ -74,7 +74,7 @@ class CssLoadProcedureTest extends JsModuleTestBase {
     void wavesAppendInOrder_andTheNextWaitsForThePrevious() {
         js.eval("js", "start(['Root', 'Left', 'Right', 'Base'], 'a')");
         tick();
-        assertEquals(List.of("Base@a"), hrefs(), "wave 0: the prior alone until it lands");
+        assertEquals(List.of("Base@a"), hrefs(), "wave 0: the base alone until it lands");
         ok("Base@a");
         assertEquals(List.of("Base@a", "Left@a", "Right@a"), hrefs(),
                 "Left and Right together: nothing pending for either");

@@ -1,8 +1,6 @@
 package hue.captains.singapura.js.homing.design.server;
 
 import hue.captains.singapura.js.homing.core.CssGroup;
-import hue.captains.singapura.js.homing.core.CssGroupImpl;
-import hue.captains.singapura.js.homing.core.PaletteProvision;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.design.Composed;
 import hue.captains.singapura.js.homing.design.Deployment;
@@ -31,42 +29,27 @@ import java.util.Map;
  *
  * <p>Given what the deployment serves, hands the server the one renderer that
  * serves the target groups, cut to the pairs the served components wear.</p>
- *
- * <p>During the migration a deployment still carries palette provisions and
- * overrides for the groups not yet moved onto design classes; they pass
- * through here unchanged and retire with the last such group. A cross has no
- * provision, so such a group is unpainted under it until then.</p>
  */
 public final class DesignRegistry implements ThemeRegistry {
 
     private final List<Design> designs;
     private final List<Palette> colours;
     private final List<DesignExtension> extensions;
-    private final List<PaletteProvision<?, ?>> palettes;
-    private final List<CssGroupImpl<?, ?>> overrides;
     /** Every wearable theme by slug: the designs, then each design under each other colour. */
     private final Map<String, Design> bySlug;
 
     public DesignRegistry(List<Design> designs, List<DesignExtension> extensions) {
-        this(designs, List.of(), extensions, List.of(), List.of());
-    }
-
-    public DesignRegistry(List<Design> designs, List<DesignExtension> extensions,
-                          List<PaletteProvision<?, ?>> palettes, List<CssGroupImpl<?, ?>> overrides) {
-        this(designs, List.of(), extensions, palettes, overrides);
+        this(designs, List.of(), extensions);
     }
 
     /**
      * @param designs the bases, each worn in its own colours by default; the first is the deployment's default
      * @param colours palettes written as colours alone — offered to every base beside the designs' own
      */
-    public DesignRegistry(List<Design> designs, List<Palette> colours, List<DesignExtension> extensions,
-                          List<PaletteProvision<?, ?>> palettes, List<CssGroupImpl<?, ?>> overrides) {
+    public DesignRegistry(List<Design> designs, List<Palette> colours, List<DesignExtension> extensions) {
         if (designs.isEmpty()) throw new IllegalArgumentException("a design registry lists at least one design");
         this.designs = List.copyOf(designs);
         this.extensions = List.copyOf(extensions);
-        this.palettes = List.copyOf(palettes);
-        this.overrides = List.copyOf(overrides);
         var own = new ArrayList<Palette>();
         for (Design d : designs) own.add(Composed.paletteOf(d));
         own.addAll(colours);
@@ -98,8 +81,6 @@ public final class DesignRegistry implements ThemeRegistry {
         if (!(base instanceof Design d) || !(colours instanceof Palette p)) return true;
         return Composed.paletteOf(d).id().equals(p.id()) || p.fits(d);
     }
-    @Override public List<PaletteProvision<?, ?>> palettes() { return palettes; }
-    @Override public List<CssGroupImpl<?, ?>> overrides() { return overrides; }
 
     @Override
     public List<CssRenderer> renderers(ServedModules served) {

@@ -16,11 +16,6 @@ import java.util.List;
  * alone, offered to every base beside the designs' own: every look wearable by
  * slug. A design is a function over the design classes a component wears, so
  * a site whose components wear design words needs nothing else.</p>
- *
- * <p>Nothing legacy rides here: no global palette provision ({@code --color-*},
- * the legacy fonts), no per-class override. Those are the studio's, for its
- * groups not yet on design classes, and the studio's registry adds them on top
- * of these same lists.</p>
  */
 public final class HomingDesigns {
 
@@ -34,7 +29,7 @@ public final class HomingDesigns {
     public static final List<Palette> COLOURS = List.of(SeedPalette.FOREST, SeedPalette.SUNSET);
 
     /** The designs and the colours, and nothing else. */
-    public static final ThemeRegistry REGISTRY = new DesignRegistry(DESIGNS, COLOURS, List.of(), List.of(), List.of());
+    public static final ThemeRegistry REGISTRY = new DesignRegistry(DESIGNS, COLOURS, List.of());
 
     private HomingDesigns() {}
 }

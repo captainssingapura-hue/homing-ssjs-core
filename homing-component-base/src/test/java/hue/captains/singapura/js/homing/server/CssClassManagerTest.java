@@ -42,8 +42,8 @@ class CssClassManagerTest extends JsModuleTestBase {
             globalThis.fire = function (part) { for (const l of links) if (!l.fired && !l.removed && l.href.indexOf(part) >= 0) { l.fired = true; l.onload(); } };
             globalThis.fireAll = function (theme) { for (const l of links) if (!l.fired && !l.removed && l.href.indexOf("theme=" + theme) >= 0) { l.fired = true; l.onload(); } };
             globalThis.failOne = function (part) { for (const l of links) if (!l.fired && !l.removed && l.href.indexOf(part) >= 0) { l.fired = true; l.onerror(); return; } };
-            // RFC 0066: the server writes the palette (a prior) into every subgraph and every non-prior node lists it.
-            globalThis.SUB = { "Palette": { deps: [], prior: true }, "G": { deps: ["Palette", "D"] }, "D": { deps: ["Palette"] }, "Base": { deps: [], prior: true } };
+            // Two groups with no dependencies - Palette, which G and D lean on, and Base - so they load first.
+            globalThis.SUB = { "Palette": { deps: [] }, "G": { deps: ["Palette", "D"] }, "D": { deps: ["Palette"] }, "Base": { deps: [] } };
             """;
 
     private Value css;
@@ -80,7 +80,7 @@ class CssClassManagerTest extends JsModuleTestBase {
     void loadCss_bringsTheWholeTree_dependenciesFirst_thenAppliesAtOnce() {
         js.eval("js", "globalThis.done = false; CssClassManagerInstance.loadCss('G', 'default', { Palette: SUB.Palette, G: SUB.G, D: SUB.D }).then(() => globalThis.done = true); undefined");
         tick();
-        assertEquals(List.of("/css-content?class=Palette&theme=default not all"), live(), "the prior alone until it lands");
+        assertEquals(List.of("/css-content?class=Palette&theme=default not all"), live(), "what nothing else waits on first, alone until it lands");
         fire("class=Palette");
         assertEquals("/css-content?class=D&theme=default not all", live().get(1), "the dependency, by name, before the group");
         fire("class=D");
@@ -111,7 +111,7 @@ class CssClassManagerTest extends JsModuleTestBase {
         tick();
         assertEquals("/css-content?class=Palette&theme=forest not all", live().get(4), "the new theme's sheets arrive after the old");
         fire("class=Palette&theme=forest");
-        assertEquals("/css-content?class=Base&theme=forest not all", live().get(5), "the prior first");
+        assertEquals("/css-content?class=Base&theme=forest not all", live().get(5), "what has no dependencies first");
         fire("class=Base&theme=forest");
         fire("class=D&theme=forest");
         assertTrue(live().subList(0, 4).stream().allMatch(s -> s.endsWith(" all")), "the old theme is still authoritative");

@@ -227,7 +227,7 @@ Record names use `snake_case`, which maps 1:1 to `kebab-case` CSS class names:
 
 ### Theme Support
 
-A theme is a `Theme` with a `GlobalColorPalette.Provision` (RFC 0066 — its body for the global palette, the `--color-*` token surface) and a `ThemeGlobals` overlay on `@layer theme`. Typed CSS records reference the tokens and never ship per-theme files — one set of records covers every theme.
+A theme is a **design** (RFC 0066 Episode 3): a function from the design classes components wear — a semantic word on a physical target, `DesignClass.of(Danger.class, Color.Surface.class)` — to their values. A palette is a design on the colour plane alone, and any design may be worn in any palette. Typed CSS records wear design words and never ship per-theme files — one set of records covers every theme.
 
 The theme a page wears is the **client's** to resolve (RFC 0064). The server serves every page under the registry's default; the preference steward on the client resolves the theme in one order — `?theme=` on the address as that page's override, else the pick stored in `localStorage` (`homing.theme`), else the default — and the CSS manager loads every group under it. Picking a theme in the picker stores it and switches the page in place, without a reload; a `?theme=` written into a link pins that theme for the page it names and is never copied onto other links.
 
@@ -458,9 +458,9 @@ As of 0.0.111, demos live in their own repo — [`homing-doc-plus-demo`](https:/
 
 ### Themes
 
-The framework ships eleven themes: Default, Carbon, Forest, Sunset, Bauhaus, Forbidden City, Letterpress, Maple Bridge, Retro 90s, Turbo C and Brutalist. Each defines the standard `--color-*` token surface (`--color-surface`, `--color-text-primary`, `--color-accent`, `--color-border`, etc.) that every typed CSS record references. Switching themes flips the entire studio chrome plus every app's playground without app-side code — and without a reload: the client's CSS manager reloads every sheet on the page under the new theme in dependency order and applies them at once.
+The framework ships eight designs — Editorial, the house design and the default, and Flat-morphism, Neo-brutalism, Neo-futurism, Neumorphism, Glassmorphism, Retro-futurism and Sketchy written over it — each with its own colours, and palettes written as colours alone (Forest, Sunset) that any design may be worn in (`homing-designs`, `HomingDesigns.REGISTRY`). Switching themes restyles every page without app-side code — and without a reload: the client's CSS manager reloads every sheet on the page under the new theme in dependency order and applies them at once.
 
-Apps drop the `--color-*` tokens into their typed `CssClass.body()` returns; the framework's `CssGroupImpl` machinery handles the `:root { --color-…: … }` emission per theme. No per-theme CSS files in app code — one set of typed CSS records covers every theme.
+Apps wear design words in their typed `CssClass` records (`wears()`, `reads()`); the design renderer serves each target's sheet under the theme the page wears, cut to the words the served components wear. No per-theme CSS files in app code — one set of typed CSS records covers every theme.
 
 ## Conformance Testing
 

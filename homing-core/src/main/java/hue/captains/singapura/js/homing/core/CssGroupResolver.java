@@ -11,11 +11,9 @@ import java.util.SequencedSet;
  * Transitively resolves CSS dependencies for a list of {@link CssGroup}s.
  * Returns a flat list in dependency order (dependencies before dependents, no duplicates).
  *
- * <p>RFC 0064: the walk refuses a cycle with the names on it, and a prior that
- * declares dependencies; RFC 0066: and a prior that is not a palette. All are
- * declaration errors, and this resolver runs
- * when a group module is served, so either fails loudly on first use rather
- * than recursing forever or loading in an order nobody intended.</p>
+ * <p>RFC 0064: the walk refuses a cycle with the names on it - a declaration
+ * error, and this resolver runs when a group module is served, so it fails
+ * loudly on first use rather than recursing forever.</p>
  */
 public final class CssGroupResolver {
 
@@ -42,24 +40,6 @@ public final class CssGroupResolver {
             throw new IllegalStateException("CSS dependency cycle: " + String.join(" -> ", names));
         }
         List<CssGroup<?>> deps = CssImportsFor.dependenciesOf(current);
-        if (current.prior()) {
-            if (!deps.isEmpty()) {
-                throw new IllegalStateException(
-                        "CssGroup " + current.getClass().getSimpleName() + " is a prior and may not declare dependencies");
-            }
-            // RFC 0066 — a prior is the claim "everything leans on me without
-            // saying so". Only a palette may make it: the global palette is the
-            // one implicit node of a deployment. A drawn group that wants to be
-            // loaded first is depended on, not prior.
-            boolean holdsPalette = false;
-            for (CssClass<?> c : current.cssClasses()) if (c instanceof PaletteClass<?>) { holdsPalette = true; break; }
-            if (!holdsPalette) {
-                throw new IllegalStateException(
-                        "CssGroup " + current.getClass().getSimpleName()
-                        + " is a prior but holds no PaletteClass: only a palette is prior; a group"
-                        + " others lean on is named in their dependsOn()");
-            }
-        }
         path.push(current.getClass());
         for (CssGroup<?> dep : deps) {
             walk(dep, resolved, path);
