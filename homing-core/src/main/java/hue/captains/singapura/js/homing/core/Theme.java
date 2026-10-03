@@ -3,8 +3,9 @@ package hue.captains.singapura.js.homing.core;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 /**
- * A typed theme — server-side identity token used as a lookup key when
- * resolving the {@link CssGroupImpl} for a {@link CssGroup}.
+ * A typed theme — server-side identity token: what a page wears, named by its
+ * slug in {@code ?theme=}, and the key a renderer serves a {@link CssGroup}'s
+ * sheet under.
  *
  * <p>Each implementing record is a stateless singleton. Themes don't extend
  * {@code Exportable} (they're never JS-module exports) and don't use the
@@ -19,7 +20,6 @@ import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
  * }
  * }</pre>
  *
- * @see CssGroupImpl
  * @see <a href="../../../../../../../../docs/rfcs/0002-typed-themes-for-cssgroups.md">RFC 0002 — Typed Themes for CssGroups</a>
  */
 public interface Theme extends StatelessFunctionalObject {

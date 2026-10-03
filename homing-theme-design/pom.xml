@@ -11,18 +11,14 @@
     <artifactId>homing-theme-design</artifactId>
     <packaging>pom</packaging>
     <description>
-        RFC 0065 layer 3, RFC 0066 — the theme design core: the design
-        vocabularies an app declares and a theme fills, one sub-module per
-        kind. Nothing here is a studio; anything that serves a JS app can bind
-        a palette. The first sub-module is colour (the global palette); scales,
-        typography and the rest arrive as their own sub-modules as the
-        semantic tree grows (RFC 0066 Episode 2).
+        RFC 0065 layer 3, RFC 0066 Episode 3 — the theme design core: the two
+        trees, the contracts and the deployment (design-core), the renderer that
+        serves them (design-server), and the framework's designs (designs).
+        Nothing here is a studio; anything that serves a JS app can wear a design.
     </description>
     <modules>
         <module>homing-design-core</module>
         <module>homing-design-server</module>
-        <module>homing-theme-color</module>
-        <module>homing-theme-type</module>
         <!-- The framework's designs, and a registry of them alone. -->
         <module>homing-designs</module>
     </modules>

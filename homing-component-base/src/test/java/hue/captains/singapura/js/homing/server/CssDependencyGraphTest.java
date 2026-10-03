@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * RFC 0064 — the dependency graph, evaluated as a raw script. Pins the plan:
- * the theme bundle first, priors next in arrival order, then Kahn's waves; a
+ * Kahn's waves, each in arrival order; a
  * dependency outside the requested set counts as satisfied; a cycle is
  * refused with its names; a dependency named but never declared is an
  * unknown node the manager must load by name.
@@ -51,28 +51,11 @@ class CssDependencyGraphTest extends JsModuleTestBase {
         return out;
     }
 
-    // ── The bundle and the priors ─────────────────────────────────────────────
+    // ── The empty plan ────────────────────────────────────────────────────────
 
     @Test
     void anEmptyPlan_isStillTheBundle() {
         assertEquals(List.of(), plan());
-    }
-
-    @Test
-    void priorsLoadFirst_inArrivalOrder_andInOneWave() {
-        merge("{ Base: { deps: [], prior: true }, Util: { deps: [], prior: true } }");
-        merge("{ Picker: { deps: [] } }");
-        assertEquals(List.of(
-                List.of("Base", "Util"),
-                List.of("Picker")), plan("Picker", "Util", "Base"));
-    }
-
-    @Test
-    void aPriorMayNotDeclareDependencies() {
-        assertTrue(js.eval("js", """
-                (g => { try { g.merge({ P: { deps: ["X"], prior: true } }); return false; }
-                        catch (e) { return /prior/.test(String(e)); } })
-                """).execute(graph).asBoolean());
     }
 
     // ── Kahn's waves ──────────────────────────────────────────────────────────
@@ -145,7 +128,7 @@ class CssDependencyGraphTest extends JsModuleTestBase {
 
     @Test
     void theSnapshot_isFrozenData() {
-        merge("{ A: { deps: ['B'], prior: false }, B: { deps: [] } }");
+        merge("{ A: { deps: ['B'] }, B: { deps: [] } }");
         assertTrue(js.eval("js", "(g => { const s = g.snapshot(); return Object.isFrozen(s) && Object.isFrozen(s[0]) && Object.isFrozen(s[0].deps); })")
                 .execute(graph).asBoolean());
     }

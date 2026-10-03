@@ -7,7 +7,6 @@ import hue.captains.singapura.js.homing.conformance.rules.FindingGrader;
 import hue.captains.singapura.js.homing.conformance.rules.GradedFinding;
 import hue.captains.singapura.js.homing.conformance.rules.Severity;
 import hue.captains.singapura.js.homing.core.Crate;
-import hue.captains.singapura.js.homing.core.PaletteProvision;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
@@ -29,16 +28,8 @@ abstract class SelfGate {
     static final boolean ALLOW_PRE_EXISTING =
             Boolean.parseBoolean(System.getProperty("conformance.allowPreExisting", "true"));
 
-    /**
-     * Law 6 - no literal where a token family is declared - is reported and not failed until the
-     * shape and space palettes exist to name what the literals say; {@code
-     * -Dconformance.css.strict=true} fails on it too.
-     */
-    static final boolean CSS_STRICT = Boolean.parseBoolean(System.getProperty("conformance.css.strict", "false"));
-
     abstract Collection<Crate> closure();
     abstract FindingGrader grader();
-    abstract List<PaletteProvision<?, ?>> provisions();
     /** The modules whose findings this gate grades. */
     abstract Predicate<String> owns();
     abstract String baselineFile();
@@ -70,23 +61,21 @@ abstract class SelfGate {
     @Test
     void everyBaselineFingerprintNamesLiveDebt() {
         var live = new ConformanceEngine().checkCrates(closure()).stream().map(Finding::fingerprint).collect(Collectors.toSet());
-        live.addAll(CssConformance.check(closure(), provisions()).stream().map(Finding::fingerprint).toList());
+        live.addAll(CssConformance.check(closure()).stream().map(Finding::fingerprint).toList());
         List<String> stale = grader().baseline().fingerprints().stream().filter(fp -> !live.contains(fp)).sorted().toList();
         assertEquals(List.of(), stale, () -> "stale baseline fingerprints (" + stale.size()
                 + ") - no current finding matches; remove them from " + baselineFile() + ":\n" + String.join("\n", stale));
     }
 
     /**
-     * RFC 0066 - the laws over the CSS graph: palettes complete, tokens declared by a palette the
-     * class reaches, priors palettes, nested names declared, crates requiring what their groups
-     * lean on. They fail the build like any JS rule, graded through the same allowances and baseline.
+     * RFC 0066 - the laws over the CSS graph: every variable a body reads is a design word or its
+     * own runtime's, nested names declared, crates requiring what their groups lean on. They fail
+     * the build like any JS rule, graded through the same allowances and baseline.
      */
     @Test
     void theCssGraphKeepsItsLaws() {
-        List<GradedFinding> graded = grader().grade(own(CssConformance.check(closure(), provisions())));
-        List<GradedFinding> reported = graded.stream()
-                .filter(g -> !CSS_STRICT && g.finding().rule().equals(CssConformance.NO_LITERAL_FAMILY)).toList();
-        List<GradedFinding> errors = graded.stream().filter(GradedFinding::isError).filter(g -> !reported.contains(g)).toList();
+        List<GradedFinding> graded = grader().grade(own(CssConformance.check(closure())));
+        List<GradedFinding> errors = graded.stream().filter(GradedFinding::isError).toList();
         assertEquals(List.of(), errors, () -> "css graph errors (" + errors.size() + "):\n"
                 + errors.stream().map(SelfGate::describe).collect(Collectors.joining("\n")));
     }

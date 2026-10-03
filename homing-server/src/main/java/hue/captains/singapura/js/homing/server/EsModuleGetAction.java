@@ -30,10 +30,6 @@ public class EsModuleGetAction
      */
     private final ServedModules served;
 
-    /** RFC 0066 — the deployment's priors (its global palette), written into
-     *  every served CSS group's dependency subgraph so the client loads them
-     *  first by the ordinary plan. Empty when the deployment has none. */
-    private final List<CssGroup<?>> priors;
     private final Predicate<CssGroup<?>> varies;
 
     public EsModuleGetAction(ModuleNameResolver nameResolver) {
@@ -41,27 +37,20 @@ public class EsModuleGetAction
     }
 
     public EsModuleGetAction(ModuleNameResolver nameResolver, ResourceReader resourceReader) {
-        this(nameResolver, resourceReader, ServedModules.NONE, List.of());
+        this(nameResolver, resourceReader, ServedModules.NONE);
     }
 
-    /** With the modules a deployment serves, pre-registered by canonical name from its crates. */
+    /** With the modules a deployment serves, pre-registered by canonical name from its crates; every group varies with the theme. */
     public EsModuleGetAction(ModuleNameResolver nameResolver, ResourceReader resourceReader, ServedModules served) {
-        this(nameResolver, resourceReader, served, List.of());
-    }
-
-    /** With the deployment's priors (RFC 0066); every group varies with the theme. */
-    public EsModuleGetAction(ModuleNameResolver nameResolver, ResourceReader resourceReader,
-                             ServedModules served, List<CssGroup<?>> priors) {
-        this(nameResolver, resourceReader, served, priors, g -> true);
+        this(nameResolver, resourceReader, served, g -> true);
     }
 
     /** @param varies whether a group's sheet changes with the theme — written into each group's subgraph for the client's manager */
     public EsModuleGetAction(ModuleNameResolver nameResolver, ResourceReader resourceReader,
-                             ServedModules served, List<CssGroup<?>> priors, Predicate<CssGroup<?>> varies) {
+                             ServedModules served, Predicate<CssGroup<?>> varies) {
         this.nameResolver = nameResolver;
         this.resourceReader = resourceReader;
         this.served = served == null ? ServedModules.NONE : served;
-        this.priors = List.copyOf(priors);
         this.varies = varies;
     }
 
@@ -145,7 +134,7 @@ public class EsModuleGetAction
         } else if (module instanceof CssGroup) {
             @SuppressWarnings("rawtypes")
             CssGroup css = (CssGroup) module;
-            contentProvider = (ContentProvider<M>) new CssGroupContentProvider<>(css, theme, nameResolver, priors, varies);
+            contentProvider = (ContentProvider<M>) new CssGroupContentProvider<>(css, theme, nameResolver, varies);
         } else if (module instanceof SelfContent self) {
             // Generic self-providing module: the type emits its own JS body.
             // Used by DocGroup (in homing-studio-base) and any future self-contained types

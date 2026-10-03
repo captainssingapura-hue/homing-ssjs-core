@@ -64,26 +64,17 @@ public class HomingActionRegistry implements ActionRegistry<RoutingContext> {
         if (meta == null) meta = AppMeta.DEFAULT;
         this.appAction = new AppHtmlGetAction(nameResolver, appResolver, themeRegistry, meta);
         ServedModules served = crates == null ? ServedModules.NONE : ServedModules.of(crates);
-        // RFC 0066 - the palettes are the priors every served group leans on; the
-        // module action writes it into each group's subgraph. /theme-vars is gone:
-        // the palette is a group, served by /css-content like any other.
-        List<CssGroup<?>> priors = themeRegistry.priors();
-        // A group varies with the theme when it is a prior, when a theme has an impl
-        // for it, or when a design-side renderer owns it and says so; every other
-        // group is served once, without a theme, and left alone by a switch.
-        var impls = themeRegistry.impls();
+        // A group varies with the theme when a design-side renderer owns it and says
+        // so; every other group is served once, without a theme, and left alone by a
+        // switch.
         var renderers = themeRegistry.renderers(served);
-        java.util.function.Predicate<CssGroup<?>> varies = g ->
-                priors.stream().anyMatch(p -> p.getClass() == g.getClass())
-                || impls.stream().anyMatch(i -> i.group().getClass() == g.getClass())
-                || renderers.stream().anyMatch(r -> r.owns(g) && r.varies(g));
-        this.moduleAction = new EsModuleGetAction(nameResolver, resourceReader, served, priors, varies);
-        // RFC 0066 - the base registry renders every group from its inline bodies,
-        // and fills the palette from the theme registry's provisions; the design
-        // side's renderers are asked first. The first theme listed is the default a
-        // request without ?theme= gets. RFC 0002 §3.6 still holds: no file-based fallback.
+        java.util.function.Predicate<CssGroup<?>> varies = g -> renderers.stream().anyMatch(r -> r.owns(g) && r.varies(g));
+        this.moduleAction = new EsModuleGetAction(nameResolver, resourceReader, served, varies);
+        // Every group renders from its inline bodies; the design side's renderers are
+        // asked first. The first theme listed is the default a request without
+        // ?theme= gets. RFC 0002 §3.6 still holds: no file-based fallback.
         Theme defaultTheme = themeRegistry.themes().isEmpty() ? null : themeRegistry.themes().get(0);
-        this.cssContentAction = new CssContentGetAction(themeRegistry.impls(), defaultTheme, served, renderers);
+        this.cssContentAction = new CssContentGetAction(defaultTheme, served, renderers);
     }
 
     /** Backwards-compatible constructor for callers that don't yet use {@code SimpleAppResolver}. */

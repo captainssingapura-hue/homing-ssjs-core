@@ -6,12 +6,8 @@ import hue.captains.singapura.js.homing.conformance.rules.CrateClosure;
 import hue.captains.singapura.js.homing.conformance.rules.FindingGrader;
 import hue.captains.singapura.js.homing.conformance.rules.RuleId;
 import hue.captains.singapura.js.homing.core.Crate;
-import hue.captains.singapura.js.homing.core.PaletteProvision;
 import hue.captains.singapura.js.homing.core.js.CoreJsCrate;
-import hue.captains.singapura.js.homing.designs.HomingDesigns;
 import hue.captains.singapura.js.homing.server.ServerCrate;
-import hue.captains.singapura.js.homing.theme.color.ThemeColorCrate;
-import hue.captains.singapura.js.homing.theme.type.ThemeTypeCrate;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -24,8 +20,8 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Core's crates on the new stack, as its gate grades them and its export reports them: its JS,
- * its server, its palettes - held to the default policy, with the allowances that are core's to
+ * Core's crates on the new stack, as its gate grades them and its export reports them: its JS
+ * and its server - held to the default policy, with the allowances that are core's to
  * make and the baseline its debt is kept in. One configuration, so the gate ({@code
  * CoreSelfConformanceTest}), the export ({@link CoreConformanceExport}) and the studio downstream
  * that browses these crates grade identically.
@@ -37,10 +33,7 @@ public final class CoreConformance {
     /** The crates graded, reported and browsed. */
     public static final List<Crate> TOP_LEVEL = List.of(
             CoreJsCrate.INSTANCE,
-            ServerCrate.INSTANCE,
-            // RFC 0066 - the palettes, so the CSS graph rules see the priors as crated.
-            ThemeColorCrate.INSTANCE,
-            ThemeTypeCrate.INSTANCE);
+            ServerCrate.INSTANCE);
 
     /** What core lets pass on purpose: the managers are where the typed paths end. */
     public static final List<Allowance> ALLOWANCES = List.of(
@@ -63,11 +56,6 @@ public final class CoreConformance {
                             + "may touch classList raw, because it is where the typed path ends."));
 
     public static Collection<Crate> closure() { return CrateClosure.of(TOP_LEVEL); }
-
-    /** The provisions the CSS graph laws derive their priors from: the framework designs' palettes. */
-    public static List<PaletteProvision<?, ?>> provisions() {
-        return HomingDesigns.REGISTRY.palettes();
-    }
 
     /** The debt core keeps, for these crates: {@code core-conformance-baseline.txt}. */
     public static Baseline baseline() {
