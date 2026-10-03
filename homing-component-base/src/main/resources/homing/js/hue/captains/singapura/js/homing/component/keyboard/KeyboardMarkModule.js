@@ -18,8 +18,15 @@
 //                                member is marked held
 //   arrives under no member      away; the marker kept
 //   leaves for nothing           held, on the same member: from away, the resume
-//   an Escape nothing took       from the control lent the keys: it lets go, and its
-//                                member is held — out of the native world, one key
+//   an Escape nothing took       from the control lent the keys: it lets go — a YIELD
+//                                from the control, one key. Its member is asked first,
+//                                wouldHold(control): one with keys of its own once the
+//                                control lets go holds them, with nothing focused; one
+//                                with nothing designed for that is passed by, and the
+//                                keys go on up the tree to the first ancestor that would
+//                                hold them, else to the root's default (the home), else
+//                                to no one; from the home's own control, the home anew -
+//                                it is the anchor. A member outside the tree holds, as ever
 //   a claim                      the browser's focus that is not in the claimer's
 //                                own area is blurred — a claim is an intention to
 //                                have the focus, and the steward makes it true
@@ -85,13 +92,19 @@ class KeyboardMark {
         KeyboardMark.paint(s);
     }
 
-    /** An Escape from the control lent the keys, which nothing took: it lets go, and its member is held. True when it did. */
+    /**
+     * An Escape from the control lent the keys, which nothing took: the control lets go, and that is a yield from it -
+     * where the keys go is the steward's (letGo): its member, if it would hold them, else up the tree. True when it
+     * did. Nothing took it: an Escape something on the way up kept - a stage, a dialog, closing - is that thing's.
+     */
     static escape(s, kind, ev) {
         if (kind !== "KeyDown" || ev.key !== "Escape" || ev.defaultPrevented || !s._lent || s.memberAt(ev.target) !== s._holder) return false;
-        if (typeof s._lent.blur === "function") s._lent.blur();
+        var control = s._lent;
+        if (typeof control.blur === "function") control.blur();
         KeyboardMark.sync(s);   // read, not waited for: a page without the window's focus moves the focus and fires nothing
         ev.preventDefault();
         ev.stopPropagation();
+        s._letGo(control);
         return true;
     }
 

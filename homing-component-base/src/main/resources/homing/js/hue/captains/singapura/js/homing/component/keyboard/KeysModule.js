@@ -19,6 +19,10 @@
 //   Keys.yield(m)                    the keys given up: they go up the focus tree to the first
 //                                    ancestor that would hold them (wouldHold), else to no one
 //   Keys.release(m)                  nothing, unless m holds
+//   Keys.home(m)                     the root's default allocation: where a yield no one would hold
+//                                    goes, and, while no one holds, the keys now - a page names it
+//                                    once it is laid out; Keys.home(null) takes it off. The home is
+//                                    the anchor: what it gives up comes straight back to it
 //     m: a membership of the focus tree — or, the older way, the pair
 //     (steward, id): Keys.claimOn(root, steward, id), Keys.claim(steward, id)
 //   A member of a mobile focus party that reaches no stationed one - a stray, or
@@ -56,5 +60,10 @@ var Keys = Object.freeze({
 
     claim: function (a, b) { if (_stray(a)) return; var t = _target(a, b); t.steward.claim(t.id); },
     yield: function (a, b) { if (_stray(a)) return false; var t = _target(a, b); return t.steward.yield(t.id); },
-    release: function (a, b) { if (_stray(a)) return; var t = _target(a, b); t.steward.release(t.id); }
+    release: function (a, b) { if (_stray(a)) return; var t = _target(a, b); t.steward.release(t.id); },
+    home: function (a, b) {
+        if (a == null) { KeyboardStewardInstance.home(null); return; }
+        if (_stray(a)) return;
+        var t = _target(a, b); t.steward.home(t.id);
+    }
 });
