@@ -90,6 +90,7 @@ class KeyboardMarkTest extends JsModuleTestBase {
         loadModule(DIR + "keyboard/KeyboardShortcutsModule.js");
         loadModule(DIR + "keyboard/KeyboardChordsModule.js");
         loadModule(DIR + "keyboard/KeyboardMarkModule.js");
+        loadModule(DIR + "keyboard/KeyboardHomeModule.js");
         loadModule(DIR + "keyboard/KeyboardStewardModule.js");
         loadModule(DIR + "keyboard/KeysModule.js");
         js.eval("js", SHIM);

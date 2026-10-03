@@ -16,6 +16,12 @@
 //                                     outside every member, and nothing is routed)
 //   KeyboardEvents.KINDS              the kinds, in this order
 //
+// And how the steward's listeners hear them - its sink for these events, its
+// trace for the keys: KeyboardEvents.listen(list, fn, what) adds one and gives
+// back the function that takes it off; KeyboardEvents.tell(list, thing, what)
+// tells every one on the list, each on its own - one that throws is reported,
+// and the rest are still told.
+//
 // The keys themselves are not events of ours: they are the browser's, passed
 // through to the holder. One event per change of holder, on the steward's sink,
 // and one per move of the marker.
@@ -28,6 +34,21 @@ function _id(v, what) {
 
 class KeyboardEvents {
     static KINDS = Object.freeze(["Granted", "Taken", "Released", "Offered", "Withdrawn", "Marked"]);
+
+    /** A listener added to a list of the steward's; the function returned takes it off. */
+    static listen(list, fn, what) {
+        if (typeof fn !== "function") throw new Error("[KeyboardSteward] " + what + " wants a function");
+        list.push(fn);
+        return function () { var i = list.indexOf(fn); if (i >= 0) list.splice(i, 1); };
+    }
+
+    /** Something told to every listener on a list, each on its own: one that throws is reported, and the rest are still told. */
+    static tell(list, thing, what) {
+        var sinks = list.slice();
+        for (var i = 0; i < sinks.length; i++) {
+            try { sinks[i](thing); } catch (e) { console.error("[KeyboardSteward] " + what + " threw on " + thing.kind + ":", e); }
+        }
+    }
     static STATES = Object.freeze(["held", "lent", "away"]);
 
     /** A member holds the keyboard now: by a claim, by a yield that reached it, by a member that left, or by the steward's Tab. */

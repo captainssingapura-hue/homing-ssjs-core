@@ -37,6 +37,7 @@ public record KeyboardStewardModule() implements DomModule<KeyboardStewardModule
                 .add(new ModuleImports<>(List.of(new KeyboardEventsModule.KeyboardEvents()), KeyboardEventsModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new KeyboardWalkModule.KeyboardWalk()), KeyboardWalkModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new KeyboardMarkModule.KeyboardMark()), KeyboardMarkModule.INSTANCE))
+                .add(new ModuleImports<>(List.of(new KeyboardHomeModule.KeyboardHome()), KeyboardHomeModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new KeyboardShortcutsModule.KeyboardShortcuts()), KeyboardShortcutsModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new KeyboardChordsModule.KeyboardChords()), KeyboardChordsModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new focusParty(), new FocusPartyModule.StationedFocusParty()), FocusPartyModule.INSTANCE))
