@@ -39,6 +39,15 @@
 //   candidate leaving the tree, all withdraw the offer: the walk exists only
 //   while the keyboard has the page.
 //
+// A YIELD goes up the focus tree to the first ancestor whose wouldHold says
+// yes. From a member: its ancestors are asked. From a native control that let
+// go - an Escape it had no use for - the member holding it is asked first: a
+// widget with nothing designed for holding the keys once its control lets go
+// says no, or says nothing, and is passed by. A yield no one would hold goes to
+// the ROOT'S DEFAULT ALLOCATION, the home, when the page named one, else to no
+// one; a page names its home once it is laid out (home(m)), and the home holds
+// at once while no one does: entering the page is the user's own act.
+//
 // A member is also told when the keys are INSIDE it — within(on, at), on the
 // holder's ancestors in the focus tree, at the marker — so a container can
 // show where the work is going on. Nothing is handed on: it is told, not routed.
@@ -70,6 +79,7 @@ class KeyboardSteward {
         this._traces = [];
         if (opts && typeof opts.onEvent === "function") this.on(opts.onEvent);
         this._holder = null;
+        this._home = null;           // the root's default allocation: a member id, or null
         this._candidate = null;      // the walk's cursor: a member id, or null
         this._shortcuts = [];        // the page's own keys, tried before anyone
         this._members = {};
@@ -95,6 +105,7 @@ class KeyboardSteward {
             else if (n.kind === "moved") KeyboardMark.tell(self, true);   // the members above the marker are others now
             else if (n.kind === "left" && self._members[n.id]) {
                 if (self._candidate === n.id) self.withdraw();   // nothing is offered to a member that has gone
+                if (self._home === n.id) self._home = null;      // a home that has gone is no one's default
                 // the leaver yields on its way out, from the parent it had: the first ancestor that would hold, else no one
                 if (self._holder === n.id) self._handOn(self._catcher(n.parent ? self._focus.find(n.parent) : null, null), n.id, "left");
                 self._party.leave(n.id);
@@ -110,10 +121,22 @@ class KeyboardSteward {
         }
         return null;
     }
-    /** The keys to `target` with the reason `by`, or, with no target, released by `from`. */
+    /** The keys to `target` with the reason `by`; with no target, to the root's default - the home - else released by `from`. */
     _handOn(target, from, by) {
+        if (!target && this._home && this._members[this._home]) target = { id: this._home };   // the home yielding keeps them: a claim by the holder is nothing
         if (target) this._party.tellFrom(_STEWARD, { kind: "Claim", id: target.id, by: by });
         else this._party.tellFrom(_STEWARD, { kind: "Release", id: from });
+    }
+    /**
+     * A native control the holder lent the keys to let go of them (KeyboardMark.escape): a yield from the control. The
+     * holder is asked first, wouldHold(control), and keeps them when it says so; otherwise they go on up the tree, as a
+     * member's yield does. A member outside the tree holds, as a member always did.
+     */
+    _letGo(control) {
+        var id = this._holder, m = id && this._focus ? this._focus.find(id) : null;
+        if (!m || m.kind === "proxy") return;
+        var c = this._catcher(m, control);
+        if (c !== m) this._handOn(c, id, "yield");
     }
     /** A member's id: a membership's, or the string given. */
     static idOf(m) { return m && typeof m === "object" && typeof m.id === "string" ? m.id : m; }
@@ -165,6 +188,7 @@ class KeyboardSteward {
         id = KeyboardSteward.idOf(id);
         if (!this._members[id]) return;
         if (this._candidate === id) this.withdraw();
+        if (this._home === id) this._home = null;
         this._party.tellFrom(_STEWARD, { kind: "Left", id: id });
         this._party.leave(id);
         delete this._members[id];
@@ -187,6 +211,19 @@ class KeyboardSteward {
         this._handOn(m ? this._catcher(m.parent(), m) : null, id, "yield");
         return true;
     }
+    /**
+     * The root's default allocation: the member the keys go to when they reach the root of the focus tree - a yield no
+     * ancestor would hold, a leaver's no one would - instead of to no one; and, while no one holds, they go to it now,
+     * by "home". A page names it once it is laid out: entering the page is the user's own act. home(null) takes it off.
+     */
+    home(m) {
+        var id = m == null ? null : KeyboardSteward.idOf(m);
+        if (id != null && !this._members[id]) throw new Error("[KeyboardSteward] no member '" + id + "' to be the home");
+        this._home = id;
+        if (id != null && this._holder === null) this._party.tellFrom(_STEWARD, { kind: "Claim", id: id, by: "home" });
+    }
+    /** The home: the member the root allocates the keys to, or null. */
+    homed() { return this._home; }
     /** A key of the PAGE's, tried before the native world and before the holder: fn(ev) → true when it took it. A chord or a function key only; the function returned takes it off. */
     shortcut(fn) { return KeyboardShortcuts.add(this._shortcuts, fn); }
     holder() { return this._holder; }

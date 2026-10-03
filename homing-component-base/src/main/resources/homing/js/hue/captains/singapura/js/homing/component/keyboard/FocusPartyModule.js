@@ -43,7 +43,9 @@
 //
 // A member is the component itself, by the base's contract, with what the
 // steward reads off it when it holds the keys: keyDown(ev), keyUp(ev),
-// granted(by), taken(by), and wouldHold(from) when a descendant yields. The
+// granted(by), taken(by), and wouldHold(from) when a descendant yields - from
+// the yielding member, null for a leaver, or the native control inside it that
+// let go of the keys, for a member asked about its own control. The
 // party reads none of them. Ids are stable across a move and a graft; paths
 // are for the eye and change with the place.
 // =============================================================================
