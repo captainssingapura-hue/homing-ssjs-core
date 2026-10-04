@@ -32,39 +32,9 @@ class ReadContentFromResourcesTest {
         Files.writeString(jsFile, "const x = 42;");
 
         var reader = new ResourceReader(tempDir);
-        var provider = new ReadContentFromResources<>(TestMod.INSTANCE, null, reader);
+        var provider = new ReadContentFromResources<>(TestMod.INSTANCE, reader);
         var content = provider.content();
 
         assertEquals(List.of("const x = 42;"), content);
-    }
-
-    @Test
-    void content_readsThemedFile(@TempDir Path tempDir) throws IOException {
-        String basePath = "homing/js/" + TestMod.class.getCanonicalName().replace(".", "/");
-        Path defaultFile = tempDir.resolve(basePath + ".js");
-        Path darkFile = tempDir.resolve(basePath + ".dark.js");
-        Files.createDirectories(defaultFile.getParent());
-        Files.writeString(defaultFile, "const x = 'light';");
-        Files.writeString(darkFile, "const x = 'dark';");
-
-        var reader = new ResourceReader(tempDir);
-        var provider = new ReadContentFromResources<>(TestMod.INSTANCE, "dark", reader);
-        var content = provider.content();
-
-        assertEquals(List.of("const x = 'dark';"), content);
-    }
-
-    @Test
-    void content_fallsBackToDefaultWhenThemeNotFound(@TempDir Path tempDir) throws IOException {
-        String basePath = "homing/js/" + TestMod.class.getCanonicalName().replace(".", "/");
-        Path defaultFile = tempDir.resolve(basePath + ".js");
-        Files.createDirectories(defaultFile.getParent());
-        Files.writeString(defaultFile, "const x = 'default';");
-
-        var reader = new ResourceReader(tempDir);
-        var provider = new ReadContentFromResources<>(TestMod.INSTANCE, "nonexistent", reader);
-        var content = provider.content();
-
-        assertEquals(List.of("const x = 'default';"), content);
     }
 }

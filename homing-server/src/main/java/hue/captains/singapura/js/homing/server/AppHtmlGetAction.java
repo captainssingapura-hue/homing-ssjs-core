@@ -179,17 +179,6 @@ public class AppHtmlGetAction
 
         AppQuery query = new AppQuery(app.simpleName(), null, theme, locale,
                 allQuery == null ? java.util.Map.of() : allQuery);
-        // RFC 0064 — the server no longer takes the page's ?theme=. The context
-        // is the client's to resolve (the steward: address as override, stored
-        // preference, registry default) and to put on the resources that vary
-        // by it. What the page template propagates is only the registry's
-        // default, so every downstream that still expects a concrete slug —
-        // the theme bundle, module URLs, the three template parts — sees one.
-        // The address's ?theme= is read by the client, not here.
-        String effectiveTheme = themeRegistry.themes().isEmpty()
-                ? null
-                : themeRegistry.themes().get(0).slug();
-
         // RFC 0051 — stamp the app's params into the page, so the client does
         // not re-parse a URL the server has already interpreted. Only apps
         // that declare a codec are stamped; the rest keep today's behaviour
@@ -204,7 +193,6 @@ public class AppHtmlGetAction
         String stampedCrumbs = stampCrumbs(crumbs);
 
         String baseModuleUrl = nameResolver.resolve(app).basePath();
-        String themeJs  = effectiveTheme != null ? "\"" + effectiveTheme + "\"" : "null";
 
         String html = """
                 <!DOCTYPE html>
@@ -239,28 +227,13 @@ public class AppHtmlGetAction
                 <body>
                     <div id="app"></div>
                     <script type="module">
-                        // RFC 0064: the page is served under the registry's default theme
-                        // and no locale. Neither is the address's to say here — the client
-                        // resolves both through the preference steward (an ?override for
-                        // this page, else the stored pick, else the default) and puts them
-                        // on the resources that vary by them. What rides on the module URL
-                        // is only the default the server propagated. Browser
-                        // prefers-color-scheme is intentionally ignored — themes are
-                        // explicit, not auto-derived.
-                        const theme = %s;
-                        // color-scheme is NOT set from the theme slug. It used to be
-                        // — `style.colorScheme = theme` — which assigned "carbon" or
-                        // "forest" to a property that accepts only
-                        // normal | light | dark | light dark. Every theme was therefore
-                        // setting an invalid value, the browser fell back to light, and
-                        // the inline style outranked the `:root { color-scheme: … }` each
-                        // theme declares in its own Globals CSS. Harmless while every
-                        // theme was light-primary; visible the moment one was not, as a
-                        // bright scrollbar down a near-black page.
-                        //
-                        // The theme owns this. Nothing to do here.
-                        let moduleUrl = "%s";
-                        if (theme) moduleUrl += "&theme=" + encodeURIComponent(theme);
+                        // RFC 0064: the page is served with no theme and no locale. The
+                        // client resolves both through the preference steward (an ?override
+                        // for this page, else the stored pick, else the default) and puts
+                        // them on the resources that vary by them - the sheets. A module
+                        // varies by neither, so its URL is its class alone: every import
+                        // of it, static or dynamic, is the same instance.
+                        const moduleUrl = "%s";
                         %s
                         %s
                         const { appMain } = await import(moduleUrl);
@@ -269,7 +242,7 @@ public class AppHtmlGetAction
                 </body>
                 </html>
                 """.formatted(htmlEscape(app.title() + " · " + meta.label()),
-                              themeJs, baseModuleUrl,
+                              baseModuleUrl,
                               stampedParams == null ? "" : "const params = " + stampedParams + ";",
                               stampedCrumbs == null ? "" : "const chrome = Object.freeze({crumbs: "
                                                           + stampedCrumbs + "});",

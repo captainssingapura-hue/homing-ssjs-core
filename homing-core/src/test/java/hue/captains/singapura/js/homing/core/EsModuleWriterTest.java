@@ -41,7 +41,7 @@ class EsModuleWriterTest {
         @Override public ExportsOf<NoExports> exports() { return new ExportsOf<>(INSTANCE, List.of()); }
     }
 
-    private final ModuleNameResolver resolver = m -> new PartialModulePath("/mod?class=" + m.getClass().getCanonicalName(), false);
+    private final ModuleNameResolver resolver = m -> new PartialModulePath("/mod?class=" + m.getClass().getCanonicalName());
     private final SimpleImportsWriterResolver importsResolver = new SimpleImportsWriterResolver(resolver);
 
     @Test

@@ -28,7 +28,6 @@ class SimplePrefixResolverTest {
 
         assertTrue(result.basePath().startsWith("/test/"));
         assertTrue(result.basePath().endsWith(".js"), "SimplePrefixResolver should append .js");
-        assertFalse(result.domAware(), "File-based resolver should never be domAware");
     }
 
     @Test

@@ -21,13 +21,18 @@ import java.util.function.Predicate;
  * dedicated variant property on the JS-side handle ({@code base.hover},
  * {@code base.focus}, etc.). No separate variant records are required — the
  * framework synthesizes everything from the base + its declared states.</p>
+ *
+ * <p>{@code defaultTheme} is the deployment's default — the theme the client's
+ * manager falls back to until the address or the stored pick says otherwise. It
+ * is the server's, never the request's: a module varies by no context, so its
+ * URL is its class alone.</p>
  */
 public record CssGroupContentProvider<C extends CssGroup<C>>(
-        C cssGroup, String theme, ModuleNameResolver nameResolver, Predicate<CssGroup<?>> varies
+        C cssGroup, String defaultTheme, ModuleNameResolver nameResolver, Predicate<CssGroup<?>> varies
 ) implements ContentProvider<C> {
 
-    public CssGroupContentProvider(C cssGroup, String theme, ModuleNameResolver nameResolver) {
-        this(cssGroup, theme, nameResolver, g -> true);
+    public CssGroupContentProvider(C cssGroup, String defaultTheme, ModuleNameResolver nameResolver) {
+        this(cssGroup, defaultTheme, nameResolver, g -> true);
     }
 
     @Override
@@ -35,7 +40,9 @@ public record CssGroupContentProvider<C extends CssGroup<C>>(
         List<String> lines = new ArrayList<>();
         String managerPath = nameResolver.resolve(CssClassManager.INSTANCE).basePath();
         String groupName = cssGroup.getClass().getCanonicalName();
-        String themeArg = theme != null ? ", \"" + theme + "\"" : "";
+        // Always the second argument, null where the deployment has no theme: the
+        // manager reads its arguments by position, and the subgraph is the third.
+        String themeArg = defaultTheme != null ? ", \"" + defaultTheme + "\"" : ", null";
 
         lines.add("import { CssClassManagerInstance as _css } from \"" + managerPath + "\";");
         // RFC 0064 — the group carries its transitive dependency subgraph as
