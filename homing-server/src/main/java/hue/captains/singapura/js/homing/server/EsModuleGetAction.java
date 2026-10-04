@@ -32,6 +32,9 @@ public class EsModuleGetAction
 
     private final Predicate<CssGroup<?>> varies;
 
+    /** The deployment's default theme slug, written into each CSS group module as its manager's fallback; null when there is none. */
+    private final String defaultTheme;
+
     public EsModuleGetAction(ModuleNameResolver nameResolver) {
         this(nameResolver, ResourceReader.INSTANCE);
     }
@@ -48,10 +51,17 @@ public class EsModuleGetAction
     /** @param varies whether a group's sheet changes with the theme — written into each group's subgraph for the client's manager */
     public EsModuleGetAction(ModuleNameResolver nameResolver, ResourceReader resourceReader,
                              ServedModules served, Predicate<CssGroup<?>> varies) {
+        this(nameResolver, resourceReader, served, varies, null);
+    }
+
+    /** @param defaultTheme the deployment's default theme slug, the client manager's fallback; null when there is none */
+    public EsModuleGetAction(ModuleNameResolver nameResolver, ResourceReader resourceReader,
+                             ServedModules served, Predicate<CssGroup<?>> varies, String defaultTheme) {
         this.nameResolver = nameResolver;
         this.resourceReader = resourceReader;
         this.served = served == null ? ServedModules.NONE : served;
         this.varies = varies;
+        this.defaultTheme = defaultTheme;
     }
 
     @Override
@@ -84,7 +94,7 @@ public class EsModuleGetAction
         try {
             EsModule<?> module = found.get();
             return CompletableFuture.completedFuture(
-                    new JsModuleContent(render(module, query.theme(), query.locale())));
+                    new JsModuleContent(render(module)));
         } catch (Exception e) {
             return CompletableFuture.failedFuture(ResourceNotFound.forClass(query.className(), e));
         }
@@ -93,21 +103,21 @@ public class EsModuleGetAction
     /**
      * The complete served JavaScript for a module, produced in-process by the
      * SAME assembly the HTTP path uses — so a build-time consumer (conformance)
-     * validates exactly what is served. {@code theme}/{@code locale} are the
-     * request values (both {@code null} for a plain {@code /module?class=}
-     * fetch — see {@link #render(EsModule)}).
+     * validates exactly what is served. A module varies by no context: a
+     * {@code theme} or {@code locale} on the request is ignored, so an old link
+     * that still carries one is served the same module.
      *
      * <p>BundledExternalModule short-circuit: a 3rd-party library bundled at
      * build time — ship the classpath bytes verbatim (no imports prefix, no
      * exports suffix, no css/href injection); the bundled file has its own
      * native exports.</p>
      */
-    public String render(EsModule<?> module, String theme, String locale) {
+    public String render(EsModule<?> module) {
         try {
             if (module instanceof BundledExternalModule<?> bundled) {
                 return String.join("\n", bundled.content());
             }
-            return String.join("\n", createWriter(module, theme, locale).writeModule());
+            return String.join("\n", createWriter(module).writeModule());
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
@@ -115,16 +125,9 @@ public class EsModuleGetAction
         }
     }
 
-    /** In-process render with default (null) theme/locale — a plain served module. */
-    public String render(EsModule<?> module) {
-        return render(module, null, null);
-    }
-
 
     @SuppressWarnings("unchecked")
-    private <M extends EsModule<M>> EsModuleWriter<M> createWriter(
-            EsModule<?> resolvedModule, String theme, String locale
-    ) throws Exception {
+    private <M extends EsModule<M>> EsModuleWriter<M> createWriter(EsModule<?> resolvedModule) throws Exception {
         M module = (M) resolvedModule;
         ContentProvider<M> contentProvider;
         if (module instanceof SvgGroup) {
@@ -134,14 +137,14 @@ public class EsModuleGetAction
         } else if (module instanceof CssGroup) {
             @SuppressWarnings("rawtypes")
             CssGroup css = (CssGroup) module;
-            contentProvider = (ContentProvider<M>) new CssGroupContentProvider<>(css, theme, nameResolver, varies);
+            contentProvider = (ContentProvider<M>) new CssGroupContentProvider<>(css, defaultTheme, nameResolver, varies);
         } else if (module instanceof SelfContent self) {
             // Generic self-providing module: the type emits its own JS body.
             // Used by DocGroup (in homing-studio-base) and any future self-contained types
             // — homing-server has no compile-time knowledge of which.
             contentProvider = () -> self.selfContent(nameResolver);
         } else {
-            contentProvider = new ReadContentFromResources<>(module, theme, resourceReader);
+            contentProvider = new ReadContentFromResources<>(module, resourceReader);
         }
 
         if (module instanceof DomModule<?> dom && !dom.cssGroups().isEmpty()) {
@@ -163,7 +166,7 @@ public class EsModuleGetAction
         }
 
         return new EsModuleWriter<>(module, contentProvider, nameResolver,
-                ExportWriter.INSTANCE, new SimpleImportsWriterResolver(nameResolver, theme, locale));
+                ExportWriter.INSTANCE, new SimpleImportsWriterResolver(nameResolver));
     }
 
     /** Package-private for testing — returns true iff the module has at least one AppLink import. */

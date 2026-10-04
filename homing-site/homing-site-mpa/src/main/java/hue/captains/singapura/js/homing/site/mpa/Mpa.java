@@ -43,7 +43,7 @@ public interface Mpa {
         return themes().themes().isEmpty() ? Optional.empty() : Optional.of(themes().themes().get(0).slug());
     }
 
-    /** The address a served module is imported from, without the theme. */
+    /** The address a served module is imported from: its class alone, the same for every importer. */
     String moduleUrl(EsModule<?> module);
 
     /** {@code app} bound to {@code params}, as a page of this MPA. */

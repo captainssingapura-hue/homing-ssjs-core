@@ -3,8 +3,6 @@
 hue.captains.singapura.js.homing.core.js.DomOpsPartyBaseModule [use-dom-ops-party] raw DOM factory (use branch.createElement via the DomOpsParty, not document.create*): const el = document.createElement(tagName);
 hue.captains.singapura.js.homing.core.js.DomOpsPartyModule [exports-are-classes] exported function 'viewParty' — a component is a class: const viewParty = () => domOpsParty.snapshot();
 hue.captains.singapura.js.homing.core.js.NodeContentModule [exports-are-classes] exported function 'NodeContent' — a component is a class: function NodeContent(bundle) {
-hue.captains.singapura.js.homing.core.js.ServingContextModule [exports-are-classes] exported function 'servingContext' — a component is a class: function servingContext() {
-hue.captains.singapura.js.homing.core.js.ServingContextModule [exports-are-classes] exported function 'withServingContext' — a component is a class: function withServingContext(url) {
 hue.captains.singapura.js.homing.core.js.TreeRendererModule [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): badge.style.cssText = "flex:0 0 auto;font-size:10px;letter-spacing:.06em;"
 hue.captains.singapura.js.homing.core.js.TreeRendererModule [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): blurb.style.cssText = "flex:1 1 0;white-space:nowrap;overflow:hidden;"
 hue.captains.singapura.js.homing.core.js.TreeRendererModule [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): caret.style.cssText = 'width:21px;display:inline-block;color:#888;font-size:18px;flex:0 0 auto;';

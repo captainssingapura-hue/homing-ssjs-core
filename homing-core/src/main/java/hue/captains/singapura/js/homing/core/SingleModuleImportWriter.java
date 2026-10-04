@@ -2,13 +2,7 @@ package hue.captains.singapura.js.homing.core;
 
 import java.util.stream.Collectors;
 
-public record SingleModuleImportWriter<M extends EsModule<M>>(
-        M module, ModuleNameResolver resolver, String theme, String locale
-) {
-
-    public SingleModuleImportWriter(M module, ModuleNameResolver resolver) {
-        this(module, resolver, null, null);
-    }
+public record SingleModuleImportWriter<M extends EsModule<M>>(M module, ModuleNameResolver resolver) {
 
     public String writeImports(ModuleImports<M> imports) {
         // RFC 0001 Step 11 fix: AppLink<?> entries are pure Java metadata for
@@ -21,8 +15,7 @@ public record SingleModuleImportWriter<M extends EsModule<M>>(
                 .toList();
         if (emittable.isEmpty()) return "";
 
-        final String moduleName = resolver.resolve(imports.from())
-                .withTheme(theme).withLocale(locale).basePath();
+        final String moduleName = resolver.resolve(imports.from()).basePath();
 
         // RFC 0024 Phase P1a — aliasing support. If the import declaration
         // carries an entry in ModuleImports.aliases() keyed by the export's

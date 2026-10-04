@@ -51,4 +51,13 @@ class CssGroupSubgraphTest {
         String load = provider.content().get(1);
         assertTrue(load.startsWith("await _css.loadCss(\"" + fq(Root.class) + "\", \"default\", { \"" + fq(Dep.class) + "\": { deps: [] }"), load);
     }
+
+    @Test
+    void withNoDefaultTheme_theSubgraphIsStillTheThirdArgument() {
+        // The manager reads loadCss(id, fallbackTheme, subgraph) by position; a
+        // missing theme is written as null, never left out.
+        var provider = new CssGroupContentProvider<>(Root.INSTANCE, null, new QueryParamResolver("/module"));
+        String load = provider.content().get(1);
+        assertTrue(load.startsWith("await _css.loadCss(\"" + fq(Root.class) + "\", null, { \"" + fq(Dep.class) + "\": { deps: [] }"), load);
+    }
 }

@@ -34,7 +34,14 @@ class QueryParamResolverTest {
         // (The package name itself contains ".js.homing." now, so check for
         //  a trailing .js — i.e. .js at the end of the string — not anywhere.)
         assertFalse(result.basePath().endsWith(".js"), "Query param resolver should not append .js extension");
-        assertFalse(result.domAware(), "Plain EsModule should not be domAware");
+    }
+
+    @Test
+    void resolve_isTheClassAlone() {
+        // One URL per module, whoever imports it: no theme, no locale, so a
+        // dynamic import(url) and a static import name the same instance.
+        var result = new QueryParamResolver().resolve(TestModule.INSTANCE);
+        assertEquals("/module?class=" + TestModule.class.getCanonicalName(), result.basePath());
     }
 
     @Test

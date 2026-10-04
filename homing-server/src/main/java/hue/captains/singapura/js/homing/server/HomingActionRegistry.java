@@ -69,11 +69,15 @@ public class HomingActionRegistry implements ActionRegistry<RoutingContext> {
         // switch.
         var renderers = themeRegistry.renderers(served);
         java.util.function.Predicate<CssGroup<?>> varies = g -> renderers.stream().anyMatch(r -> r.owns(g) && r.varies(g));
-        this.moduleAction = new EsModuleGetAction(nameResolver, resourceReader, served, varies);
-        // Every group renders from its inline bodies; the design side's renderers are
-        // asked first. The first theme listed is the default a request without
-        // ?theme= gets. RFC 0002 §3.6 still holds: no file-based fallback.
+        // The first theme listed is the default: what a sheet requested without
+        // ?theme= is rendered under, and what each CSS group module hands the
+        // client's manager as its fallback. RFC 0002 §3.6 still holds: no
+        // file-based fallback.
         Theme defaultTheme = themeRegistry.themes().isEmpty() ? null : themeRegistry.themes().get(0);
+        this.moduleAction = new EsModuleGetAction(nameResolver, resourceReader, served, varies,
+                defaultTheme == null ? null : defaultTheme.slug());
+        // Every group renders from its inline bodies; the design side's renderers are
+        // asked first.
         this.cssContentAction = new CssContentGetAction(defaultTheme, served, renderers);
     }
 

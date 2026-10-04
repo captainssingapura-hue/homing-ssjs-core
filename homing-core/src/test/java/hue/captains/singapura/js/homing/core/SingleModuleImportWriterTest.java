@@ -36,7 +36,7 @@ class SingleModuleImportWriterTest {
 
     @Test
     void writeImports_doesNotAppendJsSuffix() {
-        ModuleNameResolver resolver = m -> new PartialModulePath("/modules/" + m.getClass().getSimpleName() + ".js", false);
+        ModuleNameResolver resolver = m -> new PartialModulePath("/modules/" + m.getClass().getSimpleName() + ".js");
         var writer = new SingleModuleImportWriter<>(TestModule.INSTANCE, resolver);
 
         var imports = new ModuleImports<>(List.of(new TestModule.Foo(), new TestModule.Bar()), TestModule.INSTANCE);
@@ -53,7 +53,7 @@ class SingleModuleImportWriterTest {
         // An import-list containing only AppLinks must produce NO `import` line —
         // otherwise multiple targets' `link` records would collide as duplicate
         // identifiers in the consumer's compiled JS.
-        ModuleNameResolver resolver = m -> new PartialModulePath("/m/" + m.getClass().getSimpleName(), false);
+        ModuleNameResolver resolver = m -> new PartialModulePath("/m/" + m.getClass().getSimpleName());
         var writer = new SingleModuleImportWriter<>(AppA.INSTANCE, resolver);
         var imports = new ModuleImports<>(List.of(new AppA.link()), AppA.INSTANCE);
 
@@ -76,7 +76,7 @@ class SingleModuleImportWriterTest {
         // Note: a real AppLink<MixedSource> isn't constructable since MixedSource
         // isn't a Linkable. This test establishes the filter behavior with
         // a placeholder; in real usage the mix doesn't typecheck.
-        ModuleNameResolver resolver = m -> new PartialModulePath("/m/" + m.getClass().getSimpleName(), false);
+        ModuleNameResolver resolver = m -> new PartialModulePath("/m/" + m.getClass().getSimpleName());
         var writer = new SingleModuleImportWriter<>(MixedSource.INSTANCE, resolver);
         var imports = new ModuleImports<>(List.of(new MixedSource.helper()), MixedSource.INSTANCE);
         assertTrue(writer.writeImports(imports).contains("helper"));
@@ -87,7 +87,7 @@ class SingleModuleImportWriterTest {
         // RFC 0024 Phase P1a — aliased imports. When ModuleImports.aliases()
         // maps an Exportable's runtime class to an alias name, the writer
         // emits `OriginalName as AliasName`.
-        ModuleNameResolver resolver = m -> new PartialModulePath("/m/" + m.getClass().getSimpleName(), false);
+        ModuleNameResolver resolver = m -> new PartialModulePath("/m/" + m.getClass().getSimpleName());
         var writer = new SingleModuleImportWriter<>(TestModule.INSTANCE, resolver);
         var imports = new ModuleImports<>(
                 List.of(new TestModule.Foo(), new TestModule.Bar()),
@@ -101,7 +101,7 @@ class SingleModuleImportWriterTest {
 
     @Test
     void writeImports_aliasesMultipleExportsFromSameSource() {
-        ModuleNameResolver resolver = m -> new PartialModulePath("/m/" + m.getClass().getSimpleName(), false);
+        ModuleNameResolver resolver = m -> new PartialModulePath("/m/" + m.getClass().getSimpleName());
         var writer = new SingleModuleImportWriter<>(TestModule.INSTANCE, resolver);
         var imports = new ModuleImports<>(
                 List.of(new TestModule.Foo(), new TestModule.Bar()),
@@ -116,7 +116,7 @@ class SingleModuleImportWriterTest {
 
     @Test
     void writeImports_worksWithQueryParamResolver() {
-        ModuleNameResolver resolver = m -> new PartialModulePath("/module?class=" + m.getClass().getCanonicalName(), false);
+        ModuleNameResolver resolver = m -> new PartialModulePath("/module?class=" + m.getClass().getCanonicalName());
         var writer = new SingleModuleImportWriter<>(TestModule.INSTANCE, resolver);
 
         var imports = new ModuleImports<>(List.of(new TestModule.Foo()), TestModule.INSTANCE);
