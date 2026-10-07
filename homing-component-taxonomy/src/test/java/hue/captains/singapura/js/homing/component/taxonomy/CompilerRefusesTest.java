@@ -37,8 +37,8 @@ class CompilerRefusesTest {
             import hue.captains.singapura.js.homing.component.taxonomy.*;
             import java.util.List;
             public class Hypothetical {
-                record Text() implements Kind<Root> { static final Text INSTANCE = new Text(); public Root parent() { return Root.INSTANCE; } }
-                record Naming() implements RoleBranch<RoleRoot> { static final Naming INSTANCE = new Naming(); public RoleRoot parent() { return RoleRoot.INSTANCE; } }
+                record Text() implements L1_ComponentBranch<Root> { static final Text INSTANCE = new Text(); public Root parent() { return Root.INSTANCE; } }
+                record Naming() implements L1_RoleBranch<RoleRoot> { static final Naming INSTANCE = new Naming(); public RoleRoot parent() { return RoleRoot.INSTANCE; } }
                 record Title() implements Role<Naming> { static final Title INSTANCE = new Title(); public Naming parent() { return Naming.INSTANCE; } }
                 record Caption() implements Component<Text> { static final Caption INSTANCE = new Caption(); public Text parent() { return Text.INSTANCE; } }
             """;
@@ -122,7 +122,7 @@ class CompilerRefusesTest {
     void theCatalogue_isOpenAtAnyLevel_compiles() {
         var errors = compile("""
                 record Loose() implements Role<RoleRoot> { public RoleRoot parent() { return RoleRoot.INSTANCE; } }
-                record Deeper() implements RoleBranch<Naming> { static final Deeper INSTANCE = new Deeper(); public Naming parent() { return Naming.INSTANCE; } }
+                record Deeper() implements L2_RoleBranch<Naming> { static final Deeper INSTANCE = new Deeper(); public Naming parent() { return Naming.INSTANCE; } }
                 record Deepest() implements Role<Deeper> { public Deeper parent() { return Deeper.INSTANCE; } }
                 """);
         assertTrue(errors.isEmpty(), "a role at the root's level, a branch under a branch, a role under that: " + errors);
@@ -138,7 +138,35 @@ class CompilerRefusesTest {
     @Test
     void aBranchUnderARole_doesNotCompile() {
         refusedOnItsLine("""
-                record Group() implements RoleBranch<Title> { public Title parent() { return Title.INSTANCE; } } // refused here
+                record Group() implements L2_RoleBranch<Title> { public Title parent() { return Title.INSTANCE; } } // refused here
+                """);
+    }
+
+    @Test
+    void aSecondComponentRoot_doesNotCompile() {
+        refusedOnItsLine("""
+                record Usurper() implements L0_ComponentBranch {} // refused here
+                """);
+    }
+
+    @Test
+    void aSecondRoleRoot_doesNotCompile() {
+        refusedOnItsLine("""
+                record Pretender() implements L0_RoleBranch {} // refused here
+                """);
+    }
+
+    @Test
+    void aBranchAtTheWrongLevel_doesNotCompile() {
+        refusedOnItsLine("""
+                record Skip() implements L2_ComponentBranch<Root> { public Root parent() { return Root.INSTANCE; } } // refused here
+                """);
+    }
+
+    @Test
+    void aChainOfParentsThatComesBack_doesNotCompile() {
+        refusedOnItsLine("""
+                record Chick() implements L1_ComponentBranch<Egg> { public Egg parent() { return null; } } record Egg() implements L1_ComponentBranch<Chick> { public Chick parent() { return null; } } // refused here
                 """);
     }
 

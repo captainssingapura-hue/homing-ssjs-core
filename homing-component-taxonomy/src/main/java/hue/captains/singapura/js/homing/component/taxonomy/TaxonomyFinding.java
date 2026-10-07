@@ -12,7 +12,7 @@ public record TaxonomyFinding(Sign sign, String says) implements ValueObject {
 
     /** What reading notices. */
     public enum Sign {
-        /** A component whose every part is optional: probably a kind missing its plain leaf. */
+        /** A component whose every part is optional: probably a branch missing its plain leaf. */
         ALL_OPTIONAL,
         /** A role given to the reader that no component names. */
         ROLE_UNNAMED,

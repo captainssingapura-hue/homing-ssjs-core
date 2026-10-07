@@ -60,11 +60,11 @@ class ReadTaxonomyTest {
         Taxonomy t = read(Confirmation.INSTANCE);
         assertEquals(List.of(Confirmation.INSTANCE, Caption.INSTANCE, PlainButton.INSTANCE), t.components(),
                 "the confirmation, then what plays its parts, reached through the slots");
-        assertEquals(Set.of(Container.INSTANCE, Text.INSTANCE, Control.INSTANCE, Button.INSTANCE), Set.copyOf(t.kinds()));
-        assertTrue(t.kinds().indexOf(Control.INSTANCE) < t.kinds().indexOf(Button.INSTANCE), "a parent before its children");
+        assertEquals(List.of(Container.INSTANCE, Text.INSTANCE, Control.INSTANCE, Button.INSTANCE), t.branches(),
+                "the branches, reached through the parents, by level - every parent before its children - the root left out");
         assertEquals(List.of(Title.INSTANCE, Confirm.INSTANCE, Cancel.INSTANCE), t.roles(), "the roles its slots name, in order");
-        assertEquals(List.of(Sketch.Saying.INSTANCE, Naming.INSTANCE, Doing.INSTANCE, Committing.INSTANCE), t.branches(),
-                "the branches, reached through the roles, a parent before its child, the root left out");
+        assertEquals(List.of(Sketch.Saying.INSTANCE, Doing.INSTANCE, Naming.INSTANCE, Committing.INSTANCE), t.roleBranches(),
+                "the role branches, reached through the roles, by level, the root left out");
     }
 
     @Test
@@ -103,7 +103,7 @@ class ReadTaxonomyTest {
         Taxonomy t = READ.read(Sketch.DECLARED);
         assertEquals(List.of(PlainCard.INSTANCE, ProfileCard.INSTANCE, Shelf.INSTANCE), t.children(Card.INSTANCE));
         assertEquals(List.of(Control.INSTANCE, Container.INSTANCE, Text.INSTANCE, Sketch.Mark.INSTANCE), t.children(Root.INSTANCE),
-                "kinds first, each in reading order");
+                "branches first, each in reading order");
     }
 
     // ── roles: shared, and filed ───────────────────────────────────────────
@@ -126,17 +126,18 @@ class ReadTaxonomyTest {
         assertEquals(List.of(Confirm.INSTANCE, Cancel.INSTANCE), t.children(Committing.INSTANCE), "roles at the third level");
         assertEquals(List.of(Sketch.Entry.INSTANCE), t.children(Sketch.Shaping.INSTANCE), "and one at the second");
         assertTrue(t.roles().contains(Sketch.Summary.INSTANCE), "a catalogued role no component names is kept");
-        assertTrue(t.branches().stream().noneMatch(b -> b instanceof RoleRoot), "the root is no branch of the list: it is above them all");
+        assertTrue(t.roleBranches().stream().noneMatch(b -> b instanceof RoleRoot), "the root is no branch of the list: it is above them all");
+        assertEquals(List.of(1, 1, 1, 2, 2, 2, 2, 2, 2), t.roleBranches().stream().map(RoleBranch::level).toList(), "each branch knows its level");
     }
 
     @Test
-    void anExtension_aLeafUnderAHouseKind_rolesInAHouseBranch_andABranchOfItsOwn_atAnyLevel() {
+    void anExtension_aLeafUnderAHouseBranch_rolesInAHouseBranch_andABranchOfItsOwn_atAnyLevel() {
         var declared = new ArrayList<Component<?>>(Sketch.DECLARED);
         declared.add(TradingDesk.OrderTicket.INSTANCE);
         var roles = new ArrayList<Role<?>>(Sketch.CATALOGUE);
         roles.addAll(TradingDesk.CATALOGUE);
         Taxonomy t = READ.read(declared, roles);
-        assertTrue(t.children(Card.INSTANCE).contains(TradingDesk.OrderTicket.INSTANCE), "classification is open: its leaf under the house's kind");
+        assertTrue(t.children(Card.INSTANCE).contains(TradingDesk.OrderTicket.INSTANCE), "classification is open: its leaf under the house's branch");
         assertTrue(t.children(Button.INSTANCE).contains(TradingDesk.TradeButton.INSTANCE), "reached through its own slots");
         assertEquals(List.of(TradingDesk.Buy.INSTANCE, TradingDesk.Sell.INSTANCE),
                 t.children(Committing.INSTANCE).stream().filter(n -> n.getClass().getEnclosingClass() == TradingDesk.class).toList(),
@@ -148,24 +149,27 @@ class ReadTaxonomyTest {
     }
 
     @Test
-    void onlyALeafIsConcrete_andARoleIsNoBranch_byType() {
-        assertFalse(Branch.class.isAssignableFrom(Component.class), "a component is not a branch, so nothing can be named under it");
-        assertTrue(Branch.class.isAssignableFrom(Kind.class));
+    void theShapeIsInTheTypes_levelsSealed_eachRootClosed() {
+        assertFalse(ComponentBranch.class.isAssignableFrom(Component.class), "a component is not a branch, so nothing can be named under it");
         assertFalse(RoleBranch.class.isAssignableFrom(Role.class), "a role is not a branch, so nothing can be filed under it");
+        assertEquals(9, ComponentBranch.class.getPermittedSubclasses().length, "levels 0 to 8, and no other");
+        assertEquals(9, RoleBranch.class.getPermittedSubclasses().length);
+        assertEquals(List.of(Root.class), List.of(L0_ComponentBranch.class.getPermittedSubclasses()), "one root, nobody adds another");
+        assertEquals(List.of(RoleRoot.class), List.of(L0_RoleBranch.class.getPermittedSubclasses()));
+        assertEquals(2, Sketch.Button.INSTANCE.level());
     }
 
     // ── what is refused ────────────────────────────────────────────────────
 
     @Test
-    void noParent_orParentsThatComeBack_inTheTaxonomyOrTheCatalogue() {
+    void noParent_andNoState() {
         assertEquals(Set.of(Rule.NO_PARENT), refused(Broken.Orphan.INSTANCE));
-        assertEquals(Set.of(Rule.PARENT_CYCLE), refused(Broken.Hatchling.INSTANCE));
         assertEquals(Set.of(Rule.NO_PARENT), refused(Broken.Strays.INSTANCE), "a role filed under nothing");
-        var e = assertThrows(RefusedTaxonomy.class, () -> READ.read(List.of(), List.of(Broken.Looped.INSTANCE)));
-        assertEquals(List.of(Rule.PARENT_CYCLE), e.problems().stream().map(TaxonomyProblem::rule).toList(), "branches that come back on themselves");
-        e = assertThrows(RefusedTaxonomy.class, () -> READ.read(List.of(), List.of(Broken.Pretender.INSTANCE)));
-        assertEquals(List.of(Rule.PARENT_CYCLE), e.problems().stream().map(TaxonomyProblem::rule).toList());
-        assertEquals("Usurper is its own parent: only the root is", e.problems().get(0).says(), "a second root, refused");
+        var e = assertThrows(RefusedTaxonomy.class, () -> read(Broken.Stateful.INSTANCE));
+        assertEquals(List.of(Rule.NOT_STATELESS), e.problems().stream().map(TaxonomyProblem::rule).toList(), "a component with a field of its own");
+        assertTrue(e.problems().get(0).says().contains("instance field 'label'"), e.problems().get(0).says());
+        e = assertThrows(RefusedTaxonomy.class, () -> READ.read(List.of(), List.of(Broken.Helped.INSTANCE)));
+        assertEquals(List.of(Rule.NOT_STATELESS), e.problems().stream().map(TaxonomyProblem::rule).toList(), "a role with a static helper, as jOntology refuses one");
     }
 
     @Test
@@ -228,7 +232,7 @@ class ReadTaxonomyTest {
         var findings = t.findings();
         assertEquals(List.of(Sign.ALL_OPTIONAL, Sign.ROLE_UNNAMED, Sign.ROLE_PLAYED_VARIOUSLY),
                 findings.stream().map(TaxonomyFinding::sign).sorted().toList(), findings.toString());
-        assertEquals("Shelf: every part is optional - a kind missing its plain leaf?",
+        assertEquals("Shelf: every part is optional - a branch missing its plain leaf?",
                 findings.stream().filter(f -> f.sign() == Sign.ALL_OPTIONAL).findFirst().orElseThrow().says(),
                 "not the plain card, which has no parts at all");
         assertEquals("Title is played by Heading in ProfileCard, Caption in Confirmation",

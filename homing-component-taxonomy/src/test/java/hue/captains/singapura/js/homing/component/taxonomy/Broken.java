@@ -31,33 +31,6 @@ final class Broken {
         @Override public Text parent() { return null; }
     }
 
-    /** Two kinds, each the other's parent. */
-    record Chick() implements Kind<Egg> {
-        static final Chick INSTANCE = new Chick();
-        @Override public Egg parent() { return Egg.INSTANCE; }
-    }
-
-    record Egg() implements Kind<Chick> {
-        static final Egg INSTANCE = new Egg();
-        @Override public Chick parent() { return Chick.INSTANCE; }
-    }
-
-    record Hatchling() implements Component<Chick> {
-        static final Hatchling INSTANCE = new Hatchling();
-        @Override public Chick parent() { return Chick.INSTANCE; }
-    }
-
-    /** A branch that names itself as its parent: a second root, which only the root may be. */
-    record Usurper() implements RoleBranch<Usurper> {
-        static final Usurper INSTANCE = new Usurper();
-        @Override public Usurper parent() { return this; }
-    }
-
-    record Pretender() implements Role<Usurper> {
-        static final Pretender INSTANCE = new Pretender();
-        @Override public Usurper parent() { return Usurper.INSTANCE; }
-    }
-
     /** A role that names no parent. */
     record Stray() implements Role<Naming> {
         static final Stray INSTANCE = new Stray();
@@ -71,20 +44,19 @@ final class Broken {
         @Override public List<Slot<?>> parts() { return List.of(DSL.part(Caption.INSTANCE).as(Stray.INSTANCE).one()); }
     }
 
-    /** Two families, each the other's parent. */
-    record Ouroboros() implements RoleBranch<Tail> {
-        static final Ouroboros INSTANCE = new Ouroboros();
-        @Override public Tail parent() { return Tail.INSTANCE; }
+    // ── state ──────────────────────────────────────────────────────────────
+
+    /** A component that holds state: a label of its own. */
+    record Stateful(String label) implements Component<Container> {
+        static final Stateful INSTANCE = new Stateful("held");
+        @Override public Container parent() { return Container.INSTANCE; }
     }
 
-    record Tail() implements RoleBranch<Ouroboros> {
-        static final Tail INSTANCE = new Tail();
-        @Override public Ouroboros parent() { return Ouroboros.INSTANCE; }
-    }
-
-    record Looped() implements Role<Ouroboros> {
-        static final Looped INSTANCE = new Looped();
-        @Override public Ouroboros parent() { return Ouroboros.INSTANCE; }
+    /** A role with a static helper - which jOntology refuses a stateless functional object. */
+    record Helped() implements Role<Naming> {
+        static final Helped INSTANCE = new Helped();
+        @Override public Naming parent() { return Naming.INSTANCE; }
+        static String help() { return "help"; }
     }
 
     // ── slots ──────────────────────────────────────────────────────────────

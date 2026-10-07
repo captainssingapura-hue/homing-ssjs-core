@@ -7,7 +7,7 @@ import java.util.List;
  * written to exercise the declaration.
  *
  * <p>A role catalogue of three top branches and six beneath them, and eleven roles at two
- * depths, one of them named by no component. A taxonomy of six kinds and thirteen components: buttons, texts and a
+ * depths, one of them named by no component. A taxonomy of six branches at two levels and thirteen components: buttons, texts and a
  * mark to play parts; a plain card with no parts; a profile card, a confirmation, a watchlist
  * and a gauge whose parts say every shape of cardinality; and a shelf whose every part is
  * optional. Title is played by a heading in one place and a caption in another.</p>
@@ -19,50 +19,50 @@ final class Sketch {
     // ── the role catalogue: branches at any level, roles at the leaves ───────
 
     /** What a part tells about its owner. */
-    record Saying() implements RoleBranch<RoleRoot> {
+    record Saying() implements L1_RoleBranch<RoleRoot> {
         static final Saying INSTANCE = new Saying();
         @Override public RoleRoot parent() { return RoleRoot.INSTANCE; }
     }
 
     /** What a part lets the user do to its owner. */
-    record Doing() implements RoleBranch<RoleRoot> {
+    record Doing() implements L1_RoleBranch<RoleRoot> {
         static final Doing INSTANCE = new Doing();
         @Override public RoleRoot parent() { return RoleRoot.INSTANCE; }
     }
 
     /** How a part makes up its owner's room. */
-    record Shaping() implements RoleBranch<RoleRoot> {
+    record Shaping() implements L1_RoleBranch<RoleRoot> {
         static final Shaping INSTANCE = new Shaping();
         @Override public RoleRoot parent() { return RoleRoot.INSTANCE; }
     }
 
-    record Naming() implements RoleBranch<Saying> {
+    record Naming() implements L2_RoleBranch<Saying> {
         static final Naming INSTANCE = new Naming();
         @Override public Saying parent() { return Saying.INSTANCE; }
     }
 
-    record Telling() implements RoleBranch<Saying> {
+    record Telling() implements L2_RoleBranch<Saying> {
         static final Telling INSTANCE = new Telling();
         @Override public Saying parent() { return Saying.INSTANCE; }
     }
 
-    record Scaling() implements RoleBranch<Saying> {
+    record Scaling() implements L2_RoleBranch<Saying> {
         static final Scaling INSTANCE = new Scaling();
         @Override public Saying parent() { return Saying.INSTANCE; }
     }
 
-    record Going() implements RoleBranch<Doing> {
+    record Going() implements L2_RoleBranch<Doing> {
         static final Going INSTANCE = new Going();
         @Override public Doing parent() { return Doing.INSTANCE; }
     }
 
-    record Managing() implements RoleBranch<Doing> {
+    record Managing() implements L2_RoleBranch<Doing> {
         static final Managing INSTANCE = new Managing();
         @Override public Doing parent() { return Doing.INSTANCE; }
     }
 
     /** The acts that end a decision. */
-    record Committing() implements RoleBranch<Doing> {
+    record Committing() implements L2_RoleBranch<Doing> {
         static final Committing INSTANCE = new Committing();
         @Override public Doing parent() { return Doing.INSTANCE; }
     }
@@ -139,32 +139,32 @@ final class Sketch {
 
     // ── the taxonomy: kinds ────────────────────────────────────────────────
 
-    record Control() implements Kind<Root> {
+    record Control() implements L1_ComponentBranch<Root> {
         static final Control INSTANCE = new Control();
         @Override public Root parent() { return Root.INSTANCE; }
     }
 
-    record Container() implements Kind<Root> {
+    record Container() implements L1_ComponentBranch<Root> {
         static final Container INSTANCE = new Container();
         @Override public Root parent() { return Root.INSTANCE; }
     }
 
-    record Text() implements Kind<Root> {
+    record Text() implements L1_ComponentBranch<Root> {
         static final Text INSTANCE = new Text();
         @Override public Root parent() { return Root.INSTANCE; }
     }
 
-    record Mark() implements Kind<Root> {
+    record Mark() implements L1_ComponentBranch<Root> {
         static final Mark INSTANCE = new Mark();
         @Override public Root parent() { return Root.INSTANCE; }
     }
 
-    record Button() implements Kind<Control> {
+    record Button() implements L2_ComponentBranch<Control> {
         static final Button INSTANCE = new Button();
         @Override public Control parent() { return Control.INSTANCE; }
     }
 
-    record Card() implements Kind<Container> {
+    record Card() implements L2_ComponentBranch<Container> {
         static final Card INSTANCE = new Card();
         @Override public Container parent() { return Container.INSTANCE; }
     }
@@ -232,7 +232,7 @@ final class Sketch {
         }
     }
 
-    /** A card whose every part is optional: a kind missing its plain leaf, by the look of it. */
+    /** A card whose every part is optional: a branch missing its plain leaf, by the look of it. */
     record Shelf() implements Component<Card> {
         static final Shelf INSTANCE = new Shelf();
         private static final ComponentPartDSL DSL = ComponentPartDSL.INSTANCE;

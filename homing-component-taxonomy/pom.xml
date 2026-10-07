@@ -35,6 +35,12 @@
             <artifactId>core</artifactId>
             <version>0.0.1</version>
         </dependency>
+        <!-- Every node is a stateless functional object, and reading holds it to that through jOntology's enforcer. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.lang.ontology</groupId>
+            <artifactId>enforcer</artifactId>
+            <version>0.0.1</version>
+        </dependency>
         <!-- Node names: the rigid tree's typed, capped segments. -->
         <dependency>
             <groupId>${project.groupId}</groupId>

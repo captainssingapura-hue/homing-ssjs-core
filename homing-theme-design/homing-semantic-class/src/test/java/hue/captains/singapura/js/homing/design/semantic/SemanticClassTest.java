@@ -4,10 +4,10 @@ import hue.captains.singapura.js.homing.component.taxonomy.RoleRoot;
 import hue.captains.singapura.js.homing.component.taxonomy.Component;
 import hue.captains.singapura.js.homing.component.taxonomy.ComponentNode;
 import hue.captains.singapura.js.homing.component.taxonomy.ComponentPartDSL;
-import hue.captains.singapura.js.homing.component.taxonomy.Kind;
+import hue.captains.singapura.js.homing.component.taxonomy.L1_ComponentBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.ReadTaxonomy;
 import hue.captains.singapura.js.homing.component.taxonomy.Role;
-import hue.captains.singapura.js.homing.component.taxonomy.RoleBranch;
+import hue.captains.singapura.js.homing.component.taxonomy.L1_RoleBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.Root;
 import hue.captains.singapura.js.homing.component.taxonomy.Slot;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
@@ -28,12 +28,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class SemanticClassTest {
 
-    record Control() implements Kind<Root> {
+    record Control() implements L1_ComponentBranch<Root> {
         static final Control INSTANCE = new Control();
         @Override public Root parent() { return Root.INSTANCE; }
     }
 
-    record Text() implements Kind<Root> {
+    record Text() implements L1_ComponentBranch<Root> {
         static final Text INSTANCE = new Text();
         @Override public Root parent() { return Root.INSTANCE; }
     }
@@ -48,7 +48,7 @@ class SemanticClassTest {
         @Override public Text parent() { return Text.INSTANCE; }
     }
 
-    record Roles() implements RoleBranch<RoleRoot> {
+    record Roles() implements L1_RoleBranch<RoleRoot> {
         static final Roles INSTANCE = new Roles();
         @Override public RoleRoot parent() { return RoleRoot.INSTANCE; }
     }

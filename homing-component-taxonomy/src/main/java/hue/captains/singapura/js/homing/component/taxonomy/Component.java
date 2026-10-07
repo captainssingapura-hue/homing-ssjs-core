@@ -4,8 +4,8 @@ import java.util.List;
 
 /**
  * A component: a leaf of the taxonomy, and the only concrete node - what an implementation
- * realizes. Where something generic is needed, a kind declares a generic leaf for it
- * ({@code PlainCard} under {@code Card}).
+ * realizes. It sits under a branch at any level, the root's included. Where something generic is
+ * needed, a branch declares a generic leaf for it ({@code PlainCard} under {@code Card}).
  *
  * <p>A component declares its parts with it, as {@link Slot slots} said in the
  * {@link ComponentPartDSL}: each the independent component that plays it, a shared role, and how
@@ -13,7 +13,7 @@ import java.util.List;
  * when the taxonomy is read, each slot becoming a {@link Part}.</p>
  *
  * <pre>{@code
- * public record ProfileCard() implements Component<Card> {
+ * public record ProfileCard() implements Component<Card> {          // Card: a branch, at level 2
  *     public static final ProfileCard INSTANCE = new ProfileCard();
  *     private static final ComponentPartDSL DSL = ComponentPartDSL.INSTANCE;
  *     @Override public Card parent() { return Card.INSTANCE; }
@@ -25,9 +25,9 @@ import java.util.List;
  * }
  * }</pre>
  *
- * @param <P> the branch this component sits under
+ * @param <P> the branch this component sits under, at any level
  */
-public non-sealed interface Component<P extends Branch> extends Taxon {
+public non-sealed interface Component<P extends ComponentBranch> extends Taxon {
 
     /** The branch this component sits under. */
     P parent();

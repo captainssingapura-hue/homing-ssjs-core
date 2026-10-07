@@ -8,43 +8,43 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
- * A taxonomy as read: every kind and component reached from the components declared - up
+ * A taxonomy as read: every branch and component reached from the components declared - up
  * through their parents, across through the components that play their parts - every part, each
  * slot with its owner appended, and the role catalogue the slots name. What a design walks, what
  * derives the design classes, and what the workbench shows.
  *
- * @param kinds      the kinds, parents before their children
+ * @param branches   the branches under the root, by level, each level in the order first reached
  * @param components the components, in the order they were reached
  * @param parts      the parts, each component's in its slots' order
- * @param branches   the role catalogue's branches under its root, parents before their children
+ * @param roleBranches the role catalogue's branches under its root, by level, likewise
  * @param roles      the roles, those named by a slot in the order first named, then those given and named by none
  */
-public record Taxonomy(List<Kind<?>> kinds, List<Component<?>> components, List<Part<?, ?>> parts,
-                       List<RoleBranch<?>> branches, List<Role<?>> roles) implements ValueObject {
+public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> components, List<Part<?, ?>> parts,
+                       List<RoleBranch> roleBranches, List<Role<?>> roles) implements ValueObject {
 
     public Taxonomy {
-        kinds = List.copyOf(kinds);
+        branches = List.copyOf(branches);
         components = List.copyOf(components);
         parts = List.copyOf(parts);
-        branches = List.copyOf(branches);
+        roleBranches = List.copyOf(roleBranches);
         roles = List.copyOf(roles);
     }
 
-    /** Every node a design can be asked about: the root, the kinds, the components, then the parts. */
+    /** Every node a design can be asked about: the root, the branches, the components, then the parts. */
     public List<ComponentNode> nodes() {
         var out = new ArrayList<ComponentNode>();
         out.add(Root.INSTANCE);
-        out.addAll(kinds);
+        out.addAll(branches);
         out.addAll(components);
         out.addAll(parts);
         return List.copyOf(out);
     }
 
-    /** The kinds and components directly under a branch, kinds first, each in reading order. */
-    public List<Taxon> children(Branch branch) {
+    /** The branches and components directly under a branch - the root's included - branches first, each in reading order. */
+    public List<Taxon> children(ComponentBranch branch) {
         var out = new ArrayList<Taxon>();
-        for (Kind<?> k : kinds) if (k.parent().equals(branch)) out.add(k);
-        for (Component<?> c : components) if (c.parent().equals(branch)) out.add(c);
+        for (ComponentBranch b : branches) if (branch.equals(Levels.parentOf(b))) out.add(b);
+        for (Component<?> c : components) if (branch.equals(c.parent())) out.add(c);
         return List.copyOf(out);
     }
 
@@ -63,7 +63,7 @@ public record Taxonomy(List<Kind<?>> kinds, List<Component<?>> components, List<
         out.add(node);
         Taxon t = node instanceof Part<?, ?> p ? p.base() : (Taxon) node;
         if (node instanceof Part<?, ?>) out.add(t);
-        for (Branch b = parentOf(t); b != null; b = parentOf(b)) out.add(b);
+        for (ComponentBranch b = Levels.parentOf(t); b != null; b = Levels.parentOf(b)) out.add(b);
         return List.copyOf(out);
     }
 
@@ -73,10 +73,10 @@ public record Taxonomy(List<Kind<?>> kinds, List<Component<?>> components, List<
     // ── the role catalogue ─────────────────────────────────────────────────
 
     /** The branches and roles directly under a branch of the catalogue - the root's included - branches first. */
-    public List<RoleNode> children(RoleBranch<?> branch) {
+    public List<RoleNode> children(RoleBranch branch) {
         var out = new ArrayList<RoleNode>();
-        for (RoleBranch<?> b : branches) if (b.parent().equals(branch)) out.add(b);
-        for (Role<?> r : roles) if (r.parent().equals(branch)) out.add(r);
+        for (RoleBranch b : roleBranches) if (branch.equals(Levels.parentOf(b))) out.add(b);
+        for (Role<?> r : roles) if (branch.equals(r.parent())) out.add(r);
         return List.copyOf(out);
     }
 
@@ -93,7 +93,7 @@ public record Taxonomy(List<Kind<?>> kinds, List<Component<?>> components, List<
         for (Component<?> c : components) {
             var own = partsOf(c);
             if (!own.isEmpty() && own.stream().allMatch(p -> p.cardinality().least() == 0))
-                out.add(new TaxonomyFinding(Sign.ALL_OPTIONAL, Names.of(c) + ": every part is optional - a kind missing its plain leaf?"));
+                out.add(new TaxonomyFinding(Sign.ALL_OPTIONAL, Names.of(c) + ": every part is optional - a branch missing its plain leaf?"));
         }
         for (Role<?> r : roles) {
             var uses = partsNaming(r);
@@ -110,14 +110,5 @@ public record Taxonomy(List<Kind<?>> kinds, List<Component<?>> components, List<
                         .toList())));
         }
         return List.copyOf(out);
-    }
-
-    /** The branch a node sits under; none for the root. */
-    static Branch parentOf(Taxon t) {
-        return switch (t) {
-            case Root r         -> null;
-            case Kind<?> k      -> k.parent();
-            case Component<?> c -> c.parent();
-        };
     }
 }
