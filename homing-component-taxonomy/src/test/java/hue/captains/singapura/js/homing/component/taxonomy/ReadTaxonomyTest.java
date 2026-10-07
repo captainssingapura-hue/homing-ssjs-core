@@ -124,8 +124,9 @@ class ReadTaxonomyTest {
     void theCatalogue_branchesThenRoles_underEachBranch_atAnyDepth() {
         Taxonomy t = READ.read(Sketch.DECLARED, Sketch.CATALOGUE);
         assertEquals(List.of(Sketch.Saying.INSTANCE, Doing.INSTANCE, Sketch.Shaping.INSTANCE), t.children(RoleRoot.INSTANCE),
-                "the top branches, in the order first reached; the root not its own child");
-        assertEquals(List.of(Sketch.Going.INSTANCE, Committing.INSTANCE, Sketch.Managing.INSTANCE), t.children(Doing.INSTANCE));
+                "the top branches, in the order the catalogue files its roles; the root not its own child");
+        assertEquals(List.of(Sketch.Going.INSTANCE, Sketch.Managing.INSTANCE, Committing.INSTANCE), t.children(Doing.INSTANCE),
+                "the catalogue's order, not the order a slot first names a role");
         assertEquals(List.of(Confirm.INSTANCE, Cancel.INSTANCE), t.children(Committing.INSTANCE), "roles at the third level");
         assertEquals(List.of(Sketch.Entry.INSTANCE), t.children(Sketch.Shaping.INSTANCE), "and one at the second");
         assertTrue(t.roles().contains(Sketch.Summary.INSTANCE), "a catalogued role no component names is kept");

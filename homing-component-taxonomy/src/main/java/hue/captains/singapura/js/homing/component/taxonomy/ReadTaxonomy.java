@@ -42,7 +42,11 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
     /** The components declared, and only the roles they name. */
     public Taxonomy read(Collection<? extends Component<?>> declared) { return read(declared, List.of()); }
 
-    /** The components declared, and the roles a catalogue files - those no component names are kept, and reported. */
+    /**
+     * The components declared, and the roles a catalogue files - those no component names are kept, and
+     * reported. The roles come in the catalogue's order, then those only a slot names, as the components
+     * come in the order declared, then those only a part reaches.
+     */
     public Taxonomy read(Collection<? extends Component<?>> declared, Collection<? extends Role<?>> catalogued) {
         var problems = new ArrayList<TaxonomyProblem>();
         var branches = new LinkedHashSet<ComponentBranch>();
@@ -50,6 +54,7 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
         var parts = new ArrayList<Part<?, ?>>();
         var roles = new LinkedHashSet<Role<?>>();
         var plays = new LinkedHashMap<Component<?>, List<Component<?>>>();   // owner -> the components that play its parts
+        for (Role<?> r : catalogued) if (r != null) roles.add(r);
 
         var queue = new ArrayDeque<Component<?>>(declared);
         while (!queue.isEmpty()) {
@@ -82,7 +87,6 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
             }
             plays.put(c, bases);
         }
-        for (Role<?> r : catalogued) if (r != null) roles.add(r);
 
         var roleBranches = new LinkedHashSet<RoleBranch>();
         for (Role<?> r : roles) roleBranches.addAll(filing(r, problems));
