@@ -43,14 +43,14 @@ final class TradingDesk {
     /** A leaf under the house's Card kind, its parts played by the house's components and its own. */
     record OrderTicket() implements Component<Sketch.Card> {
         static final OrderTicket INSTANCE = new OrderTicket();
+        private static final ComponentPartDSL DSL = ComponentPartDSL.INSTANCE;
         @Override public Sketch.Card parent() { return Sketch.Card.INSTANCE; }
         @Override public List<Slot<?>> parts() {
-            final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE;
-            return List.of(dsl.part(Sketch.Heading.INSTANCE).as(Sketch.Title.INSTANCE).one(),
-                           dsl.part(Sketch.Badge.INSTANCE).as(Side.INSTANCE).one(),
-                           dsl.part(TradeButton.INSTANCE).as(Buy.INSTANCE).one(),
-                           dsl.part(TradeButton.INSTANCE).as(Sell.INSTANCE).one(),
-                           dsl.part(Sketch.PlainButton.INSTANCE).as(Sketch.Cancel.INSTANCE).optional());
+            return List.of(DSL.part(Sketch.Heading.INSTANCE).as(Sketch.Title.INSTANCE).one(),
+                           DSL.part(Sketch.Badge.INSTANCE).as(Side.INSTANCE).one(),
+                           DSL.part(TradeButton.INSTANCE).as(Buy.INSTANCE).one(),
+                           DSL.part(TradeButton.INSTANCE).as(Sell.INSTANCE).one(),
+                           DSL.part(Sketch.PlainButton.INSTANCE).as(Sketch.Cancel.INSTANCE).optional());
         }
     }
 

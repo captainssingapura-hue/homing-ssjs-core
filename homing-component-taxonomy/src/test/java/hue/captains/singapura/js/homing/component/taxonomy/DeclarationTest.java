@@ -113,6 +113,17 @@ class DeclarationTest {
     }
 
     @Test
+    void whatComposes_isSeenInItsFields() {
+        var taxonomy = new ReadTaxonomy().read(Sketch.DECLARED);
+        for (Component<?> c : taxonomy.components()) {
+            boolean holds = Arrays.stream(c.getClass().getDeclaredFields())
+                    .anyMatch(f -> f.getType() == ComponentPartDSL.class && java.lang.reflect.Modifier.isStatic(f.getModifiers()));
+            assertEquals(!taxonomy.partsOf(c).isEmpty(), holds,
+                    c + (holds ? " holds the language and declares no parts" : " declares parts without holding the language"));
+        }
+    }
+
+    @Test
     void theShapes_byType() {
         assertFalse(Slot.class.isAssignableFrom(NeedsRole.class), "a part given no role is not a slot");
         assertFalse(Slot.class.isAssignableFrom(NeedsCount.class), "a part told no count is not a slot");

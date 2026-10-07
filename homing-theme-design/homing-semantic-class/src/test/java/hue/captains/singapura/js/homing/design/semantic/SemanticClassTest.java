@@ -65,10 +65,10 @@ class SemanticClassTest {
 
     record Confirmation() implements Component<Root> {
         static final Confirmation INSTANCE = new Confirmation();
+        private static final ComponentPartDSL DSL = ComponentPartDSL.INSTANCE;
         @Override public Root parent() { return Root.INSTANCE; }
         @Override public List<Slot<?>> parts() {
-            final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE;
-            return List.of(dsl.part(PlainButton.INSTANCE).as(Confirm.INSTANCE).one(), dsl.part(Caption.INSTANCE).as(Title.INSTANCE).one());
+            return List.of(DSL.part(PlainButton.INSTANCE).as(Confirm.INSTANCE).one(), DSL.part(Caption.INSTANCE).as(Title.INSTANCE).one());
         }
     }
 

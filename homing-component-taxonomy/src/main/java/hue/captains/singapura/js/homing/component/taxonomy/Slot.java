@@ -7,7 +7,7 @@ import java.util.Objects;
 /**
  * One of a component's parts, as the component declares it: a role, the component that plays it,
  * and how many. Said in the {@link ComponentPartDSL} -
- * {@code dsl.part(Heading.INSTANCE).as(Title.INSTANCE).one()}; reading the taxonomy appends the
+ * {@code DSL.part(Heading.INSTANCE).as(Title.INSTANCE).one()}; reading the taxonomy appends the
  * owner and makes it a {@link Part}.
  *
  * @param role        the role it plays; none is refused when the taxonomy is read

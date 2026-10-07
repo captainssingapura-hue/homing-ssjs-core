@@ -49,10 +49,10 @@ class CompilerRefusesTest {
     void aWellFormedDeclaration_compiles() {
         var errors = compile("""
                 record Note() implements Component<Text> {
+                    private static final ComponentPartDSL DSL = ComponentPartDSL.INSTANCE;
                     public Text parent() { return Text.INSTANCE; }
                     public List<Slot<?>> parts() {
-                        final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE;
-                        return List.of(dsl.part(Caption.INSTANCE).as(Title.INSTANCE).optional());
+                        return List.of(DSL.part(Caption.INSTANCE).as(Title.INSTANCE).optional());
                     }
                 }
                 """);
@@ -63,10 +63,10 @@ class CompilerRefusesTest {
     void aPartNeverToldHowMany_doesNotCompile() {
         refusedOnItsLine("""
                 record Note() implements Component<Text> {
+                    private static final ComponentPartDSL DSL = ComponentPartDSL.INSTANCE;
                     public Text parent() { return Text.INSTANCE; }
                     public List<Slot<?>> parts() {
-                        final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE;
-                        return List.of(dsl.part(Caption.INSTANCE).as(Title.INSTANCE)); // refused here
+                        return List.of(DSL.part(Caption.INSTANCE).as(Title.INSTANCE)); // refused here
                     }
                 }
                 """);
@@ -76,10 +76,10 @@ class CompilerRefusesTest {
     void aPartNeverGivenARole_doesNotCompile() {
         refusedOnItsLine("""
                 record Note() implements Component<Text> {
+                    private static final ComponentPartDSL DSL = ComponentPartDSL.INSTANCE;
                     public Text parent() { return Text.INSTANCE; }
                     public List<Slot<?>> parts() {
-                        final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE;
-                        return List.of(dsl.part(Caption.INSTANCE).one()); // refused here
+                        return List.of(DSL.part(Caption.INSTANCE).one()); // refused here
                     }
                 }
                 """);
@@ -89,10 +89,10 @@ class CompilerRefusesTest {
     void aPartPlayedByAKind_doesNotCompile() {
         refusedOnItsLine("""
                 record Note() implements Component<Text> {
+                    private static final ComponentPartDSL DSL = ComponentPartDSL.INSTANCE;
                     public Text parent() { return Text.INSTANCE; }
                     public List<Slot<?>> parts() {
-                        final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE;
-                        return List.of(dsl.part(Text.INSTANCE).as(Title.INSTANCE).one()); // refused here
+                        return List.of(DSL.part(Text.INSTANCE).as(Title.INSTANCE).one()); // refused here
                     }
                 }
                 """);
@@ -102,10 +102,10 @@ class CompilerRefusesTest {
     void aPartCastAsAnythingButARole_doesNotCompile() {
         refusedOnItsLine("""
                 record Note() implements Component<Text> {
+                    private static final ComponentPartDSL DSL = ComponentPartDSL.INSTANCE;
                     public Text parent() { return Text.INSTANCE; }
                     public List<Slot<?>> parts() {
-                        final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE;
-                        return List.of(dsl.part(Caption.INSTANCE).as(Naming.INSTANCE).one()); // refused here
+                        return List.of(DSL.part(Caption.INSTANCE).as(Naming.INSTANCE).one()); // refused here
                     }
                 }
                 """);

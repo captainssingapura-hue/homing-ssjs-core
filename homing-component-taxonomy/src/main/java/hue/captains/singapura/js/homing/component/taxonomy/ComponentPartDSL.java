@@ -10,13 +10,18 @@ import hue.captains.singapura.tao.ontology.ValueObject;
 /**
  * The language a component declares its parts in - a stateless functional object, kept apart from
  * what it speaks of: a role is an identity and knows nothing of it, a component only returns the
- * slots it makes.
+ * slots it makes. A component that has parts holds it in a field of its own, so what composes is
+ * seen in its fields, and a component that holds none has no parts.
  *
  * <pre>{@code
- * @Override public List<Slot<?>> parts() {
- *     final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE;
- *     return List.of(dsl.part(Heading.INSTANCE).as(Title.INSTANCE).one(),
- *                    dsl.part(Caption.INSTANCE).as(Subtitle.INSTANCE).optional());
+ * public record ProfileCard() implements Component<Card> {
+ *     public static final ProfileCard INSTANCE = new ProfileCard();
+ *     private static final ComponentPartDSL DSL = ComponentPartDSL.INSTANCE;
+ *     @Override public Card parent() { return Card.INSTANCE; }
+ *     @Override public List<Slot<?>> parts() {
+ *         return List.of(DSL.part(Heading.INSTANCE).as(Title.INSTANCE).one(),
+ *                        DSL.part(Caption.INSTANCE).as(Subtitle.INSTANCE).optional());
+ *     }
  * }
  * }</pre>
  *

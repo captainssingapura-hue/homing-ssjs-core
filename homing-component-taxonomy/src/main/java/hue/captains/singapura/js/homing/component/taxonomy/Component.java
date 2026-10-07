@@ -15,12 +15,12 @@ import java.util.List;
  * <pre>{@code
  * public record ProfileCard() implements Component<Card> {
  *     public static final ProfileCard INSTANCE = new ProfileCard();
+ *     private static final ComponentPartDSL DSL = ComponentPartDSL.INSTANCE;
  *     @Override public Card parent() { return Card.INSTANCE; }
  *     @Override public List<Slot<?>> parts() {
- *         final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE;
- *         return List.of(dsl.part(Heading.INSTANCE).as(Title.INSTANCE).one(),
- *                        dsl.part(Badge.INSTANCE).as(Tag.INSTANCE).any(),
- *                        dsl.part(PlainButton.INSTANCE).as(Open.INSTANCE).optional());
+ *         return List.of(DSL.part(Heading.INSTANCE).as(Title.INSTANCE).one(),
+ *                        DSL.part(Badge.INSTANCE).as(Tag.INSTANCE).any(),
+ *                        DSL.part(PlainButton.INSTANCE).as(Open.INSTANCE).optional());
  *     }
  * }
  * }</pre>

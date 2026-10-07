@@ -188,10 +188,10 @@ final class Sketch {
     /** A button that names itself: its name, a caption, always one. */
     record AlternatingButton() implements Component<Button> {
         static final AlternatingButton INSTANCE = new AlternatingButton();
+        private static final ComponentPartDSL DSL = ComponentPartDSL.INSTANCE;
         @Override public Button parent() { return Button.INSTANCE; }
         @Override public List<Slot<?>> parts() {
-            final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE;
-            return List.of(dsl.part(Caption.INSTANCE).as(Name.INSTANCE).one());
+            return List.of(DSL.part(Caption.INSTANCE).as(Name.INSTANCE).one());
         }
     }
 
@@ -204,58 +204,58 @@ final class Sketch {
     /** A card for a case: a title and a name, any tags, a way to open it. */
     record ProfileCard() implements Component<Card> {
         static final ProfileCard INSTANCE = new ProfileCard();
+        private static final ComponentPartDSL DSL = ComponentPartDSL.INSTANCE;
         @Override public Card parent() { return Card.INSTANCE; }
         @Override public List<Slot<?>> parts() {
-            final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE;
-            return List.of(dsl.part(Heading.INSTANCE).as(Title.INSTANCE).one(),
-                           dsl.part(Caption.INSTANCE).as(Name.INSTANCE).one(),
-                           dsl.part(Badge.INSTANCE).as(Tag.INSTANCE).any(),
-                           dsl.part(PlainButton.INSTANCE).as(Open.INSTANCE).optional());
+            return List.of(DSL.part(Heading.INSTANCE).as(Title.INSTANCE).one(),
+                           DSL.part(Caption.INSTANCE).as(Name.INSTANCE).one(),
+                           DSL.part(Badge.INSTANCE).as(Tag.INSTANCE).any(),
+                           DSL.part(PlainButton.INSTANCE).as(Open.INSTANCE).optional());
         }
     }
 
     /** A card whose every part is optional: a kind missing its plain leaf, by the look of it. */
     record Shelf() implements Component<Card> {
         static final Shelf INSTANCE = new Shelf();
+        private static final ComponentPartDSL DSL = ComponentPartDSL.INSTANCE;
         @Override public Card parent() { return Card.INSTANCE; }
         @Override public List<Slot<?>> parts() {
-            final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE;
-            return List.of(dsl.part(Badge.INSTANCE).as(Tag.INSTANCE).any(),
-                           dsl.part(PlainButton.INSTANCE).as(Open.INSTANCE).optional());
+            return List.of(DSL.part(Badge.INSTANCE).as(Tag.INSTANCE).any(),
+                           DSL.part(PlainButton.INSTANCE).as(Open.INSTANCE).optional());
         }
     }
 
     /** A decision put to the user: its title a caption, here; a confirm, and a cancel if it may be left. */
     record Confirmation() implements Component<Container> {
         static final Confirmation INSTANCE = new Confirmation();
+        private static final ComponentPartDSL DSL = ComponentPartDSL.INSTANCE;
         @Override public Container parent() { return Container.INSTANCE; }
         @Override public List<Slot<?>> parts() {
-            final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE;
-            return List.of(dsl.part(Caption.INSTANCE).as(Title.INSTANCE).one(),
-                           dsl.part(PlainButton.INSTANCE).as(Confirm.INSTANCE).one(),
-                           dsl.part(PlainButton.INSTANCE).as(Cancel.INSTANCE).optional());
+            return List.of(DSL.part(Caption.INSTANCE).as(Title.INSTANCE).one(),
+                           DSL.part(PlainButton.INSTANCE).as(Confirm.INSTANCE).one(),
+                           DSL.part(PlainButton.INSTANCE).as(Cancel.INSTANCE).optional());
         }
     }
 
     /** Profiles listed, at least one, and a way to add another. */
     record Watchlist() implements Component<Container> {
         static final Watchlist INSTANCE = new Watchlist();
+        private static final ComponentPartDSL DSL = ComponentPartDSL.INSTANCE;
         @Override public Container parent() { return Container.INSTANCE; }
         @Override public List<Slot<?>> parts() {
-            final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE;
-            return List.of(dsl.part(ProfileCard.INSTANCE).as(Entry.INSTANCE).atLeast(1),
-                           dsl.part(PlainButton.INSTANCE).as(Add.INSTANCE).optional());
+            return List.of(DSL.part(ProfileCard.INSTANCE).as(Entry.INSTANCE).atLeast(1),
+                           DSL.part(PlainButton.INSTANCE).as(Add.INSTANCE).optional());
         }
     }
 
     /** A value on a scale of two to twelve notches, read out. */
     record Gauge() implements Component<Control> {
         static final Gauge INSTANCE = new Gauge();
+        private static final ComponentPartDSL DSL = ComponentPartDSL.INSTANCE;
         @Override public Control parent() { return Control.INSTANCE; }
         @Override public List<Slot<?>> parts() {
-            final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE;
-            return List.of(dsl.part(Tick.INSTANCE).as(Notch.INSTANCE).between(2, 12),
-                           dsl.part(Caption.INSTANCE).as(Value.INSTANCE).one());
+            return List.of(DSL.part(Tick.INSTANCE).as(Notch.INSTANCE).between(2, 12),
+                           DSL.part(Caption.INSTANCE).as(Value.INSTANCE).one());
         }
     }
 
