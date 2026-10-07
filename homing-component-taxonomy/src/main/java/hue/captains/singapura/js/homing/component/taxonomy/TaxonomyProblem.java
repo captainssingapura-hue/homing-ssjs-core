@@ -26,8 +26,8 @@ public record TaxonomyProblem(Rule rule, String says) implements ValueObject {
         COMPOSITION_CYCLE,
         /** Two nodes derive one token. */
         TOKEN_TWICE,
-        /** Two roles answer to one name: one word, one role. */
-        ROLE_NAME_TWICE,
+        /** Two nodes of the role catalogue - branches or roles, at any level - answer to one name: one word, one meaning. */
+        CATALOGUE_NAME_TWICE,
         /** A role is named as a branch or a component: it says what plays a part, not what the part does. */
         ROLE_NAMES_A_NODE,
         /** A count that is no cardinality: none, a most below the least, a range of one. */

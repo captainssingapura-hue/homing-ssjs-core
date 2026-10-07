@@ -148,6 +148,32 @@ final class Broken {
         @Override public List<Slot<?>> parts() { return List.of(DSL.part(Caption.INSTANCE).as(Elsewhere.Title.INSTANCE).one()); }
     }
 
+    /** A second "naming", a branch under Doing - beside the house's under Saying: a branch clash, under different parents. */
+    static final class Another {
+        private Another() {}
+        record Naming() implements L2_RoleBranch<Sketch.Doing> {
+            static final Naming INSTANCE = new Naming();
+            @Override public Sketch.Doing parent() { return Sketch.Doing.INSTANCE; }
+        }
+        record Moniker() implements Role<Naming> {
+            static final Moniker INSTANCE = new Moniker();
+            @Override public Naming parent() { return Naming.INSTANCE; }
+        }
+    }
+
+    /** A branch called "title", like the house's role: a branch and a role, one name. */
+    static final class Misnamed {
+        private Misnamed() {}
+        record Title() implements L2_RoleBranch<Sketch.Saying> {
+            static final Title INSTANCE = new Title();
+            @Override public Sketch.Saying parent() { return Sketch.Saying.INSTANCE; }
+        }
+        record Subhead() implements Role<Title> {
+            static final Subhead INSTANCE = new Subhead();
+            @Override public Title parent() { return Title.INSTANCE; }
+        }
+    }
+
     /** A role named for what plays it: "caption", like the component. */
     static final class Objective {
         private Objective() {}

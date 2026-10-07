@@ -28,7 +28,8 @@ import java.util.Set;
  *   <li>a slot played by nothing or in no role, or a role a component names twice;</li>
  *   <li>a component that is a part of itself, however deep - whatever the cardinalities on the
  *       way, since a cycle is refused on the types;</li>
- *   <li>two nodes with one token, two roles with one name, or a role named as a node;</li>
+ *   <li>two nodes with one token; two nodes of the role catalogue - branches or roles - with one
+ *       name, which the catalogue itself refuses to be constructed with; or a role named as a node;</li>
  *   <li>a count that is no cardinality - thrown where it is said, and reported for the component
  *       that said it, so one component's bad count never hides another's problems.</li>
  * </ul>
@@ -86,15 +87,17 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
         var roleBranches = new LinkedHashSet<RoleBranch>();
         for (Role<?> r : roles) roleBranches.addAll(filing(r, problems));
 
+        var branchList = byLevel(branches, ComponentBranch::level);
+        var componentList = List.copyOf(components);
+        var roleBranchList = byLevel(roleBranches, RoleBranch::level);
+        var roleList = List.copyOf(roles);
         problems.addAll(compositionCycles(plays));
-        var taxonomy = new Taxonomy(byLevel(branches, ComponentBranch::level), List.copyOf(components), parts,
-                byLevel(roleBranches, RoleBranch::level), List.copyOf(roles));
-        problems.addAll(stateful(taxonomy));
-        problems.addAll(tokensTwice(taxonomy));
-        problems.addAll(roleNamesTwice(roles));
-        problems.addAll(roleNamesANode(taxonomy));
+        problems.addAll(stateful(branchList, componentList, roleBranchList, roleList));
+        problems.addAll(tokensTwice(branchList, componentList, parts));
+        problems.addAll(new CatalogueNames().clashes(roleBranchList, roleList));
+        problems.addAll(roleNamesANode(branchList, componentList, roleList));
         if (!problems.isEmpty()) throw new RefusedTaxonomy(problems);
-        return taxonomy;
+        return new Taxonomy(branchList, componentList, parts, new RoleCatalogue(roleBranchList, roleList));
     }
 
     /** A component's slots; a count that is no cardinality is a problem of the component that said it. */
@@ -144,12 +147,13 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
     }
 
     /** Every node reached, held by jOntology to what it declares itself: a stateless functional object. */
-    private static List<TaxonomyProblem> stateful(Taxonomy t) {
+    private static List<TaxonomyProblem> stateful(List<ComponentBranch> branches, List<Component<?>> components,
+                                                  List<RoleBranch> roleBranches, List<Role<?>> roles) {
         var nodes = new ArrayList<Object>();
-        nodes.addAll(t.branches());
-        nodes.addAll(t.components());
-        nodes.addAll(t.roleBranches());
-        nodes.addAll(t.roles());
+        nodes.addAll(branches);
+        nodes.addAll(components);
+        nodes.addAll(roleBranches);
+        nodes.addAll(roles);
         var enforcer = new OntologyEnforcer();
         var out = new ArrayList<TaxonomyProblem>();
         var checked = new HashSet<Class<?>>();
@@ -194,39 +198,31 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
     }
 
     /** Two nodes, one token: each pair named. */
-    private static List<TaxonomyProblem> tokensTwice(Taxonomy t) {
+    private static List<TaxonomyProblem> tokensTwice(List<ComponentBranch> branches, List<Component<?>> components, List<Part<?, ?>> parts) {
+        var nodes = new ArrayList<ComponentNode>();
+        nodes.add(Root.INSTANCE);
+        nodes.addAll(branches);
+        nodes.addAll(components);
+        nodes.addAll(parts);
         var byToken = new LinkedHashMap<String, List<ComponentNode>>();
-        for (ComponentNode n : t.nodes()) byToken.computeIfAbsent(t.token(n), x -> new ArrayList<>()).add(n);
+        for (ComponentNode n : nodes) byToken.computeIfAbsent(n.token(), x -> new ArrayList<>()).add(n);
         var out = new ArrayList<TaxonomyProblem>();
-        byToken.forEach((token, nodes) -> {
-            if (nodes.size() > 1)
-                out.add(new TaxonomyProblem(Rule.TOKEN_TWICE, "'" + token + "' is derived by "
-                        + String.join(" and ", nodes.stream().map(Names::qualified).toList())));
-        });
-        return out;
-    }
-
-    /** Two roles, one name: one word means one thing. */
-    private static List<TaxonomyProblem> roleNamesTwice(Collection<Role<?>> roles) {
-        var byName = new LinkedHashMap<String, List<Role<?>>>();
-        for (Role<?> r : roles) byName.computeIfAbsent(r.name().value(), x -> new ArrayList<>()).add(r);
-        var out = new ArrayList<TaxonomyProblem>();
-        byName.forEach((name, same) -> {
+        byToken.forEach((token, same) -> {
             if (same.size() > 1)
-                out.add(new TaxonomyProblem(Rule.ROLE_NAME_TWICE, "'" + name + "' is answered to by "
+                out.add(new TaxonomyProblem(Rule.TOKEN_TWICE, "'" + token + "' is derived by "
                         + String.join(" and ", same.stream().map(Names::qualified).toList())));
         });
         return out;
     }
 
     /** A role that shares a name with a branch or a component says what plays a part, not what it does. */
-    private static List<TaxonomyProblem> roleNamesANode(Taxonomy t) {
+    private static List<TaxonomyProblem> roleNamesANode(List<ComponentBranch> branches, List<Component<?>> components, List<Role<?>> roles) {
         var nodes = new LinkedHashMap<String, Taxon>();
         nodes.put(Root.INSTANCE.name().value(), Root.INSTANCE);
-        for (ComponentBranch b : t.branches()) nodes.putIfAbsent(b.name().value(), b);
-        for (Component<?> c : t.components()) nodes.putIfAbsent(c.name().value(), c);
+        for (ComponentBranch b : branches) nodes.putIfAbsent(b.name().value(), b);
+        for (Component<?> c : components) nodes.putIfAbsent(c.name().value(), c);
         var out = new ArrayList<TaxonomyProblem>();
-        for (Role<?> r : t.roles()) {
+        for (Role<?> r : roles) {
             Taxon same = nodes.get(r.name().value());
             if (same != null)
                 out.add(new TaxonomyProblem(Rule.ROLE_NAMES_A_NODE, "the role " + Names.qualified(r) + " is named as the "

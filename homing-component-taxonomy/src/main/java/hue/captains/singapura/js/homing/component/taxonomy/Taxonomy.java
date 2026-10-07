@@ -6,6 +6,7 @@ import hue.captains.singapura.tao.ontology.ValueObject;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * A taxonomy as read: every branch and component reached from the components declared - up
@@ -16,18 +17,17 @@ import java.util.List;
  * @param branches   the branches under the root, by level, each level in the order first reached
  * @param components the components, in the order they were reached
  * @param parts      the parts, each component's in its slots' order
- * @param roleBranches the role catalogue's branches under its root, by level, likewise
- * @param roles      the roles, those named by a slot in the order first named, then those given and named by none
+ * @param catalogue  the role catalogue: its branches by level, and its roles - those named by a slot in the order
+ *                   first named, then those given and named by none
  */
 public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> components, List<Part<?, ?>> parts,
-                       List<RoleBranch> roleBranches, List<Role<?>> roles) implements ValueObject {
+                       RoleCatalogue catalogue) implements ValueObject {
 
     public Taxonomy {
         branches = List.copyOf(branches);
         components = List.copyOf(components);
         parts = List.copyOf(parts);
-        roleBranches = List.copyOf(roleBranches);
-        roles = List.copyOf(roles);
+        Objects.requireNonNull(catalogue, "Taxonomy.catalogue");
     }
 
     /** Every node a design can be asked about: the root, the branches, the components, then the parts. */
@@ -72,13 +72,14 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
 
     // ── the role catalogue ─────────────────────────────────────────────────
 
+    /** The role catalogue's branches, by level. */
+    public List<RoleBranch> roleBranches() { return catalogue.branches(); }
+
+    /** The role catalogue's roles. */
+    public List<Role<?>> roles() { return catalogue.roles(); }
+
     /** The branches and roles directly under a branch of the catalogue - the root's included - branches first. */
-    public List<RoleNode> children(RoleBranch branch) {
-        var out = new ArrayList<RoleNode>();
-        for (RoleBranch b : roleBranches) if (branch.equals(Levels.parentOf(b))) out.add(b);
-        for (Role<?> r : roles) if (branch.equals(r.parent())) out.add(r);
-        return List.copyOf(out);
-    }
+    public List<RoleNode> children(RoleBranch branch) { return catalogue.children(branch); }
 
     /** Every part that names a role: where it is used, what plays it there, how many. */
     public List<Part<?, ?>> partsNaming(Role<?> role) {
@@ -95,7 +96,7 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
             if (!own.isEmpty() && own.stream().allMatch(p -> p.cardinality().least() == 0))
                 out.add(new TaxonomyFinding(Sign.ALL_OPTIONAL, Names.of(c) + ": every part is optional - a branch missing its plain leaf?"));
         }
-        for (Role<?> r : roles) {
+        for (Role<?> r : roles()) {
             var uses = partsNaming(r);
             if (uses.isEmpty()) {
                 out.add(new TaxonomyFinding(Sign.ROLE_UNNAMED, Names.of(r) + " is named by no component"));

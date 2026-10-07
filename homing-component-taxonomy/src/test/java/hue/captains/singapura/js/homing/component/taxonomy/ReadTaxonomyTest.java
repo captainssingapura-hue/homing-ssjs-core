@@ -196,12 +196,37 @@ class ReadTaxonomyTest {
         assertTrue(e.problems().get(0).says().contains("'badge'"), e.problems().get(0).says());
 
         e = assertThrows(RefusedTaxonomy.class, () -> read(Confirmation.INSTANCE, Broken.Doubled.INSTANCE));
-        assertEquals(List.of(Rule.ROLE_NAME_TWICE), e.problems().stream().map(TaxonomyProblem::rule).toList());
+        assertEquals(List.of(Rule.CATALOGUE_NAME_TWICE), e.problems().stream().map(TaxonomyProblem::rule).toList());
         assertTrue(e.problems().get(0).says().contains("'title'"), e.problems().get(0).says());
 
         e = assertThrows(RefusedTaxonomy.class, () -> read(Broken.Labelled.INSTANCE));
         assertEquals(List.of(Rule.ROLE_NAMES_A_NODE), e.problems().stream().map(TaxonomyProblem::rule).toList());
         assertTrue(e.problems().get(0).says().contains("is named as the component"), e.problems().get(0).says());
+    }
+
+    @Test
+    void oneWordOneMeaning_acrossTheWholeCatalogue_branchesAndRoles_atAnyLevel() {
+        var e = assertThrows(RefusedTaxonomy.class, () -> READ.read(List.of(), List.of(Title.INSTANCE, Broken.Another.Moniker.INSTANCE)));
+        assertEquals(List.of(Rule.CATALOGUE_NAME_TWICE), e.problems().stream().map(TaxonomyProblem::rule).toList(),
+                "two branches called naming, under different parents");
+        assertTrue(e.problems().get(0).says().startsWith("'naming' names 2 nodes of the role catalogue: the branch"), e.problems().get(0).says());
+
+        e = assertThrows(RefusedTaxonomy.class, () -> READ.read(List.of(), List.of(Title.INSTANCE, Broken.Misnamed.Subhead.INSTANCE)));
+        assertEquals(List.of(Rule.CATALOGUE_NAME_TWICE), e.problems().stream().map(TaxonomyProblem::rule).toList(), "a branch and a role, one name");
+        assertTrue(e.problems().get(0).says().contains("the role Sketch$Title") && e.problems().get(0).says().contains("the branch Broken$Misnamed$Title"),
+                e.problems().get(0).says());
+    }
+
+    @Test
+    void aCatalogueCannotBeConstructed_withTwoNodesOfOneName() {
+        var e = assertThrows(RefusedTaxonomy.class,
+                () -> new RoleCatalogue(List.of(Sketch.Saying.INSTANCE, Doing.INSTANCE, Naming.INSTANCE, Broken.Another.Naming.INSTANCE), List.of()));
+        assertEquals(List.of(Rule.CATALOGUE_NAME_TWICE), e.problems().stream().map(TaxonomyProblem::rule).toList(),
+                "the constructor's own check: no catalogue with a clash exists, however it is made");
+        var clean = new RoleCatalogue(List.of(Sketch.Saying.INSTANCE, Naming.INSTANCE), List.of(Title.INSTANCE));
+        assertEquals(List.of(Title.INSTANCE), clean.children(Naming.INSTANCE));
+        assertEquals(List.of(), new CatalogueNames().clashes(READ.read(Sketch.DECLARED, Sketch.CATALOGUE).roleBranches(), Sketch.CATALOGUE),
+                "the hypothetical house's words are each its own");
     }
 
     @Test
@@ -220,7 +245,7 @@ class ReadTaxonomyTest {
         var e = assertThrows(RefusedTaxonomy.class, () -> read(Broken.Orphan.INSTANCE, Broken.Mirror.INSTANCE, Broken.Stutter.INSTANCE,
                 Broken.Lopsided.INSTANCE, Broken.Labelled.INSTANCE, Broken.Doubled.INSTANCE));
         assertEquals(Set.of(Rule.NO_PARENT, Rule.COMPOSITION_CYCLE, Rule.ROLE_TWICE, Rule.BAD_CARDINALITY, Rule.ROLE_NAMES_A_NODE,
-                            Rule.ROLE_NAME_TWICE),
+                            Rule.CATALOGUE_NAME_TWICE),
                 e.problems().stream().map(TaxonomyProblem::rule).collect(Collectors.toSet()));
     }
 
