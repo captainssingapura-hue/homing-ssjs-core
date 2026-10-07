@@ -56,7 +56,7 @@ final class Broken {
     record Strays() implements Component<Container> {
         static final Strays INSTANCE = new Strays();
         @Override public Container parent() { return Container.INSTANCE; }
-        @Override public List<Slot<?>> parts() { return List.of(Stray.INSTANCE.playedBy(Caption.INSTANCE).one()); }
+        @Override public List<Slot<?>> parts() { final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE; return List.of(dsl.part(Caption.INSTANCE).as(Stray.INSTANCE).one()); }
     }
 
     /** Two families, each the other's parent. */
@@ -81,7 +81,14 @@ final class Broken {
     record Vacant() implements Component<Container> {
         static final Vacant INSTANCE = new Vacant();
         @Override public Container parent() { return Container.INSTANCE; }
-        @Override public List<Slot<?>> parts() { return List.of(Title.INSTANCE.<Caption>playedBy(null).one()); }
+        @Override public List<Slot<?>> parts() { final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE; return List.of(dsl.<Caption>part(null).as(Title.INSTANCE).one()); }
+    }
+
+    /** A part played by a caption, in no role. */
+    record Nameless() implements Component<Container> {
+        static final Nameless INSTANCE = new Nameless();
+        @Override public Container parent() { return Container.INSTANCE; }
+        @Override public List<Slot<?>> parts() { final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE; return List.of(dsl.part(Caption.INSTANCE).as(null).one()); }
     }
 
     /** One role, named twice. */
@@ -89,7 +96,8 @@ final class Broken {
         static final Stutter INSTANCE = new Stutter();
         @Override public Container parent() { return Container.INSTANCE; }
         @Override public List<Slot<?>> parts() {
-            return List.of(Title.INSTANCE.playedBy(Caption.INSTANCE).one(), Title.INSTANCE.playedBy(Heading.INSTANCE).optional());
+            final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE;
+            return List.of(dsl.part(Caption.INSTANCE).as(Title.INSTANCE).one(), dsl.part(Heading.INSTANCE).as(Title.INSTANCE).optional());
         }
     }
 
@@ -99,20 +107,20 @@ final class Broken {
     record Mirror() implements Component<Container> {
         static final Mirror INSTANCE = new Mirror();
         @Override public Container parent() { return Container.INSTANCE; }
-        @Override public List<Slot<?>> parts() { return List.of(Entry.INSTANCE.playedBy(Mirror.INSTANCE).optional()); }
+        @Override public List<Slot<?>> parts() { final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE; return List.of(dsl.part(Mirror.INSTANCE).as(Entry.INSTANCE).optional()); }
     }
 
     /** Each lists the other, any number of times, none included. */
     record Ping() implements Component<Container> {
         static final Ping INSTANCE = new Ping();
         @Override public Container parent() { return Container.INSTANCE; }
-        @Override public List<Slot<?>> parts() { return List.of(Entry.INSTANCE.playedBy(Pong.INSTANCE).any()); }
+        @Override public List<Slot<?>> parts() { final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE; return List.of(dsl.part(Pong.INSTANCE).as(Entry.INSTANCE).any()); }
     }
 
     record Pong() implements Component<Container> {
         static final Pong INSTANCE = new Pong();
         @Override public Container parent() { return Container.INSTANCE; }
-        @Override public List<Slot<?>> parts() { return List.of(Entry.INSTANCE.playedBy(Ping.INSTANCE).any()); }
+        @Override public List<Slot<?>> parts() { final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE; return List.of(dsl.part(Ping.INSTANCE).as(Entry.INSTANCE).any()); }
     }
 
     // ── names ──────────────────────────────────────────────────────────────
@@ -147,7 +155,7 @@ final class Broken {
     record Doubled() implements Component<Container> {
         static final Doubled INSTANCE = new Doubled();
         @Override public Container parent() { return Container.INSTANCE; }
-        @Override public List<Slot<?>> parts() { return List.of(Elsewhere.Title.INSTANCE.playedBy(Caption.INSTANCE).one()); }
+        @Override public List<Slot<?>> parts() { final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE; return List.of(dsl.part(Caption.INSTANCE).as(Elsewhere.Title.INSTANCE).one()); }
     }
 
     /** A role named for what plays it: "caption", like the component. */
@@ -162,7 +170,7 @@ final class Broken {
     record Labelled() implements Component<Container> {
         static final Labelled INSTANCE = new Labelled();
         @Override public Container parent() { return Container.INSTANCE; }
-        @Override public List<Slot<?>> parts() { return List.of(Objective.Caption.INSTANCE.playedBy(Sketch.Caption.INSTANCE).one()); }
+        @Override public List<Slot<?>> parts() { final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE; return List.of(dsl.part(Sketch.Caption.INSTANCE).as(Objective.Caption.INSTANCE).one()); }
     }
 
     // ── counts ─────────────────────────────────────────────────────────────
@@ -171,20 +179,20 @@ final class Broken {
     record Nothing() implements Component<Container> {
         static final Nothing INSTANCE = new Nothing();
         @Override public Container parent() { return Container.INSTANCE; }
-        @Override public List<Slot<?>> parts() { return List.of(Tag.INSTANCE.playedBy(Badge.INSTANCE).exactly(0)); }
+        @Override public List<Slot<?>> parts() { final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE; return List.of(dsl.part(Badge.INSTANCE).as(Tag.INSTANCE).exactly(0)); }
     }
 
     /** Three up to one. */
     record Lopsided() implements Component<Container> {
         static final Lopsided INSTANCE = new Lopsided();
         @Override public Container parent() { return Container.INSTANCE; }
-        @Override public List<Slot<?>> parts() { return List.of(Notch.INSTANCE.playedBy(Tick.INSTANCE).between(3, 1)); }
+        @Override public List<Slot<?>> parts() { final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE; return List.of(dsl.part(Tick.INSTANCE).as(Notch.INSTANCE).between(3, 1)); }
     }
 
     /** Two up to two: that is exactly two. */
     record Flat() implements Component<Container> {
         static final Flat INSTANCE = new Flat();
         @Override public Container parent() { return Container.INSTANCE; }
-        @Override public List<Slot<?>> parts() { return List.of(Notch.INSTANCE.playedBy(Tick.INSTANCE).between(2, 2)); }
+        @Override public List<Slot<?>> parts() { final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE; return List.of(dsl.part(Tick.INSTANCE).as(Notch.INSTANCE).between(2, 2)); }
     }
 }

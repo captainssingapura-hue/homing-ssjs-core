@@ -18,6 +18,8 @@ public record TaxonomyProblem(Rule rule, String says) implements ValueObject {
         PARENT_CYCLE,
         /** A slot whose role is played by nothing. */
         NO_BASE,
+        /** A slot that plays no role. */
+        NO_ROLE,
         /** A component names one role twice. */
         ROLE_TWICE,
         /** A component is, through the parts of its parts, a part of itself - whatever the cardinalities on the way. */

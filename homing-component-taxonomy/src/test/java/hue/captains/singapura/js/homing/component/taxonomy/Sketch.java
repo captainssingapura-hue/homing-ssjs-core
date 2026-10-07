@@ -190,7 +190,8 @@ final class Sketch {
         static final AlternatingButton INSTANCE = new AlternatingButton();
         @Override public Button parent() { return Button.INSTANCE; }
         @Override public List<Slot<?>> parts() {
-            return List.of(Name.INSTANCE.playedBy(Caption.INSTANCE).one());
+            final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE;
+            return List.of(dsl.part(Caption.INSTANCE).as(Name.INSTANCE).one());
         }
     }
 
@@ -205,10 +206,11 @@ final class Sketch {
         static final ProfileCard INSTANCE = new ProfileCard();
         @Override public Card parent() { return Card.INSTANCE; }
         @Override public List<Slot<?>> parts() {
-            return List.of(Title.INSTANCE.playedBy(Heading.INSTANCE).one(),
-                           Name.INSTANCE.playedBy(Caption.INSTANCE).one(),
-                           Tag.INSTANCE.playedBy(Badge.INSTANCE).any(),
-                           Open.INSTANCE.playedBy(PlainButton.INSTANCE).optional());
+            final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE;
+            return List.of(dsl.part(Heading.INSTANCE).as(Title.INSTANCE).one(),
+                           dsl.part(Caption.INSTANCE).as(Name.INSTANCE).one(),
+                           dsl.part(Badge.INSTANCE).as(Tag.INSTANCE).any(),
+                           dsl.part(PlainButton.INSTANCE).as(Open.INSTANCE).optional());
         }
     }
 
@@ -217,8 +219,9 @@ final class Sketch {
         static final Shelf INSTANCE = new Shelf();
         @Override public Card parent() { return Card.INSTANCE; }
         @Override public List<Slot<?>> parts() {
-            return List.of(Tag.INSTANCE.playedBy(Badge.INSTANCE).any(),
-                           Open.INSTANCE.playedBy(PlainButton.INSTANCE).optional());
+            final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE;
+            return List.of(dsl.part(Badge.INSTANCE).as(Tag.INSTANCE).any(),
+                           dsl.part(PlainButton.INSTANCE).as(Open.INSTANCE).optional());
         }
     }
 
@@ -227,9 +230,10 @@ final class Sketch {
         static final Confirmation INSTANCE = new Confirmation();
         @Override public Container parent() { return Container.INSTANCE; }
         @Override public List<Slot<?>> parts() {
-            return List.of(Title.INSTANCE.playedBy(Caption.INSTANCE).one(),
-                           Confirm.INSTANCE.playedBy(PlainButton.INSTANCE).one(),
-                           Cancel.INSTANCE.playedBy(PlainButton.INSTANCE).optional());
+            final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE;
+            return List.of(dsl.part(Caption.INSTANCE).as(Title.INSTANCE).one(),
+                           dsl.part(PlainButton.INSTANCE).as(Confirm.INSTANCE).one(),
+                           dsl.part(PlainButton.INSTANCE).as(Cancel.INSTANCE).optional());
         }
     }
 
@@ -238,8 +242,9 @@ final class Sketch {
         static final Watchlist INSTANCE = new Watchlist();
         @Override public Container parent() { return Container.INSTANCE; }
         @Override public List<Slot<?>> parts() {
-            return List.of(Entry.INSTANCE.playedBy(ProfileCard.INSTANCE).atLeast(1),
-                           Add.INSTANCE.playedBy(PlainButton.INSTANCE).optional());
+            final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE;
+            return List.of(dsl.part(ProfileCard.INSTANCE).as(Entry.INSTANCE).atLeast(1),
+                           dsl.part(PlainButton.INSTANCE).as(Add.INSTANCE).optional());
         }
     }
 
@@ -248,8 +253,9 @@ final class Sketch {
         static final Gauge INSTANCE = new Gauge();
         @Override public Control parent() { return Control.INSTANCE; }
         @Override public List<Slot<?>> parts() {
-            return List.of(Notch.INSTANCE.playedBy(Tick.INSTANCE).between(2, 12),
-                           Value.INSTANCE.playedBy(Caption.INSTANCE).one());
+            final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE;
+            return List.of(dsl.part(Tick.INSTANCE).as(Notch.INSTANCE).between(2, 12),
+                           dsl.part(Caption.INSTANCE).as(Value.INSTANCE).one());
         }
     }
 

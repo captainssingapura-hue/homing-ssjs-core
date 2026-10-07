@@ -163,8 +163,9 @@ class ReadTaxonomyTest {
     }
 
     @Test
-    void aSlotPlayedByNothing_orARoleNamedTwice() {
+    void aSlotPlayedByNothing_orInNoRole_orARoleNamedTwice() {
         assertEquals(Set.of(Rule.NO_BASE), refused(Broken.Vacant.INSTANCE));
+        assertEquals(Set.of(Rule.NO_ROLE), refused(Broken.Nameless.INSTANCE));
         assertEquals(Set.of(Rule.ROLE_TWICE), refused(Broken.Stutter.INSTANCE));
     }
 

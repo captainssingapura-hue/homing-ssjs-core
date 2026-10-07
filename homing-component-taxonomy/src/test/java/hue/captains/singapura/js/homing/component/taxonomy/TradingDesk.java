@@ -45,11 +45,12 @@ final class TradingDesk {
         static final OrderTicket INSTANCE = new OrderTicket();
         @Override public Sketch.Card parent() { return Sketch.Card.INSTANCE; }
         @Override public List<Slot<?>> parts() {
-            return List.of(Sketch.Title.INSTANCE.playedBy(Sketch.Heading.INSTANCE).one(),
-                           Side.INSTANCE.playedBy(Sketch.Badge.INSTANCE).one(),
-                           Buy.INSTANCE.playedBy(TradeButton.INSTANCE).one(),
-                           Sell.INSTANCE.playedBy(TradeButton.INSTANCE).one(),
-                           Sketch.Cancel.INSTANCE.playedBy(Sketch.PlainButton.INSTANCE).optional());
+            final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE;
+            return List.of(dsl.part(Sketch.Heading.INSTANCE).as(Sketch.Title.INSTANCE).one(),
+                           dsl.part(Sketch.Badge.INSTANCE).as(Side.INSTANCE).one(),
+                           dsl.part(TradeButton.INSTANCE).as(Buy.INSTANCE).one(),
+                           dsl.part(TradeButton.INSTANCE).as(Sell.INSTANCE).one(),
+                           dsl.part(Sketch.PlainButton.INSTANCE).as(Sketch.Cancel.INSTANCE).optional());
         }
     }
 

@@ -4,6 +4,8 @@ import hue.captains.singapura.js.homing.component.taxonomy.Cardinality.AtMost;
 import hue.captains.singapura.js.homing.component.taxonomy.Cardinality.Fixed;
 import hue.captains.singapura.js.homing.component.taxonomy.Cardinality.Unbounded;
 import hue.captains.singapura.js.homing.component.taxonomy.Cardinality.Varying;
+import hue.captains.singapura.js.homing.component.taxonomy.ComponentPartDSL.NeedsCount;
+import hue.captains.singapura.js.homing.component.taxonomy.ComponentPartDSL.NeedsRole;
 import hue.captains.singapura.js.homing.component.taxonomy.Sketch.Badge;
 import hue.captains.singapura.js.homing.component.taxonomy.Sketch.Heading;
 import hue.captains.singapura.js.homing.component.taxonomy.Sketch.Naming;
@@ -11,6 +13,8 @@ import hue.captains.singapura.js.homing.component.taxonomy.Sketch.Tag;
 import hue.captains.singapura.js.homing.component.taxonomy.Sketch.Title;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -19,21 +23,25 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * The declaration language on its own, before anything is read: a role asked to be played, told
- * how many, becomes a slot; the verbs say every shape of cardinality, one way each; a count that
- * is no cardinality is thrown where it is said; and a role is an identity that carries nothing.
+ * The declaration language on its own, before anything is read: a part played by a component,
+ * given a role and told how many, becomes a slot; the verbs say every shape of cardinality, one way
+ * each; a count that is no cardinality is thrown where it is said; and a role is an identity that
+ * knows nothing of the language.
  */
 class DeclarationTest {
 
-    private static Casting<Badge> tags() { return Tag.INSTANCE.playedBy(Badge.INSTANCE); }
+    private static final ComponentPartDSL DSL = ComponentPartDSL.INSTANCE;
+
+    private static NeedsCount<Badge> tags() { return DSL.part(Badge.INSTANCE).as(Tag.INSTANCE); }
 
     @Test
-    void aRolePlayed_andToldHowMany_isASlot() {
-        Slot<Heading> title = Title.INSTANCE.playedBy(Heading.INSTANCE).one();
+    void aPartPlayed_givenARole_andToldHowMany_isASlot() {
+        Slot<Heading> title = DSL.part(Heading.INSTANCE).as(Title.INSTANCE).one();
         assertEquals(new Slot<>(Title.INSTANCE, Heading.INSTANCE, new Fixed(1)), title);
         assertEquals("title → heading 1", title.toString());
-        assertEquals(new Casting<>(Title.INSTANCE, Heading.INSTANCE), Title.INSTANCE.playedBy(Heading.INSTANCE),
-                "asked to be played, and not yet a slot");
+        assertEquals(new NeedsRole<>(Heading.INSTANCE), DSL.part(Heading.INSTANCE), "played, and needing a role");
+        assertEquals(new NeedsCount<>(Heading.INSTANCE, Title.INSTANCE), DSL.part(Heading.INSTANCE).as(Title.INSTANCE),
+                "given a role, and needing a count");
     }
 
     @Test
@@ -85,19 +93,29 @@ class DeclarationTest {
     }
 
     @Test
-    void aRole_isAnIdentity_carryingNothing() {
+    void aRole_isAnIdentity_carryingNothing_andKnowingNothingOfTheLanguage() {
         for (Role<?> r : Sketch.CATALOGUE) {
             assertTrue(r.getClass().isRecord(), r + " is a record");
             assertEquals(0, r.getClass().getRecordComponents().length, r + " carries nothing: what plays it and how many are a slot's");
         }
+        assertEquals(List.of("family"), Arrays.stream(Role.class.getDeclaredMethods()).map(Method::getName).toList(),
+                "a role declares its family, and nothing of how it is cast");
         assertEquals("title", Title.INSTANCE.name().value(), "named after its type");
         assertEquals(Naming.INSTANCE, Title.INSTANCE.family());
         assertEquals(Title.INSTANCE, new Title(), "one role, however it is reached");
     }
 
     @Test
+    void theLanguage_aStandaloneFunctionalObject() {
+        assertTrue(ComponentPartDSL.class.isRecord());
+        assertEquals(0, ComponentPartDSL.class.getRecordComponents().length, "it holds nothing");
+        assertEquals(ComponentPartDSL.INSTANCE, new ComponentPartDSL());
+    }
+
+    @Test
     void theShapes_byType() {
-        assertFalse(Slot.class.isAssignableFrom(Casting.class), "a casting is not a slot, so parts() refuses one never told how many");
+        assertFalse(Slot.class.isAssignableFrom(NeedsRole.class), "a part given no role is not a slot");
+        assertFalse(Slot.class.isAssignableFrom(NeedsCount.class), "a part told no count is not a slot");
         assertEquals(List.of(Fixed.class, Varying.class), List.of(Cardinality.class.getPermittedSubclasses()), "two cases, no third");
         assertEquals(List.of(AtMost.class, Unbounded.class), List.of(Cardinality.Bound.class.getPermittedSubclasses()));
         assertFalse(RoleBranch.class.isAssignableFrom(Role.class), "a role is not a branch: nothing is filed under it");

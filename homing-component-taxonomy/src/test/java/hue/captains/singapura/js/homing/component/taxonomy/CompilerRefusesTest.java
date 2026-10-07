@@ -50,18 +50,37 @@ class CompilerRefusesTest {
         var errors = compile("""
                 record Note() implements Component<Text> {
                     public Text parent() { return Text.INSTANCE; }
-                    public List<Slot<?>> parts() { return List.of(Title.INSTANCE.playedBy(Caption.INSTANCE).optional()); }
+                    public List<Slot<?>> parts() {
+                        final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE;
+                        return List.of(dsl.part(Caption.INSTANCE).as(Title.INSTANCE).optional());
+                    }
                 }
                 """);
         assertTrue(errors.isEmpty(), errors.toString());
     }
 
     @Test
-    void aSlotNeverToldHowMany_doesNotCompile() {
+    void aPartNeverToldHowMany_doesNotCompile() {
         refusedOnItsLine("""
                 record Note() implements Component<Text> {
                     public Text parent() { return Text.INSTANCE; }
-                    public List<Slot<?>> parts() { return List.of(Title.INSTANCE.playedBy(Caption.INSTANCE)); } // refused here
+                    public List<Slot<?>> parts() {
+                        final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE;
+                        return List.of(dsl.part(Caption.INSTANCE).as(Title.INSTANCE)); // refused here
+                    }
+                }
+                """);
+    }
+
+    @Test
+    void aPartNeverGivenARole_doesNotCompile() {
+        refusedOnItsLine("""
+                record Note() implements Component<Text> {
+                    public Text parent() { return Text.INSTANCE; }
+                    public List<Slot<?>> parts() {
+                        final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE;
+                        return List.of(dsl.part(Caption.INSTANCE).one()); // refused here
+                    }
                 }
                 """);
     }
@@ -71,7 +90,23 @@ class CompilerRefusesTest {
         refusedOnItsLine("""
                 record Note() implements Component<Text> {
                     public Text parent() { return Text.INSTANCE; }
-                    public List<Slot<?>> parts() { return List.of(Title.INSTANCE.playedBy(Text.INSTANCE).one()); } // refused here
+                    public List<Slot<?>> parts() {
+                        final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE;
+                        return List.of(dsl.part(Text.INSTANCE).as(Title.INSTANCE).one()); // refused here
+                    }
+                }
+                """);
+    }
+
+    @Test
+    void aPartCastAsAnythingButARole_doesNotCompile() {
+        refusedOnItsLine("""
+                record Note() implements Component<Text> {
+                    public Text parent() { return Text.INSTANCE; }
+                    public List<Slot<?>> parts() {
+                        final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE;
+                        return List.of(dsl.part(Caption.INSTANCE).as(Naming.INSTANCE).one()); // refused here
+                    }
                 }
                 """);
     }

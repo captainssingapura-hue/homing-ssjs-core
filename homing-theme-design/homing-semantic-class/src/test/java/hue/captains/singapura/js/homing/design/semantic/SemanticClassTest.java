@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.design.semantic;
 import hue.captains.singapura.js.homing.component.taxonomy.AnyRole;
 import hue.captains.singapura.js.homing.component.taxonomy.Component;
 import hue.captains.singapura.js.homing.component.taxonomy.ComponentNode;
+import hue.captains.singapura.js.homing.component.taxonomy.ComponentPartDSL;
 import hue.captains.singapura.js.homing.component.taxonomy.Kind;
 import hue.captains.singapura.js.homing.component.taxonomy.ReadTaxonomy;
 import hue.captains.singapura.js.homing.component.taxonomy.Role;
@@ -66,7 +67,8 @@ class SemanticClassTest {
         static final Confirmation INSTANCE = new Confirmation();
         @Override public Root parent() { return Root.INSTANCE; }
         @Override public List<Slot<?>> parts() {
-            return List.of(Confirm.INSTANCE.playedBy(PlainButton.INSTANCE).one(), Title.INSTANCE.playedBy(Caption.INSTANCE).one());
+            final ComponentPartDSL dsl = ComponentPartDSL.INSTANCE;
+            return List.of(dsl.part(PlainButton.INSTANCE).as(Confirm.INSTANCE).one(), dsl.part(Caption.INSTANCE).as(Title.INSTANCE).one());
         }
     }
 

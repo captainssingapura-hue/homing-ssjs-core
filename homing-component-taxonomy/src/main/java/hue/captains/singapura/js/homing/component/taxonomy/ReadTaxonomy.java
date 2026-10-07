@@ -22,7 +22,7 @@ import java.util.Set;
  * <ul>
  *   <li>a kind, a component or a family with no parent, a role with no family, or a chain of
  *       parents that comes back on itself;</li>
- *   <li>a slot played by nothing, or a role a component names twice;</li>
+ *   <li>a slot played by nothing or in no role, or a role a component names twice;</li>
  *   <li>a component that is a part of itself, however deep - whatever the cardinalities on the
  *       way, since a cycle is refused on the types;</li>
  *   <li>two nodes with one token, two roles with one name, or a role named as a node;</li>
@@ -54,6 +54,11 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
             for (Slot<?> slot : slotsOf(c, problems)) {
                 if (slot == null) continue;
                 Role<?> role = slot.role();
+                if (role == null) {
+                    problems.add(new TaxonomyProblem(Rule.NO_ROLE, Names.of(c) + " has a part played by " + Names.of(slot.base())
+                            + " in no role"));
+                    continue;
+                }
                 if (!named.add(role)) {
                     problems.add(new TaxonomyProblem(Rule.ROLE_TWICE, Names.of(c) + " names " + Names.of(role) + " twice"));
                     continue;
