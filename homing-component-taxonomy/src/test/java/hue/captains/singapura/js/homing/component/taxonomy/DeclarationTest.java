@@ -98,10 +98,10 @@ class DeclarationTest {
             assertTrue(r.getClass().isRecord(), r + " is a record");
             assertEquals(0, r.getClass().getRecordComponents().length, r + " carries nothing: what plays it and how many are a slot's");
         }
-        assertEquals(List.of("family"), Arrays.stream(Role.class.getDeclaredMethods()).map(Method::getName).toList(),
-                "a role declares its family, and nothing of how it is cast");
+        assertEquals(List.of("parent"), Arrays.stream(Role.class.getDeclaredMethods()).map(Method::getName).toList(),
+                "a role names its parent, and nothing of how it is cast");
         assertEquals("title", Title.INSTANCE.name().value(), "named after its type");
-        assertEquals(Naming.INSTANCE, Title.INSTANCE.family());
+        assertEquals(Naming.INSTANCE, Title.INSTANCE.parent());
         assertEquals(Title.INSTANCE, new Title(), "one role, however it is reached");
     }
 

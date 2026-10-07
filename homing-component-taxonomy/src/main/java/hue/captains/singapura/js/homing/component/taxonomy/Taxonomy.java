@@ -16,17 +16,17 @@ import java.util.List;
  * @param kinds      the kinds, parents before their children
  * @param components the components, in the order they were reached
  * @param parts      the parts, each component's in its slots' order
- * @param families   the role families, parents before their children
+ * @param branches   the role catalogue's branches under its root, parents before their children
  * @param roles      the roles, those named by a slot in the order first named, then those given and named by none
  */
 public record Taxonomy(List<Kind<?>> kinds, List<Component<?>> components, List<Part<?, ?>> parts,
-                       List<RoleFamily<?>> families, List<Role<?>> roles) implements ValueObject {
+                       List<RoleBranch<?>> branches, List<Role<?>> roles) implements ValueObject {
 
     public Taxonomy {
         kinds = List.copyOf(kinds);
         components = List.copyOf(components);
         parts = List.copyOf(parts);
-        families = List.copyOf(families);
+        branches = List.copyOf(branches);
         roles = List.copyOf(roles);
     }
 
@@ -72,11 +72,11 @@ public record Taxonomy(List<Kind<?>> kinds, List<Component<?>> components, List<
 
     // ── the role catalogue ─────────────────────────────────────────────────
 
-    /** The families and roles directly under a branch of the catalogue, families first. */
-    public List<RoleNode> children(RoleBranch branch) {
+    /** The branches and roles directly under a branch of the catalogue - the root's included - branches first. */
+    public List<RoleNode> children(RoleBranch<?> branch) {
         var out = new ArrayList<RoleNode>();
-        for (RoleFamily<?> f : families) if (f.parent().equals(branch)) out.add(f);
-        for (Role<?> r : roles) if (r.family().equals(branch)) out.add(r);
+        for (RoleBranch<?> b : branches) if (b.parent().equals(branch)) out.add(b);
+        for (Role<?> r : roles) if (r.parent().equals(branch)) out.add(r);
         return List.copyOf(out);
     }
 

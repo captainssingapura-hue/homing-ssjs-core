@@ -16,12 +16,12 @@ import java.util.Set;
 /**
  * Reads a taxonomy from the components a deployment declares, and the roles its catalogue files:
  * it reaches every kind through the parents, every component that plays a part through the
- * slots, every role a slot names and every family through the roles, and refuses - with every
- * problem it found at once - what the compiler cannot:
+ * slots, every role a slot names and every branch of the role catalogue through the roles, and
+ * refuses - with every problem it found at once - what the compiler cannot:
  *
  * <ul>
- *   <li>a kind, a component or a family with no parent, a role with no family, or a chain of
- *       parents that comes back on itself;</li>
+ *   <li>a kind, a component, a branch or a role with no parent, a chain of parents that comes
+ *       back on itself, or a branch that is its own parent - a second root;</li>
  *   <li>a slot played by nothing or in no role, or a role a component names twice;</li>
  *   <li>a component that is a part of itself, however deep - whatever the cardinalities on the
  *       way, since a cycle is refused on the types;</li>
@@ -77,11 +77,11 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
         }
         for (Role<?> r : catalogued) if (r != null) roles.add(r);
 
-        var families = new LinkedHashSet<RoleFamily<?>>();
-        for (Role<?> r : roles) families.addAll(filing(r, problems));
+        var branches = new LinkedHashSet<RoleBranch<?>>();
+        for (Role<?> r : roles) branches.addAll(filing(r, problems));
 
         problems.addAll(compositionCycles(plays));
-        var taxonomy = new Taxonomy(topDown(kinds), List.copyOf(components), parts, topDownFamilies(families), List.copyOf(roles));
+        var taxonomy = new Taxonomy(topDown(kinds), List.copyOf(components), parts, topDownBranches(branches), List.copyOf(roles));
         problems.addAll(tokensTwice(taxonomy));
         problems.addAll(roleNamesTwice(roles));
         problems.addAll(roleNamesANode(taxonomy));
@@ -118,20 +118,29 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
         return out;
     }
 
-    /** The families above a role, nearest first; no family, a missing parent or a cycle is a problem. */
-    private static List<RoleFamily<?>> filing(Role<?> r, List<TaxonomyProblem> problems) {
-        var out = new ArrayList<RoleFamily<?>>();
-        RoleBranch b = r.family();
-        if (b == null) problems.add(new TaxonomyProblem(Rule.NO_PARENT, Names.of(r) + " names no family"));
-        var seen = new HashSet<RoleBranch>();
-        while (b instanceof RoleFamily<?> f) {
-            if (!seen.add(f)) {
-                problems.add(new TaxonomyProblem(Rule.PARENT_CYCLE, "the families above " + Names.of(r) + " come back to " + Names.of(f)));
+    /**
+     * The branches above a role up to the root, nearest first, the root left out. A missing parent,
+     * a chain that comes back on itself, or a branch that is its own parent - a second root - is a
+     * problem, and ends the walk.
+     */
+    private static List<RoleBranch<?>> filing(Role<?> r, List<TaxonomyProblem> problems) {
+        var out = new ArrayList<RoleBranch<?>>();
+        RoleBranch<?> b = r.parent();
+        if (b == null) problems.add(new TaxonomyProblem(Rule.NO_PARENT, Names.of(r) + " names no parent"));
+        var seen = new HashSet<RoleBranch<?>>();
+        while (b != null && !(b instanceof RoleRoot)) {
+            if (!seen.add(b)) {
+                problems.add(new TaxonomyProblem(Rule.PARENT_CYCLE, "the branches above " + Names.of(r) + " come back to " + Names.of(b)));
                 break;
             }
-            out.add(f);
-            b = f.parent();
-            if (b == null) problems.add(new TaxonomyProblem(Rule.NO_PARENT, Names.of(f) + " names no parent"));
+            out.add(b);
+            RoleBranch<?> up = b.parent();
+            if (up == null) problems.add(new TaxonomyProblem(Rule.NO_PARENT, Names.of(b) + " names no parent"));
+            else if (up.equals(b)) {
+                problems.add(new TaxonomyProblem(Rule.PARENT_CYCLE, Names.of(b) + " is its own parent: only the root is"));
+                break;
+            }
+            b = up;
         }
         return out;
     }
@@ -149,17 +158,18 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
         out.add(k);
     }
 
-    /** Families with their parents before them, each in the order first reached. */
-    private static List<RoleFamily<?>> topDownFamilies(Set<RoleFamily<?>> families) {
-        var out = new ArrayList<RoleFamily<?>>();
-        for (RoleFamily<?> f : families) placeFamily(f, families, out, new HashSet<>());
+    /** Branches with their parents before them, each in the order first reached. */
+    private static List<RoleBranch<?>> topDownBranches(Set<RoleBranch<?>> branches) {
+        var out = new ArrayList<RoleBranch<?>>();
+        for (RoleBranch<?> b : branches) placeBranch(b, branches, out, new HashSet<>());
         return out;
     }
 
-    private static void placeFamily(RoleFamily<?> f, Set<RoleFamily<?>> families, List<RoleFamily<?>> out, Set<RoleFamily<?>> walking) {
-        if (out.contains(f) || !walking.add(f)) return;
-        if (f.parent() instanceof RoleFamily<?> p && families.contains(p)) placeFamily(p, families, out, walking);
-        out.add(f);
+    private static void placeBranch(RoleBranch<?> b, Set<RoleBranch<?>> branches, List<RoleBranch<?>> out, Set<RoleBranch<?>> walking) {
+        if (out.contains(b) || !walking.add(b)) return;
+        RoleBranch<?> p = b.parent();
+        if (p != null && branches.contains(p)) placeBranch(p, branches, out, walking);
+        out.add(b);
     }
 
     /** Every cycle of "plays a part in", each once, by the components it passes through. */

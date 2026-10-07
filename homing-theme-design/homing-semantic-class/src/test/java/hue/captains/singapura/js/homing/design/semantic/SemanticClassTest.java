@@ -1,13 +1,13 @@
 package hue.captains.singapura.js.homing.design.semantic;
 
-import hue.captains.singapura.js.homing.component.taxonomy.AnyRole;
+import hue.captains.singapura.js.homing.component.taxonomy.RoleRoot;
 import hue.captains.singapura.js.homing.component.taxonomy.Component;
 import hue.captains.singapura.js.homing.component.taxonomy.ComponentNode;
 import hue.captains.singapura.js.homing.component.taxonomy.ComponentPartDSL;
 import hue.captains.singapura.js.homing.component.taxonomy.Kind;
 import hue.captains.singapura.js.homing.component.taxonomy.ReadTaxonomy;
 import hue.captains.singapura.js.homing.component.taxonomy.Role;
-import hue.captains.singapura.js.homing.component.taxonomy.RoleFamily;
+import hue.captains.singapura.js.homing.component.taxonomy.RoleBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.Root;
 import hue.captains.singapura.js.homing.component.taxonomy.Slot;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
@@ -48,19 +48,19 @@ class SemanticClassTest {
         @Override public Text parent() { return Text.INSTANCE; }
     }
 
-    record Roles() implements RoleFamily<AnyRole> {
+    record Roles() implements RoleBranch<RoleRoot> {
         static final Roles INSTANCE = new Roles();
-        @Override public AnyRole parent() { return AnyRole.INSTANCE; }
+        @Override public RoleRoot parent() { return RoleRoot.INSTANCE; }
     }
 
     record Confirm() implements Role<Roles> {
         static final Confirm INSTANCE = new Confirm();
-        @Override public Roles family() { return Roles.INSTANCE; }
+        @Override public Roles parent() { return Roles.INSTANCE; }
     }
 
     record Title() implements Role<Roles> {
         static final Title INSTANCE = new Title();
-        @Override public Roles family() { return Roles.INSTANCE; }
+        @Override public Roles parent() { return Roles.INSTANCE; }
     }
 
     record Confirmation() implements Component<Root> {
@@ -81,7 +81,7 @@ class SemanticClassTest {
         assertEquals(Trees.targetLeaves().size() * TAXONOMY.nodes().size(), forest.size());
         assertEquals(31, Trees.targetLeaves().size(), "the target leaves today");
         assertEquals(List.of("root", "control", "text", "confirmation", "plain-button", "caption", "confirmation-confirm", "confirmation-title"),
-                TAXONOMY.nodes().stream().map(ComponentNode::token).toList(), "the roles and their family are no nodes");
+                TAXONOMY.nodes().stream().map(ComponentNode::token).toList(), "the roles and their branch are no nodes");
     }
 
     @Test

@@ -3,7 +3,7 @@ package hue.captains.singapura.js.homing.component.taxonomy;
 import hue.captains.singapura.js.homing.component.taxonomy.Cardinality.Fixed;
 import hue.captains.singapura.js.homing.component.taxonomy.Cardinality.AtMost;
 import hue.captains.singapura.js.homing.component.taxonomy.Cardinality.Varying;
-import hue.captains.singapura.js.homing.component.taxonomy.Sketch.Acting;
+import hue.captains.singapura.js.homing.component.taxonomy.Sketch.Doing;
 import hue.captains.singapura.js.homing.component.taxonomy.Sketch.Add;
 import hue.captains.singapura.js.homing.component.taxonomy.Sketch.Button;
 import hue.captains.singapura.js.homing.component.taxonomy.Sketch.Cancel;
@@ -63,8 +63,8 @@ class ReadTaxonomyTest {
         assertEquals(Set.of(Container.INSTANCE, Text.INSTANCE, Control.INSTANCE, Button.INSTANCE), Set.copyOf(t.kinds()));
         assertTrue(t.kinds().indexOf(Control.INSTANCE) < t.kinds().indexOf(Button.INSTANCE), "a parent before its children");
         assertEquals(List.of(Title.INSTANCE, Confirm.INSTANCE, Cancel.INSTANCE), t.roles(), "the roles its slots name, in order");
-        assertEquals(List.of(Naming.INSTANCE, Acting.INSTANCE, Committing.INSTANCE), t.families(),
-                "the families, reached through the roles, a parent before its child");
+        assertEquals(List.of(Sketch.Saying.INSTANCE, Naming.INSTANCE, Doing.INSTANCE, Committing.INSTANCE), t.branches(),
+                "the branches, reached through the roles, a parent before its child, the root left out");
     }
 
     @Test
@@ -118,17 +118,19 @@ class ReadTaxonomyTest {
     }
 
     @Test
-    void theCatalogue_familiesThenRoles_underEachBranch() {
+    void theCatalogue_branchesThenRoles_underEachBranch_atAnyDepth() {
         Taxonomy t = READ.read(Sketch.DECLARED, Sketch.CATALOGUE);
-        assertEquals(List.of(Naming.INSTANCE, Sketch.Telling.INSTANCE, Acting.INSTANCE, Sketch.Hosting.INSTANCE, Sketch.Measuring.INSTANCE),
-                t.children(AnyRole.INSTANCE), "the families at the root, in the order first reached");
-        assertEquals(List.of(Committing.INSTANCE, Open.INSTANCE, Add.INSTANCE), t.children(Acting.INSTANCE), "a nested family first, then the roles");
-        assertEquals(List.of(Confirm.INSTANCE, Cancel.INSTANCE), t.children(Committing.INSTANCE));
+        assertEquals(List.of(Sketch.Saying.INSTANCE, Doing.INSTANCE, Sketch.Shaping.INSTANCE), t.children(RoleRoot.INSTANCE),
+                "the top branches, in the order first reached; the root not its own child");
+        assertEquals(List.of(Sketch.Going.INSTANCE, Committing.INSTANCE, Sketch.Managing.INSTANCE), t.children(Doing.INSTANCE));
+        assertEquals(List.of(Confirm.INSTANCE, Cancel.INSTANCE), t.children(Committing.INSTANCE), "roles at the third level");
+        assertEquals(List.of(Sketch.Entry.INSTANCE), t.children(Sketch.Shaping.INSTANCE), "and one at the second");
         assertTrue(t.roles().contains(Sketch.Summary.INSTANCE), "a catalogued role no component names is kept");
+        assertTrue(t.branches().stream().noneMatch(b -> b instanceof RoleRoot), "the root is no branch of the list: it is above them all");
     }
 
     @Test
-    void anExtension_aLeafUnderAHouseKind_rolesInAHouseFamily_andAFamilyOfItsOwn() {
+    void anExtension_aLeafUnderAHouseKind_rolesInAHouseBranch_andABranchOfItsOwn_atAnyLevel() {
         var declared = new ArrayList<Component<?>>(Sketch.DECLARED);
         declared.add(TradingDesk.OrderTicket.INSTANCE);
         var roles = new ArrayList<Role<?>>(Sketch.CATALOGUE);
@@ -138,8 +140,9 @@ class ReadTaxonomyTest {
         assertTrue(t.children(Button.INSTANCE).contains(TradingDesk.TradeButton.INSTANCE), "reached through its own slots");
         assertEquals(List.of(TradingDesk.Buy.INSTANCE, TradingDesk.Sell.INSTANCE),
                 t.children(Committing.INSTANCE).stream().filter(n -> n.getClass().getEnclosingClass() == TradingDesk.class).toList(),
-                "its roles filed in the house's family");
-        assertTrue(t.children(AnyRole.INSTANCE).contains(TradingDesk.Trading.INSTANCE), "and a family of its own");
+                "its roles filed in the house's branch");
+        assertTrue(t.children(Doing.INSTANCE).contains(TradingDesk.Trading.INSTANCE), "and a branch of its own, deep in the house's catalogue");
+        assertEquals(List.of(TradingDesk.Side.INSTANCE), t.children(TradingDesk.Trading.INSTANCE));
         assertEquals(List.of("order-ticket-title", "order-ticket-side", "order-ticket-buy", "order-ticket-sell", "order-ticket-cancel"),
                 t.partsOf(TradingDesk.OrderTicket.INSTANCE).stream().map(Part::token).toList());
     }
@@ -157,9 +160,12 @@ class ReadTaxonomyTest {
     void noParent_orParentsThatComeBack_inTheTaxonomyOrTheCatalogue() {
         assertEquals(Set.of(Rule.NO_PARENT), refused(Broken.Orphan.INSTANCE));
         assertEquals(Set.of(Rule.PARENT_CYCLE), refused(Broken.Hatchling.INSTANCE));
-        assertEquals(Set.of(Rule.NO_PARENT), refused(Broken.Strays.INSTANCE), "a role filed in no family");
+        assertEquals(Set.of(Rule.NO_PARENT), refused(Broken.Strays.INSTANCE), "a role filed under nothing");
         var e = assertThrows(RefusedTaxonomy.class, () -> READ.read(List.of(), List.of(Broken.Looped.INSTANCE)));
-        assertEquals(List.of(Rule.PARENT_CYCLE), e.problems().stream().map(TaxonomyProblem::rule).toList(), "families that come back on themselves");
+        assertEquals(List.of(Rule.PARENT_CYCLE), e.problems().stream().map(TaxonomyProblem::rule).toList(), "branches that come back on themselves");
+        e = assertThrows(RefusedTaxonomy.class, () -> READ.read(List.of(), List.of(Broken.Pretender.INSTANCE)));
+        assertEquals(List.of(Rule.PARENT_CYCLE), e.problems().stream().map(TaxonomyProblem::rule).toList());
+        assertEquals("Usurper is its own parent: only the root is", e.problems().get(0).says(), "a second root, refused");
     }
 
     @Test

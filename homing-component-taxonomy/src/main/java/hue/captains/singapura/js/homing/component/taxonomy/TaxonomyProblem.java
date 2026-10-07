@@ -12,9 +12,9 @@ public record TaxonomyProblem(Rule rule, String says) implements ValueObject {
 
     /** The rules a taxonomy is read under: what the compiler cannot refuse. */
     public enum Rule {
-        /** A kind, a component or a family names no parent; a role names no family. */
+        /** A kind, a component, a branch or a role names no parent. */
         NO_PARENT,
-        /** A chain of parents comes back on itself, in the taxonomy or the role catalogue. */
+        /** A chain of parents comes back on itself, in the taxonomy or the role catalogue - a branch that is its own parent, a second root, among them. */
         PARENT_CYCLE,
         /** A slot whose role is played by nothing. */
         NO_BASE,

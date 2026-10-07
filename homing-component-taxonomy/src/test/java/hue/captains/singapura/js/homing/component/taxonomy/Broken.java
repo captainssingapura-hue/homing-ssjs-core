@@ -47,10 +47,21 @@ final class Broken {
         @Override public Chick parent() { return Chick.INSTANCE; }
     }
 
-    /** A role that names no family. */
+    /** A branch that names itself as its parent: a second root, which only the root may be. */
+    record Usurper() implements RoleBranch<Usurper> {
+        static final Usurper INSTANCE = new Usurper();
+        @Override public Usurper parent() { return this; }
+    }
+
+    record Pretender() implements Role<Usurper> {
+        static final Pretender INSTANCE = new Pretender();
+        @Override public Usurper parent() { return Usurper.INSTANCE; }
+    }
+
+    /** A role that names no parent. */
     record Stray() implements Role<Naming> {
         static final Stray INSTANCE = new Stray();
-        @Override public Naming family() { return null; }
+        @Override public Naming parent() { return null; }
     }
 
     record Strays() implements Component<Container> {
@@ -61,19 +72,19 @@ final class Broken {
     }
 
     /** Two families, each the other's parent. */
-    record Ouroboros() implements RoleFamily<Tail> {
+    record Ouroboros() implements RoleBranch<Tail> {
         static final Ouroboros INSTANCE = new Ouroboros();
         @Override public Tail parent() { return Tail.INSTANCE; }
     }
 
-    record Tail() implements RoleFamily<Ouroboros> {
+    record Tail() implements RoleBranch<Ouroboros> {
         static final Tail INSTANCE = new Tail();
         @Override public Ouroboros parent() { return Ouroboros.INSTANCE; }
     }
 
     record Looped() implements Role<Ouroboros> {
         static final Looped INSTANCE = new Looped();
-        @Override public Ouroboros family() { return Ouroboros.INSTANCE; }
+        @Override public Ouroboros parent() { return Ouroboros.INSTANCE; }
     }
 
     // ── slots ──────────────────────────────────────────────────────────────
@@ -153,7 +164,7 @@ final class Broken {
         private Elsewhere() {}
         record Title() implements Role<Naming> {
             static final Title INSTANCE = new Title();
-            @Override public Naming family() { return Naming.INSTANCE; }
+            @Override public Naming parent() { return Naming.INSTANCE; }
         }
     }
 
@@ -170,7 +181,7 @@ final class Broken {
         private Objective() {}
         record Caption() implements Role<Telling> {
             static final Caption INSTANCE = new Caption();
-            @Override public Telling family() { return Telling.INSTANCE; }
+            @Override public Telling parent() { return Telling.INSTANCE; }
         }
     }
 

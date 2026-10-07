@@ -4,34 +4,35 @@ import java.util.List;
 
 /**
  * A hypothetical extension, as another repository would write it against the {@link Sketch}
- * house: a leaf under a house kind with parts of its own, roles filed in a house family, and a
- * family of its own for a role the house has no word for. Nothing in the house names any of it.
+ * house: a leaf under a house kind with parts of its own, roles filed in a house branch, and a
+ * branch of its own, added deep in the house's catalogue, for a role the house has no word for.
+ * Nothing in the house names any of it.
  */
 final class TradingDesk {
 
     private TradingDesk() {}
 
-    /** A family of its own. */
-    record Trading() implements RoleFamily<AnyRole> {
+    /** A branch of its own, under the house's Doing: the catalogue is open at any level. */
+    record Trading() implements RoleBranch<Sketch.Doing> {
         static final Trading INSTANCE = new Trading();
-        @Override public AnyRole parent() { return AnyRole.INSTANCE; }
+        @Override public Sketch.Doing parent() { return Sketch.Doing.INSTANCE; }
     }
 
     /** Which side of a trade the owner is on. */
     record Side() implements Role<Trading> {
         static final Side INSTANCE = new Side();
-        @Override public Trading family() { return Trading.INSTANCE; }
+        @Override public Trading parent() { return Trading.INSTANCE; }
     }
 
-    /** Filed in the house's family of acts that end a decision. */
+    /** Filed in the house's branch of acts that end a decision. */
     record Buy() implements Role<Sketch.Committing> {
         static final Buy INSTANCE = new Buy();
-        @Override public Sketch.Committing family() { return Sketch.Committing.INSTANCE; }
+        @Override public Sketch.Committing parent() { return Sketch.Committing.INSTANCE; }
     }
 
     record Sell() implements Role<Sketch.Committing> {
         static final Sell INSTANCE = new Sell();
-        @Override public Sketch.Committing family() { return Sketch.Committing.INSTANCE; }
+        @Override public Sketch.Committing parent() { return Sketch.Committing.INSTANCE; }
     }
 
     /** A leaf under the house's Button kind. */

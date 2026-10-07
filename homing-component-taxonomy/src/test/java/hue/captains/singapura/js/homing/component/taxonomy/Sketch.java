@@ -6,8 +6,8 @@ import java.util.List;
  * A hypothetical house, declared through the language - nothing here is the real one; it is
  * written to exercise the declaration.
  *
- * <p>A role catalogue of six families, one nested in another, and eleven roles, one of them
- * named by no component. A taxonomy of six kinds and thirteen components: buttons, texts and a
+ * <p>A role catalogue of three top branches and six beneath them, and eleven roles at two
+ * depths, one of them named by no component. A taxonomy of six kinds and thirteen components: buttons, texts and a
  * mark to play parts; a plain card with no parts; a profile card, a confirmation, a watchlist
  * and a gauge whose parts say every shape of cardinality; and a shelf whose every part is
  * optional. Title is played by a heading in one place and a caption in another.</p>
@@ -16,103 +16,121 @@ final class Sketch {
 
     private Sketch() {}
 
-    // ── the role catalogue ─────────────────────────────────────────────────
+    // ── the role catalogue: branches at any level, roles at the leaves ───────
 
-    record Naming() implements RoleFamily<AnyRole> {
+    /** What a part tells about its owner. */
+    record Saying() implements RoleBranch<RoleRoot> {
+        static final Saying INSTANCE = new Saying();
+        @Override public RoleRoot parent() { return RoleRoot.INSTANCE; }
+    }
+
+    /** What a part lets the user do to its owner. */
+    record Doing() implements RoleBranch<RoleRoot> {
+        static final Doing INSTANCE = new Doing();
+        @Override public RoleRoot parent() { return RoleRoot.INSTANCE; }
+    }
+
+    /** How a part makes up its owner's room. */
+    record Shaping() implements RoleBranch<RoleRoot> {
+        static final Shaping INSTANCE = new Shaping();
+        @Override public RoleRoot parent() { return RoleRoot.INSTANCE; }
+    }
+
+    record Naming() implements RoleBranch<Saying> {
         static final Naming INSTANCE = new Naming();
-        @Override public AnyRole parent() { return AnyRole.INSTANCE; }
+        @Override public Saying parent() { return Saying.INSTANCE; }
     }
 
-    record Telling() implements RoleFamily<AnyRole> {
+    record Telling() implements RoleBranch<Saying> {
         static final Telling INSTANCE = new Telling();
-        @Override public AnyRole parent() { return AnyRole.INSTANCE; }
+        @Override public Saying parent() { return Saying.INSTANCE; }
     }
 
-    record Acting() implements RoleFamily<AnyRole> {
-        static final Acting INSTANCE = new Acting();
-        @Override public AnyRole parent() { return AnyRole.INSTANCE; }
+    record Scaling() implements RoleBranch<Saying> {
+        static final Scaling INSTANCE = new Scaling();
+        @Override public Saying parent() { return Saying.INSTANCE; }
     }
 
-    /** Nested: the acts that end a decision. */
-    record Committing() implements RoleFamily<Acting> {
+    record Going() implements RoleBranch<Doing> {
+        static final Going INSTANCE = new Going();
+        @Override public Doing parent() { return Doing.INSTANCE; }
+    }
+
+    record Managing() implements RoleBranch<Doing> {
+        static final Managing INSTANCE = new Managing();
+        @Override public Doing parent() { return Doing.INSTANCE; }
+    }
+
+    /** The acts that end a decision. */
+    record Committing() implements RoleBranch<Doing> {
         static final Committing INSTANCE = new Committing();
-        @Override public Acting parent() { return Acting.INSTANCE; }
-    }
-
-    record Hosting() implements RoleFamily<AnyRole> {
-        static final Hosting INSTANCE = new Hosting();
-        @Override public AnyRole parent() { return AnyRole.INSTANCE; }
-    }
-
-    record Measuring() implements RoleFamily<AnyRole> {
-        static final Measuring INSTANCE = new Measuring();
-        @Override public AnyRole parent() { return AnyRole.INSTANCE; }
+        @Override public Doing parent() { return Doing.INSTANCE; }
     }
 
     /** Names a container. */
     record Title() implements Role<Naming> {
         static final Title INSTANCE = new Title();
-        @Override public Naming family() { return Naming.INSTANCE; }
+        @Override public Naming parent() { return Naming.INSTANCE; }
     }
 
     /** Names a control or an item. */
     record Name() implements Role<Naming> {
         static final Name INSTANCE = new Name();
-        @Override public Naming family() { return Naming.INSTANCE; }
+        @Override public Naming parent() { return Naming.INSTANCE; }
     }
 
     /** Marks the owner with a short word. */
     record Tag() implements Role<Telling> {
         static final Tag INSTANCE = new Tag();
-        @Override public Telling family() { return Telling.INSTANCE; }
+        @Override public Telling parent() { return Telling.INSTANCE; }
     }
 
     /** States the owner's value. */
     record Value() implements Role<Telling> {
         static final Value INSTANCE = new Value();
-        @Override public Telling family() { return Telling.INSTANCE; }
+        @Override public Telling parent() { return Telling.INSTANCE; }
     }
 
     /** Says briefly what the owner is about - catalogued, and named by no component here. */
     record Summary() implements Role<Telling> {
         static final Summary INSTANCE = new Summary();
-        @Override public Telling family() { return Telling.INSTANCE; }
+        @Override public Telling parent() { return Telling.INSTANCE; }
+    }
+
+    /** Marks a step of the owner's scale. */
+    record Notch() implements Role<Scaling> {
+        static final Notch INSTANCE = new Notch();
+        @Override public Scaling parent() { return Scaling.INSTANCE; }
     }
 
     /** Goes to what the owner stands for. */
-    record Open() implements Role<Acting> {
+    record Open() implements Role<Going> {
         static final Open INSTANCE = new Open();
-        @Override public Acting family() { return Acting.INSTANCE; }
+        @Override public Going parent() { return Going.INSTANCE; }
     }
 
     /** Adds a member. */
-    record Add() implements Role<Acting> {
+    record Add() implements Role<Managing> {
         static final Add INSTANCE = new Add();
-        @Override public Acting family() { return Acting.INSTANCE; }
+        @Override public Managing parent() { return Managing.INSTANCE; }
     }
 
     /** Does what was decided. */
     record Confirm() implements Role<Committing> {
         static final Confirm INSTANCE = new Confirm();
-        @Override public Committing family() { return Committing.INSTANCE; }
+        @Override public Committing parent() { return Committing.INSTANCE; }
     }
 
     /** Leaves without deciding. */
     record Cancel() implements Role<Committing> {
         static final Cancel INSTANCE = new Cancel();
-        @Override public Committing family() { return Committing.INSTANCE; }
+        @Override public Committing parent() { return Committing.INSTANCE; }
     }
 
-    /** One of the things the owner lists. */
-    record Entry() implements Role<Hosting> {
+    /** One of the things the owner lists - filed straight under its top branch, beside no other. */
+    record Entry() implements Role<Shaping> {
         static final Entry INSTANCE = new Entry();
-        @Override public Hosting family() { return Hosting.INSTANCE; }
-    }
-
-    /** Marks a step of the owner's scale. */
-    record Notch() implements Role<Measuring> {
-        static final Notch INSTANCE = new Notch();
-        @Override public Measuring family() { return Measuring.INSTANCE; }
+        @Override public Shaping parent() { return Shaping.INSTANCE; }
     }
 
     /** Every role the catalogue files. */
