@@ -1,26 +1,27 @@
 package hue.captains.singapura.js.homing.component.taxonomy;
 
-import hue.captains.singapura.js.homing.tree.NodeName;
-import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
-
 /**
- * A role a component declares for one of its parts, and the component that plays it: a dialog's
- * {@code Ok} and {@code Cancel}, played by a plain button; a card's {@code Title}, played by a
- * caption. A role is a record nested in the component that declares it - that is its owner -
- * and its name is its own, usually not its base's: the role is what lets a design tell two
- * parts of one kind apart.
+ * A role: what a part does for the component that has it - a Title names it, a Summary says it
+ * briefly, a Close closes it. Never what plays it. A role is a shared, stateless singleton,
+ * filed in a family of the role catalogue, and it carries nothing else: what plays it and how
+ * many are the component's to say, in a {@link Slot}, by asking the role to be played.
  *
- * <p>The base is always an otherwise independent component. A part is answered as what it is -
- * it falls back through its base, never through its owner - and the owner's design never
- * alters how the base behaves.</p>
+ * <pre>{@code
+ * public record Title() implements Role<Naming> {
+ *     public static final Title INSTANCE = new Title();
+ *     @Override public Naming family() { return Naming.INSTANCE; }
+ * }
  *
- * @param <E> the component that plays the role
+ * Title.INSTANCE.playedBy(Heading.INSTANCE).one()      // a slot
+ * }</pre>
+ *
+ * @param <F> the family it is filed in
  */
-public interface Role<E extends Component<?>> extends StatelessFunctionalObject {
+public non-sealed interface Role<F extends RoleFamily<?>> extends RoleNode {
 
-    /** The component that plays this role. */
-    E base();
+    /** The family it is filed in. */
+    F family();
 
-    /** {@code Ok} gives {@code ok}. */
-    default NodeName name() { return NodeName.ofType(getClass(), ""); }
+    /** This role, played by a component: not yet a slot until it is told how many. */
+    default <E extends Component<?>> Casting<E> playedBy(E base) { return new Casting<>(this, base); }
 }

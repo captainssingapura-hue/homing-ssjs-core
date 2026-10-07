@@ -1,0 +1,16 @@
+package hue.captains.singapura.js.homing.component.taxonomy;
+
+import hue.captains.singapura.js.homing.tree.NodeName;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
+
+/**
+ * A node of the role catalogue: a {@link RoleBranch} - the {@link AnyRole} root or a
+ * {@link RoleFamily} - or a {@link Role} at a leaf. Each is a stateless singleton record, named
+ * after its type. The catalogue organises the roles and nothing more: it has no design classes,
+ * and no part falls back through it.
+ */
+public sealed interface RoleNode extends StatelessFunctionalObject permits RoleBranch, Role {
+
+    /** {@code ZoomIn} gives {@code zoom-in}. */
+    default NodeName name() { return NodeName.ofType(getClass(), ""); }
+}

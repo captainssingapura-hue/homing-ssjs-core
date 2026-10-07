@@ -5,24 +5,22 @@ import java.util.List;
 /**
  * A component: a leaf of the taxonomy, and the only concrete node - what an implementation
  * realizes. Where something generic is needed, a kind declares a generic leaf for it
- * ({@code GenericBox} under {@code Box}).
+ * ({@code PlainCard} under {@code Card}).
  *
- * <p>A component declares its parts as {@link Role roles}: each a record nested in the
- * component, naming the role and the independent component that plays it. Only the component
- * declares its roles - composition is closed - and the owner is appended when the taxonomy is
- * read, each role becoming a {@link Part}.</p>
+ * <p>A component declares its parts with it, as {@link Slot slots}: each a shared role, the
+ * independent component that plays it, and how many. Only the component declares its slots -
+ * composition is closed - and the owner is appended when the taxonomy is read, each slot
+ * becoming a {@link Part}.</p>
  *
  * <pre>{@code
- * public record Dialog() implements Component<Container> {
- *     public static final Dialog INSTANCE = new Dialog();
- *     @Override public Container parent() { return Container.INSTANCE; }
- *     @Override public List<Role<?>> roles() { return List.of(Ok.INSTANCE, Cancel.INSTANCE); }
- *
- *     public record Ok() implements Role<PlainButton> {
- *         public static final Ok INSTANCE = new Ok();
- *         @Override public PlainButton base() { return PlainButton.INSTANCE; }
+ * public record ProfileCard() implements Component<Card> {
+ *     public static final ProfileCard INSTANCE = new ProfileCard();
+ *     @Override public Card parent() { return Card.INSTANCE; }
+ *     @Override public List<Slot<?>> parts() {
+ *         return List.of(Title.INSTANCE.playedBy(Heading.INSTANCE).one(),
+ *                        Tag.INSTANCE.playedBy(Badge.INSTANCE).any(),
+ *                        Open.INSTANCE.playedBy(PlainButton.INSTANCE).optional());
  *     }
- *     …
  * }
  * }</pre>
  *
@@ -33,6 +31,6 @@ public non-sealed interface Component<P extends Branch> extends Taxon {
     /** The branch this component sits under. */
     P parent();
 
-    /** The roles this component declares for its parts, each nested in it; none by default. */
-    default List<Role<?>> roles() { return List.of(); }
+    /** Its parts, each a role played by an independent component, so many times; none by default. */
+    default List<Slot<?>> parts() { return List.of(); }
 }

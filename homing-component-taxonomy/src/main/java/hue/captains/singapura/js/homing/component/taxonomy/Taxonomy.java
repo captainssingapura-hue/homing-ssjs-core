@@ -1,29 +1,36 @@
 package hue.captains.singapura.js.homing.component.taxonomy;
 
+import hue.captains.singapura.js.homing.component.taxonomy.TaxonomyFinding.Sign;
 import hue.captains.singapura.tao.ontology.ValueObject;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
  * A taxonomy as read: every kind and component reached from the components declared - up
- * through their parents, across through the components that play their roles - and every part,
- * each role with its owner appended. What a design walks, and what derives the design classes.
+ * through their parents, across through the components that play their parts - every part, each
+ * slot with its owner appended, and the role catalogue the slots name. What a design walks, what
+ * derives the design classes, and what the workbench shows.
  *
  * @param kinds      the kinds, parents before their children
  * @param components the components, in the order they were reached
- * @param parts      the parts, each component's in its roles' order
+ * @param parts      the parts, each component's in its slots' order
+ * @param families   the role families, parents before their children
+ * @param roles      the roles, those named by a slot in the order first named, then those given and named by none
  */
-public record Taxonomy(List<Kind<?>> kinds, List<Component<?>> components, List<Part<?, ?>> parts)
-        implements ValueObject {
+public record Taxonomy(List<Kind<?>> kinds, List<Component<?>> components, List<Part<?, ?>> parts,
+                       List<RoleFamily<?>> families, List<Role<?>> roles) implements ValueObject {
 
     public Taxonomy {
         kinds = List.copyOf(kinds);
         components = List.copyOf(components);
         parts = List.copyOf(parts);
+        families = List.copyOf(families);
+        roles = List.copyOf(roles);
     }
 
-    /** Every node: the root, the kinds, the components, then the parts. */
+    /** Every node a design can be asked about: the root, the kinds, the components, then the parts. */
     public List<ComponentNode> nodes() {
         var out = new ArrayList<ComponentNode>();
         out.add(Root.INSTANCE);
@@ -41,9 +48,9 @@ public record Taxonomy(List<Kind<?>> kinds, List<Component<?>> components, List<
         return List.copyOf(out);
     }
 
-    /** The parts a component declares, in its roles' order. */
+    /** The parts a component declares, in its slots' order. */
     public List<Part<?, ?>> partsOf(Component<?> owner) {
-        return parts.stream().filter(p -> p.belongsTo().equals(owner)).toList();
+        return parts.stream().filter(p -> p.owner().equals(owner)).toList();
     }
 
     /**
@@ -62,6 +69,48 @@ public record Taxonomy(List<Kind<?>> kinds, List<Component<?>> components, List<
 
     /** A node's token, unique across a taxonomy: the reader refuses two nodes with one. */
     public String token(ComponentNode node) { return node.token(); }
+
+    // ── the role catalogue ─────────────────────────────────────────────────
+
+    /** The families and roles directly under a branch of the catalogue, families first. */
+    public List<RoleNode> children(RoleBranch branch) {
+        var out = new ArrayList<RoleNode>();
+        for (RoleFamily<?> f : families) if (f.parent().equals(branch)) out.add(f);
+        for (Role<?> r : roles) if (r.family().equals(branch)) out.add(r);
+        return List.copyOf(out);
+    }
+
+    /** Every part that names a role: where it is used, what plays it there, how many. */
+    public List<Part<?, ?>> partsNaming(Role<?> role) {
+        return parts.stream().filter(p -> p.role().equals(role)).toList();
+    }
+
+    // ── signs ──────────────────────────────────────────────────────────────
+
+    /** What reading notices and refuses nothing for. */
+    public List<TaxonomyFinding> findings() {
+        var out = new ArrayList<TaxonomyFinding>();
+        for (Component<?> c : components) {
+            var own = partsOf(c);
+            if (!own.isEmpty() && own.stream().allMatch(p -> p.cardinality().least() == 0))
+                out.add(new TaxonomyFinding(Sign.ALL_OPTIONAL, Names.of(c) + ": every part is optional - a kind missing its plain leaf?"));
+        }
+        for (Role<?> r : roles) {
+            var uses = partsNaming(r);
+            if (uses.isEmpty()) {
+                out.add(new TaxonomyFinding(Sign.ROLE_UNNAMED, Names.of(r) + " is named by no component"));
+                continue;
+            }
+            var bases = new LinkedHashSet<Component<?>>();
+            for (Part<?, ?> p : uses) bases.add(p.base());
+            if (bases.size() > 1)
+                out.add(new TaxonomyFinding(Sign.ROLE_PLAYED_VARIOUSLY, Names.of(r) + " is played by "
+                        + String.join(", ", bases.stream().map(b -> Names.of(b) + " in "
+                                + String.join(" and ", uses.stream().filter(p -> p.base().equals(b)).map(p -> Names.of(p.owner())).toList()))
+                        .toList())));
+        }
+        return List.copyOf(out);
+    }
 
     /** The branch a node sits under; none for the root. */
     static Branch parentOf(Taxon t) {

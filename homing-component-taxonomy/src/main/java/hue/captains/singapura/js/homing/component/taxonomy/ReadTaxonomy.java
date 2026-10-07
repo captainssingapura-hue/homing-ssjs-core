@@ -14,26 +14,35 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Reads a taxonomy from the components declared, and refuses it with every problem at once.
+ * Reads a taxonomy from the components a deployment declares, and the roles its catalogue files:
+ * it reaches every kind through the parents, every component that plays a part through the
+ * slots, every role a slot names and every family through the roles, and refuses - with every
+ * problem it found at once - what the compiler cannot:
  *
- * <p>Only components need declaring. Their kinds are reached through their parents, since a
- * parent never lists its children; the components that play their roles are reached through
- * the roles, and theirs in turn. Each role becomes a part, its owner appended.</p>
- *
- * <p>Refused: a kind or component with no parent; a chain of parents that comes back on
- * itself; a role listed by a component it is not nested in, or listed twice; a role with no
- * component to play it; a component that is, through roles, a part of itself; two nodes that
- * derive one token. That only a leaf is concrete needs no check: only a {@link Branch} can be
- * named as a parent, and a {@link Component} is not one.</p>
+ * <ul>
+ *   <li>a kind, a component or a family with no parent, a role with no family, or a chain of
+ *       parents that comes back on itself;</li>
+ *   <li>a slot played by nothing, or a role a component names twice;</li>
+ *   <li>a component that is a part of itself, however deep - whatever the cardinalities on the
+ *       way, since a cycle is refused on the types;</li>
+ *   <li>two nodes with one token, two roles with one name, or a role named as a node;</li>
+ *   <li>a count that is no cardinality - thrown where it is said, and reported for the component
+ *       that said it, so one component's bad count never hides another's problems.</li>
+ * </ul>
  */
 public record ReadTaxonomy() implements StatelessFunctionalObject {
 
-    public Taxonomy read(Collection<? extends Component<?>> declared) {
+    /** The components declared, and only the roles they name. */
+    public Taxonomy read(Collection<? extends Component<?>> declared) { return read(declared, List.of()); }
+
+    /** The components declared, and the roles a catalogue files - those no component names are kept, and reported. */
+    public Taxonomy read(Collection<? extends Component<?>> declared, Collection<? extends Role<?>> catalogued) {
         var problems = new ArrayList<TaxonomyProblem>();
         var kinds = new LinkedHashSet<Kind<?>>();
         var components = new LinkedHashSet<Component<?>>();
         var parts = new ArrayList<Part<?, ?>>();
-        var plays = new LinkedHashMap<Component<?>, List<Component<?>>>();   // owner -> the components that play its roles
+        var roles = new LinkedHashSet<Role<?>>();
+        var plays = new LinkedHashMap<Component<?>, List<Component<?>>>();   // owner -> the components that play its parts
 
         var queue = new ArrayDeque<Component<?>>(declared);
         while (!queue.isEmpty()) {
@@ -41,51 +50,83 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
             if (!components.add(c)) continue;
             kinds.addAll(lineage(c, problems));
             var bases = new ArrayList<Component<?>>();
-            var listed = new HashSet<Role<?>>();
-            for (Role<?> role : c.roles()) {
-                if (role == null) continue;
-                if (!listed.add(role)) {
-                    problems.add(new TaxonomyProblem(Rule.ROLE_TWICE, name(c) + " lists " + name(role) + " twice"));
+            var named = new HashSet<Role<?>>();
+            for (Slot<?> slot : slotsOf(c, problems)) {
+                if (slot == null) continue;
+                Role<?> role = slot.role();
+                if (!named.add(role)) {
+                    problems.add(new TaxonomyProblem(Rule.ROLE_TWICE, Names.of(c) + " names " + Names.of(role) + " twice"));
                     continue;
                 }
-                if (role.getClass().getEnclosingClass() != c.getClass()) {
-                    problems.add(new TaxonomyProblem(Rule.ROLE_NOT_ITS_OWN, name(c) + " lists " + name(role)
-                            + ", which is not nested in it: only a component declares its roles"));
-                    continue;
-                }
-                Component<?> base = role.base();
+                roles.add(role);
+                Component<?> base = slot.base();
                 if (base == null) {
-                    problems.add(new TaxonomyProblem(Rule.NO_BASE, name(role) + " names no component to play it"));
+                    problems.add(new TaxonomyProblem(Rule.NO_BASE, Names.of(c) + "." + Names.of(role) + " is played by nothing"));
                     continue;
                 }
-                parts.add(part(c, role));
+                parts.add(new Part<Component<?>, Component<?>>(c, role, base, slot.cardinality()));
                 bases.add(base);
                 queue.add(base);
             }
             plays.put(c, bases);
         }
+        for (Role<?> r : catalogued) if (r != null) roles.add(r);
+
+        var families = new LinkedHashSet<RoleFamily<?>>();
+        for (Role<?> r : roles) families.addAll(filing(r, problems));
 
         problems.addAll(compositionCycles(plays));
-        var taxonomy = new Taxonomy(topDown(kinds), List.copyOf(components), parts);
+        var taxonomy = new Taxonomy(topDown(kinds), List.copyOf(components), parts, topDownFamilies(families), List.copyOf(roles));
         problems.addAll(tokensTwice(taxonomy));
+        problems.addAll(roleNamesTwice(roles));
+        problems.addAll(roleNamesANode(taxonomy));
         if (!problems.isEmpty()) throw new RefusedTaxonomy(problems);
         return taxonomy;
+    }
+
+    /** A component's slots; a count that is no cardinality is a problem of the component that said it. */
+    private static List<Slot<?>> slotsOf(Component<?> c, List<TaxonomyProblem> problems) {
+        try {
+            List<Slot<?>> slots = c.parts();
+            return slots == null ? List.of() : slots;
+        } catch (BadCardinality e) {
+            problems.add(new TaxonomyProblem(Rule.BAD_CARDINALITY, Names.of(c) + ": " + e.getMessage()));
+            return List.of();
+        }
     }
 
     /** The kinds above a component, nearest first; a missing parent or a cycle is a problem, and ends the walk. */
     private static List<Kind<?>> lineage(Component<?> c, List<TaxonomyProblem> problems) {
         var out = new ArrayList<Kind<?>>();
         Branch b = c.parent();
-        if (b == null) problems.add(new TaxonomyProblem(Rule.NO_PARENT, name(c) + " names no parent"));
+        if (b == null) problems.add(new TaxonomyProblem(Rule.NO_PARENT, Names.of(c) + " names no parent"));
         var seen = new HashSet<Branch>();
         while (b instanceof Kind<?> k) {
             if (!seen.add(k)) {
-                problems.add(new TaxonomyProblem(Rule.PARENT_CYCLE, "the parents above " + name(c) + " come back to " + name(k)));
+                problems.add(new TaxonomyProblem(Rule.PARENT_CYCLE, "the parents above " + Names.of(c) + " come back to " + Names.of(k)));
                 break;
             }
             out.add(k);
             b = k.parent();
-            if (b == null) problems.add(new TaxonomyProblem(Rule.NO_PARENT, name(k) + " names no parent"));
+            if (b == null) problems.add(new TaxonomyProblem(Rule.NO_PARENT, Names.of(k) + " names no parent"));
+        }
+        return out;
+    }
+
+    /** The families above a role, nearest first; no family, a missing parent or a cycle is a problem. */
+    private static List<RoleFamily<?>> filing(Role<?> r, List<TaxonomyProblem> problems) {
+        var out = new ArrayList<RoleFamily<?>>();
+        RoleBranch b = r.family();
+        if (b == null) problems.add(new TaxonomyProblem(Rule.NO_PARENT, Names.of(r) + " names no family"));
+        var seen = new HashSet<RoleBranch>();
+        while (b instanceof RoleFamily<?> f) {
+            if (!seen.add(f)) {
+                problems.add(new TaxonomyProblem(Rule.PARENT_CYCLE, "the families above " + Names.of(r) + " come back to " + Names.of(f)));
+                break;
+            }
+            out.add(f);
+            b = f.parent();
+            if (b == null) problems.add(new TaxonomyProblem(Rule.NO_PARENT, Names.of(f) + " names no parent"));
         }
         return out;
     }
@@ -103,7 +144,20 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
         out.add(k);
     }
 
-    /** Every cycle of "plays a role in", each once, by the components it passes through. */
+    /** Families with their parents before them, each in the order first reached. */
+    private static List<RoleFamily<?>> topDownFamilies(Set<RoleFamily<?>> families) {
+        var out = new ArrayList<RoleFamily<?>>();
+        for (RoleFamily<?> f : families) placeFamily(f, families, out, new HashSet<>());
+        return out;
+    }
+
+    private static void placeFamily(RoleFamily<?> f, Set<RoleFamily<?>> families, List<RoleFamily<?>> out, Set<RoleFamily<?>> walking) {
+        if (out.contains(f) || !walking.add(f)) return;
+        if (f.parent() instanceof RoleFamily<?> p && families.contains(p)) placeFamily(p, families, out, walking);
+        out.add(f);
+    }
+
+    /** Every cycle of "plays a part in", each once, by the components it passes through. */
     private static List<TaxonomyProblem> compositionCycles(Map<Component<?>, List<Component<?>>> plays) {
         var out = new ArrayList<TaxonomyProblem>();
         var reported = new HashSet<Set<Component<?>>>();
@@ -123,8 +177,8 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
                 var cycle = new ArrayList<>(path.subList(i, path.size()));
                 if (reported.add(new HashSet<>(cycle))) {
                     var names = new ArrayList<String>();
-                    for (Component<?> c : cycle) names.add(name(c));
-                    names.add(name(next));
+                    for (Component<?> c : cycle) names.add(Names.of(c));
+                    names.add(Names.of(next));
                     out.add(new TaxonomyProblem(Rule.COMPOSITION_CYCLE, "a part of itself: " + String.join(" → ", names)));
                 }
                 continue;
@@ -143,29 +197,38 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
         byToken.forEach((token, nodes) -> {
             if (nodes.size() > 1)
                 out.add(new TaxonomyProblem(Rule.TOKEN_TWICE, "'" + token + "' is derived by "
-                        + String.join(" and ", nodes.stream().map(ReadTaxonomy::qualified).toList())));
+                        + String.join(" and ", nodes.stream().map(Names::qualified).toList())));
         });
         return out;
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private static Part<?, ?> part(Component<?> owner, Role<?> role) {
-        return new Part(owner, role.base(), role);
+    /** Two roles, one name: one word means one thing. */
+    private static List<TaxonomyProblem> roleNamesTwice(Collection<Role<?>> roles) {
+        var byName = new LinkedHashMap<String, List<Role<?>>>();
+        for (Role<?> r : roles) byName.computeIfAbsent(r.name().value(), x -> new ArrayList<>()).add(r);
+        var out = new ArrayList<TaxonomyProblem>();
+        byName.forEach((name, same) -> {
+            if (same.size() > 1)
+                out.add(new TaxonomyProblem(Rule.ROLE_NAME_TWICE, "'" + name + "' is answered to by "
+                        + String.join(" and ", same.stream().map(Names::qualified).toList())));
+        });
+        return out;
     }
 
-    /** A node as a reader would say it: {@code PlainButton}, a role {@code Dialog.Ok}. */
-    private static String name(Object o) {
-        if (o instanceof Part<?, ?> p) return name(p.role());
-        Class<?> c = o.getClass();
-        return o instanceof Role<?> && c.getEnclosingClass() != null
-                ? c.getEnclosingClass().getSimpleName() + "." + c.getSimpleName()
-                : c.getSimpleName();
-    }
-
-    /** A node's type without its package, where simple names are not enough: {@code Here$Badge}. */
-    private static String qualified(Object o) {
-        if (o instanceof Part<?, ?> p) return qualified(p.belongsTo()) + "." + p.name().value();
-        String n = o.getClass().getName();
-        return n.substring(n.lastIndexOf('.') + 1);
+    /** A role that shares a name with a kind or a component says what plays a part, not what it does. */
+    private static List<TaxonomyProblem> roleNamesANode(Taxonomy t) {
+        var nodes = new LinkedHashMap<String, Taxon>();
+        nodes.put(Root.INSTANCE.name().value(), Root.INSTANCE);
+        for (Kind<?> k : t.kinds()) nodes.putIfAbsent(k.name().value(), k);
+        for (Component<?> c : t.components()) nodes.putIfAbsent(c.name().value(), c);
+        var out = new ArrayList<TaxonomyProblem>();
+        for (Role<?> r : t.roles()) {
+            Taxon same = nodes.get(r.name().value());
+            if (same != null)
+                out.add(new TaxonomyProblem(Rule.ROLE_NAMES_A_NODE, "the role " + Names.qualified(r) + " is named as the "
+                        + (same instanceof Component<?> ? "component " : "kind ") + Names.qualified(same)
+                        + ": a role names what a part does, not what plays it"));
+        }
+        return out;
     }
 }

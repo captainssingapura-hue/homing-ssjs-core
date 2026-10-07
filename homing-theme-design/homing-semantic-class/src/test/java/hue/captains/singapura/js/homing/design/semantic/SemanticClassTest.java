@@ -1,11 +1,14 @@
 package hue.captains.singapura.js.homing.design.semantic;
 
+import hue.captains.singapura.js.homing.component.taxonomy.AnyRole;
 import hue.captains.singapura.js.homing.component.taxonomy.Component;
 import hue.captains.singapura.js.homing.component.taxonomy.ComponentNode;
 import hue.captains.singapura.js.homing.component.taxonomy.Kind;
 import hue.captains.singapura.js.homing.component.taxonomy.ReadTaxonomy;
 import hue.captains.singapura.js.homing.component.taxonomy.Role;
+import hue.captains.singapura.js.homing.component.taxonomy.RoleFamily;
 import hue.captains.singapura.js.homing.component.taxonomy.Root;
+import hue.captains.singapura.js.homing.component.taxonomy.Slot;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.design.Target;
 import hue.captains.singapura.js.homing.design.Trees;
@@ -19,7 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * The semantic class: a target leaf × a node of the taxonomy, a value nobody declares. The forest
  * is their product; a class falls back on its own target along its component's chain, a part
- * through its base and never its owner; its token is the node's and the target's.
+ * through its base and never its owner; its token is the node's and the target's. The roles have
+ * no classes of their own: they are not nodes of the forest.
  */
 class SemanticClassTest {
 
@@ -43,38 +47,45 @@ class SemanticClassTest {
         @Override public Text parent() { return Text.INSTANCE; }
     }
 
-    record Dialog() implements Component<Root> {
-        static final Dialog INSTANCE = new Dialog();
+    record Roles() implements RoleFamily<AnyRole> {
+        static final Roles INSTANCE = new Roles();
+        @Override public AnyRole parent() { return AnyRole.INSTANCE; }
+    }
+
+    record Confirm() implements Role<Roles> {
+        static final Confirm INSTANCE = new Confirm();
+        @Override public Roles family() { return Roles.INSTANCE; }
+    }
+
+    record Title() implements Role<Roles> {
+        static final Title INSTANCE = new Title();
+        @Override public Roles family() { return Roles.INSTANCE; }
+    }
+
+    record Confirmation() implements Component<Root> {
+        static final Confirmation INSTANCE = new Confirmation();
         @Override public Root parent() { return Root.INSTANCE; }
-        @Override public List<Role<?>> roles() { return List.of(Ok.INSTANCE, Title.INSTANCE); }
-
-        record Ok() implements Role<PlainButton> {
-            static final Ok INSTANCE = new Ok();
-            @Override public PlainButton base() { return PlainButton.INSTANCE; }
-        }
-
-        record Title() implements Role<Caption> {
-            static final Title INSTANCE = new Title();
-            @Override public Caption base() { return Caption.INSTANCE; }
+        @Override public List<Slot<?>> parts() {
+            return List.of(Confirm.INSTANCE.playedBy(PlainButton.INSTANCE).one(), Title.INSTANCE.playedBy(Caption.INSTANCE).one());
         }
     }
 
-    private static final Taxonomy TAXONOMY = new ReadTaxonomy().read(List.of(Dialog.INSTANCE));
-    private static final ComponentNode TITLE = TAXONOMY.partsOf(Dialog.INSTANCE).get(1);
+    private static final Taxonomy TAXONOMY = new ReadTaxonomy().read(List.of(Confirmation.INSTANCE));
+    private static final ComponentNode TITLE = TAXONOMY.partsOf(Confirmation.INSTANCE).get(1);
 
     @Test
     void theForestIsTheProduct_ofEveryTargetLeafAndEveryNode() {
         var forest = new DeriveSemanticClasses().derive(TAXONOMY);
         assertEquals(Trees.targetLeaves().size() * TAXONOMY.nodes().size(), forest.size());
         assertEquals(31, Trees.targetLeaves().size(), "the target leaves today");
-        assertEquals(List.of("root", "control", "text", "dialog", "plain-button", "caption", "dialog-ok", "dialog-title"),
-                TAXONOMY.nodes().stream().map(ComponentNode::token).toList());
+        assertEquals(List.of("root", "control", "text", "confirmation", "plain-button", "caption", "confirmation-confirm", "confirmation-title"),
+                TAXONOMY.nodes().stream().map(ComponentNode::token).toList(), "the roles and their family are no nodes");
     }
 
     @Test
     void aClassIsAValue_itsTokenTheNodesAndTheTargets() {
         var title = new SemanticClass<>(Target.Color.Ink.INSTANCE, TITLE);
-        assertEquals("dialog-title-color-ink", title.token());
+        assertEquals("confirmation-title-color-ink", title.token());
         assertEquals(new SemanticClass<>(Target.Color.Ink.INSTANCE, Caption.INSTANCE), new SemanticClass<>(Target.Color.Ink.INSTANCE, Caption.INSTANCE));
         assertEquals("root-shape-corner", new SemanticClass<>(Target.Shape.Corner.INSTANCE, Root.INSTANCE).token());
     }
@@ -82,9 +93,9 @@ class SemanticClassTest {
     @Test
     void aClassFallsBackOnItsOwnTarget_aPartThroughItsBase() {
         var chain = new SemanticClass<>(Target.Color.Ink.INSTANCE, TITLE).fallback(TAXONOMY);
-        assertEquals(List.of("dialog-title-color-ink", "caption-color-ink", "text-color-ink", "root-color-ink"),
+        assertEquals(List.of("confirmation-title-color-ink", "caption-color-ink", "text-color-ink", "root-color-ink"),
                 chain.stream().map(SemanticClass::token).toList());
-        assertTrue(chain.stream().noneMatch(c -> c.component().equals(Dialog.INSTANCE)), "never through the dialog that owns the title");
+        assertTrue(chain.stream().noneMatch(c -> c.component().equals(Confirmation.INSTANCE)), "never through the confirmation that owns the title");
         assertTrue(chain.stream().allMatch(c -> c.target().equals(Target.Color.Ink.INSTANCE)), "on its own target throughout");
     }
 }

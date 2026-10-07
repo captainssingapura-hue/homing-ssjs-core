@@ -16,7 +16,7 @@ public sealed interface ComponentNode extends Immutable permits Taxon, Part {
 
     /**
      * The node's token: its own name for the root, a kind or a component ({@code plain-button});
-     * for a part, its owner's and its role's ({@code dialog-ok}). A reader refuses two nodes with
+     * for a part, its owner's and its role's ({@code confirmation-confirm}). A reader refuses two nodes with
      * one token.
      */
     default String token() { return name().value(); }

@@ -1,17 +1,33 @@
 package hue.captains.singapura.js.homing.component.taxonomy;
 
-import hue.captains.singapura.js.homing.component.taxonomy.Sketch.AlternatingButton;
+import hue.captains.singapura.js.homing.component.taxonomy.Cardinality.Fixed;
+import hue.captains.singapura.js.homing.component.taxonomy.Cardinality.AtMost;
+import hue.captains.singapura.js.homing.component.taxonomy.Cardinality.Varying;
+import hue.captains.singapura.js.homing.component.taxonomy.Sketch.Acting;
+import hue.captains.singapura.js.homing.component.taxonomy.Sketch.Add;
 import hue.captains.singapura.js.homing.component.taxonomy.Sketch.Button;
+import hue.captains.singapura.js.homing.component.taxonomy.Sketch.Cancel;
 import hue.captains.singapura.js.homing.component.taxonomy.Sketch.Caption;
+import hue.captains.singapura.js.homing.component.taxonomy.Sketch.Card;
+import hue.captains.singapura.js.homing.component.taxonomy.Sketch.Committing;
+import hue.captains.singapura.js.homing.component.taxonomy.Sketch.Confirm;
+import hue.captains.singapura.js.homing.component.taxonomy.Sketch.Confirmation;
 import hue.captains.singapura.js.homing.component.taxonomy.Sketch.Container;
 import hue.captains.singapura.js.homing.component.taxonomy.Sketch.Control;
-import hue.captains.singapura.js.homing.component.taxonomy.Sketch.DangerButton;
-import hue.captains.singapura.js.homing.component.taxonomy.Sketch.Dialog;
+import hue.captains.singapura.js.homing.component.taxonomy.Sketch.Heading;
+import hue.captains.singapura.js.homing.component.taxonomy.Sketch.Naming;
+import hue.captains.singapura.js.homing.component.taxonomy.Sketch.Open;
 import hue.captains.singapura.js.homing.component.taxonomy.Sketch.PlainButton;
+import hue.captains.singapura.js.homing.component.taxonomy.Sketch.PlainCard;
+import hue.captains.singapura.js.homing.component.taxonomy.Sketch.ProfileCard;
+import hue.captains.singapura.js.homing.component.taxonomy.Sketch.Shelf;
 import hue.captains.singapura.js.homing.component.taxonomy.Sketch.Text;
+import hue.captains.singapura.js.homing.component.taxonomy.Sketch.Title;
+import hue.captains.singapura.js.homing.component.taxonomy.TaxonomyFinding.Sign;
 import hue.captains.singapura.js.homing.component.taxonomy.TaxonomyProblem.Rule;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -22,10 +38,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * The taxonomy as read: only components are declared - the kinds are reached through their
- * parents, the components that play roles through the roles - and each role becomes a part, its
- * owner appended, falling back through its base and never its owner. What breaks a taxonomy is
- * refused, every problem at once.
+ * Reading the hypothetical {@link Sketch} house and its {@link TradingDesk} extension: what is
+ * reached and how it is laid out, what every slot becomes, the roles shared and filed, what is
+ * refused - every rule, every problem at once - and what is only noticed.
  */
 class ReadTaxonomyTest {
 
@@ -38,92 +53,180 @@ class ReadTaxonomyTest {
         return e.problems().stream().map(TaxonomyProblem::rule).collect(Collectors.toSet());
     }
 
+    // ── what is reached ────────────────────────────────────────────────────
+
     @Test
-    void declaringADialog_bringsWhatItIsAndWhatPlaysItsRoles() {
-        Taxonomy t = read(Dialog.INSTANCE);
-        assertEquals(List.of(Dialog.INSTANCE, PlainButton.INSTANCE, Caption.INSTANCE), t.components(),
-                "the dialog, then the components that play its roles, reached through them");
-        assertEquals(Set.of(Container.INSTANCE, Control.INSTANCE, Button.INSTANCE, Text.INSTANCE), Set.copyOf(t.kinds()),
-                "the kinds, reached through the parents");
+    void declaringAConfirmation_bringsWhatItIs_whatPlaysItsParts_andTheRolesTheyName() {
+        Taxonomy t = read(Confirmation.INSTANCE);
+        assertEquals(List.of(Confirmation.INSTANCE, Caption.INSTANCE, PlainButton.INSTANCE), t.components(),
+                "the confirmation, then what plays its parts, reached through the slots");
+        assertEquals(Set.of(Container.INSTANCE, Text.INSTANCE, Control.INSTANCE, Button.INSTANCE), Set.copyOf(t.kinds()));
         assertTrue(t.kinds().indexOf(Control.INSTANCE) < t.kinds().indexOf(Button.INSTANCE), "a parent before its children");
+        assertEquals(List.of(Title.INSTANCE, Confirm.INSTANCE, Cancel.INSTANCE), t.roles(), "the roles its slots name, in order");
+        assertEquals(List.of(Naming.INSTANCE, Acting.INSTANCE, Committing.INSTANCE), t.families(),
+                "the families, reached through the roles, a parent before its child");
     }
 
     @Test
-    void eachRoleIsAPart_itsOwnerAppended() {
-        Taxonomy t = read(Dialog.INSTANCE);
+    void eachSlotIsAPart_itsOwnerAppended() {
+        Taxonomy t = read(Confirmation.INSTANCE);
         assertEquals(List.of(
-                new Part<>(Dialog.INSTANCE, PlainButton.INSTANCE, Dialog.Ok.INSTANCE),
-                new Part<>(Dialog.INSTANCE, PlainButton.INSTANCE, Dialog.Cancel.INSTANCE),
-                new Part<>(Dialog.INSTANCE, Caption.INSTANCE, Dialog.Title.INSTANCE)), t.partsOf(Dialog.INSTANCE));
-        assertEquals("ok", t.parts().get(0).name().value(), "a part is named by its role, not by what plays it");
+                new Part<>(Confirmation.INSTANCE, Title.INSTANCE, Caption.INSTANCE, new Fixed(1)),
+                new Part<>(Confirmation.INSTANCE, Confirm.INSTANCE, PlainButton.INSTANCE, new Fixed(1)),
+                new Part<>(Confirmation.INSTANCE, Cancel.INSTANCE, PlainButton.INSTANCE, new Varying(0, new AtMost(1)))),
+                t.partsOf(Confirmation.INSTANCE));
+        assertEquals("confirm", t.partsOf(Confirmation.INSTANCE).get(1).name().value(), "a part is named by its role, not by what plays it");
     }
 
     @Test
     void aPartFallsBackThroughItsBase_neverItsOwner() {
-        Taxonomy t = read(Dialog.INSTANCE);
-        var ok = t.partsOf(Dialog.INSTANCE).get(0);
-        assertEquals(List.of(ok, PlainButton.INSTANCE, Button.INSTANCE, Control.INSTANCE, Root.INSTANCE), t.fallback(ok));
-        assertFalse(t.fallback(ok).contains(Dialog.INSTANCE), "nothing of the dialog's own look reaches its OK button");
-        assertEquals(List.of(Dialog.INSTANCE, Container.INSTANCE, Root.INSTANCE), t.fallback(Dialog.INSTANCE));
+        Taxonomy t = read(Confirmation.INSTANCE);
+        var confirm = t.partsOf(Confirmation.INSTANCE).get(1);
+        assertEquals(List.of(confirm, PlainButton.INSTANCE, Button.INSTANCE, Control.INSTANCE, Root.INSTANCE), t.fallback(confirm));
+        assertFalse(t.fallback(confirm).contains(Confirmation.INSTANCE), "nothing of the confirmation's own look reaches its confirm");
+        assertEquals(List.of(Confirmation.INSTANCE, Container.INSTANCE, Root.INSTANCE), t.fallback(Confirmation.INSTANCE));
         assertEquals(List.of(Root.INSTANCE), t.fallback(Root.INSTANCE));
     }
 
     @Test
     void tokens_aNodesOwnName_aPartsOwnersAndItsRole() {
-        Taxonomy t = read(Dialog.INSTANCE, AlternatingButton.INSTANCE);
+        Taxonomy t = READ.read(Sketch.DECLARED);
         assertEquals("plain-button", t.token(PlainButton.INSTANCE));
-        assertEquals("button", t.token(Button.INSTANCE));
-        assertEquals(List.of("dialog-ok", "dialog-cancel", "dialog-title"),
-                t.partsOf(Dialog.INSTANCE).stream().map(t::token).toList());
-        assertEquals("alternating-button-label", t.token(t.partsOf(AlternatingButton.INSTANCE).get(0)));
+        assertEquals(List.of("profile-card-title", "profile-card-name", "profile-card-tag", "profile-card-open"),
+                t.partsOf(ProfileCard.INSTANCE).stream().map(t::token).toList());
+        assertEquals(List.of("confirmation-title", "confirmation-confirm", "confirmation-cancel"),
+                t.partsOf(Confirmation.INSTANCE).stream().map(t::token).toList());
     }
 
     @Test
     void aBranchsChildren_derived_neverListed() {
-        Taxonomy t = read(PlainButton.INSTANCE, DangerButton.INSTANCE, AlternatingButton.INSTANCE);
-        assertEquals(List.of(PlainButton.INSTANCE, DangerButton.INSTANCE, AlternatingButton.INSTANCE), t.children(Button.INSTANCE));
-        assertEquals(List.of(Control.INSTANCE, Text.INSTANCE), t.children(Root.INSTANCE), "kinds first, each in reading order");
+        Taxonomy t = READ.read(Sketch.DECLARED);
+        assertEquals(List.of(PlainCard.INSTANCE, ProfileCard.INSTANCE, Shelf.INSTANCE), t.children(Card.INSTANCE));
+        assertEquals(List.of(Control.INSTANCE, Container.INSTANCE, Text.INSTANCE, Sketch.Mark.INSTANCE), t.children(Root.INSTANCE),
+                "kinds first, each in reading order");
+    }
+
+    // ── roles: shared, and filed ───────────────────────────────────────────
+
+    @Test
+    void aRoleIsShared_eachOwnerSayingWhatPlaysItAndHowMany() {
+        Taxonomy t = READ.read(Sketch.DECLARED);
+        var titles = t.partsNaming(Title.INSTANCE);
+        assertEquals(List.of(ProfileCard.INSTANCE, Confirmation.INSTANCE), titles.stream().map(Part::owner).toList(), "one role, two owners");
+        assertEquals(List.of(Heading.INSTANCE, Caption.INSTANCE), titles.stream().map(Part::base).toList(), "each its own player");
+        assertEquals(List.of("profile-card-title", "confirmation-title"), titles.stream().map(Part::token).toList(), "each its own part");
     }
 
     @Test
-    void onlyALeafIsConcrete_byType() {
+    void theCatalogue_familiesThenRoles_underEachBranch() {
+        Taxonomy t = READ.read(Sketch.DECLARED, Sketch.CATALOGUE);
+        assertEquals(List.of(Naming.INSTANCE, Sketch.Telling.INSTANCE, Acting.INSTANCE, Sketch.Hosting.INSTANCE, Sketch.Measuring.INSTANCE),
+                t.children(AnyRole.INSTANCE), "the families at the root, in the order first reached");
+        assertEquals(List.of(Committing.INSTANCE, Open.INSTANCE, Add.INSTANCE), t.children(Acting.INSTANCE), "a nested family first, then the roles");
+        assertEquals(List.of(Confirm.INSTANCE, Cancel.INSTANCE), t.children(Committing.INSTANCE));
+        assertTrue(t.roles().contains(Sketch.Summary.INSTANCE), "a catalogued role no component names is kept");
+    }
+
+    @Test
+    void anExtension_aLeafUnderAHouseKind_rolesInAHouseFamily_andAFamilyOfItsOwn() {
+        var declared = new ArrayList<Component<?>>(Sketch.DECLARED);
+        declared.add(TradingDesk.OrderTicket.INSTANCE);
+        var roles = new ArrayList<Role<?>>(Sketch.CATALOGUE);
+        roles.addAll(TradingDesk.CATALOGUE);
+        Taxonomy t = READ.read(declared, roles);
+        assertTrue(t.children(Card.INSTANCE).contains(TradingDesk.OrderTicket.INSTANCE), "classification is open: its leaf under the house's kind");
+        assertTrue(t.children(Button.INSTANCE).contains(TradingDesk.TradeButton.INSTANCE), "reached through its own slots");
+        assertEquals(List.of(TradingDesk.Buy.INSTANCE, TradingDesk.Sell.INSTANCE),
+                t.children(Committing.INSTANCE).stream().filter(n -> n.getClass().getEnclosingClass() == TradingDesk.class).toList(),
+                "its roles filed in the house's family");
+        assertTrue(t.children(AnyRole.INSTANCE).contains(TradingDesk.Trading.INSTANCE), "and a family of its own");
+        assertEquals(List.of("order-ticket-title", "order-ticket-side", "order-ticket-buy", "order-ticket-sell", "order-ticket-cancel"),
+                t.partsOf(TradingDesk.OrderTicket.INSTANCE).stream().map(Part::token).toList());
+    }
+
+    @Test
+    void onlyALeafIsConcrete_andARoleIsNoBranch_byType() {
         assertFalse(Branch.class.isAssignableFrom(Component.class), "a component is not a branch, so nothing can be named under it");
         assertTrue(Branch.class.isAssignableFrom(Kind.class));
+        assertFalse(RoleBranch.class.isAssignableFrom(Role.class), "a role is not a branch, so nothing can be filed under it");
+    }
+
+    // ── what is refused ────────────────────────────────────────────────────
+
+    @Test
+    void noParent_orParentsThatComeBack_inTheTaxonomyOrTheCatalogue() {
+        assertEquals(Set.of(Rule.NO_PARENT), refused(Broken.Orphan.INSTANCE));
+        assertEquals(Set.of(Rule.PARENT_CYCLE), refused(Broken.Hatchling.INSTANCE));
+        assertEquals(Set.of(Rule.NO_PARENT), refused(Broken.Strays.INSTANCE), "a role filed in no family");
+        var e = assertThrows(RefusedTaxonomy.class, () -> READ.read(List.of(), List.of(Broken.Looped.INSTANCE)));
+        assertEquals(List.of(Rule.PARENT_CYCLE), e.problems().stream().map(TaxonomyProblem::rule).toList(), "families that come back on themselves");
     }
 
     @Test
-    void aRoleNotItsOwn_orListedTwice_orPlayedByNobody_isRefused() {
-        assertEquals(Set.of(Rule.ROLE_NOT_ITS_OWN), refused(Broken.Thief.INSTANCE));
-        assertEquals(Set.of(Rule.ROLE_TWICE), refused(Broken.Stutter.INSTANCE));
+    void aSlotPlayedByNothing_orARoleNamedTwice() {
         assertEquals(Set.of(Rule.NO_BASE), refused(Broken.Vacant.INSTANCE));
+        assertEquals(Set.of(Rule.ROLE_TWICE), refused(Broken.Stutter.INSTANCE));
     }
 
     @Test
-    void aComponentThatIsAPartOfItself_isRefused() {
-        assertEquals(Set.of(Rule.COMPOSITION_CYCLE), refused(Broken.Mirror.INSTANCE));
-        var e = assertThrows(RefusedTaxonomy.class, () -> read(Broken.Ping.INSTANCE));
+    void aPartOfItself_isRefusedOnTheTypes_whateverTheCount() {
+        var e = assertThrows(RefusedTaxonomy.class, () -> read(Broken.Mirror.INSTANCE));
+        assertEquals(List.of(Rule.COMPOSITION_CYCLE), e.problems().stream().map(TaxonomyProblem::rule).toList(),
+                "listed optionally, and still a cycle");
+        e = assertThrows(RefusedTaxonomy.class, () -> read(Broken.Ping.INSTANCE));
         assertEquals(1, e.problems().size(), "one cycle, reported once: " + e.problems());
         assertTrue(e.problems().get(0).says().contains("Ping → Pong → Ping"), e.problems().get(0).says());
     }
 
     @Test
-    void parentsThatComeBackOnThemselves_orNoParent_areRefused() {
-        assertEquals(Set.of(Rule.PARENT_CYCLE), refused(Broken.Chick.INSTANCE));
-        assertEquals(Set.of(Rule.NO_PARENT), refused(Broken.Orphan.INSTANCE));
-    }
-
-    @Test
-    void twoNodesWithOneToken_areRefused_bothNamed() {
+    void oneWordOneThing_tokens_roleNames_andRolesNamedAsNodes() {
         var e = assertThrows(RefusedTaxonomy.class, () -> read(Broken.Here.Badge.INSTANCE, Broken.There.Badge.INSTANCE));
         assertEquals(List.of(Rule.TOKEN_TWICE), e.problems().stream().map(TaxonomyProblem::rule).toList());
         assertTrue(e.problems().get(0).says().contains("'badge'"), e.problems().get(0).says());
+
+        e = assertThrows(RefusedTaxonomy.class, () -> read(Confirmation.INSTANCE, Broken.Doubled.INSTANCE));
+        assertEquals(List.of(Rule.ROLE_NAME_TWICE), e.problems().stream().map(TaxonomyProblem::rule).toList());
+        assertTrue(e.problems().get(0).says().contains("'title'"), e.problems().get(0).says());
+
+        e = assertThrows(RefusedTaxonomy.class, () -> read(Broken.Labelled.INSTANCE));
+        assertEquals(List.of(Rule.ROLE_NAMES_A_NODE), e.problems().stream().map(TaxonomyProblem::rule).toList());
+        assertTrue(e.problems().get(0).says().contains("is named as the component"), e.problems().get(0).says());
+    }
+
+    @Test
+    void aCountThatIsNoCardinality_isAProblemOfTheComponentThatSaidIt() {
+        var e = assertThrows(RefusedTaxonomy.class, () -> read(Broken.Nothing.INSTANCE, Broken.Lopsided.INSTANCE, Broken.Flat.INSTANCE));
+        assertEquals(List.of(Rule.BAD_CARDINALITY, Rule.BAD_CARDINALITY, Rule.BAD_CARDINALITY),
+                e.problems().stream().map(TaxonomyProblem::rule).toList(), "each component's own, none hiding another");
+        assertEquals(List.of("Nothing: 0 is no count: a role played no times is no role",
+                             "Lopsided: 3..1 is no range: the most is below the least",
+                             "Flat: 2..2 is no range: say exactly(2)"),
+                e.problems().stream().map(TaxonomyProblem::says).toList());
     }
 
     @Test
     void everyProblemAtOnce() {
-        var e = assertThrows(RefusedTaxonomy.class,
-                () -> read(Broken.Thief.INSTANCE, Broken.Mirror.INSTANCE, Broken.Orphan.INSTANCE));
-        assertEquals(Set.of(Rule.ROLE_NOT_ITS_OWN, Rule.COMPOSITION_CYCLE, Rule.NO_PARENT),
+        var e = assertThrows(RefusedTaxonomy.class, () -> read(Broken.Orphan.INSTANCE, Broken.Mirror.INSTANCE, Broken.Stutter.INSTANCE,
+                Broken.Lopsided.INSTANCE, Broken.Labelled.INSTANCE, Broken.Doubled.INSTANCE));
+        assertEquals(Set.of(Rule.NO_PARENT, Rule.COMPOSITION_CYCLE, Rule.ROLE_TWICE, Rule.BAD_CARDINALITY, Rule.ROLE_NAMES_A_NODE,
+                            Rule.ROLE_NAME_TWICE),
                 e.problems().stream().map(TaxonomyProblem::rule).collect(Collectors.toSet()));
+    }
+
+    // ── what is only noticed ───────────────────────────────────────────────
+
+    @Test
+    void signs_notFaults() {
+        Taxonomy t = READ.read(Sketch.DECLARED, Sketch.CATALOGUE);
+        var findings = t.findings();
+        assertEquals(List.of(Sign.ALL_OPTIONAL, Sign.ROLE_UNNAMED, Sign.ROLE_PLAYED_VARIOUSLY),
+                findings.stream().map(TaxonomyFinding::sign).sorted().toList(), findings.toString());
+        assertEquals("Shelf: every part is optional - a kind missing its plain leaf?",
+                findings.stream().filter(f -> f.sign() == Sign.ALL_OPTIONAL).findFirst().orElseThrow().says(),
+                "not the plain card, which has no parts at all");
+        assertEquals("Title is played by Heading in ProfileCard, Caption in Confirmation",
+                findings.stream().filter(f -> f.sign() == Sign.ROLE_PLAYED_VARIOUSLY).findFirst().orElseThrow().says());
+        assertEquals("Summary is named by no component",
+                findings.stream().filter(f -> f.sign() == Sign.ROLE_UNNAMED).findFirst().orElseThrow().says());
     }
 }

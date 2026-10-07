@@ -3,14 +3,123 @@ package hue.captains.singapura.js.homing.component.taxonomy;
 import java.util.List;
 
 /**
- * A small taxonomy to read: three kinds under the root, a button kind under one of them, and
- * the components the RFC's examples use - a plain button, a danger button and an alternating
- * one (its label played by a caption), a caption, and a dialog whose OK and Cancel are played by
- * plain buttons and whose title by a caption.
+ * A hypothetical house, declared through the language - nothing here is the real one; it is
+ * written to exercise the declaration.
+ *
+ * <p>A role catalogue of six families, one nested in another, and eleven roles, one of them
+ * named by no component. A taxonomy of six kinds and thirteen components: buttons, texts and a
+ * mark to play parts; a plain card with no parts; a profile card, a confirmation, a watchlist
+ * and a gauge whose parts say every shape of cardinality; and a shelf whose every part is
+ * optional. Title is played by a heading in one place and a caption in another.</p>
  */
 final class Sketch {
 
     private Sketch() {}
+
+    // ── the role catalogue ─────────────────────────────────────────────────
+
+    record Naming() implements RoleFamily<AnyRole> {
+        static final Naming INSTANCE = new Naming();
+        @Override public AnyRole parent() { return AnyRole.INSTANCE; }
+    }
+
+    record Telling() implements RoleFamily<AnyRole> {
+        static final Telling INSTANCE = new Telling();
+        @Override public AnyRole parent() { return AnyRole.INSTANCE; }
+    }
+
+    record Acting() implements RoleFamily<AnyRole> {
+        static final Acting INSTANCE = new Acting();
+        @Override public AnyRole parent() { return AnyRole.INSTANCE; }
+    }
+
+    /** Nested: the acts that end a decision. */
+    record Committing() implements RoleFamily<Acting> {
+        static final Committing INSTANCE = new Committing();
+        @Override public Acting parent() { return Acting.INSTANCE; }
+    }
+
+    record Hosting() implements RoleFamily<AnyRole> {
+        static final Hosting INSTANCE = new Hosting();
+        @Override public AnyRole parent() { return AnyRole.INSTANCE; }
+    }
+
+    record Measuring() implements RoleFamily<AnyRole> {
+        static final Measuring INSTANCE = new Measuring();
+        @Override public AnyRole parent() { return AnyRole.INSTANCE; }
+    }
+
+    /** Names a container. */
+    record Title() implements Role<Naming> {
+        static final Title INSTANCE = new Title();
+        @Override public Naming family() { return Naming.INSTANCE; }
+    }
+
+    /** Names a control or an item. */
+    record Name() implements Role<Naming> {
+        static final Name INSTANCE = new Name();
+        @Override public Naming family() { return Naming.INSTANCE; }
+    }
+
+    /** Marks the owner with a short word. */
+    record Tag() implements Role<Telling> {
+        static final Tag INSTANCE = new Tag();
+        @Override public Telling family() { return Telling.INSTANCE; }
+    }
+
+    /** States the owner's value. */
+    record Value() implements Role<Telling> {
+        static final Value INSTANCE = new Value();
+        @Override public Telling family() { return Telling.INSTANCE; }
+    }
+
+    /** Says briefly what the owner is about - catalogued, and named by no component here. */
+    record Summary() implements Role<Telling> {
+        static final Summary INSTANCE = new Summary();
+        @Override public Telling family() { return Telling.INSTANCE; }
+    }
+
+    /** Goes to what the owner stands for. */
+    record Open() implements Role<Acting> {
+        static final Open INSTANCE = new Open();
+        @Override public Acting family() { return Acting.INSTANCE; }
+    }
+
+    /** Adds a member. */
+    record Add() implements Role<Acting> {
+        static final Add INSTANCE = new Add();
+        @Override public Acting family() { return Acting.INSTANCE; }
+    }
+
+    /** Does what was decided. */
+    record Confirm() implements Role<Committing> {
+        static final Confirm INSTANCE = new Confirm();
+        @Override public Committing family() { return Committing.INSTANCE; }
+    }
+
+    /** Leaves without deciding. */
+    record Cancel() implements Role<Committing> {
+        static final Cancel INSTANCE = new Cancel();
+        @Override public Committing family() { return Committing.INSTANCE; }
+    }
+
+    /** One of the things the owner lists. */
+    record Entry() implements Role<Hosting> {
+        static final Entry INSTANCE = new Entry();
+        @Override public Hosting family() { return Hosting.INSTANCE; }
+    }
+
+    /** Marks a step of the owner's scale. */
+    record Notch() implements Role<Measuring> {
+        static final Notch INSTANCE = new Notch();
+        @Override public Measuring family() { return Measuring.INSTANCE; }
+    }
+
+    /** Every role the catalogue files. */
+    static final List<Role<?>> CATALOGUE = List.of(Title.INSTANCE, Name.INSTANCE, Tag.INSTANCE, Value.INSTANCE,
+            Summary.INSTANCE, Open.INSTANCE, Add.INSTANCE, Confirm.INSTANCE, Cancel.INSTANCE, Entry.INSTANCE, Notch.INSTANCE);
+
+    // ── the taxonomy: kinds ────────────────────────────────────────────────
 
     record Control() implements Kind<Root> {
         static final Control INSTANCE = new Control();
@@ -27,14 +136,41 @@ final class Sketch {
         @Override public Root parent() { return Root.INSTANCE; }
     }
 
+    record Mark() implements Kind<Root> {
+        static final Mark INSTANCE = new Mark();
+        @Override public Root parent() { return Root.INSTANCE; }
+    }
+
     record Button() implements Kind<Control> {
         static final Button INSTANCE = new Button();
         @Override public Control parent() { return Control.INSTANCE; }
     }
 
+    record Card() implements Kind<Container> {
+        static final Card INSTANCE = new Card();
+        @Override public Container parent() { return Container.INSTANCE; }
+    }
+
+    // ── the taxonomy: what plays parts ─────────────────────────────────────
+
     record Caption() implements Component<Text> {
         static final Caption INSTANCE = new Caption();
         @Override public Text parent() { return Text.INSTANCE; }
+    }
+
+    record Heading() implements Component<Text> {
+        static final Heading INSTANCE = new Heading();
+        @Override public Text parent() { return Text.INSTANCE; }
+    }
+
+    record Badge() implements Component<Text> {
+        static final Badge INSTANCE = new Badge();
+        @Override public Text parent() { return Text.INSTANCE; }
+    }
+
+    record Tick() implements Component<Mark> {
+        static final Tick INSTANCE = new Tick();
+        @Override public Mark parent() { return Mark.INSTANCE; }
     }
 
     record PlainButton() implements Component<Button> {
@@ -47,35 +183,77 @@ final class Sketch {
         @Override public Button parent() { return Button.INSTANCE; }
     }
 
+    // ── the taxonomy: what has parts ───────────────────────────────────────
+
+    /** A button that names itself: its name, a caption, always one. */
     record AlternatingButton() implements Component<Button> {
         static final AlternatingButton INSTANCE = new AlternatingButton();
         @Override public Button parent() { return Button.INSTANCE; }
-        @Override public List<Role<?>> roles() { return List.of(Label.INSTANCE); }
-
-        record Label() implements Role<Caption> {
-            static final Label INSTANCE = new Label();
-            @Override public Caption base() { return Caption.INSTANCE; }
+        @Override public List<Slot<?>> parts() {
+            return List.of(Name.INSTANCE.playedBy(Caption.INSTANCE).one());
         }
     }
 
-    record Dialog() implements Component<Container> {
-        static final Dialog INSTANCE = new Dialog();
+    /** The basic container: no parts, what it holds is its user's. */
+    record PlainCard() implements Component<Card> {
+        static final PlainCard INSTANCE = new PlainCard();
+        @Override public Card parent() { return Card.INSTANCE; }
+    }
+
+    /** A card for a case: a title and a name, any tags, a way to open it. */
+    record ProfileCard() implements Component<Card> {
+        static final ProfileCard INSTANCE = new ProfileCard();
+        @Override public Card parent() { return Card.INSTANCE; }
+        @Override public List<Slot<?>> parts() {
+            return List.of(Title.INSTANCE.playedBy(Heading.INSTANCE).one(),
+                           Name.INSTANCE.playedBy(Caption.INSTANCE).one(),
+                           Tag.INSTANCE.playedBy(Badge.INSTANCE).any(),
+                           Open.INSTANCE.playedBy(PlainButton.INSTANCE).optional());
+        }
+    }
+
+    /** A card whose every part is optional: a kind missing its plain leaf, by the look of it. */
+    record Shelf() implements Component<Card> {
+        static final Shelf INSTANCE = new Shelf();
+        @Override public Card parent() { return Card.INSTANCE; }
+        @Override public List<Slot<?>> parts() {
+            return List.of(Tag.INSTANCE.playedBy(Badge.INSTANCE).any(),
+                           Open.INSTANCE.playedBy(PlainButton.INSTANCE).optional());
+        }
+    }
+
+    /** A decision put to the user: its title a caption, here; a confirm, and a cancel if it may be left. */
+    record Confirmation() implements Component<Container> {
+        static final Confirmation INSTANCE = new Confirmation();
         @Override public Container parent() { return Container.INSTANCE; }
-        @Override public List<Role<?>> roles() { return List.of(Ok.INSTANCE, Cancel.INSTANCE, Title.INSTANCE); }
-
-        record Ok() implements Role<PlainButton> {
-            static final Ok INSTANCE = new Ok();
-            @Override public PlainButton base() { return PlainButton.INSTANCE; }
-        }
-
-        record Cancel() implements Role<PlainButton> {
-            static final Cancel INSTANCE = new Cancel();
-            @Override public PlainButton base() { return PlainButton.INSTANCE; }
-        }
-
-        record Title() implements Role<Caption> {
-            static final Title INSTANCE = new Title();
-            @Override public Caption base() { return Caption.INSTANCE; }
+        @Override public List<Slot<?>> parts() {
+            return List.of(Title.INSTANCE.playedBy(Caption.INSTANCE).one(),
+                           Confirm.INSTANCE.playedBy(PlainButton.INSTANCE).one(),
+                           Cancel.INSTANCE.playedBy(PlainButton.INSTANCE).optional());
         }
     }
+
+    /** Profiles listed, at least one, and a way to add another. */
+    record Watchlist() implements Component<Container> {
+        static final Watchlist INSTANCE = new Watchlist();
+        @Override public Container parent() { return Container.INSTANCE; }
+        @Override public List<Slot<?>> parts() {
+            return List.of(Entry.INSTANCE.playedBy(ProfileCard.INSTANCE).atLeast(1),
+                           Add.INSTANCE.playedBy(PlainButton.INSTANCE).optional());
+        }
+    }
+
+    /** A value on a scale of two to twelve notches, read out. */
+    record Gauge() implements Component<Control> {
+        static final Gauge INSTANCE = new Gauge();
+        @Override public Control parent() { return Control.INSTANCE; }
+        @Override public List<Slot<?>> parts() {
+            return List.of(Notch.INSTANCE.playedBy(Tick.INSTANCE).between(2, 12),
+                           Value.INSTANCE.playedBy(Caption.INSTANCE).one());
+        }
+    }
+
+    /** What the house declares; the rest is reached through the parents and the parts. */
+    static final List<Component<?>> DECLARED = List.of(PlainButton.INSTANCE, DangerButton.INSTANCE, AlternatingButton.INSTANCE,
+            PlainCard.INSTANCE, ProfileCard.INSTANCE, Shelf.INSTANCE, Confirmation.INSTANCE, Watchlist.INSTANCE, Gauge.INSTANCE);
 }

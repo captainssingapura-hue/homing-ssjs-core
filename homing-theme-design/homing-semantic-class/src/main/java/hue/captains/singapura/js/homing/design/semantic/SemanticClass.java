@@ -14,8 +14,8 @@ import java.util.Objects;
  * design is asked about. A plain value of two objects, equal by value, declared by nobody: the
  * forest of semantic classes is the product of the targets and the taxonomy.
  *
- * <p>Its path reads root first - {@code Color.Ink › Dialog.Title} - and its token is the node's
- * and the target's: {@code dialog-title-color-ink}.</p>
+ * <p>Its path reads root first - {@code Color.Ink › Confirmation.Title} - and its token is the node's
+ * and the target's: {@code confirmation-title-color-ink}.</p>
  *
  * @param target    a leaf of the closed target tree
  * @param component a node of the taxonomy: the root, a kind, a component or a part
@@ -30,7 +30,7 @@ public record SemanticClass<T extends Target, C extends ComponentNode>(T target,
         Trees.requireTargetLeaf(target.getClass());
     }
 
-    /** The node's token and the target's: {@code dialog-ok-color-surface}. */
+    /** The node's token and the target's: {@code confirmation-confirm-color-surface}. */
     public String token() { return component.token() + "-" + target.token(); }
 
     /**
