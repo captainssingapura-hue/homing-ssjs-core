@@ -215,4 +215,20 @@ final class Broken {
         @Override public Container parent() { return Container.INSTANCE; }
         @Override public List<Slot<?>> parts() { return List.of(DSL.part(Tick.INSTANCE).as(Notch.INSTANCE).between(2, 2)); }
     }
+
+    // ── extents ────────────────────────────────────────────────────────────
+
+    /** A size declared again under the button branch, which declares it already. */
+    record Redeclared() implements Component<Sketch.Button> {
+        static final Redeclared INSTANCE = new Redeclared();
+        @Override public Sketch.Button parent() { return Sketch.Button.INSTANCE; }
+        @Override public List<ExtentAxis> extents() { return List.of(ExtentAxis.SIZE); }
+    }
+
+    /** One axis, declared twice. */
+    record Doubly() implements Component<Sketch.Button> {
+        static final Doubly INSTANCE = new Doubly();
+        @Override public Sketch.Button parent() { return Sketch.Button.INSTANCE; }
+        @Override public List<ExtentAxis> extents() { return List.of(ExtentAxis.COLOUR, ExtentAxis.COLOUR); }
+    }
 }

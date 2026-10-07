@@ -10,7 +10,9 @@ import java.util.List;
  * depths, one of them named by no component. A taxonomy of six branches at two levels and thirteen components: buttons, texts and a
  * mark to play parts; a plain card with no parts; a profile card, a confirmation, a watchlist
  * and a gauge whose parts say every shape of cardinality; and a shelf whose every part is
- * optional. Title is played by a heading in one place and a caption in another.</p>
+ * optional. Title is played by a heading in one place and a caption in another. Every button has a
+ * size, the danger and the alternating ones a colour too, and every card a size and an aspect.
+ * Each node's meaning is in {@code meanings/.../Sketch.md}.</p>
  */
 final class Sketch {
 
@@ -162,11 +164,13 @@ final class Sketch {
     record Button() implements L2_ComponentBranch<Control> {
         static final Button INSTANCE = new Button();
         @Override public Control parent() { return Control.INSTANCE; }
+        @Override public List<ExtentAxis> extents() { return List.of(ExtentAxis.SIZE); }
     }
 
     record Card() implements L2_ComponentBranch<Container> {
         static final Card INSTANCE = new Card();
         @Override public Container parent() { return Container.INSTANCE; }
+        @Override public List<ExtentAxis> extents() { return List.of(ExtentAxis.SIZE, ExtentAxis.ASPECT); }
     }
 
     // ── the taxonomy: what plays parts ─────────────────────────────────────
@@ -199,15 +203,17 @@ final class Sketch {
     record DangerButton() implements Component<Button> {
         static final DangerButton INSTANCE = new DangerButton();
         @Override public Button parent() { return Button.INSTANCE; }
+        @Override public List<ExtentAxis> extents() { return List.of(ExtentAxis.COLOUR); }
     }
 
     // ── the taxonomy: what has parts ───────────────────────────────────────
 
-    /** A button that names itself: its name, a caption, always one. */
+    /** A button whose risk is a degree of its colour, safe to dangerous; it names itself: its name, a caption, always one. */
     record AlternatingButton() implements Component<Button> {
         static final AlternatingButton INSTANCE = new AlternatingButton();
         private static final ComponentPartDSL DSL = ComponentPartDSL.INSTANCE;
         @Override public Button parent() { return Button.INSTANCE; }
+        @Override public List<ExtentAxis> extents() { return List.of(ExtentAxis.COLOUR); }
         @Override public List<Slot<?>> parts() {
             return List.of(DSL.part(Caption.INSTANCE).as(Name.INSTANCE).one());
         }

@@ -250,10 +250,80 @@ class ReadTaxonomyTest {
     @Test
     void everyProblemAtOnce() {
         var e = assertThrows(RefusedTaxonomy.class, () -> read(Broken.Orphan.INSTANCE, Broken.Mirror.INSTANCE, Broken.Stutter.INSTANCE,
-                Broken.Lopsided.INSTANCE, Broken.Labelled.INSTANCE, Broken.Doubled.INSTANCE));
+                Broken.Lopsided.INSTANCE, Broken.Labelled.INSTANCE, Broken.Doubled.INSTANCE, Broken.Redeclared.INSTANCE,
+                Meaningless.Silent.INSTANCE));
         assertEquals(Set.of(Rule.NO_PARENT, Rule.COMPOSITION_CYCLE, Rule.ROLE_TWICE, Rule.BAD_CARDINALITY, Rule.ROLE_NAMES_A_NODE,
-                            Rule.CATALOGUE_NAME_TWICE),
+                            Rule.CATALOGUE_NAME_TWICE, Rule.EXTENT_TWICE, Rule.NO_MEANING),
                 e.problems().stream().map(TaxonomyProblem::rule).collect(Collectors.toSet()));
+    }
+
+    // ── degrees ────────────────────────────────────────────────────────────
+
+    @Test
+    void anAxisDeclaredOnABranch_isEveryLeafsUnderIt_aLeafAddsItsOwn() {
+        Taxonomy t = READ.read(Sketch.DECLARED, Sketch.CATALOGUE);
+        assertEquals(List.of(ExtentAxis.SIZE), t.extents(Button.INSTANCE));
+        assertEquals(List.of(ExtentAxis.SIZE), t.extents(PlainButton.INSTANCE), "the branch's, and nothing of its own");
+        assertEquals(List.of(ExtentAxis.SIZE, ExtentAxis.COLOUR), t.extents(Sketch.DangerButton.INSTANCE), "the branch's, then its own");
+        assertEquals(List.of(ExtentAxis.SIZE, ExtentAxis.COLOUR), t.extents(Sketch.AlternatingButton.INSTANCE),
+                "its risk a degree of its colour, not a state");
+        assertEquals(List.of(), t.extents(Root.INSTANCE));
+        assertEquals(List.of(), t.extents(Confirmation.INSTANCE), "a container of no degree");
+        assertEquals(1, ExtentAxis.COLOUR.rest(), "a colour rests at full");
+        assertEquals(0, ExtentAxis.SIZE.rest());
+    }
+
+    @Test
+    void aPart_takesItsAxesFromItsOwnComponent_neverItsOwner() {
+        Taxonomy t = READ.read(Sketch.DECLARED, Sketch.CATALOGUE);
+        assertEquals(List.of(ExtentAxis.SIZE, ExtentAxis.ASPECT), t.extents(ProfileCard.INSTANCE));
+        assertEquals(List.of(ExtentAxis.SIZE), t.extents(part(t, ProfileCard.INSTANCE, Open.INSTANCE)),
+                "a square card may hold a long button: the part's axes are its button's");
+        assertEquals(List.of(), t.extents(part(t, ProfileCard.INSTANCE, Title.INSTANCE)), "a heading has no degree, whatever its card's");
+    }
+
+    @Test
+    void anAxisIsDeclaredOnce_alongALineage() {
+        var e = assertThrows(RefusedTaxonomy.class, () -> read(Broken.Redeclared.INSTANCE));
+        assertEquals(List.of(Rule.EXTENT_TWICE), e.problems().stream().map(TaxonomyProblem::rule).toList());
+        assertEquals("Redeclared declares SIZE, which Button above it already does: every node under a branch has its axes",
+                e.problems().get(0).says());
+        assertEquals(Set.of(Rule.EXTENT_TWICE), refused(Broken.Doubly.INSTANCE));
+    }
+
+    // ── meanings ───────────────────────────────────────────────────────────
+
+    @Test
+    void everyNode_meansSomething_inASectionBesideItsClass() {
+        Taxonomy t = READ.read(Sketch.DECLARED, Sketch.CATALOGUE);
+        assertEquals("Does one thing that destroys, or cannot be undone.", t.meaning(Sketch.DangerButton.INSTANCE).markdown());
+        assertEquals("A container that stands for one thing among others like it.", t.meaning(Card.INSTANCE).markdown(), "a branch's too");
+        assertTrue(t.meaning(Root.INSTANCE).markdown().startsWith("Any component at all"), "the root's, written in core");
+        assertEquals("Ends a decision the owner puts to the user.", t.meaning(Committing.INSTANCE).markdown(), "and the catalogue's");
+        assertTrue(t.meaning(RoleRoot.INSTANCE).markdown().startsWith("Any role"));
+        assertEquals("A badge declared here.", read(Broken.Here.Badge.INSTANCE).meaning(Broken.Here.Badge.INSTANCE).markdown(),
+                "a node two classes deep, headed by its path within its file");
+    }
+
+    @Test
+    void aNodeThatMeansNothing_aFileAstray_twoThatMeanTheSame() {
+        assertEquals(Set.of(Rule.NO_MEANING), refused(Meaningless.Silent.INSTANCE), "no section");
+        assertEquals(Set.of(Rule.NO_MEANING), refused(Meaningless.Blank.INSTANCE), "a section with no words in it");
+
+        var e = assertThrows(RefusedTaxonomy.class, () -> read(Meaningless.Twin.INSTANCE, Meaningless.Twain.INSTANCE));
+        assertEquals(List.of("MEANING_TWICE: Meaningless$Twin and Meaningless$Twain mean the same: one node, or two meanings"),
+                e.problems().stream().map(TaxonomyProblem::toString).toList(), "the same words, however they are spaced");
+
+        e = assertThrows(RefusedTaxonomy.class, () -> read(Astray.Lost.INSTANCE));
+        var file = "meanings/hue/captains/singapura/js/homing/component/taxonomy/Astray.md: ";
+        assertEquals(List.of(file + "words before the first section: 'Words before any section, which no node means.'",
+                             file + "'## Lost' twice",
+                             file + "'## Gone' names no node Astray declares"),
+                e.problems().stream().map(TaxonomyProblem::says).toList());
+    }
+
+    private static Part<?, ?> part(Taxonomy t, Component<?> owner, Role<?> role) {
+        return t.partsOf(owner).stream().filter(p -> p.role().equals(role)).findFirst().orElseThrow();
     }
 
     // ── what is only noticed ───────────────────────────────────────────────

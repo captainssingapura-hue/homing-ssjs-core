@@ -32,6 +32,9 @@ import java.util.Set;
  *       name, which the catalogue itself refuses to be constructed with; or a role named as a node;</li>
  *   <li>a count that is no cardinality - thrown where it is said, and reported for the component
  *       that said it, so one component's bad count never hides another's problems.</li>
+ *   <li>an axis declared twice along one lineage;</li>
+ *   <li>a node of either tree with no meaning, a meanings file with a section astray, or two
+ *       nodes that mean the same.</li>
  * </ul>
  *
  * <p>What the levels already make impossible it never checks: a chain of parents that comes back
@@ -100,8 +103,47 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
         problems.addAll(tokensTwice(branchList, componentList, parts));
         problems.addAll(new CatalogueNames().clashes(roleBranchList, roleList));
         problems.addAll(roleNamesANode(branchList, componentList, roleList));
+        problems.addAll(extentsTwice(branchList, componentList));
+        problems.addAll(Meanings.INSTANCE.problems(meant(branchList, componentList, roleBranchList, roleList)));
         if (!problems.isEmpty()) throw new RefusedTaxonomy(problems);
         return new Taxonomy(branchList, componentList, parts, new RoleCatalogue(roleBranchList, roleList));
+    }
+
+    /** Every node that must mean something: each tree's root when anything of the tree is read, its branches, its leaves. */
+    private static List<Object> meant(List<ComponentBranch> branches, List<Component<?>> components,
+                                      List<RoleBranch> roleBranches, List<Role<?>> roles) {
+        var out = new ArrayList<Object>();
+        if (!components.isEmpty()) out.add(Root.INSTANCE);
+        out.addAll(branches);
+        out.addAll(components);
+        if (!roles.isEmpty()) out.add(RoleRoot.INSTANCE);
+        out.addAll(roleBranches);
+        out.addAll(roles);
+        return out;
+    }
+
+    /** An axis declared twice by one node, or declared by a node and a branch above it: each pair named. */
+    private static List<TaxonomyProblem> extentsTwice(List<ComponentBranch> branches, List<Component<?>> components) {
+        var nodes = new ArrayList<Taxon>();
+        nodes.addAll(branches);
+        nodes.addAll(components);
+        var out = new ArrayList<TaxonomyProblem>();
+        for (Taxon t : nodes) {
+            var own = new LinkedHashSet<ExtentAxis>();
+            for (ExtentAxis a : axes(t))
+                if (!own.add(a)) out.add(new TaxonomyProblem(Rule.EXTENT_TWICE, Names.of(t) + " declares " + a + " twice"));
+            for (ComponentBranch b = Levels.parentOf(t); b != null; b = Levels.parentOf(b))
+                for (ExtentAxis a : own)
+                    if (axes(b).contains(a))
+                        out.add(new TaxonomyProblem(Rule.EXTENT_TWICE, Names.of(t) + " declares " + a + ", which "
+                                + Names.of(b) + " above it already does: every node under a branch has its axes"));
+        }
+        return out;
+    }
+
+    private static List<ExtentAxis> axes(Taxon t) {
+        List<ExtentAxis> a = t.extents();
+        return a == null ? List.of() : a;
     }
 
     /** A component's slots; a count that is no cardinality is a problem of the component that said it. */

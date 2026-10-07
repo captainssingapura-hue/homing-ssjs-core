@@ -17,8 +17,8 @@ import java.util.Objects;
  * @param branches   the branches under the root, by level, each level in the order first reached
  * @param components the components, in the order they were reached
  * @param parts      the parts, each component's in its slots' order
- * @param catalogue  the role catalogue: its branches by level, and its roles - those named by a slot in the order
- *                   first named, then those given and named by none
+ * @param catalogue  the role catalogue: its branches by level, and its roles - the catalogue's in its order, then
+ *                   those only a slot names
  */
 public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> components, List<Part<?, ?>> parts,
                        RoleCatalogue catalogue) implements ValueObject {
@@ -73,6 +73,22 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
     /** A node's token, unique across a taxonomy: the reader refuses two nodes with one. */
     public String token(ComponentNode node) { return node.token(); }
 
+    /**
+     * The axes a node varies along by degree: those of every branch above it, root-most first, then
+     * its own. A part's are its base's - a part follows its own component, never its owner.
+     */
+    public List<ExtentAxis> extents(ComponentNode node) {
+        Taxon t = node instanceof Part<?, ?> p ? p.base() : (Taxon) node;
+        var lineage = new ArrayList<Taxon>();
+        for (Taxon at = t; at != null; at = Levels.parentOf(at)) lineage.add(0, at);
+        var out = new LinkedHashSet<ExtentAxis>();
+        for (Taxon at : lineage) out.addAll(at.extents());
+        return List.copyOf(out);
+    }
+
+    /** What a node of the tree means: read, on a taxonomy that was, from the section written for it. */
+    public Meaning meaning(Taxon node) { return Meanings.INSTANCE.meant(node); }
+
     // ── the role catalogue ─────────────────────────────────────────────────
 
     /** The role catalogue's branches, by level. */
@@ -83,6 +99,9 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
 
     /** The branches and roles directly under a branch of the catalogue - the root's included - branches first. */
     public List<RoleNode> children(RoleBranch branch) { return catalogue.children(branch); }
+
+    /** What a node of the catalogue means. */
+    public Meaning meaning(RoleNode node) { return catalogue.meaning(node); }
 
     /** Every part that names a role: where it is used, what plays it there, how many. */
     public List<Part<?, ?>> partsNaming(Role<?> role) {

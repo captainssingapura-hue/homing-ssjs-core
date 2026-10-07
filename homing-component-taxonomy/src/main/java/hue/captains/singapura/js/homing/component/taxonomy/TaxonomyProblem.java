@@ -31,7 +31,15 @@ public record TaxonomyProblem(Rule rule, String says) implements ValueObject {
         /** A role is named as a branch or a component: it says what plays a part, not what the part does. */
         ROLE_NAMES_A_NODE,
         /** A count that is no cardinality: none, a most below the least, a range of one. */
-        BAD_CARDINALITY
+        BAD_CARDINALITY,
+        /** An axis a node declares twice, or one a branch above it already declares: each axis is declared once along a lineage. */
+        EXTENT_TWICE,
+        /** A node of either tree with no meaning: no section of its own, or one with no words in it. */
+        NO_MEANING,
+        /** A meanings file with a section that names no node its class declares, a section twice, or words outside every section. */
+        MEANING_ASTRAY,
+        /** Two nodes that mean the same: one node, or two meanings to write. */
+        MEANING_TWICE
     }
 
     @Override public String toString() { return rule + ": " + says; }

@@ -32,4 +32,7 @@ public record RoleCatalogue(List<RoleBranch> branches, List<Role<?>> roles) impl
         for (Role<?> r : roles) if (branch.equals(r.parent())) out.add(r);
         return List.copyOf(out);
     }
+
+    /** What a node of the catalogue means: read, on a catalogue that was, from the section written for it. */
+    public Meaning meaning(RoleNode node) { return Meanings.INSTANCE.meant(node); }
 }
