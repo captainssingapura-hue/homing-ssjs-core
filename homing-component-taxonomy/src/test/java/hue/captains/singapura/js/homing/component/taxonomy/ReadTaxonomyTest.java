@@ -86,6 +86,9 @@ class ReadTaxonomyTest {
         assertFalse(t.fallback(confirm).contains(Confirmation.INSTANCE), "nothing of the confirmation's own look reaches its confirm");
         assertEquals(List.of(Confirmation.INSTANCE, Container.INSTANCE, Root.INSTANCE), t.fallback(Confirmation.INSTANCE));
         assertEquals(List.of(Root.INSTANCE), t.fallback(Root.INSTANCE));
+        assertEquals(Control.INSTANCE, t.parent(Button.INSTANCE), "a node's parent, read off its level");
+        assertEquals(Root.INSTANCE, t.parent(Control.INSTANCE));
+        assertEquals(null, t.parent(Root.INSTANCE), "the root has none");
     }
 
     @Test
@@ -225,6 +228,9 @@ class ReadTaxonomyTest {
                 "the constructor's own check: no catalogue with a clash exists, however it is made");
         var clean = new RoleCatalogue(List.of(Sketch.Saying.INSTANCE, Naming.INSTANCE), List.of(Title.INSTANCE));
         assertEquals(List.of(Title.INSTANCE), clean.children(Naming.INSTANCE));
+        assertEquals(Naming.INSTANCE, clean.parent(Title.INSTANCE));
+        assertEquals(Sketch.Saying.INSTANCE, clean.parent(Naming.INSTANCE));
+        assertEquals(null, clean.parent(RoleRoot.INSTANCE), "the root has none");
         assertEquals(List.of(), new CatalogueNames().clashes(READ.read(Sketch.DECLARED, Sketch.CATALOGUE).roleBranches(), Sketch.CATALOGUE),
                 "the hypothetical house's words are each its own");
     }

@@ -22,6 +22,9 @@ public record RoleCatalogue(List<RoleBranch> branches, List<Role<?>> roles) impl
         if (!clashes.isEmpty()) throw new RefusedTaxonomy(clashes);
     }
 
+    /** The branch a node is filed under, read off its level; none for the root. */
+    public RoleBranch parent(RoleNode node) { return Levels.parentOf(node); }
+
     /** The branches and roles directly under a branch - the root's included - branches first. */
     public List<RoleNode> children(RoleBranch branch) {
         var out = new ArrayList<RoleNode>();

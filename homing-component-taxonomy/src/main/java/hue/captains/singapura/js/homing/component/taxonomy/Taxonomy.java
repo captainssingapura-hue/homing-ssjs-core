@@ -48,6 +48,9 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
         return List.copyOf(out);
     }
 
+    /** The branch a node sits under, read off its level; none for the root. */
+    public ComponentBranch parent(Taxon node) { return Levels.parentOf(node); }
+
     /** The parts a component declares, in its slots' order. */
     public List<Part<?, ?>> partsOf(Component<?> owner) {
         return parts.stream().filter(p -> p.owner().equals(owner)).toList();
