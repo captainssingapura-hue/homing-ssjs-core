@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+        <artifactId>homing.js</artifactId>
+        <version>LOCAL-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>homing-component-taxonomy</artifactId>
+
+    <description>
+        RFC 0067 - the taxonomy of components: what a component is, what it is made of,
+        declared once and apart from any implementation of it, and apart from any design.
+        A rigid tree of singleton records with typed parents, used as plain Java objects:
+        kinds are abstract intermediate nodes, components are its leaves, and a component's
+        parts are roles it names, each played by another, otherwise independent component.
+        Classification is open - a node names its parent; composition is closed - only a
+        component declares its roles. Knows nothing of targets, designs or implementations:
+        a component can be declared, read and checked without any of them.
+    </description>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.lang.ontology</groupId>
+            <artifactId>core</artifactId>
+            <version>0.0.1</version>
+        </dependency>
+        <!-- Every node is a stateless functional object, and reading holds it to that through jOntology's enforcer. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.lang.ontology</groupId>
+            <artifactId>enforcer</artifactId>
+            <version>0.0.1</version>
+        </dependency>
+        <!-- Node names: the rigid tree's typed, capped segments. -->
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>homing-rigid-tree</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

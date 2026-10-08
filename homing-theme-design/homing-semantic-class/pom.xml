@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+        <artifactId>homing-theme-design</artifactId>
+        <version>LOCAL-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>homing-semantic-class</artifactId>
+
+    <description>
+        RFC 0067 - the semantic class: a target leaf paired with a node of the taxonomy of
+        components, a plain value nobody declares. The forest of design classes is their
+        product, derived - every target leaf × every node a taxonomy reads - and a class falls
+        back on its own target along its component's chain: a part through its base, never its
+        owner, up to the root. Where the targets and the components meet; each is declared in
+        a module that knows nothing of the other.
+    </description>
+
+    <dependencies>
+        <!-- The components: declared without any knowledge of targets. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-component-taxonomy</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <!-- The targets: the closed tree of what the substrate can realize. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-design-core</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

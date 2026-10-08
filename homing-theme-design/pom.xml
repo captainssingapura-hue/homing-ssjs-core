@@ -18,6 +18,9 @@
     </description>
     <modules>
         <module>homing-design-core</module>
+        <!-- RFC 0067: the semantic class - a target leaf × a node of the taxonomy of
+             components, derived, never declared. -->
+        <module>homing-semantic-class</module>
         <module>homing-design-server</module>
         <!-- The framework's designs, and a registry of them alone. -->
         <module>homing-designs</module>

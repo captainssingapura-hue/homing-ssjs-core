@@ -59,6 +59,10 @@
              deps. tree-views (serialization) + the studio normalizers depend
              ON it; builds first. -->
         <module>homing-rigid-tree</module>
+        <!-- RFC 0067: the taxonomy of components - kinds, components at its leaves, their parts
+             as roles - declared apart from any target, design or implementation. Depends only
+             on the rigid tree's node names. -->
+        <module>homing-component-taxonomy</module>
         <module>homing-doc-model</module>
         <module>homing-plan-model</module>
         <module>homing-svg-doc</module>
