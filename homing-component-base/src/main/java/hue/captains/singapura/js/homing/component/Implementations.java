@@ -32,7 +32,8 @@ import java.util.Set;
  *       branch among its branches.</li>
  *   <li><b>Once.</b> One leaf, one module; one branch, one module.</li>
  *   <li><b>One class.</b> The module exports one thing: the component named as its leaf, or the
- *       base class named as its branch.</li>
+ *       base class named as its branch. A leaf's module may export its companion beside it: the
+ *       factory that makes its element, a constant named for it.</li>
  *   <li><b>In the lineage.</b> A leaf's module imports a branch's base only when the leaf is under
  *       the branch.</li>
  *   <li><b>Composed as declared.</b> The leaves a leaf's module imports are its parts' - no more,
@@ -69,8 +70,9 @@ public record Implementations() {
                     Component<?> leaf = anchor(impl, name, problems);
                     if (leaf == null) continue;
                     if (!components.contains(leaf)) { problems.add(name + " implements " + simple(leaf) + ", which the taxonomy does not declare"); continue; }
-                    if (exports.size() != 1 || !(exports.get(0) instanceof UiComponent<?>) || !simple(exports.get(0)).equals(simple(leaf)))
-                        problems.add(name + " implements " + simple(leaf) + " but exports " + said(exports) + ": one module, one class - the component, named as its leaf");
+                    if (!asItsLeafSays(exports, leaf))
+                        problems.add(name + " implements " + simple(leaf) + " but exports " + said(exports)
+                                + ": one module, one class - the component, named as its leaf - and at most its companion, named for it");
                     composition(taxonomy, m, leaf, leaves, branches, problems);
                 }
                 case ImplForBranch<?> impl -> {
@@ -168,6 +170,18 @@ public record Implementations() {
             if (leaves.containsKey(p.base())) out.putIfAbsent(p.base(), said);
             else if (seen.add(p.base())) expect(taxonomy, p.base(), said + " (an unrealized " + simple(p.base()) + ") → ", leaves, seen, out);
         }
+    }
+
+    /**
+     * The component named as its leaf, alone or with its companion: the factory that makes the
+     * element it is realized on, exported beside it as a constant named for it -
+     * {@code PlainButtonFactory} for {@code PlainButton}.
+     */
+    private static boolean asItsLeafSays(List<? extends Exportable<?>> exports, Component<?> leaf) {
+        if (exports.isEmpty() || exports.size() > 2) return false;
+        if (!(exports.get(0) instanceof UiComponent<?>) || !simple(exports.get(0)).equals(simple(leaf))) return false;
+        return exports.size() == 1
+                || exports.get(1) instanceof Exportable._Constant<?> && simple(exports.get(1)).equals(simple(leaf) + "Factory");
     }
 
     private static String simple(Object o) { return o.getClass().getSimpleName(); }

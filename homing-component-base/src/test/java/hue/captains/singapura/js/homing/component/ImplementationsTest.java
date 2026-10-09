@@ -111,8 +111,9 @@ class ImplementationsTest {
     public record PlainButtonModule() implements DomModule<PlainButtonModule>, ImplFor<ImplementationsTest.PlainButton> {
         public static final PlainButtonModule INSTANCE = new PlainButtonModule();
         public record PlainButton() implements ElementComponent<PlainButtonModule> { @Override public String tag() { return "button"; } }
+        public record PlainButtonFactory() implements Exportable._Constant<PlainButtonModule> {}
         @Override public ImportsFor<PlainButtonModule> imports() { return ImportsFor.<PlainButtonModule>builder().add(new ModuleImports<>(List.of(new ButtonModule.Button()), ButtonModule.INSTANCE)).build(); }
-        @Override public ExportsOf<PlainButtonModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new PlainButton())); }
+        @Override public ExportsOf<PlainButtonModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new PlainButton(), new PlainButtonFactory())); }
     }
     public record IconModule() implements DomModule<IconModule>, ImplFor<ImplementationsTest.Icon> {
         public static final IconModule INSTANCE = new IconModule();
@@ -232,7 +233,7 @@ class ImplementationsTest {
     @Test
     void theParts_noMoreAndNoFewer() {
         assertEquals(List.of(
-                        "DangerButtonModule implements DangerButton but exports DangerButton, DangerButtonBuilder: one module, one class - the component, named as its leaf",
+                        "DangerButtonModule implements DangerButton but exports DangerButton, DangerButtonBuilder: one module, one class - the component, named as its leaf - and at most its companion, named for it",
                         "LooseDialogModule (Dialog) imports DangerButton (DangerButtonModule), which none of its parts declares",
                         "LooseDialogModule (Dialog) never imports Icon, which its part symbol calls for"),
                 check(ButtonModule.INSTANCE, PlainButtonModule.INSTANCE, DangerButtonModule.INSTANCE, IconModule.INSTANCE, LooseDialogModule.INSTANCE));
@@ -281,11 +282,25 @@ class ImplementationsTest {
                 "the dialog's bar is realized in a helper it imports: the helper's plain button is the dialog's");
     }
 
+    /** A companion is the factory named for the component, and a constant: anything else beside the class is refused. */
+    @Test
+    void aCompanion_namedForItsComponent_isTheOnlyThingBesideIt() {
+        assertEquals(List.of("WrongCompanion implements Icon but exports Icon, Maker: one module, one class - the component, named as its leaf - and at most its companion, named for it"),
+                check(new WrongCompanion()));
+    }
+
+    private record WrongCompanion() implements DomModule<WrongCompanion>, ImplFor<ImplementationsTest.Icon> {
+        public record Icon() implements ElementComponent<WrongCompanion> { @Override public String tag() { return "span"; } }
+        public record Maker() implements Exportable._Constant<WrongCompanion> {}
+        @Override public ImportsFor<WrongCompanion> imports() { return ImportsFor.noImports(); }
+        @Override public ExportsOf<WrongCompanion> exports() { return new ExportsOf<>(this, List.of(new Icon(), new Maker())); }
+    }
+
     @Test
     void anchoredNowhere_twice_offTheTree_outOfTheLineage() {
         assertEquals(List.of(
                         "Icon is implemented twice: by IconModule and OddIconModule",
-                        "OddIconModule implements Icon but exports Glyph: one module, one class - the component, named as its leaf",
+                        "OddIconModule implements Icon but exports Glyph: one module, one class - the component, named as its leaf - and at most its companion, named for it",
                         "OddIconModule (Icon) imports the base of Button, a branch it is not under",
                         "AdriftModule exports the component Adrift but is anchored nowhere: a component's module implements its leaf (ImplFor)",
                         "StrayModule implements Stray, which the taxonomy does not declare"),

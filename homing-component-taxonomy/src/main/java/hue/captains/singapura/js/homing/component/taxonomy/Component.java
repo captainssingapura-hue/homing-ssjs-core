@@ -34,4 +34,16 @@ public non-sealed interface Component<P extends ComponentBranch> extends Taxon {
 
     /** Its parts, each a role played by an independent component, so many times; none by default. */
     default List<Slot<?>> parts() { return List.of(); }
+
+    /**
+     * The states it has, from the tree of states: being enabled, being on. Each has its change, an
+     * event it offers by having the state. None by default.
+     */
+    default List<StateType<?>> states() { return List.of(); }
+
+    /**
+     * The events it offers besides its states' changes, from the tree of events: a click. None by
+     * default.
+     */
+    default List<EventType<?>> events() { return List.of(); }
 }
