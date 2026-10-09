@@ -39,6 +39,13 @@ public final class Dressed {
     /** The layer a target is answered in: the palette's for colour, the worn style's for the rest. */
     Layer layerFor(Target target) { return target instanceof Target.Color ? paletteLayer : styleLayer; }
 
+    /** Every layer the theme answers from: the worn style down its base chain, then the palette. */
+    List<Layer> layers() {
+        var out = new ArrayList<Layer>(styleLayer.chain());
+        out.add(paletteLayer);
+        return List.copyOf(out);
+    }
+
     /** The style's tokens, the worn one first, down its base chain. */
     public List<String> chain() { return styleLayer.chain().stream().map(Layer::token).toList(); }
 

@@ -1,9 +1,7 @@
 package hue.captains.singapura.js.homing.design.semantic;
 
 import hue.captains.singapura.js.homing.component.taxonomy.Casting;
-import hue.captains.singapura.js.homing.component.taxonomy.Component;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
-import hue.captains.singapura.js.homing.design.Carrier;
 import hue.captains.singapura.js.homing.design.Extent;
 import hue.captains.singapura.js.homing.design.Growth;
 import hue.captains.singapura.js.homing.design.State;
@@ -22,11 +20,10 @@ import java.util.List;
  * <ul>
  *   <li><b>Looks</b>, first: every casting the taxonomy has, on every CSS target, each the answering
  *       look's body under {@code .casting__target}.</li>
- *   <li><b>Treatments</b>, after, a state at a time in the cascade's order: every component, in
- *       every state its target offers that some component up its lineage answers, the body nested on
- *       the state's selector under {@code .component__target--state} - so a treatment outweighs the
- *       look while its state holds, and of two treatments the later state wins, as the old sheets
- *       had it.</li>
+ *   <li><b>Treatments</b>, after, a state at a time in the cascade's order: every treatment the
+ *       answers make ({@link DeriveTreatments}), the body nested on the state's selector under
+ *       {@code .component__target--state} - so a treatment outweighs the look while its state holds,
+ *       and of two treatments the later state wins, as the old sheets had it.</li>
  * </ul>
  *
  * A silence is copied as nothing. A look nothing answers, the root included, has no rule: it is
@@ -71,21 +68,20 @@ public record FlattenSheet() implements StatelessFunctionalObject {
                 if (!a.node().equals(c)) copied++;
             }
 
-        for (State s : State.values()) {
-            if (s == State.REST) continue;
-            var block = new StringBuilder();
-            for (Component<?> leaf : taxonomy.components())
-                for (Target t : targets) {
-                    if (!t.states().contains(s)) continue;
-                    Casting c = new Casting(leaf);
-                    Resolution r = resolver.resolve(taxonomy, theme, c, s, t);
-                    if (!(r.outcome() instanceof Resolution.Answered a)) continue;
-                    if (a.body().isBlank()) continue;
-                    block.append(rule(tokens.treatment(c, s, t), a, own(t, theme), s.selector() + " {\n" + indent(normal(a.body())) + "\n}"));
-                    treatments++;
-                    if (!a.node().equals(c)) copied++;
-                }
-            if (!block.isEmpty()) css.append("\n/* ── ").append(tokens.state(s)).append(" ── */\n").append(block);
+        // the treatments the answers make, a state at a time in the cascade's order (DeriveTreatments)
+        State current = null;
+        for (Treatment tr : DeriveTreatments.INSTANCE.of(taxonomy, theme)) {
+            State s = tr.state();
+            Target t = tr.target();
+            Casting c = new Casting(tr.component());
+            if (s != current) {
+                css.append("\n/* ── ").append(tokens.state(s)).append(" ── */\n");
+                current = s;
+            }
+            var a = (Resolution.Answered) resolver.resolve(taxonomy, theme, c, s, t).outcome();
+            css.append(rule(tokens.treatment(c, s, t), a, own(t, theme), s.selector() + " {\n" + indent(normal(a.body())) + "\n}"));
+            treatments++;
+            if (!a.node().equals(c)) copied++;
         }
         return new Flattened(css.toString(), looks, treatments, copied, unanswered);
     }
