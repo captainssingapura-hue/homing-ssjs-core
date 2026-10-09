@@ -25,6 +25,7 @@ import java.util.List;
  * <pre>
  * resolve --taxonomy CLASS --answers FILE NODE STATE TARGET   the walk, step by step
  * resolve --taxonomy CLASS --answers FILE NODE STATE|* TARGET|*   a table: every state, every target
+ * resolve --taxonomy CLASS --answers FILE --flatten [--out CSS]   the theme's sheet, flattened
  * resolve --taxonomy CLASS --list nodes|roles|states|targets   the tokens there are
  * </pre>
  *
@@ -44,11 +45,13 @@ public record ResolveCli() implements StatelessFunctionalObject {
     private static final String USAGE = String.join("\n",
             "usage: resolve --taxonomy CLASS --answers FILE NODE STATE TARGET",
             "       resolve --taxonomy CLASS --answers FILE NODE STATE|* TARGET|*",
+            "       resolve --taxonomy CLASS --answers FILE --flatten [--out CSS]",
             "       resolve --taxonomy CLASS --list nodes|roles|states|targets");
 
     /** Runs a command; the exit code. */
     public int run(List<String> args, PrintStream out, PrintStream err) {
-        String taxonomyClass = null, answersFile = null, list = null;
+        String taxonomyClass = null, answersFile = null, list = null, outFile = null;
+        boolean flatten = false;
         var rest = new ArrayList<String>();
         for (int i = 0; i < args.size(); i++) {
             String a = args.get(i);
@@ -56,6 +59,8 @@ public record ResolveCli() implements StatelessFunctionalObject {
                 case "--taxonomy" -> taxonomyClass = i + 1 < args.size() ? args.get(++i) : null;
                 case "--answers" -> answersFile = i + 1 < args.size() ? args.get(++i) : null;
                 case "--list" -> list = i + 1 < args.size() ? args.get(++i) : null;
+                case "--out" -> outFile = i + 1 < args.size() ? args.get(++i) : null;
+                case "--flatten" -> flatten = true;
                 default -> rest.add(a);
             }
         }
@@ -64,8 +69,9 @@ public record ResolveCli() implements StatelessFunctionalObject {
             Taxonomy taxonomy = taxonomy(taxonomyClass);
             if (list != null) return list(taxonomy, list, out, err);
             if (answersFile == null) return usage(err, "no --answers");
-            if (rest.size() != 3) return usage(err, "a node, a state and a target");
             AnswerSet answers = ReadAnswers.INSTANCE.read(taxonomy, lines(answersFile));
+            if (flatten) return flatten(taxonomy, answers, answersFile, outFile, out, err);
+            if (rest.size() != 3) return usage(err, "a node, a state and a target");
             var tokens = SemanticTokens.INSTANCE;
             Casting node = tokens.castingOf(taxonomy, rest.get(0));
             List<State> states = "*".equals(rest.get(1)) ? List.of(State.values()) : List.of(tokens.stateOf(rest.get(1)));
@@ -120,6 +126,25 @@ public record ResolveCli() implements StatelessFunctionalObject {
             default -> { return usage(err, "--list nodes, roles, states or targets"); }
         }
         return 0;
+    }
+
+    /** The theme's sheet, flattened, to the file named or the output; what is in it, and every look nothing answers. */
+    private static int flatten(Taxonomy taxonomy, AnswerSet answers, String answersFile, String outFile, PrintStream out, PrintStream err) {
+        var flat = FlattenSheet.INSTANCE.flatten(taxonomy, answers, Path.of(answersFile).getFileName().toString());
+        PrintStream said = outFile == null ? err : out;   // the sheet on the output, what is in it beside
+        if (outFile == null) out.print(flat.css());
+        else {
+            try { Files.writeString(Path.of(outFile), flat.css(), StandardCharsets.UTF_8); }
+            catch (IOException e) { throw new IllegalArgumentException("cannot write " + outFile + " (" + e.getClass().getSimpleName() + ")", e); }
+            said.println("wrote    " + outFile);
+        }
+        said.println("looks    " + flat.looks() + " rules, treatments " + flat.treatments() + " rules; " + flat.copied() + " copied from the node that answers");
+        if (!flat.unanswered().isEmpty()) {
+            said.println("UNANSWERED " + flat.unanswered().size() + " - a theme answers every target at the root:");
+            flat.unanswered().stream().limit(20).forEach(u -> said.println("         " + u));
+            if (flat.unanswered().size() > 20) said.println("         …");
+        }
+        return flat.unanswered().isEmpty() ? 0 : 1;
     }
 
     private static List<String> lines(String file) {

@@ -104,6 +104,21 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
     public Meaning meaning(RoleNode node) { return catalogue.meaning(node); }
 
     /** Every part that names a role: where it is used, what plays it there, how many. */
+    /**
+     * The castings the taxonomy has, derived (RFC 0067, appendix Castings): every component on its
+     * own, then each role a slot casts its component in, once - a functional role cast as the
+     * component on its own, which it looks as.
+     */
+    public List<Casting> castings() {
+        var out = new LinkedHashSet<Casting>();
+        for (Component<?> c : components) out.add(new Casting(c));
+        for (Part<?, ?> p : parts) {
+            var cast = new Casting(p.base(), p.role());
+            out.add(cast.functional() ? cast.alone() : cast);
+        }
+        return List.copyOf(out);
+    }
+
     public List<Part<?, ?>> partsNaming(Role<?> role) {
         return parts.stream().filter(p -> p.role().equals(role)).toList();
     }

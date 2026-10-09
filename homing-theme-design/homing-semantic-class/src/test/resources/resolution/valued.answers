@@ -1,0 +1,44 @@
+# A theme with bodies over the resolution's fixture: every CSS target answered at the root, the
+# buttons' corner and inset, the danger button's own corner, Go's surface on it; treatments for
+# every control when disabled, and the buttons' shadow under the hand and when disabled.
+
+root  rest  color-surface      { background-color: transparent; }
+root  rest  color-ink          { color: inherit; }
+root  rest  color-edge         { border-color: currentColor; }
+root  rest  color-fill         { fill: currentColor; }
+root  rest  color-stroke       { stroke: none; }
+root  rest  color-scrollbar    { scrollbar-color: auto; }
+root  rest  shape-corner       { border-radius: 0; }
+root  rest  shape-rule         { border-width: 0; border-style: solid; }
+root  rest  shape-shadow       { box-shadow: none; }
+root  rest  shape-clip         { clip-path: none; }
+root  rest  size-inset         { padding-block: 0; padding-inline: 0; }
+root  rest  size-gap           { gap: normal; }
+root  rest  size-extent        { min-height: auto; min-width: auto; }
+root  rest  size-proportion    { aspect-ratio: auto; }
+root  rest  type-face          { font-family: inherit; }
+root  rest  type-weight        { font-weight: inherit; }
+root  rest  type-scale         { font-size: inherit; line-height: inherit; }
+root  rest  type-treatment     { letter-spacing: normal; }
+root  rest  type-decoration    { text-decoration-line: none; }
+root  rest  type-glyph
+root  rest  motion-ease        { transition: none; }
+root  rest  motion-transform   { transform: none; }
+root  rest  motion-animate     { animation: none; }
+root  rest  effect-opacity     { opacity: 1; }
+root  rest  effect-filter      { filter: none; }
+root  rest  effect-blend       { mix-blend-mode: normal; }
+root  rest  affordance-cursor  { cursor: auto; }
+root  rest  affordance-select  { user-select: auto; }
+
+button            rest  shape-corner   { border-radius: 3px; }
+danger-button     rest  shape-corner   { border-radius: 2px; }
+danger-button_go  rest  color-surface  { background-color: #c62828; }
+button            rest  size-inset     {
+    padding-block: calc(8px * pow(1.3, var(--size)));
+    padding-inline: calc(18px * pow(1.3, var(--size)));
+}
+
+control  disabled  effect-opacity  { opacity: .45; }
+button   hover     shape-shadow    { box-shadow: 0 6px 16px rgba(0, 0, 0, .12); }
+button   disabled  shape-shadow    { box-shadow: none; }
