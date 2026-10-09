@@ -1,0 +1,43 @@
+# The resolution's cases, for every resolver of semantic classes - the Java one and the JS one
+# alike: under the answers named, a node, a state and a target, and the one class worn, "none"
+# when no component treats the state, or "unanswered" when nothing answers the look.
+
+answers sketch.answers
+
+# a look the node answers itself
+danger-button        rest      shape-corner    => danger-button__shape-corner
+# a look the branch answers
+plain-button         rest      shape-corner    => button__shape-corner
+# a role the theme does not answer: its lineage at the component, then the component's
+plain-button_cancel  rest      shape-corner    => button__shape-corner
+# a role the theme answers on the component
+danger-button_go     rest      color-surface   => danger-button_go__color-surface
+# on its own, the role's answer is not the danger button's
+danger-button        rest      color-surface   => root__color-surface
+# a broader role answered at the branch, reached from either button in a role under it
+plain-button_cancel  rest      color-ink       => button_committing__color-ink
+danger-button_go     rest      color-ink       => button_committing__color-ink
+# on its own the button plays no role: nothing answers its ink, the root included
+danger-button        rest      color-ink       => unanswered
+# a functional role is set aside: the window looks as the pane on its own
+floating-pane_window rest      color-surface   => floating-pane__color-surface
+floating-pane_window rest      shape-corner    => root__shape-corner
+# a state is a treatment, common to every role: the role is set aside
+danger-button_go     disabled  effect-opacity  => root__effect-opacity--disabled
+danger-button        disabled  color-surface   => button__color-surface--disabled
+# a state nothing treats: nothing is worn for it
+floating-pane        disabled  color-surface   => none
+danger-button        hover     color-surface   => none
+# a branch can be asked too
+button               rest      shape-corner    => button__shape-corner
+root                 rest      color-surface   => root__color-surface
+
+answers detailed.answers
+
+# the same tree, a more precise theme: each found where it is answered
+plain-button         rest      shape-corner    => plain-button__shape-corner
+plain-button_cancel  rest      shape-corner    => plain-button__shape-corner
+danger-button_go     rest      shape-corner    => danger-button__shape-corner
+danger-button        disabled  color-surface   => danger-button__color-surface--disabled
+plain-button         disabled  color-surface   => button__color-surface--disabled
+danger-button        rest      color-ink       => root__color-ink
