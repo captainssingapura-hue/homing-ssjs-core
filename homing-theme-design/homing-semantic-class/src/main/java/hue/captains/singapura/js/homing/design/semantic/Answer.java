@@ -8,8 +8,10 @@ import hue.captains.singapura.tao.ontology.ValueObject;
 
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * What a style or a palette says for one semantic class (RFC 0067, D5): its own CSS, a redirect to
@@ -66,6 +68,25 @@ public sealed interface Answer<T extends Target> extends ValueObject permits Ans
         public Redirect(Taxon to) { this(new Casting(to)); }
     }
 
-    /** The base's answer for this class, from here up - though this style answers higher up itself. */
-    record FromBase<T extends Target>() implements Answer<T> {}
+    /**
+     * The base's answer for this class, from here up - though this style answers higher up itself -
+     * in the states it names, or in every state when it names none. In a state it does not name
+     * the walk goes on up this style: a close button bare at rest, as its base says, and lifted
+     * under the hand, as its style lifts every button.
+     *
+     * @param only the states the base is asked in; none named, every state
+     */
+    record FromBase<T extends Target>(Set<State> only) implements Answer<T> {
+
+        public FromBase {
+            Objects.requireNonNull(only, "FromBase.only");
+            only = only.isEmpty() ? Set.of() : Collections.unmodifiableSet(EnumSet.copyOf(only));
+        }
+
+        /** In every state. */
+        public FromBase() { this(Set.of()); }
+
+        /** Whether the base is asked in this state. */
+        public boolean asks(State state) { return only.isEmpty() || only.contains(state); }
+    }
 }

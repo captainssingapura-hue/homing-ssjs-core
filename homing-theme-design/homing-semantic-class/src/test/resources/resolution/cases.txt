@@ -65,4 +65,8 @@ danger-button        rest      shape-shadow    => button__shape-shadow from squa
 danger-button        hover     shape-shadow    => button__shape-shadow--hover from valued
 # nothing of its own at all: its base's
 danger-button        rest      size-inset      => button__size-inset from valued
+# its base's at rest only: the plain button stands as its base has it, and moves under the hand as this style moves every button
+plain-button         rest      motion-transform => plain-button__motion-transform from valued
+plain-button         hover     motion-transform => button__motion-transform--hover from squared
+danger-button        rest      motion-transform => button__motion-transform from squared
 danger-button_go     rest      color-background   => danger-button_go__color-background from valued-colours

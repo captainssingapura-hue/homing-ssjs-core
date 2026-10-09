@@ -32,7 +32,8 @@ import java.util.Set;
  *   <li><b>The answers.</b> Its own CSS answers the states it lists, and the walk goes on for the
  *       others. A {@link Answer.Redirect redirect} is resolved again from its node, in the theme
  *       worn - late, so it follows what the worn style says of that node. {@link Answer.FromBase}
- *       asks the base the rest of the path, from the node it is said at.</li>
+ *       asks the base the rest of the path, from the node it is said at, in the states it names;
+ *       in the others the walk goes on up the style.</li>
  *   <li><b>Nothing.</b> A look nothing answers, the roots included, is a theme incomplete; a state
  *       nothing answers is no treatment, and the element shows its look at rest.</li>
  * </ul>
@@ -92,6 +93,10 @@ public record ResolveSemanticClass() implements StatelessFunctionalObject {
                     return walk(taxonomy, top, top, path(taxonomy, state == State.REST ? r.to() : r.to().alone(), state), state, target, steps, passed);
                 }
                 case Answer.FromBase<?> f -> {
+                    if (!f.asks(state)) {
+                        steps.add(new Resolution.Step(layer.token(), node, "its base's, not " + tokens.state(state)));
+                        continue;
+                    }
                     steps.add(new Resolution.Step(layer.token(), node, "its base's, from here"));
                     return walk(taxonomy, top, layer.base(), path.subList(i, path.size()), state, target, steps, passed);
                 }

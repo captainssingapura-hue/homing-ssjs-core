@@ -19,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -39,7 +40,7 @@ class ResolutionCasesTest {
     void everyCase_resolvesAsWritten() {
         var cases = ResolutionCases.INSTANCE;
         var report = cases.run(lines("cases.txt"), cases.java(TAXONOMY, ResolvingThemes.THEMES));
-        assertEquals(32, report.cases(), "every case read");
+        assertEquals(35, report.cases(), "every case read");
         assertEquals(List.of(), report.failures(), () -> String.join("\n", report.failures()));
     }
 
@@ -99,6 +100,8 @@ class ResolutionCasesTest {
                 .contains("danger-button as go is answered disabled: a state is a treatment"));
         assertTrue(refused(() -> new Implementation<>(Button.INSTANCE, corner, new Answer.Own<Target.Shape.Corner>(Map.of(State.HOVER, "border-radius: 2px;"))))
                 .contains("shape-corner offers no hover"));
+        assertTrue(refused(() -> new Implementation<>(Button.INSTANCE, corner, new Answer.FromBase<Target.Shape.Corner>(Set.of(State.HOVER))))
+                .contains("asks its base hover, which shape-corner does not offer"));
         assertTrue(refused(() -> new Implementation<>(Button.INSTANCE, corner, new Answer.Own<>("border-width: 1px;")))
                 .contains("shape-corner does not own border-width; it owns border-radius"));
         assertTrue(refused(() -> new Implementation<>(Button.INSTANCE, corner, new Answer.Own<>("& .label { border-radius: 2px; }")))

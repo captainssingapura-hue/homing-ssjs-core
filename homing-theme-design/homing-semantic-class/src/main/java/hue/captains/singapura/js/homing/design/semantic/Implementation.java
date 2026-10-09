@@ -45,6 +45,12 @@ public record Implementation<T extends Target>(Casting node, T target, Answer<T>
                     throw new IllegalArgumentException(where + " " + tokens.state(state) + ": " + e.getMessage(), e);
                 }
             });
+        if (answer instanceof Answer.FromBase<T> f)
+            f.only().forEach(state -> {
+                if (!target.states().contains(state))
+                    throw new IllegalArgumentException(where + ": asks its base " + tokens.state(state) + ", which " + target.token()
+                            + " does not offer; it offers " + String.join(", ", target.states().stream().map(tokens::state).toList()));
+            });
         if (answer instanceof Answer.Redirect<T> r && r.to().equals(node))
             throw new IllegalArgumentException(where + " is redirected to itself");
     }

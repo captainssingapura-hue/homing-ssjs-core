@@ -17,6 +17,7 @@ import hue.captains.singapura.js.homing.design.semantic.ResolvingTaxonomy.PlainB
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -130,6 +131,7 @@ final class ResolvingThemes {
                     rest(Root.INSTANCE, Target.Asset.Illustration.INSTANCE, ""),
                     rest(Button.INSTANCE, Target.Shape.Corner.INSTANCE, "border-radius: 3px;"),
                     rest(DangerButton.INSTANCE, Target.Shape.Corner.INSTANCE, "border-radius: 2px;"),
+                    rest(PlainButton.INSTANCE, Target.Motion.Transform.INSTANCE, "transform: none;"),
                     rest(Button.INSTANCE, Target.Size.Inset.INSTANCE, """
                             padding-block: calc(8px * pow(1.3, var(--size)));
                             padding-inline: calc(18px * pow(1.3, var(--size)));
@@ -167,7 +169,11 @@ final class ResolvingThemes {
             return List.of(
                     rest(Control.INSTANCE, Target.Shape.Corner.INSTANCE, "border-radius: 0;"),
                     new Implementation<>(PlainButton.INSTANCE, Target.Shape.Corner.INSTANCE, new Answer.FromBase<>()),
-                    rest(Button.INSTANCE, Target.Shape.Shadow.INSTANCE, "box-shadow: inset 0 0 0 1px;"));
+                    rest(Button.INSTANCE, Target.Shape.Shadow.INSTANCE, "box-shadow: inset 0 0 0 1px;"),
+                    // the plain button still at rest as its base has it, and moved under the hand as this style moves every button
+                    new Implementation<>(Button.INSTANCE, Target.Motion.Transform.INSTANCE, new Answer.Own<Target.Motion.Transform>(
+                            Map.of(State.REST, "transform: translateY(0);", State.HOVER, "transform: translateY(-1px);"))),
+                    new Implementation<>(PlainButton.INSTANCE, Target.Motion.Transform.INSTANCE, new Answer.FromBase<>(Set.of(State.REST))));
         }
     }
 
