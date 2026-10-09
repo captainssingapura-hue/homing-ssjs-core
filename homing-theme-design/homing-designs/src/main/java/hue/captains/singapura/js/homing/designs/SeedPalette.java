@@ -104,17 +104,16 @@ public record SeedPalette(DesignId id, String label, String inspiration, DesignI
 
     /**
      * Cardstock — warm off-white paper: a ground, a lighter sheet to lie on it, a sunk face for what is cut into it.
-     * Flat-morphism's, and the colours the hard cast was chosen against; flat and opaque, so brutalism wears it too.
+     * Cut for flat-morphism, kept as colours alone when that design was retired: a concept more than a style.
      */
     public static final SeedPalette CARDSTOCK = new SeedPalette("cardstock", "Cardstock",
-            "Warm off-white paper — a ground, a sheet to lie on it, and a sunk face cut into it.", HomingFlatMorphism.ID,
+            "Warm off-white paper — a ground, a sheet to lie on it, and a sunk face cut into it.", HomingEditorial.ID,
             new Seeds(CardstockPalette.GROUND, CardstockPalette.SHEET, CardstockPalette.SUNK, CardstockPalette.INK,
                       CardstockPalette.INK, CardstockPalette.INK_2, CardstockPalette.ON_ACCENT, "#A8A69E",
                       CardstockPalette.INK, CardstockPalette.ACCENT, CardstockPalette.ACCENT_PRESS, CardstockPalette.ON_ACCENT, CardstockPalette.HAIR),
             new Seeds(CardstockPalette.GROUND_D, CardstockPalette.SHEET_D, CardstockPalette.SUNK_D, CardstockPalette.INK_D,
                       CardstockPalette.INK_D, CardstockPalette.INK_2_D, CardstockPalette.ON_ACCENT_D, "#5C605C",
-                      CardstockPalette.INK_D, CardstockPalette.ACCENT_D, CardstockPalette.ACCENT_PRESS_D, CardstockPalette.ON_ACCENT_D, CardstockPalette.HAIR_D))
-            .fits(HomingEditorial.ID);
+                      CardstockPalette.INK_D, CardstockPalette.ACCENT_D, CardstockPalette.ACCENT_PRESS_D, CardstockPalette.ON_ACCENT_D, CardstockPalette.HAIR_D));
 
     /**
      * Black marker on white paper — one ink for the text and the lines, a grey for what is said quietly, and ONE RED
