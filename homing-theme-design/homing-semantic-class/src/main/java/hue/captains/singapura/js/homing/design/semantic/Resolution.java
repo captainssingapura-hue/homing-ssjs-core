@@ -9,10 +9,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * What a walk found for a node in a state on a target, and how: the nodes it asked, most precise
- * first, up to the one that answered; the notes on why it walked as it did; and the outcome - the
- * one class the element wears for it, or none.
+ * What a walk found for a node in a state on a target, and how: the nodes it asked, layer by layer,
+ * most precise first, up to the one that answered; the notes on why it walked as it did; and the
+ * outcome - the one class the element wears for it, and what it says, or none.
  *
+ * @param theme   the theme walked: {@code sketchy in harbour}
  * @param query   the node asked for
  * @param state   the state
  * @param target  the target
@@ -20,7 +21,7 @@ import java.util.List;
  * @param steps   every node asked, in order, the last the one that answered when one did
  * @param outcome the class, or why there is none
  */
-public record Resolution(Casting query, State state, Target target, List<String> notes, List<Step> steps, Outcome outcome)
+public record Resolution(String theme, Casting query, State state, Target target, List<String> notes, List<Step> steps, Outcome outcome)
         implements ValueObject {
 
     public Resolution {
@@ -28,19 +29,26 @@ public record Resolution(Casting query, State state, Target target, List<String>
         steps = List.copyOf(steps);
     }
 
-    /** A node asked, and whether the theme answered it. */
-    public record Step(Casting node, boolean answered) implements ValueObject {}
+    /** A node asked of a layer, and what the layer said: {@code -}, {@code answered}, a redirect, its base's. */
+    public record Step(String layer, Casting node, String said) implements ValueObject {}
 
     /** The one class an element wears for it, or why there is none. */
     public sealed interface Outcome extends ValueObject permits Answered, Silent, Unanswered {}
 
-    /** The node that answered, and the class it is worn as. */
-    public record Answered(Casting node, String className) implements Outcome {}
+    /**
+     * The layer and the node that answered, the class it is worn as, and its body.
+     *
+     * @param layer     the style or palette that answered
+     * @param node      the node it answered at
+     * @param className the answering class: the node's, the state's, the target's
+     * @param body      what it says; empty for an answer that says nothing
+     */
+    public record Answered(String layer, Casting node, String className, String body) implements Outcome {}
 
     /** A state no component answers: nothing is worn for it, and the element shows its look at rest. */
     public record Silent() implements Outcome {}
 
-    /** A look at rest that nothing answers, the root included: the theme is incomplete. */
+    /** A look at rest that nothing answers, the roots included: the theme is incomplete. */
     public record Unanswered() implements Outcome {}
 
     /** The class worn, or null when there is none. */
@@ -51,25 +59,29 @@ public record Resolution(Casting query, State state, Target target, List<String>
         var tokens = SemanticTokens.INSTANCE;
         var out = new ArrayList<String>();
         out.add("query    " + tokens.casting(query) + "  " + tokens.state(state) + "  " + tokens.target(target));
+        out.add("theme    " + theme);
         for (String n : notes) out.add("note     " + n);
-        int width = 0;
-        for (Step s : steps) width = Math.max(width, tokens.casting(s.node()).length());
+        int layers = 0, nodes = 0;
+        for (Step s : steps) {
+            layers = Math.max(layers, s.layer().length());
+            nodes = Math.max(nodes, tokens.casting(s.node()).length());
+        }
         for (int i = 0; i < steps.size(); i++) {
             Step s = steps.get(i);
             String node = tokens.casting(s.node());
-            out.add((i == 0 ? "walk     " : "         ") + String.format("%2d. ", i + 1) + node
-                    + " ".repeat(width - node.length() + 2) + (s.answered() ? "answered" : "-"));
+            out.add((i == 0 ? "walk     " : "         ") + String.format("%2d. ", i + 1) + s.layer() + " ".repeat(layers - s.layer().length() + 2)
+                    + node + " ".repeat(nodes - node.length() + 2) + s.said());
         }
         out.add(switch (outcome) {
-            case Answered a -> "result   " + a.className();
-            case Silent s -> "result   (none) - no component answers " + tokens.target(target) + " when " + tokens.state(state)
+            case Answered a -> "result   " + a.className() + " from " + a.layer();
+            case Silent s -> "result   (none) - nothing answers " + tokens.target(target) + " when " + tokens.state(state)
                     + ": nothing is worn for it, and the element shows its look at rest";
-            case Unanswered u -> "result   UNANSWERED - the theme answers " + tokens.target(target) + " at rest nowhere,"
+            case Unanswered u -> "result   UNANSWERED - " + theme + " answers " + tokens.target(target) + " at rest nowhere,"
                     + " not even at the root; a theme answers every target at the root";
         });
         if (outcome instanceof Answered a)
-            out.add("         " + (a.node().equals(query) ? "the theme answers the node itself"
-                    : "the nearest the theme answers: " + a.node() + ", " + (steps.size() - 1) + (steps.size() == 2 ? " step" : " steps") + " up"));
+            out.add("         " + (a.node().equals(query) && steps.size() == 1 ? a.layer() + " answers the node itself"
+                    : "asked " + steps.size() + (steps.size() == 1 ? " time" : " times") + ": " + a.layer() + " answers at " + a.node()));
         return List.copyOf(out);
     }
 }

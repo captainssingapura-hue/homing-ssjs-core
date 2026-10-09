@@ -1,7 +1,13 @@
 package hue.captains.singapura.js.homing.design.semantic;
 
+import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.design.State;
+import hue.captains.singapura.js.homing.design.Target;
+import hue.captains.singapura.js.homing.design.semantic.ResolvingTaxonomy.Button;
+import hue.captains.singapura.js.homing.design.semantic.ResolvingTaxonomy.DangerButton;
+import hue.captains.singapura.js.homing.design.semantic.ResolvingTaxonomy.Go;
+import hue.captains.singapura.js.homing.design.semantic.ResolvingTaxonomy.PlainButton;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -9,11 +15,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.UncheckedIOException;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -21,82 +26,178 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * The resolution against its cases - {@code resolution/cases.txt}, which every resolver of semantic
- * classes runs, the Java one here and the JS one beside it: under a theme's answers, a node, a
- * state and a target resolve to the one class written, to none, or to nothing answered. Then the
- * walk as it is told, the answers refused, and the command line.
+ * classes runs, the Java one here and the JS one beside it: in a theme, a node, a state and a target
+ * resolve to the one class written and the layer that answered it, to none, or to nothing answered.
+ * Then the walk as it is told, the answers refused as they are written, and the command line.
  */
 class ResolutionCasesTest {
 
     private static final Taxonomy TAXONOMY = ResolvingTaxonomy.INSTANCE.read();
+    private static final SemanticTokens TOKENS = SemanticTokens.INSTANCE;
 
     @Test
     void everyCase_resolvesAsWritten() {
         var cases = ResolutionCases.INSTANCE;
-        var report = cases.run(lines("cases.txt"), cases.java(TAXONOMY, ResolutionCasesTest::lines));
-        assertEquals(22, report.cases(), "every case read");
+        var report = cases.run(lines("cases.txt"), cases.java(TAXONOMY, ResolvingThemes.THEMES));
+        assertEquals(32, report.cases(), "every case read");
         assertEquals(List.of(), report.failures(), () -> String.join("\n", report.failures()));
     }
 
     @Test
     void theWalk_isTold_stepByStep() {
-        var tokens = SemanticTokens.INSTANCE;
-        Resolution r = ResolveSemanticClass.INSTANCE.resolve(TAXONOMY, answers("sketch.answers"),
-                tokens.castingOf(TAXONOMY, "plain-button_cancel"), State.REST, tokens.targetOf("color-ink"));
         assertEquals(List.of(
                 "query    plain-button_cancel  rest  color-ink",
-                "walk      1. plain-button_cancel      -",
-                "          2. plain-button_committing  -",
-                "          3. plain-button_doing       -",
-                "          4. plain-button             -",
-                "          5. button_cancel            -",
-                "          6. button_committing        answered",
-                "result   button_committing__color-ink",
-                "         the nearest the theme answers: button as committing, 5 steps up"), r.explain());
+                "theme    sketch in sketch-colours",
+                "walk      1. sketch-colours  plain-button_cancel      -",
+                "          2. sketch-colours  plain-button_committing  -",
+                "          3. sketch-colours  plain-button_doing       -",
+                "          4. sketch-colours  plain-button             -",
+                "          5. sketch-colours  button_cancel            -",
+                "          6. sketch-colours  button_committing        answered",
+                "result   button_committing__color-ink from sketch-colours",
+                "         asked 6 times: sketch-colours answers at button as committing"),
+                resolve("sketch", "plain-button_cancel", State.REST, "color-ink").explain());
+    }
+
+    /** The worn style all the way up first, then its base; a redirect in the base resolved in the style worn. */
+    @Test
+    void theWalk_layerByLayer_aRedirectResolvedInTheStyleWorn() {
+        assertEquals(List.of(
+                "query    floating-pane  rest  shape-corner",
+                "theme    squared in valued-colours",
+                "walk      1. squared  floating-pane  -",
+                "          2. squared  container      -",
+                "          3. squared  root           -",
+                "          4. valued   floating-pane  redirected to danger-button",
+                "          5. squared  danger-button  -",
+                "          6. squared  button         -",
+                "          7. squared  control        answered",
+                "result   control__shape-corner from squared",
+                "         asked 7 times: squared answers at control"),
+                resolve("squared", "floating-pane", State.REST, "shape-corner").explain());
+        var fromBase = resolve("squared", "plain-button", State.REST, "shape-corner");
+        assertEquals(List.of("squared plain-button its base's, from here", "valued plain-button -", "valued button answered"),
+                fromBase.steps().stream().map(s -> s.layer() + " " + TOKENS.casting(s.node()) + " " + s.said()).toList());
+        assertEquals("border-radius: 3px;", ((Resolution.Answered) fromBase.outcome()).body());
     }
 
     @Test
     void theNotes_sayWhyTheWalkIsTheOneItIs() {
-        var tokens = SemanticTokens.INSTANCE;
-        var answers = answers("sketch.answers");
-        Resolution window = ResolveSemanticClass.INSTANCE.resolve(TAXONOMY, answers, tokens.castingOf(TAXONOMY, "floating-pane_window"),
-                State.REST, tokens.targetOf("shape-corner"));
-        assertEquals(List.of("window is a functional role: the part is cast for its look as Standalone"), window.notes());
-        Resolution disabled = ResolveSemanticClass.INSTANCE.resolve(TAXONOMY, answers, tokens.castingOf(TAXONOMY, "danger-button_go"),
-                State.DISABLED, tokens.targetOf("effect-opacity"));
-        assertEquals(List.of("a state is a treatment, common to every role: go is set aside"), disabled.notes());
-        Resolution stray = ResolveSemanticClass.INSTANCE.resolve(TAXONOMY, answers, tokens.castingOf(TAXONOMY, "plain-button_go"),
-                State.REST, tokens.targetOf("shape-corner"));
-        assertEquals(List.of("no slot of the taxonomy casts plain-button as go: no owner can cast it so"), stray.notes());
+        assertEquals(List.of("window is a functional role: the part is cast for its look as Standalone"),
+                resolve("sketch", "floating-pane_window", State.REST, "shape-corner").notes());
+        assertEquals(List.of("a state is a treatment, common to every role: go is set aside"),
+                resolve("sketch", "danger-button_go", State.DISABLED, "effect-opacity").notes());
+        assertEquals(List.of("no slot of the taxonomy casts plain-button as go: no owner can cast it so"),
+                resolve("sketch", "plain-button_go", State.REST, "shape-corner").notes());
     }
 
     @Test
-    void answersRefused_aStateOnARole_andWordsTheTaxonomyHasNot() {
-        var reader = ReadAnswers.INSTANCE;
-        var e = assertThrows(IllegalArgumentException.class, () -> reader.read(TAXONOMY, List.of("danger-button_go disabled color-surface")));
-        assertTrue(e.getMessage().startsWith("line 1: danger-button as go is answered disabled: a state is a treatment"), e.getMessage());
-        assertThrows(IllegalArgumentException.class, () -> reader.read(TAXONOMY, List.of("", "toggle-button rest color-surface")), "no such component");
-        assertThrows(IllegalArgumentException.class, () -> reader.read(TAXONOMY, List.of("button rest colour-surface")), "no such target");
-        assertThrows(IllegalArgumentException.class, () -> reader.read(TAXONOMY, List.of("button pressed color-surface")), "no such state");
-        assertThrows(IllegalArgumentException.class, () -> reader.read(TAXONOMY, List.of("button rest")), "three words");
+    void answersRefused_asTheyAreWritten() {
+        var corner = Target.Shape.Corner.INSTANCE;
+        var go = new Casting(DangerButton.INSTANCE, Go.INSTANCE);
+        assertTrue(refused(() -> new Implementation<>(go, Target.Color.Surface.INSTANCE, new Answer.Own<Target.Color.Surface>(Map.of(State.DISABLED, ""))))
+                .contains("danger-button as go is answered disabled: a state is a treatment"));
+        assertTrue(refused(() -> new Implementation<>(Button.INSTANCE, corner, new Answer.Own<Target.Shape.Corner>(Map.of(State.HOVER, "border-radius: 2px;"))))
+                .contains("shape-corner offers no hover"));
+        assertTrue(refused(() -> new Implementation<>(Button.INSTANCE, corner, new Answer.Own<>("border-width: 1px;")))
+                .contains("shape-corner does not own border-width; it owns border-radius"));
+        assertTrue(refused(() -> new Implementation<>(Button.INSTANCE, corner, new Answer.Own<>("& .label { border-radius: 2px; }")))
+                .contains("is not the element itself"));
+        assertTrue(refused(() -> new Implementation<>(Button.INSTANCE, corner, new Answer.Own<>("border-radius: 2px; & { ")))
+                .contains("is never closed"));
+        assertTrue(refused(() -> new Implementation<>(Button.INSTANCE, Target.Sound.Cue.INSTANCE, new Answer.Own<>("color: red;")))
+                .contains("sound-cue is no CSS target"));
+        assertTrue(refused(() -> new Implementation<>(Button.INSTANCE, corner, new Answer.Redirect<>(Button.INSTANCE))).contains("redirected to itself"));
+        assertTrue(refused(() -> new Answer.Own<Target.Shape.Corner>("border-radius: 2px;").at(State.REST, "border-radius: 3px;")).contains("answered twice"));
+    }
+
+    @Test
+    void themesRefused_asTheyAreDressed() {
+        var palette = ResolvingThemes.ValuedColours.INSTANCE;
+        assertTrue(refused(() -> new Dressed(new Painting(), palette)).contains("a style never answers colour: that is its palette's"));
+        assertTrue(refused(() -> new Dressed(new Baseless(), palette)).contains("asks its base, and baseless has none"));
+        assertTrue(refused(() -> new Dressed(new Twice(), palette)).contains("button shape-corner is answered twice"));
+        assertTrue(refused(() -> new Dressed(new Ouroboros(), palette)).contains("comes back to ouroboros"));
+        var looping = new Dressed(new Looping(), palette);
+        var e = assertThrows(IllegalStateException.class,
+                () -> ResolveSemanticClass.INSTANCE.resolve(TAXONOMY, looping, new Casting(PlainButton.INSTANCE), State.REST, Target.Shape.Corner.INSTANCE));
+        assertEquals("a redirect comes back to plain-button on shape-corner: plain-button > danger-button > plain-button", e.getMessage());
+        assertEquals(List.of(), ResolvingThemes.BY_NAME.get("squared").check(TAXONOMY), "every class the fixture themes answer is one the taxonomy asks");
+        assertEquals(List.of("twice-asked: plain-button_go shape-corner - no casting the taxonomy has walks through it"),
+                new Dressed(new TwiceAsked(), palette).check(TAXONOMY));
+    }
+
+    public record Painting() implements DesignStyle {
+        @Override public List<Implementation<?>> implementations() {
+            return List.of(new Implementation<>(Button.INSTANCE, Target.Color.Surface.INSTANCE, new Answer.Own<>("background-color: red;")));
+        }
+    }
+    public record Baseless() implements DesignStyle {
+        @Override public List<Implementation<?>> implementations() {
+            return List.of(new Implementation<>(Button.INSTANCE, Target.Shape.Corner.INSTANCE, new Answer.FromBase<>()));
+        }
+    }
+    public record Twice() implements DesignStyle {
+        @Override public List<Implementation<?>> implementations() {
+            return List.of(new Implementation<>(Button.INSTANCE, Target.Shape.Corner.INSTANCE, new Answer.Own<>("border-radius: 2px;")),
+                           new Implementation<>(Button.INSTANCE, Target.Shape.Corner.INSTANCE, new Answer.Own<>("border-radius: 3px;")));
+        }
+    }
+    public record Ouroboros() implements DesignStyle, Derives<Ouroboros> {
+        @Override public Ouroboros base() { return this; }
+        @Override public List<Implementation<?>> implementations() { return List.of(); }
+    }
+    public record Looping() implements DesignStyle {
+        @Override public List<Implementation<?>> implementations() {
+            return List.of(new Implementation<>(PlainButton.INSTANCE, Target.Shape.Corner.INSTANCE, new Answer.Redirect<>(DangerButton.INSTANCE)),
+                           new Implementation<>(DangerButton.INSTANCE, Target.Shape.Corner.INSTANCE, new Answer.Redirect<>(PlainButton.INSTANCE)));
+        }
+    }
+    public record TwiceAsked() implements DesignStyle {
+        @Override public List<Implementation<?>> implementations() {
+            return List.of(new Implementation<>(new Casting(PlainButton.INSTANCE, Go.INSTANCE), Target.Shape.Corner.INSTANCE, new Answer.Own<>("border-radius: 1px;")));
+        }
     }
 
     @Test
     void theCommandLine_explainsOneQuery_tabulatesMany_andSaysWhenALookIsUnanswered() {
-        String file = path("sketch.answers");
-        var one = cli("--taxonomy", ResolvingTaxonomy.class.getName(), "--answers", file, "danger-button_go", "rest", "color-surface");
-        assertEquals(0, one.code());
-        assertTrue(one.out().contains("result   danger-button_go__color-surface"), one.out());
-        var table = cli("--taxonomy", ResolvingTaxonomy.class.getName(), "--answers", file, "danger-button", "rest", "*");
+        String taxonomy = ResolvingTaxonomy.class.getName();
+        String[] sketch = {"--style", ResolvingThemes.Sketch.class.getName(), "--palette", ResolvingThemes.SketchColours.class.getName()};
+        var one = cli(join(new String[] {"--taxonomy", taxonomy}, sketch, new String[] {"danger-button_go", "rest", "color-surface"}));
+        assertEquals(0, one.code(), one.err());
+        assertTrue(one.out().contains("result   danger-button_go__color-surface from sketch-colours"), one.out());
+        var table = cli(join(new String[] {"--taxonomy", taxonomy}, sketch, new String[] {"danger-button", "rest", "*"}));
         assertEquals(1, table.code(), "the sketch answers few targets: the rest are unanswered");
-        assertTrue(table.out().contains("rest         shape-corner       danger-button__shape-corner   (0 up)"), table.out());
+        assertTrue(table.out().contains("rest         shape-corner       danger-button__shape-corner   from sketch"), table.out());
         assertTrue(table.out().contains("rest         color-ink          UNANSWERED"), table.out());
-        var list = cli("--taxonomy", ResolvingTaxonomy.class.getName(), "--list", "roles");
+        var squared = cli("--taxonomy", taxonomy, "--style", ResolvingThemes.Squared.class.getName(), "--palette", ResolvingThemes.ValuedColours.class.getName(),
+                "plain-button", "rest", "shape-corner");
+        assertTrue(squared.out().contains("result   button__shape-corner from valued"), squared.out());
+        var flat = cli("--taxonomy", taxonomy, "--style", ResolvingThemes.Squared.class.getName(), "--palette", ResolvingThemes.ValuedColours.class.getName(), "--flatten");
+        assertEquals(0, flat.code(), flat.err());
+        assertTrue(flat.out().contains("/* from squared: control__shape-corner */\n.danger-button__shape-corner {\n    border-radius: 0;\n}\n"), flat.out());
+        var list = cli("--taxonomy", taxonomy, "--list", "roles");
         assertTrue(list.out().contains("shaping   (functional)") && list.out().contains("window   (functional)") && list.out().contains("go\n"), list.out());
-        assertEquals(2, cli("--taxonomy", ResolvingTaxonomy.class.getName(), "--answers", file, "danger-button").code(), "a node, a state and a target");
+        assertEquals(2, cli(join(new String[] {"--taxonomy", taxonomy}, sketch, new String[] {"danger-button"})).code(), "a node, a state and a target");
+        assertEquals(2, cli("--taxonomy", taxonomy, "danger-button", "rest", "shape-corner").code(), "no style, no palette");
+        assertEquals(2, cli("--taxonomy", taxonomy, "--style", ResolvingThemes.SketchColours.class.getName(), "--palette", ResolvingThemes.SketchColours.class.getName(),
+                "button", "rest", "shape-corner").code(), "a palette is no style");
         assertEquals(2, cli("--taxonomy", "no.such.Taxonomy", "--list", "nodes").code());
     }
 
+    private static Resolution resolve(String theme, String node, State state, String target) {
+        return ResolveSemanticClass.INSTANCE.resolve(TAXONOMY, ResolvingThemes.THEMES.apply(theme), TOKENS.castingOf(TAXONOMY, node), state, TOKENS.targetOf(target));
+    }
+
+    private static String refused(org.junit.jupiter.api.function.Executable e) {
+        return assertThrows(IllegalArgumentException.class, e).getMessage();
+    }
+
     private record Run(int code, String out, String err) {}
+
+    private static String[] join(String[]... parts) {
+        return Arrays.stream(parts).flatMap(Arrays::stream).toArray(String[]::new);
+    }
 
     private static Run cli(String... args) {
         var out = new ByteArrayOutputStream();
@@ -105,22 +206,12 @@ class ResolutionCasesTest {
         return new Run(code, out.toString(StandardCharsets.UTF_8).replace("\r\n", "\n"), err.toString(StandardCharsets.UTF_8));
     }
 
-    private static AnswerSet answers(String name) { return ReadAnswers.INSTANCE.read(TAXONOMY, lines(name)); }
-
     private static List<String> lines(String name) {
         try (InputStream in = ResolutionCasesTest.class.getResourceAsStream("/resolution/" + name)) {
             if (in == null) throw new IllegalStateException("no resolution/" + name);
             return new String(in.readAllBytes(), StandardCharsets.UTF_8).lines().toList();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
-        }
-    }
-
-    private static String path(String name) {
-        try {
-            return Path.of(ResolutionCasesTest.class.getResource("/resolution/" + name).toURI()).toString();
-        } catch (URISyntaxException e) {
-            throw new IllegalStateException(e);
         }
     }
 }

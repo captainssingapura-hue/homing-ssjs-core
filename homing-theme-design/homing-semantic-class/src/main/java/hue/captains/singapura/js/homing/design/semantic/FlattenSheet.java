@@ -30,7 +30,8 @@ import java.util.List;
  * </ul>
  *
  * A silence is copied as nothing. A look nothing answers, the root included, has no rule: it is
- * reported, and the sheet is incomplete. Each rule says where its body came from.
+ * reported, and the sheet is incomplete. Each rule says where its body came from - the layer and
+ * the class - unless the worn style or the palette answered the class itself.
  */
 public record FlattenSheet() implements StatelessFunctionalObject {
 
@@ -41,7 +42,7 @@ public record FlattenSheet() implements StatelessFunctionalObject {
         public Flattened { unanswered = List.copyOf(unanswered); }
     }
 
-    public Flattened flatten(Taxonomy taxonomy, AnswerSet answers, String title) {
+    public Flattened flatten(Taxonomy taxonomy, Dressed theme, String title) {
         var tokens = SemanticTokens.INSTANCE;
         var resolver = ResolveSemanticClass.INSTANCE;
         var targets = Target.leaves().stream().filter(t -> t.carrier() == Carrier.CSS).toList();
@@ -57,14 +58,13 @@ public record FlattenSheet() implements StatelessFunctionalObject {
         css.append("\n/* ── looks ── */\n");
         for (Casting c : taxonomy.castings())
             for (Target t : targets) {
-                Resolution r = resolver.resolve(taxonomy, answers, c, State.REST, t);
+                Resolution r = resolver.resolve(taxonomy, theme, c, State.REST, t);
                 if (!(r.outcome() instanceof Resolution.Answered a)) {
                     unanswered.add(tokens.look(c, t));
                     continue;
                 }
-                String body = answers.body(a.node(), State.REST, t);
-                if (body.isBlank()) continue;
-                css.append(rule(tokens.look(c, t), a.className(), normal(body)));
+                if (a.body().isBlank()) continue;
+                css.append(rule(tokens.look(c, t), a, own(t, theme), normal(a.body())));
                 looks++;
                 if (!a.node().equals(c)) copied++;
             }
@@ -76,11 +76,10 @@ public record FlattenSheet() implements StatelessFunctionalObject {
                 for (Target t : targets) {
                     if (!t.states().contains(s)) continue;
                     Casting c = new Casting(leaf);
-                    Resolution r = resolver.resolve(taxonomy, answers, c, s, t);
+                    Resolution r = resolver.resolve(taxonomy, theme, c, s, t);
                     if (!(r.outcome() instanceof Resolution.Answered a)) continue;
-                    String body = answers.body(a.node(), s, t);
-                    if (body.isBlank()) continue;
-                    block.append(rule(tokens.treatment(c, s, t), a.className(), s.selector() + " {\n" + indent(normal(body)) + "\n}"));
+                    if (a.body().isBlank()) continue;
+                    block.append(rule(tokens.treatment(c, s, t), a, own(t, theme), s.selector() + " {\n" + indent(normal(a.body())) + "\n}"));
                     treatments++;
                     if (!a.node().equals(c)) copied++;
                 }
@@ -89,8 +88,15 @@ public record FlattenSheet() implements StatelessFunctionalObject {
         return new Flattened(css.toString(), looks, treatments, copied, unanswered);
     }
 
-    private static String rule(String worn, String from, String body) {
-        return (worn.equals(from) ? "" : "/* from " + from + " */\n") + "." + worn + " {\n" + indent(body) + "\n}\n";
+    /** A rule for the class worn, saying where its body came from unless the identity worn answered it itself. */
+    private static String rule(String worn, Resolution.Answered from, String own, String body) {
+        boolean itself = worn.equals(from.className()) && own.equals(from.layer());
+        return (itself ? "" : "/* from " + from.layer() + ": " + from.className() + " */\n") + "." + worn + " {\n" + indent(body) + "\n}\n";
+    }
+
+    /** The identity asked first for a target: the palette for colour, the worn style for the rest. */
+    private static String own(Target t, Dressed theme) {
+        return t instanceof Target.Color ? theme.palette().token() : theme.style().token();
     }
 
     /** A body as written, each line its own, without the indent it was written at. */

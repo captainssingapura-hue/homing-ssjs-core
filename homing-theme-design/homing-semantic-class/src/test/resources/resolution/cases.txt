@@ -1,43 +1,68 @@
 # The resolution's cases, for every resolver of semantic classes - the Java one and the JS one
-# alike: under the answers named, a node, a state and a target, and the one class worn, "none"
-# when no component treats the state, or "unanswered" when nothing answers the look.
+# alike: in the theme named, a node, a state and a target, and the one class worn with the style
+# or palette that answered it, "none" when nothing treats the state, or "unanswered" when nothing
+# answers the look. The themes are ResolvingThemes'.
 
-answers sketch.answers
+theme sketch
 
 # a look the node answers itself
-danger-button        rest      shape-corner    => danger-button__shape-corner
+danger-button        rest      shape-corner    => danger-button__shape-corner from sketch
 # a look the branch answers
-plain-button         rest      shape-corner    => button__shape-corner
+plain-button         rest      shape-corner    => button__shape-corner from sketch
 # a role the theme does not answer: its lineage at the component, then the component's
-plain-button_cancel  rest      shape-corner    => button__shape-corner
-# a role the theme answers on the component
-danger-button_go     rest      color-surface   => danger-button_go__color-surface
+plain-button_cancel  rest      shape-corner    => button__shape-corner from sketch
+# colour is the palette's: a role the palette answers on the component
+danger-button_go     rest      color-surface   => danger-button_go__color-surface from sketch-colours
 # on its own, the role's answer is not the danger button's
-danger-button        rest      color-surface   => root__color-surface
+danger-button        rest      color-surface   => root__color-surface from sketch-colours
 # a broader role answered at the branch, reached from either button in a role under it
-plain-button_cancel  rest      color-ink       => button_committing__color-ink
-danger-button_go     rest      color-ink       => button_committing__color-ink
+plain-button_cancel  rest      color-ink       => button_committing__color-ink from sketch-colours
+danger-button_go     rest      color-ink       => button_committing__color-ink from sketch-colours
 # on its own the button plays no role: nothing answers its ink, the root included
 danger-button        rest      color-ink       => unanswered
 # a functional role is set aside: the window looks as the pane on its own
-floating-pane_window rest      color-surface   => floating-pane__color-surface
-floating-pane_window rest      shape-corner    => root__shape-corner
+floating-pane_window rest      color-surface   => floating-pane__color-surface from sketch-colours
+floating-pane_window rest      shape-corner    => root__shape-corner from sketch
 # a state is a treatment, common to every role: the role is set aside
-danger-button_go     disabled  effect-opacity  => root__effect-opacity--disabled
-danger-button        disabled  color-surface   => button__color-surface--disabled
+danger-button_go     disabled  effect-opacity  => root__effect-opacity--disabled from sketch
+danger-button        disabled  color-surface   => button__color-surface--disabled from sketch-colours
 # a state nothing treats: nothing is worn for it
 floating-pane        disabled  color-surface   => none
 danger-button        hover     color-surface   => none
 # a branch can be asked too
-button               rest      shape-corner    => button__shape-corner
-root                 rest      color-surface   => root__color-surface
+button               rest      shape-corner    => button__shape-corner from sketch
+root                 rest      color-surface   => root__color-surface from sketch-colours
 
-answers detailed.answers
+theme detailed
 
-# the same tree, a more precise theme: each found where it is answered
-plain-button         rest      shape-corner    => plain-button__shape-corner
-plain-button_cancel  rest      shape-corner    => plain-button__shape-corner
-danger-button_go     rest      shape-corner    => danger-button__shape-corner
-danger-button        disabled  color-surface   => danger-button__color-surface--disabled
-plain-button         disabled  color-surface   => button__color-surface--disabled
-danger-button        rest      color-ink       => root__color-ink
+# written over the sketch: its own answers where it has them, each found where it is answered
+plain-button         rest      shape-corner    => plain-button__shape-corner from detailed
+plain-button_cancel  rest      shape-corner    => plain-button__shape-corner from detailed
+# nothing of its own up the danger button's path: the base's, asked the same way
+danger-button_go     rest      shape-corner    => danger-button__shape-corner from sketch
+danger-button        disabled  color-surface   => danger-button__color-surface--disabled from detailed-colours
+plain-button         disabled  color-surface   => button__color-surface--disabled from detailed-colours
+danger-button        rest      color-ink       => root__color-ink from detailed-colours
+
+theme valued
+
+# a redirect: the floating pane's corner is the danger button's
+floating-pane        rest      shape-corner    => danger-button__shape-corner from valued
+# an answer of its own answers the states it lists; the walk goes on for the rest
+danger-button        hover     shape-shadow    => button__shape-shadow--hover from valued
+danger-button        rest      shape-shadow    => root__shape-shadow from valued
+
+theme squared
+
+# the worn style first, all the way up: every control square, though its base is more precise
+danger-button        rest      shape-corner    => control__shape-corner from squared
+# its base's, from here up: the plain button's corner as the valued has it
+plain-button         rest      shape-corner    => button__shape-corner from valued
+# a redirect in the base, resolved in the style worn: the danger button's corner is squared's
+floating-pane        rest      shape-corner    => control__shape-corner from squared
+# its own rest shadow; the hover it does not answer is its base's
+danger-button        rest      shape-shadow    => button__shape-shadow from squared
+danger-button        hover     shape-shadow    => button__shape-shadow--hover from valued
+# nothing of its own at all: its base's
+danger-button        rest      size-inset      => button__size-inset from valued
+danger-button_go     rest      color-surface   => danger-button_go__color-surface from valued-colours
