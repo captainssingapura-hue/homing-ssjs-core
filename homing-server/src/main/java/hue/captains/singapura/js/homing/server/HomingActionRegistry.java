@@ -67,7 +67,10 @@ public class HomingActionRegistry implements ActionRegistry<RoutingContext> {
         // A group varies with the theme when a design-side renderer owns it and says
         // so; every other group is served once, without a theme, and left alone by a
         // switch.
-        var renderers = themeRegistry.renderers(served);
+        // A group that renders itself is asked first: it is nobody else's.
+        var renderers = new java.util.ArrayList<CssRenderer>();
+        renderers.add(SelfRenderedCssRenderer.INSTANCE);
+        renderers.addAll(themeRegistry.renderers(served));
         java.util.function.Predicate<CssGroup<?>> varies = g -> renderers.stream().anyMatch(r -> r.owns(g) && r.varies(g));
         // The first theme listed is the default: what a sheet requested without
         // ?theme= is rendered under, and what each CSS group module hands the
