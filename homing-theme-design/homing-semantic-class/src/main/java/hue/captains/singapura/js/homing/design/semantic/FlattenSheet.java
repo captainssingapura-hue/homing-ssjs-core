@@ -45,7 +45,7 @@ public record FlattenSheet() implements StatelessFunctionalObject {
     public Flattened flatten(Taxonomy taxonomy, Dressed theme, String title) {
         var tokens = SemanticTokens.INSTANCE;
         var resolver = ResolveSemanticClass.INSTANCE;
-        var targets = Target.leaves().stream().filter(t -> t.carrier() == Carrier.CSS).toList();
+        var targets = tokens.cssLeaves();
         var css = new StringBuilder();
         var unanswered = new ArrayList<String>();
         int looks = 0, treatments = 0, copied = 0;
@@ -54,6 +54,8 @@ public record FlattenSheet() implements StatelessFunctionalObject {
         // the degrees a body may read: numbers the element sets on itself, never inherited
         css.append(Extent.PROPERTY).append('\n');
         for (Growth g : Growth.values()) css.append(g.property()).append('\n');
+        // the colours CSS has no property for - a shadow's, a gradient's: set on the element by its own colour class
+        for (Target t : tokens.leaves()) for (String r : t.registrations()) css.append(r).append('\n');
 
         css.append("\n/* ── looks ── */\n");
         for (Casting c : taxonomy.castings())

@@ -27,15 +27,22 @@ class FlattenSheetTest {
         var flat = flatten("valued");
         assertEquals(List.of(), flat.unanswered(), "every target answered at the root");
         assertEquals(6, TAXONOMY.castings().size(), "four components on their own, Go and Cancel - the window is the pane's own look");
-        assertEquals(6 * 27, flat.looks(), "every casting on every CSS target but the glyph, which the style answers with a silence");
+        assertEquals(6 * 32, flat.looks(), "every casting on every CSS target the semantic classes answer but the glyph, which the style answers with a silence");
         assertEquals(6, flat.treatments(), "the two buttons, each disabled, hovered, and its shadow disabled");
         String css = flat.css();
         assertTrue(css.contains("/* from valued: button__shape-corner */\n.plain-button_cancel__shape-corner {\n    border-radius: 3px;\n}\n"), css);
         assertTrue(css.contains("\n.danger-button__shape-corner {\n    border-radius: 2px;\n}\n"), "answered itself: nothing to say where from");
         assertTrue(css.contains("/* from valued: danger-button__shape-corner */\n.floating-pane__shape-corner {\n    border-radius: 2px;\n}\n"),
                 "a redirect copies the body of the class it resolves to");
-        assertTrue(css.contains("\n.danger-button_go__color-surface {\n    background-color: #c62828;\n}\n"), "the palette's own: nothing to say where from");
-        assertTrue(css.contains("/* from valued-colours: root__color-surface */\n.danger-button__color-surface {\n"), css);
+        assertTrue(css.contains("\n.danger-button_go__color-background {\n    background-color: #c62828; --background-ramp-from: transparent;"),
+                "the palette's own, the whole set: nothing to say where from");
+        assertTrue(css.contains("/* from valued-colours: root__color-background */\n.danger-button__color-background {\n"), css);
+        assertTrue(css.contains("\n.danger-button__color-box-shadow {\n    --box-shadow-cast: #000000; --box-shadow-lit: #ffffff; --box-shadow-glow: #c62828;\n}\n"),
+                "a box's shadow colours, set on the element itself");
+        assertTrue(css.contains("@property --box-shadow-cast { syntax: \"<color>\"; inherits: false; initial-value: transparent; }\n"), "registered at the head");
+        assertTrue(css.contains("@property --background-mark { syntax: \"<color>\"; inherits: false; initial-value: transparent; }\n"));
+        assertTrue(css.contains("color-mix(in srgb, var(--box-shadow-cast) 12%, transparent)"), "the style's shadow reads the palette's cast");
+        assertFalse(css.contains("__color-edge") || css.contains("__shape-rule") || css.contains("__color-surface"), "the old design system's leaves are worn by no semantic class");
         assertFalse(css.contains("floating-pane_window__"), "a functional casting is its component on its own: no class of its own");
         assertFalse(css.contains("__type-glyph"), "a silence is copied as nothing");
         assertTrue(css.contains("/* from valued: button__size-inset */\n.danger-button_go__size-inset {\n"

@@ -37,7 +37,7 @@ public sealed interface Target permits
         Target.Color, Target.Shape, Target.Size, Target.Type, Target.Motion,
         Target.Effect, Target.Affordance, Target.Sound, Target.Asset {
 
-    /** The properties this leaf owns; disjoint from its siblings'. Empty for non-CSS carriers. */
+    /** The properties this leaf owns; disjoint from its siblings', but a superseded leaf's and its successors'. Empty for non-CSS carriers. */
     Set<String> properties();
 
     /** The states the template offers a slot for; always contains {@link State#REST}. */
@@ -55,6 +55,25 @@ public sealed interface Target permits
     /** {@code branch-leaf}, from the type. */
     default String token() { return Trees.targetToken(getClass()); }
 
+    /**
+     * The precise leaves that answer this one's properties in the semantic classes, where this one
+     * is kept only for the old design system, until it retires: {@link Color.Edge},
+     * {@link Color.Surface}, {@link Shape.Rule}. Empty for a leaf the semantic classes answer. A
+     * superseded leaf and its successors are the one exception to disjointness, and this is its
+     * ledger: it only shrinks.
+     */
+    default List<Target> supersededBy() { return List.of(); }
+
+    /**
+     * The colour leaves whose registered colours a body on this leaf may read: a box's shadow is
+     * drawn in the box shadow's colours, a background's gradient and pattern in the background's.
+     * Its geometry is the style's, its colours the palette's; this is where the two meet.
+     */
+    default List<Color> colouredBy() { return List.of(); }
+
+    /** What its registered properties need declared at the head of a sheet; none for a leaf that registers none. */
+    default List<String> registrations() { return List.of(); }
+
     // ── helpers for the leaves ────────────────────────────────────────────
     Set<State> REST_ONLY    = EnumSet.of(State.REST);
     Set<State> INTERACTIVE  = EnumSet.of(State.REST, State.HOVER, State.ACTIVE, State.FOCUS, State.DISABLED,
@@ -68,17 +87,35 @@ public sealed interface Target permits
     // ═════════════════════════════════════════════════════════════════════
     //  Color — what is painted with colour
     // ═════════════════════════════════════════════════════════════════════
-    sealed interface Color extends Target permits Color.Surface, Color.Ink, Color.Edge, Color.Fill, Color.Stroke, Color.Scrollbar {
+    /**
+     * What is painted with colour. Each leaf is a <b>semantic colour</b>: the set of physical
+     * colours one meaning needs, answered as a whole and never mixed. A <b>physical colour</b> is a
+     * slot CSS paints a colour in - a property, or, where CSS gives the slot no property of its own
+     * (a shadow's colours, a gradient's stops), a longhand registered to stand in for it, set on the
+     * element itself and never inherited.
+     */
+    sealed interface Color extends Target permits Color.Surface, Color.Ink, Color.Edge, Color.Fill, Color.Stroke, Color.Scrollbar,
+            Color.Background, Color.Border, Color.Outline, Color.ColumnRule, Color.BoxShadow {
+
+        /** Each registered colour: a colour, on the element itself, transparent until answered. */
+        @Override default List<String> registrations() {
+            return properties().stream().filter(p -> p.startsWith("--")).sorted()
+                    .map(p -> "@property " + p + " { syntax: \"<color>\"; inherits: false; initial-value: transparent; }").toList();
+        }
+
         /**
          * The face an element presents: a colour, and an image layer over it — a
          * wash (a gradient), or a pattern, which is an image with a tile size and
          * a repeat. A gradient is an image in CSS, so it goes where an image goes.
+         * The old design system's: the semantic classes answer its colours with
+         * {@link Background} and its geometry with {@link Shape.Background}.
          */
         record Surface() implements Color, CssGroup<Surface> {
             public static final Surface INSTANCE = new Surface();
             @Override public List<CssClass<Surface>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("background-color", "background-image", "background-size", "background-repeat"); }
             @Override public Set<State> states() { return INTERACTIVE; }
+            @Override public List<Target> supersededBy() { return List.of(Background.INSTANCE, Shape.Background.INSTANCE); }
         }
         /** The colour of what is written on it. */
         record Ink() implements Color, CssGroup<Ink> {
@@ -87,12 +124,16 @@ public sealed interface Target permits
             @Override public Set<String> properties() { return Set.of("color"); }
             @Override public Set<State> states() { return INTERACTIVE; }
         }
-        /** The colour of its border and outline. */
+        /**
+         * The colour of its border and outline. The old design system's: the semantic classes
+         * answer the box's line, the ring of attention and the rules between columns apart.
+         */
         record Edge() implements Color, CssGroup<Edge> {
             public static final Edge INSTANCE = new Edge();
             @Override public List<CssClass<Edge>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("border-color", "outline-color", "column-rule-color"); }
             @Override public Set<State> states() { return INTERACTIVE; }
+            @Override public List<Target> supersededBy() { return List.of(Border.INSTANCE, Outline.INSTANCE, ColumnRule.INSTANCE); }
         }
         /** SVG fill. */
         record Fill() implements Color, CssGroup<Fill> {
@@ -115,30 +156,107 @@ public sealed interface Target permits
             @Override public Set<String> properties() { return Set.of("scrollbar-color"); }
             @Override public Set<State> states() { return REST_ONLY; }
         }
+        /**
+         * A box's background: the ground, and every colour a gradient or a pattern is drawn in on it
+         * - a ramp's three stops and a pattern's marks. One set, since what is drawn over the ground
+         * shows it through; the gradient's and the pattern's geometry is {@link Shape.Background}'s.
+         */
+        record Background() implements Color, CssGroup<Background> {
+            public static final Background INSTANCE = new Background();
+            @Override public List<CssClass<Background>> cssClasses() { return List.of(); }
+            @Override public Set<String> properties() {
+                return Set.of("background-color", "--background-ramp-from", "--background-ramp-via", "--background-ramp-to", "--background-mark");
+            }
+            @Override public Set<State> states() { return INTERACTIVE; }
+        }
+        /** The box's line: its border. */
+        record Border() implements Color, CssGroup<Border> {
+            public static final Border INSTANCE = new Border();
+            @Override public List<CssClass<Border>> cssClasses() { return List.of(); }
+            @Override public Set<String> properties() { return Set.of("border-color"); }
+            @Override public Set<State> states() { return INTERACTIVE; }
+        }
+        /** The ring drawn around a box for attention: on focus, and the keys' marks. */
+        record Outline() implements Color, CssGroup<Outline> {
+            public static final Outline INSTANCE = new Outline();
+            @Override public List<CssClass<Outline>> cssClasses() { return List.of(); }
+            @Override public Set<String> properties() { return Set.of("outline-color"); }
+            @Override public Set<State> states() { return INTERACTIVE; }
+        }
+        /** The rules drawn between a box's columns. */
+        record ColumnRule() implements Color, CssGroup<ColumnRule> {
+            public static final ColumnRule INSTANCE = new ColumnRule();
+            @Override public List<CssClass<ColumnRule>> cssClasses() { return List.of(); }
+            @Override public Set<String> properties() { return Set.of("column-rule-color"); }
+            @Override public Set<State> states() { return INTERACTIVE; }
+        }
+        /**
+         * A box's shadow: the dark it casts, the light on its own lit side or rim, the light it
+         * gives off. CSS has no colour longhand for a shadow, so each is registered; the shadow's
+         * geometry is {@link Shape.Shadow}'s.
+         */
+        record BoxShadow() implements Color, CssGroup<BoxShadow> {
+            public static final BoxShadow INSTANCE = new BoxShadow();
+            @Override public List<CssClass<BoxShadow>> cssClasses() { return List.of(); }
+            @Override public Set<String> properties() { return Set.of("--box-shadow-cast", "--box-shadow-lit", "--box-shadow-glow"); }
+            @Override public Set<State> states() { return INTERACTIVE; }
+        }
     }
 
     // ═════════════════════════════════════════════════════════════════════
     //  Shape — the geometry a design owns
     // ═════════════════════════════════════════════════════════════════════
-    sealed interface Shape extends Target permits Shape.Corner, Shape.Rule, Shape.Shadow, Shape.Clip {
+    sealed interface Shape extends Target permits Shape.Corner, Shape.Rule, Shape.Shadow, Shape.Clip,
+            Shape.Border, Shape.Outline, Shape.Background {
         record Corner() implements Shape, CssGroup<Corner> {
             public static final Corner INSTANCE = new Corner();
             @Override public List<CssClass<Corner>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("border-radius"); }
             @Override public Set<State> states() { return REST_ONLY; }
         }
-        /** Border and outline width and style — the line, not its colour. */
+        /**
+         * Border and outline width and style — the line, not its colour. The old design system's:
+         * the semantic classes answer the box's line and the ring of attention apart.
+         */
         record Rule() implements Shape, CssGroup<Rule> {
             public static final Rule INSTANCE = new Rule();
             @Override public List<CssClass<Rule>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("border-width", "border-style", "outline-width", "outline-style", "outline-offset"); }
             @Override public Set<State> states() { return INTERACTIVE; }   // a line may change with every state: dotted for current, dashed for highlighted
+            @Override public List<Target> supersededBy() { return List.of(Border.INSTANCE, Outline.INSTANCE); }
         }
+        /** A box's shadow, drawn in {@link Color.BoxShadow}'s colours: its offsets, blurs, spreads and insets. */
         record Shadow() implements Shape, CssGroup<Shadow> {
             public static final Shadow INSTANCE = new Shadow();
             @Override public List<CssClass<Shadow>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("box-shadow"); }
             @Override public Set<State> states() { return INTERACTIVE; }   // depth is a state too: a selected or highlighted thing lifts
+            @Override public List<Color> colouredBy() { return List.of(Color.BoxShadow.INSTANCE); }
+        }
+        /** The box's line: its border's width and style. */
+        record Border() implements Shape, CssGroup<Border> {
+            public static final Border INSTANCE = new Border();
+            @Override public List<CssClass<Border>> cssClasses() { return List.of(); }
+            @Override public Set<String> properties() { return Set.of("border-width", "border-style"); }
+            @Override public Set<State> states() { return INTERACTIVE; }
+        }
+        /** The ring drawn around a box for attention: its width, style and offset. */
+        record Outline() implements Shape, CssGroup<Outline> {
+            public static final Outline INSTANCE = new Outline();
+            @Override public List<CssClass<Outline>> cssClasses() { return List.of(); }
+            @Override public Set<String> properties() { return Set.of("outline-width", "outline-style", "outline-offset"); }
+            @Override public Set<State> states() { return INTERACTIVE; }
+        }
+        /**
+         * What is drawn over a box's ground: a gradient or a pattern, drawn in {@link Color.Background}'s
+         * colours, or an image that needs none - its angle, stops, tile, repeat and place.
+         */
+        record Background() implements Shape, CssGroup<Background> {
+            public static final Background INSTANCE = new Background();
+            @Override public List<CssClass<Background>> cssClasses() { return List.of(); }
+            @Override public Set<String> properties() { return Set.of("background-image", "background-size", "background-repeat", "background-position"); }
+            @Override public Set<State> states() { return INTERACTIVE; }
+            @Override public List<Color> colouredBy() { return List.of(Color.Background.INSTANCE); }
         }
         record Clip() implements Shape, CssGroup<Clip> {
             public static final Clip INSTANCE = new Clip();

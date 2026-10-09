@@ -12,26 +12,26 @@ plain-button         rest      shape-corner    => button__shape-corner from sket
 # a role the theme does not answer: its lineage at the component, then the component's
 plain-button_cancel  rest      shape-corner    => button__shape-corner from sketch
 # colour is the palette's: a role the palette answers on the component
-danger-button_go     rest      color-surface   => danger-button_go__color-surface from sketch-colours
+danger-button_go     rest      color-background   => danger-button_go__color-background from sketch-colours
 # on its own, the role's answer is not the danger button's
-danger-button        rest      color-surface   => root__color-surface from sketch-colours
+danger-button        rest      color-background   => root__color-background from sketch-colours
 # a broader role answered at the branch, reached from either button in a role under it
 plain-button_cancel  rest      color-ink       => button_committing__color-ink from sketch-colours
 danger-button_go     rest      color-ink       => button_committing__color-ink from sketch-colours
 # on its own the button plays no role: nothing answers its ink, the root included
 danger-button        rest      color-ink       => unanswered
 # a functional role is set aside: the window looks as the pane on its own
-floating-pane_window rest      color-surface   => floating-pane__color-surface from sketch-colours
+floating-pane_window rest      color-background   => floating-pane__color-background from sketch-colours
 floating-pane_window rest      shape-corner    => root__shape-corner from sketch
 # a state is a treatment, common to every role: the role is set aside
 danger-button_go     disabled  effect-opacity  => root__effect-opacity--disabled from sketch
-danger-button        disabled  color-surface   => button__color-surface--disabled from sketch-colours
+danger-button        disabled  color-background   => button__color-background--disabled from sketch-colours
 # a state nothing treats: nothing is worn for it
-floating-pane        disabled  color-surface   => none
-danger-button        hover     color-surface   => none
+floating-pane        disabled  color-background   => none
+danger-button        hover     color-background   => none
 # a branch can be asked too
 button               rest      shape-corner    => button__shape-corner from sketch
-root                 rest      color-surface   => root__color-surface from sketch-colours
+root                 rest      color-background   => root__color-background from sketch-colours
 
 theme detailed
 
@@ -40,8 +40,8 @@ plain-button         rest      shape-corner    => plain-button__shape-corner fro
 plain-button_cancel  rest      shape-corner    => plain-button__shape-corner from detailed
 # nothing of its own up the danger button's path: the base's, asked the same way
 danger-button_go     rest      shape-corner    => danger-button__shape-corner from sketch
-danger-button        disabled  color-surface   => danger-button__color-surface--disabled from detailed-colours
-plain-button         disabled  color-surface   => button__color-surface--disabled from detailed-colours
+danger-button        disabled  color-background   => danger-button__color-background--disabled from detailed-colours
+plain-button         disabled  color-background   => button__color-background--disabled from detailed-colours
 danger-button        rest      color-ink       => root__color-ink from detailed-colours
 
 theme valued
@@ -65,4 +65,4 @@ danger-button        rest      shape-shadow    => button__shape-shadow from squa
 danger-button        hover     shape-shadow    => button__shape-shadow--hover from valued
 # nothing of its own at all: its base's
 danger-button        rest      size-inset      => button__size-inset from valued
-danger-button_go     rest      color-surface   => danger-button_go__color-surface from valued-colours
+danger-button_go     rest      color-background   => danger-button_go__color-background from valued-colours

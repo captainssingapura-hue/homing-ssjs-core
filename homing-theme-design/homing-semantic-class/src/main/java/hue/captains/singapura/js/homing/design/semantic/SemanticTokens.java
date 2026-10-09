@@ -7,6 +7,7 @@ import hue.captains.singapura.js.homing.component.taxonomy.RoleRoot;
 import hue.captains.singapura.js.homing.component.taxonomy.Root;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxon;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
+import hue.captains.singapura.js.homing.design.Carrier;
 import hue.captains.singapura.js.homing.design.State;
 import hue.captains.singapura.js.homing.design.Target;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
@@ -73,9 +74,13 @@ public record SemanticTokens() implements StatelessFunctionalObject {
         throw new IllegalArgumentException("'" + token + "' is no state; one of " + String.join(", ", states()));
     }
 
-    /** The target leaf a token names: {@code shape-corner}. */
+    /** The target leaf a token names: {@code shape-corner}; refused for a leaf kept only for the old design system. */
     public Target targetOf(String token) {
-        for (Target t : Target.leaves()) if (t.token().equals(token)) return t;
+        for (Target t : leaves()) if (t.token().equals(token)) return t;
+        for (Target t : Target.leaves())
+            if (t.token().equals(token))
+                throw new IllegalArgumentException("'" + token + "' is the old design system's; the semantic classes answer "
+                        + String.join(", ", t.supersededBy().stream().map(Target::token).toList()));
         throw new IllegalArgumentException("'" + token + "' is no target; one of " + String.join(", ", targets()));
     }
 
@@ -86,12 +91,18 @@ public record SemanticTokens() implements StatelessFunctionalObject {
         return out;
     }
 
-    /** Every target leaf's token, in the tree's order. */
+    /** Every target leaf's token the semantic classes answer, in the tree's order. */
     public List<String> targets() {
         var out = new ArrayList<String>();
-        for (Target t : Target.leaves()) out.add(t.token());
+        for (Target t : leaves()) out.add(t.token());
         return out;
     }
+
+    /** The target leaves the semantic classes answer, in the tree's order: every leaf but those kept only for the old design system. */
+    public List<Target> leaves() { return Target.leaves().stream().filter(t -> t.supersededBy().isEmpty()).toList(); }
+
+    /** Of those, the ones a sheet carries: every CSS leaf. */
+    public List<Target> cssLeaves() { return leaves().stream().filter(t -> t.carrier() == Carrier.CSS).toList(); }
 
     private static Taxon componentOf(Taxonomy taxonomy, String token) {
         if (Root.INSTANCE.token().equals(token)) return Root.INSTANCE;

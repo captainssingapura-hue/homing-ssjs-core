@@ -67,11 +67,11 @@ final class ResolvingThemes {
         public static final SketchColours INSTANCE = new SketchColours();
         @Override public List<Implementation<? extends Target.Color>> implementations() {
             return List.of(
-                    rest(Root.INSTANCE, Target.Color.Surface.INSTANCE, ""),
-                    new Implementation<>(new Casting(DangerButton.INSTANCE, Go.INSTANCE), Target.Color.Surface.INSTANCE, new Answer.Own<>("")),
+                    rest(Root.INSTANCE, Target.Color.Background.INSTANCE, ""),
+                    new Implementation<>(new Casting(DangerButton.INSTANCE, Go.INSTANCE), Target.Color.Background.INSTANCE, new Answer.Own<>("")),
                     new Implementation<>(new Casting(Button.INSTANCE, Committing.INSTANCE), Target.Color.Ink.INSTANCE, new Answer.Own<>("")),
-                    rest(FloatingPane.INSTANCE, Target.Color.Surface.INSTANCE, ""),
-                    at(Button.INSTANCE, Target.Color.Surface.INSTANCE, State.DISABLED, ""));
+                    rest(FloatingPane.INSTANCE, Target.Color.Background.INSTANCE, ""),
+                    at(Button.INSTANCE, Target.Color.Background.INSTANCE, State.DISABLED, ""));
         }
     }
 
@@ -91,7 +91,7 @@ final class ResolvingThemes {
         @Override public List<Implementation<? extends Target.Color>> implementations() {
             var all = new ArrayList<Implementation<? extends Target.Color>>(SketchColours.INSTANCE.implementations());
             all.add(rest(Root.INSTANCE, Target.Color.Ink.INSTANCE, ""));
-            all.add(at(DangerButton.INSTANCE, Target.Color.Surface.INSTANCE, State.DISABLED, ""));
+            all.add(at(DangerButton.INSTANCE, Target.Color.Background.INSTANCE, State.DISABLED, ""));
             return List.copyOf(all);
         }
     }
@@ -101,7 +101,10 @@ final class ResolvingThemes {
         @Override public List<Implementation<?>> implementations() {
             return List.of(
                     rest(Root.INSTANCE, Target.Shape.Corner.INSTANCE, "border-radius: 0;"),
-                    rest(Root.INSTANCE, Target.Shape.Rule.INSTANCE, "border-width: 0; border-style: solid;"),
+                    rest(Root.INSTANCE, Target.Shape.Border.INSTANCE, "border-width: 0; border-style: solid;"),
+                    rest(Root.INSTANCE, Target.Shape.Outline.INSTANCE, "outline-width: 0; outline-style: none; outline-offset: 0;"),
+                    rest(Root.INSTANCE, Target.Shape.Background.INSTANCE,
+                            "background-image: none; background-size: auto; background-repeat: repeat; background-position: 0% 0%;"),
                     rest(Root.INSTANCE, Target.Shape.Shadow.INSTANCE, "box-shadow: none;"),
                     rest(Root.INSTANCE, Target.Shape.Clip.INSTANCE, "clip-path: none;"),
                     rest(Root.INSTANCE, Target.Size.Inset.INSTANCE, "padding-block: 0; padding-inline: 0;"),
@@ -134,7 +137,7 @@ final class ResolvingThemes {
                     new Implementation<>(FloatingPane.INSTANCE, Target.Shape.Corner.INSTANCE, new Answer.Redirect<>(DangerButton.INSTANCE)),
                     at(Control.INSTANCE, Target.Effect.Opacity.INSTANCE, State.DISABLED, "opacity: .45;"),
                     new Implementation<>(Button.INSTANCE, Target.Shape.Shadow.INSTANCE,
-                            new Answer.Own<Target.Shape.Shadow>(Map.of(State.HOVER, "box-shadow: 0 6px 16px rgba(0, 0, 0, .12);",
+                            new Answer.Own<Target.Shape.Shadow>(Map.of(State.HOVER, "box-shadow: 0 6px 16px color-mix(in srgb, var(--box-shadow-cast) 12%, transparent);",
                                                                      State.DISABLED, "box-shadow: none;"))));
         }
     }
@@ -143,14 +146,17 @@ final class ResolvingThemes {
         public static final ValuedColours INSTANCE = new ValuedColours();
         @Override public List<Implementation<? extends Target.Color>> implementations() {
             return List.of(
-                    rest(Root.INSTANCE, Target.Color.Surface.INSTANCE, "background-color: transparent;"),
+                    rest(Root.INSTANCE, Target.Color.Background.INSTANCE, ground("transparent")),
                     rest(Root.INSTANCE, Target.Color.Ink.INSTANCE, "color: inherit;"),
-                    rest(Root.INSTANCE, Target.Color.Edge.INSTANCE, "border-color: currentColor;"),
+                    rest(Root.INSTANCE, Target.Color.Border.INSTANCE, "border-color: currentColor;"),
+                    rest(Root.INSTANCE, Target.Color.Outline.INSTANCE, "outline-color: currentColor;"),
+                    rest(Root.INSTANCE, Target.Color.ColumnRule.INSTANCE, "column-rule-color: currentColor;"),
                     rest(Root.INSTANCE, Target.Color.Fill.INSTANCE, "fill: currentColor;"),
                     rest(Root.INSTANCE, Target.Color.Stroke.INSTANCE, "stroke: none;"),
                     rest(Root.INSTANCE, Target.Color.Scrollbar.INSTANCE, "scrollbar-color: auto;"),
-                    new Implementation<>(new Casting(DangerButton.INSTANCE, Go.INSTANCE), Target.Color.Surface.INSTANCE,
-                            new Answer.Own<>("background-color: #c62828;")));
+                    rest(Root.INSTANCE, Target.Color.BoxShadow.INSTANCE, "--box-shadow-cast: #000000; --box-shadow-lit: #ffffff; --box-shadow-glow: #c62828;"),
+                    new Implementation<>(new Casting(DangerButton.INSTANCE, Go.INSTANCE), Target.Color.Background.INSTANCE,
+                            new Answer.Own<>(ground("#c62828"))));
         }
     }
 
@@ -163,6 +169,12 @@ final class ResolvingThemes {
                     new Implementation<>(PlainButton.INSTANCE, Target.Shape.Corner.INSTANCE, new Answer.FromBase<>()),
                     rest(Button.INSTANCE, Target.Shape.Shadow.INSTANCE, "box-shadow: inset 0 0 0 1px;"));
         }
+    }
+
+    /** A plain ground: its colour, and nothing drawn on it - every colour of the set said. */
+    private static String ground(String colour) {
+        return "background-color: " + colour + "; --background-ramp-from: transparent; --background-ramp-via: transparent;"
+                + " --background-ramp-to: transparent; --background-mark: transparent;";
     }
 
     private static <T extends Target> Implementation<T> rest(Taxon node, T target, String body) {

@@ -3,7 +3,6 @@ package hue.captains.singapura.js.homing.design.semantic;
 import hue.captains.singapura.js.homing.component.taxonomy.ComponentNode;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.design.Target;
-import hue.captains.singapura.js.homing.design.Trees;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.util.ArrayList;
@@ -18,9 +17,9 @@ import java.util.List;
  */
 public record DeriveSemanticClasses() implements StatelessFunctionalObject {
 
-    /** Over every leaf of the target tree. */
+    /** Over every leaf of the target tree the semantic classes answer: the old design system's alone set aside. */
     public List<SemanticClass<Target, ComponentNode>> derive(Taxonomy taxonomy) {
-        return derive(taxonomy, Trees.targetLeaves());
+        return derive(taxonomy, SemanticTokens.INSTANCE.leaves());
     }
 
     /** Over the target leaves given. */

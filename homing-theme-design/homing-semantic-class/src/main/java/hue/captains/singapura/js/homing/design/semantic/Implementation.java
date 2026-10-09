@@ -11,8 +11,9 @@ import java.util.Objects;
 /**
  * One semantic class a style or a palette implements: a node of the taxonomy - a casting - a
  * target, and the answer, typed by the target so the two cannot part. Refused as it is written: a
- * state the target offers no slot for, a state answered on a role (a state is a treatment, common
- * to every role), a body its target cannot say, and a class redirected to itself.
+ * target kept only for the old design system, a state the target offers no slot for, a state
+ * answered on a role (a state is a treatment, common to every role), a body its target cannot say
+ * ({@link AnswerBody}), and a class redirected to itself.
  *
  * @param node   the casting answered: a component or a branch on its own, or a component in a role
  * @param target the target leaf
@@ -27,6 +28,9 @@ public record Implementation<T extends Target>(Casting node, T target, Answer<T>
         Objects.requireNonNull(answer, "Implementation.answer");
         var tokens = SemanticTokens.INSTANCE;
         String where = tokens.casting(node) + " " + target.token();
+        if (!target.supersededBy().isEmpty())
+            throw new IllegalArgumentException(where + ": " + target.token() + " is the old design system's; the semantic classes answer "
+                    + String.join(", ", target.supersededBy().stream().map(Target::token).toList()));
         if (answer instanceof Answer.Own<T> own)
             own.bodies().forEach((state, body) -> {
                 if (!target.states().contains(state))

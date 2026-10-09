@@ -76,7 +76,7 @@ public record ResolveCli() implements StatelessFunctionalObject {
             var tokens = SemanticTokens.INSTANCE;
             Casting node = tokens.castingOf(taxonomy, rest.get(0));
             List<State> states = "*".equals(rest.get(1)) ? List.of(State.values()) : List.of(tokens.stateOf(rest.get(1)));
-            List<Target> targets = "*".equals(rest.get(2)) ? Target.leaves() : List.of(tokens.targetOf(rest.get(2)));
+            List<Target> targets = "*".equals(rest.get(2)) ? tokens.leaves() : List.of(tokens.targetOf(rest.get(2)));
             var resolver = ResolveSemanticClass.INSTANCE;
             if (states.size() == 1 && targets.size() == 1) {
                 Resolution r = resolver.resolve(taxonomy, theme, node, states.get(0), targets.get(0));

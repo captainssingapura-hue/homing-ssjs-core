@@ -105,15 +105,20 @@ public final class Trees {
         for (Class<?> p : permitted) walk(p, out);
     }
 
-    /** The sealed tree's guard: within a branch, no property is owned twice. */
+    /**
+     * The sealed tree's guard: within a branch, no property is owned twice - but by a leaf kept for
+     * the old design system and a leaf that supersedes it ({@link Target#supersededBy()}).
+     */
     public static List<String> propertyCollisions() {
         var out = new ArrayList<String>();
         for (Class<?> branch : Target.class.getPermittedSubclasses()) {
-            var seen = new HashMap<String, String>();
+            var seen = new HashMap<String, Target>();
             for (Class<?> leaf : branch.getPermittedSubclasses()) {
-                for (String p : targetInstance(leaf).properties()) {
-                    String prior = seen.put(p, leaf.getSimpleName());
-                    if (prior != null) out.add(branch.getSimpleName() + ": " + p + " owned by " + prior + " and " + leaf.getSimpleName());
+                Target t = targetInstance(leaf);
+                for (String p : t.properties()) {
+                    Target prior = seen.putIfAbsent(p, t);
+                    if (prior != null && !prior.supersededBy().contains(t) && !t.supersededBy().contains(prior))
+                        out.add(branch.getSimpleName() + ": " + p + " owned by " + prior.getClass().getSimpleName() + " and " + leaf.getSimpleName());
                 }
             }
         }

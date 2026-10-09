@@ -35,6 +35,29 @@ class TreesTest {
         }
     }
 
+    /**
+     * The precise vocabulary beside the old: the leaves kept for the old design system name the
+     * leaves the semantic classes answer instead, and that ledger only shrinks. A shadow and a
+     * background are drawn in their own colours, registered where CSS has no property for them.
+     */
+    @Test
+    void theOldLeaves_nameTheirSuccessors_andTheLedgerOnlyShrinks() {
+        var superseded = Target.leaves().stream().filter(t -> !t.supersededBy().isEmpty())
+                .map(t -> t.token() + " > " + t.supersededBy().stream().map(Target::token).toList()).toList();
+        assertEquals(List.of("color-surface > [color-background, shape-background]",
+                             "color-edge > [color-border, color-outline, color-column-rule]",
+                             "shape-rule > [shape-border, shape-outline]"), superseded);
+        assertEquals(List.of(Target.Color.BoxShadow.INSTANCE), Target.Shape.Shadow.INSTANCE.colouredBy());
+        assertEquals(List.of(Target.Color.Background.INSTANCE), Target.Shape.Background.INSTANCE.colouredBy());
+        assertEquals(List.of("@property --box-shadow-cast { syntax: \"<color>\"; inherits: false; initial-value: transparent; }",
+                             "@property --box-shadow-glow { syntax: \"<color>\"; inherits: false; initial-value: transparent; }",
+                             "@property --box-shadow-lit { syntax: \"<color>\"; inherits: false; initial-value: transparent; }"),
+                Target.Color.BoxShadow.INSTANCE.registrations());
+        assertEquals(List.of(), Target.Color.Border.INSTANCE.registrations(), "border-color is CSS's own: nothing to register");
+        assertEquals("color-box-shadow", Target.Color.BoxShadow.INSTANCE.token());
+        assertEquals("color-column-rule", Target.Color.ColumnRule.INSTANCE.token());
+    }
+
     @Test
     void targetTokensCarryTheBranch() {
         assertEquals("color-surface",    Target.Color.Surface.INSTANCE.token());
