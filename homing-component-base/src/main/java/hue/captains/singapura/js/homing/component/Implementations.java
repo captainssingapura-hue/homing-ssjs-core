@@ -37,7 +37,10 @@ import java.util.Set;
  *       the branch.</li>
  *   <li><b>Composed as declared.</b> The leaves a leaf's module imports are its parts' - no more,
  *       no fewer. A part whose component is not implemented anywhere in the closure is realized by
- *       its owner inline, so its own parts are the owner's to import in its stead.</li>
+ *       its owner inline, so its own parts are the owner's to import in its stead. A part's own
+ *       parts the owner may also import, to make them and hand them in: a button holding an icon
+ *       need not know which icon, its owner does. A module that implements nothing is code its
+ *       importers run, so the leaves it imports are theirs.</li>
  * </ul>
  */
 public record Implementations() {
@@ -115,14 +118,17 @@ public record Implementations() {
         var expected = new LinkedHashMap<Component<?>, String>();   // a leaf → the part that calls for it
         expect(taxonomy, leaf, "", leaves, new HashSet<>(List.of(leaf)), expected);
         expected.remove(leaf);   // a component holding more of itself imports nothing for it
-        var imported = new LinkedHashMap<Component<?>, EsModule<?>>();
+        var handed = new HashSet<Component<?>>();   // the leaves its parts hold, at any depth: the owner may make them and hand them in
+        held(taxonomy, leaf, new HashSet<>(List.of(leaf)), handed);
+        var imported = new LinkedHashMap<Component<?>, String>();   // a leaf → the module it came from, and through which helper
         var lineage = taxonomy.fallback(leaf);
         for (var key : m.imports().getAllImports().keySet()) {
-            if (!(key instanceof EsModule<?> dep) || dep == m || !(dep instanceof Impl impl)) continue;
+            if (!(key instanceof EsModule<?> dep) || dep == m) continue;
+            if (!(dep instanceof Impl impl)) { helped(dep, dep, new HashSet<>(List.of(m, dep)), imported); continue; }
             Taxon anchor;
             try { anchor = impl.anchor(); } catch (IllegalStateException e) { continue; }
             switch (anchor) {
-                case Component<?> c -> imported.put(c, dep);
+                case Component<?> c -> imported.put(c, dep.getClass().getSimpleName());
                 case ComponentBranch b -> {
                     if (!lineage.contains(b))
                         problems.add(who + " imports the base of " + simple(b) + ", a branch it is not under");
@@ -130,11 +136,28 @@ public record Implementations() {
             }
         }
         for (var e : imported.entrySet())
-            if (!expected.containsKey(e.getKey()))
-                problems.add(who + " imports " + simple(e.getKey()) + " (" + e.getValue().getClass().getSimpleName() + "), which none of its parts declares");
+            if (!expected.containsKey(e.getKey()) && !handed.contains(e.getKey()))
+                problems.add(who + " imports " + simple(e.getKey()) + " (" + e.getValue() + "), which none of its parts declares");
         for (var e : expected.entrySet())
             if (!imported.containsKey(e.getKey()))
                 problems.add(who + " never imports " + simple(e.getKey()) + ", which its part " + e.getValue() + " calls for");
+    }
+
+    /** The leaves a module that implements nothing imports, through any such modules it imports in turn: its importer's, since it is the importer's code. */
+    private static void helped(EsModule<?> helper, EsModule<?> via, Set<EsModule<?>> seen, Map<Component<?>, String> out) {
+        for (var key : helper.imports().getAllImports().keySet()) {
+            if (!(key instanceof EsModule<?> dep) || !seen.add(dep)) continue;
+            if (!(dep instanceof Impl impl)) { helped(dep, via, seen, out); continue; }
+            Taxon anchor;
+            try { anchor = impl.anchor(); } catch (IllegalStateException e) { continue; }
+            if (anchor instanceof Component<?> c) out.putIfAbsent(c, dep.getClass().getSimpleName() + ", through " + via.getClass().getSimpleName());
+        }
+    }
+
+    /** Every leaf a component's parts hold, at any depth, realized or not. */
+    private static void held(Taxonomy taxonomy, Component<?> owner, Set<Component<?>> seen, Set<Component<?>> out) {
+        for (Part<?, ?> p : taxonomy.partsOf(owner))
+            if (seen.add(p.base())) { out.add(p.base()); held(taxonomy, p.base(), seen, out); }
     }
 
     /** The implemented leaves a component's parts call for, through every part whose own component nothing implements. */

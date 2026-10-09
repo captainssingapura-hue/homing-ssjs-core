@@ -32,6 +32,14 @@ A row of actions.
 
 A question put to the user in a window of its own.
 
+## IconButton
+
+A button whose face is an icon.
+
+## Strip
+
+A row that holds a button to add with.
+
 ## Stray
 
 A control the house never reads.

@@ -73,6 +73,17 @@ class ImplementationsTest {
                            ComponentPartDSL.INSTANCE.part(Icon.INSTANCE).as(Symbol.INSTANCE).one());
         }
     }
+    /** A button whose face is an icon its owner makes and hands in; a strip that holds one. */
+    public record IconButton() implements Component<Button> {
+        public static final IconButton INSTANCE = new IconButton();
+        @Override public Button parent() { return Button.INSTANCE; }
+        @Override public List<Slot<?>> parts() { return List.of(ComponentPartDSL.INSTANCE.part(Icon.INSTANCE).as(Symbol.INSTANCE).one()); }
+    }
+    public record Strip() implements Component<Container> {
+        public static final Strip INSTANCE = new Strip();
+        @Override public Container parent() { return Container.INSTANCE; }
+        @Override public List<Slot<?>> parts() { return List.of(ComponentPartDSL.INSTANCE.part(IconButton.INSTANCE).as(Act.INSTANCE).optional()); }
+    }
     /** Declared, but not to the reader. */
     public record Stray() implements Component<Control> {
         public static final Stray INSTANCE = new Stray();
@@ -87,7 +98,7 @@ class ImplementationsTest {
     public record Symbol() implements Role<Doing> { public static final Symbol INSTANCE = new Symbol(); @Override public Doing parent() { return Doing.INSTANCE; } }
 
     private static final Taxonomy HOUSE = new ReadTaxonomy().read(
-            List.of(PlainButton.INSTANCE, DangerButton.INSTANCE, Icon.INSTANCE, Bar.INSTANCE, Dialog.INSTANCE),
+            List.of(PlainButton.INSTANCE, DangerButton.INSTANCE, Icon.INSTANCE, Bar.INSTANCE, Dialog.INSTANCE, IconButton.INSTANCE, Strip.INSTANCE),
             List.of(Act.INSTANCE, Acts.INSTANCE, Symbol.INSTANCE));
 
     // ── the implementations ──────────────────────────────────────────────
@@ -119,6 +130,49 @@ class ImplementationsTest {
                     .build();
         }
         @Override public ExportsOf<DialogModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new Dialog())); }
+    }
+
+    public record IconButtonModule() implements DomModule<IconButtonModule>, ImplFor<ImplementationsTest.IconButton> {
+        public static final IconButtonModule INSTANCE = new IconButtonModule();
+        public record IconButton() implements ElementComponent<IconButtonModule> { @Override public String tag() { return "button"; } }
+        @Override public ImportsFor<IconButtonModule> imports() {
+            return ImportsFor.<IconButtonModule>builder()
+                    .add(new ModuleImports<>(List.of(new ButtonModule.Button()), ButtonModule.INSTANCE))
+                    .add(new ModuleImports<>(List.of(new IconModule.Icon()), IconModule.INSTANCE))
+                    .build();
+        }
+        @Override public ExportsOf<IconButtonModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new IconButton())); }
+    }
+    /** The strip makes the icon its button holds, and hands it in. */
+    public record StripModule() implements DomModule<StripModule>, ImplFor<ImplementationsTest.Strip> {
+        public static final StripModule INSTANCE = new StripModule();
+        public record Strip() implements BranchComponent<StripModule> {}
+        @Override public ImportsFor<StripModule> imports() {
+            return ImportsFor.<StripModule>builder()
+                    .add(new ModuleImports<>(List.of(new IconButtonModule.IconButton()), IconButtonModule.INSTANCE))
+                    .add(new ModuleImports<>(List.of(new IconModule.Icon()), IconModule.INSTANCE))
+                    .build();
+        }
+        @Override public ExportsOf<StripModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new Strip())); }
+    }
+    /** Code shared by whoever imports it, implementing nothing: the bar's buttons, made in one place. */
+    public record BarHelperModule() implements DomModule<BarHelperModule> {
+        public static final BarHelperModule INSTANCE = new BarHelperModule();
+        public record BarHelper() implements Exportable._Class<BarHelperModule> {}
+        @Override public ImportsFor<BarHelperModule> imports() { return ImportsFor.<BarHelperModule>builder().add(new ModuleImports<>(List.of(new PlainButtonModule.PlainButton()), PlainButtonModule.INSTANCE)).build(); }
+        @Override public ExportsOf<BarHelperModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new BarHelper())); }
+    }
+    /** The dialog that realizes its bar through the helper. */
+    public record HelpedDialogModule() implements DomModule<HelpedDialogModule>, ImplFor<ImplementationsTest.Dialog> {
+        public static final HelpedDialogModule INSTANCE = new HelpedDialogModule();
+        public record Dialog() implements BranchComponent<HelpedDialogModule> {}
+        @Override public ImportsFor<HelpedDialogModule> imports() {
+            return ImportsFor.<HelpedDialogModule>builder()
+                    .add(new ModuleImports<>(List.of(new BarHelperModule.BarHelper()), BarHelperModule.INSTANCE))
+                    .add(new ModuleImports<>(List.of(new IconModule.Icon()), IconModule.INSTANCE))
+                    .build();
+        }
+        @Override public ExportsOf<HelpedDialogModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new Dialog())); }
     }
 
     // ── the refused ──────────────────────────────────────────────────────
@@ -197,6 +251,34 @@ class ImplementationsTest {
             return ImportsFor.<NoButtons>builder().add(new ModuleImports<>(List.of(new IconModule.Icon()), IconModule.INSTANCE)).build();
         }
         @Override public ExportsOf<NoButtons> exports() { return new ExportsOf<>(this, List.of(new Dialog())); }
+    }
+
+    @Test
+    void aPartsOwnPartsTheOwnerMayMakeAndHandIn() {
+        assertEquals(List.of(), check(ButtonModule.INSTANCE, IconModule.INSTANCE, IconButtonModule.INSTANCE, StripModule.INSTANCE),
+                "the strip imports the icon its button holds: it makes it, the button holds whichever it is handed");
+        assertEquals(List.of("StripModule (Strip) imports DangerButton (DangerButtonModule), which none of its parts declares"),
+                check(ButtonModule.INSTANCE, IconModule.INSTANCE, IconButtonModule.INSTANCE, new GreedyStrip()).stream()
+                        .map(p -> p.replace("GreedyStrip", "StripModule")).toList(),
+                "but nothing its parts do not hold");
+    }
+
+    /** The strip with a button none of its parts holds. */
+    private record GreedyStrip() implements DomModule<GreedyStrip>, ImplFor<ImplementationsTest.Strip> {
+        public record Strip() implements BranchComponent<GreedyStrip> {}
+        @Override public ImportsFor<GreedyStrip> imports() {
+            return ImportsFor.<GreedyStrip>builder()
+                    .add(new ModuleImports<>(List.of(new IconButtonModule.IconButton()), IconButtonModule.INSTANCE))
+                    .add(new ModuleImports<>(List.of(new DangerButtonModule.DangerButton()), DangerButtonModule.INSTANCE))
+                    .build();
+        }
+        @Override public ExportsOf<GreedyStrip> exports() { return new ExportsOf<>(this, List.of(new Strip())); }
+    }
+
+    @Test
+    void aModuleThatImplementsNothing_isItsImportersCode() {
+        assertEquals(List.of(), check(ButtonModule.INSTANCE, PlainButtonModule.INSTANCE, IconModule.INSTANCE, BarHelperModule.INSTANCE, HelpedDialogModule.INSTANCE),
+                "the dialog's bar is realized in a helper it imports: the helper's plain button is the dialog's");
     }
 
     @Test
