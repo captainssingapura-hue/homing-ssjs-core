@@ -75,6 +75,24 @@ class FlattenSheetTest {
         assertTrue(css.contains("/* from valued: button__shape-shadow--hover */\n.plain-button__shape-shadow--hover {\n"), "the hover it leaves is its base's");
     }
 
+    /** A glyph is drawn on ::before: its body nested there, at rest and in a state alike. */
+    public record Glyphed() implements DesignStyle, Derives<ResolvingThemes.Valued> {
+        @Override public ResolvingThemes.Valued base() { return ResolvingThemes.Valued.INSTANCE; }
+        @Override public List<Implementation<?>> implementations() {
+            return List.of(new Implementation<>(ResolvingTaxonomy.Button.INSTANCE, hue.captains.singapura.js.homing.design.Target.Type.Glyph.INSTANCE,
+                    new Answer.Own<hue.captains.singapura.js.homing.design.Target.Type.Glyph>("content: \"✕\";")
+                            .at(hue.captains.singapura.js.homing.design.State.PRESSED, "content: \"✔\";")));
+        }
+    }
+
+    @Test
+    void aTargetPaintedOnAPseudoElement_isWrittenThere() {
+        String css = FlattenSheet.INSTANCE.flatten(TAXONOMY, new Dressed(new Glyphed(), ResolvingThemes.ValuedColours.INSTANCE), "glyphed").css();
+        assertTrue(css.contains("/* from glyphed: button__type-glyph */\n.plain-button__type-glyph {\n    &::before {\n        content: \"✕\";\n    }\n}\n"), css);
+        assertTrue(css.contains(".plain-button__type-glyph--pressed {\n    &[aria-pressed=\"true\"] {\n        &::before {\n            content: \"✔\";\n        }\n    }\n}\n"),
+                "in a state: the state's selector, then the pseudo-element");
+    }
+
     @Test
     void aLookNothingAnswers_isReported_andHasNoRule() {
         var flat = flatten("sketch");

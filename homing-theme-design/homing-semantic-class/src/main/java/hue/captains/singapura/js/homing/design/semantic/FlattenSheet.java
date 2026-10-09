@@ -63,7 +63,7 @@ public record FlattenSheet() implements StatelessFunctionalObject {
                     continue;
                 }
                 if (a.body().isBlank()) continue;
-                css.append(rule(tokens.look(c, t), a, own(t, theme), normal(a.body())));
+                css.append(rule(tokens.look(c, t), a, own(t, theme), drawn(t, normal(a.body()))));
                 looks++;
                 if (!a.node().equals(c)) copied++;
             }
@@ -79,7 +79,7 @@ public record FlattenSheet() implements StatelessFunctionalObject {
                 current = s;
             }
             var a = (Resolution.Answered) resolver.resolve(taxonomy, theme, c, s, t).outcome();
-            css.append(rule(tokens.treatment(c, s, t), a, own(t, theme), s.selector() + " {\n" + indent(normal(a.body())) + "\n}"));
+            css.append(rule(tokens.treatment(c, s, t), a, own(t, theme), s.selector() + " {\n" + indent(drawn(t, normal(a.body()))) + "\n}"));
             treatments++;
             if (!a.node().equals(c)) copied++;
         }
@@ -95,6 +95,11 @@ public record FlattenSheet() implements StatelessFunctionalObject {
     /** The identity asked first for a target: the palette for colour, the worn style for the rest. */
     private static String own(Target t, Dressed theme) {
         return t instanceof Target.Color ? theme.palette().token() : theme.style().token();
+    }
+
+    /** A body where its target draws: on the element, or nested on the pseudo-element the target paints on - a glyph on {@code ::before}. */
+    private static String drawn(Target t, String body) {
+        return t.pseudo() == null ? body : "&" + t.pseudo() + " {\n" + indent(body) + "\n}";
     }
 
     /** A body as written, each line its own, without the indent it was written at. */

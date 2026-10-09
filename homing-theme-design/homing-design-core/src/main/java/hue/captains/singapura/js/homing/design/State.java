@@ -44,6 +44,8 @@ public enum State {
     SELECTED("&[aria-selected=\"true\"]"),
     CURRENT("&[aria-current]"),
     CHECKED("&:checked, &[aria-checked=\"true\"]"),
+    /** On, for a button that stays pressed until pressed again: a toggle. */
+    PRESSED("&[aria-pressed=\"true\"]"),
     INVALID("&:invalid, &[aria-invalid=\"true\"]"),
     EXPANDED("&[aria-expanded=\"true\"]"),
     /** Lit from elsewhere — a search hit, the rows a chart points at. No aria state says it, so the slot reads {@code data-highlighted}. */
