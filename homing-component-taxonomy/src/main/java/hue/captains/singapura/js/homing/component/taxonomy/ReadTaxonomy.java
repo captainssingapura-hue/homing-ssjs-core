@@ -2,8 +2,6 @@ package hue.captains.singapura.js.homing.component.taxonomy;
 
 import hue.captains.singapura.js.homing.component.taxonomy.TaxonomyProblem.Rule;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
-import hue.captains.singapura.tao.ontology.enforcer.ContractViolation;
-import hue.captains.singapura.tao.ontology.enforcer.OntologyEnforcer;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -24,7 +22,6 @@ import java.util.Set;
  *
  * <ul>
  *   <li>a branch, a component or a role with no parent;</li>
- *   <li>a node with state, as jOntology judges a stateless functional object;</li>
  *   <li>a slot played by nothing or in no role, or a role a component names twice;</li>
  *   <li>a component that is a part of itself, however deep - whatever the cardinalities on the
  *       way, since a cycle is refused on the types;</li>
@@ -39,6 +36,13 @@ import java.util.Set;
  *
  * <p>What the levels already make impossible it never checks: a chain of parents that comes back
  * on itself, a second root, a tree deeper than level 8.</p>
+ *
+ * <p>Nor does it judge whether a node holds state. That every node is a stateless functional
+ * object is held at build time, by the tests of whoever declares the nodes, with jOntology's
+ * enforcer over what was read - its {@link Taxonomy#branches() branches}, {@link
+ * Taxonomy#components() components}, {@link Taxonomy#roleBranches() role branches} and {@link
+ * Taxonomy#roles() roles}. A taxonomy is read wherever it is served, and a running server needs
+ * no enforcer.</p>
  */
 public record ReadTaxonomy() implements StatelessFunctionalObject {
 
@@ -99,7 +103,6 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
         var roleBranchList = byLevel(roleBranches, RoleBranch::level);
         var roleList = List.copyOf(roles);
         problems.addAll(compositionCycles(plays));
-        problems.addAll(stateful(branchList, componentList, roleBranchList, roleList));
         problems.addAll(tokensTwice(branchList, componentList, parts));
         problems.addAll(new CatalogueNames().clashes(roleBranchList, roleList));
         problems.addAll(roleNamesANode(branchList, componentList, roleList));
@@ -190,25 +193,6 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
     /** By level, root-most first, each level in the order first reached - so every parent comes before its children. */
     private static <B> List<B> byLevel(Set<B> branches, java.util.function.ToIntFunction<B> level) {
         return branches.stream().sorted(Comparator.comparingInt(level)).toList();
-    }
-
-    /** Every node reached, held by jOntology to what it declares itself: a stateless functional object. */
-    private static List<TaxonomyProblem> stateful(List<ComponentBranch> branches, List<Component<?>> components,
-                                                  List<RoleBranch> roleBranches, List<Role<?>> roles) {
-        var nodes = new ArrayList<Object>();
-        nodes.addAll(branches);
-        nodes.addAll(components);
-        nodes.addAll(roleBranches);
-        nodes.addAll(roles);
-        var enforcer = new OntologyEnforcer();
-        var out = new ArrayList<TaxonomyProblem>();
-        var checked = new HashSet<Class<?>>();
-        for (Object node : nodes) {
-            if (!checked.add(node.getClass())) continue;
-            for (ContractViolation v : enforcer.enforce(node.getClass()))
-                out.add(new TaxonomyProblem(Rule.NOT_STATELESS, Names.qualified(node) + " is no stateless node: " + v.message()));
-        }
-        return out;
     }
 
     /** Every cycle of "plays a part in", each once, by the components it passes through. */

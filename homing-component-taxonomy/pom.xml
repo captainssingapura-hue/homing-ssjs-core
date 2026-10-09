@@ -35,11 +35,12 @@
             <artifactId>core</artifactId>
             <version>0.0.1</version>
         </dependency>
-        <!-- Every node is a stateless functional object, and reading holds it to that through jOntology's enforcer. -->
+        <!-- Every node is a stateless functional object: held by the tests, never by a read - a running server needs no enforcer. -->
         <dependency>
             <groupId>io.github.captainssingapura-hue.lang.ontology</groupId>
             <artifactId>enforcer</artifactId>
             <version>0.0.1</version>
+            <scope>test</scope>
         </dependency>
         <!-- Node names: the rigid tree's typed, capped segments. -->
         <dependency>

@@ -14,8 +14,6 @@ public record TaxonomyProblem(Rule rule, String says) implements ValueObject {
     public enum Rule {
         /** A branch, a component or a role names no parent. */
         NO_PARENT,
-        /** A node with state: jOntology's contract of a stateless functional object, broken. */
-        NOT_STATELESS,
         /** A slot whose role is played by nothing. */
         NO_BASE,
         /** A slot that plays no role. */
