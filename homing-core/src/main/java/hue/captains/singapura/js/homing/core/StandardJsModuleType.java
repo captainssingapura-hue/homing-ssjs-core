@@ -10,7 +10,7 @@ package hue.captains.singapura.js.homing.core;
  *
  * <p>Some values are <b>mechanical</b> (inferred from a module's {@link
  * ModuleForm}: a CSS group is {@link #GENERATED_CSS}, an external bundle is
- * {@link #BUNDLED_EXTERNAL}); the <b>domain</b> values ({@link #CONSUMER},
+ * {@link #BUNDLED_EXTERNAL}, a module that exports a widget is a {@link #WIDGET}); the <b>domain</b> values ({@link #CONSUMER},
  * {@link #PRIMITIVE}, {@link #SECRETARY}, {@link #PURE_LOGIC}) carry no mechanical
  * marker and are <b>declared</b> on the owning {@link CrateEntry} — an undeclared
  * module defaults to {@link #CONSUMER}, the full-discipline baseline.</p>
@@ -37,7 +37,14 @@ public enum StandardJsModuleType implements JsModuleType {
     /** Generated CSS-group content — no hand-authored JS to police. */
     GENERATED_CSS("Generated CSS", "generated-css"),
     /** A bundled third-party module (tone / three) — exempt from consumer rules; pinned + integrity only. */
-    BUNDLED_EXTERNAL("Bundled external", "bundled-external");
+    BUNDLED_EXTERNAL("Bundled external", "bundled-external"),
+    /**
+     * A widget: a module that exports one - inferred from its export, never declared, so no widget
+     * can be declared out of its discipline. It draws nothing but components: it makes, holds and
+     * touches no element, wears no class and writes no style or text of its own (Designed by
+     * construction, in the widget doctrine).
+     */
+    WIDGET("Widget", "widget");
 
     private final String label;
     private final String slug;
