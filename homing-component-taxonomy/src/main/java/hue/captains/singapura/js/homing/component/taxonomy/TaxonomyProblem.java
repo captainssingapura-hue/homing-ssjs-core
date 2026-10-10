@@ -32,12 +32,16 @@ public record TaxonomyProblem(Rule rule, String says) implements ValueObject {
         BAD_CARDINALITY,
         /** An axis a node declares twice, or one a branch above it already declares: each axis is declared once along a lineage. */
         EXTENT_TWICE,
-        /** A node of either tree with no meaning: no section of its own, or one with no words in it. */
+        /** A node of any tree - components, roles, states, events - with no meaning: no section of its own, or one with no words in it. */
         NO_MEANING,
         /** A meanings file with a section that names no node its class declares, a section twice, or words outside every section. */
         MEANING_ASTRAY,
         /** Two nodes that mean the same: one node, or two meanings to write. */
-        MEANING_TWICE
+        MEANING_TWICE,
+        /** Two nodes of the tree of states, or two of the tree of events, answer to one name: one word, one meaning, within each tree. */
+        TREE_NAME_TWICE,
+        /** A type of state with fewer than two values, or one value twice: its values are what a component is in, one at a time. */
+        BAD_STATE_VALUES
     }
 
     @Override public String toString() { return rule + ": " + says; }

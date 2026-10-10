@@ -11,23 +11,30 @@ import java.util.Objects;
 /**
  * A taxonomy as read: every branch and component reached from the components declared - up
  * through their parents, across through the components that play their parts - every part, each
- * slot with its owner appended, and the role catalogue the slots name. What a design walks, what
- * derives the design classes, and what the workbench shows.
+ * slot with its owner appended, the role catalogue the slots name, and the trees of states and of
+ * events the components have and offer. What a design walks, what derives the design classes, and
+ * what the workbench shows.
  *
  * @param branches   the branches under the root, by level, each level in the order first reached
  * @param components the components, in the order they were reached
  * @param parts      the parts, each component's in its slots' order
  * @param catalogue  the role catalogue: its branches by level, and its roles - the catalogue's in its order, then
  *                   those only a slot names
+ * @param states     the tree of states: its branches, and its types - the reader's in its order, then those only a
+ *                   component names
+ * @param events     the tree of events: its branches, and its types - the reader's in its order, then those only a
+ *                   component offers
  */
 public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> components, List<Part<?, ?>> parts,
-                       RoleCatalogue catalogue) implements ValueObject {
+                       RoleCatalogue catalogue, StateTree states, EventTree events) implements ValueObject {
 
     public Taxonomy {
         branches = List.copyOf(branches);
         components = List.copyOf(components);
         parts = List.copyOf(parts);
         Objects.requireNonNull(catalogue, "Taxonomy.catalogue");
+        Objects.requireNonNull(states, "Taxonomy.states");
+        Objects.requireNonNull(events, "Taxonomy.events");
     }
 
     /** Every node a design can be asked about: the root, the branches, the components, then the parts. */
@@ -102,6 +109,12 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
 
     /** What a node of the catalogue means. */
     public Meaning meaning(RoleNode node) { return catalogue.meaning(node); }
+
+    /** What a node of the tree of states means. */
+    public Meaning meaning(StateNode node) { return states.meaning(node); }
+
+    /** What a node of the tree of events means. */
+    public Meaning meaning(EventNode node) { return events.meaning(node); }
 
     /** Every part that names a role: where it is used, what plays it there, how many. */
     /**

@@ -27,6 +27,8 @@ class TaxonomyExtensionsTest {
         assertEquals(Sketch.DECLARED, components.subList(0, Sketch.DECLARED.size()));
         assertEquals(List.of(TradingDesk.OrderTicket.INSTANCE), components.subList(Sketch.DECLARED.size(), components.size()));
         assertEquals(TradingDesk.CATALOGUE, TaxonomyExtensions.INSTANCE.roles(SketchSource.class, List.of()));
+        assertEquals(List.of(Signals.Lit.INSTANCE), TaxonomyExtensions.INSTANCE.states(SketchSource.class, List.of()), "a word of its own, beside its leaves");
+        assertEquals(List.of(), TaxonomyExtensions.INSTANCE.events(SketchSource.class, List.of()));
     }
 
     @Test
@@ -35,6 +37,7 @@ class TaxonomyExtensionsTest {
         assertTrue(t.children(Sketch.Card.INSTANCE).contains(TradingDesk.OrderTicket.INSTANCE), "the desk's leaf, under the house's branch");
         assertTrue(t.children(Sketch.Button.INSTANCE).contains(TradingDesk.TradeButton.INSTANCE), "and what its parts reach");
         assertTrue(t.children(Sketch.Doing.INSTANCE).contains(TradingDesk.Trading.INSTANCE), "its own branch of the catalogue");
+        assertEquals(List.of(Signals.Lit.INSTANCE), t.states().types(), "and its own type of state");
         assertFalse(new ReadTaxonomy().read(Sketch.DECLARED, Sketch.CATALOGUE).components().contains(TradingDesk.OrderTicket.INSTANCE),
                 "the house alone has none of it");
     }

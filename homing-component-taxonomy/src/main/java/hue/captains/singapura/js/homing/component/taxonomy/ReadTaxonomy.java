@@ -15,10 +15,12 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Reads a taxonomy from the components a deployment declares, and the roles its catalogue files:
- * it reaches every branch through the parents, every component that plays a part through the
- * slots, every role a slot names and every branch of the role catalogue through the roles, and
- * refuses - with every problem it found at once - what the compiler cannot:
+ * Reads a taxonomy from the components a deployment declares, the roles its catalogue files, and
+ * the types of state and of event its trees file: it reaches every branch through the parents,
+ * every component that plays a part through the slots, every role a slot names and every branch of
+ * the role catalogue through the roles, every type of state a component has and of event it offers,
+ * and their branches through their parents, and refuses - with every problem it found at once -
+ * what the compiler cannot:
  *
  * <ul>
  *   <li>a branch, a component or a role with no parent;</li>
@@ -30,8 +32,10 @@ import java.util.Set;
  *   <li>a count that is no cardinality - thrown where it is said, and reported for the component
  *       that said it, so one component's bad count never hides another's problems.</li>
  *   <li>an axis declared twice along one lineage;</li>
- *   <li>a node of either tree with no meaning, a meanings file with a section astray, or two
- *       nodes that mean the same.</li>
+ *   <li>two nodes of the tree of states, or of events, with one name; a type of state with fewer
+ *       than two values, or one value twice;</li>
+ *   <li>a node of any of the four trees with no meaning, a meanings file with a section astray, or
+ *       two nodes that mean the same.</li>
  * </ul>
  *
  * <p>What the levels already make impossible it never checks: a chain of parents that comes back
@@ -40,9 +44,10 @@ import java.util.Set;
  * <p>Nor does it judge whether a node holds state. That every node is a stateless functional
  * object is held at build time, by the tests of whoever declares the nodes, with jOntology's
  * enforcer over what was read - its {@link Taxonomy#branches() branches}, {@link
- * Taxonomy#components() components}, {@link Taxonomy#roleBranches() role branches} and {@link
- * Taxonomy#roles() roles}. A taxonomy is read wherever it is served, and a running server needs
- * no enforcer.</p>
+ * Taxonomy#components() components}, {@link Taxonomy#roleBranches() role branches}, {@link
+ * Taxonomy#roles() roles}, and the {@link Taxonomy#states() states} and {@link Taxonomy#events()
+ * events} trees. A taxonomy is read wherever it is served, and a running server needs no
+ * enforcer.</p>
  */
 public record ReadTaxonomy() implements StatelessFunctionalObject {
 
@@ -55,6 +60,16 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
      * come in the order declared, then those only a part reaches.
      */
     public Taxonomy read(Collection<? extends Component<?>> declared, Collection<? extends Role<?>> catalogued) {
+        return read(declared, catalogued, List.of(), List.of());
+    }
+
+    /**
+     * The components declared, the roles a catalogue files, and the types of state and of event the
+     * trees file - each kept whether or not a component has it, so the trees are whole. Each tree's
+     * types come in the order given, then those only a component names.
+     */
+    public Taxonomy read(Collection<? extends Component<?>> declared, Collection<? extends Role<?>> catalogued,
+                         Collection<? extends StateType<?>> stateTypes, Collection<? extends EventType<?>> eventTypes) {
         var problems = new ArrayList<TaxonomyProblem>();
         var branches = new LinkedHashSet<ComponentBranch>();
         var components = new LinkedHashSet<Component<?>>();
@@ -98,6 +113,37 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
         var roleBranches = new LinkedHashSet<RoleBranch>();
         for (Role<?> r : roles) roleBranches.addAll(filing(r, problems));
 
+        var states = new LinkedHashSet<StateType<?>>();
+        var events = new LinkedHashSet<EventType<?>>();
+        for (StateType<?> s : stateTypes) if (s != null) states.add(s);
+        for (EventType<?> e : eventTypes) if (e != null) events.add(e);
+        for (Component<?> c : components) {
+            for (StateType<?> s : orNone(c.states())) if (s != null) states.add(s);
+            for (EventType<?> e : orNone(c.events())) if (e != null) events.add(e);
+        }
+        var stateBranches = new LinkedHashSet<StateBranch>();
+        for (StateType<?> s : states) {
+            StateBranch b = s.parent();
+            if (b == null) problems.add(new TaxonomyProblem(Rule.NO_PARENT, Names.of(s) + " names no parent"));
+            else if (b instanceof L1_StateBranch<?> l1) {
+                if (l1.parent() == null) problems.add(new TaxonomyProblem(Rule.NO_PARENT, Names.of(l1) + " names no parent"));
+                stateBranches.add(l1);
+            }
+        }
+        var eventBranches = new LinkedHashSet<EventBranch>();
+        for (EventType<?> e : events) {
+            EventBranch b = e.parent();
+            if (b == null) problems.add(new TaxonomyProblem(Rule.NO_PARENT, Names.of(e) + " names no parent"));
+            else if (b instanceof L1_EventBranch<?> l1) {
+                if (l1.parent() == null) problems.add(new TaxonomyProblem(Rule.NO_PARENT, Names.of(l1) + " names no parent"));
+                eventBranches.add(l1);
+            }
+        }
+        var stateBranchList = List.copyOf(stateBranches);
+        var stateList = List.copyOf(states);
+        var eventBranchList = List.copyOf(eventBranches);
+        var eventList = List.copyOf(events);
+
         var branchList = byLevel(branches, ComponentBranch::level);
         var componentList = List.copyOf(components);
         var roleBranchList = byLevel(roleBranches, RoleBranch::level);
@@ -107,12 +153,19 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
         problems.addAll(new CatalogueNames().clashes(roleBranchList, roleList));
         problems.addAll(roleNamesANode(branchList, componentList, roleList));
         problems.addAll(extentsTwice(branchList, componentList));
-        problems.addAll(Meanings.INSTANCE.problems(meant(branchList, componentList, roleBranchList, roleList)));
+        problems.addAll(TreeChecks.INSTANCE.clashes("states", StateTree.nodes(stateBranchList, stateList), StateNode::name));
+        problems.addAll(TreeChecks.INSTANCE.badValues(stateList));
+        problems.addAll(TreeChecks.INSTANCE.clashes("events", EventTree.nodes(eventBranchList, eventList), EventNode::name));
+        var meant = meant(branchList, componentList, roleBranchList, roleList);
+        if (!stateList.isEmpty()) meant.addAll(StateTree.nodes(stateBranchList, stateList));
+        if (!eventList.isEmpty()) meant.addAll(EventTree.nodes(eventBranchList, eventList));
+        problems.addAll(Meanings.INSTANCE.problems(meant));
         if (!problems.isEmpty()) throw new RefusedTaxonomy(problems);
-        return new Taxonomy(branchList, componentList, parts, new RoleCatalogue(roleBranchList, roleList));
+        return new Taxonomy(branchList, componentList, parts, new RoleCatalogue(roleBranchList, roleList),
+                new StateTree(stateBranchList, stateList), new EventTree(eventBranchList, eventList));
     }
 
-    /** Every node that must mean something: each tree's root when anything of the tree is read, its branches, its leaves. */
+    /** Every node of the first two trees that must mean something: each tree's root when anything of the tree is read, its branches, its leaves. */
     private static List<Object> meant(List<ComponentBranch> branches, List<Component<?>> components,
                                       List<RoleBranch> roleBranches, List<Role<?>> roles) {
         var out = new ArrayList<Object>();
@@ -143,6 +196,8 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
         }
         return out;
     }
+
+    private static <T> List<T> orNone(List<T> list) { return list == null ? List.of() : list; }
 
     private static List<ExtentAxis> axes(Taxon t) {
         List<ExtentAxis> a = t.extents();

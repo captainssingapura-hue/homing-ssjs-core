@@ -33,6 +33,20 @@ public record TaxonomyExtensions() implements StatelessFunctionalObject {
         return List.copyOf(out);
     }
 
+    /** The source's own types of state, then each extension's. */
+    public List<StateType<?>> states(Class<? extends TaxonomySource> source, List<? extends StateType<?>> own) {
+        var out = new ArrayList<StateType<?>>(own);
+        for (TaxonomyExtension e : of(source)) out.addAll(e.states());
+        return List.copyOf(out);
+    }
+
+    /** The source's own types of event, then each extension's. */
+    public List<EventType<?>> events(Class<? extends TaxonomySource> source, List<? extends EventType<?>> own) {
+        var out = new ArrayList<EventType<?>>(own);
+        for (TaxonomyExtension e : of(source)) out.addAll(e.events());
+        return List.copyOf(out);
+    }
+
     /** The source's own roles, then each extension's. */
     public List<Role<?>> roles(Class<? extends TaxonomySource> source, List<? extends Role<?>> own) {
         var out = new ArrayList<Role<?>>(own);

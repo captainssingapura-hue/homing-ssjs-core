@@ -95,7 +95,7 @@ record Meanings() implements StatelessFunctionalObject {
         return c == top ? c.getSimpleName() : c.getName().substring(top.getName().length() + 1).replace('$', '.');
     }
 
-    /** Whether a heading names a node of either tree that the file's class declares, or is. */
+    /** Whether a heading names a node of any of the four trees that the file's class declares, or is. */
     private static boolean declares(Class<?> top, String heading) {
         if (heading.equals(top.getSimpleName()) && isNode(top)) return true;
         try {
@@ -105,7 +105,10 @@ record Meanings() implements StatelessFunctionalObject {
         }
     }
 
-    private static boolean isNode(Class<?> c) { return Taxon.class.isAssignableFrom(c) || RoleNode.class.isAssignableFrom(c); }
+    private static boolean isNode(Class<?> c) {
+        return Taxon.class.isAssignableFrom(c) || RoleNode.class.isAssignableFrom(c)
+                || StateNode.class.isAssignableFrom(c) || EventNode.class.isAssignableFrom(c);
+    }
 
     private static Optional<String> read(Class<?> top) {
         try (InputStream in = top.getClassLoader().getResourceAsStream(path(top))) {
