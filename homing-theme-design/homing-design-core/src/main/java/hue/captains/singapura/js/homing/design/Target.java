@@ -78,11 +78,13 @@ public sealed interface Target permits
     Set<State> REST_ONLY    = EnumSet.of(State.REST);
     Set<State> INTERACTIVE  = EnumSet.of(State.REST, State.HOVER, State.ACTIVE, State.FOCUS, State.DISABLED,
                                          State.SELECTED, State.CURRENT, State.CHECKED, State.PRESSED, State.INVALID, State.EXPANDED, State.HIGHLIGHTED,
-                                         State.CANDIDATE, State.LENT, State.HELD,
+                                         State.CANDIDATE, State.LENT, State.HELD, State.DRAGGING,
                                          // the physical register: a design answers depth in whatever plane it honestly
                                          // uses for it - the shadow usually, a lit rim, a step of tone - or in none
                                          State.ELEVATED, State.SUNKEN);
     Set<State> POINTER      = EnumSet.of(State.REST, State.HOVER, State.ACTIVE, State.FOCUS, State.DISABLED);
+    /** At rest, and stood up: a size or a corner that differs for a thing laid vertically - a fader's cap - and by nothing else. */
+    Set<State> STOOD_UP     = EnumSet.of(State.REST, State.VERTICAL);
 
     // ═════════════════════════════════════════════════════════════════════
     //  Color — what is painted with colour
@@ -212,7 +214,7 @@ public sealed interface Target permits
             public static final Corner INSTANCE = new Corner();
             @Override public List<CssClass<Corner>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("border-radius"); }
-            @Override public Set<State> states() { return REST_ONLY; }
+            @Override public Set<State> states() { return STOOD_UP; }
         }
         /**
          * Border and outline width and style — the line, not its colour. The old design system's:
@@ -293,7 +295,7 @@ public sealed interface Target permits
             public static final Extent INSTANCE = new Extent();
             @Override public List<CssClass<Extent>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("min-height", "min-width", "inline-size", "block-size"); }
-            @Override public Set<State> states() { return REST_ONLY; }
+            @Override public Set<State> states() { return STOOD_UP; }
         }
         /**
          * The proportion of a box whose measure is its own, not its content's
@@ -419,7 +421,7 @@ public sealed interface Target permits
             public static final Cursor INSTANCE = new Cursor();
             @Override public List<CssClass<Cursor>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("cursor"); }
-            @Override public Set<State> states() { return EnumSet.of(State.REST, State.DISABLED); }
+            @Override public Set<State> states() { return EnumSet.of(State.REST, State.DISABLED, State.DRAGGING); }
         }
         record Select() implements Affordance, CssGroup<Select> {
             public static final Select INSTANCE = new Select();
