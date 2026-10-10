@@ -18,12 +18,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * A module declares the rules it does not keep yet on its own class, with why: its findings of those
  * rules are its debt - a warning, even in the strictest grader, saying the reason - and a finding of
- * any other rule still fails. A debt no finding owes any more is paid, and said so.
+ * any other rule still fails. A debt is owed exactly as declared: a finding more is refused, and a
+ * debt paid, whole or in part, is said so.
  */
 class DeclaredDebtsTest {
 
-    @ConformanceDebt(rule = NoInlineStyleRule.class, reason = "It styles inline until its sheet is typed")
-    @ConformanceDebt(rule = WidgetDrawsOnlyComponentsRule.class, reason = "It makes its own elements until the containers exist")
+    @ConformanceDebt(rule = NoInlineStyleRule.class, findings = 1, reason = "It styles inline until its sheet is typed")
+    @ConformanceDebt(rule = WidgetDrawsOnlyComponentsRule.class, findings = 2, reason = "It makes its own elements until the containers exist")
     record IndebtedModule() implements DomModule<IndebtedModule>, SelfContent {
         static final IndebtedModule INSTANCE = new IndebtedModule();
         @Override public ImportsFor<IndebtedModule> imports() { return ImportsFor.noImports(); }
@@ -43,8 +44,10 @@ class DeclaredDebtsTest {
 
     @Test
     void aModuleSaysWhatItOwes_byTheRule_withWhy() {
-        assertEquals(Map.of(NoInlineStyleRule.INSTANCE.id(), "It styles inline until its sheet is typed",
-                            WidgetDrawsOnlyComponentsRule.INSTANCE.id(), "It makes its own elements until the containers exist"),
+        var inline = NoInlineStyleRule.INSTANCE.id();
+        var widget = WidgetDrawsOnlyComponentsRule.INSTANCE.id();
+        assertEquals(Map.of(inline, new DeclaredDebts.Debt(inline, 1, "It styles inline until its sheet is typed"),
+                            widget, new DeclaredDebts.Debt(widget, 2, "It makes its own elements until the containers exist")),
                 DeclaredDebts.INSTANCE.of(MODULE));
         assertEquals(Map.of(), DeclaredDebts.INSTANCE.of("no.such.Module"), "a class not on the classpath owes nothing");
     }
@@ -60,11 +63,16 @@ class DeclaredDebtsTest {
     }
 
     @Test
-    void aDebtNoFindingOwes_isPaid() {
+    void aDebtIsOwedExactly_neverMore_andLoweredAsItIsPaid() {
         var crates = List.of(new OneEntry(CrateEntry.of(IndebtedModule.INSTANCE)));
-        assertEquals(List.of(), DeclaredDebts.INSTANCE.paid(crates,
-                List.of(finding(NoInlineStyleRule.INSTANCE), finding(WidgetDrawsOnlyComponentsRule.INSTANCE))));
-        assertEquals(List.of(MODULE + " declares a debt to widget-draws-only-components it no longer owes: remove its @ConformanceDebt"),
-                DeclaredDebts.INSTANCE.paid(crates, List.of(finding(NoInlineStyleRule.INSTANCE))));
+        var widget = finding(WidgetDrawsOnlyComponentsRule.INSTANCE);
+        var inline = finding(NoInlineStyleRule.INSTANCE);
+        assertEquals(List.of(), DeclaredDebts.INSTANCE.unbalanced(crates, List.of(inline, widget, widget)), "as declared");
+        assertEquals(List.of(MODULE + " owes 3 finding(s) of widget-draws-only-components but declares 2: 1 new - fix them: a debt never grows"),
+                DeclaredDebts.INSTANCE.unbalanced(crates, List.of(inline, widget, widget, widget)));
+        assertEquals(List.of(MODULE + " owes 1 finding(s) of widget-draws-only-components but declares 2: paid in part - lower its count to 1"),
+                DeclaredDebts.INSTANCE.unbalanced(crates, List.of(inline, widget)));
+        assertEquals(List.of(MODULE + " owes 0 finding(s) of widget-draws-only-components but declares 2: paid - remove its @ConformanceDebt"),
+                DeclaredDebts.INSTANCE.unbalanced(crates, List.of(inline)));
     }
 }

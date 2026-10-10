@@ -15,7 +15,7 @@ import java.util.List;
  *       WARNING, whatever the switch;</li>
  *   <li>a {@link ConformanceDebt} — a rule the module declares, on its own
  *       class and with why, that it does not keep yet: always a WARNING, and
- *       refused once it is no longer owed ({@link DeclaredDebts#paid});</li>
+ *       held to its count of findings ({@link DeclaredDebts#unbalanced});</li>
  *   <li>the {@link Baseline} — a <em>pre-existing</em> violation, legacy debt
  *       recorded when the rule was introduced: a WARNING while pre-existing
  *       violations are allowed, an ERROR when they are not.</li>
