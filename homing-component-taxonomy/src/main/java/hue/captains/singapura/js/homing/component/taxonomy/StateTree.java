@@ -7,8 +7,8 @@ import java.util.List;
 
 /**
  * A tree of states, as read: its branches under the root, and its types. It files the types, not
- * their values. It cannot be constructed with two nodes of one name, nor with a type whose values do
- * not hold together - the checks are the constructor's, so no tree that breaks them exists, however
+ * their values. It cannot be constructed with two nodes of one name, two values answered by one
+ * design word, nor with a type whose values do not hold together - the checks are the constructor's, so no tree that breaks them exists, however
  * it is made.
  *
  * @param branches the branches under the root
@@ -21,6 +21,7 @@ public record StateTree(List<StateBranch> branches, List<StateType<?>> types) im
         types = List.copyOf(types);
         var problems = new ArrayList<>(TreeChecks.INSTANCE.clashes("states", nodes(branches, types), StateNode::name));
         problems.addAll(TreeChecks.INSTANCE.badValues(types));
+        problems.addAll(TreeChecks.INSTANCE.wordsTwice(types));
         if (!problems.isEmpty()) throw new RefusedTaxonomy(problems);
     }
 

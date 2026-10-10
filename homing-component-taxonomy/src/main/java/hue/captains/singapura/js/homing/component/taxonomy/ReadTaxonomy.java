@@ -33,7 +33,8 @@ import java.util.Set;
  *       that said it, so one component's bad count never hides another's problems.</li>
  *   <li>an axis declared twice along one lineage;</li>
  *   <li>two nodes of the tree of states, or of events, with one name; a type of state with fewer
- *       than two values, or one value twice;</li>
+ *       than two values, or one value twice; a design word for a type's rest, or for a value it
+ *       lacks; two values answered by one design word;</li>
  *   <li>a node of any of the four trees with no meaning, a meanings file with a section astray, or
  *       two nodes that mean the same.</li>
  * </ul>
@@ -155,6 +156,7 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
         problems.addAll(extentsTwice(branchList, componentList));
         problems.addAll(TreeChecks.INSTANCE.clashes("states", StateTree.nodes(stateBranchList, stateList), StateNode::name));
         problems.addAll(TreeChecks.INSTANCE.badValues(stateList));
+        problems.addAll(TreeChecks.INSTANCE.wordsTwice(stateList));
         problems.addAll(TreeChecks.INSTANCE.clashes("events", EventTree.nodes(eventBranchList, eventList), EventNode::name));
         var meant = meant(branchList, componentList, roleBranchList, roleList);
         if (!stateList.isEmpty()) meant.addAll(StateTree.nodes(stateBranchList, stateList));

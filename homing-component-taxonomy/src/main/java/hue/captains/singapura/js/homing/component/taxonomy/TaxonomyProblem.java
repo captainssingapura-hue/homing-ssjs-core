@@ -41,7 +41,9 @@ public record TaxonomyProblem(Rule rule, String says) implements ValueObject {
         /** Two nodes of the tree of states, or two of the tree of events, answer to one name: one word, one meaning, within each tree. */
         TREE_NAME_TWICE,
         /** A type of state with fewer than two values, or one value twice: its values are what a component is in, one at a time. */
-        BAD_STATE_VALUES
+        BAD_STATE_VALUES,
+        /** Two values of the tree of states answered by one design word: one word, one meaning. */
+        DESIGN_WORD_TWICE
     }
 
     @Override public String toString() { return rule + ": " + says; }

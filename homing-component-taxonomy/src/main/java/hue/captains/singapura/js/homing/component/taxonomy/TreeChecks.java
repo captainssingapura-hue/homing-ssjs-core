@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 /**
@@ -33,7 +34,7 @@ record TreeChecks() implements StatelessFunctionalObject {
         return List.copyOf(out);
     }
 
-    /** A type with fewer than two values, a value twice, or none said at all. */
+    /** A type with fewer than two values, a value twice, none said at all, or a design word for its rest or for a value it lacks. */
     List<TaxonomyProblem> badValues(List<? extends StateType<?>> types) {
         var out = new ArrayList<TaxonomyProblem>();
         for (StateType<?> t : types) {
@@ -48,7 +49,36 @@ record TreeChecks() implements StatelessFunctionalObject {
             for (StateValue v : values)
                 if (v == null) out.add(new TaxonomyProblem(Rule.BAD_STATE_VALUES, Names.qualified(t) + " has a value that is nothing"));
                 else if (!seen.add(v)) out.add(new TaxonomyProblem(Rule.BAD_STATE_VALUES, Names.qualified(t) + " has the value " + v + " twice"));
+            Map<StateValue, String> words = t.words() == null ? Map.of() : t.words();
+            words.forEach((v, w) -> {
+                if (!values.contains(v) || v.equals(values.get(0)))
+                    out.add(new TaxonomyProblem(Rule.BAD_STATE_VALUES, Names.qualified(t) + " gives a design word to " + v
+                            + (values.contains(v) ? ", its rest - a look, not a word" : ", which is none of its values")));
+                else if (w == null || !w.matches("[a-z][a-z0-9]*(-[a-z0-9]+)*"))
+                    out.add(new TaxonomyProblem(Rule.BAD_STATE_VALUES, Names.qualified(t) + "'s " + v + " has the design word '" + w
+                            + "': lower case, its words joined by hyphens"));
+            });
         }
+        return List.copyOf(out);
+    }
+
+    /** Two values of the tree answered by one design word - an established word, or a type's name and a value's. */
+    List<TaxonomyProblem> wordsTwice(List<? extends StateType<?>> types) {
+        var byWord = new LinkedHashMap<String, List<String>>();
+        for (StateType<?> t : types) {
+            List<StateValue> values = t.values();
+            if (values == null || values.size() < 2) continue;
+            for (StateValue v : values.subList(1, values.size())) {
+                String w;
+                try { w = t.word(v); } catch (IllegalArgumentException e) { continue; }
+                byWord.computeIfAbsent(w, x -> new ArrayList<>()).add(Names.qualified(t) + "(" + v + ")");
+            }
+        }
+        var out = new ArrayList<TaxonomyProblem>();
+        byWord.forEach((word, same) -> {
+            if (same.size() > 1)
+                out.add(new TaxonomyProblem(Rule.DESIGN_WORD_TWICE, "the design word '" + word + "' answers " + String.join(" and ", same)));
+        });
         return List.copyOf(out);
     }
 }

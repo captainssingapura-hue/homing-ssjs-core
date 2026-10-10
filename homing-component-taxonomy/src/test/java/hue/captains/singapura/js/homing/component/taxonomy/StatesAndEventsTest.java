@@ -41,6 +41,25 @@ class StatesAndEventsTest {
     }
 
     @Test
+    void aValue_isAnsweredByItsDesignWord_establishedOrTheTypesAndItsOwn() {
+        assertEquals("disabled", Signals.Enabled.INSTANCE.word(StateValue.FALSE), "an established word, declared");
+        assertEquals("glow-dim", Signals.Glow.INSTANCE.word(new StateValue("dim")), "none established: the type's name and the value's");
+        assertEquals("glow-bright", Signals.Glow.INSTANCE.word(new StateValue("bright")));
+        assertEquals("lit-true", Signals.Lit.INSTANCE.word(StateValue.TRUE));
+        assertThrows(IllegalArgumentException.class, () -> Signals.Enabled.INSTANCE.word(StateValue.TRUE), "the rest is a look, not a word");
+        assertThrows(IllegalArgumentException.class, () -> Signals.Glow.INSTANCE.word(StateValue.TRUE), "a value the type lacks");
+    }
+
+    @Test
+    void refused_oneDesignWordForTwoValues_andAWordForARest() {
+        var twice = assertThrows(RefusedTaxonomy.class, () -> READ.read(List.of(), List.of(),
+                List.of(Signals.Enabled.INSTANCE, BrokenSignals.Off.INSTANCE), List.of()));
+        assertEquals(Set.of(Rule.DESIGN_WORD_TWICE), twice.problems().stream().map(TaxonomyProblem::rule).collect(Collectors.toSet()), twice.getMessage());
+        var rest = assertThrows(RefusedTaxonomy.class, () -> READ.read(List.of(), List.of(), List.of(BrokenSignals.Quiet.INSTANCE), List.of()));
+        assertEquals(Set.of(Rule.BAD_STATE_VALUES), rest.problems().stream().map(TaxonomyProblem::rule).collect(Collectors.toSet()), rest.getMessage());
+    }
+
+    @Test
     void everyNode_meansSomething_theRootsToo() {
         Taxonomy t = READ.read(List.of(Signals.Lamp.INSTANCE), List.of(), List.of(Signals.Lit.INSTANCE), List.of());
         assertTrue(t.meaning(StateRoot.INSTANCE).markdown().startsWith("Any type of state"));

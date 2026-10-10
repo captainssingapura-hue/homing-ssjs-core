@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.component.taxonomy;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * A hypothetical tree of states and of events for the {@link Sketch} house: a branch of states with a
@@ -16,14 +17,15 @@ final class Signals {
         @Override public StateRoot parent() { return StateRoot.INSTANCE; }
     }
 
-    /** True at rest. */
+    /** True at rest; off, it has an established design word. */
     record Enabled() implements Flag<Availability> {
         static final Enabled INSTANCE = new Enabled();
         @Override public Availability parent() { return Availability.INSTANCE; }
         @Override public boolean rest() { return true; }
+        @Override public Map<StateValue, String> words() { return Map.of(StateValue.FALSE, "disabled"); }
     }
 
-    /** Three values, off at rest. */
+    /** Three values, off at rest; no design word established, so its values' are its name and theirs. */
     record Glow() implements StateType<Availability> {
         static final Glow INSTANCE = new Glow();
         @Override public Availability parent() { return Availability.INSTANCE; }
