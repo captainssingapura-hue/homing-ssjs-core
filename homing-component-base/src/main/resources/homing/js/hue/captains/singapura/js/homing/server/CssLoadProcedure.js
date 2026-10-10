@@ -1,8 +1,9 @@
 // =============================================================================
-// CssLoadProcedure — the CSS manager's affiliate: how sheets arrive (RFC 0064).
-//
-// One procedure, two callers. Loading a group's tree for the first time and
-// refreshing every loaded group under a new theme are the same steps:
+// CssLoadProcedure — how sheets arrive (RFC 0064), for both owners of the
+// page's sheets: the CSS manager, which loads provided groups once, with no
+// theme; and ThemeSheets, which loads derived sheets under the theme worn and
+// swaps them on a switch (D25). Loading for the first time and refreshing
+// every loaded sheet under a new theme are the same steps:
 //
 //   1. PLAN     the graph answers waves — Kahn's waves
 //               (CssDependencyGraph.plan);
@@ -24,10 +25,10 @@
 // removed, its entries forgotten, and the error rethrown. Nothing was ever
 // applied, so the page is whole under whatever it wore before.
 //
-// The DOM is reached only through the link factory the manager injects —
-// appendLink(href) → { link, loaded } — so the one raw createElement in the
-// system stays where the baseline has it, and this module tests without a
-// document.
+// The DOM is reached only through the link factory its owner injects —
+// CssLinks' CssLink.append(href) → { link, loaded } — so the one raw
+// createElement in the system stays where the baseline has it, and this module
+// tests without a document.
 // =============================================================================
 
 function createCssLoadProcedure(graph, appendLink, hrefFor, notify) {
@@ -43,9 +44,6 @@ function createCssLoadProcedure(graph, appendLink, hrefFor, notify) {
 
     /** The entry for a node under a theme, appended now if it does not exist. */
     function ensure(id, theme) {
-        // A node whose sheet does not vary is fetched once, without a theme,
-        // and keyed as such: no switch reloads it and no retire removes it.
-        if (!graph.varies(id)) theme = null;
         const k = key(id, theme);
         let e = entries.get(k);
         if (e) return e;

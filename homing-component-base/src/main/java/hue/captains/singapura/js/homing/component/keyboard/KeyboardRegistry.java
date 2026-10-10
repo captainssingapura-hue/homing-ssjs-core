@@ -5,6 +5,7 @@ import hue.captains.singapura.js.homing.component.UiComponent;
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.core.CssGroup;
+import hue.captains.singapura.js.homing.core.DerivedCss;
 import hue.captains.singapura.js.homing.core.DomModule;
 import hue.captains.singapura.js.homing.core.EsModule;
 import hue.captains.singapura.js.homing.core.SelfContent;
@@ -129,7 +130,7 @@ public record KeyboardRegistry(Map<UiComponent<?>, List<KeyBinding>> byComponent
 
     /** The lines of the module's own JS that register a key listener, in any form; none for the steward, a self-content or a CSS module. */
     static List<String> keyListenerLines(EsModule<?> m) {
-        if (m instanceof SelfContent || m instanceof CssGroup<?> || m instanceof KeyboardStewardModule) return List.of();
+        if (m instanceof SelfContent || m instanceof CssGroup<?> || m instanceof DerivedCss<?> || m instanceof KeyboardStewardModule) return List.of();
         try {
             var out = new ArrayList<String>();
             for (String line : new ReadContentFromResources<>(m).content()) if (OWN_KEYS.matcher(line).find()) out.add(line);

@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
+import hue.captains.singapura.js.homing.core.DerivedCss;
 import hue.captains.singapura.js.homing.core.CssImportsFor;
 import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.core.EsModule;
@@ -66,9 +67,10 @@ public final class CssConformance {
 
     // ── The graph the rules read ─────────────────────────────────────────────
 
-    /** The deployment's CSS graph, resolved once: its groups, each by the crate that serves it. */
+    /** The deployment's CSS graph, resolved once: its provided groups and its derived sheets, each by the crate that serves it. */
     static final class Graph {
         final Map<CssGroup<?>, Crate> crateOf = new LinkedHashMap<>();
+        final Map<DerivedCss<?>, Crate> derivedCrateOf = new LinkedHashMap<>();
 
         static Graph of(Collection<? extends Crate> closure) {
             var g = new Graph();
@@ -76,6 +78,7 @@ public final class CssConformance {
                 for (CrateEntry e : c.entries()) {
                     EsModule<?> m = e.module();
                     if (m instanceof CssGroup<?> group) g.crateOf.put(group, c);
+                    if (m instanceof DerivedCss<?> sheet) g.derivedCrateOf.put(sheet, c);
                 }
             }
             return g;
@@ -86,6 +89,11 @@ public final class CssConformance {
 
         Crate crateOf(CssGroup<?> group) {
             for (var e : crateOf.entrySet()) if (e.getKey().getClass() == group.getClass()) return e.getValue();
+            return null;
+        }
+
+        Crate crateOf(DerivedCss<?> sheet) {
+            for (var e : derivedCrateOf.entrySet()) if (e.getKey().getClass() == sheet.getClass()) return e.getValue();
             return null;
         }
     }
@@ -183,6 +191,13 @@ public final class CssConformance {
                 Crate theirs = g.crateOf(dep);
                 if (theirs == null || required.contains(theirs.name())) continue;
                 out.add(new Finding(id(group), CRATE_REACH, "depends on " + id(dep) + " in crate '" + theirs.name()
+                        + "', which crate '" + mine.name() + "' does not require"));
+            }
+            // what its classes wear is derived, and loaded beside it: its crate must be reached as well
+            for (DerivedCss<?> worn : CssImportsFor.derivedOf(group)) {
+                Crate theirs = g.crateOf(worn);
+                if (theirs == null || required.contains(theirs.name())) continue;
+                out.add(new Finding(id(group), CRATE_REACH, "wears " + worn.getClass().getCanonicalName() + " in crate '" + theirs.name()
                         + "', which crate '" + mine.name() + "' does not require"));
             }
         }

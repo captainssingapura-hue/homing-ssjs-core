@@ -5,7 +5,6 @@ import hue.captains.singapura.js.homing.core.util.CssClassName;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Predicate;
 
 /**
  * Auto-generates JS module content for a {@link CssGroup}.
@@ -22,36 +21,37 @@ import java.util.function.Predicate;
  * {@code base.focus}, etc.). No separate variant records are required — the
  * framework synthesizes everything from the base + its declared states.</p>
  *
- * <p>{@code defaultTheme} is the deployment's default — the theme the client's
- * manager falls back to until the address or the stored pick says otherwise. It
- * is the server's, never the request's: a module varies by no context, so its
- * URL is its class alone.</p>
+ * <p>A group is provided, the same in every theme (RFC 0064, D25): the manager
+ * loads its tree once, with no theme. The derived sheets its tree's classes wear
+ * go to the theme's owner, {@link ThemeSheets}, which loads them under the theme
+ * worn and swaps them on a switch. {@code defaultTheme} is the deployment's
+ * default — the theme the owner falls back to until the address or the stored
+ * pick says otherwise. It is the server's, never the request's: a module varies
+ * by no context, so its URL is its class alone.</p>
  */
 public record CssGroupContentProvider<C extends CssGroup<C>>(
-        C cssGroup, String defaultTheme, ModuleNameResolver nameResolver, Predicate<CssGroup<?>> varies
+        C cssGroup, String defaultTheme, ModuleNameResolver nameResolver
 ) implements ContentProvider<C> {
-
-    public CssGroupContentProvider(C cssGroup, String defaultTheme, ModuleNameResolver nameResolver) {
-        this(cssGroup, defaultTheme, nameResolver, g -> true);
-    }
 
     @Override
     public List<String> content() {
         List<String> lines = new ArrayList<>();
         String managerPath = nameResolver.resolve(CssClassManager.INSTANCE).basePath();
         String groupName = cssGroup.getClass().getCanonicalName();
-        // Always the second argument, null where the deployment has no theme: the
-        // manager reads its arguments by position, and the subgraph is the third.
-        String themeArg = defaultTheme != null ? ", \"" + defaultTheme + "\"" : ", null";
+        List<DerivedCss<?>> derived = derivedOf(cssGroup);
 
         lines.add("import { CssClassManagerInstance as _css } from \"" + managerPath + "\";");
+        if (!derived.isEmpty())
+            lines.add("import { ThemeSheetsInstance as _themes } from \"" + nameResolver.resolve(ThemeSheets.INSTANCE).basePath() + "\";");
         // RFC 0064 — the group carries its transitive dependency subgraph as
         // DATA, derived from its classes' dependsOn() on the server, so the
         // client's CSS manager can load a lazily mounted widget's whole tree
-        // — missing dependencies included, by name — and can order a theme
-        // switch by the same graph. Not ES imports: a dependency's CSS is
-        // needed, its handles are not.
-        lines.add("await _css.loadCss(\"" + groupName + "\"" + themeArg + ", " + subgraphJs(cssGroup, varies) + ");");
+        // — missing dependencies included, by name. Not ES imports: a
+        // dependency's CSS is needed, its handles are not.
+        lines.add("await _css.loadCss(\"" + groupName + "\", " + subgraphJs(cssGroup) + ");");
+        // The derived sheets the tree's classes wear: the theme's, under the theme worn.
+        if (!derived.isEmpty())
+            lines.add("await _themes.load(" + idsJs(derived) + ", " + (defaultTheme != null ? "\"" + defaultTheme + "\"" : "null") + ");");
 
         for (CssClass<C> cls : cssGroup.cssClasses()) {
             String recordName = cls.getClass().getSimpleName();
@@ -87,9 +87,23 @@ public record CssGroupContentProvider<C extends CssGroup<C>>(
      * everything it transitively depends on, in dependency order. Class names
      * need no escaping; the resolver refuses cycles.
      */
-    static String subgraphJs(CssGroup<?> root) { return subgraphJs(root, g -> true); }
+    /** The derived sheets every group of the tree wears, first-mention order, each once. */
+    static List<DerivedCss<?>> derivedOf(CssGroup<?> root) {
+        var out = new ArrayList<DerivedCss<?>>();
+        for (CssGroup<?> g : CssGroupResolver.resolve(List.of(root)))
+            for (DerivedCss<?> s : CssImportsFor.derivedOf(g))
+                if (out.stream().noneMatch(have -> have.getClass() == s.getClass())) out.add(s);
+        return List.copyOf(out);
+    }
 
-    static String subgraphJs(CssGroup<?> root, Predicate<CssGroup<?>> varies) {
+    /** {@code ["<fqcn>", ...]} */
+    static String idsJs(List<DerivedCss<?>> sheets) {
+        var sb = new StringBuilder("[");
+        for (int i = 0; i < sheets.size(); i++) sb.append(i == 0 ? "" : ", ").append('"').append(sheets.get(i).getClass().getCanonicalName()).append('"');
+        return sb.append("]").toString();
+    }
+
+    static String subgraphJs(CssGroup<?> root) {
         StringBuilder sb = new StringBuilder("{ ");
         boolean first = true;
         for (CssGroup<?> g : CssGroupResolver.resolve(List.of(root))) {
@@ -102,7 +116,7 @@ public record CssGroupContentProvider<C extends CssGroup<C>>(
                 firstDep = false;
                 sb.append('"').append(dep.getClass().getCanonicalName()).append('"');
             }
-            sb.append("]").append(varies.test(g) ? "" : ", varies: false").append(" }");
+            sb.append("] }");
         }
         return sb.append(" }").toString();
     }

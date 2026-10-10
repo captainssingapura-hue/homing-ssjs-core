@@ -49,7 +49,7 @@ public final class ModuleClassifier {
             return StandardJsModuleType.WIDGET;
         }
         return switch (ModuleForm.of(module)) {
-            case CSS_GROUP -> StandardJsModuleType.GENERATED_CSS;
+            case CSS_GROUP, DERIVED_CSS -> StandardJsModuleType.GENERATED_CSS;
             case SVG_GROUP, SELF_CONTENT, RESOURCE_BACKED -> StandardJsModuleType.CONSUMER;
             case BUNDLED_EXTERNAL -> StandardJsModuleType.BUNDLED_EXTERNAL; // (already handled above)
         };

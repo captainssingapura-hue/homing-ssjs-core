@@ -20,7 +20,7 @@ hue.captains.singapura.js.homing.core.js.TreeRendererModule [no-literal-color] l
 hue.captains.singapura.js.homing.core.js.TreeRendererModule [no-literal-color] literal colour (use a theme token var(--...), not a baked hex/rgb): entry.rowEl.style.background = 'rgba(59,130,246,0.20)';
 hue.captains.singapura.js.homing.core.js.TreeRendererModule [no-literal-color] literal colour (use a theme token var(--...), not a baked hex/rgb): if (self._selectedEntry !== entry) row.style.background = 'rgba(0,0,0,0.05)';
 hue.captains.singapura.js.homing.core.js.TreeRendererModule [no-raw-href] raw href operation (use href.* API): label.setAttribute('href', this._hrefForPath(path, namePath) || '#');
-hue.captains.singapura.js.homing.server.CssClassManager [use-dom-ops-party] raw DOM factory (use branch.createElement via the DomOpsParty, not document.create*): const link = document.createElement("link");
+hue.captains.singapura.js.homing.server.CssLinks [use-dom-ops-party] raw DOM factory (use branch.createElement via the DomOpsParty, not document.create*): const link = document.createElement("link");
 hue.captains.singapura.js.homing.server.CssDependencyGraph [exports-are-classes] exported function 'createCssDependencyGraph' — a component is a class: function createCssDependencyGraph() {
 hue.captains.singapura.js.homing.server.CssLoadProcedure [exports-are-classes] exported function 'createCssLoadProcedure' — a component is a class: function createCssLoadProcedure(graph, appendLink, hrefFor, notify) {
 hue.captains.singapura.js.homing.server.HrefManager [no-raw-css] raw CSS operation (use css.* API): if (opts.className != null) a.className = opts.className;

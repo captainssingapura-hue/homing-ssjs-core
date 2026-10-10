@@ -1,7 +1,6 @@
 package hue.captains.singapura.js.homing.design;
 
-import hue.captains.singapura.js.homing.core.CssClass;
-import hue.captains.singapura.js.homing.core.CssGroup;
+import hue.captains.singapura.js.homing.core.DerivedCss;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -22,12 +21,12 @@ import java.util.Set;
  * cannot serve one, and a new leaf breaks every switch until it is handled —
  * the price of closing the tree, paid where it should be.</p>
  *
- * <p>Every leaf is a {@link CssGroup}: <b>the group is the target</b>, virtual
- * and derived. It declares no class of its own and exports nothing — a
+ * <p>Every leaf is a {@link DerivedCss}: <b>the sheet is the target</b>, derived
+ * for each theme. It declares no class of its own and exports nothing — a
  * component wears {@code DesignClass.of(Danger.class, Color.Surface.class)},
- * the graph counts the surface group as a dependency, and the surface sheet
- * under a design is one generated rule per pair the closure wears. Nothing
- * else of the module graph changes.</p>
+ * the theme's owner loads the surface sheet beside the wearer's group, and the
+ * surface sheet under a design is one generated rule per pair the closure
+ * wears (RFC 0064, D25).</p>
  *
  * <p>Names repeat across branches ({@code Face} could one day appear under
  * {@code Sound}), so a leaf's path is {@code Branch.Leaf} and its token is
@@ -112,17 +111,15 @@ public sealed interface Target permits
          * The old design system's: the semantic classes answer its colours with
          * {@link Background} and its geometry with {@link Shape.Background}.
          */
-        record Surface() implements Color, CssGroup<Surface> {
+        record Surface() implements Color, DerivedCss<Surface> {
             public static final Surface INSTANCE = new Surface();
-            @Override public List<CssClass<Surface>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("background-color", "background-image", "background-size", "background-repeat"); }
             @Override public Set<State> states() { return INTERACTIVE; }
             @Override public List<Target> supersededBy() { return List.of(Background.INSTANCE, Shape.Background.INSTANCE); }
         }
         /** The colour of what is written on it. */
-        record Ink() implements Color, CssGroup<Ink> {
+        record Ink() implements Color, DerivedCss<Ink> {
             public static final Ink INSTANCE = new Ink();
-            @Override public List<CssClass<Ink>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("color"); }
             @Override public Set<State> states() { return INTERACTIVE; }
         }
@@ -130,31 +127,27 @@ public sealed interface Target permits
          * The colour of its border and outline. The old design system's: the semantic classes
          * answer the box's line, the ring of attention and the rules between columns apart.
          */
-        record Edge() implements Color, CssGroup<Edge> {
+        record Edge() implements Color, DerivedCss<Edge> {
             public static final Edge INSTANCE = new Edge();
-            @Override public List<CssClass<Edge>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("border-color", "outline-color", "column-rule-color"); }
             @Override public Set<State> states() { return INTERACTIVE; }
             @Override public List<Target> supersededBy() { return List.of(Border.INSTANCE, Outline.INSTANCE, ColumnRule.INSTANCE); }
         }
         /** SVG fill. */
-        record Fill() implements Color, CssGroup<Fill> {
+        record Fill() implements Color, DerivedCss<Fill> {
             public static final Fill INSTANCE = new Fill();
-            @Override public List<CssClass<Fill>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("fill"); }
             @Override public Set<State> states() { return INTERACTIVE; }
         }
         /** SVG stroke colour. */
-        record Stroke() implements Color, CssGroup<Stroke> {
+        record Stroke() implements Color, DerivedCss<Stroke> {
             public static final Stroke INSTANCE = new Stroke();
-            @Override public List<CssClass<Stroke>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("stroke"); }
             @Override public Set<State> states() { return INTERACTIVE; }
         }
         /** The scrollbar's two colours. */
-        record Scrollbar() implements Color, CssGroup<Scrollbar> {
+        record Scrollbar() implements Color, DerivedCss<Scrollbar> {
             public static final Scrollbar INSTANCE = new Scrollbar();
-            @Override public List<CssClass<Scrollbar>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("scrollbar-color"); }
             @Override public Set<State> states() { return REST_ONLY; }
         }
@@ -163,32 +156,28 @@ public sealed interface Target permits
          * - a ramp's three stops and a pattern's marks. One set, since what is drawn over the ground
          * shows it through; the gradient's and the pattern's geometry is {@link Shape.Background}'s.
          */
-        record Background() implements Color, CssGroup<Background> {
+        record Background() implements Color, DerivedCss<Background> {
             public static final Background INSTANCE = new Background();
-            @Override public List<CssClass<Background>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() {
                 return Set.of("background-color", "--background-ramp-from", "--background-ramp-via", "--background-ramp-to", "--background-mark");
             }
             @Override public Set<State> states() { return INTERACTIVE; }
         }
         /** The box's line: its border. */
-        record Border() implements Color, CssGroup<Border> {
+        record Border() implements Color, DerivedCss<Border> {
             public static final Border INSTANCE = new Border();
-            @Override public List<CssClass<Border>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("border-color"); }
             @Override public Set<State> states() { return INTERACTIVE; }
         }
         /** The ring drawn around a box for attention: on focus, and the keys' marks. */
-        record Outline() implements Color, CssGroup<Outline> {
+        record Outline() implements Color, DerivedCss<Outline> {
             public static final Outline INSTANCE = new Outline();
-            @Override public List<CssClass<Outline>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("outline-color"); }
             @Override public Set<State> states() { return INTERACTIVE; }
         }
         /** The rules drawn between a box's columns. */
-        record ColumnRule() implements Color, CssGroup<ColumnRule> {
+        record ColumnRule() implements Color, DerivedCss<ColumnRule> {
             public static final ColumnRule INSTANCE = new ColumnRule();
-            @Override public List<CssClass<ColumnRule>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("column-rule-color"); }
             @Override public Set<State> states() { return INTERACTIVE; }
         }
@@ -197,9 +186,8 @@ public sealed interface Target permits
          * gives off. CSS has no colour longhand for a shadow, so each is registered; the shadow's
          * geometry is {@link Shape.Shadow}'s.
          */
-        record BoxShadow() implements Color, CssGroup<BoxShadow> {
+        record BoxShadow() implements Color, DerivedCss<BoxShadow> {
             public static final BoxShadow INSTANCE = new BoxShadow();
-            @Override public List<CssClass<BoxShadow>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("--box-shadow-cast", "--box-shadow-lit", "--box-shadow-glow"); }
             @Override public Set<State> states() { return INTERACTIVE; }
         }
@@ -210,9 +198,8 @@ public sealed interface Target permits
     // ═════════════════════════════════════════════════════════════════════
     sealed interface Shape extends Target permits Shape.Corner, Shape.Rule, Shape.Shadow, Shape.Clip,
             Shape.Border, Shape.Outline, Shape.Background {
-        record Corner() implements Shape, CssGroup<Corner> {
+        record Corner() implements Shape, DerivedCss<Corner> {
             public static final Corner INSTANCE = new Corner();
-            @Override public List<CssClass<Corner>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("border-radius"); }
             @Override public Set<State> states() { return STOOD_UP; }
         }
@@ -220,32 +207,28 @@ public sealed interface Target permits
          * Border and outline width and style — the line, not its colour. The old design system's:
          * the semantic classes answer the box's line and the ring of attention apart.
          */
-        record Rule() implements Shape, CssGroup<Rule> {
+        record Rule() implements Shape, DerivedCss<Rule> {
             public static final Rule INSTANCE = new Rule();
-            @Override public List<CssClass<Rule>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("border-width", "border-style", "outline-width", "outline-style", "outline-offset"); }
             @Override public Set<State> states() { return INTERACTIVE; }   // a line may change with every state: dotted for current, dashed for highlighted
             @Override public List<Target> supersededBy() { return List.of(Border.INSTANCE, Outline.INSTANCE); }
         }
         /** A box's shadow, drawn in {@link Color.BoxShadow}'s colours: its offsets, blurs, spreads and insets. */
-        record Shadow() implements Shape, CssGroup<Shadow> {
+        record Shadow() implements Shape, DerivedCss<Shadow> {
             public static final Shadow INSTANCE = new Shadow();
-            @Override public List<CssClass<Shadow>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("box-shadow"); }
             @Override public Set<State> states() { return INTERACTIVE; }   // depth is a state too: a selected or highlighted thing lifts
             @Override public List<Color> colouredBy() { return List.of(Color.BoxShadow.INSTANCE); }
         }
         /** The box's line: its border's width and style. */
-        record Border() implements Shape, CssGroup<Border> {
+        record Border() implements Shape, DerivedCss<Border> {
             public static final Border INSTANCE = new Border();
-            @Override public List<CssClass<Border>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("border-width", "border-style"); }
             @Override public Set<State> states() { return INTERACTIVE; }
         }
         /** The ring drawn around a box for attention: its width, style and offset. */
-        record Outline() implements Shape, CssGroup<Outline> {
+        record Outline() implements Shape, DerivedCss<Outline> {
             public static final Outline INSTANCE = new Outline();
-            @Override public List<CssClass<Outline>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("outline-width", "outline-style", "outline-offset"); }
             @Override public Set<State> states() { return INTERACTIVE; }
         }
@@ -253,16 +236,14 @@ public sealed interface Target permits
          * What is drawn over a box's ground: a gradient or a pattern, drawn in {@link Color.Background}'s
          * colours, or an image that needs none - its angle, stops, tile, repeat and place.
          */
-        record Background() implements Shape, CssGroup<Background> {
+        record Background() implements Shape, DerivedCss<Background> {
             public static final Background INSTANCE = new Background();
-            @Override public List<CssClass<Background>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("background-image", "background-size", "background-repeat", "background-position"); }
             @Override public Set<State> states() { return INTERACTIVE; }
             @Override public List<Color> colouredBy() { return List.of(Color.Background.INSTANCE); }
         }
-        record Clip() implements Shape, CssGroup<Clip> {
+        record Clip() implements Shape, DerivedCss<Clip> {
             public static final Clip INSTANCE = new Clip();
-            @Override public List<CssClass<Clip>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("clip-path"); }
             @Override public Set<State> states() { return REST_ONLY; }
         }
@@ -273,15 +254,13 @@ public sealed interface Target permits
     // ═════════════════════════════════════════════════════════════════════
     sealed interface Size extends Target permits Size.Inset, Size.Gap, Size.Extent, Size.Proportion {
         /** The air inside a box — block and inline, each one length, so each can grow with the element's size. */
-        record Inset() implements Size, CssGroup<Inset> {
+        record Inset() implements Size, DerivedCss<Inset> {
             public static final Inset INSTANCE = new Inset();
-            @Override public List<CssClass<Inset>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("padding-block", "padding-inline"); }
             @Override public Set<State> states() { return REST_ONLY; }
         }
-        record Gap() implements Size, CssGroup<Gap> {
+        record Gap() implements Size, DerivedCss<Gap> {
             public static final Gap INSTANCE = new Gap();
-            @Override public List<CssClass<Gap>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("gap"); }
             @Override public Set<State> states() { return REST_ONLY; }
         }
@@ -291,9 +270,8 @@ public sealed interface Target permits
          * measure itself. A design's density, not a layout's size; a host may
          * cap it, never stretch it.
          */
-        record Extent() implements Size, CssGroup<Extent> {
+        record Extent() implements Size, DerivedCss<Extent> {
             public static final Extent INSTANCE = new Extent();
-            @Override public List<CssClass<Extent>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("min-height", "min-width", "inline-size", "block-size"); }
             @Override public Set<State> states() { return STOOD_UP; }
         }
@@ -303,9 +281,8 @@ public sealed interface Target permits
          * this, and what is inside fits the box. A design's: an index card,
          * a square tile, a wide plate.
          */
-        record Proportion() implements Size, CssGroup<Proportion> {
+        record Proportion() implements Size, DerivedCss<Proportion> {
             public static final Proportion INSTANCE = new Proportion();
-            @Override public List<CssClass<Proportion>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("aspect-ratio"); }
             @Override public Set<State> states() { return REST_ONLY; }
         }
@@ -315,35 +292,30 @@ public sealed interface Target permits
     //  Type — how text is set
     // ═════════════════════════════════════════════════════════════════════
     sealed interface Type extends Target permits Type.Face, Type.Weight, Type.Scale, Type.Treatment, Type.Decoration, Type.Glyph {
-        record Face() implements Type, CssGroup<Face> {
+        record Face() implements Type, DerivedCss<Face> {
             public static final Face INSTANCE = new Face();
-            @Override public List<CssClass<Face>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("font-family"); }
             @Override public Set<State> states() { return REST_ONLY; }
         }
-        record Weight() implements Type, CssGroup<Weight> {
+        record Weight() implements Type, DerivedCss<Weight> {
             public static final Weight INSTANCE = new Weight();
-            @Override public List<CssClass<Weight>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("font-weight"); }
             @Override public Set<State> states() { return EnumSet.of(State.REST, State.HOVER, State.SELECTED, State.CURRENT); }
         }
-        record Scale() implements Type, CssGroup<Scale> {
+        record Scale() implements Type, DerivedCss<Scale> {
             public static final Scale INSTANCE = new Scale();
-            @Override public List<CssClass<Scale>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("font-size", "line-height"); }
             @Override public Set<State> states() { return REST_ONLY; }
         }
         /** Spacing, case, style and features — everything about the setting that is not face, weight or size. */
-        record Treatment() implements Type, CssGroup<Treatment> {
+        record Treatment() implements Type, DerivedCss<Treatment> {
             public static final Treatment INSTANCE = new Treatment();
-            @Override public List<CssClass<Treatment>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("letter-spacing", "word-spacing", "text-transform", "font-style",
                     "font-variant-caps", "font-variant-numeric", "font-feature-settings"); }
             @Override public Set<State> states() { return REST_ONLY; }
         }
-        record Decoration() implements Type, CssGroup<Decoration> {
+        record Decoration() implements Type, DerivedCss<Decoration> {
             public static final Decoration INSTANCE = new Decoration();
-            @Override public List<CssClass<Decoration>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("text-decoration-line", "text-decoration-style", "text-decoration-thickness", "text-underline-offset", "text-shadow"); }   // a glow or a relief is a decoration of the letters too
             @Override public Set<State> states() { return POINTER; }
         }
@@ -353,9 +325,8 @@ public sealed interface Target permits
          * {@code url()}. The element that wears it is the mark; what it says is
          * the design's.
          */
-        record Glyph() implements Type, CssGroup<Glyph> {
+        record Glyph() implements Type, DerivedCss<Glyph> {
             public static final Glyph INSTANCE = new Glyph();
-            @Override public List<CssClass<Glyph>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("content"); }
             @Override public Set<State> states() { return INTERACTIVE; }
             @Override public String pseudo() { return "::before"; }
@@ -367,23 +338,20 @@ public sealed interface Target permits
     // ═════════════════════════════════════════════════════════════════════
     sealed interface Motion extends Target permits Motion.Ease, Motion.Transform, Motion.Animate {
         /** How changes travel: the transition. One per element, so one leaf. */
-        record Ease() implements Motion, CssGroup<Ease> {
+        record Ease() implements Motion, DerivedCss<Ease> {
             public static final Ease INSTANCE = new Ease();
-            @Override public List<CssClass<Ease>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("transition"); }
             @Override public Set<State> states() { return REST_ONLY; }
         }
         /** Where the element goes per state — the press, the lift, the nudge. */
-        record Transform() implements Motion, CssGroup<Transform> {
+        record Transform() implements Motion, DerivedCss<Transform> {
             public static final Transform INSTANCE = new Transform();
-            @Override public List<CssClass<Transform>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("transform"); }
             @Override public Set<State> states() { return INTERACTIVE; }
         }
         /** Keyframed motion — arrival, attention, a spinner. */
-        record Animate() implements Motion, CssGroup<Animate> {
+        record Animate() implements Motion, DerivedCss<Animate> {
             public static final Animate INSTANCE = new Animate();
-            @Override public List<CssClass<Animate>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("animation"); }
             @Override public Set<State> states() { return EnumSet.of(State.REST, State.HOVER, State.ACTIVE, State.FOCUS, State.INVALID); }
         }
@@ -393,21 +361,18 @@ public sealed interface Target permits
     //  Effect — optical treatments of the whole element
     // ═════════════════════════════════════════════════════════════════════
     sealed interface Effect extends Target permits Effect.Opacity, Effect.Filter, Effect.Blend {
-        record Opacity() implements Effect, CssGroup<Opacity> {
+        record Opacity() implements Effect, DerivedCss<Opacity> {
             public static final Opacity INSTANCE = new Opacity();
-            @Override public List<CssClass<Opacity>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("opacity"); }
             @Override public Set<State> states() { return POINTER; }
         }
-        record Filter() implements Effect, CssGroup<Filter> {
+        record Filter() implements Effect, DerivedCss<Filter> {
             public static final Filter INSTANCE = new Filter();
-            @Override public List<CssClass<Filter>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("filter", "backdrop-filter"); }
             @Override public Set<State> states() { return INTERACTIVE; }   // a lift a table row can show — filter paints where box-shadow does not
         }
-        record Blend() implements Effect, CssGroup<Blend> {
+        record Blend() implements Effect, DerivedCss<Blend> {
             public static final Blend INSTANCE = new Blend();
-            @Override public List<CssClass<Blend>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("mix-blend-mode"); }
             @Override public Set<State> states() { return REST_ONLY; }
         }
@@ -417,15 +382,13 @@ public sealed interface Target permits
     //  Affordance — what the pointer is told
     // ═════════════════════════════════════════════════════════════════════
     sealed interface Affordance extends Target permits Affordance.Cursor, Affordance.Select {
-        record Cursor() implements Affordance, CssGroup<Cursor> {
+        record Cursor() implements Affordance, DerivedCss<Cursor> {
             public static final Cursor INSTANCE = new Cursor();
-            @Override public List<CssClass<Cursor>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("cursor"); }
             @Override public Set<State> states() { return EnumSet.of(State.REST, State.DISABLED, State.DRAGGING); }
         }
-        record Select() implements Affordance, CssGroup<Select> {
+        record Select() implements Affordance, DerivedCss<Select> {
             public static final Select INSTANCE = new Select();
-            @Override public List<CssClass<Select>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of("user-select"); }
             @Override public Set<State> states() { return REST_ONLY; }
         }
@@ -435,9 +398,8 @@ public sealed interface Target permits
     //  Sound — not CSS; a cue per state
     // ═════════════════════════════════════════════════════════════════════
     sealed interface Sound extends Target permits Sound.Cue {
-        record Cue() implements Sound, CssGroup<Cue> {
+        record Cue() implements Sound, DerivedCss<Cue> {
             public static final Cue INSTANCE = new Cue();
-            @Override public List<CssClass<Cue>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of(); }
             @Override public Set<State> states() { return EnumSet.of(State.REST, State.HOVER, State.ACTIVE, State.FOCUS, State.INVALID, State.SELECTED); }
             @Override public Carrier carrier() { return Carrier.AUDIO; }
@@ -448,16 +410,14 @@ public sealed interface Target permits
     //  Asset — not CSS; a picture the semantic is shown by
     // ═════════════════════════════════════════════════════════════════════
     sealed interface Asset extends Target permits Asset.Icon, Asset.Illustration {
-        record Icon() implements Asset, CssGroup<Icon> {
+        record Icon() implements Asset, DerivedCss<Icon> {
             public static final Icon INSTANCE = new Icon();
-            @Override public List<CssClass<Icon>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of(); }
             @Override public Set<State> states() { return REST_ONLY; }
             @Override public Carrier carrier() { return Carrier.ASSET; }
         }
-        record Illustration() implements Asset, CssGroup<Illustration> {
+        record Illustration() implements Asset, DerivedCss<Illustration> {
             public static final Illustration INSTANCE = new Illustration();
-            @Override public List<CssClass<Illustration>> cssClasses() { return List.of(); }
             @Override public Set<String> properties() { return Set.of(); }
             @Override public Set<State> states() { return REST_ONLY; }
             @Override public Carrier carrier() { return Carrier.ASSET; }

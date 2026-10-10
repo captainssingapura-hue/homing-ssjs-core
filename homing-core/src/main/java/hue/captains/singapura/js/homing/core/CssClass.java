@@ -67,21 +67,14 @@ public interface CssClass<C extends CssGroup<C>> extends Exportable._Constant<C>
     default Set<String> variants() { return Set.of(); }
 
     /**
-     * Inline CSS body for this class. When non-null, the framework renders the
-     * class using this string and does <em>not</em> consult a per-theme impl
-     * method. When null (default), the renderer falls back to looking up a
-     * matching method on the impl via reflection — the legacy theme-bound
-     * pattern.
+     * The class's rule: its declarations, the same in every theme - a provided
+     * class does not vary (RFC 0064, D25). What a theme says of the element it
+     * says through a derived sheet the class wears ({@link #wears()}), or the
+     * component's look; a body that reads a {@code var(--…)} reads a value set
+     * elsewhere and says none itself.
      *
-     * <p>RFC 0002-ext1 (Phase 05): inline bodies are the prerequisite for
-     * theme-agnostic utility classes (Phase 06) and for the marker-shape
-     * refactor (Phase 09). Class bodies that reference {@code var(--…)} CSS
-     * custom properties resolve through the active theme's cascade — they
-     * remain theme-aware via the variable layer without needing a per-theme
-     * impl method.</p>
-     *
-     * <p>Default: {@code null} — the renderer uses the impl-method dispatch
-     * path. Existing CssClass records are unaffected.</p>
+     * <p>Default: {@code null}, which the server renders as a comment that the
+     * class has no body.</p>
      */
     default String body() { return null; }
 
@@ -107,9 +100,10 @@ public interface CssClass<C extends CssGroup<C>> extends Exportable._Constant<C>
      * class by the client manager whenever this class is added, and removed
      * with it — so a component declares once, in Java, what its element means
      * and where that shows, and its JS adds one class as before. A worn
-     * token's group is a dependency of this class's group, like
-     * {@link #dependsOn()}; unlike it, a worn token is put on the element. This
-     * class's own body carries structure and nothing a worn token says.
+     * token's rule is in a derived sheet, which the theme's owner loads beside
+     * this class's group (RFC 0064, D25); unlike {@link #dependsOn()}, a worn
+     * token is put on the element. This class's own body carries structure and
+     * nothing a worn token says.
      * Default: none.
      */
     default List<? extends Wearable> wears() { return List.of(); }
@@ -122,8 +116,8 @@ public interface CssClass<C extends CssGroup<C>> extends Exportable._Constant<C>
      * lit under {@code :focus-within} reads the design's ring colour into
      * its own rule; and a channel of the component's own, a custom property
      * an ancestor sets and every slot beneath reads, whose value is the
-     * design's word passed down. Read, not worn: the pair's group is a
-     * dependency and its binding is emitted, and nothing is put on the
+     * design's word passed down. Read, not worn: the pair's derived sheet is
+     * loaded and its binding is emitted, and nothing is put on the
      * element. The value is still the design's — a body reads a word, it
      * never says one. Default: none.
      */

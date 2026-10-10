@@ -65,7 +65,6 @@ class DesignCssRendererTest {
         var renderers = REGISTRY.renderers(SERVED);
         assertEquals(1, renderers.size());
         assertTrue(renderers.get(0).owns(Target.Color.Surface.INSTANCE));
-        assertTrue(renderers.get(0).varies(Target.Color.Surface.INSTANCE));
     }
 
     @Test
@@ -84,8 +83,11 @@ class DesignCssRendererTest {
         assertTrue(surface.contains("--danger-color-surface-background-color: #B00020;"), surface);
     }
 
+    /** A derived sheet the design does not derive - the house's look, say. */
+    record Other() implements hue.captains.singapura.js.homing.core.DerivedCss<Other> {}
+
     @Test
-    void aGroupThatIsNotATarget_isNotOwned() {
-        assertFalse(REGISTRY.renderers(SERVED).get(0).owns(Wearer.INSTANCE));
+    void aSheetThatIsNotATarget_isNotOwned() {
+        assertFalse(REGISTRY.renderers(SERVED).get(0).owns(new Other()));
     }
 }

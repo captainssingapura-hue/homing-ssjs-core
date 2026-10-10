@@ -19,8 +19,10 @@ public enum ModuleForm {
     BUNDLED_EXTERNAL,
     /** Java-emitted SVG group (no {@code .js} resource). */
     SVG_GROUP,
-    /** Java-emitted CSS group (no {@code .js} resource). */
+    /** Java-emitted CSS group (no {@code .js} resource): provided, the same in every theme. */
     CSS_GROUP,
+    /** Java-emitted derived sheet (no {@code .js} resource): rendered for each theme. */
+    DERIVED_CSS,
     /** Java-emitted module content via {@link SelfContent} (no {@code .js} resource). */
     SELF_CONTENT,
     /** Content read from a {@code homing/js/<fqcn>.js} classpath resource. */
@@ -34,6 +36,7 @@ public enum ModuleForm {
         if (module instanceof BundledExternalModule<?>) return BUNDLED_EXTERNAL;
         if (module instanceof SvgGroup<?>)              return SVG_GROUP;
         if (module instanceof CssGroup<?>)              return CSS_GROUP;
+        if (module instanceof DerivedCss<?>)            return DERIVED_CSS;
         if (module instanceof SelfContent)              return SELF_CONTENT;
         return RESOURCE_BACKED;
     }

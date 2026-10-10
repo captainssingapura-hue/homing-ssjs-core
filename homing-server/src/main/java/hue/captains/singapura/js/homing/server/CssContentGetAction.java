@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.server;
 import hue.captains.singapura.js.homing.core.Component;
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
+import hue.captains.singapura.js.homing.core.DerivedCss;
 import hue.captains.singapura.js.homing.core.Layer;
 import hue.captains.singapura.js.homing.core.Layers;
 import hue.captains.singapura.js.homing.core.Theme;
@@ -18,12 +19,12 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * GET /css-content?class=&lt;CssGroup canonical name&gt;[&amp;theme=&lt;slug&gt;]
+ * GET /css-content?class=&lt;CssGroup or DerivedCss canonical name&gt;[&amp;theme=&lt;slug&gt;]
  *
- * <p>Asks the design side's renderers first - a group one of them owns is served
- * as that renderer says, under the theme asked for. Every other group renders
- * from its declared bodies, each class {@code selector { body }} in its
- * {@code @layer}; those do not vary with the theme.</p>
+ * <p>A provided group renders from its declared bodies, each class
+ * {@code selector { body }} in its {@code @layer}: the same in every theme, so a
+ * theme on the request is ignored and none is needed. A derived sheet is its
+ * renderer's, under the theme asked for, else the default (RFC 0064, D25).</p>
  *
  * <p>Hard cut: unknown {@code class} or {@code theme} returns 404. No
  * file-based fallback (RFC 0002 §3.6).</p>
@@ -79,8 +80,9 @@ public class CssContentGetAction
                 return CompletableFuture.failedFuture(ResourceNotFound.forClass(query.className(),
                         new IllegalStateException("group '" + query.className() + "' is not declared in any registered crate")));
             }
-            if (!(found.get() instanceof CssGroup<?> group)) {
-                return CompletableFuture.failedFuture(ResourceNotFound.wrongType(query.className(), "CssGroup"));
+            if (found.get() instanceof CssGroup<?> group) return CompletableFuture.completedFuture(new CssContent(renderCss(group)));
+            if (!(found.get() instanceof DerivedCss<?> sheet)) {
+                return CompletableFuture.failedFuture(ResourceNotFound.wrongType(query.className(), "CssGroup or DerivedCss"));
             }
 
             String themeSlug = query.theme() != null && !query.theme().isBlank()
@@ -92,13 +94,11 @@ public class CssContentGetAction
                         new IllegalStateException(
                                 "No theme specified and no default theme configured")));
             }
-            // The design side's renderers first: a group one of them owns varies
-            // with the theme. Every other group is its declared bodies.
             for (CssRenderer r : renderers) {
-                var css = r.render(group, themeSlug);
+                var css = r.render(sheet, themeSlug);
                 if (css.isPresent()) return CompletableFuture.completedFuture(new CssContent(css.get()));
             }
-            return CompletableFuture.completedFuture(new CssContent(renderCss(group)));
+            return CompletableFuture.completedFuture(new CssContent("/* no renderer derives " + query.className() + " */\n"));
         } catch (Exception e) {
             return CompletableFuture.failedFuture(ResourceNotFound.forClass(query.className(), e));
         }

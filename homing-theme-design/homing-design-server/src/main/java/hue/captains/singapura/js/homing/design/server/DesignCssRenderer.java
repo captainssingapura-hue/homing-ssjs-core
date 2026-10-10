@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.design.server;
 
-import hue.captains.singapura.js.homing.core.CssGroup;
+import hue.captains.singapura.js.homing.core.DerivedCss;
 import hue.captains.singapura.js.homing.design.Deployment;
 import hue.captains.singapura.js.homing.design.Design;
 import hue.captains.singapura.js.homing.design.DesignClass;
@@ -58,11 +58,11 @@ public final class DesignCssRenderer implements CssRenderer {
         this.grown = java.util.Map.of();
     }
 
-    @Override public boolean owns(CssGroup<?> group) { return group instanceof Target; }
+    @Override public boolean owns(DerivedCss<?> sheet) { return sheet instanceof Target; }
 
     @Override
-    public Optional<String> render(CssGroup<?> group, String themeSlug) {
-        if (!(group instanceof Target target)) return Optional.empty();
+    public Optional<String> render(DerivedCss<?> sheet, String themeSlug) {
+        if (!(sheet instanceof Target target)) return Optional.empty();
         Design design = designs.stream().filter(d -> d.slug().equals(themeSlug)).findFirst()
                 .orElse(designs.isEmpty() ? null : designs.get(0));
         if (design == null) return Optional.of("/* no design registered */\n");

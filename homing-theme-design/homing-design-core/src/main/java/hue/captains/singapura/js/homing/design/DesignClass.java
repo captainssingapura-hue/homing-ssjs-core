@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.design;
 
-import hue.captains.singapura.js.homing.core.CssGroup;
+import hue.captains.singapura.js.homing.core.DerivedCss;
 import hue.captains.singapura.js.homing.core.Wearable;
 
 /**
@@ -25,7 +25,7 @@ import hue.captains.singapura.js.homing.core.Wearable;
  * @param target   the physical leaf — a leaf of the sealed tree, and the class's group
  * @param <T>      the target leaf
  */
-public record DesignClass<T extends Target & CssGroup<T>>(Class<? extends Semantic> semantic, Class<T> target)
+public record DesignClass<T extends Target & DerivedCss<T>>(Class<? extends Semantic> semantic, Class<T> target)
         implements Wearable {
 
     public DesignClass {
@@ -33,7 +33,7 @@ public record DesignClass<T extends Target & CssGroup<T>>(Class<? extends Semant
         Trees.requireTargetLeaf(target);
     }
 
-    public static <T extends Target & CssGroup<T>> DesignClass<T> of(Class<? extends Semantic> semantic, Class<T> target) {
+    public static <T extends Target & DerivedCss<T>> DesignClass<T> of(Class<? extends Semantic> semantic, Class<T> target) {
         return new DesignClass<>(semantic, target);
     }
 
@@ -47,8 +47,8 @@ public record DesignClass<T extends Target & CssGroup<T>>(Class<? extends Semant
         return out;
     }
 
-    /** The group is the target: virtual, and derived from the pair. */
-    @Override public CssGroup<?> group() { return targetLeaf(); }
+    /** The sheet is the target's: derived for each theme, and loaded by the theme's owner. */
+    @Override public DerivedCss<?> sheet() { return targetLeaf(); }
 
     /** The target leaf's singleton — the properties, states and carrier this class is bound within. */
     @SuppressWarnings("unchecked")

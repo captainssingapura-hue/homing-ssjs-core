@@ -31,7 +31,8 @@ class TreesTest {
                 assertTrue(!p.equals("border") && !p.equals("background") && !p.equals("outline") && !p.equals("text-decoration") && !p.equals("font"),
                         t.token() + " owns a shorthand that crosses leaves: " + p);
             if (t.carrier() != Carrier.CSS) assertTrue(t.properties().isEmpty(), t.token() + " is not CSS and owns no property");
-            assertEquals(List.of(), ((hue.captains.singapura.js.homing.core.CssGroup<?>) t).cssClasses(), t.token() + " declares no class of its own");
+            assertTrue(t instanceof hue.captains.singapura.js.homing.core.DerivedCss<?>, t.token() + " is a derived sheet, never a provided group");
+            assertEquals(List.of(), ((hue.captains.singapura.js.homing.core.DerivedCss<?>) t).exports().exports(), t.token() + " exports nothing");
         }
     }
 
@@ -68,10 +69,10 @@ class TreesTest {
     // ── the pair ──────────────────────────────────────────────────────────
 
     @Test
-    void aPair_isAValue_withItsTokenAndItsGroup() {
+    void aPair_isAValue_withItsTokenAndItsSheet() {
         var dc = DesignClass.of(Feedback.Danger.class, Target.Color.Surface.class);
         assertEquals("danger-color-surface", dc.cssName());
-        assertEquals(Target.Color.Surface.INSTANCE, dc.group(), "the group is the target");
+        assertEquals(Target.Color.Surface.INSTANCE, dc.sheet(), "the sheet is the target's");
         assertEquals(dc, DesignClass.of(Feedback.Danger.class, Target.Color.Surface.class), "the same pair, asked twice, is one value");
         assertEquals("on-danger-color-ink", DesignClass.of(Pairing.OnDanger.class, Target.Color.Ink.class).cssName());
         assertEquals("interactive-motion-transform", DesignClass.of(Interaction.Interactive.class, Target.Motion.Transform.class).cssName());
