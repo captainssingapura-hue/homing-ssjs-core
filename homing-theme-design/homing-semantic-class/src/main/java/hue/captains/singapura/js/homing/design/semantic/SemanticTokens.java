@@ -7,6 +7,7 @@ import hue.captains.singapura.js.homing.component.taxonomy.RoleRoot;
 import hue.captains.singapura.js.homing.component.taxonomy.Root;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxon;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
+import hue.captains.singapura.js.homing.component.taxonomy.Word;
 import hue.captains.singapura.js.homing.design.Carrier;
 import hue.captains.singapura.js.homing.design.State;
 import hue.captains.singapura.js.homing.design.Target;
@@ -55,6 +56,12 @@ public record SemanticTokens() implements StatelessFunctionalObject {
 
     /** The class for a node in a state on a target: a look at rest, a treatment otherwise. */
     public String className(Casting c, State s, Target t) { return s == State.REST ? look(c, t) : treatment(c, s, t); }
+
+    /**
+     * The class a mark wears to show a word of a lexicon: {@code word-close}. It holds no {@code __}, so it
+     * is never a look's nor a treatment's, whatever a component is named.
+     */
+    public String word(Word<?> w) { return "word-" + w.token(); }
 
     // ── reading ─────────────────────────────────────────────────────────────
 
