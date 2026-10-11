@@ -24,6 +24,9 @@ import java.util.Set;
  *
  * <p>Owns exactly the {@link Target} groups. Everything else falls through to
  * the server's declared-body rendering.</p>
+ *
+ * <p>{@link LegacyCss#EMPTIED}, it still owns them and serves each empty: the
+ * old design stack, soft-removed.</p>
  */
 public final class DesignCssRenderer implements CssRenderer {
 
@@ -32,6 +35,7 @@ public final class DesignCssRenderer implements CssRenderer {
     private final Set<DesignClass<?>> worn;
     private final Set<DesignClass<?>> scaled;
     private final java.util.Map<hue.captains.singapura.js.homing.design.Growth, Set<DesignClass<?>>> grown;
+    private final LegacyCss legacy;
 
     /** @param worn every pair the served components wear — the requirement set the sheets are cut to */
     public DesignCssRenderer(List<Design> designs, List<DesignExtension> extensions, Set<DesignClass<?>> worn) {
@@ -43,11 +47,17 @@ public final class DesignCssRenderer implements CssRenderer {
      * @param grown  the pairs some component wears with a number on a growth axis — the design must give every property a ratio on it, and the sheet raises them to it
      */
     public DesignCssRenderer(List<Design> designs, List<DesignExtension> extensions, Set<DesignClass<?>> worn, Set<DesignClass<?>> scaled, java.util.Map<hue.captains.singapura.js.homing.design.Growth, Set<DesignClass<?>>> grown) {
+        this(designs, extensions, worn, scaled, grown, LegacyCss.SERVED);
+    }
+
+    /** @param legacy whether the sheets are served, or each served empty - the old stack soft-removed */
+    public DesignCssRenderer(List<Design> designs, List<DesignExtension> extensions, Set<DesignClass<?>> worn, Set<DesignClass<?>> scaled, java.util.Map<hue.captains.singapura.js.homing.design.Growth, Set<DesignClass<?>>> grown, LegacyCss legacy) {
         this.designs = List.copyOf(designs);
         this.extensions = List.copyOf(extensions);
         this.worn = Set.copyOf(worn);
         this.scaled = Set.copyOf(scaled);
         this.grown = java.util.Map.copyOf(grown);
+        this.legacy = java.util.Objects.requireNonNull(legacy, "legacy");
     }
 
     public DesignCssRenderer(List<Design> designs, List<DesignExtension> extensions, Set<DesignClass<?>> worn, Set<DesignClass<?>> scaled) {
@@ -56,6 +66,7 @@ public final class DesignCssRenderer implements CssRenderer {
         this.worn = Set.copyOf(worn);
         this.scaled = Set.copyOf(scaled);
         this.grown = java.util.Map.of();
+        this.legacy = LegacyCss.SERVED;
     }
 
     @Override public boolean owns(DerivedCss<?> sheet) { return sheet instanceof Target; }
@@ -63,6 +74,8 @@ public final class DesignCssRenderer implements CssRenderer {
     @Override
     public Optional<String> render(DerivedCss<?> sheet, String themeSlug) {
         if (!(sheet instanceof Target target)) return Optional.empty();
+        if (legacy == LegacyCss.EMPTIED)
+            return Optional.of("/* " + target.token() + ": the design words' sheet, soft-removed - served empty; -D" + LegacyCss.PROPERTY + "=on serves it */\n");
         Design design = designs.stream().filter(d -> d.slug().equals(themeSlug)).findFirst()
                 .orElse(designs.isEmpty() ? null : designs.get(0));
         if (design == null) return Optional.of("/* no design registered */\n");

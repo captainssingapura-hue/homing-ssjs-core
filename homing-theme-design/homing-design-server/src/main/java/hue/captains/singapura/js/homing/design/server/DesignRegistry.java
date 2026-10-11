@@ -28,7 +28,9 @@ import java.util.Map;
  * crafted for and what else it suits.
  *
  * <p>Given what the deployment serves, hands the server the one renderer that
- * serves the target groups, cut to the pairs the served components wear.</p>
+ * serves the target groups, cut to the pairs the served components wear - each
+ * served empty unless the server was started with {@code -Dhoming.legacyCss=on}
+ * ({@link LegacyCss}).</p>
  */
 public final class DesignRegistry implements ThemeRegistry {
 
@@ -83,9 +85,17 @@ public final class DesignRegistry implements ThemeRegistry {
     }
 
     @Override
-    public List<CssRenderer> renderers(ServedModules served) {
+    public List<CssRenderer> renderers(ServedModules served) { return renderers(served, legacy()); }
+
+    /** The renderer, its sheets served or each served empty, as said here rather than by the server's start. */
+    public List<CssRenderer> renderers(ServedModules served, LegacyCss legacy) {
         var groups = new ArrayList<CssGroup<?>>();
         for (var m : served.byName().values()) if (m instanceof CssGroup<?> g) groups.add(g);
-        return List.of(new DesignCssRenderer(List.copyOf(bySlug.values()), extensions, Deployment.wornBy(groups), Deployment.scaledBy(groups), Deployment.grownBy(groups)));
+        return List.of(new DesignCssRenderer(List.copyOf(bySlug.values()), extensions, Deployment.wornBy(groups), Deployment.scaledBy(groups), Deployment.grownBy(groups), legacy));
+    }
+
+    /** The old stack soft-removed - its sheets served empty - unless the server was started with {@code -Dhoming.legacyCss=on}. */
+    private static LegacyCss legacy() {
+        return "on".equalsIgnoreCase(System.getProperty(LegacyCss.PROPERTY)) ? LegacyCss.SERVED : LegacyCss.EMPTIED;
     }
 }

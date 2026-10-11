@@ -62,14 +62,25 @@ class DesignCssRendererTest {
         assertEquals(List.of("plain", "brutal", "plain_brutal", "brutal_plain"), REGISTRY.themes().stream().map(t -> t.slug()).toList(), "the closure: bases, then every cross");
         assertEquals("plain_brutal", REGISTRY.dressed(REGISTRY.bases().get(0), REGISTRY.colours().get(1)).slug());
         assertEquals("plain", REGISTRY.dressed(REGISTRY.bases().get(0), REGISTRY.colours().get(0)).slug(), "its own colours: the base itself");
-        var renderers = REGISTRY.renderers(SERVED);
+        var renderers = REGISTRY.renderers(SERVED, LegacyCss.SERVED);
         assertEquals(1, renderers.size());
         assertTrue(renderers.get(0).owns(Target.Color.Surface.INSTANCE));
     }
 
+    /** The old stack soft-removed: the renderer still owns every target sheet and serves it empty, unless the server is started with it on. */
+    @Test
+    void softRemoved_byDefault_everyTargetSheetIsServedEmpty() {
+        assertTrue(System.getProperty(LegacyCss.PROPERTY) == null, "the test runs with the default");
+        var renderer = REGISTRY.renderers(SERVED).get(0);
+        assertTrue(renderer.owns(Target.Color.Surface.INSTANCE), "still owned, so nothing else renders it");
+        String css = renderer.render(Target.Color.Surface.INSTANCE, "plain").orElseThrow();
+        assertEquals("/* color-surface: the design words' sheet, soft-removed - served empty; -Dhoming.legacyCss=on serves it */\n", css);
+        assertFalse(REGISTRY.renderers(SERVED, LegacyCss.SERVED).get(0).render(Target.Color.Surface.INSTANCE, "plain").orElseThrow().equals(css), "served, the sheet is back");
+    }
+
     @Test
     void aTargetSheet_underASlug_carriesWhatIsWorn_andNothingElse() {
-        String css = REGISTRY.renderers(SERVED).get(0).render(Target.Color.Surface.INSTANCE, "plain").orElseThrow();
+        String css = REGISTRY.renderers(SERVED, LegacyCss.SERVED).get(0).render(Target.Color.Surface.INSTANCE, "plain").orElseThrow();
         assertTrue(css.contains(":root {\n    --danger-color-surface-background-color: #B00020;\n    --danger-color-surface-background-color-hover: #C51F31;\n}"), css);
         assertTrue(css.contains(".danger-color-surface {\n    background-color: var(--danger-color-surface-background-color);"), css);
         assertFalse(css.contains("success-color-surface"), "a pair nothing wears is not in the sheet, whatever the design could say: " + css);
@@ -77,9 +88,9 @@ class DesignCssRendererTest {
 
     @Test
     void aThemeOverABase_rendersItsOwnWordAndTheBaseRest() {
-        String corner = REGISTRY.renderers(SERVED).get(0).render(Target.Shape.Corner.INSTANCE, "brutal").orElseThrow();
+        String corner = REGISTRY.renderers(SERVED, LegacyCss.SERVED).get(0).render(Target.Shape.Corner.INSTANCE, "brutal").orElseThrow();
         assertTrue(corner.contains("--control-shape-corner: 0;"), corner);
-        String surface = REGISTRY.renderers(SERVED).get(0).render(Target.Color.Surface.INSTANCE, "brutal").orElseThrow();
+        String surface = REGISTRY.renderers(SERVED, LegacyCss.SERVED).get(0).render(Target.Color.Surface.INSTANCE, "brutal").orElseThrow();
         assertTrue(surface.contains("--danger-color-surface-background-color: #B00020;"), surface);
     }
 
@@ -88,6 +99,6 @@ class DesignCssRendererTest {
 
     @Test
     void aSheetThatIsNotATarget_isNotOwned() {
-        assertFalse(REGISTRY.renderers(SERVED).get(0).owns(new Other()));
+        assertFalse(REGISTRY.renderers(SERVED, LegacyCss.SERVED).get(0).owns(new Other()));
     }
 }
