@@ -49,6 +49,15 @@ public interface Mpa {
     /** {@code app} bound to {@code params}, as a page of this MPA. */
     <P extends AppModule._Param, M extends AppModule<P, M>> Placed page(M app, P params);
 
+    /**
+     * {@code app} bound to {@code params}, as a page of this MPA that fills the viewport: for an app that
+     * lays itself out - a workspace, a shell of panes - the page's to say, never the app's. An MPA whose
+     * pages have one way to take their room makes it {@link #page}.
+     */
+    default <P extends AppModule._Param, M extends AppModule<P, M>> Placed fillingPage(M app, P params) {
+        return page(app, params);
+    }
+
     /** A paramless app as a page of this MPA. */
     default <M extends AppModule<AppModule._None, M>> Placed page(M app) {
         return page(app, AppModule._None.INSTANCE);
