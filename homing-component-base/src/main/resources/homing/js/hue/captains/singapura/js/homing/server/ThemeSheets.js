@@ -4,7 +4,7 @@
 // loads it once. What varies with the theme is DERIVED — a design's words,
 // the house's look — and is loaded here, under the theme worn, and swapped on
 // a switch. Every served module that needs a derived sheet hands it here: the
-// derived sheet's own module, and a provided group whose classes wear one.
+// derived sheet's own module.
 //
 //   load(ids, fallbackTheme)   the sheets under the theme worn — the steward's
 //                              answer, else the server's default — applied at once

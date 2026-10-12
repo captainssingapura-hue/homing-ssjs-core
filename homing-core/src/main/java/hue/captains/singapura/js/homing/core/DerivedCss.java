@@ -9,9 +9,9 @@ import java.util.List;
  * theme, so only a derived sheet is fetched again when the theme changes, and never by the CSS
  * manager: by the theme's own owner, {@code ThemeSheets}.
  *
- * <p>It declares no classes. The classes in it are named by whoever wears them - a provided class
- * through {@link CssClass#wears()}, a component's look by its casting - and what it exports, if
- * anything, only lets a module import it so that it loads.</p>
+ * <p>It declares no classes. The classes in it are named by whoever wears them - a component's look
+ * by its casting, a mark by its word - and what it exports, if anything, only lets a module import
+ * it so that it loads.</p>
  *
  * @param <D> self-type
  */

@@ -50,14 +50,6 @@ public interface ThemeRegistry {
      */
     default boolean fits(Theme base, Theme colours) { return true; }
 
-    /**
-     * The design side's renderers — asked first by {@code /css-content} for any group,
-     * before the declared-body rendering — given what the deployment serves, since
-     * what a sheet must carry is decided by what the served components wear.
-     * Empty for a registry with no design side.
-     */
-    default List<CssRenderer> renderers(ServedModules served) { return List.of(); }
-
     /** Empty registry — no themes registered. */
     ThemeRegistry EMPTY = new ThemeRegistry() {
         @Override public List<Theme> themes() { return List.of(); }

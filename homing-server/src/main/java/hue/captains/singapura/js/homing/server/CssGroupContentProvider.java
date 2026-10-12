@@ -38,32 +38,21 @@ public record CssGroupContentProvider<C extends CssGroup<C>>(
         List<String> lines = new ArrayList<>();
         String managerPath = nameResolver.resolve(CssClassManager.INSTANCE).basePath();
         String groupName = cssGroup.getClass().getCanonicalName();
-        List<DerivedCss<?>> derived = derivedOf(cssGroup);
 
         lines.add("import { CssClassManagerInstance as _css } from \"" + managerPath + "\";");
-        if (!derived.isEmpty())
-            lines.add("import { ThemeSheetsInstance as _themes } from \"" + nameResolver.resolve(ThemeSheets.INSTANCE).basePath() + "\";");
         // RFC 0064 — the group carries its transitive dependency subgraph as
         // DATA, derived from its classes' dependsOn() on the server, so the
         // client's CSS manager can load a lazily mounted widget's whole tree
         // — missing dependencies included, by name. Not ES imports: a
         // dependency's CSS is needed, its handles are not.
         lines.add("await _css.loadCss(\"" + groupName + "\", " + subgraphJs(cssGroup) + ");");
-        // The derived sheets the tree's classes wear: the theme's, under the theme worn.
-        if (!derived.isEmpty())
-            lines.add("await _themes.load(" + idsJs(derived) + ", " + (defaultTheme != null ? "\"" + defaultTheme + "\"" : "null") + ");");
 
         for (CssClass<C> cls : cssGroup.cssClasses()) {
             String recordName = cls.getClass().getSimpleName();
             String cssName = CssClassName.toCssName(cls.getClass());
             var variants = cls.variants();
-            // The design classes this class wears travel with the handle, as tokens:
-            // the manager adds them to the element beside the class itself.
-            String wears = cls.wears().isEmpty() ? "" : cls.wears().stream()
-                    .map(w -> "\"" + w.cssName() + "\"")
-                    .collect(java.util.stream.Collectors.joining(", ", ", [", "]"));
             if (variants.isEmpty()) {
-                lines.add("const " + recordName + " = _css.cls(\"" + cssName + "\"" + (wears.isEmpty() ? "" : ", null" + wears) + ");");
+                lines.add("const " + recordName + " = _css.cls(\"" + cssName + "\");");
             } else {
                 StringBuilder sb = new StringBuilder();
                 sb.append("const ").append(recordName).append(" = _css.cls(\"")
@@ -75,7 +64,7 @@ public record CssGroupContentProvider<C extends CssGroup<C>>(
                     sb.append(" ").append(state).append(": \"")
                       .append(state).append("-").append(cssName).append("\"");
                 }
-                sb.append(" }").append(wears).append(");");
+                sb.append(" });");
                 lines.add(sb.toString());
             }
         }
@@ -87,21 +76,6 @@ public record CssGroupContentProvider<C extends CssGroup<C>>(
      * everything it transitively depends on, in dependency order. Class names
      * need no escaping; the resolver refuses cycles.
      */
-    /** The derived sheets every group of the tree wears, first-mention order, each once. */
-    static List<DerivedCss<?>> derivedOf(CssGroup<?> root) {
-        var out = new ArrayList<DerivedCss<?>>();
-        for (CssGroup<?> g : CssGroupResolver.resolve(List.of(root)))
-            for (DerivedCss<?> s : CssImportsFor.derivedOf(g))
-                if (out.stream().noneMatch(have -> have.getClass() == s.getClass())) out.add(s);
-        return List.copyOf(out);
-    }
-
-    /** {@code ["<fqcn>", ...]} */
-    static String idsJs(List<DerivedCss<?>> sheets) {
-        var sb = new StringBuilder("[");
-        for (int i = 0; i < sheets.size(); i++) sb.append(i == 0 ? "" : ", ").append('"').append(sheets.get(i).getClass().getCanonicalName()).append('"');
-        return sb.append("]").toString();
-    }
 
     static String subgraphJs(CssGroup<?> root) {
         StringBuilder sb = new StringBuilder("{ ");

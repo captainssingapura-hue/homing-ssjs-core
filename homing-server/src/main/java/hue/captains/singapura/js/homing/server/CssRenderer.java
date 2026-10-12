@@ -12,9 +12,7 @@ import java.util.Optional;
  * never learns what a design is — a renderer does, on the design side, and
  * hands back CSS.
  *
- * <p>Registered through {@link ThemeRegistry#renderers()}, because the
- * registry is already what carries a deployment's theme knowledge into the
- * server.</p>
+ * <p>A sheet that renders itself is its own renderer ({@link SelfRenderedCssRenderer}).</p>
  */
 public interface CssRenderer {
 

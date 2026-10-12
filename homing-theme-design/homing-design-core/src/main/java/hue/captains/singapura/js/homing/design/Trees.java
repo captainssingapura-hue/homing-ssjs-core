@@ -4,74 +4,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * The walks and the guards over the two trees, derived from types alone.
- *
- * <p>The open tree's guards: a semantic coordinate must be a leaf (a record),
- * and a leaf must have exactly one branch. The sealed tree's guard:
- * siblings' property sets are disjoint. Each is a refusal at the point a
- * pair is made, and a test over the tree repeats it.</p>
+ * The walks and the guards over the tree of targets, derived from types alone: its leaves in
+ * {@code permits} order, a leaf's token and singleton, and the tree's guard - siblings' property sets
+ * are disjoint - which a test over the tree holds.
  */
 public final class Trees {
 
     private Trees() {}
 
     private static final Map<Class<?>, Target> TARGETS = new ConcurrentHashMap<>();
-
-    // ── semantic leaves ───────────────────────────────────────────────────
-
-    /** A leaf is a record with exactly one branch among its direct interfaces. */
-    public static void requireSemanticLeaf(Class<?> s) {
-        if (!Semantic.class.isAssignableFrom(s))
-            throw new IllegalArgumentException(s.getName() + ": not a Semantic");
-        if (!s.isRecord())
-            throw new IllegalArgumentException(s.getName() + ": a semantic coordinate is a leaf (a record), not a branch");
-        if (branchesOf(s).size() != 1)
-            throw new IllegalArgumentException(s.getName() + ": a semantic leaf has exactly one branch; found " + branchesOf(s));
-        Class<?> parent = parentOf(s);
-        if (parent != null && branchesOf(parent).get(0) != branchesOf(s).get(0))
-            throw new IllegalArgumentException(s.getName() + ": a refinement stays on its parent's branch; " + parent.getSimpleName() + " is " + branchesOf(parent).get(0).getSimpleName() + ", this is " + branchesOf(s).get(0).getSimpleName());
-    }
-
-    /** The leaf this one refines — the semantic leaf it is nested in — or null for a word at the top of its branch. */
-    public static Class<?> parentOf(Class<?> leaf) {
-        Class<?> e = leaf.getEnclosingClass();
-        return e != null && e.isRecord() && Semantic.class.isAssignableFrom(e) ? e : null;
-    }
-
-    /** The leaf and its parents, most precise first: {@code [Base, Button, Control]}. */
-    public static List<Class<?>> lineage(Class<?> leaf) {
-        var out = new ArrayList<Class<?>>();
-        for (Class<?> c = leaf; c != null; c = parentOf(c)) out.add(c);
-        return out;
-    }
-
-    /** The branches a leaf directly implements — {@code Semantic} itself excluded. */
-    public static List<Class<?>> branchesOf(Class<?> leaf) {
-        var out = new ArrayList<Class<?>>();
-        for (Class<?> i : leaf.getInterfaces())
-            if (i != Semantic.class && Semantic.class.isAssignableFrom(i)) out.add(i);
-        return out;
-    }
-
-    /** The one branch of a leaf. */
-    public static Class<?> branchOf(Class<?> leaf) {
-        requireSemanticLeaf(leaf);
-        return branchesOf(leaf).get(0);
-    }
-
-    /** {@code OnDanger} → {@code on-danger}; a refinement is its path, {@code Control.Button.Base} → {@code control-button-base}. */
-    public static String semanticToken(Class<?> leaf) {
-        var lineage = lineage(leaf);
-        var sb = new StringBuilder();
-        for (int i = lineage.size() - 1; i >= 0; i--) sb.append(i == lineage.size() - 1 ? "" : "-").append(kebab(lineage.get(i).getSimpleName()));
-        return sb.toString();
-    }
-
-    // ── target leaves ─────────────────────────────────────────────────────
 
     public static void requireTargetLeaf(Class<?> t) {
         if (!Target.class.isAssignableFrom(t) || !t.isRecord())
@@ -86,7 +30,7 @@ public final class Trees {
         });
     }
 
-    /** {@code branch-leaf}: {@code color-surface}. */
+    /** {@code branch-leaf}: {@code color-background}. */
     public static String targetToken(Class<?> leaf) {
         Class<?> branch = leaf.getEnclosingClass();
         return kebab(branch.getSimpleName()) + "-" + kebab(leaf.getSimpleName());
@@ -105,10 +49,7 @@ public final class Trees {
         for (Class<?> p : permitted) walk(p, out);
     }
 
-    /**
-     * The sealed tree's guard: within a branch, no property is owned twice - but by a leaf kept for
-     * the old design system and a leaf that supersedes it ({@link Target#supersededBy()}).
-     */
+    /** The sealed tree's guard: within a branch, no property is owned twice. */
     public static List<String> propertyCollisions() {
         var out = new ArrayList<String>();
         for (Class<?> branch : Target.class.getPermittedSubclasses()) {
@@ -117,7 +58,7 @@ public final class Trees {
                 Target t = targetInstance(leaf);
                 for (String p : t.properties()) {
                     Target prior = seen.putIfAbsent(p, t);
-                    if (prior != null && !prior.supersededBy().contains(t) && !t.supersededBy().contains(prior))
+                    if (prior != null)
                         out.add(branch.getSimpleName() + ": " + p + " owned by " + prior.getClass().getSimpleName() + " and " + leaf.getSimpleName());
                 }
             }
@@ -125,9 +66,7 @@ public final class Trees {
         return out;
     }
 
-    // ── naming ────────────────────────────────────────────────────────────
-
-    /** {@code OnDanger} → {@code on-danger}; {@code Color_Surface} → {@code color-surface}. */
+    /** {@code BoxShadow} → {@code box-shadow}; {@code Color_Surface} → {@code color-surface}. */
     public static String kebab(String name) {
         var sb = new StringBuilder();
         for (int i = 0; i < name.length(); i++) {
@@ -137,11 +76,5 @@ public final class Trees {
             sb.append(Character.toLowerCase(c));
         }
         return sb.toString();
-    }
-
-    /** The variable stem for a (class, property): the class token, plus the property when the target owns more than one. */
-    public static String variable(DesignClass<?> dc, String property) {
-        Set<String> owned = dc.targetLeaf().properties();
-        return "--" + dc.cssName() + (owned.size() == 1 ? "" : "-" + property);
     }
 }

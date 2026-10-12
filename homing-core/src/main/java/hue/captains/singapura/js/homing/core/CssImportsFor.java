@@ -13,10 +13,9 @@ import java.util.List;
  * with it, and the disagreement that matters — declaring nothing — would
  * silence every {@code dependsOn()} added later.
  *
- * <p>Only provided groups depend on each other. The derived sheets a group's
- * classes wear or read are not dependencies of the group - they vary with the
- * theme, and the theme's owner loads them - and are answered apart, by
- * {@link #derivedOf} (RFC 0064, D25).</p>
+ * <p>Only provided groups depend on each other. A derived sheet is no group's
+ * dependency: it varies with the theme, and the theme's owner loads it for the
+ * module that imports it (RFC 0064, D25).</p>
  *
  * @param <C> the group these are the dependencies of
  * @param cssGroup the group
@@ -41,25 +40,6 @@ public record CssImportsFor<C extends CssGroup<C>>(
             }
         }
         return new CssImportsFor<>(group, List.copyOf(groups));
-    }
-
-    /**
-     * The derived sheets a group's classes wear or read, first-mention order, each once: what the theme's
-     * owner loads beside the group, and swaps when the theme changes.
-     */
-    public static List<DerivedCss<?>> derivedOf(CssGroup<?> group) {
-        var out = new ArrayList<DerivedCss<?>>();
-        for (CssClass<?> cls : group.cssClasses()) {
-            var worn = new ArrayList<Wearable>(cls.wears());
-            worn.addAll(cls.reads());
-            for (Wearable w : worn) {
-                DerivedCss<?> s = w.sheet();
-                boolean seen = false;
-                for (DerivedCss<?> have : out) if (have.getClass() == s.getClass()) { seen = true; break; }
-                if (!seen) out.add(s);
-            }
-        }
-        return List.copyOf(out);
     }
 
     /** The derivation for a group whose self-type is not in hand. */

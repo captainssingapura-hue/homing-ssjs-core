@@ -69,8 +69,7 @@ public interface CssClass<C extends CssGroup<C>> extends Exportable._Constant<C>
     /**
      * The class's rule: its declarations, the same in every theme - a provided
      * class does not vary (RFC 0064, D25). What a theme says of the element it
-     * says through a derived sheet the class wears ({@link #wears()}), or the
-     * component's look; a body that reads a {@code var(--…)} reads a value set
+     * says through the component's look; a body that reads a {@code var(--…)} reads a value set
      * elsewhere and says none itself.
      *
      * <p>Default: {@code null}, which the server renders as a comment that the
@@ -94,66 +93,6 @@ public interface CssClass<C extends CssGroup<C>> extends Exportable._Constant<C>
      * <p>Default: none.</p>
      */
     default List<CssClass<?>> dependsOn() { return List.of(); }
-
-    /**
-     * What this class's element wears beside it: tokens applied with the
-     * class by the client manager whenever this class is added, and removed
-     * with it — so a component declares once, in Java, what its element means
-     * and where that shows, and its JS adds one class as before. A worn
-     * token's rule is in a derived sheet, which the theme's owner loads beside
-     * this class's group (RFC 0064, D25); unlike {@link #dependsOn()}, a worn
-     * token is put on the element. This class's own body carries structure and
-     * nothing a worn token says.
-     * Default: none.
-     */
-    default List<? extends Wearable> wears() { return List.of(); }
-
-    /**
-     * What this class's element READS of a design without wearing it: the
-     * pairs whose variables its body names by reference — {@code var(--…)}
-     * of the pair's root binding — where wearing would not do. Two places:
-     * a pseudo-state rule, which a worn pair cannot condition, so a frame
-     * lit under {@code :focus-within} reads the design's ring colour into
-     * its own rule; and a channel of the component's own, a custom property
-     * an ancestor sets and every slot beneath reads, whose value is the
-     * design's word passed down. Read, not worn: the pair's derived sheet is
-     * loaded and its binding is emitted, and nothing is put on the
-     * element. The value is still the design's — a body reads a word, it
-     * never says one. Default: none.
-     */
-    default List<? extends Wearable> reads() { return List.of(); }
-
-    /**
-     * The colour pairs this class wears with an EXTENT: its element sets one
-     * — {@code css.extent(el, t)}, a number from −1 to 1 — and the design's
-     * word for each pair scales with it, from the meaning turned the other
-     * way through neutral to the meaning at full. A subset of
-     * {@link #wears()}. Naming a pair here is a claim on the design: it must
-     * anchor the word at zero and at −1, and the deployment holds it to
-     * that. Default: none.
-     */
-    default List<? extends Wearable> extents() { return List.of(); }
-
-    /**
-     * The length pairs this class wears with a SIZE: its element sets one —
-     * {@code css.size(el, s)}, a number from −1 to 1, 0 the regular size —
-     * and every length of the design's word for each pair grows by its own
-     * ratio to the power of it. A subset of {@link #wears()}. Naming a pair
-     * here is a claim on the design: it must give every property of the
-     * word a ratio (1 to say it stays), and the deployment holds it to
-     * that. Default: none.
-     */
-    default List<? extends Wearable> sizes() { return List.of(); }
-
-    /**
-     * The pairs this class wears with an ASPECT: its element sets one —
-     * {@code css.aspect(el, a)}, a number from −1 to 1, 0 square — and the
-     * design's proportion for each pair is the design's widest to the power
-     * of it: +1 the widest the design allows, −1 the tallest. A subset of
-     * {@link #wears()}; the same claim on the design as {@link #sizes()},
-     * on the aspect axis. Default: none.
-     */
-    default List<? extends Wearable> aspects() { return List.of(); }
 
     /**
      * The group this class belongs to, from its declaration: a {@code CssClass}

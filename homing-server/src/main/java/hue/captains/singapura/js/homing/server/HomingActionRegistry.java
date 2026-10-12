@@ -69,7 +69,6 @@ public class HomingActionRegistry implements ActionRegistry<RoutingContext> {
         // sheet that renders itself is asked first: it is nobody else's.
         var renderers = new java.util.ArrayList<CssRenderer>();
         renderers.add(SelfRenderedCssRenderer.INSTANCE);
-        renderers.addAll(themeRegistry.renderers(served));
         // The first theme listed is the default: what a derived sheet requested
         // without ?theme= is rendered under, and what each module that loads one
         // hands the theme's owner as its fallback. RFC 0002 §3.6 still holds: no

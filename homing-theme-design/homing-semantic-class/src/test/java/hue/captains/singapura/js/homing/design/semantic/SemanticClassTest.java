@@ -79,8 +79,8 @@ class SemanticClassTest {
     void theForestIsTheProduct_ofEveryTargetLeafAndEveryNode() {
         var forest = new DeriveSemanticClasses().derive(TAXONOMY);
         assertEquals(SemanticTokens.INSTANCE.leaves().size() * TAXONOMY.nodes().size(), forest.size());
-        assertEquals(36, SemanticTokens.INSTANCE.leaves().size(), "the target leaves the semantic classes answer today: 39, but the three kept for the old design system");
-        assertEquals(39, Trees.targetLeaves().size());
+        assertEquals(36, SemanticTokens.INSTANCE.leaves().size(), "every target leaf: the three the old design system kept are gone with it");
+        assertEquals(36, Trees.targetLeaves().size());
         assertEquals(List.of("root", "control", "text", "confirmation", "plain-button", "caption", "confirmation-confirm", "confirmation-title"),
                 TAXONOMY.nodes().stream().map(ComponentNode::token).toList(), "the roles and their branch are no nodes");
     }

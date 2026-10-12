@@ -10,7 +10,7 @@
 // and is the theme's owner's (ThemeSheets).
 //
 // The rest is the element's: its classes by handle — a provided class with
-// the tokens it wears — and its degrees, size, extent, aspect and elevation.
+// and its degrees, size, extent, aspect and elevation.
 // The handles (CssHandles) are identity, bound late by the cascade.
 // =============================================================================
 
@@ -63,34 +63,30 @@ const CssClassManagerInstance = (() => {
      *   _css.cls("st-root")                                   → CssClass
      *   _css.cls("bg-accent", { hover: "hover-bg-accent" })   → CssUtility
      */
-    function cls(name, variants, wears) {
-        return variants ? new CssUtility(name, variants, wears) : new CssClass(name, wears);
+    function cls(name, variants) {
+        return variants ? new CssUtility(name, variants) : new CssClass(name);
     }
-
-    /** The tokens an add or remove touches: the class and everything it wears. */
-    function tokensOf(c) { return [resolve(c)].concat(c.wears || []); }
 
     return {
         loadCss,
         onProgress,
         snapshot,
         cls,
-        addClass(el, ...classes)            { for (const c of classes) el.classList.add(...tokensOf(c)); },
-        removeClass(el, ...classes)         { for (const c of classes) el.classList.remove(...tokensOf(c)); },
+        addClass(el, ...classes)            { for (const c of classes) el.classList.add(resolve(c)); },
+        removeClass(el, ...classes)         { for (const c of classes) el.classList.remove(resolve(c)); },
         toggleClass(el, c, force) {
             const on = arguments.length === 3 ? !!force : !el.classList.contains(resolve(c));
-            for (const t of tokensOf(c)) el.classList.toggle(t, on);
+            el.classList.toggle(resolve(c), on);
         },
-        setClass(el, ...classes)            { el.className = classes.flatMap(tokensOf).join(" "); },
+        setClass(el, ...classes)            { el.className = classes.map(resolve).join(" "); },
         hasClass(el, c)                     { return el.classList.contains(resolve(c)); },
         className(c)                        { return resolve(c); },
         /**
-         * The element's EXTENT: how much of the meaning its coloured words
+         * The element's EXTENT: how much of the meaning its look's colours
          * carry, from -1 (the meaning turned the other way) through 0
-         * (neutral) to 1 (the word at full — the default, and what null
+         * (neutral) to 1 (the meaning at full — the default, and what null
          * restores). The one number a component may set on an element:
-         * a design's word for every pair the class names in extents()
-         * interpolates by it. Clamped; not inherited by the children.
+         * a look's colours that read it interpolate by it. Clamped; not inherited by the children.
          */
         extent(el, t) {
             if (t == null) { el.style.removeProperty("--extent"); return; }
@@ -100,9 +96,9 @@ const CssClassManagerInstance = (() => {
         /**
          * The element's SIZE: from -1 (the smallest) through 0 (regular —
          * the default, and what null restores) to 1 (the biggest). The other
-         * number a component may set on an element: every length of a
-         * design's word for the pairs the class names in sizes() grows by
-         * the word's ratio to the power of it. Clamped; not inherited.
+         * number a component may set on an element: every length of a look
+         * that reads it grows by its ratio to the power of it. Clamped; not
+         * inherited.
          */
         size(el, s) {
             if (s == null) { el.style.removeProperty("--size"); return; }
@@ -111,10 +107,9 @@ const CssClassManagerInstance = (() => {
         },
         /**
          * The element's ASPECT: how wide a box whose measure is its own, from
-         * -1 (the tallest the design allows) through 0 (square - the default,
-         * and what null restores) to 1 (the widest). The design's proportion
-         * for the pairs the class names in aspects() is its widest to the
-         * power of it. Clamped; not inherited.
+         * -1 (the tallest the style allows) through 0 (square - the default,
+         * and what null restores) to 1 (the widest). A look's proportion that
+         * reads it is its widest to the power of it. Clamped; not inherited.
          */
         aspect(el, a) {
             if (a == null) { el.style.removeProperty("--aspect"); return; }
@@ -124,8 +119,8 @@ const CssClassManagerInstance = (() => {
         /**
          * The element's ELEVATION: how far off its own plane it sits -
          * "elevated", "sunken", or flat, which is null and writes nothing.
-         * One attribute, read by the design as a state on the word that says
-         * what the thing is; a design with no idiom for depth answers neither
+         * One attribute, read by the look as a state of the thing; a style
+         * with no idiom for depth answers neither
          * register, and the element stays where it is, which is its right.
          * IT MEANS NOTHING BY ITSELF: what a register stands for is the
          * caller's, said in the caller's own code.

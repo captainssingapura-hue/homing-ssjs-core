@@ -84,10 +84,6 @@ public record SemanticTokens() implements StatelessFunctionalObject {
     /** The target leaf a token names: {@code shape-corner}; refused for a leaf kept only for the old design system. */
     public Target targetOf(String token) {
         for (Target t : leaves()) if (t.token().equals(token)) return t;
-        for (Target t : Target.leaves())
-            if (t.token().equals(token))
-                throw new IllegalArgumentException("'" + token + "' is the old design system's; the semantic classes answer "
-                        + String.join(", ", t.supersededBy().stream().map(Target::token).toList()));
         throw new IllegalArgumentException("'" + token + "' is no target; one of " + String.join(", ", targets()));
     }
 
@@ -105,8 +101,8 @@ public record SemanticTokens() implements StatelessFunctionalObject {
         return out;
     }
 
-    /** The target leaves the semantic classes answer, in the tree's order: every leaf but those kept only for the old design system. */
-    public List<Target> leaves() { return Target.leaves().stream().filter(t -> t.supersededBy().isEmpty()).toList(); }
+    /** The target leaves the semantic classes answer, in the tree's order: every leaf. */
+    public List<Target> leaves() { return Target.leaves(); }
 
     /** Of those, the ones a sheet carries: every CSS leaf. */
     public List<Target> cssLeaves() { return leaves().stream().filter(t -> t.carrier() == Carrier.CSS).toList(); }

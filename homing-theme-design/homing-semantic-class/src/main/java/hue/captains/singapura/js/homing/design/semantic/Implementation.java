@@ -28,9 +28,6 @@ public record Implementation<T extends Target>(Casting node, T target, Answer<T>
         Objects.requireNonNull(answer, "Implementation.answer");
         var tokens = SemanticTokens.INSTANCE;
         String where = tokens.casting(node) + " " + target.token();
-        if (!target.supersededBy().isEmpty())
-            throw new IllegalArgumentException(where + ": " + target.token() + " is the old design system's; the semantic classes answer "
-                    + String.join(", ", target.supersededBy().stream().map(Target::token).toList()));
         if (answer instanceof Answer.Own<T> own)
             own.bodies().forEach((state, body) -> {
                 if (!target.states().contains(state))

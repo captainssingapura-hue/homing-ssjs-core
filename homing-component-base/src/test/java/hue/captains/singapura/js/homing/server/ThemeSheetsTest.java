@@ -63,7 +63,7 @@ class ThemeSheetsTest extends JsModuleTestBase {
     private List<String> live() { return js.eval("js", "live()").as(List.class); }
     private String theme() { Value v = themes.invokeMember("theme"); return v.isNull() ? null : v.asString(); }
 
-    /** The words a provided group wears, and the look a component imports: two derived sheets, under the default. */
+    /** Two derived sheets the page's modules import - a lexicon's, a look's - under the default. */
     private void pageUnderDefault() {
         js.eval("js", "globalThis.done = 0; ThemeSheetsInstance.load(['Words'], 'default').then(() => globalThis.done++);"
                 + "ThemeSheetsInstance.load(['Look'], 'default').then(() => globalThis.done++); undefined");

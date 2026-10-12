@@ -141,9 +141,7 @@ class ResolutionCasesTest {
                 .contains("shape-shadow reads --background-mark: it reads its degrees and color-box-shadow's colours, and nothing else"));
         assertTrue(refused(() -> new Implementation<>(Button.INSTANCE, Target.Shape.Corner.INSTANCE, new Answer.Own<>("--corner: 2px;")))
                 .contains("shape-corner does not own --corner"));
-        assertTrue(refused(() -> new Implementation<>(Button.INSTANCE, Target.Color.Edge.INSTANCE, new Answer.Own<>("border-color: red;")))
-                .contains("color-edge is the old design system's; the semantic classes answer color-border, color-outline, color-column-rule"));
-        assertTrue(refused(() -> TOKENS.targetOf("shape-rule")).contains("'shape-rule' is the old design system's; the semantic classes answer shape-border, shape-outline"));
+        assertTrue(refused(() -> TOKENS.targetOf("shape-rule")).contains("'shape-rule' is no target"), "the old design system's rule is gone with it");
         // what may be said: the shadow's geometry in its own colours, the element's degrees, no colour at all
         new Implementation<>(Button.INSTANCE, shadow, new Answer.Own<>(
                 "box-shadow: 0 calc(2px * pow(1.2, var(--size))) 8px color-mix(in srgb, var(--box-shadow-cast) 20%, transparent), inset 0 1px 0 var(--box-shadow-lit);"));
