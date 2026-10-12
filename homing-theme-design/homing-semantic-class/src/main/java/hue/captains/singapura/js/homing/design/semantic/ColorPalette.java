@@ -21,6 +21,12 @@ import java.util.Set;
 public interface ColorPalette {
     /** The palette's token, from its type: {@code harbour}. */
     default String token() { return NodeName.ofType(getClass(), "").value(); }
+
+    /** What a picker calls it: its token's words, capitalised - {@code Neo-Brutalism} - unless it says otherwise. */
+    default String label() { return Labels.of(token()); }
+
+    /** One line on what it is trying to be, shown beside its name in a picker; none unless it says. */
+    default String inspiration() { return ""; }
     /** The colour classes this palette answers. */
     List<Implementation<? extends Target.Color>> implementations();
     /** The styles this palette suits besides any whose own it is - by their types. None unless it says so. */

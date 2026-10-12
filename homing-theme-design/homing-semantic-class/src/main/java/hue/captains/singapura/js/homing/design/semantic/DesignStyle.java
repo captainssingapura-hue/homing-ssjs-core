@@ -16,6 +16,15 @@ public interface DesignStyle {
     /** The style's token, from its type: {@code neo-brutalism}. */
     default String token() { return NodeName.ofType(getClass(), "").value(); }
 
+    /** What a picker calls it: its token's words, capitalised - {@code Neo-Brutalism} - unless it says otherwise. */
+    default String label() { return Labels.of(token()); }
+
+    /** One line on what it is trying to be, shown beside its name in a picker; none unless it says. */
+    default String inspiration() { return ""; }
+
+    /** The family a picker files it under; {@code Styles} unless it says. */
+    default String group() { return "Styles"; }
+
     /** The classes this style answers itself. */
     List<Implementation<?>> implementations();
 
