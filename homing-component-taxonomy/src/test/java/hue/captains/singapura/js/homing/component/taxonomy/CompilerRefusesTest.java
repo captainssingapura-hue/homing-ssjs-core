@@ -195,6 +195,66 @@ class CompilerRefusesTest {
                 """);
     }
 
+    // ── virtual leaves and designs (RFC 0067, appendix Virtual Leaves and Designs) ──
+
+    /** A design branch, two virtual leaves each with its own interface for extension, and two designs of it. */
+    private static final String DESIGNED = """
+            record Frame() implements L1_ComponentBranch<Root>, DesignBranch { static final Frame INSTANCE = new Frame(); public Root parent() { return Root.INSTANCE; } }
+            record Other() implements L1_ComponentBranch<Root>, DesignBranch { static final Other INSTANCE = new Other(); public Root parent() { return Root.INSTANCE; } }
+            record Edge() implements VirtualComponent<Frame> { static final Edge INSTANCE = new Edge(); public Frame parent() { return Frame.INSTANCE; }
+                interface Concrete<D extends Design<Frame>> extends ConcreteComponent<Edge, Frame, D> {} }
+            record Mark() implements VirtualComponent<Frame> { static final Mark INSTANCE = new Mark(); public Frame parent() { return Frame.INSTANCE; }
+                interface Concrete<D extends Design<Frame>> extends ConcreteComponent<Mark, Frame, D> {} }
+            record Plain() implements Design<Frame> { static final Plain INSTANCE = new Plain(); }
+            record Bold() implements Design<Frame> { static final Bold INSTANCE = new Bold(); }
+            record Elsewhere() implements Design<Other> { static final Elsewhere INSTANCE = new Elsewhere(); }
+            """;
+
+    @Test
+    void aDesignOfVirtualLeaves_compiles() {
+        var errors = compile(DESIGNED + """
+                record PlainEdge() implements Edge.Concrete<Plain> {}
+                record BoldMark() implements Mark.Concrete<Bold> {}
+                record DirectMark() implements ConcreteComponent<Mark, Frame, Plain> {}
+                """);
+        assertTrue(errors.isEmpty(), "a concrete leaf through its leaf's interface, or naming all three itself: " + errors);
+    }
+
+    @Test
+    void aVirtualLeafUnderABranchThatIsNoDesignBranch_doesNotCompile() {
+        refusedOnItsLine(DESIGNED + """
+                record Loose() implements VirtualComponent<Text> { public Text parent() { return Text.INSTANCE; } } // refused here
+                """);
+    }
+
+    @Test
+    void aVirtualLeafWhoseParentIsNotItsBranch_doesNotCompile() {
+        refusedOnItsLine(DESIGNED + """
+                record Astray() implements VirtualComponent<Frame> { public Other parent() { return Other.INSTANCE; } } // refused here
+                """);
+    }
+
+    @Test
+    void aConcreteLeafOfOneBranchsLeafWithAnotherBranchsDesign_doesNotCompile() {
+        refusedOnItsLine(DESIGNED + """
+                record Mixed() implements ConcreteComponent<Edge, Frame, Elsewhere> {} // refused here
+                """);
+    }
+
+    @Test
+    void aConcreteLeafOfTwoDesigns_doesNotCompile() {
+        refusedOnItsLine(DESIGNED + """
+                record Both() implements Edge.Concrete<Plain>, Edge.Concrete<Bold> {} // refused here
+                """);
+    }
+
+    @Test
+    void aConcreteLeafOfTwoLeaves_doesNotCompile() {
+        refusedOnItsLine(DESIGNED + """
+                record Twice() implements Edge.Concrete<Plain>, Mark.Concrete<Plain> {} // refused here
+                """);
+    }
+
     // ── javac, against this module ─────────────────────────────────────────
 
     private static void refusedOnItsLine(String body) {

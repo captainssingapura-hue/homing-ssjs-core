@@ -43,7 +43,15 @@ public record TaxonomyProblem(Rule rule, String says) implements ValueObject {
         /** A type of state with fewer than two values, or one value twice: its values are what a component is in, one at a time. */
         BAD_STATE_VALUES,
         /** Two values of the tree of states answered by one design word: one word, one meaning. */
-        DESIGN_WORD_TWICE
+        DESIGN_WORD_TWICE,
+        /** A component under a design branch that is not virtual: a design could never be complete over it. */
+        NOT_VIRTUAL,
+        /** A virtual leaf that declares parts: it has none, and its concrete leaves add none. */
+        VIRTUAL_PARTS,
+        /** A branch under a design branch, which holds virtual leaves only. */
+        BRANCH_IN_DESIGN_BRANCH,
+        /** A part played by a virtual leaf: a part is cast, and a virtual leaf never is. */
+        VIRTUAL_PLAYS_A_PART
     }
 
     @Override public String toString() { return rule + ": " + says; }

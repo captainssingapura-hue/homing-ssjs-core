@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.component.taxonomy;
 
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -9,7 +11,7 @@ import java.lang.reflect.Type;
  * {@link ImplForBranch}, wherever along its supertypes it gives it, and that node's
  * {@code INSTANCE}.
  */
-record TypeArgument() {
+record TypeArgument() implements StatelessFunctionalObject {
 
     static final TypeArgument INSTANCE = new TypeArgument();
 

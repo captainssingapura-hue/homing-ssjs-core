@@ -32,6 +32,8 @@ import java.util.Set;
  *   <li>a count that is no cardinality - thrown where it is said, and reported for the component
  *       that said it, so one component's bad count never hides another's problems.</li>
  *   <li>an axis declared twice along one lineage;</li>
+ *   <li>a design branch holding a component that is not virtual, a virtual leaf with parts, or a
+ *       branch; a part played by a virtual leaf;</li>
  *   <li>two nodes of the tree of states, or of events, with one name; a type of state with fewer
  *       than two values, or one value twice; a design word for a type's rest, or for a value it
  *       lacks; two values answered by one design word;</li>
@@ -154,6 +156,7 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
         problems.addAll(new CatalogueNames().clashes(roleBranchList, roleList));
         problems.addAll(roleNamesANode(branchList, componentList, roleList));
         problems.addAll(extentsTwice(branchList, componentList));
+        problems.addAll(DesignBranchChecks.INSTANCE.problems(branchList, componentList, parts));
         problems.addAll(TreeChecks.INSTANCE.clashes("states", StateTree.nodes(stateBranchList, stateList), StateNode::name));
         problems.addAll(TreeChecks.INSTANCE.badValues(stateList));
         problems.addAll(TreeChecks.INSTANCE.wordsTwice(stateList));

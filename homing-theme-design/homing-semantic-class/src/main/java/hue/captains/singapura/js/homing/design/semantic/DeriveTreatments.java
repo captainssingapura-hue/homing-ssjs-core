@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.component.taxonomy.Component;
 import hue.captains.singapura.js.homing.component.taxonomy.ComponentNode;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
+import hue.captains.singapura.js.homing.component.taxonomy.VirtualComponent;
 import hue.captains.singapura.js.homing.design.Carrier;
 import hue.captains.singapura.js.homing.design.State;
 import hue.captains.singapura.js.homing.design.Target;
@@ -72,10 +73,12 @@ public record DeriveTreatments() implements StatelessFunctionalObject {
                     case Answer.FromBase<?> f -> { }   // the base's own answers are slots of the base's layer
                 }
             });
-        // 2. down the taxonomy: every component whose lineage holds the slot's node
+        // 2. down the taxonomy: every component whose lineage holds the slot's node - a virtual leaf never, a design draws it
         var under = new HashMap<ComponentNode, List<Component<?>>>();
-        for (Component<?> c : taxonomy.components())
+        for (Component<?> c : taxonomy.components()) {
+            if (c instanceof VirtualComponent<?>) continue;
             for (ComponentNode n : taxonomy.fallback(c)) under.computeIfAbsent(n, k -> new ArrayList<>()).add(c);
+        }
         // 3. confirmed by the resolver, in the chains that answer the target
         var treated = new LinkedHashSet<Treatment>();
         var asked = new LinkedHashSet<Treatment>();

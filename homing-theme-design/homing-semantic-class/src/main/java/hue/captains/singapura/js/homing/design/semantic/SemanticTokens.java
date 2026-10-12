@@ -2,11 +2,13 @@ package hue.captains.singapura.js.homing.design.semantic;
 
 import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.component.taxonomy.ComponentNode;
+import hue.captains.singapura.js.homing.component.taxonomy.Design;
 import hue.captains.singapura.js.homing.component.taxonomy.RoleNode;
 import hue.captains.singapura.js.homing.component.taxonomy.RoleRoot;
 import hue.captains.singapura.js.homing.component.taxonomy.Root;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxon;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
+import hue.captains.singapura.js.homing.component.taxonomy.VirtualComponent;
 import hue.captains.singapura.js.homing.component.taxonomy.Word;
 import hue.captains.singapura.js.homing.design.Carrier;
 import hue.captains.singapura.js.homing.design.State;
@@ -27,6 +29,9 @@ import java.util.Locale;
  *       component's token and the role's, joined by one underscore;</li>
  *   <li>a look, a casting on a target at rest: {@code danger-button_go__shape-corner};</li>
  *   <li>a treatment, a component in a state on a target: {@code button__effect-opacity--disabled}.</li>
+ *   <li>a concrete leaf - a virtual leaf as a design draws it - on a target: {@code
+ *       minesweeper-classic___cursor-border__shape-outline}, the design's token and the leaf's joined by
+ *       three underscores, which no casting ever holds; its states nested within the one class.</li>
  * </ul>
  */
 public record SemanticTokens() implements StatelessFunctionalObject {
@@ -56,6 +61,16 @@ public record SemanticTokens() implements StatelessFunctionalObject {
 
     /** The class for a node in a state on a target: a look at rest, a treatment otherwise. */
     public String className(Casting c, State s, Target t) { return s == State.REST ? look(c, t) : treatment(c, s, t); }
+
+    /**
+     * A concrete leaf: a design's drawing of a virtual leaf - {@code minesweeper-classic___cursor-border}. Its
+     * design's token and its leaf's are joined by three underscores, which no casting holds, so a design's class
+     * is never the house's, whatever a design is named.
+     */
+    public String concrete(Design<?> design, VirtualComponent<?> leaf) { return design.token() + "___" + leaf.token(); }
+
+    /** The class a concrete leaf wears on a target, its states nested within: {@code minesweeper-classic___cursor-border__shape-outline}. */
+    public String drawn(Design<?> design, VirtualComponent<?> leaf, Target t) { return concrete(design, leaf) + "__" + target(t); }
 
     /**
      * The class a mark wears to show a word of a lexicon: {@code word-close}. It holds no {@code __}, so it

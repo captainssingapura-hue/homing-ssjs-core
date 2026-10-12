@@ -120,11 +120,12 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
     /**
      * The castings the taxonomy has, derived (RFC 0067, appendix Castings): every component on its
      * own, then each role a slot casts its component in, once - a functional role cast as the
-     * component on its own, which it looks as.
+     * component on its own, which it looks as. A virtual leaf is never cast: what is worn is a
+     * design's concrete leaf of it (appendix Virtual Leaves and Designs).
      */
     public List<Casting> castings() {
         var out = new LinkedHashSet<Casting>();
-        for (Component<?> c : components) out.add(new Casting(c));
+        for (Component<?> c : components) if (!(c instanceof VirtualComponent<?>)) out.add(new Casting(c));
         for (Part<?, ?> p : parts) {
             var cast = new Casting(p.base(), p.role());
             out.add(cast.functional() ? cast.alone() : cast);
