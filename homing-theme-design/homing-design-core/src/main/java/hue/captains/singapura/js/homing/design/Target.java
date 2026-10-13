@@ -27,7 +27,7 @@ import java.util.Set;
  * {@code branch-leaf}: {@code color-background}, {@code motion-transform}.</p>
  */
 public sealed interface Target permits
-        Target.Color, Target.Shape, Target.Size, Target.Type, Target.Motion,
+        Target.Color, Target.Shape, Target.Size, Target.Type, Target.Motion, Target.Animation,
         Target.Effect, Target.Affordance, Target.Sound, Target.Asset {
 
     /** The properties this leaf owns; disjoint from its siblings'. Empty for non-CSS carriers. */
@@ -288,7 +288,7 @@ public sealed interface Target permits
     // ═════════════════════════════════════════════════════════════════════
     //  Motion — what CSS can move; the moment is a state, not a leaf
     // ═════════════════════════════════════════════════════════════════════
-    sealed interface Motion extends Target permits Motion.Ease, Motion.Transform, Motion.Animate {
+    sealed interface Motion extends Target permits Motion.Ease, Motion.Transform {
         /** How changes travel: the transition. One per element, so one leaf. */
         record Ease() implements Motion {
             public static final Ease INSTANCE = new Ease();
@@ -301,11 +301,27 @@ public sealed interface Target permits
             @Override public Set<String> properties() { return Set.of("transform"); }
             @Override public Set<State> states() { return INTERACTIVE; }
         }
-        /** Keyframed motion — arrival, attention, a spinner. */
-        record Animate() implements Motion {
-            public static final Animate INSTANCE = new Animate();
+    }
+
+    // ═════════════════════════════════════════════════════════════════════
+    //  Animation — what moves on its own, as a whole: an effect
+    // ═════════════════════════════════════════════════════════════════════
+    /**
+     * What moves on its own (RFC 0050 · Episode 2, appendix The Copied Range): an {@link AnimationEffect} - the
+     * dashes march, a band of tint sweeps across - answered whole and never in CSS. A design names the effect;
+     * its keyframes, its timing and the properties it needs are the effect's, sealed, and the framework writes
+     * them, with the effect's still dual, where motion is reduced or the effect is switched off.
+     */
+    sealed interface Animation extends Target permits Animation.Effect {
+        /**
+         * The effect an element wears: answered with an {@link AnimationEffect}, never with a body. It owns
+         * {@code animation}; the properties the effect needs besides are the effect's to take, on the element
+         * it is worn on, and no other answer there may write them.
+         */
+        record Effect() implements Animation {
+            public static final Effect INSTANCE = new Effect();
             @Override public Set<String> properties() { return Set.of("animation"); }
-            @Override public Set<State> states() { return EnumSet.of(State.REST, State.HOVER, State.ACTIVE, State.FOCUS, State.INVALID); }
+            @Override public Set<State> states() { return REST_ONLY; }
         }
     }
 

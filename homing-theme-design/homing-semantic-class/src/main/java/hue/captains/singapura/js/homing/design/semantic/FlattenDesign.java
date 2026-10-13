@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.design.semantic;
 
 import hue.captains.singapura.js.homing.component.taxonomy.ConcreteComponent;
 import hue.captains.singapura.js.homing.component.taxonomy.VirtualComponent;
+import hue.captains.singapura.js.homing.design.AnimationEffect;
 import hue.captains.singapura.js.homing.design.Extent;
 import hue.captains.singapura.js.homing.design.Growth;
 import hue.captains.singapura.js.homing.design.State;
@@ -18,8 +19,10 @@ import java.util.Map;
  * .design___leaf__target} - the body its drawing says, its states nested within in the cascade's order, so a
  * state's body outweighs the look while the state holds and of two states the later wins. A drawing taken from
  * another concrete leaf is copied, saying where it came from; one taken from a component of the taxonomy is the
- * theme's answer for it, saying whose; a drawing of nothing has no rule. A sheet of its own, beside the house's
- * look sheet, which it never touches. Given a design {@link ReadDesigns} has read.
+ * theme's answer for it, saying whose; a drawing of nothing has no rule. An animation drawn with an effect is the
+ * effect's class, its still dual's class beside it ({@code .design___leaf__animation-effect-still}), and the
+ * effect's keyframes, written once at the head of the sheet ({@link Effects}). A sheet of its own, beside the
+ * house's look sheet, which it never touches. Given a design {@link ReadDesigns} has read.
  */
 public record FlattenDesign() implements StatelessFunctionalObject {
 
@@ -40,10 +43,26 @@ public record FlattenDesign() implements StatelessFunctionalObject {
         for (Target t : tokens.leaves()) for (String r : t.registrations()) css.append(r).append('\n');
         css.append('\n');
 
+        var rules = new StringBuilder();
+        var effects = new ArrayList<AnimationEffect>();
         for (ConcreteComponent<?, ?, ?> c : design.concretes()) {
             VirtualComponent<?> leaf = c.virtual();
             for (Target t : ReadDesigns.owned(leaf)) {
                 ResolveDrawing.Resolved r = ResolveDrawing.INSTANCE.resolve(design.taxonomy(), c, t, theme);
+                boolean taken = r.by() != c;
+                if (r.drawing() instanceof Drawing.Animated an) {   // the effect's class, and its still dual beside it
+                    String worn = tokens.drawn(design.design(), leaf, t);
+                    if (taken) rules.append("/* from ").append(tokens.drawn(r.by().design(), leaf, t)).append(" */\n");
+                    if (r.of() != null) rules.append("/* the theme's ").append(r.of().name().value()).append(" */\n");
+                    rules.append("/* ").append(an.effect().token()).append(" */\n");
+                    rules.append('.').append(worn).append(" {\n").append(indent(Effects.INSTANCE.moving(an.effect()))).append("\n}\n");
+                    rules.append('.').append(tokens.still(worn)).append(" {\n").append(indent(Effects.INSTANCE.still(an.effect()))).append("\n}\n");
+                    effects.add(an.effect());
+                    drawn++;
+                    if (taken) copied++;
+                    if (r.of() != null) delegated++;
+                    continue;
+                }
                 if (!(r.drawing() instanceof Drawing.Own<?> own)) continue;
                 var parts = new ArrayList<String>();
                 Map<State, String> bodies = own.answer().bodies();
@@ -54,15 +73,18 @@ public record FlattenDesign() implements StatelessFunctionalObject {
                     parts.add(s == State.REST ? drawnBody : s.selector() + " {\n" + indent(drawnBody) + "\n}");
                 }
                 if (parts.isEmpty()) continue;
-                boolean taken = r.by() != c;
-                if (taken) css.append("/* from ").append(tokens.drawn(r.by().design(), leaf, t)).append(" */\n");
-                if (r.of() != null) css.append("/* the theme's ").append(r.of().name().value()).append(" */\n");
-                css.append('.').append(tokens.drawn(design.design(), leaf, t)).append(" {\n").append(indent(String.join("\n", parts))).append("\n}\n");
+                if (taken) rules.append("/* from ").append(tokens.drawn(r.by().design(), leaf, t)).append(" */\n");
+                if (r.of() != null) rules.append("/* the theme's ").append(r.of().name().value()).append(" */\n");
+                rules.append('.').append(tokens.drawn(design.design(), leaf, t)).append(" {\n").append(indent(String.join("\n", parts))).append("\n}\n");
                 drawn++;
                 if (taken) copied++;
                 if (r.of() != null) delegated++;
             }
         }
+        // the keyframes of every effect the design wears that moves, once, ahead of the classes that run them
+        String keyframes = Effects.INSTANCE.keyframes(effects);
+        if (!keyframes.isEmpty()) css.append(keyframes).append("\n\n");
+        css.append(rules);
         return new Flattened(css.toString(), drawn, copied, delegated);
     }
 

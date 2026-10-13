@@ -14,7 +14,8 @@ import java.util.List;
  * for each target the leaf owns, the same in every theme; the theme's sheet says what each draws. What it
  * designs is made with it, asks it to wear a leaf by the leaf's constant ({@link DesignLeaves}), and never
  * touches a class list: the object is its classes' manager. A leaf of another branch, or one the branch has
- * not, is refused.
+ * not, is refused. A leaf that wears an animation effect is switched off and on by its class and its still
+ * dual's swapped ({@code still(leaf, el)}, {@code move(leaf, el)}) - nothing more.
  *
  * <pre>{@code
  * void minesweeper_classic_sheet;
@@ -40,9 +41,15 @@ public record DesignObject() implements StatelessFunctionalObject {
         String name = name(design);
         String branch = design.branch().token();
         var leaves = new ArrayList<String>();
+        var stills = new ArrayList<String>();
         for (ConcreteComponent<?, ?, ?> c : design.concretes()) {
             var classes = new ArrayList<String>();
-            for (Target t : ReadDesigns.owned(c.virtual())) classes.add(quoted(tokens.drawn(design.design(), c.virtual(), t)));
+            for (Target t : ReadDesigns.owned(c.virtual())) {
+                String worn = tokens.drawn(design.design(), c.virtual(), t);
+                classes.add(quoted(worn));
+                if (t instanceof Target.Animation)
+                    stills.add("        " + quoted(c.virtual().token()) + ": Object.freeze([" + quoted(worn) + ", " + quoted(tokens.still(worn)) + "])");
+            }
             leaves.add("        " + quoted(c.virtual().token()) + ": Object.freeze([" + String.join(", ", classes) + "])");
         }
         return List.of(
@@ -63,8 +70,26 @@ public record DesignObject() implements StatelessFunctionalObject {
                 "        if (!classes) throw new Error(\"[" + name + "] " + branch + " has no leaf '\" + leaf.token + \"'\");",
                 "        return classes;",
                 "    },",
+                "    // the leaves that wear an animation effect: the effect's class and its still dual's - swapped, the effect is off",
+                "    stills: Object.freeze({",
+                String.join(",\n", stills),
+                "    }),",
                 "    wear(leaf, el) { " + name + ".classes(leaf).forEach(function (c) { el.classList.add(c); }); return el; },",
-                "    shed(leaf, el) { " + name + ".classes(leaf).forEach(function (c) { el.classList.remove(c); }); return el; },",
+                "    shed(leaf, el) {",
+                "        " + name + ".classes(leaf).forEach(function (c) { el.classList.remove(c); });",
+                "        var s = " + name + ".stills[leaf.token]; if (s) el.classList.remove(s[1]);",
+                "        return el;",
+                "    },",
+                "    // a leaf's effect switched off: its class swapped for its still dual's - the effect without any motion",
+                "    still(leaf, el) { var s = " + name + "._stills(leaf); el.classList.remove(s[0]); el.classList.add(s[1]); return el; },",
+                "    // and on again",
+                "    move(leaf, el) { var s = " + name + "._stills(leaf); el.classList.remove(s[1]); el.classList.add(s[0]); return el; },",
+                "    _stills(leaf) {",
+                "        " + name + ".classes(leaf);",
+                "        var s = " + name + ".stills[leaf.token];",
+                "        if (!s) throw new Error(\"[" + name + "] '\" + leaf.token + \"' wears no animation effect\");",
+                "        return s;",
+                "    },",
                 "    toString() { return " + quoted(design.token()) + "; }",
                 "});");
     }

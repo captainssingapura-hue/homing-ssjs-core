@@ -71,6 +71,7 @@ public record DeriveTreatments() implements StatelessFunctionalObject {
                     case Answer.Own<?> own -> own.bodies().keySet().forEach(s -> { if (s != State.REST) slots.add(new Slot(node, t, s)); });
                     case Answer.Redirect<?> r -> t.states().forEach(s -> { if (s != State.REST) slots.add(new Slot(node, t, s)); });
                     case Answer.FromBase<?> f -> { }   // the base's own answers are slots of the base's layer
+                    case Answer.Animated a -> { }       // an effect is a look, at rest: no treatment
                 }
             });
         // 2. down the taxonomy: every component whose lineage holds the slot's node - a virtual leaf never, a design draws it

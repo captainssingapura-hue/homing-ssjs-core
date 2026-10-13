@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.design.semantic;
 
 import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxon;
+import hue.captains.singapura.js.homing.design.AnimationEffect;
 import hue.captains.singapura.js.homing.design.State;
 import hue.captains.singapura.js.homing.design.Target;
 import hue.captains.singapura.tao.ontology.ValueObject;
@@ -22,11 +23,12 @@ import java.util.Set;
  * <p>Resolution looks in the worn style first, all the way up the tree, and only then in its base
  * (D6): a style's coarse answer outweighs its base's precise one. {@link FromBase} is how a style
  * takes its base's answer below one of its own - a call to the base, as {@code super} is, where a
- * {@link Redirect} is resolved in the style worn, late, as a method is.</p>
+ * {@link Redirect} is resolved in the style worn, late, as a method is. {@link Target.Animation.Effect} is
+ * answered {@link Animated} - with an effect, whole - and never with its own CSS.</p>
  *
  * @param <T> the target leaf: the root the class grows on
  */
-public sealed interface Answer<T extends Target> extends ValueObject permits Answer.Own, Answer.Redirect, Answer.FromBase {
+public sealed interface Answer<T extends Target> extends ValueObject permits Answer.Own, Answer.Redirect, Answer.FromBase, Answer.Animated {
 
     /**
      * Its own CSS, a body per state it answers - declarations of the target's properties, nested
@@ -88,5 +90,18 @@ public sealed interface Answer<T extends Target> extends ValueObject permits Ans
 
         /** Whether the base is asked in this state. */
         public boolean asks(State state) { return only.isEmpty() || only.contains(state); }
+    }
+
+    /**
+     * An animation effect, whole, at rest: what {@link Target.Animation.Effect} is answered with - the effect's
+     * CSS is its own, sealed ({@link Effects}), and refused here unless it is its own to write.
+     *
+     * @param effect the effect worn
+     */
+    record Animated(AnimationEffect effect) implements Answer<Target.Animation.Effect> {
+        public Animated {
+            Objects.requireNonNull(effect, "Animated.effect");
+            Effects.INSTANCE.check(effect);
+        }
     }
 }

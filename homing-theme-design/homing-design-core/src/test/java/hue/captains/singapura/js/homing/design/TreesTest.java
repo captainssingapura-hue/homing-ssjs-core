@@ -50,6 +50,8 @@ class TreesTest {
     void targetTokensCarryTheBranch() {
         assertEquals("color-background", Target.Color.Background.INSTANCE.token());
         assertEquals("motion-transform", Target.Motion.Transform.INSTANCE.token());
+        assertEquals("animation-effect", Target.Animation.Effect.INSTANCE.token());
+        assertEquals("none", AnimationEffect.None.INSTANCE.token(), "an effect's token, from its type");
         assertEquals("sound-cue",        Target.Sound.Cue.INSTANCE.token());
     }
 

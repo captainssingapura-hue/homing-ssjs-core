@@ -13,7 +13,9 @@ import java.util.Objects;
  * target, and the answer, typed by the target so the two cannot part. Refused as it is written: a
  * target kept only for the old design system, a state the target offers no slot for, a state
  * answered on a role (a state is a treatment, common to every role), a body its target cannot say
- * ({@link AnswerBody}), and a class redirected to itself.
+ * ({@link AnswerBody}), a class redirected to itself, an animation answered with a body rather than an effect,
+ * and an effect that takes a property: on a component every target's class is worn, so what the effect takes
+ * another answer writes - only a design's virtual leaf, which owns what it owns, may wear such an effect.
  *
  * @param node   the casting answered: a component or a branch on its own, or a component in a role
  * @param target the target leaf
@@ -50,6 +52,12 @@ public record Implementation<T extends Target>(Casting node, T target, Answer<T>
             });
         if (answer instanceof Answer.Redirect<T> r && r.to().equals(node))
             throw new IllegalArgumentException(where + " is redirected to itself");
+        if (target instanceof Target.Animation && answer instanceof Answer.Own<T>)
+            throw new IllegalArgumentException(where + " is answered with a body: an animation is answered with an effect, whole (Answer.Animated)");
+        if (answer instanceof Answer.Animated a && !Effects.INSTANCE.takes(a.effect()).isEmpty())
+            throw new IllegalArgumentException(where + " is " + a.effect().token() + ", which takes " + String.join(", ", Effects.INSTANCE.takes(a.effect()))
+                    + ": on a component every target's class is worn, and another answer writes what the effect takes - only a design's"
+                    + " virtual leaf, which owns what it owns, may wear it");
     }
 
     /** A component or a branch on its own. */

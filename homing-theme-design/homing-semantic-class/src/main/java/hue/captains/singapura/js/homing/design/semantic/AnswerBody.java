@@ -7,6 +7,7 @@ import hue.captains.singapura.js.homing.design.Target;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.TreeSet;
@@ -32,7 +33,8 @@ import java.util.regex.Pattern;
  *       {@code --size}, {@code --aspect}) and those colours. Any other variable is refused.</li>
  * </ul>
  *
- * A target that is not CSS - a sound, an asset - is said nothing of here.
+ * A target that is not CSS - a sound, an asset - is said nothing of here. {@link Target.Animation} is answered
+ * with an effect, never a body: the effect's declarations are judged here as a body's are ({@link Effects}).
  */
 public record AnswerBody() implements StatelessFunctionalObject {
 
@@ -45,6 +47,7 @@ public record AnswerBody() implements StatelessFunctionalObject {
     private static final Pattern HEX = Pattern.compile("#[0-9a-fA-F]{3,8}\\b");
     private static final Pattern COLOUR_FUNCTION = Pattern.compile("\\b(rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\\(", Pattern.CASE_INSENSITIVE);
     private static final Pattern WORD = Pattern.compile("[a-zA-Z][a-zA-Z0-9-]*");
+    private static final Pattern FRAME = Pattern.compile("from|to|\\d+(\\.\\d+)?%");
 
     /** The numbers an element sets on itself, which any body may read. */
     private static final Set<String> DEGREES = Set.of(Extent.VAR, Growth.SIZE.var(), Growth.ASPECT.var());
@@ -65,18 +68,58 @@ public record AnswerBody() implements StatelessFunctionalObject {
             + "slateblue slategray slategrey snow springgreen steelblue tan teal thistle tomato turquoise violet wheat white "
             + "whitesmoke yellow yellowgreen").split(" "));
 
+    /**
+     * Who may say what: a name for the messages, the properties it may declare - null for any but an animation's
+     * own - the colour targets whose registered colours it may read, and whether it is a semantic colour itself.
+     */
+    record Rights(String who, Set<String> owns, List<Target.Color> colouredBy, boolean colour) {
+        static Rights of(Target t) { return new Rights(t.token(), t.properties(), t.colouredBy(), t instanceof Target.Color); }
+    }
+
     /** Refuses a body its target cannot say; says nothing of an empty one. */
     public void check(Target target, String body) {
         if (body.isBlank()) return;
         if (target.carrier() != Carrier.CSS) throw new IllegalArgumentException(target.token() + " is no CSS target: an answer for it says nothing here");
-        String text = stripComments(body);
-        Set<String> top = block(target, text, 0);
-        if (target instanceof Target.Color && top.isEmpty())
+        if (target instanceof Target.Animation)
+            throw new IllegalArgumentException(target.token() + " is answered with an animation effect, never with a body: name the effect");
+        Rights rights = Rights.of(target);
+        Set<String> top = block(rights, stripComments(body), 0);
+        if (rights.colour() && top.isEmpty())
             throw new IllegalArgumentException(target.token() + " is said in a block alone: a semantic colour is said at the top, a mode or a state beside it");
     }
 
+    /** The properties flat declarations declare - no block in them - refused where the rights do not reach. */
+    Set<String> declarations(Rights rights, String text) {
+        String bare = stripComments(text);
+        if (bare.indexOf('{') >= 0 || bare.indexOf('}') >= 0)
+            throw new IllegalArgumentException(rights.who() + " declares in a block: its declarations are flat, the element's own");
+        return block(rights, bare, 0);
+    }
+
+    /** The frames of keyframes - {@code from}, {@code to}, a percentage, or several - and every property they move. */
+    Set<String> frames(Rights rights, String text) {
+        String bare = stripComments(text).strip();
+        var moved = new TreeSet<String>();
+        int i = 0;
+        while (i < bare.length()) {
+            int open = bare.indexOf('{', i);
+            if (open < 0) {
+                if (!bare.substring(i).isBlank()) throw new IllegalArgumentException(rights.who() + "'s frames end in '" + bare.substring(i).strip() + "', which is no frame");
+                break;
+            }
+            String selector = bare.substring(i, open).strip();
+            for (String s : selector.split(","))
+                if (!FRAME.matcher(s.strip()).matches())
+                    throw new IllegalArgumentException(rights.who() + "'s frame '" + selector + "' is no frame: from, to or a percentage");
+            int close = matching(bare, open, '{', '}');
+            moved.addAll(declarations(rights, bare.substring(open + 1, close)));
+            i = close + 1;
+        }
+        return moved;
+    }
+
     /** The properties a block declares; its nested blocks checked as it goes. */
-    private static Set<String> block(Target target, String text, int depth) {
+    private static Set<String> block(Rights target, String text, int depth) {
         var declared = new HashSet<String>();
         var buf = new StringBuilder();
         int i = 0;
@@ -97,16 +140,16 @@ public record AnswerBody() implements StatelessFunctionalObject {
             i++;
         }
         if (!buf.toString().isBlank()) declare(target, buf.toString(), declared);
-        if (target instanceof Target.Color && !declared.isEmpty() && !declared.containsAll(target.properties())) {
-            var missing = new TreeSet<>(target.properties());
+        if (target.colour() && !declared.isEmpty() && !declared.containsAll(target.owns())) {
+            var missing = new TreeSet<>(target.owns());
             missing.removeAll(declared);
-            throw new IllegalArgumentException(target.token() + " is a semantic colour, said whole or not at all: "
+            throw new IllegalArgumentException(target.who() + " is a semantic colour, said whole or not at all: "
                     + String.join(", ", missing) + (missing.size() == 1 ? " is" : " are") + " not said");
         }
         return declared;
     }
 
-    private static void nested(Target target, String selector, String inner, int depth) {
+    private static void nested(Rights target, String selector, String inner, int depth) {
         if (depth > 3) throw new IllegalArgumentException("nested too deep");
         if (selector.startsWith("@media") || selector.startsWith("@supports")) { block(target, inner, depth + 1); return; }
         for (String part : selector.split(",")) {
@@ -117,35 +160,38 @@ public record AnswerBody() implements StatelessFunctionalObject {
         block(target, inner, depth + 1);
     }
 
-    private static void declare(Target target, String text, Set<String> declared) {
+    private static void declare(Rights target, String text, Set<String> declared) {
         String d = text.strip();
         if (d.isEmpty()) return;
         int colon = d.indexOf(':');
         if (colon <= 0) throw new IllegalArgumentException("'" + d + "' is no declaration");
         String property = d.substring(0, colon).strip().toLowerCase(Locale.ROOT);
         String value = d.substring(colon + 1);
-        if (!target.properties().contains(property))
-            throw new IllegalArgumentException(target.token() + " does not own " + property + "; it owns " + String.join(", ", new TreeSet<>(target.properties())));
+        if (target.owns() == null) {
+            if (property.equals("animation") || property.startsWith("animation-"))
+                throw new IllegalArgumentException(target.who() + " declares " + property + ": its motion is the framework's to write, from its frames and its timing");
+        } else if (!target.owns().contains(property))
+            throw new IllegalArgumentException(target.who() + " does not own " + property + "; it owns " + String.join(", ", new TreeSet<>(target.owns())));
         reads(target, value);
-        if (!(target instanceof Target.Color)) namesNoColour(target, value);
+        if (!target.colour()) namesNoColour(target, value);
         declared.add(property);
     }
 
     /** The variables a value reads: the element's degrees, and the colours of the leaf that colours this one. */
-    private static void reads(Target target, String value) {
+    private static void reads(Rights target, String value) {
         Matcher m = VAR.matcher(value);
         while (m.find()) {
             String name = m.group(1);
-            if (DEGREES.contains(name) || target.properties().contains(name)) continue;
+            if (DEGREES.contains(name) || (target.owns() != null && target.owns().contains(name))) continue;
             if (target.colouredBy().stream().anyMatch(c -> c.properties().contains(name))) continue;
-            throw new IllegalArgumentException(target.token() + " reads " + name + ": it reads its degrees"
+            throw new IllegalArgumentException(target.who() + " reads " + name + ": it reads its degrees"
                     + (target.colouredBy().isEmpty() ? "" : " and " + String.join(", ", target.colouredBy().stream().map(Target::token).toList()) + "'s colours")
                     + ", and nothing else");
         }
     }
 
     /** A value off the colour targets names no colour: the palette's are read, never said. */
-    private static void namesNoColour(Target target, String value) {
+    private static void namesNoColour(Rights target, String value) {
         String bare = value.replaceAll("\"[^\"]*\"|'[^']*'", " ");
         String found = null;
         Matcher hex = HEX.matcher(bare);
@@ -157,8 +203,8 @@ public record AnswerBody() implements StatelessFunctionalObject {
             while (w.find()) if (NAMED.contains(w.group().toLowerCase(Locale.ROOT))) { found = w.group(); break; }
         }
         if (found != null)
-            throw new IllegalArgumentException(target.token() + " names a colour, " + found + ": colour is the palette's"
-                    + (target.colouredBy().isEmpty() ? ", and " + target.token() + " is drawn in none"
+            throw new IllegalArgumentException(target.who() + " names a colour, " + found + ": colour is the palette's"
+                    + (target.colouredBy().isEmpty() ? ", and " + target.who() + " is drawn in none"
                        : "; it is drawn in " + String.join(", ", target.colouredBy().stream().map(Target::token).toList()) + "'s"));
     }
 

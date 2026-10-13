@@ -32,8 +32,9 @@ import java.util.List;
  *   <li>a virtual leaf that owns no target, one twice, or one no sheet carries;</li>
  *   <li>in a theme: drawings that cannot be made, a target drawn that its leaf does not own, one drawn
  *       twice, one owned and left undrawn - nothing falls through to the theme - a drawing taken from
- *       astray, and one taken from a component the theme cannot give it from: a virtual leaf, one the
- *       taxonomy has not, one it leaves unanswered at rest.</li>
+ *       astray, one taken from a component the theme cannot give it from: a virtual leaf, one the
+ *       taxonomy has not, one it leaves unanswered at rest - and an animation effect that takes a property
+ *       another target the leaf owns writes.</li>
  * </ul>
  *
  * <p>A concrete leaf of a leaf this taxonomy has not is another taxonomy's, and is passed over. The
@@ -135,24 +136,41 @@ public record ReadDesigns() implements StatelessFunctionalObject {
                                     + t.token() + " undrawn: draw it, say none, or take another's"));
                             continue;
                         }
+                        Drawing<?> drawing;
                         if (mine.get(t) instanceof Drawing.Of<?> of) {
                             try {
-                                ResolveDrawing.INSTANCE.taken(taxonomy, of, theme, ResolveDrawing.name(c));
+                                drawing = ResolveDrawing.INSTANCE.taken(taxonomy, of, theme, ResolveDrawing.name(c));
                             } catch (IllegalArgumentException e) {
                                 problems.add(new DesignProblem(Rule.OF_ASTRAY, "in " + name(theme) + ": " + e.getMessage()));
+                                continue;
                             }
-                            continue;
+                        } else {
+                            try {
+                                drawing = ResolveDrawing.INSTANCE.resolve(taxonomy, c, t, theme).drawing();
+                            } catch (IllegalArgumentException e) {
+                                problems.add(new DesignProblem(Rule.AS_ASTRAY, "in " + name(theme) + ": " + e.getMessage()));
+                                continue;
+                            }
                         }
-                        try {
-                            ResolveDrawing.INSTANCE.resolve(taxonomy, c, t, theme);
-                        } catch (IllegalArgumentException e) {
-                            problems.add(new DesignProblem(Rule.AS_ASTRAY, "in " + name(theme) + ": " + e.getMessage()));
-                        }
+                        if (drawing instanceof Drawing.Animated an) takesOwned(c, an, mineOwned, theme, problems);
                     }
                 }
 
         if (!problems.isEmpty()) throw new RefusedDesigns(problems);
         return List.copyOf(out);
+    }
+
+    /** An effect takes what it needs: a property another target the leaf owns writes is refused, by name. */
+    private static void takesOwned(ConcreteComponent<?, ?, ?> c, Drawing.Animated an, List<Target> owned, Dressed theme, List<DesignProblem> problems) {
+        var takes = Effects.INSTANCE.takes(an.effect());
+        for (Target other : owned) {
+            if (other instanceof Target.Animation) continue;
+            for (String p : other.properties())
+                if (takes.contains(p))
+                    problems.add(new DesignProblem(Rule.EFFECT_TAKES_OWNED, ResolveDrawing.name(c) + " in " + name(theme) + " wears "
+                            + an.effect().token() + ", which takes " + p + " - and " + c.virtual().token() + " owns " + other.token()
+                            + ", which writes it: what an effect takes, nothing else there may write"));
+        }
     }
 
     /** The leaves of a design branch, in the taxonomy's order. */

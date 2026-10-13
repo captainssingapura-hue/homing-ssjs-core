@@ -10,6 +10,7 @@ import hue.captains.singapura.js.homing.component.taxonomy.Taxon;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.component.taxonomy.VirtualComponent;
 import hue.captains.singapura.js.homing.component.taxonomy.Word;
+import hue.captains.singapura.js.homing.design.AnimationEffect;
 import hue.captains.singapura.js.homing.design.Carrier;
 import hue.captains.singapura.js.homing.design.State;
 import hue.captains.singapura.js.homing.design.Target;
@@ -77,6 +78,15 @@ public record SemanticTokens() implements StatelessFunctionalObject {
      * is never a look's nor a treatment's, whatever a component is named.
      */
     public String word(Word<?> w) { return "word-" + w.token(); }
+
+    /** The keyframes an animation effect runs: {@code effect-marching-ants} - a name of keyframes, never a class's. */
+    public String effect(AnimationEffect e) { return "effect-" + e.token(); }
+
+    /**
+     * The still dual of the class an animation effect is worn by - the effect without any motion, which an element
+     * is given when the effect is switched off: {@code house-grid___copied-border__animation-effect-still}.
+     */
+    public String still(String effectClass) { return effectClass + "-still"; }
 
     // ── reading ─────────────────────────────────────────────────────────────
 

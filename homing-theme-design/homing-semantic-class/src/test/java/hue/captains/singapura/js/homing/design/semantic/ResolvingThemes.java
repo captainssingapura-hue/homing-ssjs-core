@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.design.semantic;
 import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.component.taxonomy.Root;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxon;
+import hue.captains.singapura.js.homing.design.AnimationEffect;
 import hue.captains.singapura.js.homing.design.State;
 import hue.captains.singapura.js.homing.design.Target;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingTaxonomy.Button;
@@ -120,7 +121,7 @@ final class ResolvingThemes {
                     rest(Root.INSTANCE, Target.Type.Glyph.INSTANCE, ""),
                     rest(Root.INSTANCE, Target.Motion.Ease.INSTANCE, "transition: none;"),
                     rest(Root.INSTANCE, Target.Motion.Transform.INSTANCE, "transform: none;"),
-                    rest(Root.INSTANCE, Target.Motion.Animate.INSTANCE, "animation: none;"),
+                    new Implementation<>(Root.INSTANCE, Target.Animation.Effect.INSTANCE, new Answer.Animated(AnimationEffect.None.INSTANCE)),
                     rest(Root.INSTANCE, Target.Effect.Opacity.INSTANCE, "opacity: 1;"),
                     rest(Root.INSTANCE, Target.Effect.Filter.INSTANCE, "filter: none;"),
                     rest(Root.INSTANCE, Target.Effect.Blend.INSTANCE, "mix-blend-mode: normal;"),

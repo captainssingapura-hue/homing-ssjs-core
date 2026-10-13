@@ -92,6 +92,15 @@ public record ResolveSemanticClass() implements StatelessFunctionalObject {
                                 + String.join(" > ", passed.stream().map(tokens::casting).toList()) + " > " + tokens.casting(r.to()));
                     return walk(taxonomy, top, top, path(taxonomy, state == State.REST ? r.to() : r.to().alone(), state), state, target, steps, passed);
                 }
+                case Answer.Animated a -> {
+                    if (state != State.REST) {
+                        steps.add(new Resolution.Step(layer.token(), node, "answers it, not " + tokens.state(state)));
+                        continue;
+                    }
+                    steps.add(new Resolution.Step(layer.token(), node, "answered: " + a.effect().token()));
+                    return new Resolution.Answered(layer.token(), node, tokens.className(node, state, target),
+                            Effects.INSTANCE.moving(a.effect()), a.effect());
+                }
                 case Answer.FromBase<?> f -> {
                     if (!f.asks(state)) {
                         steps.add(new Resolution.Step(layer.token(), node, "its base's, not " + tokens.state(state)));

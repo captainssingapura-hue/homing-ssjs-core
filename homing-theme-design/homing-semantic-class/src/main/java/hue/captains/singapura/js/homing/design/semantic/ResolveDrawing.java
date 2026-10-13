@@ -60,12 +60,19 @@ record ResolveDrawing() implements StatelessFunctionalObject {
         return own(taxonomy, of.target(), of.from(), theme, who);
     }
 
+    @SuppressWarnings("unchecked")
     private static <T extends Target> Drawing<T> own(Taxonomy taxonomy, T target, Component<?> from, Dressed theme, String who) {
         String said = who + "'s " + target.token() + " is taken from " + from.name().value();
         if (from instanceof VirtualComponent<?>)
             throw new IllegalArgumentException(said + ", a virtual leaf: the theme answers none of it; take another concrete leaf's with As");
         if (!taxonomy.components().contains(from))
             throw new IllegalArgumentException(said + ", which this taxonomy has not");
+        if (target instanceof Target.Animation.Effect) {   // an effect, whole: the one the theme answers the component at rest
+            if (ResolveSemanticClass.INSTANCE.resolve(taxonomy, theme, new Casting(from), State.REST, target).outcome() instanceof Resolution.Answered a
+                    && a.effect() != null)
+                return (Drawing<T>) new Drawing.Animated(a.effect());
+            throw new IllegalArgumentException(said + ", which " + theme.style().token() + " in " + theme.palette().token() + " leaves unanswered at rest");
+        }
         var bodies = new EnumMap<State, String>(State.class);
         for (State s : target.states())
             if (ResolveSemanticClass.INSTANCE.resolve(taxonomy, theme, new Casting(from), s, target).outcome() instanceof Resolution.Answered a)

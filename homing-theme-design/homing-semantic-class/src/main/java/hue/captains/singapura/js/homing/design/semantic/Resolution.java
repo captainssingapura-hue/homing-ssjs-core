@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.design.semantic;
 
 import hue.captains.singapura.js.homing.component.taxonomy.Casting;
+import hue.captains.singapura.js.homing.design.AnimationEffect;
 import hue.captains.singapura.js.homing.design.State;
 import hue.captains.singapura.js.homing.design.Target;
 import hue.captains.singapura.tao.ontology.ValueObject;
@@ -42,8 +43,12 @@ public record Resolution(String theme, Casting query, State state, Target target
      * @param node      the node it answered at
      * @param className the answering class: the node's, the state's, the target's
      * @param body      what it says; empty for an answer that says nothing
+     * @param effect    the animation effect it is, where it answered one; null otherwise
      */
-    public record Answered(String layer, Casting node, String className, String body) implements Outcome {}
+    public record Answered(String layer, Casting node, String className, String body, AnimationEffect effect) implements Outcome {
+        /** An answer of CSS: no effect. */
+        public Answered(String layer, Casting node, String className, String body) { this(layer, node, className, body, null); }
+    }
 
     /** A state no component answers: nothing is worn for it, and the element shows its look at rest. */
     public record Silent() implements Outcome {}

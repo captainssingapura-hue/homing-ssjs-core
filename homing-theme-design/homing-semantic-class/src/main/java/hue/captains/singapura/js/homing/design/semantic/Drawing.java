@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.design.semantic;
 
 import hue.captains.singapura.js.homing.component.taxonomy.Component;
 import hue.captains.singapura.js.homing.component.taxonomy.ConcreteComponent;
+import hue.captains.singapura.js.homing.design.AnimationEffect;
 import hue.captains.singapura.js.homing.design.Target;
 import hue.captains.singapura.tao.ontology.ValueObject;
 
@@ -10,11 +11,11 @@ import java.util.Objects;
 /**
  * What a concrete leaf says for one target its leaf owns (RFC 0067, appendix Virtual Leaves and Designs):
  * its own CSS, nothing, another concrete leaf's, or the theme's answer for a component of the taxonomy - reuse
- * always said. The target is the type parameter, so an answer for one target cannot stand in for another's.
+ * always said - and for an animation, an effect, whole. The target is the type parameter, so an answer for one target cannot stand in for another's.
  *
  * @param <T> the target answered
  */
-public sealed interface Drawing<T extends Target> extends ValueObject permits Drawing.Own, Drawing.None, Drawing.As, Drawing.Of {
+public sealed interface Drawing<T extends Target> extends ValueObject permits Drawing.Own, Drawing.None, Drawing.As, Drawing.Of, Drawing.Animated {
 
     /** The target it answers. */
     T target();
@@ -28,6 +29,8 @@ public sealed interface Drawing<T extends Target> extends ValueObject permits Dr
         public Own {
             Objects.requireNonNull(target, "Drawing.Own.target");
             Objects.requireNonNull(answer, "Drawing.Own.answer");
+            if (target instanceof Target.Animation)
+                throw new IllegalArgumentException(target.token() + " is drawn with an animation effect, whole (Drawing.Animated), never with a body");
             answer.bodies().forEach((state, body) -> {
                 if (!target.states().contains(state))
                     throw new IllegalArgumentException(target.token() + " offers no " + SemanticTokens.INSTANCE.state(state) + "; it offers "
@@ -79,5 +82,22 @@ public sealed interface Drawing<T extends Target> extends ValueObject permits Dr
             Objects.requireNonNull(target, "Drawing.Of.target");
             Objects.requireNonNull(from, "Drawing.Of.from");
         }
+    }
+
+    /**
+     * An animation effect, whole: what {@link Target.Animation.Effect} is drawn with (RFC 0050 · Episode 2,
+     * appendix The Copied Range). The effect's CSS is its own, sealed ({@link Effects}); the concrete leaf's class
+     * wears it, and its still dual's class is written beside it. What the effect takes, nothing else the leaf
+     * owns may write.
+     *
+     * @param effect the effect
+     */
+    record Animated(AnimationEffect effect) implements Drawing<Target.Animation.Effect> {
+        public Animated {
+            Objects.requireNonNull(effect, "Drawing.Animated.effect");
+            Effects.INSTANCE.check(effect);
+        }
+
+        @Override public Target.Animation.Effect target() { return Target.Animation.Effect.INSTANCE; }
     }
 }
