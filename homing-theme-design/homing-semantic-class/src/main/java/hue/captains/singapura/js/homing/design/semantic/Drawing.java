@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.design.semantic;
 
+import hue.captains.singapura.js.homing.component.taxonomy.Component;
 import hue.captains.singapura.js.homing.component.taxonomy.ConcreteComponent;
 import hue.captains.singapura.js.homing.design.Target;
 import hue.captains.singapura.tao.ontology.ValueObject;
@@ -8,12 +9,12 @@ import java.util.Objects;
 
 /**
  * What a concrete leaf says for one target its leaf owns (RFC 0067, appendix Virtual Leaves and Designs):
- * its own CSS, nothing, or another concrete leaf's - reuse always said. The target is the type parameter,
- * so an answer for one target cannot stand in for another's.
+ * its own CSS, nothing, another concrete leaf's, or the theme's answer for a component of the taxonomy - reuse
+ * always said. The target is the type parameter, so an answer for one target cannot stand in for another's.
  *
  * @param <T> the target answered
  */
-public sealed interface Drawing<T extends Target> extends ValueObject permits Drawing.Own, Drawing.None, Drawing.As {
+public sealed interface Drawing<T extends Target> extends ValueObject permits Drawing.Own, Drawing.None, Drawing.As, Drawing.Of {
 
     /** The target it answers. */
     T target();
@@ -61,6 +62,22 @@ public sealed interface Drawing<T extends Target> extends ValueObject permits Dr
         public As {
             Objects.requireNonNull(target, "Drawing.As.target");
             Objects.requireNonNull(to, "Drawing.As.to");
+        }
+    }
+
+    /**
+     * What the theme worn answers a component of the taxonomy for the same target: at rest and in every state
+     * the target offers, resolved as that component's own look and treatments are - this design's lattice is
+     * a document table's data cell's rule, and follows it wherever a style redraws it. A delegation said,
+     * never a copy: the design keeps no CSS of the component's, and a theme that leaves the component's
+     * target unanswered at rest refuses it.
+     *
+     * @param from the component whose answer this drawing is: one the taxonomy has, never a virtual leaf
+     */
+    record Of<T extends Target>(T target, Component<?> from) implements Drawing<T> {
+        public Of {
+            Objects.requireNonNull(target, "Drawing.Of.target");
+            Objects.requireNonNull(from, "Drawing.Of.from");
         }
     }
 }

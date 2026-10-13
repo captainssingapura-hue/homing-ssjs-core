@@ -33,7 +33,9 @@ public record DesignProblem(Rule rule, String says) implements ValueObject {
         /** A target its leaf owns that a concrete leaf leaves undrawn: nothing falls through to the theme. */
         UNDRAWN,
         /** A drawing taken from a concrete leaf of another leaf, from one that draws nothing of it, or round in a circle. */
-        AS_ASTRAY
+        AS_ASTRAY,
+        /** A drawing taken from a virtual leaf, from a component the taxonomy has not, or from one the theme leaves unanswered at rest. */
+        OF_ASTRAY
     }
 
     @Override public String toString() { return rule + ": " + says; }

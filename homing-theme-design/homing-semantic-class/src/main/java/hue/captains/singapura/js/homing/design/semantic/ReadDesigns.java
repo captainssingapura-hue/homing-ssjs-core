@@ -31,8 +31,9 @@ import java.util.List;
  *   <li>a design with two concrete leaves of one leaf, or none of a leaf of its branch;</li>
  *   <li>a virtual leaf that owns no target, one twice, or one no sheet carries;</li>
  *   <li>in a theme: drawings that cannot be made, a target drawn that its leaf does not own, one drawn
- *       twice, one owned and left undrawn - nothing falls through to the theme - and a drawing taken from
- *       astray.</li>
+ *       twice, one owned and left undrawn - nothing falls through to the theme - a drawing taken from
+ *       astray, and one taken from a component the theme cannot give it from: a virtual leaf, one the
+ *       taxonomy has not, one it leaves unanswered at rest.</li>
  * </ul>
  *
  * <p>A concrete leaf of a leaf this taxonomy has not is another taxonomy's, and is passed over. The
@@ -101,7 +102,7 @@ public record ReadDesigns() implements StatelessFunctionalObject {
                             + branch.token() + ": a design is complete over its branch"));
                 else ordered.add(c);
             }
-            out.add(new DesignRead(design, branch, ordered));
+            out.add(new DesignRead(design, branch, ordered, taxonomy));
         });
 
         // 4. in every theme: every owned target drawn once, nothing else drawn, each redirect landing
@@ -118,7 +119,9 @@ public record ReadDesigns() implements StatelessFunctionalObject {
                         continue;
                     }
                     var seen = new HashSet<Target>();
+                    var mine = new HashMap<Target, Drawing<?>>();
                     for (Drawing<?> dr : drawings) {
+                        mine.putIfAbsent(dr.target(), dr);
                         if (!mineOwned.contains(dr.target()))
                             problems.add(new DesignProblem(Rule.NOT_OWNED, ResolveDrawing.name(c) + " in " + name(theme) + " draws "
                                     + dr.target().token() + ", which " + c.virtual().token() + " does not own"));
@@ -132,8 +135,16 @@ public record ReadDesigns() implements StatelessFunctionalObject {
                                     + t.token() + " undrawn: draw it, say none, or take another's"));
                             continue;
                         }
+                        if (mine.get(t) instanceof Drawing.Of<?> of) {
+                            try {
+                                ResolveDrawing.INSTANCE.taken(taxonomy, of, theme, ResolveDrawing.name(c));
+                            } catch (IllegalArgumentException e) {
+                                problems.add(new DesignProblem(Rule.OF_ASTRAY, "in " + name(theme) + ": " + e.getMessage()));
+                            }
+                            continue;
+                        }
                         try {
-                            ResolveDrawing.INSTANCE.resolve(c, t, theme);
+                            ResolveDrawing.INSTANCE.resolve(taxonomy, c, t, theme);
                         } catch (IllegalArgumentException e) {
                             problems.add(new DesignProblem(Rule.AS_ASTRAY, "in " + name(theme) + ": " + e.getMessage()));
                         }

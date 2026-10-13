@@ -8,10 +8,16 @@ import hue.captains.singapura.js.homing.design.semantic.DesignProblem.Rule;
 import hue.captains.singapura.js.homing.design.semantic.DesigningDesigns.Bold;
 import hue.captains.singapura.js.homing.design.semantic.DesigningDesigns.BoldEdge;
 import hue.captains.singapura.js.homing.design.semantic.DesigningDesigns.BoldMark;
+import hue.captains.singapura.js.homing.design.semantic.DesigningDesigns.BoxedEdge;
+import hue.captains.singapura.js.homing.design.semantic.DesigningDesigns.BoxedMark;
 import hue.captains.singapura.js.homing.design.semantic.DesigningDesigns.BrokenEdge;
 import hue.captains.singapura.js.homing.design.semantic.DesigningDesigns.BrokenMark;
+import hue.captains.singapura.js.homing.design.semantic.DesigningDesigns.EchoEdge;
+import hue.captains.singapura.js.homing.design.semantic.DesigningDesigns.EchoMark;
 import hue.captains.singapura.js.homing.design.semantic.DesigningDesigns.Elsewhere;
 import hue.captains.singapura.js.homing.design.semantic.DesigningDesigns.HalfEdge;
+import hue.captains.singapura.js.homing.design.semantic.DesigningDesigns.HollowEdge;
+import hue.captains.singapura.js.homing.design.semantic.DesigningDesigns.HollowMark;
 import hue.captains.singapura.js.homing.design.semantic.DesigningDesigns.LostEdge;
 import hue.captains.singapura.js.homing.design.semantic.DesigningDesigns.LostMark;
 import hue.captains.singapura.js.homing.design.semantic.DesigningDesigns.MuteEdge;
@@ -54,6 +60,10 @@ class DesignsTest extends JsModuleTestBase {
     private static final Dressed SKETCH = ResolvingThemes.BY_NAME.get("sketch");
     private static final Dressed DETAILED = ResolvingThemes.BY_NAME.get("detailed");
     private static final List<Dressed> THEMES = List.of(SKETCH, DETAILED);
+    /** A theme that answers every target at the root: the box's border is answered in it, as the sketch leaves it. */
+    private static final Dressed VALUED = ResolvingThemes.BY_NAME.get("valued");
+    private static final List<ConcreteComponent<?, ?, ?>> TAKEN =
+            List.of(BoxedEdge.INSTANCE, BoxedMark.INSTANCE, EchoEdge.INSTANCE, EchoMark.INSTANCE);
     private static final List<ConcreteComponent<?, ?, ?>> GOOD =
             List.of(BoldMark.INSTANCE, PlainEdge.INSTANCE, BoldEdge.INSTANCE, PlainMark.INSTANCE);
 
@@ -124,6 +134,21 @@ class DesignsTest extends JsModuleTestBase {
     }
 
     @Test
+    void aDrawingTakenFromAVirtualLeaf_orAComponentTheTaxonomyHasNot_isRefused() {
+        var e = assertThrows(RefusedDesigns.class, () -> ReadDesigns.INSTANCE.read(TAXONOMY, List.of(VALUED), List.of(new HollowEdge(), new HollowMark())));
+        assertEquals(List.of(Rule.OF_ASTRAY, Rule.OF_ASTRAY), e.problems().stream().map(DesignProblem::rule).toList(), e.getMessage());
+        assertTrue(e.getMessage().contains("taken from mark, a virtual leaf"), e.getMessage());
+        assertTrue(e.getMessage().contains("taken from stray, which this taxonomy has not"), e.getMessage());
+    }
+
+    @Test
+    void aDrawingTakenFromAComponentTheThemeLeavesUnanswered_isRefused() {
+        var e = assertThrows(RefusedDesigns.class, () -> ReadDesigns.INSTANCE.read(TAXONOMY, List.of(SKETCH), List.of(BoxedEdge.INSTANCE, BoxedMark.INSTANCE)));
+        assertEquals(List.of(Rule.OF_ASTRAY, Rule.OF_ASTRAY), e.problems().stream().map(DesignProblem::rule).toList(), e.getMessage());
+        assertTrue(e.getMessage().contains("leaves unanswered at rest"), e.getMessage());
+    }
+
+    @Test
     void drawingsThatCannotBeMade_areRefused() {
         assertRefused(List.of(Rule.DRAWING_REFUSED), List.of(new BrokenEdge(), new BrokenMark()));
     }
@@ -157,6 +182,29 @@ class DesignsTest extends JsModuleTestBase {
         assertEquals(2, flat.copied());
         assertTrue(FlattenDesign.INSTANCE.flatten(bold, DETAILED, "Bold").css().contains(".bold___edge__shape-border {\n    border-width: 2px; border-style: solid;\n"),
                 "drawn per style");
+    }
+
+    @Test
+    void aDrawingTakenFromAComponent_isTheThemesAnswerForIt_sayingWhose() {
+        var read = ReadDesigns.INSTANCE.read(TAXONOMY, List.of(VALUED), TAKEN);
+        DesignRead boxed = read.stream().filter(d -> d.token().equals("boxed")).findFirst().orElseThrow();
+        assertEquals(TAXONOMY, boxed.taxonomy(), "a design keeps the taxonomy it was read over");
+        var flat = FlattenDesign.INSTANCE.flatten(boxed, VALUED, "Boxed");
+        String css = flat.css();
+        assertTrue(css.contains("/* the theme's box */\n.boxed___edge__shape-border {\n    border-width: 0; border-style: solid;\n}\n"),
+                "the box's border, as the valued style answers it at the root:\n" + css);
+        assertTrue(css.contains("/* the theme's box */\n.boxed___edge__color-border {\n    border-color: currentColor;\n}\n"),
+                "and its colour, as the valued palette answers it:\n" + css);
+        assertEquals(2, flat.drawn());
+        assertEquals(0, flat.copied());
+        assertEquals(2, flat.delegated());
+        // taken through another design's concrete leaf: copied, and still the theme's
+        DesignRead echo = read.stream().filter(d -> d.token().equals("echo")).findFirst().orElseThrow();
+        var echoed = FlattenDesign.INSTANCE.flatten(echo, VALUED, "Echo");
+        assertTrue(echoed.css().contains("/* from boxed___edge__shape-border */\n/* the theme's box */\n.echo___edge__shape-border {\n    border-width: 0; border-style: solid;\n}\n"),
+                echoed.css());
+        assertEquals(1, echoed.copied());
+        assertEquals(1, echoed.delegated());
     }
 
     @Test

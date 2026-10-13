@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.design.semantic;
 import hue.captains.singapura.js.homing.component.taxonomy.ComponentBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.ConcreteComponent;
 import hue.captains.singapura.js.homing.component.taxonomy.Design;
+import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.component.taxonomy.VirtualComponent;
 import hue.captains.singapura.tao.ontology.ValueObject;
 
@@ -16,13 +17,15 @@ import java.util.Objects;
  * @param design    the design
  * @param branch    the design branch it designs
  * @param concretes its concrete leaves, one for each leaf of the branch, in the branch's order
+ * @param taxonomy  the taxonomy it was read over: whose components a drawing may be taken from
  */
-public record DesignRead(Design<?> design, ComponentBranch branch, List<ConcreteComponent<?, ?, ?>> concretes) implements ValueObject {
+public record DesignRead(Design<?> design, ComponentBranch branch, List<ConcreteComponent<?, ?, ?>> concretes, Taxonomy taxonomy) implements ValueObject {
 
     public DesignRead {
         Objects.requireNonNull(design, "DesignRead.design");
         Objects.requireNonNull(branch, "DesignRead.branch");
         concretes = List.copyOf(concretes);
+        Objects.requireNonNull(taxonomy, "DesignRead.taxonomy");
     }
 
     /** Its name: {@code minesweeper-classic}. */
