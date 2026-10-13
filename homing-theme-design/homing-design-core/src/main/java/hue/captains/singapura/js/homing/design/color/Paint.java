@@ -30,7 +30,7 @@ public sealed interface Paint<S extends ColorScheme, T extends Color>
         permits Paint.With, Paint.Inherited, Paint.Nothing, Paint.Typography, Paint.Along,
                 Paint.ThumbAndTrack, Paint.Ground, Paint.Drawn, Paint.Sides, Paint.Shadow, Paint.Cast {
 
-    /** A semantic colour, in the target's one slot. */
+    /** A semantic colour, for a target that writes one colour. */
     record With<S extends ColorScheme, T extends Color & Color.Single>(SemanticColor<? super S> color) implements Paint<S, T> {
         public With { Objects.requireNonNull(color, "With.color"); }
     }

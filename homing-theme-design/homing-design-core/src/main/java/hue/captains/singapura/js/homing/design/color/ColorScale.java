@@ -6,7 +6,7 @@ import java.util.List;
  * A colour scale: a range of colours designed for a scheme, the extent a colour moves along. Three knots or more, each
  * a concrete colour - palettable or fixed, never interpolated, so no scale is built of another - that its scheme can
  * see, each at a degree it names: strictly rising, the first at -1 and the last at 1, so every degree has a colour.
- * Between two knots core interpolates, by one rule. A scale is no colour a slot holds; a style answers a slot along it
+ * Between two knots core interpolates, by one rule. A scale is no colour a target is painted in; a style paints a target along it
  * - live, its degree set on the element - or names one of its interpolated colours.
  *
  * @param <S> the scheme it is in

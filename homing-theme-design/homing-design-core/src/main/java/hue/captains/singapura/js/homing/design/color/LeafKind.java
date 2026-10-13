@@ -7,7 +7,7 @@ package hue.captains.singapura.js.homing.design.color;
  */
 public sealed interface LeafKind extends ColorNode.Kind permits LeafKind.ColorKind, LeafKind.ScaleKind {
 
-    /** A colour: what a slot may hold. */
+    /** A colour: what a target may be painted in. */
     sealed interface ColorKind extends LeafKind permits ConcreteKind, InterpolatedKind {}
 
     /** A colour derived from no other: what a scale's knots may be. */
@@ -22,6 +22,6 @@ public sealed interface LeafKind extends ColorNode.Kind permits LeafKind.ColorKi
     /** A colour scale's, at a degree. */
     record InterpolatedKind() implements ColorKind {}
 
-    /** A colour scale: no colour a slot holds, the range interpolated colours come from. */
+    /** A colour scale: no colour a target is painted in, the range interpolated colours come from. */
     record ScaleKind() implements LeafKind {}
 }

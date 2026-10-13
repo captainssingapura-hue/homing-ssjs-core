@@ -83,14 +83,14 @@ public sealed interface Target permits Target.Color, Target.Colorless {
     //  Color — what is painted with colour
     // ═════════════════════════════════════════════════════════════════════
     /**
-     * What is painted with colour. Each leaf is the set of <b>slots</b> one thing is painted in,
-     * answered as a whole and never mixed. A slot is where CSS paints a colour - a property, or,
-     * where CSS gives the slot no property of its own (a shadow's colours, a gradient's stops), a
-     * longhand registered to stand in for it, set on the element itself and never inherited.
+     * What is painted with colour. Each leaf owns the colour properties one thing is painted in,
+     * answered as a whole and never mixed - most one, a background five, a shadow three. Where CSS
+     * has no property for a colour (a shadow's colours, a gradient's stops), a longhand is registered
+     * to stand in for it, set on the element itself and never inherited.
      *
      * <p>A style answers a leaf in one of the cases it offers ({@code Paint}), naming semantic
-     * colours - never a value. Which cases a leaf offers is what CSS can do with its slots, said by
-     * the markers below, so no case lands where nobody means it.</p>
+     * colours - never a value. Which cases a leaf offers is what CSS can do with its properties, said
+     * by the markers below, so no case lands where nobody means it.</p>
      */
     sealed interface Color extends Target permits Color.Ink, Color.Fill, Color.Stroke, Color.Scrollbar,
             Color.Background, Color.Border, Color.Outline, Color.ColumnRule, Color.BoxShadow {
@@ -101,10 +101,10 @@ public sealed interface Target permits Target.Color, Target.Colorless {
                     .map(p -> "@property " + p + " { syntax: \"<color>\"; inherits: false; initial-value: transparent; }").toList();
         }
 
-        /** A leaf of one slot, which a single colour paints. */
+        /** A target that writes one colour. */
         sealed interface Single permits Ink, Fill, Stroke, Border, Outline, ColumnRule {}
 
-        /** A leaf CSS inherits: its slot may take the colour of what the element stands on. */
+        /** A target whose property CSS inherits: it may take the colour of what the element stands on. */
         sealed interface Inheritable permits Ink, Fill, Stroke, Scrollbar {}
 
         /** A leaf that may paint nothing. */

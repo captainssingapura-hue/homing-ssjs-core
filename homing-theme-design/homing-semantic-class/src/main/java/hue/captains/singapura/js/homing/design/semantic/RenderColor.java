@@ -23,14 +23,14 @@ import java.util.List;
  * knots, from the {@code --extent} the element sets on itself, so the colour at 0.45 is the one the moving colour
  * passes at 0.45.
  *
- * <p>A paint is written as its target's declarations, in one fixed order: the slot itself, then a ramp's stops from
+ * <p>A paint is written as its target's declarations, in one fixed order: its first property, then a ramp's stops from
  * the first, then a pattern's marks; a shadow's cast, lit and glow.</p>
  */
 record RenderColor() implements StatelessFunctionalObject {
 
     static final RenderColor INSTANCE = new RenderColor();
 
-    /** What CSS can do with nothing drawn: a slot left clear. */
+    /** A colour property with nothing drawn in it. */
     private static final String CLEAR = "transparent";
 
     /** A semantic colour as CSS, in the theme's palettes; refused when the theme's colour tree has it not. */
@@ -51,13 +51,13 @@ record RenderColor() implements StatelessFunctionalObject {
 
     /** A paint, written as its target's declarations. */
     String body(Dressed theme, Target.Color target, Paint<?, ?> paint) {
-        String slot = target.properties().size() == 1 ? target.properties().iterator().next() : null;
+        String property = target.properties().size() == 1 ? target.properties().iterator().next() : null;
         return switch (paint) {
-            case Paint.With<?, ?> w -> slot + ": " + css(theme, w.color()) + ";";
-            case Paint.Inherited<?, ?> i -> target instanceof Target.Color.Scrollbar ? "scrollbar-color: inherit;" : slot + ": inherit;";
-            case Paint.Nothing<?, ?> n -> slot + ": none;";
-            case Paint.Typography<?, ?> t -> slot + ": currentColor;";
-            case Paint.Along<?, ?> a -> target instanceof Target.Color.Background ? ground(along(theme, a.scale())) : slot + ": " + along(theme, a.scale()) + ";";
+            case Paint.With<?, ?> w -> property + ": " + css(theme, w.color()) + ";";
+            case Paint.Inherited<?, ?> i -> target instanceof Target.Color.Scrollbar ? "scrollbar-color: inherit;" : property + ": inherit;";
+            case Paint.Nothing<?, ?> n -> property + ": none;";
+            case Paint.Typography<?, ?> t -> property + ": currentColor;";
+            case Paint.Along<?, ?> a -> target instanceof Target.Color.Background ? ground(along(theme, a.scale())) : property + ": " + along(theme, a.scale()) + ";";
             case Paint.ThumbAndTrack<?> s -> "scrollbar-color: " + css(theme, s.thumb()) + " " + css(theme, s.track()) + ";";
             case Paint.Ground<?> g -> ground(css(theme, g.ground()));
             case Paint.Drawn<?> d -> String.join("\n",
