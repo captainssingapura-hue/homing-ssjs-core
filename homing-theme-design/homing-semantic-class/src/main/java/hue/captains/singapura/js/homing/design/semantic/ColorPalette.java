@@ -1,24 +1,28 @@
 package hue.captains.singapura.js.homing.design.semantic;
 
-import hue.captains.singapura.js.homing.design.Target;
+import hue.captains.singapura.js.homing.design.color.ColorScheme;
+import hue.captains.singapura.js.homing.design.color.ConcreteColor;
+import hue.captains.singapura.js.homing.design.color.Palettable;
 import hue.captains.singapura.js.homing.tree.NodeName;
 
-import java.util.List;
-import java.util.Set;
+import java.util.Optional;
 
 /**
- * A colour palette (RFC 0067, D7): a typed identity, as a style is, answering colour and nothing
- * else - typed so, on the colour targets alone. It is dumb: its own CSS or a redirect, and what it
- * leaves unanswered falls back along the tree. It has no base, and answers the six colour roots.
+ * A colour palette (RFC 0067, appendix Semantic Colours and Flavours): a stateless functional object that, given a
+ * palettable colour, gives a concrete colour or no answer - a curated set of concrete colours. How it arrives at them,
+ * one colour serving several purposes or a colour derived from a few seeds, is its own business. It keeps its identity,
+ * its name, what inspired it and its scheme, and nothing else: it knows no component and no style.
  *
- * <p>A palette says which styles it suits. A style is worn in its own palette unless another is
- * asked for, and a palette that suits it is offered beside its own: when the style is changed, the
- * palette worn is kept if it suits the new style, and the new style's own is taken if not. The
- * palette names the styles, never the other way round, so a palette added later suits styles that
- * never heard of it. It is advice, not a fence: any style may be worn in any palette by asking for
- * the pair.</p>
+ * <p>A palette implements one scheme, its type argument, and is worn only by a style of that scheme. It sits on a
+ * palette of the scheme below, which answers what its own scheme does not add, and so down the schemes; a palette of
+ * the base, or of a scheme from scratch, sits on nothing. Each palette is complete over the palettable colours its own
+ * scheme adds - an extension's sub-palettes answer the colours it grafts - which the colour tree checks when it is
+ * read against the palette ({@link ColorTree#check(ColorPalette)}).</p>
+ *
+ * @param <S> the scheme it implements
  */
-public interface ColorPalette {
+public interface ColorPalette<S extends ColorScheme> {
+
     /** The palette's token, from its type: {@code harbour}. */
     default String token() { return NodeName.ofType(getClass(), "").value(); }
 
@@ -27,8 +31,10 @@ public interface ColorPalette {
 
     /** One line on what it is trying to be, shown beside its name in a picker; none unless it says. */
     default String inspiration() { return ""; }
-    /** The colour classes this palette answers. */
-    List<Implementation<? extends Target.Color>> implementations();
-    /** The styles this palette suits besides any whose own it is - by their types. None unless it says so. */
-    default Set<Class<? extends DesignStyle>> suits() { return Set.of(); }
+
+    /** The concrete colour it gives a palettable colour; none for a colour it leaves to the palette below or to a sub-palette. */
+    Optional<ConcreteColor> color(Palettable<?, ?> color);
+
+    /** The palette it sits on, of the scheme below its own; none for a palette of the base, or of a scheme from scratch. */
+    default Optional<ColorPalette<? super S>> below() { return Optional.empty(); }
 }

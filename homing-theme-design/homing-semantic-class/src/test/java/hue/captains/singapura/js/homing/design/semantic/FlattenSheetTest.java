@@ -34,11 +34,20 @@ class FlattenSheetTest {
         assertTrue(css.contains("\n.danger-button__shape-corner {\n    border-radius: 2px;\n}\n"), "answered itself: nothing to say where from");
         assertTrue(css.contains("/* from valued: danger-button__shape-corner */\n.floating-pane__shape-corner {\n    border-radius: 2px;\n}\n"),
                 "a redirect copies the body of the class it resolves to");
-        assertTrue(css.contains("\n.danger-button_go__color-background {\n    background-color: #c62828; --background-ramp-from: transparent;"),
-                "the palette's own, the whole set: nothing to say where from");
-        assertTrue(css.contains("/* from valued-colours: root__color-background */\n.danger-button__color-background {\n"), css);
-        assertTrue(css.contains("\n.danger-button__color-box-shadow {\n    --box-shadow-cast: #000000; --box-shadow-lit: #ffffff; --box-shadow-glow: #c62828;\n}\n"),
-                "a box's shadow colours, set on the element itself");
+        assertTrue(css.contains("\n.danger-button_go__color-background {\n    background-color: #c62828;\n    --background-ramp-from: transparent;\n"
+                + "    --background-ramp-via: transparent;\n    --background-ramp-to: transparent;\n    --background-mark: transparent;\n}\n"),
+                "the style's own, the whole set, a fixed colour as written: nothing to say where from");
+        assertTrue(css.contains("/* from valued: root__color-background */\n.danger-button__color-background {\n    background-color: transparent;\n"), css);
+        assertTrue(css.contains("\n.danger-button__color-box-shadow {\n    --box-shadow-cast: #1f2937;\n    --box-shadow-lit: #ffffff;\n    --box-shadow-glow: #c62828;\n}\n"),
+                "a box's shadow colours, set on the element itself, each as paper gives it");
+        assertTrue(css.contains("\n.danger-button__color-ink {\n    color: color-mix(in oklab, #dc2626 calc(clamp(0, var(--extent), 1) * 100%),"
+                + " color-mix(in oklab, transparent calc(clamp(0, var(--extent) + 1, 1) * 100%), #16a34a));\n}\n"),
+                "along the risk scale, by the degree the danger button sets on itself: safe at -1, clear at 0, danger at 1");
+        assertTrue(css.contains("/* from valued: danger-button__color-ink */\n.danger-button_go__color-ink {\n"), "and as Go, the same");
+        assertTrue(css.contains("\n.plain-button__color-border {\n    border-color: color-mix(in oklab, transparent 50%, #dc2626);\n}\n"),
+                "the warning: the risk scale half way from clear to danger, mixed when the sheet is made");
+        assertTrue(css.contains("/* from valued: root__color-ink */\n.plain-button__color-ink {\n    color: inherit;\n}\n"));
+        assertTrue(css.contains("/* from valued: root__color-scrollbar */\n.plain-button__color-scrollbar {\n    scrollbar-color: inherit;\n}\n"));
         assertTrue(css.contains("@property --box-shadow-cast { syntax: \"<color>\"; inherits: false; initial-value: transparent; }\n"), "registered at the head");
         assertTrue(css.contains("@property --background-mark { syntax: \"<color>\"; inherits: false; initial-value: transparent; }\n"));
         assertTrue(css.contains("color-mix(in srgb, var(--box-shadow-cast) 12%, transparent)"), "the style's shadow reads the palette's cast");
@@ -76,7 +85,7 @@ class FlattenSheetTest {
     }
 
     /** A glyph is drawn on ::before: its body nested there, at rest and in a state alike. */
-    public record Glyphed() implements DesignStyle, Derives<ResolvingThemes.Valued> {
+    public record Glyphed() implements Derives<hue.captains.singapura.js.homing.design.color.ColorScheme.Base, ResolvingThemes.Valued> {
         @Override public ResolvingThemes.Valued base() { return ResolvingThemes.Valued.INSTANCE; }
         @Override public List<Implementation<?>> implementations() {
             return List.of(new Implementation<>(ResolvingTaxonomy.Button.INSTANCE, hue.captains.singapura.js.homing.design.Target.Type.Glyph.INSTANCE,
@@ -87,7 +96,7 @@ class FlattenSheetTest {
 
     @Test
     void aTargetPaintedOnAPseudoElement_isWrittenThere() {
-        String css = FlattenSheet.INSTANCE.flatten(TAXONOMY, new Dressed(new Glyphed(), ResolvingThemes.ValuedColours.INSTANCE), "glyphed").css();
+        String css = FlattenSheet.INSTANCE.flatten(TAXONOMY, new Dressed(ResolvingThemes.COLOURS, new Glyphed(), ResolvingColours.Paper.INSTANCE), "glyphed").css();
         assertTrue(css.contains("/* from glyphed: button__type-glyph */\n.plain-button__type-glyph {\n    &::before {\n        content: \"✕\";\n    }\n}\n"), css);
         assertTrue(css.contains(".plain-button__type-glyph--pressed {\n    &[aria-pressed=\"true\"] {\n        &::before {\n            content: \"✔\";\n        }\n    }\n}\n"),
                 "in a state: the state's selector, then the pseudo-element");

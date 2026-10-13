@@ -5,6 +5,7 @@ import hue.captains.singapura.js.homing.component.taxonomy.Component;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.design.State;
 import hue.captains.singapura.js.homing.design.Target;
+import hue.captains.singapura.js.homing.design.color.ColorScheme.Base;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingTaxonomy.Control;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingTaxonomy.DangerButton;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingTaxonomy.PlainButton;
@@ -28,10 +29,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class DeriveTreatmentsTest {
 
     private static final Taxonomy TAXONOMY = ResolvingTaxonomy.INSTANCE.read();
-    private static final ColorPalette COLOURS = ResolvingThemes.ValuedColours.INSTANCE;
+    private static final ColorTree COLOURS = ResolvingThemes.COLOURS;
+    private static final ColorPalette<Base> PAPER = ResolvingColours.Paper.INSTANCE;
 
     /** The danger button's shadow is the plain button's, which answers focus itself: a state only the redirect brings. */
-    public record Redirecting() implements DesignStyle, Derives<ResolvingThemes.Valued> {
+    public record Redirecting() implements Derives<Base, ResolvingThemes.Valued> {
         @Override public ResolvingThemes.Valued base() { return ResolvingThemes.Valued.INSTANCE; }
         @Override public List<Implementation<?>> implementations() {
             return List.of(new Implementation<>(DangerButton.INSTANCE, Target.Shape.Shadow.INSTANCE, new Answer.Redirect<>(PlainButton.INSTANCE)),
@@ -41,7 +43,7 @@ class DeriveTreatmentsTest {
     }
 
     /** A control that cannot be used says nothing of its opacity: its base's treatment ends here. */
-    public record Silencing() implements DesignStyle, Derives<ResolvingThemes.Valued> {
+    public record Silencing() implements Derives<Base, ResolvingThemes.Valued> {
         @Override public ResolvingThemes.Valued base() { return ResolvingThemes.Valued.INSTANCE; }
         @Override public List<Implementation<?>> implementations() {
             return List.of(new Implementation<>(Control.INSTANCE, Target.Effect.Opacity.INSTANCE,
@@ -52,8 +54,8 @@ class DeriveTreatmentsTest {
     @Test
     void theTreatmentsReadFromTheAnswers_areThoseASearchFinds_inEveryTheme() {
         var themes = new ArrayList<>(ResolvingThemes.BY_NAME.values());
-        themes.add(new Dressed(new Redirecting(), COLOURS));
-        themes.add(new Dressed(new Silencing(), COLOURS));
+        themes.add(new Dressed(COLOURS, new Redirecting(), PAPER));
+        themes.add(new Dressed(COLOURS, new Silencing(), PAPER));
         for (Dressed theme : themes)
             assertEquals(searched(List.of(theme)), DeriveTreatments.INSTANCE.of(TAXONOMY, theme), theme.toString());
         assertEquals(searched(themes), DeriveTreatments.INSTANCE.union(TAXONOMY, themes), "over several themes, the union of theirs");
@@ -61,13 +63,13 @@ class DeriveTreatmentsTest {
 
     @Test
     void aRedirect_bringsItsTargetsStates_andASilence_endsItsBases() {
-        var redirecting = DeriveTreatments.INSTANCE.of(TAXONOMY, new Dressed(new Redirecting(), COLOURS));
+        var redirecting = DeriveTreatments.INSTANCE.of(TAXONOMY, new Dressed(COLOURS, new Redirecting(), PAPER));
         var shadow = Target.Shape.Shadow.INSTANCE;
         assertTrue(redirecting.contains(new Treatment(DangerButton.INSTANCE, State.FOCUS, shadow)), "the plain button's focus, the danger button's through the redirect");
         assertTrue(redirecting.contains(new Treatment(DangerButton.INSTANCE, State.HOVER, shadow)), "and the base's hover, through the plain button's walk");
         var opacity = Target.Effect.Opacity.INSTANCE;
         assertTrue(DeriveTreatments.INSTANCE.of(TAXONOMY, ResolvingThemes.BY_NAME.get("valued")).contains(new Treatment(PlainButton.INSTANCE, State.DISABLED, opacity)));
-        assertFalse(DeriveTreatments.INSTANCE.of(TAXONOMY, new Dressed(new Silencing(), COLOURS)).contains(new Treatment(PlainButton.INSTANCE, State.DISABLED, opacity)),
+        assertFalse(DeriveTreatments.INSTANCE.of(TAXONOMY, new Dressed(COLOURS, new Silencing(), PAPER)).contains(new Treatment(PlainButton.INSTANCE, State.DISABLED, opacity)),
                 "the worn style's silence ends the walk: no rule");
     }
 

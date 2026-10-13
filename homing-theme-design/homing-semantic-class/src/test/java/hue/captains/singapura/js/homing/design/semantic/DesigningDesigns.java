@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.component.taxonomy.Component;
 import hue.captains.singapura.js.homing.component.taxonomy.Design;
 import hue.captains.singapura.js.homing.design.State;
 import hue.captains.singapura.js.homing.design.Target;
+import hue.captains.singapura.js.homing.design.color.Paint;
 import hue.captains.singapura.js.homing.design.semantic.DesigningTaxonomy.Box;
 import hue.captains.singapura.js.homing.design.semantic.DesigningTaxonomy.Edge;
 import hue.captains.singapura.js.homing.design.semantic.DesigningTaxonomy.Frame;
@@ -35,7 +36,7 @@ final class DesigningDesigns {
         static final PlainEdge INSTANCE = new PlainEdge();
         @Override public List<Drawing<?>> drawings(Dressed theme) {
             return List.of(new Drawing.Own<>(BORDER, "border-width: 1px; border-style: solid;"),
-                           new Drawing.Own<>(BORDER_COLOUR, "border-color: gray;"));
+                           new Drawing.Painted<>(BORDER_COLOUR, new Paint.With<>(new ResolvingColours.Copy())));
         }
     }
 
@@ -62,7 +63,7 @@ final class DesigningDesigns {
         static final BoldMark INSTANCE = new BoldMark();
         @Override public List<Drawing<?>> drawings(Dressed theme) {
             return List.of(new Drawing.As<>(RING, PlainMark.INSTANCE),
-                           new Drawing.Own<>(RING_COLOUR, "outline-color: black;"));
+                           new Drawing.Painted<>(RING_COLOUR, new Paint.With<>(new ResolvingColours.Alarm())));
         }
     }
 

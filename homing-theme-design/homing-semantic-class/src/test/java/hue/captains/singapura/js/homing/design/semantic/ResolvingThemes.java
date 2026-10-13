@@ -6,6 +6,17 @@ import hue.captains.singapura.js.homing.component.taxonomy.Taxon;
 import hue.captains.singapura.js.homing.design.AnimationEffect;
 import hue.captains.singapura.js.homing.design.State;
 import hue.captains.singapura.js.homing.design.Target;
+import hue.captains.singapura.js.homing.design.color.ColorScheme.Base;
+import hue.captains.singapura.js.homing.design.color.Paint;
+import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Alarm;
+import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Clear;
+import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Copy;
+import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Danger;
+import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Page;
+import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Paper;
+import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Raised;
+import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Risk;
+import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Warning;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingTaxonomy.Button;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingTaxonomy.Cancel;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingTaxonomy.Committing;
@@ -15,38 +26,46 @@ import hue.captains.singapura.js.homing.design.semantic.ResolvingTaxonomy.Floati
 import hue.captains.singapura.js.homing.design.semantic.ResolvingTaxonomy.Go;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingTaxonomy.PlainButton;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
 /**
- * The styles and palettes the resolution's cases are written in, over {@link ResolvingTaxonomy}:
+ * The styles the resolution's cases are written in, over {@link ResolvingTaxonomy}, worn in {@link ResolvingColours}'
+ * palettes:
  *
  * <ul>
- *   <li><b>sketch</b> - {@link Sketch} in {@link SketchColours}: a few roots, the buttons' corner, the
- *       danger button's own; Go's surface on the danger button, the ink of every button that commits.
- *       Answers with nothing in them: the walk, not the sheet.</li>
- *   <li><b>detailed</b> - {@link Detailed}, written over the sketch, in {@link DetailedColours}: the
- *       plain button's own corner and Cancel's on any button; what it leaves is the sketch's.</li>
- *   <li><b>valued</b> - {@link Valued} in {@link ValuedColours}: every root with a body, a frame, a
- *       treatment or two, and the floating pane's corner redirected to the danger button's.</li>
- *   <li><b>squared</b> - {@link Squared}, written over the valued, in its colours: every control
- *       square, which outweighs the valued's own precise corners; the plain button's corner its
- *       base's all the same; the buttons' rest shadow its own, their hover the valued's.</li>
+ *   <li><b>sketch</b> - {@link Sketch}: a few roots, the buttons' corner, the danger button's own; Go's ground on the
+ *       danger button, the ink of every button that commits. Its bodies say nothing: the walk, not the sheet.</li>
+ *   <li><b>detailed</b> - {@link Detailed}, written over the sketch: the plain button's own corner, Cancel's on any
+ *       button, the root's ink; what it leaves is the sketch's.</li>
+ *   <li><b>valued</b> - {@link Valued}: every root with a body and a colour, a frame, a treatment or two, the floating
+ *       pane's corner redirected to the danger button's, the danger button's ink along the risk scale and the plain
+ *       button's border the warning.</li>
+ *   <li><b>squared</b> - {@link Squared}, written over the valued: every control square, which outweighs the valued's
+ *       own precise corners; the plain button's corner its base's all the same; the buttons' rest shadow its own, their
+ *       hover the valued's.</li>
  * </ul>
+ *
+ * Every theme is worn in {@link Paper}.
  */
 final class ResolvingThemes {
 
     private ResolvingThemes() {}
 
+    private static final Target.Color.Background BACKGROUND = Target.Color.Background.INSTANCE;
+    private static final Target.Color.Ink INK = Target.Color.Ink.INSTANCE;
+
+    /** The colour tree the themes are worn over, read once. */
+    static final ColorTree COLOURS = ResolvingColours.INSTANCE.read();
+
     /** The themes by the names the cases give them. */
     static final Map<String, Dressed> BY_NAME = Map.of(
-            "sketch", new Dressed(Sketch.INSTANCE, SketchColours.INSTANCE),
-            "detailed", new Dressed(Detailed.INSTANCE, DetailedColours.INSTANCE),
-            "valued", new Dressed(Valued.INSTANCE, ValuedColours.INSTANCE),
-            "squared", new Dressed(Squared.INSTANCE, ValuedColours.INSTANCE));
+            "sketch", new Dressed(COLOURS, Sketch.INSTANCE, Paper.INSTANCE),
+            "detailed", new Dressed(COLOURS, Detailed.INSTANCE, Paper.INSTANCE),
+            "valued", new Dressed(COLOURS, Valued.INSTANCE, Paper.INSTANCE),
+            "squared", new Dressed(COLOURS, Squared.INSTANCE, Paper.INSTANCE));
 
     static final Function<String, Dressed> THEMES = name -> {
         Dressed d = BY_NAME.get(name);
@@ -54,7 +73,8 @@ final class ResolvingThemes {
         return d;
     };
 
-    public record Sketch() implements DesignStyle {
+
+    public record Sketch() implements DesignStyle<Base> {
         public static final Sketch INSTANCE = new Sketch();
         @Override public List<Implementation<?>> implementations() {
             return List.of(
@@ -63,21 +83,17 @@ final class ResolvingThemes {
                     rest(DangerButton.INSTANCE, Target.Shape.Corner.INSTANCE, ""),
                     at(Root.INSTANCE, Target.Effect.Opacity.INSTANCE, State.DISABLED, ""));
         }
-    }
-
-    public record SketchColours() implements ColorPalette {
-        public static final SketchColours INSTANCE = new SketchColours();
-        @Override public List<Implementation<? extends Target.Color>> implementations() {
+        @Override public List<Coloring<Base, ?>> colorings() {
             return List.of(
-                    rest(Root.INSTANCE, Target.Color.Background.INSTANCE, ""),
-                    new Implementation<>(new Casting(DangerButton.INSTANCE, Go.INSTANCE), Target.Color.Background.INSTANCE, new Answer.Own<>("")),
-                    new Implementation<>(new Casting(Button.INSTANCE, Committing.INSTANCE), Target.Color.Ink.INSTANCE, new Answer.Own<>("")),
-                    rest(FloatingPane.INSTANCE, Target.Color.Background.INSTANCE, ""),
-                    at(Button.INSTANCE, Target.Color.Background.INSTANCE, State.DISABLED, ""));
+                    new Coloring<>(Root.INSTANCE, BACKGROUND, new Answer.Painted<>(new Paint.Ground<>(new Page()))),
+                    new Coloring<>(new Casting(DangerButton.INSTANCE, Go.INSTANCE), BACKGROUND, new Answer.Painted<>(new Paint.Ground<>(new Danger()))),
+                    new Coloring<>(new Casting(Button.INSTANCE, Committing.INSTANCE), INK, new Answer.Painted<>(new Paint.With<>(new Copy()))),
+                    new Coloring<>(FloatingPane.INSTANCE, BACKGROUND, new Answer.Painted<>(new Paint.Ground<>(new Raised()))),
+                    new Coloring<>(Button.INSTANCE, BACKGROUND, new Answer.Painted<>(Map.of(State.DISABLED, new Paint.Ground<>(new Raised())))));
         }
     }
 
-    public record Detailed() implements DesignStyle, Derives<Sketch> {
+    public record Detailed() implements Derives<Base, Sketch> {
         public static final Detailed INSTANCE = new Detailed();
         @Override public Sketch base() { return Sketch.INSTANCE; }
         @Override public List<Implementation<?>> implementations() {
@@ -85,20 +101,14 @@ final class ResolvingThemes {
                     rest(PlainButton.INSTANCE, Target.Shape.Corner.INSTANCE, ""),
                     new Implementation<>(new Casting(Button.INSTANCE, Cancel.INSTANCE), Target.Shape.Corner.INSTANCE, new Answer.Own<>("")));
         }
-    }
-
-    /** A palette has no base: the sketch's colours, and more. */
-    public record DetailedColours() implements ColorPalette {
-        public static final DetailedColours INSTANCE = new DetailedColours();
-        @Override public List<Implementation<? extends Target.Color>> implementations() {
-            var all = new ArrayList<Implementation<? extends Target.Color>>(SketchColours.INSTANCE.implementations());
-            all.add(rest(Root.INSTANCE, Target.Color.Ink.INSTANCE, ""));
-            all.add(at(DangerButton.INSTANCE, Target.Color.Background.INSTANCE, State.DISABLED, ""));
-            return List.copyOf(all);
+        @Override public List<Coloring<Base, ?>> colorings() {
+            return List.of(
+                    new Coloring<>(Root.INSTANCE, INK, new Answer.Painted<>(new Paint.With<>(new Copy()))),
+                    new Coloring<>(DangerButton.INSTANCE, BACKGROUND, new Answer.Painted<>(Map.of(State.DISABLED, new Paint.Ground<>(new Raised())))));
         }
     }
 
-    public record Valued() implements DesignStyle {
+    public record Valued() implements DesignStyle<Base> {
         public static final Valued INSTANCE = new Valued();
         @Override public List<Implementation<?>> implementations() {
             return List.of(
@@ -143,27 +153,24 @@ final class ResolvingThemes {
                             new Answer.Own<Target.Shape.Shadow>(Map.of(State.HOVER, "box-shadow: 0 6px 16px color-mix(in srgb, var(--box-shadow-cast) 12%, transparent);",
                                                                      State.DISABLED, "box-shadow: none;"))));
         }
-    }
-
-    public record ValuedColours() implements ColorPalette {
-        public static final ValuedColours INSTANCE = new ValuedColours();
-        @Override public List<Implementation<? extends Target.Color>> implementations() {
+        @Override public List<Coloring<Base, ?>> colorings() {
             return List.of(
-                    rest(Root.INSTANCE, Target.Color.Background.INSTANCE, ground("transparent")),
-                    rest(Root.INSTANCE, Target.Color.Ink.INSTANCE, "color: inherit;"),
-                    rest(Root.INSTANCE, Target.Color.Border.INSTANCE, "border-color: currentColor;"),
-                    rest(Root.INSTANCE, Target.Color.Outline.INSTANCE, "outline-color: currentColor;"),
-                    rest(Root.INSTANCE, Target.Color.ColumnRule.INSTANCE, "column-rule-color: currentColor;"),
-                    rest(Root.INSTANCE, Target.Color.Fill.INSTANCE, "fill: currentColor;"),
-                    rest(Root.INSTANCE, Target.Color.Stroke.INSTANCE, "stroke: none;"),
-                    rest(Root.INSTANCE, Target.Color.Scrollbar.INSTANCE, "scrollbar-color: auto;"),
-                    rest(Root.INSTANCE, Target.Color.BoxShadow.INSTANCE, "--box-shadow-cast: #000000; --box-shadow-lit: #ffffff; --box-shadow-glow: #c62828;"),
-                    new Implementation<>(new Casting(DangerButton.INSTANCE, Go.INSTANCE), Target.Color.Background.INSTANCE,
-                            new Answer.Own<>(ground("#c62828"))));
+                    new Coloring<>(Root.INSTANCE, BACKGROUND, new Answer.Painted<>(new Paint.Ground<>(new Clear()))),
+                    new Coloring<>(Root.INSTANCE, INK, new Answer.Painted<>(new Paint.Inherited<>())),
+                    new Coloring<>(Root.INSTANCE, Target.Color.Border.INSTANCE, new Answer.Painted<>(new Paint.Typography<>())),
+                    new Coloring<>(Root.INSTANCE, Target.Color.Outline.INSTANCE, new Answer.Painted<>(new Paint.Typography<>())),
+                    new Coloring<>(Root.INSTANCE, Target.Color.ColumnRule.INSTANCE, new Answer.Painted<>(new Paint.Typography<>())),
+                    new Coloring<>(Root.INSTANCE, Target.Color.Fill.INSTANCE, new Answer.Painted<>(new Paint.Typography<>())),
+                    new Coloring<>(Root.INSTANCE, Target.Color.Stroke.INSTANCE, new Answer.Painted<>(new Paint.Nothing<>())),
+                    new Coloring<>(Root.INSTANCE, Target.Color.Scrollbar.INSTANCE, new Answer.Painted<>(new Paint.Inherited<>())),
+                    new Coloring<>(Root.INSTANCE, Target.Color.BoxShadow.INSTANCE, new Answer.Painted<>(new Paint.Shadow<>(new Copy(), new Page(), new Alarm()))),
+                    new Coloring<>(new Casting(DangerButton.INSTANCE, Go.INSTANCE), BACKGROUND, new Answer.Painted<>(new Paint.Ground<>(new Alarm()))),
+                    new Coloring<>(DangerButton.INSTANCE, INK, new Answer.Painted<>(new Paint.Along<>(new Risk()))),
+                    new Coloring<>(PlainButton.INSTANCE, Target.Color.Border.INSTANCE, new Answer.Painted<>(new Paint.With<>(new Warning()))));
         }
     }
 
-    public record Squared() implements DesignStyle, Derives<Valued> {
+    public record Squared() implements Derives<Base, Valued> {
         public static final Squared INSTANCE = new Squared();
         @Override public Valued base() { return Valued.INSTANCE; }
         @Override public List<Implementation<?>> implementations() {
@@ -178,17 +185,11 @@ final class ResolvingThemes {
         }
     }
 
-    /** A plain ground: its colour, and nothing drawn on it - every colour of the set said. */
-    private static String ground(String colour) {
-        return "background-color: " + colour + "; --background-ramp-from: transparent; --background-ramp-via: transparent;"
-                + " --background-ramp-to: transparent; --background-mark: transparent;";
-    }
-
-    private static <T extends Target> Implementation<T> rest(Taxon node, T target, String body) {
+    private static <T extends Target.Colorless> Implementation<T> rest(Taxon node, T target, String body) {
         return new Implementation<>(node, target, new Answer.Own<>(body));
     }
 
-    private static <T extends Target> Implementation<T> at(Taxon node, T target, State state, String body) {
+    private static <T extends Target.Colorless> Implementation<T> at(Taxon node, T target, State state, String body) {
         return new Implementation<>(node, target, new Answer.Own<T>(Map.of(state, body)));
     }
 }

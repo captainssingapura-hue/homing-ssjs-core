@@ -4,6 +4,10 @@ import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.design.State;
 import hue.captains.singapura.js.homing.design.Target;
+import hue.captains.singapura.js.homing.design.color.ColorScheme;
+import hue.captains.singapura.js.homing.design.color.ColorScheme.Base;
+import hue.captains.singapura.js.homing.design.color.Paint;
+import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Page;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingTaxonomy.Button;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingTaxonomy.DangerButton;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingTaxonomy.Go;
@@ -40,7 +44,7 @@ class ResolutionCasesTest {
     void everyCase_resolvesAsWritten() {
         var cases = ResolutionCases.INSTANCE;
         var report = cases.run(lines("cases.txt"), cases.java(TAXONOMY, ResolvingThemes.THEMES));
-        assertEquals(35, report.cases(), "every case read");
+        assertEquals(37, report.cases(), "every case read");
         assertEquals(List.of(), report.failures(), () -> String.join("\n", report.failures()));
     }
 
@@ -48,15 +52,15 @@ class ResolutionCasesTest {
     void theWalk_isTold_stepByStep() {
         assertEquals(List.of(
                 "query    plain-button_cancel  rest  color-ink",
-                "theme    sketch in sketch-colours",
-                "walk      1. sketch-colours  plain-button_cancel      -",
-                "          2. sketch-colours  plain-button_committing  -",
-                "          3. sketch-colours  plain-button_doing       -",
-                "          4. sketch-colours  plain-button             -",
-                "          5. sketch-colours  button_cancel            -",
-                "          6. sketch-colours  button_committing        answered",
-                "result   button_committing__color-ink from sketch-colours",
-                "         asked 6 times: sketch-colours answers at button as committing"),
+                "theme    sketch in paper",
+                "walk      1. sketch  plain-button_cancel      -",
+                "          2. sketch  plain-button_committing  -",
+                "          3. sketch  plain-button_doing       -",
+                "          4. sketch  plain-button             -",
+                "          5. sketch  button_cancel            -",
+                "          6. sketch  button_committing        answered",
+                "result   button_committing__color-ink from sketch",
+                "         asked 6 times: sketch answers at button as committing"),
                 resolve("sketch", "plain-button_cancel", State.REST, "color-ink").explain());
     }
 
@@ -65,7 +69,7 @@ class ResolutionCasesTest {
     void theWalk_layerByLayer_aRedirectResolvedInTheStyleWorn() {
         assertEquals(List.of(
                 "query    floating-pane  rest  shape-corner",
-                "theme    squared in valued-colours",
+                "theme    squared in paper",
                 "walk      1. squared  floating-pane  -",
                 "          2. squared  container      -",
                 "          3. squared  root           -",
@@ -96,8 +100,14 @@ class ResolutionCasesTest {
     void answersRefused_asTheyAreWritten() {
         var corner = Target.Shape.Corner.INSTANCE;
         var go = new Casting(DangerButton.INSTANCE, Go.INSTANCE);
-        assertTrue(refused(() -> new Implementation<>(go, Target.Color.Background.INSTANCE, new Answer.Own<Target.Color.Background>(Map.of(State.DISABLED, ""))))
+        assertTrue(refused(() -> new Implementation<>(go, corner, new Answer.Own<Target.Shape.Corner>(Map.of(State.VERTICAL, "border-radius: 2px;"))))
+                .contains("danger-button as go is answered vertical: a state is a treatment"));
+        assertTrue(refused(() -> new Coloring<>(go, Target.Color.Background.INSTANCE, new Answer.Painted<>(Map.of(State.DISABLED, new Paint.Ground<>(new Page())))))
                 .contains("danger-button as go is answered disabled: a state is a treatment"));
+        assertTrue(refused(() -> new Coloring<>(Button.INSTANCE, Target.Color.Scrollbar.INSTANCE, new Answer.Painted<>(Map.of(State.HOVER, new Paint.Inherited<>()))))
+                .contains("color-scrollbar offers no hover"));
+        assertTrue(refused(() -> new Coloring<>(Button.INSTANCE, Target.Color.Ink.INSTANCE, new Answer.Redirect<>(Button.INSTANCE))).contains("redirected to itself"));
+        assertTrue(refused(() -> new Answer.Painted<>(Map.<State, Paint<Base, Target.Color.Ink>>of())).contains("answers at least one state"));
         assertTrue(refused(() -> new Implementation<>(Button.INSTANCE, corner, new Answer.Own<Target.Shape.Corner>(Map.of(State.HOVER, "border-radius: 2px;"))))
                 .contains("shape-corner offers no hover"));
         assertTrue(refused(() -> new Implementation<>(Button.INSTANCE, corner, new Answer.FromBase<Target.Shape.Corner>(Set.of(State.HOVER))))
@@ -115,24 +125,15 @@ class ResolutionCasesTest {
     }
 
     /**
-     * A semantic colour is said whole, at the top and in every mode and state beside it; colour is
-     * the palette's, so a style's shadow names none and reads only its own colours; the old design
-     * system's leaves are answered by their successors.
+     * Colour is painted, never written: a body names no colour, and a shape drawn in colour reads only the colours
+     * that colour it; the old design system's leaves are answered by their successors. That a colour target takes no
+     * body at all is the compiler's: its own CSS is bounded to the targets that are not colour.
      */
     @Test
-    void colourRefused_partOfASet_aColourSaidByAStyle_anotherLeafsColours_theOldLeaves() {
+    void colourRefused_aColourWritten_anotherLeafsColours_theOldLeaves() {
         var shadow = Target.Shape.Shadow.INSTANCE;
-        assertEquals("color-box-shadow is a semantic colour, said whole or not at all: --box-shadow-lit is not said",
-                refused(() -> new Implementation<>(Button.INSTANCE, Target.Color.BoxShadow.INSTANCE,
-                        new Answer.Own<>("--box-shadow-cast: #000; --box-shadow-glow: #f00;"))).replaceFirst("^button color-box-shadow rest: ", ""));
-        assertTrue(refused(() -> new Implementation<>(Button.INSTANCE, Target.Color.Background.INSTANCE, new Answer.Own<>(
-                "background-color: #fff; --background-ramp-from: transparent; --background-ramp-via: transparent; --background-ramp-to: transparent;"
-                + " --background-mark: transparent; @media (prefers-color-scheme: dark) { background-color: #111; }")))
-                .contains("not said"), "a mode says the whole set too: a dark ground under a light ramp is two answers mixed");
-        assertTrue(refused(() -> new Implementation<>(Button.INSTANCE, Target.Color.Outline.INSTANCE, new Answer.Own<>("@media (min-width: 1px) { outline-color: red; }")))
-                .contains("is said in a block alone"));
         assertTrue(refused(() -> new Implementation<>(Button.INSTANCE, shadow, new Answer.Own<>("box-shadow: 0 1px 3px #111936;")))
-                .contains("shape-shadow names a colour, #111936: colour is the palette's; it is drawn in color-box-shadow's"));
+                .contains("shape-shadow names a colour, #111936: colour is painted, never written; it is drawn in color-box-shadow's"));
         assertTrue(refused(() -> new Implementation<>(Button.INSTANCE, shadow, new Answer.Own<>("box-shadow: inset 0 1px 0 color-mix(in srgb, white 60%, transparent);")))
                 .contains("names a colour, white"));
         assertTrue(refused(() -> new Implementation<>(Button.INSTANCE, shadow, new Answer.Own<>("box-shadow: 0 0 4px rgba(0, 0, 0, .2);")))
@@ -150,47 +151,70 @@ class ResolutionCasesTest {
 
     @Test
     void themesRefused_asTheyAreDressed() {
-        var palette = ResolvingThemes.ValuedColours.INSTANCE;
-        assertTrue(refused(() -> new Dressed(new Painting(), palette)).contains("a style never answers colour: that is its palette's"));
-        assertTrue(refused(() -> new Dressed(new Baseless(), palette)).contains("asks its base, and baseless has none"));
-        assertTrue(refused(() -> new Dressed(new Twice(), palette)).contains("button shape-corner is answered twice"));
-        assertTrue(refused(() -> new Dressed(new Ouroboros(), palette)).contains("comes back to ouroboros"));
-        var looping = new Dressed(new Looping(), palette);
+        var colours = ResolvingThemes.COLOURS;
+        var paper = ResolvingColours.Paper.INSTANCE;
+        assertTrue(refused(() -> new Dressed(colours, new Baseless(), paper)).contains("asks its base, and baseless has none"));
+        assertTrue(refused(() -> new Dressed(colours, new Twice(), paper)).contains("button shape-corner is answered twice"));
+        assertTrue(refused(() -> new Dressed(colours, new Ouroboros(), paper)).contains("comes back to ouroboros"));
+        assertTrue(refused(() -> new Dressed(colours, new Unschemed(), new ResolvingColours.Unmarked())).contains("unschemed requires no scheme"));
+        assertEquals("stranded sits on nothing, and Loud is on top of the base: it sits on a palette of the base",
+                refused(() -> new Dressed(colours, new Shouting(), new ResolvingColours.Stranded())));
+        assertEquals("stacked sits on neon, of Loud: a palette of Loud sits on one of the base",
+                refused(() -> new Dressed(colours, new Shouting(), new ResolvingColours.Stacked())));
+        var looping = new Dressed(colours, new Looping(), paper);
         var e = assertThrows(IllegalStateException.class,
                 () -> ResolveSemanticClass.INSTANCE.resolve(TAXONOMY, looping, new Casting(PlainButton.INSTANCE), State.REST, Target.Shape.Corner.INSTANCE));
         assertEquals("a redirect comes back to plain-button on shape-corner: plain-button > danger-button > plain-button", e.getMessage());
         assertEquals(List.of(), ResolvingThemes.BY_NAME.get("squared").check(TAXONOMY), "every class the fixture themes answer is one the taxonomy asks");
         assertEquals(List.of("twice-asked: plain-button_go shape-corner - no casting the taxonomy has walks through it"),
-                new Dressed(new TwiceAsked(), palette).check(TAXONOMY));
+                new Dressed(colours, new TwiceAsked(), paper).check(TAXONOMY));
     }
 
-    public record Painting() implements DesignStyle {
-        @Override public List<Implementation<?>> implementations() {
-            return List.of(new Implementation<>(Button.INSTANCE, Target.Color.Ink.INSTANCE, new Answer.Own<>("color: red;")));
+    /** Where the two are chosen at run time: worn only when both are of one scheme - a palette above the style's refused as one below. */
+    @Test
+    void aStyleWornAtRunTime_onlyInAPaletteOfItsScheme() {
+        var colours = ResolvingThemes.COLOURS;
+        DesignStyle<?> valued = ResolvingThemes.Valued.INSTANCE, shouting = new Shouting();
+        ColorPalette<?> paper = ResolvingColours.Paper.INSTANCE, neon = ResolvingColours.Neon.INSTANCE;
+        assertEquals("valued in paper", Wear.INSTANCE.of(colours, valued, paper).orElseThrow().toString());
+        assertEquals("shouting in neon", Wear.INSTANCE.of(colours, shouting, neon).orElseThrow().toString());
+        assertTrue(Wear.INSTANCE.of(colours, valued, neon).isEmpty(), "a palette of a scheme above: its colours are ones the style cannot see");
+        assertTrue(Wear.INSTANCE.of(colours, shouting, paper).isEmpty(), "a palette of the scheme below: it gives none of the style's own");
+    }
+
+    /** A style of the loud scheme: written over the valued, which is of the base, below it. */
+    public record Shouting() implements Derives<ResolvingColours.Loud, ResolvingThemes.Valued> {
+        @Override public ResolvingThemes.Valued base() { return ResolvingThemes.Valued.INSTANCE; }
+        @Override public List<Implementation<?>> implementations() { return List.of(); }
+        @Override public List<Coloring<ResolvingColours.Loud, ?>> colorings() {
+            return List.of(new Coloring<>(Button.INSTANCE, Target.Color.Outline.INSTANCE, new Answer.Painted<>(new Paint.With<>(new ResolvingColours.Glare()))));
         }
     }
-    public record Baseless() implements DesignStyle {
+    public record Unschemed() implements DesignStyle<ColorScheme> {
+        @Override public List<Implementation<?>> implementations() { return List.of(); }
+    }
+    public record Baseless() implements DesignStyle<Base> {
         @Override public List<Implementation<?>> implementations() {
             return List.of(new Implementation<>(Button.INSTANCE, Target.Shape.Corner.INSTANCE, new Answer.FromBase<>()));
         }
     }
-    public record Twice() implements DesignStyle {
+    public record Twice() implements DesignStyle<Base> {
         @Override public List<Implementation<?>> implementations() {
             return List.of(new Implementation<>(Button.INSTANCE, Target.Shape.Corner.INSTANCE, new Answer.Own<>("border-radius: 2px;")),
                            new Implementation<>(Button.INSTANCE, Target.Shape.Corner.INSTANCE, new Answer.Own<>("border-radius: 3px;")));
         }
     }
-    public record Ouroboros() implements DesignStyle, Derives<Ouroboros> {
+    public record Ouroboros() implements Derives<Base, Ouroboros> {
         @Override public Ouroboros base() { return this; }
         @Override public List<Implementation<?>> implementations() { return List.of(); }
     }
-    public record Looping() implements DesignStyle {
+    public record Looping() implements DesignStyle<Base> {
         @Override public List<Implementation<?>> implementations() {
             return List.of(new Implementation<>(PlainButton.INSTANCE, Target.Shape.Corner.INSTANCE, new Answer.Redirect<>(DangerButton.INSTANCE)),
                            new Implementation<>(DangerButton.INSTANCE, Target.Shape.Corner.INSTANCE, new Answer.Redirect<>(PlainButton.INSTANCE)));
         }
     }
-    public record TwiceAsked() implements DesignStyle {
+    public record TwiceAsked() implements DesignStyle<Base> {
         @Override public List<Implementation<?>> implementations() {
             return List.of(new Implementation<>(new Casting(PlainButton.INSTANCE, Go.INSTANCE), Target.Shape.Corner.INSTANCE, new Answer.Own<>("border-radius: 1px;")));
         }
@@ -199,26 +223,31 @@ class ResolutionCasesTest {
     @Test
     void theCommandLine_explainsOneQuery_tabulatesMany_andSaysWhenALookIsUnanswered() {
         String taxonomy = ResolvingTaxonomy.class.getName();
-        String[] sketch = {"--style", ResolvingThemes.Sketch.class.getName(), "--palette", ResolvingThemes.SketchColours.class.getName()};
+        String colours = ResolvingColours.class.getName(), paper = ResolvingColours.Paper.class.getName();
+        String[] sketch = {"--colors", colours, "--style", ResolvingThemes.Sketch.class.getName(), "--palette", paper};
         var one = cli(join(new String[] {"--taxonomy", taxonomy}, sketch, new String[] {"danger-button_go", "rest", "color-background"}));
         assertEquals(0, one.code(), one.err());
-        assertTrue(one.out().contains("result   danger-button_go__color-background from sketch-colours"), one.out());
+        assertTrue(one.out().contains("result   danger-button_go__color-background from sketch"), one.out());
         var table = cli(join(new String[] {"--taxonomy", taxonomy}, sketch, new String[] {"danger-button", "rest", "*"}));
         assertEquals(1, table.code(), "the sketch answers few targets: the rest are unanswered");
         assertTrue(table.out().contains("rest         shape-corner       danger-button__shape-corner   from sketch"), table.out());
         assertTrue(table.out().contains("rest         color-ink          UNANSWERED"), table.out());
-        var squared = cli("--taxonomy", taxonomy, "--style", ResolvingThemes.Squared.class.getName(), "--palette", ResolvingThemes.ValuedColours.class.getName(),
+        var squared = cli("--taxonomy", taxonomy, "--colors", colours, "--style", ResolvingThemes.Squared.class.getName(), "--palette", paper,
                 "plain-button", "rest", "shape-corner");
         assertTrue(squared.out().contains("result   button__shape-corner from valued"), squared.out());
-        var flat = cli("--taxonomy", taxonomy, "--style", ResolvingThemes.Squared.class.getName(), "--palette", ResolvingThemes.ValuedColours.class.getName(), "--flatten");
+        var flat = cli("--taxonomy", taxonomy, "--colors", colours, "--style", ResolvingThemes.Squared.class.getName(), "--palette", paper, "--flatten");
         assertEquals(0, flat.code(), flat.err());
         assertTrue(flat.out().contains("/* from squared: control__shape-corner */\n.danger-button__shape-corner {\n    border-radius: 0;\n}\n"), flat.out());
         var list = cli("--taxonomy", taxonomy, "--list", "roles");
         assertTrue(list.out().contains("shaping   (functional)") && list.out().contains("window   (functional)") && list.out().contains("go\n"), list.out());
         assertEquals(2, cli(join(new String[] {"--taxonomy", taxonomy}, sketch, new String[] {"danger-button"})).code(), "a node, a state and a target");
-        assertEquals(2, cli("--taxonomy", taxonomy, "danger-button", "rest", "shape-corner").code(), "no style, no palette");
-        assertEquals(2, cli("--taxonomy", taxonomy, "--style", ResolvingThemes.SketchColours.class.getName(), "--palette", ResolvingThemes.SketchColours.class.getName(),
-                "button", "rest", "shape-corner").code(), "a palette is no style");
+        assertEquals(2, cli("--taxonomy", taxonomy, "danger-button", "rest", "shape-corner").code(), "no colours, no style, no palette");
+        assertEquals(2, cli("--taxonomy", taxonomy, "--colors", colours, "--style", paper, "--palette", paper, "button", "rest", "shape-corner").code(),
+                "a palette is no style");
+        var apart = cli("--taxonomy", taxonomy, "--colors", colours, "--style", ResolvingThemes.Valued.class.getName(),
+                "--palette", ResolvingColours.Neon.class.getName(), "button", "rest", "shape-corner");
+        assertEquals(2, apart.code());
+        assertTrue(apart.err().contains("valued and neon are of different schemes"), apart.err());
         assertEquals(2, cli("--taxonomy", "no.such.Taxonomy", "--list", "nodes").code());
     }
 

@@ -30,13 +30,13 @@ public record WriteWord() implements StatelessFunctionalObject {
      * @param glyph its glyph
      * @param by    the style down the chain that wrote it: the worn one, or one it is written over
      */
-    public record Written(Word<?> word, String glyph, DesignStyle by) implements ValueObject {}
+    public record Written(Word<?> word, String glyph, DesignStyle<?> by) implements ValueObject {}
 
     /** The style worn, then down its base chain. */
-    public List<DesignStyle> chain(DesignStyle style) {
-        var out = new ArrayList<DesignStyle>();
+    public List<DesignStyle<?>> chain(DesignStyle<?> style) {
+        var out = new ArrayList<DesignStyle<?>>();
         var seen = new HashSet<Class<?>>();
-        for (DesignStyle s = style; s != null; s = s instanceof Derives<?> d ? d.base() : null) {
+        for (DesignStyle<?> s = style; s != null; s = s instanceof Derives<?, ?> d ? d.base() : null) {
             if (!seen.add(s.getClass())) throw new IllegalArgumentException("the base chain of " + style.token() + " comes back to " + s.token());
             out.add(s);
         }
@@ -44,7 +44,7 @@ public record WriteWord() implements StatelessFunctionalObject {
     }
 
     /** What a style writes: its own writings, then those the modules on the classpath write in it. */
-    public List<Writing> writings(DesignStyle style) {
+    public List<Writing> writings(DesignStyle<?> style) {
         var out = new ArrayList<Writing>(style.writings());
         var extensions = new ArrayList<WritingExtension>();
         for (WritingExtension e : ServiceLoader.load(WritingExtension.class, style.getClass().getClassLoader()))
@@ -55,8 +55,8 @@ public record WriteWord() implements StatelessFunctionalObject {
     }
 
     /** How the style worn writes a word, if anything down its chain does. */
-    public Optional<Written> write(DesignStyle style, Word<?> word) {
-        for (DesignStyle s : chain(style))
+    public Optional<Written> write(DesignStyle<?> style, Word<?> word) {
+        for (DesignStyle<?> s : chain(style))
             for (Writing w : writings(s))
                 if (w.word().equals(word)) return Optional.of(new Written(word, w.glyph(), s));
         return Optional.empty();
@@ -67,10 +67,10 @@ public record WriteWord() implements StatelessFunctionalObject {
      * twice, a word the lexicon has not - its module is not on the classpath, or it was never declared -
      * and a word of the lexicon nothing down the chain writes, which no mark could draw.
      */
-    public List<String> problems(Lexicon lexicon, DesignStyle style) {
+    public List<String> problems(Lexicon lexicon, DesignStyle<?> style) {
         var out = new ArrayList<String>();
         var written = new HashSet<Word<?>>();
-        for (DesignStyle s : chain(style)) {
+        for (DesignStyle<?> s : chain(style)) {
             var mine = new HashSet<Word<?>>();
             for (Writing w : writings(s)) {
                 if (!mine.add(w.word())) out.add(s.token() + " writes " + w.word().token() + " twice");

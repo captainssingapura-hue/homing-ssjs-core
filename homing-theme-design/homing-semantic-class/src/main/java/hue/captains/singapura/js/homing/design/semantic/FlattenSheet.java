@@ -28,7 +28,7 @@ import java.util.List;
  *
  * A silence is copied as nothing. A look nothing answers, the root included, has no rule: it is
  * reported, and the sheet is incomplete. Each rule says where its body came from - the layer and
- * the class - unless the worn style or the palette answered the class itself.
+ * the class - unless the worn style answered the class itself.
  */
 public record FlattenSheet() implements StatelessFunctionalObject {
 
@@ -63,7 +63,7 @@ public record FlattenSheet() implements StatelessFunctionalObject {
                     continue;
                 }
                 if (a.body().isBlank()) continue;
-                css.append(rule(tokens.look(c, t), a, own(t, theme), drawn(t, normal(a.body()))));
+                css.append(rule(tokens.look(c, t), a, theme.style().token(), drawn(t, normal(a.body()))));
                 looks++;
                 if (!a.node().equals(c)) copied++;
             }
@@ -79,22 +79,17 @@ public record FlattenSheet() implements StatelessFunctionalObject {
                 current = s;
             }
             var a = (Resolution.Answered) resolver.resolve(taxonomy, theme, c, s, t).outcome();
-            css.append(rule(tokens.treatment(c, s, t), a, own(t, theme), s.selector() + " {\n" + indent(drawn(t, normal(a.body()))) + "\n}"));
+            css.append(rule(tokens.treatment(c, s, t), a, theme.style().token(), s.selector() + " {\n" + indent(drawn(t, normal(a.body()))) + "\n}"));
             treatments++;
             if (!a.node().equals(c)) copied++;
         }
         return new Flattened(css.toString(), looks, treatments, copied, unanswered);
     }
 
-    /** A rule for the class worn, saying where its body came from unless the identity worn answered it itself. */
+    /** A rule for the class worn, saying where its body came from unless the style worn answered it itself. */
     private static String rule(String worn, Resolution.Answered from, String own, String body) {
         boolean itself = worn.equals(from.className()) && own.equals(from.layer());
         return (itself ? "" : "/* from " + from.layer() + ": " + from.className() + " */\n") + "." + worn + " {\n" + indent(body) + "\n}\n";
-    }
-
-    /** The identity asked first for a target: the palette for colour, the worn style for the rest. */
-    private static String own(Target t, Dressed theme) {
-        return t instanceof Target.Color ? theme.palette().token() : theme.style().token();
     }
 
     /** A body where its target draws: on the element, or nested on the pseudo-element the target paints on - a glyph on {@code ::before}. */

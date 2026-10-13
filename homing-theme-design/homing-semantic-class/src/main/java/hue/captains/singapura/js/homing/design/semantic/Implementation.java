@@ -9,9 +9,9 @@ import hue.captains.singapura.tao.ontology.ValueObject;
 import java.util.Objects;
 
 /**
- * One semantic class a style or a palette implements: a node of the taxonomy - a casting - a
- * target, and the answer, typed by the target so the two cannot part. Refused as it is written: a
- * target kept only for the old design system, a state the target offers no slot for, a state
+ * One semantic class a style implements on a target that is not colour - colour is a {@link Coloring}: a
+ * node of the taxonomy - a casting - a target, and the answer, typed by the target so the two cannot part.
+ * Refused as it is written: a target kept only for the old design system, a state the target offers no slot for, a state
  * answered on a role (a state is a treatment, common to every role), a body its target cannot say
  * ({@link AnswerBody}), a class redirected to itself, an animation answered with a body rather than an effect,
  * and an effect that takes a property: on a component every target's class is worn, so what the effect takes
@@ -22,7 +22,7 @@ import java.util.Objects;
  * @param answer what is said for them
  * @param <T>    the target leaf
  */
-public record Implementation<T extends Target>(Casting node, T target, Answer<T> answer) implements ValueObject {
+public record Implementation<T extends Target.Colorless>(Casting node, T target, Answer<T> answer) implements ValueObject {
 
     public Implementation {
         Objects.requireNonNull(node, "Implementation.node");

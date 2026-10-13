@@ -4,18 +4,23 @@ import hue.captains.singapura.js.homing.component.taxonomy.Component;
 import hue.captains.singapura.js.homing.component.taxonomy.ConcreteComponent;
 import hue.captains.singapura.js.homing.design.AnimationEffect;
 import hue.captains.singapura.js.homing.design.Target;
+import hue.captains.singapura.js.homing.design.color.ColorScheme;
+import hue.captains.singapura.js.homing.design.color.Paint;
 import hue.captains.singapura.tao.ontology.ValueObject;
 
 import java.util.Objects;
 
 /**
  * What a concrete leaf says for one target its leaf owns (RFC 0067, appendix Virtual Leaves and Designs):
- * its own CSS, nothing, another concrete leaf's, or the theme's answer for a component of the taxonomy - reuse
- * always said - and for an animation, an effect, whole. The target is the type parameter, so an answer for one target cannot stand in for another's.
+ * its own CSS - or for colour, the semantic colours it is painted in - nothing, another concrete leaf's, or the
+ * theme's answer for a component of the taxonomy - reuse always said - and for an animation, an effect, whole.
+ * The target is the type parameter, so an answer for one target cannot stand in for another's, and no drawing
+ * can name a colour's value.
  *
  * @param <T> the target answered
  */
-public sealed interface Drawing<T extends Target> extends ValueObject permits Drawing.Own, Drawing.None, Drawing.As, Drawing.Of, Drawing.Animated {
+public sealed interface Drawing<T extends Target> extends ValueObject
+        permits Drawing.Own, Drawing.Painted, Drawing.None, Drawing.As, Drawing.Of, Drawing.Animated {
 
     /** The target it answers. */
     T target();
@@ -25,7 +30,7 @@ public sealed interface Drawing<T extends Target> extends ValueObject permits Dr
      * properties only ({@link AnswerBody}), in states the target offers a slot for. Refused as it is
      * written, as a style's answer is.
      */
-    record Own<T extends Target>(T target, Answer.Own<T> answer) implements Drawing<T> {
+    record Own<T extends Target.Colorless>(T target, Answer.Own<T> answer) implements Drawing<T> {
         public Own {
             Objects.requireNonNull(target, "Drawing.Own.target");
             Objects.requireNonNull(answer, "Drawing.Own.answer");
@@ -45,6 +50,26 @@ public sealed interface Drawing<T extends Target> extends ValueObject permits Dr
 
         /** The look alone: a body at rest. */
         public Own(T target, String rest) { this(target, new Answer.Own<>(rest)); }
+    }
+
+    /**
+     * A colour target painted (RFC 0067, appendix Semantic Colours and Flavours): a case its target offers per
+     * state it answers, at rest the look, in semantic colours of the base - palettable ones follow the palette
+     * worn, a fixed one pins its colour. In states the target offers a slot for.
+     */
+    record Painted<T extends Target.Color>(T target, Answer.Painted<ColorScheme.Base, T> answer) implements Drawing<T> {
+        public Painted {
+            Objects.requireNonNull(target, "Drawing.Painted.target");
+            Objects.requireNonNull(answer, "Drawing.Painted.answer");
+            answer.paints().keySet().forEach(state -> {
+                if (!target.states().contains(state))
+                    throw new IllegalArgumentException(target.token() + " offers no " + SemanticTokens.INSTANCE.state(state) + "; it offers "
+                            + String.join(", ", target.states().stream().map(SemanticTokens.INSTANCE::state).toList()));
+            });
+        }
+
+        /** The look alone: a paint at rest. */
+        public Painted(T target, Paint<ColorScheme.Base, T> rest) { this(target, new Answer.Painted<>(rest)); }
     }
 
     /**

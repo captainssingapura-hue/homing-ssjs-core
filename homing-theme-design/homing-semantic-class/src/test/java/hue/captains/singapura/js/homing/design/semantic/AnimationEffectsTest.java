@@ -8,6 +8,7 @@ import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.design.AnimationEffect;
 import hue.captains.singapura.js.homing.design.State;
 import hue.captains.singapura.js.homing.design.Target;
+import hue.captains.singapura.js.homing.design.color.Paint;
 import hue.captains.singapura.js.homing.design.semantic.AnimatingTaxonomy.Ants;
 import hue.captains.singapura.js.homing.design.semantic.AnimatingTaxonomy.Area;
 import hue.captains.singapura.js.homing.design.semantic.AnimatingTaxonomy.Line;
@@ -132,7 +133,7 @@ class AnimationEffectsTest extends JsModuleTestBase {
     record MarchingLine() implements Line.Concrete<Marching>, Drawn {
         static final MarchingLine INSTANCE = new MarchingLine();
         @Override public List<Drawing<?>> drawings(Dressed theme) {
-            return List.of(new Drawing.Own<>(Target.Color.Stroke.INSTANCE, "stroke: currentColor;"), new Drawing.Animated(Ants.INSTANCE));
+            return List.of(new Drawing.Painted<>(Target.Color.Stroke.INSTANCE, new Paint.Inherited<>()), new Drawing.Animated(Ants.INSTANCE));
         }
     }
 
@@ -221,7 +222,7 @@ class AnimationEffectsTest extends JsModuleTestBase {
                 + "    animation: effect-ants 0.6s linear infinite;\n    @media (prefers-reduced-motion: reduce) {\n"), css);
         assertTrue(css.contains(".marching___line__animation-effect-still {\n    stroke-width: 1.5px;\n    stroke-dasharray: 5 4;\n    animation: none;\n}\n"), css);
         assertTrue(css.contains(".marching___area__animation-effect-still {\n    animation: none;\n}\n"), css);
-        assertTrue(css.contains(".marching___line__color-stroke {\n    stroke: currentColor;\n}\n"), "the line's ink, its own");
+        assertTrue(css.contains(".marching___line__color-stroke {\n    stroke: inherit;\n}\n"), "the line's ink, its own: the stroke of what holds it");
         assertEquals(4, flat.drawn(), "the line's ink and effect, the area's effect, the strip's effect");
     }
 

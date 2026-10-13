@@ -15,20 +15,17 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * What an answer may say: a body that means the same under any class it is copied to, and keeps
- * colour the palette's. It holds declarations of its target's own properties, blocks nested on the
- * element itself ({@code &:hover}, {@code &::before}, {@code &[aria-pressed="true"]}) and blocks for
- * a mode ({@code @media}, {@code @supports}). It names no class, reaches into no child, and sets no
- * property its target does not own - a registered one included.
+ * What an answer may say: a body that means the same under any class it is copied to, on a target
+ * that is not colour - colour is painted, in semantic colours, and never written. It holds
+ * declarations of its target's own properties, blocks nested on the element itself ({@code &:hover},
+ * {@code &::before}, {@code &[aria-pressed="true"]}) and blocks for a mode ({@code @media},
+ * {@code @supports}). It names no class, reaches into no child, and sets no property its target does
+ * not own - a registered one included.
  *
  * <ul>
- *   <li><b>A semantic colour is said whole.</b> A colour target's body gives every physical colour
- *       of its set in every block it declares anything in, the top included: the set is never
- *       mixed from two answers, and nothing is left to a silent default.</li>
- *   <li><b>Colour is the palette's.</b> A body on any other target names no colour - no hex, no
- *       colour function, no colour's name; where its geometry is drawn in colour, it reads the
- *       registered colours of the leaf that colours it ({@link Target#colouredBy()}), and those
- *       alone.</li>
+ *   <li><b>A body names no colour</b> - no hex, no colour function, no colour's name; where its
+ *       geometry is drawn in colour, it reads the registered colours of the leaf that colours it
+ *       ({@link Target#colouredBy()}), and those alone.</li>
  *   <li><b>What a body reads</b> is the element's own: its degrees ({@code --extent},
  *       {@code --size}, {@code --aspect}) and those colours. Any other variable is refused.</li>
  * </ul>
@@ -70,22 +67,19 @@ public record AnswerBody() implements StatelessFunctionalObject {
 
     /**
      * Who may say what: a name for the messages, the properties it may declare - null for any but an animation's
-     * own - the colour targets whose registered colours it may read, and whether it is a semantic colour itself.
+     * own - and the colour targets whose registered colours it may read.
      */
-    record Rights(String who, Set<String> owns, List<Target.Color> colouredBy, boolean colour) {
-        static Rights of(Target t) { return new Rights(t.token(), t.properties(), t.colouredBy(), t instanceof Target.Color); }
+    record Rights(String who, Set<String> owns, List<Target.Color> colouredBy) {
+        static Rights of(Target t) { return new Rights(t.token(), t.properties(), t.colouredBy()); }
     }
 
     /** Refuses a body its target cannot say; says nothing of an empty one. */
-    public void check(Target target, String body) {
+    public void check(Target.Colorless target, String body) {
         if (body.isBlank()) return;
         if (target.carrier() != Carrier.CSS) throw new IllegalArgumentException(target.token() + " is no CSS target: an answer for it says nothing here");
         if (target instanceof Target.Animation)
             throw new IllegalArgumentException(target.token() + " is answered with an animation effect, never with a body: name the effect");
-        Rights rights = Rights.of(target);
-        Set<String> top = block(rights, stripComments(body), 0);
-        if (rights.colour() && top.isEmpty())
-            throw new IllegalArgumentException(target.token() + " is said in a block alone: a semantic colour is said at the top, a mode or a state beside it");
+        block(Rights.of(target), stripComments(body), 0);
     }
 
     /** The properties flat declarations declare - no block in them - refused where the rights do not reach. */
@@ -140,12 +134,6 @@ public record AnswerBody() implements StatelessFunctionalObject {
             i++;
         }
         if (!buf.toString().isBlank()) declare(target, buf.toString(), declared);
-        if (target.colour() && !declared.isEmpty() && !declared.containsAll(target.owns())) {
-            var missing = new TreeSet<>(target.owns());
-            missing.removeAll(declared);
-            throw new IllegalArgumentException(target.who() + " is a semantic colour, said whole or not at all: "
-                    + String.join(", ", missing) + (missing.size() == 1 ? " is" : " are") + " not said");
-        }
         return declared;
     }
 
@@ -173,7 +161,7 @@ public record AnswerBody() implements StatelessFunctionalObject {
         } else if (!target.owns().contains(property))
             throw new IllegalArgumentException(target.who() + " does not own " + property + "; it owns " + String.join(", ", new TreeSet<>(target.owns())));
         reads(target, value);
-        if (!target.colour()) namesNoColour(target, value);
+        namesNoColour(target, value);
         declared.add(property);
     }
 
@@ -190,7 +178,7 @@ public record AnswerBody() implements StatelessFunctionalObject {
         }
     }
 
-    /** A value off the colour targets names no colour: the palette's are read, never said. */
+    /** A value names no colour: colours are painted, in semantic colours, and read here only through the registered colours. */
     private static void namesNoColour(Rights target, String value) {
         String bare = value.replaceAll("\"[^\"]*\"|'[^']*'", " ");
         String found = null;
@@ -203,7 +191,7 @@ public record AnswerBody() implements StatelessFunctionalObject {
             while (w.find()) if (NAMED.contains(w.group().toLowerCase(Locale.ROOT))) { found = w.group(); break; }
         }
         if (found != null)
-            throw new IllegalArgumentException(target.who() + " names a colour, " + found + ": colour is the palette's"
+            throw new IllegalArgumentException(target.who() + " names a colour, " + found + ": colour is painted, never written"
                     + (target.colouredBy().isEmpty() ? ", and " + target.who() + " is drawn in none"
                        : "; it is drawn in " + String.join(", ", target.colouredBy().stream().map(Target::token).toList()) + "'s"));
     }

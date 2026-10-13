@@ -50,22 +50,21 @@ public record FlattenDesign() implements StatelessFunctionalObject {
             for (Target t : ReadDesigns.owned(leaf)) {
                 ResolveDrawing.Resolved r = ResolveDrawing.INSTANCE.resolve(design.taxonomy(), c, t, theme);
                 boolean taken = r.by() != c;
-                if (r.drawing() instanceof Drawing.Animated an) {   // the effect's class, and its still dual beside it
+                if (r.effect() != null) {   // the effect's class, and its still dual beside it
                     String worn = tokens.drawn(design.design(), leaf, t);
                     if (taken) rules.append("/* from ").append(tokens.drawn(r.by().design(), leaf, t)).append(" */\n");
                     if (r.of() != null) rules.append("/* the theme's ").append(r.of().name().value()).append(" */\n");
-                    rules.append("/* ").append(an.effect().token()).append(" */\n");
-                    rules.append('.').append(worn).append(" {\n").append(indent(Effects.INSTANCE.moving(an.effect()))).append("\n}\n");
-                    rules.append('.').append(tokens.still(worn)).append(" {\n").append(indent(Effects.INSTANCE.still(an.effect()))).append("\n}\n");
-                    effects.add(an.effect());
+                    rules.append("/* ").append(r.effect().token()).append(" */\n");
+                    rules.append('.').append(worn).append(" {\n").append(indent(Effects.INSTANCE.moving(r.effect()))).append("\n}\n");
+                    rules.append('.').append(tokens.still(worn)).append(" {\n").append(indent(Effects.INSTANCE.still(r.effect()))).append("\n}\n");
+                    effects.add(r.effect());
                     drawn++;
                     if (taken) copied++;
                     if (r.of() != null) delegated++;
                     continue;
                 }
-                if (!(r.drawing() instanceof Drawing.Own<?> own)) continue;
                 var parts = new ArrayList<String>();
-                Map<State, String> bodies = own.answer().bodies();
+                Map<State, String> bodies = r.bodies();
                 for (State s : State.values()) {
                     String body = bodies.get(s);
                     if (body == null || body.isBlank()) continue;

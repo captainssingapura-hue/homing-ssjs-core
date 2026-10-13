@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.design.semantic;
 
 import hue.captains.singapura.js.homing.component.taxonomy.Component;
 import hue.captains.singapura.js.homing.component.taxonomy.ComponentPartDSL;
+import hue.captains.singapura.js.homing.component.taxonomy.ExtentAxis;
 import hue.captains.singapura.js.homing.component.taxonomy.L1_ComponentBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.L1_RoleBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.L2_ComponentBranch;
@@ -45,6 +46,8 @@ public record ResolvingTaxonomy() implements TaxonomySource {
     public record DangerButton() implements Component<Button> {
         public static final DangerButton INSTANCE = new DangerButton();
         @Override public Button parent() { return Button.INSTANCE; }
+        /** Danger turned partly safe: its colour varies by degree. */
+        @Override public List<ExtentAxis> extents() { return List.of(ExtentAxis.COLOUR); }
     }
     public record FloatingPane() implements Component<Container> {
         public static final FloatingPane INSTANCE = new FloatingPane();

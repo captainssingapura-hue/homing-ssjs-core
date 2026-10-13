@@ -35,9 +35,9 @@ import java.util.Map;
  * </ol>
  *
  * The walk's rules stay the resolver's alone; this decides only which slots are worth asking.
- * Over several themes it asks the chains that differ, never their pairings: a style over its bases
- * for every target that is not colour, a palette for colour - a style worn in a palette makes no
- * treatment and takes none away.
+ * Over several themes it asks the chains that differ, never their pairings: a style over its bases,
+ * colour's answers with the rest - the palette a style is worn in makes no treatment and takes none
+ * away, since a painted answer says something in every palette.
  */
 public record DeriveTreatments() implements StatelessFunctionalObject {
 
@@ -51,17 +51,12 @@ public record DeriveTreatments() implements StatelessFunctionalObject {
 
     /** The treatments any of the themes has a rule for, in the sheet's order. */
     public List<Treatment> union(Taxonomy taxonomy, Collection<Dressed> themes) {
-        var byStyle = new LinkedHashMap<DesignStyle, Dressed>();
-        var byPalette = new LinkedHashMap<ColorPalette, Dressed>();
-        for (Dressed d : themes) {
-            byStyle.putIfAbsent(d.style(), d);
-            byPalette.putIfAbsent(d.palette(), d);
-        }
+        var byStyle = new LinkedHashMap<DesignStyle<?>, Dressed>();
+        for (Dressed d : themes) byStyle.putIfAbsent(d.style(), d);
         // 1. the treated slots, from every layer of every chain
         var slots = new LinkedHashSet<Slot>();
         var layers = new LinkedHashSet<Layer>();
         for (Dressed d : byStyle.values()) layers.addAll(d.layers());
-        for (Dressed d : byPalette.values()) layers.addAll(d.layers());
         for (Layer layer : layers)
             layer.answers().forEach((key, answer) -> {
                 Target t = key.target();
@@ -69,6 +64,7 @@ public record DeriveTreatments() implements StatelessFunctionalObject {
                 ComponentNode node = key.node().component();
                 switch (answer) {
                     case Answer.Own<?> own -> own.bodies().keySet().forEach(s -> { if (s != State.REST) slots.add(new Slot(node, t, s)); });
+                    case Answer.Painted<?, ?> p -> p.paints().keySet().forEach(s -> { if (s != State.REST) slots.add(new Slot(node, t, s)); });
                     case Answer.Redirect<?> r -> t.states().forEach(s -> { if (s != State.REST) slots.add(new Slot(node, t, s)); });
                     case Answer.FromBase<?> f -> { }   // the base's own answers are slots of the base's layer
                     case Answer.Animated a -> { }       // an effect is a look, at rest: no treatment
@@ -87,8 +83,7 @@ public record DeriveTreatments() implements StatelessFunctionalObject {
             for (Component<?> c : under.getOrDefault(slot.node(), List.of())) {
                 var candidate = new Treatment(c, slot.state(), slot.target());
                 if (!asked.add(candidate)) continue;
-                Collection<Dressed> chains = slot.target() instanceof Target.Color ? byPalette.values() : byStyle.values();
-                for (Dressed d : chains) {
+                for (Dressed d : byStyle.values()) {
                     Resolution r = ResolveSemanticClass.INSTANCE.resolve(taxonomy, d, new Casting(c), slot.state(), slot.target());
                     if (r.outcome() instanceof Resolution.Answered a && !a.body().isBlank()) { treated.add(candidate); break; }
                 }

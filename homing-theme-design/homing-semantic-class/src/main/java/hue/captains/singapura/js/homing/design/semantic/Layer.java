@@ -3,16 +3,17 @@ package hue.captains.singapura.js.homing.design.semantic;
 import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.design.Target;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * One identity's answers, by the class they answer: a style, over its base when it has one, or a
- * palette, which has none. What resolution walks a layer at a time.
+ * One style's answers, by the class they answer - every target's, colour's included - over its base when it has one.
+ * What resolution walks a layer at a time.
  *
- * @param token   the style's or the palette's token
+ * @param token   the style's token
  * @param answers what it answers, by node and target
  * @param base    the layer beneath, or null at the bottom of the chain
  */
@@ -28,21 +29,22 @@ record Layer(String token, Map<Key, Answer<?>> answers, Layer base) {
 
     /** The layers from this one down, this one first. */
     List<Layer> chain() {
-        var out = new java.util.ArrayList<Layer>();
+        var out = new ArrayList<Layer>();
         for (Layer l = this; l != null; l = l.base()) out.add(l);
         return List.copyOf(out);
     }
 
-    /** One identity's answers, indexed: refused when a class is answered twice, or asks a base there is none of. */
-    static Layer index(String token, List<? extends Implementation<?>> implementations, Layer base) {
+    /** A style's answers, indexed - its implementations, then its colorings: refused when a class is answered twice, or asks a base there is none of. */
+    static Layer index(DesignStyle<?> style, Layer base) {
         var out = new LinkedHashMap<Key, Answer<?>>();
-        for (Implementation<?> i : implementations) {
-            if (i.answer() instanceof Answer.FromBase<?> && base == null)
-                throw new IllegalArgumentException(token + ": " + SemanticTokens.INSTANCE.casting(i.node()) + " " + i.target().token()
-                        + " asks its base, and " + token + " has none");
-            if (out.putIfAbsent(new Key(i.node(), i.target()), i.answer()) != null)
-                throw new IllegalArgumentException(token + ": " + SemanticTokens.INSTANCE.casting(i.node()) + " " + i.target().token() + " is answered twice");
-        }
-        return new Layer(token, out, base);
+        for (Implementation<?> i : style.implementations()) put(style, out, i.node(), i.target(), i.answer(), base);
+        for (Coloring<?, ?> c : style.colorings()) put(style, out, c.node(), c.target(), c.answer(), base);
+        return new Layer(style.token(), out, base);
+    }
+
+    private static void put(DesignStyle<?> style, Map<Key, Answer<?>> out, Casting node, Target target, Answer<?> answer, Layer base) {
+        String where = style.token() + ": " + SemanticTokens.INSTANCE.casting(node) + " " + target.token();
+        if (answer instanceof Answer.FromBase<?> && base == null) throw new IllegalArgumentException(where + " asks its base, and " + style.token() + " has none");
+        if (out.putIfAbsent(new Key(node, target), answer) != null) throw new IllegalArgumentException(where + " is answered twice");
     }
 }

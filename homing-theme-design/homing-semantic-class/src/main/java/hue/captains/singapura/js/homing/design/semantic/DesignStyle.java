@@ -1,17 +1,21 @@
 package hue.captains.singapura.js.homing.design.semantic;
 
+import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import hue.captains.singapura.js.homing.tree.NodeName;
 
 import java.util.List;
 
 /**
- * A design style (RFC 0067): a typed identity - a stateless record, its type its identity - and
- * what it answers. A style never answers colour: that is its palette's. A style written over another
- * says so by type, with {@link Derives}; one that derives from nothing answers every root that is
- * not colour, so that every class resolves. A style also writes the words of a lexicon - the glyph it
- * draws for each ({@link Writing}) - the words its base writes its own unless it writes them otherwise.
+ * A design style (RFC 0067): a typed identity - a stateless record, its type its identity - and what it answers. It
+ * requires one colour scheme, its type argument, and is worn only in a palette of that scheme. It says which colour each
+ * thing uses, in semantic colours its scheme can see ({@link #colorings()}), and never what a colour is: no answer can
+ * name a value. A style written over another says so by type, with {@link Derives}; one that derives from nothing
+ * answers every root, colour's included, so that every class resolves. A style also writes the words of a lexicon -
+ * the glyph it draws for each ({@link Writing}) - the words its base writes its own unless it writes them otherwise.
+ *
+ * @param <S> the colour scheme it requires
  */
-public interface DesignStyle {
+public interface DesignStyle<S extends ColorScheme> {
 
     /** The style's token, from its type: {@code neo-brutalism}. */
     default String token() { return NodeName.ofType(getClass(), "").value(); }
@@ -25,8 +29,11 @@ public interface DesignStyle {
     /** The family a picker files it under; {@code Styles} unless it says. */
     default String group() { return "Styles"; }
 
-    /** The classes this style answers itself. */
+    /** The classes this style answers itself on every target that is not colour. */
     List<Implementation<?>> implementations();
+
+    /** Which colour each class it answers itself uses; none by default, each as its base colours it. */
+    default List<Coloring<S, ?>> colorings() { return List.of(); }
 
     /** The words this style writes itself; none by default, each written as its base writes it. */
     default List<Writing> writings() { return List.of(); }

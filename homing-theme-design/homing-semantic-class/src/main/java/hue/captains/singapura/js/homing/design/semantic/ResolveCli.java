@@ -23,14 +23,14 @@ import java.util.List;
  * in a palette - and how the walk went.
  *
  * <pre>
- * resolve --taxonomy CLASS --style CLASS --palette CLASS NODE STATE TARGET   the walk, step by step
- * resolve --taxonomy CLASS --style CLASS --palette CLASS NODE STATE|* TARGET|*   a table: every state, every target
- * resolve --taxonomy CLASS --style CLASS --palette CLASS --flatten [--out CSS]   the theme's sheet, flattened
+ * resolve --taxonomy CLASS --colors CLASS --style CLASS --palette CLASS NODE STATE TARGET   the walk, step by step
+ * resolve --taxonomy CLASS --colors CLASS --style CLASS --palette CLASS NODE STATE|* TARGET|*   a table: every state, every target
+ * resolve --taxonomy CLASS --colors CLASS --style CLASS --palette CLASS --flatten [--out CSS]   the theme's sheet, flattened
  * resolve --taxonomy CLASS --list nodes|roles|states|targets   the tokens there are
  * </pre>
  *
  * Each {@code CLASS} names a type by its class, whose {@code INSTANCE} is read: a
- * {@link TaxonomySource}, a {@link DesignStyle}, a {@link ColorPalette}; {@code NODE} is a casting's token -
+ * {@link TaxonomySource}, a {@link ColorSource}, a {@link DesignStyle}, a {@link ColorPalette} of the style's scheme; {@code NODE} is a casting's token -
  * {@code danger-button}, {@code danger-button_go}. The exit is 0 when every look resolves, 1 when
  * one is unanswered, 2 when the command is wrong.
  */
@@ -43,20 +43,21 @@ public record ResolveCli() implements StatelessFunctionalObject {
     }
 
     private static final String USAGE = String.join("\n",
-            "usage: resolve --taxonomy CLASS --style CLASS --palette CLASS NODE STATE TARGET",
-            "       resolve --taxonomy CLASS --style CLASS --palette CLASS NODE STATE|* TARGET|*",
-            "       resolve --taxonomy CLASS --style CLASS --palette CLASS --flatten [--out CSS]",
+            "usage: resolve --taxonomy CLASS --colors CLASS --style CLASS --palette CLASS NODE STATE TARGET",
+            "       resolve --taxonomy CLASS --colors CLASS --style CLASS --palette CLASS NODE STATE|* TARGET|*",
+            "       resolve --taxonomy CLASS --colors CLASS --style CLASS --palette CLASS --flatten [--out CSS]",
             "       resolve --taxonomy CLASS --list nodes|roles|states|targets");
 
     /** Runs a command; the exit code. */
     public int run(List<String> args, PrintStream out, PrintStream err) {
-        String taxonomyClass = null, styleClass = null, paletteClass = null, list = null, outFile = null;
+        String taxonomyClass = null, colorsClass = null, styleClass = null, paletteClass = null, list = null, outFile = null;
         boolean flatten = false;
         var rest = new ArrayList<String>();
         for (int i = 0; i < args.size(); i++) {
             String a = args.get(i);
             switch (a) {
                 case "--taxonomy" -> taxonomyClass = i + 1 < args.size() ? args.get(++i) : null;
+                case "--colors" -> colorsClass = i + 1 < args.size() ? args.get(++i) : null;
                 case "--style" -> styleClass = i + 1 < args.size() ? args.get(++i) : null;
                 case "--palette" -> paletteClass = i + 1 < args.size() ? args.get(++i) : null;
                 case "--list" -> list = i + 1 < args.size() ? args.get(++i) : null;
@@ -69,8 +70,12 @@ public record ResolveCli() implements StatelessFunctionalObject {
         try {
             Taxonomy taxonomy = taxonomy(taxonomyClass);
             if (list != null) return list(taxonomy, list, out, err);
-            if (styleClass == null || paletteClass == null) return usage(err, "no --style or no --palette");
-            Dressed theme = new Dressed(instance(styleClass, DesignStyle.class), instance(paletteClass, ColorPalette.class));
+            if (colorsClass == null || styleClass == null || paletteClass == null) return usage(err, "no --colors, no --style or no --palette");
+            ColorTree colors = instance(colorsClass, ColorSource.class).read();
+            DesignStyle<?> style = instance(styleClass, DesignStyle.class);
+            ColorPalette<?> palette = instance(paletteClass, ColorPalette.class);
+            Dressed theme = Wear.INSTANCE.of(colors, style, palette).orElseThrow(() -> new IllegalArgumentException(
+                    style.token() + " and " + palette.token() + " are of different schemes: a style is worn only in a palette of its own"));
             if (flatten) return flatten(taxonomy, theme, outFile, out, err);
             if (rest.size() != 3) return usage(err, "a node, a state and a target");
             var tokens = SemanticTokens.INSTANCE;

@@ -174,10 +174,14 @@ class DesignsTest extends JsModuleTestBase {
         String css = flat.css();
         assertTrue(css.contains(".bold___edge__shape-border {\n    border-width: 3px; border-style: dashed;\n"
                 + "    &:hover {\n        border-width: 4px;\n    }\n}\n"), "the sketch's edge, as written, and under the hand:\n" + css);
-        assertTrue(css.contains("/* from plain___edge__color-border */\n.bold___edge__color-border {\n    border-color: gray;\n}\n"),
-                "a drawing taken from another design's concrete leaf, saying where from:\n" + css);
+        assertTrue(css.contains("/* from plain___edge__color-border */\n.bold___edge__color-border {\n    border-color: #1f2937;\n}\n"),
+                "a drawing taken from another design's concrete leaf, saying where from, its colour as paper gives it:\n" + css);
         assertTrue(css.contains("/* from plain___mark__shape-outline */\n.bold___mark__shape-outline {\n"), css);
-        assertTrue(css.contains(".bold___mark__color-outline {\n    outline-color: black;\n}\n"), css);
+        assertTrue(css.contains(".bold___mark__color-outline {\n    outline-color: #c62828;\n}\n"), "a colour the design pins, fixed:\n" + css);
+        var night = new Dressed(ResolvingThemes.COLOURS, ResolvingThemes.Sketch.INSTANCE, ResolvingColours.Night.INSTANCE);
+        String inTheNight = FlattenDesign.INSTANCE.flatten(bold, night, "Bold").css();
+        assertTrue(inTheNight.contains(".bold___edge__color-border {\n    border-color: oklch(0.93 0.01 260);\n}\n"), "a palettable colour follows the palette worn:\n" + inTheNight);
+        assertTrue(inTheNight.contains(".bold___mark__color-outline {\n    outline-color: #c62828;\n}\n"), "a fixed one does not");
         assertEquals(4, flat.drawn());
         assertEquals(2, flat.copied());
         assertTrue(FlattenDesign.INSTANCE.flatten(bold, DETAILED, "Bold").css().contains(".bold___edge__shape-border {\n    border-width: 2px; border-style: solid;\n"),
@@ -194,7 +198,7 @@ class DesignsTest extends JsModuleTestBase {
         assertTrue(css.contains("/* the theme's box */\n.boxed___edge__shape-border {\n    border-width: 0; border-style: solid;\n}\n"),
                 "the box's border, as the valued style answers it at the root:\n" + css);
         assertTrue(css.contains("/* the theme's box */\n.boxed___edge__color-border {\n    border-color: currentColor;\n}\n"),
-                "and its colour, as the valued palette answers it:\n" + css);
+                "and its colour, as the valued style colours it:\n" + css);
         assertEquals(2, flat.drawn());
         assertEquals(0, flat.copied());
         assertEquals(2, flat.delegated());

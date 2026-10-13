@@ -41,7 +41,7 @@ public record Effects() implements StatelessFunctionalObject {
     public Set<String> takes(AnimationEffect effect) {
         Objects.requireNonNull(effect, "the effect");
         String who = "the effect " + effect.token();
-        var rights = new AnswerBody.Rights(who, null, effect.drawnIn(), false);
+        var rights = new AnswerBody.Rights(who, null, effect.drawnIn());
         var body = AnswerBody.INSTANCE;
         var taken = new TreeSet<String>();
         taken.addAll(body.declarations(rights, effect.moving()));

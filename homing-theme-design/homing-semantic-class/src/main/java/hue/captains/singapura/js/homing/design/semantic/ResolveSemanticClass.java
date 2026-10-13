@@ -1,12 +1,14 @@
 package hue.captains.singapura.js.homing.design.semantic;
 
 import hue.captains.singapura.js.homing.component.taxonomy.Casting;
+import hue.captains.singapura.js.homing.component.taxonomy.ExtentAxis;
 import hue.captains.singapura.js.homing.component.taxonomy.ComponentNode;
 import hue.captains.singapura.js.homing.component.taxonomy.Part;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxon;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.design.State;
 import hue.captains.singapura.js.homing.design.Target;
+import hue.captains.singapura.js.homing.design.color.Paint;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.util.ArrayList;
@@ -25,12 +27,14 @@ import java.util.Set;
  *       role's lineage at its component, then the same at each of its component's parents, ending at
  *       the root on its own; a functional role is set aside. In any other state, a treatment, common
  *       to every role: the role is set aside and the path goes up the component's lineage alone.</li>
- *   <li><b>The layers.</b> Colour is asked of the palette, every other target of the style. The
- *       worn style is asked first, all the way up the path; only what it leaves unanswered there is
- *       its base's, asked the same way, and so on down the chain. A style's coarse answer outweighs
- *       its base's precise one.</li>
- *   <li><b>The answers.</b> Its own CSS answers the states it lists, and the walk goes on for the
- *       others. A {@link Answer.Redirect redirect} is resolved again from its node, in the theme
+ *   <li><b>The layers.</b> Every target is asked of the style, colour's included. The worn style
+ *       is asked first, all the way up the path; only what it leaves unanswered there is its base's,
+ *       asked the same way, and so on down the chain. A style's coarse answer outweighs its base's
+ *       precise one.</li>
+ *   <li><b>The answers.</b> Its own CSS answers the states it lists, and a painted colour the states
+ *       it paints - written in the colours the theme's palettes give, and along a scale only for a
+ *       casting whose node declares the COLOUR axis; the walk goes on for the other states. A
+ *       {@link Answer.Redirect redirect} is resolved again from its node, in the theme
  *       worn - late, so it follows what the worn style says of that node. {@link Answer.FromBase}
  *       asks the base the rest of the path, from the node it is said at, in the states it names;
  *       in the others the walk goes on up the style.</li>
@@ -53,11 +57,11 @@ public record ResolveSemanticClass() implements StatelessFunctionalObject {
         if (!castable(taxonomy, query))
             notes.add("no slot of the taxonomy casts " + query.component().name().value() + " as " + query.role().name().value()
                     + ": no owner can cast it so");
-        Layer top = theme.layerFor(target);
+        Layer top = theme.layer();
         var steps = new ArrayList<Resolution.Step>();
         var passed = new LinkedHashSet<Casting>();
         passed.add(query);
-        Resolution.Outcome outcome = walk(taxonomy, top, top, path(taxonomy, query, state), state, target, steps, passed);
+        Resolution.Outcome outcome = walk(taxonomy, theme, query, top, top, path(taxonomy, query, state), state, target, steps, passed);
         return new Resolution(theme.toString(), query, state, target, notes, steps, outcome);
     }
 
@@ -69,7 +73,7 @@ public record ResolveSemanticClass() implements StatelessFunctionalObject {
         return walk;
     }
 
-    private static Resolution.Outcome walk(Taxonomy taxonomy, Layer top, Layer layer, List<Casting> path, State state, Target target,
+    private static Resolution.Outcome walk(Taxonomy taxonomy, Dressed theme, Casting query, Layer top, Layer layer, List<Casting> path, State state, Target target,
                                            List<Resolution.Step> steps, Set<Casting> passed) {
         var tokens = SemanticTokens.INSTANCE;
         for (int i = 0; i < path.size(); i++) {
@@ -85,12 +89,26 @@ public record ResolveSemanticClass() implements StatelessFunctionalObject {
                     steps.add(new Resolution.Step(layer.token(), node, "answered"));
                     return new Resolution.Answered(layer.token(), node, tokens.className(node, state, target), body);
                 }
+                case Answer.Painted<?, ?> painted -> {
+                    Paint<?, ?> paint = painted.paints().get(state);
+                    if (paint == null) {
+                        steps.add(new Resolution.Step(layer.token(), node, "answers it, not " + tokens.state(state)));
+                        continue;
+                    }
+                    if (paint instanceof Paint.Along<?, ?> a && !taxonomy.extents(query.component()).contains(ExtentAxis.COLOUR))
+                        throw new IllegalStateException(tokens.casting(query) + " " + target.token() + " is answered along " + a.scale().token()
+                                + " at " + tokens.casting(node) + " by " + layer.token() + ", and " + query.component().name().value()
+                                + " declares no COLOUR axis: only a casting that varies its colour by degree moves along a scale");
+                    steps.add(new Resolution.Step(layer.token(), node, "answered"));
+                    return new Resolution.Answered(layer.token(), node, tokens.className(node, state, target),
+                            RenderColor.INSTANCE.body(theme, (Target.Color) target, paint));
+                }
                 case Answer.Redirect<?> r -> {
                     steps.add(new Resolution.Step(layer.token(), node, "redirected to " + tokens.casting(r.to())));
                     if (!passed.add(r.to()))
                         throw new IllegalStateException("a redirect comes back to " + tokens.casting(r.to()) + " on " + target.token() + ": "
                                 + String.join(" > ", passed.stream().map(tokens::casting).toList()) + " > " + tokens.casting(r.to()));
-                    return walk(taxonomy, top, top, path(taxonomy, state == State.REST ? r.to() : r.to().alone(), state), state, target, steps, passed);
+                    return walk(taxonomy, theme, query, top, top, path(taxonomy, state == State.REST ? r.to() : r.to().alone(), state), state, target, steps, passed);
                 }
                 case Answer.Animated a -> {
                     if (state != State.REST) {
@@ -107,11 +125,11 @@ public record ResolveSemanticClass() implements StatelessFunctionalObject {
                         continue;
                     }
                     steps.add(new Resolution.Step(layer.token(), node, "its base's, from here"));
-                    return walk(taxonomy, top, layer.base(), path.subList(i, path.size()), state, target, steps, passed);
+                    return walk(taxonomy, theme, query, top, layer.base(), path.subList(i, path.size()), state, target, steps, passed);
                 }
             }
         }
-        if (layer.base() != null) return walk(taxonomy, top, layer.base(), path, state, target, steps, passed);
+        if (layer.base() != null) return walk(taxonomy, theme, query, top, layer.base(), path, state, target, steps, passed);
         return state == State.REST ? new Resolution.Unanswered() : new Resolution.Silent();
     }
 

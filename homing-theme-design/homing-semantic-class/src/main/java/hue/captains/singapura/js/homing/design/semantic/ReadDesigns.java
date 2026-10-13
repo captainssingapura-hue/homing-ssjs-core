@@ -5,6 +5,7 @@ import hue.captains.singapura.js.homing.component.taxonomy.ConcreteComponent;
 import hue.captains.singapura.js.homing.component.taxonomy.Design;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.component.taxonomy.VirtualComponent;
+import hue.captains.singapura.js.homing.design.AnimationEffect;
 import hue.captains.singapura.js.homing.design.Carrier;
 import hue.captains.singapura.js.homing.design.Owns;
 import hue.captains.singapura.js.homing.design.Target;
@@ -136,23 +137,23 @@ public record ReadDesigns() implements StatelessFunctionalObject {
                                     + t.token() + " undrawn: draw it, say none, or take another's"));
                             continue;
                         }
-                        Drawing<?> drawing;
+                        ResolveDrawing.Resolved drawing;
                         if (mine.get(t) instanceof Drawing.Of<?> of) {
                             try {
-                                drawing = ResolveDrawing.INSTANCE.taken(taxonomy, of, theme, ResolveDrawing.name(c));
+                                drawing = ResolveDrawing.INSTANCE.taken(taxonomy, of, theme, ResolveDrawing.name(c), c);
                             } catch (IllegalArgumentException e) {
                                 problems.add(new DesignProblem(Rule.OF_ASTRAY, "in " + name(theme) + ": " + e.getMessage()));
                                 continue;
                             }
                         } else {
                             try {
-                                drawing = ResolveDrawing.INSTANCE.resolve(taxonomy, c, t, theme).drawing();
+                                drawing = ResolveDrawing.INSTANCE.resolve(taxonomy, c, t, theme);
                             } catch (IllegalArgumentException e) {
                                 problems.add(new DesignProblem(Rule.AS_ASTRAY, "in " + name(theme) + ": " + e.getMessage()));
                                 continue;
                             }
                         }
-                        if (drawing instanceof Drawing.Animated an) takesOwned(c, an, mineOwned, theme, problems);
+                        if (drawing.effect() != null) takesOwned(c, drawing.effect(), mineOwned, theme, problems);
                     }
                 }
 
@@ -161,14 +162,14 @@ public record ReadDesigns() implements StatelessFunctionalObject {
     }
 
     /** An effect takes what it needs: a property another target the leaf owns writes is refused, by name. */
-    private static void takesOwned(ConcreteComponent<?, ?, ?> c, Drawing.Animated an, List<Target> owned, Dressed theme, List<DesignProblem> problems) {
-        var takes = Effects.INSTANCE.takes(an.effect());
+    private static void takesOwned(ConcreteComponent<?, ?, ?> c, AnimationEffect effect, List<Target> owned, Dressed theme, List<DesignProblem> problems) {
+        var takes = Effects.INSTANCE.takes(effect);
         for (Target other : owned) {
             if (other instanceof Target.Animation) continue;
             for (String p : other.properties())
                 if (takes.contains(p))
                     problems.add(new DesignProblem(Rule.EFFECT_TAKES_OWNED, ResolveDrawing.name(c) + " in " + name(theme) + " wears "
-                            + an.effect().token() + ", which takes " + p + " - and " + c.virtual().token() + " owns " + other.token()
+                            + effect.token() + ", which takes " + p + " - and " + c.virtual().token() + " owns " + other.token()
                             + ", which writes it: what an effect takes, nothing else there may write"));
         }
     }
@@ -200,5 +201,5 @@ public record ReadDesigns() implements StatelessFunctionalObject {
         return targets;
     }
 
-    private static String name(Dressed theme) { return theme.style().token() + " in " + theme.palette().token(); }
+    private static String name(Dressed theme) { return theme.toString(); }
 }
