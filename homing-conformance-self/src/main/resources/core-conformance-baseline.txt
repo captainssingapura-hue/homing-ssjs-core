@@ -1,6 +1,7 @@
 # Core's baseline: the debt its crates on the new stack carry - the core.js and server lines
 # of the old conformance studio's ledger. Fixing debt means removing its line.
-hue.captains.singapura.js.homing.core.js.DomOpsPartyBaseModule [use-dom-ops-party] raw DOM factory (use branch.createElement via the DomOpsParty, not document.create*): const el = document.createElement(tagName);
+hue.captains.singapura.js.homing.core.js.DomOpsPartyBaseModule [use-dom-ops-party] raw DOM factory (use branch.createElement via the DomOpsParty, not document.create*): return this.#own(name, document.createElement(tagName));
+hue.captains.singapura.js.homing.core.js.DomOpsPartyBaseModule [use-dom-ops-party] raw DOM factory (use branch.createElement via the DomOpsParty, not document.create*): return this.#own(name, document.createElementNS(SVG_NS, tagName));
 hue.captains.singapura.js.homing.core.js.DomOpsPartyModule [exports-are-classes] exported function 'viewParty' — a component is a class: const viewParty = () => domOpsParty.snapshot();
 hue.captains.singapura.js.homing.core.js.NodeContentModule [exports-are-classes] exported function 'NodeContent' — a component is a class: function NodeContent(bundle) {
 hue.captains.singapura.js.homing.core.js.TreeRendererModule [no-inline-style] inline style write (use a typed css class via css.addClass, not element.style): badge.style.cssText = "flex:0 0 auto;font-size:10px;letter-spacing:.06em;"

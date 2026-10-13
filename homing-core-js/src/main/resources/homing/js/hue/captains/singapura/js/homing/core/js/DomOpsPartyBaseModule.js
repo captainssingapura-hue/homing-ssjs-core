@@ -51,6 +51,9 @@
 
 const VALID_NAME = /^[a-zA-Z0-9_-]+$/;
 
+/** SVG's namespace: what createSvgElement mints in. */
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
 /** Every maker a branch has issued (elementMaker): only these are makers. */
 const _ELEMENT_MAKERS = new WeakSet();
 
@@ -205,23 +208,41 @@ class _DomOpsPartyBase {
    * @throws {RangeError} If name is already in use on this branch.
    */
   createElement(name, tagName) {
-    this.#assertActivated();
-    if (typeof name !== 'string' || name.trim() === '') {
-      throw new TypeError(`[DomOpsParty] createElement: name must be a non-empty string. ` + `Received: ${JSON.stringify(name)}`);
-    }
-    if (!VALID_NAME.test(name)) {
-      throw new RangeError(`[DomOpsParty] createElement: name "${name}" contains invalid characters. ` + `Only letters, digits, underscores, and hyphens are allowed.`);
-    }
-    if (this.#elements.has(name)) {
-      throw new RangeError(`[DomOpsParty] createElement: name "${name}" is already in use ` + `on branch "${this.#name}".`);
-    }
-    if (typeof tagName !== 'string' || tagName.trim() === '') {
-      throw new TypeError(`[DomOpsParty] createElement: tagName must be a non-empty string. ` + `Received: ${JSON.stringify(tagName)}`);
-    }
+    this.#assertNew('createElement', name, tagName);
+    return this.#own(name, document.createElement(tagName));
+  }
 
-    const el = document.createElement(tagName);
-    this.#elements.set(name, el);
-    return el;
+  /**
+   * Creates an SVG element - in SVG's namespace - registers it under `name` on
+   * this branch, and returns it: the twin of createElement for a vector drawing
+   * a component makes itself, a line round a box. Owned, released and named as
+   * createElement's are; the only sanctioned way to make one.
+   *
+   * @param {string} name    - Unique name within this branch. [a-zA-Z0-9_-]+
+   * @param {string} tagName - An SVG element's name: svg, rect, path, …
+   * @returns {SVGElement}
+   *
+   * @throws {Error}      If the branch has not been activated.
+   * @throws {TypeError}  If name or tagName are not non-empty strings, or name
+   *                      contains invalid characters.
+   * @throws {RangeError} If name is already in use on this branch.
+   */
+  createSvgElement(name, tagName) {
+    this.#assertNew('createSvgElement', name, tagName);
+    return this.#own(name, document.createElementNS(SVG_NS, tagName));
+  }
+
+  /** An element made for a name: this branch's, under it, released with it. */
+  #own(name, el) { this.#elements.set(name, el); return el; }
+
+  /** A new element's name and tag, checked before it is made: activated, well named, free, and a tag. */
+  #assertNew(method, name, tagName) {
+    this.#assertActivated();
+    const said = `[DomOpsParty] ${method}:`;
+    if (typeof name !== 'string' || name.trim() === '') throw new TypeError(`${said} name must be a non-empty string. Received: ${JSON.stringify(name)}`);
+    if (!VALID_NAME.test(name)) throw new RangeError(`${said} name "${name}" contains invalid characters. Only letters, digits, underscores, and hyphens are allowed.`);
+    if (this.#elements.has(name)) throw new RangeError(`${said} name "${name}" is already in use on branch "${this.#name}".`);
+    if (typeof tagName !== 'string' || tagName.trim() === '') throw new TypeError(`${said} tagName must be a non-empty string. Received: ${JSON.stringify(tagName)}`);
   }
 
   /**
