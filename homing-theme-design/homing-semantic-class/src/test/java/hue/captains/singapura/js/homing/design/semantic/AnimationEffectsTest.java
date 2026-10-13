@@ -133,7 +133,8 @@ class AnimationEffectsTest extends JsModuleTestBase {
     record MarchingLine() implements Line.Concrete<Marching>, Drawn {
         static final MarchingLine INSTANCE = new MarchingLine();
         @Override public List<Drawing<?>> drawings(Dressed theme) {
-            return List.of(new Drawing.Painted<>(Target.Color.Stroke.INSTANCE, new Paint.Inherited<>()), new Drawing.Animated(Ants.INSTANCE));
+            // the line in the copy's colour: what matches the ink names the same semantic colour, as a stroke takes no typography colour
+            return List.of(new Drawing.Painted<>(Target.Color.Stroke.INSTANCE, new Paint.With<>(new ResolvingColours.Copy())), new Drawing.Animated(Ants.INSTANCE));
         }
     }
 
@@ -222,7 +223,7 @@ class AnimationEffectsTest extends JsModuleTestBase {
                 + "    animation: effect-ants 0.6s linear infinite;\n    @media (prefers-reduced-motion: reduce) {\n"), css);
         assertTrue(css.contains(".marching___line__animation-effect-still {\n    stroke-width: 1.5px;\n    stroke-dasharray: 5 4;\n    animation: none;\n}\n"), css);
         assertTrue(css.contains(".marching___area__animation-effect-still {\n    animation: none;\n}\n"), css);
-        assertTrue(css.contains(".marching___line__color-stroke {\n    stroke: inherit;\n}\n"), "the line's ink, its own: the stroke of what holds it");
+        assertTrue(css.contains(".marching___line__color-stroke {\n    stroke: #1f2937;\n}\n"), "the line's ink, its own: the copy's colour, as paper gives it");
         assertEquals(4, flat.drawn(), "the line's ink and effect, the area's effect, the strip's effect");
     }
 
