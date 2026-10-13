@@ -32,6 +32,7 @@ class ColorTreeRefusesTest {
             package hypothetical;
             import hue.captains.singapura.js.homing.design.color.*;
             import hue.captains.singapura.js.homing.design.color.ColorScheme.Base;
+            import hue.captains.singapura.js.homing.design.Target.Color;
             import java.util.List;
             public class Hypothetical {
                 abstract static class Neo extends Base {}
@@ -176,6 +177,83 @@ class ColorTreeRefusesTest {
     void aStyleNamingAScaleForAColour_doesNotCompile() {
         refusedOnItsLine("""
                 static SemanticColor<? super Base> picks() { return new Risk(); } // refused here
+                """);
+    }
+
+    // ── what a colour target is painted with ──────────────────────────────
+
+    @Test
+    void everyCaseOnATargetThatOffersIt_compiles() {
+        var errors = compile("""
+                static final List<Paint<Base, Color.Ink>> INK = List.of(new Paint.With<>(new Accent()), new Paint.Inherited<>(), new Paint.Along<>(new Risk()));
+                static final List<Paint<Base, Color.Fill>> FILL = List.of(new Paint.With<>(new MineRed()), new Paint.Inherited<>(), new Paint.Nothing<>(), new Paint.Typography<>());
+                static final List<Paint<Base, Color.Stroke>> STROKE = List.of(new Paint.With<>(new Warning()), new Paint.Inherited<>(), new Paint.Nothing<>());
+                static final List<Paint<Base, Color.Scrollbar>> SCROLLBAR = List.of(new Paint.ThumbAndTrack<>(new Calm(), new Danger()), new Paint.Inherited<>());
+                static final List<Paint<Base, Color.Background>> BACKGROUND = List.of(new Paint.Ground<>(new Calm()), new Paint.Along<>(new Risk()),
+                        new Paint.Drawn<>(new Calm(), new Accent(), new Danger(), new Calm(), new MineRed()));
+                static final List<Paint<Base, Color.Border>> BORDER = List.of(new Paint.With<>(new Accent()), new Paint.Typography<>(),
+                        new Paint.Sides<>(new Accent(), new Calm(), new Calm(), new Accent()));
+                static final List<Paint<Base, Color.Outline>> OUTLINE = List.of(new Paint.With<>(new Accent()), new Paint.Typography<>());
+                static final List<Paint<Base, Color.ColumnRule>> RULE = List.of(new Paint.With<>(new Accent()), new Paint.Typography<>());
+                static final List<Paint<Base, Color.BoxShadow>> SHADOW = List.of(new Paint.Shadow<>(new Danger(), new Calm(), new Accent()), new Paint.Cast<>(new Danger()));
+                static final List<Paint<Neo, Color.Ink>> NEO = List.of(new Paint.With<>(new Accent()), new Paint.With<>(new Spark()), new Paint.Along<>(new Glare()));
+                """);
+        assertTrue(errors.isEmpty(), "every case on a target that offers it, a scheme's paint naming the base's colours and its own: " + describe(errors));
+    }
+
+    @Test
+    void oneColourOnABackground_doesNotCompile() {
+        refusedOnItsLine("""
+                static final Paint<Base, Color.Background> P = new Paint.With<>(new Calm()); // refused here
+                """);
+    }
+
+    @Test
+    void anInheritedBorder_doesNotCompile() {
+        refusedOnItsLine("""
+                static final Paint<Base, Color.Border> P = new Paint.Inherited<>(); // refused here
+                """);
+    }
+
+    @Test
+    void anInkOfNothing_doesNotCompile() {
+        refusedOnItsLine("""
+                static final Paint<Base, Color.Ink> P = new Paint.Nothing<>(); // refused here
+                """);
+    }
+
+    @Test
+    void aStrokeInTheTypographyColour_doesNotCompile() {
+        refusedOnItsLine("""
+                static final Paint<Base, Color.Stroke> P = new Paint.Typography<>(); // refused here
+                """);
+    }
+
+    @Test
+    void aScaleInAShadow_doesNotCompile() {
+        refusedOnItsLine("""
+                static final Paint<Base, Color.BoxShadow> P = new Paint.Along<>(new Risk()); // refused here
+                """);
+    }
+
+    @Test
+    void theBasesPaintNamingASchemesColour_doesNotCompile() {
+        refusedOnItsLine("""
+                static final Paint<Base, Color.Ink> P = new Paint.With<>(new Spark()); // refused here
+                """);
+    }
+
+    @Test
+    void theBasesPaintAlongASchemesScale_doesNotCompile() {
+        refusedOnItsLine("""
+                static final Paint<Base, Color.Ink> P = new Paint.Along<>(new Glare()); // refused here
+                """);
+    }
+
+    @Test
+    void aPaintNamingAScale_doesNotCompile() {
+        refusedOnItsLine("""
+                static final Paint<Base, Color.Ink> P = new Paint.With<>(new Risk()); // refused here
                 """);
     }
 

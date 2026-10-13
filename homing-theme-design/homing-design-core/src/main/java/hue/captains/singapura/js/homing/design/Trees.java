@@ -49,10 +49,24 @@ public final class Trees {
         for (Class<?> p : permitted) walk(p, out);
     }
 
+    /** The branches: the nodes whose children are leaves - {@code Color}, and each branch under {@code Colorless}. */
+    private static List<Class<?>> branches() {
+        var out = new ArrayList<Class<?>>();
+        var todo = new ArrayList<Class<?>>(List.of(Target.class));
+        while (!todo.isEmpty()) {
+            Class<?> node = todo.remove(0);
+            Class<?>[] permitted = node.getPermittedSubclasses();
+            if (permitted == null) continue;
+            if (permitted[0].isRecord()) out.add(node);
+            else todo.addAll(List.of(permitted));
+        }
+        return out;
+    }
+
     /** The sealed tree's guard: within a branch, no property is owned twice. */
     public static List<String> propertyCollisions() {
         var out = new ArrayList<String>();
-        for (Class<?> branch : Target.class.getPermittedSubclasses()) {
+        for (Class<?> branch : branches()) {
             var seen = new HashMap<String, Target>();
             for (Class<?> leaf : branch.getPermittedSubclasses()) {
                 Target t = targetInstance(leaf);

@@ -25,10 +25,19 @@ import java.util.Set;
  * <p>Names repeat across branches ({@code Face} could one day appear under
  * {@code Sound}), so a leaf's path is {@code Branch.Leaf} and its token is
  * {@code branch-leaf}: {@code color-background}, {@code motion-transform}.</p>
+ *
+ * <p>Colour stands apart from every other branch (RFC 0067, appendix Semantic Colours and Flavours): a
+ * style answers it in semantic colours, in cases each colour leaf offers, and never in declarations of its
+ * own; every other branch is {@link Colorless}, answered in declarations that name no colour.</p>
  */
-public sealed interface Target permits
-        Target.Color, Target.Shape, Target.Size, Target.Type, Target.Motion, Target.Animation,
-        Target.Effect, Target.Affordance, Target.Sound, Target.Asset {
+public sealed interface Target permits Target.Color, Target.Colorless {
+
+    /**
+     * Every branch but colour: answered in declarations of its own properties, which name no colour - a
+     * shape drawn in colour reads the registered colours of the leaf that colours it ({@link #colouredBy()}).
+     */
+    sealed interface Colorless extends Target permits Target.Shape, Target.Size, Target.Type, Target.Motion, Target.Animation,
+            Target.Effect, Target.Affordance, Target.Sound, Target.Asset {}
 
     /** The properties this leaf owns; disjoint from its siblings'. Empty for non-CSS carriers. */
     Set<String> properties();
@@ -74,11 +83,14 @@ public sealed interface Target permits
     //  Color — what is painted with colour
     // ═════════════════════════════════════════════════════════════════════
     /**
-     * What is painted with colour. Each leaf is a <b>semantic colour</b>: the set of physical
-     * colours one meaning needs, answered as a whole and never mixed. A <b>physical colour</b> is a
-     * slot CSS paints a colour in - a property, or, where CSS gives the slot no property of its own
-     * (a shadow's colours, a gradient's stops), a longhand registered to stand in for it, set on the
-     * element itself and never inherited.
+     * What is painted with colour. Each leaf is the set of <b>slots</b> one thing is painted in,
+     * answered as a whole and never mixed. A slot is where CSS paints a colour - a property, or,
+     * where CSS gives the slot no property of its own (a shadow's colours, a gradient's stops), a
+     * longhand registered to stand in for it, set on the element itself and never inherited.
+     *
+     * <p>A style answers a leaf in one of the cases it offers ({@code Paint}), naming semantic
+     * colours - never a value. Which cases a leaf offers is what CSS can do with its slots, said by
+     * the markers below, so no case lands where nobody means it.</p>
      */
     sealed interface Color extends Target permits Color.Ink, Color.Fill, Color.Stroke, Color.Scrollbar,
             Color.Background, Color.Border, Color.Outline, Color.ColumnRule, Color.BoxShadow {
@@ -89,26 +101,41 @@ public sealed interface Target permits
                     .map(p -> "@property " + p + " { syntax: \"<color>\"; inherits: false; initial-value: transparent; }").toList();
         }
 
+        /** A leaf of one slot, which a single colour paints. */
+        sealed interface Single permits Ink, Fill, Stroke, Border, Outline, ColumnRule {}
+
+        /** A leaf CSS inherits: its slot may take the colour of what the element stands on. */
+        sealed interface Inheritable permits Ink, Fill, Stroke, Scrollbar {}
+
+        /** A leaf that may paint nothing. */
+        sealed interface Omissible permits Fill, Stroke {}
+
+        /** A leaf that may take the element's typography colour, whole - CSS's {@code currentColor}. */
+        sealed interface Typographic permits Fill, Border, Outline, ColumnRule {}
+
+        /** A leaf whose colour may move along a scale, by the element's degree: on a casting with the COLOUR axis. */
+        sealed interface Scalable permits Ink, Background {}
+
         /** The colour of what is written on it. */
-        record Ink() implements Color {
+        record Ink() implements Color, Single, Inheritable, Scalable {
             public static final Ink INSTANCE = new Ink();
             @Override public Set<String> properties() { return Set.of("color"); }
             @Override public Set<State> states() { return INTERACTIVE; }
         }
         /** SVG fill. */
-        record Fill() implements Color {
+        record Fill() implements Color, Single, Inheritable, Omissible, Typographic {
             public static final Fill INSTANCE = new Fill();
             @Override public Set<String> properties() { return Set.of("fill"); }
             @Override public Set<State> states() { return INTERACTIVE; }
         }
         /** SVG stroke colour. */
-        record Stroke() implements Color {
+        record Stroke() implements Color, Single, Inheritable, Omissible {
             public static final Stroke INSTANCE = new Stroke();
             @Override public Set<String> properties() { return Set.of("stroke"); }
             @Override public Set<State> states() { return INTERACTIVE; }
         }
         /** The scrollbar's two colours. */
-        record Scrollbar() implements Color {
+        record Scrollbar() implements Color, Inheritable {
             public static final Scrollbar INSTANCE = new Scrollbar();
             @Override public Set<String> properties() { return Set.of("scrollbar-color"); }
             @Override public Set<State> states() { return REST_ONLY; }
@@ -118,7 +145,7 @@ public sealed interface Target permits
          * - a ramp's three stops and a pattern's marks. One set, since what is drawn over the ground
          * shows it through; the gradient's and the pattern's geometry is {@link Shape.Background}'s.
          */
-        record Background() implements Color {
+        record Background() implements Color, Scalable {
             public static final Background INSTANCE = new Background();
             @Override public Set<String> properties() {
                 return Set.of("background-color", "--background-ramp-from", "--background-ramp-via", "--background-ramp-to", "--background-mark");
@@ -126,19 +153,19 @@ public sealed interface Target permits
             @Override public Set<State> states() { return INTERACTIVE; }
         }
         /** The box's line: its border. */
-        record Border() implements Color {
+        record Border() implements Color, Single, Typographic {
             public static final Border INSTANCE = new Border();
             @Override public Set<String> properties() { return Set.of("border-color"); }
             @Override public Set<State> states() { return INTERACTIVE; }
         }
         /** The ring drawn around a box for attention: on focus, and the keys' marks. */
-        record Outline() implements Color {
+        record Outline() implements Color, Single, Typographic {
             public static final Outline INSTANCE = new Outline();
             @Override public Set<String> properties() { return Set.of("outline-color"); }
             @Override public Set<State> states() { return INTERACTIVE; }
         }
         /** The rules drawn between a box's columns. */
-        record ColumnRule() implements Color {
+        record ColumnRule() implements Color, Single, Typographic {
             public static final ColumnRule INSTANCE = new ColumnRule();
             @Override public Set<String> properties() { return Set.of("column-rule-color"); }
             @Override public Set<State> states() { return INTERACTIVE; }
@@ -158,7 +185,7 @@ public sealed interface Target permits
     // ═════════════════════════════════════════════════════════════════════
     //  Shape — the geometry a design owns
     // ═════════════════════════════════════════════════════════════════════
-    sealed interface Shape extends Target permits Shape.Corner, Shape.Shadow, Shape.Clip,
+    sealed interface Shape extends Colorless permits Shape.Corner, Shape.Shadow, Shape.Clip,
             Shape.Border, Shape.Outline, Shape.Background {
         record Corner() implements Shape {
             public static final Corner INSTANCE = new Corner();
@@ -204,7 +231,7 @@ public sealed interface Target permits
     // ═════════════════════════════════════════════════════════════════════
     //  Size — density; the space a design owns inside and between
     // ═════════════════════════════════════════════════════════════════════
-    sealed interface Size extends Target permits Size.Inset, Size.Gap, Size.Extent, Size.Proportion {
+    sealed interface Size extends Colorless permits Size.Inset, Size.Gap, Size.Extent, Size.Proportion {
         /** The air inside a box — block and inline, each one length, so each can grow with the element's size. */
         record Inset() implements Size {
             public static final Inset INSTANCE = new Inset();
@@ -243,7 +270,7 @@ public sealed interface Target permits
     // ═════════════════════════════════════════════════════════════════════
     //  Type — how text is set
     // ═════════════════════════════════════════════════════════════════════
-    sealed interface Type extends Target permits Type.Face, Type.Weight, Type.Scale, Type.Treatment, Type.Decoration, Type.Glyph {
+    sealed interface Type extends Colorless permits Type.Face, Type.Weight, Type.Scale, Type.Treatment, Type.Decoration, Type.Glyph {
         record Face() implements Type {
             public static final Face INSTANCE = new Face();
             @Override public Set<String> properties() { return Set.of("font-family"); }
@@ -288,7 +315,7 @@ public sealed interface Target permits
     // ═════════════════════════════════════════════════════════════════════
     //  Motion — what CSS can move; the moment is a state, not a leaf
     // ═════════════════════════════════════════════════════════════════════
-    sealed interface Motion extends Target permits Motion.Ease, Motion.Transform {
+    sealed interface Motion extends Colorless permits Motion.Ease, Motion.Transform {
         /** How changes travel: the transition. One per element, so one leaf. */
         record Ease() implements Motion {
             public static final Ease INSTANCE = new Ease();
@@ -312,7 +339,7 @@ public sealed interface Target permits
      * its keyframes, its timing and the properties it needs are the effect's, sealed, and the framework writes
      * them, with the effect's still dual, where motion is reduced or the effect is switched off.
      */
-    sealed interface Animation extends Target permits Animation.Effect {
+    sealed interface Animation extends Colorless permits Animation.Effect {
         /**
          * The effect an element wears: answered with an {@link AnimationEffect}, never with a body. It owns
          * {@code animation}; the properties the effect needs besides are the effect's to take, on the element
@@ -328,7 +355,7 @@ public sealed interface Target permits
     // ═════════════════════════════════════════════════════════════════════
     //  Effect — optical treatments of the whole element
     // ═════════════════════════════════════════════════════════════════════
-    sealed interface Effect extends Target permits Effect.Opacity, Effect.Filter, Effect.Blend {
+    sealed interface Effect extends Colorless permits Effect.Opacity, Effect.Filter, Effect.Blend {
         record Opacity() implements Effect {
             public static final Opacity INSTANCE = new Opacity();
             @Override public Set<String> properties() { return Set.of("opacity"); }
@@ -349,7 +376,7 @@ public sealed interface Target permits
     // ═════════════════════════════════════════════════════════════════════
     //  Affordance — what the pointer is told
     // ═════════════════════════════════════════════════════════════════════
-    sealed interface Affordance extends Target permits Affordance.Cursor, Affordance.Select {
+    sealed interface Affordance extends Colorless permits Affordance.Cursor, Affordance.Select {
         record Cursor() implements Affordance {
             public static final Cursor INSTANCE = new Cursor();
             @Override public Set<String> properties() { return Set.of("cursor"); }
@@ -365,7 +392,7 @@ public sealed interface Target permits
     // ═════════════════════════════════════════════════════════════════════
     //  Sound — not CSS; a cue per state
     // ═════════════════════════════════════════════════════════════════════
-    sealed interface Sound extends Target permits Sound.Cue {
+    sealed interface Sound extends Colorless permits Sound.Cue {
         record Cue() implements Sound {
             public static final Cue INSTANCE = new Cue();
             @Override public Set<String> properties() { return Set.of(); }
@@ -377,7 +404,7 @@ public sealed interface Target permits
     // ═════════════════════════════════════════════════════════════════════
     //  Asset — not CSS; a picture the semantic is shown by
     // ═════════════════════════════════════════════════════════════════════
-    sealed interface Asset extends Target permits Asset.Icon, Asset.Illustration {
+    sealed interface Asset extends Colorless permits Asset.Icon, Asset.Illustration {
         record Icon() implements Asset {
             public static final Icon INSTANCE = new Icon();
             @Override public Set<String> properties() { return Set.of(); }
