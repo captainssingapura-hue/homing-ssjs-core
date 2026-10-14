@@ -67,6 +67,38 @@ public record LeafClasses() implements StatelessFunctionalObject {
         return taxonomy.leaves().stream().map(l -> of(taxonomy, l)).toList();
     }
 
+    /**
+     * Every leaf described for the page, as {@code StyledLeaf} wears it: a frozen object, by token, of each leaf's token,
+     * its class, and each application state it lists with every value it has - the rest's class null - in its
+     * precedence; no pseudo state, which the browser draws.
+     *
+     * <pre>{@code
+     * Object.freeze({
+     *     "tab": Object.freeze({ token: "tab", styled: "styled-tab", states: Object.freeze({
+     *         "selected": Object.freeze({ "false": null, "true": "styled-tab--selected" }) }) })
+     * })
+     * }</pre>
+     */
+    public String script(Taxonomy taxonomy) {
+        var leaves = new ArrayList<String>();
+        for (ComponentLeaf leaf : taxonomy.leaves()) {
+            var states = new ArrayList<String>();
+            for (StateType<?> s : taxonomy.precedence(leaf)) {
+                if (s instanceof Pseudo) continue;
+                List<StateValue> values = s.values();
+                var classes = new ArrayList<String>();
+                for (int i = 0; i < values.size(); i++)
+                    classes.add(quoted(values.get(i).token()) + ": " + (i == 0 ? "null" : quoted(state(leaf, s, values.get(i)))));
+                states.add(quoted(s.name().value()) + ": Object.freeze({ " + String.join(", ", classes) + " })");
+            }
+            leaves.add("    " + quoted(leaf.token()) + ": Object.freeze({ token: " + quoted(leaf.token()) + ", styled: " + quoted(styled(leaf))
+                    + ", states: Object.freeze({" + (states.isEmpty() ? "" : " " + String.join(", ", states) + " ") + "}) })");
+        }
+        return "Object.freeze({\n" + String.join(",\n", leaves) + "\n})";
+    }
+
+    private static String quoted(String s) { return "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\""; }
+
     /** The listing, a line a class or a pseudo state: {@code plain-button  .styled-plain-button}, then each state indented. */
     public List<String> lines(Taxonomy taxonomy) {
         var out = new ArrayList<String>();

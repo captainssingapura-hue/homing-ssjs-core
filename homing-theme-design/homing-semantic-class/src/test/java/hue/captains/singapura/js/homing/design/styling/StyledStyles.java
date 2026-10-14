@@ -51,6 +51,13 @@ public record StyledStyles() {
         @Override public StylingRes style(ComponentLeaf leaf) { return leaf instanceof StyledTaxonomy.Meter ? ABSENT : CONTENT; }
     }
 
+    /** Over shabby, absent for every leaf: shabby's holes are its own. */
+    public record OverShabby() implements Derives<ColorScheme.Base, Shabby> {
+        public static final OverShabby INSTANCE = new OverShabby();
+        @Override public Shabby base() { return Shabby.INSTANCE; }
+        @Override public List<Implementation<?>> implementations() { return List.of(); }
+    }
+
     /** Over plain, absent for every leaf, with a file for the tab all the same. */
     public record Stray() implements Derives<ColorScheme.Base, Plain> {
         public static final Stray INSTANCE = new Stray();

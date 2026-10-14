@@ -60,7 +60,7 @@ class CheckStyleTest {
         var files = StyleFiles.INSTANCE;
         assertEquals("styles/hue/captains/singapura/js/homing/design/styling/plain/tab.css", files.path(Plain.INSTANCE, TAB));
         assertEquals(List.of("badge.css", "meter.css", "strip-lead.css", "strip.css", "tab.css"), files.present(Plain.INSTANCE));
-        assertEquals(Plain.INSTANCE, CHECK.baseLayer(Loudly.INSTANCE).orElseThrow(), "loudly's absence lands on plain");
+        assertEquals(Plain.INSTANCE, StyleSheet.INSTANCE.baseLayer(Loudly.INSTANCE).orElseThrow(), "loudly's absence lands on plain");
     }
 
     @Test

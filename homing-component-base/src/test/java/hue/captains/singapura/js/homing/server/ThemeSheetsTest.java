@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.server;
 
 import hue.captains.singapura.js.homing.ssjs.test.JsModuleTestBase;
+import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 import org.junit.jupiter.api.BeforeEach;
@@ -9,6 +10,8 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -34,7 +37,10 @@ class ThemeSheetsTest extends JsModuleTestBase {
             globalThis.stored = null;
             globalThis.changeListeners = [];
             globalThis.PreferenceViewInstance = {
-                resolve: function (name, fallback) { return globalThis.stored || fallback || null; },
+                resolve: function (name, fallback) {
+                    var s = name === "theme" ? globalThis.stored : (globalThis.picked || {})[name];
+                    return s || fallback || null;
+                },
                 onChange: function (fn) { globalThis.changeListeners.push(fn); return function () {}; }
             };
             globalThis.live = function () { return links.filter(function (l) { return !l.removed; }).map(function (l) { return l.href + " " + l.media; }); };
@@ -61,12 +67,23 @@ class ThemeSheetsTest extends JsModuleTestBase {
     private void fireAll(String theme) { for (int i = 0; i < 4; i++) { js.eval("js", "fireAll('" + theme + "'); undefined"); tick(); } }
     @SuppressWarnings("unchecked")
     private List<String> live() { return js.eval("js", "live()").as(List.class); }
-    private String theme() { Value v = themes.invokeMember("theme"); return v.isNull() ? null : v.asString(); }
+    private String theme() { return worn("theme"); }
+    private String worn(String varies) { Value v = themes.invokeMember(varies); return v.isNull() ? null : v.asString(); }
+    private void fireEvery(String part) { for (int i = 0; i < 4; i++) fire(part); }
+
+    /** A page wearing a style's sheet and a palette's, each under its fallback. */
+    private void pageStyledAndPainted() {
+        js.eval("js", "ThemeSheetsInstance.load(['StyleSheet'], 'plain', 'style'); ThemeSheetsInstance.load(['PaletteSheet'], 'paper', 'palette'); undefined");
+        tick();
+        fireEvery("style=plain");
+        fireEvery("palette=paper");
+        assertEquals(List.of("/css-content?class=StyleSheet&style=plain all", "/css-content?class=PaletteSheet&palette=paper all"), live());
+    }
 
     /** Two derived sheets the page's modules import - a lexicon's, a look's - under the default. */
     private void pageUnderDefault() {
-        js.eval("js", "globalThis.done = 0; ThemeSheetsInstance.load(['Words'], 'default').then(() => globalThis.done++);"
-                + "ThemeSheetsInstance.load(['Look'], 'default').then(() => globalThis.done++); undefined");
+        js.eval("js", "globalThis.done = 0; ThemeSheetsInstance.load(['Words'], 'default', 'theme').then(() => globalThis.done++);"
+                + "ThemeSheetsInstance.load(['Look'], 'default', 'theme').then(() => globalThis.done++); undefined");
         tick();
         fireAll("default");
         assertEquals(2, js.eval("js", "done").asInt());
@@ -76,7 +93,7 @@ class ThemeSheetsTest extends JsModuleTestBase {
 
     @Test
     void load_bringsTheSheetsUnderTheThemeWorn_appliedAtOnce() {
-        js.eval("js", "globalThis.done = false; ThemeSheetsInstance.load(['Words', 'Look'], 'default').then(() => globalThis.done = true); undefined");
+        js.eval("js", "globalThis.done = false; ThemeSheetsInstance.load(['Words', 'Look'], 'default', 'theme').then(() => globalThis.done = true); undefined");
         tick();
         assertEquals(List.of("/css-content?class=Words&theme=default not all", "/css-content?class=Look&theme=default not all"), live());
         fire("class=Words");
@@ -89,7 +106,7 @@ class ThemeSheetsTest extends JsModuleTestBase {
 
     @Test
     void aStoredPick_decidesTheThemeOverTheFallback() {
-        js.eval("js", "globalThis.stored = 'forest'; ThemeSheetsInstance.load(['Words'], 'default'); undefined");
+        js.eval("js", "globalThis.stored = 'forest'; ThemeSheetsInstance.load(['Words'], 'default', 'theme'); undefined");
         tick();
         assertEquals(List.of("/css-content?class=Words&theme=forest not all"), live());
     }
@@ -131,7 +148,7 @@ class ThemeSheetsTest extends JsModuleTestBase {
     void aSheetAskedForAfterTheSwitch_arrivesInTheNewTheme() {
         pageUnderDefault();
         js.eval("js", "ThemeSheetsInstance.switchTheme('forest'); undefined"); tick(); fireAll("forest");
-        js.eval("js", "ThemeSheetsInstance.load(['Glyphs'], 'default'); undefined");
+        js.eval("js", "ThemeSheetsInstance.load(['Glyphs'], 'default', 'theme'); undefined");
         tick();
         assertEquals("/css-content?class=Glyphs&theme=forest not all", live().get(live().size() - 1),
                 "the served module still says default; the page wears forest");
@@ -188,5 +205,61 @@ class ThemeSheetsTest extends JsModuleTestBase {
         js.eval("js", "globalThis.stored = 'default'; changeListeners.forEach(fn => fn()); undefined");
         tick();
         assertEquals(2, live().size());
+    }
+
+    // ── The style and the palette, each on its own (RFC 0067, Two Classes per Leaf) ──
+
+    @Test
+    void aStylesSheet_andAPalettes_eachUnderItsOwnName() {
+        pageStyledAndPainted();
+        assertEquals("plain", worn("style"));
+        assertEquals("paper", worn("palette"));
+        assertNull(theme(), "nothing on this page varies with the theme");
+    }
+
+    @Test
+    void switchingTheStyle_swapsTheStylesSheetAlone() {
+        pageStyledAndPainted();
+        js.eval("js", "globalThis.applied = []; ThemeSheetsInstance.onThemeApplied(function (c) { globalThis.applied.push(c.varies + ':' + c.from + '>' + c.to); });"
+                + "ThemeSheetsInstance.switchStyle('ink'); undefined");
+        tick();
+        assertEquals(List.of("/css-content?class=StyleSheet&style=plain all", "/css-content?class=PaletteSheet&palette=paper all",
+                "/css-content?class=StyleSheet&style=ink not all"), live(), "the style's sheet alone fetched again");
+        fireEvery("style=ink");
+        assertEquals(List.of("/css-content?class=PaletteSheet&palette=paper all", "/css-content?class=StyleSheet&style=ink all"), live(),
+                "the palette's sheet untouched");
+        assertEquals("ink", worn("style"));
+        assertEquals("paper", worn("palette"));
+        assertEquals(List.of("style:plain>ink"), js.eval("js", "applied").as(List.class));
+    }
+
+    @Test
+    void switchingThePalette_swapsThePalettesSheetAlone() {
+        pageStyledAndPainted();
+        js.eval("js", "ThemeSheetsInstance.switchPalette('night'); undefined");
+        tick();
+        fireEvery("palette=night");
+        assertEquals(List.of("/css-content?class=StyleSheet&style=plain all", "/css-content?class=PaletteSheet&palette=night all"), live(),
+                "the style's sheet untouched");
+        assertEquals("plain", worn("style"));
+        assertEquals("night", worn("palette"));
+    }
+
+    @Test
+    void aPickOfEachKind_followsItsOwnPreference() {
+        pageStyledAndPainted();
+        js.eval("js", "globalThis.picked = { palette: 'night' }; changeListeners.forEach(fn => fn()); undefined");
+        tick();
+        assertEquals("/css-content?class=PaletteSheet&palette=night not all", live().get(2), "the palette's pick, and nothing of the style's");
+        assertEquals(3, live().size());
+        fireEvery("palette=night");
+        assertEquals("night", worn("palette"));
+        assertEquals("plain", worn("style"));
+    }
+
+    @Test
+    void aSheetVaryingWithSomethingElse_isRefused() {
+        var refused = assertThrows(PolyglotException.class, () -> js.eval("js", "ThemeSheetsInstance.load(['Mood'], 'calm', 'mood')"));
+        assertTrue(refused.getMessage().contains("a derived sheet varies with one of theme, style, palette, not mood"), refused.getMessage());
     }
 }

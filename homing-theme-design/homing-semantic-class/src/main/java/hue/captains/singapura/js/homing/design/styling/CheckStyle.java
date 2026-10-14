@@ -106,7 +106,7 @@ public record CheckStyle() implements StatelessFunctionalObject {
             return new Checked(problems, reports);
         }
         boolean base = !(style instanceof Derives<?, ?>);
-        if (!base && baseLayer(style).isEmpty()) problems.add(style.token() + " derives from a style that derives, in the end, from itself");
+        if (!base && StyleSheet.INSTANCE.baseLayer(style).isEmpty()) problems.add(style.token() + " derives from a style that derives, in the end, from itself");
         var named = new HashSet<String>();
         for (ComponentLeaf leaf : taxonomy.leaves()) {
             named.add(leaf.token() + ".css");
@@ -134,17 +134,6 @@ public record CheckStyle() implements StatelessFunctionalObject {
             if (!named.contains(present)) problems.add(style.token() + "/" + present + " is no leaf's file: no leaf of the taxonomy is "
                     + (present.endsWith(".css") ? present.substring(0, present.length() - 4) : present + ", and a leaf's file is <leaf>.css"));
         return new Checked(problems, reports);
-    }
-
-    /** The base layer a style's absence lands on: the style it derives from, and so up, to one that derives from nothing. */
-    public Optional<DesignStyle<?>> baseLayer(DesignStyle<?> style) {
-        var passed = new HashSet<Class<?>>();
-        DesignStyle<?> at = style;
-        while (at instanceof Derives<?, ?> d) {
-            if (!passed.add(at.getClass())) return Optional.empty();
-            at = d.base();
-        }
-        return Optional.of(at);
     }
 
     /** One of a style's files, as written, for its leaf. */

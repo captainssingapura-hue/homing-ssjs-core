@@ -63,7 +63,7 @@ class CssGroupSubgraphTest {
         List<String> lines = new DerivedCssContentProvider<>(Look.INSTANCE, "default", new QueryParamResolver("/module")).content();
         assertEquals(3, lines.size(), String.join("\n", lines));
         assertTrue(lines.get(0).startsWith("import { ThemeSheetsInstance as _themes } from "), lines.get(0));
-        assertEquals("await _themes.load([\"" + fq(Look.class) + "\"], \"default\");", lines.get(1));
+        assertEquals("await _themes.load([\"" + fq(Look.class) + "\"], \"default\", \"theme\");", lines.get(1));
         assertEquals("const look_sheet = \"" + fq(Look.class) + "\";", lines.get(2));
         assertFalse(String.join("\n", lines).contains("_css"), "never the CSS manager's");
     }

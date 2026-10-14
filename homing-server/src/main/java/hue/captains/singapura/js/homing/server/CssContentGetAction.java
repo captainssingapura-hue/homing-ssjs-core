@@ -19,18 +19,21 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * GET /css-content?class=&lt;CssGroup or DerivedCss canonical name&gt;[&amp;theme=&lt;slug&gt;]
+ * GET /css-content?class=&lt;CssGroup or DerivedCss canonical name&gt;[&amp;theme=|style=|palette=&lt;slug&gt;]
  *
  * <p>A provided group renders from its declared bodies, each class
  * {@code selector { body }} in its {@code @layer}: the same in every theme, so a
  * theme on the request is ignored and none is needed. A derived sheet is its
- * renderer's, under the theme asked for, else the default (RFC 0064, D25).</p>
+ * renderer's, under the slug asked for by the name of what it varies with - the
+ * theme, the style or the palette, the others ignored - else its own fallback,
+ * else, for one varying with the theme, the default theme (RFC 0064, D25; RFC
+ * 0067, appendix Two Classes per Leaf).</p>
  *
  * <p>Hard cut: unknown {@code class} or {@code theme} returns 404. No
  * file-based fallback (RFC 0002 §3.6).</p>
  */
 public class CssContentGetAction
-        implements GetAction<RoutingContext, ModuleQuery, EmptyParam.NoHeaders, CssContent> {
+        implements GetAction<RoutingContext, CssQuery, EmptyParam.NoHeaders, CssContent> {
 
     private final Theme defaultTheme;
     private final ServedModules served;
@@ -56,11 +59,12 @@ public class CssContentGetAction
     }
 
     @Override
-    public ParamMarshaller._QueryString<RoutingContext, ModuleQuery> queryStrMarshaller() {
-        return ctx -> new ModuleQuery(
+    public ParamMarshaller._QueryString<RoutingContext, CssQuery> queryStrMarshaller() {
+        return ctx -> new CssQuery(
                 ctx.request().getParam("class"),
-                ctx.request().getParam("theme"),
-                ctx.request().getParam("locale")
+                ctx.request().getParam(DerivedCss.VariesWith.THEME.param()),
+                ctx.request().getParam(DerivedCss.VariesWith.STYLE.param()),
+                ctx.request().getParam(DerivedCss.VariesWith.PALETTE.param())
         );
     }
 
@@ -70,7 +74,7 @@ public class CssContentGetAction
     }
 
     @Override
-    public CompletableFuture<CssContent> execute(ModuleQuery query, EmptyParam.NoHeaders headers) {
+    public CompletableFuture<CssContent> execute(CssQuery query, EmptyParam.NoHeaders headers) {
         if (query.className() == null || query.className().isBlank()) {
             return CompletableFuture.failedFuture(ResourceNotFound.missingClass());
         }
@@ -85,17 +89,18 @@ public class CssContentGetAction
                 return CompletableFuture.failedFuture(ResourceNotFound.wrongType(query.className(), "CssGroup or DerivedCss"));
             }
 
-            String themeSlug = query.theme() != null && !query.theme().isBlank()
-                    ? query.theme()
-                    : (defaultTheme != null ? defaultTheme.slug() : null);
-            if (themeSlug == null) {
+            DerivedCss.VariesWith varies = sheet.variesWith();
+            String slug = query.slugFor(varies);
+            if (slug == null) slug = sheet.fallback().orElse(null);
+            if (slug == null && varies == DerivedCss.VariesWith.THEME && defaultTheme != null) slug = defaultTheme.slug();
+            if (slug == null) {
                 return CompletableFuture.failedFuture(ResourceNotFound.forClass(
                         query.className(),
-                        new IllegalStateException(
-                                "No theme specified and no default theme configured")));
+                        new IllegalStateException("No " + varies.param() + " specified, and the sheet names no fallback"
+                                + (varies == DerivedCss.VariesWith.THEME ? " and no default theme is configured" : ""))));
             }
             for (CssRenderer r : renderers) {
-                var css = r.render(sheet, themeSlug);
+                var css = r.render(sheet, slug);
                 if (css.isPresent()) return CompletableFuture.completedFuture(new CssContent(css.get()));
             }
             return CompletableFuture.completedFuture(new CssContent("/* no renderer derives " + query.className() + " */\n"));
