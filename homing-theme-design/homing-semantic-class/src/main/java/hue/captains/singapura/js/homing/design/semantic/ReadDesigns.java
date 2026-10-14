@@ -151,20 +151,11 @@ public record ReadDesigns() implements StatelessFunctionalObject {
                                 continue;
                             }
                             ResolveDrawing.Resolved drawing;
-                            if (mine.get(t) instanceof Drawing.Of<?> of) {
-                                try {
-                                    drawing = ResolveDrawing.INSTANCE.taken(taxonomy, of, theme, ResolveDrawing.name(c), c);
-                                } catch (IllegalArgumentException e) {
-                                    problems.add(new DesignProblem(Rule.OF_ASTRAY, "in " + name(theme) + ": " + e.getMessage()));
-                                    continue;
-                                }
-                            } else {
-                                try {
-                                    drawing = ResolveDrawing.INSTANCE.resolve(taxonomy, c, t, theme);
-                                } catch (IllegalArgumentException e) {
-                                    problems.add(new DesignProblem(Rule.AS_ASTRAY, "in " + name(theme) + ": " + e.getMessage()));
-                                    continue;
-                                }
+                            try {
+                                drawing = ResolveDrawing.INSTANCE.resolve(taxonomy, c, t, theme);
+                            } catch (IllegalArgumentException e) {
+                                problems.add(new DesignProblem(Rule.AS_ASTRAY, "in " + name(theme) + ": " + e.getMessage()));
+                                continue;
                             }
                             if (drawing.effect() != null) takesOwned(c, drawing.effect(), mineOwned, theme, problems);
                         }

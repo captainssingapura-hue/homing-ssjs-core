@@ -17,8 +17,7 @@ import java.util.List;
 /**
  * Designs of {@link DesigningTaxonomy}'s frame. Two that are read: a plain one, and a bold one that draws
  * its edge per style, darkens it under the hand, and takes the plain edge's colour and the plain mark's ring.
- * Two that take their edge from the taxonomy: a boxed one, drawn as the theme answers the box, and an echo
- * that takes the boxed edge's border. Then designs that are refused, one rule each.
+ * Then designs that are refused, one rule each. None takes a component's look: what a design draws is its own.
  */
 final class DesigningDesigns {
 
@@ -96,56 +95,8 @@ final class DesigningDesigns {
         }
     }
 
-    // ── taken from the taxonomy ────────────────────────────────────────────
-
-    /** Draws its edge as the theme answers the box: the box's border, whatever a style says of it. */
-    record Boxed() implements Design<ColorScheme.Base, Frame> { static final Boxed INSTANCE = new Boxed(); }
-
-    record BoxedEdge() implements Edge.Concrete<Boxed>, Drawn {
-        static final BoxedEdge INSTANCE = new BoxedEdge();
-        @Override public List<Drawing<?>> drawings(Dressed theme) {
-            return List.of(new Drawing.Of<>(BORDER, Box.INSTANCE), new Drawing.Of<>(BORDER_COLOUR, Box.INSTANCE));
-        }
-    }
-
-    record BoxedMark() implements Mark.Concrete<Boxed>, Drawn {
-        static final BoxedMark INSTANCE = new BoxedMark();
-        @Override public List<Drawing<?>> drawings(Dressed theme) { return List.of(new Drawing.None<>(RING), new Drawing.None<>(RING_COLOUR)); }
-    }
-
-    /** Takes its edge's border from the boxed edge, which takes it from the box. */
-    record Echo() implements Design<ColorScheme.Base, Frame> { static final Echo INSTANCE = new Echo(); }
-
-    record EchoEdge() implements Edge.Concrete<Echo>, Drawn {
-        static final EchoEdge INSTANCE = new EchoEdge();
-        @Override public List<Drawing<?>> drawings(Dressed theme) {
-            return List.of(new Drawing.As<>(BORDER, BoxedEdge.INSTANCE), new Drawing.None<>(BORDER_COLOUR));
-        }
-    }
-
-    record EchoMark() implements Mark.Concrete<Echo>, Drawn {
-        static final EchoMark INSTANCE = new EchoMark();
-        @Override public List<Drawing<?>> drawings(Dressed theme) { return List.of(new Drawing.None<>(RING), new Drawing.None<>(RING_COLOUR)); }
-    }
 
     // ── refused ────────────────────────────────────────────────────────────
-
-    /** A component of the region no taxonomy read here has. */
-    record Stray() implements Component<Region> {
-        static final Stray INSTANCE = new Stray();
-        @Override public Region parent() { return Region.INSTANCE; }
-    }
-
-    /** Takes its border from a virtual leaf, and its border's colour from a component the taxonomy has not. */
-    record Hollow() implements Design<ColorScheme.Base, Frame> { static final Hollow INSTANCE = new Hollow(); }
-    record HollowEdge() implements Edge.Concrete<Hollow>, Drawn {
-        @Override public List<Drawing<?>> drawings(Dressed theme) {
-            return List.of(new Drawing.Of<>(BORDER, Mark.INSTANCE), new Drawing.Of<>(BORDER_COLOUR, Stray.INSTANCE));
-        }
-    }
-    record HollowMark() implements Mark.Concrete<Hollow>, Drawn {
-        @Override public List<Drawing<?>> drawings(Dressed theme) { return List.of(new Drawing.None<>(RING), new Drawing.None<>(RING_COLOUR)); }
-    }
 
     /** Draws the edge only. */
     record Half() implements Design<ColorScheme.Base, Frame> { static final Half INSTANCE = new Half(); }

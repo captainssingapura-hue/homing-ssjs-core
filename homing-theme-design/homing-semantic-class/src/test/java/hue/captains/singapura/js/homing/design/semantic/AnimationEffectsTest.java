@@ -158,7 +158,7 @@ class AnimationEffectsTest extends JsModuleTestBase {
         }
     }
 
-    /** Takes its line's effect from the marching line, and its area's from the theme's pad: no effect. */
+    /** Takes its line's effect from the marching line; its area moves with none. */
     record Borrowed() implements Design<ColorScheme.Base, Overlay> { static final Borrowed INSTANCE = new Borrowed(); }
 
     record BorrowedLine() implements Line.Concrete<Borrowed>, Drawn {
@@ -169,7 +169,7 @@ class AnimationEffectsTest extends JsModuleTestBase {
 
     record BorrowedArea() implements Area.Concrete<Borrowed>, Drawn {
         @Override public List<Drawing<?>> drawings(Dressed theme) {
-            return List.of(new Drawing.None<>(Target.Color.Background.INSTANCE), new Drawing.Of<>(EFFECT, Pad.INSTANCE));
+            return List.of(new Drawing.None<>(Target.Color.Background.INSTANCE), new Drawing.Animated(AnimationEffect.None.INSTANCE));
         }
     }
 
@@ -229,15 +229,14 @@ class AnimationEffectsTest extends JsModuleTestBase {
     }
 
     @Test
-    void anEffectTakenFromAnotherLeaf_orFromTheTheme_isTheEffect() {
+    void anEffectTakenFromAnotherLeaf_isTheEffect() {
         var read = ReadDesigns.INSTANCE.read(TAXONOMY, List.of(VALUED),
                 List.of(MarchingLine.INSTANCE, MarchingArea.INSTANCE, MarchingPlate.INSTANCE, MarchingStrip.INSTANCE,
                         new BorrowedLine(), new BorrowedArea(), new BorrowedPlate(), new BorrowedStrip()));
         DesignRead borrowed = read.stream().filter(d -> d.token().equals("borrowed")).findFirst().orElseThrow();
         String css = FlattenDesign.INSTANCE.flatten(borrowed, VALUED, "Borrowed").css();
         assertTrue(css.contains("/* from marching___line__animation-effect */\n/* ants */\n.borrowed___line__animation-effect {\n"), css);
-        assertTrue(css.contains("/* the theme's pad */\n/* none */\n.borrowed___area__animation-effect {\n    animation: none;\n}\n"),
-                "the pad's animation, as the valued style answers it at the root - no effect:\n" + css);
+        assertTrue(css.contains("/* none */\n.borrowed___area__animation-effect {\n    animation: none;\n}\n"), "its area's none, its own:\n" + css);
         assertEquals(1, css.split("@keyframes effect-ants", -1).length - 1);
     }
 

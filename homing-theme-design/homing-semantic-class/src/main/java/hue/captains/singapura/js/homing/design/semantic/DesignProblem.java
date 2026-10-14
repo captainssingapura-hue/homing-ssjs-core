@@ -38,8 +38,6 @@ public record DesignProblem(Rule rule, String says) implements ValueObject {
         UNDRAWN,
         /** A drawing taken from a concrete leaf of another leaf, from one that draws nothing of it, or round in a circle. */
         AS_ASTRAY,
-        /** A drawing taken from a virtual leaf, from a component the taxonomy has not, or from one the theme leaves unanswered at rest. */
-        OF_ASTRAY,
         /** An animation effect that takes a property another target its leaf owns writes: what an effect takes, nothing else there may write. */
         EFFECT_TAKES_OWNED
     }
