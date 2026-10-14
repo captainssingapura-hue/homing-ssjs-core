@@ -82,6 +82,18 @@ public record StyleFiles() implements StatelessFunctionalObject {
         }
     }
 
+    /**
+     * The casting an @keyframes is named after (D29): of those given, the one whose token is the name, or begins it before
+     * a hyphen - {@code tab-pulse} is the tab's - the longest such token, so {@code tab-strip-slide} is the tab strip's.
+     */
+    public Optional<Casting> namedAfter(String keyframe, java.util.Collection<Casting> castings) {
+        Casting best = null;
+        for (Casting c : castings)
+            if ((keyframe.equals(c.token()) || keyframe.startsWith(c.token() + "-")) && (best == null || c.token().length() > best.token().length()))
+                best = c;
+        return Optional.ofNullable(best);
+    }
+
     /** Every name in the style's directory, across the classpath, sorted: {@code button.css}. */
     public List<String> present(DesignStyle<?> style) { return List.copyOf(counted(loader(style), directory(style)).keySet()); }
 
@@ -91,9 +103,9 @@ public record StyleFiles() implements StatelessFunctionalObject {
     }
 
     /**
-     * Every casting's rule the style's family files write, by the casting - read once, each file in its family's order;
-     * a rule that is no casting's is left out, and of a casting ruled twice, the first. The check holds the files to
-     * the castings; this only finds them.
+     * Every casting's rule the style's family files write, by the casting - read once, each file in its family's order,
+     * each with the @keyframes named after it in the same file after it (D29); a rule that is no casting's is left out,
+     * and of a casting ruled twice, the first. The check holds the files to the castings; this only finds them.
      */
     public Map<Casting, Written> written(Taxonomy taxonomy, DesignStyle<?> style) {
         var byClass = new HashMap<String, Casting>();
@@ -102,11 +114,20 @@ public record StyleFiles() implements StatelessFunctionalObject {
         for (String file : present(style)) {
             if (family(file).isEmpty()) continue;
             String css = read(style, file).orElse("");
-            for (ReadCss.Piece piece : ReadCss.INSTANCE.split(css).pieces())
+            var keyframes = new ArrayList<ReadCss.Piece>();
+            for (ReadCss.Piece piece : ReadCss.INSTANCE.split(css).pieces()) {
                 if (piece.item() instanceof ReadCss.Rule r) {
                     Casting c = byClass.get(CheckStyle.squeeze(r.selector()));
                     if (c != null) out.putIfAbsent(c, new Written(file, r, piece.text()));
-                }
+                } else if (piece.item() instanceof ReadCss.AtRule a && CheckStyle.squeeze(a.prelude()).startsWith("keyframes ")) keyframes.add(piece);
+            }
+            for (ReadCss.Piece k : keyframes) {
+                String keyframe = CheckStyle.squeeze(((ReadCss.AtRule) k.item()).prelude()).substring("keyframes ".length()).trim();
+                namedAfter(keyframe, byClass.values()).ifPresent(c -> {
+                    Written w = out.get(c);
+                    if (w != null && w.file().equals(file)) out.put(c, new Written(file, w.rule(), w.text() + "\n\n" + k.text()));
+                });
+            }
         }
         return out;
     }

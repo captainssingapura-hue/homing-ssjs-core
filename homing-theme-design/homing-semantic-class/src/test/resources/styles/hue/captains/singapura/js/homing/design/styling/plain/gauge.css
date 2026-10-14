@@ -10,3 +10,9 @@
     border: 1px solid var(--it-warning);
     outline-color: var(--fixed-alarm);
 }
+
+/* The meter sweeping up its scale: named after it, served with its rule (D29). */
+@keyframes meter-sweep {
+    from { background-color: var(--fp-safe); }
+    to { background-color: var(--along-risk); }
+}

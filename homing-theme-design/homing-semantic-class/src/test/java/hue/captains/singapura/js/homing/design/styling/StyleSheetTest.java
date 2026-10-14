@@ -43,6 +43,8 @@ class StyleSheetTest {
         String plain = SHEET.write(TAXONOMY, Plain.INSTANCE);
         assertEquals(5, plain.lines().filter(l -> l.endsWith("'s own */")).count());
         assertTrue(plain.contains("--along-risk: color-mix(in oklab, var(--fp-danger)"), "a leaf's own colours travel with it");
+        assertTrue(plain.contains("}\n\n@keyframes meter-sweep {"), "its keyframes served with its rule (D29)");
+        assertTrue(SHEET.write(TAXONOMY, Ink.INSTANCE).contains("@keyframes meter-sweep"), "with the base layer's rule, where a style answers absence");
     }
 
     @Test

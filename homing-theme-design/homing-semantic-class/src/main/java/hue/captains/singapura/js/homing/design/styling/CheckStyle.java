@@ -49,8 +49,14 @@ import java.util.regex.Pattern;
  * own element - {@code &.styled-tab--selected} for an application state's value, {@code &:hover} for a pseudo state -
  * each once and holding declarations alone (D12). Every one of those selectors weighs the same, so the order the file
  * draws them in is what decides between two states at once: the leaf's precedence, the least important first, which a
- * soft check reports when it is not (D22, D23). No two states combined in one selector, no {@code !important}, and -
- * for now - no pseudo-element and no at-rule.</p>
+ * soft check reports when it is not (D22, D23). No two states combined in one selector, and no {@code !important}.</p>
+ *
+ * <p>Beyond its rule and its states, what is allowed by name and nothing else (D29): a pseudo-element of the leaf's own
+ * element, each one the check lists ({@link #PSEUDO_ELEMENTS}), nested in the casting's rule - {@code &::placeholder} -
+ * once, holding declarations alone; an {@code @media} for one of the reader's settings it lists ({@link
+ * #READER_SETTINGS}), nested in the casting's rule, once each, holding what the rule may hold; and, at the top of the
+ * family's file, an {@code @keyframes} named after a casting the file rules - {@code tab} or {@code tab-<word>} - served
+ * with it. Every declaration in them is held to the same colour rules.</p>
  *
  * <p>Its colours, every one a variable:</p>
  * <ul>
@@ -69,6 +75,18 @@ import java.util.regex.Pattern;
 public record CheckStyle() implements StatelessFunctionalObject {
 
     public static final CheckStyle INSTANCE = new CheckStyle();
+
+    /** The pseudo-elements a casting's rule may draw, each by name (D29): parts of its own element the browser makes. */
+    public static final List<String> PSEUDO_ELEMENTS = List.of("::before", "::after", "::placeholder", "::marker", "::selection",
+            "::backdrop", "::file-selector-button", "::picker(select)", "::picker-icon", "::checkmark",
+            "::-webkit-slider-thumb", "::-webkit-slider-runnable-track", "::-moz-range-thumb", "::-moz-range-track",
+            "::-moz-range-progress");
+
+    /** The reader's settings a casting's rule may answer by an {@code @media} nested in it (D29). */
+    public static final List<String> READER_SETTINGS = List.of("(prefers-reduced-motion: reduce)", "(prefers-reduced-transparency: reduce)",
+            "(prefers-contrast: more)", "(prefers-contrast: less)", "(forced-colors: active)");
+
+    private static final Pattern KEYFRAME = Pattern.compile("(from|to|\\d+(\\.\\d+)?%)(\\s*,\\s*(from|to|\\d+(\\.\\d+)?%))*");
 
     /**
      * What a check found.
@@ -175,6 +193,7 @@ public record CheckStyle() implements StatelessFunctionalObject {
         private final Map<Casting, String> drawn;
         private final List<String> problems = new ArrayList<>();
         private final List<String> reports = new ArrayList<>();
+        private final Map<Casting, OneFile> ruled = new LinkedHashMap<>();
 
         FamilyFile(Taxonomy taxonomy, ColorTree tree, DesignStyle<?> style, String file, ComponentBranch head, Map<Casting, String> drawn) {
             this.taxonomy = taxonomy;
@@ -194,10 +213,13 @@ public record CheckStyle() implements StatelessFunctionalObject {
             int last = -1;
             Casting lastDrawn = null;
             boolean any = false;
+            var keyframes = new ArrayList<ReadCss.AtRule>();
             for (ReadCss.Piece piece : split.pieces()) {
                 switch (piece.item()) {
                     case ReadCss.Declaration d -> at(d, d.property() + " is declared outside any rule");
-                    case ReadCss.AtRule a -> at(a, "@" + a.prelude() + ": no at-rule is in a family's file, for now");
+                    case ReadCss.AtRule a when squeeze(a.prelude()).startsWith("keyframes ") -> keyframes.add(a);
+                    case ReadCss.AtRule a -> at(a, "@" + a.prelude() + ": a family's file holds no at-rule but @keyframes named after a "
+                            + "casting it rules; a reader's setting is nested in the casting's rule (D29)");
                     case ReadCss.Rule r -> {
                         Casting c = byClass.get(squeeze(r.selector()));
                         if (c == null) {
@@ -225,11 +247,35 @@ public record CheckStyle() implements StatelessFunctionalObject {
                             last = index;
                             lastDrawn = c;
                         }
-                        Checked one = new OneFile(taxonomy, tree, style, c, name).check(r);
-                        problems.addAll(one.problems());
-                        reports.addAll(one.reports());
+                        OneFile one = new OneFile(taxonomy, tree, style, c, name);
+                        one.check(r);
+                        ruled.put(c, one);
                     }
                 }
+            }
+            var named = new LinkedHashSet<String>();
+            for (ReadCss.AtRule k : keyframes) {
+                String keyframe = squeeze(k.prelude()).substring("keyframes ".length()).trim();
+                if (!named.add(keyframe)) {
+                    at(k, "@keyframes " + keyframe + " is written twice");
+                    continue;
+                }
+                Casting of = StyleFiles.INSTANCE.namedAfter(keyframe, family).orElse(null);
+                if (of == null) {
+                    at(k, "@keyframes " + keyframe + " is named after none of " + head.token() + "'s castings: <casting> or <casting>-<word> (D29)");
+                    continue;
+                }
+                OneFile one = ruled.get(of);
+                if (one == null) {
+                    at(k, "@keyframes " + keyframe + " is " + of.token() + "'s, which this file does not rule: it is served with its casting's rule (D29)");
+                    continue;
+                }
+                one.keyframes(k);
+            }
+            for (OneFile one : ruled.values()) {
+                Checked c = one.finish();
+                problems.addAll(c.problems());
+                reports.addAll(c.reports());
             }
             if (!any && split.problems().isEmpty() && problems.isEmpty())
                 problems.add(name + ": rules none of " + head.token() + "'s castings: a family's file rules its castings, or is not there");
@@ -273,12 +319,36 @@ public record CheckStyle() implements StatelessFunctionalObject {
             for (ColorNode<?, ?, ?> n : tree.nodes()) nodes.put(n.token(), n);
         }
 
-        Checked check(ReadCss.Rule rule) {
+        void check(ReadCss.Rule rule) {
             if (scheme == null) {
                 problems.add(name + ": " + style.token() + " requires no scheme, so no colour can be held to it");
-                return new Checked(problems, reports);
+                return;
             }
-            leafRule(rule, LeafClasses.INSTANCE.of(taxonomy, leaf));
+            LeafClasses.Listing listing = LeafClasses.INSTANCE.of(taxonomy, leaf);
+            body(rule.body(), listing, null);
+        }
+
+        /** An @keyframes named after the casting: from, to and percentages, each holding declarations alone (D29). */
+        void keyframes(ReadCss.AtRule k) {
+            if (scheme == null) return;
+            for (ReadCss.Item item : k.body() == null ? List.<ReadCss.Item>of() : k.body()) {
+                switch (item) {
+                    case ReadCss.Rule r when KEYFRAME.matcher(squeeze(r.selector())).matches() -> {
+                        for (ReadCss.Item inner : r.body()) {
+                            switch (inner) {
+                                case ReadCss.Declaration d -> declaration(d, "a keyframe");
+                                default -> at(inner, "a keyframe holds declarations alone");
+                            }
+                        }
+                    }
+                    case ReadCss.Rule r -> at(r, r.selector() + " is no keyframe: from, to, or a percentage");
+                    default -> at(item, "an @keyframes holds keyframes alone: from, to, or a percentage");
+                }
+            }
+        }
+
+        /** What it found, its colours of its own each assigned where they are used. */
+        Checked finish() {
             for (Map.Entry<String, Integer> u : used.entrySet())
                 if (!assigned.contains(u.getKey()))
                     problems.add(name + ":" + u.getValue() + ": var(" + u.getKey() + ") is named, and not assigned in the leaf's own rule: "
@@ -286,17 +356,34 @@ public record CheckStyle() implements StatelessFunctionalObject {
             return new Checked(problems, reports);
         }
 
-        /** The leaf's rule: its declarations, then each state drawn in it, in the leaf's precedence. */
-        private void leafRule(ReadCss.Rule rule, LeafClasses.Listing listing) {
+        /**
+         * The casting's rule - or an @media of it, {@code media} its setting: its declarations, then each state drawn in
+         * it, in the leaf's precedence; each pseudo-element it lists by name; and, in the rule itself, each reader's
+         * setting answered once (D29).
+         */
+        private void body(List<ReadCss.Item> items, LeafClasses.Listing listing, String media) {
             var byDrawn = new LinkedHashMap<String, Integer>();
             for (LeafClasses.Drawn d : listing.states()) byDrawn.put(d.drawnBy(), byDrawn.size());
             var drawn = new LinkedHashSet<String>();
+            var answered = new LinkedHashSet<String>();
             String highest = null;
             int highestAt = -1;
-            for (ReadCss.Item item : rule.body()) {
+            for (ReadCss.Item item : items) {
                 switch (item) {
-                    case ReadCss.Declaration d -> declaration(d, true);
-                    case ReadCss.AtRule a -> at(a, "@" + a.prelude() + ": no at-rule is in a casting's rule, for now");
+                    case ReadCss.Declaration d -> declaration(d, media == null ? null : "an @media of it");
+                    case ReadCss.AtRule a -> {
+                        String prelude = squeeze(a.prelude());
+                        if (!prelude.matches("media\\b.*")) {
+                            at(a, "@" + a.prelude() + ": a casting's rule holds no at-rule but an @media for a reader's setting (D29)");
+                            continue;
+                        }
+                        String setting = prelude.substring("media".length()).replace(" ", "");
+                        String allowed = READER_SETTINGS.stream().filter(s -> s.replace(" ", "").equals(setting)).findFirst().orElse(null);
+                        if (media != null) at(a, "@" + a.prelude() + " inside @media " + media + ": a reader's setting is answered in the casting's rule");
+                        else if (allowed == null) at(a, "@" + a.prelude() + " is no reader's setting the check allows: " + String.join(", ", READER_SETTINGS) + " (D29)");
+                        else if (!answered.add(allowed)) at(a, "@media " + allowed + " is answered twice");
+                        else body(a.body() == null ? List.of() : a.body(), listing, allowed);
+                    }
                     case ReadCss.Rule r -> {
                         String selector = squeeze(r.selector());
                         if (!selector.startsWith("&")) {
@@ -308,7 +395,16 @@ public record CheckStyle() implements StatelessFunctionalObject {
                         Integer rank = byDrawn.get(by);
                         String combined = byDrawn.keySet().stream().filter(s -> by.startsWith(s) && by.length() > s.length()).findFirst().orElse(null);
                         if (by.startsWith("::")) {
-                            at(r, r.selector() + " draws a pseudo-element: none is in a casting's rule, for now");
+                            if (!PSEUDO_ELEMENTS.contains(by))
+                                at(r, r.selector() + " draws " + by + ", a pseudo-element the check does not allow by name: "
+                                        + String.join(", ", PSEUDO_ELEMENTS) + " (D29)");
+                            else if (!drawn.add(by)) at(r, r.selector() + " is drawn twice");
+                            else for (ReadCss.Item inner : r.body()) {
+                                switch (inner) {
+                                    case ReadCss.Declaration d -> declaration(d, "a pseudo-element's rule");
+                                    default -> at(inner, "a pseudo-element's rule holds declarations alone");
+                                }
+                            }
                             continue;
                         }
                         if (rank == null && combined != null) {
@@ -327,7 +423,7 @@ public record CheckStyle() implements StatelessFunctionalObject {
                             at(r, r.selector() + " is drawn twice: each state once, in the leaf's precedence");
                             continue;
                         }
-                        if (rank < highestAt)
+                        if (rank < highestAt && media == null)
                             reports.add(name + ":" + r.line() + ": " + by + " is drawn after " + highest + ", which outranks it in "
                                     + leaf.token() + "'s precedence: where both hold, the later wins, so " + by + " would (D22)");
                         else {
@@ -336,9 +432,9 @@ public record CheckStyle() implements StatelessFunctionalObject {
                         }
                         for (ReadCss.Item inner : r.body()) {
                             switch (inner) {
-                                case ReadCss.Declaration d -> declaration(d, false);
+                                case ReadCss.Declaration d -> declaration(d, "a state's rule");
                                 case ReadCss.Rule n -> at(n, n.selector() + " inside " + by + ": a state's rule holds declarations alone");
-                                case ReadCss.AtRule a -> at(a, "@" + a.prelude() + ": no at-rule is in a casting's rule, for now");
+                                case ReadCss.AtRule a -> at(a, "@" + a.prelude() + " inside " + by + ": a state's rule holds declarations alone");
                             }
                         }
                     }
@@ -346,8 +442,8 @@ public record CheckStyle() implements StatelessFunctionalObject {
             }
         }
 
-        /** A declaration, in the leaf's own rule or a state's. */
-        private void declaration(ReadCss.Declaration d, boolean own) {
+        /** A declaration, in the leaf's own rule - {@code where} none - or in a state's, a pseudo-element's, an @media's, a keyframe. */
+        private void declaration(ReadCss.Declaration d, String where) {
             String property = d.property(), value = d.value();
             if (value.toLowerCase(Locale.ROOT).contains("!important"))
                 at(d, property + " is !important, which overrules the leaf's precedence: the order of its states decides (D22)");
@@ -356,7 +452,7 @@ public record CheckStyle() implements StatelessFunctionalObject {
                 at(d, property + " is the palette's, defined by its sheet: a casting's rule names it, var(" + property + "), and never assigns it (D5)");
             else if (LOCAL.stream().anyMatch(property::startsWith)) {
                 local = true;
-                if (!own) at(d, property + " is assigned in a state's rule: a colour of the leaf's own is assigned in the leaf's own rule (D13, D14)");
+                if (where != null) at(d, property + " is assigned in " + where + ": a colour of the leaf's own is assigned in the leaf's own rule (D13, D14)");
                 if (!assigned.add(property)) at(d, property + " is assigned twice");
                 local(d);
             }

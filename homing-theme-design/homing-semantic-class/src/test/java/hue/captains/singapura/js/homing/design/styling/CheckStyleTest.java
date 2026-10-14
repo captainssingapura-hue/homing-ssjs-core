@@ -142,7 +142,7 @@ class CheckStyleTest {
         refused(".styled-strip {}\n.styled-tab {}", "plain/control.css:2: .styled-tab is ruled after .styled-strip, which comes after it in "
                 + "control's order: tab, tab_lead, strip, badge");
         refused("color: var(--fp-copy);\n.styled-tab {}", "plain/control.css:1: color is declared outside any rule");
-        refused(".styled-tab {}\n@media print { .styled-tab { color: var(--fp-page); } }", "@media print: no at-rule is in a family's file");
+        refused(".styled-tab {}\n@media print { .styled-tab { color: var(--fp-page); } }", "@media print: a family's file holds no at-rule but @keyframes named after a casting it rules");
         assertEquals(List.of("plain/knob.css is no family's file"), CHECK.file(TAXONOMY, TREE, Plain.INSTANCE, "knob.css", ".styled-tab {}").problems());
     }
 
@@ -157,8 +157,40 @@ class CheckStyleTest {
         refused(".styled-tab { &:hover {} &:hover {} }", "&:hover is drawn twice");
         refused(".styled-tab { &.styled-tab--selected:hover { color: var(--fp-copy); } }",
                 "draws .styled-tab--selected with more: each state is drawn alone, and where two hold the leaf's precedence decides (D22)");
-        refused(".styled-tab { &::before { color: var(--fp-copy); } }", "&::before draws a pseudo-element: none is in a casting's rule, for now");
+        refused(".styled-tab { &::first-line { color: var(--fp-copy); } }", "draws ::first-line, a pseudo-element the check does not allow by name");
         refused(".styled-tab { &.styled-tab--selected { &:hover { color: var(--fp-copy); } } }", "a state's rule holds declarations alone");
+    }
+
+    // ── what a file may hold besides, allowed by name (D29) ───────────────
+
+    @Test
+    void aPseudoElementOfTheLeafsOwnElement_byName_onceAndHoldingDeclarationsAlone() {
+        passes(TAB, ".styled-tab { color: var(--fp-copy); &::placeholder { color: var(--fp-raised); } &::before { content: \"\"; background-color: var(--fp-safe); } }");
+        refused(".styled-tab { &::placeholder {} &::placeholder {} }", "&::placeholder is drawn twice");
+        refused(".styled-tab { &::placeholder { color: #999; } }", "#999 is a literal colour");
+        refused(".styled-tab { &::before { --fixed-alarm: #c62828; color: var(--fixed-alarm); } }", "--fixed-alarm is assigned in a pseudo-element's rule");
+        refused(".styled-tab { &::before { &:hover { color: var(--fp-copy); } } }", "a pseudo-element's rule holds declarations alone");
+    }
+
+    @Test
+    void anAtMediaForAReadersSetting_nestedInTheCastingsRule_onceEach() {
+        passes(TAB, ".styled-tab { transition: color 1s; @media (prefers-reduced-motion: reduce) { transition: none; &:hover { color: var(--fp-copy); } } }");
+        refused(".styled-tab { @media print { color: var(--fp-copy); } }", "@media print is no reader's setting the check allows");
+        refused(".styled-tab { @media (prefers-contrast: more) {} @media (prefers-contrast: more) {} }", "@media (prefers-contrast: more) is answered twice");
+        refused(".styled-tab { @media (prefers-contrast: more) { @media (prefers-reduced-motion: reduce) {} } }", "a reader's setting is answered in the casting's rule");
+        refused(".styled-tab { @supports (display: grid) {} }", "a casting's rule holds no at-rule but an @media for a reader's setting");
+        refused(".styled-tab { @media (prefers-contrast: more) { --fixed-alarm: #c62828; } }", "--fixed-alarm is assigned in an @media of it");
+    }
+
+    @Test
+    void anAtKeyframes_namedAfterACastingTheFileRules_itsKeyframesHeldToTheColours() {
+        passes(TAB, ".styled-tab { animation: tab-pulse 1s; }\n@keyframes tab-pulse { from { opacity: 1; } 50% { color: var(--fp-copy); } to { opacity: .5; } }");
+        refused(".styled-tab {}\n@keyframes spin { from { opacity: 1; } }", "@keyframes spin is named after none of control's castings");
+        refused(".styled-tab {}\n@keyframes strip-slide { from { opacity: 1; } }", "@keyframes strip-slide is strip's, which this file does not rule");
+        refused(".styled-tab {}\n@keyframes tab-pulse { from { color: red; } }", "red is a named colour");
+        refused(".styled-tab {}\n@keyframes tab-pulse { .x { opacity: 1; } }", ".x is no keyframe");
+        refused(".styled-tab {}\n@keyframes tab-pulse {}\n@keyframes tab-pulse {}", "@keyframes tab-pulse is written twice");
+        assertEquals("tab_lead", StyleFiles.INSTANCE.namedAfter("tab_lead-glow", TAXONOMY.castings()).orElseThrow().token(), "the longest token it begins with");
     }
 
     @Test
