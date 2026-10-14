@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.design.styling;
 
-import hue.captains.singapura.js.homing.component.taxonomy.ComponentLeaf;
+import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.design.Extent;
 import hue.captains.singapura.js.homing.design.Growth;
@@ -51,7 +51,7 @@ public record StyleSheet() implements StatelessFunctionalObject {
            .append(Extent.PROPERTY).append('\n');
         // the degrees a leaf's lengths grow by: numbers the element sets on itself, never inherited
         for (Growth g : Growth.values()) css.append(g.property()).append('\n');
-        for (ComponentLeaf leaf : taxonomy.leaves()) {
+        for (Casting leaf : taxonomy.castings()) {
             StylingRes answer = style.style(leaf);
             DesignStyle<?> from;
             switch (answer) {

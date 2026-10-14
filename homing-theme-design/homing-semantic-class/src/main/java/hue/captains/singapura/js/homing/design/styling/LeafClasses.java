@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.design.styling;
 
-import hue.captains.singapura.js.homing.component.taxonomy.ComponentLeaf;
+import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.component.taxonomy.Importances;
 import hue.captains.singapura.js.homing.component.taxonomy.Pseudo;
 import hue.captains.singapura.js.homing.component.taxonomy.StateType;
@@ -14,21 +14,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The style-aware classes of a leaf, generated from its type (RFC 0067, appendix Two Classes per Leaf): its class,
- * {@code styled-<token>}; a class for each value but the rest of each application state it lists,
- * {@code styled-<token>--<word>}, worn while the state holds; and its pseudo states, drawn with their pseudo-classes
- * inside its class, never with a class of their own. Both in the leaf's precedence, the least important first, so in a
- * sheet the later wins.
+ * The style-aware classes of a leaf, generated from its types (RFC 0067, appendix Two Classes per Leaf). A leaf here is
+ * a casting - a component on its own, or in a role a slot casts it in, never its owner - a leaf for its class, not one
+ * of the taxonomy's tree: its class, {@code styled-<token>}; a class for each value but the rest of each application
+ * state its component lists, {@code styled-<token>--<word>}, worn while the state holds; and its pseudo states, drawn
+ * with their pseudo-classes inside its class, never with a class of their own. Both in its component's precedence, the
+ * least important first, so in a sheet the later wins.
  */
 public record LeafClasses() implements StatelessFunctionalObject {
 
     public static final LeafClasses INSTANCE = new LeafClasses();
 
-    /** {@code styled-plain-button}, {@code styled-dialog-go}. */
-    public String styled(ComponentLeaf leaf) { return "styled-" + leaf.token(); }
+    /** {@code styled-plain-button}, {@code styled-primary-button_go}. */
+    public String styled(Casting leaf) { return "styled-" + leaf.token(); }
 
     /** {@code styled-tab--selected}: the leaf's class and the value's design word. */
-    public String state(ComponentLeaf leaf, StateType<?> state, StateValue value) { return styled(leaf) + "--" + state.word(value); }
+    public String state(Casting leaf, StateType<?> state, StateValue value) { return styled(leaf) + "--" + state.word(value); }
 
     /**
      * One of a leaf's states as it is drawn, in the leaf's precedence: an application state's value, worn as a class, or a
@@ -45,16 +46,16 @@ public record LeafClasses() implements StatelessFunctionalObject {
     }
 
     /** What a leaf wears: its class, and its states, in its precedence. */
-    public record Listing(ComponentLeaf leaf, String styled, List<Drawn> states) implements ValueObject {
+    public record Listing(Casting leaf, String styled, List<Drawn> states) implements ValueObject {
         public Listing { states = List.copyOf(states); }
     }
 
     /** A leaf's classes and states, in its precedence. */
-    public Listing of(Taxonomy taxonomy, ComponentLeaf leaf) {
+    public Listing of(Taxonomy taxonomy, Casting leaf) {
         var importances = Importances.INSTANCE;
         var drawn = new ArrayList<Drawn>();
-        for (StateType<?> s : taxonomy.precedence(leaf)) {
-            String level = importances.levelFor(leaf, s).map(l -> NodeName.ofType(l, "").value()).orElse("unranked");
+        for (StateType<?> s : taxonomy.precedence(leaf.cast())) {
+            String level = importances.levelFor(leaf.cast(), s).map(l -> NodeName.ofType(l, "").value()).orElse("unranked");
             List<StateValue> values = s.values();
             for (StateValue v : values.subList(1, values.size()))
                 drawn.add(new Drawn(s, v, s instanceof Pseudo p ? p.pseudoClass() : "." + state(leaf, s, v), level));
@@ -64,7 +65,7 @@ public record LeafClasses() implements StatelessFunctionalObject {
 
     /** Every leaf's, the components then the parts. */
     public List<Listing> listing(Taxonomy taxonomy) {
-        return taxonomy.leaves().stream().map(l -> of(taxonomy, l)).toList();
+        return taxonomy.castings().stream().map(l -> of(taxonomy, l)).toList();
     }
 
     /**
@@ -81,9 +82,9 @@ public record LeafClasses() implements StatelessFunctionalObject {
      */
     public String script(Taxonomy taxonomy) {
         var leaves = new ArrayList<String>();
-        for (ComponentLeaf leaf : taxonomy.leaves()) {
+        for (Casting leaf : taxonomy.castings()) {
             var states = new ArrayList<String>();
-            for (StateType<?> s : taxonomy.precedence(leaf)) {
+            for (StateType<?> s : taxonomy.precedence(leaf.cast())) {
                 if (s instanceof Pseudo) continue;
                 List<StateValue> values = s.values();
                 var classes = new ArrayList<String>();

@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.design.semantic;
 
-import hue.captains.singapura.js.homing.component.taxonomy.ComponentLeaf;
+import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import hue.captains.singapura.js.homing.tree.NodeName;
 
@@ -40,9 +40,10 @@ public interface DesignStyle<S extends ColorScheme> {
     default List<Writing> writings() { return List.of(); }
 
     /**
-     * The style's design for a leaf (RFC 0067, appendix Two Classes per Leaf, D25): its own content, or absence, and the
+     * The style's design for a casting - a component on its own or in a role, each a leaf for its class (RFC 0067, appendix
+     * Two Classes per Leaf, D25): its own content, or absence, and the
      * base layer's content is used. Absence by default, the common case; the base layer - a style that derives from
      * nothing - answers content for every leaf, and the check refuses it any absence (D26).
      */
-    default StylingRes style(ComponentLeaf leaf) { return StylingRes.Absence.INSTANCE; }
+    default StylingRes style(Casting casting) { return StylingRes.Absence.INSTANCE; }
 }

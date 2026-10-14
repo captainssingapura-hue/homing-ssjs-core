@@ -30,8 +30,8 @@ class StyleSheetTest {
     void aStyleOverItsBaseLayer_itsOwnFileWhereItAnswersContent_theBaseLayersElsewhere() {
         String ink = SHEET.write(TAXONOMY, Ink.INSTANCE);
         assertEquals(List.of("/* tab: ink's own */", "/* strip: plain's, ink answering absence */", "/* meter: plain's, ink answering absence */",
-                        "/* badge: plain's, ink answering absence */", "/* strip-lead: plain's, ink answering absence */"),
-                ink.lines().filter(l -> l.matches("/\\* [a-z-]+: .*('s own|answering absence) \\*/")).toList(),
+                        "/* badge: plain's, ink answering absence */", "/* tab_lead: plain's, ink answering absence */"),
+                ink.lines().filter(l -> l.matches("/\\* [a-z0-9_-]+: .*('s own|answering absence) \\*/")).toList(),
                 "every leaf once, in the taxonomy's order");
         assertTrue(ink.contains("/* tab: ink's own */\n/* Ink's tab, whole: none of it plain's. */\n.styled-tab {\n"), ink);
         assertEquals(1, ink.split("\\.styled-tab \\{", -1).length - 1, "the tab's class once: ink's, never plain's beside it");

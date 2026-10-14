@@ -89,17 +89,13 @@ final class Ranked {
         @Override public List<ImportanceOverride<?>> importance() { return List.of(new ImportanceOverride<>(Armed.INSTANCE, Importance.Primary.class)); }
     }
 
-    /** A knob steering it: the part lists states of its own, none of the knob's five but Grabbed, made the least important. */
+    /** A knob steering it: cast as Steer, the knob still, with the knob's states. */
     record Console() implements Component<Gear> {
         static final Console INSTANCE = new Console();
         private static final ComponentPartDSL DSL = ComponentPartDSL.INSTANCE;
         @Override public Gear parent() { return Gear.INSTANCE; }
-        @Override public List<Slot<?>> parts() {
-            return List.of(DSL.part(Knob.INSTANCE).as(Steer.INSTANCE)
-                    .states(Grabbed.INSTANCE, Docked.INSTANCE)
-                    .importance(new ImportanceOverride<>(Grabbed.INSTANCE, Importance.Senary.class))
-                    .one());
-        }
+        @Override public List<StateType<?>> states() { return List.of(Docked.INSTANCE); }
+        @Override public List<Slot<?>> parts() { return List.of(DSL.part(Knob.INSTANCE).as(Steer.INSTANCE).one()); }
     }
 
     // ── refused ──

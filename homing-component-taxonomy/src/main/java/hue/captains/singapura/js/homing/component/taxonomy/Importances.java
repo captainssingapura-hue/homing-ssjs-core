@@ -36,7 +36,7 @@ public record Importances() implements StatelessFunctionalObject {
     }
 
     /** The level a leaf gives one of its states: its own override, else the state's level. */
-    public Optional<Class<?>> levelFor(ComponentLeaf leaf, StateType<?> state) {
+    public Optional<Class<?>> levelFor(Component<?> leaf, StateType<?> state) {
         for (ImportanceOverride<?> o : leaf.importance() == null ? List.<ImportanceOverride<?>>of() : leaf.importance())
             if (o != null && o.state().equals(state)) return Optional.of(o.level());
         return levelOf(state);
@@ -46,7 +46,7 @@ public record Importances() implements StatelessFunctionalObject {
      * A leaf's states in precedence: the least important first, so the last listed is the one that wins; two of one level
      * in the order the leaf lists them. A state with no level - the reader refuses one - comes first.
      */
-    public List<StateType<?>> precedence(ComponentLeaf leaf) {
+    public List<StateType<?>> precedence(Component<?> leaf) {
         var states = new ArrayList<StateType<?>>(new LinkedHashSet<>(leaf.states() == null ? List.<StateType<?>>of() : leaf.states()));
         states.removeIf(s -> s == null);
         states.sort(Comparator.comparingInt((StateType<?> s) -> -levelFor(leaf, s).map(this::rank).orElse(levels().size())));

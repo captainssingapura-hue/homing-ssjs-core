@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.design.styling;
 
-import hue.captains.singapura.js.homing.component.taxonomy.ComponentLeaf;
+import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.component.taxonomy.ExtentAxis;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.design.color.ColorNode;
@@ -108,7 +108,7 @@ public record CheckStyle() implements StatelessFunctionalObject {
         boolean base = !(style instanceof Derives<?, ?>);
         if (!base && StyleSheet.INSTANCE.baseLayer(style).isEmpty()) problems.add(style.token() + " derives from a style that derives, in the end, from itself");
         var named = new HashSet<String>();
-        for (ComponentLeaf leaf : taxonomy.leaves()) {
+        for (Casting leaf : taxonomy.castings()) {
             named.add(leaf.token() + ".css");
             StylingRes answer = style.style(leaf);
             Optional<String> css = files.read(style, leaf);
@@ -137,7 +137,7 @@ public record CheckStyle() implements StatelessFunctionalObject {
     }
 
     /** One of a style's files, as written, for its leaf. */
-    public Checked file(Taxonomy taxonomy, ColorTree tree, DesignStyle<?> style, ComponentLeaf leaf, String css) {
+    public Checked file(Taxonomy taxonomy, ColorTree tree, DesignStyle<?> style, Casting leaf, String css) {
         return new OneFile(taxonomy, tree, style, leaf).check(css);
     }
 
@@ -156,7 +156,7 @@ public record CheckStyle() implements StatelessFunctionalObject {
         private final Taxonomy taxonomy;
         private final ColorTree tree;
         private final DesignStyle<?> style;
-        private final ComponentLeaf leaf;
+        private final Casting leaf;
         private final Class<?> scheme;
         private final String name;
         private final Map<String, ColorNode<?, ?, ?>> nodes = new HashMap<>();
@@ -165,7 +165,7 @@ public record CheckStyle() implements StatelessFunctionalObject {
         private final Set<String> assigned = new HashSet<>();
         private final Map<String, Integer> used = new LinkedHashMap<>();
 
-        OneFile(Taxonomy taxonomy, ColorTree tree, DesignStyle<?> style, ComponentLeaf leaf) {
+        OneFile(Taxonomy taxonomy, ColorTree tree, DesignStyle<?> style, Casting leaf) {
             this.taxonomy = taxonomy;
             this.tree = tree;
             this.style = style;
@@ -308,7 +308,7 @@ public record CheckStyle() implements StatelessFunctionalObject {
                         + tree.schemeName(scheme) + ", does not see");
                 return;
             }
-            if (kind.equals("--along-") && !taxonomy.extents(leaf).contains(ExtentAxis.COLOUR))
+            if (kind.equals("--along-") && !taxonomy.extents(leaf.cast()).contains(ExtentAxis.COLOUR))
                 at(d, property + " moves a colour by the element's degree, and " + leaf.token() + " has no colour axis: only a leaf with it may (D14)");
             if (!squeeze(d.value()).equals(squeeze(expected)))
                 at(d, property + " is " + expected + " by the tree, not " + d.value());

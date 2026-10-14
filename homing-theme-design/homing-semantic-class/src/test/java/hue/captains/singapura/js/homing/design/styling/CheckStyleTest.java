@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.design.styling;
 
-import hue.captains.singapura.js.homing.component.taxonomy.ComponentLeaf;
+import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import hue.captains.singapura.js.homing.design.semantic.ColorTree;
@@ -30,21 +30,21 @@ class CheckStyleTest {
     private static final Taxonomy TAXONOMY = StyledTaxonomy.INSTANCE.read();
     private static final ColorTree TREE = ResolvingColours.INSTANCE.read();
     private static final CheckStyle CHECK = CheckStyle.INSTANCE;
-    private static final ComponentLeaf TAB = StatedTaxonomy.Tab.INSTANCE;
-    private static final ComponentLeaf METER = StyledTaxonomy.Meter.INSTANCE;
+    private static final Casting TAB = new Casting(StatedTaxonomy.Tab.INSTANCE);
+    private static final Casting METER = new Casting(StyledTaxonomy.Meter.INSTANCE);
     private static final String ALONG = "color-mix(in oklab, var(--fp-danger) calc(clamp(0, var(--extent), 1) * 100%), "
             + "color-mix(in oklab, var(--fixed-clear) calc(clamp(0, var(--extent) + 1, 1) * 100%), var(--fp-safe)))";
 
     /** A tab's file in plain refused for one thing, said by name. */
     private static void refused(String css, String says) { refused(TAB, css, says); }
 
-    private static void refused(ComponentLeaf leaf, String css, String says) {
+    private static void refused(Casting leaf, String css, String says) {
         List<String> problems = CHECK.file(TAXONOMY, TREE, Plain.INSTANCE, leaf, css).problems();
         assertEquals(1, problems.size(), "one problem, alone: " + problems);
         assertTrue(problems.get(0).contains(says), problems.get(0));
     }
 
-    private static void passes(ComponentLeaf leaf, String css) {
+    private static void passes(Casting leaf, String css) {
         var checked = CHECK.file(TAXONOMY, TREE, Plain.INSTANCE, leaf, css);
         assertEquals(List.of(), checked.problems());
         assertEquals(List.of(), checked.reports());
@@ -54,12 +54,12 @@ class CheckStyleTest {
 
     @Test
     void aBaseLayer_andTheStylesOverIt_pass() {
-        assertEquals(List.of("tab", "strip", "meter", "badge", "strip-lead"), TAXONOMY.leaves().stream().map(ComponentLeaf::token).toList(),
-                "the extension's badge a leaf like the others, and the strip's lead tab one of its own");
+        assertEquals(List.of("tab", "strip", "meter", "badge", "tab_lead"), TAXONOMY.castings().stream().map(Casting::token).toList(),
+                "the extension's badge a leaf like the others, and the tab cast as Lead one for its class");
         assertEquals(List.of(), CHECK.require(TAXONOMY, TREE, List.of(Plain.INSTANCE, Ink.INSTANCE, Loudly.INSTANCE)), "no report");
         var files = StyleFiles.INSTANCE;
         assertEquals("styles/hue/captains/singapura/js/homing/design/styling/plain/tab.css", files.path(Plain.INSTANCE, TAB));
-        assertEquals(List.of("badge.css", "meter.css", "strip-lead.css", "strip.css", "tab.css"), files.present(Plain.INSTANCE));
+        assertEquals(List.of("badge.css", "meter.css", "strip.css", "tab.css", "tab_lead.css"), files.present(Plain.INSTANCE));
         assertEquals(Plain.INSTANCE, StyleSheet.INSTANCE.baseLayer(Loudly.INSTANCE).orElseThrow(), "loudly's absence lands on plain");
     }
 
@@ -127,10 +127,10 @@ class CheckStyleTest {
     }
 
     @Test
-    void aPart_drawsItsOwnStates_noneOfItsBases() {
-        ComponentLeaf lead = TAXONOMY.parts().get(0);
-        refused(lead, ".styled-strip-lead { &.styled-tab--selected { color: var(--fp-danger); } }", "draws no state strip-lead lists");
-        passes(lead, ".styled-strip-lead { &.styled-strip-lead--selected { color: var(--fp-danger); } }");
+    void aCastingInARole_drawsItsComponentsStates_byItsOwnClasses() {
+        Casting lead = TAXONOMY.castings().stream().filter(c -> !c.standalone()).findFirst().orElseThrow();
+        refused(lead, ".styled-tab_lead { &.styled-tab--selected { color: var(--fp-danger); } }", "draws no state tab_lead lists");
+        passes(lead, ".styled-tab_lead { &:hover { color: var(--fp-copy); } &.styled-tab_lead--selected { color: var(--fp-danger); } }");
     }
 
     @Test

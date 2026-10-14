@@ -24,7 +24,7 @@ import java.util.Map;
 
 /**
  * A taxonomy with states, for the leaves' classes: a tab that is enabled, hovered, selected and held by the keys, each
- * at a level of its own; and a strip whose lead tab is a part with a state of its own.
+ * at a level of its own; and a strip whose lead tab is a tab cast as Lead - a casting, its own class, the tab's states.
  */
 public record StatedTaxonomy() implements TaxonomySource {
 
@@ -85,12 +85,12 @@ public record StatedTaxonomy() implements TaxonomySource {
         @Override public List<StateType<?>> states() { return List.of(Keys.INSTANCE, Enabled.INSTANCE, Hovered.INSTANCE, Selected.INSTANCE); }
     }
 
-    /** Its lead tab a part with a state of its own: selected, and nothing else. */
+    /** Its lead tab: a tab cast as Lead, a leaf for its class, with the tab's states. */
     public record Strip() implements Component<Control> {
         public static final Strip INSTANCE = new Strip();
         private static final ComponentPartDSL DSL = ComponentPartDSL.INSTANCE;
         @Override public Control parent() { return Control.INSTANCE; }
-        @Override public List<Slot<?>> parts() { return List.of(DSL.part(Tab.INSTANCE).as(Lead.INSTANCE).states(Selected.INSTANCE).one()); }
+        @Override public List<Slot<?>> parts() { return List.of(DSL.part(Tab.INSTANCE).as(Lead.INSTANCE).one()); }
     }
 
     @Override public Taxonomy read() { return new ReadTaxonomy().read(List.of(Tab.INSTANCE, Strip.INSTANCE)); }

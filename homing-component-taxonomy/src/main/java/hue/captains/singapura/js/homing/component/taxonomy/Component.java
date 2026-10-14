@@ -27,7 +27,7 @@ import java.util.List;
  *
  * @param <P> the branch this component sits under, at any level
  */
-public non-sealed interface Component<P extends ComponentBranch> extends Taxon, ComponentLeaf {
+public non-sealed interface Component<P extends ComponentBranch> extends Taxon {
 
     /** The branch this component sits under. */
     P parent();
@@ -39,10 +39,10 @@ public non-sealed interface Component<P extends ComponentBranch> extends Taxon, 
      * The states it has, from the tree of states: being enabled, being on. Each has its change, an
      * event it offers by having the state. None by default.
      */
-    @Override default List<StateType<?>> states() { return List.of(); }
+    default List<StateType<?>> states() { return List.of(); }
 
     /** Its own levels for some of its states, in place of theirs (RFC 0067, appendix Two Classes per Leaf); none by default. */
-    @Override default List<ImportanceOverride<?>> importance() { return List.of(); }
+    default List<ImportanceOverride<?>> importance() { return List.of(); }
 
     /**
      * The events it offers besides its states' changes, from the tree of events: a click. None by

@@ -46,16 +46,12 @@ class ImportanceTest {
     }
 
     @Test
-    void aPart_isALeafOfItsOwn_withItsOwnStatesAndOverrides() {
-        assertEquals(List.of("knob", "dial", "console", "console-steer"), GEAR.leaves().stream().map(ComponentLeaf::token).toList(),
-                "the components, then the parts at their roles");
-        Part<?, ?> steer = GEAR.parts().get(0);
-        assertEquals(List.of(Ranked.Grabbed.INSTANCE, Ranked.Docked.INSTANCE), steer.states(), "its own states, none of the knob's but Grabbed");
-        assertEquals(List.of(Ranked.Grabbed.INSTANCE, Ranked.Docked.INSTANCE), GEAR.precedence(steer),
-                "Grabbed, secondary on the tree, made the least important by the part alone");
-        assertEquals(Importance.Secondary.class, Importances.INSTANCE.levelFor(Ranked.Knob.INSTANCE, Ranked.Grabbed.INSTANCE).orElseThrow(),
-                "the knob that plays the part keeps Grabbed's own level");
-        assertTrue(GEAR.states().types().contains(Ranked.Docked.INSTANCE), "a state only a part lists is read into the tree");
+    void aCasting_isALeafForItsClass_itsStatesItsComponents_itsOwnerNeverInIt() {
+        assertEquals(List.of("knob", "dial", "console", "knob_steer"), GEAR.castings().stream().map(Casting::token).toList(),
+                "each component on its own, then each role a slot casts its component in: the knob as Steer, whoever owns it");
+        Casting steer = GEAR.castings().get(3);
+        assertEquals(Ranked.Knob.INSTANCE, steer.cast());
+        assertEquals(GEAR.precedence(Ranked.Knob.INSTANCE), GEAR.precedence(steer.cast()), "a role adds no state: the knob's, in the knob's precedence");
     }
 
     @Test

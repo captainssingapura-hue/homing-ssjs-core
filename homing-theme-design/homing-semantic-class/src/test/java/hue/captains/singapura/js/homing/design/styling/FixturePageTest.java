@@ -207,9 +207,9 @@ class FixturePageTest extends JsModuleTestBase {
                 .as(List.class);
         assertEquals(List.of("styled-tab", "styled-tab--selected"), tab);
         assertTrue(sheet.contains(".styled-tab {") && sheet.contains("&.styled-tab--selected {"), "the tab's class and its state's, ruled");
-        List<String> lead = js.eval("js", "globalThis.el2 = element(); StyledLeaf.wear(el2, leaves['strip-lead']); StyledLeaf.hold(el2, leaves['strip-lead'], 'selected', true); el2.classes()")
+        List<String> lead = js.eval("js", "globalThis.el2 = element(); StyledLeaf.wear(el2, leaves['tab_lead']); StyledLeaf.hold(el2, leaves['tab_lead'], 'selected', true); el2.classes()")
                 .as(List.class);
-        assertEquals(List.of("styled-strip-lead", "styled-strip-lead--selected"), lead, "the lead tab wears its part's classes alone, none of the tab's");
-        assertTrue(sheet.contains(".styled-strip-lead {") && sheet.contains("&.styled-strip-lead--selected {"));
+        assertEquals(List.of("styled-tab_lead", "styled-tab_lead--selected"), lead, "the tab cast as Lead wears its casting's classes alone, none of the tab's on its own");
+        assertTrue(sheet.contains(".styled-tab_lead {") && sheet.contains("&.styled-tab_lead--selected {"));
     }
 }

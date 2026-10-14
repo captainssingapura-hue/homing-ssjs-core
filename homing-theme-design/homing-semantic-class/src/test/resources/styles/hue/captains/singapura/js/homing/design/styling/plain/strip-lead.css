@@ -1,7 +1,0 @@
-/* The strip's lead tab, a leaf of its own: none of the tab's classes, its one state its own. */
-.styled-strip-lead {
-    font-weight: 600;
-    color: var(--fp-copy);
-
-    &.styled-strip-lead--selected { color: var(--fp-danger); }
-}

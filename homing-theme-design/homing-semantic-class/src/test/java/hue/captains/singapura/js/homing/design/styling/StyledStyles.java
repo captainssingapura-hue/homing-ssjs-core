@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.design.styling;
 
-import hue.captains.singapura.js.homing.component.taxonomy.ComponentLeaf;
+import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import hue.captains.singapura.js.homing.design.semantic.Derives;
 import hue.captains.singapura.js.homing.design.semantic.DesignStyle;
@@ -25,7 +25,7 @@ public record StyledStyles() {
     public record Plain() implements DesignStyle<ColorScheme.Base> {
         public static final Plain INSTANCE = new Plain();
         @Override public List<Implementation<?>> implementations() { return List.of(); }
-        @Override public StylingRes style(ComponentLeaf leaf) { return CONTENT; }
+        @Override public StylingRes style(Casting leaf) { return CONTENT; }
     }
 
     /** Over plain: a tab of its own, every other leaf plain's. */
@@ -33,7 +33,7 @@ public record StyledStyles() {
         public static final Ink INSTANCE = new Ink();
         @Override public Plain base() { return Plain.INSTANCE; }
         @Override public List<Implementation<?>> implementations() { return List.of(); }
-        @Override public StylingRes style(ComponentLeaf leaf) { return leaf instanceof StatedTaxonomy.Tab ? CONTENT : ABSENT; }
+        @Override public StylingRes style(Casting leaf) { return leaf.equals(new Casting(StatedTaxonomy.Tab.INSTANCE)) ? CONTENT : ABSENT; }
     }
 
     /** Of the loud scheme, over plain: a meter in the glare only its scheme sees. */
@@ -41,14 +41,14 @@ public record StyledStyles() {
         public static final Loudly INSTANCE = new Loudly();
         @Override public Plain base() { return Plain.INSTANCE; }
         @Override public List<Implementation<?>> implementations() { return List.of(); }
-        @Override public StylingRes style(ComponentLeaf leaf) { return leaf instanceof StyledTaxonomy.Meter ? CONTENT : ABSENT; }
+        @Override public StylingRes style(Casting leaf) { return leaf.equals(new Casting(StyledTaxonomy.Meter.INSTANCE)) ? CONTENT : ABSENT; }
     }
 
     /** A base layer with holes: absent for the meter, content for the badge with no file for it, and a file for no leaf. */
     public record Shabby() implements DesignStyle<ColorScheme.Base> {
         public static final Shabby INSTANCE = new Shabby();
         @Override public List<Implementation<?>> implementations() { return List.of(); }
-        @Override public StylingRes style(ComponentLeaf leaf) { return leaf instanceof StyledTaxonomy.Meter ? ABSENT : CONTENT; }
+        @Override public StylingRes style(Casting leaf) { return leaf.equals(new Casting(StyledTaxonomy.Meter.INSTANCE)) ? ABSENT : CONTENT; }
     }
 
     /** Over shabby, absent for every leaf: shabby's holes are its own. */

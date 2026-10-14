@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.design.styling;
 
-import hue.captains.singapura.js.homing.component.taxonomy.ComponentLeaf;
+import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.design.semantic.DesignStyle;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
@@ -34,7 +34,7 @@ public record StyleFiles() implements StatelessFunctionalObject {
     private static final String CSS = ".css";
 
     /** {@code editorial/plain-button.css}: the file as messages name it. */
-    public String name(DesignStyle<?> style, ComponentLeaf leaf) { return style.token() + "/" + leaf.token() + CSS; }
+    public String name(DesignStyle<?> style, Casting leaf) { return style.token() + "/" + leaf.token() + CSS; }
 
     /** {@code styles/com/example/styles/editorial/}: the style's directory. */
     public String directory(DesignStyle<?> style) {
@@ -42,10 +42,10 @@ public record StyleFiles() implements StatelessFunctionalObject {
     }
 
     /** {@code styles/com/example/styles/editorial/plain-button.css}: the style's file for a leaf. */
-    public String path(DesignStyle<?> style, ComponentLeaf leaf) { return directory(style) + leaf.token() + CSS; }
+    public String path(DesignStyle<?> style, Casting leaf) { return directory(style) + leaf.token() + CSS; }
 
     /** The style's file for a leaf, read; none when there is none. */
-    public Optional<String> read(DesignStyle<?> style, ComponentLeaf leaf) {
+    public Optional<String> read(DesignStyle<?> style, Casting leaf) {
         try (InputStream in = loader(style).getResourceAsStream(path(style, leaf))) {
             return in == null ? Optional.empty() : Optional.of(new String(in.readAllBytes(), StandardCharsets.UTF_8));
         } catch (IOException e) {

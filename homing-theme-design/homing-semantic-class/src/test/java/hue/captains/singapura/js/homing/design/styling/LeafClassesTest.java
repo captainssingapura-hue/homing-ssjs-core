@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.design.styling;
 
-import hue.captains.singapura.js.homing.component.taxonomy.ComponentLeaf;
+import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.design.styling.StatedTaxonomy.Tab;
 import org.junit.jupiter.api.Test;
@@ -22,7 +22,7 @@ class LeafClassesTest {
 
     @Test
     void aComponentsClasses_inItsPrecedence_theLeastImportantFirst() {
-        var tab = CLASSES.of(TAXONOMY, Tab.INSTANCE);
+        var tab = CLASSES.of(TAXONOMY, new Casting(Tab.INSTANCE));
         assertEquals("styled-tab", tab.styled());
         assertEquals(List.of(":hover", ".styled-tab--disabled", ".styled-tab--selected", ".styled-tab--candidate", ".styled-tab--held"),
                 tab.states().stream().map(LeafClasses.Drawn::drawnBy).toList(),
@@ -33,22 +33,23 @@ class LeafClassesTest {
     }
 
     @Test
-    void aPart_isALeafOfItsOwn_itsClassesItsOwn() {
-        ComponentLeaf lead = TAXONOMY.parts().get(0);
+    void aCastingInARole_isALeafForItsClass_withItsComponentsStates_neverItsOwners() {
+        Casting lead = TAXONOMY.castings().stream().filter(c -> !c.standalone()).findFirst().orElseThrow();
+        assertEquals("tab_lead", lead.token(), "the tab cast as Lead: the component and its role, the strip that owns it never in it");
         var listing = CLASSES.of(TAXONOMY, lead);
-        assertEquals("styled-strip-lead", listing.styled());
-        assertEquals(List.of(".styled-strip-lead--selected"), listing.states().stream().map(LeafClasses.Drawn::drawnBy).toList(),
-                "the part's one state, none of the tab's four");
+        assertEquals("styled-tab_lead", listing.styled(), "a class of its own: the role changes the look");
+        assertEquals(List.of(":hover", ".styled-tab_lead--disabled", ".styled-tab_lead--selected", ".styled-tab_lead--candidate", ".styled-tab_lead--held"),
+                listing.states().stream().map(LeafClasses.Drawn::drawnBy).toList(), "the tab's states, in the tab's precedence: a role adds none");
     }
 
     @Test
     void theListing_everyLeaf_aLineAClass() {
-        assertEquals(List.of("tab", "strip", "strip-lead"), CLASSES.listing(TAXONOMY).stream().map(l -> l.leaf().token()).toList());
+        assertEquals(List.of("tab", "strip", "tab_lead"), CLASSES.listing(TAXONOMY).stream().map(l -> l.leaf().token()).toList());
         List<String> lines = CLASSES.lines(TAXONOMY);
         assertEquals("tab  .styled-tab", lines.get(0));
         assertEquals("    :hover  hovered=true  quinary", lines.get(1));
         assertEquals("    .styled-tab--held  keys=held  secondary", lines.get(5));
         assertTrue(lines.contains("strip  .styled-strip"), "a leaf with no states has its class alone");
-        assertTrue(lines.contains("    .styled-strip-lead--selected  selected=true  tertiary"), lines.toString());
+        assertTrue(lines.contains("    .styled-tab_lead--selected  selected=true  tertiary"), lines.toString());
     }
 }

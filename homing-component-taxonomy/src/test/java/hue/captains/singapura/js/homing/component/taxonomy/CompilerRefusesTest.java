@@ -263,20 +263,15 @@ class CompilerRefusesTest {
             """;
 
     @Test
-    void aStateOfOneLevel_anOverride_andAPartWithStatesOfItsOwn_compile() {
+    void aStateOfOneLevel_andAComponentsOverride_compile() {
         var errors = compile(STATES + """
                 record Lamp() implements Component<Text> {
-                    private static final ComponentPartDSL DSL = ComponentPartDSL.INSTANCE;
                     public Text parent() { return Text.INSTANCE; }
                     public List<StateType<?>> states() { return List.of(new Lit()); }
                     public List<ImportanceOverride<?>> importance() { return List.of(new ImportanceOverride<>(new Lit(), Importance.Primary.class)); }
-                    public List<Slot<?>> parts() {
-                        return List.of(DSL.part(Caption.INSTANCE).as(Title.INSTANCE).states(new Lit())
-                                .importance(new ImportanceOverride<>(new Lit(), Importance.Secondary.class)).one());
-                    }
                 }
                 """);
-        assertTrue(errors.isEmpty(), "a state of one level, a leaf's override, a part's own states: " + errors);
+        assertTrue(errors.isEmpty(), "a state of one level, a component's override: " + errors);
     }
 
     @Test
@@ -290,13 +285,6 @@ class CompilerRefusesTest {
     void anOverrideToAStateRatherThanALevel_doesNotCompile() {
         refusedOnItsLine(STATES + """
                 static final ImportanceOverride<?> ODD = new ImportanceOverride<>(new Lit(), Lit.class); // refused here
-                """);
-    }
-
-    @Test
-    void aFourthKindOfLeaf_doesNotCompile() {
-        refusedOnItsLine("""
-                record Odd() implements ComponentLeaf { public NodeName name() { return null; } public List<StateType<?>> states() { return List.of(); } public List<ImportanceOverride<?>> importance() { return List.of(); } } // refused here
                 """);
     }
 

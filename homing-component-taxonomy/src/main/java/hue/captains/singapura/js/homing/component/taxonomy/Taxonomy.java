@@ -37,18 +37,8 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
         Objects.requireNonNull(events, "Taxonomy.events");
     }
 
-    /**
-     * Every leaf as a design sees it (RFC 0067, appendix Two Classes per Leaf): the components, then the parts at their
-     * roles, each a top-level thing in state and in design.
-     */
-    public List<ComponentLeaf> leaves() {
-        var out = new ArrayList<ComponentLeaf>(components);
-        out.addAll(parts);
-        return List.copyOf(out);
-    }
-
-    /** A leaf's states in precedence: the least important first, so the last wins; two of one level in the order the leaf lists them. */
-    public List<StateType<?>> precedence(ComponentLeaf leaf) { return Importances.INSTANCE.precedence(leaf); }
+    /** A component's states in precedence: the least important first, so the last wins; two of one level in the order it lists them. */
+    public List<StateType<?>> precedence(Component<?> component) { return Importances.INSTANCE.precedence(component); }
 
     /** Every node a design can be asked about: the root, the branches, the components, then the parts. */
     public List<ComponentNode> nodes() {
@@ -134,7 +124,9 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
      * The castings the taxonomy has, derived (RFC 0067, appendix Castings): every component on its
      * own, then each role a slot casts its component in, once - a functional role cast as the
      * component on its own, which it looks as. A virtual leaf is never cast: what is worn is a
-     * design's concrete leaf of it (appendix Virtual Leaves and Designs).
+     * design's concrete leaf of it (appendix Virtual Leaves and Designs). Each is a leaf for its
+     * style-aware class (appendix Two Classes per Leaf) - never one of the tree: the component and its
+     * role, locked in the component's constructor, name the one class it wears.
      */
     public List<Casting> castings() {
         var out = new LinkedHashSet<Casting>();

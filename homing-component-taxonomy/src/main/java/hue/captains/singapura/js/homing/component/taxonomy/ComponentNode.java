@@ -9,7 +9,7 @@ import hue.captains.singapura.tao.ontology.Immutable;
  * component. Every node is something a design can be asked about; a design class is a target
  * paired with one of them.
  */
-public sealed interface ComponentNode extends Immutable permits Taxon, Part, ComponentLeaf {
+public sealed interface ComponentNode extends Immutable permits Taxon, Part {
 
     /** The node's own name: from its type for the tree's nodes, from its role for a part. */
     NodeName name();

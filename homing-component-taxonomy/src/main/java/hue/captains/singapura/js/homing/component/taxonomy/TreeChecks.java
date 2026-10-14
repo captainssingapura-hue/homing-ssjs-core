@@ -87,12 +87,12 @@ record TreeChecks() implements StatelessFunctionalObject {
     }
 
     /**
-     * A leaf - a component or a part - that lists a state twice or lists nothing, or overrides the level of a state it
+     * A component that lists a state twice or lists nothing, or overrides the level of a state it
      * does not list, or of one twice.
      */
-    List<TaxonomyProblem> leafStates(List<? extends ComponentLeaf> leaves) {
+    List<TaxonomyProblem> leafStates(List<? extends Component<?>> leaves) {
         var out = new ArrayList<TaxonomyProblem>();
-        for (ComponentLeaf leaf : leaves) {
+        for (Component<?> leaf : leaves) {
             String who = leaf.token();
             var listed = new HashSet<StateType<?>>();
             for (StateType<?> s : leaf.states() == null ? List.<StateType<?>>of() : leaf.states()) {

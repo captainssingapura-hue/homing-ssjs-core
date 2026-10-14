@@ -33,6 +33,18 @@ public record Casting(Taxon component, RoleNode role) implements ValueObject {
     /** Whether it is cast as Standalone. */
     public boolean standalone() { return role instanceof RoleRoot; }
 
+    /**
+     * Its token, its style-aware class's (RFC 0067, appendix Two Classes per Leaf): the component's on its own -
+     * {@code primary-button} - and in a role the component's then the role's - {@code primary-button_go}.
+     */
+    public String token() { return standalone() ? component.token() : component.token() + "_" + role.name().value(); }
+
+    /** The component cast: what a casting of the taxonomy's own always is; refused for a casting of a branch, which nothing wears. */
+    public Component<?> cast() {
+        if (component instanceof Component<?> c) return c;
+        throw new IllegalStateException(this + " casts a branch, which nothing wears");
+    }
+
     /** The same component on its own. */
     public Casting alone() { return standalone() ? this : new Casting(component); }
 

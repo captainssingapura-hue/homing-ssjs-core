@@ -29,9 +29,9 @@ class LeafScriptTest extends JsModuleTestBase {
                 script);
         js = buildContext();
         Value leaves = js.eval("js", "(" + script + ")");
-        assertEquals(List.of("tab", "strip", "strip-lead"), List.copyOf(leaves.getMemberKeys()), "components, then parts");
-        assertEquals("styled-strip-lead--selected", leaves.getMember("strip-lead").getMember("states").getMember("selected").getMember("true").asString(),
-                "a part's states its own");
+        assertEquals(List.of("tab", "strip", "tab_lead"), List.copyOf(leaves.getMemberKeys()), "each component on its own, then each role a slot casts its component in");
+        assertEquals("styled-tab_lead--selected", leaves.getMember("tab_lead").getMember("states").getMember("selected").getMember("true").asString(),
+                "the tab cast as Lead: its own class, the tab's states");
         assertEquals(List.of("enabled", "selected", "keys"), List.copyOf(leaves.getMember("tab").getMember("states").getMemberKeys()),
                 "the hover is the browser's, drawn by its pseudo-class; the rest in the tab's precedence");
         assertTrue(js.eval("js", "Object.isFrozen((" + script + ")['tab'].states.keys)").asBoolean());
