@@ -18,7 +18,7 @@ final class Signals {
     }
 
     /** True at rest; off, it has an established design word. */
-    record Enabled() implements Flag<Availability> {
+    record Enabled() implements Flag<Availability>, Importance.Quaternary {
         static final Enabled INSTANCE = new Enabled();
         @Override public Availability parent() { return Availability.INSTANCE; }
         @Override public boolean rest() { return true; }
@@ -26,14 +26,14 @@ final class Signals {
     }
 
     /** Three values, off at rest; no design word established, so its values' are its name and theirs. */
-    record Glow() implements StateType<Availability> {
+    record Glow() implements StateType<Availability>, Importance.Tertiary {
         static final Glow INSTANCE = new Glow();
         @Override public Availability parent() { return Availability.INSTANCE; }
         @Override public List<StateValue> values() { return List.of(new StateValue("off"), new StateValue("dim"), new StateValue("bright")); }
     }
 
     /** Filed under the root; no component has it. */
-    record Lit() implements Flag<StateRoot> {
+    record Lit() implements Flag<StateRoot>, Importance.Senary {
         static final Lit INSTANCE = new Lit();
         @Override public StateRoot parent() { return StateRoot.INSTANCE; }
     }

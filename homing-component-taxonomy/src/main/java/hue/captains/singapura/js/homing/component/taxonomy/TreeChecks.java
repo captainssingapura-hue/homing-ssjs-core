@@ -62,6 +62,59 @@ record TreeChecks() implements StatelessFunctionalObject {
         return List.copyOf(out);
     }
 
+    /**
+     * A type of state with no level of importance - every state has one, intrinsic, on the tree of states - and a pseudo
+     * state that is no flag, or whose pseudo-class is none.
+     */
+    List<TaxonomyProblem> levels(List<? extends StateType<?>> types) {
+        var out = new ArrayList<TaxonomyProblem>();
+        for (StateType<?> t : types) {
+            if (Importances.INSTANCE.levelOf(t).isEmpty())
+                out.add(new TaxonomyProblem(Rule.STATE_UNRANKED, Names.qualified(t) + " has no level of importance: every state "
+                        + "implements one, Importance.Primary to Importance.Senary"));
+            if (t instanceof Pseudo p) {
+                List<StateValue> values = t.values();
+                if (values != null && values.size() != 2)
+                    out.add(new TaxonomyProblem(Rule.PSEUDO_BADLY, Names.qualified(t) + " is a pseudo state with " + values.size()
+                            + " values: a pseudo state is a flag, its one value beside its rest the one its pseudo-class shows"));
+                String pc = p.pseudoClass();
+                if (pc == null || !pc.matches(":[a-z][a-z-]*"))
+                    out.add(new TaxonomyProblem(Rule.PSEUDO_BADLY, Names.qualified(t) + "'s pseudo-class '" + pc + "' is none: ':hover', "
+                            + "':focus-visible'"));
+            }
+        }
+        return List.copyOf(out);
+    }
+
+    /**
+     * A leaf - a component or a part - that lists a state twice or lists nothing, or overrides the level of a state it
+     * does not list, or of one twice.
+     */
+    List<TaxonomyProblem> leafStates(List<? extends ComponentLeaf> leaves) {
+        var out = new ArrayList<TaxonomyProblem>();
+        for (ComponentLeaf leaf : leaves) {
+            String who = leaf.token();
+            var listed = new HashSet<StateType<?>>();
+            for (StateType<?> s : leaf.states() == null ? List.<StateType<?>>of() : leaf.states()) {
+                if (s == null) out.add(new TaxonomyProblem(Rule.STATES_LISTED_BADLY, who + " lists a state that is nothing"));
+                else if (!listed.add(s)) out.add(new TaxonomyProblem(Rule.STATES_LISTED_BADLY, who + " lists " + Names.of(s) + " twice"));
+            }
+            var overridden = new HashSet<StateType<?>>();
+            for (ImportanceOverride<?> o : leaf.importance() == null ? List.<ImportanceOverride<?>>of() : leaf.importance()) {
+                if (o == null) {
+                    out.add(new TaxonomyProblem(Rule.STATES_LISTED_BADLY, who + " overrides the level of nothing"));
+                    continue;
+                }
+                if (!listed.contains(o.state()))
+                    out.add(new TaxonomyProblem(Rule.STATES_LISTED_BADLY, who + " overrides the level of " + Names.of(o.state())
+                            + ", which it does not list"));
+                if (!overridden.add(o.state()))
+                    out.add(new TaxonomyProblem(Rule.STATES_LISTED_BADLY, who + " overrides the level of " + Names.of(o.state()) + " twice"));
+            }
+        }
+        return List.copyOf(out);
+    }
+
     /** Two values of the tree answered by one design word - an established word, or a type's name and a value's. */
     List<TaxonomyProblem> wordsTwice(List<? extends StateType<?>> types) {
         var byWord = new LinkedHashMap<String, List<String>>();

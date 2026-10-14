@@ -7,6 +7,11 @@ import hue.captains.singapura.js.homing.component.taxonomy.Cardinality.Varying;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import hue.captains.singapura.tao.ontology.ValueObject;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * The language a component declares its parts in - a stateless functional object, kept apart from
  * what it speaks of: a role is an identity and knows nothing of it, a component only returns the
@@ -57,18 +62,36 @@ public record ComponentPartDSL() implements StatelessFunctionalObject {
     public record NeedsRole<E extends Component<?>>(E base) implements ValueObject {
 
         /** The role it plays - none is refused when the taxonomy is read. Not yet a slot: it needs a count. */
-        public NeedsCount<E> as(Role<?> role) { return new NeedsCount<>(base, role); }
+        public NeedsCount<E> as(Role<?> role) { return new NeedsCount<>(base, role, List.of(), List.of()); }
     }
 
     /**
      * A part played by a component in a role, and not yet told how many. Each verb says how many,
-     * and makes the slot; a count that is no cardinality is thrown where it is said.
+     * and makes the slot; a count that is no cardinality is thrown where it is said. Before it, the
+     * part's own states and overrides may be said: a part is a top-level thing in state and in
+     * design, with none of its own unless its slot says.
      *
-     * @param base the component that plays it
-     * @param role the role it plays
-     * @param <E>  the component that plays it
+     * @param base       the component that plays it
+     * @param role       the role it plays
+     * @param states     the part's own states, in the order listed
+     * @param importance the part's own levels for some of them
+     * @param <E>        the component that plays it
      */
-    public record NeedsCount<E extends Component<?>>(E base, Role<?> role) implements ValueObject {
+    public record NeedsCount<E extends Component<?>>(E base, Role<?> role, List<StateType<?>> states,
+                                                     List<ImportanceOverride<?>> importance) implements ValueObject {
+
+        /** A part given a role, with no states of its own yet. */
+        public NeedsCount(E base, Role<?> role) { this(base, role, List.of(), List.of()); }
+
+        /** The part's own states, in the order listed: the order that breaks a tie of importance. */
+        public NeedsCount<E> states(StateType<?>... states) {
+            return new NeedsCount<>(base, role, Collections.unmodifiableList(new ArrayList<>(Arrays.asList(states))), importance);
+        }
+
+        /** The part's own levels for some of its states, in place of theirs. */
+        public NeedsCount<E> importance(ImportanceOverride<?>... overrides) {
+            return new NeedsCount<>(base, role, states, Collections.unmodifiableList(new ArrayList<>(Arrays.asList(overrides))));
+        }
 
         /** Exactly one, from the start. */
         public Slot<E> one() { return exactly(1); }
@@ -91,6 +114,6 @@ public record ComponentPartDSL() implements StatelessFunctionalObject {
         /** From {@code m} up to {@code n}. */
         public Slot<E> between(int m, int n) { return slot(new Varying(m, new AtMost(n))); }
 
-        private Slot<E> slot(Cardinality cardinality) { return new Slot<>(role, base, cardinality); }
+        private Slot<E> slot(Cardinality cardinality) { return new Slot<>(role, base, cardinality, states, importance); }
     }
 }

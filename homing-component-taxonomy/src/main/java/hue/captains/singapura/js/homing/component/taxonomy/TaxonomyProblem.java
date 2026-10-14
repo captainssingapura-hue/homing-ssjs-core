@@ -44,6 +44,12 @@ public record TaxonomyProblem(Rule rule, String says) implements ValueObject {
         BAD_STATE_VALUES,
         /** Two values of the tree of states answered by one design word: one word, one meaning. */
         DESIGN_WORD_TWICE,
+        /** A type of state with no level of importance: every state implements one, intrinsic, on the tree of states. */
+        STATE_UNRANKED,
+        /** A pseudo state that is no flag, or whose pseudo-class is none. */
+        PSEUDO_BADLY,
+        /** A component or a part that lists a state twice or lists nothing, or overrides the level of a state it does not list, or of one twice. */
+        STATES_LISTED_BADLY,
         /** A component under a design branch that is not virtual: a design could never be complete over it. */
         NOT_VIRTUAL,
         /** A virtual leaf that declares parts: it has none, and its concrete leaves add none. */

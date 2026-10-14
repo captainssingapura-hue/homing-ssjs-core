@@ -37,6 +37,19 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
         Objects.requireNonNull(events, "Taxonomy.events");
     }
 
+    /**
+     * Every leaf as a design sees it (RFC 0067, appendix Two Classes per Leaf): the components, then the parts at their
+     * roles, each a top-level thing in state and in design.
+     */
+    public List<ComponentLeaf> leaves() {
+        var out = new ArrayList<ComponentLeaf>(components);
+        out.addAll(parts);
+        return List.copyOf(out);
+    }
+
+    /** A leaf's states in precedence: the least important first, so the last wins; two of one level in the order the leaf lists them. */
+    public List<StateType<?>> precedence(ComponentLeaf leaf) { return Importances.INSTANCE.precedence(leaf); }
+
     /** Every node a design can be asked about: the root, the branches, the components, then the parts. */
     public List<ComponentNode> nodes() {
         var out = new ArrayList<ComponentNode>();

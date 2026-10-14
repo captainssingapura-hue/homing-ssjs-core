@@ -106,7 +106,7 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
                     problems.add(new TaxonomyProblem(Rule.NO_BASE, Names.of(c) + "." + Names.of(role) + " is played by nothing"));
                     continue;
                 }
-                parts.add(new Part<Component<?>, Component<?>>(c, role, base, slot.cardinality()));
+                parts.add(new Part<Component<?>, Component<?>>(c, role, base, slot.cardinality(), slot.states(), slot.importance()));
                 bases.add(base);
                 queue.add(base);
             }
@@ -123,6 +123,9 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
         for (Component<?> c : components) {
             for (StateType<?> s : orNone(c.states())) if (s != null) states.add(s);
             for (EventType<?> e : orNone(c.events())) if (e != null) events.add(e);
+        }
+        for (Part<?, ?> p : parts) {
+            for (StateType<?> s : p.states()) if (s != null) states.add(s);
         }
         var stateBranches = new LinkedHashSet<StateBranch>();
         for (StateType<?> s : states) {
@@ -160,6 +163,10 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
         problems.addAll(TreeChecks.INSTANCE.clashes("states", StateTree.nodes(stateBranchList, stateList), StateNode::name));
         problems.addAll(TreeChecks.INSTANCE.badValues(stateList));
         problems.addAll(TreeChecks.INSTANCE.wordsTwice(stateList));
+        problems.addAll(TreeChecks.INSTANCE.levels(stateList));
+        var leaves = new ArrayList<ComponentLeaf>(componentList);
+        leaves.addAll(parts);
+        problems.addAll(TreeChecks.INSTANCE.leafStates(leaves));
         problems.addAll(TreeChecks.INSTANCE.clashes("events", EventTree.nodes(eventBranchList, eventList), EventNode::name));
         var meant = meant(branchList, componentList, roleBranchList, roleList);
         if (!stateList.isEmpty()) meant.addAll(StateTree.nodes(stateBranchList, stateList));

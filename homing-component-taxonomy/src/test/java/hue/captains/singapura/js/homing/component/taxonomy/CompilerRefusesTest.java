@@ -35,6 +35,7 @@ class CompilerRefusesTest {
     private static final String PREAMBLE = """
             package hypothetical;
             import hue.captains.singapura.js.homing.component.taxonomy.*;
+            import hue.captains.singapura.js.homing.tree.NodeName;
             import java.util.List;
             public class Hypothetical {
                 record Text() implements L1_ComponentBranch<Root> { static final Text INSTANCE = new Text(); public Root parent() { return Root.INSTANCE; } }
@@ -252,6 +253,50 @@ class CompilerRefusesTest {
     void aConcreteLeafOfTwoLeaves_doesNotCompile() {
         refusedOnItsLine(DESIGNED + """
                 record Twice() implements Edge.Concrete<Plain>, Mark.Concrete<Plain> {} // refused here
+                """);
+    }
+
+    // ── the importance of states (RFC 0067, appendix Two Classes per Leaf) ──
+
+    private static final String STATES = """
+            record Lit() implements Flag<StateRoot>, Importance.Senary { public StateRoot parent() { return StateRoot.INSTANCE; } }
+            """;
+
+    @Test
+    void aStateOfOneLevel_anOverride_andAPartWithStatesOfItsOwn_compile() {
+        var errors = compile(STATES + """
+                record Lamp() implements Component<Text> {
+                    private static final ComponentPartDSL DSL = ComponentPartDSL.INSTANCE;
+                    public Text parent() { return Text.INSTANCE; }
+                    public List<StateType<?>> states() { return List.of(new Lit()); }
+                    public List<ImportanceOverride<?>> importance() { return List.of(new ImportanceOverride<>(new Lit(), Importance.Primary.class)); }
+                    public List<Slot<?>> parts() {
+                        return List.of(DSL.part(Caption.INSTANCE).as(Title.INSTANCE).states(new Lit())
+                                .importance(new ImportanceOverride<>(new Lit(), Importance.Secondary.class)).one());
+                    }
+                }
+                """);
+        assertTrue(errors.isEmpty(), "a state of one level, a leaf's override, a part's own states: " + errors);
+    }
+
+    @Test
+    void aStateOfTwoLevels_doesNotCompile() {
+        refusedOnItsLine("""
+                record Torn() implements Flag<StateRoot>, Importance.Primary, Importance.Secondary { public StateRoot parent() { return StateRoot.INSTANCE; } } // refused here
+                """);
+    }
+
+    @Test
+    void anOverrideToAStateRatherThanALevel_doesNotCompile() {
+        refusedOnItsLine(STATES + """
+                static final ImportanceOverride<?> ODD = new ImportanceOverride<>(new Lit(), Lit.class); // refused here
+                """);
+    }
+
+    @Test
+    void aFourthKindOfLeaf_doesNotCompile() {
+        refusedOnItsLine("""
+                record Odd() implements ComponentLeaf { public NodeName name() { return null; } public List<StateType<?>> states() { return List.of(); } public List<ImportanceOverride<?>> importance() { return List.of(); } } // refused here
                 """);
     }
 
