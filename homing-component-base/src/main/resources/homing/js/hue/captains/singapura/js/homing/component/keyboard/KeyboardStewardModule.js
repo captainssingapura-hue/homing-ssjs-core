@@ -27,8 +27,10 @@
 //   browser's focus. The browser's focus arriving inside a member makes that
 //   member the holder, by "native"; arriving on a member's own root, or on
 //   something only a scroller, is refused; a claim blurs whatever has the
-//   browser's focus outside the claimer. The steward alone writes data-keys,
-//   on the roots it enrolled, and tells the members above the marker
+//   browser's focus outside the claimer. The steward alone writes the marks,
+//   on the roots it enrolled - data-keys, for code that reads them, and, on a
+//   root enrolled with its marks, its leaf's state class for the look (RFC
+//   0067, D12) - and tells the members above the marker
 //   within(on, at) on every move of it.
 //
 //   THE WALK, while nothing is natively focused, is KeyboardWalk's: it moves
@@ -91,6 +93,8 @@ class KeyboardSteward {
         this._roots = new WeakMap();     // root element → the id enrolled on it
         this._rootsOf = new Map();       // id → its roots, which wear its mark
         this._painted = new Set();       // the roots wearing a mark now
+        this._marksOf = new Map();       // root → { leaf, state }: its leaf, and the state of it the keys' marks are
+        this._keysWorn = new Map();      // root → the value of that state it wears now
         this._at = null; this._lent = null; this._away = false;   // the browser's focus last read; the element lent to; outside every member
         this._inside = {}; this._toldAt = null;                     // the members told the marker is inside them; the marker they were told
         this._party = new Party({ name: "keyboard", root: { path: _ROOT, initial: KeyboardSecretary.initial, behavior: KeyboardSecretary.behavior } });
@@ -142,13 +146,20 @@ class KeyboardSteward {
     static idOf(m) { return m && typeof m === "object" && typeof m.id === "string" ? m.id : m; }
 
     // ── the roots under the convention ────────────────────────────────────
-    /** A root enrolled for a member: memberAt answers it, and it wears the member's mark. The function returned forgets it. Keys.claimOn does this. */
-    enroll(root, id) {
+    /**
+     * A root enrolled for a member: memberAt answers it, and it wears the member's mark. The function returned forgets
+     * it. Keys.claimOn does this. With its marks - { leaf, state }: the root's leaf as Java describes it, and the state
+     * of it the keys' marks are - the root also wears that state's class while it holds a mark (RFC 0067, D12): the
+     * state's values the marks themselves, held, lent and candidate, and away its rest. Refused when they could not show.
+     */
+    enroll(root, id, marks) {
         id = KeyboardSteward.idOf(id);
         if (!root || typeof root !== "object") throw new Error("[KeyboardSteward] enroll wants the root element");
         if (typeof id !== "string" || !id) throw new Error("[KeyboardSteward] enroll wants the member's id");
+        if (marks != null) KeyboardMark.markable(id, marks);
         var roots = this._roots, self = this;
         roots.set(root, id);
+        if (marks != null) this._marksOf.set(root, Object.freeze({ leaf: marks.leaf, state: marks.state }));
         KeyboardMark.enrolled(this, root, id);
         return function () { if (roots.get(root) === id) roots.delete(root); KeyboardMark.forget(self, root, id); };
     }
@@ -339,8 +350,7 @@ class KeyboardSteward {
 
     dispose() {
         this._listen(false);
-        this._painted.forEach(function (r) { r.removeAttribute("data-keys"); });
-        this._painted = new Set();
+        KeyboardMark.clear(this);
         this._holder = null;
         this._candidate = null;
         this._members = {};

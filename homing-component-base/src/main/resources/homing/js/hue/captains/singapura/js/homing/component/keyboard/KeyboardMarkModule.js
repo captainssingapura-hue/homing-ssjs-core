@@ -34,7 +34,10 @@
 //
 // THE MARKS ARE THE STEWARD'S ALONE: data-keys on every root it enrolled —
 // "held" or "lent" on the holder's, "candidate" on the walk's candidate's,
-// nothing on any other. The members above the marker are TOLD, on every move,
+// nothing on any other - for the code that reads them; and on a root enrolled
+// with its marks, { leaf, state }, that state's class for the look, its value
+// the mark and away the rest (RFC 0067, appendix Two Classes per Leaf, D12).
+// The members above the marker are TOLD, on every move,
 // within(on, at) — at being the marker — and each does what it does with it.
 //
 // Statics on a steward, as KeyboardWalk's are:
@@ -164,21 +167,55 @@ class KeyboardMark {
         return want;
     }
 
-    /** The marks written — by the steward alone — and, when the marker moved, everyone above it told. */
+    /**
+     * The marks written — by the steward alone — and, when the marker moved, everyone above it told: data-keys, for the
+     * code that reads it; and on a root enrolled with its marks, its leaf's state class, for the look (RFC 0067, D12).
+     */
     static paint(s) {
         var want = KeyboardMark._wanted(s);
         s._painted.forEach(function (r) { if (!want.has(r)) r.removeAttribute(_ATTR); });
         want.forEach(function (v, r) { if (r.getAttribute(_ATTR) !== v) r.setAttribute(_ATTR, v); });
         s._painted = new Set(want.keys());
+        s._marksOf.forEach(function (m, r) { KeyboardMark._wear(s, r, m, want.has(r) ? want.get(r) : "away"); });
         KeyboardMark.tell(s, false);
     }
 
-    /** A root forgotten: its mark goes with it. */
+    /** Marks that can show, or refused: a leaf as Java describes it, listing the state, whose values are the marks', away the rest. */
+    static markable(id, marks) {
+        var leaf = marks.leaf, state = marks.state;
+        if (!leaf || typeof leaf.token !== "string" || typeof leaf.styled !== "string" || !leaf.states)
+            throw new Error("[KeyboardSteward] " + id + "'s marks want its leaf, as Java describes it");
+        var values = typeof state === "string" ? leaf.states[state] : null;
+        if (!values) throw new Error("[KeyboardSteward] " + leaf.token + " lists no state " + state + ": the keys' marks on " + id + "'s root could never show");
+        var want = ["away", "candidate", "lent", "held"], has = Object.keys(values);
+        if (want.some(function (v) { return has.indexOf(v) < 0; }) || has.length !== want.length || values.away !== null)
+            throw new Error("[KeyboardSteward] " + leaf.token + "'s " + state + " is " + has.join(", ") + ": the keys' marks are away - the rest - candidate, lent and held");
+    }
+
+    /** Every mark taken off, the steward going: data-keys, and each marked root's class. */
+    static clear(s) {
+        s._painted.forEach(function (r) { r.removeAttribute(_ATTR); });
+        s._marksOf.forEach(function (m, r) { StyledLeaf.hold(r, m.leaf, m.state, "away"); });
+        s._painted = new Set();
+        s._marksOf = new Map();
+        s._keysWorn = new Map();
+    }
+
+    /** A root's state class for the keys' mark it holds: the value's class on, the others off; away, the rest, none. */
+    static _wear(s, root, marks, value) {
+        if (s._keysWorn.get(root) === value) return;
+        StyledLeaf.hold(root, marks.leaf, marks.state, value);
+        s._keysWorn.set(root, value);
+    }
+
+    /** A root forgotten: its mark goes with it, and its state class. */
     static forget(s, root, id) {
         var list = s._rootsOf.get(id), i = list ? list.indexOf(root) : -1;
         if (i >= 0) list.splice(i, 1);
         if (list && !list.length) s._rootsOf.delete(id);
         if (s._painted.has(root)) { s._painted.delete(root); root.removeAttribute(_ATTR); }
+        var marks = s._marksOf.get(root);
+        if (marks) { KeyboardMark._wear(s, root, marks, "away"); s._marksOf.delete(root); s._keysWorn.delete(root); }
     }
 
     /**
@@ -218,6 +255,8 @@ class KeyboardMark {
             roots.forEach(function (r) {
                 var has = r.getAttribute(_ATTR), should = want.has(r) ? want.get(r) : null;
                 if (has !== should) broken.push("the root of " + rid + " says " + has + ", not " + should);
+                if (s._marksOf.has(r) && s._keysWorn.get(r) !== (should || "away"))
+                    broken.push("the root of " + rid + " wears its keys' class for " + s._keysWorn.get(r) + ", not " + (should || "away"));
             });
         });
         return broken;

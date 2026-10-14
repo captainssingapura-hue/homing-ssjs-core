@@ -5,6 +5,7 @@ import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
+import hue.captains.singapura.js.homing.server.StyledLeaves;
 
 import java.util.List;
 
@@ -33,6 +34,8 @@ public record KeyboardMarkModule() implements DomModule<KeyboardMarkModule> {
     @Override public ImportsFor<KeyboardMarkModule> imports() {
         return ImportsFor.<KeyboardMarkModule>builder()
                 .add(new ModuleImports<>(List.of(new KeyboardEventsModule.KeyboardEvents()), KeyboardEventsModule.INSTANCE))
+                // the keys' marks as a leaf's state class, on a root enrolled with its marks (RFC 0067, D12)
+                .add(new ModuleImports<>(List.of(new StyledLeaves.StyledLeaf()), StyledLeaves.INSTANCE))
                 .build();
     }
 
