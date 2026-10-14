@@ -35,7 +35,7 @@ class StyleSheetTest {
                 "every leaf once, in the taxonomy's order");
         assertTrue(ink.contains("/* tab: ink's own */\n/* Ink's tab, whole: none of it plain's. */\n.styled-tab {\n"), ink);
         assertEquals(1, ink.split("\\.styled-tab \\{", -1).length - 1, "the tab's class once: ink's, never plain's beside it");
-        assertTrue(ink.contains(Extent.PROPERTY), "the degree's property, core's, once at the top");
+        assertTrue(ink.contains(Extent.PROPERTY) && ink.contains(hue.captains.singapura.js.homing.design.Growth.SIZE.property()), "the degrees' properties, core's, at the top");
     }
 
     @Test
