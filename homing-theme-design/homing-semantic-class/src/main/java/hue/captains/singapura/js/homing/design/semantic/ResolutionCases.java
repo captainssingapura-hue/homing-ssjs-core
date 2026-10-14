@@ -17,7 +17,7 @@ import java.util.function.Function;
  * theme sketch
  * danger-button_go   rest      color-surface   => danger-button_go__color-surface from sketch-colours
  * floating-pane      disabled  color-surface   => none
- * danger-button      rest      color-ink       => unanswered
+ * danger-button      rest      color-text       => unanswered
  * </pre>
  *
  * The outcome is the class worn and the style or palette that answered it, {@code none} when

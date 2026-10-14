@@ -36,6 +36,14 @@ public interface DesignStyle<S extends ColorScheme> {
     /** Which colour each class it answers itself uses; none by default, each as its base colours it. */
     default List<Coloring<S, ?>> colorings() { return List.of(); }
 
+    /**
+     * The colours each component it draws in its own files imports (RFC 0067, appendix Two Classes per Leaf, D32): every
+     * colour of the tree the component's rules use, in a scheme this style's sees - by the compiler - and none it does
+     * not; the check holds the files to them. A component it draws with no colour of the tree is listed nowhere; none by
+     * default. A module's files import by the module's own ({@link ColorImportsExtension}).
+     */
+    default List<ColorImports<S>> colorImports() { return List.of(); }
+
     /** The words this style writes itself; none by default, each written as its base writes it. */
     default List<Writing> writings() { return List.of(); }
 

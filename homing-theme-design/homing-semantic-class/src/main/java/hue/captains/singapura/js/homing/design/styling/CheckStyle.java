@@ -1,18 +1,24 @@
 package hue.captains.singapura.js.homing.design.styling;
 
 import hue.captains.singapura.js.homing.component.taxonomy.Casting;
+import hue.captains.singapura.js.homing.component.taxonomy.Component;
 import hue.captains.singapura.js.homing.component.taxonomy.ComponentBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.ExtentAxis;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
+import hue.captains.singapura.js.homing.design.color.ColorLeaf;
 import hue.captains.singapura.js.homing.design.color.ColorNode;
 import hue.captains.singapura.js.homing.design.color.ColorScale;
+import hue.captains.singapura.js.homing.design.color.CurrentColor;
 import hue.captains.singapura.js.homing.design.color.Fixed;
 import hue.captains.singapura.js.homing.design.color.Interpolated;
-import hue.captains.singapura.js.homing.design.color.Ink;
 import hue.captains.singapura.js.homing.design.color.Palettable;
+import hue.captains.singapura.js.homing.design.semantic.ColorImports;
+import hue.captains.singapura.js.homing.design.semantic.ColorImportsExtension;
+import hue.captains.singapura.js.homing.design.semantic.ColorImportsExtensions;
 import hue.captains.singapura.js.homing.design.semantic.ColorTree;
 import hue.captains.singapura.js.homing.design.semantic.Derives;
 import hue.captains.singapura.js.homing.design.semantic.DesignStyle;
+import hue.captains.singapura.js.homing.design.semantic.StyleImports;
 import hue.captains.singapura.js.homing.design.semantic.StylingRes;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import hue.captains.singapura.tao.ontology.ValueObject;
@@ -66,12 +72,19 @@ import java.util.regex.Pattern;
  *   <li>{@code --fixed-<leaf>}, {@code --it-<leaf>}: assigned in the leaf's own rule, each to the one value the tree
  *       gives it, and named only where so assigned (D13);</li>
  *   <li>{@code --along-<scale>}: the same, and only on a leaf with the colour axis (D14);</li>
- *   <li>{@code --ink-<leaf>}: the same, a share of the ink the element stands on - CSS's {@code currentColor}, which the
- *       tree gives at a share (D31);</li>
+ *   <li>{@code --current-<leaf>}: the same, CSS's {@code currentColor} - the colour the element is given - at the share
+ *       the tree gives it (D31, D32);</li>
  *   <li>none of the four falling back, and no literal colour anywhere else - a hex, a colour function, a mix, a named
  *       or a system colour; {@code currentColor}, {@code transparent}, {@code inherit} and their like are CSS's own
  *       (D6).</li>
  * </ul>
+ *
+ * <p>Each component's design uses the colours it imports, and no other (D32): a colour of the tree named in a rule of
+ * the component - on its own or in a role, a state, a pseudo-element, a keyframe - is one its imports list, and each
+ * import is used. A colour named only in the value of a colour of its own - a scale's knots - is the tree's, not the
+ * design's. The style's own files are held to its {@link DesignStyle#colorImports()}; a module's files to the module's
+ * {@link ColorImportsExtension} - each to the files beside it, so the same on any classpath. An import is of a component
+ * the style draws, in the tree, and one the style's scheme sees.</p>
  *
  * Every problem is found at once, each naming its file and line.
  */
@@ -138,6 +151,7 @@ public record CheckStyle() implements StatelessFunctionalObject {
             problems.add(files.name(style, twice) + " is given twice on the classpath, one hiding the other: a module adding to a family "
                     + "gives a file of its own, <family>.<module>.css (D30)");
         var drawn = new LinkedHashMap<Casting, String>();
+        var used = new LinkedHashMap<String, Map<Component<?>, Map<String, String>>>();
         for (String present : files.present(style)) {
             Optional<String> family = files.family(present);
             if (family.isEmpty() || !heads.containsKey(family.get())) {
@@ -145,7 +159,8 @@ public record CheckStyle() implements StatelessFunctionalObject {
                         + "and the families are " + (heads.isEmpty() ? "none - no branch heads one" : String.join(", ", heads.keySet())));
                 continue;
             }
-            Checked f = new FamilyFile(taxonomy, tree, style, present, heads.get(family.get()), drawn).check(files.read(style, present).orElse(""));
+            Checked f = new FamilyFile(taxonomy, tree, style, present, heads.get(family.get()), drawn,
+                    used.computeIfAbsent(files.module(present).orElse(""), k -> new LinkedHashMap<>())).check(files.read(style, present).orElse(""));
             problems.addAll(f.problems());
             reports.addAll(f.reports());
         }
@@ -170,7 +185,102 @@ public record CheckStyle() implements StatelessFunctionalObject {
                 }
             }
         }
+        problems.addAll(imports(taxonomy, tree, style, used));
         return new Checked(problems, reports);
+    }
+
+    /**
+     * Each design held to its imports, both ways - a colour used and not imported, one imported and used nowhere - and
+     * each import to the taxonomy, the style and the tree (D32): the style's own for its own files, each module's for
+     * the module's.
+     *
+     * @param used by contributor - the style's own files, {@code ""}, or a module's - each component's colours and
+     *             where each is first used
+     */
+    private static List<String> imports(Taxonomy taxonomy, ColorTree tree, DesignStyle<?> style, Map<String, Map<Component<?>, Map<String, String>>> used) {
+        var problems = new ArrayList<String>();
+        Class<?> scheme = tree.scheme(style).orElseThrow();
+        var declared = new LinkedHashMap<String, Map<Component<?>, List<ColorLeaf<?, ?, ?>>>>();
+        var whose = new LinkedHashMap<String, String>();
+        whose.put("", style.token() + "'s colorImports()");
+        declare(taxonomy, tree, style, scheme, whose.get(""), style.colorImports(), declared.computeIfAbsent("", k -> new LinkedHashMap<>()), problems);
+        var modules = new LinkedHashSet<String>();
+        for (String present : StyleFiles.INSTANCE.present(style)) StyleFiles.INSTANCE.module(present).ifPresent(modules::add);
+        for (ColorImportsExtension e : ColorImportsExtensions.INSTANCE.of(style)) {
+            String module = e.module();
+            boolean listed = false;
+            for (StyleImports<?> si : e.imports()) {
+                if (si.style() != style.getClass()) continue;
+                String who = module + "'s ColorImportsExtension, for " + style.token();
+                if (listed) {
+                    problems.add(e.getClass().getSimpleName() + " lists " + style.token() + " twice: a module's imports in a style are listed once");
+                    continue;
+                }
+                listed = true;
+                if (whose.containsKey(module)) {
+                    problems.add(e.getClass().getSimpleName() + " imports for " + module + " in " + style.token() + ", for which another already does: one module, one extension");
+                    continue;
+                }
+                if (!modules.contains(module))
+                    problems.add(who + " imports colours, and " + module + " gives " + style.token() + " no file: <family>." + module + ".css (D32)");
+                whose.put(module, who);
+                declare(taxonomy, tree, style, scheme, who, si.imports(), declared.computeIfAbsent(module, k -> new LinkedHashMap<>()), problems);
+            }
+        }
+        var contributors = new LinkedHashSet<String>(declared.keySet());
+        contributors.addAll(used.keySet());
+        for (String contributor : contributors) {
+            Map<Component<?>, List<ColorLeaf<?, ?, ?>>> imports = declared.getOrDefault(contributor, Map.of());
+            Map<Component<?>, Map<String, String>> uses = used.getOrDefault(contributor, Map.of());
+            String who = whose.getOrDefault(contributor, contributor + "'s ColorImportsExtension, for " + style.token());
+            for (Map.Entry<Component<?>, Map<String, String>> u : uses.entrySet()) {
+                if (taxonomy.castings().stream().noneMatch(c -> c.cast().equals(u.getKey()) && style.style(c) instanceof StylingRes.CssContent))
+                    continue;   // a rule of what the style draws not: refused as that
+                var imported = new HashSet<String>();
+                for (ColorLeaf<?, ?, ?> c : imports.getOrDefault(u.getKey(), List.of())) imported.add(c.token());
+                for (Map.Entry<String, String> colour : u.getValue().entrySet())
+                    if (!imported.contains(colour.getKey()))
+                        problems.add(colour.getValue() + ": " + u.getKey().token() + "'s design uses " + colour.getKey() + ", which it does not import: "
+                                + who + " lists each colour a design uses (D32)");
+            }
+            for (Map.Entry<Component<?>, List<ColorLeaf<?, ?, ?>>> i : imports.entrySet()) {
+                Map<String, String> its = uses.getOrDefault(i.getKey(), Map.of());
+                for (ColorLeaf<?, ?, ?> c : i.getValue())
+                    if (!its.containsKey(c.token()))
+                        problems.add(who + " imports " + c.token() + " for " + i.getKey().token() + ", and "
+                                + (contributor.isEmpty() ? "its own files" : contributor + "'s files") + " use it nowhere: a design imports what it uses (D32)");
+            }
+        }
+        return problems;
+    }
+
+    /** One contributor's imports, each of a component the style draws, once, and each colour one of the tree the style's scheme sees. */
+    private static void declare(Taxonomy taxonomy, ColorTree tree, DesignStyle<?> style, Class<?> scheme, String who,
+                                List<? extends ColorImports<?>> imports, Map<Component<?>, List<ColorLeaf<?, ?, ?>>> into, List<String> problems) {
+        for (ColorImports<?> i : imports) {
+            Component<?> component = i.component();
+            List<Casting> castings = taxonomy.castings().stream().filter(c -> c.cast().equals(component)).toList();
+            if (castings.isEmpty()) {
+                problems.add(who + " imports colours for " + component.token() + ", which is no component of the taxonomy");
+                continue;
+            }
+            if (castings.stream().noneMatch(c -> style.style(c) instanceof StylingRes.CssContent))
+                problems.add(who + " imports colours for " + component.token() + ", which " + style.token()
+                        + " does not draw: its base's design is worn, and that design's imports with it (D32)");
+            if (into.containsKey(component)) {
+                problems.add(who + " imports colours for " + component.token() + " twice: a design's imports are listed once");
+                continue;
+            }
+            var colours = new ArrayList<ColorLeaf<?, ?, ?>>();
+            for (ColorLeaf<?, ?, ?> c : i.colors()) {
+                if (!tree.has(c)) problems.add(who + " imports " + c.token() + " for " + component.token() + ", which the tree has not");
+                else if (!tree.sees(scheme, c))
+                    problems.add(who + " imports " + c.token() + " for " + component.token() + ": it is " + tree.schemeName(tree.scheme(c))
+                            + "'s, which " + style.token() + "'s scheme, " + tree.schemeName(scheme) + ", does not see");
+                colours.add(c);
+            }
+            into.put(component, colours);
+        }
     }
 
     /**
@@ -182,7 +292,7 @@ public record CheckStyle() implements StatelessFunctionalObject {
         ComponentBranch head = family.flatMap(f -> taxonomy.heads().stream().filter(h -> h.token().equals(f)).findFirst()).orElse(null);
         if (head == null)
             return new Checked(List.of(StyleFiles.INSTANCE.name(style, file) + " is no family's file"), List.of());
-        return new FamilyFile(taxonomy, tree, style, file, head, new LinkedHashMap<>()).check(css);
+        return new FamilyFile(taxonomy, tree, style, file, head, new LinkedHashMap<>(), new LinkedHashMap<>()).check(css);
     }
 
     /** The check of one family file: its castings' rules, each once, in the family's order, each held by {@link OneFile}. */
@@ -197,14 +307,17 @@ public record CheckStyle() implements StatelessFunctionalObject {
         private final List<String> problems = new ArrayList<>();
         private final List<String> reports = new ArrayList<>();
         private final Map<Casting, OneFile> ruled = new LinkedHashMap<>();
+        private final Map<Component<?>, Map<String, String>> used;
 
-        FamilyFile(Taxonomy taxonomy, ColorTree tree, DesignStyle<?> style, String file, ComponentBranch head, Map<Casting, String> drawn) {
+        FamilyFile(Taxonomy taxonomy, ColorTree tree, DesignStyle<?> style, String file, ComponentBranch head, Map<Casting, String> drawn,
+                   Map<Component<?>, Map<String, String>> used) {
             this.taxonomy = taxonomy;
             this.tree = tree;
             this.style = style;
             this.head = head;
             this.name = StyleFiles.INSTANCE.name(style, file);
             this.drawn = drawn;
+            this.used = used;
         }
 
         Checked check(String css) {
@@ -275,10 +388,12 @@ public record CheckStyle() implements StatelessFunctionalObject {
                 }
                 one.keyframes(k);
             }
-            for (OneFile one : ruled.values()) {
-                Checked c = one.finish();
+            for (Map.Entry<Casting, OneFile> one : ruled.entrySet()) {
+                Checked c = one.getValue().finish();
                 problems.addAll(c.problems());
                 reports.addAll(c.reports());
+                Map<String, String> its = used.computeIfAbsent(one.getKey().cast(), k -> new LinkedHashMap<>());
+                one.getValue().uses().forEach(its::putIfAbsent);
             }
             if (!any && split.problems().isEmpty() && problems.isEmpty())
                 problems.add(name + ": rules none of " + head.token() + "'s castings: a family's file rules its castings, or is not there");
@@ -298,7 +413,7 @@ public record CheckStyle() implements StatelessFunctionalObject {
         private static final Pattern WORD = Pattern.compile("(?<![\\w#.-])[A-Za-z][\\w-]*");
         private static final Pattern STRING = Pattern.compile("\"(?:[^\"\\\\]|\\\\.)*\"|'(?:[^'\\\\]|\\\\.)*'");
         private static final Pattern URL = Pattern.compile("(?i)url\\([^)]*\\)");
-        private static final Set<String> LOCAL = Set.of("--fixed-", "--it-", "--along-", "--ink-");
+        private static final Set<String> LOCAL = Set.of("--fixed-", "--it-", "--along-", "--current-");
 
         private final Taxonomy taxonomy;
         private final ColorTree tree;
@@ -311,6 +426,7 @@ public record CheckStyle() implements StatelessFunctionalObject {
         private final List<String> reports = new ArrayList<>();
         private final Set<String> assigned = new HashSet<>();
         private final Map<String, Integer> used = new LinkedHashMap<>();
+        private final Map<String, String> uses = new LinkedHashMap<>();
 
         OneFile(Taxonomy taxonomy, ColorTree tree, DesignStyle<?> style, Casting leaf, String name) {
             this.taxonomy = taxonomy;
@@ -358,6 +474,9 @@ public record CheckStyle() implements StatelessFunctionalObject {
                             + "a colour of its own is assigned where it is used (D13, D14)");
             return new Checked(problems, reports);
         }
+
+        /** The tree's colours its declarations use, each by its token, and where first: none named only in a colour of its own's value (D32). */
+        Map<String, String> uses() { return uses; }
 
         /**
          * The casting's rule - or an @media of it, {@code media} its setting: its declarations, then each state drawn in
@@ -459,7 +578,7 @@ public record CheckStyle() implements StatelessFunctionalObject {
                 if (!assigned.add(property)) at(d, property + " is assigned twice");
                 local(d);
             }
-            names(d);
+            names(d, local);
             if (!local) literals(d);
         }
 
@@ -467,19 +586,19 @@ public record CheckStyle() implements StatelessFunctionalObject {
         private void local(ReadCss.Declaration d) {
             String property = d.property();
             String kind = property.startsWith("--fixed-") ? "--fixed-" : property.startsWith("--it-") ? "--it-"
-                    : property.startsWith("--ink-") ? "--ink-" : "--along-";
+                    : property.startsWith("--current-") ? "--current-" : "--along-";
             String token = property.substring(kind.length());
             ColorNode<?, ?, ?> node = nodes.get(token);
             var colours = LocalColours.INSTANCE;
             String expected = switch (kind) {
                 case "--fixed-" -> node instanceof Fixed<?, ?> f ? colours.fixed(f) : null;
                 case "--it-" -> node instanceof Interpolated<?, ?> i ? colours.interpolated(i) : null;
-                case "--ink-" -> node instanceof Ink<?, ?> k ? colours.ink(k) : null;
+                case "--current-" -> node instanceof CurrentColor<?, ?> k ? colours.current(k) : null;
                 default -> node instanceof ColorScale<?, ?> s ? colours.along(s) : null;
             };
             if (expected == null) {
                 at(d, property + " names no " + (kind.equals("--fixed-") ? "fixed colour" : kind.equals("--it-") ? "interpolated colour"
-                        : kind.equals("--ink-") ? "ink" : "colour scale")
+                        : kind.equals("--current-") ? "share of the current colour" : "colour scale")
                         + " of the tree" + (node == null ? "" : ": " + token + " is " + kindOf(node)));
                 return;
             }
@@ -494,8 +613,11 @@ public record CheckStyle() implements StatelessFunctionalObject {
                 at(d, property + " is " + expected + " by the tree, not " + d.value());
         }
 
-        /** Every variable a value names: a palette's must be one the style's scheme sees; a local one, assigned; none falling back. */
-        private void names(ReadCss.Declaration d) {
+        /**
+         * Every variable a value names: a palette's must be one the style's scheme sees; a local one, assigned; none falling
+         * back. Each a use of the design's - but in the value of a colour of its own, where the tree's value names them (D32).
+         */
+        private void names(ReadCss.Declaration d, boolean local) {
             Matcher m = VAR.matcher(d.value());
             while (m.find()) {
                 String variable = m.group(1);
@@ -510,7 +632,13 @@ public record CheckStyle() implements StatelessFunctionalObject {
                     else if (!tree.sees(scheme, node))
                         at(d, variable + ": " + token + " is " + tree.schemeName(tree.scheme(node)) + "'s, which " + style.token() + "'s scheme, "
                                 + tree.schemeName(scheme) + ", does not see (D7)");
-                } else if (colour) used.putIfAbsent(variable, d.line());
+                    if (node instanceof Palettable<?, ?> && !local) uses.putIfAbsent(token, name + ":" + d.line());
+                } else if (colour) {
+                    used.putIfAbsent(variable, d.line());
+                    String prefix = LOCAL.stream().filter(variable::startsWith).findFirst().orElseThrow();
+                    String token = variable.substring(prefix.length());
+                    if (!local && nodes.containsKey(token)) uses.putIfAbsent(token, name + ":" + d.line());
+                }
             }
         }
 
@@ -537,7 +665,7 @@ public record CheckStyle() implements StatelessFunctionalObject {
                 case Palettable<?, ?> p -> "a palettable colour, var(--fp-" + p.token() + ")";
                 case Fixed<?, ?> f -> "a fixed colour, --fixed-" + f.token();
                 case Interpolated<?, ?> i -> "an interpolated colour, --it-" + i.token();
-                case Ink<?, ?> k -> "an ink, --ink-" + k.token();
+                case CurrentColor<?, ?> k -> "the current colour at a share, --current-" + k.token();
                 case ColorScale<?, ?> s -> "a colour scale, --along-" + s.token();
                 default -> "a branch";
             };

@@ -28,8 +28,8 @@ public record ColorProblem(Rule rule, String says) implements ValueObject {
         INTERPOLATED_BADLY,
         /** A fixed colour that gives no colour. */
         FIXED_BADLY,
-        /** An ink of no share, or of more than the ink whole. */
-        INK_BADLY,
+        /** CSS's currentColor at no share, or at more than the whole of it. */
+        SHARE_BADLY,
         /** An extension grafting palettable colours whose base sub-palette, its last word, is missing or leaves one unanswered. */
         LAST_WORD_MISSING
     }

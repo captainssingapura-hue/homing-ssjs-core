@@ -4,9 +4,9 @@ import hue.captains.singapura.js.homing.design.color.ColorBranch;
 import hue.captains.singapura.js.homing.design.color.ColorNode;
 import hue.captains.singapura.js.homing.design.color.ColorScale;
 import hue.captains.singapura.js.homing.design.color.ConcreteColor;
+import hue.captains.singapura.js.homing.design.color.CurrentColor;
 import hue.captains.singapura.js.homing.design.color.Fixed;
 import hue.captains.singapura.js.homing.design.color.Interpolated;
-import hue.captains.singapura.js.homing.design.color.Ink;
 import hue.captains.singapura.js.homing.design.color.Palettable;
 import hue.captains.singapura.js.homing.design.semantic.ColorProblem.Rule;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
@@ -116,10 +116,10 @@ public record ReadColors() implements StatelessFunctionalObject {
                     if (s == null || !read.containsKey(s.getClass()))
                         problems.add(new ColorProblem(Rule.INTERPOLATED_BADLY, i.token() + " is drawn from " + (s == null ? "no scale" : s.token() + ", which the tree has not")));
                 }
-                case Ink<?, ?> k -> {
+                case CurrentColor<?, ?> k -> {
                     double share = k.share();
                     if (!(share > 0 && share <= 1))
-                        problems.add(new ColorProblem(Rule.INK_BADLY, k.token() + " takes " + share + " of the ink: a share is more than none and at most the ink whole, 1"));
+                        problems.add(new ColorProblem(Rule.SHARE_BADLY, k.token() + " takes " + share + " of the colour it is given: a share is more than none and at most the whole of it, 1"));
                 }
                 case Fixed<?, ?> f -> {
                     ConcreteColor color;

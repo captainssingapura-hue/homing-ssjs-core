@@ -51,7 +51,7 @@ class ResolutionCasesTest {
     @Test
     void theWalk_isTold_stepByStep() {
         assertEquals(List.of(
-                "query    plain-button_cancel  rest  color-ink",
+                "query    plain-button_cancel  rest  color-text",
                 "theme    sketch in paper",
                 "walk      1. sketch  plain-button_cancel      -",
                 "          2. sketch  plain-button_committing  -",
@@ -59,9 +59,9 @@ class ResolutionCasesTest {
                 "          4. sketch  plain-button             -",
                 "          5. sketch  button_cancel            -",
                 "          6. sketch  button_committing        answered",
-                "result   button_committing__color-ink from sketch",
+                "result   button_committing__color-text from sketch",
                 "         asked 6 times: sketch answers at button as committing"),
-                resolve("sketch", "plain-button_cancel", State.REST, "color-ink").explain());
+                resolve("sketch", "plain-button_cancel", State.REST, "color-text").explain());
     }
 
     /** The worn style all the way up first, then its base; a redirect in the base resolved in the style worn. */
@@ -106,8 +106,8 @@ class ResolutionCasesTest {
                 .contains("danger-button as go is answered disabled: a state is a treatment"));
         assertTrue(refused(() -> new Coloring<>(Button.INSTANCE, Target.Color.Scrollbar.INSTANCE, new Answer.Painted<>(Map.of(State.HOVER, new Paint.Inherited<>()))))
                 .contains("color-scrollbar offers no hover"));
-        assertTrue(refused(() -> new Coloring<>(Button.INSTANCE, Target.Color.Ink.INSTANCE, new Answer.Redirect<>(Button.INSTANCE))).contains("redirected to itself"));
-        assertTrue(refused(() -> new Answer.Painted<>(Map.<State, Paint<Base, Target.Color.Ink>>of())).contains("answers at least one state"));
+        assertTrue(refused(() -> new Coloring<>(Button.INSTANCE, Target.Color.Text.INSTANCE, new Answer.Redirect<>(Button.INSTANCE))).contains("redirected to itself"));
+        assertTrue(refused(() -> new Answer.Painted<>(Map.<State, Paint<Base, Target.Color.Text>>of())).contains("answers at least one state"));
         assertTrue(refused(() -> new Implementation<>(Button.INSTANCE, corner, new Answer.Own<Target.Shape.Corner>(Map.of(State.HOVER, "border-radius: 2px;"))))
                 .contains("shape-corner offers no hover"));
         assertTrue(refused(() -> new Implementation<>(Button.INSTANCE, corner, new Answer.FromBase<Target.Shape.Corner>(Set.of(State.HOVER))))
@@ -231,7 +231,7 @@ class ResolutionCasesTest {
         var table = cli(join(new String[] {"--taxonomy", taxonomy}, sketch, new String[] {"danger-button", "rest", "*"}));
         assertEquals(1, table.code(), "the sketch answers few targets: the rest are unanswered");
         assertTrue(table.out().contains("rest         shape-corner       danger-button__shape-corner   from sketch"), table.out());
-        assertTrue(table.out().contains("rest         color-ink          UNANSWERED"), table.out());
+        assertTrue(table.out().contains("rest         color-text         UNANSWERED"), table.out());
         var squared = cli("--taxonomy", taxonomy, "--colors", colours, "--style", ResolvingThemes.Squared.class.getName(), "--palette", paper,
                 "plain-button", "rest", "shape-corner");
         assertTrue(squared.out().contains("result   button__shape-corner from valued"), squared.out());

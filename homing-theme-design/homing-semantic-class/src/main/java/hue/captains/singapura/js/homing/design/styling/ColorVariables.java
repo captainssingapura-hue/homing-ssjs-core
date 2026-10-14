@@ -1,9 +1,9 @@
 package hue.captains.singapura.js.homing.design.styling;
 
 import hue.captains.singapura.js.homing.design.color.ColorScale;
+import hue.captains.singapura.js.homing.design.color.CurrentColor;
 import hue.captains.singapura.js.homing.design.color.Fixed;
 import hue.captains.singapura.js.homing.design.color.Interpolated;
-import hue.captains.singapura.js.homing.design.color.Ink;
 import hue.captains.singapura.js.homing.design.color.Palettable;
 import hue.captains.singapura.js.homing.design.color.SemanticColor;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
@@ -17,7 +17,7 @@ import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
  *   <li>{@code --fixed-<leaf>} - a fixed colour, assigned in the leaf's own CSS;</li>
  *   <li>{@code --it-<leaf>} - an interpolated colour, assigned in the leaf's own CSS;</li>
  *   <li>{@code --along-<scale>} - a colour along a scale by the element's degree, assigned in the leaf's own CSS;</li>
- *   <li>{@code --ink-<leaf>} - a share of the ink the element stands on, assigned in the leaf's own CSS (D31).</li>
+ *   <li>{@code --current-<leaf>} - CSS's currentColor at a share, assigned in the leaf's own CSS (D31, D32).</li>
  * </ul>
  */
 public record ColorVariables() implements StatelessFunctionalObject {
@@ -33,8 +33,8 @@ public record ColorVariables() implements StatelessFunctionalObject {
     /** {@code --it-warning}. */
     public String of(Interpolated<?, ?> color) { return "--it-" + color.token(); }
 
-    /** {@code --ink-rule}. */
-    public String of(Ink<?, ?> color) { return "--ink-" + color.token(); }
+    /** {@code --current-rule}. */
+    public String of(CurrentColor<?, ?> color) { return "--current-" + color.token(); }
 
     /** The variable of a colour of any kind. */
     public String of(SemanticColor<?> color) {
@@ -42,7 +42,7 @@ public record ColorVariables() implements StatelessFunctionalObject {
             case Palettable<?, ?> p -> of(p);
             case Fixed<?, ?> f -> of(f);
             case Interpolated<?, ?> i -> of(i);
-            case Ink<?, ?> k -> of(k);
+            case CurrentColor<?, ?> k -> of(k);
         };
     }
 

@@ -92,7 +92,7 @@ public sealed interface Target permits Target.Color, Target.Colorless {
      * colours - never a value. Which cases a leaf offers is what CSS can do with its properties, said
      * by the markers below, so no case lands where nobody means it.</p>
      */
-    sealed interface Color extends Target permits Color.Ink, Color.Fill, Color.Stroke, Color.Scrollbar,
+    sealed interface Color extends Target permits Color.Text, Color.Fill, Color.Stroke, Color.Scrollbar,
             Color.Background, Color.Border, Color.Outline, Color.ColumnRule, Color.BoxShadow {
 
         /** Each registered colour: a colour, on the element itself, transparent until answered. */
@@ -102,10 +102,10 @@ public sealed interface Target permits Target.Color, Target.Colorless {
         }
 
         /** A target that writes one colour. */
-        sealed interface Single permits Ink, Fill, Stroke, Border, Outline, ColumnRule {}
+        sealed interface Single permits Text, Fill, Stroke, Border, Outline, ColumnRule {}
 
         /** A target whose property CSS inherits: it may take the colour of what the element stands on. */
-        sealed interface Inheritable permits Ink, Fill, Stroke, Scrollbar {}
+        sealed interface Inheritable permits Text, Fill, Stroke, Scrollbar {}
 
         /** A leaf that may paint nothing. */
         sealed interface Omissible permits Fill, Stroke {}
@@ -114,11 +114,11 @@ public sealed interface Target permits Target.Color, Target.Colorless {
         sealed interface Typographic permits Fill, Border, Outline, ColumnRule {}
 
         /** A leaf whose colour may move along a scale, by the element's degree: on a casting with the COLOUR axis. */
-        sealed interface Scalable permits Ink, Background {}
+        sealed interface Scalable permits Text, Background {}
 
         /** The colour of what is written on it. */
-        record Ink() implements Color, Single, Inheritable, Scalable {
-            public static final Ink INSTANCE = new Ink();
+        record Text() implements Color, Single, Inheritable, Scalable {
+            public static final Text INSTANCE = new Text();
             @Override public Set<String> properties() { return Set.of("color"); }
             @Override public Set<State> states() { return INTERACTIVE; }
         }

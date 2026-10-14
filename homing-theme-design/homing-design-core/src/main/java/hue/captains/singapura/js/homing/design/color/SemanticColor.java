@@ -7,4 +7,4 @@ package hue.captains.singapura.js.homing.design.color;
  *
  * @param <S> the scheme it is in
  */
-public sealed interface SemanticColor<S extends ColorScheme> permits Palettable, Fixed, Interpolated, Ink {}
+public sealed interface SemanticColor<S extends ColorScheme> permits Palettable, Fixed, Interpolated, CurrentColor {}

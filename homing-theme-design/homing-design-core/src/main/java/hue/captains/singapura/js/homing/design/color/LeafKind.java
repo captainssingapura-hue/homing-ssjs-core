@@ -11,7 +11,7 @@ public sealed interface LeafKind extends ColorNode.Kind permits LeafKind.ColorKi
     sealed interface ColorKind extends LeafKind permits ConcreteKind, InterpolatedKind {}
 
     /** A colour derived from no other: what a scale's knots may be. */
-    sealed interface ConcreteKind extends ColorKind permits PalettableKind, FixedKind, InkKind {}
+    sealed interface ConcreteKind extends ColorKind permits PalettableKind, FixedKind, CurrentColorKind {}
 
     /** The worn palette gives it. */
     record PalettableKind() implements ConcreteKind {}
@@ -19,8 +19,8 @@ public sealed interface LeafKind extends ColorNode.Kind permits LeafKind.ColorKi
     /** Its declaration gives it. */
     record FixedKind() implements ConcreteKind {}
 
-    /** What the element stands on gives it, at a share: no colour of the tree its source (D31). */
-    record InkKind() implements ConcreteKind {}
+    /** What holds the element gives it - CSS's currentColor - at a share: no colour of the tree its source (D31, D32). */
+    record CurrentColorKind() implements ConcreteKind {}
 
     /** A colour scale's, at a degree. */
     record InterpolatedKind() implements ColorKind {}

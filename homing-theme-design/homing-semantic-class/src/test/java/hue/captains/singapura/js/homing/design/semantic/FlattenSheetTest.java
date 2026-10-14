@@ -40,13 +40,13 @@ class FlattenSheetTest {
         assertTrue(css.contains("/* from valued: root__color-background */\n.danger-button__color-background {\n    background-color: transparent;\n"), css);
         assertTrue(css.contains("\n.danger-button__color-box-shadow {\n    --box-shadow-cast: #1f2937;\n    --box-shadow-lit: #ffffff;\n    --box-shadow-glow: #c62828;\n}\n"),
                 "a box's shadow colours, set on the element itself, each as paper gives it");
-        assertTrue(css.contains("\n.danger-button__color-ink {\n    color: color-mix(in oklab, #dc2626 calc(clamp(0, var(--extent), 1) * 100%),"
+        assertTrue(css.contains("\n.danger-button__color-text {\n    color: color-mix(in oklab, #dc2626 calc(clamp(0, var(--extent), 1) * 100%),"
                 + " color-mix(in oklab, transparent calc(clamp(0, var(--extent) + 1, 1) * 100%), #16a34a));\n}\n"),
                 "along the risk scale, by the degree the danger button sets on itself: safe at -1, clear at 0, danger at 1");
-        assertTrue(css.contains("/* from valued: danger-button__color-ink */\n.danger-button_go__color-ink {\n"), "and as Go, the same");
+        assertTrue(css.contains("/* from valued: danger-button__color-text */\n.danger-button_go__color-text {\n"), "and as Go, the same");
         assertTrue(css.contains("\n.plain-button__color-border {\n    border-color: color-mix(in oklab, transparent 50%, #dc2626);\n}\n"),
                 "the warning: the risk scale half way from clear to danger, mixed when the sheet is made");
-        assertTrue(css.contains("/* from valued: root__color-ink */\n.plain-button__color-ink {\n    color: inherit;\n}\n"));
+        assertTrue(css.contains("/* from valued: root__color-text */\n.plain-button__color-text {\n    color: inherit;\n}\n"));
         assertTrue(css.contains("/* from valued: root__color-scrollbar */\n.plain-button__color-scrollbar {\n    scrollbar-color: inherit;\n}\n"));
         assertTrue(css.contains("@property --box-shadow-cast { syntax: \"<color>\"; inherits: false; initial-value: transparent; }\n"), "registered at the head");
         assertTrue(css.contains("@property --background-mark { syntax: \"<color>\"; inherits: false; initial-value: transparent; }\n"));
@@ -105,7 +105,7 @@ class FlattenSheetTest {
     @Test
     void aLookNothingAnswers_isReported_andHasNoRule() {
         var flat = flatten("sketch");
-        assertTrue(flat.unanswered().contains("danger-button__color-ink"), flat.unanswered().toString());
-        assertFalse(flat.css().contains(".danger-button__color-ink"));
+        assertTrue(flat.unanswered().contains("danger-button__color-text"), flat.unanswered().toString());
+        assertFalse(flat.css().contains(".danger-button__color-text"));
     }
 }

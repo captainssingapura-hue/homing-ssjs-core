@@ -185,7 +185,7 @@ class ColorTreeRefusesTest {
     @Test
     void everyCaseOnATargetThatOffersIt_compiles() {
         var errors = compile("""
-                static final List<Paint<Base, Color.Ink>> INK = List.of(new Paint.With<>(new Accent()), new Paint.Inherited<>(), new Paint.Along<>(new Risk()));
+                static final List<Paint<Base, Color.Text>> INK = List.of(new Paint.With<>(new Accent()), new Paint.Inherited<>(), new Paint.Along<>(new Risk()));
                 static final List<Paint<Base, Color.Fill>> FILL = List.of(new Paint.With<>(new MineRed()), new Paint.Inherited<>(), new Paint.Nothing<>(), new Paint.Typography<>());
                 static final List<Paint<Base, Color.Stroke>> STROKE = List.of(new Paint.With<>(new Warning()), new Paint.Inherited<>(), new Paint.Nothing<>());
                 static final List<Paint<Base, Color.Scrollbar>> SCROLLBAR = List.of(new Paint.ThumbAndTrack<>(new Calm(), new Danger()), new Paint.Inherited<>());
@@ -196,7 +196,7 @@ class ColorTreeRefusesTest {
                 static final List<Paint<Base, Color.Outline>> OUTLINE = List.of(new Paint.With<>(new Accent()), new Paint.Typography<>());
                 static final List<Paint<Base, Color.ColumnRule>> RULE = List.of(new Paint.With<>(new Accent()), new Paint.Typography<>());
                 static final List<Paint<Base, Color.BoxShadow>> SHADOW = List.of(new Paint.Shadow<>(new Danger(), new Calm(), new Accent()), new Paint.Cast<>(new Danger()));
-                static final List<Paint<Neo, Color.Ink>> NEO = List.of(new Paint.With<>(new Accent()), new Paint.With<>(new Spark()), new Paint.Along<>(new Glare()));
+                static final List<Paint<Neo, Color.Text>> NEO = List.of(new Paint.With<>(new Accent()), new Paint.With<>(new Spark()), new Paint.Along<>(new Glare()));
                 """);
         assertTrue(errors.isEmpty(), "every case on a target that offers it, a scheme's paint naming the base's colours and its own: " + describe(errors));
     }
@@ -218,7 +218,7 @@ class ColorTreeRefusesTest {
     @Test
     void anInkOfNothing_doesNotCompile() {
         refusedOnItsLine("""
-                static final Paint<Base, Color.Ink> P = new Paint.Nothing<>(); // refused here
+                static final Paint<Base, Color.Text> P = new Paint.Nothing<>(); // refused here
                 """);
     }
 
@@ -239,21 +239,21 @@ class ColorTreeRefusesTest {
     @Test
     void theBasesPaintNamingASchemesColour_doesNotCompile() {
         refusedOnItsLine("""
-                static final Paint<Base, Color.Ink> P = new Paint.With<>(new Spark()); // refused here
+                static final Paint<Base, Color.Text> P = new Paint.With<>(new Spark()); // refused here
                 """);
     }
 
     @Test
     void theBasesPaintAlongASchemesScale_doesNotCompile() {
         refusedOnItsLine("""
-                static final Paint<Base, Color.Ink> P = new Paint.Along<>(new Glare()); // refused here
+                static final Paint<Base, Color.Text> P = new Paint.Along<>(new Glare()); // refused here
                 """);
     }
 
     @Test
     void aPaintNamingAScale_doesNotCompile() {
         refusedOnItsLine("""
-                static final Paint<Base, Color.Ink> P = new Paint.With<>(new Risk()); // refused here
+                static final Paint<Base, Color.Text> P = new Paint.With<>(new Risk()); // refused here
                 """);
     }
 

@@ -16,10 +16,10 @@ danger-button_go     rest      color-background   => danger-button_go__color-bac
 # on its own, the role's answer is not the danger button's
 danger-button        rest      color-background   => root__color-background from sketch
 # a broader role answered at the branch, reached from either button in a role under it
-plain-button_cancel  rest      color-ink       => button_committing__color-ink from sketch
-danger-button_go     rest      color-ink       => button_committing__color-ink from sketch
+plain-button_cancel  rest      color-text       => button_committing__color-text from sketch
+danger-button_go     rest      color-text       => button_committing__color-text from sketch
 # on its own the button plays no role: nothing answers its ink, the root included
-danger-button        rest      color-ink       => unanswered
+danger-button        rest      color-text       => unanswered
 # a functional role is set aside: the window looks as the pane on its own
 floating-pane_window rest      color-background   => floating-pane__color-background from sketch
 floating-pane_window rest      shape-corner    => root__shape-corner from sketch
@@ -43,7 +43,7 @@ danger-button_go     rest      shape-corner    => danger-button__shape-corner fr
 danger-button        disabled  color-background   => danger-button__color-background--disabled from detailed
 # what the detailed style does not colour is the sketch's
 plain-button         disabled  color-background   => button__color-background--disabled from sketch
-danger-button        rest      color-ink       => root__color-ink from detailed
+danger-button        rest      color-text       => root__color-text from detailed
 
 theme valued
 
@@ -53,8 +53,8 @@ floating-pane        rest      shape-corner    => danger-button__shape-corner fr
 danger-button        hover     shape-shadow    => button__shape-shadow--hover from valued
 danger-button        rest      shape-shadow    => root__shape-shadow from valued
 # a colour along a scale, on the danger button, which varies its colour by degree; the plain button inherits its ink
-danger-button_go     rest      color-ink       => danger-button__color-ink from valued
-plain-button         rest      color-ink       => root__color-ink from valued
+danger-button_go     rest      color-text       => danger-button__color-text from valued
+plain-button         rest      color-text       => root__color-text from valued
 
 theme squared
 

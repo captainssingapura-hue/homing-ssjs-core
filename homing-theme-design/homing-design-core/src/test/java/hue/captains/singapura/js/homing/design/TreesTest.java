@@ -58,7 +58,7 @@ class TreesTest {
     @Test
     void aTargetIsALeafOfTheSealedTree() {
         assertThrows(IllegalArgumentException.class, () -> Trees.requireTargetLeaf(Target.Color.class));
-        Trees.requireTargetLeaf(Target.Color.Ink.class);
+        Trees.requireTargetLeaf(Target.Color.Text.class);
         assertEquals("on-danger", Trees.kebab("OnDanger"));
     }
 }

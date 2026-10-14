@@ -7,10 +7,17 @@ import hue.captains.singapura.js.homing.component.taxonomy.ReadTaxonomy;
 import hue.captains.singapura.js.homing.component.taxonomy.Root;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.design.color.ColorScheme;
+import hue.captains.singapura.js.homing.design.semantic.ColorImports;
 import hue.captains.singapura.js.homing.design.semantic.ColorTree;
 import hue.captains.singapura.js.homing.design.semantic.DesignStyle;
 import hue.captains.singapura.js.homing.design.semantic.Implementation;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingColours;
+import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Copy;
+import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Danger;
+import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Glare;
+import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Page;
+import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Raised;
+import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Safe;
 import hue.captains.singapura.js.homing.design.styling.StyledStyles.Ink;
 import hue.captains.singapura.js.homing.design.styling.StyledStyles.Loudly;
 import hue.captains.singapura.js.homing.design.styling.StyledStyles.Plain;
@@ -93,6 +100,95 @@ class CheckStyleTest {
         var refused = assertThrows(IllegalArgumentException.class,
                 () -> CHECK.require(TAXONOMY, TREE, List.of(Plain.INSTANCE, Shabby.INSTANCE, Stray.INSTANCE)));
         assertEquals(4, refused.getMessage().lines().count() - 1, refused.getMessage());
+    }
+
+    // ── a design's colour imports (D32) ────────────────────────────────────
+
+    /** Plain's files again, under styles of the same name that import otherwise: each refused for one thing. */
+    static final class Forgetful {
+        /** The tab's safe left out, the strip's raised too: two colours used and not imported. */
+        record Plain() implements DesignStyle<ColorScheme.Base> {
+            @Override public List<Implementation<?>> implementations() { return List.of(); }
+            @Override public hue.captains.singapura.js.homing.design.semantic.StylingRes style(Casting leaf) { return StyledStyles.Plain.INSTANCE.style(leaf); }
+            @Override public List<ColorImports<ColorScheme.Base>> colorImports() {
+                return List.of(new ColorImports<>(StatedTaxonomy.Tab.INSTANCE, new Copy(), new Page(), new Raised(), new Danger()),
+                        StyledStyles.Plain.IMPORTS.get(2));
+            }
+        }
+    }
+
+    static final class Greedy {
+        /** The strip's copy, which its rules use nowhere; the meter imported twice. */
+        record Plain() implements DesignStyle<ColorScheme.Base> {
+            @Override public List<Implementation<?>> implementations() { return List.of(); }
+            @Override public hue.captains.singapura.js.homing.design.semantic.StylingRes style(Casting leaf) { return StyledStyles.Plain.INSTANCE.style(leaf); }
+            @Override public List<ColorImports<ColorScheme.Base>> colorImports() {
+                return List.of(StyledStyles.Plain.IMPORTS.get(0), new ColorImports<>(StatedTaxonomy.Strip.INSTANCE, new Raised(), new Copy()),
+                        StyledStyles.Plain.IMPORTS.get(2), StyledStyles.Plain.IMPORTS.get(2));
+            }
+        }
+    }
+
+    static final class Wide {
+        /** Plain's own, and the glare only the loud scheme sees, slipped past the compiler by a raw type. */
+        record Plain() implements DesignStyle<ColorScheme.Base> {
+            @Override public List<Implementation<?>> implementations() { return List.of(); }
+            @Override public hue.captains.singapura.js.homing.design.semantic.StylingRes style(Casting leaf) { return StyledStyles.Plain.INSTANCE.style(leaf); }
+            @SuppressWarnings({"unchecked", "rawtypes"})
+            @Override public List<ColorImports<ColorScheme.Base>> colorImports() {
+                ColorImports glare = new ColorImports<ResolvingColours.Loud>(StatedTaxonomy.Strip.INSTANCE, new Raised(), new Glare());
+                return List.of(StyledStyles.Plain.IMPORTS.get(0), glare, StyledStyles.Plain.IMPORTS.get(2));
+            }
+        }
+    }
+
+    @Test
+    void aDesign_usesTheColoursItImports_andImportsNoneItUsesNot() {
+        assertEquals(List.of(
+                "plain/control.css:12: tab's design uses safe, which it does not import: plain's colorImports() lists each colour a design uses (D32)",
+                "plain/control.css:27: strip's design uses raised, which it does not import: plain's colorImports() lists each colour a design uses (D32)",
+                "plain/control.extension.css:5: badge's design uses flag, which it does not import: extension's ColorImportsExtension, for plain lists each colour a design uses (D32)",
+                "plain/control.extension.css:6: badge's design uses page, which it does not import: extension's ColorImportsExtension, for plain lists each colour a design uses (D32)"),
+                CHECK.check(TAXONOMY, TREE, new Forgetful.Plain()).problems(),
+                "each named where first used; the tab's role is the tab's design; the extension imports for plain itself, not a style of its name");
+        assertEquals(List.of(
+                "plain's colorImports() imports colours for meter twice: a design's imports are listed once",
+                "plain's colorImports() imports copy for strip, and its own files use it nowhere: a design imports what it uses (D32)",
+                "plain/control.extension.css:5: badge's design uses flag, which it does not import: extension's ColorImportsExtension, for plain lists each colour a design uses (D32)",
+                "plain/control.extension.css:6: badge's design uses page, which it does not import: extension's ColorImportsExtension, for plain lists each colour a design uses (D32)"),
+                CHECK.check(TAXONOMY, TREE, new Greedy.Plain()).problems());
+    }
+
+    @Test
+    void anImport_isOneTheStylesSchemeSees_byTheCompiler_andByTheCheckPastARawType() {
+        assertEquals(List.of("plain's colorImports() imports glare for strip: it is Loud's, which plain's scheme, the base, does not see",
+                        "plain's colorImports() imports glare for strip, and its own files use it nowhere: a design imports what it uses (D32)",
+                "plain/control.extension.css:5: badge's design uses flag, which it does not import: extension's ColorImportsExtension, for plain lists each colour a design uses (D32)",
+                "plain/control.extension.css:6: badge's design uses page, which it does not import: extension's ColorImportsExtension, for plain lists each colour a design uses (D32)"),
+                CHECK.check(TAXONOMY, TREE, new Wide.Plain()).problems());
+        // new ColorImports<ColorScheme.Base>(StatedTaxonomy.Strip.INSTANCE, new Glare()) does not compile: Glare is no ColorLeaf<? super Base, ?, ?>
+        new ColorImports<ResolvingColours.Loud>(StatedTaxonomy.Strip.INSTANCE, new Glare(), new Raised());   // the loud scheme sees both
+    }
+
+    @Test
+    void anImport_isOfAComponentTheStyleDraws_itsColoursEachOnce_andNeverNone() {
+        record Taken() implements DesignStyle<ColorScheme.Base> {
+            @Override public List<Implementation<?>> implementations() { return List.of(); }
+            @Override public hue.captains.singapura.js.homing.design.semantic.StylingRes style(Casting leaf) { return hue.captains.singapura.js.homing.design.semantic.StylingRes.Absence.INSTANCE; }
+            @Override public List<ColorImports<ColorScheme.Base>> colorImports() { return List.of(new ColorImports<>(StatedTaxonomy.Tab.INSTANCE, new Copy())); }
+        }
+        assertTrue(CHECK.check(TAXONOMY, TREE, new Taken()).problems().contains(
+                "taken's colorImports() imports colours for tab, which taken does not draw: its base's design is worn, and that design's imports with it (D32)"));
+        assertTrue(assertThrows(IllegalArgumentException.class, () -> new ColorImports<ColorScheme.Base>(StatedTaxonomy.Tab.INSTANCE))
+                .getMessage().contains("tab imports no colour: a design that uses none lists no import"));
+        assertTrue(assertThrows(IllegalArgumentException.class, () -> new ColorImports<ColorScheme.Base>(StatedTaxonomy.Tab.INSTANCE, new Copy(), new Copy()))
+                .getMessage().contains("tab imports copy twice"));
+    }
+
+    @Test
+    void aModulesFiles_importByTheModulesOwn_heldToItsFilesAlone() {
+        assertEquals(List.of(), CHECK.check(TAXONOMY, TREE, Plain.INSTANCE).problems(),
+                "the badge, drawn in the extension's file, imports by the extension's: flag and page; plain's own imports none for it");
     }
 
     /** A style whose type argument is the marker, which is no scheme. */
@@ -235,14 +331,14 @@ class CheckStyleTest {
     }
 
     @Test
-    void anInk_aShareOfWhatTheElementStandsOn_isAssignedInItsRule_asTheTreeGivesIt() {
-        passes(TAB, ".styled-tab { --ink-hairline: color-mix(in oklab, currentColor 30%, transparent); border-color: var(--ink-hairline); }");
-        refused(".styled-tab { --ink-hairline: color-mix(in oklab, currentColor 60%, transparent); }",
-                "--ink-hairline is color-mix(in oklab, currentColor 30%, transparent) by the tree");
+    void theCurrentColourAtAShare_isAssignedInItsRule_asTheTreeGivesIt() {
+        passes(TAB, ".styled-tab { --current-hairline: color-mix(in oklab, currentColor 30%, transparent); border-color: var(--current-hairline); }");
+        refused(".styled-tab { --current-hairline: color-mix(in oklab, currentColor 60%, transparent); }",
+                "--current-hairline is color-mix(in oklab, currentColor 30%, transparent) by the tree");
         refused(".styled-tab { border-color: color-mix(in oklab, currentColor 30%, transparent); }", "color-mix( makes a colour the tree does not have");
-        refused(".styled-tab { --ink-copy: currentColor; }", "--ink-copy names no ink of the tree: copy is a palettable colour, var(--fp-copy)");
-        refused(".styled-tab { color: var(--fp-hairline); }", "--fp-hairline names no palettable colour of the tree: hairline is an ink, --ink-hairline");
-        passes(TAB, ".styled-tab { color: currentColor; border-color: currentColor; }");   // the ink whole, CSS's own (D6)
+        refused(".styled-tab { --current-copy: currentColor; }", "--current-copy names no share of the current colour of the tree: copy is a palettable colour, var(--fp-copy)");
+        refused(".styled-tab { color: var(--fp-hairline); }", "--fp-hairline names no palettable colour of the tree: hairline is the current colour at a share, --current-hairline");
+        passes(TAB, ".styled-tab { color: currentColor; border-color: currentColor; }");   // the whole of it, CSS's own (D6)
     }
 
     @Test

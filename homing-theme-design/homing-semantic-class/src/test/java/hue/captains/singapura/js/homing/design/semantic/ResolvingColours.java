@@ -4,9 +4,9 @@ import hue.captains.singapura.js.homing.design.color.ColorScale;
 import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import hue.captains.singapura.js.homing.design.color.ColorScheme.Base;
 import hue.captains.singapura.js.homing.design.color.ConcreteColor;
+import hue.captains.singapura.js.homing.design.color.CurrentColor;
 import hue.captains.singapura.js.homing.design.color.Fixed;
 import hue.captains.singapura.js.homing.design.color.Interpolated;
-import hue.captains.singapura.js.homing.design.color.Ink;
 import hue.captains.singapura.js.homing.design.color.L1_ColorBranch;
 import hue.captains.singapura.js.homing.design.color.Palettable;
 
@@ -48,8 +48,8 @@ public record ResolvingColours() implements ColorSource {
         }
     }
     /** Half way to danger. */
-    /** A line between rows: a share of the ink it stands on. */
-    public record Hairline() implements Ink<Base, Words> {
+    /** A line between rows: the colour it is given, at a share. */
+    public record Hairline() implements CurrentColor<Base, Words> {
         @Override public double share() { return 0.3; }
     }
 

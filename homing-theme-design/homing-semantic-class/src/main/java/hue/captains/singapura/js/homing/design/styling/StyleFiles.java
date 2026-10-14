@@ -73,6 +73,12 @@ public record StyleFiles() implements StatelessFunctionalObject {
         return m.matches() ? Optional.of(m.group(1)) : Optional.empty();
     }
 
+    /** The module that gives a file, by its name - {@code panes} for {@code selector.panes.css} - or none: the style's own. */
+    public Optional<String> module(String file) {
+        Matcher m = FILE.matcher(file);
+        return m.matches() ? Optional.ofNullable(m.group(2)) : Optional.empty();
+    }
+
     /** One of the style's files, read; none when there is none. */
     public Optional<String> read(DesignStyle<?> style, String file) {
         try (InputStream in = loader(style).getResourceAsStream(path(style, file))) {

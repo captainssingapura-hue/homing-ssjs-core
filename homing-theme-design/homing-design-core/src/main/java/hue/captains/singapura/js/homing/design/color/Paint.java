@@ -13,7 +13,7 @@ import java.util.Objects;
  * <table>
  *   <caption>The cases each target offers</caption>
  *   <tr><th>Target</th><th>Its cases</th></tr>
- *   <tr><td>Ink</td><td>{@link With} · {@link Inherited} · {@link Along}</td></tr>
+ *   <tr><td>Text</td><td>{@link With} · {@link Inherited} · {@link Along}</td></tr>
  *   <tr><td>Fill</td><td>{@link With} · {@link Inherited} · {@link Nothing} · {@link Typography}</td></tr>
  *   <tr><td>Stroke</td><td>{@link With} · {@link Inherited} · {@link Nothing}</td></tr>
  *   <tr><td>Scrollbar</td><td>{@link ThumbAndTrack} · {@link Inherited}</td></tr>

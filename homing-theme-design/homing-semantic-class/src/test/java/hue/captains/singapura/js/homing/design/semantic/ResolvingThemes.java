@@ -55,7 +55,7 @@ final class ResolvingThemes {
     private ResolvingThemes() {}
 
     private static final Target.Color.Background BACKGROUND = Target.Color.Background.INSTANCE;
-    private static final Target.Color.Ink INK = Target.Color.Ink.INSTANCE;
+    private static final Target.Color.Text INK = Target.Color.Text.INSTANCE;
 
     /** The colour tree the themes are worn over, read once. */
     static final ColorTree COLOURS = ResolvingColours.INSTANCE.read();
