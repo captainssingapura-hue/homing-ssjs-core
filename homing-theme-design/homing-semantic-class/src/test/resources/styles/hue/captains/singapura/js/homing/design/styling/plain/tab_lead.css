@@ -1,7 +1,0 @@
-/* The strip's lead tab: a tab cast as Lead, its own class, the tab's states. */
-.styled-tab_lead {
-    font-weight: 600;
-    color: var(--fp-copy);
-
-    &.styled-tab_lead--selected { color: var(--fp-danger); }
-}

@@ -1,5 +1,0 @@
-/* The plain strip: a raised row. */
-.styled-strip {
-    display: flex;
-    background-color: var(--fp-raised);
-}

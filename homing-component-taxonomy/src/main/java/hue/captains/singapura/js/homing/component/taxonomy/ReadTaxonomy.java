@@ -38,7 +38,9 @@ import java.util.Set;
  *       than two values, or one value twice; a design word for a type's rest, or for a value it
  *       lacks; two values answered by one design word;</li>
  *   <li>a node of any of the four trees with no meaning, a meanings file with a section astray, or
- *       two nodes that mean the same.</li>
+ *       two nodes that mean the same;</li>
+ *   <li>a family head with another between it and the root, and a component that says it heads a
+ *       family ({@link FamilyHead}).</li>
  * </ul>
  *
  * <p>What the levels already make impossible it never checks: a chain of parents that comes back
@@ -157,6 +159,7 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
         problems.addAll(roleNamesANode(branchList, componentList, roleList));
         problems.addAll(extentsTwice(branchList, componentList));
         problems.addAll(DesignBranchChecks.INSTANCE.problems(branchList, componentList, parts));
+        problems.addAll(familyHeads(branchList, componentList));
         problems.addAll(TreeChecks.INSTANCE.clashes("states", StateTree.nodes(stateBranchList, stateList), StateNode::name));
         problems.addAll(TreeChecks.INSTANCE.badValues(stateList));
         problems.addAll(TreeChecks.INSTANCE.wordsTwice(stateList));
@@ -201,6 +204,23 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
                         out.add(new TaxonomyProblem(Rule.EXTENT_TWICE, Names.of(t) + " declares " + a + ", which "
                                 + Names.of(b) + " above it already does: every node under a branch has its axes"));
         }
+        return out;
+    }
+
+    /** A family head under another, each pair named; a component that says it heads a family. */
+    private static List<TaxonomyProblem> familyHeads(List<ComponentBranch> branches, List<Component<?>> components) {
+        var out = new ArrayList<TaxonomyProblem>();
+        for (ComponentBranch b : branches) {
+            if (!(b instanceof FamilyHead)) continue;
+            for (ComponentBranch above = Levels.parentOf(b); above != null; above = Levels.parentOf(above))
+                if (above instanceof FamilyHead)
+                    out.add(new TaxonomyProblem(Rule.FAMILY_HEAD_NESTED, Names.of(b) + " heads a family under " + Names.of(above)
+                            + ", which heads one too: a family is headed at one level, no head between a head and the root"));
+        }
+        for (Component<?> c : components)
+            if (c instanceof FamilyHead)
+                out.add(new TaxonomyProblem(Rule.FAMILY_HEAD_NOT_A_BRANCH, Names.of(c) + " is a component, and says it heads a family: "
+                        + "only a branch does"));
         return out;
     }
 

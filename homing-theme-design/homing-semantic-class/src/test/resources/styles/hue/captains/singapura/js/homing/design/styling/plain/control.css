@@ -1,3 +1,5 @@
+/* Plain: the controls, the base layer - each casting whole, the tab cast as Lead beside the tab. */
+
 /* The plain tab: copy on the page, raised under the pointer, danger's mark when picked. */
 .styled-tab {
     color: var(--fp-copy);
@@ -9,4 +11,18 @@
     &.styled-tab--selected { border-bottom-color: var(--fp-danger); }
     &.styled-tab--candidate { outline: 1px dashed var(--fp-safe); }
     &.styled-tab--held { outline: 2px solid var(--fp-safe); }
+}
+
+/* The strip's lead tab: a tab cast as Lead, its own class, the tab's states. */
+.styled-tab_lead {
+    font-weight: 600;
+    color: var(--fp-copy);
+
+    &.styled-tab_lead--selected { color: var(--fp-danger); }
+}
+
+/* The plain strip: a raised row. */
+.styled-strip {
+    display: flex;
+    background-color: var(--fp-raised);
 }

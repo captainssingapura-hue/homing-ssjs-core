@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * A style's sheet flattened: one class for every leaf, the style's own file or its base layer's, each whole and saying
+ * A style's sheet flattened: one class for every casting, the style's own rule or its base layer's, each whole and saying
  * whose it is; nothing falling back. And a deployment's styling: the two sheets a page wears, each by its own slug.
  */
 class StyleSheetTest {
@@ -33,7 +33,7 @@ class StyleSheetTest {
                         "/* badge: plain's, ink answering absence */", "/* tab_lead: plain's, ink answering absence */"),
                 ink.lines().filter(l -> l.matches("/\\* [a-z0-9_-]+: .*('s own|answering absence) \\*/")).toList(),
                 "every leaf once, in the taxonomy's order");
-        assertTrue(ink.contains("/* tab: ink's own */\n/* Ink's tab, whole: none of it plain's. */\n.styled-tab {\n"), ink);
+        assertTrue(ink.contains("/* tab: ink's own */\n.styled-tab {\n"), ink);
         assertEquals(1, ink.split("\\.styled-tab \\{", -1).length - 1, "the tab's class once: ink's, never plain's beside it");
         assertTrue(ink.contains(Extent.PROPERTY) && ink.contains(hue.captains.singapura.js.homing.design.Growth.SIZE.property()), "the degrees' properties, core's, at the top");
     }
@@ -55,8 +55,7 @@ class StyleSheetTest {
     void nothingFallsBack() {
         var shabby = assertThrows(IllegalArgumentException.class, () -> SHEET.write(TAXONOMY, Shabby.INSTANCE));
         assertEquals("shabby's sheet cannot be written: shabby is a base layer, and answers absence for meter: a base layer "
-                + "answers content for every leaf (D26); shabby answers content for badge, and has no file at "
-                + "styles/hue/captains/singapura/js/homing/design/styling/shabby/badge.css", shabby.getMessage());
+                + "answers content for every leaf (D26); shabby answers content for badge, and no file of its family rules it", shabby.getMessage());
         var over = assertThrows(IllegalArgumentException.class, () -> SHEET.write(TAXONOMY, OverShabby.INSTANCE));
         assertTrue(over.getMessage().contains("over-shabby answers absence for meter, and so does its base layer, shabby"), over.getMessage());
     }

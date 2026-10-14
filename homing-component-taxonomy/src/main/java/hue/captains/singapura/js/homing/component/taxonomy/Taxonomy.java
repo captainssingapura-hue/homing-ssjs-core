@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * A taxonomy as read: every branch and component reached from the components declared - up
@@ -134,6 +135,34 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
         for (Part<?, ?> p : parts) {
             var cast = new Casting(p.base(), p.role());
             out.add(cast.functional() ? cast.alone() : cast);
+        }
+        return List.copyOf(out);
+    }
+
+    // ── families ───────────────────────────────────────────────────────────
+
+    /** The branches that head a family ({@link FamilyHead}), in reading order. */
+    public List<ComponentBranch> heads() {
+        return branches.stream().filter(b -> b instanceof FamilyHead).toList();
+    }
+
+    /** The head of a component's family: the one branch above it that heads one - the reader refuses two - or none. */
+    public Optional<ComponentBranch> head(Component<?> component) {
+        for (ComponentBranch b = Levels.parentOf(component); b != null; b = Levels.parentOf(b))
+            if (b instanceof FamilyHead) return Optional.of(b);
+        return Optional.empty();
+    }
+
+    /**
+     * A family's castings, in the order its files rule them: each of its components in reading order, on its own, then
+     * in each role it is cast in - a casting in a role beside its component.
+     */
+    public List<Casting> family(ComponentBranch head) {
+        var castings = castings();
+        var out = new ArrayList<Casting>();
+        for (Component<?> c : components) {
+            if (!head(c).filter(head::equals).isPresent()) continue;
+            for (Casting cast : castings) if (cast.component().equals(c)) out.add(cast);
         }
         return List.copyOf(out);
     }

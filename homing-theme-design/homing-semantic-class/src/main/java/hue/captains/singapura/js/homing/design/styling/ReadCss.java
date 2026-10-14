@@ -8,8 +8,9 @@ import java.util.List;
 
 /**
  * A style-aware file read as what it says (RFC 0067, appendix Two Classes per Leaf): its rules, each rule's
- * declarations and the rules nested in it, and its at-rules, each with the line it starts on. Only as much CSS as the
- * check needs - comments dropped, strings and brackets kept whole - and what cannot be read is said, never guessed at.
+ * declarations and the rules nested in it, and its at-rules, each with the line it starts on - or split into its
+ * top-level items, each with its text as written. Only as much CSS as the check needs - comments dropped, strings and
+ * brackets kept whole - and what cannot be read is said, never guessed at.
  */
 public record ReadCss() implements StatelessFunctionalObject {
 
@@ -44,12 +45,44 @@ public record ReadCss() implements StatelessFunctionalObject {
         public Read { items = List.copyOf(items); problems = List.copyOf(problems); }
     }
 
+    /** A top-level item of a file, and its text as written: from where it starts to where it ends, no comment before it. */
+    public record Piece(Item item, String text) implements ValueObject {}
+
+    /**
+     * A file split into its top-level items, each with its text - a family's file into its castings' rules.
+     *
+     * @param pieces   each top-level item, in the file's order
+     * @param problems what could not be read, each with its line
+     */
+    public record Split(List<Piece> pieces, List<String> problems) implements ValueObject {
+        public Split { pieces = List.copyOf(pieces); problems = List.copyOf(problems); }
+    }
+
     public Read read(String css) {
         var problems = new ArrayList<String>();
         String text = withoutComments(css, problems);
         var at = new int[]{0};
         List<Item> items = block(text, at, problems, true);
         return new Read(items, problems);
+    }
+
+    public Split split(String css) {
+        var problems = new ArrayList<String>();
+        String text = withoutComments(css, problems);
+        var pieces = new ArrayList<Piece>();
+        var at = new int[]{0};
+        while (true) {
+            skipSpace(text, at);
+            if (at[0] >= text.length()) return new Split(pieces, problems);
+            if (text.charAt(at[0]) == '}') {
+                problems.add(line(text, at[0]) + ": a closing brace with nothing open");
+                at[0]++;
+                continue;
+            }
+            int start = at[0];
+            Item item = item(text, at, problems);
+            if (item != null) pieces.add(new Piece(item, css.substring(start, at[0]).strip()));
+        }
     }
 
     /** Comments blanked, their line breaks kept, so every line is where it was. */
@@ -102,23 +135,29 @@ public record ReadCss() implements StatelessFunctionalObject {
                 at[0]++;
                 return items;
             }
-            int start = at[0];
-            char ended = chunk(text, at);
-            String said = text.substring(start, at[0]).trim();
-            int line = line(text, start);
-            switch (ended) {
-                case '{' -> {
-                    at[0]++;
-                    List<Item> body = block(text, at, problems, false);
-                    items.add(said.startsWith("@") ? new AtRule(said.substring(1), line, body) : new Rule(said, line, body));
-                }
-                case ';' -> {
-                    at[0]++;
-                    items.add(statement(said, line, problems));
-                }
-                default -> {
-                    if (!said.isEmpty()) items.add(statement(said, line, problems));
-                }
+            Item item = item(text, at, problems);
+            if (item != null) items.add(item);
+        }
+    }
+
+    /** The item that starts where it is: a rule or an at-rule with its block, or a statement; none for an empty one at the end. */
+    private static Item item(String text, int[] at, List<String> problems) {
+        int start = at[0];
+        char ended = chunk(text, at);
+        String said = text.substring(start, at[0]).trim();
+        int line = line(text, start);
+        switch (ended) {
+            case '{' -> {
+                at[0]++;
+                List<Item> body = block(text, at, problems, false);
+                return said.startsWith("@") ? new AtRule(said.substring(1), line, body) : new Rule(said, line, body);
+            }
+            case ';' -> {
+                at[0]++;
+                return statement(said, line, problems);
+            }
+            default -> {
+                return said.isEmpty() ? null : statement(said, line, problems);
             }
         }
     }

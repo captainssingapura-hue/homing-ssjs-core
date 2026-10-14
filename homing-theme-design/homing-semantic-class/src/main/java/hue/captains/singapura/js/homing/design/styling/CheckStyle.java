@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.design.styling;
 
 import hue.captains.singapura.js.homing.component.taxonomy.Casting;
+import hue.captains.singapura.js.homing.component.taxonomy.ComponentBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.ExtentAxis;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.design.color.ColorNode;
@@ -37,11 +38,14 @@ import java.util.regex.Pattern;
  * <ul>
  *   <li>requires a scheme, and a base layer - one that derives from nothing - answers content for every leaf, an
  *       extension's included (D26);</li>
- *   <li>has a file for every leaf it answers content for, and no file for one it leaves absent, nor one that is no
- *       leaf's.</li>
+ *   <li>rules every casting it answers content for, once, in its family's files, and none it leaves absent; every
+ *       casting is of a family (D30);</li>
+ *   <li>has no file that is no family's - {@code <family>.css}, or a module's {@code <family>.<module>.css} - and none
+ *       given twice on the classpath, one hiding the other.</li>
  * </ul>
  *
- * <p>A leaf's file rules its own class, once, and nothing else; inside it, each state the leaf lists, drawn on the leaf's
+ * <p>A family's file rules its castings' classes, each once, in the family's order - each component on its own, then in
+ * each role it is cast in - and nothing else. Inside a casting's rule, each state the leaf lists, drawn on the leaf's
  * own element - {@code &.styled-tab--selected} for an application state's value, {@code &:hover} for a pseudo state -
  * each once and holding declarations alone (D12). Every one of those selectors weighs the same, so the order the file
  * draws them in is what decides between two states at once: the leaf's precedence, the least important first, which a
@@ -96,7 +100,7 @@ public record CheckStyle() implements StatelessFunctionalObject {
         return List.copyOf(reports);
     }
 
-    /** A style over every leaf of the taxonomy: its answer for each, its files, and each file. */
+    /** A style over every casting of the taxonomy: its answer for each, its family files, and each file. */
     public Checked check(Taxonomy taxonomy, ColorTree tree, DesignStyle<?> style) {
         var problems = new ArrayList<String>();
         var reports = new ArrayList<String>();
@@ -107,41 +111,135 @@ public record CheckStyle() implements StatelessFunctionalObject {
         }
         boolean base = !(style instanceof Derives<?, ?>);
         if (!base && StyleSheet.INSTANCE.baseLayer(style).isEmpty()) problems.add(style.token() + " derives from a style that derives, in the end, from itself");
-        var named = new HashSet<String>();
+        var heads = new LinkedHashMap<String, ComponentBranch>();
+        for (ComponentBranch h : taxonomy.heads()) heads.put(h.token(), h);
+        for (String twice : files.twice(style))
+            problems.add(files.name(style, twice) + " is given twice on the classpath, one hiding the other: a module adding to a family "
+                    + "gives a file of its own, <family>.<module>.css (D30)");
+        var drawn = new LinkedHashMap<Casting, String>();
+        for (String present : files.present(style)) {
+            Optional<String> family = files.family(present);
+            if (family.isEmpty() || !heads.containsKey(family.get())) {
+                problems.add(files.name(style, present) + " is no family's file: a style's file is <family>.css, or <family>.<module>.css, "
+                        + "and the families are " + (heads.isEmpty() ? "none - no branch heads one" : String.join(", ", heads.keySet())));
+                continue;
+            }
+            Checked f = new FamilyFile(taxonomy, tree, style, present, heads.get(family.get()), drawn).check(files.read(style, present).orElse(""));
+            problems.addAll(f.problems());
+            reports.addAll(f.reports());
+        }
         for (Casting leaf : taxonomy.castings()) {
-            named.add(leaf.token() + ".css");
-            StylingRes answer = style.style(leaf);
-            Optional<String> css = files.read(style, leaf);
-            switch (answer) {
+            Optional<ComponentBranch> head = taxonomy.head(leaf.cast());
+            if (head.isEmpty()) {
+                problems.add(leaf.token() + " is of no family: no branch above " + leaf.cast().token() + " heads one, so no file of "
+                        + style.token() + " can rule it (D30)");
+                continue;
+            }
+            switch (style.style(leaf)) {
                 case null -> problems.add(style.token() + " answers nothing for " + leaf.token() + ": content, or absence");
                 case StylingRes.CssContent c -> {
-                    if (css.isEmpty()) problems.add(style.token() + " answers content for " + leaf.token() + ", and has no file at " + files.path(style, leaf));
-                    else {
-                        Checked f = file(taxonomy, tree, style, leaf, css.get());
-                        problems.addAll(f.problems());
-                        reports.addAll(f.reports());
-                    }
+                    if (!drawn.containsKey(leaf)) problems.add(style.token() + " answers content for " + leaf.token() + ", and no file of "
+                            + head.get().token() + "'s rules it: " + files.name(style, files.file(head.get())) + ", or a module's");
                 }
                 case StylingRes.Absence a -> {
                     if (base) problems.add(style.token() + " is a base layer, and answers absence for " + leaf.token()
                             + ": a base layer answers content for every leaf, an extension's too (D26)");
-                    if (css.isPresent()) problems.add(files.name(style, leaf) + " is a file " + style.token() + " does not answer: it answers absence for "
-                            + leaf.token() + ", so the base layer's is used - answer content, or remove the file");
+                    if (drawn.containsKey(leaf)) problems.add(drawn.get(leaf) + ": " + style.token() + " rules " + leaf.token()
+                            + ", which it does not answer: it answers absence, so the base layer's is used - answer content, or remove the rule");
                 }
             }
         }
-        for (String present : files.present(style))
-            if (!named.contains(present)) problems.add(style.token() + "/" + present + " is no leaf's file: no leaf of the taxonomy is "
-                    + (present.endsWith(".css") ? present.substring(0, present.length() - 4) : present + ", and a leaf's file is <leaf>.css"));
         return new Checked(problems, reports);
     }
 
-    /** One of a style's files, as written, for its leaf. */
-    public Checked file(Taxonomy taxonomy, ColorTree tree, DesignStyle<?> style, Casting leaf, String css) {
-        return new OneFile(taxonomy, tree, style, leaf).check(css);
+    /**
+     * One of a style's family files, as written: {@code control.css}, or a module's, {@code control.extension.css} - the
+     * castings of the family its name says, each ruled once, in the family's order, each held to its leaf and the tree.
+     */
+    public Checked file(Taxonomy taxonomy, ColorTree tree, DesignStyle<?> style, String file, String css) {
+        Optional<String> family = StyleFiles.INSTANCE.family(file);
+        ComponentBranch head = family.flatMap(f -> taxonomy.heads().stream().filter(h -> h.token().equals(f)).findFirst()).orElse(null);
+        if (head == null)
+            return new Checked(List.of(StyleFiles.INSTANCE.name(style, file) + " is no family's file"), List.of());
+        return new FamilyFile(taxonomy, tree, style, file, head, new LinkedHashMap<>()).check(css);
     }
 
-    /** The check of one file: what it found as it went. */
+    /** The check of one family file: its castings' rules, each once, in the family's order, each held by {@link OneFile}. */
+    private static final class FamilyFile {
+
+        private final Taxonomy taxonomy;
+        private final ColorTree tree;
+        private final DesignStyle<?> style;
+        private final ComponentBranch head;
+        private final String name;
+        private final Map<Casting, String> drawn;
+        private final List<String> problems = new ArrayList<>();
+        private final List<String> reports = new ArrayList<>();
+
+        FamilyFile(Taxonomy taxonomy, ColorTree tree, DesignStyle<?> style, String file, ComponentBranch head, Map<Casting, String> drawn) {
+            this.taxonomy = taxonomy;
+            this.tree = tree;
+            this.style = style;
+            this.head = head;
+            this.name = StyleFiles.INSTANCE.name(style, file);
+            this.drawn = drawn;
+        }
+
+        Checked check(String css) {
+            var family = taxonomy.family(head);
+            var byClass = new LinkedHashMap<String, Casting>();
+            for (Casting c : taxonomy.castings()) byClass.put("." + LeafClasses.INSTANCE.of(taxonomy, c).styled(), c);
+            ReadCss.Split split = ReadCss.INSTANCE.split(css);
+            for (String p : split.problems()) problems.add(name + ":" + p);
+            int last = -1;
+            Casting lastDrawn = null;
+            boolean any = false;
+            for (ReadCss.Piece piece : split.pieces()) {
+                switch (piece.item()) {
+                    case ReadCss.Declaration d -> at(d, d.property() + " is declared outside any rule");
+                    case ReadCss.AtRule a -> at(a, "@" + a.prelude() + ": no at-rule is in a family's file, for now");
+                    case ReadCss.Rule r -> {
+                        Casting c = byClass.get(squeeze(r.selector()));
+                        if (c == null) {
+                            at(r, r.selector() + " is no casting's rule: a family's file rules each of its castings' classes, "
+                                    + ".styled-<casting>, alone, its states nested in it (D9, D10)");
+                            continue;
+                        }
+                        int index = family.indexOf(c);
+                        if (index < 0) {
+                            String other = taxonomy.head(c.cast()).map(ComponentBranch::token).orElse(null);
+                            at(r, r.selector() + " is " + (other == null ? "of no family" : other + "'s, ruled in " + other + "'s files")
+                                    + ", not " + head.token() + "'s");
+                            continue;
+                        }
+                        any = true;
+                        if (drawn.containsKey(c)) {
+                            at(r, r.selector() + " is ruled twice: first at " + drawn.get(c) + " - each casting once, in its family's files");
+                            continue;
+                        }
+                        drawn.put(c, name + ":" + r.line());
+                        if (index < last)
+                            at(r, r.selector() + " is ruled after .styled-" + lastDrawn.token() + ", which comes after it in "
+                                    + head.token() + "'s order: " + String.join(", ", family.stream().map(Casting::token).toList()));
+                        else {
+                            last = index;
+                            lastDrawn = c;
+                        }
+                        Checked one = new OneFile(taxonomy, tree, style, c, name).check(r);
+                        problems.addAll(one.problems());
+                        reports.addAll(one.reports());
+                    }
+                }
+            }
+            if (!any && split.problems().isEmpty() && problems.isEmpty())
+                problems.add(name + ": rules none of " + head.token() + "'s castings: a family's file rules its castings, or is not there");
+            return new Checked(problems, reports);
+        }
+
+        private void at(ReadCss.Item item, String says) { problems.add(name + ":" + item.line() + ": " + says); }
+    }
+
+    /** The check of one casting's rule: what it found as it went. */
     private static final class OneFile {
 
         private static final Pattern VAR = Pattern.compile("var\\(\\s*(--[A-Za-z0-9_-]+)\\s*(,)?");
@@ -165,42 +263,22 @@ public record CheckStyle() implements StatelessFunctionalObject {
         private final Set<String> assigned = new HashSet<>();
         private final Map<String, Integer> used = new LinkedHashMap<>();
 
-        OneFile(Taxonomy taxonomy, ColorTree tree, DesignStyle<?> style, Casting leaf) {
+        OneFile(Taxonomy taxonomy, ColorTree tree, DesignStyle<?> style, Casting leaf, String name) {
             this.taxonomy = taxonomy;
             this.tree = tree;
             this.style = style;
             this.leaf = leaf;
             this.scheme = tree.scheme(style).orElse(null);
-            this.name = StyleFiles.INSTANCE.name(style, leaf);
+            this.name = name;
             for (ColorNode<?, ?, ?> n : tree.nodes()) nodes.put(n.token(), n);
         }
 
-        Checked check(String css) {
+        Checked check(ReadCss.Rule rule) {
             if (scheme == null) {
                 problems.add(name + ": " + style.token() + " requires no scheme, so no colour can be held to it");
                 return new Checked(problems, reports);
             }
-            ReadCss.Read read = ReadCss.INSTANCE.read(css);
-            for (String p : read.problems()) problems.add(name + ":" + p);
-            LeafClasses.Listing listing = LeafClasses.INSTANCE.of(taxonomy, leaf);
-            String own = "." + listing.styled();
-            ReadCss.Rule rule = null;
-            for (ReadCss.Item item : read.items()) {
-                switch (item) {
-                    case ReadCss.Rule r when same(r.selector(), own) -> {
-                        if (rule == null) rule = r;
-                        else at(r, own + " is ruled twice: a leaf's file rules its class once, its states nested in it");
-                    }
-                    case ReadCss.Rule r -> at(r, r.selector() + " is not this leaf's: its file rules " + own + " alone, its states nested in it (D9, D10)");
-                    case ReadCss.Declaration d -> at(d, d.property() + " is declared outside any rule");
-                    case ReadCss.AtRule a -> at(a, "@" + a.prelude() + ": no at-rule is in a leaf's file, for now");
-                }
-            }
-            if (rule == null) {
-                problems.add(name + ": no rule for " + own + ": a leaf's file rules its own class");
-                return new Checked(problems, reports);
-            }
-            leafRule(rule, listing);
+            leafRule(rule, LeafClasses.INSTANCE.of(taxonomy, leaf));
             for (Map.Entry<String, Integer> u : used.entrySet())
                 if (!assigned.contains(u.getKey()))
                     problems.add(name + ":" + u.getValue() + ": var(" + u.getKey() + ") is named, and not assigned in the leaf's own rule: "
@@ -218,7 +296,7 @@ public record CheckStyle() implements StatelessFunctionalObject {
             for (ReadCss.Item item : rule.body()) {
                 switch (item) {
                     case ReadCss.Declaration d -> declaration(d, true);
-                    case ReadCss.AtRule a -> at(a, "@" + a.prelude() + ": no at-rule is in a leaf's file, for now");
+                    case ReadCss.AtRule a -> at(a, "@" + a.prelude() + ": no at-rule is in a casting's rule, for now");
                     case ReadCss.Rule r -> {
                         String selector = squeeze(r.selector());
                         if (!selector.startsWith("&")) {
@@ -230,7 +308,7 @@ public record CheckStyle() implements StatelessFunctionalObject {
                         Integer rank = byDrawn.get(by);
                         String combined = byDrawn.keySet().stream().filter(s -> by.startsWith(s) && by.length() > s.length()).findFirst().orElse(null);
                         if (by.startsWith("::")) {
-                            at(r, r.selector() + " draws a pseudo-element: none is in a leaf's file, for now");
+                            at(r, r.selector() + " draws a pseudo-element: none is in a casting's rule, for now");
                             continue;
                         }
                         if (rank == null && combined != null) {
@@ -260,7 +338,7 @@ public record CheckStyle() implements StatelessFunctionalObject {
                             switch (inner) {
                                 case ReadCss.Declaration d -> declaration(d, false);
                                 case ReadCss.Rule n -> at(n, n.selector() + " inside " + by + ": a state's rule holds declarations alone");
-                                case ReadCss.AtRule a -> at(a, "@" + a.prelude() + ": no at-rule is in a leaf's file, for now");
+                                case ReadCss.AtRule a -> at(a, "@" + a.prelude() + ": no at-rule is in a casting's rule, for now");
                             }
                         }
                     }
@@ -275,7 +353,7 @@ public record CheckStyle() implements StatelessFunctionalObject {
                 at(d, property + " is !important, which overrules the leaf's precedence: the order of its states decides (D22)");
             boolean local = false;
             if (property.startsWith("--fp-"))
-                at(d, property + " is the palette's, defined by its sheet: a leaf's file names it, var(" + property + "), and never assigns it (D5)");
+                at(d, property + " is the palette's, defined by its sheet: a casting's rule names it, var(" + property + "), and never assigns it (D5)");
             else if (LOCAL.stream().anyMatch(property::startsWith)) {
                 local = true;
                 if (!own) at(d, property + " is assigned in a state's rule: a colour of the leaf's own is assigned in the leaf's own rule (D13, D14)");
@@ -361,8 +439,6 @@ public record CheckStyle() implements StatelessFunctionalObject {
                 default -> "a branch";
             };
         }
-
-        private static boolean same(String selector, String own) { return squeeze(selector).equals(own); }
     }
 
     /** Spaces gathered to one, and none beside a bracket or a comma; lower case. */

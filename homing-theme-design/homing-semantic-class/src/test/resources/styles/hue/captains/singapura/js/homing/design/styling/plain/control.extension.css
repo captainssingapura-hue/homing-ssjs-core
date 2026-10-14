@@ -1,3 +1,5 @@
+/* The extension's own file of the controls, from the module that adds the badge (D26, D30). */
+
 /* The extension's badge, in the base layer: given by the module that adds it. */
 .styled-badge {
     color: var(--fp-flag);

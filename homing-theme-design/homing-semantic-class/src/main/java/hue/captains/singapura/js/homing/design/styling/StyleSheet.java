@@ -12,16 +12,17 @@ import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
- * A style's style-aware sheet, flattened (RFC 0067, appendix Two Classes per Leaf, D9, D25): for every leaf of the
- * taxonomy, exactly one class - the style's own file where it answers content, its base layer's where it answers
- * absence - each file whole, as written, and saying whose it is. The same in every palette of the style's scheme, so
- * it is swapped when the style changes and never when the palette does.
+ * A style's style-aware sheet, flattened (RFC 0067, appendix Two Classes per Leaf, D9, D25, D30): for every casting of
+ * the taxonomy, exactly one class - the style's own rule where it answers content, its base layer's where it answers
+ * absence - each rule whole, as its family's file writes it, and saying whose it is. The same in every palette of the
+ * style's scheme, so it is swapped when the style changes and never when the palette does.
  *
- * <p>Nothing falls back: a leaf the style answers content for with no file, a base layer answering absence or with no
- * file, a style deriving in the end from itself - each refuses the sheet, every problem at once. The conformance check
+ * <p>Nothing falls back: a casting the style answers content for with no rule, a base layer answering absence or with
+ * no rule, a style deriving in the end from itself - each refuses the sheet, every problem at once. The conformance check
  * ({@link CheckStyle}) holds the files to their leaves and the tree; this only puts them together.</p>
  */
 public record StyleSheet() implements StatelessFunctionalObject {
@@ -44,6 +45,8 @@ public record StyleSheet() implements StatelessFunctionalObject {
         DesignStyle<?> base = baseLayer(style).orElseThrow(() -> new IllegalArgumentException(
                 style.token() + "'s sheet cannot be written: it derives from a style that derives, in the end, from itself"));
         var files = StyleFiles.INSTANCE;
+        Map<Casting, StyleFiles.Written> own = files.written(taxonomy, style);
+        Map<Casting, StyleFiles.Written> based = base == style ? own : files.written(taxonomy, base);
         var problems = new ArrayList<String>();
         var css = new StringBuilder();
         css.append("/* ").append(style.token()).append(" - its style-aware sheet: one class for every leaf, each its own file or its base layer's.\n")
@@ -74,14 +77,14 @@ public record StyleSheet() implements StatelessFunctionalObject {
                     from = base;
                 }
             }
-            Optional<String> file = files.read(from, leaf);
-            if (file.isEmpty()) {
-                problems.add(from.token() + " answers content for " + leaf.token() + ", and has no file at " + files.path(from, leaf));
+            StyleFiles.Written written = (from == style ? own : based).get(leaf);
+            if (written == null) {
+                problems.add(from.token() + " answers content for " + leaf.token() + ", and no file of its family rules it");
                 continue;
             }
             css.append("\n/* ").append(leaf.token()).append(": ")
                .append(from == style ? style.token() + "'s own" : base.token() + "'s, " + style.token() + " answering absence")
-               .append(" */\n").append(file.get().strip()).append('\n');
+               .append(" */\n").append(written.text()).append('\n');
         }
         if (!problems.isEmpty())
             throw new IllegalArgumentException(style.token() + "'s sheet cannot be written: " + String.join("; ", problems));

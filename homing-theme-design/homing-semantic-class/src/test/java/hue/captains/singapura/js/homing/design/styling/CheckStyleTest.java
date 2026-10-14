@@ -1,6 +1,10 @@
 package hue.captains.singapura.js.homing.design.styling;
 
 import hue.captains.singapura.js.homing.component.taxonomy.Casting;
+import hue.captains.singapura.js.homing.component.taxonomy.Component;
+import hue.captains.singapura.js.homing.component.taxonomy.L1_ComponentBranch;
+import hue.captains.singapura.js.homing.component.taxonomy.ReadTaxonomy;
+import hue.captains.singapura.js.homing.component.taxonomy.Root;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import hue.captains.singapura.js.homing.design.semantic.ColorTree;
@@ -21,9 +25,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * The check of a style's files, from the Java leaves: each style's answer for every leaf and its file; every file held
- * to its leaf's class and states and to the colour tree; each kind of wrong file refused by name, alone; the precedence
- * a soft report.
+ * The check of a style's files, from the Java leaves: each style's answer for every casting and its rule in its family's
+ * files; every family file holding its castings' rules, each once, in the family's order; every rule held to its leaf's
+ * class and states and to the colour tree; each kind of wrong file refused by name, alone; the precedence a soft report.
  */
 class CheckStyleTest {
 
@@ -35,17 +39,20 @@ class CheckStyleTest {
     private static final String ALONG = "color-mix(in oklab, var(--fp-danger) calc(clamp(0, var(--extent), 1) * 100%), "
             + "color-mix(in oklab, var(--fixed-clear) calc(clamp(0, var(--extent) + 1, 1) * 100%), var(--fp-safe)))";
 
-    /** A tab's file in plain refused for one thing, said by name. */
+    /** A casting's family's own file: control.css. */
+    private static String fileOf(Casting leaf) { return StyleFiles.INSTANCE.file(TAXONOMY.head(leaf.cast()).orElseThrow()); }
+
+    /** The controls' file in plain refused for one thing, said by name. */
     private static void refused(String css, String says) { refused(TAB, css, says); }
 
     private static void refused(Casting leaf, String css, String says) {
-        List<String> problems = CHECK.file(TAXONOMY, TREE, Plain.INSTANCE, leaf, css).problems();
+        List<String> problems = CHECK.file(TAXONOMY, TREE, Plain.INSTANCE, fileOf(leaf), css).problems();
         assertEquals(1, problems.size(), "one problem, alone: " + problems);
         assertTrue(problems.get(0).contains(says), problems.get(0));
     }
 
     private static void passes(Casting leaf, String css) {
-        var checked = CHECK.file(TAXONOMY, TREE, Plain.INSTANCE, leaf, css);
+        var checked = CHECK.file(TAXONOMY, TREE, Plain.INSTANCE, fileOf(leaf), css);
         assertEquals(List.of(), checked.problems());
         assertEquals(List.of(), checked.reports());
     }
@@ -58,24 +65,27 @@ class CheckStyleTest {
                 "the extension's badge a leaf like the others, and the tab cast as Lead one for its class");
         assertEquals(List.of(), CHECK.require(TAXONOMY, TREE, List.of(Plain.INSTANCE, Ink.INSTANCE, Loudly.INSTANCE)), "no report");
         var files = StyleFiles.INSTANCE;
-        assertEquals("styles/hue/captains/singapura/js/homing/design/styling/plain/tab.css", files.path(Plain.INSTANCE, TAB));
-        assertEquals(List.of("badge.css", "meter.css", "strip.css", "tab.css", "tab_lead.css"), files.present(Plain.INSTANCE));
+        assertEquals("styles/hue/captains/singapura/js/homing/design/styling/plain/control.css", files.path(Plain.INSTANCE, fileOf(TAB)));
+        assertEquals(List.of("control.css", "control.extension.css", "gauge.css"), files.present(Plain.INSTANCE),
+                "a file per family, and the extension's own file of the controls, for the badge it adds");
+        assertEquals(List.of("control.css", "control.extension.css", "gauge.css"), files.written(TAXONOMY, Plain.INSTANCE).values().stream()
+                .map(StyleFiles.Written::file).distinct().toList());
         assertEquals(Plain.INSTANCE, StyleSheet.INSTANCE.baseLayer(Loudly.INSTANCE).orElseThrow(), "loudly's absence lands on plain");
     }
 
     @Test
     void aBaseLayer_answersEveryLeaf_anExtensionsToo_andHasNoFileForNone() {
         assertEquals(List.of(
+                "shabby/knob.css is no family's file: a style's file is <family>.css, or <family>.<module>.css, and the families are control, gauge",
                 "shabby is a base layer, and answers absence for meter: a base layer answers content for every leaf, an extension's too (D26)",
-                "shabby answers content for badge, and has no file at styles/hue/captains/singapura/js/homing/design/styling/shabby/badge.css",
-                "shabby/knob.css is no leaf's file: no leaf of the taxonomy is knob"),
+                "shabby answers content for badge, and no file of control's rules it: shabby/control.css, or a module's"),
                 CHECK.check(TAXONOMY, TREE, Shabby.INSTANCE).problems());
     }
 
     @Test
     void aFileTheStyleDoesNotAnswer_isRefused() {
-        assertEquals(List.of("stray/tab.css is a file stray does not answer: it answers absence for tab, so the base layer's is used - "
-                + "answer content, or remove the file"), CHECK.check(TAXONOMY, TREE, Stray.INSTANCE).problems());
+        assertEquals(List.of("stray/control.css:2: stray rules tab, which it does not answer: it answers absence, so the base layer's is used - "
+                + "answer content, or remove the rule"), CHECK.check(TAXONOMY, TREE, Stray.INSTANCE).problems());
     }
 
     @Test
@@ -96,19 +106,44 @@ class CheckStyleTest {
                 CHECK.check(TAXONOMY, TREE, new Unschemed()).problems());
     }
 
-    // ── a file's selectors: its leaf's class, its states nested in it ──────
+    /** A branch that heads no family, and a pebble under it. */
+    record Loose() implements L1_ComponentBranch<Root> {
+        static final Loose INSTANCE = new Loose();
+        @Override public Root parent() { return Root.INSTANCE; }
+    }
+
+    record Pebble() implements Component<Loose> {
+        static final Pebble INSTANCE = new Pebble();
+        @Override public Loose parent() { return Loose.INSTANCE; }
+    }
 
     @Test
-    void aFileRulesItsLeafsClass_once_andNothingElse() {
-        refused(".styled-tab { color: var(--fp-copy); }\n.styled-strip { color: var(--fp-copy); }",
-                "plain/tab.css:2: .styled-strip is not this leaf's: its file rules .styled-tab alone, its states nested in it");
-        refused(".styled-tab {}\nbutton { color: var(--fp-copy); }", "button is not this leaf's");
-        refused(".styled-tab {}\n.styled-tab .icon { color: var(--fp-copy); }", ".styled-tab .icon is not this leaf's");
-        refused(".styled-tab {}\n.styled-tab, .styled-strip { color: var(--fp-copy); }", ".styled-tab, .styled-strip is not this leaf's");
-        refused("", "plain/tab.css: no rule for .styled-tab: a leaf's file rules its own class");
-        refused(".styled-tab {}\n.styled-tab {}", "plain/tab.css:2: .styled-tab is ruled twice");
-        refused("color: var(--fp-copy);\n.styled-tab {}", "plain/tab.css:1: color is declared outside any rule");
-        refused(".styled-tab {}\n@media print { .styled-tab { color: var(--fp-page); } }", "@media print: no at-rule is in a leaf's file");
+    void aCastingOfNoFamily_hasNoFile_andIsRefused() {
+        var loose = new ReadTaxonomy().read(List.of(Pebble.INSTANCE));
+        var problems = CHECK.check(loose, TREE, Plain.INSTANCE).problems();
+        assertTrue(problems.contains("pebble is of no family: no branch above pebble heads one, so no file of plain can rule it (D30)"), problems.toString());
+        assertTrue(problems.contains("plain/control.css is no family's file: a style's file is <family>.css, or <family>.<module>.css, "
+                + "and the families are none - no branch heads one"), problems.toString());
+    }
+
+    // ── a family's file: its castings' classes, each once, in its order ────
+
+    @Test
+    void aFamilysFile_rulesItsCastings_eachOnce_inTheFamilysOrder_andNothingElse() {
+        passes(TAB, ".styled-tab { color: var(--fp-copy); }\n.styled-strip { color: var(--fp-copy); }");
+        assertEquals(List.of("tab", "tab_lead", "strip", "badge"), TAXONOMY.family(StatedTaxonomy.Control.INSTANCE).stream().map(Casting::token).toList(),
+                "each component on its own, then in each role: the tab as Lead beside the tab");
+        refused(".styled-tab {}\n.styled-meter { color: var(--fp-copy); }", "plain/control.css:2: .styled-meter is gauge's, ruled in gauge's files, not control's");
+        refused(".styled-tab {}\nbutton { color: var(--fp-copy); }", "button is no casting's rule");
+        refused(".styled-tab {}\n.styled-tab .icon { color: var(--fp-copy); }", ".styled-tab .icon is no casting's rule");
+        refused(".styled-tab {}\n.styled-tab, .styled-strip { color: var(--fp-copy); }", ".styled-tab, .styled-strip is no casting's rule");
+        refused("", "plain/control.css: rules none of control's castings");
+        refused(".styled-tab {}\n.styled-tab {}", "plain/control.css:2: .styled-tab is ruled twice: first at plain/control.css:1");
+        refused(".styled-strip {}\n.styled-tab {}", "plain/control.css:2: .styled-tab is ruled after .styled-strip, which comes after it in "
+                + "control's order: tab, tab_lead, strip, badge");
+        refused("color: var(--fp-copy);\n.styled-tab {}", "plain/control.css:1: color is declared outside any rule");
+        refused(".styled-tab {}\n@media print { .styled-tab { color: var(--fp-page); } }", "@media print: no at-rule is in a family's file");
+        assertEquals(List.of("plain/knob.css is no family's file"), CHECK.file(TAXONOMY, TREE, Plain.INSTANCE, "knob.css", ".styled-tab {}").problems());
     }
 
     @Test
@@ -122,7 +157,7 @@ class CheckStyleTest {
         refused(".styled-tab { &:hover {} &:hover {} }", "&:hover is drawn twice");
         refused(".styled-tab { &.styled-tab--selected:hover { color: var(--fp-copy); } }",
                 "draws .styled-tab--selected with more: each state is drawn alone, and where two hold the leaf's precedence decides (D22)");
-        refused(".styled-tab { &::before { color: var(--fp-copy); } }", "&::before draws a pseudo-element: none is in a leaf's file, for now");
+        refused(".styled-tab { &::before { color: var(--fp-copy); } }", "&::before draws a pseudo-element: none is in a casting's rule, for now");
         refused(".styled-tab { &.styled-tab--selected { &:hover { color: var(--fp-copy); } } }", "a state's rule holds declarations alone");
     }
 
@@ -135,10 +170,10 @@ class CheckStyleTest {
 
     @Test
     void statesOutOfTheLeafsPrecedence_areReported_notRefused() {
-        var checked = CHECK.file(TAXONOMY, TREE, Plain.INSTANCE, TAB,
+        var checked = CHECK.file(TAXONOMY, TREE, Plain.INSTANCE, fileOf(TAB),
                 ".styled-tab {\n  &.styled-tab--selected { color: var(--fp-danger); }\n  &:hover { color: var(--fp-raised); }\n}");
         assertEquals(List.of(), checked.problems(), "a soft check (D23)");
-        assertEquals(List.of("plain/tab.css:3: :hover is drawn after .styled-tab--selected, which outranks it in tab's precedence: "
+        assertEquals(List.of("plain/control.css:3: :hover is drawn after .styled-tab--selected, which outranks it in tab's precedence: "
                 + "where both hold, the later wins, so :hover would (D22)"), checked.reports());
     }
 
@@ -149,7 +184,7 @@ class CheckStyleTest {
         refused(".styled-tab { color: var(--fp-ink); }", "--fp-ink names no palettable colour of the tree");
         refused(".styled-tab { color: var(--fp-alarm); }", "--fp-alarm names no palettable colour of the tree: alarm is a fixed colour, --fixed-alarm");
         refused(METER, ".styled-meter { color: var(--fp-glare); }", "--fp-glare: glare is Loud's, which plain's scheme, the base, does not see (D7)");
-        assertTrue(CHECK.file(TAXONOMY, TREE, Loudly.INSTANCE, METER, ".styled-meter { color: var(--fp-glare); }").passes(), "loudly's scheme sees it");
+        assertTrue(CHECK.file(TAXONOMY, TREE, Loudly.INSTANCE, fileOf(METER), ".styled-meter { color: var(--fp-glare); }").passes(), "loudly's scheme sees it");
         refused(".styled-tab { --fp-copy: var(--fp-page); }", "--fp-copy is the palette's, defined by its sheet");
         refused(".styled-tab { color: var(--fp-copy, var(--fp-page)); }", "var(--fp-copy, ...) falls back");
     }

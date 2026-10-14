@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.design.styling;
 
 import hue.captains.singapura.js.homing.component.taxonomy.Component;
 import hue.captains.singapura.js.homing.component.taxonomy.ComponentPartDSL;
+import hue.captains.singapura.js.homing.component.taxonomy.FamilyHead;
 import hue.captains.singapura.js.homing.component.taxonomy.Flag;
 import hue.captains.singapura.js.homing.component.taxonomy.Importance;
 import hue.captains.singapura.js.homing.component.taxonomy.L1_ComponentBranch;
@@ -30,7 +31,7 @@ public record StatedTaxonomy() implements TaxonomySource {
 
     public static final StatedTaxonomy INSTANCE = new StatedTaxonomy();
 
-    public record Control() implements L1_ComponentBranch<Root> {
+    public record Control() implements L1_ComponentBranch<Root>, FamilyHead {
         public static final Control INSTANCE = new Control();
         @Override public Root parent() { return Root.INSTANCE; }
     }

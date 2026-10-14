@@ -57,7 +57,11 @@ public record TaxonomyProblem(Rule rule, String says) implements ValueObject {
         /** A branch under a design branch, which holds virtual leaves only. */
         BRANCH_IN_DESIGN_BRANCH,
         /** A part played by a virtual leaf: a part is cast, and a virtual leaf never is. */
-        VIRTUAL_PLAYS_A_PART
+        VIRTUAL_PLAYS_A_PART,
+        /** A family head with another family head between it and the root: families are headed at one level. */
+        FAMILY_HEAD_NESTED,
+        /** A component that says it heads a family: only a branch does. */
+        FAMILY_HEAD_NOT_A_BRANCH
     }
 
     @Override public String toString() { return rule + ": " + says; }
