@@ -11,13 +11,16 @@ public sealed interface LeafKind extends ColorNode.Kind permits LeafKind.ColorKi
     sealed interface ColorKind extends LeafKind permits ConcreteKind, InterpolatedKind {}
 
     /** A colour derived from no other: what a scale's knots may be. */
-    sealed interface ConcreteKind extends ColorKind permits PalettableKind, FixedKind {}
+    sealed interface ConcreteKind extends ColorKind permits PalettableKind, FixedKind, InkKind {}
 
     /** The worn palette gives it. */
     record PalettableKind() implements ConcreteKind {}
 
     /** Its declaration gives it. */
     record FixedKind() implements ConcreteKind {}
+
+    /** What the element stands on gives it, at a share: no colour of the tree its source (D31). */
+    record InkKind() implements ConcreteKind {}
 
     /** A colour scale's, at a degree. */
     record InterpolatedKind() implements ColorKind {}

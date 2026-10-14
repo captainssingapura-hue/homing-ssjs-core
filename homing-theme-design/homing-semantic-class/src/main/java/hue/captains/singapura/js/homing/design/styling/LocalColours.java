@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.design.Extent;
 import hue.captains.singapura.js.homing.design.color.ColorScale;
 import hue.captains.singapura.js.homing.design.color.Fixed;
 import hue.captains.singapura.js.homing.design.color.Interpolated;
+import hue.captains.singapura.js.homing.design.color.Ink;
 import hue.captains.singapura.js.homing.design.color.SemanticColor;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
@@ -19,7 +20,8 @@ import java.util.List;
  *   <li>{@code --fixed-<leaf>}: the colour as declared;</li>
  *   <li>{@code --it-<leaf>}: its scale at its degree - a knot's variable, or the two either side mixed in OKLab;</li>
  *   <li>{@code --along-<scale>}: the scale by the element's {@code --extent}, from the first knot, each next mixed in
- *       by how far the degree has come between the two.</li>
+ *       by how far the degree has come between the two;</li>
+ *   <li>{@code --ink-<leaf>}: the ink the element stands on, {@code currentColor}, at its share - the rest clear (D31).</li>
  * </ul>
  *
  * Every anchor is a knot's variable, {@code --fp-} or {@code --fixed-}, never a literal colour: the palette's colours
@@ -32,6 +34,11 @@ public record LocalColours() implements StatelessFunctionalObject {
 
     /** {@code #c62828}. */
     public String fixed(Fixed<?, ?> color) { return color.color().css(); }
+
+    /** {@code color-mix(in oklab, currentColor 30%, transparent)}; the ink whole, {@code currentColor}. */
+    public String ink(Ink<?, ?> color) {
+        return color.share() == 1 ? "currentColor" : "color-mix(in oklab, currentColor " + percent(color.share()) + ", transparent)";
+    }
 
     /** {@code color-mix(in oklab, var(--fixed-clear) 50%, var(--fp-danger))}. */
     public String interpolated(Interpolated<?, ?> color) {

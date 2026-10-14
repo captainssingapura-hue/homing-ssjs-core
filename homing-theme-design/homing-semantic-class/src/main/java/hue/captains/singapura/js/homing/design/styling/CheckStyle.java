@@ -8,6 +8,7 @@ import hue.captains.singapura.js.homing.design.color.ColorNode;
 import hue.captains.singapura.js.homing.design.color.ColorScale;
 import hue.captains.singapura.js.homing.design.color.Fixed;
 import hue.captains.singapura.js.homing.design.color.Interpolated;
+import hue.captains.singapura.js.homing.design.color.Ink;
 import hue.captains.singapura.js.homing.design.color.Palettable;
 import hue.captains.singapura.js.homing.design.semantic.ColorTree;
 import hue.captains.singapura.js.homing.design.semantic.Derives;
@@ -65,6 +66,8 @@ import java.util.regex.Pattern;
  *   <li>{@code --fixed-<leaf>}, {@code --it-<leaf>}: assigned in the leaf's own rule, each to the one value the tree
  *       gives it, and named only where so assigned (D13);</li>
  *   <li>{@code --along-<scale>}: the same, and only on a leaf with the colour axis (D14);</li>
+ *   <li>{@code --ink-<leaf>}: the same, a share of the ink the element stands on - CSS's {@code currentColor}, which the
+ *       tree gives at a share (D31);</li>
  *   <li>none of the four falling back, and no literal colour anywhere else - a hex, a colour function, a mix, a named
  *       or a system colour; {@code currentColor}, {@code transparent}, {@code inherit} and their like are CSS's own
  *       (D6).</li>
@@ -295,7 +298,7 @@ public record CheckStyle() implements StatelessFunctionalObject {
         private static final Pattern WORD = Pattern.compile("(?<![\\w#.-])[A-Za-z][\\w-]*");
         private static final Pattern STRING = Pattern.compile("\"(?:[^\"\\\\]|\\\\.)*\"|'(?:[^'\\\\]|\\\\.)*'");
         private static final Pattern URL = Pattern.compile("(?i)url\\([^)]*\\)");
-        private static final Set<String> LOCAL = Set.of("--fixed-", "--it-", "--along-");
+        private static final Set<String> LOCAL = Set.of("--fixed-", "--it-", "--along-", "--ink-");
 
         private final Taxonomy taxonomy;
         private final ColorTree tree;
@@ -463,17 +466,20 @@ public record CheckStyle() implements StatelessFunctionalObject {
         /** A colour assigned in the leaf's own CSS: the one value the tree gives it. */
         private void local(ReadCss.Declaration d) {
             String property = d.property();
-            String kind = property.startsWith("--fixed-") ? "--fixed-" : property.startsWith("--it-") ? "--it-" : "--along-";
+            String kind = property.startsWith("--fixed-") ? "--fixed-" : property.startsWith("--it-") ? "--it-"
+                    : property.startsWith("--ink-") ? "--ink-" : "--along-";
             String token = property.substring(kind.length());
             ColorNode<?, ?, ?> node = nodes.get(token);
             var colours = LocalColours.INSTANCE;
             String expected = switch (kind) {
                 case "--fixed-" -> node instanceof Fixed<?, ?> f ? colours.fixed(f) : null;
                 case "--it-" -> node instanceof Interpolated<?, ?> i ? colours.interpolated(i) : null;
+                case "--ink-" -> node instanceof Ink<?, ?> k ? colours.ink(k) : null;
                 default -> node instanceof ColorScale<?, ?> s ? colours.along(s) : null;
             };
             if (expected == null) {
-                at(d, property + " names no " + (kind.equals("--fixed-") ? "fixed colour" : kind.equals("--it-") ? "interpolated colour" : "colour scale")
+                at(d, property + " names no " + (kind.equals("--fixed-") ? "fixed colour" : kind.equals("--it-") ? "interpolated colour"
+                        : kind.equals("--ink-") ? "ink" : "colour scale")
                         + " of the tree" + (node == null ? "" : ": " + token + " is " + kindOf(node)));
                 return;
             }
@@ -531,6 +537,7 @@ public record CheckStyle() implements StatelessFunctionalObject {
                 case Palettable<?, ?> p -> "a palettable colour, var(--fp-" + p.token() + ")";
                 case Fixed<?, ?> f -> "a fixed colour, --fixed-" + f.token();
                 case Interpolated<?, ?> i -> "an interpolated colour, --it-" + i.token();
+                case Ink<?, ?> k -> "an ink, --ink-" + k.token();
                 case ColorScale<?, ?> s -> "a colour scale, --along-" + s.token();
                 default -> "a branch";
             };

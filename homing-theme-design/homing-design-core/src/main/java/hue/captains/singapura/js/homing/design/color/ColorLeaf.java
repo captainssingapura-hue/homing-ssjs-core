@@ -10,4 +10,4 @@ package hue.captains.singapura.js.homing.design.color;
  * @param <K> its kind
  */
 public sealed interface ColorLeaf<S extends ColorScheme, P extends ColorBranch<? super S, ?>, K extends LeafKind>
-        extends ColorNode<S, P, K> permits Palettable, Fixed, Interpolated, ColorScale {}
+        extends ColorNode<S, P, K> permits Palettable, Fixed, Interpolated, Ink, ColorScale {}

@@ -13,6 +13,7 @@ import hue.captains.singapura.js.homing.design.color.ColorScheme.Base;
 import hue.captains.singapura.js.homing.design.color.ConcreteColor;
 import hue.captains.singapura.js.homing.design.color.Fixed;
 import hue.captains.singapura.js.homing.design.color.Interpolated;
+import hue.captains.singapura.js.homing.design.color.Ink;
 import hue.captains.singapura.js.homing.design.color.L1_ColorBranch;
 import hue.captains.singapura.js.homing.design.color.Paint;
 import hue.captains.singapura.js.homing.design.color.Palettable;
@@ -49,7 +50,7 @@ class ColorTreeTest {
 
     @Test
     void theTree_isTheOwnersNodes_thenEachExtensionsFoundOnTheClasspath() {
-        assertEquals(16, TREE.nodes().size(), "thirteen of its owner's, three the mine colours graft");
+        assertEquals(17, TREE.nodes().size(), "fourteen of its owner's - a hairline, an ink, among them - three the mine colours graft");
         assertTrue(TREE.extension(new MineColours.Flag()).orElseThrow() instanceof MineColours);
         assertTrue(TREE.extension(new Copy()).isEmpty(), "the owner's own: no extension");
         assertEquals(ResolvingColours.Loud.class, TREE.scheme(new Glare()));
@@ -145,6 +146,7 @@ class ColorTreeTest {
         @Override public double degree() { return 2; }
     }
     public record Blank() implements Fixed<Base, Signals> { @Override public ConcreteColor color() { return null; } }
+    public record None() implements Ink<Base, Signals> { @Override public double share() { return 0; } }
     public record Graft() implements ColorExtension {
         @Override public Class<? extends ColorSource> extending() { return ResolvingColours.class; }
         @Override public List<ColorNode<?, ?, ?>> nodes() { return List.of(new Lost(), new Astray()); }
@@ -154,10 +156,10 @@ class ColorTreeTest {
     void whatTheCompilerCannotRefuse_isRefusedAsTheTreeIsRead_everyProblemAtOnce() {
         List<ColorNode<?, ?, ?>> own = List.of(new ResolvingColours.Surfaces(), new ResolvingColours.Words(), new Signals(), new ResolvingColours.Clear(),
                 new Safe(), new Danger(), new Copy(), new Risk(),
-                new Astray(), new Danger2(), new Coloured(1), new Marker(), new Short(), new Falling(), new Off(), new Blank());
+                new Astray(), new Danger2(), new Coloured(1), new Marker(), new Short(), new Falling(), new Off(), new Blank(), new None());
         var e = assertThrows(RefusedColors.class, () -> ReadColors.INSTANCE.read(own, List.of()));
         assertEquals(List.of(Rule.NAME_TWICE, Rule.PARENT_MISSING, Rule.NOT_STATELESS, Rule.SCHEME_ASTRAY,
-                        Rule.SCALE_BADLY, Rule.SCALE_BADLY, Rule.SCALE_BADLY, Rule.INTERPOLATED_BADLY, Rule.FIXED_BADLY),
+                        Rule.SCALE_BADLY, Rule.SCALE_BADLY, Rule.SCALE_BADLY, Rule.INTERPOLATED_BADLY, Rule.FIXED_BADLY, Rule.INK_BADLY),
                 e.problems().stream().map(ColorProblem::rule).toList(), e.getMessage());
         assertTrue(e.getMessage().contains("'danger' names " + Danger.class.getName() + " and " + Danger2.class.getName()), e.getMessage());
         assertTrue(e.getMessage().contains("astray hangs under Lost, which the tree has not"), e.getMessage());
@@ -165,6 +167,7 @@ class ColorTreeTest {
         assertTrue(e.getMessage().contains("falling's knots run from -1.0 to 0.9"), e.getMessage());
         assertTrue(e.getMessage().contains("falling's knot at 0.25 follows one at 0.5: its knots rise strictly"), e.getMessage());
         assertTrue(e.getMessage().contains("off is at 2.0: a degree is from -1 to 1"), e.getMessage());
+        assertTrue(e.getMessage().contains("none takes 0.0 of the ink: a share is more than none and at most the ink whole, 1"), e.getMessage());
         var twice = assertThrows(RefusedColors.class, () -> ReadColors.INSTANCE.read(List.of(new Signals(), new Safe()), List.of(new Graft(), new Graft())));
         assertTrue(twice.getMessage().contains("lost is listed twice by Graft and by Graft"), twice.getMessage());
         var lastWord = assertThrows(RefusedColors.class, () -> ReadColors.INSTANCE.read(List.of(), List.of(new Graft())));

@@ -235,6 +235,17 @@ class CheckStyleTest {
     }
 
     @Test
+    void anInk_aShareOfWhatTheElementStandsOn_isAssignedInItsRule_asTheTreeGivesIt() {
+        passes(TAB, ".styled-tab { --ink-hairline: color-mix(in oklab, currentColor 30%, transparent); border-color: var(--ink-hairline); }");
+        refused(".styled-tab { --ink-hairline: color-mix(in oklab, currentColor 60%, transparent); }",
+                "--ink-hairline is color-mix(in oklab, currentColor 30%, transparent) by the tree");
+        refused(".styled-tab { border-color: color-mix(in oklab, currentColor 30%, transparent); }", "color-mix( makes a colour the tree does not have");
+        refused(".styled-tab { --ink-copy: currentColor; }", "--ink-copy names no ink of the tree: copy is a palettable colour, var(--fp-copy)");
+        refused(".styled-tab { color: var(--fp-hairline); }", "--fp-hairline names no palettable colour of the tree: hairline is an ink, --ink-hairline");
+        passes(TAB, ".styled-tab { color: currentColor; border-color: currentColor; }");   // the ink whole, CSS's own (D6)
+    }
+
+    @Test
     void aColourAlongAScale_onlyOnALeafWithTheColourAxis_itsAnchorsVariables() {
         passes(METER, ".styled-meter { --fixed-clear: transparent; --along-risk: " + ALONG + "; background-color: var(--along-risk); }");
         refused(".styled-tab { --fixed-clear: transparent; --along-risk: " + ALONG + "; }", "tab has no colour axis: only a leaf with it may (D14)");

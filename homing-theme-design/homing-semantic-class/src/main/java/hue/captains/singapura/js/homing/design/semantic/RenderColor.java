@@ -6,6 +6,7 @@ import hue.captains.singapura.js.homing.design.color.ColorNode;
 import hue.captains.singapura.js.homing.design.color.ColorScale;
 import hue.captains.singapura.js.homing.design.color.Fixed;
 import hue.captains.singapura.js.homing.design.color.Interpolated;
+import hue.captains.singapura.js.homing.design.color.Ink;
 import hue.captains.singapura.js.homing.design.color.Paint;
 import hue.captains.singapura.js.homing.design.color.Palettable;
 import hue.captains.singapura.js.homing.design.color.SemanticColor;
@@ -39,6 +40,7 @@ record RenderColor() implements StatelessFunctionalObject {
             case Palettable<?, ?> p -> p;
             case Fixed<?, ?> f -> f;
             case Interpolated<?, ?> i -> i;
+            case Ink<?, ?> k -> k;
         };
         if (!theme.colors().has(node)) throw new IllegalArgumentException(node.token() + " is in no colour tree read: its owner or an extension lists it");
         return switch (color) {
@@ -46,6 +48,7 @@ record RenderColor() implements StatelessFunctionalObject {
                     theme.palette().token() + " gives " + p.token() + " no colour, nor does any palette below it or a sub-palette")).css();
             case Fixed<?, ?> f -> f.color().css();
             case Interpolated<?, ?> i -> at(theme, i.scale(), i.degree());
+            case Ink<?, ?> k -> k.share() == 1 ? "currentColor" : "color-mix(in oklab, currentColor " + percent(k.share()) + ", transparent)";
         };
     }
 

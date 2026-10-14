@@ -6,6 +6,7 @@ import hue.captains.singapura.js.homing.design.color.ColorScheme.Base;
 import hue.captains.singapura.js.homing.design.color.ConcreteColor;
 import hue.captains.singapura.js.homing.design.color.Fixed;
 import hue.captains.singapura.js.homing.design.color.Interpolated;
+import hue.captains.singapura.js.homing.design.color.Ink;
 import hue.captains.singapura.js.homing.design.color.L1_ColorBranch;
 import hue.captains.singapura.js.homing.design.color.Palettable;
 
@@ -47,6 +48,11 @@ public record ResolvingColours() implements ColorSource {
         }
     }
     /** Half way to danger. */
+    /** A line between rows: a share of the ink it stands on. */
+    public record Hairline() implements Ink<Base, Words> {
+        @Override public double share() { return 0.3; }
+    }
+
     public record Warning() implements Interpolated<Base, Signals> {
         @Override public ColorScale<? super Base, ?> scale() { return new Risk(); }
         @Override public double degree() { return 0.5; }
@@ -56,7 +62,7 @@ public record ResolvingColours() implements ColorSource {
 
     @Override public ColorTree read() {
         return ReadColors.INSTANCE.read(ResolvingColours.class, List.of(new Surfaces(), new Words(), new Signals(), new Page(), new Raised(),
-                new Clear(), new Copy(), new Danger(), new Safe(), new Alarm(), new Risk(), new Warning(), new Glare()));
+                new Clear(), new Copy(), new Danger(), new Safe(), new Alarm(), new Risk(), new Warning(), new Glare(), new Hairline()));
     }
 
     /** White paper, dark copy: the base's every palettable colour. */
