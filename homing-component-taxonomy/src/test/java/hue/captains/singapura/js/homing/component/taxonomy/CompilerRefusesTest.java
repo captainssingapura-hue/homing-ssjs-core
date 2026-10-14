@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.component.taxonomy;
 
+import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import hue.captains.singapura.js.homing.tree.NodeName;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,7 @@ class CompilerRefusesTest {
     private static final String PREAMBLE = """
             package hypothetical;
             import hue.captains.singapura.js.homing.component.taxonomy.*;
+            import hue.captains.singapura.js.homing.design.color.ColorScheme;
             import hue.captains.singapura.js.homing.tree.NodeName;
             import java.util.List;
             public class Hypothetical {
@@ -203,12 +205,12 @@ class CompilerRefusesTest {
             record Frame() implements L1_ComponentBranch<Root>, DesignBranch { static final Frame INSTANCE = new Frame(); public Root parent() { return Root.INSTANCE; } }
             record Other() implements L1_ComponentBranch<Root>, DesignBranch { static final Other INSTANCE = new Other(); public Root parent() { return Root.INSTANCE; } }
             record Edge() implements VirtualComponent<Frame> { static final Edge INSTANCE = new Edge(); public Frame parent() { return Frame.INSTANCE; }
-                interface Concrete<D extends Design<Frame>> extends ConcreteComponent<Edge, Frame, D> {} }
+                interface Concrete<D extends Design<?, Frame>> extends ConcreteComponent<Edge, Frame, D> {} }
             record Mark() implements VirtualComponent<Frame> { static final Mark INSTANCE = new Mark(); public Frame parent() { return Frame.INSTANCE; }
-                interface Concrete<D extends Design<Frame>> extends ConcreteComponent<Mark, Frame, D> {} }
-            record Plain() implements Design<Frame> { static final Plain INSTANCE = new Plain(); }
-            record Bold() implements Design<Frame> { static final Bold INSTANCE = new Bold(); }
-            record Elsewhere() implements Design<Other> { static final Elsewhere INSTANCE = new Elsewhere(); }
+                interface Concrete<D extends Design<?, Frame>> extends ConcreteComponent<Mark, Frame, D> {} }
+            record Plain() implements Design<ColorScheme.Base, Frame> { static final Plain INSTANCE = new Plain(); }
+            record Bold() implements Design<ColorScheme.Base, Frame> { static final Bold INSTANCE = new Bold(); }
+            record Elsewhere() implements Design<ColorScheme.Base, Other> { static final Elsewhere INSTANCE = new Elsewhere(); }
             """;
 
     @Test
@@ -239,6 +241,13 @@ class CompilerRefusesTest {
     void aConcreteLeafOfOneBranchsLeafWithAnotherBranchsDesign_doesNotCompile() {
         refusedOnItsLine(DESIGNED + """
                 record Mixed() implements ConcreteComponent<Edge, Frame, Elsewhere> {} // refused here
+                """);
+    }
+
+    @Test
+    void aDesignInWhatIsNoScheme_doesNotCompile() {
+        refusedOnItsLine(DESIGNED + """
+                record Schemeless() implements Design<String, Frame> {} // refused here
                 """);
     }
 
@@ -321,7 +330,7 @@ class CompilerRefusesTest {
 
     /** This module's classes, and what they are written against. */
     private static String classpath() {
-        return Stream.of(Role.class, NodeName.class, StatelessFunctionalObject.class)
+        return Stream.of(Role.class, NodeName.class, StatelessFunctionalObject.class, ColorScheme.class)
                 .map(c -> {
                     try { return Path.of(c.getProtectionDomain().getCodeSource().getLocation().toURI()).toString(); }
                     catch (URISyntaxException e) { throw new IllegalStateException(e); }

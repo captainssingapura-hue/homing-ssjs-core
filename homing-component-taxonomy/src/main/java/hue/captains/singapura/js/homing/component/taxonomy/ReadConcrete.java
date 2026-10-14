@@ -26,8 +26,8 @@ record ReadConcrete() implements StatelessFunctionalObject {
     }
 
     /** The design a concrete leaf belongs to: the third argument it gives {@code ConcreteComponent}. */
-    Design<?> designOf(Class<?> concrete) {
-        return (Design<?>) instance(concrete, 2, "design", "name a design record in the leaf's Concrete<YourDesign>, not a raw Concrete");
+    Design<?, ?> designOf(Class<?> concrete) {
+        return (Design<?, ?>) instance(concrete, 2, "design", "name a design record in the leaf's Concrete<YourDesign>, not a raw Concrete");
     }
 
     private static Object instance(Class<?> concrete, int at, String what, String how) {

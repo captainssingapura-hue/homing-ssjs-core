@@ -57,10 +57,10 @@ public record ReadDesigns() implements StatelessFunctionalObject {
         var has = new HashSet<>(taxonomy.components());
 
         // 1. each concrete leaf's leaf and design, read off its declaration
-        var byDesign = new LinkedHashMap<Design<?>, List<ConcreteComponent<?, ?, ?>>>();
+        var byDesign = new LinkedHashMap<Design<?, ?>, List<ConcreteComponent<?, ?, ?>>>();
         for (ConcreteComponent<?, ?, ?> c : concretes) {
             VirtualComponent<?> leaf;
-            Design<?> design;
+            Design<?, ?> design;
             try {
                 leaf = c.virtual();
                 design = c.design();
@@ -75,13 +75,19 @@ public record ReadDesigns() implements StatelessFunctionalObject {
         }
 
         // 2. one design, one name
-        var byName = new LinkedHashMap<String, List<Design<?>>>();
-        for (Design<?> d : byDesign.keySet()) byName.computeIfAbsent(d.token(), n -> new ArrayList<>()).add(d);
+        var byName = new LinkedHashMap<String, List<Design<?, ?>>>();
+        for (Design<?, ?> d : byDesign.keySet()) byName.computeIfAbsent(d.token(), n -> new ArrayList<>()).add(d);
         byName.forEach((name, same) -> {
             if (same.size() > 1)
                 problems.add(new DesignProblem(Rule.NAME_TWICE, "'" + name + "' names " + same.size() + " designs: "
                         + String.join(" and ", same.stream().map(d -> d.getClass().getName()).toList())));
         });
+
+        // 2b. each design in a scheme, as a style is (D33)
+        for (Design<?, ?> d : byDesign.keySet())
+            if (Schemes.INSTANCE.of(d).isEmpty())
+                problems.add(new DesignProblem(Rule.NO_SCHEME, d.token() + " is in no scheme: its first type argument is an abstract class - "
+                        + "the base, one on top of it, or one from scratch"));
 
         // 3. each design complete over its branch, and what each leaf owns
         var owned = new HashMap<VirtualComponent<?>, List<Target>>();
@@ -109,53 +115,61 @@ public record ReadDesigns() implements StatelessFunctionalObject {
 
         // 4. in every theme: every owned target drawn once, nothing else drawn, each redirect landing
         for (Dressed theme : themes)
-            for (DesignRead d : out)
-                for (ConcreteComponent<?, ?, ?> c : d.concretes()) {
-                    if (!(c instanceof Drawn drawn)) continue;   // refused above
-                    List<Target> mineOwned = owned.getOrDefault(c.virtual(), List.of());
-                    List<Drawing<?>> drawings;
-                    try {
-                        drawings = drawn.drawings(theme);
-                    } catch (RuntimeException e) {
-                        problems.add(new DesignProblem(Rule.DRAWING_REFUSED, ResolveDrawing.name(c) + " in " + name(theme) + ": " + e.getMessage()));
-                        continue;
-                    }
-                    var seen = new HashSet<Target>();
-                    var mine = new HashMap<Target, Drawing<?>>();
-                    for (Drawing<?> dr : drawings) {
-                        mine.putIfAbsent(dr.target(), dr);
-                        if (!mineOwned.contains(dr.target()))
-                            problems.add(new DesignProblem(Rule.NOT_OWNED, ResolveDrawing.name(c) + " in " + name(theme) + " draws "
-                                    + dr.target().token() + ", which " + c.virtual().token() + " does not own"));
-                        else if (!seen.add(dr.target()))
-                            problems.add(new DesignProblem(Rule.DRAWN_TWICE, ResolveDrawing.name(c) + " in " + name(theme) + " draws "
-                                    + dr.target().token() + " twice"));
-                    }
-                    for (Target t : mineOwned) {
-                        if (!seen.contains(t)) {
-                            problems.add(new DesignProblem(Rule.UNDRAWN, ResolveDrawing.name(c) + " in " + name(theme) + " leaves "
-                                    + t.token() + " undrawn: draw it, say none, or take another's"));
+            for (DesignRead d : out) {
+                Class<?> designs = Schemes.INSTANCE.of(d.design()).orElse(null), wears = Schemes.INSTANCE.of(theme.style()).orElse(null);
+                if (designs == null || wears == null) continue;   // refused above, or by the theme
+                if (!Schemes.INSTANCE.sees(wears, designs)) {
+                    problems.add(new DesignProblem(Rule.SCHEME_UNSEEN, d.token() + " is " + Schemes.INSTANCE.name(designs) + "'s, which " + name(theme)
+                            + "'s scheme, " + Schemes.INSTANCE.name(wears) + ", does not see: a design is drawn only in a theme whose scheme sees its own"));
+                    continue;
+                }
+                    for (ConcreteComponent<?, ?, ?> c : d.concretes()) {
+                        if (!(c instanceof Drawn drawn)) continue;   // refused above
+                        List<Target> mineOwned = owned.getOrDefault(c.virtual(), List.of());
+                        List<Drawing<?>> drawings;
+                        try {
+                            drawings = drawn.drawings(theme);
+                        } catch (RuntimeException e) {
+                            problems.add(new DesignProblem(Rule.DRAWING_REFUSED, ResolveDrawing.name(c) + " in " + name(theme) + ": " + e.getMessage()));
                             continue;
                         }
-                        ResolveDrawing.Resolved drawing;
-                        if (mine.get(t) instanceof Drawing.Of<?> of) {
-                            try {
-                                drawing = ResolveDrawing.INSTANCE.taken(taxonomy, of, theme, ResolveDrawing.name(c), c);
-                            } catch (IllegalArgumentException e) {
-                                problems.add(new DesignProblem(Rule.OF_ASTRAY, "in " + name(theme) + ": " + e.getMessage()));
-                                continue;
-                            }
-                        } else {
-                            try {
-                                drawing = ResolveDrawing.INSTANCE.resolve(taxonomy, c, t, theme);
-                            } catch (IllegalArgumentException e) {
-                                problems.add(new DesignProblem(Rule.AS_ASTRAY, "in " + name(theme) + ": " + e.getMessage()));
-                                continue;
-                            }
+                        var seen = new HashSet<Target>();
+                        var mine = new HashMap<Target, Drawing<?>>();
+                        for (Drawing<?> dr : drawings) {
+                            mine.putIfAbsent(dr.target(), dr);
+                            if (!mineOwned.contains(dr.target()))
+                                problems.add(new DesignProblem(Rule.NOT_OWNED, ResolveDrawing.name(c) + " in " + name(theme) + " draws "
+                                        + dr.target().token() + ", which " + c.virtual().token() + " does not own"));
+                            else if (!seen.add(dr.target()))
+                                problems.add(new DesignProblem(Rule.DRAWN_TWICE, ResolveDrawing.name(c) + " in " + name(theme) + " draws "
+                                        + dr.target().token() + " twice"));
                         }
-                        if (drawing.effect() != null) takesOwned(c, drawing.effect(), mineOwned, theme, problems);
+                        for (Target t : mineOwned) {
+                            if (!seen.contains(t)) {
+                                problems.add(new DesignProblem(Rule.UNDRAWN, ResolveDrawing.name(c) + " in " + name(theme) + " leaves "
+                                        + t.token() + " undrawn: draw it, say none, or take another's"));
+                                continue;
+                            }
+                            ResolveDrawing.Resolved drawing;
+                            if (mine.get(t) instanceof Drawing.Of<?> of) {
+                                try {
+                                    drawing = ResolveDrawing.INSTANCE.taken(taxonomy, of, theme, ResolveDrawing.name(c), c);
+                                } catch (IllegalArgumentException e) {
+                                    problems.add(new DesignProblem(Rule.OF_ASTRAY, "in " + name(theme) + ": " + e.getMessage()));
+                                    continue;
+                                }
+                            } else {
+                                try {
+                                    drawing = ResolveDrawing.INSTANCE.resolve(taxonomy, c, t, theme);
+                                } catch (IllegalArgumentException e) {
+                                    problems.add(new DesignProblem(Rule.AS_ASTRAY, "in " + name(theme) + ": " + e.getMessage()));
+                                    continue;
+                                }
+                            }
+                            if (drawing.effect() != null) takesOwned(c, drawing.effect(), mineOwned, theme, problems);
+                        }
                     }
-                }
+            }
 
         if (!problems.isEmpty()) throw new RefusedDesigns(problems);
         return List.copyOf(out);

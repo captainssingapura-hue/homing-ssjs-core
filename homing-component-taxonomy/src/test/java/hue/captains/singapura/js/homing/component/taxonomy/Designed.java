@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.component.taxonomy;
 
+import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import java.util.List;
 
 /**
@@ -23,13 +24,13 @@ final class Designed {
     record Edge() implements VirtualComponent<Frame> {
         static final Edge INSTANCE = new Edge();
         @Override public Frame parent() { return Frame.INSTANCE; }
-        interface Concrete<D extends Design<Frame>> extends ConcreteComponent<Edge, Frame, D> {}
+        interface Concrete<D extends Design<?, Frame>> extends ConcreteComponent<Edge, Frame, D> {}
     }
 
     record Mark() implements VirtualComponent<Frame> {
         static final Mark INSTANCE = new Mark();
         @Override public Frame parent() { return Frame.INSTANCE; }
-        interface Concrete<D extends Design<Frame>> extends ConcreteComponent<Mark, Frame, D> {}
+        interface Concrete<D extends Design<?, Frame>> extends ConcreteComponent<Mark, Frame, D> {}
     }
 
     /** An ordinary component beside the branch, cast as any is. */
@@ -38,11 +39,11 @@ final class Designed {
         @Override public Region parent() { return Region.INSTANCE; }
     }
 
-    record Plain() implements Design<Frame> {
+    record Plain() implements Design<ColorScheme.Base, Frame> {
         static final Plain INSTANCE = new Plain();
     }
 
-    record Bold() implements Design<Frame> {
+    record Bold() implements Design<ColorScheme.Base, Frame> {
         static final Bold INSTANCE = new Bold();
     }
 

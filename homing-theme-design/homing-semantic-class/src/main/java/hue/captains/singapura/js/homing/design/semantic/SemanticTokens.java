@@ -68,10 +68,10 @@ public record SemanticTokens() implements StatelessFunctionalObject {
      * design's token and its leaf's are joined by three underscores, which no casting holds, so a design's class
      * is never the house's, whatever a design is named.
      */
-    public String concrete(Design<?> design, VirtualComponent<?> leaf) { return design.token() + "___" + leaf.token(); }
+    public String concrete(Design<?, ?> design, VirtualComponent<?> leaf) { return design.token() + "___" + leaf.token(); }
 
     /** The class a concrete leaf wears on a target, its states nested within: {@code minesweeper-classic___cursor-border__shape-outline}. */
-    public String drawn(Design<?> design, VirtualComponent<?> leaf, Target t) { return concrete(design, leaf) + "__" + target(t); }
+    public String drawn(Design<?, ?> design, VirtualComponent<?> leaf, Target t) { return concrete(design, leaf) + "__" + target(t); }
 
     /**
      * The class a mark wears to show a word of a lexicon: {@code word-close}. It holds no {@code __}, so it

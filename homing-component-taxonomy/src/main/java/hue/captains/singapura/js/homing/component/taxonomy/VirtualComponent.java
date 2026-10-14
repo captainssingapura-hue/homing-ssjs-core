@@ -17,7 +17,7 @@ package hue.captains.singapura.js.homing.component.taxonomy;
  *     public static final CursorBorder INSTANCE = new CursorBorder();
  *     @Override public GridFrame parent() { return GridFrame.INSTANCE; }
  *     …
- *     public interface Concrete<D extends Design<GridFrame>> extends ConcreteComponent<CursorBorder, GridFrame, D> {}
+ *     public interface Concrete<D extends Design<?, GridFrame>> extends ConcreteComponent<CursorBorder, GridFrame, D> {}
  * }
  * }</pre>
  *

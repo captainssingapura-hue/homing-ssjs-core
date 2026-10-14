@@ -19,7 +19,7 @@ import java.util.Objects;
  * @param concretes its concrete leaves, one for each leaf of the branch, in the branch's order
  * @param taxonomy  the taxonomy it was read over: whose components a drawing may be taken from
  */
-public record DesignRead(Design<?> design, ComponentBranch branch, List<ConcreteComponent<?, ?, ?>> concretes, Taxonomy taxonomy) implements ValueObject {
+public record DesignRead(Design<?, ?> design, ComponentBranch branch, List<ConcreteComponent<?, ?, ?>> concretes, Taxonomy taxonomy) implements ValueObject {
 
     public DesignRead {
         Objects.requireNonNull(design, "DesignRead.design");

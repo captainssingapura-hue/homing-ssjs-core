@@ -41,28 +41,28 @@ public record AnimatingTaxonomy() implements TaxonomySource {
         public static final Line INSTANCE = new Line();
         @Override public Overlay parent() { return Overlay.INSTANCE; }
         @Override public List<Target> owns() { return List.of(Target.Color.Stroke.INSTANCE, Target.Animation.Effect.INSTANCE); }
-        public interface Concrete<D extends Design<Overlay>> extends ConcreteComponent<Line, Overlay, D> {}
+        public interface Concrete<D extends Design<?, Overlay>> extends ConcreteComponent<Line, Overlay, D> {}
     }
 
     public record Area() implements VirtualComponent<Overlay>, Owns {
         public static final Area INSTANCE = new Area();
         @Override public Overlay parent() { return Overlay.INSTANCE; }
         @Override public List<Target> owns() { return List.of(Target.Color.Background.INSTANCE, Target.Animation.Effect.INSTANCE); }
-        public interface Concrete<D extends Design<Overlay>> extends ConcreteComponent<Area, Overlay, D> {}
+        public interface Concrete<D extends Design<?, Overlay>> extends ConcreteComponent<Area, Overlay, D> {}
     }
 
     public record Plate() implements VirtualComponent<Overlay>, Owns {
         public static final Plate INSTANCE = new Plate();
         @Override public Overlay parent() { return Overlay.INSTANCE; }
         @Override public List<Target> owns() { return List.of(Target.Color.Background.INSTANCE); }
-        public interface Concrete<D extends Design<Overlay>> extends ConcreteComponent<Plate, Overlay, D> {}
+        public interface Concrete<D extends Design<?, Overlay>> extends ConcreteComponent<Plate, Overlay, D> {}
     }
 
     public record Strip() implements VirtualComponent<Overlay>, Owns {
         public static final Strip INSTANCE = new Strip();
         @Override public Overlay parent() { return Overlay.INSTANCE; }
         @Override public List<Target> owns() { return List.of(Target.Shape.Background.INSTANCE, Target.Animation.Effect.INSTANCE); }
-        public interface Concrete<D extends Design<Overlay>> extends ConcreteComponent<Strip, Overlay, D> {}
+        public interface Concrete<D extends Design<?, Overlay>> extends ConcreteComponent<Strip, Overlay, D> {}
     }
 
     public record Pad() implements Component<Stage> {

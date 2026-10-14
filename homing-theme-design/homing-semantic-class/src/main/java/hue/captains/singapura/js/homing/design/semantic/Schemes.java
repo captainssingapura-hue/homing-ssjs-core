@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.design.semantic;
 
+import hue.captains.singapura.js.homing.component.taxonomy.Design;
 import hue.captains.singapura.js.homing.design.color.ColorNode;
 import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
@@ -8,7 +9,7 @@ import java.lang.reflect.Modifier;
 import java.util.Optional;
 
 /**
- * The schemes things are in, read off their declarations: a node's, a palette's, a style's. A scheme is an abstract
+ * The schemes things are in, read off their declarations: a node's, a palette's, a style's, a design's. A scheme is an abstract
  * class: {@link ColorScheme.Base}, one on top of another, or one from scratch that implements {@link ColorScheme}
  * alone - never the marker itself, nor a variable, which a declaration could otherwise slip in.
  */
@@ -24,6 +25,9 @@ record Schemes() implements StatelessFunctionalObject {
 
     /** The scheme a style requires. */
     Optional<Class<?>> of(DesignStyle<?> style) { return scheme(style.getClass(), DesignStyle.class); }
+
+    /** The scheme a design is in (D33). */
+    Optional<Class<?>> of(Design<?, ?> design) { return scheme(design.getClass(), Design.class); }
 
     /** The scheme below one: the scheme it is on top of, or none for the base and a scheme from scratch. */
     Optional<Class<?>> below(Class<?> scheme) {

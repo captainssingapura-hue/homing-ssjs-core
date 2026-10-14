@@ -38,14 +38,14 @@ public record DesigningTaxonomy() implements TaxonomySource {
         public static final Edge INSTANCE = new Edge();
         @Override public Frame parent() { return Frame.INSTANCE; }
         @Override public List<Target> owns() { return List.of(Target.Shape.Border.INSTANCE, Target.Color.Border.INSTANCE); }
-        public interface Concrete<D extends Design<Frame>> extends ConcreteComponent<Edge, Frame, D> {}
+        public interface Concrete<D extends Design<?, Frame>> extends ConcreteComponent<Edge, Frame, D> {}
     }
 
     public record Mark() implements VirtualComponent<Frame>, Owns {
         public static final Mark INSTANCE = new Mark();
         @Override public Frame parent() { return Frame.INSTANCE; }
         @Override public List<Target> owns() { return List.of(Target.Shape.Outline.INSTANCE, Target.Color.Outline.INSTANCE); }
-        public interface Concrete<D extends Design<Frame>> extends ConcreteComponent<Mark, Frame, D> {}
+        public interface Concrete<D extends Design<?, Frame>> extends ConcreteComponent<Mark, Frame, D> {}
     }
 
     public record Box() implements Component<Region> {

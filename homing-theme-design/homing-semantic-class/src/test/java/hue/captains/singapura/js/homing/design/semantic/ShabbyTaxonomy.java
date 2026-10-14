@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.design.semantic;
 
+import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import hue.captains.singapura.js.homing.component.taxonomy.ConcreteComponent;
 import hue.captains.singapura.js.homing.component.taxonomy.Design;
 import hue.captains.singapura.js.homing.component.taxonomy.DesignBranch;
@@ -44,7 +45,7 @@ public record ShabbyTaxonomy() implements TaxonomySource {
         @Override public List<Target> owns() { return List.of(Target.Sound.Cue.INSTANCE); }
     }
 
-    public record Scruffy() implements Design<Shabby> {
+    public record Scruffy() implements Design<ColorScheme.Base, Shabby> {
         public static final Scruffy INSTANCE = new Scruffy();
     }
 

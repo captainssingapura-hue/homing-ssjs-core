@@ -31,6 +31,10 @@ import hue.captains.singapura.js.homing.design.semantic.DesigningDesigns.PlainMa
 import hue.captains.singapura.js.homing.design.semantic.DesigningDesigns.PongEdge;
 import hue.captains.singapura.js.homing.design.semantic.DesigningDesigns.PongMark;
 import hue.captains.singapura.js.homing.design.semantic.DesigningDesigns.RawMark;
+import hue.captains.singapura.js.homing.design.semantic.DesigningDesigns.ShoutedEdge;
+import hue.captains.singapura.js.homing.design.semantic.DesigningDesigns.ShoutedMark;
+import hue.captains.singapura.js.homing.design.semantic.DesigningDesigns.UnschemedEdge;
+import hue.captains.singapura.js.homing.design.semantic.DesigningDesigns.UnschemedMark;
 import hue.captains.singapura.js.homing.design.semantic.DesigningDesigns.WrongEdge;
 import hue.captains.singapura.js.homing.design.semantic.DesigningDesigns.WrongMark;
 import hue.captains.singapura.js.homing.design.semantic.DesigningTaxonomy.Box;
@@ -264,5 +268,26 @@ class DesignsTest extends JsModuleTestBase {
         var out = new ArrayList<>(base);
         out.add(more);
         return out;
+    }
+    // ── the scheme a design is in (D33) ────────────────────────────────────
+
+    /** A theme of the loud scheme, on top of the base: shouting, in neon. */
+    private static final Dressed SHOUTING = new Dressed(ResolvingThemes.COLOURS, new ResolutionCasesTest.Shouting(), ResolvingColours.Neon.INSTANCE);
+
+    @Test
+    void aDesign_isInAScheme_andDrawnOnlyInAThemeWhoseSchemeSeesIt() {
+        var unseen = assertThrows(RefusedDesigns.class, () -> ReadDesigns.INSTANCE.read(TAXONOMY, THEMES, List.of(ShoutedEdge.INSTANCE, ShoutedMark.INSTANCE)));
+        assertEquals(List.of(Rule.SCHEME_UNSEEN, Rule.SCHEME_UNSEEN), unseen.problems().stream().map(DesignProblem::rule).toList(), unseen.getMessage());
+        assertTrue(unseen.getMessage().contains("shouted is Loud's, which ") && unseen.getMessage().contains("'s scheme, the base, does not see: "
+                + "a design is drawn only in a theme whose scheme sees its own"), unseen.getMessage());
+        var loud = ReadDesigns.INSTANCE.read(TAXONOMY, List.of(SHOUTING), List.of(ShoutedEdge.INSTANCE, ShoutedMark.INSTANCE)).get(0);
+        assertTrue(FlattenDesign.INSTANCE.flatten(loud, SHOUTING, "Shouted").css().contains(".shouted___edge__shape-border"), "drawn where its scheme is");
+        assertTrue(assertThrows(IllegalArgumentException.class, () -> FlattenDesign.INSTANCE.flatten(loud, SKETCH, "Shouted")).getMessage()
+                .contains("shouted is drawn only in a theme whose scheme sees its own"), "and flattened nowhere else");
+        assertEquals("plain", ReadDesigns.INSTANCE.read(TAXONOMY, List.of(SHOUTING), List.of(PlainEdge.INSTANCE, PlainMark.INSTANCE)).get(0).token(),
+                "the base's design in a loud theme, which sees the base");
+        var none = assertThrows(RefusedDesigns.class, () -> ReadDesigns.INSTANCE.read(TAXONOMY, THEMES, List.of(UnschemedEdge.INSTANCE, UnschemedMark.INSTANCE)));
+        assertEquals(List.of(Rule.NO_SCHEME), none.problems().stream().map(DesignProblem::rule).toList(), none.getMessage());
+        assertTrue(none.getMessage().contains("unschemed is in no scheme: its first type argument is an abstract class"), none.getMessage());
     }
 }

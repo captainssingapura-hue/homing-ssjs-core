@@ -32,6 +32,10 @@ public record FlattenDesign() implements StatelessFunctionalObject {
     public record Flattened(String css, int drawn, int copied, int delegated) implements ValueObject {}
 
     public Flattened flatten(DesignRead design, Dressed theme, String title) {
+        Class<?> designs = Schemes.INSTANCE.of(design.design()).orElse(null), wears = Schemes.INSTANCE.of(theme.style()).orElse(null);
+        if (designs == null || wears == null || !Schemes.INSTANCE.sees(wears, designs))
+            throw new IllegalArgumentException(design.token() + " is drawn only in a theme whose scheme sees its own, and "
+                    + theme.style().token() + "'s does not (D33)");
         var tokens = SemanticTokens.INSTANCE;
         var css = new StringBuilder();
         int drawn = 0, copied = 0, delegated = 0;

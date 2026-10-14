@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.design.semantic;
 
+import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import hue.captains.singapura.js.homing.component.taxonomy.Component;
 import hue.captains.singapura.js.homing.component.taxonomy.Design;
 import hue.captains.singapura.js.homing.design.State;
@@ -30,7 +31,7 @@ final class DesigningDesigns {
 
     // ── read ───────────────────────────────────────────────────────────────
 
-    record Plain() implements Design<Frame> { static final Plain INSTANCE = new Plain(); }
+    record Plain() implements Design<ColorScheme.Base, Frame> { static final Plain INSTANCE = new Plain(); }
 
     record PlainEdge() implements Edge.Concrete<Plain>, Drawn {
         static final PlainEdge INSTANCE = new PlainEdge();
@@ -48,7 +49,35 @@ final class DesigningDesigns {
         }
     }
 
-    record Bold() implements Design<Frame> { static final Bold INSTANCE = new Bold(); }
+    // ── the scheme a design is in (D33) ────────────────────────────────────
+
+    /** Plain's drawings, in the loud scheme: drawn only in a theme whose scheme sees the loud. */
+    record Shouted() implements Design<ResolvingColours.Loud, Frame> { static final Shouted INSTANCE = new Shouted(); }
+
+    record ShoutedEdge() implements Edge.Concrete<Shouted>, Drawn {
+        static final ShoutedEdge INSTANCE = new ShoutedEdge();
+        @Override public List<Drawing<?>> drawings(Dressed theme) { return PlainEdge.INSTANCE.drawings(theme); }
+    }
+
+    record ShoutedMark() implements Mark.Concrete<Shouted>, Drawn {
+        static final ShoutedMark INSTANCE = new ShoutedMark();
+        @Override public List<Drawing<?>> drawings(Dressed theme) { return PlainMark.INSTANCE.drawings(theme); }
+    }
+
+    /** Plain's drawings, in the marker, which is no scheme. */
+    record Unschemed() implements Design<ColorScheme, Frame> { static final Unschemed INSTANCE = new Unschemed(); }
+
+    record UnschemedEdge() implements Edge.Concrete<Unschemed>, Drawn {
+        static final UnschemedEdge INSTANCE = new UnschemedEdge();
+        @Override public List<Drawing<?>> drawings(Dressed theme) { return PlainEdge.INSTANCE.drawings(theme); }
+    }
+
+    record UnschemedMark() implements Mark.Concrete<Unschemed>, Drawn {
+        static final UnschemedMark INSTANCE = new UnschemedMark();
+        @Override public List<Drawing<?>> drawings(Dressed theme) { return PlainMark.INSTANCE.drawings(theme); }
+    }
+
+    record Bold() implements Design<ColorScheme.Base, Frame> { static final Bold INSTANCE = new Bold(); }
 
     record BoldEdge() implements Edge.Concrete<Bold>, Drawn {
         static final BoldEdge INSTANCE = new BoldEdge();
@@ -70,7 +99,7 @@ final class DesigningDesigns {
     // ── taken from the taxonomy ────────────────────────────────────────────
 
     /** Draws its edge as the theme answers the box: the box's border, whatever a style says of it. */
-    record Boxed() implements Design<Frame> { static final Boxed INSTANCE = new Boxed(); }
+    record Boxed() implements Design<ColorScheme.Base, Frame> { static final Boxed INSTANCE = new Boxed(); }
 
     record BoxedEdge() implements Edge.Concrete<Boxed>, Drawn {
         static final BoxedEdge INSTANCE = new BoxedEdge();
@@ -85,7 +114,7 @@ final class DesigningDesigns {
     }
 
     /** Takes its edge's border from the boxed edge, which takes it from the box. */
-    record Echo() implements Design<Frame> { static final Echo INSTANCE = new Echo(); }
+    record Echo() implements Design<ColorScheme.Base, Frame> { static final Echo INSTANCE = new Echo(); }
 
     record EchoEdge() implements Edge.Concrete<Echo>, Drawn {
         static final EchoEdge INSTANCE = new EchoEdge();
@@ -108,7 +137,7 @@ final class DesigningDesigns {
     }
 
     /** Takes its border from a virtual leaf, and its border's colour from a component the taxonomy has not. */
-    record Hollow() implements Design<Frame> { static final Hollow INSTANCE = new Hollow(); }
+    record Hollow() implements Design<ColorScheme.Base, Frame> { static final Hollow INSTANCE = new Hollow(); }
     record HollowEdge() implements Edge.Concrete<Hollow>, Drawn {
         @Override public List<Drawing<?>> drawings(Dressed theme) {
             return List.of(new Drawing.Of<>(BORDER, Mark.INSTANCE), new Drawing.Of<>(BORDER_COLOUR, Stray.INSTANCE));
@@ -119,7 +148,7 @@ final class DesigningDesigns {
     }
 
     /** Draws the edge only. */
-    record Half() implements Design<Frame> { static final Half INSTANCE = new Half(); }
+    record Half() implements Design<ColorScheme.Base, Frame> { static final Half INSTANCE = new Half(); }
     record HalfEdge() implements Edge.Concrete<Half>, Drawn {
         @Override public List<Drawing<?>> drawings(Dressed theme) { return List.of(new Drawing.None<>(BORDER), new Drawing.None<>(BORDER_COLOUR)); }
     }
@@ -130,7 +159,7 @@ final class DesigningDesigns {
     }
 
     /** A mark that says nothing of how it is drawn. */
-    record Mute() implements Design<Frame> { static final Mute INSTANCE = new Mute(); }
+    record Mute() implements Design<ColorScheme.Base, Frame> { static final Mute INSTANCE = new Mute(); }
     record MuteEdge() implements Edge.Concrete<Mute>, Drawn {
         @Override public List<Drawing<?>> drawings(Dressed theme) { return List.of(new Drawing.None<>(BORDER), new Drawing.None<>(BORDER_COLOUR)); }
     }
@@ -141,7 +170,7 @@ final class DesigningDesigns {
     record RawMark() implements Mark.Concrete {}
 
     /** Draws a ring its edge does not own, its border twice, and leaves its border's colour undrawn. */
-    record Wrong() implements Design<Frame> { static final Wrong INSTANCE = new Wrong(); }
+    record Wrong() implements Design<ColorScheme.Base, Frame> { static final Wrong INSTANCE = new Wrong(); }
     record WrongEdge() implements Edge.Concrete<Wrong>, Drawn {
         @Override public List<Drawing<?>> drawings(Dressed theme) {
             return List.of(new Drawing.None<>(BORDER), new Drawing.None<>(BORDER), new Drawing.None<>(RING));
@@ -152,7 +181,7 @@ final class DesigningDesigns {
     }
 
     /** Takes its border's colour from a mark. */
-    record Lost() implements Design<Frame> { static final Lost INSTANCE = new Lost(); }
+    record Lost() implements Design<ColorScheme.Base, Frame> { static final Lost INSTANCE = new Lost(); }
     record LostEdge() implements Edge.Concrete<Lost>, Drawn {
         @Override public List<Drawing<?>> drawings(Dressed theme) {
             return List.of(new Drawing.None<>(BORDER), new Drawing.As<>(BORDER_COLOUR, PlainMark.INSTANCE));
@@ -163,8 +192,8 @@ final class DesigningDesigns {
     }
 
     /** Two designs whose edges each take their border from the other's. */
-    record Ping() implements Design<Frame> { static final Ping INSTANCE = new Ping(); }
-    record Pong() implements Design<Frame> { static final Pong INSTANCE = new Pong(); }
+    record Ping() implements Design<ColorScheme.Base, Frame> { static final Ping INSTANCE = new Ping(); }
+    record Pong() implements Design<ColorScheme.Base, Frame> { static final Pong INSTANCE = new Pong(); }
     record PingEdge() implements Edge.Concrete<Ping>, Drawn {
         static final PingEdge INSTANCE = new PingEdge();
         @Override public List<Drawing<?>> drawings(Dressed theme) { return List.of(new Drawing.As<>(BORDER, PongEdge.INSTANCE), new Drawing.None<>(BORDER_COLOUR)); }
@@ -181,7 +210,7 @@ final class DesigningDesigns {
     }
 
     /** Draws its border with a property no border owns: refused as the drawing is made. */
-    record Broken() implements Design<Frame> { static final Broken INSTANCE = new Broken(); }
+    record Broken() implements Design<ColorScheme.Base, Frame> { static final Broken INSTANCE = new Broken(); }
     record BrokenEdge() implements Edge.Concrete<Broken>, Drawn {
         @Override public List<Drawing<?>> drawings(Dressed theme) {
             return List.of(new Drawing.Own<>(BORDER, "color: red;"), new Drawing.None<>(BORDER_COLOUR));
@@ -194,7 +223,7 @@ final class DesigningDesigns {
     /** A second design named plain, from elsewhere. */
     static final class Elsewhere {
         private Elsewhere() {}
-        record Plain() implements Design<Frame> { static final Plain INSTANCE = new Plain(); }
+        record Plain() implements Design<ColorScheme.Base, Frame> { static final Plain INSTANCE = new Plain(); }
         record OtherEdge() implements Edge.Concrete<Plain>, Drawn {
             @Override public List<Drawing<?>> drawings(Dressed theme) { return List.of(new Drawing.None<>(BORDER), new Drawing.None<>(BORDER_COLOUR)); }
         }

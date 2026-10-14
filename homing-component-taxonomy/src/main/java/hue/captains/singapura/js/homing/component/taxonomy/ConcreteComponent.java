@@ -24,7 +24,7 @@ import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
  * @param <N>  the design branch the leaf and the design share
  * @param <D>  the design it belongs to
  */
-public interface ConcreteComponent<VC extends VirtualComponent<N>, N extends ComponentBranch & DesignBranch, D extends Design<N>>
+public interface ConcreteComponent<VC extends VirtualComponent<N>, N extends ComponentBranch & DesignBranch, D extends Design<?, N>>
         extends StatelessFunctionalObject {
 
     /** The virtual leaf it draws: the first type argument's {@code INSTANCE}. */

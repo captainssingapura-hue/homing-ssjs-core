@@ -18,6 +18,10 @@ public record DesignProblem(Rule rule, String says) implements ValueObject {
         NOT_DRAWN,
         /** Two designs with one name. */
         NAME_TWICE,
+        /** A design in no scheme: its first type argument the marker, a variable, or no abstract scheme (D33). */
+        NO_SCHEME,
+        /** A design given a theme whose scheme does not see the design's: drawn only where its colours are (D33). */
+        SCHEME_UNSEEN,
         /** A design with two concrete leaves of one leaf. */
         LEAF_TWICE,
         /** A design with no concrete leaf of a leaf of its branch: it is complete over its branch, or refused. */
