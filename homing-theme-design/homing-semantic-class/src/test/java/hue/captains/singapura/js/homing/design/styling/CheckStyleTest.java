@@ -120,6 +120,9 @@ class CheckStyleTest {
         refused(".styled-tab { &:disabled { color: var(--fp-raised); } }", "disabled, checked and invalid are application states, worn as classes (D21)");
         refused(".styled-tab { &:focus { color: var(--fp-raised); } }", "&:focus draws no state tab lists");
         refused(".styled-tab { &:hover {} &:hover {} }", "&:hover is drawn twice");
+        refused(".styled-tab { &.styled-tab--selected:hover { color: var(--fp-copy); } }",
+                "draws .styled-tab--selected with more: each state is drawn alone, and where two hold the leaf's precedence decides (D22)");
+        refused(".styled-tab { &::before { color: var(--fp-copy); } }", "&::before draws a pseudo-element: none is in a leaf's file, for now");
         refused(".styled-tab { &.styled-tab--selected { &:hover { color: var(--fp-copy); } } }", "a state's rule holds declarations alone");
     }
 

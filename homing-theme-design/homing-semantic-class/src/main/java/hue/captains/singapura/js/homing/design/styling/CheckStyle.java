@@ -45,7 +45,8 @@ import java.util.regex.Pattern;
  * own element - {@code &.styled-tab--selected} for an application state's value, {@code &:hover} for a pseudo state -
  * each once and holding declarations alone (D12). Every one of those selectors weighs the same, so the order the file
  * draws them in is what decides between two states at once: the leaf's precedence, the least important first, which a
- * soft check reports when it is not (D22, D23). No {@code !important}, and no at-rule, for now.</p>
+ * soft check reports when it is not (D22, D23). No two states combined in one selector, no {@code !important}, and -
+ * for now - no pseudo-element and no at-rule.</p>
  *
  * <p>Its colours, every one a variable:</p>
  * <ul>
@@ -238,6 +239,16 @@ public record CheckStyle() implements StatelessFunctionalObject {
                         }
                         String by = selector.substring(1);
                         Integer rank = byDrawn.get(by);
+                        String combined = byDrawn.keySet().stream().filter(s -> by.startsWith(s) && by.length() > s.length()).findFirst().orElse(null);
+                        if (by.startsWith("::")) {
+                            at(r, r.selector() + " draws a pseudo-element: none is in a leaf's file, for now");
+                            continue;
+                        }
+                        if (rank == null && combined != null) {
+                            at(r, r.selector() + " draws " + combined + " with more: each state is drawn alone, and where two hold the "
+                                    + "leaf's precedence decides (D22)");
+                            continue;
+                        }
                         if (rank == null) {
                             at(r, r.selector() + " draws no state " + leaf.token() + " lists"
                                     + (by.startsWith(":") ? ": a pseudo-class is drawn only for a pseudo state the leaf lists, and disabled, checked and invalid are application states, worn as classes (D21)"
