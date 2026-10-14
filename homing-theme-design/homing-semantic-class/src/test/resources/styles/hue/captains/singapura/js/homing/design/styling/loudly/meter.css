@@ -1,0 +1,5 @@
+/* A loud meter: the glare its scheme adds. */
+.styled-meter {
+    color: var(--fp-glare);
+    background-color: var(--fp-page);
+}

@@ -1,0 +1,12 @@
+/* The plain tab: copy on the page, raised under the pointer, danger's mark when picked. */
+.styled-tab {
+    color: var(--fp-copy);
+    background-color: var(--fp-page);
+    border-bottom: 2px solid transparent;
+
+    &:hover { background-color: var(--fp-raised); }
+    &.styled-tab--disabled { color: var(--fp-raised); }
+    &.styled-tab--selected { border-bottom-color: var(--fp-danger); }
+    &.styled-tab--candidate { outline: 1px dashed var(--fp-safe); }
+    &.styled-tab--held { outline: 2px solid var(--fp-safe); }
+}

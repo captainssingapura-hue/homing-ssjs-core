@@ -1,0 +1,12 @@
+/* The plain meter, on the colour axis: its ground along the risk scale, its edge the warning, its mark the alarm. */
+.styled-meter {
+    --fixed-clear: transparent;
+    --fixed-alarm: #c62828;
+    --it-warning: color-mix(in oklab, var(--fixed-clear) 50%, var(--fp-danger));
+    --along-risk: color-mix(in oklab, var(--fp-danger) calc(clamp(0, var(--extent), 1) * 100%),
+                            color-mix(in oklab, var(--fixed-clear) calc(clamp(0, var(--extent) + 1, 1) * 100%), var(--fp-safe)));
+
+    background-color: var(--along-risk);
+    border: 1px solid var(--it-warning);
+    outline-color: var(--fixed-alarm);
+}

@@ -48,6 +48,15 @@ public final class ColorTree {
     /** A node's parent; none for a branch at the top. */
     public Optional<ColorNode<?, ?, ?>> parent(ColorNode<?, ?, ?> node) { return Optional.ofNullable(of(node).parent()); }
 
+    /** The scheme a style requires; none when its type argument is no scheme. */
+    public Optional<Class<?>> scheme(DesignStyle<?> style) { return Schemes.INSTANCE.of(style); }
+
+    /** Whether a scheme sees a node: one of its own scheme's, or of a scheme below it. */
+    public boolean sees(Class<?> scheme, ColorNode<?, ?, ?> node) { return Schemes.INSTANCE.sees(scheme, of(node).scheme()); }
+
+    /** A scheme as messages say it: {@code the base}, or its name. */
+    public String schemeName(Class<?> scheme) { return Schemes.INSTANCE.name(scheme); }
+
     /** The extension that grafted a node; none for one of the owner's own. */
     public Optional<ColorExtension> extension(ColorNode<?, ?, ?> node) { return Optional.ofNullable(of(node).extension()); }
 
