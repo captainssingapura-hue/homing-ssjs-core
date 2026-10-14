@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.design.semantic;
 import hue.captains.singapura.js.homing.design.color.ColorNode;
 import hue.captains.singapura.js.homing.design.color.ConcreteColor;
 import hue.captains.singapura.js.homing.design.color.Palettable;
+import hue.captains.singapura.js.homing.tree.NodeName;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,17 +53,50 @@ public final class ColorTree {
 
     /** The concrete colour a palettable colour is under a palette, through the two layers; none when nothing answers it. */
     public Optional<ConcreteColor> resolve(ColorPalette<?> selected, Palettable<?, ?> color) {
+        return resolution(selected, color).map(Resolved::color);
+    }
+
+    /**
+     * A palettable colour resolved, and who gave it: the selected palette itself, the extension's sub-palette for it, a
+     * palette below it, or the extension's last word.
+     *
+     * @param color the concrete colour
+     * @param from  who gave it, as a sheet says it - {@code mine-colours for paper}, {@code paper, below neon},
+     *              {@code mine-colours' last word} - empty when the selected palette gave it itself
+     */
+    public record Resolved(ConcreteColor color, String from) {}
+
+    /** A palettable colour resolved through the two layers, saying who gave it; none when nothing answers it. */
+    public Optional<Resolved> resolution(ColorPalette<?> selected, Palettable<?, ?> color) {
         ColorExtension extension = of(color).extension();
         Optional<ConcreteColor> found = selected.color(color);
-        if (found.isEmpty() && extension != null) found = extension.subPalette(selected).flatMap(s -> s.color(color));
+        if (found.isPresent()) return Optional.of(new Resolved(found.get(), ""));
+        String grafted = extension == null ? null : NodeName.ofType(extension.getClass(), "").value();
+        if (extension != null) {
+            found = extension.subPalette(selected).flatMap(s -> s.color(color));
+            if (found.isPresent()) return Optional.of(new Resolved(found.get(), grafted + " for " + selected.token()));
+        }
         var passed = new ArrayList<ColorPalette<?>>(List.of(selected));
-        for (Optional<? extends ColorPalette<?>> p = selected.below(); found.isEmpty() && p.isPresent(); p = p.get().below()) {
+        for (Optional<? extends ColorPalette<?>> p = selected.below(); p.isPresent(); p = p.get().below()) {
             if (passed.contains(p.get())) throw new IllegalArgumentException(selected.token() + "'s chain comes back to " + p.get().token());
             passed.add(p.get());
             found = p.get().color(color);
+            if (found.isPresent()) return Optional.of(new Resolved(found.get(), p.get().token() + ", below " + selected.token()));
         }
-        if (found.isEmpty() && extension != null) found = extension.baseSubPalette().flatMap(s -> s.color(color));
-        return found;
+        if (extension != null) {
+            found = extension.baseSubPalette().flatMap(s -> s.color(color));
+            if (found.isPresent()) return Optional.of(new Resolved(found.get(), grafted + (grafted.endsWith("s") ? "'" : "'s") + " last word"));
+        }
+        return Optional.empty();
+    }
+
+    /** The palettable colours a palette's scheme sees - its own scheme's and every scheme's below it - in the tree's order. */
+    public List<Palettable<?, ?>> palettables(ColorPalette<?> palette) {
+        Class<?> scheme = Schemes.INSTANCE.of(palette).orElseThrow(() -> new IllegalArgumentException(palette.token() + " implements no scheme"));
+        var out = new ArrayList<Palettable<?, ?>>();
+        for (Read r : read.values())
+            if (r.node() instanceof Palettable<?, ?> p && Schemes.INSTANCE.sees(scheme, r.scheme())) out.add(p);
+        return List.copyOf(out);
     }
 
     /**
