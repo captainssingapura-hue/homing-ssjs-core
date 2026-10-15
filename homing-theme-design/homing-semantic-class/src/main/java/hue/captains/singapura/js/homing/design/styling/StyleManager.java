@@ -74,7 +74,7 @@ public record StyleManager(Taxonomy taxonomy, ColorTree tree, List<StyleRegistra
                 for (StyleDeclaration.Provided<?, ?> p : jar.provided()) {
                     if (p.style().getClass() != style.getClass()) continue;
                     for (CastingStyle<?, ?, ?, ?> i : p.castings())
-                        castingOf(i).ifPresent(c -> out.computeIfAbsent(c, k -> new ArrayList<>()).add(i));
+                        casting(i).ifPresent(c -> out.computeIfAbsent(c, k -> new ArrayList<>()).add(i));
                 }
         }
         return out;
@@ -142,8 +142,8 @@ public record StyleManager(Taxonomy taxonomy, ColorTree tree, List<StyleRegistra
         return out;
     }
 
-    /** The casting an implementation's types name, if the taxonomy can make it. */
-    private static Optional<Casting> castingOf(CastingStyle<?, ?, ?, ?> implementation) {
+    /** The casting an implementation's types name - its component's, in its role - if the taxonomy can make it. */
+    public static Optional<Casting> casting(CastingStyle<?, ?, ?, ?> implementation) {
         List<Class<?>> args = TypeArguments.INSTANCE.of(implementation.getClass(), CastingStyle.class);
         if (args.size() != 4 || args.contains(null)) return Optional.empty();
         return CheckDeclaration.casting(args.get(2), args.get(3));
