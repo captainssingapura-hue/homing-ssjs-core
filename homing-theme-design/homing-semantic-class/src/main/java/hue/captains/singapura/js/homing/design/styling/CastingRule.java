@@ -14,6 +14,8 @@ import hue.captains.singapura.js.homing.design.color.Palettable;
 import hue.captains.singapura.js.homing.design.semantic.ColorTree;
 import hue.captains.singapura.js.homing.design.semantic.DesignStyle;
 
+import hue.captains.singapura.tao.ontology.ValueObject;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,11 +31,65 @@ import java.util.regex.Pattern;
 /**
  * The check of one casting's rule (RFC 0067, appendices Two Classes per Leaf and The Style Jars): its declarations, each state
  * it draws in the casting's precedence, each pseudo-element and reader's setting allowed by name (D29), its keyframes, and
- * every colour held to the tree and the style's scheme - what it found as it went. Run over a family file's rule by
- * {@link CheckStyle}, and over one implementation's CSS, its marks filled in, by {@link CheckDeclaration}.
+ * every colour held to the tree and the style's scheme - what it found as it went. Run over one implementation's CSS,
+ * its marks filled in, by {@link CheckDeclaration}.
  */
 final class CastingRule {
 
+    /** The pseudo-elements a casting's rule may draw, each by name (D29): parts of its own element the browser makes. */
+    static final List<String> PSEUDO_ELEMENTS = List.of("::before", "::after", "::placeholder", "::marker", "::selection",
+            "::backdrop", "::file-selector-button", "::picker(select)", "::picker-icon", "::checkmark",
+            "::-webkit-slider-thumb", "::-webkit-slider-runnable-track", "::-moz-range-thumb", "::-moz-range-track",
+            "::-moz-range-progress");
+
+    /** The reader's settings a casting's rule may answer by an {@code @media} nested in it (D29). */
+    static final List<String> READER_SETTINGS = List.of("(prefers-reduced-motion: reduce)", "(prefers-reduced-transparency: reduce)",
+            "(prefers-contrast: more)", "(prefers-contrast: less)", "(forced-colors: active)");
+
+    static final Pattern KEYFRAME = Pattern.compile("(from|to|\\d+(\\.\\d+)?%)(\\s*,\\s*(from|to|\\d+(\\.\\d+)?%))*");
+
+    /**
+     * What a check found.
+     *
+     * @param problems what refuses the style, each naming its file and line
+     * @param reports  what the soft check says and does not refuse: a state drawn out of its leaf's precedence (D23)
+     */
+    public record Checked(List<String> problems, List<String> reports) implements ValueObject {
+        public Checked { problems = List.copyOf(problems); reports = List.copyOf(reports); }
+
+        /** Whether nothing refuses it. */
+        public boolean passes() { return problems.isEmpty(); }
+    }
+
+    /** Spaces gathered to one, and none beside a bracket or a comma; lower case. */
+    static String squeeze(String s) {
+        return s.trim().replaceAll("\\s+", " ").replaceAll(" ?([(),]) ?", "$1").toLowerCase(Locale.ROOT);
+    }
+
+    static final Set<String> NAMED = Set.of(
+            "aliceblue", "antiquewhite", "aqua", "aquamarine", "azure", "beige", "bisque", "black", "blanchedalmond", "blue",
+            "blueviolet", "brown", "burlywood", "cadetblue", "chartreuse", "chocolate", "coral", "cornflowerblue", "cornsilk",
+            "crimson", "cyan", "darkblue", "darkcyan", "darkgoldenrod", "darkgray", "darkgreen", "darkgrey", "darkkhaki",
+            "darkmagenta", "darkolivegreen", "darkorange", "darkorchid", "darkred", "darksalmon", "darkseagreen",
+            "darkslateblue", "darkslategray", "darkslategrey", "darkturquoise", "darkviolet", "deeppink", "deepskyblue",
+            "dimgray", "dimgrey", "dodgerblue", "firebrick", "floralwhite", "forestgreen", "fuchsia", "gainsboro",
+            "ghostwhite", "gold", "goldenrod", "gray", "green", "greenyellow", "grey", "honeydew", "hotpink", "indianred",
+            "indigo", "ivory", "khaki", "lavender", "lavenderblush", "lawngreen", "lemonchiffon", "lightblue", "lightcoral",
+            "lightcyan", "lightgoldenrodyellow", "lightgray", "lightgreen", "lightgrey", "lightpink", "lightsalmon",
+            "lightseagreen", "lightskyblue", "lightslategray", "lightslategrey", "lightsteelblue", "lightyellow", "lime",
+            "limegreen", "linen", "magenta", "maroon", "mediumaquamarine", "mediumblue", "mediumorchid", "mediumpurple",
+            "mediumseagreen", "mediumslateblue", "mediumspringgreen", "mediumturquoise", "mediumvioletred", "midnightblue",
+            "mintcream", "mistyrose", "moccasin", "navajowhite", "navy", "oldlace", "olive", "olivedrab", "orange",
+            "orangered", "orchid", "palegoldenrod", "palegreen", "paleturquoise", "palevioletred", "papayawhip", "peachpuff",
+            "peru", "pink", "plum", "powderblue", "purple", "rebeccapurple", "red", "rosybrown", "royalblue", "saddlebrown",
+            "salmon", "sandybrown", "seagreen", "seashell", "sienna", "silver", "skyblue", "slateblue", "slategray",
+            "slategrey", "snow", "springgreen", "steelblue", "tan", "teal", "thistle", "tomato", "turquoise", "violet",
+            "wheat", "white", "whitesmoke", "yellow", "yellowgreen");
+
+    static final Set<String> SYSTEM = Set.of(
+            "accentcolor", "accentcolortext", "activetext", "buttonborder", "buttonface", "buttontext", "canvas", "canvastext",
+            "field", "fieldtext", "graytext", "highlight", "highlighttext", "linktext", "mark", "marktext", "selecteditem",
+            "selecteditemtext", "visitedtext");
     private static final Pattern VAR = Pattern.compile("var\\(\\s*(--[A-Za-z0-9_-]+)\\s*(,)?");
     private static final Pattern HEX = Pattern.compile("(?<![\\w-])#[0-9a-fA-F]{3,8}(?![\\w-])");
     private static final Pattern FUNCTION = Pattern.compile(
@@ -80,7 +136,7 @@ final class CastingRule {
         if (scheme == null) return;
         for (ReadCss.Item item : k.body() == null ? List.<ReadCss.Item>of() : k.body()) {
             switch (item) {
-                case ReadCss.Rule r when CheckStyle.KEYFRAME.matcher(CheckStyle.squeeze(r.selector())).matches() -> {
+                case ReadCss.Rule r when KEYFRAME.matcher(squeeze(r.selector())).matches() -> {
                     for (ReadCss.Item inner : r.body()) {
                         switch (inner) {
                             case ReadCss.Declaration d -> declaration(d, "a keyframe");
@@ -95,12 +151,12 @@ final class CastingRule {
     }
 
     /** What it found, its colours of its own each assigned where they are used. */
-    CheckStyle.Checked finish() {
+    Checked finish() {
         for (Map.Entry<String, Integer> u : used.entrySet())
             if (!assigned.contains(u.getKey()))
                 problems.add(name + ":" + u.getValue() + ": var(" + u.getKey() + ") is named, and not assigned in the leaf's own rule: "
                         + "a colour of its own is assigned where it is used (D13, D14)");
-        return new CheckStyle.Checked(problems, reports);
+        return new Checked(problems, reports);
     }
 
     /** The tree's colours its declarations use, each by its token, and where first: none named only in a colour of its own's value (D32). */
@@ -122,20 +178,20 @@ final class CastingRule {
             switch (item) {
                 case ReadCss.Declaration d -> declaration(d, media == null ? null : "an @media of it");
                 case ReadCss.AtRule a -> {
-                    String prelude = CheckStyle.squeeze(a.prelude());
+                    String prelude = squeeze(a.prelude());
                     if (!prelude.matches("media\\b.*")) {
                         at(a, "@" + a.prelude() + ": a casting's rule holds no at-rule but an @media for a reader's setting (D29)");
                         continue;
                     }
                     String setting = prelude.substring("media".length()).replace(" ", "");
-                    String allowed = CheckStyle.READER_SETTINGS.stream().filter(s -> s.replace(" ", "").equals(setting)).findFirst().orElse(null);
+                    String allowed = READER_SETTINGS.stream().filter(s -> s.replace(" ", "").equals(setting)).findFirst().orElse(null);
                     if (media != null) at(a, "@" + a.prelude() + " inside @media " + media + ": a reader's setting is answered in the casting's rule");
-                    else if (allowed == null) at(a, "@" + a.prelude() + " is no reader's setting the check allows: " + String.join(", ", CheckStyle.READER_SETTINGS) + " (D29)");
+                    else if (allowed == null) at(a, "@" + a.prelude() + " is no reader's setting the check allows: " + String.join(", ", READER_SETTINGS) + " (D29)");
                     else if (!answered.add(allowed)) at(a, "@media " + allowed + " is answered twice");
                     else body(a.body() == null ? List.of() : a.body(), listing, allowed);
                 }
                 case ReadCss.Rule r -> {
-                    String selector = CheckStyle.squeeze(r.selector());
+                    String selector = squeeze(r.selector());
                     if (!selector.startsWith("&")) {
                         at(r, r.selector() + " inside " + listing.styled() + " is no state of it: a state is drawn on the leaf's own element, "
                                 + "&.<state class> or &:<pseudo-class>");
@@ -145,9 +201,9 @@ final class CastingRule {
                     Integer rank = byDrawn.get(by);
                     String combined = byDrawn.keySet().stream().filter(s -> by.startsWith(s) && by.length() > s.length()).findFirst().orElse(null);
                     if (by.startsWith("::")) {
-                        if (!CheckStyle.PSEUDO_ELEMENTS.contains(by))
+                        if (!PSEUDO_ELEMENTS.contains(by))
                             at(r, r.selector() + " draws " + by + ", a pseudo-element the check does not allow by name: "
-                                    + String.join(", ", CheckStyle.PSEUDO_ELEMENTS) + " (D29)");
+                                    + String.join(", ", PSEUDO_ELEMENTS) + " (D29)");
                         else if (!drawn.add(by)) at(r, r.selector() + " is drawn twice");
                         else for (ReadCss.Item inner : r.body()) {
                             switch (inner) {
@@ -237,7 +293,7 @@ final class CastingRule {
         }
         if (kind.equals("--along-") && !taxonomy.extents(leaf.cast()).contains(ExtentAxis.COLOUR))
             at(d, property + " moves a colour by the element's degree, and " + leaf.token() + " has no colour axis: only a leaf with it may (D14)");
-        if (!CheckStyle.squeeze(d.value()).equals(CheckStyle.squeeze(expected)))
+        if (!squeeze(d.value()).equals(squeeze(expected)))
             at(d, property + " is " + expected + " by the tree, not " + d.value());
     }
 
@@ -281,8 +337,8 @@ final class CastingRule {
                     : m.group() + " writes a literal colour" + why);
         for (Matcher m = WORD.matcher(value); m.find(); ) {
             String word = m.group().toLowerCase(Locale.ROOT);
-            if (CheckStyle.NAMED.contains(word)) at(d, m.group() + " is a named colour" + why);
-            else if (CheckStyle.SYSTEM.contains(word)) at(d, m.group() + " is a system colour" + why);
+            if (NAMED.contains(word)) at(d, m.group() + " is a named colour" + why);
+            else if (SYSTEM.contains(word)) at(d, m.group() + " is a system colour" + why);
         }
     }
 

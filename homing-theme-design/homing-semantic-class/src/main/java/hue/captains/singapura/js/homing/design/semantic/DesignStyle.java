@@ -1,6 +1,5 @@
 package hue.captains.singapura.js.homing.design.semantic;
 
-import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import hue.captains.singapura.js.homing.tree.NodeName;
 
@@ -12,7 +11,9 @@ import java.util.List;
  * thing uses, in semantic colours its scheme can see ({@link #colorings()}), and never what a colour is: no answer can
  * name a value. A style written over another says so by type, with {@link Derives}; one that derives from nothing
  * answers every root, colour's included, so that every class resolves. A style also writes the words of a lexicon -
- * the glyph it draws for each ({@link Writing}) - the words its base writes its own unless it writes them otherwise.
+ * the glyph it draws for each ({@link Writing}) - the words its base writes its own unless it writes them otherwise. How
+ * it draws each casting is no part of it: each is a class of its own, in the jar that implements it (appendix The Style
+ * Jars).
  *
  * @param <S> the colour scheme it requires
  */
@@ -36,22 +37,6 @@ public interface DesignStyle<S extends ColorScheme> {
     /** Which colour each class it answers itself uses; none by default, each as its base colours it. */
     default List<Coloring<S, ?>> colorings() { return List.of(); }
 
-    /**
-     * The colours each component it draws in its own files imports (RFC 0067, appendix Two Classes per Leaf, D32): every
-     * colour of the tree the component's rules use, in a scheme this style's sees - by the compiler - and none it does
-     * not; the check holds the files to them. A component it draws with no colour of the tree is listed nowhere; none by
-     * default. A module's files import by the module's own ({@link ColorImportsExtension}).
-     */
-    default List<ColorImports<S>> colorImports() { return List.of(); }
-
     /** The words this style writes itself; none by default, each written as its base writes it. */
     default List<Writing> writings() { return List.of(); }
-
-    /**
-     * The style's design for a casting - a component on its own or in a role, each a leaf for its class (RFC 0067, appendix
-     * Two Classes per Leaf, D25): its own content, or absence, and the
-     * base layer's content is used. Absence by default, the common case; the base layer - a style that derives from
-     * nothing - answers content for every leaf, and the check refuses it any absence (D26).
-     */
-    default StylingRes style(Casting casting) { return StylingRes.Absence.INSTANCE; }
 }

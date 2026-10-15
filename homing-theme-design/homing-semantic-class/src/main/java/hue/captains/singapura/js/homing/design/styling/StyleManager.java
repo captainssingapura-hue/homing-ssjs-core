@@ -6,6 +6,7 @@ import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.design.Extent;
 import hue.captains.singapura.js.homing.design.Growth;
 import hue.captains.singapura.js.homing.design.semantic.ColorTree;
+import hue.captains.singapura.js.homing.design.semantic.Derives;
 import hue.captains.singapura.js.homing.design.semantic.DesignStyle;
 import hue.captains.singapura.js.homing.design.semantic.TypeArguments;
 import hue.captains.singapura.js.homing.design.styles.CastingStyle;
@@ -15,6 +16,7 @@ import hue.captains.singapura.js.homing.tree.NodeName;
 import hue.captains.singapura.tao.ontology.ValueObject;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -95,7 +97,7 @@ public record StyleManager(Taxonomy taxonomy, ColorTree tree, List<StyleRegistra
 
     /** How a style draws a casting: its own implementation, else its base layer's; a delegation followed to CSS. */
     public Resolved resolve(DesignStyle<?> style, Casting casting) {
-        DesignStyle<?> base = StyleSheet.INSTANCE.baseLayer(style).orElseThrow(() -> new IllegalArgumentException(style.token() + " derives, in the end, from itself"));
+        DesignStyle<?> base = baseLayer(style).orElseThrow(() -> new IllegalArgumentException(style.token() + " derives, in the end, from itself"));
         Optional<CastingStyle<?, ?, ?, ?>> own = implementation(style, casting);
         CastingStyle<?, ?, ?, ?> answering = own.or(() -> implementation(base, casting)).orElseThrow(() -> new IllegalArgumentException(
                 casting.token() + " has no implementation in " + style.token() + " nor its base layer, " + base.token()));
@@ -151,5 +153,16 @@ public record StyleManager(Taxonomy taxonomy, ColorTree tree, List<StyleRegistra
     private static String styleOf(CastingStyle<?, ?, ?, ?> implementation) {
         Class<?> style = TypeArguments.INSTANCE.at(implementation.getClass(), CastingStyle.class, 1);
         return style == null ? "?" : NodeName.ofType(style, "").value();
+    }
+
+    /** The base layer a style's absence lands on: the style it derives from, and so up, to one that derives from nothing. */
+    public static Optional<DesignStyle<?>> baseLayer(DesignStyle<?> style) {
+        var passed = new HashSet<Class<?>>();
+        DesignStyle<?> at = style;
+        while (at instanceof Derives<?, ?> d) {
+            if (!passed.add(at.getClass())) return Optional.empty();
+            at = d.base();
+        }
+        return Optional.of(at);
     }
 }

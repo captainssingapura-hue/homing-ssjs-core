@@ -76,7 +76,7 @@ public interface StyleRule extends StatelessFunctionalObject {
             var problems = new ArrayList<String>();
             var bases = new ArrayList<DesignStyle<?>>();
             for (StyleRegistration r : manager.registrations()) {
-                DesignStyle<?> base = StyleSheet.INSTANCE.baseLayer(r.style()).orElse(null);
+                DesignStyle<?> base = StyleManager.baseLayer(r.style()).orElse(null);
                 if (base == null) {
                     problems.add(r.style().token() + " derives, in the end, from itself");
                     continue;

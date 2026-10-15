@@ -102,7 +102,7 @@ public record CastingCss() implements StatelessFunctionalObject {
         int rules = 0;
         for (ReadCss.Item item : read.items()) {
             switch (item) {
-                case ReadCss.Rule r when CheckStyle.squeeze(r.selector()).equals(CASTING) -> {
+                case ReadCss.Rule r when CastingRule.squeeze(r.selector()).equals(CASTING) -> {
                     rules++;
                     if (rules > 1) problems.add(name + ":" + r.line() + ": $casting is ruled twice: an implementation's CSS holds its casting's one rule");
                     else inside(name, r.body(), states, problems);

@@ -1,7 +1,0 @@
-/* Ink's tab, whole: none of it plain's. */
-.styled-tab {
-    color: var(--fp-copy);
-    background-color: var(--fp-raised);
-
-    &.styled-tab--selected { color: var(--fp-danger); }
-}

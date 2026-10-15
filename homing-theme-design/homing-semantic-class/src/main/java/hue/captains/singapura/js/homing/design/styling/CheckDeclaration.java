@@ -173,6 +173,36 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
         return new Implementation(type, style.token(), casting.token(), problems);
     }
 
+    /**
+     * What a casting's CSS was found to be, as each implementation's is held.
+     *
+     * @param marked   whether its marks are in form: past them its rule is read, and its colours are its rule's
+     * @param problems what refuses it, each naming its file and line
+     * @param reports  what the soft check says and does not refuse: a state drawn out of the casting's precedence (D23)
+     * @param uses     the colours of the tree its rule uses, by token, each with where it first does
+     */
+    record CssChecked(boolean marked, List<String> problems, List<String> reports, Map<String, String> uses) {}
+
+    /** A casting's CSS, its marks in: their form, then - filled in for the casting - a casting's rule, held to its leaf and the tree. */
+    static CssChecked css(Taxonomy taxonomy, ColorTree tree, DesignStyle<?> style, Casting casting, String name, String text) {
+        CastingCss.Marked marked = CastingCss.INSTANCE.marks(name, text);
+        if (!marked.passes()) return new CssChecked(false, marked.problems(), List.of(), Map.of());
+        var problems = new ArrayList<>(marked.problems());
+        ReadCss.Read read = ReadCss.INSTANCE.read(CastingCss.INSTANCE.filled(text, casting));
+        problems.addAll(read.problems());
+        CastingRule rule = new CastingRule(taxonomy, tree, style, casting, name);
+        for (ReadCss.Item item : read.items()) {
+            switch (item) {
+                case ReadCss.Rule r -> rule.check(r);
+                case ReadCss.AtRule a -> rule.keyframes(a);
+                case ReadCss.Declaration d -> { }
+            }
+        }
+        CastingRule.Checked checked = rule.finish();
+        problems.addAll(checked.problems());
+        return new CssChecked(true, problems, checked.reports(), rule.uses());
+    }
+
     /** Its own CSS: at its canonical name, marked in form, and - filled in for its casting - a casting's rule, its colours imported both ways. */
     private static void content(Class<?> type, DesignStyle<?> style, Casting casting, StylingRes.CssContent<?, ?> content, Class<?> scheme,
                                 Taxonomy taxonomy, ColorTree tree, List<String> problems) {
@@ -184,21 +214,13 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
             return;
         }
         String name = type.getSimpleName() + ".css";
-        CastingCss.Marked marked = css.marks(name, text.get());
-        problems.addAll(marked.problems());
-        if (!marked.passes() || scheme == null) return;
-        ReadCss.Read read = ReadCss.INSTANCE.read(css.filled(text.get(), casting));
-        problems.addAll(read.problems());
-        CastingRule rule = new CastingRule(taxonomy, tree, style, casting, name);
-        for (ReadCss.Item item : read.items()) {
-            switch (item) {
-                case ReadCss.Rule r -> rule.check(r);
-                case ReadCss.AtRule a -> rule.keyframes(a);
-                case ReadCss.Declaration d -> { }
-            }
+        if (scheme == null) {
+            problems.addAll(css.marks(name, text.get()).problems());
+            return;
         }
-        CheckStyle.Checked checked = rule.finish();
+        CssChecked checked = css(taxonomy, tree, style, casting, name, text.get());
         problems.addAll(checked.problems());
+        if (!checked.marked()) return;
         var imported = new LinkedHashMap<String, ColorLeaf<?, ?, ?>>();
         for (ColorLeaf<?, ?, ?> c : content.colours()) {
             imported.put(c.token(), c);
@@ -207,7 +229,7 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
                 problems.add("imports " + c.token() + ": it is " + tree.schemeName(tree.scheme(c)) + "'s, which " + style.token()
                         + "'s scheme, " + tree.schemeName(scheme) + ", does not see");
         }
-        Map<String, String> uses = rule.uses();
+        Map<String, String> uses = checked.uses();
         for (Map.Entry<String, String> u : uses.entrySet())
             if (!imported.containsKey(u.getKey()))
                 problems.add(u.getValue() + ": uses " + u.getKey() + ", which it does not import: CssContent lists each colour its CSS uses (D32)");
