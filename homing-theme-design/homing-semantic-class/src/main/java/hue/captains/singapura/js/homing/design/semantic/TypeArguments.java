@@ -15,15 +15,15 @@ import java.util.Map;
  * variables of every type between substituted. What the colour tree's reader reads a node's scheme, parent and kind
  * with, and what a style's and a palette's scheme is read with.
  */
-record TypeArguments() implements StatelessFunctionalObject {
+public record TypeArguments() implements StatelessFunctionalObject {
 
-    static final TypeArguments INSTANCE = new TypeArguments();
+    public static final TypeArguments INSTANCE = new TypeArguments();
 
     /**
      * The classes {@code declared} binds on {@code generic}'s parameters, in order - an argument that is no class, a
      * variable or a wildcard, as null - or none when it is not a {@code generic}, or binds it raw.
      */
-    List<Class<?>> of(Class<?> declared, Class<?> generic) {
+    public List<Class<?>> of(Class<?> declared, Class<?> generic) {
         Type[] found = find(declared, generic, Map.of());
         if (found == null) return List.of();
         var out = new ArrayList<Class<?>>();
@@ -32,7 +32,7 @@ record TypeArguments() implements StatelessFunctionalObject {
     }
 
     /** The argument at an index, or null when there is none to read. */
-    Class<?> at(Class<?> declared, Class<?> generic, int index) {
+    public Class<?> at(Class<?> declared, Class<?> generic, int index) {
         List<Class<?>> args = of(declared, generic);
         return index < args.size() ? args.get(index) : null;
     }
