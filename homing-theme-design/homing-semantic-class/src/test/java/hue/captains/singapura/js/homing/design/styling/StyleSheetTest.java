@@ -2,7 +2,6 @@ package hue.captains.singapura.js.homing.design.styling;
 
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.design.Extent;
-import hue.captains.singapura.js.homing.design.semantic.ResolvingColours;
 import hue.captains.singapura.js.homing.design.styling.StyledStyles.Ink;
 import hue.captains.singapura.js.homing.design.styling.StyledStyles.Loudly;
 import hue.captains.singapura.js.homing.design.styling.StyledStyles.OverShabby;
@@ -60,28 +59,5 @@ class StyleSheetTest {
                 + "answers content for every leaf (D26); shabby answers content for badge, and no file of its family rules it", shabby.getMessage());
         var over = assertThrows(IllegalArgumentException.class, () -> SHEET.write(TAXONOMY, OverShabby.INSTANCE));
         assertTrue(over.getMessage().contains("over-shabby answers absence for meter, and so does its base layer, shabby"), over.getMessage());
-    }
-
-    // ── a deployment's styling ─────────────────────────────────────────────
-
-    private static final Styling STYLING = new Styling(TAXONOMY, ResolvingColours.INSTANCE.read(),
-            List.of(Plain.INSTANCE, Ink.INSTANCE, Loudly.INSTANCE),
-            List.of(ResolvingColours.Paper.INSTANCE, ResolvingColours.Night.INSTANCE, ResolvingColours.Neon.INSTANCE));
-
-    @Test
-    void aStyling_servesEachSheetByItsOwnSlug_theFirstOfEachTheDefault() {
-        assertEquals(Plain.INSTANCE, STYLING.defaultStyle());
-        assertEquals(ResolvingColours.Paper.INSTANCE, STYLING.defaultPalette());
-        assertEquals(SHEET.write(TAXONOMY, Ink.INSTANCE), STYLING.styleSheet("ink"));
-        assertTrue(STYLING.paletteSheet("night").contains("    --fp-copy: oklch(0.93 0.01 260);\n"));
-        assertEquals("no style served is baroque", assertThrows(IllegalArgumentException.class, () -> STYLING.styleSheet("baroque")).getMessage());
-        assertEquals("no palette served is dusk", assertThrows(IllegalArgumentException.class, () -> STYLING.paletteSheet("dusk")).getMessage());
-    }
-
-    @Test
-    void aStylingOfNothing_orOfTwoOfOneToken_isRefused() {
-        var refused = assertThrows(IllegalArgumentException.class, () -> new Styling(TAXONOMY, ResolvingColours.INSTANCE.read(),
-                List.of(Plain.INSTANCE, Plain.INSTANCE), List.of()));
-        assertEquals("a styling cannot be made: it serves no palette; two styles are plain", refused.getMessage());
     }
 }

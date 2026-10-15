@@ -5,6 +5,8 @@ import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.core.DerivedCss;
 import hue.captains.singapura.js.homing.core.SelfRenderedCss;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingColours;
+import hue.captains.singapura.js.homing.design.styles.ink.InkStyles;
+import hue.captains.singapura.js.homing.design.styles.plain.PlainStyles;
 import hue.captains.singapura.js.homing.design.styling.StyledStyles.Ink;
 import hue.captains.singapura.js.homing.design.styling.StyledStyles.Plain;
 import hue.captains.singapura.js.homing.server.CssContentGetAction;
@@ -41,8 +43,11 @@ class FixturePageTest extends JsModuleTestBase {
 
     private static final String DIR = "/homing/js/hue/captains/singapura/js/homing/server/";
 
-    static final Styling STYLING = new Styling(StyledTaxonomy.INSTANCE.read(), ResolvingColours.INSTANCE.read(),
-            List.of(Plain.INSTANCE, Ink.INSTANCE), List.of(ResolvingColours.Paper.INSTANCE, ResolvingColours.Night.INSTANCE));
+    static final Styling STYLING = new Styling(
+            StyleManager.of(StyledTaxonomy.INSTANCE.read(), ResolvingColours.INSTANCE.read(), List.of(
+                    StyleRegistration.of(Plain.INSTANCE, PlainStyles.INSTANCE), StyleRegistration.of(Ink.INSTANCE, InkStyles.INSTANCE))),
+            List.of(Plain.INSTANCE, Ink.INSTANCE), List.of(ResolvingColours.Paper.INSTANCE, ResolvingColours.Night.INSTANCE),
+            Map.of(Plain.INSTANCE, ResolvingColours.Paper.INSTANCE, Ink.INSTANCE, ResolvingColours.Night.INSTANCE));
 
     /** The page's style-aware sheet: a style's, by ?style=. */
     record PageStyle() implements DerivedCss<PageStyle>, SelfRenderedCss {
