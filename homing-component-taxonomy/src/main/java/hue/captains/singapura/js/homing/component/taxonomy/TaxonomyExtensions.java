@@ -4,6 +4,7 @@ import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.ServiceLoader;
 
@@ -52,5 +53,43 @@ public record TaxonomyExtensions() implements StatelessFunctionalObject {
         var out = new ArrayList<Role<?>>(own);
         for (TaxonomyExtension e : of(source)) out.addAll(e.roles());
         return List.copyOf(out);
+    }
+
+    // ── registered explicitly: the extensions an instance names, and nothing found on the classpath ──
+
+    /**
+     * A source's taxonomy read with the extensions registered for it, explicitly, in the order registered - nothing
+     * looked up on the classpath. Refused, every problem at once, when an extension extends another taxonomy or is
+     * registered twice; the tree is then read as any is ({@link ReadTaxonomy}), so what an extension declares is held to
+     * the same rules as the source's own.
+     *
+     * @param source     the taxonomy the extensions add to
+     * @param components the source's own components
+     * @param roles      the source's own role catalogue
+     * @param states     the source's own types of state
+     * @param events     the source's own types of event
+     * @param extensions the extensions registered for it
+     */
+    public Taxonomy read(Class<? extends TaxonomySource> source, List<? extends Component<?>> components, List<? extends Role<?>> roles,
+                         List<? extends StateType<?>> states, List<? extends EventType<?>> events, List<? extends TaxonomyExtension> extensions) {
+        var problems = new ArrayList<String>();
+        var registered = new HashSet<Class<?>>();
+        for (TaxonomyExtension e : extensions) {
+            if (!registered.add(e.getClass())) problems.add(e.getClass().getName() + " is registered twice");
+            if (e.extending() != source)
+                problems.add(e.getClass().getName() + " extends " + e.extending().getSimpleName() + ", and is registered for " + source.getSimpleName());
+        }
+        if (!problems.isEmpty()) throw new IllegalArgumentException("the taxonomy's extensions are refused:\n  " + String.join("\n  ", problems));
+        var allComponents = new ArrayList<Component<?>>(components);
+        var allRoles = new ArrayList<Role<?>>(roles);
+        var allStates = new ArrayList<StateType<?>>(states);
+        var allEvents = new ArrayList<EventType<?>>(events);
+        for (TaxonomyExtension e : extensions) {
+            allComponents.addAll(e.components());
+            allRoles.addAll(e.roles());
+            allStates.addAll(e.states());
+            allEvents.addAll(e.events());
+        }
+        return new ReadTaxonomy().read(allComponents, allRoles, allStates, allEvents);
     }
 }
