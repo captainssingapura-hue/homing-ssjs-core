@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.design.styling;
 
 import hue.captains.singapura.js.homing.component.taxonomy.Casting;
+import hue.captains.singapura.js.homing.component.taxonomy.ReadTaxonomy;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingColours;
 import hue.captains.singapura.js.homing.design.semantic.SchemeTreeReader;
@@ -96,6 +97,19 @@ class StyleManagerTest {
         String twice = assertThrows(IllegalArgumentException.class,
                 () -> StyleManager.of(TAXONOMY, List.of(ResolvingColours.INSTANCE, new ResolvingColours()), List.of(PLAIN, INK))).getMessage();
         assertTrue(twice.contains("BaseScheme is read by two readers"), twice);
+    }
+
+    @Test
+    void aStyle_isAFunctionOfTheComponents_theirRegistryItsDomain() {
+        Taxonomy tabsAlone = new ReadTaxonomy().read(List.of(StatedTaxonomy.Tab.INSTANCE, StatedTaxonomy.Strip.INSTANCE));
+        String outside = assertThrows(IllegalArgumentException.class, () -> StyleManager.of(tabsAlone, SCHEMES, List.of(PLAIN, INK, LOUDLY))).getMessage();
+        assertTrue(outside.contains("plain: PlainStyles implements meter, which no component registered has: a style is a function of the components, "
+                + "their registry its domain"), outside);
+        assertTrue(outside.contains("plain: PlainStyles implements badge, which no component registered has"), "the extension's badge, left out: " + outside);
+        assertTrue(outside.contains("loudly: LoudlyStyles implements meter"), outside);
+        assertTrue(!outside.contains("implements tab,"), "what the registry has, the styles may draw");
+        StyleManager whole = StyleManager.of(TAXONOMY, SCHEMES, List.of(PLAIN, INK, LOUDLY));
+        assertEquals(List.of(), new StyleRule.WithinDomain().check(whole), "every casting implemented, within the domain");
     }
 
     /** A second jar for ink, implementing its tab again. */

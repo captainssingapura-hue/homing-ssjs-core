@@ -28,7 +28,34 @@ public interface StyleRule extends StatelessFunctionalObject {
      * The rules an instance is held to unless it says: one implementation per casting, Base's for every one, every style
      * provided for registered, every style's scheme read.
      */
-    List<StyleRule> DEFAULT = List.of(new OnePerCasting(), new StylesProvidedRegistered(), new BaseForEveryCasting(), new SchemesRead());
+    List<StyleRule> DEFAULT = List.of(new OnePerCasting(), new StylesProvidedRegistered(), new BaseForEveryCasting(), new SchemesRead(), new WithinDomain());
+
+    /**
+     * A style is a function of the components, and the components registered are its domain: every casting a registered
+     * jar implements is a casting of the taxonomy the instance registers. One outside it - a component whose module the
+     * instance leaves out, or one no taxonomy can make - is refused, each said whole. Checked apart from the taxonomy,
+     * which knows nothing of styles.
+     */
+    record WithinDomain() implements StyleRule {
+        @Override public List<String> check(StyleManager manager) {
+            var problems = new ArrayList<String>();
+            var domain = new HashSet<>(manager.taxonomy().castings());
+            for (StyleRegistration r : manager.registrations())
+                for (StyleDeclaration jar : r.jars())
+                    for (StyleDeclaration.Provided<?, ?> p : jar.provided()) {
+                        if (p.style().getClass() != r.style().getClass()) continue;
+                        for (CastingStyle<?, ?, ?, ?> i : p.castings()) {
+                            var casting = StyleManager.casting(i);
+                            if (casting.isEmpty())
+                                problems.add(r.style().token() + ": " + i.getClass().getName() + " implements no casting the taxonomy can make");
+                            else if (!domain.contains(casting.get()))
+                                problems.add(r.style().token() + ": " + jar.getClass().getSimpleName() + " implements " + casting.get().token()
+                                        + ", which no component registered has: a style is a function of the components, their registry its domain");
+                        }
+                    }
+            return problems;
+        }
+    }
 
     /**
      * The schemes are the registered styles': each style's scheme read by a registered reader, and every reader registered
