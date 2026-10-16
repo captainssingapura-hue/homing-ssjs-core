@@ -89,10 +89,10 @@ class StyleManagerTest {
         assertEquals(List.of(BaseScheme.class, BaseColours.LoudScheme.class), List.copyOf(manager.trees().keySet()), "the styles' schemes, each once");
         assertEquals(17, manager.tree(StyledStyles.Loudly.INSTANCE).nodes().size(), "loudly over the loud scheme's tree: the base's layer and its glare");
         assertEquals(16, manager.tree(StyledStyles.Ink.INSTANCE).nodes().size(), "ink over the base's alone");
-        assertEquals(BaseColours.LOUD_TREE, manager.tree(BaseColours.LoudScheme.INSTANCE), "the registry's own tree, not another read");
+        assertEquals(BaseColours.LOUD_TREE, manager.tree(BaseColours.LoudScheme.INSTANCE), "the tree the registry's declarations read");
         assertEquals(List.of(BaseScheme.class), List.copyOf(StyleManager.of(TAXONOMY, BaseColours.SCHEMES, List.of(PLAIN, INK)).trees().keySet()),
                 "no style requiring the loud scheme, its tree is never taken: the manager sees no scheme its styles do not require");
-        SchemeRegistry baseAlone = SchemeRegistry.of(List.of(BaseColours.INSTANCE));
+        SchemeRegistry baseAlone = new SchemeRegistry(List.of(BaseColours.INSTANCE));
         String unregistered = assertThrows(IllegalArgumentException.class,
                 () -> StyleManager.of(TAXONOMY, baseAlone, List.of(PLAIN, INK, LOUDLY))).getMessage();
         assertTrue(unregistered.contains("loudly requires LoudScheme, which the instance does not register: a style's scheme is registered with the instance"),

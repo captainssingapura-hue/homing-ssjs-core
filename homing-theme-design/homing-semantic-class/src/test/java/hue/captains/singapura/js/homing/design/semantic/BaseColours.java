@@ -95,11 +95,11 @@ public record BaseColours() implements SchemeDeclaration<BaseScheme> {
     }
 
     /** The tests' schemes, registered as an instance registers its own: the base, and the loud scheme on it. */
-    public static final SchemeRegistry SCHEMES = SchemeRegistry.of(List.of(INSTANCE, LoudColours.INSTANCE));
+    public static final SchemeRegistry SCHEMES = new SchemeRegistry(List.of(INSTANCE, LoudColours.INSTANCE));
     /** The base's tree. */
-    public static final ColorTree TREE = SCHEMES.tree(BaseScheme.INSTANCE);
+    public static final ColorTree TREE = SchemeTrees.INSTANCE.tree(SCHEMES, BaseScheme.INSTANCE);
     /** The loud scheme's tree: the base's layer and its glare. */
-    public static final ColorTree LOUD_TREE = SCHEMES.tree(LoudScheme.INSTANCE);
+    public static final ColorTree LOUD_TREE = SchemeTrees.INSTANCE.tree(SCHEMES, LoudScheme.INSTANCE);
 
     /** The resolution's jar of palettes, declared: the night first, the default; paper; neon on paper. */
     public record Palettes() implements PaletteDeclaration {

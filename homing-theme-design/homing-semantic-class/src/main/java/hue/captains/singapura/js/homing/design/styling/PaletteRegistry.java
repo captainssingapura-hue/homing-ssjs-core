@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.design.styling;
 
+import hue.captains.singapura.js.homing.design.semantic.SchemeTrees;
+
 import hue.captains.singapura.js.homing.design.semantic.ColorPalette;
 import hue.captains.singapura.js.homing.design.semantic.ColorTree;
 import hue.captains.singapura.js.homing.design.color.ColorScheme;
@@ -51,7 +53,7 @@ public record PaletteRegistry(List<PaletteDeclaration> jars, Map<Class<?>, Color
         for (ColorPalette<?> p : palettes) {
             ColorScheme scheme = p.scheme();
             if (scheme == null) { problems.add(p.token() + " says no scheme: a palette says the scheme it implements"); continue; }
-            Optional<ColorTree> tree = schemes.find(scheme);
+            Optional<ColorTree> tree = SchemeTrees.INSTANCE.find(schemes, scheme);
             if (tree.isEmpty()) {
                 problems.add(p.token() + " is " + scheme.name() + "'s, which the instance does not register: a palette's scheme is registered with the instance");
                 continue;

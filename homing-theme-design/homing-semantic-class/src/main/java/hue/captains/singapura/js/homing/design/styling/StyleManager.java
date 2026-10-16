@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.design.styling;
 
+import hue.captains.singapura.js.homing.design.semantic.SchemeTrees;
+
 import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.component.taxonomy.ComponentBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
@@ -71,7 +73,7 @@ public record StyleManager(Taxonomy taxonomy, Map<Class<?>, ColorTree> trees, Li
         for (StyleRegistration r : registrations) {
             ColorScheme scheme = r.style().scheme();
             if (scheme == null) { problems.add(r.style().token() + " says no scheme: a style says the scheme it requires"); continue; }
-            Optional<ColorTree> tree = schemes.find(scheme);
+            Optional<ColorTree> tree = SchemeTrees.INSTANCE.find(schemes, scheme);
             if (tree.isEmpty()) problems.add(r.style().token() + " requires " + scheme.name() + ", which the instance does not register: "
                     + "a style's scheme is registered with the instance");
             else trees.putIfAbsent(scheme.getClass(), tree.get());

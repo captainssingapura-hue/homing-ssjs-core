@@ -52,7 +52,7 @@ class PaletteRegistryTest {
         String adrift = refused(only(Night.INSTANCE, Neon.INSTANCE));
         assertTrue(adrift.contains("neon sits on paper, which is not registered"), "the palettes below registered too: " + adrift);
         String unregistered = assertThrows(IllegalArgumentException.class,
-                () -> PaletteRegistry.of(List.of(BaseColours.Palettes.INSTANCE), SchemeRegistry.of(List.of(BaseColours.INSTANCE)))).getMessage();
+                () -> PaletteRegistry.of(List.of(BaseColours.Palettes.INSTANCE), new SchemeRegistry(List.of(BaseColours.INSTANCE)))).getMessage();
         assertTrue(unregistered.startsWith("the instance's palettes are refused:") && unregistered.contains("neon is LoudScheme's, which the instance does not register"), unregistered);
     }
 

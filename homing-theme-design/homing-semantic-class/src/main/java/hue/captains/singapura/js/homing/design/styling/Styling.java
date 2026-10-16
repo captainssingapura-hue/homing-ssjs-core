@@ -28,7 +28,7 @@ import java.util.Optional;
  * <p>The styles and the palettes are each registered, and held to their own checks, apart ({@link StyleManager},
  * {@link PaletteRegistry}, D47): here only their meeting is held. Refused when it serves no style, two of one token, a
  * style the manager does not register, a style with no palette of its own, or one not registered or not fitting it; and
- * when the styles and the palettes hold two trees of one scheme - an instance registers its schemes once. A palette
+ * when the styles and the palettes hold two different trees of one scheme - an instance registers its schemes once. A palette
  * nothing served wears is no problem.</p>
  *
  * @param manager  the central style manager: every registered style with its jars, a base layer among them
@@ -48,8 +48,8 @@ public record Styling(StyleManager manager, List<DesignStyle<?>> styles, Palette
         for (DesignStyle<?> s : styles) if (!seen.add(s.token())) problems.add("two styles are " + s.token());
         for (var e : manager.trees().entrySet()) {
             ColorTree theirs = registry.trees().get(e.getKey());
-            if (theirs != null && theirs != e.getValue())
-                problems.add("its styles and its palettes hold two trees of " + e.getKey().getSimpleName() + ": an instance registers its schemes once");
+            if (theirs != null && !theirs.equals(e.getValue()))
+                problems.add("its styles and its palettes hold two different trees of " + e.getKey().getSimpleName() + ": an instance registers its schemes once");
         }
         List<ColorPalette<?>> registered = registry.palettes();
         for (DesignStyle<?> s : styles) {

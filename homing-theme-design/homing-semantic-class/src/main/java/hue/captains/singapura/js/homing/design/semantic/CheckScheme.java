@@ -45,7 +45,7 @@ public record CheckScheme() implements StatelessFunctionalObject {
         if (!Objects.equals(home, home(scheme.getClass())))
             problems.add(who + " declares " + scheme.name() + ", which lives in another jar: a scheme and its colours live in one jar");
         ColorTree tree;
-        try { tree = registry.tree(scheme); } catch (IllegalArgumentException e) { problems.add(e.getMessage()); return problems; }
+        try { tree = SchemeTrees.INSTANCE.tree(registry, scheme); } catch (IllegalArgumentException e) { problems.add(e.getMessage()); return problems; }
         for (ColorNode<?, ?, ?> n : tree.nodes()) {
             if (!Schemes.INSTANCE.same(tree.scheme(n), scheme)) continue;   // a layer below: its own declaration's
             Class<?> c = n.getClass();

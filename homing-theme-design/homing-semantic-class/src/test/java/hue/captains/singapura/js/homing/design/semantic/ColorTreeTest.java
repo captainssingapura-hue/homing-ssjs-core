@@ -219,23 +219,29 @@ class ColorTreeTest {
                 empty.problems().stream().map(ColorProblem::toString).toList());
         var adrift = assertThrows(RefusedColors.class, () -> ReadColors.INSTANCE.read(List.of(BaseColours.LoudColours.INSTANCE)));
         assertTrue(adrift.getMessage().contains("LAYER_ASTRAY: LoudColours declares LoudScheme, which is on top of BaseScheme, and sits on nothing"), adrift.getMessage());
-        String unregistered = assertThrows(IllegalArgumentException.class, () -> SchemeRegistry.of(List.of(BaseColours.LoudColours.INSTANCE))).getMessage();
+        String unregistered = assertThrows(IllegalArgumentException.class, () -> new SchemeRegistry(List.of(BaseColours.LoudColours.INSTANCE))).getMessage();
         assertTrue(unregistered.contains("LoudScheme is on top of BaseScheme, which no registered declaration declares: a scheme's schemes below are "
                 + "registered with it"), unregistered);
-        String twice = assertThrows(IllegalArgumentException.class, () -> SchemeRegistry.of(List.of(BaseColours.INSTANCE, BaseColours.INSTANCE))).getMessage();
+        String twice = assertThrows(IllegalArgumentException.class, () -> new SchemeRegistry(List.of(BaseColours.INSTANCE, BaseColours.INSTANCE))).getMessage();
         assertTrue(twice.contains("BaseScheme is declared twice"), twice);
-        String circling = assertThrows(IllegalArgumentException.class, () -> SchemeRegistry.of(List.of(BaseColours.INSTANCE, new Circling()))).getMessage();
+        String circling = assertThrows(IllegalArgumentException.class, () -> new SchemeRegistry(List.of(BaseColours.INSTANCE, new Circling()))).getMessage();
         assertTrue(circling.contains("CirclingScheme's schemes below come back to CirclingScheme"), circling);
-        String nothing = assertThrows(IllegalArgumentException.class, () -> SchemeRegistry.of(List.of())).getMessage();
+        String nothing = assertThrows(IllegalArgumentException.class, () -> new SchemeRegistry(List.of())).getMessage();
         assertTrue(nothing.contains("it registers no scheme"), nothing);
+        String every = assertThrows(IllegalArgumentException.class,
+                () -> new SchemeRegistry(List.of(BaseColours.INSTANCE, BaseColours.INSTANCE, new Circling(), new Quiet()))).getMessage();
+        assertTrue(every.contains("BaseScheme is declared twice") && every.contains("CirclingScheme's schemes below come back")
+                && every.contains("LoudScheme's tree is refused") && every.contains("LAYER_EMPTY: Quiet adds no colour to LoudScheme"), "every rule applied apart, each problem kept: " + every);
+        assertEquals(new Validation.Invalid(List.of("a", "b")), new Validation.Invalid(List.of("a")).and(Validation.Valid.INSTANCE).and(new Validation.Invalid(List.of("b"))),
+                "results combine, every problem kept");
     }
 
     @Test
     void whatOnlyADeclarationsTypesTell_isCheckedWhenItsJarIsBuilt_neverAtRunTime() {
         assertEquals(List.of(), CheckScheme.INSTANCE.check(BaseColours.INSTANCE, BaseColours.SCHEMES), "the tests' base holds");
         assertEquals(List.of(), CheckScheme.INSTANCE.check(BaseColours.LoudColours.INSTANCE, BaseColours.SCHEMES), "and the loud scheme on it");
-        SchemeRegistry smuggled = SchemeRegistry.of(List.of(BaseColours.INSTANCE, new Smuggling()));
-        assertTrue(smuggled.tree(BaseColours.LoudScheme.INSTANCE).has(new Astray()), "read at run time, where nothing reads the type that says astray is the base's");
+        SchemeRegistry smuggled = new SchemeRegistry(List.of(BaseColours.INSTANCE, new Smuggling()));
+        assertTrue(SchemeTrees.INSTANCE.tree(smuggled, BaseColours.LoudScheme.INSTANCE).has(new Astray()), "read at run time, where nothing reads the type that says astray is the base's");
         List<String> told = CheckScheme.INSTANCE.check(new Smuggling(), smuggled);
         assertTrue(told.contains("astray is BaseScheme's, and came into LoudScheme's layer: a branch comes in with a leaf of its own scheme, and its scheme "
                 + "lists it below"), told.toString());

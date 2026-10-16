@@ -90,10 +90,12 @@ class StylingTest {
         String misfit = assertThrows(IllegalArgumentException.class, () -> new Styling(MANAGER, List.of(Loudly.INSTANCE),
                 registry(Paper.INSTANCE), Map.of(Loudly.INSTANCE, Paper.INSTANCE))).getMessage();
         assertTrue(misfit.contains("loudly's own palette, paper, does not fit it"), misfit);
-        SchemeRegistry again = SchemeRegistry.of(List.of(BaseColours.INSTANCE, BaseColours.LoudColours.INSTANCE));
+        SchemeRegistry same = new SchemeRegistry(List.of(BaseColours.INSTANCE, BaseColours.LoudColours.INSTANCE));
+        new Styling(MANAGER, List.of(Ink.INSTANCE), PaletteRegistry.of(only(Night.INSTANCE), same), Map.of(Ink.INSTANCE, Night.INSTANCE));   // the same declarations: the same trees
+        SchemeRegistry other = new SchemeRegistry(List.of(new Lean()));
         String twoTrees = assertThrows(IllegalArgumentException.class, () -> new Styling(MANAGER, List.of(Ink.INSTANCE),
-                PaletteRegistry.of(only(Night.INSTANCE), again), Map.of(Ink.INSTANCE, Night.INSTANCE))).getMessage();
-        assertTrue(twoTrees.contains("its styles and its palettes hold two trees of BaseScheme: an instance registers its schemes once"), twoTrees);
+                PaletteRegistry.of(only(Night.INSTANCE), other), Map.of(Ink.INSTANCE, Night.INSTANCE))).getMessage();
+        assertTrue(twoTrees.contains("its styles and its palettes hold two different trees of BaseScheme: an instance registers its schemes once"), twoTrees);
     }
 
     @Test
@@ -106,6 +108,14 @@ class StylingTest {
         assertFalse(plainOnly.trees().containsKey(BaseColours.LoudScheme.class), "which the styles never see");
         Styling noLoudPalette = new Styling(MANAGER, List.of(Ink.INSTANCE), registry(Night.INSTANCE, Paper.INSTANCE), Map.of(Ink.INSTANCE, Night.INSTANCE));
         assertEquals(List.of("ink", "ink_paper"), List.copyOf(noLoudPalette.themes().keySet()), "loudly registered, no palette of its scheme: it stands");
+    }
+
+    /** Another declaration of the base: every colour of it but the hairline - a tree unlike the registered one. */
+    record Lean() implements hue.captains.singapura.js.homing.design.semantic.SchemeDeclaration<hue.captains.singapura.js.homing.design.semantic.BaseScheme> {
+        @Override public hue.captains.singapura.js.homing.design.semantic.BaseScheme scheme() { return hue.captains.singapura.js.homing.design.semantic.BaseScheme.INSTANCE; }
+        @Override public List<? extends hue.captains.singapura.js.homing.design.color.ColorLeaf<hue.captains.singapura.js.homing.design.semantic.BaseScheme, ?, ?>> leaves() {
+            return BaseColours.INSTANCE.leaves().stream().filter(l -> !(l instanceof BaseColours.Hairline)).toList();
+        }
     }
 
     /** The instance's palettes: these alone, in a jar declared on the spot. */

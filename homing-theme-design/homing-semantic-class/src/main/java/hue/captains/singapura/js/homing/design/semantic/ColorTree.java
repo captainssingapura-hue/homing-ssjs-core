@@ -138,6 +138,11 @@ public final class ColorTree {
         }
     }
 
+    /** Two trees are one when they read the same nodes, each in the same scheme under the same parent. */
+    @Override public boolean equals(Object o) { return o instanceof ColorTree t && t.read.equals(read); }
+
+    @Override public int hashCode() { return read.hashCode(); }
+
     private Read of(ColorNode<?, ?, ?> node) {
         Read r = read.get(node.getClass());
         if (r == null) throw new IllegalArgumentException(node.token() + " is in no colour tree read: its scheme's declaration, or one below it, lists it");

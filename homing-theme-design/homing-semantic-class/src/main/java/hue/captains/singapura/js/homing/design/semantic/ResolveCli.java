@@ -74,7 +74,7 @@ public record ResolveCli() implements StatelessFunctionalObject {
             var declarations = new ArrayList<SchemeDeclaration<?>>();
             for (String c : colorsClass.split(",")) declarations.add(instance(c.strip(), SchemeDeclaration.class));
             DesignStyle<?> style = instance(styleClass, DesignStyle.class);
-            ColorTree colors = SchemeRegistry.of(declarations).tree(style.scheme());
+            ColorTree colors = SchemeTrees.INSTANCE.tree(new SchemeRegistry(declarations), style.scheme());
             ColorPalette<?> palette = instance(paletteClass, ColorPalette.class);
             Dressed theme = Wear.INSTANCE.of(colors, style, palette).orElseThrow(() -> new IllegalArgumentException(
                     style.token() + " and " + palette.token() + " are of different schemes: a style is worn only in a palette of its own"));
