@@ -82,5 +82,6 @@ public record LocalColours() implements StatelessFunctionalObject {
         return BigDecimal.valueOf(share * 100).setScale(2, RoundingMode.HALF_EVEN).stripTrailingZeros().toPlainString() + "%";
     }
 
-    private static String plain(double d) { return BigDecimal.valueOf(d).stripTrailingZeros().toPlainString(); }
+    /** A degree or a span, written plain - to six places, so 0.6 - 0.4 is 0.2 and not its double's tail. */
+    private static String plain(double d) { return BigDecimal.valueOf(d).setScale(6, RoundingMode.HALF_EVEN).stripTrailingZeros().toPlainString(); }
 }

@@ -6,6 +6,7 @@ import hue.captains.singapura.js.homing.component.taxonomy.RoleNode;
 import hue.captains.singapura.js.homing.component.taxonomy.RoleRoot;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.design.color.ColorLeaf;
+import hue.captains.singapura.js.homing.design.color.ColorScale;
 import hue.captains.singapura.js.homing.design.semantic.ColorTree;
 import hue.captains.singapura.js.homing.design.semantic.DesignStyle;
 import hue.captains.singapura.js.homing.design.semantic.TypeArguments;
@@ -185,12 +186,18 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
 
     /** A casting's CSS, its marks in: their form, then - filled in for the casting - a casting's rule, held to its leaf and the tree. */
     static CssChecked css(Taxonomy taxonomy, ColorTree tree, DesignStyle<?> style, Casting casting, String name, String text) {
+        return css(taxonomy, tree, style, casting, name, text, List.of());
+    }
+
+    /** As {@link #css(Taxonomy, ColorTree, DesignStyle, Casting, String, String)}, with the implementation's own spectra (D41). */
+    static CssChecked css(Taxonomy taxonomy, ColorTree tree, DesignStyle<?> style, Casting casting, String name, String text,
+                          List<? extends ColorScale<?, ?>> spectra) {
         CastingCss.Marked marked = CastingCss.INSTANCE.marks(name, text);
         if (!marked.passes()) return new CssChecked(false, marked.problems(), List.of(), Map.of());
         var problems = new ArrayList<>(marked.problems());
         ReadCss.Read read = ReadCss.INSTANCE.read(CastingCss.INSTANCE.filled(text, casting));
         problems.addAll(read.problems());
-        CastingRule rule = new CastingRule(taxonomy, tree, style, casting, name);
+        CastingRule rule = new CastingRule(taxonomy, tree, style, casting, name, spectra);
         for (ReadCss.Item item : read.items()) {
             switch (item) {
                 case ReadCss.Rule r -> rule.check(r);
@@ -218,13 +225,23 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
             problems.addAll(css.marks(name, text.get()).problems());
             return;
         }
-        CssChecked checked = css(taxonomy, tree, style, casting, name, text.get());
+        var spectra = new ArrayList<ColorScale<?, ?>>();
+        for (ColorLeaf<?, ?, ?> c : content.colours())
+            if (c instanceof ColorScale<?, ?> s && !tree.has(c)) spectra.add(s);
+        CssChecked checked = css(taxonomy, tree, style, casting, name, text.get(), spectra);
         problems.addAll(checked.problems());
         if (!checked.marked()) return;
         var imported = new LinkedHashMap<String, ColorLeaf<?, ?, ?>>();
         for (ColorLeaf<?, ?, ?> c : content.colours()) {
             imported.put(c.token(), c);
-            if (!tree.has(c)) problems.add("imports " + c.token() + ", which the tree has not");
+            if (c instanceof ColorScale<?, ?> s && !tree.has(c)) {   // its own spectrum: its anchors the tree's, its positions its own (D41)
+                for (ColorScale.Knot<?> k : s.knots()) {
+                    if (!tree.has(k.color())) problems.add("its spectrum " + s.token() + " is anchored at " + k.color().token() + ", which the tree has not: a spectrum's anchors are the tree's colours");
+                    else if (!tree.sees(scheme, k.color()))
+                        problems.add("its spectrum " + s.token() + " is anchored at " + k.color().token() + ", which " + style.token() + "'s scheme, "
+                                + tree.schemeName(scheme) + ", does not see");
+                }
+            } else if (!tree.has(c)) problems.add("imports " + c.token() + ", which the tree has not");
             else if (!tree.sees(scheme, c))
                 problems.add("imports " + c.token() + ": it is " + tree.schemeName(tree.scheme(c)) + "'s, which " + style.token()
                         + "'s scheme, " + tree.schemeName(scheme) + ", does not see");

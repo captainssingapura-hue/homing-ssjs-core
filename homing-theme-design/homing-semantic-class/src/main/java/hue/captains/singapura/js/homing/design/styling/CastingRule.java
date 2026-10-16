@@ -106,6 +106,8 @@ final class CastingRule {
     private final Class<?> scheme;
     private final String name;
     private final Map<String, ColorNode<?, ?, ?>> nodes = new HashMap<>();
+    /** The implementation's own spectra, by name: read before the tree's scale of the same name (D41). */
+    private final Map<String, ColorScale<?, ?>> spectra = new HashMap<>();
     private final List<String> problems = new ArrayList<>();
     private final List<String> reports = new ArrayList<>();
     private final Set<String> assigned = new HashSet<>();
@@ -113,6 +115,11 @@ final class CastingRule {
     private final Map<String, String> uses = new LinkedHashMap<>();
 
     CastingRule(Taxonomy taxonomy, ColorTree tree, DesignStyle<?> style, Casting leaf, String name) {
+        this(taxonomy, tree, style, leaf, name, List.of());
+    }
+
+    /** With the implementation's own spectra: colour scales over the tree's colours, at degrees of the style's own (D41). */
+    CastingRule(Taxonomy taxonomy, ColorTree tree, DesignStyle<?> style, Casting leaf, String name, List<? extends ColorScale<?, ?>> spectra) {
         this.taxonomy = taxonomy;
         this.tree = tree;
         this.style = style;
@@ -120,6 +127,7 @@ final class CastingRule {
         this.scheme = tree.scheme(style).orElse(null);
         this.name = name;
         for (ColorNode<?, ?, ?> n : tree.nodes()) nodes.put(n.token(), n);
+        for (ColorScale<?, ?> s : spectra) this.spectra.put(s.token(), s);
     }
 
     void check(ReadCss.Rule rule) {
@@ -272,7 +280,8 @@ final class CastingRule {
         String kind = property.startsWith("--fixed-") ? "--fixed-" : property.startsWith("--it-") ? "--it-"
                 : property.startsWith("--current-") ? "--current-" : "--along-";
         String token = property.substring(kind.length());
-        ColorNode<?, ?, ?> node = nodes.get(token);
+        ColorNode<?, ?, ?> node = kind.equals("--along-") && spectra.containsKey(token) ? spectra.get(token) : nodes.get(token);
+        boolean own = node != null && spectra.get(token) == node;
         var colours = LocalColours.INSTANCE;
         String expected = switch (kind) {
             case "--fixed-" -> node instanceof Fixed<?, ?> f ? colours.fixed(f) : null;
@@ -286,7 +295,7 @@ final class CastingRule {
                     + " of the tree" + (node == null ? "" : ": " + token + " is " + kindOf(node)));
             return;
         }
-        if (!tree.sees(scheme, node)) {
+        if (!own && !tree.sees(scheme, node)) {
             at(d, property + ": " + token + " is " + tree.schemeName(tree.scheme(node)) + "'s, which " + style.token() + "'s scheme, "
                     + tree.schemeName(scheme) + ", does not see");
             return;
@@ -294,7 +303,7 @@ final class CastingRule {
         if (kind.equals("--along-") && !taxonomy.extents(leaf.cast()).contains(ExtentAxis.COLOUR))
             at(d, property + " moves a colour by the element's degree, and " + leaf.token() + " has no colour axis: only a leaf with it may (D14)");
         if (!squeeze(d.value()).equals(squeeze(expected)))
-            at(d, property + " is " + expected + " by the tree, not " + d.value());
+            at(d, property + " is " + expected + (own ? " by its own spectrum" : " by the tree") + ", not " + d.value());
     }
 
     /**
@@ -321,7 +330,7 @@ final class CastingRule {
                 used.putIfAbsent(variable, d.line());
                 String prefix = LOCAL.stream().filter(variable::startsWith).findFirst().orElseThrow();
                 String token = variable.substring(prefix.length());
-                if (!local && nodes.containsKey(token)) uses.putIfAbsent(token, name + ":" + d.line());
+                if (!local && (nodes.containsKey(token) || spectra.containsKey(token))) uses.putIfAbsent(token, name + ":" + d.line());
             }
         }
     }

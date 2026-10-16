@@ -2,6 +2,8 @@ package hue.captains.singapura.js.homing.design.styling;
 
 import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
+import hue.captains.singapura.js.homing.design.color.ColorScale;
+import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import hue.captains.singapura.js.homing.design.semantic.ColorTree;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingColours;
 import hue.captains.singapura.js.homing.design.semantic.DesignStyle;
@@ -163,6 +165,28 @@ class CastingRuleTest {
         refused("$casting { --fixed-clear: transparent; --along-risk: " + ALONG + "; }", "tab has no colour axis: only a leaf with it may (D14)");
         refused(METER, "$casting { --along-risk: color-mix(in oklab, #dc2626 calc(clamp(0, var(--extent), 1) * 100%), #16a34a); }",
                 "--along-risk is " + ALONG + " by the tree");
+    }
+
+    /** A spectrum of the style's own: the tree's safe and danger its anchors, the turn at degrees of its own (D41). */
+    record Swing() implements ColorScale<ColorScheme.Base, ResolvingColours.Signals> {
+        @Override public List<Knot<ColorScheme.Base>> knots() {
+            return List.of(new Knot<>(new ResolvingColours.Safe(), -1), new Knot<>(new ResolvingColours.Safe(), 0.4),
+                           new Knot<>(new ResolvingColours.Danger(), 0.6), new Knot<>(new ResolvingColours.Danger(), 1));
+        }
+    }
+
+    @Test
+    void aSpectrumOfItsOwn_isReadInPlaceOfTheTrees_itsAnchorsTheTreesColours() {
+        String swing = LocalColours.INSTANCE.along(new Swing());
+        String css = "$casting { --along-swing: " + swing + "; background-color: var(--along-swing); }";
+        var own = CheckDeclaration.css(TAXONOMY, TREE, Plain.INSTANCE, METER, "Its.css", css, List.of(new Swing()));
+        assertEquals(List.of(), own.problems(), "its own spectrum, as it writes it");
+        assertTrue(own.uses().containsKey("swing"), "used, so imported: the both-ways check sees it");
+        refused(METER, css, "--along-swing names no colour scale of the tree");
+        var drifted = CheckDeclaration.css(TAXONOMY, TREE, Plain.INSTANCE, METER, "Its.css",
+                "$casting { --along-swing: " + LocalColours.INSTANCE.along(new ResolvingColours.Risk()) + "; background-color: var(--along-swing); }",
+                List.of(new Swing()));
+        assertTrue(drifted.problems().stream().anyMatch(p -> p.contains("by its own spectrum")), drifted.problems().toString());
     }
 
     @Test
