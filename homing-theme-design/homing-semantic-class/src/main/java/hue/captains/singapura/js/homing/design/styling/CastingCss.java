@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.design.styling;
 
 import hue.captains.singapura.js.homing.component.taxonomy.Casting;
+import hue.captains.singapura.js.homing.core.util.ResourceReader;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import hue.captains.singapura.tao.ontology.ValueObject;
 
@@ -8,6 +9,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.CodeSource;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -67,6 +70,20 @@ public record CastingCss() implements StatelessFunctionalObject {
             return Optional.empty();
         } catch (IOException e) {
             throw new IllegalStateException(path + " could not be read: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * The implementation's CSS as a reader finds it: in dev mode, the file at its canonical name in the first source
+     * root that has it - as it is on the file system now - else, and deployed, from its own jar.
+     */
+    public Optional<String> read(Class<?> implementation, ResourceReader reader) {
+        Optional<Path> file = reader.sourceFile(resource(implementation));
+        if (file.isEmpty()) return read(implementation);
+        try {
+            return Optional.of(Files.readString(file.get(), StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            throw new IllegalStateException(file.get() + " could not be read: " + e.getMessage(), e);
         }
     }
 

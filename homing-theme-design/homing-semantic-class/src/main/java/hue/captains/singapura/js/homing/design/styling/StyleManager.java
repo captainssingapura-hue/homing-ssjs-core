@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.design.styling;
 import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.component.taxonomy.ComponentBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
+import hue.captains.singapura.js.homing.core.util.ResourceReader;
 import hue.captains.singapura.js.homing.design.Extent;
 import hue.captains.singapura.js.homing.design.Growth;
 import hue.captains.singapura.js.homing.design.semantic.ColorTree;
@@ -114,8 +115,13 @@ public record StyleManager(Taxonomy taxonomy, ColorTree tree, List<StyleRegistra
 
     /** A casting's rule as a style serves it: the CSS its implementation reaches, its marks filled in for the casting. */
     public String rule(DesignStyle<?> style, Casting casting) {
+        return rule(style, casting, ResourceReader.INSTANCE);
+    }
+
+    /** As {@link #rule(DesignStyle, Casting)}, each casting's CSS as the reader finds it - in dev mode, on the file system. */
+    public String rule(DesignStyle<?> style, Casting casting, ResourceReader reader) {
         Resolved r = resolve(style, casting);
-        String css = CastingCss.INSTANCE.read(r.css().getClass()).orElseThrow(() -> new IllegalArgumentException(
+        String css = CastingCss.INSTANCE.read(r.css().getClass(), reader).orElseThrow(() -> new IllegalArgumentException(
                 r.css().getClass().getName() + " answers CssContent, and its jar has no " + CastingCss.INSTANCE.resource(r.css().getClass())));
         return "/* " + casting.token() + ": " + r.says() + " */\n" + CastingCss.INSTANCE.filled(css, casting).strip() + "\n";
     }
@@ -131,15 +137,38 @@ public record StyleManager(Taxonomy taxonomy, ColorTree tree, List<StyleRegistra
         return css.toString();
     }
 
-    /** A style's family files, aggregated for reading only: each family head's castings, in its order. */
+    /** A style's family files, aggregated for reading only: each family head's file, in the taxonomy's order. */
     public Map<String, String> families(DesignStyle<?> style) {
+        return families(style, ResourceReader.INSTANCE);
+    }
+
+    /** As {@link #families(DesignStyle)}, each casting's CSS as the reader finds it - in dev mode, on the file system. */
+    public Map<String, String> families(DesignStyle<?> style, ResourceReader reader) {
         var out = new LinkedHashMap<String, String>();
-        for (ComponentBranch head : taxonomy.heads()) {
-            var css = new StringBuilder();
-            for (Casting c : taxonomy.family(head)) css.append(css.isEmpty() ? "" : "\n").append(rule(style, c));
-            out.put(head.token(), css.toString());
-        }
+        for (ComponentBranch head : taxonomy.heads()) out.put(head.token(), family(style, head, reader));
         return out;
+    }
+
+    /**
+     * A style's file of one family, for reading only: each of the family's castings as the style serves it, in the
+     * family's order, under a line saying whose it is - the style's own, or its base layer's where it leaves the casting.
+     * A casting drawn by delegation is that line alone, naming the casting whose rule it takes: its rule is the same.
+     */
+    public String family(DesignStyle<?> style, ComponentBranch head, ResourceReader reader) {
+        var css = new StringBuilder("/* " + style.token() + " - the " + head.token() + " family, as the style serves it: each casting "
+                + "its own, or its base layer's. Aggregated by StyleManager, for reading; do not edit. */\n");
+        for (Casting c : taxonomy.family(head)) {
+            css.append('\n');
+            Resolved r = resolve(style, c);
+            if (r.css() == r.implementation()) {
+                css.append(rule(style, c, reader));
+                continue;
+            }
+            String to = casting(r.css()).map(Casting::token).orElse(r.css().getClass().getName());
+            css.append("/* ").append(c.token()).append(": ").append(r.says()).append(" - its rule ").append(to)
+               .append("'s, under .").append(LeafClasses.INSTANCE.styled(c)).append(" */\n");
+        }
+        return css.toString();
     }
 
     /** The casting an implementation's types name - its component's, in its role - if the taxonomy can make it. */
