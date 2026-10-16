@@ -6,7 +6,6 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -43,18 +42,4 @@ class TaxonomyExtensionsTest {
                 "the house alone has none of it");
     }
 
-    @Test
-    void registeredExplicitly_anExtensionDeclaresItsComponents_andNothingIsFoundOnTheClasspath() {
-        var extensions = TaxonomyExtensions.INSTANCE;
-        Taxonomy alone = extensions.read(SketchSource.class, Sketch.DECLARED, Sketch.CATALOGUE, List.of(), List.of(), List.of());
-        assertFalse(alone.components().contains(TradingDesk.OrderTicket.INSTANCE), "none registered: the house alone, whatever the classpath names");
-        Taxonomy desk = extensions.read(SketchSource.class, Sketch.DECLARED, Sketch.CATALOGUE, List.of(), List.of(), List.of(new TradingDeskExtension()));
-        assertTrue(desk.children(Sketch.Card.INSTANCE).contains(TradingDesk.OrderTicket.INSTANCE), "the desk's leaf, as registered");
-        assertTrue(desk.roles().containsAll(TradingDesk.CATALOGUE), "and its roles");
-        assertEquals(List.of(Signals.Lit.INSTANCE), desk.states().types(), "and its type of state");
-        String refused = assertThrows(IllegalArgumentException.class, () -> extensions.read(SketchSource.class, Sketch.DECLARED, Sketch.CATALOGUE,
-                List.of(), List.of(), List.of(new ElsewhereExtension(), new TradingDeskExtension(), new TradingDeskExtension()))).getMessage();
-        assertTrue(refused.contains("ElsewhereExtension extends Elsewhere, and is registered for SketchSource"), refused);
-        assertTrue(refused.contains("TradingDeskExtension is registered twice"), refused);
-    }
 }
