@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.design.styling;
 
+import hue.captains.singapura.js.homing.design.semantic.SchemeTrees;
+
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.design.semantic.ColorPalette;
 import hue.captains.singapura.js.homing.design.semantic.ColorTree;
@@ -28,10 +30,10 @@ import java.util.Optional;
  * <p>The styles and the palettes are each registered, and held to their own checks, apart ({@link StyleManager},
  * {@link PaletteRegistry}, D47): here only their meeting is held. Refused when it serves no style, two of one token, a
  * style the manager does not register, a style with no palette of its own, or one not registered or not fitting it; and
- * when the styles and the palettes hold two different trees of one scheme - an instance registers its schemes once. A palette
- * nothing served wears is no problem.</p>
+ * a style served whose scheme the instance does not register - the styles care nothing for colours, and a style is
+ * dressed over its scheme's tree. A palette nothing served wears is no problem.</p>
  *
- * @param manager  the central style manager: every registered style with its jars, a base layer among them
+ * @param manager  the central style manager: the base layer and every style registered over it
  * @param styles   the styles served, the default first
  * @param registry the instance's palettes, its registry of every jar's
  * @param own      each style's own palette
@@ -46,14 +48,12 @@ public record Styling(StyleManager manager, List<DesignStyle<?>> styles, Palette
         if (styles.isEmpty()) problems.add("it serves no style");
         var seen = new HashSet<String>();
         for (DesignStyle<?> s : styles) if (!seen.add(s.token())) problems.add("two styles are " + s.token());
-        for (var e : manager.trees().entrySet()) {
-            ColorTree theirs = RegisteredPalettes.INSTANCE.trees(registry).get(e.getKey());
-            if (theirs != null && !theirs.equals(e.getValue()))
-                problems.add("its styles and its palettes hold two different trees of " + e.getKey().getSimpleName() + ": an instance registers its schemes once");
-        }
         List<ColorPalette<?>> registered = RegisteredPalettes.INSTANCE.palettes(registry);
         for (DesignStyle<?> s : styles) {
             if (manager.style(s.token()).isEmpty()) problems.add(s.token() + " is served, and the manager does not register it");
+            if (s.scheme() == null) problems.add(s.token() + " says no scheme");
+            else if (SchemeTrees.INSTANCE.find(registry.schemes(), s.scheme()).isEmpty())
+                problems.add(s.token() + " is served, and its scheme, " + s.scheme().name() + ", is not registered");
             ColorPalette<?> p = own.get(s);
             if (p == null) problems.add(s.token() + " has no palette of its own");
             else if (!registered.contains(p)) problems.add(s.token() + "'s own palette, " + p.token() + ", is not registered");
@@ -72,7 +72,7 @@ public record Styling(StyleManager manager, List<DesignStyle<?>> styles, Palette
     public ColorTree colours(ColorPalette<?> palette) { return RegisteredPalettes.INSTANCE.tree(registry, palette); }
 
     /** The colour tree a style is drawn over: its scheme's. */
-    public ColorTree colours(DesignStyle<?> style) { return manager.tree(style); }
+    public ColorTree colours(DesignStyle<?> style) { return SchemeTrees.INSTANCE.tree(registry.schemes(), style.scheme()); }
 
     /** The style a page wears until the address or a pick says otherwise. */
     public DesignStyle<?> defaultStyle() { return styles.get(0); }

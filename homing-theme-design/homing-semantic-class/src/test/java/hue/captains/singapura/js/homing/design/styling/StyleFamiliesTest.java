@@ -29,9 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class StyleFamiliesTest {
 
-    private static final StyleManager MANAGER = StyleManager.of(StyledTaxonomy.INSTANCE.read(), BaseColours.SCHEMES, List.of(
-            StyleRegistration.of(StyledStyles.Plain.INSTANCE, PlainStyles.INSTANCE), StyleRegistration.of(StyledStyles.Ink.INSTANCE, InkStyles.INSTANCE),
-            StyleRegistration.of(StyledStyles.Loudly.INSTANCE, LoudlyStyles.INSTANCE)));
+    private static final StyleManager MANAGER = StyledManagers.INSTANCE.all();
     private static final Styling STYLING = new Styling(MANAGER, List.of(StyledStyles.Ink.INSTANCE, StyledStyles.Loudly.INSTANCE),
             new PaletteRegistry(List.of(BaseColours.Palettes.INSTANCE), BaseColours.SCHEMES), Map.of(StyledStyles.Ink.INSTANCE, BaseColours.Night.INSTANCE,
                     StyledStyles.Loudly.INSTANCE, BaseColours.Neon.INSTANCE));

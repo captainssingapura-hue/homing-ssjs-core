@@ -30,9 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class StylingTest {
 
-    private static final StyleManager MANAGER = StyleManager.of(StyledTaxonomy.INSTANCE.read(), BaseColours.SCHEMES, List.of(
-            StyleRegistration.of(Plain.INSTANCE, PlainStyles.INSTANCE), StyleRegistration.of(Ink.INSTANCE, InkStyles.INSTANCE),
-            StyleRegistration.of(Loudly.INSTANCE, LoudlyStyles.INSTANCE)));
+    private static final StyleManager MANAGER = StyledManagers.INSTANCE.all();
 
     /** The instance's palettes: the resolution's jar of them. */
     private static final PaletteRegistry REGISTRY = new PaletteRegistry(List.of(BaseColours.Palettes.INSTANCE), BaseColours.SCHEMES);
@@ -80,7 +78,7 @@ class StylingTest {
         String twice = assertThrows(IllegalArgumentException.class, () -> new Styling(MANAGER, List.of(Ink.INSTANCE, Ink.INSTANCE),
                 registry(Night.INSTANCE), Map.of(Ink.INSTANCE, Night.INSTANCE))).getMessage();
         assertTrue(twice.contains("two styles are ink"), twice);
-        StyleManager plainOnly = StyleManager.of(StyledTaxonomy.INSTANCE.read(), BaseColours.SCHEMES, List.of(StyleRegistration.of(Plain.INSTANCE, PlainStyles.INSTANCE)));
+        StyleManager plainOnly = StyledManagers.INSTANCE.plain();
         String unregistered = assertThrows(IllegalArgumentException.class, () -> new Styling(plainOnly, List.of(Ink.INSTANCE),
                 registry(Night.INSTANCE), Map.of(Ink.INSTANCE, Night.INSTANCE))).getMessage();
         assertTrue(unregistered.contains("ink is served, and the manager does not register it"), unregistered);
@@ -90,32 +88,22 @@ class StylingTest {
         String misfit = assertThrows(IllegalArgumentException.class, () -> new Styling(MANAGER, List.of(Loudly.INSTANCE),
                 registry(Paper.INSTANCE), Map.of(Loudly.INSTANCE, Paper.INSTANCE))).getMessage();
         assertTrue(misfit.contains("loudly's own palette, paper, does not fit it"), misfit);
-        SchemeRegistry same = new SchemeRegistry(List.of(BaseColours.INSTANCE, BaseColours.LoudColours.INSTANCE));
-        new Styling(MANAGER, List.of(Ink.INSTANCE), new PaletteRegistry(only(Night.INSTANCE), same), Map.of(Ink.INSTANCE, Night.INSTANCE));   // the same declarations: the same trees
-        SchemeRegistry other = new SchemeRegistry(List.of(new Lean()));
-        String twoTrees = assertThrows(IllegalArgumentException.class, () -> new Styling(MANAGER, List.of(Ink.INSTANCE),
-                new PaletteRegistry(only(Night.INSTANCE), other), Map.of(Ink.INSTANCE, Night.INSTANCE))).getMessage();
-        assertTrue(twoTrees.contains("its styles and its palettes hold two different trees of BaseScheme: an instance registers its schemes once"), twoTrees);
+        SchemeRegistry baseAlone = new SchemeRegistry(List.of(BaseColours.INSTANCE));
+        String unworn = assertThrows(IllegalArgumentException.class, () -> new Styling(MANAGER, List.of(Loudly.INSTANCE),
+                new PaletteRegistry(only(Night.INSTANCE), baseAlone), Map.of(Loudly.INSTANCE, Night.INSTANCE))).getMessage();
+        assertTrue(unworn.contains("loudly is served, and its scheme, LoudScheme, is not registered"),
+                "the styles care nothing for colours; a style served is dressed over its scheme's tree: " + unworn);
     }
 
     @Test
     void aPaletteNothingWears_andASchemeNoPaletteDresses_areNoProblem() {
-        StyleManager plainOnly = StyleManager.of(StyledTaxonomy.INSTANCE.read(), BaseColours.SCHEMES, List.of(StyleRegistration.of(Plain.INSTANCE, PlainStyles.INSTANCE)));
+        StyleManager plainOnly = StyledManagers.INSTANCE.plain();
         Styling styling = new Styling(plainOnly, List.of(Plain.INSTANCE), REGISTRY, Map.of(Plain.INSTANCE, Paper.INSTANCE));
         assertTrue(styling.palettes().contains(Neon.INSTANCE), "neon registered, of a scheme no style requires");
         assertFalse(styling.themes().containsKey("plain_neon"), "and nothing wears it");
         assertTrue(styling.paletteSheet("neon").contains("--fp-glare"), "its sheet written over its own scheme's tree, as the registry read it");
-        assertFalse(plainOnly.trees().containsKey(BaseColours.LoudScheme.class), "which the styles never see");
         Styling noLoudPalette = new Styling(MANAGER, List.of(Ink.INSTANCE), registry(Night.INSTANCE, Paper.INSTANCE), Map.of(Ink.INSTANCE, Night.INSTANCE));
         assertEquals(List.of("ink", "ink_paper"), List.copyOf(noLoudPalette.themes().keySet()), "loudly registered, no palette of its scheme: it stands");
-    }
-
-    /** Another declaration of the base: every colour of it but the hairline - a tree unlike the registered one. */
-    record Lean() implements hue.captains.singapura.js.homing.design.semantic.SchemeDeclaration<hue.captains.singapura.js.homing.design.semantic.BaseScheme> {
-        @Override public hue.captains.singapura.js.homing.design.semantic.BaseScheme scheme() { return hue.captains.singapura.js.homing.design.semantic.BaseScheme.INSTANCE; }
-        @Override public List<? extends hue.captains.singapura.js.homing.design.color.ColorLeaf<hue.captains.singapura.js.homing.design.semantic.BaseScheme, ?, ?>> leaves() {
-            return BaseColours.INSTANCE.leaves().stream().filter(l -> !(l instanceof BaseColours.Hairline)).toList();
-        }
     }
 
     /** The instance's palettes: these alone, in a jar declared on the spot. */
