@@ -87,7 +87,7 @@ public record ReadDesigns() implements StatelessFunctionalObject {
         for (Design<?, ?> d : byDesign.keySet())
             if (Schemes.INSTANCE.of(d).isEmpty())
                 problems.add(new DesignProblem(Rule.NO_SCHEME, d.token() + " is in no scheme: its first type argument is an abstract class - "
-                        + "the base, one on top of it, or one from scratch"));
+                        + "a scheme from scratch or one on top of another"));
 
         // 3. each design complete over its branch, and what each leaf owns
         var owned = new HashMap<VirtualComponent<?>, List<Target>>();

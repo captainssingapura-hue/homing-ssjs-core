@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.design.color;
 
 /**
- * A branch at the top of the colour tree, in its scheme: {@code record Attention() implements L1_ColorBranch<Base>}.
+ * A branch at the top of the colour tree, in its scheme: {@code record Attention() implements L1_ColorBranch<BaseScheme>}.
  *
  * @param <S> the scheme it is in
  */

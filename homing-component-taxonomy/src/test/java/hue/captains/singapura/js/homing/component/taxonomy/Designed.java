@@ -1,6 +1,5 @@
 package hue.captains.singapura.js.homing.component.taxonomy;
 
-import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import java.util.List;
 
 /**
@@ -39,11 +38,11 @@ final class Designed {
         @Override public Region parent() { return Region.INSTANCE; }
     }
 
-    record Plain() implements Design<ColorScheme.Base, Frame> {
+    record Plain() implements Design<BaseScheme, Frame> {
         static final Plain INSTANCE = new Plain();
     }
 
-    record Bold() implements Design<ColorScheme.Base, Frame> {
+    record Bold() implements Design<BaseScheme, Frame> {
         static final Bold INSTANCE = new Bold();
     }
 

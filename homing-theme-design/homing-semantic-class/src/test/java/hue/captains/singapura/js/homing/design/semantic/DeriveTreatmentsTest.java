@@ -5,7 +5,6 @@ import hue.captains.singapura.js.homing.component.taxonomy.Component;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.design.State;
 import hue.captains.singapura.js.homing.design.Target;
-import hue.captains.singapura.js.homing.design.color.ColorScheme.Base;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingTaxonomy.Control;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingTaxonomy.DangerButton;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingTaxonomy.PlainButton;
@@ -30,10 +29,10 @@ class DeriveTreatmentsTest {
 
     private static final Taxonomy TAXONOMY = ResolvingTaxonomy.INSTANCE.read();
     private static final ColorTree COLOURS = ResolvingThemes.COLOURS;
-    private static final ColorPalette<Base> PAPER = ResolvingColours.Paper.INSTANCE;
+    private static final ColorPalette<BaseScheme> PAPER = ResolvingColours.Paper.INSTANCE;
 
     /** The danger button's shadow is the plain button's, which answers focus itself: a state only the redirect brings. */
-    public record Redirecting() implements Derives<Base, ResolvingThemes.Valued> {
+    public record Redirecting() implements Derives<BaseScheme, ResolvingThemes.Valued> {
         @Override public ResolvingThemes.Valued base() { return ResolvingThemes.Valued.INSTANCE; }
         @Override public List<Implementation<?>> implementations() {
             return List.of(new Implementation<>(DangerButton.INSTANCE, Target.Shape.Shadow.INSTANCE, new Answer.Redirect<>(PlainButton.INSTANCE)),
@@ -43,7 +42,7 @@ class DeriveTreatmentsTest {
     }
 
     /** A control that cannot be used says nothing of its opacity: its base's treatment ends here. */
-    public record Silencing() implements Derives<Base, ResolvingThemes.Valued> {
+    public record Silencing() implements Derives<BaseScheme, ResolvingThemes.Valued> {
         @Override public ResolvingThemes.Valued base() { return ResolvingThemes.Valued.INSTANCE; }
         @Override public List<Implementation<?>> implementations() {
             return List.of(new Implementation<>(Control.INSTANCE, Target.Effect.Opacity.INSTANCE,

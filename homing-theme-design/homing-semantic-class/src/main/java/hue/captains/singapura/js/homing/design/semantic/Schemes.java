@@ -9,37 +9,40 @@ import java.lang.reflect.Modifier;
 import java.util.Optional;
 
 /**
- * The schemes things are in, read off their declarations: a node's, a palette's, a style's, a design's. A scheme is an abstract
- * class: {@link ColorScheme.Base}, one on top of another, or one from scratch that implements {@link ColorScheme}
- * alone - never the marker itself, nor a variable, which a declaration could otherwise slip in.
+ * The schemes things are in, read off their declarations: a node's, a palette's, a style's, a design's, a tree
+ * reader's. A scheme is an abstract class: one from scratch that implements {@link ColorScheme} alone - a base - or one
+ * on top of another - never the marker itself, nor a variable, which a declaration could otherwise slip in.
  */
-record Schemes() implements StatelessFunctionalObject {
+public record Schemes() implements StatelessFunctionalObject {
 
-    static final Schemes INSTANCE = new Schemes();
+    public static final Schemes INSTANCE = new Schemes();
 
     /** The scheme a node is in. */
-    Optional<Class<?>> of(ColorNode<?, ?, ?> node) { return scheme(node.getClass(), ColorNode.class); }
+    public Optional<Class<?>> of(ColorNode<?, ?, ?> node) { return scheme(node.getClass(), ColorNode.class); }
 
     /** The scheme a palette implements. */
-    Optional<Class<?>> of(ColorPalette<?> palette) { return scheme(palette.getClass(), ColorPalette.class); }
+    public Optional<Class<?>> of(ColorPalette<?> palette) { return scheme(palette.getClass(), ColorPalette.class); }
 
     /** The scheme a style requires. */
-    Optional<Class<?>> of(DesignStyle<?> style) { return scheme(style.getClass(), DesignStyle.class); }
+    public Optional<Class<?>> of(DesignStyle<?> style) { return scheme(style.getClass(), DesignStyle.class); }
 
     /** The scheme a design is in (D33). */
-    Optional<Class<?>> of(Design<?, ?> design) { return scheme(design.getClass(), Design.class); }
+    public Optional<Class<?>> of(Design<?, ?> design) { return scheme(design.getClass(), Design.class); }
 
     /** The scheme below one: the scheme it is on top of, or none for the base and a scheme from scratch. */
-    Optional<Class<?>> below(Class<?> scheme) {
+    public Optional<Class<?>> below(Class<?> scheme) {
         Class<?> up = scheme.getSuperclass();
         return up != null && ColorScheme.class.isAssignableFrom(up) ? Optional.of(up) : Optional.empty();
     }
 
     /** Whether a scheme sees what is in another: its own, and what every scheme below it has. */
-    boolean sees(Class<?> scheme, Class<?> of) { return of.isAssignableFrom(scheme); }
+    public boolean sees(Class<?> scheme, Class<?> of) { return of.isAssignableFrom(scheme); }
 
-    /** {@code the base}, or the scheme's name, as messages say it. */
-    String name(Class<?> scheme) { return scheme == ColorScheme.Base.class ? "the base" : scheme.getSimpleName(); }
+    /** The scheme a tree reader reads. */
+    public Optional<Class<?>> of(SchemeTreeReader<?> reader) { return scheme(reader.getClass(), SchemeTreeReader.class); }
+
+    /** The scheme's name, as messages say it. */
+    public String name(Class<?> scheme) { return scheme.getSimpleName(); }
 
     private static Optional<Class<?>> scheme(Class<?> declared, Class<?> generic) {
         Class<?> s = TypeArguments.INSTANCE.at(declared, generic, 0);

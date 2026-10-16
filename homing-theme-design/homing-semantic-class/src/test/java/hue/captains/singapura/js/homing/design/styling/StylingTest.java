@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class StylingTest {
 
-    private static final StyleManager MANAGER = StyleManager.of(StyledTaxonomy.INSTANCE.read(), ResolvingColours.INSTANCE.read(), List.of(
+    private static final StyleManager MANAGER = StyleManager.of(StyledTaxonomy.INSTANCE.read(), List.of(ResolvingColours.INSTANCE, ResolvingColours.LoudColours.INSTANCE), List.of(
             StyleRegistration.of(Plain.INSTANCE, PlainStyles.INSTANCE), StyleRegistration.of(Ink.INSTANCE, InkStyles.INSTANCE),
             StyleRegistration.of(Loudly.INSTANCE, LoudlyStyles.INSTANCE)));
 
@@ -74,7 +74,7 @@ class StylingTest {
         String twice = assertThrows(IllegalArgumentException.class, () -> new Styling(MANAGER, List.of(Ink.INSTANCE, Ink.INSTANCE),
                 List.of(Night.INSTANCE), Map.of(Ink.INSTANCE, Night.INSTANCE))).getMessage();
         assertTrue(twice.contains("two styles are ink"), twice);
-        StyleManager plainOnly = StyleManager.of(StyledTaxonomy.INSTANCE.read(), ResolvingColours.INSTANCE.read(),
+        StyleManager plainOnly = StyleManager.of(StyledTaxonomy.INSTANCE.read(), List.of(ResolvingColours.INSTANCE),
                 List.of(StyleRegistration.of(Plain.INSTANCE, PlainStyles.INSTANCE)));
         String unregistered = assertThrows(IllegalArgumentException.class, () -> new Styling(plainOnly, List.of(Ink.INSTANCE),
                 List.of(Night.INSTANCE), Map.of(Ink.INSTANCE, Night.INSTANCE))).getMessage();

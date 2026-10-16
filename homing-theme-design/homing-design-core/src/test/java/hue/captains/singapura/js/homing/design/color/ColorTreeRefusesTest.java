@@ -31,10 +31,10 @@ class ColorTreeRefusesTest {
     private static final String PREAMBLE = """
             package hypothetical;
             import hue.captains.singapura.js.homing.design.color.*;
-            import hue.captains.singapura.js.homing.design.color.ColorScheme.Base;
             import hue.captains.singapura.js.homing.design.Target.Color;
             import java.util.List;
             public class Hypothetical {
+                abstract static class Base implements ColorScheme {}
                 abstract static class Neo extends Base {}
                 record Attention() implements L1_ColorBranch<Base> {}
                 record Feedback() implements L1_ColorBranch<Base> {}

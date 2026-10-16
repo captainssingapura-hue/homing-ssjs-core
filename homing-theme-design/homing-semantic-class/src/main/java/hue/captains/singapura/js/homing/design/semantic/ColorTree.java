@@ -13,30 +13,21 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * A colour tree as read (RFC 0067, appendix Semantic Colours and Flavours): its owner's nodes and every extension's,
- * each with its scheme, its parent, and the extension that grafted it. What a palettable colour is resolved through -
- * in two layers, the first answer winning:
- *
- * <ol>
- *   <li><b>the selected palette:</b> the palette worn; then the sub-palette for it of the extension that grafted the
- *       colour, which may be absent;</li>
- *   <li><b>below:</b> the palette the selected one sits on, and so down its scheme's chain; then the extension's base
- *       sub-palette, its last word.</li>
- * </ol>
- *
- * A colour of the owner's own tree has no extension: the selected palette, then down the chain. Made by
+ * A scheme's colour tree as read (RFC 0067, appendix Semantic Colours and Flavours): the normalized tree its reader
+ * overlays, the base's layer first and its own last, each node with its scheme and its parent. A palettable colour is
+ * resolved by the selected palette, then down the palettes it sits on, the first answer winning. Made by
  * {@link ReadColors}, which refuses a tree that cannot be read.
  */
 public final class ColorTree {
 
-    /** A node as read: its scheme, its parent - none at the top - and the extension that grafted it - none for the owner's. */
-    record Read(ColorNode<?, ?, ?> node, Class<?> scheme, ColorNode<?, ?, ?> parent, ColorExtension extension) {}
+    /** A node as read: its scheme, and its parent - none at the top. */
+    record Read(ColorNode<?, ?, ?> node, Class<?> scheme, ColorNode<?, ?, ?> parent) {}
 
     private final Map<Class<?>, Read> read;
 
     ColorTree(Map<Class<?>, Read> read) { this.read = Collections.unmodifiableMap(new LinkedHashMap<>(read)); }
 
-    /** Every node, the owner's first, then each extension's, each in the order listed. */
+    /** Every node, the base's layer first, each layer in the order its reader lists it. */
     public List<ColorNode<?, ?, ?>> nodes() { return read.values().stream().<ColorNode<?, ?, ?>>map(Read::node).toList(); }
 
     /** Whether the tree has this node. */
@@ -57,44 +48,31 @@ public final class ColorTree {
     /** A scheme as messages say it: {@code the base}, or its name. */
     public String schemeName(Class<?> scheme) { return Schemes.INSTANCE.name(scheme); }
 
-    /** The extension that grafted a node; none for one of the owner's own. */
-    public Optional<ColorExtension> extension(ColorNode<?, ?, ?> node) { return Optional.ofNullable(of(node).extension()); }
 
-    /** The concrete colour a palettable colour is under a palette, through the two layers; none when nothing answers it. */
+    /** The concrete colour a palettable colour is under a palette, or one below it; none when nothing answers it. */
     public Optional<ConcreteColor> resolve(ColorPalette<?> selected, Palettable<?, ?> color) {
         return resolution(selected, color).map(Resolved::color);
     }
 
     /**
-     * A palettable colour resolved, and who gave it: the selected palette itself, the extension's sub-palette for it, a
-     * palette below it, or the extension's last word.
+     * A palettable colour resolved, and who gave it: the selected palette itself, or a palette below it.
      *
      * @param color the concrete colour
-     * @param from  who gave it, as a sheet says it - {@code mine-colours for paper}, {@code paper, below neon},
-     *              {@code mine-colours' last word} - empty when the selected palette gave it itself
+     * @param from  who gave it, as a sheet says it - {@code paper, below neon} - empty when the selected palette gave it itself
      */
     public record Resolved(ConcreteColor color, String from) {}
 
-    /** A palettable colour resolved through the two layers, saying who gave it; none when nothing answers it. */
+    /** A palettable colour resolved down the palettes, saying who gave it; none when nothing answers it. */
     public Optional<Resolved> resolution(ColorPalette<?> selected, Palettable<?, ?> color) {
-        ColorExtension extension = of(color).extension();
+        of(color);   // refused when the tree has it not
         Optional<ConcreteColor> found = selected.color(color);
         if (found.isPresent()) return Optional.of(new Resolved(found.get(), ""));
-        String grafted = extension == null ? null : NodeName.ofType(extension.getClass(), "").value();
-        if (extension != null) {
-            found = extension.subPalette(selected).flatMap(s -> s.color(color));
-            if (found.isPresent()) return Optional.of(new Resolved(found.get(), grafted + " for " + selected.token()));
-        }
         var passed = new ArrayList<ColorPalette<?>>(List.of(selected));
         for (Optional<? extends ColorPalette<?>> p = selected.below(); p.isPresent(); p = p.get().below()) {
             if (passed.contains(p.get())) throw new IllegalArgumentException(selected.token() + "'s chain comes back to " + p.get().token());
             passed.add(p.get());
             found = p.get().color(color);
             if (found.isPresent()) return Optional.of(new Resolved(found.get(), p.get().token() + ", below " + selected.token()));
-        }
-        if (extension != null) {
-            found = extension.baseSubPalette().flatMap(s -> s.color(color));
-            if (found.isPresent()) return Optional.of(new Resolved(found.get(), grafted + (grafted.endsWith("s") ? "'" : "'s") + " last word"));
         }
         return Optional.empty();
     }
@@ -119,8 +97,7 @@ public final class ColorTree {
         Class<?> scheme = Schemes.INSTANCE.of(palette).orElseThrow();
         for (Read r : read.values())
             if (r.node() instanceof Palettable<?, ?> p && Schemes.INSTANCE.sees(scheme, r.scheme()) && resolve(palette, p).isEmpty())
-                out.add(palette.token() + " leaves " + p.token() + " unanswered" + (r.extension() == null ? ""
-                        : ", and so does " + r.extension().getClass().getSimpleName() + "'s base sub-palette"));
+                out.add(palette.token() + " leaves " + p.token() + " unanswered");
         return List.copyOf(out);
     }
 
@@ -138,7 +115,7 @@ public final class ColorTree {
             ColorPalette<?> at = next;
             Optional<Class<?>> scheme = schemes.of(at);
             if (scheme.isEmpty()) {
-                out.add(at.token() + " implements no scheme: its type argument is an abstract class on top of the base, or one from scratch");
+                out.add(at.token() + " implements no scheme: its type argument is an abstract class, a scheme from scratch or one on top of another");
                 return out;
             }
             Optional<Class<?>> belowScheme = schemes.below(scheme.get());
@@ -161,7 +138,7 @@ public final class ColorTree {
 
     private Read of(ColorNode<?, ?, ?> node) {
         Read r = read.get(node.getClass());
-        if (r == null) throw new IllegalArgumentException(node.token() + " is in no colour tree read: its owner or an extension lists it");
+        if (r == null) throw new IllegalArgumentException(node.token() + " is in no colour tree read: its scheme's layer, or one below it, lists it");
         return r;
     }
 }

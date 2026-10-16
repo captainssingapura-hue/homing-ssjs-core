@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class CheckDeclarationTest {
 
     private static final Taxonomy TAXONOMY = StyledTaxonomy.INSTANCE.read();
-    private static final ColorTree TREE = ResolvingColours.INSTANCE.read();
+    private static final ColorTree TREE = ResolvingColours.LoudColours.INSTANCE.read();
     private static final CheckDeclaration CHECK = CheckDeclaration.INSTANCE;
 
     @Test

@@ -2,8 +2,8 @@ package hue.captains.singapura.js.homing.design.styling;
 
 import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
-import hue.captains.singapura.js.homing.design.semantic.ColorTree;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingColours;
+import hue.captains.singapura.js.homing.design.semantic.SchemeTreeReader;
 import hue.captains.singapura.js.homing.design.styles.ink.InkStyles;
 import hue.captains.singapura.js.homing.design.styles.loudly.LoudlyStyles;
 import hue.captains.singapura.js.homing.design.styles.plain.PlainStyles;
@@ -23,14 +23,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class StyleManagerTest {
 
     private static final Taxonomy TAXONOMY = StyledTaxonomy.INSTANCE.read();
-    private static final ColorTree TREE = ResolvingColours.INSTANCE.read();
+    /** The schemes' readers: the base's, and the loud scheme's over it. */
+    private static final List<SchemeTreeReader<?>> SCHEMES = List.of(ResolvingColours.INSTANCE, ResolvingColours.LoudColours.INSTANCE);
     private static final StyleRegistration PLAIN = StyleRegistration.of(StyledStyles.Plain.INSTANCE, PlainStyles.INSTANCE);
     private static final StyleRegistration INK = StyleRegistration.of(StyledStyles.Ink.INSTANCE, InkStyles.INSTANCE);
     private static final StyleRegistration LOUDLY = StyleRegistration.of(StyledStyles.Loudly.INSTANCE, LoudlyStyles.INSTANCE);
 
     @Test
     void anInstance_ofItsRegistrations_heldToTheRules() {
-        StyleManager manager = StyleManager.of(TAXONOMY, TREE, List.of(PLAIN, INK, LOUDLY));
+        StyleManager manager = StyleManager.of(TAXONOMY, SCHEMES, List.of(PLAIN, INK, LOUDLY));
         assertEquals(List.of("plain", "ink", "loudly"), manager.styles().stream().map(s -> s.token()).toList(), "the default first");
         assertEquals(5, manager.implementations(StyledStyles.Plain.INSTANCE).size(), "the base layer: every casting");
         assertEquals(1, manager.implementations(StyledStyles.Ink.INSTANCE).size());
@@ -38,7 +39,7 @@ class StyleManagerTest {
 
     @Test
     void aCasting_itsOwn_elseItsBaseLayers_aDelegationFollowed() {
-        StyleManager manager = StyleManager.of(TAXONOMY, TREE, List.of(PLAIN, INK, LOUDLY));
+        StyleManager manager = StyleManager.of(TAXONOMY, SCHEMES, List.of(PLAIN, INK, LOUDLY));
         var ink = StyledStyles.Ink.INSTANCE;
         assertEquals("ink's own", manager.resolve(ink, new Casting(StatedTaxonomy.Tab.INSTANCE)).says());
         assertEquals("plain's, ink answering absence", manager.resolve(ink, new Casting(StatedTaxonomy.Strip.INSTANCE)).says());
@@ -48,7 +49,7 @@ class StyleManagerTest {
 
     @Test
     void aStylesSheet_oneClassForEveryCasting_aDelegationUnderItsOwnClass() {
-        String sheet = StyleManager.of(TAXONOMY, TREE, List.of(PLAIN, INK, LOUDLY)).sheet(StyledStyles.Ink.INSTANCE);
+        String sheet = StyleManager.of(TAXONOMY, SCHEMES, List.of(PLAIN, INK, LOUDLY)).sheet(StyledStyles.Ink.INSTANCE);
         assertTrue(sheet.contains("@property --extent"), "the degrees registered");
         assertTrue(sheet.contains("/* tab: ink's own */\n.styled-tab {"), sheet);
         assertTrue(sheet.contains("/* tab_lead: plain's, ink answering absence, as plain's Tab */\n"), "the lead tab: plain's tab's file");
@@ -56,30 +57,45 @@ class StyleManagerTest {
         assertTrue(sheet.contains("@keyframes meter-sweep {"), "the meter's keyframes, named for it");
         assertTrue(!sheet.contains("$"), "every mark filled in");
         for (Casting c : TAXONOMY.castings()) assertTrue(sheet.contains("." + LeafClasses.INSTANCE.styled(c) + " {"), c.token());
-        var families = StyleManager.of(TAXONOMY, TREE, List.of(PLAIN, INK, LOUDLY)).families(StyledStyles.Ink.INSTANCE);
+        var families = StyleManager.of(TAXONOMY, SCHEMES, List.of(PLAIN, INK, LOUDLY)).families(StyledStyles.Ink.INSTANCE);
         assertTrue(families.get("control").contains(".styled-tab {") && families.get("gauge").contains(".styled-meter {"), "the family files, aggregated");
     }
 
     @Test
     void refused_noBaseLayer_aJarProvidingNothingForItsStyle_aStyleProvidedForNotRegistered_twoOfOneCasting() {
-        String noBase = assertThrows(IllegalArgumentException.class, () -> StyleManager.of(TAXONOMY, TREE, List.of(INK))).getMessage();
+        String noBase = assertThrows(IllegalArgumentException.class, () -> StyleManager.of(TAXONOMY, SCHEMES, List.of(INK))).getMessage();
         assertTrue(noBase.contains("ink's base layer, plain, is not registered"), noBase);
-        String wrongJar = assertThrows(IllegalArgumentException.class, () -> StyleManager.of(TAXONOMY, TREE,
+        String wrongJar = assertThrows(IllegalArgumentException.class, () -> StyleManager.of(TAXONOMY, SCHEMES,
                 List.of(PLAIN, StyleRegistration.of(StyledStyles.Ink.INSTANCE, LoudlyStyles.INSTANCE)))).getMessage();
         assertTrue(wrongJar.contains("LoudlyStyles is registered for ink, and provides nothing for it"), wrongJar);
         assertTrue(wrongJar.contains("provides for loudly, which the instance does not register"), wrongJar);
-        String twice = assertThrows(IllegalArgumentException.class, () -> StyleManager.of(TAXONOMY, TREE,
+        String twice = assertThrows(IllegalArgumentException.class, () -> StyleManager.of(TAXONOMY, SCHEMES,
                 List.of(PLAIN, StyleRegistration.of(StyledStyles.Ink.INSTANCE, InkStyles.INSTANCE, new InkAgain())))).getMessage();
         assertTrue(twice.contains("ink has 2 implementations of tab"), twice);
     }
 
     @Test
     void theRuleSet_isTheInstances() {
-        StyleManager none = StyleManager.of(TAXONOMY, TREE, List.of(INK), List.of());
+        StyleManager none = StyleManager.of(TAXONOMY, SCHEMES, List.of(INK), List.of());
         assertEquals(List.of("ink"), none.styles().stream().map(s -> s.token()).toList(), "held to no rule, it stands");
         StyleRule onlyPlain = m -> m.styles().stream().anyMatch(s -> s.token().equals("plain")) ? List.of() : List.of("plain first");
-        assertTrue(assertThrows(IllegalArgumentException.class, () -> StyleManager.of(TAXONOMY, TREE, List.of(INK), List.of(onlyPlain)))
+        assertTrue(assertThrows(IllegalArgumentException.class, () -> StyleManager.of(TAXONOMY, SCHEMES, List.of(INK), List.of(onlyPlain)))
                 .getMessage().contains("plain first"), "a rule of the instance's own");
+    }
+
+    @Test
+    void theSchemes_areTheRegisteredStyles_eachReadByTheOneReaderRegisteredForIt() {
+        StyleManager manager = StyleManager.of(TAXONOMY, SCHEMES, List.of(PLAIN, INK, LOUDLY));
+        assertEquals(17, manager.tree(StyledStyles.Loudly.INSTANCE).nodes().size(), "loudly over the loud scheme's tree: the base's layer and its glare");
+        assertEquals(16, manager.tree(StyledStyles.Ink.INSTANCE).nodes().size(), "ink over the base's alone");
+        String unread = assertThrows(IllegalArgumentException.class,
+                () -> StyleManager.of(TAXONOMY, List.of(ResolvingColours.INSTANCE), List.of(PLAIN, INK, LOUDLY))).getMessage();
+        assertTrue(unread.contains("loudly requires Loud, which no registered reader reads"), unread);
+        String unworn = assertThrows(IllegalArgumentException.class, () -> StyleManager.of(TAXONOMY, SCHEMES, List.of(PLAIN, INK))).getMessage();
+        assertTrue(unworn.contains("Loud is read, and no registered style requires it"), unworn);
+        String twice = assertThrows(IllegalArgumentException.class,
+                () -> StyleManager.of(TAXONOMY, List.of(ResolvingColours.INSTANCE, new ResolvingColours()), List.of(PLAIN, INK))).getMessage();
+        assertTrue(twice.contains("BaseScheme is read by two readers"), twice);
     }
 
     /** A second jar for ink, implementing its tab again. */

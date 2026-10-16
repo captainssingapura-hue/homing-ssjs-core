@@ -43,7 +43,7 @@ public final class Dressed {
         this.style = Objects.requireNonNull(style, "Dressed.style");
         this.palette = Objects.requireNonNull(palette, "Dressed.palette");
         if (Schemes.INSTANCE.of(style).isEmpty())
-            throw new IllegalArgumentException(style.token() + " requires no scheme: its type argument is an abstract class, the base, one on top of it, or one from scratch");
+            throw new IllegalArgumentException(style.token() + " requires no scheme: its type argument is an abstract class, a scheme from scratch or one on top of another");
         colors.requireChain(palette);
         this.layer = layerOf(style, new LinkedHashSet<>());
     }

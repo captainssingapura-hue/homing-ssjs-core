@@ -18,7 +18,7 @@ public record ColorProblem(Rule rule, String says) implements ValueObject {
         NOT_STATELESS,
         /** A node in no scheme - the marker itself, or a variable - or under a parent its scheme cannot see. */
         SCHEME_ASTRAY,
-        /** A node whose parent the tree has not: a branch neither its owner nor an extension lists. */
+        /** A node whose parent the tree has not: a branch neither its layer nor one below lists. */
         PARENT_MISSING,
         /** Two nodes with one name, or one node listed twice. */
         NAME_TWICE,
@@ -30,8 +30,12 @@ public record ColorProblem(Rule rule, String says) implements ValueObject {
         FIXED_BADLY,
         /** CSS's currentColor at no share, or at more than the whole of it. */
         SHARE_BADLY,
-        /** An extension grafting palettable colours whose base sub-palette, its last word, is missing or leaves one unanswered. */
-        LAST_WORD_MISSING
+        /** A layer of no scheme, one holding another scheme's colour, or one sitting on a layer other than its scheme's below, or on itself. */
+        LAYER_ASTRAY,
+        /** A layer that adds no colour: a scheme without colours of its own means nothing. */
+        LAYER_EMPTY,
+        /** A layer whose reader lives in another jar than its scheme: a scheme and its colours live in one jar. */
+        LAYER_ELSEWHERE
     }
 
     @Override public String toString() { return rule + ": " + says; }

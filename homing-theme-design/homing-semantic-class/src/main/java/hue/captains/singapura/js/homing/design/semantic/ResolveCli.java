@@ -30,7 +30,7 @@ import java.util.List;
  * </pre>
  *
  * Each {@code CLASS} names a type by its class, whose {@code INSTANCE} is read: a
- * {@link TaxonomySource}, a {@link ColorSource}, a {@link DesignStyle}, a {@link ColorPalette} of the style's scheme; {@code NODE} is a casting's token -
+ * {@link TaxonomySource}, a {@link SchemeTreeReader}, a {@link DesignStyle}, a {@link ColorPalette} of the style's scheme; {@code NODE} is a casting's token -
  * {@code danger-button}, {@code danger-button_go}. The exit is 0 when every look resolves, 1 when
  * one is unanswered, 2 when the command is wrong.
  */
@@ -71,7 +71,7 @@ public record ResolveCli() implements StatelessFunctionalObject {
             Taxonomy taxonomy = taxonomy(taxonomyClass);
             if (list != null) return list(taxonomy, list, out, err);
             if (colorsClass == null || styleClass == null || paletteClass == null) return usage(err, "no --colors, no --style or no --palette");
-            ColorTree colors = instance(colorsClass, ColorSource.class).read();
+            ColorTree colors = instance(colorsClass, SchemeTreeReader.class).read();
             DesignStyle<?> style = instance(styleClass, DesignStyle.class);
             ColorPalette<?> palette = instance(paletteClass, ColorPalette.class);
             Dressed theme = Wear.INSTANCE.of(colors, style, palette).orElseThrow(() -> new IllegalArgumentException(

@@ -15,8 +15,8 @@ import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
  * <pre>{@code
  * package hue.captains.singapura.js.homing.design.styles.editorial;
  *
- * public record PlainButton() implements CastingStyle<ColorScheme.Base, Editorial, HouseControls.PlainButton, RoleRoot> {
- *     @Override public StylingRes<ColorScheme.Base, HouseControls.PlainButton> style() {
+ * public record PlainButton() implements CastingStyle<BaseScheme, Editorial, HouseControls.PlainButton, RoleRoot> {
+ *     @Override public StylingRes<BaseScheme, HouseControls.PlainButton> style() {
  *         return new StylingRes.CssContent<>(new Raised(), new Text(), new Border(), new Ring());
  *     }
  * }

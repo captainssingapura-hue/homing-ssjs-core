@@ -42,7 +42,7 @@ record RenderColor() implements StatelessFunctionalObject {
             case Interpolated<?, ?> i -> i;
             case CurrentColor<?, ?> k -> k;
         };
-        if (!theme.colors().has(node)) throw new IllegalArgumentException(node.token() + " is in no colour tree read: its owner or an extension lists it");
+        if (!theme.colors().has(node)) throw new IllegalArgumentException(node.token() + " is in no colour tree read: its scheme's layer, or one below it, lists it");
         return switch (color) {
             case Palettable<?, ?> p -> theme.colors().resolve(theme.palette(), p).orElseThrow(() -> new IllegalArgumentException(
                     theme.palette().token() + " gives " + p.token() + " no colour, nor does any palette below it or a sub-palette")).css();

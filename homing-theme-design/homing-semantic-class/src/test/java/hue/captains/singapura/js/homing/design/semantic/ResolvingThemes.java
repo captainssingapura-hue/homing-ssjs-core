@@ -6,7 +6,6 @@ import hue.captains.singapura.js.homing.component.taxonomy.Taxon;
 import hue.captains.singapura.js.homing.design.AnimationEffect;
 import hue.captains.singapura.js.homing.design.State;
 import hue.captains.singapura.js.homing.design.Target;
-import hue.captains.singapura.js.homing.design.color.ColorScheme.Base;
 import hue.captains.singapura.js.homing.design.color.Paint;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Alarm;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Clear;
@@ -58,7 +57,7 @@ final class ResolvingThemes {
     private static final Target.Color.Text INK = Target.Color.Text.INSTANCE;
 
     /** The colour tree the themes are worn over, read once. */
-    static final ColorTree COLOURS = ResolvingColours.INSTANCE.read();
+    static final ColorTree COLOURS = ResolvingColours.LoudColours.INSTANCE.read();
 
     /** The themes by the names the cases give them. */
     static final Map<String, Dressed> BY_NAME = Map.of(
@@ -74,7 +73,7 @@ final class ResolvingThemes {
     };
 
 
-    public record Sketch() implements DesignStyle<Base> {
+    public record Sketch() implements DesignStyle<BaseScheme> {
         public static final Sketch INSTANCE = new Sketch();
         @Override public List<Implementation<?>> implementations() {
             return List.of(
@@ -83,7 +82,7 @@ final class ResolvingThemes {
                     rest(DangerButton.INSTANCE, Target.Shape.Corner.INSTANCE, ""),
                     at(Root.INSTANCE, Target.Effect.Opacity.INSTANCE, State.DISABLED, ""));
         }
-        @Override public List<Coloring<Base, ?>> colorings() {
+        @Override public List<Coloring<BaseScheme, ?>> colorings() {
             return List.of(
                     new Coloring<>(Root.INSTANCE, BACKGROUND, new Answer.Painted<>(new Paint.Ground<>(new Page()))),
                     new Coloring<>(new Casting(DangerButton.INSTANCE, Go.INSTANCE), BACKGROUND, new Answer.Painted<>(new Paint.Ground<>(new Danger()))),
@@ -93,7 +92,7 @@ final class ResolvingThemes {
         }
     }
 
-    public record Detailed() implements Derives<Base, Sketch> {
+    public record Detailed() implements Derives<BaseScheme, Sketch> {
         public static final Detailed INSTANCE = new Detailed();
         @Override public Sketch base() { return Sketch.INSTANCE; }
         @Override public List<Implementation<?>> implementations() {
@@ -101,14 +100,14 @@ final class ResolvingThemes {
                     rest(PlainButton.INSTANCE, Target.Shape.Corner.INSTANCE, ""),
                     new Implementation<>(new Casting(Button.INSTANCE, Cancel.INSTANCE), Target.Shape.Corner.INSTANCE, new Answer.Own<>("")));
         }
-        @Override public List<Coloring<Base, ?>> colorings() {
+        @Override public List<Coloring<BaseScheme, ?>> colorings() {
             return List.of(
                     new Coloring<>(Root.INSTANCE, INK, new Answer.Painted<>(new Paint.With<>(new Copy()))),
                     new Coloring<>(DangerButton.INSTANCE, BACKGROUND, new Answer.Painted<>(Map.of(State.DISABLED, new Paint.Ground<>(new Raised())))));
         }
     }
 
-    public record Valued() implements DesignStyle<Base> {
+    public record Valued() implements DesignStyle<BaseScheme> {
         public static final Valued INSTANCE = new Valued();
         @Override public List<Implementation<?>> implementations() {
             return List.of(
@@ -153,7 +152,7 @@ final class ResolvingThemes {
                             new Answer.Own<Target.Shape.Shadow>(Map.of(State.HOVER, "box-shadow: 0 6px 16px color-mix(in srgb, var(--box-shadow-cast) 12%, transparent);",
                                                                      State.DISABLED, "box-shadow: none;"))));
         }
-        @Override public List<Coloring<Base, ?>> colorings() {
+        @Override public List<Coloring<BaseScheme, ?>> colorings() {
             return List.of(
                     new Coloring<>(Root.INSTANCE, BACKGROUND, new Answer.Painted<>(new Paint.Ground<>(new Clear()))),
                     new Coloring<>(Root.INSTANCE, INK, new Answer.Painted<>(new Paint.Inherited<>())),
@@ -170,7 +169,7 @@ final class ResolvingThemes {
         }
     }
 
-    public record Squared() implements Derives<Base, Valued> {
+    public record Squared() implements Derives<BaseScheme, Valued> {
         public static final Squared INSTANCE = new Squared();
         @Override public Valued base() { return Valued.INSTANCE; }
         @Override public List<Implementation<?>> implementations() {

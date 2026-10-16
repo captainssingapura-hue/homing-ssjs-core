@@ -16,8 +16,7 @@ import java.util.Optional;
  * <p>A palette implements one scheme, its type argument, and is worn only by a style of that scheme. It sits on a
  * palette of the scheme below, which answers what its own scheme does not add, and so down the schemes; a palette of
  * the base, or of a scheme from scratch, sits on nothing. Each palette is complete over the palettable colours its own
- * scheme adds - an extension's sub-palettes answer the colours it grafts - which the colour tree checks when it is
- * read against the palette ({@link ColorTree#check(ColorPalette)}).</p>
+ * scheme adds, which the colour tree checks when it is read against the palette ({@link ColorTree#check(ColorPalette)}).</p>
  *
  * @param <S> the scheme it implements
  */

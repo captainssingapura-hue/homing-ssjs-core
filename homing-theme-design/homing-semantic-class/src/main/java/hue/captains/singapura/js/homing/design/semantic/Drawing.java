@@ -54,10 +54,10 @@ public sealed interface Drawing<T extends Target> extends ValueObject
 
     /**
      * A colour target painted (RFC 0067, appendix Semantic Colours and Flavours): a case its target offers per
-     * state it answers, at rest the look, in semantic colours of the base - palettable ones follow the palette
+     * state it answers, at rest the look, in semantic colours of its design's scheme - palettable ones follow the palette
      * worn, a fixed one pins its colour. In states the target offers a slot for.
      */
-    record Painted<T extends Target.Color>(T target, Answer.Painted<ColorScheme.Base, T> answer) implements Drawing<T> {
+    record Painted<T extends Target.Color>(T target, Answer.Painted<?, T> answer) implements Drawing<T> {
         public Painted {
             Objects.requireNonNull(target, "Drawing.Painted.target");
             Objects.requireNonNull(answer, "Drawing.Painted.answer");
@@ -69,7 +69,7 @@ public sealed interface Drawing<T extends Target> extends ValueObject
         }
 
         /** The look alone: a paint at rest. */
-        public Painted(T target, Paint<ColorScheme.Base, T> rest) { this(target, new Answer.Painted<>(rest)); }
+        public Painted(T target, Paint<?, T> rest) { this(target, new Answer.Painted<>(rest)); }
     }
 
     /**

@@ -9,7 +9,6 @@ import hue.captains.singapura.js.homing.design.Target;
 import hue.captains.singapura.js.homing.design.color.ColorNode;
 import hue.captains.singapura.js.homing.design.color.ColorScale;
 import hue.captains.singapura.js.homing.design.color.ColorScheme;
-import hue.captains.singapura.js.homing.design.color.ColorScheme.Base;
 import hue.captains.singapura.js.homing.design.color.ConcreteColor;
 import hue.captains.singapura.js.homing.design.color.CurrentColor;
 import hue.captains.singapura.js.homing.design.color.Fixed;
@@ -40,31 +39,33 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * A colour tree read from its owner's nodes and its extensions' grafts, refused where the compiler cannot refuse it;
- * a palettable colour resolved through the two layers; a palette checked whole over what its scheme sees; a colour
- * moving along a scale only where the casting varies its colour by degree.
+ * A scheme's colour tree read by its reader, layer by layer from the base up to its own - each layer its scheme's alone,
+ * closed, adding colours - and refused where the compiler cannot refuse it; a palettable colour resolved down the
+ * palettes; a palette checked whole over what its scheme sees; a colour moving along a scale only where the casting
+ * varies its colour by degree.
  */
 class ColorTreeTest {
 
     private static final ColorTree TREE = ResolvingThemes.COLOURS;
 
     @Test
-    void theTree_isTheOwnersNodes_thenEachExtensionsFoundOnTheClasspath() {
-        assertEquals(17, TREE.nodes().size(), "fourteen of its owner's - a hairline, the current colour at a share, among them - three the mine colours graft");
-        assertTrue(TREE.extension(new MineColours.Flag()).orElseThrow() instanceof MineColours);
-        assertTrue(TREE.extension(new Copy()).isEmpty(), "the owner's own: no extension");
+    void theTree_isTheLayersFromTheBaseUp_eachItsSchemesAlone() {
+        assertEquals(16, ResolvingColours.INSTANCE.read().nodes().size(), "the base's own - a hairline, the current colour at a share, the mines among them");
+        assertEquals(17, TREE.nodes().size(), "the loud scheme's, its glare over the base's sixteen");
+        assertEquals(new Glare(), TREE.nodes().get(16), "the base's layer first, the scheme's own last");
+        assertTrue(!ResolvingColours.INSTANCE.read().has(new Glare()), "the base sees nothing of the scheme on top of it");
         assertEquals(ResolvingColours.Loud.class, TREE.scheme(new Glare()));
         assertEquals(new Signals(), TREE.parent(new Glare()).orElseThrow(), "a scheme's colour, under the base's branch");
         assertTrue(TREE.parent(new Signals()).isEmpty(), "a branch at the top");
     }
 
-    /** The selected palette, then the extension's word for it; the palettes below, then the extension's last word. */
+    /** The selected palette, then the palettes below it. */
     @Test
-    void aPalettableColour_resolvesInTwoLayers_theFirstAnswerWinning() {
-        var flag = new MineColours.Flag();
-        assertEquals("#e53935", css(TREE.resolve(Paper.INSTANCE, flag)), "paper knows no flag: the extension's word for paper");
-        assertEquals("#ff6f00", css(TREE.resolve(Night.INSTANCE, flag)), "the night knows the flag: a palette's own wins over the extension's");
-        assertEquals("#d32f2f", css(TREE.resolve(Neon.INSTANCE, flag)), "neither neon nor paper below it: the extension's last word");
+    void aPalettableColour_resolvesDownThePalettes_theFirstAnswerWinning() {
+        var flag = new ResolvingColours.Flag();
+        assertEquals("#e53935", css(TREE.resolve(Paper.INSTANCE, flag)), "paper's own flag");
+        assertEquals("#ff6f00", css(TREE.resolve(Night.INSTANCE, flag)), "the night's own");
+        assertEquals("#e53935", css(TREE.resolve(Neon.INSTANCE, flag)), "what neon leaves, paper below it gives");
         assertEquals("#ff0055", css(TREE.resolve(Neon.INSTANCE, new Danger())), "neon's own danger, over paper's");
         assertEquals("#1f2937", css(TREE.resolve(Neon.INSTANCE, new Copy())), "what neon leaves, paper below it gives");
         assertEquals("#39ff14", css(TREE.resolve(Neon.INSTANCE, new Glare())));
@@ -77,9 +78,9 @@ class ColorTreeTest {
         assertEquals(List.of(), TREE.check(Night.INSTANCE));
         assertEquals(List.of(), TREE.check(Neon.INSTANCE), "complete over its scheme's own, the rest down the chain");
         assertEquals(List.of("unsafe leaves safe unanswered"), TREE.check(new ResolvingColours.Unsafe()));
-        assertEquals(List.of("stranded sits on nothing, and Loud is on top of the base: it sits on a palette of the base"),
+        assertEquals(List.of("stranded sits on nothing, and Loud is on top of BaseScheme: it sits on a palette of BaseScheme"),
                 TREE.check(new ResolvingColours.Stranded()));
-        assertEquals(List.of("unmarked implements no scheme: its type argument is an abstract class on top of the base, or one from scratch"),
+        assertEquals(List.of("unmarked implements no scheme: its type argument is an abstract class, a scheme from scratch or one on top of another"),
                 TREE.check(new ResolvingColours.Unmarked()));
     }
 
@@ -87,24 +88,24 @@ class ColorTreeTest {
     void anInterpolatedColour_isWorkedOutWhenTheSheetIsMade_andOnlyOneTheTreeHas() {
         var nodes = new ArrayList<ColorNode<?, ?, ?>>(TREE.nodes());
         nodes.addAll(List.of(new AtSafe(), new MostlyClear()));
-        var tree = ReadColors.INSTANCE.read(nodes, List.of());
+        var tree = ReadColors.INSTANCE.read(nodes);
         var theme = new Dressed(tree, ResolvingThemes.Valued.INSTANCE, Paper.INSTANCE);
         var render = RenderColor.INSTANCE;
         assertEquals("#16a34a", render.css(theme, new AtSafe()), "at a knot's degree, the knot's own colour");
         assertEquals("color-mix(in oklab, #16a34a 25%, transparent)", render.css(theme, new MostlyClear()), "a quarter of the way from safe, three from clear");
         var e = assertThrows(IllegalArgumentException.class, () -> render.css(ResolvingThemes.BY_NAME.get("valued"), new AtSafe()));
-        assertEquals("at-safe is in no colour tree read: its owner or an extension lists it", e.getMessage());
+        assertEquals("at-safe is in no colour tree read: its scheme's layer, or one below it, lists it", e.getMessage());
     }
 
     /** The risk scale's first knot. */
-    public record AtSafe() implements Interpolated<Base, Signals> {
-        @Override public ColorScale<? super Base, ?> scale() { return new Risk(); }
+    public record AtSafe() implements Interpolated<BaseScheme, Signals> {
+        @Override public ColorScale<? super BaseScheme, ?> scale() { return new Risk(); }
         @Override public double degree() { return -1; }
     }
 
     /** Three quarters of the way from safe at -1 to clear at 0. */
-    public record MostlyClear() implements Interpolated<Base, Signals> {
-        @Override public ColorScale<? super Base, ?> scale() { return new Risk(); }
+    public record MostlyClear() implements Interpolated<BaseScheme, Signals> {
+        @Override public ColorScale<? super BaseScheme, ?> scale() { return new Risk(); }
         @Override public double degree() { return -0.25; }
     }
 
@@ -118,9 +119,9 @@ class ColorTreeTest {
     }
 
     /** Every button's ink along the risk scale - the plain button's included, which varies its colour by no degree. */
-    public record Swaying() implements DesignStyle<Base> {
+    public record Swaying() implements DesignStyle<BaseScheme> {
         @Override public List<Implementation<?>> implementations() { return List.of(); }
-        @Override public List<Coloring<Base, ?>> colorings() {
+        @Override public List<Coloring<BaseScheme, ?>> colorings() {
             return List.of(new Coloring<>(Button.INSTANCE, Target.Color.Text.INSTANCE, new Answer.Painted<>(new Paint.Along<>(new Risk()))),
                            new Coloring<>(Root.INSTANCE, Target.Color.Text.INSTANCE, new Answer.Painted<>(new Paint.Inherited<>())));
         }
@@ -128,36 +129,32 @@ class ColorTreeTest {
 
     // ── refused as read ────────────────────────────────────────────────────
 
-    public record Lost() implements L1_ColorBranch<Base> {}
-    public record Astray() implements Palettable<Base, Lost> {}
-    public record Danger2() implements Palettable<Base, Signals> { @Override public String token() { return "danger"; } }
-    public record Coloured(int shade) implements Palettable<Base, Signals> {}
+    public record Lost() implements L1_ColorBranch<BaseScheme> {}
+    public record Astray() implements Palettable<BaseScheme, Lost> {}
+    public record Danger2() implements Palettable<BaseScheme, Signals> { @Override public String token() { return "danger"; } }
+    public record Coloured(int shade) implements Palettable<BaseScheme, Signals> {}
     public record Marker() implements L1_ColorBranch<ColorScheme> {}
-    public record Short() implements ColorScale<Base, Signals> {
-        @Override public List<Knot<Base>> knots() { return List.of(new Knot<>(new Safe(), -1), new Knot<>(new Danger(), 1)); }
+    public record Short() implements ColorScale<BaseScheme, Signals> {
+        @Override public List<Knot<BaseScheme>> knots() { return List.of(new Knot<>(new Safe(), -1), new Knot<>(new Danger(), 1)); }
     }
-    public record Falling() implements ColorScale<Base, Signals> {
-        @Override public List<Knot<Base>> knots() {
+    public record Falling() implements ColorScale<BaseScheme, Signals> {
+        @Override public List<Knot<BaseScheme>> knots() {
             return List.of(new Knot<>(new Safe(), -1), new Knot<>(new Danger(), 0.5), new Knot<>(new Copy(), 0.25), new Knot<>(new Danger(), 0.9));
         }
     }
-    public record Off() implements Interpolated<Base, Signals> {
-        @Override public ColorScale<? super Base, ?> scale() { return new Risk(); }
+    public record Off() implements Interpolated<BaseScheme, Signals> {
+        @Override public ColorScale<? super BaseScheme, ?> scale() { return new Risk(); }
         @Override public double degree() { return 2; }
     }
-    public record Blank() implements Fixed<Base, Signals> { @Override public ConcreteColor color() { return null; } }
-    public record None() implements CurrentColor<Base, Signals> { @Override public double share() { return 0; } }
-    public record Graft() implements ColorExtension {
-        @Override public Class<? extends ColorSource> extending() { return ResolvingColours.class; }
-        @Override public List<ColorNode<?, ?, ?>> nodes() { return List.of(new Lost(), new Astray()); }
-    }
+    public record Blank() implements Fixed<BaseScheme, Signals> { @Override public ConcreteColor color() { return null; } }
+    public record None() implements CurrentColor<BaseScheme, Signals> { @Override public double share() { return 0; } }
 
     @Test
     void whatTheCompilerCannotRefuse_isRefusedAsTheTreeIsRead_everyProblemAtOnce() {
         List<ColorNode<?, ?, ?>> own = List.of(new ResolvingColours.Surfaces(), new ResolvingColours.Words(), new Signals(), new ResolvingColours.Clear(),
                 new Safe(), new Danger(), new Copy(), new Risk(),
                 new Astray(), new Danger2(), new Coloured(1), new Marker(), new Short(), new Falling(), new Off(), new Blank(), new None());
-        var e = assertThrows(RefusedColors.class, () -> ReadColors.INSTANCE.read(own, List.of()));
+        var e = assertThrows(RefusedColors.class, () -> ReadColors.INSTANCE.read(own));
         assertEquals(List.of(Rule.NAME_TWICE, Rule.PARENT_MISSING, Rule.NOT_STATELESS, Rule.SCHEME_ASTRAY,
                         Rule.SCALE_BADLY, Rule.SCALE_BADLY, Rule.SCALE_BADLY, Rule.INTERPOLATED_BADLY, Rule.FIXED_BADLY, Rule.SHARE_BADLY),
                 e.problems().stream().map(ColorProblem::rule).toList(), e.getMessage());
@@ -168,11 +165,47 @@ class ColorTreeTest {
         assertTrue(e.getMessage().contains("falling's knot at 0.25 follows one at 0.5: its knots rise strictly"), e.getMessage());
         assertTrue(e.getMessage().contains("off is at 2.0: a degree is from -1 to 1"), e.getMessage());
         assertTrue(e.getMessage().contains("none takes 0.0 of the colour it is given: a share is more than none and at most the whole of it, 1"), e.getMessage());
-        var twice = assertThrows(RefusedColors.class, () -> ReadColors.INSTANCE.read(List.of(new Signals(), new Safe()), List.of(new Graft(), new Graft())));
-        assertTrue(twice.getMessage().contains("lost is listed twice by Graft and by Graft"), twice.getMessage());
-        var lastWord = assertThrows(RefusedColors.class, () -> ReadColors.INSTANCE.read(List.of(), List.of(new Graft())));
-        assertEquals(List.of("LAST_WORD_MISSING: Graft grafts 1 palettable colour and has no base sub-palette: its last word answers every one"),
-                lastWord.problems().stream().map(ColorProblem::toString).toList());
+        var twice = assertThrows(RefusedColors.class, () -> ReadColors.INSTANCE.read(List.of(new Signals(), new Safe(), new Safe())));
+        assertTrue(twice.getMessage().contains("safe is listed twice"), twice.getMessage());
+    }
+
+    // ── a scheme's layers ──────────────────────────────────────────────────
+
+    /** The loud scheme with nothing of its own: it means nothing. */
+    public record Quiet() implements SchemeTreeReader<ResolvingColours.Loud> {
+        @Override public List<? extends ColorNode<ResolvingColours.Loud, ?, ?>> layer() { return List.of(); }
+        @Override public Optional<SchemeTreeReader<? super ResolvingColours.Loud>> below() { return Optional.of(ResolvingColours.INSTANCE); }
+    }
+
+    /** The loud scheme's glare, forgetting the base it is on top of. */
+    public record Adrift() implements SchemeTreeReader<ResolvingColours.Loud> {
+        @Override public List<? extends ColorNode<ResolvingColours.Loud, ?, ?>> layer() { return List.of(new Glare()); }
+    }
+
+    /** One that slips a base colour into the loud scheme's layer - the compiler refuses it but for a raw list. */
+    public record Smuggling() implements SchemeTreeReader<ResolvingColours.Loud> {
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        @Override public List<? extends ColorNode<ResolvingColours.Loud, ?, ?>> layer() { return (List) List.of(new Glare(), new Copy()); }
+        @Override public Optional<SchemeTreeReader<? super ResolvingColours.Loud>> below() { return Optional.of(ResolvingColours.INSTANCE); }
+    }
+
+    /** One that sits on itself. */
+    public record Circling() implements SchemeTreeReader<ResolvingColours.Loud> {
+        @Override public List<? extends ColorNode<ResolvingColours.Loud, ?, ?>> layer() { return List.of(new Glare()); }
+        @Override public Optional<SchemeTreeReader<? super ResolvingColours.Loud>> below() { return Optional.of(new Circling()); }
+    }
+
+    @Test
+    void aLayer_addsColoursOfItsSchemeAlone_overTheLayerOfTheSchemeBelow() {
+        var empty = assertThrows(RefusedColors.class, () -> new Quiet().read());
+        assertEquals(List.of("LAYER_EMPTY: Quiet adds no colour to Loud: a scheme without colours of its own means nothing"),
+                empty.problems().stream().map(ColorProblem::toString).toList());
+        var adrift = assertThrows(RefusedColors.class, () -> new Adrift().read());
+        assertTrue(adrift.getMessage().contains("LAYER_ASTRAY: Adrift reads Loud, which is on top of BaseScheme, and sits on nothing"), adrift.getMessage());
+        var smuggled = assertThrows(RefusedColors.class, () -> new Smuggling().read());
+        assertTrue(smuggled.getMessage().contains("LAYER_ASTRAY: copy is BaseScheme's, in Loud's layer: a layer holds its scheme's colours alone"), smuggled.getMessage());
+        var circling = assertThrows(RefusedColors.class, () -> new Circling().read());
+        assertTrue(circling.getMessage().contains("Circling sits, in the end, on itself"), circling.getMessage());
     }
 
     private static String css(Optional<ConcreteColor> c) { return c.orElseThrow().css(); }

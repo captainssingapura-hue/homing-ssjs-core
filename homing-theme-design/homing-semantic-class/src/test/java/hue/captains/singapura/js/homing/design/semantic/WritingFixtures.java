@@ -5,7 +5,6 @@ import hue.captains.singapura.js.homing.component.taxonomy.Lexicon;
 import hue.captains.singapura.js.homing.component.taxonomy.ReadLexicon;
 import hue.captains.singapura.js.homing.component.taxonomy.Word;
 import hue.captains.singapura.js.homing.component.taxonomy.WordRoot;
-import hue.captains.singapura.js.homing.design.color.ColorScheme.Base;
 
 import java.util.List;
 
@@ -46,7 +45,7 @@ public final class WritingFixtures {
 
     static final Lexicon LEXICON = ReadLexicon.INSTANCE.read(List.of(Check.INSTANCE, Close.INSTANCE, Add.INSTANCE));
 
-    public record Plain() implements DesignStyle<Base> {
+    public record Plain() implements DesignStyle<BaseScheme> {
         public static final Plain INSTANCE = new Plain();
         @Override public List<Implementation<?>> implementations() { return List.of(); }
         @Override public List<Writing> writings() {
@@ -54,7 +53,7 @@ public final class WritingFixtures {
         }
     }
 
-    public record Fancy() implements Derives<Base, Plain> {
+    public record Fancy() implements Derives<BaseScheme, Plain> {
         public static final Fancy INSTANCE = new Fancy();
         @Override public Plain base() { return Plain.INSTANCE; }
         @Override public List<Implementation<?>> implementations() { return List.of(); }
@@ -67,14 +66,14 @@ public final class WritingFixtures {
         @Override public List<Writing> writings() { return List.of(new Writing(Add.INSTANCE, "⊕")); }
     }
 
-    public record Quoting() implements Derives<Base, Plain> {
+    public record Quoting() implements Derives<BaseScheme, Plain> {
         public static final Quoting INSTANCE = new Quoting();
         @Override public Plain base() { return Plain.INSTANCE; }
         @Override public List<Implementation<?>> implementations() { return List.of(); }
         @Override public List<Writing> writings() { return List.of(new Writing(Close.INSTANCE, "\"\\")); }
     }
 
-    public record Gappy() implements DesignStyle<Base> {
+    public record Gappy() implements DesignStyle<BaseScheme> {
         public static final Gappy INSTANCE = new Gappy();
         @Override public List<Implementation<?>> implementations() { return List.of(); }
         @Override public List<Writing> writings() {

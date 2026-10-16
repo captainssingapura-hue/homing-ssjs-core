@@ -16,11 +16,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class PaletteSheetTest {
 
-    private static final ColorTree TREE = ResolvingColours.INSTANCE.read();
+    private static final ColorTree TREE = ResolvingColours.LoudColours.INSTANCE.read();
     private static final PaletteSheet SHEET = PaletteSheet.INSTANCE;
 
     @Test
-    void aBasePalette_everyPalettableColourOfTheBase_andTheExtensionsWordForIt() {
+    void aBasePalette_everyPalettableColourOfTheBase() {
         var paper = SHEET.write(TREE, ResolvingColours.Paper.INSTANCE);
         assertTrue(paper.css().endsWith(":root {\n"
                 + "    --fp-page: #ffffff;\n"
@@ -28,7 +28,7 @@ class PaletteSheetTest {
                 + "    --fp-copy: #1f2937;\n"
                 + "    --fp-danger: #dc2626;\n"
                 + "    --fp-safe: #16a34a;\n"
-                + "    --fp-flag: #e53935;   /* mine-colours for paper */\n"
+                + "    --fp-flag: #e53935;\n"
                 + "}\n"), paper.css());
         assertTrue(!paper.css().contains("--fp-glare"), "the loud scheme's glare is none of the base's");
         assertTrue(!paper.css().contains("clear") && !paper.css().contains("alarm") && !paper.css().contains("warning"),
@@ -36,12 +36,12 @@ class PaletteSheetTest {
     }
 
     @Test
-    void aPaletteOfASchemeOnTop_itsOwn_thenThePalettesBelow_thenTheExtensionsLastWord() {
+    void aPaletteOfASchemeOnTop_itsOwn_thenThePalettesBelow() {
         var neon = SHEET.write(TREE, ResolvingColours.Neon.INSTANCE);
         assertTrue(neon.css().contains("    --fp-page: #ffffff;   /* paper, below neon */\n"), neon.css());
         assertTrue(neon.css().contains("    --fp-danger: #ff0055;\n"), "neon's own danger, said by neon itself");
         assertTrue(neon.css().contains("    --fp-glare: #39ff14;\n"), "the colour its scheme adds");
-        assertTrue(neon.css().contains("    --fp-flag: #d32f2f;   /* mine-colours' last word */\n"), neon.css());
+        assertTrue(neon.css().contains("    --fp-flag: #e53935;   /* paper, below neon */\n"), neon.css());
     }
 
     @Test
@@ -51,7 +51,7 @@ class PaletteSheetTest {
         assertEquals(List.of("--fp-page", "--fp-raised", "--fp-copy", "--fp-danger", "--fp-safe", "--fp-flag"), paper.variables());
         assertEquals(paper.variables(), night.variables(), "a style's CSS is the same in every palette of its scheme");
         assertTrue(night.css().contains("    --fp-copy: oklch(0.93 0.01 260);\n"), night.css());
-        assertTrue(night.css().contains("    --fp-flag: #ff6f00;\n"), "the night knows the flag: its own word wins over the extension's");
+        assertTrue(night.css().contains("    --fp-flag: #ff6f00;\n"), "the night's own flag");
         assertEquals(7, SHEET.write(TREE, ResolvingColours.Neon.INSTANCE).variables().size(), "the base's six, and the glare");
     }
 
@@ -60,7 +60,7 @@ class PaletteSheetTest {
         var unsafe = assertThrows(IllegalArgumentException.class, () -> SHEET.write(TREE, new ResolvingColours.Unsafe()));
         assertEquals("unsafe's sheet cannot be written: unsafe leaves safe unanswered", unsafe.getMessage());
         var stranded = assertThrows(IllegalArgumentException.class, () -> SHEET.write(TREE, new ResolvingColours.Stranded()));
-        assertTrue(stranded.getMessage().contains("stranded sits on nothing, and Loud is on top of the base"), stranded.getMessage());
+        assertTrue(stranded.getMessage().contains("stranded sits on nothing, and Loud is on top of BaseScheme"), stranded.getMessage());
     }
 
     @Test

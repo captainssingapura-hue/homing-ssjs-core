@@ -3,7 +3,7 @@ package hue.captains.singapura.js.homing.design.styling;
 import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.design.color.ColorScale;
-import hue.captains.singapura.js.homing.design.color.ColorScheme;
+import hue.captains.singapura.js.homing.design.semantic.BaseScheme;
 import hue.captains.singapura.js.homing.design.semantic.ColorTree;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingColours;
 import hue.captains.singapura.js.homing.design.semantic.DesignStyle;
@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class CastingRuleTest {
 
     private static final Taxonomy TAXONOMY = StyledTaxonomy.INSTANCE.read();
-    private static final ColorTree TREE = ResolvingColours.INSTANCE.read();
+    private static final ColorTree TREE = ResolvingColours.LoudColours.INSTANCE.read();
     private static final Casting TAB = new Casting(StatedTaxonomy.Tab.INSTANCE);
     private static final Casting METER = new Casting(StyledTaxonomy.Meter.INSTANCE);
     private static final Casting LEAD = TAXONOMY.castings().stream().filter(c -> c.token().equals("tab_lead")).findFirst().orElseThrow();
@@ -129,7 +129,7 @@ class CastingRuleTest {
     void aPalettesVariable_isAPalettableColourTheStylesSchemeSees_neverAssigned_neverFallingBack() {
         refused("$casting { color: var(--fp-ink); }", "--fp-ink names no palettable colour of the tree");
         refused("$casting { color: var(--fp-alarm); }", "--fp-alarm names no palettable colour of the tree: alarm is a fixed colour, --fixed-alarm");
-        refused(METER, "$casting { color: var(--fp-glare); }", "--fp-glare: glare is Loud's, which plain's scheme, the base, does not see (D7)");
+        refused(METER, "$casting { color: var(--fp-glare); }", "--fp-glare: glare is Loud's, which plain's scheme, BaseScheme, does not see (D7)");
         assertEquals(List.of(), check(Loudly.INSTANCE, METER, "$casting { color: var(--fp-glare); }").problems(), "loudly's scheme sees it");
         refused("$casting { --fp-copy: var(--fp-page); }", "--fp-copy is the palette's, defined by its sheet");
         refused("$casting { color: var(--fp-copy, var(--fp-page)); }", "var(--fp-copy, ...) falls back");
@@ -168,8 +168,8 @@ class CastingRuleTest {
     }
 
     /** A spectrum of the style's own: the tree's safe and danger its anchors, the turn at degrees of its own (D41). */
-    record Swing() implements ColorScale<ColorScheme.Base, ResolvingColours.Signals> {
-        @Override public List<Knot<ColorScheme.Base>> knots() {
+    record Swing() implements ColorScale<BaseScheme, ResolvingColours.Signals> {
+        @Override public List<Knot<BaseScheme>> knots() {
             return List.of(new Knot<>(new ResolvingColours.Safe(), -1), new Knot<>(new ResolvingColours.Safe(), 0.4),
                            new Knot<>(new ResolvingColours.Danger(), 0.6), new Knot<>(new ResolvingColours.Danger(), 1));
         }

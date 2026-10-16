@@ -15,7 +15,7 @@ import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
  * are the base's, and so is a domain's drawn in the house's palettes - Minesweeper's Vista.</p>
  *
  * <pre>{@code
- * public record MinesweeperClassic() implements Design<ColorScheme.Base, GridFrame> {
+ * public record MinesweeperClassic() implements Design<BaseScheme, GridFrame> {
  *     public static final MinesweeperClassic INSTANCE = new MinesweeperClassic();
  * }
  * }</pre>

@@ -5,6 +5,7 @@ import hue.captains.singapura.js.homing.design.semantic.ColorPalette;
 import hue.captains.singapura.js.homing.design.semantic.ColorTree;
 import hue.captains.singapura.js.homing.design.semantic.DesignStyle;
 import hue.captains.singapura.js.homing.design.semantic.Dressed;
+import hue.captains.singapura.js.homing.design.semantic.Schemes;
 import hue.captains.singapura.js.homing.design.semantic.Wear;
 
 import java.util.ArrayList;
@@ -46,6 +47,12 @@ public record Styling(StyleManager manager, List<DesignStyle<?>> styles, List<Co
         for (DesignStyle<?> s : styles) if (!seen.add(s.token())) problems.add("two styles are " + s.token());
         seen.clear();
         for (ColorPalette<?> p : palettes) if (!seen.add(p.token())) problems.add("two palettes are " + p.token());
+        for (ColorPalette<?> p : palettes) {
+            Optional<Class<?>> scheme = Schemes.INSTANCE.of(p);
+            if (scheme.isEmpty()) problems.add(p.token() + " implements no scheme");
+            else if (!manager.trees().containsKey(scheme.get()))
+                problems.add(p.token() + " is " + Schemes.INSTANCE.name(scheme.get()) + "'s, which no registered style requires: nothing could wear it");
+        }
         for (DesignStyle<?> s : styles) {
             if (manager.style(s.token()).isEmpty()) problems.add(s.token() + " is served, and the manager does not register it");
             ColorPalette<?> p = own.get(s);
@@ -59,8 +66,13 @@ public record Styling(StyleManager manager, List<DesignStyle<?>> styles, List<Co
     /** The leaves the manager styles. */
     public Taxonomy taxonomy() { return manager.taxonomy(); }
 
-    /** The colour tree the palettes are written over. */
-    public ColorTree colours() { return manager.tree(); }
+    /** The colour tree a palette is written over: its scheme's. */
+    public ColorTree colours(ColorPalette<?> palette) {
+        return manager.tree(Schemes.INSTANCE.of(palette).orElseThrow(() -> new IllegalArgumentException(palette.token() + " implements no scheme")));
+    }
+
+    /** The colour tree a style is drawn over: its scheme's. */
+    public ColorTree colours(DesignStyle<?> style) { return manager.tree(style); }
 
     /** The style a page wears until the address or a pick says otherwise. */
     public DesignStyle<?> defaultStyle() { return styles.get(0); }
@@ -81,7 +93,8 @@ public record Styling(StyleManager manager, List<DesignStyle<?>> styles, List<Co
 
     /** A palette's sheet, by its token: every --fp- variable its scheme sees. Refused for a palette not served. */
     public String paletteSheet(String token) {
-        return PaletteSheet.INSTANCE.write(colours(), palette(token).orElseThrow(() -> new IllegalArgumentException("no palette served is " + token))).css();
+        ColorPalette<?> palette = palette(token).orElseThrow(() -> new IllegalArgumentException("no palette served is " + token));
+        return PaletteSheet.INSTANCE.write(colours(palette), palette).css();
     }
 
     /** A style's own palette. */
@@ -125,7 +138,7 @@ public record Styling(StyleManager manager, List<DesignStyle<?>> styles, List<Co
     }
 
     private Dressed wear(DesignStyle<?> style, ColorPalette<?> palette) {
-        return Wear.INSTANCE.of(colours(), style, palette).orElseThrow(() -> new IllegalArgumentException(
+        return Wear.INSTANCE.of(colours(style), style, palette).orElseThrow(() -> new IllegalArgumentException(
                 palette.token() + " does not fit " + style.token()));
     }
 }

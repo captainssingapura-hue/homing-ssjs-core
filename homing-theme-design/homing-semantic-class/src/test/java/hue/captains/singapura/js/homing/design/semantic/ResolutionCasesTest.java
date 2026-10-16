@@ -5,7 +5,6 @@ import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.design.State;
 import hue.captains.singapura.js.homing.design.Target;
 import hue.captains.singapura.js.homing.design.color.ColorScheme;
-import hue.captains.singapura.js.homing.design.color.ColorScheme.Base;
 import hue.captains.singapura.js.homing.design.color.Paint;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Page;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingTaxonomy.Button;
@@ -107,7 +106,7 @@ class ResolutionCasesTest {
         assertTrue(refused(() -> new Coloring<>(Button.INSTANCE, Target.Color.Scrollbar.INSTANCE, new Answer.Painted<>(Map.of(State.HOVER, new Paint.Inherited<>()))))
                 .contains("color-scrollbar offers no hover"));
         assertTrue(refused(() -> new Coloring<>(Button.INSTANCE, Target.Color.Text.INSTANCE, new Answer.Redirect<>(Button.INSTANCE))).contains("redirected to itself"));
-        assertTrue(refused(() -> new Answer.Painted<>(Map.<State, Paint<Base, Target.Color.Text>>of())).contains("answers at least one state"));
+        assertTrue(refused(() -> new Answer.Painted<>(Map.<State, Paint<BaseScheme, Target.Color.Text>>of())).contains("answers at least one state"));
         assertTrue(refused(() -> new Implementation<>(Button.INSTANCE, corner, new Answer.Own<Target.Shape.Corner>(Map.of(State.HOVER, "border-radius: 2px;"))))
                 .contains("shape-corner offers no hover"));
         assertTrue(refused(() -> new Implementation<>(Button.INSTANCE, corner, new Answer.FromBase<Target.Shape.Corner>(Set.of(State.HOVER))))
@@ -157,9 +156,9 @@ class ResolutionCasesTest {
         assertTrue(refused(() -> new Dressed(colours, new Twice(), paper)).contains("button shape-corner is answered twice"));
         assertTrue(refused(() -> new Dressed(colours, new Ouroboros(), paper)).contains("comes back to ouroboros"));
         assertTrue(refused(() -> new Dressed(colours, new Unschemed(), new ResolvingColours.Unmarked())).contains("unschemed requires no scheme"));
-        assertEquals("stranded sits on nothing, and Loud is on top of the base: it sits on a palette of the base",
+        assertEquals("stranded sits on nothing, and Loud is on top of BaseScheme: it sits on a palette of BaseScheme",
                 refused(() -> new Dressed(colours, new Shouting(), new ResolvingColours.Stranded())));
-        assertEquals("stacked sits on neon, of Loud: a palette of Loud sits on one of the base",
+        assertEquals("stacked sits on neon, of Loud: a palette of Loud sits on one of BaseScheme",
                 refused(() -> new Dressed(colours, new Shouting(), new ResolvingColours.Stacked())));
         var looping = new Dressed(colours, new Looping(), paper);
         var e = assertThrows(IllegalStateException.class,
@@ -193,28 +192,28 @@ class ResolutionCasesTest {
     public record Unschemed() implements DesignStyle<ColorScheme> {
         @Override public List<Implementation<?>> implementations() { return List.of(); }
     }
-    public record Baseless() implements DesignStyle<Base> {
+    public record Baseless() implements DesignStyle<BaseScheme> {
         @Override public List<Implementation<?>> implementations() {
             return List.of(new Implementation<>(Button.INSTANCE, Target.Shape.Corner.INSTANCE, new Answer.FromBase<>()));
         }
     }
-    public record Twice() implements DesignStyle<Base> {
+    public record Twice() implements DesignStyle<BaseScheme> {
         @Override public List<Implementation<?>> implementations() {
             return List.of(new Implementation<>(Button.INSTANCE, Target.Shape.Corner.INSTANCE, new Answer.Own<>("border-radius: 2px;")),
                            new Implementation<>(Button.INSTANCE, Target.Shape.Corner.INSTANCE, new Answer.Own<>("border-radius: 3px;")));
         }
     }
-    public record Ouroboros() implements Derives<Base, Ouroboros> {
+    public record Ouroboros() implements Derives<BaseScheme, Ouroboros> {
         @Override public Ouroboros base() { return this; }
         @Override public List<Implementation<?>> implementations() { return List.of(); }
     }
-    public record Looping() implements DesignStyle<Base> {
+    public record Looping() implements DesignStyle<BaseScheme> {
         @Override public List<Implementation<?>> implementations() {
             return List.of(new Implementation<>(PlainButton.INSTANCE, Target.Shape.Corner.INSTANCE, new Answer.Redirect<>(DangerButton.INSTANCE)),
                            new Implementation<>(DangerButton.INSTANCE, Target.Shape.Corner.INSTANCE, new Answer.Redirect<>(PlainButton.INSTANCE)));
         }
     }
-    public record TwiceAsked() implements DesignStyle<Base> {
+    public record TwiceAsked() implements DesignStyle<BaseScheme> {
         @Override public List<Implementation<?>> implementations() {
             return List.of(new Implementation<>(new Casting(PlainButton.INSTANCE, Go.INSTANCE), Target.Shape.Corner.INSTANCE, new Answer.Own<>("border-radius: 1px;")));
         }

@@ -85,7 +85,7 @@ class FlattenSheetTest {
     }
 
     /** A glyph is drawn on ::before: its body nested there, at rest and in a state alike. */
-    public record Glyphed() implements Derives<hue.captains.singapura.js.homing.design.color.ColorScheme.Base, ResolvingThemes.Valued> {
+    public record Glyphed() implements Derives<hue.captains.singapura.js.homing.design.semantic.BaseScheme, ResolvingThemes.Valued> {
         @Override public ResolvingThemes.Valued base() { return ResolvingThemes.Valued.INSTANCE; }
         @Override public List<Implementation<?>> implementations() {
             return List.of(new Implementation<>(ResolvingTaxonomy.Button.INSTANCE, hue.captains.singapura.js.homing.design.Target.Type.Glyph.INSTANCE,

@@ -44,7 +44,7 @@ class FixturePageTest extends JsModuleTestBase {
     private static final String DIR = "/homing/js/hue/captains/singapura/js/homing/server/";
 
     static final Styling STYLING = new Styling(
-            StyleManager.of(StyledTaxonomy.INSTANCE.read(), ResolvingColours.INSTANCE.read(), List.of(
+            StyleManager.of(StyledTaxonomy.INSTANCE.read(), List.of(ResolvingColours.INSTANCE), List.of(
                     StyleRegistration.of(Plain.INSTANCE, PlainStyles.INSTANCE), StyleRegistration.of(Ink.INSTANCE, InkStyles.INSTANCE))),
             List.of(Plain.INSTANCE, Ink.INSTANCE), List.of(ResolvingColours.Paper.INSTANCE, ResolvingColours.Night.INSTANCE),
             Map.of(Plain.INSTANCE, ResolvingColours.Paper.INSTANCE, Ink.INSTANCE, ResolvingColours.Night.INSTANCE));

@@ -62,11 +62,11 @@ class ConcreteColorTest {
 
     @Test
     void aKnot_isAtADegreeFromMinusOneToOne() {
-        record Feedback() implements L1_ColorBranch<ColorScheme.Base> {}
-        record Calm() implements Palettable<ColorScheme.Base, Feedback> {}
-        assertEquals(0.5, new ColorScale.Knot<ColorScheme.Base>(new Calm(), 0.5).degree());
-        assertThrows(IllegalArgumentException.class, () -> new ColorScale.Knot<ColorScheme.Base>(new Calm(), 1.5));
-        assertThrows(IllegalArgumentException.class, () -> new ColorScale.Knot<ColorScheme.Base>(new Calm(), Double.NaN));
+        record Feedback() implements L1_ColorBranch<BaseScheme> {}
+        record Calm() implements Palettable<BaseScheme, Feedback> {}
+        assertEquals(0.5, new ColorScale.Knot<BaseScheme>(new Calm(), 0.5).degree());
+        assertThrows(IllegalArgumentException.class, () -> new ColorScale.Knot<BaseScheme>(new Calm(), 1.5));
+        assertThrows(IllegalArgumentException.class, () -> new ColorScale.Knot<BaseScheme>(new Calm(), Double.NaN));
         assertEquals("calm", new Calm().token());
     }
 }

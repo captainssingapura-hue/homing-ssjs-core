@@ -230,7 +230,7 @@ class DesignsTest extends JsModuleTestBase {
     void aDesign_isInAScheme_andDrawnOnlyInAThemeWhoseSchemeSeesIt() {
         var unseen = assertThrows(RefusedDesigns.class, () -> ReadDesigns.INSTANCE.read(TAXONOMY, THEMES, List.of(ShoutedEdge.INSTANCE, ShoutedMark.INSTANCE)));
         assertEquals(List.of(Rule.SCHEME_UNSEEN, Rule.SCHEME_UNSEEN), unseen.problems().stream().map(DesignProblem::rule).toList(), unseen.getMessage());
-        assertTrue(unseen.getMessage().contains("shouted is Loud's, which ") && unseen.getMessage().contains("'s scheme, the base, does not see: "
+        assertTrue(unseen.getMessage().contains("shouted is Loud's, which ") && unseen.getMessage().contains("'s scheme, BaseScheme, does not see: "
                 + "a design is drawn only in a theme whose scheme sees its own"), unseen.getMessage());
         var loud = ReadDesigns.INSTANCE.read(TAXONOMY, List.of(SHOUTING), List.of(ShoutedEdge.INSTANCE, ShoutedMark.INSTANCE)).get(0);
         assertTrue(FlattenDesign.INSTANCE.flatten(loud, SHOUTING, "Shouted").css().contains(".shouted___edge__shape-border"), "drawn where its scheme is");
