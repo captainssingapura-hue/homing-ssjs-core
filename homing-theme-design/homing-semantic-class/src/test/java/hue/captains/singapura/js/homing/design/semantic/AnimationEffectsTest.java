@@ -128,7 +128,7 @@ class AnimationEffectsTest extends JsModuleTestBase {
 
     // ── drawn by a design ──────────────────────────────────────────────────
 
-    record Marching() implements Design<BaseScheme, Overlay> { static final Marching INSTANCE = new Marching(); }
+    record Marching() implements Design<BaseScheme, Overlay> { @Override public BaseScheme scheme() { return BaseScheme.INSTANCE; } static final Marching INSTANCE = new Marching(); }
 
     record MarchingLine() implements Line.Concrete<Marching>, Drawn {
         static final MarchingLine INSTANCE = new MarchingLine();
@@ -158,7 +158,7 @@ class AnimationEffectsTest extends JsModuleTestBase {
     }
 
     /** Takes its line's effect from the marching line; its area moves with none. */
-    record Borrowed() implements Design<BaseScheme, Overlay> { static final Borrowed INSTANCE = new Borrowed(); }
+    record Borrowed() implements Design<BaseScheme, Overlay> { @Override public BaseScheme scheme() { return BaseScheme.INSTANCE; } static final Borrowed INSTANCE = new Borrowed(); }
 
     record BorrowedLine() implements Line.Concrete<Borrowed>, Drawn {
         @Override public List<Drawing<?>> drawings(Dressed theme) {
@@ -183,7 +183,7 @@ class AnimationEffectsTest extends JsModuleTestBase {
     }
 
     /** Sweeps its strip, whose image the strip's own background writes: refused. */
-    record Clashing() implements Design<BaseScheme, Overlay> { static final Clashing INSTANCE = new Clashing(); }
+    record Clashing() implements Design<BaseScheme, Overlay> { @Override public BaseScheme scheme() { return BaseScheme.INSTANCE; } static final Clashing INSTANCE = new Clashing(); }
 
     record ClashingLine() implements Line.Concrete<Clashing>, Drawn {
         @Override public List<Drawing<?>> drawings(Dressed theme) {

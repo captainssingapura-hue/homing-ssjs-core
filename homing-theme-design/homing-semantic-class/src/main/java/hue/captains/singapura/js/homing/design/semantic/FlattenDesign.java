@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.design.semantic;
 
+import hue.captains.singapura.js.homing.design.color.ColorScheme;
+
 import hue.captains.singapura.js.homing.component.taxonomy.ConcreteComponent;
 import hue.captains.singapura.js.homing.component.taxonomy.VirtualComponent;
 import hue.captains.singapura.js.homing.design.AnimationEffect;
@@ -32,7 +34,7 @@ public record FlattenDesign() implements StatelessFunctionalObject {
     public record Flattened(String css, int drawn, int copied) implements ValueObject {}
 
     public Flattened flatten(DesignRead design, Dressed theme, String title) {
-        Class<?> designs = Schemes.INSTANCE.of(design.design()).orElse(null), wears = Schemes.INSTANCE.of(theme.style()).orElse(null);
+        ColorScheme designs = Schemes.INSTANCE.of(design.design()).orElse(null), wears = Schemes.INSTANCE.of(theme.style()).orElse(null);
         if (designs == null || wears == null || !Schemes.INSTANCE.sees(wears, designs))
             throw new IllegalArgumentException(design.token() + " is drawn only in a theme whose scheme sees its own, and "
                     + theme.style().token() + "'s does not (D33)");

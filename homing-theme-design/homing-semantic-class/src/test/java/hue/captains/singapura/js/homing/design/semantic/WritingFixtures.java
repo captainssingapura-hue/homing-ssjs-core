@@ -46,6 +46,8 @@ public final class WritingFixtures {
     static final Lexicon LEXICON = ReadLexicon.INSTANCE.read(List.of(Check.INSTANCE, Close.INSTANCE, Add.INSTANCE));
 
     public record Plain() implements DesignStyle<BaseScheme> {
+
+        @Override public BaseScheme scheme() { return BaseScheme.INSTANCE; }
         public static final Plain INSTANCE = new Plain();
         @Override public List<Implementation<?>> implementations() { return List.of(); }
         @Override public List<Writing> writings() {
@@ -54,6 +56,8 @@ public final class WritingFixtures {
     }
 
     public record Fancy() implements Derives<BaseScheme, Plain> {
+
+        @Override public BaseScheme scheme() { return BaseScheme.INSTANCE; }
         public static final Fancy INSTANCE = new Fancy();
         @Override public Plain base() { return Plain.INSTANCE; }
         @Override public List<Implementation<?>> implementations() { return List.of(); }
@@ -67,6 +71,8 @@ public final class WritingFixtures {
     }
 
     public record Quoting() implements Derives<BaseScheme, Plain> {
+
+        @Override public BaseScheme scheme() { return BaseScheme.INSTANCE; }
         public static final Quoting INSTANCE = new Quoting();
         @Override public Plain base() { return Plain.INSTANCE; }
         @Override public List<Implementation<?>> implementations() { return List.of(); }
@@ -74,6 +80,8 @@ public final class WritingFixtures {
     }
 
     public record Gappy() implements DesignStyle<BaseScheme> {
+
+        @Override public BaseScheme scheme() { return BaseScheme.INSTANCE; }
         public static final Gappy INSTANCE = new Gappy();
         @Override public List<Implementation<?>> implementations() { return List.of(); }
         @Override public List<Writing> writings() {

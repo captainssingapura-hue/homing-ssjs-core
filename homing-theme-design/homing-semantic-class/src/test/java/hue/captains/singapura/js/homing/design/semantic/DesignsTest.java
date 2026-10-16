@@ -240,6 +240,6 @@ class DesignsTest extends JsModuleTestBase {
                 "the base's design in a loud theme, which sees the base");
         var none = assertThrows(RefusedDesigns.class, () -> ReadDesigns.INSTANCE.read(TAXONOMY, THEMES, List.of(UnschemedEdge.INSTANCE, UnschemedMark.INSTANCE)));
         assertEquals(List.of(Rule.NO_SCHEME), none.problems().stream().map(DesignProblem::rule).toList(), none.getMessage());
-        assertTrue(none.getMessage().contains("unschemed is in no scheme: its first type argument is an abstract class"), none.getMessage());
+        assertTrue(none.getMessage().contains("unschemed says no scheme: a design says the scheme it is in"), none.getMessage());
     }
 }

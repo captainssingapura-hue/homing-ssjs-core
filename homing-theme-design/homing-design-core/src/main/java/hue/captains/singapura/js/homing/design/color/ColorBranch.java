@@ -14,6 +14,8 @@ public sealed interface ColorBranch<S extends ColorScheme, P> extends ColorNode<
 
     /** The parent of a branch at the top of the tree: none. */
     final class Top {
+        /** The one top. */
+        public static final Top INSTANCE = new Top();
         private Top() {}
     }
 }

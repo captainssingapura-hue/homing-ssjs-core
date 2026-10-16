@@ -45,6 +45,8 @@ public record ShabbyTaxonomy() implements TaxonomySource {
     }
 
     public record Scruffy() implements Design<BaseScheme, Shabby> {
+
+        @Override public BaseScheme scheme() { return BaseScheme.INSTANCE; }
         public static final Scruffy INSTANCE = new Scruffy();
     }
 

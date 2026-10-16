@@ -39,10 +39,14 @@ final class Designed {
     }
 
     record Plain() implements Design<BaseScheme, Frame> {
+
+        @Override public BaseScheme scheme() { return BaseScheme.INSTANCE; }
         static final Plain INSTANCE = new Plain();
     }
 
     record Bold() implements Design<BaseScheme, Frame> {
+
+        @Override public BaseScheme scheme() { return BaseScheme.INSTANCE; }
         static final Bold INSTANCE = new Bold();
     }
 

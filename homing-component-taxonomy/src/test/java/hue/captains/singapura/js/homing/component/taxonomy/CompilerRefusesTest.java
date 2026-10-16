@@ -202,16 +202,16 @@ class CompilerRefusesTest {
 
     /** A design branch, two virtual leaves each with its own interface for extension, and two designs of it. */
     private static final String DESIGNED = """
-            abstract static class Scheme implements ColorScheme {}
+            static class Scheme implements ColorScheme { static final Scheme INSTANCE = new Scheme(); }
             record Frame() implements L1_ComponentBranch<Root>, DesignBranch { static final Frame INSTANCE = new Frame(); public Root parent() { return Root.INSTANCE; } }
             record Other() implements L1_ComponentBranch<Root>, DesignBranch { static final Other INSTANCE = new Other(); public Root parent() { return Root.INSTANCE; } }
             record Edge() implements VirtualComponent<Frame> { static final Edge INSTANCE = new Edge(); public Frame parent() { return Frame.INSTANCE; }
                 interface Concrete<D extends Design<?, Frame>> extends ConcreteComponent<Edge, Frame, D> {} }
             record Mark() implements VirtualComponent<Frame> { static final Mark INSTANCE = new Mark(); public Frame parent() { return Frame.INSTANCE; }
                 interface Concrete<D extends Design<?, Frame>> extends ConcreteComponent<Mark, Frame, D> {} }
-            record Plain() implements Design<Scheme, Frame> { static final Plain INSTANCE = new Plain(); }
-            record Bold() implements Design<Scheme, Frame> { static final Bold INSTANCE = new Bold(); }
-            record Elsewhere() implements Design<Scheme, Other> { static final Elsewhere INSTANCE = new Elsewhere(); }
+            record Plain() implements Design<Scheme, Frame> { @Override public Scheme scheme() { return Scheme.INSTANCE; } static final Plain INSTANCE = new Plain(); }
+            record Bold() implements Design<Scheme, Frame> { @Override public Scheme scheme() { return Scheme.INSTANCE; } static final Bold INSTANCE = new Bold(); }
+            record Elsewhere() implements Design<Scheme, Other> { @Override public Scheme scheme() { return Scheme.INSTANCE; } static final Elsewhere INSTANCE = new Elsewhere(); }
             """;
 
     @Test
@@ -248,7 +248,7 @@ class CompilerRefusesTest {
     @Test
     void aDesignInWhatIsNoScheme_doesNotCompile() {
         refusedOnItsLine(DESIGNED + """
-                record Schemeless() implements Design<String, Frame> {} // refused here
+                record Schemeless() implements Design<String, Frame> { @Override public String scheme() { return String.INSTANCE; } } // refused here
                 """);
     }
 

@@ -19,6 +19,9 @@ import java.util.List;
  */
 public interface DesignStyle<S extends ColorScheme> {
 
+    /** The scheme it requires: the scheme's one object, said by the style itself (D49) - nothing reads it off the style's type. */
+    S scheme();
+
     /** The style's token, from its type: {@code neo-brutalism}. */
     default String token() { return NodeName.ofType(getClass(), "").value(); }
 

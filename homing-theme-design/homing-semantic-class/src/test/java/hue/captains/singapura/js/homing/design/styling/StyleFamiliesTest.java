@@ -29,11 +29,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class StyleFamiliesTest {
 
-    private static final StyleManager MANAGER = StyleManager.of(StyledTaxonomy.INSTANCE.read(), List.of(
+    private static final StyleManager MANAGER = StyleManager.of(StyledTaxonomy.INSTANCE.read(), BaseColours.SCHEMES, List.of(
             StyleRegistration.of(StyledStyles.Plain.INSTANCE, PlainStyles.INSTANCE), StyleRegistration.of(StyledStyles.Ink.INSTANCE, InkStyles.INSTANCE),
             StyleRegistration.of(StyledStyles.Loudly.INSTANCE, LoudlyStyles.INSTANCE)));
     private static final Styling STYLING = new Styling(MANAGER, List.of(StyledStyles.Ink.INSTANCE, StyledStyles.Loudly.INSTANCE),
-            PaletteRegistry.of(List.of(BaseColours.Palettes.INSTANCE)), Map.of(StyledStyles.Ink.INSTANCE, BaseColours.Night.INSTANCE,
+            PaletteRegistry.of(List.of(BaseColours.Palettes.INSTANCE), BaseColours.SCHEMES), Map.of(StyledStyles.Ink.INSTANCE, BaseColours.Night.INSTANCE,
                     StyledStyles.Loudly.INSTANCE, BaseColours.Neon.INSTANCE));
 
     /** Ink's own tab, at its canonical name. */

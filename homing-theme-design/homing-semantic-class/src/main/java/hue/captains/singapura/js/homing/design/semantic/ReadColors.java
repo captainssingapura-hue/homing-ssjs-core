@@ -1,8 +1,10 @@
 package hue.captains.singapura.js.homing.design.semantic;
 
 import hue.captains.singapura.js.homing.design.color.ColorBranch;
+import hue.captains.singapura.js.homing.design.color.ColorLeaf;
 import hue.captains.singapura.js.homing.design.color.ColorNode;
 import hue.captains.singapura.js.homing.design.color.ColorScale;
+import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import hue.captains.singapura.js.homing.design.color.ConcreteColor;
 import hue.captains.singapura.js.homing.design.color.CurrentColor;
 import hue.captains.singapura.js.homing.design.color.Fixed;
@@ -10,151 +12,126 @@ import hue.captains.singapura.js.homing.design.color.Interpolated;
 import hue.captains.singapura.js.homing.design.semantic.ColorProblem.Rule;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
-import java.security.CodeSource;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Reads a scheme's colour tree (RFC 0067, appendix Semantic Colours and Flavours): the normalized tree its reader
- * ({@link SchemeTreeReader}) overlays, layer by layer from the base up to its own, and refuses - with every problem it
- * found at once - what the compiler cannot:
+ * Reads a scheme's colour tree (RFC 0067, appendix Semantic Colours and Flavours, D49): the layers of its declarations,
+ * the base's first and its own last, each the leaves its declaration lists and the branches above them - each branch
+ * coming in with the first leaf under it, as a component's branch comes in with it. Nothing is read off a type at run
+ * time: a node says its parent, a declaration its scheme, a scheme the one below it. It refuses, with every problem it
+ * found at once:
  *
  * <ul>
- *   <li>a layer that is no scheme's, one whose scheme lives in another jar than its reader, one that adds no colour - a
- *       scheme without colours of its own means nothing - one that holds another scheme's, or one that sits on a layer
- *       other than its scheme's below, or on itself;</li>
- *   <li>a node that is not a stateless record, or whose scheme, parent or kind cannot be read off its declaration -
- *       one written raw, one in the marker {@code ColorScheme} itself;</li>
- *   <li>a node whose parent the tree has not, or one its scheme cannot see;</li>
- *   <li>two nodes with one name, or one node listed twice;</li>
+ *   <li>layers that are not their schemes' own chain - a first layer of a scheme on top of another, a layer whose scheme
+ *       is not on top of the one below it, a scheme read twice - or a layer that adds no colour: a scheme without
+ *       colours of its own means nothing;</li>
+ *   <li>a node that gives no parent; two nodes with one name, or one node listed twice;</li>
  *   <li>a scale of fewer than three knots, its knots not strictly rising from -1 to 1, or a knot of a colour the tree has
  *       not; an interpolated colour at a degree outside -1 to 1, or of a scale the tree has not; a fixed colour that gives
  *       none.</li>
  * </ul>
  *
- * <p>What the types already make impossible it never checks: a node of two kinds, under two parents, at two levels; a
- * chain of parents that comes back; a knot that is interpolated or a scale; a node hung under a parent its scheme
- * cannot see.</p>
+ * <p>What only a node's declaration could tell - a node that is no stateless record, a layer in another jar than its
+ * scheme, a branch of a scheme other than the layer it came in with - is checked when its jar is built
+ * ({@link CheckScheme}), never at run time. What the types already make impossible it never checks: a node of two
+ * kinds, under two parents, at two levels; a chain of parents that comes back; a knot that is interpolated or a scale;
+ * a layer holding another scheme's leaves; a node hung under a parent its scheme cannot see.</p>
  */
 public record ReadColors() implements StatelessFunctionalObject {
 
     public static final ReadColors INSTANCE = new ReadColors();
 
-    /** A scheme's normalized tree: its reader's layers, the base first, each its scheme's alone. */
-    public ColorTree read(SchemeTreeReader<?> reader) {
+    /** A scheme's normalized tree: its layers' declarations, the base's first, each its scheme's alone. */
+    public ColorTree read(List<? extends SchemeDeclaration<?>> layers) {
         var problems = new ArrayList<ColorProblem>();
-        var schemes = Schemes.INSTANCE;
-        var layers = new ArrayList<SchemeTreeReader<?>>();
+        var read = new LinkedHashMap<Class<?>, ColorTree.Read>();
+        var byName = new LinkedHashMap<String, ColorNode<?, ?, ?>>();
+        if (layers.isEmpty()) problems.add(new ColorProblem(Rule.LAYER_EMPTY, "no layer is read: a tree is its scheme's layers"));
         var passed = new HashSet<Class<?>>();
-        for (SchemeTreeReader<?> at = reader; at != null; at = at.below().orElse(null)) {
-            if (!passed.add(at.getClass())) {
-                problems.add(new ColorProblem(Rule.LAYER_ASTRAY, at.getClass().getSimpleName() + " sits, in the end, on itself"));
+        ColorScheme under = null;
+        for (SchemeDeclaration<?> layer : layers) {
+            String who = layer.getClass().getSimpleName();
+            ColorScheme scheme = layer.scheme();
+            if (scheme == null) {
+                problems.add(new ColorProblem(Rule.LAYER_ASTRAY, who + " declares no scheme"));
+                throw new RefusedColors(problems);
+            }
+            if (!passed.add(scheme.getClass())) {
+                problems.add(new ColorProblem(Rule.LAYER_ASTRAY, who + " declares " + scheme.name() + ", whose layer is read already: "
+                        + "a scheme's layer is read once"));
                 break;
             }
-            layers.add(0, at);
-        }
-        var nodes = new ArrayList<ColorNode<?, ?, ?>>();
-        Class<?> under = null;
-        for (SchemeTreeReader<?> layer : layers) {
-            String who = layer.getClass().getSimpleName();
-            Optional<Class<?>> scheme = schemes.of(layer);
-            if (scheme.isEmpty()) {
-                problems.add(new ColorProblem(Rule.LAYER_ASTRAY, who + " reads no scheme: its type argument is an abstract class, "
-                        + "a scheme from scratch or one on top of another - never ColorScheme itself, nor a variable"));
-                return refuse(problems);
-            }
-            Optional<Class<?>> below = schemes.below(scheme.get());
-            if (!Objects.equals(below.orElse(null), under))
-                problems.add(new ColorProblem(Rule.LAYER_ASTRAY, who + " reads " + schemes.name(scheme.get()) + ", which is "
-                        + below.map(b -> "on top of " + schemes.name(b)).orElse("from scratch") + ", and sits on "
-                        + (under == null ? "nothing" : schemes.name(under) + "'s layer")));
-            if (!Objects.equals(home(layer.getClass()), home(scheme.get())))
-                problems.add(new ColorProblem(Rule.LAYER_ELSEWHERE, who + " reads " + schemes.name(scheme.get()) + ", which lives in another jar: "
-                        + "a scheme and its colours live in one jar"));
-            List<? extends ColorNode<?, ?, ?>> own = layer.layer();
-            if (own == null || own.isEmpty())
-                problems.add(new ColorProblem(Rule.LAYER_EMPTY, who + " adds no colour to " + schemes.name(scheme.get())
+            Optional<ColorScheme> below = scheme.below();
+            boolean sits = below.isEmpty() ? under == null : under != null && Schemes.INSTANCE.same(below.get(), under);
+            if (!sits)
+                problems.add(new ColorProblem(Rule.LAYER_ASTRAY, who + " declares " + scheme.name() + ", which is "
+                        + below.map(b -> "on top of " + b.name()).orElse("from scratch") + ", and sits on "
+                        + (under == null ? "nothing" : under.name() + "'s layer")));
+            List<? extends ColorLeaf<?, ?, ?>> leaves = layer.leaves();
+            if (leaves == null || leaves.isEmpty())
+                problems.add(new ColorProblem(Rule.LAYER_EMPTY, who + " adds no colour to " + scheme.name()
                         + ": a scheme without colours of its own means nothing"));
-            else for (ColorNode<?, ?, ?> n : own) {
-                Optional<Class<?>> its = schemes.of(n);
-                if (its.isPresent() && its.get() != scheme.get())
-                    problems.add(new ColorProblem(Rule.LAYER_ASTRAY, n.token() + " is " + schemes.name(its.get()) + "'s, in "
-                            + schemes.name(scheme.get()) + "'s layer: a layer holds its scheme's colours alone"));
-                nodes.add(n);
-            }
-            under = scheme.get();
+            else for (ColorLeaf<?, ?, ?> leaf : leaves) add(leaf, scheme, read, byName, problems);
+            under = scheme;
         }
-        return read(nodes, problems);
+        return whole(read, problems);
     }
 
-    /** The tree of these nodes, as one layer: for what reads a tree's nodes alone. */
-    ColorTree read(Collection<? extends ColorNode<?, ?, ?>> nodes) {
-        return read(nodes, new ArrayList<>());
-    }
-
-    private ColorTree read(Collection<? extends ColorNode<?, ?, ?>> nodes, List<ColorProblem> problems) {
-        var schemes = Schemes.INSTANCE;
-
-        // 1. every node listed once, each name once
-        var listed = new ArrayList<ColorNode<?, ?, ?>>();
+    /** The tree of these nodes, as one layer of a scheme: for what reads a tree's nodes alone. */
+    ColorTree read(ColorScheme scheme, Collection<? extends ColorNode<?, ?, ?>> nodes) {
+        var problems = new ArrayList<ColorProblem>();
+        var read = new LinkedHashMap<Class<?>, ColorTree.Read>();
         var byName = new LinkedHashMap<String, ColorNode<?, ?, ?>>();
-        for (ColorNode<?, ?, ?> n : nodes) {
-            ColorNode<?, ?, ?> before = byName.putIfAbsent(n.token(), n);
+        for (ColorNode<?, ?, ?> n : nodes) add(n, scheme, read, byName, problems);
+        return whole(read, problems);
+    }
+
+    /**
+     * A node into the tree, in a layer's scheme: the branches above it first, from the top down, each the tree has not
+     * yet coming in with it, each under the parent it says; a node listed twice, or a name naming two, refused.
+     */
+    private static void add(ColorNode<?, ?, ?> node, ColorScheme scheme, Map<Class<?>, ColorTree.Read> read,
+                            Map<String, ColorNode<?, ?, ?>> byName, List<ColorProblem> problems) {
+        var chain = new ArrayList<ColorNode<?, ?, ?>>();
+        for (ColorNode<?, ?, ?> at = node; at != null; ) {
+            chain.add(0, at);
+            Object parent = at.parent();
+            if (parent == null) {
+                problems.add(new ColorProblem(Rule.UNREADABLE, at.token() + " gives no parent: a node says the branch it hangs under"));
+                return;
+            }
+            at = parent instanceof ColorNode<?, ?, ?> p ? p : null;   // the top: no parent
+        }
+        ColorNode<?, ?, ?> parent = null;
+        for (int i = 0; i < chain.size(); i++) {
+            ColorNode<?, ?, ?> n = chain.get(i);
+            ColorTree.Read before = read.get(n.getClass());
             if (before != null) {
-                problems.add(new ColorProblem(Rule.NAME_TWICE, before.getClass() == n.getClass()
-                        ? n.token() + " is listed twice"
-                        : "'" + n.token() + "' names " + before.getClass().getName() + " and " + n.getClass().getName()));
+                if (i == chain.size() - 1) problems.add(new ColorProblem(Rule.NAME_TWICE, n.token() + " is listed twice"));
+                parent = before.node();
                 continue;
             }
-            listed.add(n);
+            ColorNode<?, ?, ?> named = byName.putIfAbsent(n.token(), n);
+            if (named != null) {
+                problems.add(new ColorProblem(Rule.NAME_TWICE, "'" + n.token() + "' names " + named.getClass().getName() + " and " + n.getClass().getName()));
+                return;
+            }
+            read.put(n.getClass(), new ColorTree.Read(n, scheme, parent));
+            parent = n;
         }
+    }
 
-        // 2. each node a stateless record, in a scheme, under a parent the tree has and its scheme can see
-        var byClass = new LinkedHashMap<Class<?>, ColorNode<?, ?, ?>>();
-        for (ColorNode<?, ?, ?> n : listed) byClass.put(n.getClass(), n);
-        var read = new LinkedHashMap<Class<?>, ColorTree.Read>();
-        listed.forEach(n -> {
-            Class<?> c = n.getClass();
-            if (!c.isRecord() || c.getRecordComponents().length > 0)
-                problems.add(new ColorProblem(Rule.NOT_STATELESS, n.token() + " is " + (c.isRecord() ? "a record with components" : "no record")
-                        + ": a node is a stateless record, its type its meaning"));
-            Optional<Class<?>> scheme = schemes.of(n);
-            if (scheme.isEmpty()) {
-                problems.add(new ColorProblem(Rule.SCHEME_ASTRAY, n.token() + " is in no scheme: its scheme is an abstract class, a scheme from scratch"
-                        + " or one on top of another - never ColorScheme itself, nor a variable"));
-                return;
-            }
-            Class<?> parentClass = TypeArguments.INSTANCE.at(c, ColorNode.class, 1);
-            if (parentClass == null) {
-                problems.add(new ColorProblem(Rule.UNREADABLE, n.token() + "'s parent cannot be read off its declaration: it is written raw"));
-                return;
-            }
-            ColorNode<?, ?, ?> parent = null;
-            if (parentClass != ColorBranch.Top.class) {
-                parent = byClass.get(parentClass);
-                if (parent == null) {
-                    problems.add(new ColorProblem(Rule.PARENT_MISSING, n.token() + " hangs under " + parentClass.getSimpleName()
-                            + ", which the tree has not: its layer, or one below it, lists it"));
-                    return;
-                }
-                Optional<Class<?>> parentScheme = schemes.of(parent);
-                if (parentScheme.isPresent() && !schemes.sees(scheme.get(), parentScheme.get()))
-                    problems.add(new ColorProblem(Rule.SCHEME_ASTRAY, n.token() + ", in " + schemes.name(scheme.get()) + ", hangs under "
-                            + parent.token() + ", in " + schemes.name(parentScheme.get()) + ", which it cannot see"));
-            }
-            read.put(c, new ColorTree.Read(n, scheme.get(), parent));
-        });
-
-        // 3. each leaf whole: a scale's knots, an interpolated colour's scale and degree, a fixed colour's colour
+    /** Each leaf whole - a scale's knots, an interpolated colour's scale and degree, a share, a fixed colour's colour - or refused. */
+    private static ColorTree whole(Map<Class<?>, ColorTree.Read> read, List<ColorProblem> problems) {
         for (ColorTree.Read r : read.values()) {
             switch (r.node()) {
-                case ColorScale<?, ?> s -> scale(s, r, read, problems);
+                case ColorScale<?, ?> s -> scale(s, read, problems);
                 case Interpolated<?, ?> i -> {
                     double d = i.degree();
                     if (!(d >= -1 && d <= 1))
@@ -173,24 +150,15 @@ public record ReadColors() implements StatelessFunctionalObject {
                     try { color = f.color(); } catch (RuntimeException e) { color = null; }
                     if (color == null) problems.add(new ColorProblem(Rule.FIXED_BADLY, f.token() + " gives no colour: a fixed colour is given at its declaration"));
                 }
+                case ColorBranch<?, ?> b -> { }
                 default -> { }
             }
         }
-
-
         if (!problems.isEmpty()) throw new RefusedColors(problems);
         return new ColorTree(read);
     }
 
-    private static ColorTree refuse(List<ColorProblem> problems) { throw new RefusedColors(problems); }
-
-    /** Where a class was loaded from: its jar, or its classes' directory. */
-    private static String home(Class<?> c) {
-        CodeSource source = c.getProtectionDomain() == null ? null : c.getProtectionDomain().getCodeSource();
-        return source == null || source.getLocation() == null ? null : source.getLocation().toString();
-    }
-
-    private static void scale(ColorScale<?, ?> s, ColorTree.Read r, Map<Class<?>, ColorTree.Read> read, List<ColorProblem> problems) {
+    private static void scale(ColorScale<?, ?> s, Map<Class<?>, ColorTree.Read> read, List<ColorProblem> problems) {
         List<? extends ColorScale.Knot<?>> knots;
         try { knots = s.knots(); } catch (RuntimeException e) {
             problems.add(new ColorProblem(Rule.SCALE_BADLY, s.token() + "'s knots cannot be made: " + e.getMessage()));
@@ -211,5 +179,4 @@ public record ReadColors() implements StatelessFunctionalObject {
             if (!read.containsKey(k.color().getClass()))
                 problems.add(new ColorProblem(Rule.SCALE_BADLY, s.token() + " has a knot of " + k.color().token() + ", which the tree has not"));
     }
-
 }

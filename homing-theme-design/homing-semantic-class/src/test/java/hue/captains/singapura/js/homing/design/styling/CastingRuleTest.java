@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class CastingRuleTest {
 
     private static final Taxonomy TAXONOMY = StyledTaxonomy.INSTANCE.read();
-    private static final ColorTree TREE = BaseColours.LoudColours.INSTANCE.read();
+    private static final ColorTree TREE = BaseColours.LOUD_TREE;
     private static final Casting TAB = new Casting(StatedTaxonomy.Tab.INSTANCE);
     private static final Casting METER = new Casting(StyledTaxonomy.Meter.INSTANCE);
     private static final Casting LEAD = TAXONOMY.castings().stream().filter(c -> c.token().equals("tab_lead")).findFirst().orElseThrow();
@@ -169,6 +169,7 @@ class CastingRuleTest {
 
     /** A spectrum of the style's own: the tree's safe and danger its anchors, the turn at degrees of its own (D41). */
     record Swing() implements ColorScale<BaseScheme, BaseColours.Signals> {
+        @Override public BaseColours.Signals parent() { return new BaseColours.Signals(); }
         @Override public List<Knot<BaseScheme>> knots() {
             return List.of(new Knot<>(new BaseColours.Safe(), -1), new Knot<>(new BaseColours.Safe(), 0.4),
                            new Knot<>(new BaseColours.Danger(), 0.6), new Knot<>(new BaseColours.Danger(), 1));

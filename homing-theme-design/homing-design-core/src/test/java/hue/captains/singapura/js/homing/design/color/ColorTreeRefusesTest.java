@@ -39,14 +39,14 @@ class ColorTreeRefusesTest {
                 record Attention() implements L1_ColorBranch<Base> {}
                 record Feedback() implements L1_ColorBranch<Base> {}
                 record Glow() implements L1_ColorBranch<Neo> {}
-                record Accent() implements Palettable<Base, Attention> {}
-                record Calm() implements Palettable<Base, Feedback> {}
-                record Danger() implements Palettable<Base, Feedback> {}
-                record MineRed() implements Fixed<Base, Feedback> { public ConcreteColor color() { return new ConcreteColor.Srgb("#ff0000"); } }
-                record Risk() implements ColorScale<Base, Feedback> { public List<ColorScale.Knot<Base>> knots() { return List.of(new ColorScale.Knot<>(new Calm(), -1), new ColorScale.Knot<>(new Accent(), 0), new ColorScale.Knot<>(new Danger(), 1)); } }
-                record Warning() implements Interpolated<Base, Feedback> { public ColorScale<? super Base, ?> scale() { return new Risk(); } public double degree() { return 0.5; } }
-                record Spark() implements Palettable<Neo, Glow> {}
-                record Glare() implements ColorScale<Neo, Glow> { public List<ColorScale.Knot<Neo>> knots() { return List.of(new ColorScale.Knot<>(new Calm(), -1), new ColorScale.Knot<>(new Spark(), 0), new ColorScale.Knot<>(new MineRed(), 1)); } }
+                record Accent() implements Palettable<Base, Attention> { @Override public Attention parent() { return new Attention(); } }
+                record Calm() implements Palettable<Base, Feedback> { @Override public Feedback parent() { return new Feedback(); } }
+                record Danger() implements Palettable<Base, Feedback> { @Override public Feedback parent() { return new Feedback(); } }
+                record MineRed() implements Fixed<Base, Feedback> { @Override public Feedback parent() { return new Feedback(); } public ConcreteColor color() { return new ConcreteColor.Srgb("#ff0000"); } }
+                record Risk() implements ColorScale<Base, Feedback> { @Override public Feedback parent() { return new Feedback(); } public List<ColorScale.Knot<Base>> knots() { return List.of(new ColorScale.Knot<>(new Calm(), -1), new ColorScale.Knot<>(new Accent(), 0), new ColorScale.Knot<>(new Danger(), 1)); } }
+                record Warning() implements Interpolated<Base, Feedback> { @Override public Feedback parent() { return new Feedback(); } public ColorScale<? super Base, ?> scale() { return new Risk(); } public double degree() { return 0.5; } }
+                record Spark() implements Palettable<Neo, Glow> { @Override public Glow parent() { return new Glow(); } }
+                record Glare() implements ColorScale<Neo, Glow> { @Override public Glow parent() { return new Glow(); } public List<ColorScale.Knot<Neo>> knots() { return List.of(new ColorScale.Knot<>(new Calm(), -1), new ColorScale.Knot<>(new Spark(), 0), new ColorScale.Knot<>(new MineRed(), 1)); } }
             """;
 
     private static final String MARK = "// refused here";
@@ -54,13 +54,13 @@ class ColorTreeRefusesTest {
     @Test
     void aWellFormedTree_compiles() {
         var errors = compile("""
-                record Halo() implements L2_ColorBranch<Neo, Attention> {}
-                record Rim() implements L3_ColorBranch<Neo, Halo> {}
-                record Edge() implements L2_ColorBranch<Base, Feedback> {}
-                record Flare() implements Palettable<Neo, Rim> {}
-                record Ember() implements Fixed<Neo, Edge> { public ConcreteColor color() { return new ConcreteColor.Oklch("oklch(0.6 0.2 30)"); } }
-                record Hazard() implements Interpolated<Neo, Glow> { public ColorScale<? super Neo, ?> scale() { return new Risk(); } public double degree() { return -0.25; } }
-                record Flash() implements Interpolated<Neo, Glow> { public ColorScale<? super Neo, ?> scale() { return new Glare(); } public double degree() { return 1; } }
+                record Halo() implements L2_ColorBranch<Neo, Attention> { @Override public Attention parent() { return new Attention(); } }
+                record Rim() implements L3_ColorBranch<Neo, Halo> { @Override public Halo parent() { return new Halo(); } }
+                record Edge() implements L2_ColorBranch<Base, Feedback> { @Override public Feedback parent() { return new Feedback(); } }
+                record Flare() implements Palettable<Neo, Rim> { @Override public Rim parent() { return new Rim(); } }
+                record Ember() implements Fixed<Neo, Edge> { @Override public Edge parent() { return new Edge(); } public ConcreteColor color() { return new ConcreteColor.Oklch("oklch(0.6 0.2 30)"); } }
+                record Hazard() implements Interpolated<Neo, Glow> { @Override public Glow parent() { return new Glow(); } public ColorScale<? super Neo, ?> scale() { return new Risk(); } public double degree() { return -0.25; } }
+                record Flash() implements Interpolated<Neo, Glow> { @Override public Glow parent() { return new Glow(); } public ColorScale<? super Neo, ?> scale() { return new Glare(); } public double degree() { return 1; } }
                 static SemanticColor<? super Neo> neoPicks() { return new Accent(); }
                 static SemanticColor<? super Neo> neoPicksItsOwn() { return new Flare(); }
                 static SemanticColor<? super Base> basePicks() { return new Warning(); }
@@ -71,35 +71,35 @@ class ColorTreeRefusesTest {
     @Test
     void theBasesBranchUnderASchemesBranch_doesNotCompile() {
         refusedOnItsLine("""
-                record Lost() implements L2_ColorBranch<Base, Glow> {} // refused here
+                record Lost() implements L2_ColorBranch<Base, Glow> { @Override public Glow parent() { return new Glow(); } } // refused here
                 """);
     }
 
     @Test
     void theBasesLeafUnderASchemesBranch_doesNotCompile() {
         refusedOnItsLine("""
-                record Stray() implements Palettable<Base, Glow> {} // refused here
+                record Stray() implements Palettable<Base, Glow> { @Override public Glow parent() { return new Glow(); } } // refused here
                 """);
     }
 
     @Test
     void aLeafAtTheTopOfTheTree_doesNotCompile() {
         refusedOnItsLine("""
-                record Orphan() implements Palettable<Base, ColorBranch.Top> {} // refused here
+                record Orphan() implements Palettable<Base, ColorBranch.Top> { @Override public ColorBranch.Top parent() { return ColorBranch.Top.INSTANCE; } } // refused here
                 """);
     }
 
     @Test
     void aBranchAtTheWrongLevel_doesNotCompile() {
         refusedOnItsLine("""
-                record Skip() implements L3_ColorBranch<Base, Attention> {} // refused here
+                record Skip() implements L3_ColorBranch<Base, Attention> { @Override public Attention parent() { return new Attention(); } } // refused here
                 """);
     }
 
     @Test
     void aBranchAtTwoLevels_doesNotCompile() {
         refusedOnItsLine("""
-                record Twice() implements L1_ColorBranch<Base>, L2_ColorBranch<Base, Feedback> {} // refused here
+                record Twice() implements L1_ColorBranch<Base>, L2_ColorBranch<Base, Feedback> { @Override public Feedback parent() { return new Feedback(); } } // refused here
                 """);
     }
 
@@ -127,7 +127,7 @@ class ColorTreeRefusesTest {
     @Test
     void aBranchThatIsAlsoALeaf_doesNotCompile() {
         refusedOnItsLine("""
-                record Hybrid() implements L1_ColorBranch<Base>, Palettable<Base, Feedback> {} // refused here
+                record Hybrid() implements L1_ColorBranch<Base>, Palettable<Base, Feedback> { @Override public Feedback parent() { return new Feedback(); } } // refused here
                 """);
     }
 
@@ -141,28 +141,28 @@ class ColorTreeRefusesTest {
     @Test
     void aColourFromAScaleOfASchemeAbove_doesNotCompile() {
         refusedOnItsLine("""
-                record Up() implements Interpolated<Base, Feedback> { public ColorScale<? super Base, ?> scale() { return new Glare(); } public double degree() { return 0; } } // refused here
+                record Up() implements Interpolated<Base, Feedback> { @Override public Feedback parent() { return new Feedback(); } public ColorScale<? super Base, ?> scale() { return new Glare(); } public double degree() { return 0; } } // refused here
                 """);
     }
 
     @Test
     void aKnotOfAColourOfASchemeAbove_doesNotCompile() {
         refusedOnItsLine("""
-                record Peek() implements ColorScale<Base, Feedback> { public List<ColorScale.Knot<Base>> knots() { return List.of(new ColorScale.Knot<>(new Calm(), -1), new ColorScale.Knot<>(new Spark(), 0), new ColorScale.Knot<>(new Danger(), 1)); } } // refused here
+                record Peek() implements ColorScale<Base, Feedback> { @Override public Feedback parent() { return new Feedback(); } public List<ColorScale.Knot<Base>> knots() { return List.of(new ColorScale.Knot<>(new Calm(), -1), new ColorScale.Knot<>(new Spark(), 0), new ColorScale.Knot<>(new Danger(), 1)); } } // refused here
                 """);
     }
 
     @Test
     void aKnotOfAnInterpolatedColour_doesNotCompile() {
         refusedOnItsLine("""
-                record Nested() implements ColorScale<Base, Feedback> { public List<ColorScale.Knot<Base>> knots() { return List.of(new ColorScale.Knot<>(new Calm(), -1), new ColorScale.Knot<>(new Warning(), 0), new ColorScale.Knot<>(new Danger(), 1)); } } // refused here
+                record Nested() implements ColorScale<Base, Feedback> { @Override public Feedback parent() { return new Feedback(); } public List<ColorScale.Knot<Base>> knots() { return List.of(new ColorScale.Knot<>(new Calm(), -1), new ColorScale.Knot<>(new Warning(), 0), new ColorScale.Knot<>(new Danger(), 1)); } } // refused here
                 """);
     }
 
     @Test
     void aKnotOfAScale_doesNotCompile() {
         refusedOnItsLine("""
-                record Nested() implements ColorScale<Base, Feedback> { public List<ColorScale.Knot<Base>> knots() { return List.of(new ColorScale.Knot<>(new Calm(), -1), new ColorScale.Knot<>(new Risk(), 0), new ColorScale.Knot<>(new Danger(), 1)); } } // refused here
+                record Nested() implements ColorScale<Base, Feedback> { @Override public Feedback parent() { return new Feedback(); } public List<ColorScale.Knot<Base>> knots() { return List.of(new ColorScale.Knot<>(new Calm(), -1), new ColorScale.Knot<>(new Risk(), 0), new ColorScale.Knot<>(new Danger(), 1)); } } // refused here
                 """);
     }
 
@@ -288,10 +288,15 @@ class ColorTreeRefusesTest {
         return diagnostics.getDiagnostics().stream().filter(d -> d.getKind() == Diagnostic.Kind.ERROR).collect(Collectors.toList());
     }
 
-    /** This module's classes. */
+    /** This module's classes, and what they are written against: a scheme is a stateless object (D49). */
     private static String classpath() {
-        try { return Path.of(ColorNode.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toString(); }
-        catch (URISyntaxException e) { throw new IllegalStateException(e); }
+        return java.util.stream.Stream.of(ColorNode.class, hue.captains.singapura.tao.ontology.Stateless.class)
+                .map(c -> {
+                    try { return Path.of(c.getProtectionDomain().getCodeSource().getLocation().toURI()).toString(); }
+                    catch (URISyntaxException e) { throw new IllegalStateException(e); }
+                })
+                .distinct()
+                .collect(Collectors.joining(java.io.File.pathSeparator));
     }
 
     private static long lineOf(String source, String mark) {

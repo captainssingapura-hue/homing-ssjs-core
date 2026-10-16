@@ -57,7 +57,7 @@ final class ResolvingThemes {
     private static final Target.Color.Text INK = Target.Color.Text.INSTANCE;
 
     /** The colour tree the themes are worn over, read once. */
-    static final ColorTree COLOURS = BaseColours.LoudColours.INSTANCE.read();
+    static final ColorTree COLOURS = BaseColours.LOUD_TREE;
 
     /** The themes by the names the cases give them. */
     static final Map<String, Dressed> BY_NAME = Map.of(
@@ -74,6 +74,8 @@ final class ResolvingThemes {
 
 
     public record Sketch() implements DesignStyle<BaseScheme> {
+
+        @Override public BaseScheme scheme() { return BaseScheme.INSTANCE; }
         public static final Sketch INSTANCE = new Sketch();
         @Override public List<Implementation<?>> implementations() {
             return List.of(
@@ -93,6 +95,8 @@ final class ResolvingThemes {
     }
 
     public record Detailed() implements Derives<BaseScheme, Sketch> {
+
+        @Override public BaseScheme scheme() { return BaseScheme.INSTANCE; }
         public static final Detailed INSTANCE = new Detailed();
         @Override public Sketch base() { return Sketch.INSTANCE; }
         @Override public List<Implementation<?>> implementations() {
@@ -108,6 +112,8 @@ final class ResolvingThemes {
     }
 
     public record Valued() implements DesignStyle<BaseScheme> {
+
+        @Override public BaseScheme scheme() { return BaseScheme.INSTANCE; }
         public static final Valued INSTANCE = new Valued();
         @Override public List<Implementation<?>> implementations() {
             return List.of(
@@ -170,6 +176,8 @@ final class ResolvingThemes {
     }
 
     public record Squared() implements Derives<BaseScheme, Valued> {
+
+        @Override public BaseScheme scheme() { return BaseScheme.INSTANCE; }
         public static final Squared INSTANCE = new Squared();
         @Override public Valued base() { return Valued.INSTANCE; }
         @Override public List<Implementation<?>> implementations() {

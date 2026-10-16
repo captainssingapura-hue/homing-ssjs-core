@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.design.semantic;
 
+import hue.captains.singapura.js.homing.design.color.ColorScheme;
+
 import hue.captains.singapura.js.homing.component.taxonomy.ComponentBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.ConcreteComponent;
 import hue.captains.singapura.js.homing.component.taxonomy.Design;
@@ -86,8 +88,7 @@ public record ReadDesigns() implements StatelessFunctionalObject {
         // 2b. each design in a scheme, as a style is (D33)
         for (Design<?, ?> d : byDesign.keySet())
             if (Schemes.INSTANCE.of(d).isEmpty())
-                problems.add(new DesignProblem(Rule.NO_SCHEME, d.token() + " is in no scheme: its first type argument is an abstract class - "
-                        + "a scheme from scratch or one on top of another"));
+                problems.add(new DesignProblem(Rule.NO_SCHEME, d.token() + " says no scheme: a design says the scheme it is in"));
 
         // 3. each design complete over its branch, and what each leaf owns
         var owned = new HashMap<VirtualComponent<?>, List<Target>>();
@@ -116,7 +117,7 @@ public record ReadDesigns() implements StatelessFunctionalObject {
         // 4. in every theme: every owned target drawn once, nothing else drawn, each redirect landing
         for (Dressed theme : themes)
             for (DesignRead d : out) {
-                Class<?> designs = Schemes.INSTANCE.of(d.design()).orElse(null), wears = Schemes.INSTANCE.of(theme.style()).orElse(null);
+                ColorScheme designs = Schemes.INSTANCE.of(d.design()).orElse(null), wears = Schemes.INSTANCE.of(theme.style()).orElse(null);
                 if (designs == null || wears == null) continue;   // refused above, or by the theme
                 if (!Schemes.INSTANCE.sees(wears, designs)) {
                     problems.add(new DesignProblem(Rule.SCHEME_UNSEEN, d.token() + " is " + Schemes.INSTANCE.name(designs) + "'s, which " + name(theme)

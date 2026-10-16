@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.design.semantic;
 
+import hue.captains.singapura.js.homing.design.color.ColorScheme;
+
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.util.Optional;
@@ -15,14 +17,14 @@ public record Wear() implements StatelessFunctionalObject {
 
     /** The style worn in the palette, when the two are of one scheme. */
     public Optional<Dressed> of(ColorTree colors, DesignStyle<?> style, ColorPalette<?> palette) {
-        Optional<Class<?>> mine = Schemes.INSTANCE.of(style), its = Schemes.INSTANCE.of(palette);
-        if (mine.isEmpty() || its.isEmpty() || mine.get() != its.get()) return Optional.empty();
+        Optional<ColorScheme> mine = Schemes.INSTANCE.of(style), its = Schemes.INSTANCE.of(palette);
+        if (mine.isEmpty() || its.isEmpty() || !Schemes.INSTANCE.same(mine.get(), its.get())) return Optional.empty();
         return Optional.of(new Dressed(colors, style, palette, true));
     }
 
     /** Whether the style may be worn in the palette: both of one scheme. */
     public boolean fits(DesignStyle<?> style, ColorPalette<?> palette) {
-        Optional<Class<?>> mine = Schemes.INSTANCE.of(style), its = Schemes.INSTANCE.of(palette);
-        return mine.isPresent() && its.isPresent() && mine.get() == its.get();
+        Optional<ColorScheme> mine = Schemes.INSTANCE.of(style), its = Schemes.INSTANCE.of(palette);
+        return mine.isPresent() && its.isPresent() && Schemes.INSTANCE.same(mine.get(), its.get());
     }
 }

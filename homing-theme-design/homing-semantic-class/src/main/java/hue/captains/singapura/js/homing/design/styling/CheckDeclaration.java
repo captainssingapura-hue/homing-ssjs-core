@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.design.styling;
 
+import hue.captains.singapura.js.homing.design.semantic.CheckScheme;
+import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.component.taxonomy.Component;
 import hue.captains.singapura.js.homing.component.taxonomy.RoleNode;
@@ -110,6 +112,7 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
         var declared = new LinkedHashSet<Class<?>>();
         for (StyleDeclaration.Provided<?, ?> provided : declaration.provided()) {
             DesignStyle<?> style = provided.style();
+            CheckScheme.INSTANCE.says(style).forEach(p -> problems.add(p + ": a style says the scheme its type names (D49)"));
             for (CastingStyle<?, ?, ?, ?> implementation : provided.castings()) {
                 Implementation one = one(implementation, style, jar, taxonomy, tree);
                 implementations.add(one);
@@ -151,8 +154,8 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
         }
         if (args.get(1) != style.getClass())
             problems.add("is " + args.get(1).getSimpleName() + "'s, listed for " + style.token());
-        Optional<Class<?>> scheme = tree.scheme(style);
-        if (scheme.isEmpty()) problems.add(style.token() + " requires no scheme: no colour can be held to it");
+        Optional<ColorScheme> scheme = tree.scheme(style);
+        if (scheme.isEmpty()) problems.add(style.token() + " says no scheme: no colour can be held to it");
         Casting casting = casting(args.get(2), args.get(3)).orElse(null);
         if (casting == null) {
             problems.add(args.get(2).getSimpleName() + " as " + args.get(3).getSimpleName() + " names no component and role the taxonomy can make");
@@ -211,7 +214,7 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
     }
 
     /** Its own CSS: at its canonical name, marked in form, and - filled in for its casting - a casting's rule, its colours imported both ways. */
-    private static void content(Class<?> type, DesignStyle<?> style, Casting casting, StylingRes.CssContent<?, ?> content, Class<?> scheme,
+    private static void content(Class<?> type, DesignStyle<?> style, Casting casting, StylingRes.CssContent<?, ?> content, ColorScheme scheme,
                                 Taxonomy taxonomy, ColorTree tree, List<String> problems) {
         var css = CastingCss.INSTANCE;
         String file = css.resource(type);
@@ -255,7 +258,7 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
     }
 
     /** A delegation: no CSS of its own; its chain to CSS, never round, of the same component; its colours the delegating scheme's. */
-    private static void delegation(Class<?> type, DesignStyle<?> style, Casting casting, StylingRes.Delegation<?, ?> delegation, Class<?> scheme,
+    private static void delegation(Class<?> type, DesignStyle<?> style, Casting casting, StylingRes.Delegation<?, ?> delegation, ColorScheme scheme,
                                    ColorTree tree, List<String> problems) {
         if (CastingCss.INSTANCE.read(type).isPresent())
             problems.add("delegates, and its jar has " + CastingCss.INSTANCE.resource(type) + ": a delegation has no CSS of its own");

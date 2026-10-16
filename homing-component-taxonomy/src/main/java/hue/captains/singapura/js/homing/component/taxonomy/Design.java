@@ -25,6 +25,9 @@ import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
  */
 public interface Design<S extends ColorScheme, N extends ComponentBranch & DesignBranch> extends StatelessFunctionalObject {
 
+    /** The scheme it is in: the scheme's one object, said by the design itself (D49) - nothing reads it off its type. */
+    S scheme();
+
     /** Its name, from its type: {@code MinesweeperClassic} gives {@code minesweeper-classic}. */
     default String token() { return NodeName.ofType(getClass(), "").value(); }
 }

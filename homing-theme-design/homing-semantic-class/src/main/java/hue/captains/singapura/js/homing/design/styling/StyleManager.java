@@ -9,7 +9,8 @@ import hue.captains.singapura.js.homing.design.Growth;
 import hue.captains.singapura.js.homing.design.semantic.ColorTree;
 import hue.captains.singapura.js.homing.design.semantic.Derives;
 import hue.captains.singapura.js.homing.design.semantic.DesignStyle;
-import hue.captains.singapura.js.homing.design.semantic.SchemeReaders;
+import hue.captains.singapura.js.homing.design.color.ColorScheme;
+import hue.captains.singapura.js.homing.design.semantic.SchemeRegistry;
 import hue.captains.singapura.js.homing.design.semantic.Schemes;
 import hue.captains.singapura.js.homing.design.semantic.TypeArguments;
 import hue.captains.singapura.js.homing.design.styles.CastingStyle;
@@ -38,65 +39,59 @@ import java.util.Optional;
  * taxonomy, each its implementation's CSS with its marks filled in for the casting served - a delegating casting under
  * its own class. The family files are aggregated the same way, for reading only.</p>
  *
- * <p>Its colours are its styles' schemes (D47): the schemes are the registered styles', each style saying only its own,
- * and each scheme's tree is read by the reader the instance's finder finds for it ({@link SchemeReaders}) - asked for
- * those schemes alone, so no scheme no style requires is ever seen. Styles and schemes know nothing of palettes, which
- * are registered apart ({@link PaletteRegistry}).</p>
+ * <p>Its colours are its styles' schemes (D47, D49): each style says its own, and each scheme's full tree is taken from
+ * the instance's registry of schemes ({@link SchemeRegistry}) - those its styles require alone, so no scheme no style
+ * requires is ever seen; a style of a scheme the instance does not register is refused. Styles and schemes know
+ * nothing of palettes, which are registered apart ({@link PaletteRegistry}).</p>
  *
  * @param taxonomy      the castings
- * @param readers       how it finds a scheme's reader: the instance's one finder
- * @param trees         each scheme's normalized tree, by its scheme: the registered styles' schemes
+ * @param trees         each scheme's full tree, by its scheme: the registered styles' schemes
  * @param registrations the styles the instance includes, each with its jars, the default first
  */
-public record StyleManager(Taxonomy taxonomy, SchemeReaders readers, Map<Class<?>, ColorTree> trees, List<StyleRegistration> registrations)
-        implements ValueObject {
+public record StyleManager(Taxonomy taxonomy, Map<Class<?>, ColorTree> trees, List<StyleRegistration> registrations) implements ValueObject {
 
     public StyleManager {
         trees = Collections.unmodifiableMap(new LinkedHashMap<>(trees));
         registrations = List.copyOf(registrations);
     }
 
-    /** An instance of its registrations, held to the default rules, its schemes' readers found by name. */
-    public static StyleManager of(Taxonomy taxonomy, List<StyleRegistration> registrations) {
-        return of(taxonomy, registrations, StyleRule.DEFAULT, SchemeReaders.BY_NAME);
-    }
-
-    /** An instance of its registrations, held to the rules it is given, its schemes' readers found by name. */
-    public static StyleManager of(Taxonomy taxonomy, List<StyleRegistration> registrations, List<StyleRule> rules) {
-        return of(taxonomy, registrations, rules, SchemeReaders.BY_NAME);
+    /** An instance of its registrations over the instance's schemes, held to the default rules. */
+    public static StyleManager of(Taxonomy taxonomy, SchemeRegistry schemes, List<StyleRegistration> registrations) {
+        return of(taxonomy, schemes, registrations, StyleRule.DEFAULT);
     }
 
     /**
-     * An instance of its registrations, held to the rules it is given, its schemes' readers found by the finder it is
-     * given; refused with every problem at once. Its schemes are its styles': each style's, read by the reader found for it.
+     * An instance of its registrations over the instance's schemes, held to the rules it is given; refused with every
+     * problem at once. Its schemes are its styles': each style's tree, as the registry of schemes read it.
      */
-    public static StyleManager of(Taxonomy taxonomy, List<StyleRegistration> registrations, List<StyleRule> rules, SchemeReaders readers) {
+    public static StyleManager of(Taxonomy taxonomy, SchemeRegistry schemes, List<StyleRegistration> registrations, List<StyleRule> rules) {
         var problems = new ArrayList<String>();
         if (registrations.isEmpty()) problems.add("it registers no style");
-        var schemes = new ArrayList<Class<?>>();
+        var trees = new LinkedHashMap<Class<?>, ColorTree>();
         for (StyleRegistration r : registrations) {
-            Optional<Class<?>> scheme = Schemes.INSTANCE.of(r.style());
-            if (scheme.isEmpty()) problems.add(r.style().token() + " requires no scheme: its type argument is an abstract class");
-            else if (!schemes.contains(scheme.get())) schemes.add(scheme.get());
+            ColorScheme scheme = r.style().scheme();
+            if (scheme == null) { problems.add(r.style().token() + " says no scheme: a style says the scheme it requires"); continue; }
+            Optional<ColorTree> tree = schemes.find(scheme);
+            if (tree.isEmpty()) problems.add(r.style().token() + " requires " + scheme.name() + ", which the instance does not register: "
+                    + "a style's scheme is registered with the instance");
+            else trees.putIfAbsent(scheme.getClass(), tree.get());
         }
-        SchemeReaders.Read read = readers.read(schemes);
-        problems.addAll(read.problems());
-        var manager = new StyleManager(taxonomy, readers, read.trees(), registrations);
+        var manager = new StyleManager(taxonomy, trees, registrations);
         if (problems.isEmpty()) for (StyleRule rule : rules) problems.addAll(rule.check(manager));
         if (!problems.isEmpty()) throw new IllegalArgumentException("the instance's styles are refused:\n  " + String.join("\n  ", problems));
         return manager;
     }
 
-    /** A scheme's normalized tree: one a registered style requires. */
-    public ColorTree tree(Class<?> scheme) {
-        ColorTree tree = trees.get(scheme);
-        if (tree == null) throw new IllegalArgumentException(Schemes.INSTANCE.name(scheme) + " is required by no registered style");
+    /** A scheme's full tree: one a registered style requires. */
+    public ColorTree tree(ColorScheme scheme) {
+        ColorTree tree = trees.get(scheme.getClass());
+        if (tree == null) throw new IllegalArgumentException(scheme.name() + " is required by no registered style");
         return tree;
     }
 
     /** The tree a style is drawn over: its scheme's. */
     public ColorTree tree(DesignStyle<?> style) {
-        return tree(Schemes.INSTANCE.of(style).orElseThrow(() -> new IllegalArgumentException(style.token() + " requires no scheme")));
+        return tree(Schemes.INSTANCE.of(style).orElseThrow(() -> new IllegalArgumentException(style.token() + " says no scheme")));
     }
 
     /** The styles the instance includes, the default first. */

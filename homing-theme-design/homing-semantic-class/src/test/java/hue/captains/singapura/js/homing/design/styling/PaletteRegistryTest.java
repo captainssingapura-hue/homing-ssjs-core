@@ -6,7 +6,7 @@ import hue.captains.singapura.js.homing.design.semantic.BaseColours.Night;
 import hue.captains.singapura.js.homing.design.semantic.BaseColours.Paper;
 import hue.captains.singapura.js.homing.design.semantic.BaseScheme;
 import hue.captains.singapura.js.homing.design.semantic.ColorPalette;
-import hue.captains.singapura.js.homing.design.semantic.SchemeReaders;
+import hue.captains.singapura.js.homing.design.semantic.SchemeRegistry;
 import hue.captains.singapura.js.homing.design.styles.PaletteDeclaration;
 import org.junit.jupiter.api.Test;
 
@@ -18,21 +18,21 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * The instance's palettes (RFC 0067, D47): one registry, each jar a sub-registry by its declaration, apart from the
- * styles - each palette's scheme read by the reader the instance's finder finds for it, whether a style requires the
- * scheme or not - and held to its own checks.
+ * The instance's palettes (RFC 0067, D47, D49): one registry, each jar a sub-registry by its declaration, apart from the
+ * styles - each palette held whole over its scheme's tree as the instance's registry of schemes read it, whether a style
+ * requires the scheme or not - and held to its own checks.
  */
 class PaletteRegistryTest {
 
     @Test
     void theInstancesPalettes_eachJarASubRegistry_eachSchemeReadByTheReaderFoundForIt() {
-        PaletteRegistry registry = PaletteRegistry.of(List.of(BaseColours.Palettes.INSTANCE));
+        PaletteRegistry registry = PaletteRegistry.of(List.of(BaseColours.Palettes.INSTANCE), BaseColours.SCHEMES);
         assertEquals(List.of(Night.INSTANCE, Paper.INSTANCE, Neon.INSTANCE), registry.palettes(), "the jar's, in its order");
         assertEquals(List.of(BaseScheme.class, BaseColours.LoudScheme.class), List.copyOf(registry.trees().keySet()),
-                "the palettes' schemes, each read once - no style asked");
+                "the palettes' schemes - no style asked");
         assertEquals(17, registry.tree(Neon.INSTANCE).nodes().size(), "neon over the loud scheme's tree");
         assertEquals(Optional.of(Paper.INSTANCE), registry.palette("paper"));
-        assertEquals(SchemeReaders.BY_NAME, registry.readers(), "found by name unless it says");
+        assertEquals(BaseColours.LOUD_TREE, registry.tree(Neon.INSTANCE), "the registry of schemes' own tree");
     }
 
     /** A second jar holding night again. */
@@ -41,7 +41,7 @@ class PaletteRegistryTest {
     }
 
     @Test
-    void refused_nothing_aJarTwice_twoOfOneToken_notWhole_sittingOnOneNotRegistered_aSchemeWithNoReader() {
+    void refused_nothing_aJarTwice_twoOfOneToken_notWhole_sittingOnOneNotRegistered_ofASchemeNotRegistered() {
         assertTrue(refused(List.of()).contains("it registers no palette"));
         String jarTwice = refused(List.of(BaseColours.Palettes.INSTANCE, BaseColours.Palettes.INSTANCE));
         assertTrue(jarTwice.contains("Palettes is registered twice"), jarTwice);
@@ -51,15 +51,13 @@ class PaletteRegistryTest {
         assertTrue(incomplete.contains("unsafe leaves safe unanswered"), "a palette whole over its scheme: " + incomplete);
         String adrift = refused(only(Night.INSTANCE, Neon.INSTANCE));
         assertTrue(adrift.contains("neon sits on paper, which is not registered"), "the palettes below registered too: " + adrift);
-        SchemeReaders noLoud = scheme -> scheme == BaseColours.LoudScheme.class
-                ? new SchemeReaders.Found.Missing("the loud scheme's reader is out") : SchemeReaders.BY_NAME.find(scheme);
-        String unread = assertThrows(IllegalArgumentException.class,
-                () -> PaletteRegistry.of(List.of(BaseColours.Palettes.INSTANCE), noLoud)).getMessage();
-        assertTrue(unread.startsWith("the instance's palettes are refused:") && unread.contains("the loud scheme's reader is out"), unread);
+        String unregistered = assertThrows(IllegalArgumentException.class,
+                () -> PaletteRegistry.of(List.of(BaseColours.Palettes.INSTANCE), SchemeRegistry.of(List.of(BaseColours.INSTANCE)))).getMessage();
+        assertTrue(unregistered.startsWith("the instance's palettes are refused:") && unregistered.contains("neon is LoudScheme's, which the instance does not register"), unregistered);
     }
 
     private static String refused(List<PaletteDeclaration> jars) {
-        return assertThrows(IllegalArgumentException.class, () -> PaletteRegistry.of(jars)).getMessage();
+        return assertThrows(IllegalArgumentException.class, () -> PaletteRegistry.of(jars, BaseColours.SCHEMES)).getMessage();
     }
 
     private static List<PaletteDeclaration> only(ColorPalette<?>... palettes) { return List.of(() -> List.of(palettes)); }

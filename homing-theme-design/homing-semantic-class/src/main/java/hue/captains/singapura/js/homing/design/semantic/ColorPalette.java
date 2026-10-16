@@ -22,6 +22,9 @@ import java.util.Optional;
  */
 public interface ColorPalette<S extends ColorScheme> {
 
+    /** The scheme it implements: the scheme's one object, said by the palette itself (D49) - nothing reads it off its type. */
+    S scheme();
+
     /** The palette's token, from its type: {@code harbour}. */
     default String token() { return NodeName.ofType(getClass(), "").value(); }
 

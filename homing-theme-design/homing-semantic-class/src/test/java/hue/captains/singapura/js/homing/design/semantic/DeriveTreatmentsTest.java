@@ -33,6 +33,8 @@ class DeriveTreatmentsTest {
 
     /** The danger button's shadow is the plain button's, which answers focus itself: a state only the redirect brings. */
     public record Redirecting() implements Derives<BaseScheme, ResolvingThemes.Valued> {
+
+        @Override public BaseScheme scheme() { return BaseScheme.INSTANCE; }
         @Override public ResolvingThemes.Valued base() { return ResolvingThemes.Valued.INSTANCE; }
         @Override public List<Implementation<?>> implementations() {
             return List.of(new Implementation<>(DangerButton.INSTANCE, Target.Shape.Shadow.INSTANCE, new Answer.Redirect<>(PlainButton.INSTANCE)),
@@ -43,6 +45,8 @@ class DeriveTreatmentsTest {
 
     /** A control that cannot be used says nothing of its opacity: its base's treatment ends here. */
     public record Silencing() implements Derives<BaseScheme, ResolvingThemes.Valued> {
+
+        @Override public BaseScheme scheme() { return BaseScheme.INSTANCE; }
         @Override public ResolvingThemes.Valued base() { return ResolvingThemes.Valued.INSTANCE; }
         @Override public List<Implementation<?>> implementations() {
             return List.of(new Implementation<>(Control.INSTANCE, Target.Effect.Opacity.INSTANCE,

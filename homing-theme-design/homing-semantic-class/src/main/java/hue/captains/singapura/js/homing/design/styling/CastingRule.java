@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.design.styling;
 
+import hue.captains.singapura.js.homing.design.color.ColorScheme;
+
 import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.component.taxonomy.Component;
 import hue.captains.singapura.js.homing.component.taxonomy.ExtentAxis;
@@ -103,7 +105,7 @@ final class CastingRule {
     private final ColorTree tree;
     private final DesignStyle<?> style;
     private final Casting leaf;
-    private final Class<?> scheme;
+    private final ColorScheme scheme;
     private final String name;
     private final Map<String, ColorNode<?, ?, ?>> nodes = new HashMap<>();
     /** The implementation's own spectra, by name: read before the tree's scale of the same name (D41). */

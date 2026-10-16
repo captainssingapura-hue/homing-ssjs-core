@@ -17,12 +17,16 @@ public record StyledStyles() {
 
     /** The base layer: an implementation for every casting, the extension's badge included. */
     public record Plain() implements DesignStyle<BaseScheme> {
+
+        @Override public BaseScheme scheme() { return BaseScheme.INSTANCE; }
         public static final Plain INSTANCE = new Plain();
         @Override public List<Implementation<?>> implementations() { return List.of(); }
     }
 
     /** Over plain: a tab of its own, every other casting plain's. */
     public record Ink() implements Derives<BaseScheme, Plain> {
+
+        @Override public BaseScheme scheme() { return BaseScheme.INSTANCE; }
         public static final Ink INSTANCE = new Ink();
         @Override public Plain base() { return Plain.INSTANCE; }
         @Override public List<Implementation<?>> implementations() { return List.of(); }
@@ -30,6 +34,8 @@ public record StyledStyles() {
 
     /** Of the loud scheme, over plain: a meter in the glare only its scheme sees. */
     public record Loudly() implements Derives<BaseColours.LoudScheme, Plain> {
+
+        @Override public BaseColours.LoudScheme scheme() { return BaseColours.LoudScheme.INSTANCE; }
         public static final Loudly INSTANCE = new Loudly();
         @Override public Plain base() { return Plain.INSTANCE; }
         @Override public List<Implementation<?>> implementations() { return List.of(); }
@@ -37,6 +43,8 @@ public record StyledStyles() {
 
     /** A base layer whose jar is wrong in every way a jar can be: the declaration's check refuses it. */
     public record Shabby() implements DesignStyle<BaseScheme> {
+
+        @Override public BaseScheme scheme() { return BaseScheme.INSTANCE; }
         public static final Shabby INSTANCE = new Shabby();
         @Override public List<Implementation<?>> implementations() { return List.of(); }
     }

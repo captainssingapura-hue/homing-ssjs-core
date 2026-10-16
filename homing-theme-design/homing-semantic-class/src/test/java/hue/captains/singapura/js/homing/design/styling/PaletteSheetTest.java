@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class PaletteSheetTest {
 
-    private static final ColorTree TREE = BaseColours.LoudColours.INSTANCE.read();
+    private static final ColorTree TREE = BaseColours.LOUD_TREE;
     private static final PaletteSheet SHEET = PaletteSheet.INSTANCE;
 
     @Test

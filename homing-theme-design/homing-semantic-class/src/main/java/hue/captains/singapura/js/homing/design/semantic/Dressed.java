@@ -43,7 +43,7 @@ public final class Dressed {
         this.style = Objects.requireNonNull(style, "Dressed.style");
         this.palette = Objects.requireNonNull(palette, "Dressed.palette");
         if (Schemes.INSTANCE.of(style).isEmpty())
-            throw new IllegalArgumentException(style.token() + " requires no scheme: its type argument is an abstract class, a scheme from scratch or one on top of another");
+            throw new IllegalArgumentException(style.token() + " says no scheme: a style says the scheme it requires");
         colors.requireChain(palette);
         this.layer = layerOf(style, new LinkedHashSet<>());
     }
@@ -88,7 +88,7 @@ public final class Dressed {
         Layer base = null;
         if (style instanceof Derives<?, ?> d) {
             DesignStyle<?> b = Objects.requireNonNull(d.base(), style.token() + ".base()");
-            Optional<Class<?>> mine = Schemes.INSTANCE.of(style), its = Schemes.INSTANCE.of(b);
+            Optional<ColorScheme> mine = Schemes.INSTANCE.of(style), its = Schemes.INSTANCE.of(b);
             if (its.isEmpty() || !Schemes.INSTANCE.sees(mine.orElseThrow(), its.get()))
                 throw new IllegalArgumentException(style.token() + " is written over " + b.token() + ", whose scheme it cannot see");
             base = layerOf(b, seen);

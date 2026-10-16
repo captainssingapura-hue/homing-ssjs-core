@@ -20,6 +20,13 @@ public sealed interface ColorNode<S extends ColorScheme, P, K extends ColorNode.
     /** {@code accent-edge}, from its type. */
     default String token() { return Trees.kebab(getClass().getSimpleName()); }
 
+    /**
+     * Its parent, said by the node itself as a component says its branch (D49): the branch it hangs under, or
+     * {@link ColorBranch.Top} for a branch at the top. Its type is the parent its declaration names, so the two never
+     * differ; nothing reads it off the declaration at run time.
+     */
+    P parent();
+
     /** What a node is: a branch, or a leaf of one of the leaf kinds. */
     sealed interface Kind permits BranchKind, LeafKind {}
 

@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.design.semantic;
 
+import hue.captains.singapura.js.homing.design.color.ColorScheme;
+
 import hue.captains.singapura.js.homing.design.color.ColorNode;
 import hue.captains.singapura.js.homing.design.color.ConcreteColor;
 import hue.captains.singapura.js.homing.design.color.Palettable;
@@ -13,40 +15,40 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * A scheme's colour tree as read (RFC 0067, appendix Semantic Colours and Flavours): the normalized tree its reader
- * overlays, the base's layer first and its own last, each node with its scheme and its parent. A palettable colour is
+ * A scheme's colour tree as read (RFC 0067, appendix Semantic Colours and Flavours, D49): the normalized tree of its
+ * declarations' layers, the base's first and its own last, each node with its scheme and its parent. A palettable colour is
  * resolved by the selected palette, then down the palettes it sits on, the first answer winning. Made by
  * {@link ReadColors}, which refuses a tree that cannot be read.
  */
 public final class ColorTree {
 
     /** A node as read: its scheme, and its parent - none at the top. */
-    record Read(ColorNode<?, ?, ?> node, Class<?> scheme, ColorNode<?, ?, ?> parent) {}
+    record Read(ColorNode<?, ?, ?> node, ColorScheme scheme, ColorNode<?, ?, ?> parent) {}
 
     private final Map<Class<?>, Read> read;
 
     ColorTree(Map<Class<?>, Read> read) { this.read = Collections.unmodifiableMap(new LinkedHashMap<>(read)); }
 
-    /** Every node, the base's layer first, each layer in the order its reader lists it. */
+    /** Every node, the base's layer first, each layer in the order its declaration lists it, each branch before the first leaf under it. */
     public List<ColorNode<?, ?, ?>> nodes() { return read.values().stream().<ColorNode<?, ?, ?>>map(Read::node).toList(); }
 
     /** Whether the tree has this node. */
     public boolean has(ColorNode<?, ?, ?> node) { return read.containsKey(node.getClass()); }
 
     /** The scheme a node is in. */
-    public Class<?> scheme(ColorNode<?, ?, ?> node) { return of(node).scheme(); }
+    public ColorScheme scheme(ColorNode<?, ?, ?> node) { return of(node).scheme(); }
 
     /** A node's parent; none for a branch at the top. */
     public Optional<ColorNode<?, ?, ?>> parent(ColorNode<?, ?, ?> node) { return Optional.ofNullable(of(node).parent()); }
 
-    /** The scheme a style requires; none when its type argument is no scheme. */
-    public Optional<Class<?>> scheme(DesignStyle<?> style) { return Schemes.INSTANCE.of(style); }
+    /** The scheme a style requires, as it says; none when it says none. */
+    public Optional<ColorScheme> scheme(DesignStyle<?> style) { return Schemes.INSTANCE.of(style); }
 
     /** Whether a scheme sees a node: one of its own scheme's, or of a scheme below it. */
-    public boolean sees(Class<?> scheme, ColorNode<?, ?, ?> node) { return Schemes.INSTANCE.sees(scheme, of(node).scheme()); }
+    public boolean sees(ColorScheme scheme, ColorNode<?, ?, ?> node) { return Schemes.INSTANCE.sees(scheme, of(node).scheme()); }
 
     /** A scheme as messages say it: {@code the base}, or its name. */
-    public String schemeName(Class<?> scheme) { return Schemes.INSTANCE.name(scheme); }
+    public String schemeName(ColorScheme scheme) { return Schemes.INSTANCE.name(scheme); }
 
 
     /** The concrete colour a palettable colour is under a palette, or one below it; none when nothing answers it. */
@@ -79,7 +81,7 @@ public final class ColorTree {
 
     /** The palettable colours a palette's scheme sees - its own scheme's and every scheme's below it - in the tree's order. */
     public List<Palettable<?, ?>> palettables(ColorPalette<?> palette) {
-        Class<?> scheme = Schemes.INSTANCE.of(palette).orElseThrow(() -> new IllegalArgumentException(palette.token() + " implements no scheme"));
+        ColorScheme scheme = Schemes.INSTANCE.of(palette).orElseThrow(() -> new IllegalArgumentException(palette.token() + " implements no scheme"));
         var out = new ArrayList<Palettable<?, ?>>();
         for (Read r : read.values())
             if (r.node() instanceof Palettable<?, ?> p && Schemes.INSTANCE.sees(scheme, r.scheme())) out.add(p);
@@ -94,7 +96,7 @@ public final class ColorTree {
     public List<String> check(ColorPalette<?> palette) {
         var out = new ArrayList<String>(chainProblems(palette));
         if (!out.isEmpty()) return List.copyOf(out);
-        Class<?> scheme = Schemes.INSTANCE.of(palette).orElseThrow();
+        ColorScheme scheme = Schemes.INSTANCE.of(palette).orElseThrow();
         for (Read r : read.values())
             if (r.node() instanceof Palettable<?, ?> p && Schemes.INSTANCE.sees(scheme, r.scheme()) && resolve(palette, p).isEmpty())
                 out.add(palette.token() + " leaves " + p.token() + " unanswered");
@@ -113,20 +115,20 @@ public final class ColorTree {
         ColorPalette<?> next = palette;
         while (true) {
             ColorPalette<?> at = next;
-            Optional<Class<?>> scheme = schemes.of(at);
+            Optional<ColorScheme> scheme = schemes.of(at);
             if (scheme.isEmpty()) {
-                out.add(at.token() + " implements no scheme: its type argument is an abstract class, a scheme from scratch or one on top of another");
+                out.add(at.token() + " says no scheme: a palette says the scheme it implements");
                 return out;
             }
-            Optional<Class<?>> belowScheme = schemes.below(scheme.get());
+            Optional<ColorScheme> belowScheme = schemes.below(scheme.get());
             Optional<? extends ColorPalette<?>> below = at.below();
             if (below.isEmpty()) {
                 belowScheme.ifPresent(b -> out.add(at.token() + " sits on nothing, and " + schemes.name(scheme.get()) + " is on top of "
                         + schemes.name(b) + ": it sits on a palette of " + schemes.name(b)));
                 return out;
             }
-            Optional<Class<?>> under = schemes.of(below.get());
-            if (belowScheme.isEmpty() || under.isEmpty() || under.get() != belowScheme.get()) {
+            Optional<ColorScheme> under = schemes.of(below.get());
+            if (belowScheme.isEmpty() || under.isEmpty() || !schemes.same(under.get(), belowScheme.get())) {
                 out.add(at.token() + " sits on " + below.get().token() + ", " + under.map(u -> "of " + schemes.name(u)).orElse("of no scheme") + ": "
                         + belowScheme.map(b -> "a palette of " + schemes.name(scheme.get()) + " sits on one of " + schemes.name(b))
                                      .orElse(schemes.name(scheme.get()) + " is on top of no scheme, so its palettes sit on nothing"));
@@ -138,7 +140,7 @@ public final class ColorTree {
 
     private Read of(ColorNode<?, ?, ?> node) {
         Read r = read.get(node.getClass());
-        if (r == null) throw new IllegalArgumentException(node.token() + " is in no colour tree read: its scheme's layer, or one below it, lists it");
+        if (r == null) throw new IllegalArgumentException(node.token() + " is in no colour tree read: its scheme's declaration, or one below it, lists it");
         return r;
     }
 }

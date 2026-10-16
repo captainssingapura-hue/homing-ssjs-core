@@ -155,7 +155,7 @@ class ResolutionCasesTest {
         assertTrue(refused(() -> new Dressed(colours, new Baseless(), paper)).contains("asks its base, and baseless has none"));
         assertTrue(refused(() -> new Dressed(colours, new Twice(), paper)).contains("button shape-corner is answered twice"));
         assertTrue(refused(() -> new Dressed(colours, new Ouroboros(), paper)).contains("comes back to ouroboros"));
-        assertTrue(refused(() -> new Dressed(colours, new Unschemed(), new BaseColours.Unmarked())).contains("unschemed requires no scheme"));
+        assertTrue(refused(() -> new Dressed(colours, new Unschemed(), new BaseColours.Unmarked())).contains("unschemed says no scheme"));
         assertEquals("stranded sits on nothing, and LoudScheme is on top of BaseScheme: it sits on a palette of BaseScheme",
                 refused(() -> new Dressed(colours, new Shouting(), new BaseColours.Stranded())));
         assertEquals("stacked sits on neon, of LoudScheme: a palette of LoudScheme sits on one of BaseScheme",
@@ -183,6 +183,8 @@ class ResolutionCasesTest {
 
     /** A style of the loud scheme: written over the valued, which is of the base, below it. */
     public record Shouting() implements Derives<BaseColours.LoudScheme, ResolvingThemes.Valued> {
+
+        @Override public BaseColours.LoudScheme scheme() { return BaseColours.LoudScheme.INSTANCE; }
         @Override public ResolvingThemes.Valued base() { return ResolvingThemes.Valued.INSTANCE; }
         @Override public List<Implementation<?>> implementations() { return List.of(); }
         @Override public List<Coloring<BaseColours.LoudScheme, ?>> colorings() {
@@ -190,30 +192,42 @@ class ResolutionCasesTest {
         }
     }
     public record Unschemed() implements DesignStyle<ColorScheme> {
+
+        @Override public ColorScheme scheme() { return null; }
         @Override public List<Implementation<?>> implementations() { return List.of(); }
     }
     public record Baseless() implements DesignStyle<BaseScheme> {
+
+        @Override public BaseScheme scheme() { return BaseScheme.INSTANCE; }
         @Override public List<Implementation<?>> implementations() {
             return List.of(new Implementation<>(Button.INSTANCE, Target.Shape.Corner.INSTANCE, new Answer.FromBase<>()));
         }
     }
     public record Twice() implements DesignStyle<BaseScheme> {
+
+        @Override public BaseScheme scheme() { return BaseScheme.INSTANCE; }
         @Override public List<Implementation<?>> implementations() {
             return List.of(new Implementation<>(Button.INSTANCE, Target.Shape.Corner.INSTANCE, new Answer.Own<>("border-radius: 2px;")),
                            new Implementation<>(Button.INSTANCE, Target.Shape.Corner.INSTANCE, new Answer.Own<>("border-radius: 3px;")));
         }
     }
     public record Ouroboros() implements Derives<BaseScheme, Ouroboros> {
+
+        @Override public BaseScheme scheme() { return BaseScheme.INSTANCE; }
         @Override public Ouroboros base() { return this; }
         @Override public List<Implementation<?>> implementations() { return List.of(); }
     }
     public record Looping() implements DesignStyle<BaseScheme> {
+
+        @Override public BaseScheme scheme() { return BaseScheme.INSTANCE; }
         @Override public List<Implementation<?>> implementations() {
             return List.of(new Implementation<>(PlainButton.INSTANCE, Target.Shape.Corner.INSTANCE, new Answer.Redirect<>(DangerButton.INSTANCE)),
                            new Implementation<>(DangerButton.INSTANCE, Target.Shape.Corner.INSTANCE, new Answer.Redirect<>(PlainButton.INSTANCE)));
         }
     }
     public record TwiceAsked() implements DesignStyle<BaseScheme> {
+
+        @Override public BaseScheme scheme() { return BaseScheme.INSTANCE; }
         @Override public List<Implementation<?>> implementations() {
             return List.of(new Implementation<>(new Casting(PlainButton.INSTANCE, Go.INSTANCE), Target.Shape.Corner.INSTANCE, new Answer.Own<>("border-radius: 1px;")));
         }

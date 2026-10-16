@@ -23,14 +23,14 @@ import java.util.List;
  * in a palette - and how the walk went.
  *
  * <pre>
- * resolve --taxonomy CLASS --colors CLASS --style CLASS --palette CLASS NODE STATE TARGET   the walk, step by step
- * resolve --taxonomy CLASS --colors CLASS --style CLASS --palette CLASS NODE STATE|* TARGET|*   a table: every state, every target
- * resolve --taxonomy CLASS --colors CLASS --style CLASS --palette CLASS --flatten [--out CSS]   the theme's sheet, flattened
+ * resolve --taxonomy CLASS --colors CLASS[,CLASS] --style CLASS --palette CLASS NODE STATE TARGET   the walk, step by step
+ * resolve --taxonomy CLASS --colors CLASS[,CLASS] --style CLASS --palette CLASS NODE STATE|* TARGET|*   a table: every state, every target
+ * resolve --taxonomy CLASS --colors CLASS[,CLASS] --style CLASS --palette CLASS --flatten [--out CSS]   the theme's sheet, flattened
  * resolve --taxonomy CLASS --list nodes|roles|states|targets   the tokens there are
  * </pre>
  *
  * Each {@code CLASS} names a type by its class, whose {@code INSTANCE} is read: a
- * {@link TaxonomySource}, a {@link SchemeTreeReader}, a {@link DesignStyle}, a {@link ColorPalette} of the style's scheme; {@code NODE} is a casting's token -
+ * {@link TaxonomySource}, the {@link SchemeDeclaration}s of the style's scheme and those below it, a {@link DesignStyle}, a {@link ColorPalette} of the style's scheme; {@code NODE} is a casting's token -
  * {@code danger-button}, {@code danger-button_go}. The exit is 0 when every look resolves, 1 when
  * one is unanswered, 2 when the command is wrong.
  */
@@ -71,8 +71,10 @@ public record ResolveCli() implements StatelessFunctionalObject {
             Taxonomy taxonomy = taxonomy(taxonomyClass);
             if (list != null) return list(taxonomy, list, out, err);
             if (colorsClass == null || styleClass == null || paletteClass == null) return usage(err, "no --colors, no --style or no --palette");
-            ColorTree colors = instance(colorsClass, SchemeTreeReader.class).read();
+            var declarations = new ArrayList<SchemeDeclaration<?>>();
+            for (String c : colorsClass.split(",")) declarations.add(instance(c.strip(), SchemeDeclaration.class));
             DesignStyle<?> style = instance(styleClass, DesignStyle.class);
+            ColorTree colors = SchemeRegistry.of(declarations).tree(style.scheme());
             ColorPalette<?> palette = instance(paletteClass, ColorPalette.class);
             Dressed theme = Wear.INSTANCE.of(colors, style, palette).orElseThrow(() -> new IllegalArgumentException(
                     style.token() + " and " + palette.token() + " are of different schemes: a style is worn only in a palette of its own"));
