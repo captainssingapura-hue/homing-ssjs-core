@@ -10,6 +10,8 @@ import hue.captains.singapura.js.homing.design.color.Interpolated;
 import hue.captains.singapura.js.homing.design.color.L1_ColorBranch;
 import hue.captains.singapura.js.homing.design.color.Palettable;
 
+import hue.captains.singapura.js.homing.design.styles.PaletteDeclaration;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -78,6 +80,12 @@ public record ResolvingColours() implements SchemeTreeReader<BaseScheme> {
         public static final LoudColours INSTANCE = new LoudColours();
         @Override public List<? extends ColorNode<Loud, ?, ?>> layer() { return List.of(new Glare()); }
         @Override public Optional<SchemeTreeReader<? super Loud>> below() { return Optional.of(ResolvingColours.INSTANCE); }
+    }
+
+    /** The resolution's jar of palettes, declared: the night first, the default; paper; neon on paper. */
+    public record Palettes() implements PaletteDeclaration {
+        public static final Palettes INSTANCE = new Palettes();
+        @Override public List<? extends ColorPalette<?>> palettes() { return List.of(Night.INSTANCE, Paper.INSTANCE, Neon.INSTANCE); }
     }
 
     /** White paper, dark copy: the base's every palettable colour. */

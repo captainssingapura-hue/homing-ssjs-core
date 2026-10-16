@@ -33,7 +33,7 @@ class StyleFamiliesTest {
             StyleRegistration.of(StyledStyles.Plain.INSTANCE, PlainStyles.INSTANCE), StyleRegistration.of(StyledStyles.Ink.INSTANCE, InkStyles.INSTANCE),
             StyleRegistration.of(StyledStyles.Loudly.INSTANCE, LoudlyStyles.INSTANCE)));
     private static final Styling STYLING = new Styling(MANAGER, List.of(StyledStyles.Ink.INSTANCE, StyledStyles.Loudly.INSTANCE),
-            List.of(ResolvingColours.Night.INSTANCE, ResolvingColours.Neon.INSTANCE), Map.of(StyledStyles.Ink.INSTANCE, ResolvingColours.Night.INSTANCE,
+            List.of(ResolvingColours.Palettes.INSTANCE), Map.of(StyledStyles.Ink.INSTANCE, ResolvingColours.Night.INSTANCE,
                     StyledStyles.Loudly.INSTANCE, ResolvingColours.Neon.INSTANCE));
 
     /** Ink's own tab, at its canonical name. */
