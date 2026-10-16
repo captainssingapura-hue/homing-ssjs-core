@@ -50,15 +50,31 @@ public record CollectModules() implements StatelessFunctionalObject {
      */
     public <Sc extends ColorScheme, B extends DesignStyle<Sc>> List<BaseModule<Sc, B>> base(B base, List<? extends ComponentModule> definitions,
                                                                                           List<? extends StyleDeclaration> declarations) {
+        List<CastingStyle<Sc, B, ?, ?>> looks = looks(base, declarations);
+        Set<Component<?>> top = top(definitions);
+        refuseOutside(base, Bundles.INSTANCE.bundle(taxonomy(definitions), List.copyOf(top), top, looks).outside());
+        return collect(base, definitions, looks);
+    }
+
+    /**
+     * The base modules of some of the jars, for an instance of those alone (D51): as {@link #base}, each look of the
+     * definitions' designs bundled, and a look of a design not given set aside - a look a jar gives a component cast in
+     * another jar's component, whose owner is not among them, is no casting of this instance.
+     */
+    public <Sc extends ColorScheme, B extends DesignStyle<Sc>> List<BaseModule<Sc, B>> baseWithin(B base, List<? extends ComponentModule> definitions,
+                                                                                                List<? extends StyleDeclaration> declarations) {
+        return collect(base, definitions, looks(base, declarations));
+    }
+
+    private <Sc extends ColorScheme, B extends DesignStyle<Sc>> List<BaseModule<Sc, B>> collect(B base, List<? extends ComponentModule> definitions,
+                                                                                              List<CastingStyle<Sc, B, ?, ?>> looks) {
         Taxonomy taxonomy = taxonomy(definitions);
         Set<Component<?>> top = top(definitions);
-        List<CastingStyle<Sc, B, ?, ?>> looks = looks(base, declarations);
         var out = new ArrayList<BaseModule<Sc, B>>();
         for (ComponentModule m : definitions) {
             Bundles.Bundled<Sc, B> b = Bundles.INSTANCE.bundle(taxonomy, m.components(), top, looks);
             out.add(new CollectedBase<>(base, m, b.bundles()));
         }
-        refuseOutside(base, Bundles.INSTANCE.bundle(taxonomy, List.copyOf(top), top, looks).outside());
         return List.copyOf(out);
     }
 

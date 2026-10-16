@@ -13,7 +13,7 @@ import hue.captains.singapura.js.homing.component.taxonomy.RoleRoot;
 import hue.captains.singapura.js.homing.component.taxonomy.Root;
 import hue.captains.singapura.js.homing.component.taxonomy.Slot;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
-import hue.captains.singapura.js.homing.component.taxonomy.TaxonomySource;
+import hue.captains.singapura.js.homing.component.taxonomy.ComponentModule;
 
 import java.util.List;
 
@@ -23,7 +23,7 @@ import java.util.List;
  * Go, the pane as its Window. Go and Cancel are Committing, under Doing; Window is Shaping, which
  * is functional.
  */
-public record ResolvingTaxonomy() implements TaxonomySource {
+public record ResolvingTaxonomy() implements ComponentModule {
 
     public static final ResolvingTaxonomy INSTANCE = new ResolvingTaxonomy();
 
@@ -90,7 +90,10 @@ public record ResolvingTaxonomy() implements TaxonomySource {
         @Override public Shaping parent() { return Shaping.INSTANCE; }
     }
 
-    @Override public Taxonomy read() {
+    /** Its one component: the dialog, which brings the rest as its parts. */
+    @Override public List<? extends Component<?>> components() { return List.of(Dialog.INSTANCE); }
+
+    public Taxonomy read() {
         return new ReadTaxonomy().read(List.of(Dialog.INSTANCE), List.of(Go.INSTANCE, Cancel.INSTANCE, Window.INSTANCE));
     }
 }

@@ -9,7 +9,6 @@ import hue.captains.singapura.js.homing.component.taxonomy.L2_ComponentBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.ReadTaxonomy;
 import hue.captains.singapura.js.homing.component.taxonomy.Root;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
-import hue.captains.singapura.js.homing.component.taxonomy.TaxonomySource;
 import hue.captains.singapura.js.homing.component.taxonomy.VirtualComponent;
 import hue.captains.singapura.js.homing.design.AnimationEffect;
 import hue.captains.singapura.js.homing.design.Owns;
@@ -23,7 +22,7 @@ import java.util.List;
  * background's image beside an effect - so an effect that takes the image clashes with it. Beside them an ordinary
  * pad, and the effects the designs wear.
  */
-public record AnimatingTaxonomy() implements TaxonomySource {
+public record AnimatingTaxonomy() {
 
     public static final AnimatingTaxonomy INSTANCE = new AnimatingTaxonomy();
 
@@ -70,7 +69,7 @@ public record AnimatingTaxonomy() implements TaxonomySource {
         @Override public Stage parent() { return Stage.INSTANCE; }
     }
 
-    @Override public Taxonomy read() {
+    public Taxonomy read() {
         return new ReadTaxonomy().read(List.of(Pad.INSTANCE, Line.INSTANCE, Area.INSTANCE, Plate.INSTANCE, Strip.INSTANCE));
     }
 

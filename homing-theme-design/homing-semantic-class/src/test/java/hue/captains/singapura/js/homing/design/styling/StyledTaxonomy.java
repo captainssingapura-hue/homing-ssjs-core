@@ -7,8 +7,6 @@ import hue.captains.singapura.js.homing.component.taxonomy.L1_ComponentBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.ReadTaxonomy;
 import hue.captains.singapura.js.homing.component.taxonomy.Root;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
-import hue.captains.singapura.js.homing.component.taxonomy.TaxonomyExtensions;
-import hue.captains.singapura.js.homing.component.taxonomy.TaxonomySource;
 
 import java.util.List;
 
@@ -17,7 +15,7 @@ import java.util.List;
  * strip, the strip's lead tab a casting of its own - and whatever extends this source on the classpath: in the tests,
  * the {@link StyledExtension}'s badge; and the gauges, a meter on the colour axis.
  */
-public record StyledTaxonomy() implements TaxonomySource {
+public record StyledTaxonomy() {
 
     public static final StyledTaxonomy INSTANCE = new StyledTaxonomy();
 
@@ -34,8 +32,7 @@ public record StyledTaxonomy() implements TaxonomySource {
         @Override public List<ExtentAxis> extents() { return List.of(ExtentAxis.COLOUR); }
     }
 
-    @Override public Taxonomy read() {
-        return new ReadTaxonomy().read(TaxonomyExtensions.INSTANCE.components(StyledTaxonomy.class,
-                List.of(StatedTaxonomy.Tab.INSTANCE, StatedTaxonomy.Strip.INSTANCE, Meter.INSTANCE)));
+    public Taxonomy read() {
+        return new ReadTaxonomy().read(List.of(StatedTaxonomy.Tab.INSTANCE, StatedTaxonomy.Strip.INSTANCE, Meter.INSTANCE, StyledExtension.Badge.INSTANCE));
     }
 }

@@ -147,6 +147,16 @@ class StyleRegistryTest {
         assertTrue(collected.contains("implements meter, of no component's design given"), "a look of no component, refused as it is collected: " + collected);
     }
 
+    @Test
+    void someJarsAlone_eachLookOfTheirDesigns_theRestSetAside_theHouseStillStrict() {
+        var tabsAlone = List.<ComponentModule>of(new TabsAlone());
+        String strict = refused(() -> CollectModules.INSTANCE.base(Plain.INSTANCE, tabsAlone, List.of(PlainStyles.INSTANCE)));
+        assertTrue(strict.contains("implements meter, of no component's design given"), "collected for the whole, a look of no component given is refused: " + strict);
+        StyleManager some = new StyleRegistryBuilder<>(CollectModules.INSTANCE.baseWithin(Plain.INSTANCE, tabsAlone, List.of(PlainStyles.INSTANCE))).build();
+        assertEquals(List.of("tab", "strip", "tab_lead"), some.taxonomy().castings().stream().map(Casting::token).toList(), "the tab and the strip, and the strip's lead");
+        assertEquals(3, some.implementations(Plain.INSTANCE).size(), "the meter's and the badge's looks set aside: no casting of this instance");
+    }
+
     private static String refused(Runnable step) {
         return assertThrows(IllegalArgumentException.class, step::run).getMessage();
     }

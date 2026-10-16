@@ -7,7 +7,6 @@ import hue.captains.singapura.js.homing.component.taxonomy.L1_ComponentBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.ReadTaxonomy;
 import hue.captains.singapura.js.homing.component.taxonomy.Root;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
-import hue.captains.singapura.js.homing.component.taxonomy.TaxonomySource;
 import hue.captains.singapura.js.homing.component.taxonomy.VirtualComponent;
 import hue.captains.singapura.js.homing.design.Owns;
 import hue.captains.singapura.js.homing.design.Target;
@@ -18,7 +17,7 @@ import java.util.List;
  * A design branch whose leaves own their targets badly - one owns nothing, one owns a target twice, one
  * owns a sound no sheet carries - and a design of it that is complete all the same.
  */
-public record ShabbyTaxonomy() implements TaxonomySource {
+public record ShabbyTaxonomy() {
 
     public static final ShabbyTaxonomy INSTANCE = new ShabbyTaxonomy();
 
@@ -62,5 +61,5 @@ public record ShabbyTaxonomy() implements TaxonomySource {
         @Override public List<Drawing<?>> drawings(Dressed theme) { return List.of(new Drawing.None<>(Target.Sound.Cue.INSTANCE)); }
     }
 
-    @Override public Taxonomy read() { return new ReadTaxonomy().read(List.of(Bare.INSTANCE, Doubled.INSTANCE, Sounding.INSTANCE)); }
+    public Taxonomy read() { return new ReadTaxonomy().read(List.of(Bare.INSTANCE, Doubled.INSTANCE, Sounding.INSTANCE)); }
 }

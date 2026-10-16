@@ -5,7 +5,7 @@ import java.util.List;
 /**
  * What a Maven module adds to a lexicon: the words only its components show. The lexicon it extends
  * is a common one - the words every deployment of it has - and the module's words are in it if and
- * only if the module is on the classpath, as a {@link TaxonomyExtension}'s leaves are in the tree. A
+ * only if the module is on the classpath. A
  * word is filed under the base's branches, or under one the module declares beside it.
  *
  * <p>A word of a module's own is drawn only where a style writes it: the module writes it in the

@@ -1,11 +1,12 @@
 package hue.captains.singapura.js.homing.design.semantic;
 
 import hue.captains.singapura.js.homing.component.taxonomy.Casting;
+import hue.captains.singapura.js.homing.component.taxonomy.ComponentModule;
+import hue.captains.singapura.js.homing.component.taxonomy.ComponentModules;
 import hue.captains.singapura.js.homing.component.taxonomy.ComponentNode;
 import hue.captains.singapura.js.homing.component.taxonomy.Root;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxon;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
-import hue.captains.singapura.js.homing.component.taxonomy.TaxonomySource;
 import hue.captains.singapura.js.homing.design.State;
 import hue.captains.singapura.js.homing.design.Target;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
@@ -23,14 +24,14 @@ import java.util.List;
  * in a palette - and how the walk went.
  *
  * <pre>
- * resolve --taxonomy CLASS --colors CLASS[,CLASS] --style CLASS --palette CLASS NODE STATE TARGET   the walk, step by step
- * resolve --taxonomy CLASS --colors CLASS[,CLASS] --style CLASS --palette CLASS NODE STATE|* TARGET|*   a table: every state, every target
- * resolve --taxonomy CLASS --colors CLASS[,CLASS] --style CLASS --palette CLASS --flatten [--out CSS]   the theme's sheet, flattened
- * resolve --taxonomy CLASS --list nodes|roles|states|targets   the tokens there are
+ * resolve --modules CLASS[,CLASS] --colors CLASS[,CLASS] --style CLASS --palette CLASS NODE STATE TARGET   the walk, step by step
+ * resolve --modules CLASS[,CLASS] --colors CLASS[,CLASS] --style CLASS --palette CLASS NODE STATE|* TARGET|*   a table: every state, every target
+ * resolve --modules CLASS[,CLASS] --colors CLASS[,CLASS] --style CLASS --palette CLASS --flatten [--out CSS]   the theme's sheet, flattened
+ * resolve --modules CLASS[,CLASS] --list nodes|roles|states|targets   the tokens there are
  * </pre>
  *
  * Each {@code CLASS} names a type by its class, whose {@code INSTANCE} is read: a
- * {@link TaxonomySource}, the {@link SchemeDeclaration}s of the style's scheme and those below it, a {@link DesignStyle}, a {@link ColorPalette} of the style's scheme; {@code NODE} is a casting's token -
+ * {@link ComponentModule} whose components are read, each registered as an instance registers its own, the {@link SchemeDeclaration}s of the style's scheme and those below it, a {@link DesignStyle}, a {@link ColorPalette} of the style's scheme; {@code NODE} is a casting's token -
  * {@code danger-button}, {@code danger-button_go}. The exit is 0 when every look resolves, 1 when
  * one is unanswered, 2 when the command is wrong.
  */
@@ -43,20 +44,20 @@ public record ResolveCli() implements StatelessFunctionalObject {
     }
 
     private static final String USAGE = String.join("\n",
-            "usage: resolve --taxonomy CLASS --colors CLASS --style CLASS --palette CLASS NODE STATE TARGET",
-            "       resolve --taxonomy CLASS --colors CLASS --style CLASS --palette CLASS NODE STATE|* TARGET|*",
-            "       resolve --taxonomy CLASS --colors CLASS --style CLASS --palette CLASS --flatten [--out CSS]",
-            "       resolve --taxonomy CLASS --list nodes|roles|states|targets");
+            "usage: resolve --modules CLASS[,CLASS] --colors CLASS --style CLASS --palette CLASS NODE STATE TARGET",
+            "       resolve --modules CLASS[,CLASS] --colors CLASS --style CLASS --palette CLASS NODE STATE|* TARGET|*",
+            "       resolve --modules CLASS[,CLASS] --colors CLASS --style CLASS --palette CLASS --flatten [--out CSS]",
+            "       resolve --modules CLASS[,CLASS] --list nodes|roles|states|targets");
 
     /** Runs a command; the exit code. */
     public int run(List<String> args, PrintStream out, PrintStream err) {
-        String taxonomyClass = null, colorsClass = null, styleClass = null, paletteClass = null, list = null, outFile = null;
+        String modulesClasses = null, colorsClass = null, styleClass = null, paletteClass = null, list = null, outFile = null;
         boolean flatten = false;
         var rest = new ArrayList<String>();
         for (int i = 0; i < args.size(); i++) {
             String a = args.get(i);
             switch (a) {
-                case "--taxonomy" -> taxonomyClass = i + 1 < args.size() ? args.get(++i) : null;
+                case "--modules" -> modulesClasses = i + 1 < args.size() ? args.get(++i) : null;
                 case "--colors" -> colorsClass = i + 1 < args.size() ? args.get(++i) : null;
                 case "--style" -> styleClass = i + 1 < args.size() ? args.get(++i) : null;
                 case "--palette" -> paletteClass = i + 1 < args.size() ? args.get(++i) : null;
@@ -66,9 +67,9 @@ public record ResolveCli() implements StatelessFunctionalObject {
                 default -> rest.add(a);
             }
         }
-        if (taxonomyClass == null) return usage(err, "no --taxonomy");
+        if (modulesClasses == null) return usage(err, "no --modules");
         try {
-            Taxonomy taxonomy = taxonomy(taxonomyClass);
+            Taxonomy taxonomy = taxonomy(modulesClasses);
             if (list != null) return list(taxonomy, list, out, err);
             if (colorsClass == null || styleClass == null || paletteClass == null) return usage(err, "no --colors, no --style or no --palette");
             var declarations = new ArrayList<SchemeDeclaration<?>>();
@@ -167,14 +168,11 @@ public record ResolveCli() implements StatelessFunctionalObject {
         }
     }
 
-    private static Taxonomy taxonomy(String className) {
-        try {
-            Object source = Class.forName(className).getField("INSTANCE").get(null);
-            if (!(source instanceof TaxonomySource s)) throw new IllegalArgumentException(className + " is no TaxonomySource");
-            return s.read();
-        } catch (ReflectiveOperationException e) {
-            throw new IllegalArgumentException("no taxonomy " + className + ": " + e.getMessage(), e);
-        }
+    /** The taxonomy of the component modules named, each by its class: their components, their parts with them. */
+    private static Taxonomy taxonomy(String classNames) {
+        var modules = new ArrayList<ComponentModule>();
+        for (String c : classNames.split(",")) modules.add(instance(c.strip(), ComponentModule.class));
+        return ComponentModules.INSTANCE.read(modules, List.of(), List.of(), List.of());
     }
 
     private static int usage(PrintStream err, String why) {

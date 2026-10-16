@@ -238,26 +238,26 @@ class ResolutionCasesTest {
         String taxonomy = ResolvingTaxonomy.class.getName();
         String colours = BaseColours.class.getName(), paper = BaseColours.Paper.class.getName();
         String[] sketch = {"--colors", colours, "--style", ResolvingThemes.Sketch.class.getName(), "--palette", paper};
-        var one = cli(join(new String[] {"--taxonomy", taxonomy}, sketch, new String[] {"danger-button_go", "rest", "color-background"}));
+        var one = cli(join(new String[] {"--modules", taxonomy}, sketch, new String[] {"danger-button_go", "rest", "color-background"}));
         assertEquals(0, one.code(), one.err());
         assertTrue(one.out().contains("result   danger-button_go__color-background from sketch"), one.out());
-        var table = cli(join(new String[] {"--taxonomy", taxonomy}, sketch, new String[] {"danger-button", "rest", "*"}));
+        var table = cli(join(new String[] {"--modules", taxonomy}, sketch, new String[] {"danger-button", "rest", "*"}));
         assertEquals(1, table.code(), "the sketch answers few targets: the rest are unanswered");
         assertTrue(table.out().contains("rest         shape-corner       danger-button__shape-corner   from sketch"), table.out());
         assertTrue(table.out().contains("rest         color-text         UNANSWERED"), table.out());
-        var squared = cli("--taxonomy", taxonomy, "--colors", colours, "--style", ResolvingThemes.Squared.class.getName(), "--palette", paper,
+        var squared = cli("--modules", taxonomy, "--colors", colours, "--style", ResolvingThemes.Squared.class.getName(), "--palette", paper,
                 "plain-button", "rest", "shape-corner");
         assertTrue(squared.out().contains("result   button__shape-corner from valued"), squared.out());
-        var flat = cli("--taxonomy", taxonomy, "--colors", colours, "--style", ResolvingThemes.Squared.class.getName(), "--palette", paper, "--flatten");
+        var flat = cli("--modules", taxonomy, "--colors", colours, "--style", ResolvingThemes.Squared.class.getName(), "--palette", paper, "--flatten");
         assertEquals(0, flat.code(), flat.err());
         assertTrue(flat.out().contains("/* from squared: control__shape-corner */\n.danger-button__shape-corner {\n    border-radius: 0;\n}\n"), flat.out());
-        var list = cli("--taxonomy", taxonomy, "--list", "roles");
+        var list = cli("--modules", taxonomy, "--list", "roles");
         assertTrue(list.out().contains("shaping   (functional)") && list.out().contains("window   (functional)") && list.out().contains("go\n"), list.out());
-        assertEquals(2, cli(join(new String[] {"--taxonomy", taxonomy}, sketch, new String[] {"danger-button"})).code(), "a node, a state and a target");
-        assertEquals(2, cli("--taxonomy", taxonomy, "danger-button", "rest", "shape-corner").code(), "no colours, no style, no palette");
-        assertEquals(2, cli("--taxonomy", taxonomy, "--colors", colours, "--style", paper, "--palette", paper, "button", "rest", "shape-corner").code(),
+        assertEquals(2, cli(join(new String[] {"--modules", taxonomy}, sketch, new String[] {"danger-button"})).code(), "a node, a state and a target");
+        assertEquals(2, cli("--modules", taxonomy, "danger-button", "rest", "shape-corner").code(), "no colours, no style, no palette");
+        assertEquals(2, cli("--modules", taxonomy, "--colors", colours, "--style", paper, "--palette", paper, "button", "rest", "shape-corner").code(),
                 "a palette is no style");
-        var apart = cli("--taxonomy", taxonomy, "--colors", colours, "--style", ResolvingThemes.Valued.class.getName(),
+        var apart = cli("--modules", taxonomy, "--colors", colours, "--style", ResolvingThemes.Valued.class.getName(),
                 "--palette", BaseColours.Neon.class.getName(), "button", "rest", "shape-corner");
         assertEquals(2, apart.code());
         assertTrue(apart.err().contains("valued and neon are of different schemes"), apart.err());

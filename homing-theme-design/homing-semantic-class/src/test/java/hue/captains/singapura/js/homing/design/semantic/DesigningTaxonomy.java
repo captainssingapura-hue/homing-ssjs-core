@@ -9,7 +9,6 @@ import hue.captains.singapura.js.homing.component.taxonomy.L2_ComponentBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.ReadTaxonomy;
 import hue.captains.singapura.js.homing.component.taxonomy.Root;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
-import hue.captains.singapura.js.homing.component.taxonomy.TaxonomySource;
 import hue.captains.singapura.js.homing.component.taxonomy.VirtualComponent;
 import hue.captains.singapura.js.homing.design.Owns;
 import hue.captains.singapura.js.homing.design.Target;
@@ -20,7 +19,7 @@ import java.util.List;
  * The taxonomy the designs are written against: a design branch, {@code Frame}, with two virtual leaves -
  * its edge, owning a border's shape and colour, and its mark, owning a ring's - beside an ordinary box.
  */
-public record DesigningTaxonomy() implements TaxonomySource {
+public record DesigningTaxonomy() {
 
     public static final DesigningTaxonomy INSTANCE = new DesigningTaxonomy();
 
@@ -53,5 +52,5 @@ public record DesigningTaxonomy() implements TaxonomySource {
         @Override public Region parent() { return Region.INSTANCE; }
     }
 
-    @Override public Taxonomy read() { return new ReadTaxonomy().read(List.of(Box.INSTANCE, Edge.INSTANCE, Mark.INSTANCE)); }
+    public Taxonomy read() { return new ReadTaxonomy().read(List.of(Box.INSTANCE, Edge.INSTANCE, Mark.INSTANCE)); }
 }

@@ -18,7 +18,6 @@ import hue.captains.singapura.js.homing.component.taxonomy.StateRoot;
 import hue.captains.singapura.js.homing.component.taxonomy.StateType;
 import hue.captains.singapura.js.homing.component.taxonomy.StateValue;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
-import hue.captains.singapura.js.homing.component.taxonomy.TaxonomySource;
 
 import java.util.List;
 import java.util.Map;
@@ -27,7 +26,7 @@ import java.util.Map;
  * A taxonomy with states, for the leaves' classes: a tab that is enabled, hovered, selected and held by the keys, each
  * at a level of its own; and a strip whose lead tab is a tab cast as Lead - a casting, its own class, the tab's states.
  */
-public record StatedTaxonomy() implements TaxonomySource {
+public record StatedTaxonomy() {
 
     public static final StatedTaxonomy INSTANCE = new StatedTaxonomy();
 
@@ -94,5 +93,5 @@ public record StatedTaxonomy() implements TaxonomySource {
         @Override public List<Slot<?>> parts() { return List.of(DSL.part(Tab.INSTANCE).as(Lead.INSTANCE).one()); }
     }
 
-    @Override public Taxonomy read() { return new ReadTaxonomy().read(List.of(Tab.INSTANCE, Strip.INSTANCE)); }
+    public Taxonomy read() { return new ReadTaxonomy().read(List.of(Tab.INSTANCE, Strip.INSTANCE)); }
 }
