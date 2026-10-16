@@ -96,7 +96,7 @@ class FlattenSheetTest {
 
     @Test
     void aTargetPaintedOnAPseudoElement_isWrittenThere() {
-        String css = FlattenSheet.INSTANCE.flatten(TAXONOMY, new Dressed(ResolvingThemes.COLOURS, new Glyphed(), ResolvingColours.Paper.INSTANCE), "glyphed").css();
+        String css = FlattenSheet.INSTANCE.flatten(TAXONOMY, new Dressed(ResolvingThemes.COLOURS, new Glyphed(), BaseColours.Paper.INSTANCE), "glyphed").css();
         assertTrue(css.contains("/* from glyphed: button__type-glyph */\n.plain-button__type-glyph {\n    &::before {\n        content: \"✕\";\n    }\n}\n"), css);
         assertTrue(css.contains(".plain-button__type-glyph--pressed {\n    &[aria-pressed=\"true\"] {\n        &::before {\n            content: \"✔\";\n        }\n    }\n}\n"),
                 "in a state: the state's selector, then the pseudo-element");

@@ -29,7 +29,7 @@ class DeriveTreatmentsTest {
 
     private static final Taxonomy TAXONOMY = ResolvingTaxonomy.INSTANCE.read();
     private static final ColorTree COLOURS = ResolvingThemes.COLOURS;
-    private static final ColorPalette<BaseScheme> PAPER = ResolvingColours.Paper.INSTANCE;
+    private static final ColorPalette<BaseScheme> PAPER = BaseColours.Paper.INSTANCE;
 
     /** The danger button's shadow is the plain button's, which answers focus itself: a state only the redirect brings. */
     public record Redirecting() implements Derives<BaseScheme, ResolvingThemes.Valued> {

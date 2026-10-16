@@ -7,15 +7,15 @@ import hue.captains.singapura.js.homing.design.AnimationEffect;
 import hue.captains.singapura.js.homing.design.State;
 import hue.captains.singapura.js.homing.design.Target;
 import hue.captains.singapura.js.homing.design.color.Paint;
-import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Alarm;
-import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Clear;
-import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Copy;
-import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Danger;
-import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Page;
-import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Paper;
-import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Raised;
-import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Risk;
-import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Warning;
+import hue.captains.singapura.js.homing.design.semantic.BaseColours.Alarm;
+import hue.captains.singapura.js.homing.design.semantic.BaseColours.Clear;
+import hue.captains.singapura.js.homing.design.semantic.BaseColours.Copy;
+import hue.captains.singapura.js.homing.design.semantic.BaseColours.Danger;
+import hue.captains.singapura.js.homing.design.semantic.BaseColours.Page;
+import hue.captains.singapura.js.homing.design.semantic.BaseColours.Paper;
+import hue.captains.singapura.js.homing.design.semantic.BaseColours.Raised;
+import hue.captains.singapura.js.homing.design.semantic.BaseColours.Risk;
+import hue.captains.singapura.js.homing.design.semantic.BaseColours.Warning;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingTaxonomy.Button;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingTaxonomy.Cancel;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingTaxonomy.Committing;
@@ -31,7 +31,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 /**
- * The styles the resolution's cases are written in, over {@link ResolvingTaxonomy}, worn in {@link ResolvingColours}'
+ * The styles the resolution's cases are written in, over {@link ResolvingTaxonomy}, worn in {@link BaseColours}'
  * palettes:
  *
  * <ul>
@@ -57,7 +57,7 @@ final class ResolvingThemes {
     private static final Target.Color.Text INK = Target.Color.Text.INSTANCE;
 
     /** The colour tree the themes are worn over, read once. */
-    static final ColorTree COLOURS = ResolvingColours.LoudColours.INSTANCE.read();
+    static final ColorTree COLOURS = BaseColours.LoudColours.INSTANCE.read();
 
     /** The themes by the names the cases give them. */
     static final Map<String, Dressed> BY_NAME = Map.of(

@@ -2,7 +2,7 @@ package hue.captains.singapura.js.homing.design.styles.shabby;
 
 import hue.captains.singapura.js.homing.component.taxonomy.RoleRoot;
 import hue.captains.singapura.js.homing.design.semantic.BaseScheme;
-import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Copy;
+import hue.captains.singapura.js.homing.design.semantic.BaseColours.Copy;
 import hue.captains.singapura.js.homing.design.styles.CastingStyle;
 import hue.captains.singapura.js.homing.design.styles.StylingRes;
 import hue.captains.singapura.js.homing.design.styling.StatedTaxonomy;

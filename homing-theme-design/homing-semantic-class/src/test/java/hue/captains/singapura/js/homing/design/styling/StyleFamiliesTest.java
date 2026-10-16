@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.design.styling;
 
 import hue.captains.singapura.js.homing.core.util.ResourceReader;
-import hue.captains.singapura.js.homing.design.semantic.ResolvingColours;
+import hue.captains.singapura.js.homing.design.semantic.BaseColours;
 import hue.captains.singapura.js.homing.design.styles.ink.InkStyles;
 import hue.captains.singapura.js.homing.design.styles.loudly.LoudlyStyles;
 import hue.captains.singapura.js.homing.design.styles.plain.PlainStyles;
@@ -29,12 +29,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class StyleFamiliesTest {
 
-    private static final StyleManager MANAGER = StyleManager.of(StyledTaxonomy.INSTANCE.read(), List.of(ResolvingColours.INSTANCE, ResolvingColours.LoudColours.INSTANCE), List.of(
+    private static final StyleManager MANAGER = StyleManager.of(StyledTaxonomy.INSTANCE.read(), List.of(
             StyleRegistration.of(StyledStyles.Plain.INSTANCE, PlainStyles.INSTANCE), StyleRegistration.of(StyledStyles.Ink.INSTANCE, InkStyles.INSTANCE),
             StyleRegistration.of(StyledStyles.Loudly.INSTANCE, LoudlyStyles.INSTANCE)));
     private static final Styling STYLING = new Styling(MANAGER, List.of(StyledStyles.Ink.INSTANCE, StyledStyles.Loudly.INSTANCE),
-            List.of(ResolvingColours.Palettes.INSTANCE), Map.of(StyledStyles.Ink.INSTANCE, ResolvingColours.Night.INSTANCE,
-                    StyledStyles.Loudly.INSTANCE, ResolvingColours.Neon.INSTANCE));
+            PaletteRegistry.of(List.of(BaseColours.Palettes.INSTANCE)), Map.of(StyledStyles.Ink.INSTANCE, BaseColours.Night.INSTANCE,
+                    StyledStyles.Loudly.INSTANCE, BaseColours.Neon.INSTANCE));
 
     /** Ink's own tab, at its canonical name. */
     private static final String INK_TAB = "hue/captains/singapura/js/homing/design/styles/ink/Tab.css";

@@ -39,7 +39,12 @@ public record Schemes() implements StatelessFunctionalObject {
     public boolean sees(Class<?> scheme, Class<?> of) { return of.isAssignableFrom(scheme); }
 
     /** The scheme a tree reader reads. */
-    public Optional<Class<?>> of(SchemeTreeReader<?> reader) { return scheme(reader.getClass(), SchemeTreeReader.class); }
+    public Optional<Class<?>> of(SchemeTreeReader<?> reader) { return readBy(reader.getClass()); }
+
+    /** The scheme a reader's class reads, off its declaration: none when it is no reader, or reads no scheme. */
+    public Optional<Class<?>> readBy(Class<?> reader) {
+        return SchemeTreeReader.class.isAssignableFrom(reader) ? scheme(reader, SchemeTreeReader.class) : Optional.empty();
+    }
 
     /** The scheme's name, as messages say it. */
     public String name(Class<?> scheme) { return scheme.getSimpleName(); }

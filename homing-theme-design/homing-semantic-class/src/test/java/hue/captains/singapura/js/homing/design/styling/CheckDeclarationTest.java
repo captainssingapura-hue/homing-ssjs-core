@@ -2,7 +2,7 @@ package hue.captains.singapura.js.homing.design.styling;
 
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.design.semantic.ColorTree;
-import hue.captains.singapura.js.homing.design.semantic.ResolvingColours;
+import hue.captains.singapura.js.homing.design.semantic.BaseColours;
 import hue.captains.singapura.js.homing.design.styles.ink.InkStyles;
 import hue.captains.singapura.js.homing.design.styles.loudly.LoudlyStyles;
 import hue.captains.singapura.js.homing.design.styles.plain.PlainStyles;
@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class CheckDeclarationTest {
 
     private static final Taxonomy TAXONOMY = StyledTaxonomy.INSTANCE.read();
-    private static final ColorTree TREE = ResolvingColours.LoudColours.INSTANCE.read();
+    private static final ColorTree TREE = BaseColours.LoudColours.INSTANCE.read();
     private static final CheckDeclaration CHECK = CheckDeclaration.INSTANCE;
 
     @Test

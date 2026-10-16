@@ -2,10 +2,10 @@ package hue.captains.singapura.js.homing.design.styles.plain;
 
 import hue.captains.singapura.js.homing.component.taxonomy.RoleRoot;
 import hue.captains.singapura.js.homing.design.semantic.BaseScheme;
-import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Alarm;
-import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Risk;
-import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Safe;
-import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Warning;
+import hue.captains.singapura.js.homing.design.semantic.BaseColours.Alarm;
+import hue.captains.singapura.js.homing.design.semantic.BaseColours.Risk;
+import hue.captains.singapura.js.homing.design.semantic.BaseColours.Safe;
+import hue.captains.singapura.js.homing.design.semantic.BaseColours.Warning;
 import hue.captains.singapura.js.homing.design.styles.CastingStyle;
 import hue.captains.singapura.js.homing.design.styles.StylingRes;
 import hue.captains.singapura.js.homing.design.styling.StyledStyles.Plain;

@@ -17,15 +17,15 @@ import hue.captains.singapura.js.homing.design.color.L1_ColorBranch;
 import hue.captains.singapura.js.homing.design.color.Paint;
 import hue.captains.singapura.js.homing.design.color.Palettable;
 import hue.captains.singapura.js.homing.design.semantic.ColorProblem.Rule;
-import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Copy;
-import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Danger;
-import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Glare;
-import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Neon;
-import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Night;
-import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Paper;
-import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Risk;
-import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Safe;
-import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Signals;
+import hue.captains.singapura.js.homing.design.semantic.BaseColours.Copy;
+import hue.captains.singapura.js.homing.design.semantic.BaseColours.Danger;
+import hue.captains.singapura.js.homing.design.semantic.BaseColours.Glare;
+import hue.captains.singapura.js.homing.design.semantic.BaseColours.Neon;
+import hue.captains.singapura.js.homing.design.semantic.BaseColours.Night;
+import hue.captains.singapura.js.homing.design.semantic.BaseColours.Paper;
+import hue.captains.singapura.js.homing.design.semantic.BaseColours.Risk;
+import hue.captains.singapura.js.homing.design.semantic.BaseColours.Safe;
+import hue.captains.singapura.js.homing.design.semantic.BaseColours.Signals;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingTaxonomy.Button;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingTaxonomy.PlainButton;
 import org.junit.jupiter.api.Test;
@@ -50,11 +50,11 @@ class ColorTreeTest {
 
     @Test
     void theTree_isTheLayersFromTheBaseUp_eachItsSchemesAlone() {
-        assertEquals(16, ResolvingColours.INSTANCE.read().nodes().size(), "the base's own - a hairline, the current colour at a share, the mines among them");
+        assertEquals(16, BaseColours.INSTANCE.read().nodes().size(), "the base's own - a hairline, the current colour at a share, the mines among them");
         assertEquals(17, TREE.nodes().size(), "the loud scheme's, its glare over the base's sixteen");
         assertEquals(new Glare(), TREE.nodes().get(16), "the base's layer first, the scheme's own last");
-        assertTrue(!ResolvingColours.INSTANCE.read().has(new Glare()), "the base sees nothing of the scheme on top of it");
-        assertEquals(ResolvingColours.Loud.class, TREE.scheme(new Glare()));
+        assertTrue(!BaseColours.INSTANCE.read().has(new Glare()), "the base sees nothing of the scheme on top of it");
+        assertEquals(BaseColours.LoudScheme.class, TREE.scheme(new Glare()));
         assertEquals(new Signals(), TREE.parent(new Glare()).orElseThrow(), "a scheme's colour, under the base's branch");
         assertTrue(TREE.parent(new Signals()).isEmpty(), "a branch at the top");
     }
@@ -62,7 +62,7 @@ class ColorTreeTest {
     /** The selected palette, then the palettes below it. */
     @Test
     void aPalettableColour_resolvesDownThePalettes_theFirstAnswerWinning() {
-        var flag = new ResolvingColours.Flag();
+        var flag = new BaseColours.Flag();
         assertEquals("#e53935", css(TREE.resolve(Paper.INSTANCE, flag)), "paper's own flag");
         assertEquals("#ff6f00", css(TREE.resolve(Night.INSTANCE, flag)), "the night's own");
         assertEquals("#e53935", css(TREE.resolve(Neon.INSTANCE, flag)), "what neon leaves, paper below it gives");
@@ -77,11 +77,11 @@ class ColorTreeTest {
         assertEquals(List.of(), TREE.check(Paper.INSTANCE));
         assertEquals(List.of(), TREE.check(Night.INSTANCE));
         assertEquals(List.of(), TREE.check(Neon.INSTANCE), "complete over its scheme's own, the rest down the chain");
-        assertEquals(List.of("unsafe leaves safe unanswered"), TREE.check(new ResolvingColours.Unsafe()));
-        assertEquals(List.of("stranded sits on nothing, and Loud is on top of BaseScheme: it sits on a palette of BaseScheme"),
-                TREE.check(new ResolvingColours.Stranded()));
+        assertEquals(List.of("unsafe leaves safe unanswered"), TREE.check(new BaseColours.Unsafe()));
+        assertEquals(List.of("stranded sits on nothing, and LoudScheme is on top of BaseScheme: it sits on a palette of BaseScheme"),
+                TREE.check(new BaseColours.Stranded()));
         assertEquals(List.of("unmarked implements no scheme: its type argument is an abstract class, a scheme from scratch or one on top of another"),
-                TREE.check(new ResolvingColours.Unmarked()));
+                TREE.check(new BaseColours.Unmarked()));
     }
 
     @Test
@@ -151,7 +151,7 @@ class ColorTreeTest {
 
     @Test
     void whatTheCompilerCannotRefuse_isRefusedAsTheTreeIsRead_everyProblemAtOnce() {
-        List<ColorNode<?, ?, ?>> own = List.of(new ResolvingColours.Surfaces(), new ResolvingColours.Words(), new Signals(), new ResolvingColours.Clear(),
+        List<ColorNode<?, ?, ?>> own = List.of(new BaseColours.Surfaces(), new BaseColours.Words(), new Signals(), new BaseColours.Clear(),
                 new Safe(), new Danger(), new Copy(), new Risk(),
                 new Astray(), new Danger2(), new Coloured(1), new Marker(), new Short(), new Falling(), new Off(), new Blank(), new None());
         var e = assertThrows(RefusedColors.class, () -> ReadColors.INSTANCE.read(own));
@@ -172,38 +172,38 @@ class ColorTreeTest {
     // ── a scheme's layers ──────────────────────────────────────────────────
 
     /** The loud scheme with nothing of its own: it means nothing. */
-    public record Quiet() implements SchemeTreeReader<ResolvingColours.Loud> {
-        @Override public List<? extends ColorNode<ResolvingColours.Loud, ?, ?>> layer() { return List.of(); }
-        @Override public Optional<SchemeTreeReader<? super ResolvingColours.Loud>> below() { return Optional.of(ResolvingColours.INSTANCE); }
+    public record Quiet() implements SchemeTreeReader<BaseColours.LoudScheme> {
+        @Override public List<? extends ColorNode<BaseColours.LoudScheme, ?, ?>> layer() { return List.of(); }
+        @Override public Optional<SchemeTreeReader<? super BaseColours.LoudScheme>> below() { return Optional.of(BaseColours.INSTANCE); }
     }
 
     /** The loud scheme's glare, forgetting the base it is on top of. */
-    public record Adrift() implements SchemeTreeReader<ResolvingColours.Loud> {
-        @Override public List<? extends ColorNode<ResolvingColours.Loud, ?, ?>> layer() { return List.of(new Glare()); }
+    public record Adrift() implements SchemeTreeReader<BaseColours.LoudScheme> {
+        @Override public List<? extends ColorNode<BaseColours.LoudScheme, ?, ?>> layer() { return List.of(new Glare()); }
     }
 
     /** One that slips a base colour into the loud scheme's layer - the compiler refuses it but for a raw list. */
-    public record Smuggling() implements SchemeTreeReader<ResolvingColours.Loud> {
+    public record Smuggling() implements SchemeTreeReader<BaseColours.LoudScheme> {
         @SuppressWarnings({"unchecked", "rawtypes"})
-        @Override public List<? extends ColorNode<ResolvingColours.Loud, ?, ?>> layer() { return (List) List.of(new Glare(), new Copy()); }
-        @Override public Optional<SchemeTreeReader<? super ResolvingColours.Loud>> below() { return Optional.of(ResolvingColours.INSTANCE); }
+        @Override public List<? extends ColorNode<BaseColours.LoudScheme, ?, ?>> layer() { return (List) List.of(new Glare(), new Copy()); }
+        @Override public Optional<SchemeTreeReader<? super BaseColours.LoudScheme>> below() { return Optional.of(BaseColours.INSTANCE); }
     }
 
     /** One that sits on itself. */
-    public record Circling() implements SchemeTreeReader<ResolvingColours.Loud> {
-        @Override public List<? extends ColorNode<ResolvingColours.Loud, ?, ?>> layer() { return List.of(new Glare()); }
-        @Override public Optional<SchemeTreeReader<? super ResolvingColours.Loud>> below() { return Optional.of(new Circling()); }
+    public record Circling() implements SchemeTreeReader<BaseColours.LoudScheme> {
+        @Override public List<? extends ColorNode<BaseColours.LoudScheme, ?, ?>> layer() { return List.of(new Glare()); }
+        @Override public Optional<SchemeTreeReader<? super BaseColours.LoudScheme>> below() { return Optional.of(new Circling()); }
     }
 
     @Test
     void aLayer_addsColoursOfItsSchemeAlone_overTheLayerOfTheSchemeBelow() {
         var empty = assertThrows(RefusedColors.class, () -> new Quiet().read());
-        assertEquals(List.of("LAYER_EMPTY: Quiet adds no colour to Loud: a scheme without colours of its own means nothing"),
+        assertEquals(List.of("LAYER_EMPTY: Quiet adds no colour to LoudScheme: a scheme without colours of its own means nothing"),
                 empty.problems().stream().map(ColorProblem::toString).toList());
         var adrift = assertThrows(RefusedColors.class, () -> new Adrift().read());
-        assertTrue(adrift.getMessage().contains("LAYER_ASTRAY: Adrift reads Loud, which is on top of BaseScheme, and sits on nothing"), adrift.getMessage());
+        assertTrue(adrift.getMessage().contains("LAYER_ASTRAY: Adrift reads LoudScheme, which is on top of BaseScheme, and sits on nothing"), adrift.getMessage());
         var smuggled = assertThrows(RefusedColors.class, () -> new Smuggling().read());
-        assertTrue(smuggled.getMessage().contains("LAYER_ASTRAY: copy is BaseScheme's, in Loud's layer: a layer holds its scheme's colours alone"), smuggled.getMessage());
+        assertTrue(smuggled.getMessage().contains("LAYER_ASTRAY: copy is BaseScheme's, in LoudScheme's layer: a layer holds its scheme's colours alone"), smuggled.getMessage());
         var circling = assertThrows(RefusedColors.class, () -> new Circling().read());
         assertTrue(circling.getMessage().contains("Circling sits, in the end, on itself"), circling.getMessage());
     }

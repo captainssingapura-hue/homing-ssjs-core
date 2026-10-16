@@ -36,7 +36,7 @@ final class DesigningDesigns {
         static final PlainEdge INSTANCE = new PlainEdge();
         @Override public List<Drawing<?>> drawings(Dressed theme) {
             return List.of(new Drawing.Own<>(BORDER, "border-width: 1px; border-style: solid;"),
-                           new Drawing.Painted<>(BORDER_COLOUR, new Paint.With<>(new ResolvingColours.Copy())));
+                           new Drawing.Painted<>(BORDER_COLOUR, new Paint.With<>(new BaseColours.Copy())));
         }
     }
 
@@ -51,7 +51,7 @@ final class DesigningDesigns {
     // ── the scheme a design is in (D33) ────────────────────────────────────
 
     /** Plain's drawings, in the loud scheme: drawn only in a theme whose scheme sees the loud. */
-    record Shouted() implements Design<ResolvingColours.Loud, Frame> { static final Shouted INSTANCE = new Shouted(); }
+    record Shouted() implements Design<BaseColours.LoudScheme, Frame> { static final Shouted INSTANCE = new Shouted(); }
 
     record ShoutedEdge() implements Edge.Concrete<Shouted>, Drawn {
         static final ShoutedEdge INSTANCE = new ShoutedEdge();
@@ -91,7 +91,7 @@ final class DesigningDesigns {
         static final BoldMark INSTANCE = new BoldMark();
         @Override public List<Drawing<?>> drawings(Dressed theme) {
             return List.of(new Drawing.As<>(RING, PlainMark.INSTANCE),
-                           new Drawing.Painted<>(RING_COLOUR, new Paint.With<>(new ResolvingColours.Alarm())));
+                           new Drawing.Painted<>(RING_COLOUR, new Paint.With<>(new BaseColours.Alarm())));
         }
     }
 

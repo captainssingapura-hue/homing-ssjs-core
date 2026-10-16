@@ -5,9 +5,7 @@ import hue.captains.singapura.js.homing.design.semantic.ColorPalette;
 import hue.captains.singapura.js.homing.design.semantic.ColorTree;
 import hue.captains.singapura.js.homing.design.semantic.DesignStyle;
 import hue.captains.singapura.js.homing.design.semantic.Dressed;
-import hue.captains.singapura.js.homing.design.semantic.Schemes;
 import hue.captains.singapura.js.homing.design.semantic.Wear;
-import hue.captains.singapura.js.homing.design.styles.PaletteDeclaration;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,80 +16,57 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * What an instance styles with (RFC 0067, appendix The Style Jars): the second stage of its registration. The styles it
- * serves - each registered with the central manager, the default first - its palettes, the default first, and which
- * palette is each style's own, a pairing neither a style nor a palette may know. It serves the two sheets a page wears,
- * each by its own slug and swapped on its own (appendix Two Classes per Leaf, D19): a style's sheet, aggregated by the
- * manager and the same in every palette, and a palette's, the same under every style. The themes - each style in each
- * palette that fits it - keep their slugs for what still names a theme by one word: the style's token alone in its own
- * palette, the style's then the palette's, joined by an underscore, in another.
+ * What an instance styles with (RFC 0067, appendix The Style Jars): the second stage of its registration, where its
+ * styles and its palettes meet. The styles it serves - each registered with the central manager, the default first -
+ * the palettes, from the instance's registry of them, the default first, and which palette is each style's own, a
+ * pairing neither a style nor a palette may know. It serves the two sheets a page wears, each by its own slug and
+ * swapped on its own (appendix Two Classes per Leaf, D19): a style's sheet, aggregated by the manager and the same in
+ * every palette, and a palette's, the same under every style. The themes - each style in each palette that fits it -
+ * keep their slugs for what still names a theme by one word: the style's token alone in its own palette, the style's
+ * then the palette's, joined by an underscore, in another.
  *
- * <p>Its palettes are registered by the jars that provide them, each by its declaration ({@link PaletteDeclaration}),
- * the default first. Refused when it serves nothing, two of one token, a style the manager does not register, or a
- * style with no palette of its own among its palettes, or one that does not fit it; a jar registered twice; a palette of
- * a scheme no registered style requires, one not whole over its scheme's colours, or one sitting on a palette not
- * registered; and a scheme with no palette to wear.</p>
+ * <p>The styles and the palettes are each registered, and held to their own checks, apart ({@link StyleManager},
+ * {@link PaletteRegistry}, D47): here only their meeting is held. Refused when it serves no style, two of one token, a
+ * style the manager does not register, a style with no palette of its own, or one not registered or not fitting it; and
+ * when the styles' schemes and the palettes' are found by two finders - an instance has one. A palette nothing served
+ * wears is no problem.</p>
  *
- * @param manager      the central style manager: every registered style with its jars, a base layer among them
- * @param styles       the styles served, the default first
- * @param declarations the jars of palettes registered, the default palette the first one's first
- * @param own          each style's own palette
+ * @param manager  the central style manager: every registered style with its jars, a base layer among them
+ * @param styles   the styles served, the default first
+ * @param registry the instance's palettes, its registry of every jar's
+ * @param own      each style's own palette
  */
-public record Styling(StyleManager manager, List<DesignStyle<?>> styles, List<PaletteDeclaration> declarations,
+public record Styling(StyleManager manager, List<DesignStyle<?>> styles, PaletteRegistry registry,
                       Map<DesignStyle<?>, ColorPalette<?>> own) {
 
     public Styling {
         styles = List.copyOf(styles);
-        declarations = List.copyOf(declarations);
         own = Map.copyOf(own);
         var problems = new ArrayList<String>();
-        var jars = new HashSet<Class<?>>();
-        for (PaletteDeclaration d : declarations) if (!jars.add(d.getClass())) problems.add(d.getClass().getName() + " is registered twice");
-        List<ColorPalette<?>> palettes = served(declarations);
         if (styles.isEmpty()) problems.add("it serves no style");
-        if (palettes.isEmpty()) problems.add("it serves no palette");
         var seen = new HashSet<String>();
         for (DesignStyle<?> s : styles) if (!seen.add(s.token())) problems.add("two styles are " + s.token());
-        seen.clear();
-        for (ColorPalette<?> p : palettes) if (!seen.add(p.token())) problems.add("two palettes are " + p.token());
-        for (ColorPalette<?> p : palettes) {
-            Optional<Class<?>> scheme = Schemes.INSTANCE.of(p);
-            if (scheme.isEmpty()) { problems.add(p.token() + " implements no scheme"); continue; }
-            if (!manager.trees().containsKey(scheme.get())) {
-                problems.add(p.token() + " is " + Schemes.INSTANCE.name(scheme.get()) + "'s, which no registered style requires: nothing could wear it");
-                continue;
-            }
-            problems.addAll(manager.tree(scheme.get()).check(p));   // whole over its scheme's colours, and a chain down the schemes
-            for (Optional<? extends ColorPalette<?>> b = p.below(); b.isPresent(); b = b.get().below())
-                if (!palettes.contains(b.get())) { problems.add(p.token() + " sits on " + b.get().token() + ", which is not registered"); break; }
-        }
-        for (Class<?> scheme : manager.trees().keySet())
-            if (palettes.stream().noneMatch(p -> Schemes.INSTANCE.of(p).filter(s -> s == scheme).isPresent()))
-                problems.add(Schemes.INSTANCE.name(scheme) + " has no palette registered: nothing could dress a style of it");
+        if (!manager.readers().equals(registry.readers()))
+            problems.add("its styles' schemes and its palettes' are found by two finders: an instance has one");
+        List<ColorPalette<?>> registered = registry.palettes();
         for (DesignStyle<?> s : styles) {
             if (manager.style(s.token()).isEmpty()) problems.add(s.token() + " is served, and the manager does not register it");
             ColorPalette<?> p = own.get(s);
             if (p == null) problems.add(s.token() + " has no palette of its own");
-            else if (!palettes.contains(p)) problems.add(s.token() + "'s own palette, " + p.token() + ", is not served");
+            else if (!registered.contains(p)) problems.add(s.token() + "'s own palette, " + p.token() + ", is not registered");
             else if (!Wear.INSTANCE.fits(s, p)) problems.add(s.token() + "'s own palette, " + p.token() + ", does not fit it");
         }
         if (!problems.isEmpty()) throw new IllegalArgumentException("a styling cannot be made: " + String.join("; ", problems));
     }
 
     /** The palettes served: every registered jar's, in the order registered, the default first. */
-    public List<ColorPalette<?>> palettes() { return served(declarations); }
-
-    private static List<ColorPalette<?>> served(List<PaletteDeclaration> declarations) {
-        return declarations.stream().<ColorPalette<?>>flatMap(d -> d.palettes().stream()).toList();
-    }
+    public List<ColorPalette<?>> palettes() { return registry.palettes(); }
 
     /** The leaves the manager styles. */
     public Taxonomy taxonomy() { return manager.taxonomy(); }
 
-    /** The colour tree a palette is written over: its scheme's. */
-    public ColorTree colours(ColorPalette<?> palette) {
-        return manager.tree(Schemes.INSTANCE.of(palette).orElseThrow(() -> new IllegalArgumentException(palette.token() + " implements no scheme")));
-    }
+    /** The colour tree a palette is written over: its scheme's, as the registry read it. */
+    public ColorTree colours(ColorPalette<?> palette) { return registry.tree(palette); }
 
     /** The colour tree a style is drawn over: its scheme's. */
     public ColorTree colours(DesignStyle<?> style) { return manager.tree(style); }

@@ -134,7 +134,7 @@ class AnimationEffectsTest extends JsModuleTestBase {
         static final MarchingLine INSTANCE = new MarchingLine();
         @Override public List<Drawing<?>> drawings(Dressed theme) {
             // the line in the copy's colour: what matches the ink names the same semantic colour, as a stroke takes no typography colour
-            return List.of(new Drawing.Painted<>(Target.Color.Stroke.INSTANCE, new Paint.With<>(new ResolvingColours.Copy())), new Drawing.Animated(Ants.INSTANCE));
+            return List.of(new Drawing.Painted<>(Target.Color.Stroke.INSTANCE, new Paint.With<>(new BaseColours.Copy())), new Drawing.Animated(Ants.INSTANCE));
         }
     }
 

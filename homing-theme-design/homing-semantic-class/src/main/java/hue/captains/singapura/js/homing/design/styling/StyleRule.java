@@ -2,14 +2,12 @@ package hue.captains.singapura.js.homing.design.styling;
 
 import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.design.semantic.DesignStyle;
-import hue.captains.singapura.js.homing.design.semantic.Schemes;
 import hue.captains.singapura.js.homing.design.styles.CastingStyle;
 import hue.captains.singapura.js.homing.design.styles.StyleDeclaration;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,9 +24,10 @@ public interface StyleRule extends StatelessFunctionalObject {
 
     /**
      * The rules an instance is held to unless it says: one implementation per casting, Base's for every one, every style
-     * provided for registered, every style's scheme read.
+     * provided for registered, every casting within the components' domain. (Every style's scheme read is no rule: the
+     * manager reads its styles' schemes, and only those - D47.)
      */
-    List<StyleRule> DEFAULT = List.of(new OnePerCasting(), new StylesProvidedRegistered(), new BaseForEveryCasting(), new SchemesRead(), new WithinDomain());
+    List<StyleRule> DEFAULT = List.of(new OnePerCasting(), new StylesProvidedRegistered(), new BaseForEveryCasting(), new WithinDomain());
 
     /**
      * A style is a function of the components, and the components registered are its domain: every casting a registered
@@ -53,29 +52,6 @@ public interface StyleRule extends StatelessFunctionalObject {
                                         + ", which no component registered has: a style is a function of the components, their registry its domain");
                         }
                     }
-            return problems;
-        }
-    }
-
-    /**
-     * The schemes are the registered styles': each style's scheme read by a registered reader, and every reader registered
-     * reading a scheme some registered style requires - one no style wears is read for no one.
-     */
-    record SchemesRead() implements StyleRule {
-        @Override public List<String> check(StyleManager manager) {
-            var problems = new ArrayList<String>();
-            var worn = new LinkedHashSet<Class<?>>();
-            for (StyleRegistration r : manager.registrations()) {
-                var scheme = Schemes.INSTANCE.of(r.style());
-                if (scheme.isEmpty()) { problems.add(r.style().token() + " requires no scheme: its type argument is an abstract class"); continue; }
-                worn.add(scheme.get());
-                if (!manager.trees().containsKey(scheme.get()))
-                    problems.add(r.style().token() + " requires " + Schemes.INSTANCE.name(scheme.get()) + ", which no registered reader reads: "
-                            + "a scheme's tree reader is registered with the instance");
-            }
-            for (Class<?> read : manager.trees().keySet())
-                if (!worn.contains(read))
-                    problems.add(Schemes.INSTANCE.name(read) + " is read, and no registered style requires it: the schemes are the registered styles'");
             return problems;
         }
     }

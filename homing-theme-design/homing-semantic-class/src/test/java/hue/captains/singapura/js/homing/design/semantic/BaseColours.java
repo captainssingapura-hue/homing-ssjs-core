@@ -17,16 +17,16 @@ import java.util.Optional;
 
 /**
  * The colour tree the resolution's cases are painted in: surfaces, words and signals in the base - a leaf of every kind,
- * a scale from safe through clear to danger, a warning half way along it - and {@link Loud}, a scheme on top of the base
+ * a scale from safe through clear to danger, a warning half way along it - and {@link LoudScheme}, a scheme on top of the base
  * with a glare of its own, read by {@link LoudColours} over this layer; and the mines, a flag and a mine, in the base too.
  * Three palettes: {@link Paper} and {@link Night} of the base, {@link Neon} of the loud scheme, sitting on paper.
  */
-public record ResolvingColours() implements SchemeTreeReader<BaseScheme> {
+public record BaseColours() implements SchemeTreeReader<BaseScheme> {
 
-    public static final ResolvingColours INSTANCE = new ResolvingColours();
+    public static final BaseColours INSTANCE = new BaseColours();
 
     /** A scheme on top of the base: what it sees is the base's, and its glare, read by {@link LoudColours}. */
-    public abstract static class Loud extends BaseScheme {}
+    public abstract static class LoudScheme extends BaseScheme {}
 
     public record Surfaces() implements L1_ColorBranch<BaseScheme> {}
     public record Words() implements L1_ColorBranch<BaseScheme> {}
@@ -68,7 +68,7 @@ public record ResolvingColours() implements SchemeTreeReader<BaseScheme> {
     }
 
     /** The loud scheme's own. */
-    public record Glare() implements Palettable<Loud, Signals> {}
+    public record Glare() implements Palettable<LoudScheme, Signals> {}
 
     /** The base's layer: every colour of the base, the mines among them. */
     @Override public List<? extends ColorNode<BaseScheme, ?, ?>> layer() {
@@ -76,10 +76,10 @@ public record ResolvingColours() implements SchemeTreeReader<BaseScheme> {
     }
 
     /** The loud scheme's reader: its glare, over the base. */
-    public record LoudColours() implements SchemeTreeReader<Loud> {
+    public record LoudColours() implements SchemeTreeReader<LoudScheme> {
         public static final LoudColours INSTANCE = new LoudColours();
-        @Override public List<? extends ColorNode<Loud, ?, ?>> layer() { return List.of(new Glare()); }
-        @Override public Optional<SchemeTreeReader<? super Loud>> below() { return Optional.of(ResolvingColours.INSTANCE); }
+        @Override public List<? extends ColorNode<LoudScheme, ?, ?>> layer() { return List.of(new Glare()); }
+        @Override public Optional<SchemeTreeReader<? super LoudScheme>> below() { return Optional.of(BaseColours.INSTANCE); }
     }
 
     /** The resolution's jar of palettes, declared: the night first, the default; paper; neon on paper. */
@@ -121,7 +121,7 @@ public record ResolvingColours() implements SchemeTreeReader<BaseScheme> {
     }
 
     /** Neon, on paper: the glare the loud scheme adds, and its own danger. */
-    public record Neon() implements ColorPalette<Loud> {
+    public record Neon() implements ColorPalette<LoudScheme> {
         public static final Neon INSTANCE = new Neon();
         @Override public Optional<ConcreteColor> color(Palettable<?, ?> color) {
             return Optional.ofNullable(switch (color) {
@@ -130,18 +130,18 @@ public record ResolvingColours() implements SchemeTreeReader<BaseScheme> {
                 default -> null;
             });
         }
-        @Override public Optional<ColorPalette<? super Loud>> below() { return Optional.of(Paper.INSTANCE); }
+        @Override public Optional<ColorPalette<? super LoudScheme>> below() { return Optional.of(Paper.INSTANCE); }
     }
 
     /** A loud style's palette that forgets what it sits on. */
-    public record Stranded() implements ColorPalette<Loud> {
+    public record Stranded() implements ColorPalette<LoudScheme> {
         @Override public Optional<ConcreteColor> color(Palettable<?, ?> color) { return Optional.empty(); }
     }
 
     /** One that sits on a palette of its own scheme. */
-    public record Stacked() implements ColorPalette<Loud> {
+    public record Stacked() implements ColorPalette<LoudScheme> {
         @Override public Optional<ConcreteColor> color(Palettable<?, ?> color) { return Optional.empty(); }
-        @Override public Optional<ColorPalette<? super Loud>> below() { return Optional.of(Neon.INSTANCE); }
+        @Override public Optional<ColorPalette<? super LoudScheme>> below() { return Optional.of(Neon.INSTANCE); }
     }
 
     /** A base palette that answers nothing of the warning's scale's safe end. */

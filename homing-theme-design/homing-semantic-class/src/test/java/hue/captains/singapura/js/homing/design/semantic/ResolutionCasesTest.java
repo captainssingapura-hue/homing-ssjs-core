@@ -6,7 +6,7 @@ import hue.captains.singapura.js.homing.design.State;
 import hue.captains.singapura.js.homing.design.Target;
 import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import hue.captains.singapura.js.homing.design.color.Paint;
-import hue.captains.singapura.js.homing.design.semantic.ResolvingColours.Page;
+import hue.captains.singapura.js.homing.design.semantic.BaseColours.Page;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingTaxonomy.Button;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingTaxonomy.DangerButton;
 import hue.captains.singapura.js.homing.design.semantic.ResolvingTaxonomy.Go;
@@ -151,15 +151,15 @@ class ResolutionCasesTest {
     @Test
     void themesRefused_asTheyAreDressed() {
         var colours = ResolvingThemes.COLOURS;
-        var paper = ResolvingColours.Paper.INSTANCE;
+        var paper = BaseColours.Paper.INSTANCE;
         assertTrue(refused(() -> new Dressed(colours, new Baseless(), paper)).contains("asks its base, and baseless has none"));
         assertTrue(refused(() -> new Dressed(colours, new Twice(), paper)).contains("button shape-corner is answered twice"));
         assertTrue(refused(() -> new Dressed(colours, new Ouroboros(), paper)).contains("comes back to ouroboros"));
-        assertTrue(refused(() -> new Dressed(colours, new Unschemed(), new ResolvingColours.Unmarked())).contains("unschemed requires no scheme"));
-        assertEquals("stranded sits on nothing, and Loud is on top of BaseScheme: it sits on a palette of BaseScheme",
-                refused(() -> new Dressed(colours, new Shouting(), new ResolvingColours.Stranded())));
-        assertEquals("stacked sits on neon, of Loud: a palette of Loud sits on one of BaseScheme",
-                refused(() -> new Dressed(colours, new Shouting(), new ResolvingColours.Stacked())));
+        assertTrue(refused(() -> new Dressed(colours, new Unschemed(), new BaseColours.Unmarked())).contains("unschemed requires no scheme"));
+        assertEquals("stranded sits on nothing, and LoudScheme is on top of BaseScheme: it sits on a palette of BaseScheme",
+                refused(() -> new Dressed(colours, new Shouting(), new BaseColours.Stranded())));
+        assertEquals("stacked sits on neon, of LoudScheme: a palette of LoudScheme sits on one of BaseScheme",
+                refused(() -> new Dressed(colours, new Shouting(), new BaseColours.Stacked())));
         var looping = new Dressed(colours, new Looping(), paper);
         var e = assertThrows(IllegalStateException.class,
                 () -> ResolveSemanticClass.INSTANCE.resolve(TAXONOMY, looping, new Casting(PlainButton.INSTANCE), State.REST, Target.Shape.Corner.INSTANCE));
@@ -174,7 +174,7 @@ class ResolutionCasesTest {
     void aStyleWornAtRunTime_onlyInAPaletteOfItsScheme() {
         var colours = ResolvingThemes.COLOURS;
         DesignStyle<?> valued = ResolvingThemes.Valued.INSTANCE, shouting = new Shouting();
-        ColorPalette<?> paper = ResolvingColours.Paper.INSTANCE, neon = ResolvingColours.Neon.INSTANCE;
+        ColorPalette<?> paper = BaseColours.Paper.INSTANCE, neon = BaseColours.Neon.INSTANCE;
         assertEquals("valued in paper", Wear.INSTANCE.of(colours, valued, paper).orElseThrow().toString());
         assertEquals("shouting in neon", Wear.INSTANCE.of(colours, shouting, neon).orElseThrow().toString());
         assertTrue(Wear.INSTANCE.of(colours, valued, neon).isEmpty(), "a palette of a scheme above: its colours are ones the style cannot see");
@@ -182,11 +182,11 @@ class ResolutionCasesTest {
     }
 
     /** A style of the loud scheme: written over the valued, which is of the base, below it. */
-    public record Shouting() implements Derives<ResolvingColours.Loud, ResolvingThemes.Valued> {
+    public record Shouting() implements Derives<BaseColours.LoudScheme, ResolvingThemes.Valued> {
         @Override public ResolvingThemes.Valued base() { return ResolvingThemes.Valued.INSTANCE; }
         @Override public List<Implementation<?>> implementations() { return List.of(); }
-        @Override public List<Coloring<ResolvingColours.Loud, ?>> colorings() {
-            return List.of(new Coloring<>(Button.INSTANCE, Target.Color.Outline.INSTANCE, new Answer.Painted<>(new Paint.With<>(new ResolvingColours.Glare()))));
+        @Override public List<Coloring<BaseColours.LoudScheme, ?>> colorings() {
+            return List.of(new Coloring<>(Button.INSTANCE, Target.Color.Outline.INSTANCE, new Answer.Painted<>(new Paint.With<>(new BaseColours.Glare()))));
         }
     }
     public record Unschemed() implements DesignStyle<ColorScheme> {
@@ -222,7 +222,7 @@ class ResolutionCasesTest {
     @Test
     void theCommandLine_explainsOneQuery_tabulatesMany_andSaysWhenALookIsUnanswered() {
         String taxonomy = ResolvingTaxonomy.class.getName();
-        String colours = ResolvingColours.class.getName(), paper = ResolvingColours.Paper.class.getName();
+        String colours = BaseColours.class.getName(), paper = BaseColours.Paper.class.getName();
         String[] sketch = {"--colors", colours, "--style", ResolvingThemes.Sketch.class.getName(), "--palette", paper};
         var one = cli(join(new String[] {"--taxonomy", taxonomy}, sketch, new String[] {"danger-button_go", "rest", "color-background"}));
         assertEquals(0, one.code(), one.err());
@@ -244,7 +244,7 @@ class ResolutionCasesTest {
         assertEquals(2, cli("--taxonomy", taxonomy, "--colors", colours, "--style", paper, "--palette", paper, "button", "rest", "shape-corner").code(),
                 "a palette is no style");
         var apart = cli("--taxonomy", taxonomy, "--colors", colours, "--style", ResolvingThemes.Valued.class.getName(),
-                "--palette", ResolvingColours.Neon.class.getName(), "button", "rest", "shape-corner");
+                "--palette", BaseColours.Neon.class.getName(), "button", "rest", "shape-corner");
         assertEquals(2, apart.code());
         assertTrue(apart.err().contains("valued and neon are of different schemes"), apart.err());
         assertEquals(2, cli("--taxonomy", "no.such.Taxonomy", "--list", "nodes").code());

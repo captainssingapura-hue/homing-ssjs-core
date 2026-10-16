@@ -4,7 +4,7 @@ import hue.captains.singapura.js.homing.design.semantic.BaseScheme;
 import hue.captains.singapura.js.homing.design.semantic.Derives;
 import hue.captains.singapura.js.homing.design.semantic.DesignStyle;
 import hue.captains.singapura.js.homing.design.semantic.Implementation;
-import hue.captains.singapura.js.homing.design.semantic.ResolvingColours;
+import hue.captains.singapura.js.homing.design.semantic.BaseColours;
 
 import java.util.List;
 
@@ -29,7 +29,7 @@ public record StyledStyles() {
     }
 
     /** Of the loud scheme, over plain: a meter in the glare only its scheme sees. */
-    public record Loudly() implements Derives<ResolvingColours.Loud, Plain> {
+    public record Loudly() implements Derives<BaseColours.LoudScheme, Plain> {
         public static final Loudly INSTANCE = new Loudly();
         @Override public Plain base() { return Plain.INSTANCE; }
         @Override public List<Implementation<?>> implementations() { return List.of(); }

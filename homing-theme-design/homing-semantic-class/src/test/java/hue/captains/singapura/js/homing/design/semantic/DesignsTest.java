@@ -157,7 +157,7 @@ class DesignsTest extends JsModuleTestBase {
                 "a drawing taken from another design's concrete leaf, saying where from, its colour as paper gives it:\n" + css);
         assertTrue(css.contains("/* from plain___mark__shape-outline */\n.bold___mark__shape-outline {\n"), css);
         assertTrue(css.contains(".bold___mark__color-outline {\n    outline-color: #c62828;\n}\n"), "a colour the design pins, fixed:\n" + css);
-        var night = new Dressed(ResolvingThemes.COLOURS, ResolvingThemes.Sketch.INSTANCE, ResolvingColours.Night.INSTANCE);
+        var night = new Dressed(ResolvingThemes.COLOURS, ResolvingThemes.Sketch.INSTANCE, BaseColours.Night.INSTANCE);
         String inTheNight = FlattenDesign.INSTANCE.flatten(bold, night, "Bold").css();
         assertTrue(inTheNight.contains(".bold___edge__color-border {\n    border-color: oklch(0.93 0.01 260);\n}\n"), "a palettable colour follows the palette worn:\n" + inTheNight);
         assertTrue(inTheNight.contains(".bold___mark__color-outline {\n    outline-color: #c62828;\n}\n"), "a fixed one does not");
@@ -224,13 +224,13 @@ class DesignsTest extends JsModuleTestBase {
     // ── the scheme a design is in (D33) ────────────────────────────────────
 
     /** A theme of the loud scheme, on top of the base: shouting, in neon. */
-    private static final Dressed SHOUTING = new Dressed(ResolvingThemes.COLOURS, new ResolutionCasesTest.Shouting(), ResolvingColours.Neon.INSTANCE);
+    private static final Dressed SHOUTING = new Dressed(ResolvingThemes.COLOURS, new ResolutionCasesTest.Shouting(), BaseColours.Neon.INSTANCE);
 
     @Test
     void aDesign_isInAScheme_andDrawnOnlyInAThemeWhoseSchemeSeesIt() {
         var unseen = assertThrows(RefusedDesigns.class, () -> ReadDesigns.INSTANCE.read(TAXONOMY, THEMES, List.of(ShoutedEdge.INSTANCE, ShoutedMark.INSTANCE)));
         assertEquals(List.of(Rule.SCHEME_UNSEEN, Rule.SCHEME_UNSEEN), unseen.problems().stream().map(DesignProblem::rule).toList(), unseen.getMessage());
-        assertTrue(unseen.getMessage().contains("shouted is Loud's, which ") && unseen.getMessage().contains("'s scheme, BaseScheme, does not see: "
+        assertTrue(unseen.getMessage().contains("shouted is LoudScheme's, which ") && unseen.getMessage().contains("'s scheme, BaseScheme, does not see: "
                 + "a design is drawn only in a theme whose scheme sees its own"), unseen.getMessage());
         var loud = ReadDesigns.INSTANCE.read(TAXONOMY, List.of(SHOUTING), List.of(ShoutedEdge.INSTANCE, ShoutedMark.INSTANCE)).get(0);
         assertTrue(FlattenDesign.INSTANCE.flatten(loud, SHOUTING, "Shouted").css().contains(".shouted___edge__shape-border"), "drawn where its scheme is");
