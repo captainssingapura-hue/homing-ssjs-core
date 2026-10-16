@@ -47,7 +47,7 @@ class FixturePageTest extends JsModuleTestBase {
     static final Styling STYLING = new Styling(
             StyleManager.of(StyledTaxonomy.INSTANCE.read(), BaseColours.SCHEMES, List.of(
                     StyleRegistration.of(Plain.INSTANCE, PlainStyles.INSTANCE), StyleRegistration.of(Ink.INSTANCE, InkStyles.INSTANCE))),
-            List.of(Plain.INSTANCE, Ink.INSTANCE), PaletteRegistry.of(List.<PaletteDeclaration>of(() -> List.of(BaseColours.Paper.INSTANCE, BaseColours.Night.INSTANCE)), BaseColours.SCHEMES),
+            List.of(Plain.INSTANCE, Ink.INSTANCE), new PaletteRegistry(List.<PaletteDeclaration>of(() -> List.of(BaseColours.Paper.INSTANCE, BaseColours.Night.INSTANCE)), BaseColours.SCHEMES),
             Map.of(Plain.INSTANCE, BaseColours.Paper.INSTANCE, Ink.INSTANCE, BaseColours.Night.INSTANCE));
 
     /** The page's style-aware sheet: a style's, by ?style=. */

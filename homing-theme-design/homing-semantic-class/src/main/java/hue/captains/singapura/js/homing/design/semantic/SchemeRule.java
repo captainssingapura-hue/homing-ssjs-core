@@ -23,15 +23,10 @@ public interface SchemeRule extends StatelessFunctionalObject {
     List<SchemeRule> RULES = List.of(new RegistersSome(), new EachSaysItsScheme(), new OnePerScheme(), new SchemesBelowRegistered(),
             new EveryTreeReads());
 
-    /** What a list of problems comes to: valid when none. */
-    private static Validation of(List<String> problems) {
-        return problems.isEmpty() ? Validation.Valid.INSTANCE : new Validation.Invalid(problems);
-    }
-
     /** It registers a scheme. */
     record RegistersSome() implements SchemeRule {
         @Override public Validation check(List<SchemeDeclaration<?>> declarations) {
-            return of(declarations.isEmpty() ? List.of("it registers no scheme") : List.of());
+            return Validations.INSTANCE.of(declarations.isEmpty() ? List.of("it registers no scheme") : List.of());
         }
     }
 
@@ -40,7 +35,7 @@ public interface SchemeRule extends StatelessFunctionalObject {
         @Override public Validation check(List<SchemeDeclaration<?>> declarations) {
             var problems = new ArrayList<String>();
             for (SchemeDeclaration<?> d : declarations) if (d.scheme() == null) problems.add(d.getClass().getName() + " declares no scheme");
-            return of(problems);
+            return Validations.INSTANCE.of(problems);
         }
     }
 
@@ -55,7 +50,7 @@ public interface SchemeRule extends StatelessFunctionalObject {
                 if (before != null) problems.add(d.scheme().name() + " is declared twice, by " + before.getClass().getName() + " and "
                         + d.getClass().getName() + ": a scheme has one declaration");
             }
-            return of(problems);
+            return Validations.INSTANCE.of(problems);
         }
     }
 
@@ -78,7 +73,7 @@ public interface SchemeRule extends StatelessFunctionalObject {
                             problems.add(d.scheme().name() + "'s schemes below come back to " + back.at().name() + ": a scheme is on top of one below it");
                 }
             }
-            return of(problems);
+            return Validations.INSTANCE.of(problems);
         }
     }
 
@@ -94,7 +89,7 @@ public interface SchemeRule extends StatelessFunctionalObject {
                 try { ReadColors.INSTANCE.read(found.declarations()); }
                 catch (RefusedColors e) { problems.add(scheme.name() + "'s tree is refused: " + e.getMessage()); }
             }
-            return of(problems);
+            return Validations.INSTANCE.of(problems);
         }
     }
 }

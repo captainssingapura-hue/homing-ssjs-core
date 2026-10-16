@@ -47,11 +47,11 @@ public record Styling(StyleManager manager, List<DesignStyle<?>> styles, Palette
         var seen = new HashSet<String>();
         for (DesignStyle<?> s : styles) if (!seen.add(s.token())) problems.add("two styles are " + s.token());
         for (var e : manager.trees().entrySet()) {
-            ColorTree theirs = registry.trees().get(e.getKey());
+            ColorTree theirs = RegisteredPalettes.INSTANCE.trees(registry).get(e.getKey());
             if (theirs != null && !theirs.equals(e.getValue()))
                 problems.add("its styles and its palettes hold two different trees of " + e.getKey().getSimpleName() + ": an instance registers its schemes once");
         }
-        List<ColorPalette<?>> registered = registry.palettes();
+        List<ColorPalette<?>> registered = RegisteredPalettes.INSTANCE.palettes(registry);
         for (DesignStyle<?> s : styles) {
             if (manager.style(s.token()).isEmpty()) problems.add(s.token() + " is served, and the manager does not register it");
             ColorPalette<?> p = own.get(s);
@@ -63,13 +63,13 @@ public record Styling(StyleManager manager, List<DesignStyle<?>> styles, Palette
     }
 
     /** The palettes served: every registered jar's, in the order registered, the default first. */
-    public List<ColorPalette<?>> palettes() { return registry.palettes(); }
+    public List<ColorPalette<?>> palettes() { return RegisteredPalettes.INSTANCE.palettes(registry); }
 
     /** The leaves the manager styles. */
     public Taxonomy taxonomy() { return manager.taxonomy(); }
 
     /** The colour tree a palette is written over: its scheme's, as the registry read it. */
-    public ColorTree colours(ColorPalette<?> palette) { return registry.tree(palette); }
+    public ColorTree colours(ColorPalette<?> palette) { return RegisteredPalettes.INSTANCE.tree(registry, palette); }
 
     /** The colour tree a style is drawn over: its scheme's. */
     public ColorTree colours(DesignStyle<?> style) { return manager.tree(style); }

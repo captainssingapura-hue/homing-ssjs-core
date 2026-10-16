@@ -19,8 +19,8 @@ public record SchemeRegistry(List<SchemeDeclaration<?>> declarations) implements
 
     public SchemeRegistry {
         declarations = List.copyOf(declarations);
-        Validation found = Validation.Valid.INSTANCE;
-        for (SchemeRule rule : SchemeRule.RULES) found = found.and(rule.check(declarations));
+        final List<SchemeDeclaration<?>> registered = declarations;
+        Validation found = Validations.INSTANCE.all(SchemeRule.RULES, rule -> rule.check(registered));
         if (found instanceof Validation.Invalid invalid)
             throw new IllegalArgumentException("the instance's schemes are refused:\n  " + String.join("\n  ", invalid.problems()));
     }

@@ -35,7 +35,7 @@ class StylingTest {
             StyleRegistration.of(Loudly.INSTANCE, LoudlyStyles.INSTANCE)));
 
     /** The instance's palettes: the resolution's jar of them. */
-    private static final PaletteRegistry REGISTRY = PaletteRegistry.of(List.of(BaseColours.Palettes.INSTANCE), BaseColours.SCHEMES);
+    private static final PaletteRegistry REGISTRY = new PaletteRegistry(List.of(BaseColours.Palettes.INSTANCE), BaseColours.SCHEMES);
 
     /** Ink and Loudly served, Plain only their base layer. */
     private static final Styling STYLING = new Styling(MANAGER, List.of(Ink.INSTANCE, Loudly.INSTANCE),
@@ -91,10 +91,10 @@ class StylingTest {
                 registry(Paper.INSTANCE), Map.of(Loudly.INSTANCE, Paper.INSTANCE))).getMessage();
         assertTrue(misfit.contains("loudly's own palette, paper, does not fit it"), misfit);
         SchemeRegistry same = new SchemeRegistry(List.of(BaseColours.INSTANCE, BaseColours.LoudColours.INSTANCE));
-        new Styling(MANAGER, List.of(Ink.INSTANCE), PaletteRegistry.of(only(Night.INSTANCE), same), Map.of(Ink.INSTANCE, Night.INSTANCE));   // the same declarations: the same trees
+        new Styling(MANAGER, List.of(Ink.INSTANCE), new PaletteRegistry(only(Night.INSTANCE), same), Map.of(Ink.INSTANCE, Night.INSTANCE));   // the same declarations: the same trees
         SchemeRegistry other = new SchemeRegistry(List.of(new Lean()));
         String twoTrees = assertThrows(IllegalArgumentException.class, () -> new Styling(MANAGER, List.of(Ink.INSTANCE),
-                PaletteRegistry.of(only(Night.INSTANCE), other), Map.of(Ink.INSTANCE, Night.INSTANCE))).getMessage();
+                new PaletteRegistry(only(Night.INSTANCE), other), Map.of(Ink.INSTANCE, Night.INSTANCE))).getMessage();
         assertTrue(twoTrees.contains("its styles and its palettes hold two different trees of BaseScheme: an instance registers its schemes once"), twoTrees);
     }
 
@@ -119,7 +119,7 @@ class StylingTest {
     }
 
     /** The instance's palettes: these alone, in a jar declared on the spot. */
-    private static PaletteRegistry registry(ColorPalette<?>... palettes) { return PaletteRegistry.of(only(palettes), BaseColours.SCHEMES); }
+    private static PaletteRegistry registry(ColorPalette<?>... palettes) { return new PaletteRegistry(only(palettes), BaseColours.SCHEMES); }
 
     /** A jar of these palettes alone, declared on the spot. */
     private static List<PaletteDeclaration> only(ColorPalette<?>... palettes) {
