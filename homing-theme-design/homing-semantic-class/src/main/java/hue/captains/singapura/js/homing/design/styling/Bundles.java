@@ -47,14 +47,15 @@ public record Bundles() implements StatelessFunctionalObject {
 
     private static void walk(Taxonomy taxonomy, Component<?> at, Collection<? extends Component<?>> topLevel, Set<Casting> out, Set<Component<?>> passed) {
         if (!passed.add(at)) return;
-        for (Part<?, ?> p : taxonomy.partsOf(at)) {
-            var cast = new Casting(p.base(), p.role());
-            if (!cast.functional()) out.add(cast);   // a part in a functional role looks as it alone: its own design's
-            if (!topLevel.contains(p.base())) {
-                if (!(p.base() instanceof VirtualComponent<?>)) out.add(new Casting(p.base()));
-                walk(taxonomy, p.base(), topLevel, out, passed);
+        for (Part<?, ?> p : taxonomy.partsOf(at))
+            for (Component<?> base : p.bases()) {
+                var cast = new Casting(base, p.role());
+                if (!cast.functional()) out.add(cast);   // a part in a functional role looks as it alone: its own design's
+                if (!topLevel.contains(base)) {
+                    if (!(base instanceof VirtualComponent<?>)) out.add(new Casting(base));
+                    walk(taxonomy, base, topLevel, out, passed);
+                }
             }
-        }
     }
 
     /**

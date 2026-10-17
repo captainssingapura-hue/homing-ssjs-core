@@ -38,7 +38,7 @@ public record TaxonomyProblem(Rule rule, String says) implements ValueObject {
         MEANING_ASTRAY,
         /** Two nodes that mean the same: one node, or two meanings to write. */
         MEANING_TWICE,
-        /** Two nodes of the tree of states, two of the tree of events, or two of a lexicon, answer to one name: one word, one meaning, within each tree. */
+        /** Two nodes of the tree of states, or two of the tree of events, answer to one name: one word, one meaning, within each tree. */
         TREE_NAME_TWICE,
         /** A type of state with fewer than two values, or one value twice: its values are what a component is in, one at a time. */
         BAD_STATE_VALUES,

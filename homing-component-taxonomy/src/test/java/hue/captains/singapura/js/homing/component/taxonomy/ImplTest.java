@@ -9,13 +9,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * An implementation names its anchor as a type argument, and the anchor is read off the
- * declaration: a leaf for {@link ImplFor}, a branch for {@link ImplForBranch}, however far up its
+ * declaration: a leaf for {@link ImplFor}, a branch for {@link ImplForBranch} and {@link ImplForLeavesOf}, however far up its
  * supertypes it is given. One that names no class is refused when it is read.
  */
 class ImplTest {
 
     record DangerButtonModule() implements ImplFor<Sketch.DangerButton> {}
     record ButtonModule() implements ImplForBranch<Sketch.Button> {}
+    record EveryButtonModule() implements ImplForLeavesOf<Sketch.Button> {}
 
     /** The argument given on an interface the module takes on, not on the module itself. */
     interface CardImpl extends ImplFor<Sketch.ProfileCard> {}
@@ -40,6 +41,8 @@ class ImplTest {
     void aBranch_isReadOffTheDeclaration() {
         assertSame(Sketch.Button.INSTANCE, new ButtonModule().branch());
         assertSame(Sketch.Button.INSTANCE, new ButtonModule().anchor());
+        assertSame(Sketch.Button.INSTANCE, new EveryButtonModule().branch(), "the branch whose every leaf one class realizes");
+        assertSame(Sketch.Button.INSTANCE, new EveryButtonModule().anchor());
     }
 
     @Test

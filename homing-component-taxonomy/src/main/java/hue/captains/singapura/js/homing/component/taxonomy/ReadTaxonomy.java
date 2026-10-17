@@ -78,7 +78,7 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
         var problems = new ArrayList<TaxonomyProblem>();
         var branches = new LinkedHashSet<ComponentBranch>();
         var components = new LinkedHashSet<Component<?>>();
-        var parts = new ArrayList<Part<?, ?>>();
+        var parts = new ArrayList<Object>();   // each a Part, or a branch's part to resolve once every component is read
         var roles = new LinkedHashSet<Role<?>>();
         var plays = new LinkedHashMap<Component<?>, List<Component<?>>>();   // owner -> the components that play its parts
         for (Role<?> r : catalogued) if (r != null) roles.add(r);
@@ -94,7 +94,7 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
                 if (slot == null) continue;
                 Role<?> role = slot.role();
                 if (role == null) {
-                    problems.add(new TaxonomyProblem(Rule.NO_ROLE, Names.of(c) + " has a part played by " + Names.of(slot.base())
+                    problems.add(new TaxonomyProblem(Rule.NO_ROLE, Names.of(c) + " has a part played by " + slot.players().say()
                             + " in no role"));
                     continue;
                 }
@@ -103,16 +103,49 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
                     continue;
                 }
                 roles.add(role);
-                Component<?> base = slot.base();
-                if (base == null) {
-                    problems.add(new TaxonomyProblem(Rule.NO_BASE, Names.of(c) + "." + Names.of(role) + " is played by nothing"));
-                    continue;
+                switch (slot.players()) {
+                    case Players.One one -> {
+                        if (one.component() == null) {
+                            problems.add(new TaxonomyProblem(Rule.NO_BASE, Names.of(c) + "." + Names.of(role) + " is played by nothing"));
+                            continue;
+                        }
+                        parts.add(new Part<Component<?>, Component<?>>(c, role, List.of(one.component()), slot.cardinality()));
+                        bases.add(one.component());
+                        queue.add(one.component());
+                    }
+                    case Players.AnyOf some -> {
+                        parts.add(new Part<Component<?>, Component<?>>(c, role, some.components(), slot.cardinality()));
+                        bases.addAll(some.components());
+                        queue.addAll(some.components());
+                    }
+                    case Players.Under under -> {
+                        if (under.branch() == null) {
+                            problems.add(new TaxonomyProblem(Rule.NO_BASE, Names.of(c) + "." + Names.of(role) + " is played by nothing"));
+                            continue;
+                        }
+                        parts.add(new Pending(c, role, under.branch(), slot.cardinality()));
+                    }
                 }
-                parts.add(new Part<Component<?>, Component<?>>(c, role, base, slot.cardinality()));
-                bases.add(base);
-                queue.add(base);
             }
             plays.put(c, bases);
+        }
+
+        // a branch's part: played by every component read under the branch - the instance's, a downstream's with the house's
+        var read = new ArrayList<Part<?, ?>>();
+        for (Object o : parts) {
+            if (o instanceof Part<?, ?> p) { read.add(p); continue; }
+            Pending pending = (Pending) o;
+            var under = new ArrayList<Component<?>>();
+            for (Component<?> c : components)
+                for (ComponentBranch b = Levels.parentOf(c); b != null; b = Levels.parentOf(b))
+                    if (b.equals(pending.branch())) { under.add(c); break; }
+            if (under.isEmpty()) {
+                problems.add(new TaxonomyProblem(Rule.NO_BASE, Names.of(pending.owner()) + "." + Names.of(pending.role())
+                        + " is played by any " + Names.of(pending.branch()) + ", and none is read"));
+                continue;
+            }
+            read.add(new Part<Component<?>, Component<?>>(pending.owner(), pending.role(), under, pending.cardinality()));
+            plays.computeIfAbsent(pending.owner(), k -> new ArrayList<>()).addAll(under);
         }
 
         var roleBranches = new LinkedHashSet<RoleBranch>();
@@ -154,11 +187,11 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
         var roleBranchList = byLevel(roleBranches, RoleBranch::level);
         var roleList = List.copyOf(roles);
         problems.addAll(compositionCycles(plays));
-        problems.addAll(tokensTwice(branchList, componentList, parts));
+        problems.addAll(tokensTwice(branchList, componentList, read));
         problems.addAll(new CatalogueNames().clashes(roleBranchList, roleList));
         problems.addAll(roleNamesANode(branchList, componentList, roleList));
         problems.addAll(extentsTwice(branchList, componentList));
-        problems.addAll(DesignBranchChecks.INSTANCE.problems(branchList, componentList, parts));
+        problems.addAll(DesignBranchChecks.INSTANCE.problems(branchList, componentList, read));
         problems.addAll(familyHeads(branchList, componentList));
         problems.addAll(TreeChecks.INSTANCE.clashes("states", StateTree.nodes(stateBranchList, stateList), StateNode::name));
         problems.addAll(TreeChecks.INSTANCE.badValues(stateList));
@@ -171,7 +204,7 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
         if (!eventList.isEmpty()) meant.addAll(EventTree.nodes(eventBranchList, eventList));
         problems.addAll(Meanings.INSTANCE.problems(meant));
         if (!problems.isEmpty()) throw new RefusedTaxonomy(problems);
-        return new Taxonomy(branchList, componentList, parts, new RoleCatalogue(roleBranchList, roleList),
+        return new Taxonomy(branchList, componentList, read, new RoleCatalogue(roleBranchList, roleList),
                 new StateTree(stateBranchList, stateList), new EventTree(eventBranchList, eventList));
     }
 
@@ -343,4 +376,7 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
         }
         return out;
     }
+
+    /** A part played by any component under a branch, resolved once every component is read. */
+    private record Pending(Component<?> owner, Role<?> role, ComponentBranch branch, Cardinality cardinality) {}
 }

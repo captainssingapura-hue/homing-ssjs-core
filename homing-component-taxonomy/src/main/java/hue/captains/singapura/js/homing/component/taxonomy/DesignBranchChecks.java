@@ -32,9 +32,10 @@ record DesignBranchChecks() implements StatelessFunctionalObject {
                         + " and its concrete leaves add none"));
         }
         for (Part<?, ?> p : parts)
-            if (p.base() instanceof VirtualComponent<?>)
-                out.add(new TaxonomyProblem(Rule.VIRTUAL_PLAYS_A_PART, Names.of(p.owner()) + "." + Names.of(p.role()) + " is played by the virtual leaf "
-                        + Names.of(p.base()) + ": a part is cast, and a virtual leaf never is"));
+            for (Component<?> base : p.bases())
+                if (base instanceof VirtualComponent<?>)
+                    out.add(new TaxonomyProblem(Rule.VIRTUAL_PLAYS_A_PART, Names.of(p.owner()) + "." + Names.of(p.role()) + " is played by the virtual leaf "
+                            + Names.of(base) + ": a part is cast, and a virtual leaf never is"));
         return List.copyOf(out);
     }
 }

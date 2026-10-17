@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.component.taxonomy.Component;
 import hue.captains.singapura.js.homing.component.taxonomy.ComponentPartDSL;
 import hue.captains.singapura.js.homing.component.taxonomy.ImplFor;
 import hue.captains.singapura.js.homing.component.taxonomy.ImplForBranch;
+import hue.captains.singapura.js.homing.component.taxonomy.ImplForLeavesOf;
 import hue.captains.singapura.js.homing.component.taxonomy.L1_ComponentBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.L1_RoleBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.L2_ComponentBranch;
@@ -30,7 +31,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * A small house, its implementations anchored at it, and what the gate refuses: a component
  * anchored nowhere, a leaf implemented twice, a module of two classes, a base imported out of its
- * lineage, and imports that are not the parts - read through a part nothing implements.
+ * lineage, and imports that are not the parts - read through a part nothing implements; and a
+ * branch whose every leaf one class realizes, imported for the leaves it stands for.
  */
 class ImplementationsTest {
 
@@ -89,6 +91,39 @@ class ImplementationsTest {
         public static final Stray INSTANCE = new Stray();
         @Override public Control parent() { return Control.INSTANCE; }
     }
+    /** Marks, alike but for their look: one class realizes every one; a badge shows the star, a picker any mark. */
+    public record Mark() implements L2_ComponentBranch<Control> {
+        public static final Mark INSTANCE = new Mark();
+        @Override public Control parent() { return Control.INSTANCE; }
+    }
+    public record Star() implements Component<Mark> {
+        public static final Star INSTANCE = new Star();
+        @Override public Mark parent() { return Mark.INSTANCE; }
+    }
+    public record Moon() implements Component<Mark> {
+        public static final Moon INSTANCE = new Moon();
+        @Override public Mark parent() { return Mark.INSTANCE; }
+    }
+    public record Badge() implements Component<Container> {
+        public static final Badge INSTANCE = new Badge();
+        @Override public Container parent() { return Container.INSTANCE; }
+        @Override public List<Slot<?>> parts() { return List.of(ComponentPartDSL.INSTANCE.part(Star.INSTANCE).as(Symbol.INSTANCE).one()); }
+    }
+    public record Picker() implements Component<Container> {
+        public static final Picker INSTANCE = new Picker();
+        @Override public Container parent() { return Container.INSTANCE; }
+        @Override public List<Slot<?>> parts() { return List.of(ComponentPartDSL.INSTANCE.anyOf(Mark.INSTANCE).as(Symbol.INSTANCE).optional()); }
+    }
+    /** Seals, one of which holds a part of its own: not alike but for the look. */
+    public record Seal() implements L2_ComponentBranch<Control> {
+        public static final Seal INSTANCE = new Seal();
+        @Override public Control parent() { return Control.INSTANCE; }
+    }
+    public record Knot() implements Component<Seal> {
+        public static final Knot INSTANCE = new Knot();
+        @Override public Seal parent() { return Seal.INSTANCE; }
+        @Override public List<Slot<?>> parts() { return List.of(ComponentPartDSL.INSTANCE.part(Icon.INSTANCE).as(Symbol.INSTANCE).one()); }
+    }
     public record Doing() implements L1_RoleBranch<RoleRoot> {
         public static final Doing INSTANCE = new Doing();
         @Override public RoleRoot parent() { return RoleRoot.INSTANCE; }
@@ -98,7 +133,8 @@ class ImplementationsTest {
     public record Symbol() implements Role<Doing> { public static final Symbol INSTANCE = new Symbol(); @Override public Doing parent() { return Doing.INSTANCE; } }
 
     private static final Taxonomy HOUSE = new ReadTaxonomy().read(
-            List.of(PlainButton.INSTANCE, DangerButton.INSTANCE, Icon.INSTANCE, Bar.INSTANCE, Dialog.INSTANCE, IconButton.INSTANCE, Strip.INSTANCE),
+            List.of(PlainButton.INSTANCE, DangerButton.INSTANCE, Icon.INSTANCE, Bar.INSTANCE, Dialog.INSTANCE, IconButton.INSTANCE, Strip.INSTANCE,
+                    Star.INSTANCE, Moon.INSTANCE, Badge.INSTANCE, Picker.INSTANCE, Knot.INSTANCE),
             List.of(Act.INSTANCE, Acts.INSTANCE, Symbol.INSTANCE));
 
     // ── the implementations ──────────────────────────────────────────────
@@ -216,6 +252,81 @@ class ImplementationsTest {
         @Override public ExportsOf<StrayModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new Stray())); }
     }
 
+    public record MarkModule() implements DomModule<MarkModule>, ImplForLeavesOf<ImplementationsTest.Mark> {
+        public static final MarkModule INSTANCE = new MarkModule();
+        public record Mark() implements ElementComponent<MarkModule> { @Override public String tag() { return "span"; } }
+        @Override public ImportsFor<MarkModule> imports() { return ImportsFor.noImports(); }
+        @Override public ExportsOf<MarkModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new Mark())); }
+    }
+
+    /** The badge and the picker, each importing the marks' one class: the star the badge's slot names, any mark for the picker. */
+    private record BadgeModule() implements DomModule<BadgeModule>, ImplFor<ImplementationsTest.Badge> {
+        public record Badge() implements BranchComponent<BadgeModule> {}
+        @Override public ImportsFor<BadgeModule> imports() {
+            return ImportsFor.<BadgeModule>builder().add(new ModuleImports<>(List.of(new MarkModule.Mark()), MarkModule.INSTANCE)).build();
+        }
+        @Override public ExportsOf<BadgeModule> exports() { return new ExportsOf<>(this, List.of(new Badge())); }
+    }
+
+    private record PickerModule() implements DomModule<PickerModule>, ImplFor<ImplementationsTest.Picker> {
+        public record Picker() implements BranchComponent<PickerModule> {}
+        @Override public ImportsFor<PickerModule> imports() {
+            return ImportsFor.<PickerModule>builder().add(new ModuleImports<>(List.of(new MarkModule.Mark()), MarkModule.INSTANCE)).build();
+        }
+        @Override public ExportsOf<PickerModule> exports() { return new ExportsOf<>(this, List.of(new Picker())); }
+    }
+
+    /** The badge without the marks' class; the icon with it, though it holds no mark. */
+    private record BareBadge() implements DomModule<BareBadge>, ImplFor<ImplementationsTest.Badge> {
+        public record Badge() implements BranchComponent<BareBadge> {}
+        @Override public ImportsFor<BareBadge> imports() { return ImportsFor.noImports(); }
+        @Override public ExportsOf<BareBadge> exports() { return new ExportsOf<>(this, List.of(new Badge())); }
+    }
+
+    private record MarkedIcon() implements DomModule<MarkedIcon>, ImplFor<ImplementationsTest.Icon> {
+        public record Icon() implements ElementComponent<MarkedIcon> { @Override public String tag() { return "span"; } }
+        @Override public ImportsFor<MarkedIcon> imports() {
+            return ImportsFor.<MarkedIcon>builder().add(new ModuleImports<>(List.of(new MarkModule.Mark()), MarkModule.INSTANCE)).build();
+        }
+        @Override public ExportsOf<MarkedIcon> exports() { return new ExportsOf<>(this, List.of(new Icon())); }
+    }
+
+    /** A room the marks are mounted in, implementing nothing: its importer's code; and a picker that mounts through it. */
+    public record MarkRoomModule() implements DomModule<MarkRoomModule> {
+        public static final MarkRoomModule INSTANCE = new MarkRoomModule();
+        public record MarkRoom() implements Exportable._Class<MarkRoomModule> {}
+        @Override public ImportsFor<MarkRoomModule> imports() {
+            return ImportsFor.<MarkRoomModule>builder().add(new ModuleImports<>(List.of(new MarkModule.Mark()), MarkModule.INSTANCE)).build();
+        }
+        @Override public ExportsOf<MarkRoomModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new MarkRoom())); }
+    }
+
+    private record RoomPicker() implements DomModule<RoomPicker>, ImplFor<ImplementationsTest.Picker> {
+        public record Picker() implements BranchComponent<RoomPicker> {}
+        @Override public ImportsFor<RoomPicker> imports() {
+            return ImportsFor.<RoomPicker>builder().add(new ModuleImports<>(List.of(new MarkRoomModule.MarkRoom()), MarkRoomModule.INSTANCE)).build();
+        }
+        @Override public ExportsOf<RoomPicker> exports() { return new ExportsOf<>(this, List.of(new Picker())); }
+    }
+
+    private record StarModule() implements DomModule<StarModule>, ImplFor<ImplementationsTest.Star> {
+        public record Star() implements ElementComponent<StarModule> { @Override public String tag() { return "span"; } }
+        @Override public ImportsFor<StarModule> imports() { return ImportsFor.noImports(); }
+        @Override public ExportsOf<StarModule> exports() { return new ExportsOf<>(this, List.of(new Star())); }
+    }
+
+    private record GlyphsModule() implements DomModule<GlyphsModule>, ImplForLeavesOf<ImplementationsTest.Mark> {
+        public record Glyph() implements ElementComponent<GlyphsModule> { @Override public String tag() { return "span"; } }
+        @Override public ImportsFor<GlyphsModule> imports() { return ImportsFor.noImports(); }
+        @Override public ExportsOf<GlyphsModule> exports() { return new ExportsOf<>(this, List.of(new Glyph())); }
+    }
+
+    private record SealModule() implements DomModule<SealModule>, ImplForLeavesOf<ImplementationsTest.Seal> {
+        public record Seal() implements ElementComponent<SealModule> { @Override public String tag() { return "span"; } }
+        @Override public ImportsFor<SealModule> imports() { return ImportsFor.noImports(); }
+        @Override public ExportsOf<SealModule> exports() { return new ExportsOf<>(this, List.of(new Seal())); }
+    }
+
     private record Shipped(String name, List<EsModule<?>> modules) implements Crate {
         @Override public List<CrateEntry> entries() { return modules.stream().map(CrateEntry::of).toList(); }
     }
@@ -305,5 +416,32 @@ class ImplementationsTest {
                         "AdriftModule exports the component Adrift but is anchored nowhere: a component's module implements its leaf (ImplFor)",
                         "StrayModule implements Stray, which the taxonomy does not declare"),
                 check(ButtonModule.INSTANCE, IconModule.INSTANCE, OddIconModule.INSTANCE, AdriftModule.INSTANCE, StrayModule.INSTANCE));
+    }
+
+    /**
+     * One class realizes every mark: the badge imports it for the star its slot names, the picker for
+     * any mark; a module that holds no mark imports it for nothing, and one that names none of them
+     * never imports what its part calls for.
+     */
+    @Test
+    void aBranchRealizedWhole_standsForEachLeafItsImportersPartsCallFor() {
+        assertEquals(List.of(), check(MarkModule.INSTANCE, new BadgeModule(), new PickerModule()),
+                "the star the badge's slot names, and any mark the picker shows: each a leaf of the one class");
+        assertEquals(List.of("BareBadge (Badge) never imports Star, which its part symbol calls for",
+                             "MarkedIcon (Icon) imports every leaf of Mark (MarkModule), but none of its parts holds one"),
+                check(MarkModule.INSTANCE, new BareBadge(), new MarkedIcon()));
+        assertEquals(List.of(), check(MarkModule.INSTANCE, MarkRoomModule.INSTANCE, new RoomPicker()),
+                "through a room that implements nothing: the room is the picker's code, the marks it mounts the picker's");
+    }
+
+    /** A leaf of a branch realized whole is the one class's alone; the class is named as the branch; its leaves hold no parts. */
+    @Test
+    void aBranchRealizedWhole_once_namedAsTheBranch_itsLeavesAlikeButForTheirLook() {
+        assertEquals(List.of("Star is implemented twice: by MarkModule, every leaf of its branch, and StarModule"),
+                check(MarkModule.INSTANCE, new StarModule()));
+        assertEquals(List.of("GlyphsModule implements every leaf of Mark but exports Glyph: one module, one class - the component, named as the branch, made with the leaf it realizes"),
+                check(new GlyphsModule()));
+        assertEquals(List.of("SealModule implements every leaf of Seal, but Knot holds parts: the leaves of one class are alike but for their look"),
+                check(new SealModule()));
     }
 }

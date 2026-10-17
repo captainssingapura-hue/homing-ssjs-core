@@ -7,8 +7,8 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
 /**
- * Reads the node an implementation names: the type argument it gives {@link ImplFor} or
- * {@link ImplForBranch}, wherever along its supertypes it gives it, and that node's
+ * Reads the node an implementation names: the type argument it gives {@link ImplFor},
+ * {@link ImplForBranch} or {@link ImplForLeavesOf}, wherever along its supertypes it gives it, and that node's
  * {@code INSTANCE}.
  */
 record TypeArgument() implements StatelessFunctionalObject {

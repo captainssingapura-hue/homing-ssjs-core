@@ -10,10 +10,9 @@ import java.util.List;
  * requires one colour scheme, its type argument, and is worn only in a palette of that scheme. It says which colour each
  * thing uses, in semantic colours its scheme can see ({@link #colorings()}), and never what a colour is: no answer can
  * name a value. A style written over another says so by type, with {@link Derives}; one that derives from nothing
- * answers every root, colour's included, so that every class resolves. A style also writes the words of a lexicon -
- * the glyph it draws for each ({@link Writing}) - the words its base writes its own unless it writes them otherwise. How
- * it draws each casting is no part of it: each is a class of its own, in the jar that implements it (appendix The Style
- * Jars).
+ * answers every root, colour's included, so that every class resolves. How it draws each casting is no part of it:
+ * each is a class of its own, in the jar that implements it (appendix The Style Jars) - an icon's picture among them
+ * (D52).
  *
  * @param <S> the colour scheme it requires
  */
@@ -39,7 +38,4 @@ public interface DesignStyle<S extends ColorScheme> {
 
     /** Which colour each class it answers itself uses; none by default, each as its base colours it. */
     default List<Coloring<S, ?>> colorings() { return List.of(); }
-
-    /** The words this style writes itself; none by default, each written as its base writes it. */
-    default List<Writing> writings() { return List.of(); }
 }

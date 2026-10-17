@@ -72,9 +72,9 @@ class ReadTaxonomyTest {
     void eachSlotIsAPart_itsOwnerAppended() {
         Taxonomy t = read(Confirmation.INSTANCE);
         assertEquals(List.of(
-                new Part<>(Confirmation.INSTANCE, Title.INSTANCE, Caption.INSTANCE, new Fixed(1)),
-                new Part<>(Confirmation.INSTANCE, Confirm.INSTANCE, PlainButton.INSTANCE, new Fixed(1)),
-                new Part<>(Confirmation.INSTANCE, Cancel.INSTANCE, PlainButton.INSTANCE, new Varying(0, new AtMost(1)))),
+                new Part<>(Confirmation.INSTANCE, Title.INSTANCE, List.of(Caption.INSTANCE), new Fixed(1)),
+                new Part<>(Confirmation.INSTANCE, Confirm.INSTANCE, List.of(PlainButton.INSTANCE), new Fixed(1)),
+                new Part<>(Confirmation.INSTANCE, Cancel.INSTANCE, List.of(PlainButton.INSTANCE), new Varying(0, new AtMost(1)))),
                 t.partsOf(Confirmation.INSTANCE));
         assertEquals("confirm", t.partsOf(Confirmation.INSTANCE).get(1).name().value(), "a part is named by its role, not by what plays it");
     }
@@ -117,7 +117,7 @@ class ReadTaxonomyTest {
         Taxonomy t = READ.read(Sketch.DECLARED);
         var titles = t.partsNaming(Title.INSTANCE);
         assertEquals(List.of(ProfileCard.INSTANCE, Confirmation.INSTANCE), titles.stream().map(Part::owner).toList(), "one role, two owners");
-        assertEquals(List.of(Heading.INSTANCE, Caption.INSTANCE), titles.stream().map(Part::base).toList(), "each its own player");
+        assertEquals(List.of(Heading.INSTANCE, Caption.INSTANCE), titles.stream().map(p -> p.bases().get(0)).toList(), "each its own player");
         assertEquals(List.of("profile-card-title", "confirmation-title"), titles.stream().map(Part::token).toList(), "each its own part");
     }
 

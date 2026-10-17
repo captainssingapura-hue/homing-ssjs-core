@@ -46,18 +46,36 @@ public record ComponentPartDSL() implements StatelessFunctionalObject {
     public static final ComponentPartDSL INSTANCE = new ComponentPartDSL();
 
     /** A part played by a component - none is refused when the taxonomy is read. Not yet a slot: it needs a role. */
-    public <E extends Component<?>> NeedsRole<E> part(E base) { return new NeedsRole<>(base); }
+    public <E extends Component<?>> NeedsRole<E> part(E base) { return new NeedsRole<>(new Players.One(base)); }
 
     /**
-     * A part played by a component, and given no role yet.
-     *
-     * @param base the component that plays it
-     * @param <E>  the component that plays it
+     * A part played by one of several components, the owner mounting one at a time (D52): {@code DSL.part(Size.INSTANCE,
+     * Aspect.INSTANCE).as(Measure.INSTANCE).one()}. Not yet a slot: it needs a role.
      */
-    public record NeedsRole<E extends Component<?>>(E base) implements ValueObject {
+    public NeedsRole<Component<?>> part(Component<?> first, Component<?> second, Component<?>... more) {
+        var all = new java.util.ArrayList<Component<?>>();
+        all.add(first);
+        all.add(second);
+        all.addAll(java.util.List.of(more));
+        return new NeedsRole<>(new Players.AnyOf(all));
+    }
+
+    /**
+     * A part played by any component under a branch - those the instance registers there, a downstream's with the
+     * house's (D52): {@code DSL.anyOf(Icon.INSTANCE).as(Leading.INSTANCE).optional()}. Not yet a slot: it needs a role.
+     */
+    public NeedsRole<Component<?>> anyOf(ComponentBranch branch) { return new NeedsRole<>(new Players.Under(branch)); }
+
+    /**
+     * A part whose players are named, and given no role yet.
+     *
+     * @param players who plays it
+     * @param <E>     what plays it, as the DSL was told
+     */
+    public record NeedsRole<E extends Component<?>>(Players players) implements ValueObject {
 
         /** The role it plays - none is refused when the taxonomy is read. Not yet a slot: it needs a count. */
-        public NeedsCount<E> as(Role<?> role) { return new NeedsCount<>(base, role); }
+        public NeedsCount<E> as(Role<?> role) { return new NeedsCount<>(players, role); }
     }
 
     /**
@@ -68,7 +86,7 @@ public record ComponentPartDSL() implements StatelessFunctionalObject {
      * @param role the role it plays
      * @param <E>  the component that plays it
      */
-    public record NeedsCount<E extends Component<?>>(E base, Role<?> role) implements ValueObject {
+    public record NeedsCount<E extends Component<?>>(Players players, Role<?> role) implements ValueObject {
 
         /** Exactly one, from the start. */
         public Slot<E> one() { return exactly(1); }
@@ -91,6 +109,6 @@ public record ComponentPartDSL() implements StatelessFunctionalObject {
         /** From {@code m} up to {@code n}. */
         public Slot<E> between(int m, int n) { return slot(new Varying(m, new AtMost(n))); }
 
-        private Slot<E> slot(Cardinality cardinality) { return new Slot<>(role, base, cardinality); }
+        private Slot<E> slot(Cardinality cardinality) { return new Slot<>(role, players, cardinality); }
     }
 }

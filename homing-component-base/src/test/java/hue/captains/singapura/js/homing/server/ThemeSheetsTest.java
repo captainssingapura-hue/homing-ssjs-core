@@ -80,7 +80,7 @@ class ThemeSheetsTest extends JsModuleTestBase {
         assertEquals(List.of("/css-content?class=StyleSheet&style=plain all", "/css-content?class=PaletteSheet&palette=paper all"), live());
     }
 
-    /** Two derived sheets the page's modules import - a lexicon's, a look's - under the default. */
+    /** Two derived sheets the page's modules import - a words' sheet, a look's - under the default. */
     private void pageUnderDefault() {
         js.eval("js", "globalThis.done = 0; ThemeSheetsInstance.load(['Words'], 'default', 'theme').then(() => globalThis.done++);"
                 + "ThemeSheetsInstance.load(['Look'], 'default', 'theme').then(() => globalThis.done++); undefined");

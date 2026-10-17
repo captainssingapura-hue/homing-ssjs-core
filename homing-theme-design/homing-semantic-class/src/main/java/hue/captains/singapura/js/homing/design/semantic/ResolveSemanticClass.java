@@ -136,7 +136,7 @@ public record ResolveSemanticClass() implements StatelessFunctionalObject {
     /** Whether a casting is one the taxonomy has: on its own, or a role some slot casts its component in. */
     private static boolean castable(Taxonomy taxonomy, Casting c) {
         if (c.standalone()) return true;
-        for (Part<?, ?> p : taxonomy.parts()) if (p.base().equals(c.component()) && p.role().equals(c.role())) return true;
+        for (Part<?, ?> p : taxonomy.parts()) if (p.bases().contains(c.component()) && p.role().equals(c.role())) return true;
         return false;
     }
 }

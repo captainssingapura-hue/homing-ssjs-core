@@ -75,10 +75,23 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
     public List<ComponentNode> fallback(ComponentNode node) {
         var out = new ArrayList<ComponentNode>();
         out.add(node);
-        Taxon t = node instanceof Part<?, ?> p ? p.base() : (Taxon) node;
+        Taxon t = node instanceof Part<?, ?> p ? played(p) : (Taxon) node;
         if (node instanceof Part<?, ?>) out.add(t);
         for (ComponentBranch b = Levels.parentOf(t); b != null; b = Levels.parentOf(b)) out.add(b);
         return List.copyOf(out);
+    }
+
+    /** What a part is answered as: the one that plays it, or the branch its players share, the nearest - the root at the least. */
+    private static Taxon played(Part<?, ?> p) {
+        if (!p.alternatives()) return p.bases().get(0);
+        List<Taxon> common = null;
+        for (Component<?> c : p.bases()) {
+            var lineage = new ArrayList<Taxon>();
+            for (ComponentBranch b = Levels.parentOf(c); b != null; b = Levels.parentOf(b)) lineage.add(b);
+            if (common == null) common = lineage;
+            else common.retainAll(lineage);
+        }
+        return common.get(0);
     }
 
     /** A node's token, unique across a taxonomy: the reader refuses two nodes with one. */
@@ -89,7 +102,7 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
      * its own. A part's are its base's - a part follows its own component, never its owner.
      */
     public List<ExtentAxis> extents(ComponentNode node) {
-        Taxon t = node instanceof Part<?, ?> p ? p.base() : (Taxon) node;
+        Taxon t = node instanceof Part<?, ?> p ? played(p) : (Taxon) node;
         var lineage = new ArrayList<Taxon>();
         for (Taxon at = t; at != null; at = Levels.parentOf(at)) lineage.add(0, at);
         var out = new LinkedHashSet<ExtentAxis>();
@@ -132,10 +145,11 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
     public List<Casting> castings() {
         var out = new LinkedHashSet<Casting>();
         for (Component<?> c : components) if (!(c instanceof VirtualComponent<?>)) out.add(new Casting(c));
-        for (Part<?, ?> p : parts) {
-            var cast = new Casting(p.base(), p.role());
-            out.add(cast.functional() ? cast.alone() : cast);
-        }
+        for (Part<?, ?> p : parts)
+            for (Component<?> base : p.bases()) {
+                var cast = new Casting(base, p.role());
+                out.add(cast.functional() ? cast.alone() : cast);
+            }
         return List.copyOf(out);
     }
 
@@ -188,11 +202,11 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
                 continue;
             }
             var bases = new LinkedHashSet<Component<?>>();
-            for (Part<?, ?> p : uses) bases.add(p.base());
+            for (Part<?, ?> p : uses) bases.addAll(p.bases());
             if (bases.size() > 1)
                 out.add(new TaxonomyFinding(Sign.ROLE_PLAYED_VARIOUSLY, Names.of(r) + " is played by "
                         + String.join(", ", bases.stream().map(b -> Names.of(b) + " in "
-                                + String.join(" and ", uses.stream().filter(p -> p.base().equals(b)).map(p -> Names.of(p.owner())).toList()))
+                                + String.join(" and ", uses.stream().filter(p -> p.bases().contains(b)).map(p -> Names.of(p.owner())).toList()))
                         .toList())));
         }
         return List.copyOf(out);

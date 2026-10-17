@@ -61,7 +61,8 @@ public record ComponentModules() implements StatelessFunctionalObject {
         while (grew) {
             grew = false;
             for (Part<?, ?> p : taxonomy.parts())
-                if (out.containsKey(p.owner()) && !out.containsKey(p.base())) { out.put(p.base(), out.get(p.owner())); grew = true; }
+                for (Component<?> base : p.bases())
+                    if (out.containsKey(p.owner()) && !out.containsKey(base)) { out.put(base, out.get(p.owner())); grew = true; }
         }
         return out;
     }

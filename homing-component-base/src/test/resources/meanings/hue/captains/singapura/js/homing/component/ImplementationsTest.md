@@ -59,3 +59,31 @@ The actions a dialog offers.
 ## Symbol
 
 What stands for the owner.
+
+## Mark
+
+The marks, alike but for their look: one class realizes every one.
+
+## Star
+
+A mark: a star.
+
+## Moon
+
+A mark: a moon.
+
+## Badge
+
+What shows the star.
+
+## Picker
+
+What shows any mark.
+
+## Seal
+
+The seals: one holds a part, so they are not alike but for their look.
+
+## Knot
+
+A seal holding an icon.
