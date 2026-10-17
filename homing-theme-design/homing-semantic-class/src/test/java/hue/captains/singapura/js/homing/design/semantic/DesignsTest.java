@@ -185,10 +185,16 @@ class DesignsTest extends JsModuleTestBase {
     void aDesignsObject_wearsAndShedsALeafsClasses_andRefusesALeafOfAnotherBranch() {
         js = buildContext();
         js.eval("js", "var plain_sheet = 'the sheet';"
+                + " var css = { cls: function (n) { return { name: n }; },"
+                + " addClass: function (el, c) { if (!c || typeof c.name !== 'string') throw new Error('not a handle: ' + c); el.classList.add(c.name); },"
+                + " removeClass: function (el, c) { if (!c || typeof c.name !== 'string') throw new Error('not a handle: ' + c); el.classList.remove(c.name); } };"
                 + " function El() { var s = new Set(); this.classList = { add: function (c) { s.add(c); }, remove: function (c) { s.delete(c); } };"
                 + " this.classes = function () { return Array.from(s).sort().join(' '); }; }");
         js.eval("js", String.join("\n", DesignLeaves.INSTANCE.lines(TAXONOMY, Frame.INSTANCE)));
-        js.eval("js", String.join("\n", DesignObject.INSTANCE.lines(read("plain"), "plain_sheet")));
+        var lines = DesignObject.INSTANCE.lines(read("plain"), "plain_sheet");
+        assertTrue(lines.stream().noneMatch(l -> l.contains("classList") || l.contains("className")),
+                "generated, it keeps the standard hand-written code keeps: its classes through the css manager, never the class list");
+        js.eval("js", String.join("\n", lines));
         assertEquals("EDGE,MARK", js.eval("js", "Object.keys(FRAME).join(',')").asString(), "every leaf of the branch, in its order");
         assertEquals("frame plain plain true", js.eval("js", "[Plain.branch, Plain.name, String(Plain), Object.isFrozen(Plain)].join(' ')").asString());
         assertEquals("plain___edge__color-border plain___edge__shape-border",

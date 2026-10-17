@@ -255,6 +255,9 @@ class AnimationEffectsTest extends JsModuleTestBase {
         DesignRead marching = ReadDesigns.INSTANCE.read(TAXONOMY, List.of(VALUED), MARCHING).get(0);
         js = buildContext();
         js.eval("js", "var marching_sheet = 'the sheet';"
+                + " var css = { cls: function (n) { return { name: n }; },"
+                + " addClass: function (el, c) { if (!c || typeof c.name !== 'string') throw new Error('not a handle: ' + c); el.classList.add(c.name); },"
+                + " removeClass: function (el, c) { if (!c || typeof c.name !== 'string') throw new Error('not a handle: ' + c); el.classList.remove(c.name); } };"
                 + " function El() { var s = new Set(); this.classList = { add: function (c) { s.add(c); }, remove: function (c) { s.delete(c); } };"
                 + " this.classes = function () { return Array.from(s).sort().join(' '); }; }");
         js.eval("js", String.join("\n", DesignLeaves.INSTANCE.lines(TAXONOMY, Overlay.INSTANCE)));

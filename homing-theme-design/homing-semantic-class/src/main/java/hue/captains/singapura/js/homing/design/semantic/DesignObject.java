@@ -13,9 +13,14 @@ import java.util.List;
  * and its name, and wears and sheds a leaf's classes on an element - every class its concrete leaf wears, one
  * for each target the leaf owns, the same in every theme; the theme's sheet says what each draws. What it
  * designs is made with it, asks it to wear a leaf by the leaf's constant ({@link DesignLeaves}), and never
- * touches a class list: the object is its classes' manager. A leaf of another branch, or one the branch has
+ * touches a class list: the object is its classes' keeper. A leaf of another branch, or one the branch has
  * not, is refused. A leaf that wears an animation effect is switched off and on by its class and its still
  * dual's swapped ({@code still(leaf, el)}, {@code move(leaf, el)}) - nothing more.
+ *
+ * <p>Generated, it keeps the standard hand-written code keeps: every class is a handle made once by the css
+ * manager ({@code css.cls}), and is put on and taken off through it ({@code css.addClass},
+ * {@code css.removeClass}) - never through the element's class list. The manager is the page's, injected into
+ * the object's module by the sheet it imports.</p>
  *
  * <pre>{@code
  * void minesweeper_classic_sheet;
@@ -46,9 +51,9 @@ public record DesignObject() implements StatelessFunctionalObject {
             var classes = new ArrayList<String>();
             for (Target t : ReadDesigns.owned(c.virtual())) {
                 String worn = tokens.drawn(design.design(), c.virtual(), t);
-                classes.add(quoted(worn));
+                classes.add(handle(worn));
                 if (t instanceof Target.Animation)
-                    stills.add("        " + quoted(c.virtual().token()) + ": Object.freeze([" + quoted(worn) + ", " + quoted(tokens.still(worn)) + "])");
+                    stills.add("        " + quoted(c.virtual().token()) + ": Object.freeze([" + handle(worn) + ", " + handle(tokens.still(worn)) + "])");
             }
             leaves.add("        " + quoted(c.virtual().token()) + ": Object.freeze([" + String.join(", ", classes) + "])");
         }
@@ -58,7 +63,7 @@ public record DesignObject() implements StatelessFunctionalObject {
                 "const " + name + " = Object.freeze({",
                 "    branch: " + quoted(branch) + ",",
                 "    name: " + quoted(design.token()) + ",",
-                "    // every class each leaf's concrete leaf wears: one for each target the leaf owns",
+                "    // every class each leaf's concrete leaf wears, as the css manager's handle: one for each target the leaf owns",
                 "    leaves: Object.freeze({",
                 String.join(",\n", leaves),
                 "    }),",
@@ -70,20 +75,20 @@ public record DesignObject() implements StatelessFunctionalObject {
                 "        if (!classes) throw new Error(\"[" + name + "] " + branch + " has no leaf '\" + leaf.token + \"'\");",
                 "        return classes;",
                 "    },",
-                "    // the leaves that wear an animation effect: the effect's class and its still dual's - swapped, the effect is off",
+                "    // the leaves that wear an animation effect: the effect's class and its still dual's, as handles - swapped, the effect is off",
                 "    stills: Object.freeze({",
                 String.join(",\n", stills),
                 "    }),",
-                "    wear(leaf, el) { " + name + ".classes(leaf).forEach(function (c) { el.classList.add(c); }); return el; },",
+                "    wear(leaf, el) { " + name + ".classes(leaf).forEach(function (c) { css.addClass(el, c); }); return el; },",
                 "    shed(leaf, el) {",
-                "        " + name + ".classes(leaf).forEach(function (c) { el.classList.remove(c); });",
-                "        var s = " + name + ".stills[leaf.token]; if (s) el.classList.remove(s[1]);",
+                "        " + name + ".classes(leaf).forEach(function (c) { css.removeClass(el, c); });",
+                "        var s = " + name + ".stills[leaf.token]; if (s) css.removeClass(el, s[1]);",
                 "        return el;",
                 "    },",
                 "    // a leaf's effect switched off: its class swapped for its still dual's - the effect without any motion",
-                "    still(leaf, el) { var s = " + name + "._stills(leaf); el.classList.remove(s[0]); el.classList.add(s[1]); return el; },",
+                "    still(leaf, el) { var s = " + name + "._stills(leaf); css.removeClass(el, s[0]); css.addClass(el, s[1]); return el; },",
                 "    // and on again",
-                "    move(leaf, el) { var s = " + name + "._stills(leaf); el.classList.remove(s[1]); el.classList.add(s[0]); return el; },",
+                "    move(leaf, el) { var s = " + name + "._stills(leaf); css.removeClass(el, s[1]); css.addClass(el, s[0]); return el; },",
                 "    _stills(leaf) {",
                 "        " + name + ".classes(leaf);",
                 "        var s = " + name + ".stills[leaf.token];",
@@ -95,4 +100,7 @@ public record DesignObject() implements StatelessFunctionalObject {
     }
 
     private static String quoted(String s) { return "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\""; }
+
+    /** A class's handle, made once by the css manager, as a generated group of CSS classes makes its own. */
+    private static String handle(String className) { return "css.cls(" + quoted(className) + ")"; }
 }
