@@ -90,7 +90,9 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
             branches.addAll(lineage(c, problems));
             var bases = new ArrayList<Component<?>>();
             var named = new HashSet<Role<?>>();
-            for (Slot<?> slot : slotsOf(c, problems)) {
+            List<Slot<?>> slots = slotsOf(c, problems);
+            kind(c, slots, problems);
+            for (Slot<?> slot : slots) {
                 if (slot == null) continue;
                 Role<?> role = slot.role();
                 if (role == null) {
@@ -262,6 +264,14 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
     private static List<ExtentAxis> axes(Taxon t) {
         List<ExtentAxis> a = t.extents();
         return a == null ? List.of() : a;
+    }
+
+    /** A leaf declares no parts, a composite at least one, and no component says it is both (D53). */
+    private static void kind(Component<?> c, List<Slot<?>> slots, List<TaxonomyProblem> problems) {
+        boolean leaf = c instanceof Leaf<?>, composite = c instanceof Composite<?>;
+        if (leaf && composite) problems.add(new TaxonomyProblem(Rule.KIND_BADLY, Names.of(c) + " says it is a leaf and a composite: a component is one"));
+        else if (leaf && !slots.isEmpty()) problems.add(new TaxonomyProblem(Rule.KIND_BADLY, Names.of(c) + " is a leaf, and declares parts: a component with parts is a composite"));
+        else if (composite && slots.isEmpty()) problems.add(new TaxonomyProblem(Rule.KIND_BADLY, Names.of(c) + " is a composite, and declares no parts: a component with none is a leaf"));
     }
 
     /** A component's slots; a count that is no cardinality is a problem of the component that said it. */

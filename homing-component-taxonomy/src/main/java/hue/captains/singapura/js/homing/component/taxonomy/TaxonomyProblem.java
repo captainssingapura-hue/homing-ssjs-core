@@ -61,7 +61,9 @@ public record TaxonomyProblem(Rule rule, String says) implements ValueObject {
         /** A family head with another family head between it and the root: families are headed at one level. */
         FAMILY_HEAD_NESTED,
         /** A component that says it heads a family: only a branch does. */
-        FAMILY_HEAD_NOT_A_BRANCH
+        FAMILY_HEAD_NOT_A_BRANCH,
+        /** A leaf that declares parts, a composite that declares none, or a component that says it is both (D53). */
+        KIND_BADLY
     }
 
     @Override public String toString() { return rule + ": " + says; }
