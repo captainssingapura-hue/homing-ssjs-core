@@ -1,4 +1,4 @@
-# The animating designs' fixture
+# The animating local styles' fixture
 
 ## Stage
 
@@ -6,7 +6,7 @@ What is laid over a page's contents.
 
 ## Overlay
 
-The marks laid over contents, drawn as a design draws them - some of them moving.
+The marks laid over contents, drawn as a local style draws them - some of them moving.
 
 ## Line
 

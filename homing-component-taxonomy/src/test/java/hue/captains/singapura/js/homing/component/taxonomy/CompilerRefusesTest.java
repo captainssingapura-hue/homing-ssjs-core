@@ -1,6 +1,5 @@
 package hue.captains.singapura.js.homing.component.taxonomy;
 
-import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import hue.captains.singapura.js.homing.tree.NodeName;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import org.junit.jupiter.api.Test;
@@ -36,7 +35,6 @@ class CompilerRefusesTest {
     private static final String PREAMBLE = """
             package hypothetical;
             import hue.captains.singapura.js.homing.component.taxonomy.*;
-            import hue.captains.singapura.js.homing.design.color.ColorScheme;
             import hue.captains.singapura.js.homing.tree.NodeName;
             import java.util.List;
             public class Hypothetical {
@@ -198,71 +196,32 @@ class CompilerRefusesTest {
                 """);
     }
 
-    // ── virtual leaves and designs (RFC 0067, appendix Virtual Leaves and Designs) ──
+    // ── virtual leaves (RFC 0067, appendix Virtual Leaves and Designs) - a local style of them is the design side's ──
 
-    /** A design branch, two virtual leaves each with its own interface for extension, and two designs of it. */
-    private static final String DESIGNED = """
-            static class Scheme implements ColorScheme { static final Scheme INSTANCE = new Scheme(); }
-            record Frame() implements L1_ComponentBranch<Root>, DesignBranch { static final Frame INSTANCE = new Frame(); public Root parent() { return Root.INSTANCE; } }
-            record Other() implements L1_ComponentBranch<Root>, DesignBranch { static final Other INSTANCE = new Other(); public Root parent() { return Root.INSTANCE; } }
-            record Edge() implements VirtualComponent<Frame> { static final Edge INSTANCE = new Edge(); public Frame parent() { return Frame.INSTANCE; }
-                interface Concrete<D extends Design<?, Frame>> extends ConcreteComponent<Edge, Frame, D> {} }
-            record Mark() implements VirtualComponent<Frame> { static final Mark INSTANCE = new Mark(); public Frame parent() { return Frame.INSTANCE; }
-                interface Concrete<D extends Design<?, Frame>> extends ConcreteComponent<Mark, Frame, D> {} }
-            record Plain() implements Design<Scheme, Frame> { @Override public Scheme scheme() { return Scheme.INSTANCE; } static final Plain INSTANCE = new Plain(); }
-            record Bold() implements Design<Scheme, Frame> { @Override public Scheme scheme() { return Scheme.INSTANCE; } static final Bold INSTANCE = new Bold(); }
-            record Elsewhere() implements Design<Scheme, Other> { @Override public Scheme scheme() { return Scheme.INSTANCE; } static final Elsewhere INSTANCE = new Elsewhere(); }
+    /** A local-style branch, another, and a virtual leaf of the first. */
+    private static final String FRAMED = """
+            record Frame() implements L1_ComponentBranch<Root>, LocalStyleBranch { static final Frame INSTANCE = new Frame(); public Root parent() { return Root.INSTANCE; } }
+            record Other() implements L1_ComponentBranch<Root>, LocalStyleBranch { static final Other INSTANCE = new Other(); public Root parent() { return Root.INSTANCE; } }
+            record Edge() implements VirtualComponent<Frame> { static final Edge INSTANCE = new Edge(); public Frame parent() { return Frame.INSTANCE; } }
             """;
 
     @Test
-    void aDesignOfVirtualLeaves_compiles() {
-        var errors = compile(DESIGNED + """
-                record PlainEdge() implements Edge.Concrete<Plain> {}
-                record BoldMark() implements Mark.Concrete<Bold> {}
-                record DirectMark() implements ConcreteComponent<Mark, Frame, Plain> {}
-                """);
-        assertTrue(errors.isEmpty(), "a concrete leaf through its leaf's interface, or naming all three itself: " + errors);
+    void aVirtualLeafUnderALocalStyleBranch_compiles() {
+        var errors = compile(FRAMED);
+        assertTrue(errors.isEmpty(), "a virtual leaf under its local-style branch: " + errors);
     }
 
     @Test
-    void aVirtualLeafUnderABranchThatIsNoDesignBranch_doesNotCompile() {
-        refusedOnItsLine(DESIGNED + """
+    void aVirtualLeafUnderABranchThatIsNoLocalStyleBranch_doesNotCompile() {
+        refusedOnItsLine(FRAMED + """
                 record Loose() implements VirtualComponent<Text> { public Text parent() { return Text.INSTANCE; } } // refused here
                 """);
     }
 
     @Test
     void aVirtualLeafWhoseParentIsNotItsBranch_doesNotCompile() {
-        refusedOnItsLine(DESIGNED + """
+        refusedOnItsLine(FRAMED + """
                 record Astray() implements VirtualComponent<Frame> { public Other parent() { return Other.INSTANCE; } } // refused here
-                """);
-    }
-
-    @Test
-    void aConcreteLeafOfOneBranchsLeafWithAnotherBranchsDesign_doesNotCompile() {
-        refusedOnItsLine(DESIGNED + """
-                record Mixed() implements ConcreteComponent<Edge, Frame, Elsewhere> {} // refused here
-                """);
-    }
-
-    @Test
-    void aDesignInWhatIsNoScheme_doesNotCompile() {
-        refusedOnItsLine(DESIGNED + """
-                record Schemeless() implements Design<String, Frame> { @Override public String scheme() { return String.INSTANCE; } } // refused here
-                """);
-    }
-
-    @Test
-    void aConcreteLeafOfTwoDesigns_doesNotCompile() {
-        refusedOnItsLine(DESIGNED + """
-                record Both() implements Edge.Concrete<Plain>, Edge.Concrete<Bold> {} // refused here
-                """);
-    }
-
-    @Test
-    void aConcreteLeafOfTwoLeaves_doesNotCompile() {
-        refusedOnItsLine(DESIGNED + """
-                record Twice() implements Edge.Concrete<Plain>, Mark.Concrete<Plain> {} // refused here
                 """);
     }
 
@@ -331,7 +290,7 @@ class CompilerRefusesTest {
 
     /** This module's classes, and what they are written against. */
     private static String classpath() {
-        return Stream.of(Role.class, NodeName.class, StatelessFunctionalObject.class, ColorScheme.class)
+        return Stream.of(Role.class, NodeName.class, StatelessFunctionalObject.class)
                 .map(c -> {
                     try { return Path.of(c.getProtectionDomain().getCodeSource().getLocation().toURI()).toString(); }
                     catch (URISyntaxException e) { throw new IllegalStateException(e); }

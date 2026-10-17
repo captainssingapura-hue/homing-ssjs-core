@@ -1,4 +1,4 @@
-# A design branch owned badly
+# A local-style branch owned badly
 
 ## Shabby
 

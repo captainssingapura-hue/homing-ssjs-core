@@ -1,8 +1,8 @@
 package hue.captains.singapura.js.homing.design.semantic;
 
-import hue.captains.singapura.js.homing.component.taxonomy.Design;
 import hue.captains.singapura.js.homing.design.color.ColorNode;
 import hue.captains.singapura.js.homing.design.color.ColorScheme;
+import hue.captains.singapura.js.homing.design.local.LocalStyle;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.lang.reflect.Field;
@@ -24,7 +24,7 @@ import java.util.Optional;
  *   <li>its leaves, and the branches that came into its layer with them, each a stateless record of its scheme, saying
  *       as its parent the one its type names;</li>
  *   <li>the declaration, its scheme and its every node in one jar: a scheme and its colours live together;</li>
- *   <li>a style's, a palette's, a design's scheme the one its type names.</li>
+ *   <li>a style's, a palette's, a local style's scheme the one its type names.</li>
  * </ul>
  */
 public record CheckScheme() implements StatelessFunctionalObject {
@@ -95,8 +95,8 @@ public record CheckScheme() implements StatelessFunctionalObject {
     /** What refuses a palette's say of its scheme: the scheme it says, against the one its type names. */
     public List<String> says(ColorPalette<?> palette) { return says(palette.token(), palette.scheme(), palette.getClass(), ColorPalette.class); }
 
-    /** What refuses a design's say of its scheme: the scheme it says, against the one its type names. */
-    public List<String> says(Design<?, ?> design) { return says(design.token(), design.scheme(), design.getClass(), Design.class); }
+    /** What refuses a local style's say of its scheme: the scheme it says, against the one its type names. */
+    public List<String> says(LocalStyle<?, ?> localStyle) { return says(localStyle.token(), localStyle.scheme(), localStyle.getClass(), LocalStyle.class); }
 
     private static List<String> says(String token, ColorScheme scheme, Class<?> declared, Class<?> generic) {
         Class<?> typed = TypeArguments.INSTANCE.at(declared, generic, 0);

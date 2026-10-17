@@ -50,12 +50,12 @@ public record TaxonomyProblem(Rule rule, String says) implements ValueObject {
         PSEUDO_BADLY,
         /** A component or a part that lists a state twice or lists nothing, or overrides the level of a state it does not list, or of one twice. */
         STATES_LISTED_BADLY,
-        /** A component under a design branch that is not virtual: a design could never be complete over it. */
+        /** A component under a local-style branch that is not virtual: a local style could never be complete over it. */
         NOT_VIRTUAL,
         /** A virtual leaf that declares parts: it has none, and its concrete leaves add none. */
         VIRTUAL_PARTS,
-        /** A branch under a design branch, which holds virtual leaves only. */
-        BRANCH_IN_DESIGN_BRANCH,
+        /** A branch under a local-style branch, which holds virtual leaves only. */
+        BRANCH_IN_LOCAL_STYLE_BRANCH,
         /** A part played by a virtual leaf: a part is cast, and a virtual leaf never is. */
         VIRTUAL_PLAYS_A_PART,
         /** A family head with another family head between it and the root: families are headed at one level. */

@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * The styling an instance installed at bootstrap (RFC 0067, appendix The Style Jars): the one every served sheet reads -
- * a style's, a palette's, a design's. Installed once, explicitly, before the first sheet is served; the
+ * a style's, a palette's, a local style's. Installed once, explicitly, before the first sheet is served; the
  * same styling installed again changes nothing, another is refused, and asking before any is installed is refused.
  */
 public final class InstalledStyling {

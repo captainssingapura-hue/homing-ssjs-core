@@ -48,12 +48,6 @@
             <artifactId>homing-rigid-tree</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <!-- The colour schemes a design is in (RFC 0067 D33): the design core's, which knows no taxonomy. -->
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>homing-design-core</artifactId>
-            <version>${project.version}</version>
-        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>

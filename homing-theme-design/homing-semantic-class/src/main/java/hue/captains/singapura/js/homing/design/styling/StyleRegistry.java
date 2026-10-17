@@ -6,6 +6,7 @@ import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.core.util.ResourceReader;
 import hue.captains.singapura.js.homing.design.Extent;
 import hue.captains.singapura.js.homing.design.Growth;
+import hue.captains.singapura.js.homing.design.local.LocalStyle;
 import hue.captains.singapura.js.homing.design.semantic.DesignStyle;
 import hue.captains.singapura.js.homing.design.semantic.TypeArguments;
 import hue.captains.singapura.js.homing.design.styles.CastingStyle;
@@ -40,6 +41,12 @@ record StyleRegistry(Taxonomy taxonomy, DesignStyle<?> base, List<BaseModule<?, 
         var copied = new LinkedHashMap<Class<?>, Map<Casting, CastingStyle<?, ?, ?, ?>>>();
         looks.forEach((k, v) -> copied.put(k, Collections.unmodifiableMap(new LinkedHashMap<>(v))));
         looks = Collections.unmodifiableMap(copied);
+    }
+
+    @Override public List<LocalStyle<?, ?>> localStyles() {
+        var out = new ArrayList<LocalStyle<?, ?>>();
+        for (BaseModule<?, ?> m : baseModules) out.addAll(m.localStyles());
+        return List.copyOf(out);
     }
 
     @Override public List<DesignStyle<?>> styles() {

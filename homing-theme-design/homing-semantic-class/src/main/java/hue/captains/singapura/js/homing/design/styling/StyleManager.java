@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.component.taxonomy.ComponentBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.core.util.ResourceReader;
+import hue.captains.singapura.js.homing.design.local.LocalStyle;
 import hue.captains.singapura.js.homing.design.semantic.DesignStyle;
 import hue.captains.singapura.js.homing.design.styles.CastingStyle;
 import hue.captains.singapura.tao.ontology.ValueObject;
@@ -27,6 +28,9 @@ public interface StyleManager {
 
     /** The base layer: every casting's last answer. */
     DesignStyle<?> base();
+
+    /** The local styles its base modules register, in the order registered: each complete over its branch, a branch the taxonomy has. */
+    List<LocalStyle<?, ?>> localStyles();
 
     /** Every style it holds, the base first, then each in the order registered. */
     List<DesignStyle<?>> styles();

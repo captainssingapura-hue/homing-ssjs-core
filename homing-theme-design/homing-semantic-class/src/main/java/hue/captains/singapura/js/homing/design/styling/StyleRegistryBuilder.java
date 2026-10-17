@@ -8,8 +8,12 @@ import hue.captains.singapura.js.homing.component.taxonomy.Role;
 import hue.captains.singapura.js.homing.component.taxonomy.StateType;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.design.color.ColorScheme;
+import hue.captains.singapura.js.homing.design.local.LocalStyle;
 import hue.captains.singapura.js.homing.design.semantic.Derives;
 import hue.captains.singapura.js.homing.design.semantic.DesignStyle;
+import hue.captains.singapura.js.homing.design.semantic.LocalStyleProblem;
+import hue.captains.singapura.js.homing.design.semantic.ReadLocalStyles;
+import hue.captains.singapura.js.homing.design.semantic.RefusedLocalStyles;
 import hue.captains.singapura.js.homing.design.styles.CastingStyle;
 
 import java.util.ArrayList;
@@ -56,7 +60,9 @@ public final class StyleRegistryBuilder<Sc extends ColorScheme, B extends Design
      * whatever is registered ({@link ComponentModules}): refused when there are no modules; when they are not all of one
      * base, or the base derives; when the components cannot be read - a module twice, a component listed by two; when a
      * module bundles a component it does not list, or one twice; when a component's bundle misses or exceeds its design;
-     * when one casting is given two looks; when a component needs a look in the base and has none.
+     * when one casting is given two looks; when a component needs a look in the base and has none; and when the local
+     * styles the modules register cannot be read over the components ({@link ReadLocalStyles}) - how each is drawn in a
+     * style is held when the styles meet their palettes ({@link Styling}).
      */
     public StyleRegistryBuilder(List<? extends BaseModule<Sc, B>> baseModules, List<? extends Role<?>> roles,
                                 List<? extends StateType<?>> states, List<? extends EventType<?>> events) {
@@ -96,6 +102,13 @@ public final class StyleRegistryBuilder<Sc extends ColorScheme, B extends Design
             for (Component<?> c : listed)
                 if (!bundled.contains(c) && !Bundles.INSTANCE.design(t, c, top).isEmpty())
                     problems.add(name(m) + " gives " + c.token() + " no look in the base: every component needs one");
+        }
+        var localStyles = new ArrayList<LocalStyle<?, ?>>();
+        for (BaseModule<Sc, B> m : baseModules) localStyles.addAll(m.localStyles());
+        try {
+            ReadLocalStyles.INSTANCE.read(t, List.of(), localStyles);
+        } catch (RefusedLocalStyles e) {
+            for (LocalStyleProblem p : e.problems()) problems.add(p.toString());
         }
         if (!problems.isEmpty()) refuse(problems);
         this.taxonomy = t;

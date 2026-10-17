@@ -1,11 +1,9 @@
 package hue.captains.singapura.js.homing.design.semantic;
 
 import hue.captains.singapura.js.homing.component.taxonomy.Component;
-import hue.captains.singapura.js.homing.component.taxonomy.ConcreteComponent;
-import hue.captains.singapura.js.homing.component.taxonomy.Design;
-import hue.captains.singapura.js.homing.component.taxonomy.DesignBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.L1_ComponentBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.L2_ComponentBranch;
+import hue.captains.singapura.js.homing.component.taxonomy.LocalStyleBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.ReadTaxonomy;
 import hue.captains.singapura.js.homing.component.taxonomy.Root;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
@@ -13,14 +11,16 @@ import hue.captains.singapura.js.homing.component.taxonomy.VirtualComponent;
 import hue.captains.singapura.js.homing.design.AnimationEffect;
 import hue.captains.singapura.js.homing.design.Owns;
 import hue.captains.singapura.js.homing.design.Target;
+import hue.captains.singapura.js.homing.design.local.ConcreteComponent;
+import hue.captains.singapura.js.homing.design.local.LocalStyle;
 
 import java.util.List;
 
 /**
- * A taxonomy whose design branch, {@code Overlay}, has leaves that move: a line, owning a stroke's colour and an
+ * A taxonomy whose local-style branch, {@code Overlay}, has leaves that move: a line, owning a stroke's colour and an
  * effect; an area, owning a ground and an effect; a plate that owns a ground alone; and a strip that owns a
  * background's image beside an effect - so an effect that takes the image clashes with it. Beside them an ordinary
- * pad, and the effects the designs wear.
+ * pad, and the effects the local styles wear.
  */
 public record AnimatingTaxonomy() {
 
@@ -31,7 +31,7 @@ public record AnimatingTaxonomy() {
         @Override public Root parent() { return Root.INSTANCE; }
     }
 
-    public record Overlay() implements L2_ComponentBranch<Stage>, DesignBranch {
+    public record Overlay() implements L2_ComponentBranch<Stage>, LocalStyleBranch {
         public static final Overlay INSTANCE = new Overlay();
         @Override public Stage parent() { return Stage.INSTANCE; }
     }
@@ -40,28 +40,28 @@ public record AnimatingTaxonomy() {
         public static final Line INSTANCE = new Line();
         @Override public Overlay parent() { return Overlay.INSTANCE; }
         @Override public List<Target> owns() { return List.of(Target.Color.Stroke.INSTANCE, Target.Animation.Effect.INSTANCE); }
-        public interface Concrete<D extends Design<?, Overlay>> extends ConcreteComponent<Line, Overlay, D> {}
+        public interface Concrete<D extends LocalStyle<?, Overlay>> extends ConcreteComponent<Line, Overlay, D> {}
     }
 
     public record Area() implements VirtualComponent<Overlay>, Owns {
         public static final Area INSTANCE = new Area();
         @Override public Overlay parent() { return Overlay.INSTANCE; }
         @Override public List<Target> owns() { return List.of(Target.Color.Background.INSTANCE, Target.Animation.Effect.INSTANCE); }
-        public interface Concrete<D extends Design<?, Overlay>> extends ConcreteComponent<Area, Overlay, D> {}
+        public interface Concrete<D extends LocalStyle<?, Overlay>> extends ConcreteComponent<Area, Overlay, D> {}
     }
 
     public record Plate() implements VirtualComponent<Overlay>, Owns {
         public static final Plate INSTANCE = new Plate();
         @Override public Overlay parent() { return Overlay.INSTANCE; }
         @Override public List<Target> owns() { return List.of(Target.Color.Background.INSTANCE); }
-        public interface Concrete<D extends Design<?, Overlay>> extends ConcreteComponent<Plate, Overlay, D> {}
+        public interface Concrete<D extends LocalStyle<?, Overlay>> extends ConcreteComponent<Plate, Overlay, D> {}
     }
 
     public record Strip() implements VirtualComponent<Overlay>, Owns {
         public static final Strip INSTANCE = new Strip();
         @Override public Overlay parent() { return Overlay.INSTANCE; }
         @Override public List<Target> owns() { return List.of(Target.Shape.Background.INSTANCE, Target.Animation.Effect.INSTANCE); }
-        public interface Concrete<D extends Design<?, Overlay>> extends ConcreteComponent<Strip, Overlay, D> {}
+        public interface Concrete<D extends LocalStyle<?, Overlay>> extends ConcreteComponent<Strip, Overlay, D> {}
     }
 
     public record Pad() implements Component<Stage> {

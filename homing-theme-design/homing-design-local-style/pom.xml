@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+        <artifactId>homing-theme-design</artifactId>
+        <version>LOCAL-SNAPSHOT</version>
+    </parent>
+    <artifactId>homing-design-local-style</artifactId>
+    <description>
+        RFC 0067 D29, appendix Local Styles: a local style - the look of one local-style branch, chosen where the
+        thing is made, drawn inside whatever style the reader wears - and its concrete leaves. An extension of the
+        design core, which knows the component tree's definitions - a branch, a virtual leaf, a local-style branch -
+        and never a component: the design core and the tree stay independent of each other.
+    </description>
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+    <dependencies>
+        <!-- The colour scheme a local style is in (RFC 0067 D33). -->
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>homing-design-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- The tree's definitions: the branch a local style styles, the virtual leaves its concrete leaves draw. -->
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>homing-component-taxonomy</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>homing-rigid-tree</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.lang.ontology</groupId>
+            <artifactId>core</artifactId>
+            <version>0.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

@@ -1,14 +1,14 @@
 package hue.captains.singapura.js.homing.design.semantic;
 
 import hue.captains.singapura.js.homing.component.taxonomy.Casting;
-import hue.captains.singapura.js.homing.component.taxonomy.ConcreteComponent;
-import hue.captains.singapura.js.homing.component.taxonomy.Design;
 import hue.captains.singapura.js.homing.component.taxonomy.Root;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.design.AnimationEffect;
 import hue.captains.singapura.js.homing.design.State;
 import hue.captains.singapura.js.homing.design.Target;
 import hue.captains.singapura.js.homing.design.color.Paint;
+import hue.captains.singapura.js.homing.design.local.ConcreteComponent;
+import hue.captains.singapura.js.homing.design.local.LocalStyle;
 import hue.captains.singapura.js.homing.design.semantic.AnimatingTaxonomy.Ants;
 import hue.captains.singapura.js.homing.design.semantic.AnimatingTaxonomy.Area;
 import hue.captains.singapura.js.homing.design.semantic.AnimatingTaxonomy.Line;
@@ -17,7 +17,10 @@ import hue.captains.singapura.js.homing.design.semantic.AnimatingTaxonomy.Pad;
 import hue.captains.singapura.js.homing.design.semantic.AnimatingTaxonomy.Plate;
 import hue.captains.singapura.js.homing.design.semantic.AnimatingTaxonomy.Strip;
 import hue.captains.singapura.js.homing.design.semantic.AnimatingTaxonomy.Sweep;
-import hue.captains.singapura.js.homing.design.semantic.DesignProblem.Rule;
+import hue.captains.singapura.js.homing.design.semantic.LocalStyleProblem.Rule;
+import hue.captains.singapura.js.homing.core.DerivedCss;
+import hue.captains.singapura.js.homing.core.Exportable;
+import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.ssjs.test.JsModuleTestBase;
 import org.junit.jupiter.api.Test;
 
@@ -34,13 +37,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Animation, a target of its own (RFC 0050 · Episode 2, appendix The Copied Range): answered with an effect, whole,
  * never with a body. An effect's CSS is its own, sealed and written by the framework - its class, its still dual,
- * its keyframes once - and refused unless it is its own to write. On a component it may take nothing; on a design's
- * leaf it takes what it needs, and nothing else the leaf owns may write it.
+ * its keyframes once - and refused unless it is its own to write. On a component it may take nothing; on a local
+ * style's leaf it takes what it needs, and nothing else the leaf owns may write it.
  */
 class AnimationEffectsTest extends JsModuleTestBase {
 
     private static final Taxonomy TAXONOMY = AnimatingTaxonomy.INSTANCE.read();
     private static final Dressed VALUED = ResolvingThemes.BY_NAME.get("valued");
+    private static final InStyle VALUED_STYLE = new InStyle(VALUED.style(), VALUED.colors());
     private static final Target.Animation.Effect EFFECT = Target.Animation.Effect.INSTANCE;
 
     // ── an effect, judged and written ──────────────────────────────────────
@@ -126,13 +130,19 @@ class AnimationEffectsTest extends JsModuleTestBase {
         assertNull(((Resolution.Answered) ink.outcome()).effect(), "an answer of CSS is no effect");
     }
 
-    // ── drawn by a design ──────────────────────────────────────────────────
+    // ── drawn by a local style ─────────────────────────────────────────────
 
-    record Marching() implements Design<BaseScheme, Overlay> { @Override public BaseScheme scheme() { return BaseScheme.INSTANCE; } static final Marching INSTANCE = new Marching(); }
+    record Marching() implements LocalStyle<BaseScheme, Overlay> {
+        static final Marching INSTANCE = new Marching();
+        @Override public BaseScheme scheme() { return BaseScheme.INSTANCE; }
+        @Override public List<ConcreteComponent<?, Overlay, ?>> concretes() {
+            return List.of(MarchingLine.INSTANCE, MarchingArea.INSTANCE, MarchingPlate.INSTANCE, MarchingStrip.INSTANCE);
+        }
+    }
 
     record MarchingLine() implements Line.Concrete<Marching>, Drawn {
         static final MarchingLine INSTANCE = new MarchingLine();
-        @Override public List<Drawing<?>> drawings(Dressed theme) {
+        @Override public List<Drawing<?>> drawings(DesignStyle<?> style) {
             // the line in the copy's colour: what matches the ink names the same semantic colour, as a stroke takes no typography colour
             return List.of(new Drawing.Painted<>(Target.Color.Stroke.INSTANCE, new Paint.With<>(new BaseColours.Copy())), new Drawing.Animated(Ants.INSTANCE));
         }
@@ -140,80 +150,92 @@ class AnimationEffectsTest extends JsModuleTestBase {
 
     record MarchingArea() implements Area.Concrete<Marching>, Drawn {
         static final MarchingArea INSTANCE = new MarchingArea();
-        @Override public List<Drawing<?>> drawings(Dressed theme) {
+        @Override public List<Drawing<?>> drawings(DesignStyle<?> style) {
             return List.of(new Drawing.None<>(Target.Color.Background.INSTANCE), new Drawing.Animated(Sweep.INSTANCE));
         }
     }
 
     record MarchingPlate() implements Plate.Concrete<Marching>, Drawn {
         static final MarchingPlate INSTANCE = new MarchingPlate();
-        @Override public List<Drawing<?>> drawings(Dressed theme) { return List.of(new Drawing.None<>(Target.Color.Background.INSTANCE)); }
+        @Override public List<Drawing<?>> drawings(DesignStyle<?> style) { return List.of(new Drawing.None<>(Target.Color.Background.INSTANCE)); }
     }
 
     record MarchingStrip() implements Strip.Concrete<Marching>, Drawn {
         static final MarchingStrip INSTANCE = new MarchingStrip();
-        @Override public List<Drawing<?>> drawings(Dressed theme) {
+        @Override public List<Drawing<?>> drawings(DesignStyle<?> style) {
             return List.of(new Drawing.None<>(Target.Shape.Background.INSTANCE), new Drawing.Animated(Ants.INSTANCE));
         }
     }
 
     /** Takes its line's effect from the marching line; its area moves with none. */
-    record Borrowed() implements Design<BaseScheme, Overlay> { @Override public BaseScheme scheme() { return BaseScheme.INSTANCE; } static final Borrowed INSTANCE = new Borrowed(); }
+    record Borrowed() implements LocalStyle<BaseScheme, Overlay> {
+        static final Borrowed INSTANCE = new Borrowed();
+        @Override public BaseScheme scheme() { return BaseScheme.INSTANCE; }
+        @Override public List<ConcreteComponent<?, Overlay, ?>> concretes() { return List.of(new BorrowedLine(), new BorrowedArea(), new BorrowedPlate(), new BorrowedStrip()); }
+    }
 
     record BorrowedLine() implements Line.Concrete<Borrowed>, Drawn {
-        @Override public List<Drawing<?>> drawings(Dressed theme) {
+        @Override public List<Drawing<?>> drawings(DesignStyle<?> style) {
             return List.of(new Drawing.None<>(Target.Color.Stroke.INSTANCE), new Drawing.As<>(EFFECT, MarchingLine.INSTANCE));
         }
     }
 
     record BorrowedArea() implements Area.Concrete<Borrowed>, Drawn {
-        @Override public List<Drawing<?>> drawings(Dressed theme) {
+        @Override public List<Drawing<?>> drawings(DesignStyle<?> style) {
             return List.of(new Drawing.None<>(Target.Color.Background.INSTANCE), new Drawing.Animated(AnimationEffect.None.INSTANCE));
         }
     }
 
     record BorrowedPlate() implements Plate.Concrete<Borrowed>, Drawn {
-        @Override public List<Drawing<?>> drawings(Dressed theme) { return List.of(new Drawing.None<>(Target.Color.Background.INSTANCE)); }
+        @Override public List<Drawing<?>> drawings(DesignStyle<?> style) { return List.of(new Drawing.None<>(Target.Color.Background.INSTANCE)); }
     }
 
     record BorrowedStrip() implements Strip.Concrete<Borrowed>, Drawn {
-        @Override public List<Drawing<?>> drawings(Dressed theme) {
+        @Override public List<Drawing<?>> drawings(DesignStyle<?> style) {
             return List.of(new Drawing.None<>(Target.Shape.Background.INSTANCE), new Drawing.None<>(EFFECT));
         }
     }
 
     /** Sweeps its strip, whose image the strip's own background writes: refused. */
-    record Clashing() implements Design<BaseScheme, Overlay> { @Override public BaseScheme scheme() { return BaseScheme.INSTANCE; } static final Clashing INSTANCE = new Clashing(); }
+    record Clashing() implements LocalStyle<BaseScheme, Overlay> {
+        static final Clashing INSTANCE = new Clashing();
+        @Override public BaseScheme scheme() { return BaseScheme.INSTANCE; }
+        @Override public List<ConcreteComponent<?, Overlay, ?>> concretes() { return List.of(new ClashingLine(), new ClashingArea(), new ClashingPlate(), new ClashingStrip()); }
+    }
 
     record ClashingLine() implements Line.Concrete<Clashing>, Drawn {
-        @Override public List<Drawing<?>> drawings(Dressed theme) {
+        @Override public List<Drawing<?>> drawings(DesignStyle<?> style) {
             return List.of(new Drawing.None<>(Target.Color.Stroke.INSTANCE), new Drawing.None<>(EFFECT));
         }
     }
 
     record ClashingArea() implements Area.Concrete<Clashing>, Drawn {
-        @Override public List<Drawing<?>> drawings(Dressed theme) {
+        @Override public List<Drawing<?>> drawings(DesignStyle<?> style) {
             return List.of(new Drawing.None<>(Target.Color.Background.INSTANCE), new Drawing.None<>(EFFECT));
         }
     }
 
     record ClashingPlate() implements Plate.Concrete<Clashing>, Drawn {
-        @Override public List<Drawing<?>> drawings(Dressed theme) { return List.of(new Drawing.None<>(Target.Color.Background.INSTANCE)); }
+        @Override public List<Drawing<?>> drawings(DesignStyle<?> style) { return List.of(new Drawing.None<>(Target.Color.Background.INSTANCE)); }
     }
 
     record ClashingStrip() implements Strip.Concrete<Clashing>, Drawn {
-        @Override public List<Drawing<?>> drawings(Dressed theme) {
+        @Override public List<Drawing<?>> drawings(DesignStyle<?> style) {
             return List.of(new Drawing.None<>(Target.Shape.Background.INSTANCE), new Drawing.Animated(Sweep.INSTANCE));
         }
     }
 
-    private static final List<ConcreteComponent<?, ?, ?>> MARCHING =
-            List.of(MarchingLine.INSTANCE, MarchingArea.INSTANCE, MarchingPlate.INSTANCE, MarchingStrip.INSTANCE);
+    /** The marching local style's sheet, as a jar declares it: exporting one constant, for its object to import. */
+    record MarchingSheet() implements DerivedCss<MarchingSheet> {
+        static final MarchingSheet INSTANCE = new MarchingSheet();
+        record marching_sheet() implements Exportable._Constant<MarchingSheet> {}
+        @Override public ExportsOf<MarchingSheet> exports() { return new ExportsOf<>(INSTANCE, List.of(new marching_sheet())); }
+    }
 
     @Test
     void aLeafsEffect_isItsClass_itsStillDualBeside_andItsKeyframesOnceAtTheHead() {
-        DesignRead marching = ReadDesigns.INSTANCE.read(TAXONOMY, List.of(VALUED), MARCHING).get(0);
-        var flat = FlattenDesign.INSTANCE.flatten(marching, VALUED, "Marching");
+        LocalStyleRead marching = ReadLocalStyles.INSTANCE.read(TAXONOMY, List.of(VALUED_STYLE), List.of(Marching.INSTANCE)).get(0);
+        var flat = FlattenLocalStyle.INSTANCE.flatten(marching, VALUED_STYLE, "Marching");
         String css = flat.css();
         int ants = css.indexOf("@keyframes effect-ants {"), sweep = css.indexOf("@keyframes effect-sweep {");
         assertTrue(ants > 0 && sweep > ants, "each moving effect's keyframes, in the order first worn:\n" + css);
@@ -223,17 +245,15 @@ class AnimationEffectsTest extends JsModuleTestBase {
                 + "    animation: effect-ants 0.6s linear infinite;\n    @media (prefers-reduced-motion: reduce) {\n"), css);
         assertTrue(css.contains(".marching___line__animation-effect-still {\n    stroke-width: 1.5px;\n    stroke-dasharray: 5 4;\n    animation: none;\n}\n"), css);
         assertTrue(css.contains(".marching___area__animation-effect-still {\n    animation: none;\n}\n"), css);
-        assertTrue(css.contains(".marching___line__color-stroke {\n    stroke: #1f2937;\n}\n"), "the line's ink, its own: the copy's colour, as paper gives it");
+        assertTrue(css.contains(".marching___line__color-stroke {\n    stroke: var(--fp-copy);\n}\n"), "the line's ink, its own: the copy's colour, the palette's variable");
         assertEquals(4, flat.drawn(), "the line's ink and effect, the area's effect, the strip's effect");
     }
 
     @Test
     void anEffectTakenFromAnotherLeaf_isTheEffect() {
-        var read = ReadDesigns.INSTANCE.read(TAXONOMY, List.of(VALUED),
-                List.of(MarchingLine.INSTANCE, MarchingArea.INSTANCE, MarchingPlate.INSTANCE, MarchingStrip.INSTANCE,
-                        new BorrowedLine(), new BorrowedArea(), new BorrowedPlate(), new BorrowedStrip()));
-        DesignRead borrowed = read.stream().filter(d -> d.token().equals("borrowed")).findFirst().orElseThrow();
-        String css = FlattenDesign.INSTANCE.flatten(borrowed, VALUED, "Borrowed").css();
+        var read = ReadLocalStyles.INSTANCE.read(TAXONOMY, List.of(VALUED_STYLE), List.of(Marching.INSTANCE, Borrowed.INSTANCE));
+        LocalStyleRead borrowed = read.stream().filter(d -> d.token().equals("borrowed")).findFirst().orElseThrow();
+        String css = FlattenLocalStyle.INSTANCE.flatten(borrowed, VALUED_STYLE, "Borrowed").css();
         assertTrue(css.contains("/* from marching___line__animation-effect */\n/* ants */\n.borrowed___line__animation-effect {\n"), css);
         assertTrue(css.contains("/* none */\n.borrowed___area__animation-effect {\n    animation: none;\n}\n"), "its area's none, its own:\n" + css);
         assertEquals(1, css.split("@keyframes effect-ants", -1).length - 1);
@@ -241,18 +261,17 @@ class AnimationEffectsTest extends JsModuleTestBase {
 
     @Test
     void anEffectThatTakesWhatTheLeafsOtherTargetWrites_isRefused() {
-        var e = assertThrows(RefusedDesigns.class, () -> ReadDesigns.INSTANCE.read(TAXONOMY, List.of(VALUED),
-                List.of(new ClashingLine(), new ClashingArea(), new ClashingPlate(), new ClashingStrip())));
+        var e = assertThrows(RefusedLocalStyles.class, () -> ReadLocalStyles.INSTANCE.read(TAXONOMY, List.of(VALUED_STYLE), List.of(Clashing.INSTANCE)));
         assertEquals(List.of(Rule.EFFECT_TAKES_OWNED, Rule.EFFECT_TAKES_OWNED, Rule.EFFECT_TAKES_OWNED, Rule.EFFECT_TAKES_OWNED),
-                e.problems().stream().map(DesignProblem::rule).toList(), e.getMessage());
+                e.problems().stream().map(LocalStyleProblem::rule).toList(), e.getMessage());
         assertTrue(e.getMessage().contains("wears sweep, which takes background-image - and strip owns shape-background, which writes it"), e.getMessage());
     }
 
     // ── handed to a page: the still dual swapped ────────────────────────────
 
     @Test
-    void aDesignsObject_switchesALeafsEffectOffAndOn_bySwappingItsClassForItsStillDual() {
-        DesignRead marching = ReadDesigns.INSTANCE.read(TAXONOMY, List.of(VALUED), MARCHING).get(0);
+    void aLocalStylesObject_switchesALeafsEffectOffAndOn_bySwappingItsClassForItsStillDual() {
+        LocalStyleRead marching = ReadLocalStyles.INSTANCE.read(TAXONOMY, List.of(VALUED_STYLE), List.of(Marching.INSTANCE)).get(0);
         js = buildContext();
         js.eval("js", "var marching_sheet = 'the sheet';"
                 + " var css = { cls: function (n) { return { name: n }; },"
@@ -260,8 +279,8 @@ class AnimationEffectsTest extends JsModuleTestBase {
                 + " removeClass: function (el, c) { if (!c || typeof c.name !== 'string') throw new Error('not a handle: ' + c); el.classList.remove(c.name); } };"
                 + " function El() { var s = new Set(); this.classList = { add: function (c) { s.add(c); }, remove: function (c) { s.delete(c); } };"
                 + " this.classes = function () { return Array.from(s).sort().join(' '); }; }");
-        js.eval("js", String.join("\n", DesignLeaves.INSTANCE.lines(TAXONOMY, Overlay.INSTANCE)));
-        js.eval("js", String.join("\n", DesignObject.INSTANCE.lines(marching, "marching_sheet")));
+        js.eval("js", String.join("\n", LocalStyleLeaves.INSTANCE.lines(TAXONOMY, Overlay.INSTANCE)));
+        js.eval("js", String.join("\n", LocalStyleObject.INSTANCE.lines(marching, MarchingSheet.INSTANCE)));
         assertEquals("marching___line__animation-effect marching___line__color-stroke",
                 js.eval("js", "var el = new El(); Marching.wear(OVERLAY.LINE, el); el.classes()").asString());
         assertEquals("marching___line__animation-effect-still marching___line__color-stroke",

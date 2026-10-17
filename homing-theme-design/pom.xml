@@ -18,6 +18,9 @@
     </description>
     <modules>
         <module>homing-design-core</module>
+        <!-- RFC 0067 D29: a local style - the look of one local-style branch - and its concrete leaves: the design core
+             extended with the tree's definitions, never a component. -->
+        <module>homing-design-local-style</module>
         <!-- RFC 0067: the semantic class - a target leaf × a node of the taxonomy of
              components, derived, never declared. -->
         <module>homing-semantic-class</module>

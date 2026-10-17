@@ -1,12 +1,18 @@
 package hue.captains.singapura.js.homing.design.styling;
 
-import hue.captains.singapura.js.homing.design.semantic.SchemeTrees;
-
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
+import hue.captains.singapura.js.homing.core.DerivedCss;
+import hue.captains.singapura.js.homing.design.local.LocalStyle;
 import hue.captains.singapura.js.homing.design.semantic.ColorPalette;
 import hue.captains.singapura.js.homing.design.semantic.ColorTree;
 import hue.captains.singapura.js.homing.design.semantic.DesignStyle;
 import hue.captains.singapura.js.homing.design.semantic.Dressed;
+import hue.captains.singapura.js.homing.design.semantic.FlattenLocalStyle;
+import hue.captains.singapura.js.homing.design.semantic.InStyle;
+import hue.captains.singapura.js.homing.design.semantic.LocalStyleObject;
+import hue.captains.singapura.js.homing.design.semantic.LocalStyleRead;
+import hue.captains.singapura.js.homing.design.semantic.ReadLocalStyles;
+import hue.captains.singapura.js.homing.design.semantic.SchemeTrees;
 import hue.captains.singapura.js.homing.design.semantic.Wear;
 
 import java.util.ArrayList;
@@ -32,6 +38,10 @@ import java.util.Optional;
  * style the manager does not register, a style with no palette of its own, or one not registered or not fitting it; and
  * a style served whose scheme the instance does not register - the styles care nothing for colours, and a style is
  * dressed over its scheme's tree. A palette nothing served wears is no problem.</p>
+ *
+ * <p>It serves the local styles the base modules register too (appendix Local Styles): each drawn in every style served,
+ * refused as the styling is made unless it is - every problem at once ({@link ReadLocalStyles}) - and for each its sheet
+ * in a style, the same in every palette, and its object.</p>
  *
  * @param manager  the central style manager: the base layer and every style registered over it
  * @param styles   the styles served, the default first
@@ -60,6 +70,9 @@ public record Styling(StyleManager manager, List<DesignStyle<?>> styles, Palette
             else if (!Wear.INSTANCE.fits(s, p)) problems.add(s.token() + "'s own palette, " + p.token() + ", does not fit it");
         }
         if (!problems.isEmpty()) throw new IllegalArgumentException("a styling cannot be made: " + String.join("; ", problems));
+        var in = new ArrayList<InStyle>();
+        for (DesignStyle<?> s : styles) in.add(new InStyle(s, SchemeTrees.INSTANCE.tree(registry.schemes(), s.scheme())));
+        ReadLocalStyles.INSTANCE.read(manager.taxonomy(), in, manager.localStyles());
     }
 
     /** The palettes served: every registered jar's, in the order registered, the default first. */
@@ -89,6 +102,26 @@ public record Styling(StyleManager manager, List<DesignStyle<?>> styles, Palette
     /** A style's sheet, by its token: one class for every casting, as the manager aggregates it. Refused for a style not served. */
     public String styleSheet(String token) {
         return manager.sheet(style(token).orElseThrow(() -> new IllegalArgumentException("no style served is " + token)));
+    }
+
+    /** The local styles the base modules register, as read. */
+    public List<LocalStyleRead> localStyles() { return ReadLocalStyles.INSTANCE.read(taxonomy(), List.of(), manager.localStyles()); }
+
+    /** A local style registered, as read. Refused for one no base module registers. */
+    public LocalStyleRead localStyle(LocalStyle<?, ?> localStyle) {
+        for (LocalStyleRead r : localStyles()) if (r.localStyle().equals(localStyle)) return r;
+        throw new IllegalArgumentException(localStyle.token() + " is registered by no base module: a local style comes with its branch's module");
+    }
+
+    /** A local style's sheet in a style served, by the style's token: the same in every palette. Refused for a style not served. */
+    public String localStyleSheet(LocalStyle<?, ?> localStyle, String styleToken) {
+        DesignStyle<?> style = style(styleToken).orElseThrow(() -> new IllegalArgumentException("no style served is " + styleToken));
+        return FlattenLocalStyle.INSTANCE.flatten(localStyle(localStyle), new InStyle(style, colours(style)), localStyle.token() + " in " + style.token()).css();
+    }
+
+    /** A local style's object, its first line importing the local style's sheet, which exports the one constant it is imported by. */
+    public List<String> localStyleObject(LocalStyle<?, ?> localStyle, DerivedCss<?> sheet) {
+        return LocalStyleObject.INSTANCE.lines(localStyle(localStyle), sheet);
     }
 
     /** A palette's sheet, by its token: every --fp- variable its scheme sees. Refused for a palette not served. */

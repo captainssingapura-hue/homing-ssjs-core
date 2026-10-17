@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.design.semantic;
 
-import hue.captains.singapura.js.homing.component.taxonomy.Design;
 import hue.captains.singapura.js.homing.design.color.ColorScheme;
+import hue.captains.singapura.js.homing.design.local.LocalStyle;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.util.ArrayList;
@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * The schemes things are in, as each says it (RFC 0067, D49): a style's, a palette's, a design's, a declaration's - by
+ * The schemes things are in, as each says it (RFC 0067, D49): a style's, a palette's, a local style's, a declaration's - by
  * the scheme each answers, never read off its type - and how schemes stand to one another, by the scheme each says it
  * is on top of. A scheme is a stateless object: any two of one scheme are the same.
  */
@@ -24,8 +24,8 @@ public record Schemes() implements StatelessFunctionalObject {
     /** The scheme a palette implements. */
     public Optional<ColorScheme> of(ColorPalette<?> palette) { return Optional.ofNullable(palette.scheme()); }
 
-    /** The scheme a design is in (D33). */
-    public Optional<ColorScheme> of(Design<?, ?> design) { return Optional.ofNullable(design.scheme()); }
+    /** The scheme a local style is in (D33). */
+    public Optional<ColorScheme> of(LocalStyle<?, ?> localStyle) { return Optional.ofNullable(localStyle.scheme()); }
 
     /** The scheme a declaration declares. */
     public Optional<ColorScheme> of(SchemeDeclaration<?> declaration) { return Optional.ofNullable(declaration.scheme()); }

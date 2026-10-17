@@ -70,7 +70,7 @@ public record DeriveTreatments() implements StatelessFunctionalObject {
                     case Answer.Animated a -> { }       // an effect is a look, at rest: no treatment
                 }
             });
-        // 2. down the taxonomy: every component whose lineage holds the slot's node - a virtual leaf never, a design draws it
+        // 2. down the taxonomy: every component whose lineage holds the slot's node - a virtual leaf never, a local style draws it
         var under = new HashMap<ComponentNode, List<Component<?>>>();
         for (Component<?> c : taxonomy.components()) {
             if (c instanceof VirtualComponent<?>) continue;

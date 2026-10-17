@@ -1,19 +1,19 @@
 package hue.captains.singapura.js.homing.design.semantic;
 
-import hue.captains.singapura.js.homing.component.taxonomy.ConcreteComponent;
 import hue.captains.singapura.js.homing.design.AnimationEffect;
 import hue.captains.singapura.js.homing.design.Target;
 import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import hue.captains.singapura.js.homing.design.color.Paint;
+import hue.captains.singapura.js.homing.design.local.ConcreteComponent;
 import hue.captains.singapura.tao.ontology.ValueObject;
 
 import java.util.Objects;
 
 /**
- * What a concrete leaf says for one target its leaf owns (RFC 0067, appendix Virtual Leaves and Designs):
+ * What a concrete leaf says for one target its leaf owns (RFC 0067, appendix Virtual Leaves and Designs, and Local Styles):
  * its own CSS - or for colour, the semantic colours it is painted in - nothing, or another concrete leaf's - reuse
- * always said - and for an animation, an effect, whole. A design never takes a component's look: what it draws is its
- * own, as a table's lines are the table's and never its cells' (the owner, 15 Oct 2026).
+ * always said - and for an animation, an effect, whole. A local style never takes a component's look: what it draws is
+ * its own, as a table's lines are the table's and never its cells' (the owner, 15 Oct 2026).
  * The target is the type parameter, so an answer for one target cannot stand in for another's, and no drawing
  * can name a colour's value.
  *
@@ -54,8 +54,8 @@ public sealed interface Drawing<T extends Target> extends ValueObject
 
     /**
      * A colour target painted (RFC 0067, appendix Semantic Colours and Flavours): a case its target offers per
-     * state it answers, at rest the look, in semantic colours of its design's scheme - palettable ones follow the palette
-     * worn, a fixed one pins its colour. In states the target offers a slot for.
+     * state it answers, at rest the look, in semantic colours of its local style's scheme - palettable ones follow the
+     * palette worn, a fixed one pins its colour. In states the target offers a slot for.
      */
     record Painted<T extends Target.Color>(T target, Answer.Painted<?, T> answer) implements Drawing<T> {
         public Painted {
@@ -73,16 +73,16 @@ public sealed interface Drawing<T extends Target> extends ValueObject
     }
 
     /**
-     * Nothing: no rule draws the target in this theme. Its class is worn all the same - what a design
-     * puts on an element is the same in every theme - and says nothing.
+     * Nothing: no rule draws the target in this style. Its class is worn all the same - what a local style
+     * puts on an element is the same in every style - and says nothing.
      */
     record None<T extends Target>(T target) implements Drawing<T> {
         public None { Objects.requireNonNull(target, "Drawing.None.target"); }
     }
 
     /**
-     * Another concrete leaf's drawing of the same target - of the same leaf, in another design - in the
-     * theme worn: this design's cursor is the house's cursor.
+     * Another concrete leaf's drawing of the same target - of the same leaf, in another local style - in the
+     * style worn: this local style's cursor is the house's cursor.
      *
      * @param to the concrete leaf whose drawing this one is
      */

@@ -34,6 +34,12 @@
             <artifactId>homing-design-core</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+        <!-- The local styles: a local-style branch looked one way where it is made, drawn in whatever style is worn. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-design-local-style</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
