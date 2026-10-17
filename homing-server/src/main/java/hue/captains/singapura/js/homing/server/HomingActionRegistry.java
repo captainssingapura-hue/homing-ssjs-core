@@ -64,20 +64,20 @@ public class HomingActionRegistry implements ActionRegistry<RoutingContext> {
         if (meta == null) meta = AppMeta.DEFAULT;
         this.appAction = new AppHtmlGetAction(nameResolver, appResolver, themeRegistry, meta);
         ServedModules served = crates == null ? ServedModules.NONE : ServedModules.of(crates);
-        // A group varies with the theme when a design-side renderer owns it and says
-        // so; every other group is served once, without a theme, and left alone by a
-        // switch.
-        var renderers = themeRegistry.renderers(served);
-        java.util.function.Predicate<CssGroup<?>> varies = g -> renderers.stream().anyMatch(r -> r.owns(g) && r.varies(g));
-        // The first theme listed is the default: what a sheet requested without
-        // ?theme= is rendered under, and what each CSS group module hands the
-        // client's manager as its fallback. RFC 0002 §3.6 still holds: no
+        // What varies with the theme is a derived sheet, by its type: a provided group is
+        // served once, without a theme, and left alone by a switch (RFC 0064, D25). A
+        // sheet that renders itself is asked first: it is nobody else's.
+        var renderers = new java.util.ArrayList<CssRenderer>();
+        renderers.add(SelfRenderedCssRenderer.INSTANCE);
+        // The first theme listed is the default: what a derived sheet requested
+        // without ?theme= is rendered under, and what each module that loads one
+        // hands the theme's owner as its fallback. RFC 0002 §3.6 still holds: no
         // file-based fallback.
         Theme defaultTheme = themeRegistry.themes().isEmpty() ? null : themeRegistry.themes().get(0);
-        this.moduleAction = new EsModuleGetAction(nameResolver, resourceReader, served, varies,
+        this.moduleAction = new EsModuleGetAction(nameResolver, resourceReader, served,
                 defaultTheme == null ? null : defaultTheme.slug());
-        // Every group renders from its inline bodies; the design side's renderers are
-        // asked first.
+        // A provided group renders from its inline bodies; a derived sheet is the
+        // renderers'.
         this.cssContentAction = new CssContentGetAction(defaultTheme, served, renderers);
     }
 

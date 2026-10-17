@@ -38,12 +38,21 @@ public enum State {
     ELEVATED("&[data-elevation=\"elevated\"]"),
     /** Pressed into its own plane, as far the other way as this word goes here. */
     SUNKEN("&[data-elevation=\"sunken\"]"),
+    /**
+     * Stood up: a thing laid along a line - a slider's rail, its knob - whose line runs
+     * vertically, read from {@code aria-orientation}; rest is laid along. Early with the depth:
+     * it is how a thing SITS, so a fader's cap is a cap whatever happens to it, and the few
+     * targets that differ by it - a size, a corner - say so.
+     */
+    VERTICAL("&[aria-orientation=\"vertical\"]"),
     HOVER("&:hover"),
     FOCUS("&:focus-visible"),
     DISABLED("&:disabled, &[aria-disabled=\"true\"]"),
     SELECTED("&[aria-selected=\"true\"]"),
     CURRENT("&[aria-current]"),
     CHECKED("&:checked, &[aria-checked=\"true\"]"),
+    /** On, for a button that stays pressed until pressed again: a toggle. */
+    PRESSED("&[aria-pressed=\"true\"]"),
     INVALID("&:invalid, &[aria-invalid=\"true\"]"),
     EXPANDED("&[aria-expanded=\"true\"]"),
     /** Lit from elsewhere — a search hit, the rows a chart points at. No aria state says it, so the slot reads {@code data-highlighted}. */
@@ -54,6 +63,12 @@ public enum State {
     LENT("&[data-keys=\"lent\"]"),
     /** The keys are here: this is the holder. After the words that say what a thing is, so a held tab reads held over selected. */
     HELD("&[data-keys=\"held\"]"),
+    /**
+     * Held by the hand and moved: a slider's knob while it is dragged, from the press to the
+     * release, and the parts that show it - the detent, a mark of where the slider rests,
+     * shown only then. No aria state says it, so the slot reads {@code data-dragging}.
+     */
+    DRAGGING("&[data-dragging]"),
     /** Pressed: last, so it is seen whatever else the thing is. */
     ACTIVE("&:active");
 

@@ -44,10 +44,10 @@ public final class CoreConformance {
                             + "the rule redirects consumers to; window.location/setAttribute('href') "
                             + "here are the sanctioned primitives, not a bypass."),
             new Allowance(
-                    "hue.captains.singapura.js.homing.server.CssClassManager",
+                    "hue.captains.singapura.js.homing.server.CssLinks",
                     new RuleId("no-raw-href"),
-                    "CssClassManager builds its own stylesheet <link> href - framework "
-                            + "infrastructure that emits the served CSS, not a consumer view."),
+                    "CssLinks builds the stylesheet <link> href for both owners of the page's sheets - "
+                            + "framework infrastructure that emits the served CSS, not a consumer view."),
             new Allowance(
                     "hue.captains.singapura.js.homing.server.CssClassManager",
                     new RuleId("no-raw-css"),

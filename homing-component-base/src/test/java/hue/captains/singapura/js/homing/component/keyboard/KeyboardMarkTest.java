@@ -1,12 +1,14 @@
 package hue.captains.singapura.js.homing.component.keyboard;
 
 import hue.captains.singapura.js.homing.ssjs.test.JsModuleTestBase;
+import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Value;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -33,7 +35,9 @@ class KeyboardMarkTest extends JsModuleTestBase {
             return ev;
         }
         function el(tag, parent, attrs) {
-            var e = { tagName: tag, parentNode: parent || null, _cap: {}, _bub: {}, isContentEditable: false, _attrs: Object.assign({}, attrs || {}) };
+            var e = { tagName: tag, parentNode: parent || null, _cap: {}, _bub: {}, isContentEditable: false, _attrs: Object.assign({}, attrs || {}), _classes: [] };
+            e.classList = { add: function (c) { if (e._classes.indexOf(c) < 0) e._classes.push(c); }, remove: function (c) { var i = e._classes.indexOf(c); if (i >= 0) e._classes.splice(i, 1); },
+                            contains: function (c) { return e._classes.indexOf(c) >= 0; } };
             e.setAttribute = function (k, v) { e._attrs[k] = String(v); };
             e.getAttribute = function (k) { return k in e._attrs ? e._attrs[k] : null; };
             e.removeAttribute = function (k) { delete e._attrs[k]; };
@@ -89,6 +93,9 @@ class KeyboardMarkTest extends JsModuleTestBase {
         loadModule(DIR + "keyboard/KeyboardWalkModule.js");
         loadModule(DIR + "keyboard/KeyboardShortcutsModule.js");
         loadModule(DIR + "keyboard/KeyboardChordsModule.js");
+        // the keys' marks as a leaf's state class: StyledLeaf, its classes through the css manager, here a stand-in
+        js.eval("js", "var CssClassManagerInstance = { cls: function (n) { return n; }, addClass: function (e, c) { e.classList.add(c); }, removeClass: function (e, c) { e.classList.remove(c); }, hasClass: function (e, c) { return e.classList.contains(c); } };");
+        loadModule("/homing/js/hue/captains/singapura/js/homing/server/StyledLeaves.js");
         loadModule(DIR + "keyboard/KeyboardMarkModule.js");
         loadModule(DIR + "keyboard/KeyboardHomeModule.js");
         loadModule(DIR + "keyboard/KeyboardStewardModule.js");
@@ -285,5 +292,58 @@ class KeyboardMarkTest extends JsModuleTestBase {
         eval("told = []; q.adopt(w); fieldB.blur(); told = []; p.adopt(v)");
         assertEquals("q:false:held,p:true:held,desk:true:held", s("told.join()"), "the tree moved under the marker: told again");
         eval("kt.dispose()");
+    }
+
+    // ── the marks as a leaf's state class (RFC 0067, appendix Two Classes per Leaf, D12) ──
+
+    private static final String CARD = "var card = Object.freeze({ token: 'card', styled: 'styled-card', states: Object.freeze({"
+            + " keyboard: Object.freeze({ away: null, candidate: 'styled-card--candidate', lent: 'styled-card--lent', held: 'styled-card--held' }) }) });"
+            + " var rootC = el('DIV', page), fieldC = el('INPUT', rootC); rootC._classes.push('styled-card');"
+            + " kb.join('c', { keyDown: function () { return true; } });"
+            + " var offC = Keys.claimOn(rootC, kb, 'c', { leaf: card, state: 'keyboard' });";
+
+    private String classesOf(String el) { return s(el + "._classes.join(' ')"); }
+
+    @Test
+    void aRootEnrolledWithItsMarks_wearsItsLeafsStateClass_whileItHoldsOne() {
+        eval(CARD);
+        assertEquals("styled-card", classesOf("rootC"), "away: the rest, no class of the state");
+        eval("kb.claim('c')");
+        assertEquals("styled-card styled-card--held", classesOf("rootC"), "held: the state's class for it");
+        assertEquals("held", s("keysOn(rootC)"), "and data-keys, still, for the code that reads it");
+        eval("fieldC.focus()");
+        assertEquals("styled-card styled-card--lent", classesOf("rootC"), "lent to a native control of its own: the one value at a time");
+        eval("fieldC.blur(); kb.claim('a'); kb.offer('c')");
+        assertEquals("styled-card styled-card--candidate", classesOf("rootC"), "the walk's candidate");
+        eval("kb.withdraw()");
+        assertEquals("styled-card", classesOf("rootC"), "another holds, and no offer: the rest");
+        assertTrue(eval("kb.check().length === 0").asBoolean(), eval("kb.check().join('; ')").toString());
+        eval("kb.claim('c'); offC()");
+        assertEquals("styled-card", classesOf("rootC"), "forgotten: its class goes with its mark");
+        assertEquals(null, s("keysOn(rootC)"));
+    }
+
+    @Test
+    void aRootEnrolledWithoutMarks_wearsDataKeysAlone() {
+        eval("kb.claim('a')");
+        assertEquals("held", s("keysOn(rootA)"));
+        assertEquals("", classesOf("rootA"), "no leaf named: no class");
+    }
+
+    @Test
+    void marksThatCouldNeverShow_areRefused() {
+        eval("var rootD = el('DIV', page); kb.join('d', { keyDown: function () { return true; } });");
+        var none = assertThrows(PolyglotException.class, () -> eval("Keys.claimOn(rootD, kb, 'd', { leaf: { token: 'tab', styled: 'styled-tab', states: {} }, state: 'keyboard' })"));
+        assertTrue(none.getMessage().contains("tab lists no state keyboard: the keys' marks on d's root could never show"), none.getMessage());
+        var short_ = assertThrows(PolyglotException.class, () -> eval("Keys.claimOn(rootD, kb, 'd', { leaf: { token: 'tab', styled: 'styled-tab',"
+                + " states: { keys: { away: null, candidate: 'a', held: 'b' } } }, state: 'keys' })"));
+        assertTrue(short_.getMessage().contains("tab's keys is away, candidate, held: the keys' marks are away - the rest - candidate, lent and held"), short_.getMessage());
+        assertThrows(PolyglotException.class, () -> eval("Keys.claimOn(rootD, kb, 'd', { state: 'keyboard' })"), "marks want the leaf");
+    }
+
+    @Test
+    void theStewardGone_takesTheClassesOff() {
+        eval(CARD + " kb.claim('c'); kb.dispose()");
+        assertEquals("styled-card", classesOf("rootC"));
     }
 }

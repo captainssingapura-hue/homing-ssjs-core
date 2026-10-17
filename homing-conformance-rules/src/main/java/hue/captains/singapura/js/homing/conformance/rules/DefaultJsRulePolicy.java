@@ -21,7 +21,10 @@ import java.util.Map;
  * both (a primitive's extra "publish every mutation" obligation is behavioural,
  * not statically checked). <b>No-DOM modules</b> ({@code SECRETARY} /
  * {@code PURE_LOGIC}) must touch no DOM at all ({@link NoDomAccessRule}); managers
- * and generated CSS carry the base only; a bundled external is exempt.</p>
+ * and generated CSS carry the base only; a bundled external is exempt. A
+ * <b>widget</b> ({@code WIDGET}, inferred from its export) owes the DOM-owner
+ * discipline and more: it draws nothing but components ({@link
+ * WidgetDrawsOnlyComponentsRule}).</p>
  *
  * <p><b>Extend, don't patch.</b> This policy is not a configuration surface — a
  * downstream never edits the framework's types or rules. Instead it defines its
@@ -72,6 +75,13 @@ public record DefaultJsRulePolicy() implements JsRulePolicy {
             ViewDoctrineRule.INSTANCE,
             KeysThroughThePartyRule.INSTANCE);
 
+    /**
+     * A widget: the DOM-owner discipline, and it draws nothing but components - it makes, holds and
+     * touches no element of its own (Designed by construction, in the widget doctrine).
+     */
+    public static final List<JsRule> WIDGET_DISCIPLINE = concat(DOM_OWNER_DISCIPLINE,
+            WidgetDrawsOnlyComponentsRule.INSTANCE);
+
     /** No-DOM modules: global + may-not-touch-the-DOM-at-all — the <b>headless lane</b>. */
     public static final List<JsRule> NO_DOM = concat(GLOBAL,
             NoDomAccessRule.INSTANCE);
@@ -97,6 +107,8 @@ public record DefaultJsRulePolicy() implements JsRulePolicy {
             new JsRuleSet(new RuleSetId("manager-injector"), "ManagerInjector", GLOBAL);
     private static final JsRuleSet GENERATED_CSS =
             new JsRuleSet(new RuleSetId("generated-css"), "Generated CSS", GLOBAL);
+    private static final JsRuleSet WIDGET =
+            new JsRuleSet(new RuleSetId("widget"), "Widget", WIDGET_DISCIPLINE);
     private static final JsRuleSet BUNDLED_EXTERNAL =
             JsRuleSet.empty(new RuleSetId("bundled-external"), "Bundled external");
 
@@ -111,6 +123,7 @@ public record DefaultJsRulePolicy() implements JsRulePolicy {
                 case MANAGER_INJECTOR -> MANAGER_INJECTOR;
                 case GENERATED_CSS    -> GENERATED_CSS;
                 case BUNDLED_EXTERNAL -> BUNDLED_EXTERNAL;
+                case WIDGET           -> WIDGET;
             };
         }
         throw new IllegalArgumentException(

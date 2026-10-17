@@ -1,0 +1,42 @@
+package hue.captains.singapura.js.homing.design.semantic;
+
+import hue.captains.singapura.tao.ontology.ValueObject;
+
+/**
+ * Why a colour tree was refused, one problem each.
+ *
+ * @param rule what was broken
+ * @param says the problem, naming what broke it
+ */
+public record ColorProblem(Rule rule, String says) implements ValueObject {
+
+    /** The rules a colour tree is read under: what the compiler cannot refuse. */
+    public enum Rule {
+        /** A node whose parent or kind cannot be read off its declaration: one written raw. */
+        UNREADABLE,
+        /** A node that is not a record with no components: a node is a stateless record, its type its meaning. */
+        NOT_STATELESS,
+        /** A node in no scheme - the marker itself, or a variable - or under a parent its scheme cannot see. */
+        SCHEME_ASTRAY,
+        /** A node whose parent the tree has not: a branch neither its layer nor one below lists. */
+        PARENT_MISSING,
+        /** Two nodes with one name, or one node listed twice. */
+        NAME_TWICE,
+        /** A scale with fewer than three knots, knots not strictly rising from -1 to 1, or a knot of a colour the tree has not. */
+        SCALE_BADLY,
+        /** An interpolated colour at a degree outside -1 to 1, or of a scale the tree has not. */
+        INTERPOLATED_BADLY,
+        /** A fixed colour that gives no colour. */
+        FIXED_BADLY,
+        /** CSS's currentColor at no share, or at more than the whole of it. */
+        SHARE_BADLY,
+        /** A layer of no scheme, one holding another scheme's colour, or one sitting on a layer other than its scheme's below, or on itself. */
+        LAYER_ASTRAY,
+        /** A layer that adds no colour: a scheme without colours of its own means nothing. */
+        LAYER_EMPTY,
+        /** A layer whose reader lives in another jar than its scheme: a scheme and its colours live in one jar. */
+        LAYER_ELSEWHERE
+    }
+
+    @Override public String toString() { return rule + ": " + says; }
+}

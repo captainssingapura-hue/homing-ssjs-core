@@ -22,6 +22,16 @@
  * After dissolve(), the entire DOM subtree and party subtree rooted here
  * are clean. No manual element removal is needed.
  *
+ * elementMaker(name) — an element made by what it is for
+ * ─────────────────────────────────────────────────────
+ * A simple component makes its own element, of its own tag: its owner hands it
+ * a maker - branch.elementMaker(name) - never a branch and never an element. The
+ * maker is single-use: called once with a tag, it makes the element on its
+ * branch under the owner's name, owned by the branch as createElement's are, and
+ * is spent. So an owner never holds a bare element it could do with as it
+ * likes, and a component can tell a maker a branch issued from any other
+ * function (DomOpsParty.isElementMaker).
+ *
  * Grafting (RFC 0066 E3) — a party of parties
  * ───────────────────────────────────────────
  * A page has one STATIONED party, the root of its tree; every other party
@@ -40,6 +50,12 @@
  */
 
 const VALID_NAME = /^[a-zA-Z0-9_-]+$/;
+
+/** SVG's namespace: what createSvgElement mints in. */
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+/** Every maker a branch has issued (elementMaker): only these are makers. */
+const _ELEMENT_MAKERS = new WeakSet();
 
 // `export { _DomOpsPartyBase };` is appended by the framework's EsModuleWriter.
 // `import { ... }` lines are generated from the Java EsModule's ImportsFor.
@@ -192,24 +208,78 @@ class _DomOpsPartyBase {
    * @throws {RangeError} If name is already in use on this branch.
    */
   createElement(name, tagName) {
+    this.#assertNew('createElement', name, tagName);
+    return this.#own(name, document.createElement(tagName));
+  }
+
+  /**
+   * Creates an SVG element - in SVG's namespace - registers it under `name` on
+   * this branch, and returns it: the twin of createElement for a vector drawing
+   * a component makes itself, a line round a box. Owned, released and named as
+   * createElement's are; the only sanctioned way to make one.
+   *
+   * @param {string} name    - Unique name within this branch. [a-zA-Z0-9_-]+
+   * @param {string} tagName - An SVG element's name: svg, rect, path, …
+   * @returns {SVGElement}
+   *
+   * @throws {Error}      If the branch has not been activated.
+   * @throws {TypeError}  If name or tagName are not non-empty strings, or name
+   *                      contains invalid characters.
+   * @throws {RangeError} If name is already in use on this branch.
+   */
+  createSvgElement(name, tagName) {
+    this.#assertNew('createSvgElement', name, tagName);
+    return this.#own(name, document.createElementNS(SVG_NS, tagName));
+  }
+
+  /** An element made for a name: this branch's, under it, released with it. */
+  #own(name, el) { this.#elements.set(name, el); return el; }
+
+  /** A new element's name and tag, checked before it is made: activated, well named, free, and a tag. */
+  #assertNew(method, name, tagName) {
     this.#assertActivated();
-    if (typeof name !== 'string' || name.trim() === '') {
-      throw new TypeError(`[DomOpsParty] createElement: name must be a non-empty string. ` + `Received: ${JSON.stringify(name)}`);
-    }
-    if (!VALID_NAME.test(name)) {
-      throw new RangeError(`[DomOpsParty] createElement: name "${name}" contains invalid characters. ` + `Only letters, digits, underscores, and hyphens are allowed.`);
+    const said = `[DomOpsParty] ${method}:`;
+    if (typeof name !== 'string' || name.trim() === '') throw new TypeError(`${said} name must be a non-empty string. Received: ${JSON.stringify(name)}`);
+    if (!VALID_NAME.test(name)) throw new RangeError(`${said} name "${name}" contains invalid characters. Only letters, digits, underscores, and hyphens are allowed.`);
+    if (this.#elements.has(name)) throw new RangeError(`${said} name "${name}" is already in use on branch "${this.#name}".`);
+    if (typeof tagName !== 'string' || tagName.trim() === '') throw new TypeError(`${said} tagName must be a non-empty string. Received: ${JSON.stringify(tagName)}`);
+  }
+
+  /**
+   * A single-use maker of the element `name` on this branch: what an owner
+   * hands a simple component, which makes its own element with it - make(tag) -
+   * once. The element is this branch's, as createElement's are, under the
+   * owner's name; a second call is refused. The name is checked now, and again
+   * when the element is made.
+   *
+   * @param {string} name - Unique name within this branch. [a-zA-Z0-9_-]+
+   * @returns {(tagName: string) => HTMLElement}
+   *
+   * @throws {Error}      If the branch has not been activated.
+   * @throws {TypeError}  If name is not a non-empty string, or contains invalid characters.
+   * @throws {RangeError} If name is already in use on this branch.
+   */
+  elementMaker(name) {
+    this.#assertActivated();
+    if (typeof name !== 'string' || name.trim() === '' || !VALID_NAME.test(name)) {
+      throw new TypeError(`[DomOpsParty] elementMaker: name must be letters, digits, underscores and hyphens. ` + `Received: ${JSON.stringify(name)}`);
     }
     if (this.#elements.has(name)) {
-      throw new RangeError(`[DomOpsParty] createElement: name "${name}" is already in use ` + `on branch "${this.#name}".`);
+      throw new RangeError(`[DomOpsParty] elementMaker: name "${name}" is already in use ` + `on branch "${this.#name}".`);
     }
-    if (typeof tagName !== 'string' || tagName.trim() === '') {
-      throw new TypeError(`[DomOpsParty] createElement: tagName must be a non-empty string. ` + `Received: ${JSON.stringify(tagName)}`);
-    }
-
-    const el = document.createElement(tagName);
-    this.#elements.set(name, el);
-    return el;
+    const branch = this;
+    let spent = false;
+    const make = function (tagName) {
+      if (spent) throw new Error(`[DomOpsParty] the maker of "${name}" is spent: it makes its element once.`);
+      spent = true;
+      return branch.createElement(name, tagName);
+    };
+    _ELEMENT_MAKERS.add(make);
+    return Object.freeze(make);
   }
+
+  /** Whether a function is a maker a branch issued (elementMaker), and no other. @returns {boolean} */
+  static isElementMaker(fn) { return typeof fn === 'function' && _ELEMENT_MAKERS.has(fn); }
 
   /**
    * Returns a previously created element by name, or null if not found.

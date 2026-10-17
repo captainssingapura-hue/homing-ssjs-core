@@ -1,0 +1,4 @@
+$casting {
+    color: var(--fp-copy);
+    &$sideways { color: var(--fp-copy); }
+}

@@ -48,6 +48,10 @@ public final class ServerCrate implements Crate, ComponentVehicle {
                 CrateEntry.of(CssDependencyGraph.INSTANCE),
                 CrateEntry.of(CssHandles.INSTANCE),
                 CrateEntry.of(CssLoadProcedure.INSTANCE),
+                CrateEntry.of(CssLinks.INSTANCE),
+                CrateEntry.of(ThemeSheets.INSTANCE),
+                // RFC 0067, Two Classes per Leaf - an element wears its leaf's style-aware classes.
+                CrateEntry.of(StyledLeaves.INSTANCE),
                 // RFC 0066 E3 - the component base's own: the widget slot, a
                 // primitive that places and removes a root and mints nothing.
                 // Declared here because a Maven module has one crate, and this

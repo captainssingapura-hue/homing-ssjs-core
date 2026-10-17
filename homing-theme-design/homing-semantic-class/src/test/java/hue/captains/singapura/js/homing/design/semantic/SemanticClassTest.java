@@ -78,26 +78,27 @@ class SemanticClassTest {
     @Test
     void theForestIsTheProduct_ofEveryTargetLeafAndEveryNode() {
         var forest = new DeriveSemanticClasses().derive(TAXONOMY);
-        assertEquals(Trees.targetLeaves().size() * TAXONOMY.nodes().size(), forest.size());
-        assertEquals(31, Trees.targetLeaves().size(), "the target leaves today");
+        assertEquals(SemanticTokens.INSTANCE.leaves().size() * TAXONOMY.nodes().size(), forest.size());
+        assertEquals(36, SemanticTokens.INSTANCE.leaves().size(), "every target leaf: the three the old design system kept are gone with it");
+        assertEquals(36, Trees.targetLeaves().size());
         assertEquals(List.of("root", "control", "text", "confirmation", "plain-button", "caption", "confirmation-confirm", "confirmation-title"),
                 TAXONOMY.nodes().stream().map(ComponentNode::token).toList(), "the roles and their branch are no nodes");
     }
 
     @Test
     void aClassIsAValue_itsTokenTheNodesAndTheTargets() {
-        var title = new SemanticClass<>(Target.Color.Ink.INSTANCE, TITLE);
-        assertEquals("confirmation-title-color-ink", title.token());
-        assertEquals(new SemanticClass<>(Target.Color.Ink.INSTANCE, Caption.INSTANCE), new SemanticClass<>(Target.Color.Ink.INSTANCE, Caption.INSTANCE));
+        var title = new SemanticClass<>(Target.Color.Text.INSTANCE, TITLE);
+        assertEquals("confirmation-title-color-text", title.token());
+        assertEquals(new SemanticClass<>(Target.Color.Text.INSTANCE, Caption.INSTANCE), new SemanticClass<>(Target.Color.Text.INSTANCE, Caption.INSTANCE));
         assertEquals("root-shape-corner", new SemanticClass<>(Target.Shape.Corner.INSTANCE, Root.INSTANCE).token());
     }
 
     @Test
     void aClassFallsBackOnItsOwnTarget_aPartThroughItsBase() {
-        var chain = new SemanticClass<>(Target.Color.Ink.INSTANCE, TITLE).fallback(TAXONOMY);
-        assertEquals(List.of("confirmation-title-color-ink", "caption-color-ink", "text-color-ink", "root-color-ink"),
+        var chain = new SemanticClass<>(Target.Color.Text.INSTANCE, TITLE).fallback(TAXONOMY);
+        assertEquals(List.of("confirmation-title-color-text", "caption-color-text", "text-color-text", "root-color-text"),
                 chain.stream().map(SemanticClass::token).toList());
         assertTrue(chain.stream().noneMatch(c -> c.component().equals(Confirmation.INSTANCE)), "never through the confirmation that owns the title");
-        assertTrue(chain.stream().allMatch(c -> c.target().equals(Target.Color.Ink.INSTANCE)), "on its own target throughout");
+        assertTrue(chain.stream().allMatch(c -> c.target().equals(Target.Color.Text.INSTANCE)), "on its own target throughout");
     }
 }

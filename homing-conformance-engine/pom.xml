@@ -34,6 +34,12 @@
             <artifactId>homing-server</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+        <!-- A widget is told by its export: a component whose shape is a widget's. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-component-base</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>

@@ -25,6 +25,7 @@ import hue.captains.singapura.js.homing.component.taxonomy.Sketch.Text;
 import hue.captains.singapura.js.homing.component.taxonomy.Sketch.Title;
 import hue.captains.singapura.js.homing.component.taxonomy.TaxonomyFinding.Sign;
 import hue.captains.singapura.js.homing.component.taxonomy.TaxonomyProblem.Rule;
+import hue.captains.singapura.tao.ontology.enforcer.OntologyEnforcer;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -71,9 +72,9 @@ class ReadTaxonomyTest {
     void eachSlotIsAPart_itsOwnerAppended() {
         Taxonomy t = read(Confirmation.INSTANCE);
         assertEquals(List.of(
-                new Part<>(Confirmation.INSTANCE, Title.INSTANCE, Caption.INSTANCE, new Fixed(1)),
-                new Part<>(Confirmation.INSTANCE, Confirm.INSTANCE, PlainButton.INSTANCE, new Fixed(1)),
-                new Part<>(Confirmation.INSTANCE, Cancel.INSTANCE, PlainButton.INSTANCE, new Varying(0, new AtMost(1)))),
+                new Part<>(Confirmation.INSTANCE, Title.INSTANCE, List.of(Caption.INSTANCE), new Fixed(1)),
+                new Part<>(Confirmation.INSTANCE, Confirm.INSTANCE, List.of(PlainButton.INSTANCE), new Fixed(1)),
+                new Part<>(Confirmation.INSTANCE, Cancel.INSTANCE, List.of(PlainButton.INSTANCE), new Varying(0, new AtMost(1)))),
                 t.partsOf(Confirmation.INSTANCE));
         assertEquals("confirm", t.partsOf(Confirmation.INSTANCE).get(1).name().value(), "a part is named by its role, not by what plays it");
     }
@@ -116,7 +117,7 @@ class ReadTaxonomyTest {
         Taxonomy t = READ.read(Sketch.DECLARED);
         var titles = t.partsNaming(Title.INSTANCE);
         assertEquals(List.of(ProfileCard.INSTANCE, Confirmation.INSTANCE), titles.stream().map(Part::owner).toList(), "one role, two owners");
-        assertEquals(List.of(Heading.INSTANCE, Caption.INSTANCE), titles.stream().map(Part::base).toList(), "each its own player");
+        assertEquals(List.of(Heading.INSTANCE, Caption.INSTANCE), titles.stream().map(p -> p.bases().get(0)).toList(), "each its own player");
         assertEquals(List.of("profile-card-title", "confirmation-title"), titles.stream().map(Part::token).toList(), "each its own part");
     }
 
@@ -166,14 +167,38 @@ class ReadTaxonomyTest {
     // ── what is refused ────────────────────────────────────────────────────
 
     @Test
-    void noParent_andNoState() {
+    void noParent() {
         assertEquals(Set.of(Rule.NO_PARENT), refused(Broken.Orphan.INSTANCE));
         assertEquals(Set.of(Rule.NO_PARENT), refused(Broken.Strays.INSTANCE), "a role filed under nothing");
-        var e = assertThrows(RefusedTaxonomy.class, () -> read(Broken.Stateful.INSTANCE));
-        assertEquals(List.of(Rule.NOT_STATELESS), e.problems().stream().map(TaxonomyProblem::rule).toList(), "a component with a field of its own");
-        assertTrue(e.problems().get(0).says().contains("instance field 'label'"), e.problems().get(0).says());
-        e = assertThrows(RefusedTaxonomy.class, () -> READ.read(List.of(), List.of(Broken.Helped.INSTANCE)));
-        assertEquals(List.of(Rule.NOT_STATELESS), e.problems().stream().map(TaxonomyProblem::rule).toList(), "a role with a static helper, as jOntology refuses one");
+    }
+
+    /**
+     * A read never judges state - a running server reads the taxonomy, and needs no enforcer. The
+     * build does, as a declaring repo's test would: jOntology's enforcer over every node read.
+     */
+    @Test
+    void stateIsTheBuildsToRefuse_neverTheReads() {
+        Taxonomy held = read(Broken.Stateful.INSTANCE);
+        assertTrue(held.components().contains(Broken.Stateful.INSTANCE), "read, state and all");
+        var stateful = violations(held);
+        assertEquals(1, stateful.size(), stateful.toString());
+        assertTrue(stateful.get(0).contains("instance field 'label'"), stateful.get(0));
+        var helped = violations(READ.read(List.of(), List.of(Broken.Helped.INSTANCE)));
+        assertEquals(1, helped.size(), "a role with a static helper, as jOntology refuses one: " + helped);
+        assertEquals(List.of(), violations(READ.read(Sketch.DECLARED)), "the sketch's nodes, every one stateless");
+    }
+
+    /** What the build holds a read taxonomy to: every branch, component, role branch and role a stateless functional object. */
+    private static List<String> violations(Taxonomy t) {
+        var nodes = new ArrayList<Object>();
+        nodes.addAll(t.branches());
+        nodes.addAll(t.components());
+        nodes.addAll(t.roleBranches());
+        nodes.addAll(t.roles());
+        var enforcer = new OntologyEnforcer();
+        return nodes.stream().map(Object::getClass).distinct()
+                .flatMap(c -> enforcer.enforce(c).stream().map(v -> c.getSimpleName() + ": " + v.message()))
+                .toList();
     }
 
     @Test

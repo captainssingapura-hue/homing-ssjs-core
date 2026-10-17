@@ -22,4 +22,12 @@ public interface DomModule<M extends DomModule<M>> extends EsModule<M> {
                 .filter(m -> m instanceof CssGroup<?>)
                 .toList();
     }
+
+    /** The derived sheets it imports: a look's, which it wears by its own hand (RFC 0064, D25). */
+    @SuppressWarnings("unchecked")
+    default List<DerivedCss<?>> derivedSheets() {
+        return (List<DerivedCss<?>>) (List<?>) imports().getAllImports().keySet().stream()
+                .filter(m -> m instanceof DerivedCss<?>)
+                .toList();
+    }
 }

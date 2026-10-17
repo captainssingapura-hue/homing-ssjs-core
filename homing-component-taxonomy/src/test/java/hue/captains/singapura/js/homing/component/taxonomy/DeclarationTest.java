@@ -37,10 +37,10 @@ class DeclarationTest {
     @Test
     void aPartPlayed_givenARole_andToldHowMany_isASlot() {
         Slot<Heading> title = DSL.part(Heading.INSTANCE).as(Title.INSTANCE).one();
-        assertEquals(new Slot<>(Title.INSTANCE, Heading.INSTANCE, new Fixed(1)), title);
+        assertEquals(new Slot<>(Title.INSTANCE, new Players.One(Heading.INSTANCE), new Fixed(1)), title);
         assertEquals("title → heading 1", title.toString());
-        assertEquals(new NeedsRole<>(Heading.INSTANCE), DSL.part(Heading.INSTANCE), "played, and needing a role");
-        assertEquals(new NeedsCount<>(Heading.INSTANCE, Title.INSTANCE), DSL.part(Heading.INSTANCE).as(Title.INSTANCE),
+        assertEquals(new NeedsRole<>(new Players.One(Heading.INSTANCE)), DSL.part(Heading.INSTANCE), "played, and needing a role");
+        assertEquals(new NeedsCount<>(new Players.One(Heading.INSTANCE), Title.INSTANCE), DSL.part(Heading.INSTANCE).as(Title.INSTANCE),
                 "given a role, and needing a count");
     }
 

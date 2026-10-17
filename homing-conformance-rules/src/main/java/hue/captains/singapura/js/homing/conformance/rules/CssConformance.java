@@ -4,10 +4,10 @@ import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
+import hue.captains.singapura.js.homing.core.DerivedCss;
 import hue.captains.singapura.js.homing.core.CssImportsFor;
 import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.core.EsModule;
-import hue.captains.singapura.js.homing.core.Wearable;
 import hue.captains.singapura.js.homing.core.util.CssClassName;
 
 import java.util.ArrayList;
@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
  * <table>
  *   <tr><th>Rule</th><th>Law</th><th>Refuses</th></tr>
  *   <tr><td>{@code css-token-declared}</td><td>1</td>
- *       <td>a body reading a variable that is neither a design word the class wears or {@code reads()}, nor named in its {@code runtimeVars()}</td></tr>
+ *       <td>a body reading a variable not named in its {@code runtimeVars()}</td></tr>
  *   <tr><td>{@code css-nested-reference-declared}</td><td>4</td>
  *       <td>a body naming a class in a nested selector that is neither in its group nor a declared dependency</td></tr>
  *   <tr><td>{@code css-crate-reach}</td><td>D9</td>
@@ -66,9 +66,10 @@ public final class CssConformance {
 
     // ── The graph the rules read ─────────────────────────────────────────────
 
-    /** The deployment's CSS graph, resolved once: its groups, each by the crate that serves it. */
+    /** The deployment's CSS graph, resolved once: its provided groups and its derived sheets, each by the crate that serves it. */
     static final class Graph {
         final Map<CssGroup<?>, Crate> crateOf = new LinkedHashMap<>();
+        final Map<DerivedCss<?>, Crate> derivedCrateOf = new LinkedHashMap<>();
 
         static Graph of(Collection<? extends Crate> closure) {
             var g = new Graph();
@@ -76,6 +77,7 @@ public final class CssConformance {
                 for (CrateEntry e : c.entries()) {
                     EsModule<?> m = e.module();
                     if (m instanceof CssGroup<?> group) g.crateOf.put(group, c);
+                    if (m instanceof DerivedCss<?> sheet) g.derivedCrateOf.put(sheet, c);
                 }
             }
             return g;
@@ -86,6 +88,11 @@ public final class CssConformance {
 
         Crate crateOf(CssGroup<?> group) {
             for (var e : crateOf.entrySet()) if (e.getKey().getClass() == group.getClass()) return e.getValue();
+            return null;
+        }
+
+        Crate crateOf(DerivedCss<?> sheet) {
+            for (var e : derivedCrateOf.entrySet()) if (e.getKey().getClass() == sheet.getClass()) return e.getValue();
             return null;
         }
     }
@@ -109,30 +116,15 @@ public final class CssConformance {
                 while (m.find()) {
                     CssVar v = new CssVar(m.group(1));
                     if (c.runtimeVars().contains(v)) continue;
-                    if (readsWord(c, v)) continue;                  // a design word the class wears or reads: its binding is emitted with the pair
                     undeclared.add(v.name());
                 }
                 if (!undeclared.isEmpty()) {
                     out.add(new Finding(id(group), TOKEN_DECLARED, cls(c) + " reads " + undeclared
-                            + " — neither a design word the class wears or reads, nor in runtimeVars()"));
+                            + " — not in runtimeVars()"));
                 }
             }
         }
         return out;
-    }
-
-    /**
-     * A design word the class wears or reads, named by its variable: {@code --<pair>} or
-     * {@code --<pair>-<property>}, a state suffix or not. The binding is the design's, emitted
-     * with the pair; the body only reads it.
-     */
-    static boolean readsWord(CssClass<?> c, CssVar v) {
-        for (var list : List.of(c.wears(), c.reads()))
-            for (Wearable w : list) {
-                String stem = "--" + w.cssName();
-                if (v.name().equals(stem) || v.name().startsWith(stem + "-")) return true;
-            }
-        return false;
     }
 
     /** A class name inside a body: a nested selector naming another class. */

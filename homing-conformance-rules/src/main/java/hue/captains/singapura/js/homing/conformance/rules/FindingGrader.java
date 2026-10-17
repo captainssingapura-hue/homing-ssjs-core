@@ -8,11 +8,14 @@ import java.util.List;
  *
  * <p><b>Strict-by-default, with a grandfathered baseline.</b> Every rule is
  * build-failing — a finding is an {@link Severity#ERROR} unless something
- * downgrades it. Two things do:</p>
+ * downgrades it. Three things do:</p>
  * <ol>
  *   <li>an {@link Allowance} — a <em>documented, intentional</em> exception
  *       (infrastructure that is the exception, a sanctioned pattern): always a
  *       WARNING, whatever the switch;</li>
+ *   <li>a {@link ConformanceDebt} — a rule the module declares, on its own
+ *       class and with why, that it does not keep yet: always a WARNING, and
+ *       held to its count of findings ({@link DeclaredDebts#unbalanced});</li>
  *   <li>the {@link Baseline} — a <em>pre-existing</em> violation, legacy debt
  *       recorded when the rule was introduced: a WARNING while pre-existing
  *       violations are allowed, an ERROR when they are not.</li>
@@ -57,6 +60,8 @@ public record FindingGrader(List<Allowance> allowlist, Baseline baseline, boolea
         for (Allowance a : allowlist) {
             if (a.matches(finding)) return new GradedFinding(finding, Severity.WARNING, Disposition.ALLOWED, a.reason());
         }
+        var owed = DeclaredDebts.INSTANCE.reasonFor(finding);
+        if (owed.isPresent()) return new GradedFinding(finding, Severity.WARNING, Disposition.DEBT, "debt: " + owed.get());
         if (baseline.contains(finding)) {
             return allowPreExisting
                     ? new GradedFinding(finding, Severity.WARNING, Disposition.PRE_EXISTING, "pre-existing (baselined)")

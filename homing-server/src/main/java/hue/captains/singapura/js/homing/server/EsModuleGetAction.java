@@ -12,7 +12,6 @@ import io.vertx.ext.web.RoutingContext;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Predicate;
 
 public class EsModuleGetAction
         implements GetAction<RoutingContext, ModuleQuery, EmptyParam.NoHeaders, JsModuleContent> {
@@ -30,9 +29,7 @@ public class EsModuleGetAction
      */
     private final ServedModules served;
 
-    private final Predicate<CssGroup<?>> varies;
-
-    /** The deployment's default theme slug, written into each CSS group module as its manager's fallback; null when there is none. */
+    /** The deployment's default theme slug, written into each module that loads a derived sheet as the theme owner's fallback; null when there is none. */
     private final String defaultTheme;
 
     public EsModuleGetAction(ModuleNameResolver nameResolver) {
@@ -43,24 +40,17 @@ public class EsModuleGetAction
         this(nameResolver, resourceReader, ServedModules.NONE);
     }
 
-    /** With the modules a deployment serves, pre-registered by canonical name from its crates; every group varies with the theme. */
+    /** With the modules a deployment serves, pre-registered by canonical name from its crates. */
     public EsModuleGetAction(ModuleNameResolver nameResolver, ResourceReader resourceReader, ServedModules served) {
-        this(nameResolver, resourceReader, served, g -> true);
+        this(nameResolver, resourceReader, served, null);
     }
 
-    /** @param varies whether a group's sheet changes with the theme — written into each group's subgraph for the client's manager */
+    /** @param defaultTheme the deployment's default theme slug, the theme owner's fallback; null when there is none */
     public EsModuleGetAction(ModuleNameResolver nameResolver, ResourceReader resourceReader,
-                             ServedModules served, Predicate<CssGroup<?>> varies) {
-        this(nameResolver, resourceReader, served, varies, null);
-    }
-
-    /** @param defaultTheme the deployment's default theme slug, the client manager's fallback; null when there is none */
-    public EsModuleGetAction(ModuleNameResolver nameResolver, ResourceReader resourceReader,
-                             ServedModules served, Predicate<CssGroup<?>> varies, String defaultTheme) {
+                             ServedModules served, String defaultTheme) {
         this.nameResolver = nameResolver;
         this.resourceReader = resourceReader;
         this.served = served == null ? ServedModules.NONE : served;
-        this.varies = varies;
         this.defaultTheme = defaultTheme;
     }
 
@@ -137,7 +127,11 @@ public class EsModuleGetAction
         } else if (module instanceof CssGroup) {
             @SuppressWarnings("rawtypes")
             CssGroup css = (CssGroup) module;
-            contentProvider = (ContentProvider<M>) new CssGroupContentProvider<>(css, defaultTheme, nameResolver, varies);
+            contentProvider = (ContentProvider<M>) new CssGroupContentProvider<>(css, defaultTheme, nameResolver);
+        } else if (module instanceof DerivedCss) {
+            @SuppressWarnings("rawtypes")
+            DerivedCss derived = (DerivedCss) module;
+            contentProvider = (ContentProvider<M>) new DerivedCssContentProvider<>(derived, defaultTheme, nameResolver);
         } else if (module instanceof SelfContent self) {
             // Generic self-providing module: the type emits its own JS body.
             // Used by DocGroup (in homing-studio-base) and any future self-contained types
@@ -147,7 +141,9 @@ public class EsModuleGetAction
             contentProvider = new ReadContentFromResources<>(module, resourceReader);
         }
 
-        if (module instanceof DomModule<?> dom && !dom.cssGroups().isEmpty()) {
+        // The manager for a module's elements - their classes and their degrees - whether it imports a provided group
+        // or a derived sheet: a look wears a derived sheet's classes by its own hand, and still sets its degrees here.
+        if (module instanceof DomModule<?> dom && (!dom.cssGroups().isEmpty() || !dom.derivedSheets().isEmpty())) {
             contentProvider = withCssManager(contentProvider);
         }
 

@@ -7,28 +7,39 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * A taxonomy as read: every branch and component reached from the components declared - up
  * through their parents, across through the components that play their parts - every part, each
- * slot with its owner appended, and the role catalogue the slots name. What a design walks, what
- * derives the design classes, and what the workbench shows.
+ * slot with its owner appended, the role catalogue the slots name, and the trees of states and of
+ * events the components have and offer. What a design walks, what derives the design classes, and
+ * what the workbench shows.
  *
  * @param branches   the branches under the root, by level, each level in the order first reached
  * @param components the components, in the order they were reached
  * @param parts      the parts, each component's in its slots' order
  * @param catalogue  the role catalogue: its branches by level, and its roles - the catalogue's in its order, then
  *                   those only a slot names
+ * @param states     the tree of states: its branches, and its types - the reader's in its order, then those only a
+ *                   component names
+ * @param events     the tree of events: its branches, and its types - the reader's in its order, then those only a
+ *                   component offers
  */
 public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> components, List<Part<?, ?>> parts,
-                       RoleCatalogue catalogue) implements ValueObject {
+                       RoleCatalogue catalogue, StateTree states, EventTree events) implements ValueObject {
 
     public Taxonomy {
         branches = List.copyOf(branches);
         components = List.copyOf(components);
         parts = List.copyOf(parts);
         Objects.requireNonNull(catalogue, "Taxonomy.catalogue");
+        Objects.requireNonNull(states, "Taxonomy.states");
+        Objects.requireNonNull(events, "Taxonomy.events");
     }
+
+    /** A component's states in precedence: the least important first, so the last wins; two of one level in the order it lists them. */
+    public List<StateType<?>> precedence(Component<?> component) { return Importances.INSTANCE.precedence(component); }
 
     /** Every node a design can be asked about: the root, the branches, the components, then the parts. */
     public List<ComponentNode> nodes() {
@@ -64,10 +75,23 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
     public List<ComponentNode> fallback(ComponentNode node) {
         var out = new ArrayList<ComponentNode>();
         out.add(node);
-        Taxon t = node instanceof Part<?, ?> p ? p.base() : (Taxon) node;
+        Taxon t = node instanceof Part<?, ?> p ? played(p) : (Taxon) node;
         if (node instanceof Part<?, ?>) out.add(t);
         for (ComponentBranch b = Levels.parentOf(t); b != null; b = Levels.parentOf(b)) out.add(b);
         return List.copyOf(out);
+    }
+
+    /** What a part is answered as: the one that plays it, or the branch its players share, the nearest - the root at the least. */
+    private static Taxon played(Part<?, ?> p) {
+        if (!p.alternatives()) return p.bases().get(0);
+        List<Taxon> common = null;
+        for (Component<?> c : p.bases()) {
+            var lineage = new ArrayList<Taxon>();
+            for (ComponentBranch b = Levels.parentOf(c); b != null; b = Levels.parentOf(b)) lineage.add(b);
+            if (common == null) common = lineage;
+            else common.retainAll(lineage);
+        }
+        return common.get(0);
     }
 
     /** A node's token, unique across a taxonomy: the reader refuses two nodes with one. */
@@ -78,7 +102,7 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
      * its own. A part's are its base's - a part follows its own component, never its owner.
      */
     public List<ExtentAxis> extents(ComponentNode node) {
-        Taxon t = node instanceof Part<?, ?> p ? p.base() : (Taxon) node;
+        Taxon t = node instanceof Part<?, ?> p ? played(p) : (Taxon) node;
         var lineage = new ArrayList<Taxon>();
         for (Taxon at = t; at != null; at = Levels.parentOf(at)) lineage.add(0, at);
         var out = new LinkedHashSet<ExtentAxis>();
@@ -103,7 +127,60 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
     /** What a node of the catalogue means. */
     public Meaning meaning(RoleNode node) { return catalogue.meaning(node); }
 
+    /** What a node of the tree of states means. */
+    public Meaning meaning(StateNode node) { return states.meaning(node); }
+
+    /** What a node of the tree of events means. */
+    public Meaning meaning(EventNode node) { return events.meaning(node); }
+
     /** Every part that names a role: where it is used, what plays it there, how many. */
+    /**
+     * The castings the taxonomy has, derived (RFC 0067, appendix Castings): every component on its
+     * own, then each role a slot casts its component in, once - a functional role cast as the
+     * component on its own, which it looks as. A virtual leaf is never cast: what is worn is a
+     * design's concrete leaf of it (appendix Virtual Leaves and Designs). Each is a leaf for its
+     * style-aware class (appendix Two Classes per Leaf) - never one of the tree: the component and its
+     * role, locked in the component's constructor, name the one class it wears.
+     */
+    public List<Casting> castings() {
+        var out = new LinkedHashSet<Casting>();
+        for (Component<?> c : components) if (!(c instanceof VirtualComponent<?>)) out.add(new Casting(c));
+        for (Part<?, ?> p : parts)
+            for (Component<?> base : p.bases()) {
+                var cast = new Casting(base, p.role());
+                out.add(cast.functional() ? cast.alone() : cast);
+            }
+        return List.copyOf(out);
+    }
+
+    // ── families ───────────────────────────────────────────────────────────
+
+    /** The branches that head a family ({@link FamilyHead}), in reading order. */
+    public List<ComponentBranch> heads() {
+        return branches.stream().filter(b -> b instanceof FamilyHead).toList();
+    }
+
+    /** The head of a component's family: the one branch above it that heads one - the reader refuses two - or none. */
+    public Optional<ComponentBranch> head(Component<?> component) {
+        for (ComponentBranch b = Levels.parentOf(component); b != null; b = Levels.parentOf(b))
+            if (b instanceof FamilyHead) return Optional.of(b);
+        return Optional.empty();
+    }
+
+    /**
+     * A family's castings, in the order its files rule them: each of its components in reading order, on its own, then
+     * in each role it is cast in - a casting in a role beside its component.
+     */
+    public List<Casting> family(ComponentBranch head) {
+        var castings = castings();
+        var out = new ArrayList<Casting>();
+        for (Component<?> c : components) {
+            if (!head(c).filter(head::equals).isPresent()) continue;
+            for (Casting cast : castings) if (cast.component().equals(c)) out.add(cast);
+        }
+        return List.copyOf(out);
+    }
+
     public List<Part<?, ?>> partsNaming(Role<?> role) {
         return parts.stream().filter(p -> p.role().equals(role)).toList();
     }
@@ -125,11 +202,11 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
                 continue;
             }
             var bases = new LinkedHashSet<Component<?>>();
-            for (Part<?, ?> p : uses) bases.add(p.base());
+            for (Part<?, ?> p : uses) bases.addAll(p.bases());
             if (bases.size() > 1)
                 out.add(new TaxonomyFinding(Sign.ROLE_PLAYED_VARIOUSLY, Names.of(r) + " is played by "
                         + String.join(", ", bases.stream().map(b -> Names.of(b) + " in "
-                                + String.join(" and ", uses.stream().filter(p -> p.base().equals(b)).map(p -> Names.of(p.owner())).toList()))
+                                + String.join(" and ", uses.stream().filter(p -> p.bases().contains(b)).map(p -> Names.of(p.owner())).toList()))
                         .toList())));
         }
         return List.copyOf(out);

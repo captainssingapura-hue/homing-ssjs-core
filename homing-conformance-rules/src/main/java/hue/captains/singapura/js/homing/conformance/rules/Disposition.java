@@ -11,6 +11,8 @@ public enum Disposition {
     ALLOWED("Allowed", "allowed"),
     /** Grandfathered legacy debt in the committed baseline — a warning while pre-existing is allowed. */
     PRE_EXISTING("Pre-existing", "pre-existing"),
+    /** A rule its module declares it does not keep yet ({@link ConformanceDebt}), with why — a warning. */
+    DEBT("Debt", "debt"),
     /** A fresh violation — neither allowed nor baselined — always an error. */
     NEW("New", "new");
 

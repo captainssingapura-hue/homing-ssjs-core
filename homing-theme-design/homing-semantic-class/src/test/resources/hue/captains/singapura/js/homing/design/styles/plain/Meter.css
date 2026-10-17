@@ -1,0 +1,18 @@
+$casting {
+    --fixed-clear: transparent;
+    --fixed-alarm: #c62828;
+    --it-warning: color-mix(in oklab, var(--fixed-clear) 50%, var(--fp-danger));
+    --along-risk: color-mix(in oklab, var(--fp-danger) calc(clamp(0, var(--extent), 1) * 100%),
+                            color-mix(in oklab, var(--fixed-clear) calc(clamp(0, var(--extent) + 1, 1) * 100%), var(--fp-safe)));
+
+    background-color: var(--along-risk);
+    border: 1px solid var(--it-warning);
+    outline-color: var(--fixed-alarm);
+    animation: $sweep 2s ease-out;
+}
+
+/* Sweeping up its scale: a keyframes of its own, named for the casting served. */
+@keyframes $sweep {
+    from { background-color: var(--fp-safe); }
+    to { background-color: var(--along-risk); }
+}

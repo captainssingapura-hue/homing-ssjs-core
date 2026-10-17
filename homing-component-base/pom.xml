@@ -35,6 +35,12 @@
             <artifactId>homing-rigid-tree</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+        <!-- The taxonomy an implementation is anchored at: ImplFor and ImplForBranch, read against the crates. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-component-taxonomy</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>

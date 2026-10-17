@@ -35,6 +35,7 @@ class CompilerRefusesTest {
     private static final String PREAMBLE = """
             package hypothetical;
             import hue.captains.singapura.js.homing.component.taxonomy.*;
+            import hue.captains.singapura.js.homing.tree.NodeName;
             import java.util.List;
             public class Hypothetical {
                 record Text() implements L1_ComponentBranch<Root> { static final Text INSTANCE = new Text(); public Root parent() { return Root.INSTANCE; } }
@@ -192,6 +193,67 @@ class CompilerRefusesTest {
                     public boolean allows(int n) { return true; }
                     public String multiplicity() { return "?"; }
                 }
+                """);
+    }
+
+    // ── virtual leaves (RFC 0067, appendix Virtual Leaves and Designs) - a local style of them is the design side's ──
+
+    /** A local-style branch, another, and a virtual leaf of the first. */
+    private static final String FRAMED = """
+            record Frame() implements L1_ComponentBranch<Root>, LocalStyleBranch { static final Frame INSTANCE = new Frame(); public Root parent() { return Root.INSTANCE; } }
+            record Other() implements L1_ComponentBranch<Root>, LocalStyleBranch { static final Other INSTANCE = new Other(); public Root parent() { return Root.INSTANCE; } }
+            record Edge() implements VirtualComponent<Frame> { static final Edge INSTANCE = new Edge(); public Frame parent() { return Frame.INSTANCE; } }
+            """;
+
+    @Test
+    void aVirtualLeafUnderALocalStyleBranch_compiles() {
+        var errors = compile(FRAMED);
+        assertTrue(errors.isEmpty(), "a virtual leaf under its local-style branch: " + errors);
+    }
+
+    @Test
+    void aVirtualLeafUnderABranchThatIsNoLocalStyleBranch_doesNotCompile() {
+        refusedOnItsLine(FRAMED + """
+                record Loose() implements VirtualComponent<Text> { public Text parent() { return Text.INSTANCE; } } // refused here
+                """);
+    }
+
+    @Test
+    void aVirtualLeafWhoseParentIsNotItsBranch_doesNotCompile() {
+        refusedOnItsLine(FRAMED + """
+                record Astray() implements VirtualComponent<Frame> { public Other parent() { return Other.INSTANCE; } } // refused here
+                """);
+    }
+
+    // ── the importance of states (RFC 0067, appendix Two Classes per Leaf) ──
+
+    private static final String STATES = """
+            record Lit() implements Flag<StateRoot>, Importance.Senary { public StateRoot parent() { return StateRoot.INSTANCE; } }
+            """;
+
+    @Test
+    void aStateOfOneLevel_andAComponentsOverride_compile() {
+        var errors = compile(STATES + """
+                record Lamp() implements Component<Text> {
+                    public Text parent() { return Text.INSTANCE; }
+                    public List<StateType<?>> states() { return List.of(new Lit()); }
+                    public List<ImportanceOverride<?>> importance() { return List.of(new ImportanceOverride<>(new Lit(), Importance.Primary.class)); }
+                }
+                """);
+        assertTrue(errors.isEmpty(), "a state of one level, a component's override: " + errors);
+    }
+
+    @Test
+    void aStateOfTwoLevels_doesNotCompile() {
+        refusedOnItsLine("""
+                record Torn() implements Flag<StateRoot>, Importance.Primary, Importance.Secondary { public StateRoot parent() { return StateRoot.INSTANCE; } } // refused here
+                """);
+    }
+
+    @Test
+    void anOverrideToAStateRatherThanALevel_doesNotCompile() {
+        refusedOnItsLine(STATES + """
+                static final ImportanceOverride<?> ODD = new ImportanceOverride<>(new Lit(), Lit.class); // refused here
                 """);
     }
 

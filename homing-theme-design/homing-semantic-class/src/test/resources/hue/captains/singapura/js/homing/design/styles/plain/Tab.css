@@ -1,0 +1,12 @@
+/* Plain's tab: copy on the page, raised under the pointer, danger's mark when picked. */
+$casting {
+    color: var(--fp-copy);
+    background-color: var(--fp-page);
+    border-bottom: 2px solid transparent;
+
+    &:hover { background-color: var(--fp-raised); }
+    &$disabled { color: var(--fp-raised); }
+    &$selected { border-bottom-color: var(--fp-danger); }
+    &$candidate { outline: 1px dashed var(--fp-safe); }
+    &$held { outline: 2px solid var(--fp-safe); }
+}

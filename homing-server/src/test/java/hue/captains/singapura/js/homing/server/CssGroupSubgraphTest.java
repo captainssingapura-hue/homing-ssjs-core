@@ -2,18 +2,22 @@ package hue.captains.singapura.js.homing.server;
 
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
+import hue.captains.singapura.js.homing.core.DerivedCss;
+import hue.captains.singapura.js.homing.core.Exportable;
+import hue.captains.singapura.js.homing.core.ExportsOf;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * The dependency subgraph a served CSS group module carries to the client: the
- * group and everything it transitively depends on, derived on the server from
- * its classes' dependsOn(), in dependency order - and a group that does not vary
- * with the theme says so.
+ * What a served CSS module hands the client (RFC 0064, D22, D25). A provided group carries its
+ * dependency subgraph - the group and everything it transitively depends on, derived on the
+ * server from its classes' dependsOn(), in dependency order - to the CSS manager, which loads it
+ * once, with no theme. A derived sheet's own module goes to the theme's owner alone.
  */
 class CssGroupSubgraphTest {
 
@@ -31,6 +35,13 @@ class CssGroupSubgraphTest {
         @Override public List<CssClass<Root>> cssClasses() { return List.of(new root_thing()); }
     }
 
+    /** A derived sheet a module imports so that it loads: a look, say. */
+    record Look() implements DerivedCss<Look> {
+        static final Look INSTANCE = new Look();
+        record look_sheet() implements Exportable._Constant<Look> {}
+        @Override public ExportsOf<Look> exports() { return new ExportsOf<>(this, List.of(new look_sheet())); }
+    }
+
     private static String fq(Class<?> c) { return c.getCanonicalName(); }
 
     @Test
@@ -40,24 +51,20 @@ class CssGroupSubgraphTest {
     }
 
     @Test
-    void aGroupThatDoesNotVary_saysSo() {
-        String js = CssGroupContentProvider.subgraphJs(Root.INSTANCE, g -> g != Dep.INSTANCE);
-        assertEquals("{ \"" + fq(Dep.class) + "\": { deps: [], varies: false }, \"" + fq(Root.class) + "\": { deps: [\"" + fq(Dep.class) + "\"] } }", js);
-    }
-
-    @Test
-    void theGeneratedModule_loadsWithItsSubgraph() {
+    void theGeneratedModule_loadsItsSubgraphOnce_withNoTheme() {
         var provider = new CssGroupContentProvider<>(Root.INSTANCE, "default", new QueryParamResolver("/module"));
-        String load = provider.content().get(1);
-        assertTrue(load.startsWith("await _css.loadCss(\"" + fq(Root.class) + "\", \"default\", { \"" + fq(Dep.class) + "\": { deps: [] }"), load);
+        List<String> lines = provider.content();
+        assertTrue(lines.get(1).startsWith("await _css.loadCss(\"" + fq(Root.class) + "\", { \"" + fq(Dep.class) + "\": { deps: [] }"), lines.get(1));
+        assertFalse(String.join("\n", lines).contains("_themes"), "a provided group asks the theme for nothing");
     }
 
     @Test
-    void withNoDefaultTheme_theSubgraphIsStillTheThirdArgument() {
-        // The manager reads loadCss(id, fallbackTheme, subgraph) by position; a
-        // missing theme is written as null, never left out.
-        var provider = new CssGroupContentProvider<>(Root.INSTANCE, null, new QueryParamResolver("/module"));
-        String load = provider.content().get(1);
-        assertTrue(load.startsWith("await _css.loadCss(\"" + fq(Root.class) + "\", null, { \"" + fq(Dep.class) + "\": { deps: [] }"), load);
+    void aDerivedSheetsModule_goesToTheThemesOwnerAlone_andBindsWhatItExports() {
+        List<String> lines = new DerivedCssContentProvider<>(Look.INSTANCE, "default", new QueryParamResolver("/module")).content();
+        assertEquals(3, lines.size(), String.join("\n", lines));
+        assertTrue(lines.get(0).startsWith("import { ThemeSheetsInstance as _themes } from "), lines.get(0));
+        assertEquals("await _themes.load([\"" + fq(Look.class) + "\"], \"default\", \"theme\");", lines.get(1));
+        assertEquals("const look_sheet = \"" + fq(Look.class) + "\";", lines.get(2));
+        assertFalse(String.join("\n", lines).contains("_css"), "never the CSS manager's");
     }
 }

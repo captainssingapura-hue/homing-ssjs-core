@@ -34,9 +34,30 @@
             <artifactId>homing-design-core</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+        <!-- The local styles: a local-style branch looked one way where it is made, drawn in whatever style is worn. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-design-local-style</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- A design's object run as a page runs it: its wear and shed on an element. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-ssjs-test-fixtures</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- A fixture page: a styling's two sheets served as the server serves them, and swapped by the theme's owner.
+             The design side never needs the server; only its tests put the two together. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-server</artifactId>
+            <version>${project.parent.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

@@ -2,8 +2,6 @@ package hue.captains.singapura.js.homing.component.taxonomy;
 
 import hue.captains.singapura.js.homing.component.taxonomy.TaxonomyProblem.Rule;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
-import hue.captains.singapura.tao.ontology.enforcer.ContractViolation;
-import hue.captains.singapura.tao.ontology.enforcer.OntologyEnforcer;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -17,14 +15,15 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Reads a taxonomy from the components a deployment declares, and the roles its catalogue files:
- * it reaches every branch through the parents, every component that plays a part through the
- * slots, every role a slot names and every branch of the role catalogue through the roles, and
- * refuses - with every problem it found at once - what the compiler cannot:
+ * Reads a taxonomy from the components a deployment declares, the roles its catalogue files, and
+ * the types of state and of event its trees file: it reaches every branch through the parents,
+ * every component that plays a part through the slots, every role a slot names and every branch of
+ * the role catalogue through the roles, every type of state a component has and of event it offers,
+ * and their branches through their parents, and refuses - with every problem it found at once -
+ * what the compiler cannot:
  *
  * <ul>
  *   <li>a branch, a component or a role with no parent;</li>
- *   <li>a node with state, as jOntology judges a stateless functional object;</li>
  *   <li>a slot played by nothing or in no role, or a role a component names twice;</li>
  *   <li>a component that is a part of itself, however deep - whatever the cardinalities on the
  *       way, since a cycle is refused on the types;</li>
@@ -33,12 +32,27 @@ import java.util.Set;
  *   <li>a count that is no cardinality - thrown where it is said, and reported for the component
  *       that said it, so one component's bad count never hides another's problems.</li>
  *   <li>an axis declared twice along one lineage;</li>
- *   <li>a node of either tree with no meaning, a meanings file with a section astray, or two
- *       nodes that mean the same.</li>
+ *   <li>a local-style branch holding a component that is not virtual, a virtual leaf with parts, or a
+ *       branch; a part played by a virtual leaf;</li>
+ *   <li>two nodes of the tree of states, or of events, with one name; a type of state with fewer
+ *       than two values, or one value twice; a design word for a type's rest, or for a value it
+ *       lacks; two values answered by one design word;</li>
+ *   <li>a node of any of the four trees with no meaning, a meanings file with a section astray, or
+ *       two nodes that mean the same;</li>
+ *   <li>a family head with another between it and the root, and a component that says it heads a
+ *       family ({@link FamilyHead}).</li>
  * </ul>
  *
  * <p>What the levels already make impossible it never checks: a chain of parents that comes back
  * on itself, a second root, a tree deeper than level 8.</p>
+ *
+ * <p>Nor does it judge whether a node holds state. That every node is a stateless functional
+ * object is held at build time, by the tests of whoever declares the nodes, with jOntology's
+ * enforcer over what was read - its {@link Taxonomy#branches() branches}, {@link
+ * Taxonomy#components() components}, {@link Taxonomy#roleBranches() role branches}, {@link
+ * Taxonomy#roles() roles}, and the {@link Taxonomy#states() states} and {@link Taxonomy#events()
+ * events} trees. A taxonomy is read wherever it is served, and a running server needs no
+ * enforcer.</p>
  */
 public record ReadTaxonomy() implements StatelessFunctionalObject {
 
@@ -51,10 +65,20 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
      * come in the order declared, then those only a part reaches.
      */
     public Taxonomy read(Collection<? extends Component<?>> declared, Collection<? extends Role<?>> catalogued) {
+        return read(declared, catalogued, List.of(), List.of());
+    }
+
+    /**
+     * The components declared, the roles a catalogue files, and the types of state and of event the
+     * trees file - each kept whether or not a component has it, so the trees are whole. Each tree's
+     * types come in the order given, then those only a component names.
+     */
+    public Taxonomy read(Collection<? extends Component<?>> declared, Collection<? extends Role<?>> catalogued,
+                         Collection<? extends StateType<?>> stateTypes, Collection<? extends EventType<?>> eventTypes) {
         var problems = new ArrayList<TaxonomyProblem>();
         var branches = new LinkedHashSet<ComponentBranch>();
         var components = new LinkedHashSet<Component<?>>();
-        var parts = new ArrayList<Part<?, ?>>();
+        var parts = new ArrayList<Object>();   // each a Part, or a branch's part to resolve once every component is read
         var roles = new LinkedHashSet<Role<?>>();
         var plays = new LinkedHashMap<Component<?>, List<Component<?>>>();   // owner -> the components that play its parts
         for (Role<?> r : catalogued) if (r != null) roles.add(r);
@@ -70,7 +94,7 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
                 if (slot == null) continue;
                 Role<?> role = slot.role();
                 if (role == null) {
-                    problems.add(new TaxonomyProblem(Rule.NO_ROLE, Names.of(c) + " has a part played by " + Names.of(slot.base())
+                    problems.add(new TaxonomyProblem(Rule.NO_ROLE, Names.of(c) + " has a part played by " + slot.players().say()
                             + " in no role"));
                     continue;
                 }
@@ -79,37 +103,112 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
                     continue;
                 }
                 roles.add(role);
-                Component<?> base = slot.base();
-                if (base == null) {
-                    problems.add(new TaxonomyProblem(Rule.NO_BASE, Names.of(c) + "." + Names.of(role) + " is played by nothing"));
-                    continue;
+                switch (slot.players()) {
+                    case Players.One one -> {
+                        if (one.component() == null) {
+                            problems.add(new TaxonomyProblem(Rule.NO_BASE, Names.of(c) + "." + Names.of(role) + " is played by nothing"));
+                            continue;
+                        }
+                        parts.add(new Part<Component<?>, Component<?>>(c, role, List.of(one.component()), slot.cardinality()));
+                        bases.add(one.component());
+                        queue.add(one.component());
+                    }
+                    case Players.AnyOf some -> {
+                        parts.add(new Part<Component<?>, Component<?>>(c, role, some.components(), slot.cardinality()));
+                        bases.addAll(some.components());
+                        queue.addAll(some.components());
+                    }
+                    case Players.Under under -> {
+                        if (under.branch() == null) {
+                            problems.add(new TaxonomyProblem(Rule.NO_BASE, Names.of(c) + "." + Names.of(role) + " is played by nothing"));
+                            continue;
+                        }
+                        parts.add(new Pending(c, role, under.branch(), slot.cardinality()));
+                    }
                 }
-                parts.add(new Part<Component<?>, Component<?>>(c, role, base, slot.cardinality()));
-                bases.add(base);
-                queue.add(base);
             }
             plays.put(c, bases);
         }
 
+        // a branch's part: played by every component read under the branch - the instance's, a downstream's with the house's
+        var read = new ArrayList<Part<?, ?>>();
+        for (Object o : parts) {
+            if (o instanceof Part<?, ?> p) { read.add(p); continue; }
+            Pending pending = (Pending) o;
+            var under = new ArrayList<Component<?>>();
+            for (Component<?> c : components)
+                for (ComponentBranch b = Levels.parentOf(c); b != null; b = Levels.parentOf(b))
+                    if (b.equals(pending.branch())) { under.add(c); break; }
+            if (under.isEmpty()) {
+                problems.add(new TaxonomyProblem(Rule.NO_BASE, Names.of(pending.owner()) + "." + Names.of(pending.role())
+                        + " is played by any " + Names.of(pending.branch()) + ", and none is read"));
+                continue;
+            }
+            read.add(new Part<Component<?>, Component<?>>(pending.owner(), pending.role(), under, pending.cardinality()));
+            plays.computeIfAbsent(pending.owner(), k -> new ArrayList<>()).addAll(under);
+        }
+
         var roleBranches = new LinkedHashSet<RoleBranch>();
         for (Role<?> r : roles) roleBranches.addAll(filing(r, problems));
+
+        var states = new LinkedHashSet<StateType<?>>();
+        var events = new LinkedHashSet<EventType<?>>();
+        for (StateType<?> s : stateTypes) if (s != null) states.add(s);
+        for (EventType<?> e : eventTypes) if (e != null) events.add(e);
+        for (Component<?> c : components) {
+            for (StateType<?> s : orNone(c.states())) if (s != null) states.add(s);
+            for (EventType<?> e : orNone(c.events())) if (e != null) events.add(e);
+        }
+        var stateBranches = new LinkedHashSet<StateBranch>();
+        for (StateType<?> s : states) {
+            StateBranch b = s.parent();
+            if (b == null) problems.add(new TaxonomyProblem(Rule.NO_PARENT, Names.of(s) + " names no parent"));
+            else if (b instanceof L1_StateBranch<?> l1) {
+                if (l1.parent() == null) problems.add(new TaxonomyProblem(Rule.NO_PARENT, Names.of(l1) + " names no parent"));
+                stateBranches.add(l1);
+            }
+        }
+        var eventBranches = new LinkedHashSet<EventBranch>();
+        for (EventType<?> e : events) {
+            EventBranch b = e.parent();
+            if (b == null) problems.add(new TaxonomyProblem(Rule.NO_PARENT, Names.of(e) + " names no parent"));
+            else if (b instanceof L1_EventBranch<?> l1) {
+                if (l1.parent() == null) problems.add(new TaxonomyProblem(Rule.NO_PARENT, Names.of(l1) + " names no parent"));
+                eventBranches.add(l1);
+            }
+        }
+        var stateBranchList = List.copyOf(stateBranches);
+        var stateList = List.copyOf(states);
+        var eventBranchList = List.copyOf(eventBranches);
+        var eventList = List.copyOf(events);
 
         var branchList = byLevel(branches, ComponentBranch::level);
         var componentList = List.copyOf(components);
         var roleBranchList = byLevel(roleBranches, RoleBranch::level);
         var roleList = List.copyOf(roles);
         problems.addAll(compositionCycles(plays));
-        problems.addAll(stateful(branchList, componentList, roleBranchList, roleList));
-        problems.addAll(tokensTwice(branchList, componentList, parts));
+        problems.addAll(tokensTwice(branchList, componentList, read));
         problems.addAll(new CatalogueNames().clashes(roleBranchList, roleList));
         problems.addAll(roleNamesANode(branchList, componentList, roleList));
         problems.addAll(extentsTwice(branchList, componentList));
-        problems.addAll(Meanings.INSTANCE.problems(meant(branchList, componentList, roleBranchList, roleList)));
+        problems.addAll(LocalStyleBranchChecks.INSTANCE.problems(branchList, componentList, read));
+        problems.addAll(familyHeads(branchList, componentList));
+        problems.addAll(TreeChecks.INSTANCE.clashes("states", StateTree.nodes(stateBranchList, stateList), StateNode::name));
+        problems.addAll(TreeChecks.INSTANCE.badValues(stateList));
+        problems.addAll(TreeChecks.INSTANCE.wordsTwice(stateList));
+        problems.addAll(TreeChecks.INSTANCE.levels(stateList));
+        problems.addAll(TreeChecks.INSTANCE.leafStates(componentList));
+        problems.addAll(TreeChecks.INSTANCE.clashes("events", EventTree.nodes(eventBranchList, eventList), EventNode::name));
+        var meant = meant(branchList, componentList, roleBranchList, roleList);
+        if (!stateList.isEmpty()) meant.addAll(StateTree.nodes(stateBranchList, stateList));
+        if (!eventList.isEmpty()) meant.addAll(EventTree.nodes(eventBranchList, eventList));
+        problems.addAll(Meanings.INSTANCE.problems(meant));
         if (!problems.isEmpty()) throw new RefusedTaxonomy(problems);
-        return new Taxonomy(branchList, componentList, parts, new RoleCatalogue(roleBranchList, roleList));
+        return new Taxonomy(branchList, componentList, read, new RoleCatalogue(roleBranchList, roleList),
+                new StateTree(stateBranchList, stateList), new EventTree(eventBranchList, eventList));
     }
 
-    /** Every node that must mean something: each tree's root when anything of the tree is read, its branches, its leaves. */
+    /** Every node of the first two trees that must mean something: each tree's root when anything of the tree is read, its branches, its leaves. */
     private static List<Object> meant(List<ComponentBranch> branches, List<Component<?>> components,
                                       List<RoleBranch> roleBranches, List<Role<?>> roles) {
         var out = new ArrayList<Object>();
@@ -140,6 +239,25 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
         }
         return out;
     }
+
+    /** A family head under another, each pair named; a component that says it heads a family. */
+    private static List<TaxonomyProblem> familyHeads(List<ComponentBranch> branches, List<Component<?>> components) {
+        var out = new ArrayList<TaxonomyProblem>();
+        for (ComponentBranch b : branches) {
+            if (!(b instanceof FamilyHead)) continue;
+            for (ComponentBranch above = Levels.parentOf(b); above != null; above = Levels.parentOf(above))
+                if (above instanceof FamilyHead)
+                    out.add(new TaxonomyProblem(Rule.FAMILY_HEAD_NESTED, Names.of(b) + " heads a family under " + Names.of(above)
+                            + ", which heads one too: a family is headed at one level, no head between a head and the root"));
+        }
+        for (Component<?> c : components)
+            if (c instanceof FamilyHead)
+                out.add(new TaxonomyProblem(Rule.FAMILY_HEAD_NOT_A_BRANCH, Names.of(c) + " is a component, and says it heads a family: "
+                        + "only a branch does"));
+        return out;
+    }
+
+    private static <T> List<T> orNone(List<T> list) { return list == null ? List.of() : list; }
 
     private static List<ExtentAxis> axes(Taxon t) {
         List<ExtentAxis> a = t.extents();
@@ -190,25 +308,6 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
     /** By level, root-most first, each level in the order first reached - so every parent comes before its children. */
     private static <B> List<B> byLevel(Set<B> branches, java.util.function.ToIntFunction<B> level) {
         return branches.stream().sorted(Comparator.comparingInt(level)).toList();
-    }
-
-    /** Every node reached, held by jOntology to what it declares itself: a stateless functional object. */
-    private static List<TaxonomyProblem> stateful(List<ComponentBranch> branches, List<Component<?>> components,
-                                                  List<RoleBranch> roleBranches, List<Role<?>> roles) {
-        var nodes = new ArrayList<Object>();
-        nodes.addAll(branches);
-        nodes.addAll(components);
-        nodes.addAll(roleBranches);
-        nodes.addAll(roles);
-        var enforcer = new OntologyEnforcer();
-        var out = new ArrayList<TaxonomyProblem>();
-        var checked = new HashSet<Class<?>>();
-        for (Object node : nodes) {
-            if (!checked.add(node.getClass())) continue;
-            for (ContractViolation v : enforcer.enforce(node.getClass()))
-                out.add(new TaxonomyProblem(Rule.NOT_STATELESS, Names.qualified(node) + " is no stateless node: " + v.message()));
-        }
-        return out;
     }
 
     /** Every cycle of "plays a part in", each once, by the components it passes through. */
@@ -277,4 +376,7 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
         }
         return out;
     }
+
+    /** A part played by any component under a branch, resolved once every component is read. */
+    private record Pending(Component<?> owner, Role<?> role, ComponentBranch branch, Cardinality cardinality) {}
 }

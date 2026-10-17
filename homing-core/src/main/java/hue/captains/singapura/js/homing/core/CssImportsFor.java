@@ -13,6 +13,10 @@ import java.util.List;
  * with it, and the disagreement that matters — declaring nothing — would
  * silence every {@code dependsOn()} added later.
  *
+ * <p>Only provided groups depend on each other. A derived sheet is no group's
+ * dependency: it varies with the theme, and the theme's owner loads it for the
+ * module that imports it (RFC 0064, D25).</p>
+ *
  * @param <C> the group these are the dependencies of
  * @param cssGroup the group
  * @param imports  its dependencies, first-mention order, the group itself excluded
@@ -28,8 +32,6 @@ public record CssImportsFor<C extends CssGroup<C>>(
         for (CssClass<C> cls : group.cssClasses()) {
             var depGroups = new ArrayList<CssGroup<?>>();
             for (CssClass<?> dep : cls.dependsOn()) depGroups.add(CssClass.groupOf(dep));
-            for (Wearable w : cls.wears()) depGroups.add(w.group());
-            for (Wearable w : cls.reads()) depGroups.add(w.group());
             for (CssGroup<?> g : depGroups) {
                 if (g.getClass() == group.getClass()) continue;
                 boolean seen = false;

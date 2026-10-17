@@ -2,14 +2,12 @@
 // CssDependencyGraph — the CSS manager's affiliate: what depends on what,
 // and in what order it loads (RFC 0064).
 //
-// Pure. No DOM, no fetch, no theme: a graph of CSS group names with three
+// Pure. No DOM, no fetch, no theme: a graph of CSS sheet names with two
 // facts per node —
 //
 //   deps    the groups this one's classes depend on, declared in Java per
 //           CssClass and derived per group, carried to the client as data
 //           inside the served group module;
-//   varies  whether its sheet changes with the theme - a node the server marks
-//           varies:false is served once and left alone by a switch;
 //   known   whether the node has been declared at all, or is only referred
 //           to by another's deps — a node the manager will have to load by
 //           name, without its handles.
@@ -20,25 +18,26 @@
 // in it is waiting on anything pending; waves run one after another. A cycle
 // leaves nodes that never qualify, and is refused with their names.
 //
-// The graph is merged from subgraphs as group modules arrive, so by the time a
-// theme switch happens it holds everything on the page. snapshot() is the
+// The graph is merged from subgraphs as modules arrive, so it holds every
+// sheet its owner has loaded - the CSS manager's provided groups, or the
+// theme's derived sheets: each owner keeps a graph of its own (RFC 0064, D25). snapshot() is the
 // frozen projection the workbench draws (RFC 0063: data, never handles).
 // =============================================================================
 
 
 function createCssDependencyGraph() {
-    // id → { deps: string[], varies: boolean, known: boolean, seq: number }
+    // id → { deps: string[], known: boolean, seq: number }
     const nodes = new Map();
     let seq = 0;
 
     function node(id) {
         let n = nodes.get(id);
-        if (!n) { n = { deps: [], varies: true, known: false, seq: seq++ }; nodes.set(id, n); }
+        if (!n) { n = { deps: [], known: false, seq: seq++ }; nodes.set(id, n); }
         return n;
     }
 
     /**
-     * Merge a subgraph: { <id>: { deps: [...], varies?: bool }, ... }. A node
+     * Merge a subgraph: { <id>: { deps: [...] }, ... }. A node
      * declared twice keeps the first declaration's order and the union of its
      * dependencies; a dependency named but not declared becomes an unknown
      * node until its own module arrives.
@@ -51,9 +50,6 @@ function createCssDependencyGraph() {
             const decl = subgraph[id] || {};
             const n = node(id);
             n.known = true;
-            // A node the server marks varies:false is served once, without a
-            // theme, and left alone by a switch: its sheet does not change.
-            if (decl.varies === false) n.varies = false;
             for (const d of decl.deps || []) {
                 if (d === id) throw new Error("CssDependencyGraph: " + id + " depends on itself");
                 node(d);
@@ -64,7 +60,6 @@ function createCssDependencyGraph() {
 
     function has(id)   { return nodes.has(id); }
     function deps(id)  { return nodes.has(id) ? nodes.get(id).deps.slice() : []; }
-    function varies(id) { return !nodes.has(id) || nodes.get(id).varies; }
     function known(id) { return nodes.has(id) && nodes.get(id).known; }
 
     /** Every node reachable from the ids, the ids included. */
@@ -111,11 +106,11 @@ function createCssDependencyGraph() {
     function snapshot() {
         const out = [];
         for (const [id, n] of nodes) {
-            out.push(Object.freeze({ id: id, deps: Object.freeze(n.deps.slice()), varies: n.varies, known: n.known }));
+            out.push(Object.freeze({ id: id, deps: Object.freeze(n.deps.slice()), known: n.known }));
         }
         out.sort(function (a, b) { return nodes.get(a.id).seq - nodes.get(b.id).seq; });
         return Object.freeze(out);
     }
 
-    return Object.freeze({ merge, has, deps, varies, known, closureOf, plan, snapshot });
+    return Object.freeze({ merge, has, deps, known, closureOf, plan, snapshot });
 }

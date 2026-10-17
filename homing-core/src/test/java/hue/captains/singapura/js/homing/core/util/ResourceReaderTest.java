@@ -54,9 +54,31 @@ class ResourceReaderTest {
         try {
             System.clearProperty("homing.devRoot");
             var reader = ResourceReader.fromSystemProperty();
-            assertNull(reader.sourceRoot());
+            assertEquals(java.util.List.of(), reader.sourceRoots());
+            assertFalse(reader.dev());
         } finally {
             if (prev != null) System.setProperty("homing.devRoot", prev);
+        }
+    }
+
+    @Test
+    void fromSystemProperty_takesSeveralRoots_theFirstThatHasAPathWins(@TempDir Path tempDir) throws IOException {
+        Path one = Files.createDirectories(tempDir.resolve("one")), two = Files.createDirectories(tempDir.resolve("two"));
+        Files.writeString(two.resolve("only-two.txt"), "from-two");
+        Files.writeString(one.resolve("both.txt"), "from-one");
+        Files.writeString(two.resolve("both.txt"), "from-two");
+        String prev = System.getProperty("homing.devRoot");
+        try {
+            System.setProperty("homing.devRoot", one + java.io.File.pathSeparator + " " + two + java.io.File.pathSeparator);
+            var reader = ResourceReader.fromSystemProperty();
+            assertEquals(java.util.List.of(one, two), reader.sourceRoots(), "each root, trimmed, none empty");
+            assertTrue(reader.dev());
+            assertEquals("from-two", reader.getStringsFromResource("only-two.txt").getFirst());
+            assertEquals("from-one", reader.getStringsFromResource("both.txt").getFirst(), "the first root that has it");
+            assertEquals(java.util.Optional.empty(), reader.sourceFile("nowhere.txt"));
+        } finally {
+            if (prev != null) System.setProperty("homing.devRoot", prev);
+            else System.clearProperty("homing.devRoot");
         }
     }
 }

@@ -6,7 +6,9 @@ import hue.captains.singapura.js.homing.conformance.rules.FindingGrader;
 import hue.captains.singapura.js.homing.conformance.rules.GradedFinding;
 import hue.captains.singapura.js.homing.conformance.rules.JsRulePolicy;
 import hue.captains.singapura.js.homing.conformance.rules.JsRuleSet;
+import hue.captains.singapura.js.homing.conformance.rules.RuleSetId;
 import hue.captains.singapura.js.homing.conformance.rules.ServedModule;
+import hue.captains.singapura.js.homing.conformance.rules.WidgetDrawsOnlyComponentsRule;
 import hue.captains.singapura.js.homing.conformance.rules.report.ConformanceReport;
 import hue.captains.singapura.js.homing.conformance.rules.report.ConformanceRun;
 import hue.captains.singapura.js.homing.conformance.rules.report.CrateReport;
@@ -53,7 +55,20 @@ public final class ConformanceEngine {
     /** Findings for one module: render → classify → policy.rulesFor(type) → run. */
     public List<Finding> check(EsModule<?> module) {
         ServedModule served = renderer.render(module);
-        return policy.rulesFor(served.type()).checkAll(served);
+        return rulesFor(served.type(), module).checkAll(served);
+    }
+
+    /**
+     * The rules a module is held to: its type's, and - for a module that exports a widget, whatever
+     * its type, a downstream's own included - the widget rule besides, so no widget is declared out
+     * of drawing only components.
+     */
+    private JsRuleSet rulesFor(JsModuleType type, EsModule<?> module) {
+        JsRuleSet set = policy.rulesFor(type);
+        if (!ModuleClassifier.exportsAWidget(module) || set.rules().contains(WidgetDrawsOnlyComponentsRule.INSTANCE)) return set;
+        var rules = new ArrayList<>(set.rules());
+        rules.add(WidgetDrawsOnlyComponentsRule.INSTANCE);
+        return new JsRuleSet(new RuleSetId(set.id().value() + "+widget"), set.title() + ", a widget", List.copyOf(rules));
     }
 
     /** Findings across a set of modules. */
@@ -76,7 +91,7 @@ public final class ConformanceEngine {
             for (CrateEntry e : c.entries()) {
                 var type = ModuleClassifier.classify(e);
                 ServedModule served = renderer.render(e.module(), type);
-                all.addAll(policy.rulesFor(type).checkAll(served));
+                all.addAll(rulesFor(type, e.module()).checkAll(served));
             }
         }
         return List.copyOf(all);
@@ -104,7 +119,7 @@ public final class ConformanceEngine {
             for (CrateEntry e : c.entries()) {
                 JsModuleType type = ModuleClassifier.classify(e);
                 ServedModule served = renderer.render(e.module(), type);
-                JsRuleSet set = policy.rulesFor(type);
+                JsRuleSet set = rulesFor(type, e.module());
                 ruleSets.computeIfAbsent(set.id().value(), k -> ruleSetReport(set));
 
                 var findings = new ArrayList<FindingReport>();

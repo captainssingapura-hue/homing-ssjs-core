@@ -9,10 +9,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** The two trees hold their shape: the sealed one partitions, the open one is guarded, and a pair is a value. */
+/** The sealed tree of targets holds its shape: its branches partition their properties, and every leaf is a value. */
 class TreesTest {
-
-    // ── the sealed tree ───────────────────────────────────────────────────
 
     @Test
     void everyBranchPartitionsItsProperties() {
@@ -22,7 +20,7 @@ class TreesTest {
     @Test
     void everyLeafHasAnInstance_andRestAmongItsStates_andNoCrossLeafShorthand() {
         List<Target> leaves = Target.leaves();
-        assertTrue(leaves.size() >= 25, "the tree has " + leaves.size() + " leaves");
+        assertEquals(36, leaves.size(), "the tree's leaves");
         var tokens = new HashSet<String>();
         for (Target t : leaves) {
             assertTrue(t.states().contains(State.REST), t.token() + " offers REST");
@@ -31,74 +29,36 @@ class TreesTest {
                 assertTrue(!p.equals("border") && !p.equals("background") && !p.equals("outline") && !p.equals("text-decoration") && !p.equals("font"),
                         t.token() + " owns a shorthand that crosses leaves: " + p);
             if (t.carrier() != Carrier.CSS) assertTrue(t.properties().isEmpty(), t.token() + " is not CSS and owns no property");
-            assertEquals(List.of(), ((hue.captains.singapura.js.homing.core.CssGroup<?>) t).cssClasses(), t.token() + " declares no class of its own");
         }
+    }
+
+    /** A shadow and a background are drawn in their own colours, registered where CSS has no property for them. */
+    @Test
+    void aShadowAndABackground_areDrawnInTheirOwnColours() {
+        assertEquals(List.of(Target.Color.BoxShadow.INSTANCE), Target.Shape.Shadow.INSTANCE.colouredBy());
+        assertEquals(List.of(Target.Color.Background.INSTANCE), Target.Shape.Background.INSTANCE.colouredBy());
+        assertEquals(List.of("@property --box-shadow-cast { syntax: \"<color>\"; inherits: false; initial-value: transparent; }",
+                             "@property --box-shadow-glow { syntax: \"<color>\"; inherits: false; initial-value: transparent; }",
+                             "@property --box-shadow-lit { syntax: \"<color>\"; inherits: false; initial-value: transparent; }"),
+                Target.Color.BoxShadow.INSTANCE.registrations());
+        assertEquals(List.of(), Target.Color.Border.INSTANCE.registrations(), "border-color is CSS's own: nothing to register");
+        assertEquals("color-box-shadow", Target.Color.BoxShadow.INSTANCE.token());
+        assertEquals("color-column-rule", Target.Color.ColumnRule.INSTANCE.token());
     }
 
     @Test
     void targetTokensCarryTheBranch() {
-        assertEquals("color-surface",    Target.Color.Surface.INSTANCE.token());
+        assertEquals("color-background", Target.Color.Background.INSTANCE.token());
         assertEquals("motion-transform", Target.Motion.Transform.INSTANCE.token());
+        assertEquals("animation-effect", Target.Animation.Effect.INSTANCE.token());
+        assertEquals("none", AnimationEffect.None.INSTANCE.token(), "an effect's token, from its type");
         assertEquals("sound-cue",        Target.Sound.Cue.INSTANCE.token());
     }
 
-    // ── the pair ──────────────────────────────────────────────────────────
-
     @Test
-    void aPair_isAValue_withItsTokenAndItsGroup() {
-        var dc = DesignClass.of(Feedback.Danger.class, Target.Color.Surface.class);
-        assertEquals("danger-color-surface", dc.cssName());
-        assertEquals(Target.Color.Surface.INSTANCE, dc.group(), "the group is the target");
-        assertEquals(dc, DesignClass.of(Feedback.Danger.class, Target.Color.Surface.class), "the same pair, asked twice, is one value");
-        assertEquals("on-danger-color-ink", DesignClass.of(Pairing.OnDanger.class, Target.Color.Ink.class).cssName());
-        assertEquals("interactive-motion-transform", DesignClass.of(Interaction.Interactive.class, Target.Motion.Transform.class).cssName());
-        assertEquals("drop-target-shape-rule", DesignClass.of(Interaction.DropTarget.class, Target.Shape.Rule.class).cssName());
-    }
-
-    @Test
-    void everyShippedLeaf_hasExactlyOneBranch() {
-        int count = 0;
-        for (Class<?> branch : List.of(Feedback.class, Emphasis.class, Layer.class, Interaction.class, Text.class, Pairing.class, Box.class, Brand.class, Structure.class)) {
-            for (Class<?> leaf : branch.getDeclaredClasses()) {
-                if (!leaf.isRecord()) continue;
-                assertEquals(branch, Trees.branchOf(leaf), leaf.getName() + " has one branch, " + branch.getSimpleName());
-                count++;
-            }
-        }
-        assertTrue(count >= 40, "the first vocabulary has " + count + " leaves");
-    }
-
-    // ── the guards ────────────────────────────────────────────────────────
-
-    /** Two branches on one leaf. */
-    record TwoBranches() implements Feedback, Emphasis {}
-    record OffBranch() implements Feedback { record Refined() implements Emphasis {} }
-
-    @Test
-    void theGuardsRefuse() {
-        var e1 = assertThrows(IllegalArgumentException.class, () -> DesignClass.of(Feedback.class.asSubclass(Semantic.class), Target.Color.Ink.class));
-        assertTrue(e1.getMessage().contains("leaf"), e1.getMessage());
-        var e2 = assertThrows(IllegalArgumentException.class, () -> DesignClass.of(TwoBranches.class, Target.Color.Ink.class));
-        assertTrue(e2.getMessage().contains("exactly one branch"), e2.getMessage());
-        var e3 = assertThrows(IllegalArgumentException.class, () -> DesignClass.of(OffBranch.Refined.class, Target.Color.Ink.class));
-        assertTrue(e3.getMessage().contains("stays on its parent's branch"), e3.getMessage());
-    }
-
-    /** A leaf nested in a leaf refines it: the token is the path, the lineage climbs to the top, and a top word has no parent. */
-    @Test
-    void aRefinement_isItsPath() {
-        assertEquals("control-button-base", Trees.semanticToken(Box.Control.Button.Base.class));
-        assertEquals("control-button", Trees.semanticToken(Box.Control.Button.class));
-        assertEquals("control", Trees.semanticToken(Box.Control.class));
-        assertEquals(List.of(Box.Control.Button.Base.class, Box.Control.Button.class, Box.Control.class), Trees.lineage(Box.Control.Button.Base.class));
-        assertEquals(null, Trees.parentOf(Box.Control.class));
-        assertEquals(Box.class, Trees.branchOf(Box.Control.Button.Base.class));
-    }
-
-    @Test
-    void kebab() {
+    void aTargetIsALeafOfTheSealedTree() {
+        assertThrows(IllegalArgumentException.class, () -> Trees.requireTargetLeaf(Target.Color.class));
+        Trees.requireTargetLeaf(Target.Color.Text.class);
         assertEquals("on-danger", Trees.kebab("OnDanger"));
-        assertEquals("color-surface", Trees.kebab("Color_Surface"));
-        assertEquals("drop-target", Trees.kebab("DropTarget"));
     }
 }

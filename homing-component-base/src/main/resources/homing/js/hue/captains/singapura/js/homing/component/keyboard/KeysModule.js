@@ -3,7 +3,10 @@
 // component joins a focus branch and calls here; every call goes to the
 // page's steward directly, none touches the party.
 //
-//   Keys.claimOn(root, m) → off
+//   Keys.claimOn(root, m, marks?) → off
+//     marks: { leaf, state } - the root's leaf as Java describes it, and the
+//     state of it the keys' marks are - for the root to wear that state's class
+//     while it holds a mark (RFC 0067, D12); without them, data-keys alone
 //     the claiming convention, as one line and one listener: a press in the
 //     root claims the keys for m — when m is the innermost member whose root
 //     contains the press. The roots under the convention are enrolled with
@@ -42,14 +45,16 @@ function _target(a, b) {
 
 var Keys = Object.freeze({
 
-    claimOn: function (root, a, b) {
+    claimOn: function (root, a, b, c) {
         if (!root || typeof root.addEventListener !== "function") throw new Error("[Keys] claimOn wants the component's root element");
         var t = _target(a, b);
+        var older = t.steward === a;                    // (steward, id[, marks]), else (membership[, marks])
+        var marks = older ? c : b;
         var member = t.id && typeof t.id === "object" ? t.id : null;
         var steward = t.steward, id = member && typeof member.id === "string" ? member.id : t.id;
         if (!steward || typeof steward.claim !== "function") throw new Error("[Keys] claimOn wants the page's KeyboardSteward");
         if (id == null) throw new Error("[Keys] claimOn wants the membership to claim for");
-        var forget = steward.enroll(root, id);
+        var forget = steward.enroll(root, id, marks);
         function press(ev) { if (steward.memberAt(ev.target) === id && !_stray(member)) steward.claim(id); }   // a stray's press goes nowhere
         root.addEventListener("pointerdown", press, true);
         return function () {

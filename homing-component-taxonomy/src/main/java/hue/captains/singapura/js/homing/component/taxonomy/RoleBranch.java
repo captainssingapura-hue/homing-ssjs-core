@@ -14,4 +14,12 @@ public sealed interface RoleBranch extends RoleNode
 
     /** Its level: 0 for the root, one more than its parent's for every other. */
     int level();
+
+    /**
+     * Whether its roles are functional: they say what a part is for in its owner's structure - a
+     * window, a veil, the tabs - and nothing of how it looks. A part cast in one is cast for its
+     * look as Standalone. A role is functional when any branch it is filed under says so; none
+     * does by default.
+     */
+    default boolean functional() { return false; }
 }

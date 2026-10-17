@@ -1,0 +1,41 @@
+package hue.captains.singapura.js.homing.design.semantic;
+
+import hue.captains.singapura.js.homing.design.color.ColorScheme;
+import hue.captains.singapura.js.homing.tree.NodeName;
+
+import java.util.List;
+
+/**
+ * A design style (RFC 0067): a typed identity - a stateless record, its type its identity - and what it answers. It
+ * requires one colour scheme, its type argument, and is worn only in a palette of that scheme. It says which colour each
+ * thing uses, in semantic colours its scheme can see ({@link #colorings()}), and never what a colour is: no answer can
+ * name a value. A style written over another says so by type, with {@link Derives}; one that derives from nothing
+ * answers every root, colour's included, so that every class resolves. How it draws each casting is no part of it:
+ * each is a class of its own, in the jar that implements it (appendix The Style Jars) - an icon's picture among them
+ * (D52).
+ *
+ * @param <S> the colour scheme it requires
+ */
+public interface DesignStyle<S extends ColorScheme> {
+
+    /** The scheme it requires: the scheme's one object, said by the style itself (D49) - nothing reads it off the style's type. */
+    S scheme();
+
+    /** The style's token, from its type: {@code neo-brutalism}. */
+    default String token() { return NodeName.ofType(getClass(), "").value(); }
+
+    /** What a picker calls it: its token's words, capitalised - {@code Neo-Brutalism} - unless it says otherwise. */
+    default String label() { return Labels.of(token()); }
+
+    /** One line on what it is trying to be, shown beside its name in a picker; none unless it says. */
+    default String inspiration() { return ""; }
+
+    /** The family a picker files it under; {@code Styles} unless it says. */
+    default String group() { return "Styles"; }
+
+    /** The classes this style answers itself on every target that is not colour. */
+    List<Implementation<?>> implementations();
+
+    /** Which colour each class it answers itself uses; none by default, each as its base colours it. */
+    default List<Coloring<S, ?>> colorings() { return List.of(); }
+}
