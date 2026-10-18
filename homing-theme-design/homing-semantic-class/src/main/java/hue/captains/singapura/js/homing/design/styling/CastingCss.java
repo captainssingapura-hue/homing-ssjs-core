@@ -183,12 +183,21 @@ public record CastingCss() implements StatelessFunctionalObject {
      * the word, {@code $name} - a keyframes of its own - {@code <casting>-<name>}.
      */
     public String filled(String css, Casting casting) {
-        String styled = LeafClasses.INSTANCE.styled(casting);
-        String token = casting.token();
-        String out = KEYFRAMES.matcher(css).replaceAll(m -> "@keyframes " + Matcher.quoteReplacement(token + "-" + m.group(1)));
+        return filled(css, LeafClasses.INSTANCE.styled(casting), casting.token());
+    }
+
+    /**
+     * The file with its marks filled in for a class, whoever's it is: {@code $casting} the class, {@code &$word} the
+     * class's state for the word, {@code <class>--<word>}, {@code $name} - a keyframes of its own - {@code <prefix>-<name>}.
+     *
+     * @param styled    the class, without its dot
+     * @param keyframes what its keyframes' names start with
+     */
+    public String filled(String css, String styled, String keyframes) {
+        String out = KEYFRAMES.matcher(css).replaceAll(m -> "@keyframes " + Matcher.quoteReplacement(keyframes + "-" + m.group(1)));
         out = STATE.matcher(out).replaceAll(m -> Matcher.quoteReplacement("&." + styled + "--" + m.group(1)));
         out = out.replace(CASTING, "." + styled);
-        out = USE.matcher(out).replaceAll(m -> Matcher.quoteReplacement(token + "-" + m.group(1)));
+        out = USE.matcher(out).replaceAll(m -> Matcher.quoteReplacement(keyframes + "-" + m.group(1)));
         return out;
     }
 
