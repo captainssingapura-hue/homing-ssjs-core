@@ -33,7 +33,7 @@ class CastingRuleTest {
             + "color-mix(in oklab, var(--fixed-clear) calc(clamp(0, var(--extent) + 1, 1) * 100%), var(--fp-safe)))";
 
     private static CheckDeclaration.CssChecked check(DesignStyle<?> style, Casting casting, String css) {
-        return CheckDeclaration.css(TAXONOMY, TREE, style, casting, "Its.css", css);
+        return CheckDeclaration.INSTANCE.css(TAXONOMY, TREE, style, casting, "Its.css", css);
     }
 
     private static void refused(String css, String says) { refused(TAB, css, says); }
@@ -180,11 +180,11 @@ class CastingRuleTest {
     void aSpectrumOfItsOwn_isReadInPlaceOfTheTrees_itsAnchorsTheTreesColours() {
         String swing = LocalColours.INSTANCE.along(new Swing());
         String css = "$casting { --along-swing: " + swing + "; background-color: var(--along-swing); }";
-        var own = CheckDeclaration.css(TAXONOMY, TREE, Plain.INSTANCE, METER, "Its.css", css, List.of(new Swing()));
+        var own = CheckDeclaration.INSTANCE.css(TAXONOMY, TREE, Plain.INSTANCE, METER, "Its.css", css, List.of(new Swing()));
         assertEquals(List.of(), own.problems(), "its own spectrum, as it writes it");
         assertTrue(own.uses().containsKey("swing"), "used, so imported: the both-ways check sees it");
         refused(METER, css, "--along-swing names no colour scale of the tree");
-        var drifted = CheckDeclaration.css(TAXONOMY, TREE, Plain.INSTANCE, METER, "Its.css",
+        var drifted = CheckDeclaration.INSTANCE.css(TAXONOMY, TREE, Plain.INSTANCE, METER, "Its.css",
                 "$casting { --along-swing: " + LocalColours.INSTANCE.along(new BaseColours.Risk()) + "; background-color: var(--along-swing); }",
                 List.of(new Swing()));
         assertTrue(drifted.problems().stream().anyMatch(p -> p.contains("by its own spectrum")), drifted.problems().toString());
