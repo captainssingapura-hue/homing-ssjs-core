@@ -36,9 +36,20 @@ final class TradingDesk {
     }
 
     /** A leaf under the house's Button branch. */
-    record TradeButton() implements Component<Sketch.Button> {
+    record TradeButton() implements Component<Sketch.Button>, WithRoles<Trades> {
         static final TradeButton INSTANCE = new TradeButton();
         @Override public Sketch.Button parent() { return Sketch.Button.INSTANCE; }
+        @Override public Trades roleSet() { return Trades.INSTANCE; }
+    }
+
+    /**
+     * A leaf under the house's Text branch, cast as its own Side: the house's badge is cast only in the roles its set gives,
+     * and Side, the desk's word, is none of them (D55).
+     */
+    record SideFlag() implements Component<Sketch.Text>, WithRoles<Sides> {
+        static final SideFlag INSTANCE = new SideFlag();
+        @Override public Sketch.Text parent() { return Sketch.Text.INSTANCE; }
+        @Override public Sides roleSet() { return Sides.INSTANCE; }
     }
 
     /** A leaf under the house's Card branch, its parts played by the house's components and its own. */
@@ -48,7 +59,7 @@ final class TradingDesk {
         @Override public Sketch.Card parent() { return Sketch.Card.INSTANCE; }
         @Override public List<Slot<?>> parts() {
             return List.of(DSL.part(Sketch.Heading.INSTANCE).as(Sketch.Title.INSTANCE).one(),
-                           DSL.part(Sketch.Badge.INSTANCE).as(Side.INSTANCE).one(),
+                           DSL.part(SideFlag.INSTANCE).as(Side.INSTANCE).one(),
                            DSL.part(TradeButton.INSTANCE).as(Buy.INSTANCE).one(),
                            DSL.part(TradeButton.INSTANCE).as(Sell.INSTANCE).one(),
                            DSL.part(Sketch.PlainButton.INSTANCE).as(Sketch.Cancel.INSTANCE).optional());
@@ -56,4 +67,18 @@ final class TradingDesk {
     }
 
     static final List<Role<?>> CATALOGUE = List.of(Side.INSTANCE, Buy.INSTANCE, Sell.INSTANCE);
+
+    // ── the roles each component may be cast in (RFC 0067, D55) ──────────
+
+    /** What a trade button may be cast as. */
+    record Trades() implements RoleSet {
+        static final Trades INSTANCE = new Trades();
+        @Override public List<Role<?>> roles() { return List.of(Buy.INSTANCE, Sell.INSTANCE); }
+    }
+
+    /** What a side flag may be cast as. */
+    record Sides() implements RoleSet {
+        static final Sides INSTANCE = new Sides();
+        @Override public List<Role<?>> roles() { return List.of(Side.INSTANCE); }
+    }
 }

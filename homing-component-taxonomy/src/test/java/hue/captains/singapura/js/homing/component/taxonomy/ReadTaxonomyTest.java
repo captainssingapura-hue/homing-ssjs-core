@@ -63,8 +63,11 @@ class ReadTaxonomyTest {
                 "the confirmation, then what plays its parts, reached through the slots");
         assertEquals(List.of(Container.INSTANCE, Text.INSTANCE, Control.INSTANCE, Button.INSTANCE), t.branches(),
                 "the branches, reached through the parents, by level - every parent before its children - the root left out");
-        assertEquals(List.of(Title.INSTANCE, Confirm.INSTANCE, Cancel.INSTANCE), t.roles(), "the roles its slots name, in order");
-        assertEquals(List.of(Sketch.Saying.INSTANCE, Doing.INSTANCE, Naming.INSTANCE, Committing.INSTANCE), t.roleBranches(),
+        assertEquals(List.of(Title.INSTANCE, Confirm.INSTANCE, Cancel.INSTANCE, Sketch.Name.INSTANCE, Sketch.Tag.INSTANCE, Sketch.Value.INSTANCE,
+                        Sketch.Summary.INSTANCE, Open.INSTANCE, Add.INSTANCE),
+                t.roles(), "the roles its slots name, in order, then those its parts' role sets name: what they may be cast in (D55)");
+        assertEquals(List.of(Sketch.Saying.INSTANCE, Doing.INSTANCE, Naming.INSTANCE, Committing.INSTANCE, Sketch.Telling.INSTANCE, Sketch.Going.INSTANCE,
+                        Sketch.Managing.INSTANCE), t.roleBranches(),
                 "the role branches, reached through the roles, by level, the root left out");
     }
 

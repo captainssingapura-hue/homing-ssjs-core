@@ -20,9 +20,10 @@ final class Kinds {
         @Override public RoleRoot parent() { return RoleRoot.INSTANCE; }
     }
 
-    record Knob() implements Leaf<Shelf> {
+    record Knob() implements Leaf<Shelf>, WithRoles<Spots> {
         static final Knob INSTANCE = new Knob();
         @Override public Shelf parent() { return Shelf.INSTANCE; }
+        @Override public Spots roleSet() { return Spots.INSTANCE; }
     }
 
     record Drawer() implements Composite<Shelf> {
@@ -55,5 +56,13 @@ final class Kinds {
         private static final ComponentPartDSL DSL = ComponentPartDSL.INSTANCE;
         @Override public Shelf parent() { return Shelf.INSTANCE; }
         @Override public List<Slot<?>> parts() { return List.of(DSL.part(Knob.INSTANCE).as(Spot.INSTANCE).one()); }
+    }
+
+    // ── the roles each component may be cast in (RFC 0067, D55) ──────────
+
+    /** What a knob may be cast as. */
+    record Spots() implements RoleSet {
+        static final Spots INSTANCE = new Spots();
+        @Override public List<Role<?>> roles() { return List.of(Spot.INSTANCE); }
     }
 }

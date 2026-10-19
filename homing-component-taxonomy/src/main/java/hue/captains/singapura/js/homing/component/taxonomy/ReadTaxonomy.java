@@ -17,7 +17,7 @@ import java.util.Set;
 /**
  * Reads a taxonomy from the components a deployment declares, the roles its catalogue files, and
  * the types of state and of event its trees file: it reaches every branch through the parents,
- * every component that plays a part through the slots, every role a slot names and every branch of
+ * every component that plays a part through the slots, every role a slot or a role set names, every branch of
  * the role catalogue through the roles, every type of state a component has and of event it offers,
  * and their branches through their parents, and refuses - with every problem it found at once -
  * what the compiler cannot:
@@ -40,7 +40,10 @@ import java.util.Set;
  *   <li>a node of any of the four trees with no meaning, a meanings file with a section astray, or
  *       two nodes that mean the same;</li>
  *   <li>a family head with another between it and the root, and a component that says it heads a
- *       family ({@link FamilyHead}).</li>
+ *       family ({@link FamilyHead});</li>
+ *   <li>a component cast in a role with a look of its own that its role set does not allow, or that has no
+ *       role set ({@link WithRoles}); a role set with no roles, a role twice, or one that only places a part
+ *       (D55).</li>
  * </ul>
  *
  * <p>What the levels already make impossible it never checks: a chain of parents that comes back
@@ -150,6 +153,11 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
             plays.computeIfAbsent(pending.owner(), k -> new ArrayList<>()).addAll(under);
         }
 
+        // a role set's roles, as a slot's: what its component may be cast in is the taxonomy's, cast in or not yet (D55)
+        for (Component<?> c : components)
+            if (c instanceof WithRoles<?> w && w.roleSet() != null)
+                for (Role<?> r : orNone(w.roleSet().roles())) if (r != null) roles.add(r);
+
         var roleBranches = new LinkedHashSet<RoleBranch>();
         for (Role<?> r : roles) roleBranches.addAll(filing(r, problems));
 
@@ -195,6 +203,7 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
         problems.addAll(extentsTwice(branchList, componentList));
         problems.addAll(LocalStyleBranchChecks.INSTANCE.problems(branchList, componentList, read));
         problems.addAll(familyHeads(branchList, componentList));
+        problems.addAll(castings(read, componentList));
         problems.addAll(TreeChecks.INSTANCE.clashes("states", StateTree.nodes(stateBranchList, stateList), StateNode::name));
         problems.addAll(TreeChecks.INSTANCE.badValues(stateList));
         problems.addAll(TreeChecks.INSTANCE.wordsTwice(stateList));
@@ -384,6 +393,41 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
                         + (same instanceof Component<?> ? "component " : "branch ") + Names.qualified(same)
                         + ": a role names what a part does, not what plays it"));
         }
+        return out;
+    }
+
+    /**
+     * A component cast in a role with a look of its own only in one its role set allows (D55) - so its castings are its
+     * own, and never an owner's to add - and each role set well made: some roles, each once, none that only places a
+     * part.
+     */
+    private static List<TaxonomyProblem> castings(List<Part<?, ?>> parts, List<Component<?>> components) {
+        var out = new ArrayList<TaxonomyProblem>();
+        for (Component<?> c : components) {
+            if (!(c instanceof WithRoles<?> w)) continue;
+            RoleSet set = w.roleSet();
+            if (set == null) { out.add(new TaxonomyProblem(Rule.ROLE_SET_BADLY, Names.of(c) + " says it is cast in roles, and gives no role set")); continue; }
+            String named = Names.of(c) + "'s role set, " + set.getClass().getSimpleName() + ",";
+            List<Role<?>> in = orNone(set.roles());
+            if (in.isEmpty()) out.add(new TaxonomyProblem(Rule.ROLE_SET_BADLY, named + " has no roles: a component cast in none is no WithRoles"));
+            var seen = new HashSet<Role<?>>();
+            for (Role<?> r : in) {
+                if (r == null) out.add(new TaxonomyProblem(Rule.ROLE_SET_BADLY, named + " names no role"));
+                else if (!seen.add(r)) out.add(new TaxonomyProblem(Rule.ROLE_SET_BADLY, named + " names " + Names.of(r) + " twice"));
+                else if (new Casting(c, r).functional())
+                    out.add(new TaxonomyProblem(Rule.ROLE_SET_BADLY, named + " names " + Names.of(r) + ", a role that only places a part: no casting"));
+            }
+        }
+        for (Part<?, ?> p : parts)
+            for (Component<?> b : p.bases()) {
+                if (new Casting(b, p.role()).functional() || b instanceof VirtualComponent<?>) continue;   // a virtual leaf plays no part at all
+                if (!(b instanceof WithRoles<?> w) || w.roleSet() == null)
+                    out.add(new TaxonomyProblem(Rule.ROLE_NOT_ALLOWED, Names.of(p.owner()) + " casts " + Names.of(b) + " as " + Names.of(p.role())
+                            + ", a role with a look of its own, and " + Names.of(b) + " has no role set: a component says the roles it may be cast in (WithRoles)"));
+                else if (!orNone(w.roleSet().roles()).contains(p.role()))
+                    out.add(new TaxonomyProblem(Rule.ROLE_NOT_ALLOWED, Names.of(p.owner()) + " casts " + Names.of(b) + " as " + Names.of(p.role())
+                            + ", a role its set, " + w.roleSet().getClass().getSimpleName() + ", does not allow"));
+            }
         return out;
     }
 

@@ -175,29 +175,34 @@ final class Sketch {
 
     // ── the taxonomy: what plays parts ─────────────────────────────────────
 
-    record Caption() implements Component<Text> {
+    record Caption() implements Component<Text>, WithRoles<Words> {
         static final Caption INSTANCE = new Caption();
         @Override public Text parent() { return Text.INSTANCE; }
+        @Override public Words roleSet() { return Words.INSTANCE; }
     }
 
-    record Heading() implements Component<Text> {
+    record Heading() implements Component<Text>, WithRoles<Words> {
         static final Heading INSTANCE = new Heading();
         @Override public Text parent() { return Text.INSTANCE; }
+        @Override public Words roleSet() { return Words.INSTANCE; }
     }
 
-    record Badge() implements Component<Text> {
+    record Badge() implements Component<Text>, WithRoles<Words> {
         static final Badge INSTANCE = new Badge();
         @Override public Text parent() { return Text.INSTANCE; }
+        @Override public Words roleSet() { return Words.INSTANCE; }
     }
 
-    record Tick() implements Component<Mark> {
+    record Tick() implements Component<Mark>, WithRoles<Notches> {
         static final Tick INSTANCE = new Tick();
         @Override public Mark parent() { return Mark.INSTANCE; }
+        @Override public Notches roleSet() { return Notches.INSTANCE; }
     }
 
-    record PlainButton() implements Component<Button> {
+    record PlainButton() implements Component<Button>, WithRoles<Presses> {
         static final PlainButton INSTANCE = new PlainButton();
         @Override public Button parent() { return Button.INSTANCE; }
+        @Override public Presses roleSet() { return Presses.INSTANCE; }
     }
 
     record DangerButton() implements Component<Button> {
@@ -226,10 +231,11 @@ final class Sketch {
     }
 
     /** A card for a case: a title and a name, any tags, a way to open it. */
-    record ProfileCard() implements Component<Card> {
+    record ProfileCard() implements Component<Card>, WithRoles<Listed> {
         static final ProfileCard INSTANCE = new ProfileCard();
         private static final ComponentPartDSL DSL = ComponentPartDSL.INSTANCE;
         @Override public Card parent() { return Card.INSTANCE; }
+        @Override public Listed roleSet() { return Listed.INSTANCE; }
         @Override public List<Slot<?>> parts() {
             return List.of(DSL.part(Heading.INSTANCE).as(Title.INSTANCE).one(),
                            DSL.part(Caption.INSTANCE).as(Name.INSTANCE).one(),
@@ -286,4 +292,30 @@ final class Sketch {
     /** What the house declares; the rest is reached through the parents and the parts. */
     static final List<Component<?>> DECLARED = List.of(PlainButton.INSTANCE, DangerButton.INSTANCE, AlternatingButton.INSTANCE,
             PlainCard.INSTANCE, ProfileCard.INSTANCE, Shelf.INSTANCE, Confirmation.INSTANCE, Watchlist.INSTANCE, Gauge.INSTANCE);
+
+    // ── the roles each component may be cast in (RFC 0067, D55) ──────────
+
+    /** What a text may be cast as: naming or telling its owner. */
+    record Words() implements RoleSet {
+        static final Words INSTANCE = new Words();
+        @Override public List<Role<?>> roles() { return List.of(Title.INSTANCE, Name.INSTANCE, Tag.INSTANCE, Value.INSTANCE, Summary.INSTANCE); }
+    }
+
+    /** What a mark may be cast as: a step on its owner's scale. */
+    record Notches() implements RoleSet {
+        static final Notches INSTANCE = new Notches();
+        @Override public List<Role<?>> roles() { return List.of(Notch.INSTANCE); }
+    }
+
+    /** What a button may be cast as: going, managing or committing. */
+    record Presses() implements RoleSet {
+        static final Presses INSTANCE = new Presses();
+        @Override public List<Role<?>> roles() { return List.of(Open.INSTANCE, Add.INSTANCE, Confirm.INSTANCE, Cancel.INSTANCE); }
+    }
+
+    /** What a card may be cast as: one of the things its owner lists. */
+    record Listed() implements RoleSet {
+        static final Listed INSTANCE = new Listed();
+        @Override public List<Role<?>> roles() { return List.of(Entry.INSTANCE); }
+    }
 }

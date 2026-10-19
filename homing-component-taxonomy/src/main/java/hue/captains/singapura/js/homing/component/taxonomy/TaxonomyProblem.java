@@ -63,7 +63,11 @@ public record TaxonomyProblem(Rule rule, String says) implements ValueObject {
         /** A component that says it heads a family: only a branch does. */
         FAMILY_HEAD_NOT_A_BRANCH,
         /** A leaf that declares parts, a composite that declares none, or a component that says it is both (D53). */
-        KIND_BADLY
+        KIND_BADLY,
+        /** A component cast in a role with a look of its own that its role set does not allow - or that has no role set (D55). */
+        ROLE_NOT_ALLOWED,
+        /** A role set with no roles, a role twice, or one that only places a part (D55). */
+        ROLE_SET_BADLY
     }
 
     @Override public String toString() { return rule + ": " + says; }

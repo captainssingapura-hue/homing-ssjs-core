@@ -37,11 +37,23 @@ final class Broken {
         @Override public Naming parent() { return null; }
     }
 
+    /** A note cast as the stray role, which its set names: the stray is refused for its filing alone. */
+    record StrayNote() implements Component<Text>, WithRoles<StrayNote.Cast> {
+        static final StrayNote INSTANCE = new StrayNote();
+        @Override public Text parent() { return Text.INSTANCE; }
+        @Override public Cast roleSet() { return Cast.INSTANCE; }
+        /** What it may be cast as: the stray role alone. */
+        record Cast() implements RoleSet {
+            static final Cast INSTANCE = new Cast();
+            @Override public List<Role<?>> roles() { return List.of(Stray.INSTANCE); }
+        }
+    }
+
     record Strays() implements Component<Container> {
         static final Strays INSTANCE = new Strays();
         private static final ComponentPartDSL DSL = ComponentPartDSL.INSTANCE;
         @Override public Container parent() { return Container.INSTANCE; }
-        @Override public List<Slot<?>> parts() { return List.of(DSL.part(Caption.INSTANCE).as(Stray.INSTANCE).one()); }
+        @Override public List<Slot<?>> parts() { return List.of(DSL.part(StrayNote.INSTANCE).as(Stray.INSTANCE).one()); }
     }
 
     // ── state ──────────────────────────────────────────────────────────────
@@ -90,25 +102,28 @@ final class Broken {
     // ── composition ────────────────────────────────────────────────────────
 
     /** Lists itself - optionally, and still a part of itself: a cycle is refused on the types. */
-    record Mirror() implements Component<Container> {
+    record Mirror() implements Component<Container>, WithRoles<Sketch.Listed> {
         static final Mirror INSTANCE = new Mirror();
         private static final ComponentPartDSL DSL = ComponentPartDSL.INSTANCE;
         @Override public Container parent() { return Container.INSTANCE; }
+        @Override public Sketch.Listed roleSet() { return Sketch.Listed.INSTANCE; }
         @Override public List<Slot<?>> parts() { return List.of(DSL.part(Mirror.INSTANCE).as(Entry.INSTANCE).optional()); }
     }
 
     /** Each lists the other, any number of times, none included. */
-    record Ping() implements Component<Container> {
+    record Ping() implements Component<Container>, WithRoles<Sketch.Listed> {
         static final Ping INSTANCE = new Ping();
         private static final ComponentPartDSL DSL = ComponentPartDSL.INSTANCE;
         @Override public Container parent() { return Container.INSTANCE; }
+        @Override public Sketch.Listed roleSet() { return Sketch.Listed.INSTANCE; }
         @Override public List<Slot<?>> parts() { return List.of(DSL.part(Pong.INSTANCE).as(Entry.INSTANCE).any()); }
     }
 
-    record Pong() implements Component<Container> {
+    record Pong() implements Component<Container>, WithRoles<Sketch.Listed> {
         static final Pong INSTANCE = new Pong();
         private static final ComponentPartDSL DSL = ComponentPartDSL.INSTANCE;
         @Override public Container parent() { return Container.INSTANCE; }
+        @Override public Sketch.Listed roleSet() { return Sketch.Listed.INSTANCE; }
         @Override public List<Slot<?>> parts() { return List.of(DSL.part(Ping.INSTANCE).as(Entry.INSTANCE).any()); }
     }
 
@@ -140,12 +155,24 @@ final class Broken {
         }
     }
 
+    /** A note cast as the second title, which its set names. */
+    record DoubledNote() implements Component<Text>, WithRoles<DoubledNote.Cast> {
+        static final DoubledNote INSTANCE = new DoubledNote();
+        @Override public Text parent() { return Text.INSTANCE; }
+        @Override public Cast roleSet() { return Cast.INSTANCE; }
+        /** What it may be cast as: the second title alone. */
+        record Cast() implements RoleSet {
+            static final Cast INSTANCE = new Cast();
+            @Override public List<Role<?>> roles() { return List.of(Elsewhere.Title.INSTANCE); }
+        }
+    }
+
     /** Names the second title; read beside anything that names the house's, two roles answer to one name. */
     record Doubled() implements Component<Container> {
         static final Doubled INSTANCE = new Doubled();
         private static final ComponentPartDSL DSL = ComponentPartDSL.INSTANCE;
         @Override public Container parent() { return Container.INSTANCE; }
-        @Override public List<Slot<?>> parts() { return List.of(DSL.part(Caption.INSTANCE).as(Elsewhere.Title.INSTANCE).one()); }
+        @Override public List<Slot<?>> parts() { return List.of(DSL.part(DoubledNote.INSTANCE).as(Elsewhere.Title.INSTANCE).one()); }
     }
 
     /** A second "naming", a branch under Doing - beside the house's under Saying: a branch clash, under different parents. */
@@ -183,11 +210,25 @@ final class Broken {
         }
     }
 
+    /** A note cast as the role named for what plays it, which its set names. */
+    record LabelledNote() implements Component<Text>, WithRoles<LabelledNote.Cast> {
+        static final LabelledNote INSTANCE = new LabelledNote();
+        @Override public Text parent() { return Text.INSTANCE; }
+        @Override public Cast roleSet() { return Cast.INSTANCE; }
+        /** What it may be cast as: that role alone. */
+        record Cast() implements RoleSet {
+            static final Cast INSTANCE = new Cast();
+            @Override public List<Role<?>> roles() { return List.of(Objective.Caption.INSTANCE); }
+        }
+    }
+
     record Labelled() implements Component<Container> {
         static final Labelled INSTANCE = new Labelled();
         private static final ComponentPartDSL DSL = ComponentPartDSL.INSTANCE;
         @Override public Container parent() { return Container.INSTANCE; }
-        @Override public List<Slot<?>> parts() { return List.of(DSL.part(Sketch.Caption.INSTANCE).as(Objective.Caption.INSTANCE).one()); }
+        @Override public List<Slot<?>> parts() {
+            return List.of(DSL.part(LabelledNote.INSTANCE).as(Objective.Caption.INSTANCE).one(), DSL.part(Sketch.Caption.INSTANCE).as(Sketch.Name.INSTANCE).optional());
+        }
     }
 
     // ── counts ─────────────────────────────────────────────────────────────

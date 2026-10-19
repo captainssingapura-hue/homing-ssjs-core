@@ -10,7 +10,9 @@ import java.util.List;
  * <p>A component declares its parts with it, as {@link Slot slots} said in the
  * {@link ComponentPartDSL}: each the independent component that plays it, a shared role, and how
  * many. Only the component declares its slots - composition is closed - and the owner is appended
- * when the taxonomy is read, each slot becoming a {@link Part}.</p>
+ * when the taxonomy is read, each slot becoming a {@link Part}. A part cast in a role with a look of
+ * its own says it may be: it is a {@link WithRoles} whose set gives that role - the heading, the badge
+ * and the button below each are - so a component's castings are its own, never its owner's (D55).</p>
  *
  * <pre>{@code
  * public record ProfileCard() implements Component<Card> {          // Card: a branch, at level 2

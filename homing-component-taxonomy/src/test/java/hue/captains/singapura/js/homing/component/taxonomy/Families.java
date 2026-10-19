@@ -47,9 +47,10 @@ final class Families {
         @Override public Cutting parent() { return Cutting.INSTANCE; }
     }
 
-    record Blade() implements Component<Cutter> {
+    record Blade() implements Component<Cutter>, WithRoles<Cuts> {
         static final Blade INSTANCE = new Blade();
         @Override public Cutter parent() { return Cutter.INSTANCE; }
+        @Override public Cuts roleSet() { return Cuts.INSTANCE; }
     }
 
     record Saw() implements Component<Cutter> {
@@ -90,5 +91,13 @@ final class Families {
     record Bossy() implements Component<Loose>, FamilyHead {
         static final Bossy INSTANCE = new Bossy();
         @Override public Loose parent() { return Loose.INSTANCE; }
+    }
+
+    // ── the roles each component may be cast in (RFC 0067, D55) ──────────
+
+    /** What a blade may be cast as. */
+    record Cuts() implements RoleSet {
+        static final Cuts INSTANCE = new Cuts();
+        @Override public List<Role<?>> roles() { return List.of(Edge.INSTANCE); }
     }
 }

@@ -11,6 +11,7 @@ import hue.captains.singapura.js.homing.component.taxonomy.L1_StateBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.Pseudo;
 import hue.captains.singapura.js.homing.component.taxonomy.ReadTaxonomy;
 import hue.captains.singapura.js.homing.component.taxonomy.Role;
+import hue.captains.singapura.js.homing.component.taxonomy.RoleSet;
 import hue.captains.singapura.js.homing.component.taxonomy.RoleRoot;
 import hue.captains.singapura.js.homing.component.taxonomy.Root;
 import hue.captains.singapura.js.homing.component.taxonomy.Slot;
@@ -18,6 +19,7 @@ import hue.captains.singapura.js.homing.component.taxonomy.StateRoot;
 import hue.captains.singapura.js.homing.component.taxonomy.StateType;
 import hue.captains.singapura.js.homing.component.taxonomy.StateValue;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
+import hue.captains.singapura.js.homing.component.taxonomy.WithRoles;
 
 import java.util.List;
 import java.util.Map;
@@ -79,9 +81,10 @@ public record StatedTaxonomy() {
     }
 
     /** Listed with the keys first, which its levels put last. */
-    public record Tab() implements Component<Control> {
+    public record Tab() implements Component<Control>, WithRoles<Leads> {
         public static final Tab INSTANCE = new Tab();
         @Override public Control parent() { return Control.INSTANCE; }
+        @Override public Leads roleSet() { return Leads.INSTANCE; }
         @Override public List<StateType<?>> states() { return List.of(Keys.INSTANCE, Enabled.INSTANCE, Hovered.INSTANCE, Selected.INSTANCE); }
     }
 
@@ -94,4 +97,12 @@ public record StatedTaxonomy() {
     }
 
     public Taxonomy read() { return new ReadTaxonomy().read(List.of(Tab.INSTANCE, Strip.INSTANCE)); }
+
+    // ── the roles each component may be cast in (RFC 0067, D55) ──
+
+    /** What a tab may be cast as: leading its owner. */
+    public record Leads() implements RoleSet {
+        public static final Leads INSTANCE = new Leads();
+        @Override public List<Role<?>> roles() { return List.of(Lead.INSTANCE); }
+    }
 }

@@ -43,19 +43,22 @@ final class Pictured {
         @Override public Root parent() { return Root.INSTANCE; }
     }
 
-    record Up() implements Component<Picture> {
+    record Up() implements Component<Picture>, WithRoles<Pictures> {
         static final Up INSTANCE = new Up();
         @Override public Picture parent() { return Picture.INSTANCE; }
+        @Override public Pictures roleSet() { return Pictures.INSTANCE; }
     }
 
-    record Down() implements Component<Picture> {
+    record Down() implements Component<Picture>, WithRoles<Pictures> {
         static final Down INSTANCE = new Down();
         @Override public Picture parent() { return Picture.INSTANCE; }
+        @Override public Pictures roleSet() { return Pictures.INSTANCE; }
     }
 
-    record Star() implements Component<Picture> {
+    record Star() implements Component<Picture>, WithRoles<Pictures> {
         static final Star INSTANCE = new Star();
         @Override public Picture parent() { return Picture.INSTANCE; }
+        @Override public Pictures roleSet() { return Pictures.INSTANCE; }
     }
 
     /** One of the up and the down as its sort mark, or none: which is its own to say. */
@@ -70,5 +73,13 @@ final class Pictured {
         static final Row INSTANCE = new Row();
         @Override public Bar parent() { return Bar.INSTANCE; }
         @Override public List<Slot<?>> parts() { return List.of(DSL.anyOf(Picture.INSTANCE).as(Lead.INSTANCE).optional()); }
+    }
+
+    // ── the roles each component may be cast in (RFC 0067, D55) ──────────
+
+    /** What a picture may be cast as: leading its owner, or its sort mark. */
+    record Pictures() implements RoleSet {
+        static final Pictures INSTANCE = new Pictures();
+        @Override public List<Role<?>> roles() { return List.of(Lead.INSTANCE, Sort.INSTANCE); }
     }
 }

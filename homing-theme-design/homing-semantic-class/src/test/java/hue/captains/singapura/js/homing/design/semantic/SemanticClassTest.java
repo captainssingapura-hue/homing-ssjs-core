@@ -7,10 +7,12 @@ import hue.captains.singapura.js.homing.component.taxonomy.ComponentPartDSL;
 import hue.captains.singapura.js.homing.component.taxonomy.L1_ComponentBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.ReadTaxonomy;
 import hue.captains.singapura.js.homing.component.taxonomy.Role;
+import hue.captains.singapura.js.homing.component.taxonomy.RoleSet;
 import hue.captains.singapura.js.homing.component.taxonomy.L1_RoleBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.Root;
 import hue.captains.singapura.js.homing.component.taxonomy.Slot;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
+import hue.captains.singapura.js.homing.component.taxonomy.WithRoles;
 import hue.captains.singapura.js.homing.design.Target;
 import hue.captains.singapura.js.homing.design.Trees;
 import org.junit.jupiter.api.Test;
@@ -38,14 +40,16 @@ class SemanticClassTest {
         @Override public Root parent() { return Root.INSTANCE; }
     }
 
-    record PlainButton() implements Component<Control> {
+    record PlainButton() implements Component<Control>, WithRoles<Confirming> {
         static final PlainButton INSTANCE = new PlainButton();
         @Override public Control parent() { return Control.INSTANCE; }
+        @Override public Confirming roleSet() { return Confirming.INSTANCE; }
     }
 
-    record Caption() implements Component<Text> {
+    record Caption() implements Component<Text>, WithRoles<Titling> {
         static final Caption INSTANCE = new Caption();
         @Override public Text parent() { return Text.INSTANCE; }
+        @Override public Titling roleSet() { return Titling.INSTANCE; }
     }
 
     record Roles() implements L1_RoleBranch<RoleRoot> {
@@ -100,5 +104,19 @@ class SemanticClassTest {
                 chain.stream().map(SemanticClass::token).toList());
         assertTrue(chain.stream().noneMatch(c -> c.component().equals(Confirmation.INSTANCE)), "never through the confirmation that owns the title");
         assertTrue(chain.stream().allMatch(c -> c.target().equals(Target.Color.Text.INSTANCE)), "on its own target throughout");
+    }
+
+    // ── the roles each component may be cast in (RFC 0067, D55) ──
+
+    /** What the button may be cast as. */
+    record Confirming() implements RoleSet {
+        static final Confirming INSTANCE = new Confirming();
+        @Override public List<Role<?>> roles() { return List.of(Confirm.INSTANCE); }
+    }
+
+    /** What the caption may be cast as. */
+    record Titling() implements RoleSet {
+        static final Titling INSTANCE = new Titling();
+        @Override public List<Role<?>> roles() { return List.of(Title.INSTANCE); }
     }
 }

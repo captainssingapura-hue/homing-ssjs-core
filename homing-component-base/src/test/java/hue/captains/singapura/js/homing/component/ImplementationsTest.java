@@ -10,10 +10,12 @@ import hue.captains.singapura.js.homing.component.taxonomy.L1_RoleBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.L2_ComponentBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.ReadTaxonomy;
 import hue.captains.singapura.js.homing.component.taxonomy.Role;
+import hue.captains.singapura.js.homing.component.taxonomy.RoleSet;
 import hue.captains.singapura.js.homing.component.taxonomy.RoleRoot;
 import hue.captains.singapura.js.homing.component.taxonomy.Root;
 import hue.captains.singapura.js.homing.component.taxonomy.Slot;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
+import hue.captains.singapura.js.homing.component.taxonomy.WithRoles;
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.core.DomModule;
@@ -49,22 +51,25 @@ class ImplementationsTest {
         public static final Container INSTANCE = new Container();
         @Override public Root parent() { return Root.INSTANCE; }
     }
-    public record PlainButton() implements Component<Button> {
+    public record PlainButton() implements Component<Button>, WithRoles<ActRoles> {
         public static final PlainButton INSTANCE = new PlainButton();
         @Override public Button parent() { return Button.INSTANCE; }
+        @Override public ActRoles roleSet() { return ActRoles.INSTANCE; }
     }
     public record DangerButton() implements Component<Button> {
         public static final DangerButton INSTANCE = new DangerButton();
         @Override public Button parent() { return Button.INSTANCE; }
     }
-    public record Icon() implements Component<Control> {
+    public record Icon() implements Component<Control>, WithRoles<SymbolRoles> {
         public static final Icon INSTANCE = new Icon();
         @Override public Control parent() { return Control.INSTANCE; }
+        @Override public SymbolRoles roleSet() { return SymbolRoles.INSTANCE; }
     }
     /** Nothing implements the bar: a dialog realizes it inline, so the bar's buttons are the dialog's to import. */
-    public record Bar() implements Component<Container> {
+    public record Bar() implements Component<Container>, WithRoles<ActsRoles> {
         public static final Bar INSTANCE = new Bar();
         @Override public Container parent() { return Container.INSTANCE; }
+        @Override public ActsRoles roleSet() { return ActsRoles.INSTANCE; }
         @Override public List<Slot<?>> parts() { return List.of(ComponentPartDSL.INSTANCE.part(PlainButton.INSTANCE).as(Act.INSTANCE).atLeast(1)); }
     }
     public record Dialog() implements Component<Container> {
@@ -76,9 +81,10 @@ class ImplementationsTest {
         }
     }
     /** A button whose face is an icon its owner makes and hands in; a strip that holds one. */
-    public record IconButton() implements Component<Button> {
+    public record IconButton() implements Component<Button>, WithRoles<ActRoles> {
         public static final IconButton INSTANCE = new IconButton();
         @Override public Button parent() { return Button.INSTANCE; }
+        @Override public ActRoles roleSet() { return ActRoles.INSTANCE; }
         @Override public List<Slot<?>> parts() { return List.of(ComponentPartDSL.INSTANCE.part(Icon.INSTANCE).as(Symbol.INSTANCE).one()); }
     }
     public record Strip() implements Component<Container> {
@@ -96,13 +102,15 @@ class ImplementationsTest {
         public static final Mark INSTANCE = new Mark();
         @Override public Control parent() { return Control.INSTANCE; }
     }
-    public record Star() implements Component<Mark> {
+    public record Star() implements Component<Mark>, WithRoles<SymbolRoles> {
         public static final Star INSTANCE = new Star();
         @Override public Mark parent() { return Mark.INSTANCE; }
+        @Override public SymbolRoles roleSet() { return SymbolRoles.INSTANCE; }
     }
-    public record Moon() implements Component<Mark> {
+    public record Moon() implements Component<Mark>, WithRoles<SymbolRoles> {
         public static final Moon INSTANCE = new Moon();
         @Override public Mark parent() { return Mark.INSTANCE; }
+        @Override public SymbolRoles roleSet() { return SymbolRoles.INSTANCE; }
     }
     public record Badge() implements Component<Container> {
         public static final Badge INSTANCE = new Badge();
@@ -443,5 +451,25 @@ class ImplementationsTest {
                 check(new GlyphsModule()));
         assertEquals(List.of("SealModule implements every leaf of Seal, but Knot holds parts: the leaves of one class are alike but for their look"),
                 check(new SealModule()));
+    }
+
+    // ── the roles each component may be cast in (RFC 0067, D55) ──
+
+    /** What a button may be cast as. */
+    public record ActRoles() implements RoleSet {
+        public static final ActRoles INSTANCE = new ActRoles();
+        @Override public List<Role<?>> roles() { return List.of(Act.INSTANCE); }
+    }
+
+    /** What a bar may be cast as. */
+    public record ActsRoles() implements RoleSet {
+        public static final ActsRoles INSTANCE = new ActsRoles();
+        @Override public List<Role<?>> roles() { return List.of(Acts.INSTANCE); }
+    }
+
+    /** What an icon or a mark may be cast as. */
+    public record SymbolRoles() implements RoleSet {
+        public static final SymbolRoles INSTANCE = new SymbolRoles();
+        @Override public List<Role<?>> roles() { return List.of(Symbol.INSTANCE); }
     }
 }
