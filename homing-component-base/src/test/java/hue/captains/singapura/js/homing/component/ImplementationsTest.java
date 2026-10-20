@@ -440,6 +440,20 @@ class ImplementationsTest {
                 check(ButtonModule.INSTANCE, IconModule.INSTANCE, OddIconModule.INSTANCE, AdriftModule.INSTANCE, StrayModule.INSTANCE));
     }
 
+    /** A widget's module: a widget is no component, so it is anchored at no leaf (owner, 20 Oct). */
+    public record LooseWidgetModule() implements Widget<Widget._None, LooseWidgetModule> {
+        public static final LooseWidgetModule INSTANCE = new LooseWidgetModule();
+        public record LooseWidget() implements Widget._Class<Widget._None, LooseWidgetModule> {}
+        @Override public String title() { return "Loose"; }
+        @Override public ImportsFor<LooseWidgetModule> imports() { return ImportsFor.noImports(); }
+        @Override public ExportsOf<LooseWidgetModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new LooseWidget())); }
+    }
+
+    @Test
+    void aWidget_isNoComponent_anchoredAtNoLeaf() {
+        assertEquals(List.of(), check(LooseWidgetModule.INSTANCE));
+    }
+
     /**
      * One class realizes every mark: the badge imports it for the star its slot names, the picker for
      * any mark; a module that holds no mark imports it for nothing, and one that names none of them
