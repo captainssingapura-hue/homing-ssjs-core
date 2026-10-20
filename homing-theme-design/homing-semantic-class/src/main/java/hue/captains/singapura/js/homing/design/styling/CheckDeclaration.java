@@ -6,6 +6,7 @@ import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.component.taxonomy.Component;
 import hue.captains.singapura.js.homing.component.taxonomy.RoleNode;
 import hue.captains.singapura.js.homing.component.taxonomy.RoleRoot;
+import hue.captains.singapura.js.homing.component.taxonomy.Room;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.design.color.ColorLeaf;
 import hue.captains.singapura.js.homing.design.color.ColorScale;
@@ -198,6 +199,10 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
         CastingCss.Marked marked = CastingCss.INSTANCE.marks(name, text);
         if (!marked.passes()) return new CssChecked(false, marked.problems(), List.of(), Map.of());
         var problems = new ArrayList<>(marked.problems());
+        var declared = casting.component() instanceof Component<?> c ? c.rooms().stream().map(Room::name).toList() : List.<String>of();
+        for (String room : marked.rooms())
+            if (!declared.contains(room))
+                problems.add(name + ": rules $casting__" + room + ", a room " + casting.component().token() + " has not: a component's rooms are its own to declare");
         ReadCss.Read read = ReadCss.INSTANCE.read(CastingCss.INSTANCE.filled(text, casting));
         problems.addAll(read.problems());
         CastingRule rule = new CastingRule(taxonomy, tree, style, casting, name, spectra);

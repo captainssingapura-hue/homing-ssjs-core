@@ -67,7 +67,9 @@ public record TaxonomyProblem(Rule rule, String says) implements ValueObject {
         /** A component cast in a role with a look of its own that its role set does not allow - or that has no role set (D55). */
         ROLE_NOT_ALLOWED,
         /** A role set with no roles, a role twice, or one that only places a part (D55). */
-        ROLE_SET_BADLY
+        ROLE_SET_BADLY,
+        /** A component that names a room twice. */
+        ROOMS_BADLY
     }
 
     @Override public String toString() { return rule + ": " + says; }

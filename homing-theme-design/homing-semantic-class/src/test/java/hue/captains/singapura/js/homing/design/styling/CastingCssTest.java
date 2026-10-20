@@ -64,4 +64,19 @@ class CastingCssTest {
         assertTrue(CSS.marks("g.css", "$casting { color: inherit; } $casting { color: inherit; }").problems().stream()
                 .anyMatch(p -> p.contains("ruled twice")), "its one rule, once");
     }
+
+    @Test
+    void aRoom_ruledBesideTheCasting_declarationsAlone_filledAsTheCastingsClassAndItsName() {
+        String css = "$casting { gap: 0; } $casting__body { padding-block: 14px; gap: 10px; }";
+        CastingCss.Marked marked = CSS.marks("panel.css", css);
+        assertTrue(marked.passes(), marked.problems().toString());
+        assertEquals(Set.of("body"), marked.rooms());
+        assertTrue(CSS.filled(css, "c-panel", "panel").contains(".c-panel__body {"), CSS.filled(css, "c-panel", "panel"));
+        assertTrue(CSS.marks("h.css", "$casting { gap: 0; } $casting__body { gap: 1px; } $casting__body { gap: 2px; }").problems().stream()
+                .anyMatch(p -> p.contains("$casting__body is ruled twice")), "a room once");
+        assertTrue(CSS.marks("i.css", "$casting { gap: 0; } $casting__body { &$current { gap: 1px; } }").problems().stream()
+                .anyMatch(p -> p.contains("declarations alone")), "a room has no states of its own");
+        assertTrue(CSS.marks("j.css", "$casting { gap: 0; } $casting__Body { gap: 1px; }").problems().stream()
+                .anyMatch(p -> p.contains("is no mark of the casting")), "a room named in lower-case words");
+    }
 }

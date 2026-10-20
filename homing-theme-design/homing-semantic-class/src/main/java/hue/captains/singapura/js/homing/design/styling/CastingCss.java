@@ -28,6 +28,8 @@ import java.util.regex.Pattern;
  * <ul>
  *   <li>{@code $casting { … }} - its one rule, the casting's class;</li>
  *   <li>{@code &$word { … }}, nested in it - an application state, its class for the word;</li>
+ *   <li>{@code $casting__name { … }}, beside it - a room of its component's own, the casting's class and the room's
+ *       name: declarations alone, a room having no states of its own;</li>
  *   <li>{@code @keyframes $name} - a keyframes of its own, and {@code $name} where a value uses it.</li>
  * </ul>
  *
@@ -40,6 +42,7 @@ public record CastingCss() implements StatelessFunctionalObject {
     public static final CastingCss INSTANCE = new CastingCss();
 
     private static final String CASTING = "$casting";
+    private static final Pattern ROOM = Pattern.compile("\\$casting__([a-z][a-z0-9]*(?:-[a-z0-9]+)*)");
     private static final Pattern NAME = Pattern.compile("[a-z][a-z0-9-]*");
     private static final Pattern STATE = Pattern.compile("&\\$([a-z][a-z0-9-]*)");
     private static final Pattern KEYFRAMES = Pattern.compile("@keyframes\\s+\\$([a-z][a-z0-9-]*)");
@@ -97,14 +100,15 @@ public record CastingCss() implements StatelessFunctionalObject {
 
     /**
      * What a file marks, and every problem with its marks: its one rule {@code $casting}; each state {@code &$word};
-     * each keyframes {@code @keyframes $name}, once, and every {@code $name} a value uses one of them; no class name
-     * anywhere, and no other {@code $}.
+     * each room {@code $casting__name}, once, declarations alone; each keyframes {@code @keyframes $name}, once, and
+     * every {@code $name} a value uses one of them; no class name anywhere, and no other {@code $}.
      *
      * @param states    the words of the states it marks, as written
      * @param keyframes the names of its keyframes
+     * @param rooms     the names of the rooms it rules
      */
-    public record Marked(List<String> problems, Set<String> states, Set<String> keyframes) implements ValueObject {
-        public Marked { problems = List.copyOf(problems); states = Set.copyOf(states); keyframes = Set.copyOf(keyframes); }
+    public record Marked(List<String> problems, Set<String> states, Set<String> keyframes, Set<String> rooms) implements ValueObject {
+        public Marked { problems = List.copyOf(problems); states = Set.copyOf(states); keyframes = Set.copyOf(keyframes); rooms = Set.copyOf(rooms); }
 
         public boolean passes() { return problems.isEmpty(); }
     }
@@ -114,6 +118,7 @@ public record CastingCss() implements StatelessFunctionalObject {
         var problems = new ArrayList<String>();
         var states = new LinkedHashSet<String>();
         var keyframes = new LinkedHashSet<String>();
+        var rooms = new LinkedHashSet<String>();
         ReadCss.Read read = ReadCss.INSTANCE.read(css);
         for (String p : read.problems()) problems.add(name + ":" + p);
         int rules = 0;
@@ -123,6 +128,14 @@ public record CastingCss() implements StatelessFunctionalObject {
                     rules++;
                     if (rules > 1) problems.add(name + ":" + r.line() + ": $casting is ruled twice: an implementation's CSS holds its casting's one rule");
                     else inside(name, r.body(), states, problems);
+                }
+                case ReadCss.Rule r when ROOM.matcher(r.selector().trim()).matches() -> {
+                    Matcher m = ROOM.matcher(r.selector().trim());
+                    m.matches();
+                    if (!rooms.add(m.group(1))) problems.add(name + ":" + r.line() + ": $casting__" + m.group(1) + " is ruled twice: a room's rule is written once");
+                    for (ReadCss.Item i : r.body())
+                        if (!(i instanceof ReadCss.Declaration))
+                            problems.add(name + ":" + i.line() + ": inside $casting__" + m.group(1) + ": a room's rule holds declarations alone - a room has no states of its own");
                 }
                 case ReadCss.Rule r -> problems.add(name + ":" + r.line() + ": " + r.selector().trim() + " is no mark of the casting: an implementation's "
                         + "CSS rules its casting as $casting { … }, and names no class (The Style Jars)");
@@ -138,7 +151,7 @@ public record CastingCss() implements StatelessFunctionalObject {
         }
         if (rules == 0 && read.problems().isEmpty()) problems.add(name + ": marks no $casting rule: an implementation's CSS rules its casting");
         for (ReadCss.Item item : read.items()) values(name, item, keyframes, problems);
-        return new Marked(problems, states, keyframes);
+        return new Marked(problems, states, keyframes, rooms);
     }
 
     /** Inside the casting's rule: each nested selector a state's mark, the browser's own, or a pseudo-element's - no class, no other $. */
@@ -179,8 +192,9 @@ public record CastingCss() implements StatelessFunctionalObject {
     }
 
     /**
-     * The file with its marks filled in for a casting: {@code $casting} its class, {@code &$word} its state's class for
-     * the word, {@code $name} - a keyframes of its own - {@code <casting>-<name>}.
+     * The file with its marks filled in for a casting: {@code $casting} its class, {@code $casting__name} its class and
+     * the room's name, {@code &$word} its state's class for the word, {@code $name} - a keyframes of its own -
+     * {@code <casting>-<name>}.
      */
     public String filled(String css, Casting casting) {
         return filled(css, LeafClasses.INSTANCE.styled(casting), casting.token());

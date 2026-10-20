@@ -95,6 +95,7 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
             var named = new HashSet<Role<?>>();
             List<Slot<?>> slots = slotsOf(c, problems);
             kind(c, slots, problems);
+            rooms(c, problems);
             for (Slot<?> slot : slots) {
                 if (slot == null) continue;
                 Role<?> role = slot.role();
@@ -281,6 +282,13 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
         if (leaf && composite) problems.add(new TaxonomyProblem(Rule.KIND_BADLY, Names.of(c) + " says it is a leaf and a composite: a component is one"));
         else if (leaf && !slots.isEmpty()) problems.add(new TaxonomyProblem(Rule.KIND_BADLY, Names.of(c) + " is a leaf, and declares parts: a component with parts is a composite"));
         else if (composite && slots.isEmpty()) problems.add(new TaxonomyProblem(Rule.KIND_BADLY, Names.of(c) + " is a composite, and declares no parts: a component with none is a leaf"));
+    }
+
+    /** A component's rooms, each named once. */
+    private static void rooms(Component<?> c, List<TaxonomyProblem> problems) {
+        var named = new HashSet<String>();
+        for (Room room : c.rooms())
+            if (!named.add(room.name())) problems.add(new TaxonomyProblem(Rule.ROOMS_BADLY, Names.of(c) + " names its room " + room.name() + " twice"));
     }
 
     /** A component's slots; a count that is no cardinality is a problem of the component that said it. */

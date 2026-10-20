@@ -38,6 +38,12 @@ public non-sealed interface Component<P extends ComponentBranch> extends Taxon {
     default List<Slot<?>> parts() { return List.of(); }
 
     /**
+     * Its rooms: elements of its own, inside it, that are no parts - they share its class, their look its own look's,
+     * and what sits in them is its own (RFC 0067). None by default.
+     */
+    default List<Room> rooms() { return List.of(); }
+
+    /**
      * The states it has, from the tree of states: being enabled, being on. Each has its change, an
      * event it offers by having the state. None by default.
      */
