@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.component.taxonomy;
 
 import hue.captains.singapura.js.homing.component.taxonomy.Cardinality.AtMost;
+import hue.captains.singapura.js.homing.component.taxonomy.Cardinality.Dynamic;
 import hue.captains.singapura.js.homing.component.taxonomy.Cardinality.Fixed;
 import hue.captains.singapura.js.homing.component.taxonomy.Cardinality.Unbounded;
 import hue.captains.singapura.js.homing.component.taxonomy.Cardinality.Varying;
@@ -40,6 +41,10 @@ import hue.captains.singapura.tao.ontology.ValueObject;
  *   <tr><td>{@code atLeast(n)}</td><td>{@code n..*}</td></tr>
  *   <tr><td>{@code between(m, n)}</td><td>{@code m..n}</td></tr>
  * </table>
+ *
+ * <p>Each count is static, as the owner is made and for its life, unless it is said dynamic - {@code
+ * any(Cardinality.DYNAMIC)}, {@code optional(Cardinality.DYNAMIC)}: the owner makes and drops those parts while it
+ * lives (RFC 0071 port, question 5).</p>
  */
 public record ComponentPartDSL() implements StatelessFunctionalObject {
 
@@ -88,26 +93,47 @@ public record ComponentPartDSL() implements StatelessFunctionalObject {
      */
     public record NeedsCount<E extends Component<?>>(Players players, Role<?> role) implements ValueObject {
 
-        /** Exactly one, from the start. */
+        /** Exactly one, static: made with its owner, kept for its life. */
         public Slot<E> one() { return exactly(1); }
 
-        /** Exactly {@code n}, from the start. */
+        /** Exactly one, dynamic: the owner replaces it while it lives - another player is another part. */
+        public Slot<E> one(Dynamic dynamic) { return exactly(1, dynamic); }
+
+        /** Exactly {@code n}, static. */
         public Slot<E> exactly(int n) { return slot(new Fixed(n)); }
 
-        /** None, or one. */
+        /** Exactly {@code n}, dynamic. */
+        public Slot<E> exactly(int n, Dynamic dynamic) { return slot(new Fixed(n, dynamic)); }
+
+        /** None, or one, static: whether it is there is decided as the owner is made. */
         public Slot<E> optional() { return atMost(1); }
 
-        /** None, up to {@code n}. */
+        /** None, or one, dynamic: made and dropped while the owner lives. */
+        public Slot<E> optional(Dynamic dynamic) { return atMost(1, dynamic); }
+
+        /** None, up to {@code n}, static. */
         public Slot<E> atMost(int n) { return slot(new Varying(0, new AtMost(n))); }
 
-        /** As many as the owner holds, none included. */
+        /** None, up to {@code n}, dynamic. */
+        public Slot<E> atMost(int n, Dynamic dynamic) { return slot(new Varying(0, new AtMost(n), dynamic)); }
+
+        /** As many as the owner holds, none included, static: how many is decided as the owner is made. */
         public Slot<E> any() { return atLeast(0); }
 
-        /** {@code n} or more. */
+        /** As many as the owner holds, none included, dynamic: made and dropped while the owner lives. */
+        public Slot<E> any(Dynamic dynamic) { return atLeast(0, dynamic); }
+
+        /** {@code n} or more, static. */
         public Slot<E> atLeast(int n) { return slot(new Varying(n, Unbounded.INSTANCE)); }
 
-        /** From {@code m} up to {@code n}. */
+        /** {@code n} or more, dynamic. */
+        public Slot<E> atLeast(int n, Dynamic dynamic) { return slot(new Varying(n, Unbounded.INSTANCE, dynamic)); }
+
+        /** From {@code m} up to {@code n}, static. */
         public Slot<E> between(int m, int n) { return slot(new Varying(m, new AtMost(n))); }
+
+        /** From {@code m} up to {@code n}, dynamic. */
+        public Slot<E> between(int m, int n, Dynamic dynamic) { return slot(new Varying(m, new AtMost(n), dynamic)); }
 
         private Slot<E> slot(Cardinality cardinality) { return new Slot<>(role, players, cardinality); }
     }

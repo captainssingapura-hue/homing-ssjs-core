@@ -56,6 +56,26 @@ class DeclarationTest {
     }
 
     @Test
+    void everyCount_staticUnlessSaidDynamic() {
+        for (Slot<?> s : List.of(tags().one(), tags().exactly(3), tags().optional(), tags().atMost(4), tags().any(), tags().atLeast(2), tags().between(2, 12)))
+            assertFalse(s.cardinality().dynamic(), s + ": static, the default");
+        var dynamic = Cardinality.DYNAMIC;
+        assertEquals(new Fixed(1, dynamic), tags().one(dynamic).cardinality());
+        assertEquals(new Fixed(3, dynamic), tags().exactly(3, dynamic).cardinality());
+        assertEquals(new Varying(0, new AtMost(1), dynamic), tags().optional(dynamic).cardinality());
+        assertEquals(new Varying(0, new AtMost(4), dynamic), tags().atMost(4, dynamic).cardinality());
+        assertEquals(new Varying(0, Unbounded.INSTANCE, dynamic), tags().any(dynamic).cardinality());
+        assertEquals(new Varying(2, Unbounded.INSTANCE, dynamic), tags().atLeast(2, dynamic).cardinality());
+        assertEquals(new Varying(2, new AtMost(12), dynamic), tags().between(2, 12, dynamic).cardinality());
+        assertTrue(tags().any(dynamic).cardinality().dynamic());
+        assertFalse(tags().any().equals(tags().any(dynamic)), "the same count, decided at another time: another cardinality");
+        assertEquals("0..* dynamic", tags().any(dynamic).cardinality().toString());
+        assertEquals("0..1", tags().optional().cardinality().toString(), "static says nothing: the default");
+        assertEquals("0..*", tags().any(dynamic).cardinality().multiplicity(), "the multiplicity is the count's alone");
+        assertThrows(BadCardinality.class, () -> new Fixed(1, null));
+    }
+
+    @Test
     void writtenAsMultiplicity() {
         assertEquals(List.of("1", "3", "0..1", "0..4", "0..*", "2..*", "2..12"),
                 List.of(tags().one(), tags().exactly(3), tags().optional(), tags().atMost(4), tags().any(), tags().atLeast(2),
