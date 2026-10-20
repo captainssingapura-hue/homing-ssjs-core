@@ -65,7 +65,7 @@ class ImplementationsTest {
         @Override public Control parent() { return Control.INSTANCE; }
         @Override public SymbolRoles roleSet() { return SymbolRoles.INSTANCE; }
     }
-    /** Nothing implements the bar: a dialog realizes it inline, so the bar's buttons are the dialog's to import. */
+    /** The bar a dialog's actions sit on: a component of its own, its buttons its parts. */
     public record Bar() implements Component<Container>, WithRoles<ActsRoles> {
         public static final Bar INSTANCE = new Bar();
         @Override public Container parent() { return Container.INSTANCE; }
@@ -165,12 +165,21 @@ class ImplementationsTest {
         @Override public ImportsFor<IconModule> imports() { return ImportsFor.noImports(); }
         @Override public ExportsOf<IconModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new Icon())); }
     }
+    /** The bar: its own module, importing the buttons it holds. */
+    public record BarModule() implements DomModule<BarModule>, ImplFor<ImplementationsTest.Bar> {
+        public static final BarModule INSTANCE = new BarModule();
+        public record Bar() implements BranchComponent<BarModule> {}
+        @Override public ImportsFor<BarModule> imports() {
+            return ImportsFor.<BarModule>builder().add(new ModuleImports<>(List.of(new PlainButtonModule.PlainButton()), PlainButtonModule.INSTANCE)).build();
+        }
+        @Override public ExportsOf<BarModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new Bar())); }
+    }
     public record DialogModule() implements DomModule<DialogModule>, ImplFor<ImplementationsTest.Dialog> {
         public static final DialogModule INSTANCE = new DialogModule();
         public record Dialog() implements BranchComponent<DialogModule> {}
         @Override public ImportsFor<DialogModule> imports() {
             return ImportsFor.<DialogModule>builder()
-                    .add(new ModuleImports<>(List.of(new PlainButtonModule.PlainButton()), PlainButtonModule.INSTANCE))
+                    .add(new ModuleImports<>(List.of(new BarModule.Bar()), BarModule.INSTANCE))
                     .add(new ModuleImports<>(List.of(new IconModule.Icon()), IconModule.INSTANCE))
                     .build();
         }
@@ -200,14 +209,14 @@ class ImplementationsTest {
         }
         @Override public ExportsOf<StripModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new Strip())); }
     }
-    /** Code shared by whoever imports it, implementing nothing: the bar's buttons, made in one place. */
+    /** Code shared by whoever imports it, implementing nothing: the dialog's bar, made in one place. */
     public record BarHelperModule() implements DomModule<BarHelperModule> {
         public static final BarHelperModule INSTANCE = new BarHelperModule();
         public record BarHelper() implements Exportable._Class<BarHelperModule> {}
-        @Override public ImportsFor<BarHelperModule> imports() { return ImportsFor.<BarHelperModule>builder().add(new ModuleImports<>(List.of(new PlainButtonModule.PlainButton()), PlainButtonModule.INSTANCE)).build(); }
+        @Override public ImportsFor<BarHelperModule> imports() { return ImportsFor.<BarHelperModule>builder().add(new ModuleImports<>(List.of(new BarModule.Bar()), BarModule.INSTANCE)).build(); }
         @Override public ExportsOf<BarHelperModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new BarHelper())); }
     }
-    /** The dialog that realizes its bar through the helper. */
+    /** The dialog that makes its bar through the helper. */
     public record HelpedDialogModule() implements DomModule<HelpedDialogModule>, ImplFor<ImplementationsTest.Dialog> {
         public static final HelpedDialogModule INSTANCE = new HelpedDialogModule();
         public record Dialog() implements BranchComponent<HelpedDialogModule> {}
@@ -345,8 +354,8 @@ class ImplementationsTest {
 
     @Test
     void anchored_once_oneClassEach_composedAsDeclared() {
-        assertEquals(List.of(), check(ButtonModule.INSTANCE, PlainButtonModule.INSTANCE, IconModule.INSTANCE, DialogModule.INSTANCE),
-                "the dialog imports the plain button its unimplemented bar calls for, and the icon its own part does");
+        assertEquals(List.of(), check(ButtonModule.INSTANCE, PlainButtonModule.INSTANCE, IconModule.INSTANCE, BarModule.INSTANCE, DialogModule.INSTANCE),
+                "the dialog imports its bar and its icon, each its part; the bar the buttons it holds");
     }
 
     @Test
@@ -354,23 +363,28 @@ class ImplementationsTest {
         assertEquals(List.of(
                         "DangerButtonModule implements DangerButton but exports DangerButton, DangerButtonBuilder: one module, one class - the component, named as its leaf - and at most its companion, named for it",
                         "LooseDialogModule (Dialog) imports DangerButton (DangerButtonModule), which none of its parts declares",
+                        "LooseDialogModule (Dialog) never imports Bar, which its part acts calls for",
                         "LooseDialogModule (Dialog) never imports Icon, which its part symbol calls for"),
-                check(ButtonModule.INSTANCE, PlainButtonModule.INSTANCE, DangerButtonModule.INSTANCE, IconModule.INSTANCE, LooseDialogModule.INSTANCE));
+                check(ButtonModule.INSTANCE, PlainButtonModule.INSTANCE, DangerButtonModule.INSTANCE, IconModule.INSTANCE, BarModule.INSTANCE, LooseDialogModule.INSTANCE));
     }
 
     @Test
-    void throughAPartNothingImplements_theCallIsSaid() {
-        assertEquals(List.of("NoButtons (Dialog) never imports PlainButton, which its part acts (an unrealized Bar) → act calls for"),
-                check(ButtonModule.INSTANCE, PlainButtonModule.INSTANCE, IconModule.INSTANCE, new NoButtons()));
+    void aPartNothingImplements_isRefused_neverRealizedInline() {
+        assertEquals(List.of("InlineDialog (Dialog): its part acts is Bar, which no module implements - a part is a component of its own, never realized by its owner inline"),
+                check(ButtonModule.INSTANCE, PlainButtonModule.INSTANCE, IconModule.INSTANCE, new InlineDialog()),
+                "the dialog makes its bar itself, the bar's buttons with it: refused");
     }
 
-    /** The dialog with its button import taken away. */
-    private record NoButtons() implements DomModule<NoButtons>, ImplFor<ImplementationsTest.Dialog> {
-        public record Dialog() implements BranchComponent<NoButtons> {}
-        @Override public ImportsFor<NoButtons> imports() {
-            return ImportsFor.<NoButtons>builder().add(new ModuleImports<>(List.of(new IconModule.Icon()), IconModule.INSTANCE)).build();
+    /** The dialog that makes its bar itself, importing the bar's buttons in the bar's stead. */
+    private record InlineDialog() implements DomModule<InlineDialog>, ImplFor<ImplementationsTest.Dialog> {
+        public record Dialog() implements BranchComponent<InlineDialog> {}
+        @Override public ImportsFor<InlineDialog> imports() {
+            return ImportsFor.<InlineDialog>builder()
+                    .add(new ModuleImports<>(List.of(new PlainButtonModule.PlainButton()), PlainButtonModule.INSTANCE))
+                    .add(new ModuleImports<>(List.of(new IconModule.Icon()), IconModule.INSTANCE))
+                    .build();
         }
-        @Override public ExportsOf<NoButtons> exports() { return new ExportsOf<>(this, List.of(new Dialog())); }
+        @Override public ExportsOf<InlineDialog> exports() { return new ExportsOf<>(this, List.of(new Dialog())); }
     }
 
     @Test
@@ -397,8 +411,8 @@ class ImplementationsTest {
 
     @Test
     void aModuleThatImplementsNothing_isItsImportersCode() {
-        assertEquals(List.of(), check(ButtonModule.INSTANCE, PlainButtonModule.INSTANCE, IconModule.INSTANCE, BarHelperModule.INSTANCE, HelpedDialogModule.INSTANCE),
-                "the dialog's bar is realized in a helper it imports: the helper's plain button is the dialog's");
+        assertEquals(List.of(), check(ButtonModule.INSTANCE, PlainButtonModule.INSTANCE, IconModule.INSTANCE, BarModule.INSTANCE, BarHelperModule.INSTANCE, HelpedDialogModule.INSTANCE),
+                "the dialog's bar is made in a helper it imports: the helper's bar is the dialog's");
     }
 
     /** A companion is the factory named for the component, and a constant: anything else beside the class is refused. */
