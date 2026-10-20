@@ -14,7 +14,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * The marker (RFC 0066 E3, keyboard §17.5): where the focus is, one per page,
  * kept by the steward — the holder, held or lent to a native control of its
- * own, or away — and the steward the only writer of the marks. Over a fake
+ * own, or away — and each member told its own mark, marked(state), the
+ * steward writing nothing on the page (RFC 0071, D16). Over a fake
  * DOM whose focus() and blur() move document.activeElement and fire focusout
  * then focusin as a browser does, the body active while the focus is between
  * the two.
@@ -74,12 +75,15 @@ class KeyboardMarkTest extends JsModuleTestBase {
         var fieldA = el("INPUT", rootA), paneA = el("DIV", rootA), boxA = el("DIV", rootA, { tabindex: "-1" }), fieldB = el("INPUT", rootB);
         var kb = new KeyboardSteward(fakeBranch("keyboard"), { onEvent: sink });
         function member(id, root) {
-            var m = { keys: [], granted: [] };
-            kb.join(id, { keyDown: function (ev) { m.keys.push(ev.key); return true; }, granted: function (by) { m.granted.push(by); } });
+            var m = { keys: [], granted: [], heard: [], mark: "away" };
+            kb.join(id, { keyDown: function (ev) { m.keys.push(ev.key); return true; }, granted: function (by) { m.granted.push(by); },
+                          marked: function (state) { m.heard.push(state); m.mark = state; } });
             if (root) m.off = Keys.claimOn(root, kb, id);
             return m;
         }
-        function keysOn(e) { return e.getAttribute("data-keys"); }
+        // nothing the steward writes on the page: no attribute, no class, on any element
+        function written() { var out = []; [page, rootA, rootB, outside, fieldA, paneA, boxA, fieldB].forEach(function (e) {
+            Object.keys(e._attrs).forEach(function (k) { if (k !== "tabindex") out.push(k); }); e._classes.forEach(function (c) { out.push(c); }); }); return out.join(" "); }
         function at() { var m = kb.marker(); return m ? m.id + ":" + m.state : "none"; }
         """;
 
@@ -93,9 +97,6 @@ class KeyboardMarkTest extends JsModuleTestBase {
         loadModule(DIR + "keyboard/KeyboardWalkModule.js");
         loadModule(DIR + "keyboard/KeyboardShortcutsModule.js");
         loadModule(DIR + "keyboard/KeyboardChordsModule.js");
-        // the keys' marks as a leaf's state class: StyledLeaf, its classes through the css manager, here a stand-in
-        js.eval("js", "var CssClassManagerInstance = { cls: function (n) { return n; }, addClass: function (e, c) { e.classList.add(c); }, removeClass: function (e, c) { e.classList.remove(c); }, hasClass: function (e, c) { return e.classList.contains(c); } };");
-        loadModule("/homing/js/hue/captains/singapura/js/homing/server/StyledLeaves.js");
         loadModule(DIR + "keyboard/KeyboardMarkModule.js");
         loadModule(DIR + "keyboard/KeyboardHomeModule.js");
         loadModule(DIR + "keyboard/KeyboardStewardModule.js");
@@ -115,8 +116,9 @@ class KeyboardMarkTest extends JsModuleTestBase {
         assertTrue(eval("kb.marker().el === fieldA && kb.marker().root === rootA").asBoolean());
         assertEquals("Taken:b Granted:a:native Marked:a:lent", s("events.join(' ')"), "granted by the focus, and the marker moved once");
         assertEquals("native", s("a.granted.join()"));
-        assertEquals("lent", s("keysOn(rootA)"));
-        assertTrue(eval("keysOn(rootB) === null").asBoolean(), "one element on the page says where the focus is");
+        assertEquals("lent", s("a.mark"), "the holder told its own mark");
+        assertEquals("held,away", s("b.heard.join()"), "the one it left told it is away");
+        assertEquals("", s("written()"), "and nothing written on the page");
         assertEquals("fieldA", eval("document.activeElement === fieldA ? 'fieldA' : 'other'").asString(), "and the browser's focus is left where it arrived");
     }
 
@@ -124,7 +126,7 @@ class KeyboardMarkTest extends JsModuleTestBase {
     void theFocusLeavingForNothing_leavesTheSameMemberHeld() {
         eval("fieldA.focus(); events = []; fieldA.blur()");
         assertEquals("a:held", s("at()"));
-        assertEquals("held", s("keysOn(rootA)"));
+        assertEquals("lent,held", s("a.heard.join()"), "lent, then held again: no grant between, its mark told");
         assertEquals("Marked:a:held", s("marks()"));
         eval("key(document.body, 'ArrowUp')");
         assertEquals("ArrowUp", s("a.keys.join()"), "nothing focused: the holder's keyDown");
@@ -148,7 +150,8 @@ class KeyboardMarkTest extends JsModuleTestBase {
     void theFocusUnderNoMember_isAway_theMarkerKept_andItResumes() {
         eval("kb.claim('a'); events = []; outside.focus()");
         assertEquals("a:away", s("at()"), "the marker stays");
-        assertEquals("held", s("keysOn(rootA)"), "and so does its mark");
+        assertEquals("held", s("a.mark"), "and so does its mark: away is the steward's word for the focus, never a member's mark");
+        assertEquals("held", s("a.heard.join()"), "told once, when it was claimed: the focus under no member tells it nothing");
         assertEquals("Marked:a:away", s("marks()"));
         eval("key(outside, 'ArrowUp'); key(outside, 'x')");
         assertEquals("", s("a.keys.join()"), "away: nothing is routed");
@@ -164,7 +167,7 @@ class KeyboardMarkTest extends JsModuleTestBase {
         eval("fieldA.focus(); kb.claim('b')");
         assertTrue(eval("document.activeElement === document.body").asBoolean(), "a claim is an intention to have the focus: made true");
         assertEquals("b:held", s("at()"));
-        assertTrue(eval("keysOn(rootA) === null").asBoolean());
+        assertEquals("away", s("a.mark"));
         eval("outside.focus(); kb.claim('a')");
         assertTrue(eval("document.activeElement === document.body").asBoolean(), "away included");
         assertEquals("a:held", s("at()"));
@@ -187,27 +190,29 @@ class KeyboardMarkTest extends JsModuleTestBase {
         eval("fieldA.focus(); kb.release('a')");
         assertTrue(eval("document.activeElement === document.body").asBoolean());
         assertEquals("none", s("at()"));
-        assertTrue(eval("keysOn(rootA) === null && keysOn(rootB) === null").asBoolean(), "no holder, no mark");
+        assertTrue(eval("a.mark === 'away' && b.mark === 'away'").asBoolean(), "no holder, no mark");
     }
 
     @Test
-    void theCandidateWearsItsMark_andNothingElseDoes() {
+    void theCandidateIsToldItsMark_andNothingElseIs() {
         eval("kb.claim('a'); kb.offer('b')");
-        assertEquals("candidate", s("keysOn(rootB)"));
-        assertEquals("held", s("keysOn(rootA)"));
+        assertEquals("candidate", s("b.mark"));
+        assertEquals("held", s("a.mark"));
         eval("kb.withdraw()");
-        assertTrue(eval("keysOn(rootB) === null").asBoolean());
+        assertEquals("away", s("b.mark"));
         eval("kb.offer('b'); kb.confirm()");
-        assertEquals("held", s("keysOn(rootB)"));
-        assertTrue(eval("keysOn(rootA) === null").asBoolean());
+        assertEquals("held", s("b.mark"));
+        assertEquals("away", s("a.mark"));
+        assertEquals("candidate,away,candidate,held", s("b.heard.join()"), "each change told once");
     }
 
     @Test
-    void aRootForgotten_losesItsMark_andAnEnrolledHolderWearsItAtOnce() {
+    void aRootForgotten_leavesTheMarkWithItsMember() {
         eval("kb.claim('a'); a.off()");
-        assertTrue(eval("keysOn(rootA) === null").asBoolean());
+        assertEquals("held", s("a.mark"), "the mark is the member's, not its root's");
         eval("a.off = Keys.claimOn(rootA, kb, 'a')");
-        assertEquals("held", s("keysOn(rootA)"), "enrolled while it holds");
+        assertEquals("held", s("a.heard.join()"), "enrolled again while it holds: nothing new to tell it");
+        assertEquals("", s("written()"));
     }
 
     @Test
@@ -250,11 +255,11 @@ class KeyboardMarkTest extends JsModuleTestBase {
     }
 
     @Test
-    void checkNamesAMarkNotTheStewards() {
+    void checkNamesAMarkToldWrong() {
         eval("kb.claim('a')");
         assertTrue(eval("kb.check().length === 0").asBoolean());
-        eval("rootB.setAttribute('data-keys', 'held')");
-        assertEquals("the root of b says held, not null", s("kb.check().join()"));
+        eval("kb._marks.set('b', 'held')");
+        assertEquals("b was told it is held, and it is away", s("kb.check().join()"));
     }
 
     @Test
@@ -294,56 +299,29 @@ class KeyboardMarkTest extends JsModuleTestBase {
         eval("kt.dispose()");
     }
 
-    // ── the marks as a leaf's state class (RFC 0067, appendix Two Classes per Leaf, D12) ──
-
-    private static final String CARD = "var card = Object.freeze({ token: 'card', styled: 'styled-card', states: Object.freeze({"
-            + " keyboard: Object.freeze({ away: null, candidate: 'styled-card--candidate', lent: 'styled-card--lent', held: 'styled-card--held' }) }) });"
-            + " var rootC = el('DIV', page), fieldC = el('INPUT', rootC); rootC._classes.push('styled-card');"
-            + " kb.join('c', { keyDown: function () { return true; } });"
-            + " var offC = Keys.claimOn(rootC, kb, 'c', { leaf: card, state: 'keyboard' });";
-
-    private String classesOf(String el) { return s(el + "._classes.join(' ')"); }
+    // ── each member's own mark, and nothing written (RFC 0071, D16) ──
 
     @Test
-    void aRootEnrolledWithItsMarks_wearsItsLeafsStateClass_whileItHoldsOne() {
-        eval(CARD);
-        assertEquals("styled-card", classesOf("rootC"), "away: the rest, no class of the state");
-        eval("kb.claim('c')");
-        assertEquals("styled-card styled-card--held", classesOf("rootC"), "held: the state's class for it");
-        assertEquals("held", s("keysOn(rootC)"), "and data-keys, still, for the code that reads it");
-        eval("fieldC.focus()");
-        assertEquals("styled-card styled-card--lent", classesOf("rootC"), "lent to a native control of its own: the one value at a time");
-        eval("fieldC.blur(); kb.claim('a'); kb.offer('c')");
-        assertEquals("styled-card styled-card--candidate", classesOf("rootC"), "the walk's candidate");
-        eval("kb.withdraw()");
-        assertEquals("styled-card", classesOf("rootC"), "another holds, and no offer: the rest");
+    void aMemberHearsEveryChangeOfItsMark_andTheStewardWritesNothingOnThePage() {
+        eval("var rootC = el('DIV', page), fieldC = el('INPUT', rootC); var c = member('c', rootC);");
+        eval("kb.claim('c'); fieldC.focus(); fieldC.blur(); kb.claim('a'); kb.offer('c'); kb.withdraw()");
+        assertEquals("held,lent,held,away,candidate,away", s("c.heard.join()"), "held, lent to its own control, held again, away, offered, withdrawn");
+        assertTrue(eval("Object.keys(rootC._attrs).length === 0 && rootC._classes.length === 0").asBoolean(), "its root untouched");
+        assertEquals("", s("written()"));
         assertTrue(eval("kb.check().length === 0").asBoolean(), eval("kb.check().join('; ')").toString());
-        eval("kb.claim('c'); offC()");
-        assertEquals("styled-card", classesOf("rootC"), "forgotten: its class goes with its mark");
-        assertEquals(null, s("keysOn(rootC)"));
     }
 
     @Test
-    void aRootEnrolledWithoutMarks_wearsDataKeysAlone() {
-        eval("kb.claim('a')");
-        assertEquals("held", s("keysOn(rootA)"));
-        assertEquals("", classesOf("rootA"), "no leaf named: no class");
-    }
-
-    @Test
-    void marksThatCouldNeverShow_areRefused() {
+    void marksHandedIn_areRefused() {
         eval("var rootD = el('DIV', page); kb.join('d', { keyDown: function () { return true; } });");
-        var none = assertThrows(PolyglotException.class, () -> eval("Keys.claimOn(rootD, kb, 'd', { leaf: { token: 'tab', styled: 'styled-tab', states: {} }, state: 'keyboard' })"));
-        assertTrue(none.getMessage().contains("tab lists no state keyboard: the keys' marks on d's root could never show"), none.getMessage());
-        var short_ = assertThrows(PolyglotException.class, () -> eval("Keys.claimOn(rootD, kb, 'd', { leaf: { token: 'tab', styled: 'styled-tab',"
-                + " states: { keys: { away: null, candidate: 'a', held: 'b' } } }, state: 'keys' })"));
-        assertTrue(short_.getMessage().contains("tab's keys is away, candidate, held: the keys' marks are away - the rest - candidate, lent and held"), short_.getMessage());
-        assertThrows(PolyglotException.class, () -> eval("Keys.claimOn(rootD, kb, 'd', { state: 'keyboard' })"), "marks want the leaf");
+        var refused = assertThrows(PolyglotException.class, () -> eval("Keys.claimOn(rootD, kb, 'd', { leaf: { token: 'tab' }, state: 'keyboard' })"));
+        assertTrue(refused.getMessage().contains("claimOn takes no marks"), refused.getMessage());
+        assertThrows(PolyglotException.class, () -> eval("kb.enroll(rootD, 'd', { state: 'keyboard' })"), "nor does the steward enrol a root with them");
     }
 
     @Test
-    void theStewardGone_takesTheClassesOff() {
-        eval(CARD + " kb.claim('c'); kb.dispose()");
-        assertEquals("styled-card", classesOf("rootC"));
+    void theStewardGone_tellsEachMarkedMemberAway() {
+        eval("kb.claim('a'); kb.offer('b'); kb.dispose()");
+        assertTrue(eval("a.mark === 'away' && b.mark === 'away'").asBoolean());
     }
 }

@@ -32,20 +32,21 @@
 //                                have the focus, and the steward makes it true
 //   a release                    the browser's focus inside the one that let go, blurred
 //
-// THE MARKS ARE THE STEWARD'S ALONE: data-keys on every root it enrolled —
-// "held" or "lent" on the holder's, "candidate" on the walk's candidate's,
-// nothing on any other - for the code that reads them; and on a root enrolled
-// with its marks, { leaf, state }, that state's class for the look, its value
-// the mark and away the rest (RFC 0067, appendix Two Classes per Leaf, D12).
-// The members above the marker are TOLD, on every move,
-// within(on, at) — at being the marker — and each does what it does with it.
+// THE MARKS ARE WORKED OUT BY THE STEWARD, AND WORN BY EACH MEMBER: the holder
+// is held or lent - held too while the browser's focus is under no member, the
+// marker kept - the walk's candidate is candidate, every other member away.
+// Each member is told its own when it changes, marked(state), a value of its
+// Keyboard state, and sets that state itself, through its own reference (RFC
+// 0071, D16): the steward writes nothing on the page. The members above the
+// marker are TOLD, on every move, within(on, at) — at being the marker — and
+// each does what it does with it.
 //
 // Statics on a steward, as KeyboardWalk's are:
 //
 //   KeyboardMark.sync(s)           read the browser's focus, and hold the rules
 //   KeyboardMark.claimed(s, id, by)   after a grant: the focus made true
 //   KeyboardMark.released(s, id)      after a release: nothing left focused in it
-//   KeyboardMark.paint(s)          the marks, and — when the marker moved — the notices
+//   KeyboardMark.paint(s)          each member told its mark, and — when the marker moved — the notices
 //   KeyboardMark.marker(s)         { id, state, root, el }, or null with no holder
 //   KeyboardMark.check(s)          the invariants broken now, as sentences: [] when all hold
 //   KeyboardMark.asked(el)         whether an element's focus is one somebody asked for
@@ -54,7 +55,6 @@
 //   KeyboardMark.focusOut(s, ev) .enrolled(s, root, id) .escape(s, kind, ev)   the steward's, for its listeners
 // =============================================================================
 
-var _ATTR = "data-keys";
 // focusable by what they are: a link, an area and a player take the focus only when they are one — an address,
 // controls — so one that has it asked for it
 var _ASKED = /^(INPUT|SELECT|TEXTAREA|BUTTON|IFRAME|SUMMARY|EMBED|OBJECT|DIALOG|A|AREA|AUDIO|VIDEO)$/;
@@ -159,63 +159,50 @@ class KeyboardMark {
     /** The roots enrolled for a member. */
     static rootsOf(s, id) { return id == null ? [] : (s._rootsOf.get(id) || []); }
 
-    /** What each enrolled root should wear now: the holder's held or lent, the candidate's candidate. */
+    /**
+     * Each member's mark now, by its id: the holder's held or lent - held too while the browser's focus is under no
+     * member, the marker kept - and the walk's candidate's candidate. Every member not in it is away.
+     */
     static _wanted(s) {
         var want = new Map(), at = KeyboardMark.marker(s);
-        KeyboardMark.rootsOf(s, at ? at.id : null).forEach(function (r) { want.set(r, at.state === "lent" ? "lent" : "held"); });
-        KeyboardMark.rootsOf(s, s._candidate).forEach(function (r) { if (!want.has(r)) want.set(r, "candidate"); });
+        if (at) want.set(at.id, at.state === "lent" ? "lent" : "held");
+        if (s._candidate && !want.has(s._candidate)) want.set(s._candidate, "candidate");
         return want;
     }
 
     /**
-     * The marks written — by the steward alone — and, when the marker moved, everyone above it told: data-keys, for the
-     * code that reads it; and on a root enrolled with its marks, its leaf's state class, for the look (RFC 0067, D12).
+     * Each member whose mark changed told it - marked(state), held, lent, candidate or away, the values of its Keyboard
+     * state - and, when the marker moved, everyone above it told. Nothing is written on the page: the member sets its own
+     * state, through its own reference (RFC 0071, D16).
      */
     static paint(s) {
-        var want = KeyboardMark._wanted(s);
-        s._painted.forEach(function (r) { if (!want.has(r)) r.removeAttribute(_ATTR); });
-        want.forEach(function (v, r) { if (r.getAttribute(_ATTR) !== v) r.setAttribute(_ATTR, v); });
-        s._painted = new Set(want.keys());
-        s._marksOf.forEach(function (m, r) { KeyboardMark._wear(s, r, m, want.has(r) ? want.get(r) : "away"); });
+        var want = KeyboardMark._wanted(s), told = s._marks;
+        told.forEach(function (v, id) { if (!want.has(id)) { told.delete(id); KeyboardMark._marked(s, id, "away"); } });
+        want.forEach(function (v, id) { if (told.get(id) !== v) { told.set(id, v); KeyboardMark._marked(s, id, v); } });
         KeyboardMark.tell(s, false);
     }
 
-    /** Marks that can show, or refused: a leaf as Java describes it, listing the state, whose values are the marks', away the rest. */
-    static markable(id, marks) {
-        var leaf = marks.leaf, state = marks.state;
-        if (!leaf || typeof leaf.token !== "string" || typeof leaf.styled !== "string" || !leaf.states)
-            throw new Error("[KeyboardSteward] " + id + "'s marks want its leaf, as Java describes it");
-        var values = typeof state === "string" ? leaf.states[state] : null;
-        if (!values) throw new Error("[KeyboardSteward] " + leaf.token + " lists no state " + state + ": the keys' marks on " + id + "'s root could never show");
-        var want = ["away", "candidate", "lent", "held"], has = Object.keys(values);
-        if (want.some(function (v) { return has.indexOf(v) < 0; }) || has.length !== want.length || values.away !== null)
-            throw new Error("[KeyboardSteward] " + leaf.token + "'s " + state + " is " + has.join(", ") + ": the keys' marks are away - the rest - candidate, lent and held");
+    /** One member told its mark, when it hears marks: marked(state). */
+    static _marked(s, id, state) {
+        var h = s._members[id];
+        if (h && typeof h.marked === "function") { try { h.marked(state); } catch (e) { console.error("[KeyboardSteward] marked threw:", e); } }
     }
 
-    /** Every mark taken off, the steward going: data-keys, and each marked root's class. */
+    /** The mark a member was last told: held, lent, candidate, or away. */
+    static markOf(s, id) { return s._marks.has(id) ? s._marks.get(id) : "away"; }
+
+    /** Every mark taken off, the steward going: each member it had marked told away. */
     static clear(s) {
-        s._painted.forEach(function (r) { r.removeAttribute(_ATTR); });
-        s._marksOf.forEach(function (m, r) { StyledLeaf.hold(r, m.leaf, m.state, "away"); });
-        s._painted = new Set();
-        s._marksOf = new Map();
-        s._keysWorn = new Map();
+        var told = s._marks;
+        s._marks = new Map();
+        told.forEach(function (v, id) { KeyboardMark._marked(s, id, "away"); });
     }
 
-    /** A root's state class for the keys' mark it holds: the value's class on, the others off; away, the rest, none. */
-    static _wear(s, root, marks, value) {
-        if (s._keysWorn.get(root) === value) return;
-        StyledLeaf.hold(root, marks.leaf, marks.state, value);
-        s._keysWorn.set(root, value);
-    }
-
-    /** A root forgotten: its mark goes with it, and its state class. */
+    /** A root forgotten: memberAt no longer answers it. The mark is the member's, and stays with it. */
     static forget(s, root, id) {
         var list = s._rootsOf.get(id), i = list ? list.indexOf(root) : -1;
         if (i >= 0) list.splice(i, 1);
         if (list && !list.length) s._rootsOf.delete(id);
-        if (s._painted.has(root)) { s._painted.delete(root); root.removeAttribute(_ATTR); }
-        var marks = s._marksOf.get(root);
-        if (marks) { KeyboardMark._wear(s, root, marks, "away"); s._marksOf.delete(root); s._keysWorn.delete(root); }
     }
 
     /**
@@ -251,14 +238,8 @@ class KeyboardMark {
         } else if (a && !s._away) broken.push("the browser's focus is under no member, and the steward is not away");
         if (!a && s._lent) broken.push("the marker is lent, and nothing has the browser's focus");
         var want = KeyboardMark._wanted(s);
-        s._rootsOf.forEach(function (roots, rid) {
-            roots.forEach(function (r) {
-                var has = r.getAttribute(_ATTR), should = want.has(r) ? want.get(r) : null;
-                if (has !== should) broken.push("the root of " + rid + " says " + has + ", not " + should);
-                if (s._marksOf.has(r) && s._keysWorn.get(r) !== (should || "away"))
-                    broken.push("the root of " + rid + " wears its keys' class for " + s._keysWorn.get(r) + ", not " + (should || "away"));
-            });
-        });
+        want.forEach(function (v, id) { if (s._marks.get(id) !== v) broken.push(id + " was told it is " + KeyboardMark.markOf(s, id) + ", not " + v); });
+        s._marks.forEach(function (v, id) { if (!want.has(id)) broken.push(id + " was told it is " + v + ", and it is away"); });
         return broken;
     }
 }

@@ -27,10 +27,10 @@
 //   browser's focus. The browser's focus arriving inside a member makes that
 //   member the holder, by "native"; arriving on a member's own root, or on
 //   something only a scroller, is refused; a claim blurs whatever has the
-//   browser's focus outside the claimer. The steward alone writes the marks,
-//   on the roots it enrolled - data-keys, for code that reads them, and, on a
-//   root enrolled with its marks, its leaf's state class for the look (RFC
-//   0067, D12) - and tells the members above the marker
+//   browser's focus outside the claimer. The steward works out each member's
+//   mark - held, lent, candidate, or away - and tells it, marked(state), when it
+//   changes: the member sets its own Keyboard state (RFC 0071, D16), and the
+//   steward writes nothing on the page. It tells the members above the marker
 //   within(on, at) on every move of it.
 //
 //   THE WALK, while nothing is natively focused, is KeyboardWalk's: it moves
@@ -60,7 +60,7 @@
 // show where the work is going on. Nothing is handed on: it is told, not routed.
 //
 // Members: a membership of the focus tree, joined on the party's `joined`
-// notice, its component's keyDown/keyUp/granted/taken the reactors; or, the
+// notice, its component's keyDown/keyUp/granted/taken/marked the reactors; or, the
 // older way, an id with handlers. The roots under the convention are enrolled
 // here (Keys.claimOn does it), so `memberAt(el)` answers the innermost member
 // whose root contains an element — the structural query the press and the
@@ -71,7 +71,7 @@
 const _keyboardOwner = Object.freeze({ toString: () => "keyboard" });
 var _pages = new WeakSet();          // the documents that have a steward: one each
 var _STEWARD = "steward", _ROOT = "keyboard";
-var _REACTORS = ["keyDown", "keyUp", "granted", "taken", "offered", "withdrawn", "within", "chord"];   // a component's methods the steward calls, when it has them
+var _REACTORS = ["keyDown", "keyUp", "granted", "taken", "offered", "withdrawn", "within", "marked", "chord"];   // a component's methods the steward calls, when it has them
 
 class KeyboardSteward {
     constructor(branch, opts) {
@@ -92,9 +92,7 @@ class KeyboardSteward {
         this._members = {};
         this._roots = new WeakMap();     // root element → the id enrolled on it
         this._rootsOf = new Map();       // id → its roots, which wear its mark
-        this._painted = new Set();       // the roots wearing a mark now
-        this._marksOf = new Map();       // root → { leaf, state }: its leaf, and the state of it the keys' marks are
-        this._keysWorn = new Map();      // root → the value of that state it wears now
+        this._marks = new Map();         // member id → the mark it was last told: held, lent or candidate; away is none
         this._at = null; this._lent = null; this._away = false;   // the browser's focus last read; the element lent to; outside every member
         this._inside = {}; this._toldAt = null;                     // the members told the marker is inside them; the marker they were told
         this._party = new Party({ name: "keyboard", root: { path: _ROOT, initial: KeyboardSecretary.initial, behavior: KeyboardSecretary.behavior } });
@@ -147,19 +145,17 @@ class KeyboardSteward {
 
     // ── the roots under the convention ────────────────────────────────────
     /**
-     * A root enrolled for a member: memberAt answers it, and it wears the member's mark. The function returned forgets
-     * it. Keys.claimOn does this. With its marks - { leaf, state }: the root's leaf as Java describes it, and the state
-     * of it the keys' marks are - the root also wears that state's class while it holds a mark (RFC 0067, D12): the
-     * state's values the marks themselves, held, lent and candidate, and away its rest. Refused when they could not show.
+     * A root enrolled for a member: memberAt answers it, and the browser's focus inside it is measured against the
+     * member. The function returned forgets it. Keys.claimOn does this. The member's mark is not the root's: it is told
+     * the member, marked(state), which sets its own Keyboard state (RFC 0071, D16) - so marks handed in are refused.
      */
     enroll(root, id, marks) {
         id = KeyboardSteward.idOf(id);
         if (!root || typeof root !== "object") throw new Error("[KeyboardSteward] enroll wants the root element");
         if (typeof id !== "string" || !id) throw new Error("[KeyboardSteward] enroll wants the member's id");
-        if (marks != null) KeyboardMark.markable(id, marks);
+        if (marks !== undefined) throw new Error("[KeyboardSteward] " + id + ": the keys' mark is the member's own Keyboard state, told it by marked(state) (RFC 0071, D16) - no marks are handed in");
         var roots = this._roots, self = this;
         roots.set(root, id);
-        if (marks != null) this._marksOf.set(root, Object.freeze({ leaf: marks.leaf, state: marks.state }));
         KeyboardMark.enrolled(this, root, id);
         return function () { if (roots.get(root) === id) roots.delete(root); KeyboardMark.forget(self, root, id); };
     }
@@ -281,12 +277,16 @@ class KeyboardSteward {
         this._fire(KeyboardEvents.Withdrawn(id));
         return true;
     }
-    /** The offer taken up: the candidate claims, and the walk is over. True when there was a candidate. */
+    /**
+     * The offer taken up: the candidate claims, and the walk is over. True when there was a candidate. The marks are told
+     * once the claim is through, so the candidate hears held - never away between.
+     */
     confirm() {
         var id = this._candidate;
         if (!id) return false;
-        this.withdraw();
+        this._withdraw();
         this.claim(id);
+        KeyboardMark.paint(this);
         return true;
     }
 
