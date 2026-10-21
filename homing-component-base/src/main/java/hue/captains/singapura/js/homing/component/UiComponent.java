@@ -41,7 +41,9 @@ public sealed interface UiComponent<M extends DomModule<M>> extends Exportable._
         /** Takes the sub-branch its caller made for it and mints its own tree on it. */
         BRANCH("branch"),
         /** The branch shape with typed params: a host's widget. */
-        WIDGET("widget");
+        WIDGET("widget"),
+        /** The branch shape of a layout (owner, 21 Oct): it arranges sub-containers on its umbrella - no component, its styling the layouts'. */
+        LAYOUT("layout");
         private final String tag;
         Shape(String tag) { this.tag = tag; }
         public String tag() { return tag; }

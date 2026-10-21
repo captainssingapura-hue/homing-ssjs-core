@@ -144,7 +144,7 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
      */
     public List<Casting> castings() {
         var out = new LinkedHashSet<Casting>();
-        for (Component<?> c : components) if (!(c instanceof VirtualComponent<?>)) out.add(new Casting(c));
+        for (Component<?> c : components) if (!(c instanceof VirtualComponent<?>) && !(c instanceof LayoutStyling<?>)) out.add(new Casting(c));   // the layouts' styling has no casting of its own
         for (Part<?, ?> p : parts)
             for (Component<?> base : p.bases()) {
                 var cast = new Casting(base, p.role());

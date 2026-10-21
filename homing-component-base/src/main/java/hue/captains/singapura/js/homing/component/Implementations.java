@@ -79,8 +79,8 @@ public record Implementations() {
         for (EsModule<?> m : own) {
             String name = m.getClass().getSimpleName();
             List<? extends Exportable<?>> exports = m.exports().exports();
-            // a widget is no component (owner, 20 Oct): the design stack is not applied to it, so it is anchored at no leaf
-            boolean exportsComponent = exports.stream().anyMatch(x -> x instanceof UiComponent<?> c && c.shape() != UiComponent.Shape.WIDGET);
+            // a widget is no component (owner, 20 Oct), nor a layout (21 Oct): neither is anchored at a leaf
+            boolean exportsComponent = exports.stream().anyMatch(x -> x instanceof UiComponent<?> c && c.shape() != UiComponent.Shape.WIDGET && c.shape() != UiComponent.Shape.LAYOUT);
             switch (m) {
                 case ImplFor<?> impl -> {
                     Component<?> leaf = anchor(impl, name, problems);

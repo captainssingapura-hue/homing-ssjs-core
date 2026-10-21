@@ -428,6 +428,11 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
         }
         for (Part<?, ?> p : parts)
             for (Component<?> b : p.bases()) {
+                if (b instanceof LayoutStyling<?>) {
+                    out.add(new TaxonomyProblem(Rule.LAYOUT_STYLING_PLAYS_A_PART, Names.of(p.owner()) + " casts " + Names.of(b) + " as " + Names.of(p.role())
+                            + ": the layouts' styling owns parts for their design, and is no part of anything"));
+                    continue;
+                }
                 if (new Casting(b, p.role()).functional() || b instanceof VirtualComponent<?>) continue;   // a virtual leaf plays no part at all
                 if (!(b instanceof WithRoles<?> w) || w.roleSet() == null)
                     out.add(new TaxonomyProblem(Rule.ROLE_NOT_ALLOWED, Names.of(p.owner()) + " casts " + Names.of(b) + " as " + Names.of(p.role())

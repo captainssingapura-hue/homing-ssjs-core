@@ -454,6 +454,19 @@ class ImplementationsTest {
         assertEquals(List.of(), check(LooseWidgetModule.INSTANCE));
     }
 
+    /** A layout's module: a layout is no component either, so it too is anchored at no leaf (owner, 21 Oct). */
+    public record RowLayoutModule() implements DomModule<RowLayoutModule> {
+        public static final RowLayoutModule INSTANCE = new RowLayoutModule();
+        public record RowLayout() implements BranchComponent<RowLayoutModule> { @Override public Shape shape() { return Shape.LAYOUT; } }
+        @Override public ImportsFor<RowLayoutModule> imports() { return ImportsFor.noImports(); }
+        @Override public ExportsOf<RowLayoutModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new RowLayout())); }
+    }
+
+    @Test
+    void aLayout_isNoComponent_anchoredAtNoLeaf() {
+        assertEquals(List.of(), check(RowLayoutModule.INSTANCE));
+    }
+
     /**
      * One class realizes every mark: the badge imports it for the star its slot names, the picker for
      * any mark; a module that holds no mark imports it for nothing, and one that names none of them
