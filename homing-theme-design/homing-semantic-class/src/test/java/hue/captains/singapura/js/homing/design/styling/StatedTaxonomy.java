@@ -16,6 +16,7 @@ import hue.captains.singapura.js.homing.component.taxonomy.RoleRoot;
 import hue.captains.singapura.js.homing.component.taxonomy.Root;
 import hue.captains.singapura.js.homing.component.taxonomy.Slot;
 import hue.captains.singapura.js.homing.component.taxonomy.StateRoot;
+import hue.captains.singapura.js.homing.component.taxonomy.Classed;
 import hue.captains.singapura.js.homing.component.taxonomy.StateType;
 import hue.captains.singapura.js.homing.component.taxonomy.StateValue;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
@@ -72,7 +73,7 @@ public record StatedTaxonomy() {
         @Override public Map<StateValue, String> words() { return Map.of(StateValue.TRUE, "selected"); }
     }
 
-    public record Keys() implements StateType<Availability>, Importance.Secondary {
+    public record Keys() implements Classed<Availability>, Importance.Secondary {
         public static final Keys INSTANCE = new Keys();
         private static final List<StateValue> VALUES = List.of(new StateValue("away"), new StateValue("candidate"), new StateValue("held"));
         @Override public Availability parent() { return Availability.INSTANCE; }

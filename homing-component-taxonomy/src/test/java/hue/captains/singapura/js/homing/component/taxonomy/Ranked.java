@@ -107,7 +107,7 @@ final class Ranked {
     }
 
     /** A pseudo state with three values. */
-    record Wide() implements StateType<Mode>, Importance.Quinary, Pseudo {
+    record Wide() implements Classed<Mode>, Importance.Quinary, Pseudo {
         static final Wide INSTANCE = new Wide();
         @Override public Mode parent() { return Mode.INSTANCE; }
         @Override public List<StateValue> values() { return List.of(new StateValue("low"), new StateValue("mid"), new StateValue("high")); }

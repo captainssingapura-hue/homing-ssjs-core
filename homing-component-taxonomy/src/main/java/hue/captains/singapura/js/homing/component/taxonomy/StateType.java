@@ -1,27 +1,27 @@
 package hue.captains.singapura.js.homing.component.taxonomy;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * A type of state, a leaf of the tree of states: one respect in which a component may be one way or
- * another - Enabled (true or false), Elevation (flat, elevated or sunken). The tree files the types,
- * never their values: a component that has a type is in exactly one of its values at a time, so it
- * has one value of each type it names ({@link Component#states()}). A shared, stateless singleton
- * filed under a branch, the root's included; each has its change, an event no tree needs to hold.
- * A type that is yes or no is a {@link Flag}.
+ * another - Enabled (true or false), a button's count of its clicks, a splitter's position, a text box's
+ * draft. The tree files the types, never their values: a component that has a type is in exactly one of
+ * its values at a time, so it has one value of each type it names ({@link Component#states()}). A
+ * shared, stateless singleton filed under a branch, the root's included.
  *
- * <p>A design answers a value by its word. Every value but the one at rest has one: its established
- * design word where there is one ({@link #words()} - Enabled's false is {@code disabled}, Hovered's
- * true {@code hover}), and otherwise the type's name and the value's, joined: {@code busy-true}.</p>
+ * <p>Its change is its event (RFC 0069, amended 21 Oct): an event is the change of one state of one
+ * component, from a value to a different one, and a component declares its states and nothing else.
+ * What its values may be is its {@link #domain() domain} - a finite set of ranges, or a value object -
+ * and the changes that mean something of their own are named on it ({@link #changes()}). A type whose
+ * look is a class - one for each of its named values - is {@link Classed}; every other is drawn by what
+ * it moves or shows, and writes no class.</p>
  *
  * <pre>{@code
- * public record Elevation() implements StateType<Physical> {
- *     public static final Elevation INSTANCE = new Elevation();
- *     @Override public Physical parent() { return Physical.INSTANCE; }
- *     @Override public List<StateValue> values() {
- *         return List.of(new StateValue("flat"), new StateValue("elevated"), new StateValue("sunken"));
- *     }
+ * public record Clicks() implements StateType<Committing> {
+ *     public static final Clicks INSTANCE = new Clicks();
+ *     @Override public Committing parent() { return Committing.INSTANCE; }
+ *     @Override public StateDomain domain() { return new StateDomain.Ranges(List.of(new StateDomain.Span(0, BOUND, true)), new StateDomain.Number(0)); }
+ *     @Override public List<NamedChange> changes() { return List.of(new NamedChange("click", new NamedChange.Rises())); }
  * }
  * }</pre>
  *
@@ -32,23 +32,9 @@ public non-sealed interface StateType<P extends StateBranch> extends StateNode {
     /** The branch it is filed under. */
     P parent();
 
-    /**
-     * Its values, which exclude one another, the one at rest first: the value a look is drawn for
-     * when it says nothing of the state. Two at least, each once - held when the tree is read.
-     */
-    List<StateValue> values();
+    /** What its values may be, and its rest: its describer, in no language. */
+    StateDomain domain();
 
-    /**
-     * The established design words of those of its values that have one - Enabled's false is
-     * {@code disabled}; none by default. Never its rest's, which a design answers as the look itself.
-     */
-    default Map<StateValue, String> words() { return Map.of(); }
-
-    /** The word a design answers a value by: its established one, or the type's name and the value's joined - {@code busy-true}. */
-    default String word(StateValue value) {
-        if (!values().contains(value)) throw new IllegalArgumentException(name().value() + " has no value " + value);
-        if (value.equals(values().get(0))) throw new IllegalArgumentException(name().value() + "'s " + value + " is its rest: a look, not a word");
-        String word = words().get(value);
-        return word != null ? word : name().value() + "-" + value.token();
-    }
+    /** Its changes that mean something of their own, each named - none by default. */
+    default List<NamedChange> changes() { return List.of(); }
 }

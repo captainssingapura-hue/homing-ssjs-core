@@ -39,7 +39,7 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
     }
 
     /** A component's states in precedence: the least important first, so the last wins; two of one level in the order it lists them. */
-    public List<StateType<?>> precedence(Component<?> component) { return Importances.INSTANCE.precedence(component); }
+    public List<Classed<?>> precedence(Component<?> component) { return Importances.INSTANCE.precedence(component); }
 
     /** Every node a design can be asked about: the root, the branches, the components, then the parts. */
     public List<ComponentNode> nodes() {

@@ -26,7 +26,7 @@ final class Signals {
     }
 
     /** Three values, off at rest; no design word established, so its values' are its name and theirs. */
-    record Glow() implements StateType<Availability>, Importance.Tertiary {
+    record Glow() implements Classed<Availability>, Importance.Tertiary {
         static final Glow INSTANCE = new Glow();
         @Override public Availability parent() { return Availability.INSTANCE; }
         @Override public List<StateValue> values() { return List.of(new StateValue("off"), new StateValue("dim"), new StateValue("bright")); }

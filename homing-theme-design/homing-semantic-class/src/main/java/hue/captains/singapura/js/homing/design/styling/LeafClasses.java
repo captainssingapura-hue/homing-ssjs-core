@@ -3,7 +3,7 @@ package hue.captains.singapura.js.homing.design.styling;
 import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.component.taxonomy.Importances;
 import hue.captains.singapura.js.homing.component.taxonomy.Pseudo;
-import hue.captains.singapura.js.homing.component.taxonomy.StateType;
+import hue.captains.singapura.js.homing.component.taxonomy.Classed;
 import hue.captains.singapura.js.homing.component.taxonomy.StateValue;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.tree.NodeName;
@@ -29,7 +29,7 @@ public record LeafClasses() implements StatelessFunctionalObject {
     public String styled(Casting leaf) { return "styled-" + leaf.token(); }
 
     /** {@code styled-tab--selected}: the leaf's class and the value's design word. */
-    public String state(Casting leaf, StateType<?> state, StateValue value) { return styled(leaf) + "--" + state.word(value); }
+    public String state(Casting leaf, Classed<?> state, StateValue value) { return styled(leaf) + "--" + state.word(value); }
 
     /**
      * One of a leaf's states as it is drawn, in the leaf's precedence: an application state's value, worn as a class, or a
@@ -40,7 +40,7 @@ public record LeafClasses() implements StatelessFunctionalObject {
      * @param drawnBy  the class worn while it holds - {@code .styled-tab--selected} - or the pseudo-class - {@code :hover}
      * @param level    the level the leaf gives it: {@code tertiary}
      */
-    public record Drawn(StateType<?> state, StateValue value, String drawnBy, String level) implements ValueObject {
+    public record Drawn(Classed<?> state, StateValue value, String drawnBy, String level) implements ValueObject {
         /** Whether it is a pseudo state, drawn by its pseudo-class. */
         public boolean pseudo() { return drawnBy.startsWith(":"); }
     }
@@ -54,7 +54,7 @@ public record LeafClasses() implements StatelessFunctionalObject {
     public Listing of(Taxonomy taxonomy, Casting leaf) {
         var importances = Importances.INSTANCE;
         var drawn = new ArrayList<Drawn>();
-        for (StateType<?> s : taxonomy.precedence(leaf.cast())) {
+        for (Classed<?> s : taxonomy.precedence(leaf.cast())) {
             String level = importances.levelFor(leaf.cast(), s).map(l -> NodeName.ofType(l, "").value()).orElse("unranked");
             List<StateValue> values = s.values();
             for (StateValue v : values.subList(1, values.size()))
@@ -84,7 +84,7 @@ public record LeafClasses() implements StatelessFunctionalObject {
         var leaves = new ArrayList<String>();
         for (Casting leaf : taxonomy.castings()) {
             var states = new ArrayList<String>();
-            for (StateType<?> s : taxonomy.precedence(leaf.cast())) {
+            for (Classed<?> s : taxonomy.precedence(leaf.cast())) {
                 if (s instanceof Pseudo) continue;
                 List<StateValue> values = s.values();
                 var classes = new ArrayList<String>();

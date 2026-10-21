@@ -42,6 +42,10 @@ public record TaxonomyProblem(Rule rule, String says) implements ValueObject {
         TREE_NAME_TWICE,
         /** A type of state with fewer than two values, or one value twice: its values are what a component is in, one at a time. */
         BAD_STATE_VALUES,
+        /** A type of state whose domain cannot be made, is none, or has a span while it is classed (RFC 0069, amended 21 Oct). */
+        BAD_STATE_DOMAIN,
+        /** A named change of a type of state that is none, named twice, or does not fit its type's domain. */
+        BAD_STATE_CHANGE,
         /** Two values of the tree of states answered by one design word: one word, one meaning. */
         DESIGN_WORD_TWICE,
         /** A type of state with no level of importance: every state implements one, intrinsic, on the tree of states. */
