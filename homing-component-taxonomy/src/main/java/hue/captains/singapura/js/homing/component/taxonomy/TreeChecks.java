@@ -12,8 +12,8 @@ import java.util.Map;
 import java.util.function.Function;
 
 /**
- * What the trees of states and of events refuse to be made of: two nodes of one tree that answer to
- * one name - one word, one meaning, within each tree - and a type of state whose values do not hold
+ * What the tree of states refuses to be made of: two nodes that answer to one name - one word, one
+ * meaning, within the tree - and a type of state whose values do not hold
  * together. Checked where a tree is constructed, and where a taxonomy is read, so a read reports
  * every problem at once.
  */

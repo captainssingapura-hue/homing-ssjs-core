@@ -44,17 +44,11 @@ public non-sealed interface Component<P extends ComponentBranch> extends Taxon {
     default List<Room> rooms() { return List.of(); }
 
     /**
-     * The states it has, from the tree of states: being enabled, being on. Each has its change, an
-     * event it offers by having the state. None by default.
+     * The states it has, from the tree of states: being enabled, being on - and nothing else: an event
+     * is the change of one of its states (RFC 0069, amended). None by default.
      */
     default List<StateType<?>> states() { return List.of(); }
 
     /** Its own levels for some of its states, in place of theirs (RFC 0067, appendix Two Classes per Leaf); none by default. */
     default List<ImportanceOverride<?>> importance() { return List.of(); }
-
-    /**
-     * The events it offers besides its states' changes, from the tree of events: a click. None by
-     * default.
-     */
-    default List<EventType<?>> events() { return List.of(); }
 }

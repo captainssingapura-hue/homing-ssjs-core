@@ -98,7 +98,7 @@ public record CollectModules() implements StatelessFunctionalObject {
     }
 
     private static Taxonomy taxonomy(List<? extends ComponentModule> definitions) {
-        return ComponentModules.INSTANCE.read(definitions, List.of(), List.of(), List.of());
+        return ComponentModules.INSTANCE.read(definitions, List.of(), List.of());
     }
 
     private static Set<Component<?>> top(List<? extends ComponentModule> definitions) {

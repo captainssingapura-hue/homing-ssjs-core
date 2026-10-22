@@ -9,8 +9,8 @@ import java.util.Objects;
  * business it serves, never how it looks. A brief section of markdown, the definitive guide to how
  * the node is to be used and designed, and what its finer states are to be grounded on.
  *
- * <p>Every node of the four trees has one - the roots, every branch, every component, every role,
- * every type of state and of event -
+ * <p>Every node of the three trees has one - the roots, every branch, every component, every role,
+ * every type of state -
  * written in a markdown file beside the class that declares it, under {@code meanings/}: the
  * section headed by the node's name within that class. A node of {@code com.example.House} at
  * {@code House.Card} is the section {@code ## Card} of {@code meanings/com/example/House.md}; a node

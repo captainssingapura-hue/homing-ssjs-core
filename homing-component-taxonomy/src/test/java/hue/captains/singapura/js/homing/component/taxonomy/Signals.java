@@ -4,9 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A hypothetical tree of states and of events for the {@link Sketch} house: a branch of states with a
- * type that is yes or no and one with three values, a type filed under the root, a branch of events,
- * and a lamp that has the states and offers the event.
+ * A hypothetical tree of states for the {@link Sketch} house: a branch of states with a type that is
+ * yes or no and one with three values, a type filed under the root, and a lamp that has the states.
  */
 final class Signals {
 
@@ -38,21 +37,10 @@ final class Signals {
         @Override public StateRoot parent() { return StateRoot.INSTANCE; }
     }
 
-    record Pointing() implements L1_EventBranch<EventRoot> {
-        static final Pointing INSTANCE = new Pointing();
-        @Override public EventRoot parent() { return EventRoot.INSTANCE; }
-    }
-
-    record Tap() implements EventType<Pointing> {
-        static final Tap INSTANCE = new Tap();
-        @Override public Pointing parent() { return Pointing.INSTANCE; }
-    }
-
-    /** A control that has the states and offers the event. */
+    /** A control that has the states. */
     record Lamp() implements Component<Sketch.Control> {
         static final Lamp INSTANCE = new Lamp();
         @Override public Sketch.Control parent() { return Sketch.Control.INSTANCE; }
         @Override public List<StateType<?>> states() { return List.of(Enabled.INSTANCE, Glow.INSTANCE); }
-        @Override public List<EventType<?>> events() { return List.of(Tap.INSTANCE); }
     }
 }
