@@ -28,8 +28,8 @@ public sealed interface StateDomain extends ValueObject permits StateDomain.Rang
     /** Its rest. */
     Value rest();
 
-    /** One value of a type of state: a named one, a number, or a text. */
-    sealed interface Value extends ValueObject permits Named, Number, Text {}
+    /** One value of a type of state: a named one, a number, a text, or an order of names. */
+    sealed interface Value extends ValueObject permits Named, Number, Text, Names {}
 
     /** A named value: {@code true}, {@code sunken}. */
     record Named(StateValue value) implements Value {
@@ -49,6 +49,16 @@ public sealed interface StateDomain extends ValueObject permits StateDomain.Rang
     record Text(String value) implements Value {
         public Text { Objects.requireNonNull(value, "Text.value"); }
         @Override public String toString() { return value; }
+    }
+
+    /** An order of names, each once, none blank - a tab order: equal to another of the same names in the same order. */
+    record Names(List<String> names) implements Value {
+        public Names {
+            names = List.copyOf(Objects.requireNonNull(names, "Names.names"));
+            if (names.stream().anyMatch(String::isBlank)) throw new IllegalArgumentException("an order of names names none blank: " + names);
+            if (new java.util.HashSet<>(names).size() != names.size()) throw new IllegalArgumentException("an order of names names each once: " + names);
+        }
+        @Override public String toString() { return names.toString(); }
     }
 
     /** One range of a type of state's values: a named value, or a span of numbers. */
@@ -117,7 +127,8 @@ public sealed interface StateDomain extends ValueObject permits StateDomain.Rang
     }
 
     /**
-     * A value object of one kind, compared by its equality: a text, which may be any - the empty one its rest.
+     * A value object of one kind, compared by its equality: a text, which may be any - the empty one its rest; or an order
+     * of names, each once - none its rest.
      *
      * @param kind what its values are
      */
@@ -125,14 +136,14 @@ public sealed interface StateDomain extends ValueObject permits StateDomain.Rang
         public Valued { Objects.requireNonNull(kind, "Valued.kind"); }
 
         /** What a value-object state's values are. */
-        public enum Kind { TEXT }
+        public enum Kind { TEXT, NAMES }
 
         @Override public boolean allows(Value value) {
-            return switch (kind) { case TEXT -> value instanceof Text; };
+            return switch (kind) { case TEXT -> value instanceof Text; case NAMES -> value instanceof Names; };
         }
 
         @Override public Value rest() {
-            return switch (kind) { case TEXT -> new Text(""); };
+            return switch (kind) { case TEXT -> new Text(""); case NAMES -> new Names(List.of()); };
         }
     }
 }

@@ -85,6 +85,17 @@ class StateDomainTest {
     }
 
     @Test
+    void anOrderOfNames_isComparedItemByItem_itsRestNone() {
+        var order = new StateDomain.Valued(StateDomain.Valued.Kind.NAMES);
+        assertTrue(order.allows(new StateDomain.Names(List.of("alpha", "beta"))) && !order.allows(new StateDomain.Text("alpha")));
+        assertEquals(new StateDomain.Names(List.of()), order.rest());
+        assertEquals(new StateDomain.Names(List.of("a", "b")), new StateDomain.Names(List.of("a", "b")), "the same names in the same order: one value");
+        assertFalse(new StateDomain.Names(List.of("a", "b")).equals(new StateDomain.Names(List.of("b", "a"))), "another order: another value");
+        assertThrows(IllegalArgumentException.class, () -> new StateDomain.Names(List.of("a", "a")), "a name once");
+        assertThrows(IllegalArgumentException.class, () -> new StateDomain.Names(List.of(" ")), "none blank");
+    }
+
+    @Test
     void aClassedType_isASetOfNamedValues_itsRestTheFirst() {
         var lit = Signals.Lit.INSTANCE.domain();
         assertTrue(lit instanceof StateDomain.Ranges r && !r.continuous() && r.named().equals(Signals.Lit.INSTANCE.values()));
