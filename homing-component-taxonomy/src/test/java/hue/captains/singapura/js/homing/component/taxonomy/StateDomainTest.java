@@ -3,6 +3,9 @@ package hue.captains.singapura.js.homing.component.taxonomy;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
+import java.util.OptionalInt;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -93,6 +96,22 @@ class StateDomainTest {
         assertFalse(new StateDomain.Names(List.of("a", "b")).equals(new StateDomain.Names(List.of("b", "a"))), "another order: another value");
         assertThrows(IllegalArgumentException.class, () -> new StateDomain.Names(List.of("a", "a")), "a name once");
         assertThrows(IllegalArgumentException.class, () -> new StateDomain.Names(List.of(" ")), "none blank");
+    }
+
+    @Test
+    void aCountForEachName_orNone_isComparedNameByName_itsRestNoName() {
+        var counts = new StateDomain.Valued(StateDomain.Valued.Kind.COUNTS);
+        var held = new StateDomain.Counts(Map.of("alpha", OptionalInt.of(0), "gamma", OptionalInt.empty()));
+        assertTrue(counts.allows(held) && !counts.allows(new StateDomain.Names(List.of("alpha"))));
+        assertEquals(new StateDomain.Counts(Map.of()), counts.rest());
+        var once = new StateDomain.Counts(Map.of("alpha", OptionalInt.of(1), "gamma", OptionalInt.empty()));
+        assertEquals(new StateDomain.Counts(Map.of("gamma", OptionalInt.empty(), "alpha", OptionalInt.of(1))), once, "the order given means nothing");
+        assertEquals(Set.of("alpha"), held.differing(once), "one name's count up: it alone differs");
+        assertEquals(Set.of("beta"), held.differing(new StateDomain.Counts(Map.of("alpha", OptionalInt.of(0), "beta", OptionalInt.of(0), "gamma", OptionalInt.empty()))),
+                "a name put in: it alone differs");
+        assertFalse(held.equals(new StateDomain.Counts(Map.of("alpha", OptionalInt.of(0), "gamma", OptionalInt.of(0)))), "none is no count of none");
+        assertThrows(IllegalArgumentException.class, () -> new StateDomain.Counts(Map.of("alpha", OptionalInt.of(-1))), "from none");
+        assertThrows(IllegalArgumentException.class, () -> new StateDomain.Counts(Map.of(" ", OptionalInt.of(0))), "none blank");
     }
 
     @Test

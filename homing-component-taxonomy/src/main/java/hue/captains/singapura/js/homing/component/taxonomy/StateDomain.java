@@ -3,9 +3,15 @@ package hue.captains.singapura.js.homing.component.taxonomy;
 import hue.captains.singapura.tao.ontology.ValueObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.OptionalInt;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * What a type of state may be (RFC 0069, amended 21 Oct): its describer, in no language, so that its Java type and its
@@ -28,8 +34,8 @@ public sealed interface StateDomain extends ValueObject permits StateDomain.Rang
     /** Its rest. */
     Value rest();
 
-    /** One value of a type of state: a named one, a number, a text, or an order of names. */
-    sealed interface Value extends ValueObject permits Named, Number, Text, Names {}
+    /** One value of a type of state: a named one, a number, a text, an order of names, or a count for each name. */
+    sealed interface Value extends ValueObject permits Named, Number, Text, Names, Counts {}
 
     /** A named value: {@code true}, {@code sunken}. */
     record Named(StateValue value) implements Value {
@@ -59,6 +65,37 @@ public sealed interface StateDomain extends ValueObject permits StateDomain.Rang
             if (new java.util.HashSet<>(names).size() != names.size()) throw new IllegalArgumentException("an order of names names each once: " + names);
         }
         @Override public String toString() { return names.toString(); }
+    }
+
+    /**
+     * A count for each name, from none - or none at all, for a name that is not counted: the closes asked of each tab a
+     * pane holds, none for a tab that cannot be closed. Equal to another of the same names, each with the same count or
+     * none; the order they are given in is kept, and means nothing.
+     */
+    record Counts(Map<String, OptionalInt> counts) implements Value {
+        public Counts {
+            Objects.requireNonNull(counts, "Counts.counts");
+            for (var e : counts.entrySet()) {
+                if (e.getKey() == null || e.getKey().isBlank()) throw new IllegalArgumentException("a count for each name names none blank: " + counts.keySet());
+                if (e.getValue() == null) throw new IllegalArgumentException(e.getKey() + ": a count, or none - OptionalInt.empty()");
+                if (e.getValue().isPresent() && e.getValue().getAsInt() < 0) throw new IllegalArgumentException(e.getKey() + ": a count is from none, not " + e.getValue().getAsInt());
+            }
+            counts = Collections.unmodifiableMap(new LinkedHashMap<>(counts));
+        }
+
+        /** The names whose count differs from another's - or which only one of the two has. */
+        public Set<String> differing(Counts other) {
+            var out = new TreeSet<String>();
+            for (var e : counts.entrySet()) if (!e.getValue().equals(other.counts.get(e.getKey()))) out.add(e.getKey());
+            for (String n : other.counts.keySet()) if (!counts.containsKey(n)) out.add(n);
+            return out;
+        }
+
+        @Override public String toString() {
+            var said = new ArrayList<String>();
+            counts.forEach((n, c) -> said.add(n + "=" + (c.isPresent() ? String.valueOf(c.getAsInt()) : "none")));
+            return "{" + String.join(", ", said) + "}";
+        }
     }
 
     /** One range of a type of state's values: a named value, or a span of numbers. */
@@ -128,7 +165,7 @@ public sealed interface StateDomain extends ValueObject permits StateDomain.Rang
 
     /**
      * A value object of one kind, compared by its equality: a text, which may be any - the empty one its rest; or an order
-     * of names, each once - none its rest.
+     * of names, each once - none its rest; or a count for each name, or none for a name not counted - no name its rest.
      *
      * @param kind what its values are
      */
@@ -136,14 +173,14 @@ public sealed interface StateDomain extends ValueObject permits StateDomain.Rang
         public Valued { Objects.requireNonNull(kind, "Valued.kind"); }
 
         /** What a value-object state's values are. */
-        public enum Kind { TEXT, NAMES }
+        public enum Kind { TEXT, NAMES, COUNTS }
 
         @Override public boolean allows(Value value) {
-            return switch (kind) { case TEXT -> value instanceof Text; case NAMES -> value instanceof Names; };
+            return switch (kind) { case TEXT -> value instanceof Text; case NAMES -> value instanceof Names; case COUNTS -> value instanceof Counts; };
         }
 
         @Override public Value rest() {
-            return switch (kind) { case TEXT -> new Text(""); case NAMES -> new Names(List.of()); };
+            return switch (kind) { case TEXT -> new Text(""); case NAMES -> new Names(List.of()); case COUNTS -> new Counts(Map.of()); };
         }
     }
 }
