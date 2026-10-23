@@ -75,7 +75,9 @@ public record TaxonomyProblem(Rule rule, String says) implements ValueObject {
         /** A role set with no roles, a role twice, or one that only places a part (D55). */
         ROLE_SET_BADLY,
         /** A component that names a room twice. */
-        ROOMS_BADLY
+        ROOMS_BADLY,
+        /** A component that names one of its values twice (RFC 0071 port, 23 Oct). */
+        VALUES_BADLY
     }
 
     @Override public String toString() { return rule + ": " + says; }

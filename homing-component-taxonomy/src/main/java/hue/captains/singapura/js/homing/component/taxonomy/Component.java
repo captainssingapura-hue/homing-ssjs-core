@@ -49,6 +49,12 @@ public non-sealed interface Component<P extends ComponentBranch> extends Taxon {
      */
     default List<StateType<?>> states() { return List.of(); }
 
+    /**
+     * The values it is made with, immutable for its life (RFC 0071 port, owner 23 Oct): each named, typed and with its
+     * default, groups nesting them - given on the page in its fixed object, after its parts' choices. None by default.
+     */
+    default List<FixedValue> fixedValues() { return List.of(); }
+
     /** Its own levels for some of its states, in place of theirs (RFC 0067, appendix Two Classes per Leaf); none by default. */
     default List<ImportanceOverride<?>> importance() { return List.of(); }
 }

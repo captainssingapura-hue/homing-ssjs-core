@@ -95,6 +95,7 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
             List<Slot<?>> slots = slotsOf(c, problems);
             kind(c, slots, problems);
             rooms(c, problems);
+            values(c, problems);
             for (Slot<?> slot : slots) {
                 if (slot == null) continue;
                 Role<?> role = slot.role();
@@ -272,6 +273,13 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
         var named = new HashSet<String>();
         for (Room room : c.rooms())
             if (!named.add(room.name())) problems.add(new TaxonomyProblem(Rule.ROOMS_BADLY, Names.of(c) + " names its room " + room.name() + " twice"));
+    }
+
+    /** A component's values, each named once (a group's own are checked as it is made). */
+    private static void values(Component<?> c, List<TaxonomyProblem> problems) {
+        var named = new HashSet<String>();
+        for (FixedValue value : orNone(c.fixedValues()))
+            if (!named.add(value.name())) problems.add(new TaxonomyProblem(Rule.VALUES_BADLY, Names.of(c) + " names its value " + value.name() + " twice"));
     }
 
     /** A component's slots; a count that is no cardinality is a problem of the component that said it. */
