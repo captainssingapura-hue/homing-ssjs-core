@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.design.styling;
 
 import hue.captains.singapura.js.homing.component.taxonomy.Casting;
+import hue.captains.singapura.js.homing.component.taxonomy.Component;
 import hue.captains.singapura.js.homing.component.taxonomy.ComponentBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.core.util.ResourceReader;
@@ -92,7 +93,10 @@ record StyleRegistry(Taxonomy taxonomy, DesignStyle<?> base, List<BaseModule<?, 
         Resolved r = resolve(style, casting);
         String css = CastingCss.INSTANCE.read(r.css().getClass(), reader).orElseThrow(() -> new IllegalArgumentException(
                 r.css().getClass().getName() + " answers CssContent, and its jar has no " + CastingCss.INSTANCE.resource(r.css().getClass())));
-        return "/* " + casting.token() + ": " + r.says() + " */\n" + CastingCss.INSTANCE.filled(css, casting).strip() + "\n";
+        // a leaf the document wears is ruled on :root, the document's own element, under no class (RFC 0071 port, 24 Oct)
+        String filled = casting.component() instanceof Component<?> c && taxonomy.wornByTheDocument(c)
+                ? CastingCss.INSTANCE.onTheRoot(css, casting) : CastingCss.INSTANCE.filled(css, casting);
+        return "/* " + casting.token() + ": " + r.says() + " */\n" + filled.strip() + "\n";
     }
 
     @Override public String sheet(DesignStyle<?> style) {

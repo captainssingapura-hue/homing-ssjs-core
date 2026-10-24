@@ -16,6 +16,7 @@ import hue.captains.singapura.js.homing.component.taxonomy.Root;
 import hue.captains.singapura.js.homing.component.taxonomy.Slot;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.component.taxonomy.WithRoles;
+import hue.captains.singapura.js.homing.component.taxonomy.WornByTheDocument;
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.core.DomModule;
@@ -140,9 +141,19 @@ class ImplementationsTest {
     public record Acts() implements Role<Doing> { public static final Acts INSTANCE = new Acts(); @Override public Doing parent() { return Doing.INSTANCE; } }
     public record Symbol() implements Role<Doing> { public static final Symbol INSTANCE = new Symbol(); @Override public Doing parent() { return Doing.INSTANCE; } }
 
+    /** The paper the page is: a branch the document wears, its backdrop a leaf of it - a style's rule on the root, no module's (RFC 0071 port, 24 Oct). */
+    public record Paper() implements L1_ComponentBranch<Root>, WornByTheDocument {
+        public static final Paper INSTANCE = new Paper();
+        @Override public Root parent() { return Root.INSTANCE; }
+    }
+    public record Backdrop() implements Component<Paper> {
+        public static final Backdrop INSTANCE = new Backdrop();
+        @Override public Paper parent() { return Paper.INSTANCE; }
+    }
+
     private static final Taxonomy HOUSE = new ReadTaxonomy().read(
             List.of(PlainButton.INSTANCE, DangerButton.INSTANCE, Icon.INSTANCE, Bar.INSTANCE, Dialog.INSTANCE, IconButton.INSTANCE, Strip.INSTANCE,
-                    Star.INSTANCE, Moon.INSTANCE, Badge.INSTANCE, Picker.INSTANCE, Knot.INSTANCE),
+                    Star.INSTANCE, Moon.INSTANCE, Badge.INSTANCE, Picker.INSTANCE, Knot.INSTANCE, Backdrop.INSTANCE),
             List.of(Act.INSTANCE, Acts.INSTANCE, Symbol.INSTANCE));
 
     // ── the implementations ──────────────────────────────────────────────
@@ -267,6 +278,13 @@ class ImplementationsTest {
         public record Stray() implements ElementComponent<StrayModule> { @Override public String tag() { return "span"; } }
         @Override public ImportsFor<StrayModule> imports() { return ImportsFor.noImports(); }
         @Override public ExportsOf<StrayModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new Stray())); }
+    }
+    /** A module for a leaf the document wears: refused, whatever it exports. */
+    public record BackdropModule() implements DomModule<BackdropModule>, ImplFor<ImplementationsTest.Backdrop> {
+        public static final BackdropModule INSTANCE = new BackdropModule();
+        public record Backdrop() implements ElementComponent<BackdropModule> { @Override public String tag() { return "html"; } }
+        @Override public ImportsFor<BackdropModule> imports() { return ImportsFor.noImports(); }
+        @Override public ExportsOf<BackdropModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new Backdrop())); }
     }
 
     public record MarkModule() implements DomModule<MarkModule>, ImplForLeavesOf<ImplementationsTest.Mark> {
@@ -438,6 +456,13 @@ class ImplementationsTest {
                         "AdriftModule exports the component Adrift but is anchored nowhere: a component's module implements its leaf (ImplFor)",
                         "StrayModule implements Stray, which the taxonomy does not declare"),
                 check(ButtonModule.INSTANCE, IconModule.INSTANCE, OddIconModule.INSTANCE, AdriftModule.INSTANCE, StrayModule.INSTANCE));
+    }
+
+    /** A leaf the document wears is a style's rule on the document's root: no module implements it (RFC 0071 port, 24 Oct). */
+    @Test
+    void aLeafTheDocumentWears_isNoModules() {
+        assertEquals(List.of("BackdropModule implements Backdrop, which the document wears: its look is a style's rule on the document's root, and no module's"),
+                check(BackdropModule.INSTANCE));
     }
 
     /** A widget's module: a widget is no component, so it is anchored at no leaf (owner, 20 Oct). */

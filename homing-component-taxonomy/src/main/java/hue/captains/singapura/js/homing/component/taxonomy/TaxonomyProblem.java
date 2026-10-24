@@ -77,7 +77,13 @@ public record TaxonomyProblem(Rule rule, String says) implements ValueObject {
         /** A component that names a room twice. */
         ROOMS_BADLY,
         /** A component that names one of its values twice (RFC 0071 port, 23 Oct). */
-        VALUES_BADLY
+        VALUES_BADLY,
+        /** A component that says the document wears it: only a branch does, for every leaf under it (RFC 0071 port, 24 Oct). */
+        WORN_BY_THE_DOCUMENT_NOT_A_BRANCH,
+        /** A leaf the document wears with parts, states, rooms, values, axes or a role set: it is a style's rule on the document's root, and nothing else. */
+        DOCUMENT_LEAF_BADLY,
+        /** A part played by a leaf the document wears: a part is an element of its owner's, and the document's leaf has no element. */
+        DOCUMENT_LEAF_PLAYS_A_PART
     }
 
     @Override public String toString() { return rule + ": " + says; }

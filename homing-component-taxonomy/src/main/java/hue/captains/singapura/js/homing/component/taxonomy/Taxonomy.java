@@ -154,6 +154,16 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
         return branches.stream().filter(b -> b instanceof FamilyHead).toList();
     }
 
+    /**
+     * Whether the document wears a component: a branch above it says so ({@link WornByTheDocument}). Its look is a
+     * style's rule on the document's root, and no module, element or class is its.
+     */
+    public boolean wornByTheDocument(Component<?> component) {
+        for (ComponentBranch b = Levels.parentOf(component); b != null; b = Levels.parentOf(b))
+            if (b instanceof WornByTheDocument) return true;
+        return false;
+    }
+
     /** The head of a component's family: the one branch above it that heads one - the reader refuses two - or none. */
     public Optional<ComponentBranch> head(Component<?> component) {
         for (ComponentBranch b = Levels.parentOf(component); b != null; b = Levels.parentOf(b))

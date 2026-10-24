@@ -201,6 +201,17 @@ public record CastingCss() implements StatelessFunctionalObject {
     }
 
     /**
+     * The file with its marks filled in for a leaf the document wears (RFC 0071 port, 24 Oct): {@code $casting} is
+     * {@code :root}, the document's own element - no class, such a leaf having no states and no rooms - and {@code $name}
+     * a keyframes of its own, {@code <casting>-<name>}.
+     */
+    public String onTheRoot(String css, Casting casting) {
+        String out = KEYFRAMES.matcher(css).replaceAll(m -> "@keyframes " + Matcher.quoteReplacement(casting.token() + "-" + m.group(1)));
+        out = out.replace(CASTING, ":root");
+        return USE.matcher(out).replaceAll(m -> Matcher.quoteReplacement(casting.token() + "-" + m.group(1)));
+    }
+
+    /**
      * The file with its marks filled in for a class, whoever's it is: {@code $casting} the class, {@code &$word} the
      * class's state for the word, {@code <class>--<word>}, {@code $name} - a keyframes of its own - {@code <prefix>-<name>}.
      *

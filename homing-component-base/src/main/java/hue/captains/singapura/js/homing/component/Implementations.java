@@ -31,7 +31,9 @@ import java.util.Set;
  *       or every leaf of a branch ({@link ImplForLeavesOf}); a module that implements a branch's base
  *       ({@link ImplForBranch}) exports no component.</li>
  *   <li><b>Declared.</b> The anchor is a node of the taxonomy: a leaf among its components, a
- *       branch among its branches.</li>
+ *       branch among its branches. And an element's: a leaf the document wears ({@link
+ *       hue.captains.singapura.js.homing.component.taxonomy.WornByTheDocument}) is a style's rule
+ *       on the document's root, and no module implements it.</li>
  *   <li><b>Once.</b> One leaf, one module; one branch, one module - a leaf under a branch one
  *       module realizes whole is that module's alone.</li>
  *   <li><b>One class.</b> The module exports one thing: the component named as its leaf, the base
@@ -86,6 +88,10 @@ public record Implementations() {
                     Component<?> leaf = anchor(impl, name, problems);
                     if (leaf == null) continue;
                     if (!components.contains(leaf)) { problems.add(name + " implements " + simple(leaf) + ", which the taxonomy does not declare"); continue; }
+                    if (taxonomy.wornByTheDocument(leaf)) {
+                        problems.add(name + " implements " + simple(leaf) + ", which the document wears: its look is a style's rule on the document's root, and no module's");
+                        continue;
+                    }
                     if (!asItsLeafSays(exports, leaf))
                         problems.add(name + " implements " + simple(leaf) + " but exports " + said(exports)
                                 + ": one module, one class - the component, named as its leaf - and at most its companion, named for it");

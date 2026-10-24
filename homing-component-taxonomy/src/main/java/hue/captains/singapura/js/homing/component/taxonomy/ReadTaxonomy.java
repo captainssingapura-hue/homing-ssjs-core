@@ -41,6 +41,9 @@ import java.util.Set;
  *       two nodes that mean the same;</li>
  *   <li>a family head with another between it and the root, and a component that says it heads a
  *       family ({@link FamilyHead});</li>
+ *   <li>a leaf the document wears ({@link WornByTheDocument}) with anything an element's leaf has - parts,
+ *       states, rooms, values, axes, a role set - or playing a part; a component that says the document
+ *       wears it;</li>
  *   <li>a component cast in a role with a look of its own that its role set does not allow, or that has no
  *       role set ({@link WithRoles}); a role set with no roles, a role twice, or one that only places a part
  *       (D55).</li>
@@ -189,6 +192,7 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
         problems.addAll(extentsTwice(branchList, componentList));
         problems.addAll(LocalStyleBranchChecks.INSTANCE.problems(branchList, componentList, read));
         problems.addAll(familyHeads(branchList, componentList));
+        problems.addAll(wornByTheDocument(componentList, read));
         problems.addAll(castings(read, componentList));
         problems.addAll(TreeChecks.INSTANCE.clashes("states", StateTree.nodes(stateBranchList, stateList), StateNode::name));
         problems.addAll(TreeChecks.INSTANCE.badValues(stateList));
@@ -251,6 +255,43 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
                 out.add(new TaxonomyProblem(Rule.FAMILY_HEAD_NOT_A_BRANCH, Names.of(c) + " is a component, and says it heads a family: "
                         + "only a branch does"));
         return out;
+    }
+
+    /**
+     * A leaf the document wears ({@link WornByTheDocument}) with anything an element's leaf has - its one problem naming
+     * each; one that plays a part, each part named; and a component that says the document wears it, which only a branch says.
+     */
+    private static List<TaxonomyProblem> wornByTheDocument(List<Component<?>> components, List<Part<?, ?>> parts) {
+        var out = new ArrayList<TaxonomyProblem>();
+        for (Component<?> c : components) {
+            if (c instanceof WornByTheDocument)
+                out.add(new TaxonomyProblem(Rule.WORN_BY_THE_DOCUMENT_NOT_A_BRANCH, Names.of(c) + " is a component, and says the document wears it: "
+                        + "only a branch does, for every leaf under it"));
+            if (!underTheDocument(c)) continue;
+            var has = new ArrayList<String>();
+            if (c instanceof Composite<?>) has.add("parts");
+            if (!orNone(c.states()).isEmpty()) has.add("states");
+            if (!c.rooms().isEmpty()) has.add("rooms");
+            if (!orNone(c.fixedValues()).isEmpty()) has.add("values");
+            if (!axes(c).isEmpty()) has.add("axes");
+            if (c instanceof WithRoles<?>) has.add("a role set");
+            if (!has.isEmpty())
+                out.add(new TaxonomyProblem(Rule.DOCUMENT_LEAF_BADLY, Names.of(c) + " is worn by the document, and has " + String.join(", ", has)
+                        + ": the document's leaf is a style's rule on its root, and nothing else - no element, no state, no part"));
+        }
+        for (Part<?, ?> p : parts)
+            for (Component<?> player : p.bases())
+                if (underTheDocument(player))
+                    out.add(new TaxonomyProblem(Rule.DOCUMENT_LEAF_PLAYS_A_PART, Names.of(player) + " plays " + Names.of(p.owner()) + "." + Names.of(p.role())
+                            + ", and the document wears it: a part is an element of its owner's, and the document's leaf has none"));
+        return out;
+    }
+
+    /** Whether a branch above a node says the document wears its leaves. */
+    private static boolean underTheDocument(Taxon t) {
+        for (ComponentBranch b = Levels.parentOf(t); b != null; b = Levels.parentOf(b))
+            if (b instanceof WornByTheDocument) return true;
+        return false;
     }
 
     private static <T> List<T> orNone(List<T> list) { return list == null ? List.of() : list; }

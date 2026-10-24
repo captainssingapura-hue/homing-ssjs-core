@@ -87,3 +87,11 @@ The seals: one holds a part, so they are not alike but for their look.
 ## Knot
 
 A seal holding an icon.
+
+## Paper
+
+The paper the page is: what the document itself wears.
+
+## Backdrop
+
+The colour behind everything on the page, the document's own.
