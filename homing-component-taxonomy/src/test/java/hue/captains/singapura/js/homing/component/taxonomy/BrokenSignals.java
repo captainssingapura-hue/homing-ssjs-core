@@ -8,13 +8,13 @@ final class BrokenSignals {
 
     private BrokenSignals() {}
 
-    record Single() implements StateType<StateRoot>, Importance.Senary {
+    record Single() implements Classed<StateRoot>, Importance.Senary {
         static final Single INSTANCE = new Single();
         @Override public StateRoot parent() { return StateRoot.INSTANCE; }
         @Override public List<StateValue> values() { return List.of(StateValue.TRUE); }
     }
 
-    record Twice() implements StateType<StateRoot>, Importance.Senary {
+    record Twice() implements Classed<StateRoot>, Importance.Senary {
         static final Twice INSTANCE = new Twice();
         @Override public StateRoot parent() { return StateRoot.INSTANCE; }
         @Override public List<StateValue> values() { return List.of(StateValue.TRUE, StateValue.FALSE, StateValue.TRUE); }

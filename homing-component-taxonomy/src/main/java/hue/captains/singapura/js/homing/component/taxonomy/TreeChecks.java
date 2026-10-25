@@ -12,8 +12,8 @@ import java.util.Map;
 import java.util.function.Function;
 
 /**
- * What the trees of states and of events refuse to be made of: two nodes of one tree that answer to
- * one name - one word, one meaning, within each tree - and a type of state whose values do not hold
+ * What the tree of states refuses to be made of: two nodes that answer to one name - one word, one
+ * meaning, within the tree - and a type of state whose values do not hold
  * together. Checked where a tree is constructed, and where a taxonomy is read, so a read reports
  * every problem at once.
  */
@@ -34,10 +34,11 @@ record TreeChecks() implements StatelessFunctionalObject {
         return List.copyOf(out);
     }
 
-    /** A type with fewer than two values, a value twice, none said at all, or a design word for its rest or for a value it lacks. */
+    /** A classed type with fewer than two values, a value twice, none said at all, or a design word for its rest or for a value it lacks. */
     List<TaxonomyProblem> badValues(List<? extends StateType<?>> types) {
         var out = new ArrayList<TaxonomyProblem>();
-        for (StateType<?> t : types) {
+        for (StateType<?> s : types) {
+            if (!(s instanceof Classed<?> t)) continue;
             List<StateValue> values = t.values();
             if (values == null || values.size() < 2) {
                 out.add(new TaxonomyProblem(Rule.BAD_STATE_VALUES, Names.qualified(t) + " has "
@@ -63,12 +64,15 @@ record TreeChecks() implements StatelessFunctionalObject {
     }
 
     /**
-     * A type of state with no level of importance - every state has one, intrinsic, on the tree of states - and a pseudo
-     * state that is no flag, or whose pseudo-class is none.
+     * A classed type of state with no level of importance - every one has one, intrinsic, on the tree of states, which
+     * orders the classes a leaf wears - and a pseudo state that is no flag, or whose pseudo-class is none.
      */
     List<TaxonomyProblem> levels(List<? extends StateType<?>> types) {
         var out = new ArrayList<TaxonomyProblem>();
-        for (StateType<?> t : types) {
+        for (StateType<?> s : types) {
+            if (s instanceof Pseudo && !(s instanceof Classed<?>))
+                out.add(new TaxonomyProblem(Rule.PSEUDO_BADLY, Names.qualified(s) + " is a pseudo state that is not classed: a pseudo state is a flag"));
+            if (!(s instanceof Classed<?> t)) continue;
             if (Importances.INSTANCE.levelOf(t).isEmpty())
                 out.add(new TaxonomyProblem(Rule.STATE_UNRANKED, Names.qualified(t) + " has no level of importance: every state "
                         + "implements one, Importance.Primary to Importance.Senary"));
@@ -115,10 +119,50 @@ record TreeChecks() implements StatelessFunctionalObject {
         return List.copyOf(out);
     }
 
+    /**
+     * A type whose domain cannot be made or is none, or that is classed and has a span - a class is for a named value; and a
+     * named change that is none, named twice, or does not fit its type's domain: a change between values it does not name,
+     * a rise or a fall where it has no span of numbers (RFC 0069, amended 21 Oct).
+     */
+    List<TaxonomyProblem> badChanges(List<? extends StateType<?>> types) {
+        var out = new ArrayList<TaxonomyProblem>();
+        for (StateType<?> t : types) {
+            StateDomain domain;
+            try { domain = t.domain(); }
+            catch (RuntimeException e) {
+                if (!(t instanceof Classed<?>)) out.add(new TaxonomyProblem(Rule.BAD_STATE_DOMAIN, Names.qualified(t) + "'s domain is not to be made: " + e.getMessage()));
+                continue;   // a classed type's values are held by badValues
+            }
+            if (domain == null) { out.add(new TaxonomyProblem(Rule.BAD_STATE_DOMAIN, Names.qualified(t) + " has no domain: what its values may be")); continue; }
+            if (t instanceof Classed<?> && !(domain instanceof StateDomain.Ranges r && !r.continuous()))
+                out.add(new TaxonomyProblem(Rule.BAD_STATE_DOMAIN, Names.qualified(t) + " is classed and its domain is no set of named values: a class is for a named value"));
+            List<NamedChange> changes = t.changes();
+            if (changes == null) { out.add(new TaxonomyProblem(Rule.BAD_STATE_CHANGE, Names.qualified(t) + " names its changes as nothing: none is an empty list")); continue; }
+            var named = new HashSet<String>();
+            for (NamedChange c : changes) {
+                if (c == null) { out.add(new TaxonomyProblem(Rule.BAD_STATE_CHANGE, Names.qualified(t) + " names a change that is nothing")); continue; }
+                if (!named.add(c.name())) out.add(new TaxonomyProblem(Rule.BAD_STATE_CHANGE, Names.qualified(t) + " names the change '" + c.name() + "' twice"));
+                switch (c.transition()) {
+                    case NamedChange.Between b -> {
+                        if (!(domain.allows(new StateDomain.Named(b.from())) && domain.allows(new StateDomain.Named(b.to()))))
+                            out.add(new TaxonomyProblem(Rule.BAD_STATE_CHANGE, Names.qualified(t) + "'s change '" + c.name() + "' is from " + b.from() + " to " + b.to()
+                                    + ", and it names no such values"));
+                    }
+                    case NamedChange.Rises r -> { if (!(domain instanceof StateDomain.Ranges x && x.continuous()))
+                        out.add(new TaxonomyProblem(Rule.BAD_STATE_CHANGE, Names.qualified(t) + "'s change '" + c.name() + "' is a rise, and it has no span of numbers")); }
+                    case NamedChange.Falls f -> { if (!(domain instanceof StateDomain.Ranges x && x.continuous()))
+                        out.add(new TaxonomyProblem(Rule.BAD_STATE_CHANGE, Names.qualified(t) + "'s change '" + c.name() + "' is a fall, and it has no span of numbers")); }
+                }
+            }
+        }
+        return List.copyOf(out);
+    }
+
     /** Two values of the tree answered by one design word - an established word, or a type's name and a value's. */
     List<TaxonomyProblem> wordsTwice(List<? extends StateType<?>> types) {
         var byWord = new LinkedHashMap<String, List<String>>();
-        for (StateType<?> t : types) {
+        for (StateType<?> s : types) {
+            if (!(s instanceof Classed<?> t)) continue;
             List<StateValue> values = t.values();
             if (values == null || values.size() < 2) continue;
             for (StateValue v : values.subList(1, values.size())) {

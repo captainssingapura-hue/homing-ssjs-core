@@ -1,4 +1,4 @@
-# Hypothetical states and events
+# Hypothetical states
 
 ## Availability
 
@@ -15,14 +15,6 @@ How brightly it shines.
 ## Lit
 
 Shining at all.
-
-## Pointing
-
-What the pointer does to it.
-
-## Tap
-
-Touched and let go.
 
 ## Lamp
 

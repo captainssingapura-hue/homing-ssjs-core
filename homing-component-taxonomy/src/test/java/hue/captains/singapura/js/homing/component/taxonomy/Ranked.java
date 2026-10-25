@@ -73,9 +73,10 @@ final class Ranked {
     // ── components ──
 
     /** All five, Picked and Armed of one level, listed in that order. */
-    record Knob() implements Component<Gear> {
+    record Knob() implements Component<Gear>, WithRoles<Steering> {
         static final Knob INSTANCE = new Knob();
         @Override public Gear parent() { return Gear.INSTANCE; }
+        @Override public Steering roleSet() { return Steering.INSTANCE; }
         @Override public List<StateType<?>> states() {
             return List.of(Faded.INSTANCE, Picked.INSTANCE, Armed.INSTANCE, Pointed.INSTANCE, Grabbed.INSTANCE);
         }
@@ -106,7 +107,7 @@ final class Ranked {
     }
 
     /** A pseudo state with three values. */
-    record Wide() implements StateType<Mode>, Importance.Quinary, Pseudo {
+    record Wide() implements Classed<Mode>, Importance.Quinary, Pseudo {
         static final Wide INSTANCE = new Wide();
         @Override public Mode parent() { return Mode.INSTANCE; }
         @Override public List<StateValue> values() { return List.of(new StateValue("low"), new StateValue("mid"), new StateValue("high")); }
@@ -130,5 +131,13 @@ final class Ranked {
                            new ImportanceOverride<>(Armed.INSTANCE, Importance.Primary.class),
                            new ImportanceOverride<>(Armed.INSTANCE, Importance.Senary.class));
         }
+    }
+
+    // ── the roles each component may be cast in (RFC 0067, D55) ──────────
+
+    /** What a knob may be cast as. */
+    record Steering() implements RoleSet {
+        static final Steering INSTANCE = new Steering();
+        @Override public List<Role<?>> roles() { return List.of(Steer.INSTANCE); }
     }
 }

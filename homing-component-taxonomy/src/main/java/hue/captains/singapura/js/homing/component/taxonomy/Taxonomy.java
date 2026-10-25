@@ -12,8 +12,8 @@ import java.util.Optional;
 /**
  * A taxonomy as read: every branch and component reached from the components declared - up
  * through their parents, across through the components that play their parts - every part, each
- * slot with its owner appended, the role catalogue the slots name, and the trees of states and of
- * events the components have and offer. What a design walks, what derives the design classes, and
+ * slot with its owner appended, the role catalogue the slots name, and the tree of states the
+ * components have. What a design walks, what derives the design classes, and
  * what the workbench shows.
  *
  * @param branches   the branches under the root, by level, each level in the order first reached
@@ -23,11 +23,9 @@ import java.util.Optional;
  *                   those only a slot names
  * @param states     the tree of states: its branches, and its types - the reader's in its order, then those only a
  *                   component names
- * @param events     the tree of events: its branches, and its types - the reader's in its order, then those only a
- *                   component offers
  */
 public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> components, List<Part<?, ?>> parts,
-                       RoleCatalogue catalogue, StateTree states, EventTree events) implements ValueObject {
+                       RoleCatalogue catalogue, StateTree states) implements ValueObject {
 
     public Taxonomy {
         branches = List.copyOf(branches);
@@ -35,11 +33,10 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
         parts = List.copyOf(parts);
         Objects.requireNonNull(catalogue, "Taxonomy.catalogue");
         Objects.requireNonNull(states, "Taxonomy.states");
-        Objects.requireNonNull(events, "Taxonomy.events");
     }
 
     /** A component's states in precedence: the least important first, so the last wins; two of one level in the order it lists them. */
-    public List<StateType<?>> precedence(Component<?> component) { return Importances.INSTANCE.precedence(component); }
+    public List<Classed<?>> precedence(Component<?> component) { return Importances.INSTANCE.precedence(component); }
 
     /** Every node a design can be asked about: the root, the branches, the components, then the parts. */
     public List<ComponentNode> nodes() {
@@ -130,9 +127,6 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
     /** What a node of the tree of states means. */
     public Meaning meaning(StateNode node) { return states.meaning(node); }
 
-    /** What a node of the tree of events means. */
-    public Meaning meaning(EventNode node) { return events.meaning(node); }
-
     /** Every part that names a role: where it is used, what plays it there, how many. */
     /**
      * The castings the taxonomy has, derived (RFC 0067, appendix Castings): every component on its
@@ -144,7 +138,7 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
      */
     public List<Casting> castings() {
         var out = new LinkedHashSet<Casting>();
-        for (Component<?> c : components) if (!(c instanceof VirtualComponent<?>)) out.add(new Casting(c));
+        for (Component<?> c : components) if (!(c instanceof VirtualComponent<?>) && !(c instanceof LayoutStyling<?>)) out.add(new Casting(c));   // the layouts' styling has no casting of its own
         for (Part<?, ?> p : parts)
             for (Component<?> base : p.bases()) {
                 var cast = new Casting(base, p.role());
@@ -158,6 +152,16 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
     /** The branches that head a family ({@link FamilyHead}), in reading order. */
     public List<ComponentBranch> heads() {
         return branches.stream().filter(b -> b instanceof FamilyHead).toList();
+    }
+
+    /**
+     * Whether the document wears a component: a branch above it says so ({@link WornByTheDocument}). Its look is a
+     * style's rule on the document's root, and no module, element or class is its.
+     */
+    public boolean wornByTheDocument(Component<?> component) {
+        for (ComponentBranch b = Levels.parentOf(component); b != null; b = Levels.parentOf(b))
+            if (b instanceof WornByTheDocument) return true;
+        return false;
     }
 
     /** The head of a component's family: the one branch above it that heads one - the reader refuses two - or none. */

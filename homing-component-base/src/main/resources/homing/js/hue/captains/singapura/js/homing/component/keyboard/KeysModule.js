@@ -3,21 +3,19 @@
 // component joins a focus branch and calls here; every call goes to the
 // page's steward directly, none touches the party.
 //
-//   Keys.claimOn(root, m, marks?) → off
-//     marks: { leaf, state } - the root's leaf as Java describes it, and the
-//     state of it the keys' marks are - for the root to wear that state's class
-//     while it holds a mark (RFC 0067, D12); without them, data-keys alone
+//   Keys.claimOn(root, m) → off
 //     the claiming convention, as one line and one listener: a press in the
 //     root claims the keys for m — when m is the innermost member whose root
 //     contains the press. The roots under the convention are enrolled with
 //     the steward, so nesting is a structural question and not an order: a
 //     press in a widget inside a pane inside a dialog is the widget's alone,
 //     and a container is never granted for a press on its child. The root
-//     enrolled is also where the member's mark is worn — written by the
-//     steward, never by the member — and what the browser's focus arriving
-//     inside it is measured against: that is the steward's business, not the
-//     convention's (RFC 0066 E3, keyboard §17.5), so the convention listens to
-//     the press alone. off() removes the listener and forgets the root.
+//     enrolled is also what the browser's focus arriving inside it is measured
+//     against: that is the steward's business, not the convention's (RFC 0066
+//     E3, keyboard §17.5), so the convention listens to the press alone. The
+//     member's mark is not the root's: the steward tells the member,
+//     marked(state), and it sets its own Keyboard state (RFC 0071, D16) - no
+//     marks are handed in. off() removes the listener and forgets the root.
 //   Keys.claim(m)                    by call: a dialog on open, a shortcut's summons
 //   Keys.yield(m)                    the keys given up: they go up the focus tree to the first
 //                                    ancestor that would hold them (wouldHold), else to no one
@@ -48,13 +46,14 @@ var Keys = Object.freeze({
     claimOn: function (root, a, b, c) {
         if (!root || typeof root.addEventListener !== "function") throw new Error("[Keys] claimOn wants the component's root element");
         var t = _target(a, b);
-        var older = t.steward === a;                    // (steward, id[, marks]), else (membership[, marks])
-        var marks = older ? c : b;
+        var older = t.steward === a;                    // (steward, id), else (membership)
+        if ((older ? c : b) !== undefined)
+            throw new Error("[Keys] claimOn takes no marks: the keys' mark is the member's own Keyboard state, told it by marked(state) (RFC 0071, D16)");
         var member = t.id && typeof t.id === "object" ? t.id : null;
         var steward = t.steward, id = member && typeof member.id === "string" ? member.id : t.id;
         if (!steward || typeof steward.claim !== "function") throw new Error("[Keys] claimOn wants the page's KeyboardSteward");
         if (id == null) throw new Error("[Keys] claimOn wants the membership to claim for");
-        var forget = steward.enroll(root, id, marks);
+        var forget = steward.enroll(root, id);
         function press(ev) { if (steward.memberAt(ev.target) === id && !_stray(member)) steward.claim(id); }   // a stray's press goes nowhere
         root.addEventListener("pointerdown", press, true);
         return function () {

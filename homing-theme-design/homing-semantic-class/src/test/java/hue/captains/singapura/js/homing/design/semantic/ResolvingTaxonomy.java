@@ -9,11 +9,13 @@ import hue.captains.singapura.js.homing.component.taxonomy.L2_ComponentBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.L2_RoleBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.ReadTaxonomy;
 import hue.captains.singapura.js.homing.component.taxonomy.Role;
+import hue.captains.singapura.js.homing.component.taxonomy.RoleSet;
 import hue.captains.singapura.js.homing.component.taxonomy.RoleRoot;
 import hue.captains.singapura.js.homing.component.taxonomy.Root;
 import hue.captains.singapura.js.homing.component.taxonomy.Slot;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.component.taxonomy.ComponentModule;
+import hue.captains.singapura.js.homing.component.taxonomy.WithRoles;
 
 import java.util.List;
 
@@ -39,13 +41,15 @@ public record ResolvingTaxonomy() implements ComponentModule {
         public static final Container INSTANCE = new Container();
         @Override public Root parent() { return Root.INSTANCE; }
     }
-    public record PlainButton() implements Component<Button> {
+    public record PlainButton() implements Component<Button>, WithRoles<Commits> {
         public static final PlainButton INSTANCE = new PlainButton();
         @Override public Button parent() { return Button.INSTANCE; }
+        @Override public Commits roleSet() { return Commits.INSTANCE; }
     }
-    public record DangerButton() implements Component<Button> {
+    public record DangerButton() implements Component<Button>, WithRoles<Commits> {
         public static final DangerButton INSTANCE = new DangerButton();
         @Override public Button parent() { return Button.INSTANCE; }
+        @Override public Commits roleSet() { return Commits.INSTANCE; }
         /** Danger turned partly safe: its colour varies by degree. */
         @Override public List<ExtentAxis> extents() { return List.of(ExtentAxis.COLOUR); }
     }
@@ -95,5 +99,13 @@ public record ResolvingTaxonomy() implements ComponentModule {
 
     public Taxonomy read() {
         return new ReadTaxonomy().read(List.of(Dialog.INSTANCE), List.of(Go.INSTANCE, Cancel.INSTANCE, Window.INSTANCE));
+    }
+
+    // ── the roles each component may be cast in (RFC 0067, D55) ──
+
+    /** What a button may be cast as: committing its owner. */
+    public record Commits() implements RoleSet {
+        public static final Commits INSTANCE = new Commits();
+        @Override public List<Role<?>> roles() { return List.of(Go.INSTANCE, Cancel.INSTANCE); }
     }
 }

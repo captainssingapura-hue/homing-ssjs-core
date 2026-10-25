@@ -6,7 +6,7 @@
     <parent>
         <groupId>io.github.captainssingapura-hue.homing.js</groupId>
         <artifactId>homing-theme-design</artifactId>
-        <version>LOCAL-SNAPSHOT</version>
+        <version>LOCAL-SNAPSHOT-T1</version>
     </parent>
     <artifactId>homing-design-local-style</artifactId>
     <description>

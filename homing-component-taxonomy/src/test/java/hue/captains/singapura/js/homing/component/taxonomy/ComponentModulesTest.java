@@ -31,7 +31,7 @@ class ComponentModulesTest {
     }
 
     private static Taxonomy read(List<? extends ComponentModule> modules) {
-        return ComponentModules.INSTANCE.read(modules, Sketch.CATALOGUE, List.of(), List.of());
+        return ComponentModules.INSTANCE.read(modules, Sketch.CATALOGUE, List.of());
     }
 
     @Test

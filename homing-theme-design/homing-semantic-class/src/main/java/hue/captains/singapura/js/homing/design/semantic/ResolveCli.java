@@ -172,7 +172,7 @@ public record ResolveCli() implements StatelessFunctionalObject {
     private static Taxonomy taxonomy(String classNames) {
         var modules = new ArrayList<ComponentModule>();
         for (String c : classNames.split(",")) modules.add(instance(c.strip(), ComponentModule.class));
-        return ComponentModules.INSTANCE.read(modules, List.of(), List.of(), List.of());
+        return ComponentModules.INSTANCE.read(modules, List.of(), List.of());
     }
 
     private static int usage(PrintStream err, String why) {

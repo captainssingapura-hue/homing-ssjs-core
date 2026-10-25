@@ -3,7 +3,7 @@ package hue.captains.singapura.js.homing.component.taxonomy;
 import java.util.List;
 
 /**
- * A type of state that is yes or no: its values {@link StateValue#FALSE false} and {@link
+ * A type of state that is yes or no, its look a class ({@link Classed}): its values {@link StateValue#FALSE false} and {@link
  * StateValue#TRUE true}, the one at rest first - false, unless the type says otherwise: a component
  * is enabled at rest, and pressed only when pressed.
  *
@@ -17,7 +17,7 @@ import java.util.List;
  *
  * @param <P> the branch it is filed under
  */
-public interface Flag<P extends StateBranch> extends StateType<P> {
+public interface Flag<P extends StateBranch> extends Classed<P> {
 
     /** Its value at rest: false, unless it says otherwise. */
     default boolean rest() { return false; }

@@ -12,8 +12,8 @@ import java.util.Optional;
 /**
  * A components taxonomy read from the component modules an instance registers at bootstrap - a flat list, explicitly,
  * nothing found on the classpath. Each module's components in the order registered; their parts with them,
- * transitively; the branches, roles, states and events from them. The base's catalogue of roles and its trees of states
- * and events are whole whatever is registered, so a component is built from their words. Refused - every problem at
+ * transitively; the branches, roles and states from them. The base's catalogue of roles and its tree of states are
+ * whole whatever is registered, so a component is built from their words. Refused - every problem at
  * once - when a module is registered twice or a component is listed twice, by one module or by two: a component is one
  * jar's. What is listed is then read under the same rules as any taxonomy ({@link ReadTaxonomy}).
  */
@@ -27,10 +27,8 @@ public record ComponentModules() implements StatelessFunctionalObject {
      * @param modules the component modules registered, in order
      * @param roles   the base's catalogue of roles
      * @param states  the base's types of state
-     * @param events  the base's types of event
      */
-    public Taxonomy read(List<? extends ComponentModule> modules, List<? extends Role<?>> roles,
-                         List<? extends StateType<?>> states, List<? extends EventType<?>> events) {
+    public Taxonomy read(List<? extends ComponentModule> modules, List<? extends Role<?>> roles, List<? extends StateType<?>> states) {
         var problems = new ArrayList<String>();
         var registered = new HashSet<Class<?>>();
         var listedBy = new LinkedHashMap<Component<?>, ComponentModule>();
@@ -44,7 +42,7 @@ public record ComponentModules() implements StatelessFunctionalObject {
             }
         }
         if (!problems.isEmpty()) throw new IllegalArgumentException("the component modules are refused:\n  " + String.join("\n  ", problems));
-        return new ReadTaxonomy().read(List.copyOf(listedBy.keySet()), roles, states, events);
+        return new ReadTaxonomy().read(List.copyOf(listedBy.keySet()), roles, states);
     }
 
     /** Which registered module lists a component; none when only a part brings it. */

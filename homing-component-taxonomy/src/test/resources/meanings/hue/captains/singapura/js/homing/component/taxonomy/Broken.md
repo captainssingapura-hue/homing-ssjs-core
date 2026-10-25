@@ -8,6 +8,10 @@ Words with no branch to belong to.
 
 A role filed under nothing.
 
+## StrayNote
+
+A note cast in the stray role.
+
 ## Strays
 
 Holds a part whose role is filed under nothing.
@@ -56,6 +60,10 @@ A badge declared there.
 
 A second role that answers to title.
 
+## DoubledNote
+
+A note cast as the second title.
+
 ## Doubled
 
 Names the second title.
@@ -79,6 +87,10 @@ A role filed under the branch called title.
 ## Objective.Caption
 
 A role named for what plays it.
+
+## LabelledNote
+
+A note cast in the role named for what plays it.
 
 ## Labelled
 

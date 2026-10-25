@@ -10,10 +10,13 @@ import hue.captains.singapura.js.homing.component.taxonomy.L1_RoleBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.L2_ComponentBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.ReadTaxonomy;
 import hue.captains.singapura.js.homing.component.taxonomy.Role;
+import hue.captains.singapura.js.homing.component.taxonomy.RoleSet;
 import hue.captains.singapura.js.homing.component.taxonomy.RoleRoot;
 import hue.captains.singapura.js.homing.component.taxonomy.Root;
 import hue.captains.singapura.js.homing.component.taxonomy.Slot;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
+import hue.captains.singapura.js.homing.component.taxonomy.WithRoles;
+import hue.captains.singapura.js.homing.component.taxonomy.WornByTheDocument;
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.core.DomModule;
@@ -49,22 +52,25 @@ class ImplementationsTest {
         public static final Container INSTANCE = new Container();
         @Override public Root parent() { return Root.INSTANCE; }
     }
-    public record PlainButton() implements Component<Button> {
+    public record PlainButton() implements Component<Button>, WithRoles<ActRoles> {
         public static final PlainButton INSTANCE = new PlainButton();
         @Override public Button parent() { return Button.INSTANCE; }
+        @Override public ActRoles roleSet() { return ActRoles.INSTANCE; }
     }
     public record DangerButton() implements Component<Button> {
         public static final DangerButton INSTANCE = new DangerButton();
         @Override public Button parent() { return Button.INSTANCE; }
     }
-    public record Icon() implements Component<Control> {
+    public record Icon() implements Component<Control>, WithRoles<SymbolRoles> {
         public static final Icon INSTANCE = new Icon();
         @Override public Control parent() { return Control.INSTANCE; }
+        @Override public SymbolRoles roleSet() { return SymbolRoles.INSTANCE; }
     }
-    /** Nothing implements the bar: a dialog realizes it inline, so the bar's buttons are the dialog's to import. */
-    public record Bar() implements Component<Container> {
+    /** The bar a dialog's actions sit on: a component of its own, its buttons its parts. */
+    public record Bar() implements Component<Container>, WithRoles<ActsRoles> {
         public static final Bar INSTANCE = new Bar();
         @Override public Container parent() { return Container.INSTANCE; }
+        @Override public ActsRoles roleSet() { return ActsRoles.INSTANCE; }
         @Override public List<Slot<?>> parts() { return List.of(ComponentPartDSL.INSTANCE.part(PlainButton.INSTANCE).as(Act.INSTANCE).atLeast(1)); }
     }
     public record Dialog() implements Component<Container> {
@@ -76,9 +82,10 @@ class ImplementationsTest {
         }
     }
     /** A button whose face is an icon its owner makes and hands in; a strip that holds one. */
-    public record IconButton() implements Component<Button> {
+    public record IconButton() implements Component<Button>, WithRoles<ActRoles> {
         public static final IconButton INSTANCE = new IconButton();
         @Override public Button parent() { return Button.INSTANCE; }
+        @Override public ActRoles roleSet() { return ActRoles.INSTANCE; }
         @Override public List<Slot<?>> parts() { return List.of(ComponentPartDSL.INSTANCE.part(Icon.INSTANCE).as(Symbol.INSTANCE).one()); }
     }
     public record Strip() implements Component<Container> {
@@ -96,13 +103,15 @@ class ImplementationsTest {
         public static final Mark INSTANCE = new Mark();
         @Override public Control parent() { return Control.INSTANCE; }
     }
-    public record Star() implements Component<Mark> {
+    public record Star() implements Component<Mark>, WithRoles<SymbolRoles> {
         public static final Star INSTANCE = new Star();
         @Override public Mark parent() { return Mark.INSTANCE; }
+        @Override public SymbolRoles roleSet() { return SymbolRoles.INSTANCE; }
     }
-    public record Moon() implements Component<Mark> {
+    public record Moon() implements Component<Mark>, WithRoles<SymbolRoles> {
         public static final Moon INSTANCE = new Moon();
         @Override public Mark parent() { return Mark.INSTANCE; }
+        @Override public SymbolRoles roleSet() { return SymbolRoles.INSTANCE; }
     }
     public record Badge() implements Component<Container> {
         public static final Badge INSTANCE = new Badge();
@@ -132,9 +141,19 @@ class ImplementationsTest {
     public record Acts() implements Role<Doing> { public static final Acts INSTANCE = new Acts(); @Override public Doing parent() { return Doing.INSTANCE; } }
     public record Symbol() implements Role<Doing> { public static final Symbol INSTANCE = new Symbol(); @Override public Doing parent() { return Doing.INSTANCE; } }
 
+    /** The paper the page is: a branch the document wears, its backdrop a leaf of it - a style's rule on the root, no module's (RFC 0071 port, 24 Oct). */
+    public record Paper() implements L1_ComponentBranch<Root>, WornByTheDocument {
+        public static final Paper INSTANCE = new Paper();
+        @Override public Root parent() { return Root.INSTANCE; }
+    }
+    public record Backdrop() implements Component<Paper> {
+        public static final Backdrop INSTANCE = new Backdrop();
+        @Override public Paper parent() { return Paper.INSTANCE; }
+    }
+
     private static final Taxonomy HOUSE = new ReadTaxonomy().read(
             List.of(PlainButton.INSTANCE, DangerButton.INSTANCE, Icon.INSTANCE, Bar.INSTANCE, Dialog.INSTANCE, IconButton.INSTANCE, Strip.INSTANCE,
-                    Star.INSTANCE, Moon.INSTANCE, Badge.INSTANCE, Picker.INSTANCE, Knot.INSTANCE),
+                    Star.INSTANCE, Moon.INSTANCE, Badge.INSTANCE, Picker.INSTANCE, Knot.INSTANCE, Backdrop.INSTANCE),
             List.of(Act.INSTANCE, Acts.INSTANCE, Symbol.INSTANCE));
 
     // ── the implementations ──────────────────────────────────────────────
@@ -157,12 +176,21 @@ class ImplementationsTest {
         @Override public ImportsFor<IconModule> imports() { return ImportsFor.noImports(); }
         @Override public ExportsOf<IconModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new Icon())); }
     }
+    /** The bar: its own module, importing the buttons it holds. */
+    public record BarModule() implements DomModule<BarModule>, ImplFor<ImplementationsTest.Bar> {
+        public static final BarModule INSTANCE = new BarModule();
+        public record Bar() implements BranchComponent<BarModule> {}
+        @Override public ImportsFor<BarModule> imports() {
+            return ImportsFor.<BarModule>builder().add(new ModuleImports<>(List.of(new PlainButtonModule.PlainButton()), PlainButtonModule.INSTANCE)).build();
+        }
+        @Override public ExportsOf<BarModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new Bar())); }
+    }
     public record DialogModule() implements DomModule<DialogModule>, ImplFor<ImplementationsTest.Dialog> {
         public static final DialogModule INSTANCE = new DialogModule();
         public record Dialog() implements BranchComponent<DialogModule> {}
         @Override public ImportsFor<DialogModule> imports() {
             return ImportsFor.<DialogModule>builder()
-                    .add(new ModuleImports<>(List.of(new PlainButtonModule.PlainButton()), PlainButtonModule.INSTANCE))
+                    .add(new ModuleImports<>(List.of(new BarModule.Bar()), BarModule.INSTANCE))
                     .add(new ModuleImports<>(List.of(new IconModule.Icon()), IconModule.INSTANCE))
                     .build();
         }
@@ -192,14 +220,14 @@ class ImplementationsTest {
         }
         @Override public ExportsOf<StripModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new Strip())); }
     }
-    /** Code shared by whoever imports it, implementing nothing: the bar's buttons, made in one place. */
+    /** Code shared by whoever imports it, implementing nothing: the dialog's bar, made in one place. */
     public record BarHelperModule() implements DomModule<BarHelperModule> {
         public static final BarHelperModule INSTANCE = new BarHelperModule();
         public record BarHelper() implements Exportable._Class<BarHelperModule> {}
-        @Override public ImportsFor<BarHelperModule> imports() { return ImportsFor.<BarHelperModule>builder().add(new ModuleImports<>(List.of(new PlainButtonModule.PlainButton()), PlainButtonModule.INSTANCE)).build(); }
+        @Override public ImportsFor<BarHelperModule> imports() { return ImportsFor.<BarHelperModule>builder().add(new ModuleImports<>(List.of(new BarModule.Bar()), BarModule.INSTANCE)).build(); }
         @Override public ExportsOf<BarHelperModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new BarHelper())); }
     }
-    /** The dialog that realizes its bar through the helper. */
+    /** The dialog that makes its bar through the helper. */
     public record HelpedDialogModule() implements DomModule<HelpedDialogModule>, ImplFor<ImplementationsTest.Dialog> {
         public static final HelpedDialogModule INSTANCE = new HelpedDialogModule();
         public record Dialog() implements BranchComponent<HelpedDialogModule> {}
@@ -250,6 +278,13 @@ class ImplementationsTest {
         public record Stray() implements ElementComponent<StrayModule> { @Override public String tag() { return "span"; } }
         @Override public ImportsFor<StrayModule> imports() { return ImportsFor.noImports(); }
         @Override public ExportsOf<StrayModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new Stray())); }
+    }
+    /** A module for a leaf the document wears: refused, whatever it exports. */
+    public record BackdropModule() implements DomModule<BackdropModule>, ImplFor<ImplementationsTest.Backdrop> {
+        public static final BackdropModule INSTANCE = new BackdropModule();
+        public record Backdrop() implements ElementComponent<BackdropModule> { @Override public String tag() { return "html"; } }
+        @Override public ImportsFor<BackdropModule> imports() { return ImportsFor.noImports(); }
+        @Override public ExportsOf<BackdropModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new Backdrop())); }
     }
 
     public record MarkModule() implements DomModule<MarkModule>, ImplForLeavesOf<ImplementationsTest.Mark> {
@@ -337,8 +372,8 @@ class ImplementationsTest {
 
     @Test
     void anchored_once_oneClassEach_composedAsDeclared() {
-        assertEquals(List.of(), check(ButtonModule.INSTANCE, PlainButtonModule.INSTANCE, IconModule.INSTANCE, DialogModule.INSTANCE),
-                "the dialog imports the plain button its unimplemented bar calls for, and the icon its own part does");
+        assertEquals(List.of(), check(ButtonModule.INSTANCE, PlainButtonModule.INSTANCE, IconModule.INSTANCE, BarModule.INSTANCE, DialogModule.INSTANCE),
+                "the dialog imports its bar and its icon, each its part; the bar the buttons it holds");
     }
 
     @Test
@@ -346,23 +381,28 @@ class ImplementationsTest {
         assertEquals(List.of(
                         "DangerButtonModule implements DangerButton but exports DangerButton, DangerButtonBuilder: one module, one class - the component, named as its leaf - and at most its companion, named for it",
                         "LooseDialogModule (Dialog) imports DangerButton (DangerButtonModule), which none of its parts declares",
+                        "LooseDialogModule (Dialog) never imports Bar, which its part acts calls for",
                         "LooseDialogModule (Dialog) never imports Icon, which its part symbol calls for"),
-                check(ButtonModule.INSTANCE, PlainButtonModule.INSTANCE, DangerButtonModule.INSTANCE, IconModule.INSTANCE, LooseDialogModule.INSTANCE));
+                check(ButtonModule.INSTANCE, PlainButtonModule.INSTANCE, DangerButtonModule.INSTANCE, IconModule.INSTANCE, BarModule.INSTANCE, LooseDialogModule.INSTANCE));
     }
 
     @Test
-    void throughAPartNothingImplements_theCallIsSaid() {
-        assertEquals(List.of("NoButtons (Dialog) never imports PlainButton, which its part acts (an unrealized Bar) → act calls for"),
-                check(ButtonModule.INSTANCE, PlainButtonModule.INSTANCE, IconModule.INSTANCE, new NoButtons()));
+    void aPartNothingImplements_isRefused_neverRealizedInline() {
+        assertEquals(List.of("InlineDialog (Dialog): its part acts is Bar, which no module implements - a part is a component of its own, never realized by its owner inline"),
+                check(ButtonModule.INSTANCE, PlainButtonModule.INSTANCE, IconModule.INSTANCE, new InlineDialog()),
+                "the dialog makes its bar itself, the bar's buttons with it: refused");
     }
 
-    /** The dialog with its button import taken away. */
-    private record NoButtons() implements DomModule<NoButtons>, ImplFor<ImplementationsTest.Dialog> {
-        public record Dialog() implements BranchComponent<NoButtons> {}
-        @Override public ImportsFor<NoButtons> imports() {
-            return ImportsFor.<NoButtons>builder().add(new ModuleImports<>(List.of(new IconModule.Icon()), IconModule.INSTANCE)).build();
+    /** The dialog that makes its bar itself, importing the bar's buttons in the bar's stead. */
+    private record InlineDialog() implements DomModule<InlineDialog>, ImplFor<ImplementationsTest.Dialog> {
+        public record Dialog() implements BranchComponent<InlineDialog> {}
+        @Override public ImportsFor<InlineDialog> imports() {
+            return ImportsFor.<InlineDialog>builder()
+                    .add(new ModuleImports<>(List.of(new PlainButtonModule.PlainButton()), PlainButtonModule.INSTANCE))
+                    .add(new ModuleImports<>(List.of(new IconModule.Icon()), IconModule.INSTANCE))
+                    .build();
         }
-        @Override public ExportsOf<NoButtons> exports() { return new ExportsOf<>(this, List.of(new Dialog())); }
+        @Override public ExportsOf<InlineDialog> exports() { return new ExportsOf<>(this, List.of(new Dialog())); }
     }
 
     @Test
@@ -389,8 +429,8 @@ class ImplementationsTest {
 
     @Test
     void aModuleThatImplementsNothing_isItsImportersCode() {
-        assertEquals(List.of(), check(ButtonModule.INSTANCE, PlainButtonModule.INSTANCE, IconModule.INSTANCE, BarHelperModule.INSTANCE, HelpedDialogModule.INSTANCE),
-                "the dialog's bar is realized in a helper it imports: the helper's plain button is the dialog's");
+        assertEquals(List.of(), check(ButtonModule.INSTANCE, PlainButtonModule.INSTANCE, IconModule.INSTANCE, BarModule.INSTANCE, BarHelperModule.INSTANCE, HelpedDialogModule.INSTANCE),
+                "the dialog's bar is made in a helper it imports: the helper's bar is the dialog's");
     }
 
     /** A companion is the factory named for the component, and a constant: anything else beside the class is refused. */
@@ -418,6 +458,40 @@ class ImplementationsTest {
                 check(ButtonModule.INSTANCE, IconModule.INSTANCE, OddIconModule.INSTANCE, AdriftModule.INSTANCE, StrayModule.INSTANCE));
     }
 
+    /** A leaf the document wears is a style's rule on the document's root: no module implements it (RFC 0071 port, 24 Oct). */
+    @Test
+    void aLeafTheDocumentWears_isNoModules() {
+        assertEquals(List.of("BackdropModule implements Backdrop, which the document wears: its look is a style's rule on the document's root, and no module's"),
+                check(BackdropModule.INSTANCE));
+    }
+
+    /** A widget's module: a widget is no component, so it is anchored at no leaf (owner, 20 Oct). */
+    public record LooseWidgetModule() implements Widget<Widget._None, LooseWidgetModule> {
+        public static final LooseWidgetModule INSTANCE = new LooseWidgetModule();
+        public record LooseWidget() implements Widget._Class<Widget._None, LooseWidgetModule> {}
+        @Override public String title() { return "Loose"; }
+        @Override public ImportsFor<LooseWidgetModule> imports() { return ImportsFor.noImports(); }
+        @Override public ExportsOf<LooseWidgetModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new LooseWidget())); }
+    }
+
+    @Test
+    void aWidget_isNoComponent_anchoredAtNoLeaf() {
+        assertEquals(List.of(), check(LooseWidgetModule.INSTANCE));
+    }
+
+    /** A layout's module: a layout is no component either, so it too is anchored at no leaf (owner, 21 Oct). */
+    public record RowLayoutModule() implements DomModule<RowLayoutModule> {
+        public static final RowLayoutModule INSTANCE = new RowLayoutModule();
+        public record RowLayout() implements BranchComponent<RowLayoutModule> { @Override public Shape shape() { return Shape.LAYOUT; } }
+        @Override public ImportsFor<RowLayoutModule> imports() { return ImportsFor.noImports(); }
+        @Override public ExportsOf<RowLayoutModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new RowLayout())); }
+    }
+
+    @Test
+    void aLayout_isNoComponent_anchoredAtNoLeaf() {
+        assertEquals(List.of(), check(RowLayoutModule.INSTANCE));
+    }
+
     /**
      * One class realizes every mark: the badge imports it for the star its slot names, the picker for
      * any mark; a module that holds no mark imports it for nothing, and one that names none of them
@@ -443,5 +517,25 @@ class ImplementationsTest {
                 check(new GlyphsModule()));
         assertEquals(List.of("SealModule implements every leaf of Seal, but Knot holds parts: the leaves of one class are alike but for their look"),
                 check(new SealModule()));
+    }
+
+    // ── the roles each component may be cast in (RFC 0067, D55) ──
+
+    /** What a button may be cast as. */
+    public record ActRoles() implements RoleSet {
+        public static final ActRoles INSTANCE = new ActRoles();
+        @Override public List<Role<?>> roles() { return List.of(Act.INSTANCE); }
+    }
+
+    /** What a bar may be cast as. */
+    public record ActsRoles() implements RoleSet {
+        public static final ActsRoles INSTANCE = new ActsRoles();
+        @Override public List<Role<?>> roles() { return List.of(Acts.INSTANCE); }
+    }
+
+    /** What an icon or a mark may be cast as. */
+    public record SymbolRoles() implements RoleSet {
+        public static final SymbolRoles INSTANCE = new SymbolRoles();
+        @Override public List<Role<?>> roles() { return List.of(Symbol.INSTANCE); }
     }
 }

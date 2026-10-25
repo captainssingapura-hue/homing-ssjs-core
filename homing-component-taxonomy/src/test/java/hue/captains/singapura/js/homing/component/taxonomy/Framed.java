@@ -31,9 +31,10 @@ final class Framed {
     }
 
     /** An ordinary component beside the branch, cast as any is. */
-    record Box() implements Component<Region> {
+    record Box() implements Component<Region>, WithRoles<Places> {
         static final Box INSTANCE = new Box();
         @Override public Region parent() { return Region.INSTANCE; }
+        @Override public Places roleSet() { return Places.INSTANCE; }
     }
 
     // ── refused when read ──────────────────────────────────────────────────
@@ -74,5 +75,13 @@ final class Framed {
     record Deep() implements Component<SubFrame> {
         static final Deep INSTANCE = new Deep();
         @Override public SubFrame parent() { return SubFrame.INSTANCE; }
+    }
+
+    // ── the roles each component may be cast in (RFC 0067, D55) ──────────
+
+    /** What a box may be cast as. */
+    record Places() implements RoleSet {
+        static final Places INSTANCE = new Places();
+        @Override public List<Role<?>> roles() { return List.of(Place.INSTANCE); }
     }
 }

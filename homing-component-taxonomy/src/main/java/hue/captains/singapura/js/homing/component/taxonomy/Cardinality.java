@@ -3,21 +3,27 @@ package hue.captains.singapura.js.homing.component.taxonomy;
 import hue.captains.singapura.tao.ontology.ValueObject;
 
 /**
- * How many of a part a component has: a sum of two cases.
+ * How many of a part a component has, and when that is decided: a sum of two cases for the count, each
+ * {@link Static} or {@link Dynamic}.
  *
  * <ul>
- *   <li>{@link Fixed} - by construction: the parts are there from the start and their count never
- *       changes - a split's seam, a dialog's window.</li>
- *   <li>{@link Varying} - by reaction: the count is the owner's to change within a range - the
- *       tabs of a strip, the choices of a menu. A count chosen once, when the owner is built, is
- *       varying too: a cardinality bounds a count, and does not say when it is chosen.</li>
+ *   <li>{@link Fixed} - exactly so many: a split's seam, a dialog's window.</li>
+ *   <li>{@link Varying} - within a range: the tabs of a strip, the choices of a menu.</li>
  * </ul>
  *
- * <p>One way to say each: {@code Fixed(0)} is refused - a role played no times is no role - and
- * so is a range whose least and most are equal, which is {@code Fixed}. Written as
- * multiplicity: {@code 1}, {@code 2}, {@code 0..1}, {@code 1..*}.</p>
+ * <p>The count bounds how many; the other side says when they are decided (RFC 0071 port, question 5, the owner's
+ * words). <b>Static</b>, the default: the parts along the slot are made with their owner and kept for its life - how
+ * many, and which player, chosen once, as it is made; a part a state shows or hides is still static. <b>Dynamic</b>: the
+ * owner makes and drops them while it lives, within the count - the tabs of a strip, the steps of a trail.</p>
+ *
+ * <p>One way to say each count: {@code Fixed(0)} is refused - a role played no times is no role - and so is a range
+ * whose least and most are equal, which is {@code Fixed}. Written as multiplicity: {@code 1}, {@code 2}, {@code 0..1},
+ * {@code 1..*}.</p>
  */
 public sealed interface Cardinality extends ValueObject permits Cardinality.Fixed, Cardinality.Varying {
+
+    /** Dynamic, as the DSL says it: {@code DSL.part(Tab.INSTANCE).as(Chip.INSTANCE).any(Cardinality.DYNAMIC)}. */
+    Dynamic DYNAMIC = Dynamic.INSTANCE;
 
     /** The fewest the owner may have: one or more makes the part required. */
     int least();
@@ -28,19 +34,28 @@ public sealed interface Cardinality extends ValueObject permits Cardinality.Fixe
     /** As multiplicity: {@code 1}, {@code 0..1}, {@code 2..12}, {@code 0..*}. */
     String multiplicity();
 
-    /** Exactly so many, from the start: {@code Fixed(1)} is {@code 1}. */
-    record Fixed(int count) implements Cardinality {
+    /** When the parts are decided: once, as the owner is made, or while it lives. */
+    StaticOrDynamic when();
+
+    /** Whether the owner makes and drops these parts while it lives. */
+    default boolean dynamic() { return when() instanceof Dynamic; }
+
+    /** Exactly so many: {@code Fixed(1)} is {@code 1}, static. */
+    record Fixed(int count, StaticOrDynamic when) implements Cardinality {
         public Fixed {
             if (count < 1) throw new BadCardinality(count + " is no count: a role played no times is no role");
+            if (when == null) throw new BadCardinality(count + ", decided when? static or dynamic");
         }
+        /** Exactly so many, static. */
+        public Fixed(int count) { this(count, Static.INSTANCE); }
         @Override public int least() { return count; }
         @Override public boolean allows(int n) { return n == count; }
         @Override public String multiplicity() { return String.valueOf(count); }
-        @Override public String toString() { return multiplicity(); }
+        @Override public String toString() { return multiplicity() + when.said(); }
     }
 
-    /** At least {@code min}, and at most what {@code max} says: {@code Varying(0, AtMost(1))} is {@code 0..1}. */
-    record Varying(int min, Bound max) implements Cardinality {
+    /** At least {@code min}, and at most what {@code max} says: {@code Varying(0, AtMost(1))} is {@code 0..1}, static. */
+    record Varying(int min, Bound max, StaticOrDynamic when) implements Cardinality {
         public Varying {
             if (max == null) throw new BadCardinality(min + "..? is no range: it needs a most, or none");
             if (min < 0) throw new BadCardinality(min + ".." + max.say() + " is no range: the least is below none");
@@ -48,11 +63,32 @@ public sealed interface Cardinality extends ValueObject permits Cardinality.Fixe
                 throw new BadCardinality(min + ".." + most + " is no range: the most is below the least");
             if (max instanceof AtMost(int most) && most == min)
                 throw new BadCardinality(min + ".." + most + " is no range: say exactly(" + most + ")");
+            if (when == null) throw new BadCardinality(min + ".." + max.say() + ", decided when? static or dynamic");
         }
+        /** Within a range, static. */
+        public Varying(int min, Bound max) { this(min, max, Static.INSTANCE); }
         @Override public int least() { return min; }
         @Override public boolean allows(int n) { return n >= min && max.admits(n); }
         @Override public String multiplicity() { return min + ".." + max.say(); }
-        @Override public String toString() { return multiplicity(); }
+        @Override public String toString() { return multiplicity() + when.said(); }
+    }
+
+    /** When the parts along a slot are decided: once, as their owner is made, or while it lives. */
+    sealed interface StaticOrDynamic extends ValueObject permits Static, Dynamic {
+        /** How a count says it: nothing for static, the default; {@code " dynamic"}. */
+        String said();
+    }
+
+    /** Decided once, as the owner is made, and kept for its life - the default. */
+    record Static() implements StaticOrDynamic {
+        public static final Static INSTANCE = new Static();
+        @Override public String said() { return ""; }
+    }
+
+    /** Made and dropped by the owner while it lives, within the count. */
+    record Dynamic() implements StaticOrDynamic {
+        public static final Dynamic INSTANCE = new Dynamic();
+        @Override public String said() { return " dynamic"; }
     }
 
     /** The most of a range: so many, or no most at all. */

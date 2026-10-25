@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.component.taxonomy.Component;
 import hue.captains.singapura.js.homing.component.taxonomy.Part;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
+import hue.captains.singapura.js.homing.component.taxonomy.LayoutStyling;
 import hue.captains.singapura.js.homing.component.taxonomy.VirtualComponent;
 import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import hue.captains.singapura.js.homing.design.semantic.Derives;
@@ -40,7 +41,7 @@ public record Bundles() implements StatelessFunctionalObject {
      */
     public Set<Casting> design(Taxonomy taxonomy, Component<?> component, Collection<? extends Component<?>> topLevel) {
         var out = new LinkedHashSet<Casting>();
-        if (!(component instanceof VirtualComponent<?>)) out.add(new Casting(component));
+        if (!(component instanceof VirtualComponent<?>) && !(component instanceof LayoutStyling<?>)) out.add(new Casting(component));   // the layouts' styling has no look of its own
         walk(taxonomy, component, topLevel, out, new HashSet<>());
         return out;
     }

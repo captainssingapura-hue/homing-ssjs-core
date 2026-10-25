@@ -75,7 +75,7 @@ class SeveralPlayersTest {
             @Override public List<? extends Component<?>> components() { return List.of(Header.INSTANCE); }
         }
         var modules = List.of(new Headers());
-        Taxonomy t = ComponentModules.INSTANCE.read(modules, List.of(), List.of(), List.of());
+        Taxonomy t = ComponentModules.INSTANCE.read(modules, List.of(), List.of());
         var bringers = ComponentModules.INSTANCE.bringers(modules, t);
         assertTrue(bringers.get(Up.INSTANCE) instanceof Headers && bringers.get(Down.INSTANCE) instanceof Headers);
     }

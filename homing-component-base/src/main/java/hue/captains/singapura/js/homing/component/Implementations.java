@@ -31,7 +31,9 @@ import java.util.Set;
  *       or every leaf of a branch ({@link ImplForLeavesOf}); a module that implements a branch's base
  *       ({@link ImplForBranch}) exports no component.</li>
  *   <li><b>Declared.</b> The anchor is a node of the taxonomy: a leaf among its components, a
- *       branch among its branches.</li>
+ *       branch among its branches. And an element's: a leaf the document wears ({@link
+ *       hue.captains.singapura.js.homing.component.taxonomy.WornByTheDocument}) is a style's rule
+ *       on the document's root, and no module implements it.</li>
  *   <li><b>Once.</b> One leaf, one module; one branch, one module - a leaf under a branch one
  *       module realizes whole is that module's alone.</li>
  *   <li><b>One class.</b> The module exports one thing: the component named as its leaf, the base
@@ -43,10 +45,11 @@ import java.util.Set;
  *   <li><b>In the lineage.</b> A leaf's module imports a branch's base only when the leaf is under
  *       the branch.</li>
  *   <li><b>Composed as declared.</b> The leaves a leaf's module imports are its parts' - no more,
- *       no fewer. A part whose component is not implemented anywhere in the closure is realized by
- *       its owner inline, so its own parts are the owner's to import in its stead. A part's own
- *       parts the owner may also import, to make them and hand them in: a button holding an icon
- *       need not know which icon, its owner does. A module that realizes every leaf of a branch
+ *       no fewer. Every part is a component of its own, implemented by a module of the closure: a
+ *       part no module implements is a problem of its owner's, never realized by its owner inline -
+ *       an owner never makes its part's element (RFC 0071), and a widget draws only components. A
+ *       part's own parts the owner may also import, to make them and hand them in: a button holding
+ *       an icon need not know which icon, its owner does. A module that realizes every leaf of a branch
  *       stands for each leaf its importer's parts call for - one a slot names or any of the branch -
  *       and is imported only for one. A module that implements nothing is code its importers run,
  *       so the leaves it imports are theirs.</li>
@@ -78,12 +81,17 @@ public record Implementations() {
         for (EsModule<?> m : own) {
             String name = m.getClass().getSimpleName();
             List<? extends Exportable<?>> exports = m.exports().exports();
-            boolean exportsComponent = exports.stream().anyMatch(x -> x instanceof UiComponent<?>);
+            // a widget is no component (owner, 20 Oct), nor a layout (21 Oct): neither is anchored at a leaf
+            boolean exportsComponent = exports.stream().anyMatch(x -> x instanceof UiComponent<?> c && c.shape() != UiComponent.Shape.WIDGET && c.shape() != UiComponent.Shape.LAYOUT);
             switch (m) {
                 case ImplFor<?> impl -> {
                     Component<?> leaf = anchor(impl, name, problems);
                     if (leaf == null) continue;
                     if (!components.contains(leaf)) { problems.add(name + " implements " + simple(leaf) + ", which the taxonomy does not declare"); continue; }
+                    if (taxonomy.wornByTheDocument(leaf)) {
+                        problems.add(name + " implements " + simple(leaf) + ", which the document wears: its look is a style's rule on the document's root, and no module's");
+                        continue;
+                    }
                     if (!asItsLeafSays(exports, leaf))
                         problems.add(name + " implements " + simple(leaf) + " but exports " + said(exports)
                                 + ": one module, one class - the component, named as its leaf - and at most its companion, named for it");
@@ -145,7 +153,7 @@ public record Implementations() {
                                     Map<Component<?>, EsModule<?>> leaves, Map<ComponentBranch, EsModule<?>> whole, List<String> problems) {
         String who = m.getClass().getSimpleName() + " (" + simple(leaf) + ")";
         var expected = new LinkedHashMap<Component<?>, String>();   // a leaf → the part that calls for it
-        expect(taxonomy, leaf, "", leaves, whole, new HashSet<>(List.of(leaf)), expected);
+        expect(taxonomy, leaf, who, leaves, whole, expected, problems);
         expected.remove(leaf);   // a component holding more of itself imports nothing for it
         var handed = new HashSet<Component<?>>();   // the leaves its parts hold, at any depth: the owner may make them and hand them in
         held(taxonomy, leaf, new HashSet<>(List.of(leaf)), handed);
@@ -205,14 +213,15 @@ public record Implementations() {
                 if (seen.add(base)) { out.add(base); held(taxonomy, base, seen, out); }
     }
 
-    /** The implemented leaves a component's parts call for, through every part whose own component nothing implements. */
-    private static void expect(Taxonomy taxonomy, Component<?> owner, String through, Map<Component<?>, EsModule<?>> leaves,
-                               Map<ComponentBranch, EsModule<?>> whole, Set<Component<?>> seen, Map<Component<?>, String> out) {
+    /** The leaves a component's parts call for, each implemented by a module of the closure; a part nothing implements, a problem. */
+    private static void expect(Taxonomy taxonomy, Component<?> owner, String who, Map<Component<?>, EsModule<?>> leaves,
+                               Map<ComponentBranch, EsModule<?>> whole, Map<Component<?>, String> out, List<String> problems) {
         for (Part<?, ?> p : taxonomy.partsOf(owner)) {
-            String said = through + p.role().name().value();
+            String said = p.role().name().value();
             for (Component<?> base : p.bases()) {
                 if (leaves.containsKey(base) || wholeOf(taxonomy, base, whole) != null) out.putIfAbsent(base, said);
-                else if (seen.add(base)) expect(taxonomy, base, said + " (an unrealized " + simple(base) + ") → ", leaves, whole, seen, out);
+                else if (!base.equals(owner))
+                    problems.add(who + ": its part " + said + " is " + simple(base) + ", which no module implements - a part is a component of its own, never realized by its owner inline");
             }
         }
     }

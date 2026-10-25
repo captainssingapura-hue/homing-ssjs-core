@@ -43,13 +43,14 @@ public record Importances() implements StatelessFunctionalObject {
     }
 
     /**
-     * A leaf's states in precedence: the least important first, so the last listed is the one that wins; two of one level
+     * A leaf's classed states in precedence - the classes it wears: the least important first, so the last listed is the one that wins; two of one level
      * in the order the leaf lists them. A state with no level - the reader refuses one - comes first.
      */
-    public List<StateType<?>> precedence(Component<?> leaf) {
-        var states = new ArrayList<StateType<?>>(new LinkedHashSet<>(leaf.states() == null ? List.<StateType<?>>of() : leaf.states()));
-        states.removeIf(s -> s == null);
-        states.sort(Comparator.comparingInt((StateType<?> s) -> -levelFor(leaf, s).map(this::rank).orElse(levels().size())));
+    public List<Classed<?>> precedence(Component<?> leaf) {
+        var states = new ArrayList<Classed<?>>();
+        for (StateType<?> s : new LinkedHashSet<>(leaf.states() == null ? List.<StateType<?>>of() : leaf.states()))
+            if (s instanceof Classed<?> c) states.add(c);   // the classes a leaf wears: its classed states alone
+        states.sort(Comparator.comparingInt((Classed<?> s) -> -levelFor(leaf, s).map(this::rank).orElse(levels().size())));
         return List.copyOf(states);
     }
 

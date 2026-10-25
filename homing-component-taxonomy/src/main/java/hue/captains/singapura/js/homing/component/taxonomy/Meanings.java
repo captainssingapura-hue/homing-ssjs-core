@@ -107,7 +107,7 @@ record Meanings() implements StatelessFunctionalObject {
 
     private static boolean isNode(Class<?> c) {
         return Taxon.class.isAssignableFrom(c) || RoleNode.class.isAssignableFrom(c)
-                || StateNode.class.isAssignableFrom(c) || EventNode.class.isAssignableFrom(c);
+                || StateNode.class.isAssignableFrom(c);
     }
 
     private static Optional<String> read(Class<?> top) {

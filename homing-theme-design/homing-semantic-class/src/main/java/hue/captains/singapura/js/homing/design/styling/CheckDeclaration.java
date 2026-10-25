@@ -6,6 +6,7 @@ import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.component.taxonomy.Component;
 import hue.captains.singapura.js.homing.component.taxonomy.RoleNode;
 import hue.captains.singapura.js.homing.component.taxonomy.RoleRoot;
+import hue.captains.singapura.js.homing.component.taxonomy.Room;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.design.color.ColorLeaf;
 import hue.captains.singapura.js.homing.design.color.ColorScale;
@@ -171,7 +172,7 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
         StylingRes<?, ?> res = implementation.style();
         switch (res) {
             case null -> problems.add("answers nothing: CssContent, or a Delegation");
-            case StylingRes.CssContent<?, ?> content -> content(type, style, casting, content, scheme.orElse(null), taxonomy, tree, problems);
+            case StylingRes.CssContent<?, ?> content -> own(type, style, casting, content, taxonomy, tree, problems);
             case StylingRes.Delegation<?, ?> delegation -> delegation(type, style, casting, delegation, scheme.orElse(null), tree, problems);
         }
         return new Implementation(type, style.token(), casting.token(), problems);
@@ -185,19 +186,23 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
      * @param reports  what the soft check says and does not refuse: a state drawn out of the casting's precedence (D23)
      * @param uses     the colours of the tree its rule uses, by token, each with where it first does
      */
-    record CssChecked(boolean marked, List<String> problems, List<String> reports, Map<String, String> uses) {}
+    public record CssChecked(boolean marked, List<String> problems, List<String> reports, Map<String, String> uses) {}
 
     /** A casting's CSS, its marks in: their form, then - filled in for the casting - a casting's rule, held to its leaf and the tree. */
-    static CssChecked css(Taxonomy taxonomy, ColorTree tree, DesignStyle<?> style, Casting casting, String name, String text) {
+    public CssChecked css(Taxonomy taxonomy, ColorTree tree, DesignStyle<?> style, Casting casting, String name, String text) {
         return css(taxonomy, tree, style, casting, name, text, List.of());
     }
 
     /** As {@link #css(Taxonomy, ColorTree, DesignStyle, Casting, String, String)}, with the implementation's own spectra (D41). */
-    static CssChecked css(Taxonomy taxonomy, ColorTree tree, DesignStyle<?> style, Casting casting, String name, String text,
+    public CssChecked css(Taxonomy taxonomy, ColorTree tree, DesignStyle<?> style, Casting casting, String name, String text,
                           List<? extends ColorScale<?, ?>> spectra) {
         CastingCss.Marked marked = CastingCss.INSTANCE.marks(name, text);
         if (!marked.passes()) return new CssChecked(false, marked.problems(), List.of(), Map.of());
         var problems = new ArrayList<>(marked.problems());
+        var declared = casting.component() instanceof Component<?> c ? c.rooms().stream().map(Room::name).toList() : List.<String>of();
+        for (String room : marked.rooms())
+            if (!declared.contains(room))
+                problems.add(name + ": rules $casting__" + room + ", a room " + casting.component().token() + " has not: a component's rooms are its own to declare");
         ReadCss.Read read = ReadCss.INSTANCE.read(CastingCss.INSTANCE.filled(text, casting));
         problems.addAll(read.problems());
         CastingRule rule = new CastingRule(taxonomy, tree, style, casting, name, spectra);
@@ -213,9 +218,9 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
         return new CssChecked(true, problems, checked.reports(), rule.uses());
     }
 
-    /** Its own CSS: at its canonical name, marked in form, and - filled in for its casting - a casting's rule, its colours imported both ways. */
-    private static void content(Class<?> type, DesignStyle<?> style, Casting casting, StylingRes.CssContent<?, ?> content, ColorScheme scheme,
-                                Taxonomy taxonomy, ColorTree tree, List<String> problems) {
+    /** Its own CSS: at its canonical name in its jar, then held whole ({@link #content}). */
+    private void own(Class<?> type, DesignStyle<?> style, Casting casting, StylingRes.CssContent<?, ?> content,
+                     Taxonomy taxonomy, ColorTree tree, List<String> problems) {
         var css = CastingCss.INSTANCE;
         String file = css.resource(type);
         Optional<String> text = css.read(type);
@@ -223,19 +228,35 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
             problems.add("answers CssContent, and its jar has no " + file + ": its CSS is at its canonical name");
             return;
         }
-        String name = type.getSimpleName() + ".css";
+        problems.addAll(content(taxonomy, tree, style, casting, type.getSimpleName() + ".css", text.get(), content.colours()));
+    }
+
+    /**
+     * A casting's CSS held whole, as an implementation with CSS of its own is: its marks in form; filled in for its
+     * casting, a casting's rule (D9, D12, D29); and its colours - those the implementation lists, its own spectra among
+     * them (D41) - the tree's, seen by its style's scheme, and imported both ways: each it uses listed, each listed used
+     * (D32). Every problem, each naming the file; for a style that says no scheme, its marks alone.
+     *
+     * @param name    the file, as the problems name it
+     * @param text    its CSS
+     * @param colours the colours the implementation lists
+     */
+    public List<String> content(Taxonomy taxonomy, ColorTree tree, DesignStyle<?> style, Casting casting, String name, String text,
+                                List<? extends ColorLeaf<?, ?, ?>> colours) {
+        var problems = new ArrayList<String>();
+        ColorScheme scheme = tree.scheme(style).orElse(null);
         if (scheme == null) {
-            problems.addAll(css.marks(name, text.get()).problems());
-            return;
+            problems.addAll(CastingCss.INSTANCE.marks(name, text).problems());
+            return List.copyOf(problems);
         }
         var spectra = new ArrayList<ColorScale<?, ?>>();
-        for (ColorLeaf<?, ?, ?> c : content.colours())
+        for (ColorLeaf<?, ?, ?> c : colours)
             if (c instanceof ColorScale<?, ?> s && !tree.has(c)) spectra.add(s);
-        CssChecked checked = css(taxonomy, tree, style, casting, name, text.get(), spectra);
+        CssChecked checked = css(taxonomy, tree, style, casting, name, text, spectra);
         problems.addAll(checked.problems());
-        if (!checked.marked()) return;
+        if (!checked.marked()) return List.copyOf(problems);
         var imported = new LinkedHashMap<String, ColorLeaf<?, ?, ?>>();
-        for (ColorLeaf<?, ?, ?> c : content.colours()) {
+        for (ColorLeaf<?, ?, ?> c : colours) {
             imported.put(c.token(), c);
             if (c instanceof ColorScale<?, ?> s && !tree.has(c)) {   // its own spectrum: its anchors the tree's, its positions its own (D41)
                 for (ColorScale.Knot<?> k : s.knots()) {
@@ -255,6 +276,7 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
                 problems.add(u.getValue() + ": uses " + u.getKey() + ", which it does not import: CssContent lists each colour its CSS uses (D32)");
         for (String i : imported.keySet())
             if (!uses.containsKey(i)) problems.add("imports " + i + ", and its CSS uses it nowhere: it imports what it uses (D32)");
+        return List.copyOf(problems);
     }
 
     /** A delegation: no CSS of its own; its chain to CSS, never round, of the same component; its colours the delegating scheme's. */

@@ -32,16 +32,20 @@ public record TaxonomyProblem(Rule rule, String says) implements ValueObject {
         BAD_CARDINALITY,
         /** An axis a node declares twice, or one a branch above it already declares: each axis is declared once along a lineage. */
         EXTENT_TWICE,
-        /** A node of any tree - components, roles, states, events, words - with no meaning: no section of its own, or one with no words in it. */
+        /** A node of any tree - components, roles, states, words - with no meaning: no section of its own, or one with no words in it. */
         NO_MEANING,
         /** A meanings file with a section that names no node its class declares, a section twice, or words outside every section. */
         MEANING_ASTRAY,
         /** Two nodes that mean the same: one node, or two meanings to write. */
         MEANING_TWICE,
-        /** Two nodes of the tree of states, or two of the tree of events, answer to one name: one word, one meaning, within each tree. */
+        /** Two nodes of the tree of states answer to one name: one word, one meaning, within the tree. */
         TREE_NAME_TWICE,
         /** A type of state with fewer than two values, or one value twice: its values are what a component is in, one at a time. */
         BAD_STATE_VALUES,
+        /** A type of state whose domain cannot be made, is none, or has a span while it is classed (RFC 0069, amended 21 Oct). */
+        BAD_STATE_DOMAIN,
+        /** A named change of a type of state that is none, named twice, or does not fit its type's domain. */
+        BAD_STATE_CHANGE,
         /** Two values of the tree of states answered by one design word: one word, one meaning. */
         DESIGN_WORD_TWICE,
         /** A type of state with no level of importance: every state implements one, intrinsic, on the tree of states. */
@@ -58,10 +62,28 @@ public record TaxonomyProblem(Rule rule, String says) implements ValueObject {
         BRANCH_IN_LOCAL_STYLE_BRANCH,
         /** A part played by a virtual leaf: a part is cast, and a virtual leaf never is. */
         VIRTUAL_PLAYS_A_PART,
+        /** A part played by the layouts' styling: it owns parts for their design, and is no part of anything. */
+        LAYOUT_STYLING_PLAYS_A_PART,
         /** A family head with another family head between it and the root: families are headed at one level. */
         FAMILY_HEAD_NESTED,
         /** A component that says it heads a family: only a branch does. */
-        FAMILY_HEAD_NOT_A_BRANCH
+        FAMILY_HEAD_NOT_A_BRANCH,
+        /** A leaf that declares parts, a composite that declares none, or a component that says it is both (D53). */
+        KIND_BADLY,
+        /** A component cast in a role with a look of its own that its role set does not allow - or that has no role set (D55). */
+        ROLE_NOT_ALLOWED,
+        /** A role set with no roles, a role twice, or one that only places a part (D55). */
+        ROLE_SET_BADLY,
+        /** A component that names a room twice. */
+        ROOMS_BADLY,
+        /** A component that names one of its values twice (RFC 0071 port, 23 Oct). */
+        VALUES_BADLY,
+        /** A component that says the document wears it: only a branch does, for every leaf under it (RFC 0071 port, 24 Oct). */
+        WORN_BY_THE_DOCUMENT_NOT_A_BRANCH,
+        /** A leaf the document wears with parts, states, rooms, values, axes or a role set: it is a style's rule on the document's root, and nothing else. */
+        DOCUMENT_LEAF_BADLY,
+        /** A part played by a leaf the document wears: a part is an element of its owner's, and the document's leaf has no element. */
+        DOCUMENT_LEAF_PLAYS_A_PART
     }
 
     @Override public String toString() { return rule + ": " + says; }

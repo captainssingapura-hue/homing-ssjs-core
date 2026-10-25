@@ -57,7 +57,7 @@ class ImportanceTest {
     @Test
     void refused_aStateOfNoLevel_aPseudoStateThatIsNone_andALeafThatListsBadly() {
         var e = assertThrows(RefusedTaxonomy.class, () -> READ.read(List.of(Ranked.Muddled.INSTANCE), List.of(),
-                List.of(Ranked.Unranked.INSTANCE, Ranked.Wide.INSTANCE, Ranked.Colonless.INSTANCE), List.of()));
+                List.of(Ranked.Unranked.INSTANCE, Ranked.Wide.INSTANCE, Ranked.Colonless.INSTANCE)));
         Map<Rule, Long> rules = e.problems().stream().collect(Collectors.groupingBy(TaxonomyProblem::rule, Collectors.counting()));
         assertEquals(Map.of(Rule.STATE_UNRANKED, 1L, Rule.PSEUDO_BADLY, 2L, Rule.STATES_LISTED_BADLY, 3L), rules, e.getMessage());
         assertTrue(e.getMessage().contains("muddled lists Armed twice"), e.getMessage());

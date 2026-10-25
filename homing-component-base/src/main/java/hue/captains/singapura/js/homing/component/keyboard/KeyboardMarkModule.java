@@ -5,7 +5,6 @@ import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ExportsOf;
 import hue.captains.singapura.js.homing.core.ImportsFor;
 import hue.captains.singapura.js.homing.core.ModuleImports;
-import hue.captains.singapura.js.homing.server.StyledLeaves;
 
 import java.util.List;
 
@@ -18,15 +17,17 @@ import java.util.List;
  * browser's focus arriving inside a member makes it the holder; arriving on
  * a member's own root, or on something focusable only because it scrolls, is
  * refused; a claim blurs the browser's focus outside the claimer; a release
- * blurs it inside the one that let go. The marks ({@code data-keys} on the
- * enrolled roots) are written here and nowhere else, and the members above
- * the marker are told {@code within(on, at)} on every move of it. Statics on
- * a steward, as {@link KeyboardWalkModule}'s are; it reads the browser's
- * focus and writes the marks, so it is a DOM module.
+ * blurs it inside the one that let go. Each member's mark - held, lent,
+ * candidate, or away - is worked out here and told the member, {@code
+ * marked(state)}, when it changes: the member sets its own Keyboard state
+ * (RFC 0071, D16), and nothing is written on the page. The members above the
+ * marker are told {@code within(on, at)} on every move of it. Statics on a
+ * steward, as {@link KeyboardWalkModule}'s are; it reads the browser's focus
+ * and blurs it, so it is a DOM module.
  */
 public record KeyboardMarkModule() implements DomModule<KeyboardMarkModule> {
 
-    /** The class of statics: {@code sync}, {@code claimed}, {@code released}, {@code paint}, {@code tell}, {@code marker}, {@code check}, {@code asked}, {@code focused}. */
+    /** The class of statics: {@code sync}, {@code claimed}, {@code released}, {@code paint}, {@code tell}, {@code marker}, {@code markOf}, {@code check}, {@code asked}, {@code focused}. */
     public record KeyboardMark() implements Exportable._Constant<KeyboardMarkModule> {}
 
     public static final KeyboardMarkModule INSTANCE = new KeyboardMarkModule();
@@ -34,8 +35,6 @@ public record KeyboardMarkModule() implements DomModule<KeyboardMarkModule> {
     @Override public ImportsFor<KeyboardMarkModule> imports() {
         return ImportsFor.<KeyboardMarkModule>builder()
                 .add(new ModuleImports<>(List.of(new KeyboardEventsModule.KeyboardEvents()), KeyboardEventsModule.INSTANCE))
-                // the keys' marks as a leaf's state class, on a root enrolled with its marks (RFC 0067, D12)
-                .add(new ModuleImports<>(List.of(new StyledLeaves.StyledLeaf()), StyledLeaves.INSTANCE))
                 .build();
     }
 

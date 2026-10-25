@@ -3,7 +3,6 @@ package hue.captains.singapura.js.homing.design.styling;
 import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.component.taxonomy.Component;
 import hue.captains.singapura.js.homing.component.taxonomy.ComponentModules;
-import hue.captains.singapura.js.homing.component.taxonomy.EventType;
 import hue.captains.singapura.js.homing.component.taxonomy.Role;
 import hue.captains.singapura.js.homing.component.taxonomy.StateType;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
@@ -53,10 +52,10 @@ public final class StyleRegistryBuilder<Sc extends ColorScheme, B extends Design
     private final Map<Class<?>, Map<Casting, CastingStyle<?, ?, ?, ?>>> looks;
 
     /** The base modules, the components' words only those they name. */
-    public StyleRegistryBuilder(List<? extends BaseModule<Sc, B>> baseModules) { this(baseModules, List.of(), List.of(), List.of()); }
+    public StyleRegistryBuilder(List<? extends BaseModule<Sc, B>> baseModules) { this(baseModules, List.of(), List.of()); }
 
     /**
-     * The base modules, with the instance's words - its catalogue of roles and its trees of states and events, whole
+     * The base modules, with the instance's words - its catalogue of roles and its tree of states, whole
      * whatever is registered ({@link ComponentModules}): refused when there are no modules; when they are not all of one
      * base, or the base derives; when the components cannot be read - a module twice, a component listed by two; when a
      * module bundles a component it does not list, or one twice; when a component's bundle misses or exceeds its design;
@@ -65,7 +64,7 @@ public final class StyleRegistryBuilder<Sc extends ColorScheme, B extends Design
      * style is held when the styles meet their palettes ({@link Styling}).
      */
     public StyleRegistryBuilder(List<? extends BaseModule<Sc, B>> baseModules, List<? extends Role<?>> roles,
-                                List<? extends StateType<?>> states, List<? extends EventType<?>> events) {
+                                List<? extends StateType<?>> states) {
         var problems = new ArrayList<String>();
         if (baseModules.isEmpty()) refuse(List.of("it registers no base module: the base layer gives every component its look"));
         B b = baseModules.get(0).style();
@@ -75,7 +74,7 @@ public final class StyleRegistryBuilder<Sc extends ColorScheme, B extends Design
         if (b instanceof Derives<?, ?> d) problems.add("the base, " + b.token() + ", is written over " + d.base().token() + ": a base derives from nothing");
         Taxonomy t;
         try {
-            t = ComponentModules.INSTANCE.read(baseModules.stream().map(BaseModule::components).toList(), roles, states, events);
+            t = ComponentModules.INSTANCE.read(baseModules.stream().map(BaseModule::components).toList(), roles, states);
         } catch (RuntimeException e) {
             problems.add(e.getMessage());
             refuse(problems);
