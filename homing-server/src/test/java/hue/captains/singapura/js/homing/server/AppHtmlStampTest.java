@@ -66,7 +66,7 @@ class AppHtmlStampTest {
         var resolver = new SimpleAppResolver(List.of(CodedApp.INSTANCE, PlainApp.INSTANCE));
         var action = new AppHtmlGetAction(
                 new QueryParamResolver(), resolver);
-        var q = new AppQuery(simpleName, null, null, null, query);
+        var q = new AppQuery(simpleName, null, null, query);
         return action.execute(q, new EmptyParam.NoHeaders()).get().body();
     }
 
