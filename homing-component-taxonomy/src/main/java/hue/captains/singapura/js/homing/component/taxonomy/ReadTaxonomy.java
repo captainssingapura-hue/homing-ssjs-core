@@ -37,8 +37,6 @@ import java.util.Set;
  *   <li>two nodes of the tree of states with one name; a type of state with fewer
  *       than two values, or one value twice; a design word for a type's rest, or for a value it
  *       lacks; two values answered by one design word;</li>
- *   <li>a node of any of the three trees with no meaning, a meanings file with a section astray, or
- *       two nodes that mean the same;</li>
  *   <li>a family head with another between it and the root, and a component that says it heads a
  *       family ({@link FamilyHead});</li>
  *   <li>a leaf the document wears ({@link WornByTheDocument}) with anything an element's leaf has - parts,
@@ -58,6 +56,10 @@ import java.util.Set;
  * Taxonomy#components() components}, {@link Taxonomy#roleBranches() role branches}, {@link
  * Taxonomy#roles() roles}, and the {@link Taxonomy#states() states} tree. A taxonomy is read wherever it is served, and a running server needs no
  * enforcer.</p>
+ *
+ * <p>Nor does it read a meanings file. That every node means something, that every section is headed as a node,
+ * and that no two nodes mean the same is held at build time too, by {@link MeaningsCheck} in the same tests; a
+ * running server reads a node's meaning only when it is asked for one.</p>
  */
 public record ReadTaxonomy() implements StatelessFunctionalObject {
 
@@ -200,25 +202,9 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
         problems.addAll(TreeChecks.INSTANCE.levels(stateList));
         problems.addAll(TreeChecks.INSTANCE.badChanges(stateList));
         problems.addAll(TreeChecks.INSTANCE.leafStates(componentList));
-        var meant = meant(branchList, componentList, roleBranchList, roleList);
-        if (!stateList.isEmpty()) meant.addAll(StateTree.nodes(stateBranchList, stateList));
-        problems.addAll(Meanings.INSTANCE.problems(meant));
         if (!problems.isEmpty()) throw new RefusedTaxonomy(problems);
         return new Taxonomy(branchList, componentList, read, new RoleCatalogue(roleBranchList, roleList),
                 new StateTree(stateBranchList, stateList));
-    }
-
-    /** Every node of the first two trees that must mean something: each tree's root when anything of the tree is read, its branches, its leaves. */
-    private static List<Object> meant(List<ComponentBranch> branches, List<Component<?>> components,
-                                      List<RoleBranch> roleBranches, List<Role<?>> roles) {
-        var out = new ArrayList<Object>();
-        if (!components.isEmpty()) out.add(Root.INSTANCE);
-        out.addAll(branches);
-        out.addAll(components);
-        if (!roles.isEmpty()) out.add(RoleRoot.INSTANCE);
-        out.addAll(roleBranches);
-        out.addAll(roles);
-        return out;
     }
 
     /** An axis declared twice by one node, or declared by a node and a branch above it: each pair named. */

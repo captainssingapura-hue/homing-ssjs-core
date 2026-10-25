@@ -400,14 +400,13 @@ Homing includes a server module (`homing-server`) that serves ES modules and SPA
 | Path | Response | Description |
 |------|----------|-------------|
 | `/app?app=<simple-name>` | `text/html` | Full HTML page that boots the app (RFC 0001) |
-| `/app?class=<AppModule>` | `text/html` | Legacy fallback — accepts canonical class name |
 | `/module?class=<EsModule>` | `application/javascript` | Generated ES module with imports/exports |
 | `/css?class=<CssGroup>` | `application/json` | Resolved CSS dependency chain |
 | `/css-content?class=<CssGroup>` | `text/css` | Raw CSS file content |
 
 `/app` ignores `?theme=` and `?locale=`: the page is served under the registry's default and the client resolves both through the preference steward (RFC 0064). The keyed resources — `/css-content`, `/theme-globals` — still take `?theme=` explicitly; the client's CSS manager puts it there.
 
-The `?app=<simple-name>` URL contract — introduced in [RFC 0001](docs/rfcs/0001-app-registry-and-typed-nav.md) — is the public surface. Simple names default to a kebab-case derivation of the AppModule's class name (e.g. `PitchDeck` → `pitch-deck`); each AppModule may override `simpleName()` to lock the URL contract independently of its Java class. The legacy `?class=` form is retained for backwards compatibility.
+The `?app=<simple-name>` URL contract — introduced in [RFC 0001](docs/rfcs/0001-app-registry-and-typed-nav.md) — is the public surface. Simple names default to a kebab-case derivation of the AppModule's class name (e.g. `PitchDeck` → `pitch-deck`); each AppModule may override `simpleName()` to lock the URL contract independently of its Java class. The old `/app?class=<AppModule>` form is retired: an app is never found by its class's name, and a request without `?app=` is not found.
 
 ### Running
 

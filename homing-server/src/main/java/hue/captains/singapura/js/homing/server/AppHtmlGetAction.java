@@ -11,11 +11,11 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * GET {@code /app?app=<simpleName>}    — the RFC 0001 contract; resolves via {@link SimpleAppResolver}.
- * <br>
- * GET {@code /app?class=<canonical>}   — legacy fallback; uses reflection.
  *
- * <p>If a {@link SimpleAppResolver} is configured, {@code ?app=} is supported.
- * If not, only {@code ?class=} works (legacy mode for servers built before Step 07).</p>
+ * <p>An app is found by its simple name in the registry, never by reflection: the old
+ * {@code ?class=<canonical>} form is retired (NoReflectionAtRunTime), and a request with no
+ * {@code ?app=} is not found, its message saying {@code ?app=<simple name>} is the way. A server
+ * constructed without a {@link SimpleAppResolver} finds no app at all.</p>
  *
  * <p>Proxy-app names are explicitly rejected: a proxy is a URL builder, not a
  * navigable target. Requests for {@code ?app=&lt;proxy-name&gt;} return 404.</p>
@@ -24,7 +24,7 @@ public class AppHtmlGetAction
         implements GetAction<RoutingContext, AppQuery, EmptyParam.NoHeaders, HtmlPageContent> {
 
     private final ModuleNameResolver nameResolver;
-    private final SimpleAppResolver appResolver;   // may be null in legacy-only mode
+    private final SimpleAppResolver appResolver;   // may be null: then no app is found
     private final ThemeRegistry themeRegistry;     // RFC 0002-ext1 — for the theme picker widget
     private final AppMeta meta;                    // downstream-supplied brand label
 
@@ -66,7 +66,6 @@ public class AppHtmlGetAction
     public ParamMarshaller._QueryString<RoutingContext, AppQuery> queryStrMarshaller() {
         return ctx -> new AppQuery(
                 ctx.request().getParam("app"),
-                ctx.request().getParam("class"),
                 ctx.request().getParam("theme"),
                 ctx.request().getParam("locale"),
                 // RFC 0051 — the app's own params travel as the raw map; the
@@ -82,45 +81,29 @@ public class AppHtmlGetAction
 
     @Override
     public CompletableFuture<HtmlPageContent> execute(AppQuery query, EmptyParam.NoHeaders headers) {
-        if (!query.hasSimpleName() && !query.hasClassName()) {
-            return CompletableFuture.failedFuture(ResourceNotFound.missingClass());
+        if (!query.hasSimpleName()) {
+            // ?class= is no more: an app is found by its simple name in the registry, never by reflection.
+            return CompletableFuture.failedFuture(notFound("app",
+                    "No app named: use ?app=<simple name>"));
         }
 
         AppModule<?, ?> app;
         try {
-            if (query.hasSimpleName()) {
-                if (appResolver == null) {
-                    return CompletableFuture.failedFuture(notFound(query.simpleName(),
-                            "?app= dispatch requires a SimpleAppResolver — server was constructed without one"));
-                }
-                if (appResolver.resolveProxy(query.simpleName()) != null) {
-                    return CompletableFuture.failedFuture(notFound(query.simpleName(),
-                            "Proxy apps are not routable; they are URL builders for typed external links"));
-                }
-                app = appResolver.resolveApp(query.simpleName());
-                if (app == null) {
-                    return CompletableFuture.failedFuture(notFound(query.simpleName(),
-                            "No app registered with this simple name"));
-                }
-            } else {
-                // Legacy ?class= path — kept for backwards compatibility during Step 11 migration.
-                Class<?> clazz = Class.forName(query.className());
-                Object instance;
-                try {
-                    var instanceField = clazz.getField("INSTANCE");
-                    instance = instanceField.get(null);
-                } catch (NoSuchFieldException e) {
-                    instance = clazz.getDeclaredConstructor().newInstance();
-                }
-                if (!(instance instanceof AppModule<?, ?> a)) {
-                    return CompletableFuture.failedFuture(
-                            ResourceNotFound.wrongType(query.className(), "AppModule"));
-                }
-                app = a;
+            if (appResolver == null) {
+                return CompletableFuture.failedFuture(notFound(query.simpleName(),
+                        "?app= dispatch requires a SimpleAppResolver — server was constructed without one"));
+            }
+            if (appResolver.resolveProxy(query.simpleName()) != null) {
+                return CompletableFuture.failedFuture(notFound(query.simpleName(),
+                        "Proxy apps are not routable; they are URL builders for typed external links"));
+            }
+            app = appResolver.resolveApp(query.simpleName());
+            if (app == null) {
+                return CompletableFuture.failedFuture(notFound(query.simpleName(),
+                        "No app registered with this simple name"));
             }
         } catch (Exception e) {
-            String resource = query.hasSimpleName() ? query.simpleName() : query.className();
-            return CompletableFuture.failedFuture(ResourceNotFound.forClass(resource, e));
+            return CompletableFuture.failedFuture(ResourceNotFound.forClass(query.simpleName(), e));
         }
 
         return dispatch(app, query);
@@ -177,7 +160,7 @@ public class AppHtmlGetAction
                     java.util.Map<String, java.util.List<String>> allQuery,
                     java.util.List<java.util.Map.Entry<String, String>> crumbs) {
 
-        AppQuery query = new AppQuery(app.simpleName(), null, theme, locale,
+        AppQuery query = new AppQuery(app.simpleName(), theme, locale,
                 allQuery == null ? java.util.Map.of() : allQuery);
         // RFC 0051 — stamp the app's params into the page, so the client does
         // not re-parse a URL the server has already interpreted. Only apps
