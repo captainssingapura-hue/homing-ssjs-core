@@ -278,10 +278,9 @@ class ReadTaxonomyTest {
     @Test
     void everyProblemAtOnce() {
         var e = assertThrows(RefusedTaxonomy.class, () -> read(Broken.Orphan.INSTANCE, Broken.Mirror.INSTANCE, Broken.Stutter.INSTANCE,
-                Broken.Lopsided.INSTANCE, Broken.Labelled.INSTANCE, Broken.Doubled.INSTANCE, Broken.Redeclared.INSTANCE,
-                Meaningless.Silent.INSTANCE));
+                Broken.Lopsided.INSTANCE, Broken.Labelled.INSTANCE, Broken.Doubled.INSTANCE, Broken.Redeclared.INSTANCE));
         assertEquals(Set.of(Rule.NO_PARENT, Rule.COMPOSITION_CYCLE, Rule.ROLE_TWICE, Rule.BAD_CARDINALITY, Rule.ROLE_NAMES_A_NODE,
-                            Rule.CATALOGUE_NAME_TWICE, Rule.EXTENT_TWICE, Rule.NO_MEANING),
+                            Rule.CATALOGUE_NAME_TWICE, Rule.EXTENT_TWICE),
                 e.problems().stream().map(TaxonomyProblem::rule).collect(Collectors.toSet()));
     }
 
@@ -331,23 +330,6 @@ class ReadTaxonomyTest {
         assertTrue(t.meaning(RoleRoot.INSTANCE).markdown().startsWith("Any role"));
         assertEquals("A badge declared here.", read(Broken.Here.Badge.INSTANCE).meaning(Broken.Here.Badge.INSTANCE).markdown(),
                 "a node two classes deep, headed by its path within its file");
-    }
-
-    @Test
-    void aNodeThatMeansNothing_aFileAstray_twoThatMeanTheSame() {
-        assertEquals(Set.of(Rule.NO_MEANING), refused(Meaningless.Silent.INSTANCE), "no section");
-        assertEquals(Set.of(Rule.NO_MEANING), refused(Meaningless.Blank.INSTANCE), "a section with no words in it");
-
-        var e = assertThrows(RefusedTaxonomy.class, () -> read(Meaningless.Twin.INSTANCE, Meaningless.Twain.INSTANCE));
-        assertEquals(List.of("MEANING_TWICE: Meaningless$Twin and Meaningless$Twain mean the same: one node, or two meanings"),
-                e.problems().stream().map(TaxonomyProblem::toString).toList(), "the same words, however they are spaced");
-
-        e = assertThrows(RefusedTaxonomy.class, () -> read(Astray.Lost.INSTANCE));
-        var file = "meanings/hue/captains/singapura/js/homing/component/taxonomy/Astray.md: ";
-        assertEquals(List.of(file + "words before the first section: 'Words before any section, which no node means.'",
-                             file + "'## Lost' twice",
-                             file + "'## Gone' names no node Astray declares"),
-                e.problems().stream().map(TaxonomyProblem::says).toList());
     }
 
     private static Part<?, ?> part(Taxonomy t, Component<?> owner, Role<?> role) {
