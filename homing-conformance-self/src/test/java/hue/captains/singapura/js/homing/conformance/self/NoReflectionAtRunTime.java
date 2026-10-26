@@ -99,14 +99,6 @@ record NoReflectionAtRunTime() implements StatelessFunctionalObject {
                     "a scheme jar's own test calls it, and nothing at run time: it holds a scheme's INSTANCE to its type"),
             new Classified(SEMANTIC_CLASS, "CheckDeclaration.java", "class-by-name", Verdict.ALLOWED,
                     "the style jar's own check, at build (check, then leftOut): the classes of the jar's own entries"),
-            new Classified(SEMANTIC_CLASS, "CheckDeclaration.java", "instance-field", Verdict.REPORTED,
-                    "instance(), through casting(): reached at a site's startup - a styling installed, StyleRegistryBuilder "
-                            + "asks Bundles.casting - a component's and a role's instance found from an implementation's type arguments"),
-            new Classified(SEMANTIC_CLASS, "CheckDeclaration.java", "new-instance", Verdict.REPORTED,
-                    "instance(), through casting(): as above, a record of no components made by its constructor"),
-            new Classified("homing-component-base", "UiComponent.java", "instance-field", Verdict.REPORTED,
-                    "module(): the module found by its declaration's enclosing class's INSTANCE; here only ComponentTrees' "
-                            + "normalize and validate call it, which only tests call - but any run time may"),
             new Classified("homing-theme-design/homing-design-core", "Trees.java", "instance-field", Verdict.REPORTED,
                     "targetInstance(): each leaf of the sealed tree of targets by its INSTANCE, through Target.leaves() "
                             + "and SemanticTokens.leaves(), which flattening a sheet walks"));

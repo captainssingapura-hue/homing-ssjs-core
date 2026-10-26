@@ -28,6 +28,12 @@
             <artifactId>homing-component-taxonomy</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+        <!-- The base layer: a component's and a role's one instance, read as a stateless singleton's. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-base-lang</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
         <!-- The targets: the closed tree of what the substrate can realize. -->
         <dependency>
             <groupId>io.github.captainssingapura-hue.homing.js</groupId>

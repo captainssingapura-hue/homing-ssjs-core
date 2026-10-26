@@ -1,8 +1,11 @@
 package hue.captains.singapura.js.homing.design.styling;
 
+import hue.captains.singapura.js.homing.base.lang.ReadSingleton;
 import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.component.taxonomy.Component;
 import hue.captains.singapura.js.homing.component.taxonomy.Part;
+import hue.captains.singapura.js.homing.component.taxonomy.RoleNode;
+import hue.captains.singapura.js.homing.component.taxonomy.RoleRoot;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.component.taxonomy.LayoutStyling;
 import hue.captains.singapura.js.homing.component.taxonomy.VirtualComponent;
@@ -102,11 +105,18 @@ public record Bundles() implements StatelessFunctionalObject {
         return new Bundled<>(bundles, outside);
     }
 
-    /** The casting an implementation's types name - its component's, in its role - if the taxonomy can make it. */
+    /**
+     * The casting an implementation's types name - its component's, in its role - if the taxonomy can make it: the
+     * component's and the role's one instance, each its own {@code INSTANCE}. The same casting at a site's startup and
+     * in a style jar's own check ({@link CheckDeclaration}).
+     */
     public Optional<Casting> casting(CastingStyle<?, ?, ?, ?> implementation) {
         List<Class<?>> args = TypeArguments.INSTANCE.of(implementation.getClass(), CastingStyle.class);
         if (args.size() != 4 || args.contains(null)) return Optional.empty();
-        return CheckDeclaration.casting(args.get(2), args.get(3));
+        Component<?> component = ReadSingleton.INSTANCE.find(args.get(2), Component.class).orElse(null);
+        if (component == null) return Optional.empty();
+        if (args.get(3) == RoleRoot.class) return Optional.of(new Casting(component));
+        return ReadSingleton.INSTANCE.find(args.get(3), RoleNode.class).map(role -> new Casting(component, role));
     }
 
     /** The base layer a style's absence lands on: the style it derives from, and so up, to one that derives from nothing. */

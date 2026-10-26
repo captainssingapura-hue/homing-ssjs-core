@@ -64,7 +64,7 @@ class ComponentTreesTest {
 
     @Test
     void aVehiclesCatalogue_isGraftedUnderTheSitesRoot_derivedFromTheClosure() {
-        var c = ComponentTrees.compose("gallery", List.of(SiteCrate.INSTANCE));
+        var c = ComponentTrees.INSTANCE.compose("gallery", List.of(SiteCrate.INSTANCE));
         NormalizedNode root = c.root();
         assertEquals("gallery", root.segment().value());
         assertEquals(TreeLevel.L0.INSTANCE, root.level());
@@ -90,9 +90,9 @@ class ComponentTreesTest {
         var vehicle = (ComponentDetails.OfVehicle) c.detailsOf(boxes.identity());
         assertEquals(2, vehicle.componentCount());
         assertEquals("1 vehicle · 2 components", c.detailsOf(root.identity()).row().note());
-        assertEquals(List.of(), ComponentTrees.validate(List.of(SiteCrate.INSTANCE)));
+        assertEquals(List.of(), ComponentTrees.INSTANCE.validate(List.of(SiteCrate.INSTANCE)));
         // a vehicle standalone is at L0; the same tree, the same segments, one level up
-        var standalone = ComponentTrees.normalize(BoxCrate.INSTANCE, new java.util.HashMap<>());
+        var standalone = ComponentTrees.INSTANCE.normalize(BoxCrate.INSTANCE, new java.util.HashMap<>());
         assertEquals(TreeLevel.L0.INSTANCE, standalone.level());
         assertEquals("knob", standalone.children().get(0).children().get(0).segment().value());
     }
@@ -147,25 +147,67 @@ class ComponentTreesTest {
     @Test
     void theGuard_holdsTheLogicalSideToThePhysical() {
         assertEquals(List.of("lone: LoneModule exports the component Lone but the crate ships no catalogue"),
-                ComponentTrees.validate(List.of(LoneCrate.INSTANCE)));
-        var borrowed = ComponentTrees.validate(List.of(BorrowingCrate.INSTANCE));
+                ComponentTrees.INSTANCE.validate(List.of(LoneCrate.INSTANCE)));
+        var borrowed = ComponentTrees.INSTANCE.validate(List.of(BorrowingCrate.INSTANCE));
         assertTrue(borrowed.contains("borrowing/borrowed: segment repeated among siblings: box"), borrowed.toString());
-        assertTrue(borrowed.contains("borrowing/borrowed/box is exported by BoxModule, which borrowing does not ship"), borrowed.toString());
+        assertTrue(borrowed.contains("borrowing/borrowed/box is exported by no module borrowing ships"), borrowed.toString());
         assertTrue(borrowed.stream().anyMatch(p -> p.contains("is listed already by")), "the box once by borrowing, then by boxes, or twice by borrowing: " + borrowed);
         assertTrue(borrowed.stream().anyMatch(p -> p.startsWith("identity carried by")), "the composed tree carries the box's identity more than once: " + borrowed);
-        assertEquals(List.of("host/stray is listed under host but names box"), ComponentTrees.validate(List.of(HostCrate.INSTANCE)));
+        assertEquals(List.of("host/stray is listed under host but names box"), ComponentTrees.INSTANCE.validate(List.of(HostCrate.INSTANCE)));
+    }
+
+    // ── where a component's module is found: among the modules its crate ships ──
+    /** Lists the lone component and ships no module: the catalogue finds the lone no module. */
+    public record StrandedComponents() implements C0_Components<StrandedComponents> {
+        public static final StrandedComponents INSTANCE = new StrandedComponents();
+        @Override public String name() { return "Stranded"; }
+        @Override public List<ComponentEntry<StrandedComponents>> leaves() { return List.of(ComponentEntry.of(this, new LoneModule.Lone())); }
+    }
+    static final class StrandedCrate implements Crate, ComponentVehicle {
+        static final StrandedCrate INSTANCE = new StrandedCrate();
+        @Override public String name() { return "stranded"; }
+        @Override public List<CrateEntry> entries() { return List.of(); }
+        @Override public C0_Components<?> components() { return StrandedComponents.INSTANCE; }
+    }
+    /** A second module that exports the box, as the box module's: a crate that ships both gives the box two. */
+    public record TwinModule() implements DomModule<BoxModule> {
+        public static final TwinModule INSTANCE = new TwinModule();
+        @Override public ImportsFor<BoxModule> imports() { return ImportsFor.noImports(); }
+        @Override public ExportsOf<BoxModule> exports() { return new ExportsOf<>(BoxModule.INSTANCE, List.of(new BoxModule.Box())); }
+    }
+    public record TwinComponents() implements C0_Components<TwinComponents> {
+        public static final TwinComponents INSTANCE = new TwinComponents();
+        @Override public String name() { return "Twin"; }
+        @Override public List<ComponentEntry<TwinComponents>> leaves() { return List.of(ComponentEntry.of(this, new BoxModule.Box()), ComponentEntry.of(this, new BoxModule.Knob())); }
+    }
+    static final class TwinCrate implements Crate, ComponentVehicle {
+        static final TwinCrate INSTANCE = new TwinCrate();
+        @Override public String name() { return "twin"; }
+        @Override public List<CrateEntry> entries() { return List.of(CrateEntry.of(BoxModule.INSTANCE), CrateEntry.of(TwinModule.INSTANCE)); }
+        @Override public C0_Components<?> components() { return TwinComponents.INSTANCE; }
     }
 
     @Test
-    void aDeclarationIsItsExport_readOffTheNesting() {
+    void aComponentsModule_isTheOneModuleItsCrateShipsThatExportsIt() {
+        assertEquals(List.of("stranded/stranded/lone is exported by no module stranded ships"), ComponentTrees.INSTANCE.validate(List.of(StrandedCrate.INSTANCE)));
+        assertEquals(List.of("?"), modules(ComponentTrees.INSTANCE.compose("site", List.of(StrandedCrate.INSTANCE))), "no module: none shown");
+        assertEquals(List.of("twin/twin/box is exported by more than one module twin ships: BoxModule, TwinModule"),
+                ComponentTrees.INSTANCE.validate(List.of(TwinCrate.INSTANCE)));
+        assertEquals(List.of("?", BoxModule.class.getName()), modules(ComponentTrees.INSTANCE.compose("site", List.of(TwinCrate.INSTANCE))),
+                "two modules for the box: none shown; one for the knob");
+    }
+
+    /** The module shown for each component at the root of the composition's one vehicle. */
+    private List<String> modules(ComponentTrees.Composition c) {
+        return c.root().children().get(0).children().stream().map(n -> ((ComponentDetails.OfComponent) c.detailsOf(n.identity())).module()).toList();
+    }
+
+    @Test
+    void aDeclarationIsItsExport_namedAsItsClass() {
         var knob = new BoxModule.Knob();
-        assertEquals(BoxModule.INSTANCE, knob.module());
         assertEquals("knob", knob.segment().value());
         assertEquals("Knob", knob.label());
         assertEquals(UiComponent.Shape.ELEMENT, knob.shape());
         assertEquals(UiComponent.Shape.BRANCH, new BoxModule.Box().shape());
-        record Orphan() implements BranchComponent<BoxModule> {}
-        var ex = org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class, () -> new Orphan().module());
-        assertTrue(ex.getMessage().contains("no module INSTANCE"), ex.getMessage());
     }
 }

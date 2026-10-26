@@ -9,6 +9,10 @@
     <version>LOCAL-SNAPSHOT-T1</version>
     <packaging>pom</packaging>
     <modules>
+        <!-- The base layer: language-level enhancements to Java - kinds and
+             small utilities beneath every other module, on jOntology's markers
+             and nothing else. Knows nothing of homing. Builds first. -->
+        <module>homing-base-lang</module>
         <module>homing-core</module>
         <module>homing-core-js</module>
         <!-- RFC 0066 Episode 3, layer 1 — the component base: the headless

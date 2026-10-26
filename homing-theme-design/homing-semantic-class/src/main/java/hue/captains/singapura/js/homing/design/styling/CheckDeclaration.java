@@ -4,8 +4,6 @@ import hue.captains.singapura.js.homing.design.semantic.CheckScheme;
 import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.component.taxonomy.Component;
-import hue.captains.singapura.js.homing.component.taxonomy.RoleNode;
-import hue.captains.singapura.js.homing.component.taxonomy.RoleRoot;
 import hue.captains.singapura.js.homing.component.taxonomy.Room;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.design.color.ColorLeaf;
@@ -157,7 +155,7 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
             problems.add("is " + args.get(1).getSimpleName() + "'s, listed for " + style.token());
         Optional<ColorScheme> scheme = tree.scheme(style);
         if (scheme.isEmpty()) problems.add(style.token() + " says no scheme: no colour can be held to it");
-        Casting casting = casting(args.get(2), args.get(3)).orElse(null);
+        Casting casting = Bundles.INSTANCE.casting(implementation).orElse(null);   // the casting the run time finds, found the same way
         if (casting == null) {
             problems.add(args.get(2).getSimpleName() + " as " + args.get(3).getSimpleName() + " names no component and role the taxonomy can make");
             return new Implementation(type, style.token(), args.get(2).getSimpleName() + "_" + args.get(3).getSimpleName(), problems);
@@ -317,27 +315,6 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
         List<Class<?>> args = TypeArguments.INSTANCE.of(type, CastingStyle.class);
         if (args.size() != 4 || args.contains(null)) return Optional.empty();
         return Optional.of(args.get(1).getName() + "|" + args.get(2).getName() + "|" + args.get(3).getName());
-    }
-
-    /** The casting an implementation's component and role classes name. */
-    static Optional<Casting> casting(Class<?> component, Class<?> role) {
-        Object c = instance(component);
-        if (!(c instanceof Component<?> comp)) return Optional.empty();
-        if (role == RoleRoot.class) return Optional.of(new Casting(comp));
-        Object r = instance(role);
-        return r instanceof RoleNode node ? Optional.of(new Casting(comp, node)) : Optional.empty();
-    }
-
-    /** A node's one instance: its INSTANCE, or a record of no components made. */
-    private static Object instance(Class<?> type) {
-        try {
-            var field = type.getField("INSTANCE");
-            return field.get(null);
-        } catch (ReflectiveOperationException ignored) { }
-        try {
-            if (type.isRecord() && type.getRecordComponents().length == 0) return type.getDeclaredConstructor().newInstance();
-        } catch (ReflectiveOperationException ignored) { }
-        return null;
     }
 
     /** A style's package, as a path: design.styles and its token, its dashes dropped - {@code design/styles/neobrutalism/}. */
