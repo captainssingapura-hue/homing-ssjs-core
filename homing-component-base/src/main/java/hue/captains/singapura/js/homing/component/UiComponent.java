@@ -22,10 +22,10 @@ import hue.captains.singapura.js.homing.tree.NodeName;
  *
  * <p>The bound {@code M extends DomModule} is the earlier finding made a
  * type: only a DOM module exports a component. Builders, statics and data
- * stay {@code _Constant}. The physical home is read off the nesting —
- * {@link #module()} is the enclosing module's {@code INSTANCE} — so the
- * catalogue can hold every declaration to a served module that exports
- * it, and every served module's component to a catalogue.</p>
+ * stay {@code _Constant}. The physical home is the module whose exports
+ * hold it, among the modules its vehicle ships ({@link ComponentTrees}) —
+ * so the catalogue can hold every declaration to a served module that
+ * exports it, and every served module's component to a catalogue.</p>
  *
  * <p>Named {@code UiComponent} because {@code Component} is the default
  * CSS cascade layer's name in the core, left as it is.</p>
@@ -59,21 +59,4 @@ public sealed interface UiComponent<M extends DomModule<M>> extends Exportable._
 
     /** The segment under its catalogue: the class name in kebab. */
     default NodeName segment() { return NodeName.ofType(getClass(), ""); }
-
-    /**
-     * The module that exports this class: the enclosing module record's
-     * {@code INSTANCE}, since a declaration is nested in its module; a
-     * declaration that is not overrides this.
-     */
-    @SuppressWarnings("unchecked")
-    default M module() {
-        Class<?> enclosing = getClass().getEnclosingClass();
-        if (enclosing == null)
-            throw new IllegalStateException(getClass().getName() + ": a component declaration is nested in its module, or overrides module()");
-        try {
-            return (M) enclosing.getField("INSTANCE").get(null);
-        } catch (ReflectiveOperationException | ClassCastException e) {
-            throw new IllegalStateException(enclosing.getName() + ": no module INSTANCE to read for " + getClass().getSimpleName() + "; override module()", e);
-        }
-    }
 }

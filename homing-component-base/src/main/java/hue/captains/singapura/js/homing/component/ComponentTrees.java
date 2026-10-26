@@ -36,8 +36,8 @@ import java.util.Set;
  * different arrangement writes portals; none does yet.</p>
  *
  * <p><b>The guard</b> ({@link #validate}) holds the logical side to the
- * physical: every catalogue leaf names a component whose module the same
- * crate ships and exports; every component a served DOM module exports is
+ * physical: every catalogue leaf names a component that one module the same
+ * crate ships exports, and only one; every component a served DOM module exports is
  * listed by exactly one catalogue; parents are coherent, siblings' segments
  * distinct, and the composed tree's identities disjoint.</p>
  */
@@ -103,9 +103,10 @@ public final class ComponentTrees {
     /** A vehicle's catalogue as a standalone tree rooted at L0, its details recorded. */
     public static NormalizedNode normalize(Crate crate, Map<NodeIdentity, ComponentDetails> details) {
         C0_Components<?> root = ((ComponentVehicle) crate).components();
+        var exporters = exporters(crate);
         var kids = new ArrayList<NormalizedNode>();
-        for (ComponentCatalogue<?> sub : root.subCatalogues()) kids.add(normalize(sub, crate, TreeLevel.L1.INSTANCE, List.of(root.segment()), details));
-        for (ComponentEntry<?> e : root.leaves()) kids.add(leaf(e, crate, TreeLevel.L1.INSTANCE, List.of(root.segment()), details));
+        for (ComponentCatalogue<?> sub : root.subCatalogues()) kids.add(normalize(sub, crate, exporters, TreeLevel.L1.INSTANCE, List.of(root.segment()), details));
+        for (ComponentEntry<?> e : root.leaves()) kids.add(leaf(e, crate, exporters, TreeLevel.L1.INSTANCE, List.of(root.segment()), details));
         var id = new ComponentNodeIdentity.OfVehicle(crate.name());
         var node = new NormalizedNode(TreeLevel.L0.INSTANCE, root.segment(), id, label(root.name()), kids);
         details.put(id, new ComponentDetails.OfVehicle(crate.name(), root.name(), root.summary(), countComponents(node)));
@@ -113,12 +114,13 @@ public final class ComponentTrees {
     }
 
     @SuppressWarnings("unchecked")
-    private static NormalizedNode normalize(ComponentCatalogue<?> cat, Crate crate, TreeLevel at, List<NodeName> path, Map<NodeIdentity, ComponentDetails> details) {
+    private static NormalizedNode normalize(ComponentCatalogue<?> cat, Crate crate, Map<Class<?>, List<EsModule<?>>> exporters, TreeLevel at,
+                                            List<NodeName> path, Map<NodeIdentity, ComponentDetails> details) {
         var here = new ArrayList<>(path); here.add(cat.segment());
         var kids = new ArrayList<NormalizedNode>();
         TreeLevel below = at.below().orElseThrow();
-        for (ComponentCatalogue<?> sub : cat.subCatalogues()) kids.add(normalize(sub, crate, below, here, details));
-        for (ComponentEntry<?> e : cat.leaves()) kids.add(leaf(e, crate, below, here, details));
+        for (ComponentCatalogue<?> sub : cat.subCatalogues()) kids.add(normalize(sub, crate, exporters, below, here, details));
+        for (ComponentEntry<?> e : cat.leaves()) kids.add(leaf(e, crate, exporters, below, here, details));
         var id = new ComponentNodeIdentity.OfCatalogue((Class<? extends ComponentCatalogue<?>>) cat.getClass());
         var node = new NormalizedNode(at, cat.segment(), id, label(cat.name()), kids);
         details.put(id, new ComponentDetails.OfCatalogue(cat.name(), cat.summary(), countComponents(node)));
@@ -126,19 +128,29 @@ public final class ComponentTrees {
     }
 
     @SuppressWarnings("unchecked")
-    private static NormalizedNode leaf(ComponentEntry<?> e, Crate crate, TreeLevel at, List<NodeName> path, Map<NodeIdentity, ComponentDetails> details) {
+    private static NormalizedNode leaf(ComponentEntry<?> e, Crate crate, Map<Class<?>, List<EsModule<?>>> exporters, TreeLevel at,
+                                       List<NodeName> path, Map<NodeIdentity, ComponentDetails> details) {
         UiComponent<?> c = ((ComponentEntry.OfComponent<?, ?>) e).component();
         var id = new ComponentNodeIdentity.OfComponent((Class<? extends UiComponent<?>>) c.getClass());
         var words = new ArrayList<String>();
         for (NodeName n : path) words.add(n.value());
         words.add(c.segment().value());
+        List<EsModule<?>> by = exporters.getOrDefault(c.getClass(), List.of());
         details.put(id, new ComponentDetails.OfComponent(c.label(), c.shape(), c instanceof ElementComponent<?> el ? el.tag() : "",
-                c.summary(), moduleName(c), crate.name(), List.copyOf(words)));
+                c.summary(), by.size() == 1 ? by.get(0).getClass().getName() : "?", crate.name(), List.copyOf(words)));
         return NormalizedNode.leaf(at, c.segment(), id, label(c.label()));
     }
 
-    private static String moduleName(UiComponent<?> c) {
-        try { return c.module().getClass().getName(); } catch (IllegalStateException e) { return "?"; }
+    /**
+     * Each component the crate's modules export, by its class, with the modules that export it: where a catalogue
+     * finds the module of a component it lists - the one module its crate ships that exports it.
+     */
+    private static Map<Class<?>, List<EsModule<?>>> exporters(Crate crate) {
+        var out = new LinkedHashMap<Class<?>, List<EsModule<?>>>();
+        for (CrateEntry e : crate.entries())
+            for (var x : e.module().exports().exports())
+                if (x instanceof UiComponent<?>) out.computeIfAbsent(x.getClass(), k -> new ArrayList<>()).add(e.module());
+        return out;
     }
 
     private static Map<DimensionKey, DimensionValue> label(String text) {
@@ -163,9 +175,7 @@ public final class ComponentTrees {
             if (!(crate instanceof ComponentVehicle v)) continue;
             C0_Components<?> root = v.components();
             if (root == null) { problems.add(crate.name() + ": a vehicle with no catalogue"); continue; }
-            var shipped = new HashSet<Class<?>>();
-            for (CrateEntry e : crate.entries()) shipped.add(e.module().getClass());
-            checkNode(crate, root, null, shipped, listed, problems);
+            checkNode(crate, root, null, exporters(crate), listed, problems);
         }
         // coverage: every component a served DOM module exports is listed once
         for (Crate crate : closure) {
@@ -185,7 +195,7 @@ public final class ComponentTrees {
         return List.copyOf(problems);
     }
 
-    private static void checkNode(Crate crate, ComponentCatalogue<?> node, ComponentCatalogue<?> parent, Set<Class<?>> shipped,
+    private static void checkNode(Crate crate, ComponentCatalogue<?> node, ComponentCatalogue<?> parent, Map<Class<?>, List<EsModule<?>>> exporters,
                                   Map<Class<?>, String> listed, List<String> problems) {
         String where = crate.name() + "/" + node.segment().value();
         Object named = node instanceof C1_Components<?, ?> c1 ? c1.parent() : node instanceof C2_Components<?, ?> c2 ? c2.parent() : null;
@@ -195,7 +205,7 @@ public final class ComponentTrees {
         var segments = new HashSet<String>();
         for (ComponentCatalogue<?> sub : node.subCatalogues()) {
             if (!segments.add(sub.segment().value())) problems.add(where + ": segment repeated among siblings: " + sub.segment().value());
-            checkNode(crate, sub, node, shipped, listed, problems);
+            checkNode(crate, sub, node, exporters, listed, problems);
         }
         for (ComponentEntry<?> e : node.leaves()) {
             UiComponent<?> c = ((ComponentEntry.OfComponent<?, ?>) e).component();
@@ -203,11 +213,10 @@ public final class ComponentTrees {
             if (!segments.add(c.segment().value())) problems.add(where + ": segment repeated among siblings: " + c.segment().value());
             String before = listed.putIfAbsent(c.getClass(), crate.name());
             if (before != null) problems.add(leaf + " is listed already by " + before);
-            EsModule<?> m;
-            try { m = c.module(); } catch (IllegalStateException ex) { problems.add(leaf + ": " + ex.getMessage()); continue; }
-            if (!shipped.contains(m.getClass())) problems.add(leaf + " is exported by " + m.getClass().getSimpleName() + ", which " + crate.name() + " does not ship");
-            if (m.exports().exports().stream().noneMatch(x -> x.getClass() == c.getClass()))
-                problems.add(leaf + ": " + m.getClass().getSimpleName() + " does not export it");
+            List<EsModule<?>> by = exporters.getOrDefault(c.getClass(), List.of());
+            if (by.isEmpty()) problems.add(leaf + " is exported by no module " + crate.name() + " ships");
+            if (by.size() > 1) problems.add(leaf + " is exported by more than one module " + crate.name() + " ships: "
+                    + String.join(", ", by.stream().map(m -> m.getClass().getSimpleName()).toList()));
         }
     }
 }
