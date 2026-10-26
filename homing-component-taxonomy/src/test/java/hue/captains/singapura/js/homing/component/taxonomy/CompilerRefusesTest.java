@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.component.taxonomy;
 
+import hue.captains.singapura.js.homing.base.lang.StatelessSingleton;
 import hue.captains.singapura.js.homing.tree.NodeName;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import org.junit.jupiter.api.Test;
@@ -290,7 +291,7 @@ class CompilerRefusesTest {
 
     /** This module's classes, and what they are written against. */
     private static String classpath() {
-        return Stream.of(Role.class, NodeName.class, StatelessFunctionalObject.class)
+        return Stream.of(Role.class, NodeName.class, StatelessFunctionalObject.class, StatelessSingleton.class)
                 .map(c -> {
                     try { return Path.of(c.getProtectionDomain().getCodeSource().getLocation().toURI()).toString(); }
                     catch (URISyntaxException e) { throw new IllegalStateException(e); }

@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.design.local;
 
+import hue.captains.singapura.js.homing.base.lang.StatelessSingleton;
 import hue.captains.singapura.js.homing.component.taxonomy.Role;
 import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import hue.captains.singapura.js.homing.tree.NodeName;
@@ -137,7 +138,7 @@ class CompilerRefusesTest {
 
     /** This module's classes, and what they are written against. */
     private static String classpath() {
-        return Stream.of(Role.class, NodeName.class, StatelessFunctionalObject.class, ColorScheme.class, LocalStyle.class)
+        return Stream.of(Role.class, NodeName.class, StatelessFunctionalObject.class, StatelessSingleton.class, ColorScheme.class, LocalStyle.class)
                 .map(c -> {
                     try { return Path.of(c.getProtectionDomain().getCodeSource().getLocation().toURI()).toString(); }
                     catch (URISyntaxException e) { throw new IllegalStateException(e); }
