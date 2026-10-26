@@ -42,6 +42,12 @@
             <version>0.0.1</version>
             <scope>test</scope>
         </dependency>
+        <!-- The base layer: language-level kinds, such as the stateless singleton. -->
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>homing-base-lang</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <!-- Node names: the rigid tree's typed, capped segments. -->
         <dependency>
             <groupId>${project.groupId}</groupId>
