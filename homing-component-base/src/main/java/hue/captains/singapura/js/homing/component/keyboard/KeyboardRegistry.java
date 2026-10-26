@@ -55,7 +55,7 @@ public record KeyboardRegistry(Map<UiComponent<?>, List<KeyBinding>> byComponent
     /** The map of the catalogued components of a crate closure, and the page's own shortcuts. */
     public static KeyboardRegistry requiredBy(List<Crate> topLevel, List<KeyBinding> shortcuts) {
         var by = new LinkedHashMap<UiComponent<?>, List<KeyBinding>>();
-        for (UiComponent<?> c : ComponentTrees.components(topLevel))
+        for (UiComponent<?> c : ComponentTrees.INSTANCE.components(topLevel))
             if (c instanceof NeedKeyboard n) by.put(c, List.copyOf(n.keys()));
         return new KeyboardRegistry(by, shortcuts);
     }
@@ -95,7 +95,7 @@ public record KeyboardRegistry(Map<UiComponent<?>, List<KeyBinding>> byComponent
      */
     public static List<String> validate(List<Crate> topLevel) {
         var problems = new ArrayList<String>();
-        for (Crate crate : ComponentTrees.closure(topLevel)) {
+        for (Crate crate : ComponentTrees.INSTANCE.closure(topLevel)) {
             for (CrateEntry e : crate.entries()) {
                 EsModule<?> m = e.module();
                 for (var x : m.exports().exports()) {
@@ -115,7 +115,7 @@ public record KeyboardRegistry(Map<UiComponent<?>, List<KeyBinding>> byComponent
     /** The served modules of the closure that listen to keys with no declaration: what is still to migrate. */
     public static List<String> undeclaredListeners(List<Crate> topLevel) {
         var out = new ArrayList<String>();
-        for (Crate crate : ComponentTrees.closure(topLevel)) {
+        for (Crate crate : ComponentTrees.INSTANCE.closure(topLevel)) {
             for (CrateEntry e : crate.entries()) {
                 EsModule<?> m = e.module();
                 if (!listensToKeys(m)) continue;

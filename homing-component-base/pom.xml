@@ -35,6 +35,12 @@
             <artifactId>homing-rigid-tree</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+        <!-- The base layer: ComponentTrees is a stateless singleton. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.homing.js</groupId>
+            <artifactId>homing-base-lang</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
         <!-- The taxonomy an implementation is anchored at: ImplFor and ImplForBranch, read against the crates. -->
         <dependency>
             <groupId>io.github.captainssingapura-hue.homing.js</groupId>

@@ -65,7 +65,7 @@ public record Implementations() {
         var leaves = new LinkedHashMap<Component<?>, EsModule<?>>();         // a leaf → the module that implements it, over the closure
         var branches = new LinkedHashMap<ComponentBranch, EsModule<?>>();    // a branch → the module of its base
         var whole = new LinkedHashMap<ComponentBranch, EsModule<?>>();       // a branch → the module whose one class realizes its every leaf
-        for (Crate crate : ComponentTrees.closure(topLevel))
+        for (Crate crate : ComponentTrees.INSTANCE.closure(topLevel))
             for (CrateEntry e : crate.entries())
                 index(e.module(), leaves, branches, whole, problems);
         for (var e : leaves.entrySet()) {

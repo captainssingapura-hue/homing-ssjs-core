@@ -64,7 +64,7 @@ class ComponentTreesTest {
 
     @Test
     void aVehiclesCatalogue_isGraftedUnderTheSitesRoot_derivedFromTheClosure() {
-        var c = ComponentTrees.compose("gallery", List.of(SiteCrate.INSTANCE));
+        var c = ComponentTrees.INSTANCE.compose("gallery", List.of(SiteCrate.INSTANCE));
         NormalizedNode root = c.root();
         assertEquals("gallery", root.segment().value());
         assertEquals(TreeLevel.L0.INSTANCE, root.level());
@@ -90,9 +90,9 @@ class ComponentTreesTest {
         var vehicle = (ComponentDetails.OfVehicle) c.detailsOf(boxes.identity());
         assertEquals(2, vehicle.componentCount());
         assertEquals("1 vehicle · 2 components", c.detailsOf(root.identity()).row().note());
-        assertEquals(List.of(), ComponentTrees.validate(List.of(SiteCrate.INSTANCE)));
+        assertEquals(List.of(), ComponentTrees.INSTANCE.validate(List.of(SiteCrate.INSTANCE)));
         // a vehicle standalone is at L0; the same tree, the same segments, one level up
-        var standalone = ComponentTrees.normalize(BoxCrate.INSTANCE, new java.util.HashMap<>());
+        var standalone = ComponentTrees.INSTANCE.normalize(BoxCrate.INSTANCE, new java.util.HashMap<>());
         assertEquals(TreeLevel.L0.INSTANCE, standalone.level());
         assertEquals("knob", standalone.children().get(0).children().get(0).segment().value());
     }
@@ -147,13 +147,13 @@ class ComponentTreesTest {
     @Test
     void theGuard_holdsTheLogicalSideToThePhysical() {
         assertEquals(List.of("lone: LoneModule exports the component Lone but the crate ships no catalogue"),
-                ComponentTrees.validate(List.of(LoneCrate.INSTANCE)));
-        var borrowed = ComponentTrees.validate(List.of(BorrowingCrate.INSTANCE));
+                ComponentTrees.INSTANCE.validate(List.of(LoneCrate.INSTANCE)));
+        var borrowed = ComponentTrees.INSTANCE.validate(List.of(BorrowingCrate.INSTANCE));
         assertTrue(borrowed.contains("borrowing/borrowed: segment repeated among siblings: box"), borrowed.toString());
         assertTrue(borrowed.contains("borrowing/borrowed/box is exported by no module borrowing ships"), borrowed.toString());
         assertTrue(borrowed.stream().anyMatch(p -> p.contains("is listed already by")), "the box once by borrowing, then by boxes, or twice by borrowing: " + borrowed);
         assertTrue(borrowed.stream().anyMatch(p -> p.startsWith("identity carried by")), "the composed tree carries the box's identity more than once: " + borrowed);
-        assertEquals(List.of("host/stray is listed under host but names box"), ComponentTrees.validate(List.of(HostCrate.INSTANCE)));
+        assertEquals(List.of("host/stray is listed under host but names box"), ComponentTrees.INSTANCE.validate(List.of(HostCrate.INSTANCE)));
     }
 
     // ── where a component's module is found: among the modules its crate ships ──
@@ -189,11 +189,11 @@ class ComponentTreesTest {
 
     @Test
     void aComponentsModule_isTheOneModuleItsCrateShipsThatExportsIt() {
-        assertEquals(List.of("stranded/stranded/lone is exported by no module stranded ships"), ComponentTrees.validate(List.of(StrandedCrate.INSTANCE)));
-        assertEquals(List.of("?"), modules(ComponentTrees.compose("site", List.of(StrandedCrate.INSTANCE))), "no module: none shown");
+        assertEquals(List.of("stranded/stranded/lone is exported by no module stranded ships"), ComponentTrees.INSTANCE.validate(List.of(StrandedCrate.INSTANCE)));
+        assertEquals(List.of("?"), modules(ComponentTrees.INSTANCE.compose("site", List.of(StrandedCrate.INSTANCE))), "no module: none shown");
         assertEquals(List.of("twin/twin/box is exported by more than one module twin ships: BoxModule, TwinModule"),
-                ComponentTrees.validate(List.of(TwinCrate.INSTANCE)));
-        assertEquals(List.of("?", BoxModule.class.getName()), modules(ComponentTrees.compose("site", List.of(TwinCrate.INSTANCE))),
+                ComponentTrees.INSTANCE.validate(List.of(TwinCrate.INSTANCE)));
+        assertEquals(List.of("?", BoxModule.class.getName()), modules(ComponentTrees.INSTANCE.compose("site", List.of(TwinCrate.INSTANCE))),
                 "two modules for the box: none shown; one for the knob");
     }
 

@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.component;
 
+import hue.captains.singapura.js.homing.base.lang.StatelessSingleton;
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.core.DomModule;
@@ -14,6 +15,7 @@ import hue.captains.singapura.js.homing.tree.NormalizedNode;
 import hue.captains.singapura.js.homing.tree.RigidTrees;
 import hue.captains.singapura.js.homing.tree.TreeLevel;
 import hue.captains.singapura.js.homing.tree.dims.NameValue;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -40,10 +42,12 @@ import java.util.Set;
  * crate ships exports, and only one; every component a served DOM module exports is
  * listed by exactly one catalogue; parents are coherent, siblings' segments
  * distinct, and the composed tree's identities disjoint.</p>
+ *
+ * <p>It keeps nothing between calls: one instance, its own {@code INSTANCE}.</p>
  */
-public final class ComponentTrees {
+public record ComponentTrees() implements StatelessFunctionalObject, StatelessSingleton {
 
-    private ComponentTrees() {}
+    public static final ComponentTrees INSTANCE = new ComponentTrees();
 
     /** A composed tree with what each vertex is. */
     public record Composition(NormalizedNode root, Map<NodeIdentity, ComponentDetails> details) {
@@ -57,28 +61,28 @@ public final class ComponentTrees {
     // ── the closure ───────────────────────────────────────────────────────
 
     /** The crates reachable from the top-level ones through {@code requires()}, top-level first, each once. */
-    public static List<Crate> closure(List<Crate> topLevel) {
+    public List<Crate> closure(List<Crate> topLevel) {
         var out = new LinkedHashSet<Crate>();
         for (Crate c : topLevel) walk(c, out);
         return List.copyOf(out);
     }
-    private static void walk(Crate c, Set<Crate> out) {
+    private void walk(Crate c, Set<Crate> out) {
         if (!out.add(c)) return;
         for (Crate r : c.requires()) walk(r, out);
     }
 
     /** The vehicles in the closure, in closure order. */
-    public static List<Crate> vehicles(List<Crate> topLevel) {
+    public List<Crate> vehicles(List<Crate> topLevel) {
         return closure(topLevel).stream().filter(c -> c instanceof ComponentVehicle).toList();
     }
 
     /** Every catalogued component in the closure, in tree order: what a page's facilities are derived from. */
-    public static List<UiComponent<?>> components(List<Crate> topLevel) {
+    public List<UiComponent<?>> components(List<Crate> topLevel) {
         var out = new ArrayList<UiComponent<?>>();
         for (Crate crate : vehicles(topLevel)) collect(((ComponentVehicle) crate).components(), out);
         return List.copyOf(out);
     }
-    private static void collect(ComponentCatalogue<?> cat, List<UiComponent<?>> out) {
+    private void collect(ComponentCatalogue<?> cat, List<UiComponent<?>> out) {
         for (ComponentCatalogue<?> sub : cat.subCatalogues()) collect(sub, out);
         for (ComponentEntry<?> e : cat.leaves()) out.add(((ComponentEntry.OfComponent<?, ?>) e).component());
     }
@@ -86,7 +90,7 @@ public final class ComponentTrees {
     // ── composition ───────────────────────────────────────────────────────
 
     /** The site's root with every vehicle's catalogue grafted under it, derived from the closure. */
-    public static Composition compose(String rootName, List<Crate> topLevel) {
+    public Composition compose(String rootName, List<Crate> topLevel) {
         var details = new LinkedHashMap<NodeIdentity, ComponentDetails>();
         var kids = new ArrayList<NormalizedNode>();
         int components = 0;
@@ -101,7 +105,7 @@ public final class ComponentTrees {
     }
 
     /** A vehicle's catalogue as a standalone tree rooted at L0, its details recorded. */
-    public static NormalizedNode normalize(Crate crate, Map<NodeIdentity, ComponentDetails> details) {
+    public NormalizedNode normalize(Crate crate, Map<NodeIdentity, ComponentDetails> details) {
         C0_Components<?> root = ((ComponentVehicle) crate).components();
         var exporters = exporters(crate);
         var kids = new ArrayList<NormalizedNode>();
@@ -114,7 +118,7 @@ public final class ComponentTrees {
     }
 
     @SuppressWarnings("unchecked")
-    private static NormalizedNode normalize(ComponentCatalogue<?> cat, Crate crate, Map<Class<?>, List<EsModule<?>>> exporters, TreeLevel at,
+    private NormalizedNode normalize(ComponentCatalogue<?> cat, Crate crate, Map<Class<?>, List<EsModule<?>>> exporters, TreeLevel at,
                                             List<NodeName> path, Map<NodeIdentity, ComponentDetails> details) {
         var here = new ArrayList<>(path); here.add(cat.segment());
         var kids = new ArrayList<NormalizedNode>();
@@ -128,7 +132,7 @@ public final class ComponentTrees {
     }
 
     @SuppressWarnings("unchecked")
-    private static NormalizedNode leaf(ComponentEntry<?> e, Crate crate, Map<Class<?>, List<EsModule<?>>> exporters, TreeLevel at,
+    private NormalizedNode leaf(ComponentEntry<?> e, Crate crate, Map<Class<?>, List<EsModule<?>>> exporters, TreeLevel at,
                                        List<NodeName> path, Map<NodeIdentity, ComponentDetails> details) {
         UiComponent<?> c = ((ComponentEntry.OfComponent<?, ?>) e).component();
         var id = new ComponentNodeIdentity.OfComponent((Class<? extends UiComponent<?>>) c.getClass());
@@ -145,7 +149,7 @@ public final class ComponentTrees {
      * Each component the crate's modules export, by its class, with the modules that export it: where a catalogue
      * finds the module of a component it lists - the one module its crate ships that exports it.
      */
-    private static Map<Class<?>, List<EsModule<?>>> exporters(Crate crate) {
+    private Map<Class<?>, List<EsModule<?>>> exporters(Crate crate) {
         var out = new LinkedHashMap<Class<?>, List<EsModule<?>>>();
         for (CrateEntry e : crate.entries())
             for (var x : e.module().exports().exports())
@@ -153,11 +157,11 @@ public final class ComponentTrees {
         return out;
     }
 
-    private static Map<DimensionKey, DimensionValue> label(String text) {
+    private Map<DimensionKey, DimensionValue> label(String text) {
         return Map.of(DisplayLabel.INSTANCE, new NameValue(text));
     }
 
-    private static int countComponents(NormalizedNode n) {
+    private int countComponents(NormalizedNode n) {
         if (n.identity() instanceof ComponentNodeIdentity.OfComponent) return 1;
         int sum = 0;
         for (NormalizedNode k : n.children()) sum += countComponents(k);
@@ -167,7 +171,7 @@ public final class ComponentTrees {
     // ── the guard ─────────────────────────────────────────────────────────
 
     /** The problems with the closure's catalogues against its modules; empty when the logical side matches the physical. */
-    public static List<String> validate(List<Crate> topLevel) {
+    public List<String> validate(List<Crate> topLevel) {
         var problems = new ArrayList<String>();
         var closure = closure(topLevel);
         var listed = new LinkedHashMap<Class<?>, String>();   // component class → the vehicle that lists it
@@ -195,7 +199,7 @@ public final class ComponentTrees {
         return List.copyOf(problems);
     }
 
-    private static void checkNode(Crate crate, ComponentCatalogue<?> node, ComponentCatalogue<?> parent, Map<Class<?>, List<EsModule<?>>> exporters,
+    private void checkNode(Crate crate, ComponentCatalogue<?> node, ComponentCatalogue<?> parent, Map<Class<?>, List<EsModule<?>>> exporters,
                                   Map<Class<?>, String> listed, List<String> problems) {
         String where = crate.name() + "/" + node.segment().value();
         Object named = node instanceof C1_Components<?, ?> c1 ? c1.parent() : node instanceof C2_Components<?, ?> c2 ? c2.parent() : null;
