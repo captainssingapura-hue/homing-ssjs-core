@@ -19,6 +19,9 @@ public final class CssGroupResolver {
 
     private CssGroupResolver() {}
 
+    /**
+     * The groups {@code roots} depend on and the roots themselves, dependencies first and none twice; refuses a cycle.
+     */
     public static List<CssGroup<?>> resolve(List<CssGroup<?>> roots) {
         SequencedSet<CssGroup<?>> resolved = new LinkedHashSet<>();
         Deque<Class<?>> path = new ArrayDeque<>();

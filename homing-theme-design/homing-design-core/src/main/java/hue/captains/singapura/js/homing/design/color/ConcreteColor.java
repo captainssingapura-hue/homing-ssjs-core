@@ -68,9 +68,13 @@ public sealed interface ConcreteColor permits ConcreteColor.Srgb, ConcreteColor.
             return v;
         }
 
+        /** The red channel, from 0 to 255. */
         public int red() { return red; }
+        /** The green channel, from 0 to 255. */
         public int green() { return green; }
+        /** The blue channel, from 0 to 255. */
         public int blue() { return blue; }
+        /** The opacity, from 0 to 1. */
         public double alpha() { return alpha; }
 
         @Override public String css() {
@@ -126,9 +130,13 @@ public sealed interface ConcreteColor permits ConcreteColor.Srgb, ConcreteColor.
                     parts.size() == 4 ? alphaOf(written, parts.get(3)) : 1};
         }
 
+        /** The lightness, from 0 to 1. */
         public double lightness() { return lightness; }
+        /** The chroma, from 0 up. */
         public double chroma() { return chroma; }
+        /** The hue in degrees, from 0 up to but not including 360. */
         public double hue() { return hue; }
+        /** The opacity, from 0 to 1. */
         public double alpha() { return alpha; }
 
         @Override public String css() {

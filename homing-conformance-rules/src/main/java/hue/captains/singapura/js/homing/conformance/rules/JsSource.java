@@ -34,5 +34,6 @@ public record JsSource(List<String> lines) {
     /** The segment as a single string, lines rejoined with {@code '\n'}. */
     public String text() { return String.join("\n", lines); }
 
+    /** Whether the segment has no lines. */
     public boolean isEmpty() { return lines.isEmpty(); }
 }

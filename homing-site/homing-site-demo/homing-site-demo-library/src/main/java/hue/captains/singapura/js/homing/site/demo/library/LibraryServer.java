@@ -19,6 +19,7 @@ public final class LibraryServer {
 
     private LibraryServer() {}
 
+    /** Serves the site on its port; exits with status 1 when it cannot start. */
     public static void main(String[] args) {
         SiteHost.start(LibrarySite.INSTANCE, PORT)
                 .onFailure(err -> System.exit(1));

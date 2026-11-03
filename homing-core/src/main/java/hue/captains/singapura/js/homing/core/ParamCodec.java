@@ -97,13 +97,17 @@ public interface ParamCodec<P extends AppModule._Param> {
         /** The params when this decoded successfully, else null. */
         default P orNull() { return this instanceof Ok<P>(P p) ? p : null; }
 
+        /** Whether the params were decoded. */
         default boolean isOk() { return this instanceof Ok; }
 
         /** A one-line explanation suitable for a 400 response body. */
         default String describe() { return "ok"; }
 
+        /** Decoded: these are the params. */
         static <P extends AppModule._Param> Decoded<P> ok(P params) { return new Ok<>(params); }
+        /** Not decoded: the required parameter {@code key} is absent. */
         static <P extends AppModule._Param> Decoded<P> missing(String key) { return new Missing<>(key); }
+        /** Not decoded: {@code value}, given for {@code key}, cannot be read as {@code expected}. */
         static <P extends AppModule._Param> Decoded<P> malformed(String key, String value, String expected) {
             return new Malformed<>(key, value, expected);
         }

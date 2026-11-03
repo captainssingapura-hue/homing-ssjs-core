@@ -179,13 +179,16 @@ public final class CatalogueTree {
 
     // ── Reading ───────────────────────────────────────────────────────────────
 
+    /** The tree's root. */
     public L0_Catalogue<?> root() { return root; }
 
     /** Every vertex, root first, each parent before its children. */
     public List<Catalogue<?>> all() { return Collections.unmodifiableList(preOrder); }
 
+    /** How many vertices the tree has. */
     public int size() { return preOrder.size(); }
 
+    /** Whether {@code c} is a vertex of this tree. */
     public boolean contains(Catalogue<?> c) { return vertexPaths.containsKey(c.getClass()); }
 
     /** The vertex above {@code c} in the composed tree - a grafted root's is its host; empty for the tree's root. */

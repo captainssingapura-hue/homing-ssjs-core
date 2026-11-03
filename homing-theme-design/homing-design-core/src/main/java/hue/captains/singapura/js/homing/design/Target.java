@@ -45,6 +45,7 @@ public sealed interface Target permits Target.Color, Target.Colorless {
     /** The states the template offers a slot for; always contains {@link State#REST}. */
     Set<State> states();
 
+    /** The medium that carries the leaf's answer: CSS, unless the leaf says otherwise. */
     default Carrier carrier() { return Carrier.CSS; }
 
     /**

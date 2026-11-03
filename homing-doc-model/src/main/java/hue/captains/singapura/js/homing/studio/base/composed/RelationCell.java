@@ -38,19 +38,29 @@ public final class RelationCell {
     public static RelationCell cell(String text) { return new RelationCell(text); }
 
     // ── Status badge (inline pill) ──────────────────────────────────────────
+    /** Marks the cell with this badge. */
     public RelationCell badge(TableData.Badge b) { this.badge = b; return this; }
+    /** Marks the cell with the success badge. */
     public RelationCell success() { this.badge = TableData.Badge.SUCCESS; return this; }
+    /** Marks the cell with the warning badge. */
     public RelationCell warning() { this.badge = TableData.Badge.WARNING; return this; }
+    /** Marks the cell with the error badge. */
     public RelationCell error()   { this.badge = TableData.Badge.ERROR;   return this; }
 
     // ── Horizontal alignment ────────────────────────────────────────────────
+    /** Aligns the cell this way. */
     public RelationCell align(TableData.Align a) { this.align = a; return this; }
+    /** Aligns the cell to the left. */
     public RelationCell left()   { this.align = TableData.Align.LEFT;   return this; }
+    /** Centres the cell. */
     public RelationCell center() { this.align = TableData.Align.CENTER; return this; }
+    /** Aligns the cell to the right. */
     public RelationCell right()  { this.align = TableData.Align.RIGHT;  return this; }
 
     // ── Emphasis ────────────────────────────────────────────────────────────
+    /** Gives the cell strong emphasis. */
     public RelationCell strong() { this.emphasis = Articulation.Emphasis.STRONG; return this; }
+    /** Gives the cell muted emphasis. */
     public RelationCell muted()  { this.emphasis = Articulation.Emphasis.MUTED;  return this; }
 
     /** The plain cell text (goes into the relation's {@code rows}). */

@@ -66,7 +66,9 @@ public record Leaf<C extends Catalogue<C>>(
         return new Leaf<>(slug, name, summary, null, null, null, page);
     }
 
+    /** This leaf, shown with this badge. */
     public Leaf<C> badge(String badge) { return new Leaf<>(slug, name, summary, badge, icon, opens, page); }
+    /** This leaf, shown with this icon. */
     public Leaf<C> icon(String icon)   { return new Leaf<>(slug, name, summary, badge, icon, opens, page); }
 
     /** This leaf, opening as its app says. */

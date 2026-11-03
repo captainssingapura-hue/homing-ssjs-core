@@ -48,8 +48,11 @@ public final class Dressed {
         this.layer = layerOf(style, new LinkedHashSet<>());
     }
 
+    /** The colour tree the theme is worn over. */
     public ColorTree colors() { return colors; }
+    /** The style worn. */
     public DesignStyle<?> style() { return style; }
+    /** The palette it is worn in. */
     public ColorPalette<?> palette() { return palette; }
 
     /** The worn style's layer, over its base chain: what every target is asked of. */

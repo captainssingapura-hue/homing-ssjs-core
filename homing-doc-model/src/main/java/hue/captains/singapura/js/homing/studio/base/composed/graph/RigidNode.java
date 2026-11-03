@@ -93,10 +93,16 @@ public final class RigidNode<T> {
         return child(source, name, Title.humanizing(name), order);
     }
 
+    /** The node above this one; null for a root. */
     public RigidNode<T> parent() { return parent; }
+    /** Its depth: 0 for a root. */
     public int level()           { return level; }
+    /** The name it is known by. */
     public NodeName name()       { return name; }
+    /** Its heading. */
     public Title title()         { return title; }
+    /** The caller's node it stands for. */
     public T source()            { return source; }
+    /** Its place among its siblings, when one was stated. */
     public OptionalInt order()   { return order; }
 }

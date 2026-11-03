@@ -48,6 +48,10 @@ public record ResolveSemanticClass() implements StatelessFunctionalObject {
 
     public static final ResolveSemanticClass INSTANCE = new ResolveSemanticClass();
 
+    /**
+     * Walks the tree for {@code query} in {@code state} on {@code target}, in {@code theme}: the class worn or why
+     * there is none, with every step and note.
+     */
     public Resolution resolve(Taxonomy taxonomy, Dressed theme, Casting query, State state, Target target) {
         var notes = new ArrayList<String>();
         if (state == State.REST && query.functional())

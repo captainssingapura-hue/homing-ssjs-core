@@ -55,6 +55,7 @@ public final class CoreConformance {
                             + "the css.* API the rule redirects DOM owners to. The one module that "
                             + "may touch classList raw, because it is where the typed path ends."));
 
+    /** Core's top-level crates and every crate they require. */
     public static Collection<Crate> closure() { return CrateClosure.of(TOP_LEVEL); }
 
     /** The debt core keeps, for these crates: {@code core-conformance-baseline.txt}. */
@@ -71,6 +72,10 @@ public final class CoreConformance {
         }
     }
 
+    /**
+     * Core's grader: the strict one, with core's allowances and baseline. With {@code allowPreExisting}, a baselined
+     * finding is a warning rather than an error.
+     */
     public static FindingGrader grader(boolean allowPreExisting) {
         return FindingGrader.STRICT.withAllowlist(ALLOWANCES).withBaseline(baseline()).allowingPreExisting(allowPreExisting);
     }

@@ -10,5 +10,6 @@ import java.util.List;
  * @param <M>
  */
 public interface ContentProvider<M extends EsModule> extends StatelessFunctionalObject {
+    /** The module's script, line by line, without its imports and exports. */
     List<String> content();
 }

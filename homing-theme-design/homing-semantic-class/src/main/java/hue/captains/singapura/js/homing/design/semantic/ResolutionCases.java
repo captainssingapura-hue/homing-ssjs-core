@@ -30,6 +30,7 @@ public record ResolutionCases() implements StatelessFunctionalObject {
 
     /** A resolver as the cases ask it: by tokens, in the theme named, the outcome's words. */
     public interface Resolver {
+        /** The outcome of one query, in the words a case writes it. */
         String resolve(String theme, String node, String state, String target);
     }
 
@@ -38,6 +39,7 @@ public record ResolutionCases() implements StatelessFunctionalObject {
         public Report { failures = List.copyOf(failures); }
     }
 
+    /** Runs the cases in {@code lines} against {@code resolver}: how many ran, and every one that failed. */
     public Report run(List<String> lines, Resolver resolver) {
         String theme = null;
         int cases = 0;

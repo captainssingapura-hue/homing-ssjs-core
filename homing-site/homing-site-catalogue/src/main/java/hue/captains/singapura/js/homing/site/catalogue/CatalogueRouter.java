@@ -62,7 +62,9 @@ public final class CatalogueRouter implements Router {
         return new CatalogueRouter(tree, mount, listing);
     }
 
+    /** The tree it serves. */
     public CatalogueTree tree()  { return tree; }
+    /** The path the tree is served at. */
     public Path          mount() { return mount; }
 
     // ── Path out ──────────────────────────────────────────────────────────────

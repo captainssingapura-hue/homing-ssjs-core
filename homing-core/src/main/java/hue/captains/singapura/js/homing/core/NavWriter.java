@@ -41,6 +41,7 @@ public final class NavWriter {
         this.allImports = allImports;
     }
 
+    /** The lines of the {@code nav} const and the helper it needs; no lines when no app is linked. */
     public List<String> write() {
         // Collect AppLink targets, deduplicated, in insertion order.
         Map<Linkable, Boolean> targets = new LinkedHashMap<>();

@@ -22,6 +22,7 @@ public interface CssGroup<C extends CssGroup<C>> extends EsModule<C> {
     // derived from its classes' dependsOn() by CssImportsFor.of(group), and
     // there is deliberately no method to override: see CssImportsFor.
 
+    /** The classes of the group, each an export of its module. */
     List<CssClass<C>> cssClasses();
 
     @Override

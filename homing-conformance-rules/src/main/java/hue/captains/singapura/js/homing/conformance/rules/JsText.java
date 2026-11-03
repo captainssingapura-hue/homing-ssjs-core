@@ -16,6 +16,7 @@ public final class JsText {
 
     private JsText() {}
 
+    /** The lines with their line and block comments blanked to spaces, so every position stays where it was. */
     public static List<String> stripComments(List<String> lines) {
         var out = new ArrayList<String>(lines.size());
         boolean inBlock = false;

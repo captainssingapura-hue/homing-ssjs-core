@@ -31,6 +31,9 @@ public record ServedModules(Map<String, EsModule<?>> byName) {
     /** Serves nothing by name. {@code render(module)} still works on an instance. */
     public static final ServedModules NONE = new ServedModules(Map.of());
 
+    /**
+     * The modules of {@code roots} and of every crate they require, by canonical name; the first declared keeps a name.
+     */
     public static ServedModules of(Collection<? extends Crate> roots) {
         var byName = new LinkedHashMap<String, EsModule<?>>();
         var seen = new LinkedHashMap<String, Crate>();
@@ -44,9 +47,11 @@ public record ServedModules(Map<String, EsModule<?>> byName) {
         return new ServedModules(byName);
     }
 
+    /** The module of this canonical name, if a crate declared it. */
     public Optional<EsModule<?>> find(String canonicalName) {
         return Optional.ofNullable(byName.get(canonicalName));
     }
 
+    /** How many modules are served. */
     public int size() { return byName.size(); }
 }

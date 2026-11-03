@@ -19,6 +19,7 @@ import java.nio.file.Path;
  */
 public final class ConformanceReportWriter {
 
+    /** Writes {@code run} under {@code dir}, making the folders it needs: the summary, then a file for each module. */
     public void write(Path dir, ConformanceRun run) throws IOException {
         Files.createDirectories(dir);
         Files.writeString(dir.resolve(ConformanceReportFiles.SUMMARY),

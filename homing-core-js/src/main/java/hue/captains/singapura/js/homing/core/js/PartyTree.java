@@ -63,7 +63,9 @@ public record PartyTree(List<L1Branch> branches) {
 
     /** One L1 branch under {@code domOpsParty} (the root). */
     public sealed interface L1Branch permits FrameworkBranch, AppBodyBranch {
+        /** The branch's name, which is also its variable in the JS. */
         String name();
+        /** Who activates the branch. */
         OwnerRef owner();
     }
 

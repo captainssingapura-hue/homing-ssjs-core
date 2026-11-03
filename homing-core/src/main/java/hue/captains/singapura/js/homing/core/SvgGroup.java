@@ -17,5 +17,6 @@ public interface SvgGroup<G extends SvgGroup<G>> extends EsModule<G> {
         return ImportsFor.noImports();
     }
 
+    /** The SVG resources of the group, each an export of its module. */
     List<SvgBeing<G>> svgBeings();
 }

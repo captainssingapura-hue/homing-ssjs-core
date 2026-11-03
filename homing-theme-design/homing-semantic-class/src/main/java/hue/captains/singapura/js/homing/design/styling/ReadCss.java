@@ -58,6 +58,7 @@ public record ReadCss() implements StatelessFunctionalObject {
         public Split { pieces = List.copyOf(pieces); problems = List.copyOf(problems); }
     }
 
+    /** Reads a file into its items, and says what could not be read. */
     public Read read(String css) {
         var problems = new ArrayList<String>();
         String text = withoutComments(css, problems);
@@ -66,6 +67,7 @@ public record ReadCss() implements StatelessFunctionalObject {
         return new Read(items, problems);
     }
 
+    /** Splits a file into its top-level items, each with its text as written, and says what could not be read. */
     public Split split(String css) {
         var problems = new ArrayList<String>();
         String text = withoutComments(css, problems);

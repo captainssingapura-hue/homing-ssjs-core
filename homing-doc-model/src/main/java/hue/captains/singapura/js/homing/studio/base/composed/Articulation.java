@@ -59,12 +59,18 @@ public record Articulation(
         private TableData.Align align;
         private Emphasis        emphasis;
 
+        /** Sets the badge. */
         public Builder badge(TableData.Badge b) { this.badge = b; return this; }
+        /** Sets the alignment. */
         public Builder align(TableData.Align a) { this.align = a; return this; }
+        /** Sets the emphasis. */
         public Builder emphasis(Emphasis e)     { this.emphasis = e; return this; }
+        /** Sets strong emphasis. */
         public Builder strong()                 { this.emphasis = Emphasis.STRONG; return this; }
+        /** Sets muted emphasis. */
         public Builder muted()                  { this.emphasis = Emphasis.MUTED; return this; }
 
+        /** The articulation, with only the marks that were set. */
         public Articulation build() {
             return new Articulation(Optional.ofNullable(badge),
                                     Optional.ofNullable(align),

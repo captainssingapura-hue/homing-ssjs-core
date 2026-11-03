@@ -37,6 +37,7 @@ public record AppQuery(String simpleName, String theme, String locale,
         this(simpleName, theme, locale, java.util.Map.of());
     }
 
+    /** Whether the query names an app. */
     public boolean hasSimpleName() {
         return simpleName != null && !simpleName.isBlank();
     }

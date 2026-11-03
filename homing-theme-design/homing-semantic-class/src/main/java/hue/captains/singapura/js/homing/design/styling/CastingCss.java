@@ -110,6 +110,7 @@ public record CastingCss() implements StatelessFunctionalObject {
     public record Marked(List<String> problems, Set<String> states, Set<String> keyframes, Set<String> rooms) implements Scalar {
         public Marked { problems = List.copyOf(problems); states = Set.copyOf(states); keyframes = Set.copyOf(keyframes); rooms = Set.copyOf(rooms); }
 
+        /** Whether no problem was found in the file's marks. */
         public boolean passes() { return problems.isEmpty(); }
     }
 

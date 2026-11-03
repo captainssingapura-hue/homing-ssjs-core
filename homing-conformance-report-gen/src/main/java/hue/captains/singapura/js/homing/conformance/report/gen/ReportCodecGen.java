@@ -23,6 +23,10 @@ public final class ReportCodecGen {
 
     private ReportCodecGen() {}
 
+    /**
+     * Generates each codec of the manifest into the source folder {@code args[0]}; refuses any other number of
+     * arguments.
+     */
     public static void main(String[] args) throws IOException {
         if (args.length != 1) {
             throw new IllegalArgumentException("Usage: ReportCodecGen <output-source-directory>");

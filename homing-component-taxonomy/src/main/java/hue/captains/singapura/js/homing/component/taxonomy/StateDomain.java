@@ -100,6 +100,7 @@ public sealed interface StateDomain extends Scalar permits StateDomain.Ranges, S
 
     /** One range of a type of state's values: a named value, or a span of numbers. */
     sealed interface Range extends Scalar permits Point, Span {
+        /** Whether {@code value} is in this range. */
         boolean holds(Value value);
     }
 

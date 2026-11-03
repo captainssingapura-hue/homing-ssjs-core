@@ -11,5 +11,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface ConformanceDebts {
+    /** The debts the module declares, one for each rule it owes. */
     ConformanceDebt[] value();
 }

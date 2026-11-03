@@ -93,7 +93,9 @@ public sealed interface Cardinality extends Scalar permits Cardinality.Fixed, Ca
 
     /** The most of a range: so many, or no most at all. */
     sealed interface Bound extends Scalar permits AtMost, Unbounded {
+        /** Whether a count of {@code n} is within this bound. */
         boolean admits(int n);
+        /** The bound as written: the number, or {@code *} when there is no most. */
         String say();
     }
 

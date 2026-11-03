@@ -185,6 +185,7 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
         return List.copyOf(out);
     }
 
+    /** Every part whose role is {@code role}, in the taxonomy's order. */
     public List<Part<?, ?>> partsNaming(Role<?> role) {
         return parts.stream().filter(p -> p.role().equals(role)).toList();
     }

@@ -43,6 +43,10 @@ public final class CrateConformance {
     public record ModuleResult(String moduleClass, String crate, String form,
                                boolean ok, List<String> findings) {}
 
+    /**
+     * Each crate of {@code closure} and each of its modules, with what each fails on, and whether all of them are
+     * clean.
+     */
     public static Result evaluate(List<Crate> closure) {
         // moduleClass -> owning crate name
         Map<String, String> owner = new HashMap<>();

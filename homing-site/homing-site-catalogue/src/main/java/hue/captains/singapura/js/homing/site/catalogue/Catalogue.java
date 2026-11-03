@@ -47,6 +47,7 @@ public sealed interface Catalogue<Self extends Catalogue<Self>>
         return NodeName.ofType(getClass(), "Catalogue");
     }
 
+    /** What a listing says of this catalogue; nothing by default. */
     default String summary() { return ""; }
 
     /** A short upper-case tag for a listing to show; {@code CATALOGUE} by default. */

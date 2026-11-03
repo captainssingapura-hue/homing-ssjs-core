@@ -51,6 +51,7 @@ public final class LibDownloader {
     private static final Duration TIMEOUT = Duration.ofSeconds(60);
     private static final String SHA_TODO_SENTINEL = "TODO";
 
+    /** Downloads, verifies and copies every library; {@code args} are the output folder and the cache folder. */
     public static void main(String[] args) throws Exception {
         if (args.length < 2) {
             System.err.println("Usage: LibDownloader <outputDir> <cacheDir>");

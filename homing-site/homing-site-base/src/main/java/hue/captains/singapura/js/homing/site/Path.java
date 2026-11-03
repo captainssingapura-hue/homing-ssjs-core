@@ -60,7 +60,9 @@ public record Path(List<String> segments) {
         return out.isEmpty() ? ROOT : new Path(out);
     }
 
+    /** Whether this is the root: no segments. */
     public boolean isRoot() { return segments.isEmpty(); }
+    /** How many segments it has. */
     public int     depth()  { return segments.size(); }
 
     /** The first segment, when there is one. */

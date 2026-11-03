@@ -42,7 +42,9 @@ public record Baseline(Set<String> fingerprints) {
         return fingerprints.contains(finding.fingerprint());
     }
 
+    /** Whether nothing is grandfathered. */
     public boolean isEmpty() { return fingerprints.isEmpty(); }
+    /** How many findings are grandfathered. */
     public int size()        { return fingerprints.size(); }
 
     /** The sorted line form of a set of findings — the content to record as a baseline file. */

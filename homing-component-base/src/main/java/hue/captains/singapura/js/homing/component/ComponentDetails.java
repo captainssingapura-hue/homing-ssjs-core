@@ -15,6 +15,7 @@ public sealed interface ComponentDetails extends Scalar {
     /** Narrowed to what a tree row draws. */
     RowDisplay row();
 
+    /** {@code n} and the noun, with an {@code s} unless {@code n} is one: {@code 3 widgets}. */
     static String plural(int n, String noun) { return n + " " + noun + (n == 1 ? "" : "s"); }
 
     /** The composition's root: every vehicle, counted. */

@@ -34,6 +34,7 @@ public record ResourceReader(List<Path> sourceRoots) {
         this(sourceRoot == null ? List.of() : List.of(sourceRoot));
     }
 
+    /** A reader over the roots {@code homing.devRoot} names, or {@link #INSTANCE} when it names none. */
     public static ResourceReader fromSystemProperty() {
         String devRoot = System.getProperty("homing.devRoot");
         if (devRoot == null || devRoot.isBlank()) return INSTANCE;
@@ -55,6 +56,9 @@ public record ResourceReader(List<Path> sourceRoots) {
         return Optional.empty();
     }
 
+    /**
+     * The lines of the resource at {@code path}: from the first source root that has it, or else from the classpath.
+     */
     public List<String> getStringsFromResource(String path) {
         Optional<Path> file = sourceFile(path);
         if (file.isPresent()) {

@@ -34,6 +34,10 @@ public record PaletteSheet() implements StatelessFunctionalObject {
         public Written { variables = List.copyOf(variables); }
     }
 
+    /**
+     * Writes the sheet of {@code palette} over {@code tree}; refuses a palette the tree has problems with, naming every
+     * one.
+     */
     public Written write(ColorTree tree, ColorPalette<?> palette) {
         List<String> problems = tree.check(palette);
         if (!problems.isEmpty())

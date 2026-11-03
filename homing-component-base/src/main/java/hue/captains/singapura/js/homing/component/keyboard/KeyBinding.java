@@ -24,8 +24,11 @@ public record KeyBinding(Key key, Set<Modifier> modifiers, String meaning) {
         if (meaning.isBlank()) throw new IllegalArgumentException("KeyBinding.meaning: must not be blank");
     }
 
+    /** A key pressed alone, and what the component does with it. */
     public static KeyBinding of(Key key, String meaning) { return new KeyBinding(key, Set.of(), meaning); }
+    /** A key pressed with one modifier held, and what the component does with it. */
     public static KeyBinding of(Key key, Modifier modifier, String meaning) { return new KeyBinding(key, EnumSet.of(modifier), meaning); }
+    /** A key pressed with these modifiers held, and what the component does with it. */
     public static KeyBinding of(Key key, Set<Modifier> modifiers, String meaning) { return new KeyBinding(key, modifiers, meaning); }
 
     /** Several keys, one meaning: {@code ArrowRight} and {@code ArrowUp} both a step up. */

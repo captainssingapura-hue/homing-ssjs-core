@@ -70,6 +70,7 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
     public record Implementation(Class<?> type, String style, String casting, List<String> problems) implements Scalar {
         public Implementation { problems = List.copyOf(problems); }
 
+        /** Whether nothing refuses the implementation. */
         public boolean passes() { return problems.isEmpty(); }
 
         /** How a test names it: its style's token, then its class's simple name. */
@@ -85,6 +86,7 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
     public record Checked(List<Implementation> implementations, List<String> problems) implements Scalar {
         public Checked { implementations = List.copyOf(implementations); problems = List.copyOf(problems); }
 
+        /** Whether nothing refuses the jar or any of its implementations. */
         public boolean passes() { return problems.isEmpty() && implementations.stream().allMatch(Implementation::passes); }
 
         /** Every problem, the jar's then each implementation's, named. */

@@ -35,7 +35,9 @@ public record Trail(List<Crumb> crumbs) {
         crumbs = List.copyOf(crumbs);
     }
 
+    /** Whether the trail has no crumbs. */
     public boolean isEmpty() { return crumbs.isEmpty(); }
+    /** How many crumbs it has. */
     public int     depth()   { return crumbs.size(); }
 
     /** This trail one crumb longer. */

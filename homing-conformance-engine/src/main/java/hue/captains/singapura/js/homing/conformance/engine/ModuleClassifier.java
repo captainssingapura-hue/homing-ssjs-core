@@ -38,6 +38,10 @@ public final class ModuleClassifier {
         return declared != null ? declared : classify(entry.module());
     }
 
+    /**
+     * The type of a module with none declared, derived from what it is: an external module, a manager injector or a
+     * widget first, then by its {@link ModuleForm}.
+     */
     public static JsModuleType classify(EsModule<?> module) {
         if (module instanceof BundledExternalModule<?> || module instanceof ExternalModule<?>) {
             return StandardJsModuleType.BUNDLED_EXTERNAL;

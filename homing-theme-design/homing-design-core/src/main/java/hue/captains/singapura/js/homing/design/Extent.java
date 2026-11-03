@@ -42,6 +42,7 @@ public enum Extent {
 
     Extent(int value, String suffix) { this.value = value; this.suffix = suffix; }
 
+    /** The extent as a number: -1, 0 or 1. */
     public int value() { return value; }
 
     /** The suffix on the anchor's variable: none for the word itself, {@code -zero}, {@code -neg}. */

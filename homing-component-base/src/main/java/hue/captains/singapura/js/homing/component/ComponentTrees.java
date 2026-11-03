@@ -55,6 +55,7 @@ public record ComponentTrees() implements StatelessFunctionalObject, StatelessSi
             Objects.requireNonNull(root, "root");
             details = Map.copyOf(details);
         }
+        /** What the vertex {@code id} is; null when the tree has no such vertex. */
         public ComponentDetails detailsOf(NodeIdentity id) { return details.get(id); }
     }
 

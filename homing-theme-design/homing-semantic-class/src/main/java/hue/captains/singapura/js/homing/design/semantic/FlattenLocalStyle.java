@@ -35,6 +35,10 @@ public record FlattenLocalStyle() implements StatelessFunctionalObject {
     /** The sheet, how many rules it holds, and how many were taken from another concrete leaf. */
     public record Flattened(String css, int drawn, int copied) implements Scalar {}
 
+    /**
+     * Flattens the local style for {@code style}, with {@code title} at the head of the sheet; refuses a style whose
+     * scheme does not see the local style's.
+     */
     public Flattened flatten(LocalStyleRead read, InStyle style, String title) {
         ColorScheme mine = Schemes.INSTANCE.of(read.localStyle()).orElse(null), wears = Schemes.INSTANCE.of(style.style()).orElse(null);
         if (mine == null || wears == null || !Schemes.INSTANCE.sees(wears, mine))

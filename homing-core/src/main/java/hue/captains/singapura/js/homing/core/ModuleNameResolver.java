@@ -6,5 +6,6 @@ package hue.captains.singapura.js.homing.core;
  */
 @FunctionalInterface
 public interface ModuleNameResolver {
+    /** How {@code module} is written in an import statement. */
     PartialModulePath resolve(EsModule<?> module);
 }

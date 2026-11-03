@@ -157,7 +157,9 @@ public final class Rigid {
             this.category = (category == null) ? "DOC" : category;
         }
         @Override L0 self() { return this; }
+        /** Opens a level 1 section under the document; {@code l1build()} closes it. */
         public L1 l1(String title) { return new L1(this, title); }
+        /** The finished document, with every section closed so far. */
         public RigidDoc build() { return new RigidDoc(uuid, summary, category, toNode()); }
     }
 
@@ -166,7 +168,9 @@ public final class Rigid {
         private final L0 parent;
         L1(L0 parent, String title) { super(title); this.parent = parent; }
         @Override L1 self() { return this; }
+        /** Opens a level 2 section under this one; {@code l2build()} closes it. */
         public L2 l2(String title) { return new L2(this, title); }
+        /** Closes this section into the document, and goes back to the document. */
         public L0 l1build() { parent.addChild(toNode()); return parent; }
     }
 
@@ -175,7 +179,9 @@ public final class Rigid {
         private final L1 parent;
         L2(L1 parent, String title) { super(title); this.parent = parent; }
         @Override L2 self() { return this; }
+        /** Opens a level 3 section under this one; {@code l3build()} closes it. */
         public L3 l3(String title) { return new L3(this, title); }
+        /** Closes this section into its parent, and goes back to the parent. */
         public L1 l2build() { parent.addChild(toNode()); return parent; }
     }
 
@@ -184,7 +190,9 @@ public final class Rigid {
         private final L2 parent;
         L3(L2 parent, String title) { super(title); this.parent = parent; }
         @Override L3 self() { return this; }
+        /** Opens a level 4 section under this one; {@code l4build()} closes it. */
         public L4 l4(String title) { return new L4(this, title); }
+        /** Closes this section into its parent, and goes back to the parent. */
         public L2 l3build() { parent.addChild(toNode()); return parent; }
     }
 
@@ -193,7 +201,9 @@ public final class Rigid {
         private final L3 parent;
         L4(L3 parent, String title) { super(title); this.parent = parent; }
         @Override L4 self() { return this; }
+        /** Opens a level 5 section under this one; {@code l5build()} closes it. */
         public L5 l5(String title) { return new L5(this, title); }
+        /** Closes this section into its parent, and goes back to the parent. */
         public L3 l4build() { parent.addChild(toNode()); return parent; }
     }
 
@@ -202,7 +212,9 @@ public final class Rigid {
         private final L4 parent;
         L5(L4 parent, String title) { super(title); this.parent = parent; }
         @Override L5 self() { return this; }
+        /** Opens a level 6 section under this one; {@code l6build()} closes it. */
         public L6 l6(String title) { return new L6(this, title); }
+        /** Closes this section into its parent, and goes back to the parent. */
         public L4 l5build() { parent.addChild(toNode()); return parent; }
     }
 
@@ -211,6 +223,7 @@ public final class Rigid {
         private final L5 parent;
         L6(L5 parent, String title) { super(title); this.parent = parent; }
         @Override L6 self() { return this; }
+        /** Closes this section into its parent, and goes back to the parent. */
         public L5 l6build() { parent.addChild(toNode()); return parent; }
     }
 }

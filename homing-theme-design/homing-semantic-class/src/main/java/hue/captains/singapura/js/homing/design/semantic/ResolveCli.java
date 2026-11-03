@@ -39,6 +39,7 @@ public record ResolveCli() implements StatelessFunctionalObject {
 
     public static final ResolveCli INSTANCE = new ResolveCli();
 
+    /** Runs the command line and exits with its status. */
     public static void main(String[] args) {
         System.exit(INSTANCE.run(List.of(args), System.out, System.err));
     }

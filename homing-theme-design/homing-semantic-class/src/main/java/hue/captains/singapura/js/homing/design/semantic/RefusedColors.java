@@ -13,5 +13,6 @@ public final class RefusedColors extends RuntimeException {
         this.problems = List.copyOf(problems);
     }
 
+    /** Every problem found in the colour tree. */
     public List<ColorProblem> problems() { return problems; }
 }

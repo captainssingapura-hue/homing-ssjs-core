@@ -21,6 +21,10 @@ public final class WriteStyleFamilies {
 
     private WriteStyleFamilies() {}
 
+    /**
+     * Writes the family files of the instance named by {@code args[1]} into the classes folder {@code args[0]}; refuses
+     * any other number of arguments.
+     */
     public static void main(String[] args) throws Exception {
         if (args.length != 2) throw new IllegalArgumentException("usage: WriteStyleFamilies <the build's classes> <the instance's class>");
         Object instance = Class.forName(args[1]).getField("INSTANCE").get(null);

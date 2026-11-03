@@ -17,5 +17,6 @@ public record GradedFinding(Finding finding, Severity severity, Disposition disp
         note = (note == null) ? "" : note;
     }
 
+    /** Whether this finding fails the build. */
     public boolean isError() { return severity == Severity.ERROR; }
 }

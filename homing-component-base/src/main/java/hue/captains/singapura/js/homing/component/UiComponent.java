@@ -46,9 +46,11 @@ public sealed interface UiComponent<M extends DomModule<M>> extends Exportable._
         LAYOUT("layout");
         private final String tag;
         Shape(String tag) { this.tag = tag; }
+        /** The shape as a word, as a component's row in a tree shows it. */
         public String tag() { return tag; }
     }
 
+    /** Which shape this component is. */
     Shape shape();
 
     /** The class's name, which is the JS class's. */

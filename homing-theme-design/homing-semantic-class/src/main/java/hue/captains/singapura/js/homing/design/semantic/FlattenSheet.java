@@ -39,6 +39,10 @@ public record FlattenSheet() implements StatelessFunctionalObject {
         public Flattened { unanswered = List.copyOf(unanswered); }
     }
 
+    /**
+     * Flattens the theme over {@code taxonomy}, with {@code title} at the head of the sheet; a look nothing answers is
+     * listed, not refused.
+     */
     public Flattened flatten(Taxonomy taxonomy, Dressed theme, String title) {
         var tokens = SemanticTokens.INSTANCE;
         var resolver = ResolveSemanticClass.INSTANCE;

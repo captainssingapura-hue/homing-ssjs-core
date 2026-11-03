@@ -48,6 +48,7 @@ public final class ResourceNotFound extends RuntimeException implements HttpRetu
 
     public record _ExternalError(String resource, String furtherExplanation) implements ExternalError {}
 
+    /** The error for a request without its {@code class} query parameter. */
     public static ResourceNotFound missingClass() {
         return new ResourceNotFound(
                 new _InternalError(null, "Missing 'class' query parameter"),
@@ -55,6 +56,7 @@ public final class ResourceNotFound extends RuntimeException implements HttpRetu
         );
     }
 
+    /** The error for a class that is found but is not an {@code expectedType}. */
     public static ResourceNotFound wrongType(String className, String expectedType) {
         return new ResourceNotFound(
                 new _InternalError(null, className + " is not a " + expectedType),
@@ -62,6 +64,7 @@ public final class ResourceNotFound extends RuntimeException implements HttpRetu
         );
     }
 
+    /** The error for a class that failed to load; {@code cause} stays in the internal error. */
     public static ResourceNotFound forClass(String className, Exception cause) {
         return new ResourceNotFound(
                 new _InternalError(cause, "Failed to load " + className),

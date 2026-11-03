@@ -17,6 +17,7 @@ public final class Trees {
 
     private static final Map<Class<?>, Target> TARGETS = new ConcurrentHashMap<>();
 
+    /** Refuses {@code t} unless it is a leaf of the target tree: a record that is a {@link Target}. */
     public static void requireTargetLeaf(Class<?> t) {
         if (!Target.class.isAssignableFrom(t) || !t.isRecord())
             throw new IllegalArgumentException(t.getName() + ": a target coordinate is a leaf of the sealed tree");

@@ -25,6 +25,9 @@ public final class CrateSeed {
 
     private CrateSeed() {}
 
+    /**
+     * Paste-ready imports and {@code entries()} body for the crate of the Maven module {@code anchorInModule} is in.
+     */
     public static String suggest(Class<?> anchorInModule) {
         Set<String> fqcns = OrphanCheck.servedModuleClassesInModuleOf(anchorInModule);
         var imports = new TreeSet<String>();

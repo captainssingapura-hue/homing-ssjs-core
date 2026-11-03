@@ -44,6 +44,7 @@ public record Query(Map<String, List<String>> all) {
         return new Query(QueryString.of(key, value));
     }
 
+    /** Whether the page was reached with no parameters. */
     public boolean isEmpty() { return all.isEmpty(); }
 
     /** The first value under {@code key}, when the key was given at all. */

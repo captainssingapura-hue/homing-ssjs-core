@@ -25,6 +25,7 @@ public record Allowance(String moduleClass, RuleId rule, String reason) {
         }
     }
 
+    /** Whether this allowance covers {@code finding}: the same module and the same rule. */
     public boolean matches(Finding finding) {
         return finding.moduleClass().equals(moduleClass) && finding.rule().equals(rule);
     }

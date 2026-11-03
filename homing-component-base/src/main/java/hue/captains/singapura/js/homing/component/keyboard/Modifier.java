@@ -6,5 +6,6 @@ public enum Modifier {
 
     private final String label;
     Modifier(String label) { this.label = label; }
+    /** The modifier's name as a person reads it: {@code Shift}. */
     public String label() { return label; }
 }

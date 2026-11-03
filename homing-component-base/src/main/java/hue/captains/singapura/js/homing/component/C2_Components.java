@@ -10,6 +10,7 @@ import java.util.List;
  * @param <Self> the concrete group's own type
  */
 public non-sealed interface C2_Components<P extends C1_Components<?, P>, Self extends C2_Components<P, Self>> extends ComponentCatalogue<Self> {
+    /** The family this group is listed under. */
     P parent();
     @Override default List<? extends ComponentCatalogue<?>> subCatalogues() { return List.of(); }
 }

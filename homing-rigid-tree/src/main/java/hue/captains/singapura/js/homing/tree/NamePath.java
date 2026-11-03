@@ -42,6 +42,7 @@ public record NamePath(List<NodeName> segments) implements Scalar {
         segments = List.copyOf(segments);
     }
 
+    /** The path of these segments, root first. */
     public static NamePath of(NodeName... segments) {
         return new NamePath(List.of(segments));
     }
@@ -97,7 +98,9 @@ public record NamePath(List<NodeName> segments) implements Scalar {
         return new NamePath(out);
     }
 
+    /** Whether this is the root: no segments. */
     public boolean isEmpty() { return segments.isEmpty(); }
+    /** How many segments it has. */
     public int     depth()   { return segments.size(); }
 
     /** The {@code '/'}-joined wire form; {@code ""} for the root. */

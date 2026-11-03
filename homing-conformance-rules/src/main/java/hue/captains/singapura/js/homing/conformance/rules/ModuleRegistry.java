@@ -30,7 +30,9 @@ public record ModuleRegistry(List<ModuleRef> modules) {
         return new ModuleRegistry(List.copyOf(refs));
     }
 
+    /** How many modules it holds. */
     public int size() { return modules.size(); }
+    /** Whether it holds no module. */
     public boolean isEmpty() { return modules.isEmpty(); }
 
     /** The modules grouped by package name, packages in sorted order. */
