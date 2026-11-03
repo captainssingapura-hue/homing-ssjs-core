@@ -5,7 +5,7 @@ import hue.captains.singapura.js.homing.component.taxonomy.Taxon;
 import hue.captains.singapura.js.homing.design.State;
 import hue.captains.singapura.js.homing.design.Target;
 import hue.captains.singapura.js.homing.design.color.ColorScheme;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.Objects;
 import java.util.Set;
@@ -21,7 +21,7 @@ import java.util.Set;
  * @param <S> the scheme of the style that says it
  * @param <T> the colour target
  */
-public final class Coloring<S extends ColorScheme, T extends Target.Color> implements ValueObject {
+public final class Coloring<S extends ColorScheme, T extends Target.Color> implements Scalar {
 
     private final Casting node;
     private final T target;

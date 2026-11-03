@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.design.styling;
 
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,15 +23,15 @@ public record ReadCss() implements StatelessFunctionalObject {
     }
 
     /** A rule: its selector as written, trimmed, and what its block holds. */
-    public record Rule(String selector, int line, List<Item> body) implements Item, ValueObject {
+    public record Rule(String selector, int line, List<Item> body) implements Item, Scalar {
         public Rule { body = List.copyOf(body); }
     }
 
     /** A declaration: its property and its value, each trimmed. */
-    public record Declaration(String property, String value, int line) implements Item, ValueObject {}
+    public record Declaration(String property, String value, int line) implements Item, Scalar {}
 
     /** An at-rule: what it says after the {@code @}, and its block - none for a statement. */
-    public record AtRule(String prelude, int line, List<Item> body) implements Item, ValueObject {
+    public record AtRule(String prelude, int line, List<Item> body) implements Item, Scalar {
         public AtRule { body = body == null ? null : List.copyOf(body); }
     }
 
@@ -41,12 +41,12 @@ public record ReadCss() implements StatelessFunctionalObject {
      * @param items    what it holds at the top
      * @param problems what could not be read, each with its line
      */
-    public record Read(List<Item> items, List<String> problems) implements ValueObject {
+    public record Read(List<Item> items, List<String> problems) implements Scalar {
         public Read { items = List.copyOf(items); problems = List.copyOf(problems); }
     }
 
     /** A top-level item of a file, and its text as written: from where it starts to where it ends, no comment before it. */
-    public record Piece(Item item, String text) implements ValueObject {}
+    public record Piece(Item item, String text) implements Scalar {}
 
     /**
      * A file split into its top-level items, each with its text - a family's file into its castings' rules.
@@ -54,7 +54,7 @@ public record ReadCss() implements StatelessFunctionalObject {
      * @param pieces   each top-level item, in the file's order
      * @param problems what could not be read, each with its line
      */
-    public record Split(List<Piece> pieces, List<String> problems) implements ValueObject {
+    public record Split(List<Piece> pieces, List<String> problems) implements Scalar {
         public Split { pieces = List.copyOf(pieces); problems = List.copyOf(problems); }
     }
 

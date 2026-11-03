@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.design.semantic;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 /**
  * Why a colour tree was refused, one problem each.
@@ -8,7 +8,7 @@ import hue.captains.singapura.tao.ontology.ValueObject;
  * @param rule what was broken
  * @param says the problem, naming what broke it
  */
-public record ColorProblem(Rule rule, String says) implements ValueObject {
+public record ColorProblem(Rule rule, String says) implements Scalar {
 
     /** The rules a colour tree is read under: what the compiler cannot refuse. */
     public enum Rule {

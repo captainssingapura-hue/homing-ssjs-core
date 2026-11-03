@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.studio.base.composed.text;
 
 import hue.captains.singapura.js.homing.tree.NodeName;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -16,7 +16,7 @@ import java.util.Optional;
  * it moves the constraint into the type rather than leaving titles as raw,
  * unbounded {@code String}s.</p>
  */
-public record Title(String text) implements ValueObject {
+public record Title(String text) implements Scalar {
 
     /** Hard cap on a title's length, in chars — deliberately tighter than a {@link Line}. */
     public static final int MAX_CHARS = 66;

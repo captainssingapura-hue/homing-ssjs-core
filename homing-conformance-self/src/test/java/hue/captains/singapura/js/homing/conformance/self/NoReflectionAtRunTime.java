@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.conformance.self;
 
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -37,13 +37,13 @@ record NoReflectionAtRunTime() implements StatelessFunctionalObject {
     static final NoReflectionAtRunTime INSTANCE = new NoReflectionAtRunTime();
 
     /** A use of reflection the rule looks for, by its name, and how a line of source shows it. */
-    record Use(String name, Pattern shows) implements ValueObject {}
+    record Use(String name, Pattern shows) implements Scalar {}
 
     /** A module the rule does not look in - a build-time tool's - and why. */
-    record Exempt(String module, String why) implements ValueObject {}
+    record Exempt(String module, String why) implements Scalar {}
 
     /** What the rule makes of one use in one file of a run-time module, and why. */
-    record Classified(String module, String file, String use, Verdict verdict, String why) implements ValueObject {}
+    record Classified(String module, String file, String use, Verdict verdict, String why) implements Scalar {}
 
     enum Verdict {
         /** The rule does not forbid it: a class the code holds, or a resource its declaration names - no name turned into a class. */
@@ -53,7 +53,7 @@ record NoReflectionAtRunTime() implements StatelessFunctionalObject {
     }
 
     /** A use the rule forbids: its module, its file from the repository's root, its line. */
-    record Finding(String module, String path, int line, String use, String text) implements ValueObject {
+    record Finding(String module, String path, int line, String use, String text) implements Scalar {
         @Override public String toString() { return path + ":" + line + " [" + use + "] " + text; }
     }
 

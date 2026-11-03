@@ -9,7 +9,7 @@ import hue.captains.singapura.js.homing.design.Target;
 import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import hue.captains.singapura.js.homing.design.local.ConcreteComponent;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -33,7 +33,7 @@ public record FlattenLocalStyle() implements StatelessFunctionalObject {
     public static final FlattenLocalStyle INSTANCE = new FlattenLocalStyle();
 
     /** The sheet, how many rules it holds, and how many were taken from another concrete leaf. */
-    public record Flattened(String css, int drawn, int copied) implements ValueObject {}
+    public record Flattened(String css, int drawn, int copied) implements Scalar {}
 
     public Flattened flatten(LocalStyleRead read, InStyle style, String title) {
         ColorScheme mine = Schemes.INSTANCE.of(read.localStyle()).orElse(null), wears = Schemes.INSTANCE.of(style.style()).orElse(null);

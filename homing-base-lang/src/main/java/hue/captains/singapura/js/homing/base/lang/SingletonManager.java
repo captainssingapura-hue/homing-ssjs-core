@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.base.lang;
 
 import hue.captains.singapura.tao.ontology.Immutable;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.Optional;
 
@@ -60,12 +60,12 @@ public interface SingletonManager {
         record Held(StatelessSingleton instance) implements Read {}
 
         /** Why the type has none, in words that name it: so it stays, however often it is asked. */
-        record Refused(String why) implements Read, ValueObject {}
+        record Refused(String why) implements Read, Scalar {}
 
         /**
          * Its INSTANCE is null: asked for while the type is still being initialized, or never set. It may be there
          * when asked again, so it is never kept.
          */
-        record NotYet(String why) implements Read, ValueObject {}
+        record NotYet(String why) implements Read, Scalar {}
     }
 }

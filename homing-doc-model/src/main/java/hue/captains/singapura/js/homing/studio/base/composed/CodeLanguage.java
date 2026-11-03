@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.composed;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.List;
 import java.util.Objects;
@@ -42,7 +42,7 @@ import java.util.Objects;
  *
  * @since homing-studio-base — the typed half of RFC 0059 D15
  */
-public sealed interface CodeLanguage extends ValueObject {
+public sealed interface CodeLanguage extends Scalar {
 
     /** The wire identifier — what reaches {@code class="language-X"}. */
     String tag();

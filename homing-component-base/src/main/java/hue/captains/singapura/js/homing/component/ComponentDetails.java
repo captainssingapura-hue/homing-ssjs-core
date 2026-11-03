@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.component;
 
 import hue.captains.singapura.js.homing.tree.RowDisplay;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.List;
 
@@ -10,7 +10,7 @@ import java.util.List;
  * answer, the way the crate tree has {@code CrateDetails}: typed, with the
  * one place strings are rendered in {@link #row()}.
  */
-public sealed interface ComponentDetails extends ValueObject {
+public sealed interface ComponentDetails extends Scalar {
 
     /** Narrowed to what a tree row draws. */
     RowDisplay row();

@@ -4,7 +4,7 @@ import hue.captains.singapura.js.homing.design.semantic.SchemeRegistry;
 import hue.captains.singapura.js.homing.design.semantic.Validation;
 import hue.captains.singapura.js.homing.design.semantic.Validations;
 import hue.captains.singapura.js.homing.design.styles.PaletteDeclaration;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.List;
 import java.util.Objects;
@@ -21,7 +21,7 @@ import java.util.Objects;
  * @param jars    the jars of palettes, each by its declaration, the default first
  * @param schemes the instance's schemes, each palette written over its scheme's tree
  */
-public record PaletteRegistry(List<PaletteDeclaration> jars, SchemeRegistry schemes) implements ValueObject {
+public record PaletteRegistry(List<PaletteDeclaration> jars, SchemeRegistry schemes) implements Scalar {
 
     public PaletteRegistry {
         jars = List.copyOf(jars);

@@ -19,4 +19,4 @@ package hue.captains.singapura.js.homing.studio.base.tracker;
  *
  * @since RFC 0005-ext1 (4th pillar — added in v1 release tracker for tracker self-orientation)
  */
-public record Objective(String label, String description) implements hue.captains.singapura.tao.ontology.ValueObject {}
+public record Objective(String label, String description) implements hue.captains.singapura.tao.ontology.Scalar {}

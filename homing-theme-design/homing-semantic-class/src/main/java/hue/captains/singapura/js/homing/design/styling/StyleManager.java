@@ -7,7 +7,7 @@ import hue.captains.singapura.js.homing.core.util.ResourceReader;
 import hue.captains.singapura.js.homing.design.local.LocalStyle;
 import hue.captains.singapura.js.homing.design.semantic.DesignStyle;
 import hue.captains.singapura.js.homing.design.styles.CastingStyle;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.List;
 import java.util.Map;
@@ -54,7 +54,7 @@ public interface StyleManager {
      * @param css            the implementation of CSS it reaches, following delegations
      * @param says           whose it is, as the sheet says it
      */
-    record Resolved(CastingStyle<?, ?, ?, ?> implementation, CastingStyle<?, ?, ?, ?> css, String says) implements ValueObject {}
+    record Resolved(CastingStyle<?, ?, ?, ?> implementation, CastingStyle<?, ?, ?, ?> css, String says) implements Scalar {}
 
     /** How a style draws a casting: its own implementation, else its base layer's; a delegation followed to CSS. */
     Resolved resolve(DesignStyle<?> style, Casting casting);

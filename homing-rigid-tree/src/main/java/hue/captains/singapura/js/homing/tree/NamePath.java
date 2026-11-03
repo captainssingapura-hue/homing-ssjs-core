@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.tree;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +29,7 @@ import java.util.Objects;
  * @param segments the chain from the root, root-first; empty is the root itself
  * @since RFC 0053
  */
-public record NamePath(List<NodeName> segments) implements ValueObject {
+public record NamePath(List<NodeName> segments) implements Scalar {
 
     /** The root — an empty chain. Its wire form is the empty string. */
     public static final NamePath ROOT = new NamePath(List.of());

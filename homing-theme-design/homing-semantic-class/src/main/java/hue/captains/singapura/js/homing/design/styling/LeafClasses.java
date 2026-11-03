@@ -8,7 +8,7 @@ import hue.captains.singapura.js.homing.component.taxonomy.StateValue;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.tree.NodeName;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,13 +40,13 @@ public record LeafClasses() implements StatelessFunctionalObject {
      * @param drawnBy  the class worn while it holds - {@code .styled-tab--selected} - or the pseudo-class - {@code :hover}
      * @param level    the level the leaf gives it: {@code tertiary}
      */
-    public record Drawn(Classed<?> state, StateValue value, String drawnBy, String level) implements ValueObject {
+    public record Drawn(Classed<?> state, StateValue value, String drawnBy, String level) implements Scalar {
         /** Whether it is a pseudo state, drawn by its pseudo-class. */
         public boolean pseudo() { return drawnBy.startsWith(":"); }
     }
 
     /** What a leaf wears: its class, and its states, in its precedence. */
-    public record Listing(Casting leaf, String styled, List<Drawn> states) implements ValueObject {
+    public record Listing(Casting leaf, String styled, List<Drawn> states) implements Scalar {
         public Listing { states = List.copyOf(states); }
     }
 

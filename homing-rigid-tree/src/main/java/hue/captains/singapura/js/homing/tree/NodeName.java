@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.tree;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
  * The humanizing {@code Title} derivation stayed behind with the text family, where
  * presentation belongs.</p>
  */
-public record NodeName(String value) implements ValueObject {
+public record NodeName(String value) implements Scalar {
 
     /** Hard cap on a name segment's length, in chars — a short machine id, not prose. */
     public static final int MAX_CHARS = 48;

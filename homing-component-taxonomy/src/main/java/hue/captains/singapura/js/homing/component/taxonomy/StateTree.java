@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.component.taxonomy;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +14,7 @@ import java.util.List;
  * @param branches the branches under the root
  * @param types    the types: the reader's list in its order, then those only a component names
  */
-public record StateTree(List<StateBranch> branches, List<StateType<?>> types) implements ValueObject {
+public record StateTree(List<StateBranch> branches, List<StateType<?>> types) implements Scalar {
 
     public StateTree {
         branches = List.copyOf(branches);

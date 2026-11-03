@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.component.taxonomy;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.Objects;
 
@@ -20,7 +20,7 @@ import java.util.Objects;
  *
  * @param markdown the section's body, its heading left out
  */
-public record Meaning(String markdown) implements ValueObject {
+public record Meaning(String markdown) implements Scalar {
 
     public Meaning {
         Objects.requireNonNull(markdown, "Meaning.markdown");

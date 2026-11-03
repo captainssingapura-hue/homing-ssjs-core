@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.component.taxonomy;
 
 import hue.captains.singapura.js.homing.tree.NodeName;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.List;
 import java.util.Objects;
@@ -21,7 +21,7 @@ import java.util.Objects;
  * @param <E>         what plays it
  */
 public record Part<O extends Component<?>, E extends Component<?>>(O owner, Role<?> role, List<E> bases, Cardinality cardinality)
-        implements ComponentNode, ValueObject {
+        implements ComponentNode, Scalar {
 
     public Part {
         Objects.requireNonNull(owner, "Part.owner");

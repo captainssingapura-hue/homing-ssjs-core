@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.composed.text;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -29,7 +29,7 @@ import java.util.Optional;
  * ({@code Articulated}'s length helper) and the cap starts biting on visible
  * text only.</p>
  */
-public sealed interface Line extends ValueObject
+public sealed interface Line extends Scalar
         permits Line.Plain, Line.Articulated {
 
     /** The hard cap on a single line's effective length, in chars. */

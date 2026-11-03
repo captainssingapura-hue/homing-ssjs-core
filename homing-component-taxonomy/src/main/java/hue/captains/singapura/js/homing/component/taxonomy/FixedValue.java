@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.component.taxonomy;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.HashSet;
 import java.util.List;
@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
  * <p>Its name is a field's, as the page says it: a lower-case letter, then letters and digits - {@code least}. A value
  * that may be none says so; its default may then be none.</p>
  */
-public sealed interface FixedValue extends ValueObject
+public sealed interface FixedValue extends Scalar
         permits FixedValue.Whole, FixedValue.YesNo, FixedValue.Text, FixedValue.OneOf, FixedValue.Element, FixedValue.Group {
 
     /** Its name, unique among its group's. */

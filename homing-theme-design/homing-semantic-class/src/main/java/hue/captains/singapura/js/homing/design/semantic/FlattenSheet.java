@@ -7,7 +7,7 @@ import hue.captains.singapura.js.homing.design.Growth;
 import hue.captains.singapura.js.homing.design.State;
 import hue.captains.singapura.js.homing.design.Target;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +35,7 @@ public record FlattenSheet() implements StatelessFunctionalObject {
     public static final FlattenSheet INSTANCE = new FlattenSheet();
 
     /** The sheet, what is in it, and every look nothing answers. */
-    public record Flattened(String css, int looks, int treatments, int copied, List<String> unanswered) implements ValueObject {
+    public record Flattened(String css, int looks, int treatments, int copied, List<String> unanswered) implements Scalar {
         public Flattened { unanswered = List.copyOf(unanswered); }
     }
 

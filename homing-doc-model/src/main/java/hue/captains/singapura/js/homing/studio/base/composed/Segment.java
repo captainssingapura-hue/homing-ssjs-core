@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.composed;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 /**
  * RFC 0019 — one element of a {@link ComposedDoc}'s body. Sealed sum;
@@ -44,7 +44,7 @@ import hue.captains.singapura.tao.ontology.ValueObject;
  *
  * @since RFC 0019 Phase 1 (extended Phase 3 with table + image variants)
  */
-public sealed interface Segment extends ValueObject
+public sealed interface Segment extends Scalar
         permits RigidSegment,
                 ComposedSegment {
 }

@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.component.taxonomy;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
  *
  * @param name its name: lower-case words joined by hyphens, unique among its component's rooms
  */
-public record Room(String name) implements ValueObject {
+public record Room(String name) implements Scalar {
 
     private static final Pattern NAME = Pattern.compile("[a-z][a-z0-9]*(-[a-z0-9]+)*");
 

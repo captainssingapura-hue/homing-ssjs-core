@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.table;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +21,7 @@ import java.util.Objects;
  *
  * @since RFC 0020
  */
-public record TableData(List<Cell> headers, List<List<Cell>> rows) implements ValueObject {
+public record TableData(List<Cell> headers, List<List<Cell>> rows) implements Scalar {
 
     public TableData {
         Objects.requireNonNull(headers, "TableData.headers");
@@ -55,7 +55,7 @@ public record TableData(List<Cell> headers, List<List<Cell>> rows) implements Va
      * @param align    optional horizontal alignment; null falls through to defaults
      */
     public record Cell(String text, int colspan, int rowspan, Badge badge, Align align)
-            implements ValueObject {
+            implements Scalar {
 
         public Cell {
             Objects.requireNonNull(text, "Cell.text (use \"\" for empty)");

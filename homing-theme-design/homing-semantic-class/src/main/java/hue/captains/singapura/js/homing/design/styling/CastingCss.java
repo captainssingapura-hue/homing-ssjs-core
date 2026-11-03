@@ -3,7 +3,7 @@ package hue.captains.singapura.js.homing.design.styling;
 import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.core.util.ResourceReader;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -107,7 +107,7 @@ public record CastingCss() implements StatelessFunctionalObject {
      * @param keyframes the names of its keyframes
      * @param rooms     the names of the rooms it rules
      */
-    public record Marked(List<String> problems, Set<String> states, Set<String> keyframes, Set<String> rooms) implements ValueObject {
+    public record Marked(List<String> problems, Set<String> states, Set<String> keyframes, Set<String> rooms) implements Scalar {
         public Marked { problems = List.copyOf(problems); states = Set.copyOf(states); keyframes = Set.copyOf(keyframes); rooms = Set.copyOf(rooms); }
 
         public boolean passes() { return problems.isEmpty(); }

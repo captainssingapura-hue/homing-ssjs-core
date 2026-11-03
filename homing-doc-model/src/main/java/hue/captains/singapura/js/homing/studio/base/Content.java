@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.Objects;
 
@@ -18,7 +18,7 @@ import java.util.Objects;
  * @param body      the bytes, as text
  * @param mediaType what they are, e.g. {@code text/markdown; charset=utf-8}
  */
-public record Content(String body, String mediaType) implements ValueObject {
+public record Content(String body, String mediaType) implements Scalar {
 
     public Content {
         Objects.requireNonNull(body,      "Content.body");

@@ -7,7 +7,7 @@ import hue.captains.singapura.js.homing.design.Owns;
 import hue.captains.singapura.js.homing.design.Target;
 import hue.captains.singapura.js.homing.design.local.ConcreteComponent;
 import hue.captains.singapura.js.homing.design.local.LocalStyle;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.List;
 import java.util.Objects;
@@ -22,7 +22,7 @@ import java.util.Objects;
  * @param taxonomy   the taxonomy it was read over
  */
 public record LocalStyleRead(LocalStyle<?, ?> localStyle, ComponentBranch branch, List<ConcreteComponent<?, ?, ?>> concretes, Taxonomy taxonomy)
-        implements ValueObject {
+        implements Scalar {
 
     public LocalStyleRead {
         Objects.requireNonNull(localStyle, "LocalStyleRead.localStyle");

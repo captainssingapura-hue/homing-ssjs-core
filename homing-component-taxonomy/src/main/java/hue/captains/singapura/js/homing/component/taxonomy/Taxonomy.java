@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.component.taxonomy;
 
 import hue.captains.singapura.js.homing.component.taxonomy.TaxonomyFinding.Sign;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -25,7 +25,7 @@ import java.util.Optional;
  *                   component names
  */
 public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> components, List<Part<?, ?>> parts,
-                       RoleCatalogue catalogue, StateTree states) implements ValueObject {
+                       RoleCatalogue catalogue, StateTree states) implements Scalar {
 
     public Taxonomy {
         branches = List.copyOf(branches);

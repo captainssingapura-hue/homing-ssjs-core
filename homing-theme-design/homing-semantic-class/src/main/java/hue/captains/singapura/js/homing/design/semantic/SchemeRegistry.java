@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.design.semantic;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.List;
 
@@ -15,7 +15,7 @@ import java.util.List;
  *
  * @param declarations each scheme's declaration, in the order registered
  */
-public record SchemeRegistry(List<SchemeDeclaration<?>> declarations) implements ValueObject {
+public record SchemeRegistry(List<SchemeDeclaration<?>> declarations) implements Scalar {
 
     public SchemeRegistry {
         declarations = List.copyOf(declarations);

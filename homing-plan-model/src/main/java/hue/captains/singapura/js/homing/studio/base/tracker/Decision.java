@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.tracker;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 /**
  * An open or resolved design decision attached to a {@link Plan}. The renderer
@@ -15,4 +15,4 @@ public record Decision(
         DecisionStatus status,
         String rationale,
         String notes
-) implements ValueObject {}
+) implements Scalar {}

@@ -33,13 +33,13 @@
         <dependency>
             <groupId>io.github.captainssingapura-hue.lang.ontology</groupId>
             <artifactId>core</artifactId>
-            <version>0.0.1</version>
+            <version>0.1.0</version>
         </dependency>
         <!-- Every node is a stateless functional object: held by the tests, never by a read - a running server needs no enforcer. -->
         <dependency>
             <groupId>io.github.captainssingapura-hue.lang.ontology</groupId>
             <artifactId>enforcer</artifactId>
-            <version>0.0.1</version>
+            <version>0.1.0</version>
             <scope>test</scope>
         </dependency>
         <!-- The base layer: language-level kinds, such as the stateless singleton. -->

@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.component.taxonomy;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 /**
  * A sign, not a fault: what reading a taxonomy notices and refuses nothing for.
@@ -8,7 +8,7 @@ import hue.captains.singapura.tao.ontology.ValueObject;
  * @param sign what was noticed
  * @param says the finding, naming what showed it
  */
-public record TaxonomyFinding(Sign sign, String says) implements ValueObject {
+public record TaxonomyFinding(Sign sign, String says) implements Scalar {
 
     /** What reading notices. */
     public enum Sign {

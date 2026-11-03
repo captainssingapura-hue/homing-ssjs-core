@@ -15,7 +15,7 @@ import hue.captains.singapura.js.homing.design.styles.CastingStyle;
 import hue.captains.singapura.js.homing.design.styles.StyleDeclaration;
 import hue.captains.singapura.js.homing.design.styles.StylingRes;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -67,7 +67,7 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
      * @param casting  the casting it implements, by its token - or what its types name, when they name none
      * @param problems what refuses it
      */
-    public record Implementation(Class<?> type, String style, String casting, List<String> problems) implements ValueObject {
+    public record Implementation(Class<?> type, String style, String casting, List<String> problems) implements Scalar {
         public Implementation { problems = List.copyOf(problems); }
 
         public boolean passes() { return problems.isEmpty(); }
@@ -82,7 +82,7 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
      * @param implementations each implementation the declaration lists, held alone
      * @param problems        the jar's: two of one casting, something of it left out
      */
-    public record Checked(List<Implementation> implementations, List<String> problems) implements ValueObject {
+    public record Checked(List<Implementation> implementations, List<String> problems) implements Scalar {
         public Checked { implementations = List.copyOf(implementations); problems = List.copyOf(problems); }
 
         public boolean passes() { return problems.isEmpty() && implementations.stream().allMatch(Implementation::passes); }

@@ -4,7 +4,7 @@ import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.design.AnimationEffect;
 import hue.captains.singapura.js.homing.design.State;
 import hue.captains.singapura.js.homing.design.Target;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +23,7 @@ import java.util.List;
  * @param outcome the class, or why there is none
  */
 public record Resolution(String theme, Casting query, State state, Target target, List<String> notes, List<Step> steps, Outcome outcome)
-        implements ValueObject {
+        implements Scalar {
 
     public Resolution {
         notes = List.copyOf(notes);
@@ -31,10 +31,10 @@ public record Resolution(String theme, Casting query, State state, Target target
     }
 
     /** A node asked of a layer, and what the layer said: {@code -}, {@code answered}, a redirect, its base's. */
-    public record Step(String layer, Casting node, String said) implements ValueObject {}
+    public record Step(String layer, Casting node, String said) implements Scalar {}
 
     /** The one class an element wears for it, or why there is none. */
-    public sealed interface Outcome extends ValueObject permits Answered, Silent, Unanswered {}
+    public sealed interface Outcome extends Scalar permits Answered, Silent, Unanswered {}
 
     /**
      * The layer and the node that answered, the class it is worn as, and its body.

@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.component.taxonomy;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +13,7 @@ import java.util.List;
  * @param branches the branches under the root, by level
  * @param roles    the roles
  */
-public record RoleCatalogue(List<RoleBranch> branches, List<Role<?>> roles) implements ValueObject {
+public record RoleCatalogue(List<RoleBranch> branches, List<Role<?>> roles) implements Scalar {
 
     public RoleCatalogue {
         branches = List.copyOf(branches);

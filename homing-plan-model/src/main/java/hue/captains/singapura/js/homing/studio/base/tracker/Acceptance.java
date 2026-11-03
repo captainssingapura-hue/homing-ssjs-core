@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.tracker;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 /**
  * One acceptance criterion for a {@link Plan} — the "outcome" pillar of the
@@ -20,4 +20,4 @@ import hue.captains.singapura.tao.ontology.ValueObject;
  *
  * @since RFC 0005-ext1
  */
-public record Acceptance(String label, String description, boolean met) implements ValueObject {}
+public record Acceptance(String label, String description, boolean met) implements Scalar {}

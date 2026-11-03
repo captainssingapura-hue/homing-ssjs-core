@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.component.taxonomy;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.Objects;
 
@@ -12,7 +12,7 @@ import java.util.Objects;
  *
  * @param token the value's name: {@code true}, {@code sunken}
  */
-public record StateValue(String token) implements ValueObject {
+public record StateValue(String token) implements Scalar {
 
     /** Yes, for a type that is yes or no. */
     public static final StateValue TRUE = new StateValue("true");

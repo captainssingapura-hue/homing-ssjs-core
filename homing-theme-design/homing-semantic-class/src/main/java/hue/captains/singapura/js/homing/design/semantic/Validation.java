@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.design.semantic;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,7 +9,7 @@ import java.util.List;
  * What a rule finds of what it checks (RFC 0067, D49): valid, or invalid with every problem it found, each said whole.
  * Applicative: results combine ({@link #and(Validation)}) keeping every problem of every rule, none stopping the rest.
  */
-public sealed interface Validation extends ValueObject permits Validation.Valid, Validation.Invalid {
+public sealed interface Validation extends Scalar permits Validation.Valid, Validation.Invalid {
 
     /** Nothing found. */
     record Valid() implements Validation {

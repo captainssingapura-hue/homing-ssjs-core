@@ -16,7 +16,7 @@ import hue.captains.singapura.js.homing.design.color.Palettable;
 import hue.captains.singapura.js.homing.design.semantic.ColorTree;
 import hue.captains.singapura.js.homing.design.semantic.DesignStyle;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -56,7 +56,7 @@ final class CastingRule {
      * @param problems what refuses the style, each naming its file and line
      * @param reports  what the soft check says and does not refuse: a state drawn out of its leaf's precedence (D23)
      */
-    public record Checked(List<String> problems, List<String> reports) implements ValueObject {
+    public record Checked(List<String> problems, List<String> reports) implements Scalar {
         public Checked { problems = List.copyOf(problems); reports = List.copyOf(reports); }
 
         /** Whether nothing refuses it. */

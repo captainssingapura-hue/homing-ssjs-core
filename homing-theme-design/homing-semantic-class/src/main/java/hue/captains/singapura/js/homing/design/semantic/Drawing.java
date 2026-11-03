@@ -5,7 +5,7 @@ import hue.captains.singapura.js.homing.design.Target;
 import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import hue.captains.singapura.js.homing.design.color.Paint;
 import hue.captains.singapura.js.homing.design.local.ConcreteComponent;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.Objects;
 
@@ -19,7 +19,7 @@ import java.util.Objects;
  *
  * @param <T> the target answered
  */
-public sealed interface Drawing<T extends Target> extends ValueObject
+public sealed interface Drawing<T extends Target> extends Scalar
         permits Drawing.Own, Drawing.Painted, Drawing.None, Drawing.As, Drawing.Animated {
 
     /** The target it answers. */

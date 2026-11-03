@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.component.taxonomy;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +20,7 @@ import java.util.Objects;
  * @param role      the role, a branch of the catalogue on the way to its root, or the root itself:
  *                  Standalone
  */
-public record Casting(Taxon component, RoleNode role) implements ValueObject {
+public record Casting(Taxon component, RoleNode role) implements Scalar {
 
     public Casting {
         Objects.requireNonNull(component, "Casting.component");

@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.component.taxonomy;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 /**
  * How many of a part a component has, and when that is decided: a sum of two cases for the count, each
@@ -20,7 +20,7 @@ import hue.captains.singapura.tao.ontology.ValueObject;
  * whose least and most are equal, which is {@code Fixed}. Written as multiplicity: {@code 1}, {@code 2}, {@code 0..1},
  * {@code 1..*}.</p>
  */
-public sealed interface Cardinality extends ValueObject permits Cardinality.Fixed, Cardinality.Varying {
+public sealed interface Cardinality extends Scalar permits Cardinality.Fixed, Cardinality.Varying {
 
     /** Dynamic, as the DSL says it: {@code DSL.part(Tab.INSTANCE).as(Chip.INSTANCE).any(Cardinality.DYNAMIC)}. */
     Dynamic DYNAMIC = Dynamic.INSTANCE;
@@ -74,7 +74,7 @@ public sealed interface Cardinality extends ValueObject permits Cardinality.Fixe
     }
 
     /** When the parts along a slot are decided: once, as their owner is made, or while it lives. */
-    sealed interface StaticOrDynamic extends ValueObject permits Static, Dynamic {
+    sealed interface StaticOrDynamic extends Scalar permits Static, Dynamic {
         /** How a count says it: nothing for static, the default; {@code " dynamic"}. */
         String said();
     }
@@ -92,7 +92,7 @@ public sealed interface Cardinality extends ValueObject permits Cardinality.Fixe
     }
 
     /** The most of a range: so many, or no most at all. */
-    sealed interface Bound extends ValueObject permits AtMost, Unbounded {
+    sealed interface Bound extends Scalar permits AtMost, Unbounded {
         boolean admits(int n);
         String say();
     }

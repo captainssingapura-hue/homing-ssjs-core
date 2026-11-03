@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.core;
 
 import hue.captains.singapura.js.homing.core.util.ResourceReader;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -24,7 +24,7 @@ import java.util.Optional;
  *
  * @param <G> the SvgGroup the being belongs to
  */
-public record SvgRef<G extends SvgGroup<G>>(G group, SvgBeing<G> being) implements ValueObject {
+public record SvgRef<G extends SvgGroup<G>>(G group, SvgBeing<G> being) implements Scalar {
 
     public SvgRef {
         Objects.requireNonNull(group, "SvgRef.group");

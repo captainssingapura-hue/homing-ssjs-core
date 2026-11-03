@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.component.taxonomy;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.HashSet;
 import java.util.List;
@@ -11,7 +11,7 @@ import java.util.Objects;
  * component under a branch - those the instance registers there, read with the taxonomy. One slot for a role still, and
  * its cardinality the role's: how many of them it holds at once, whichever plays.
  */
-public sealed interface Players extends ValueObject permits Players.One, Players.AnyOf, Players.Under {
+public sealed interface Players extends Scalar permits Players.One, Players.AnyOf, Players.Under {
 
     /** How a reader says it: {@code button}, {@code size | aspect}, {@code any icon}. */
     String say();

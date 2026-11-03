@@ -4,7 +4,7 @@ import hue.captains.singapura.js.homing.design.color.Palettable;
 import hue.captains.singapura.js.homing.design.semantic.ColorPalette;
 import hue.captains.singapura.js.homing.design.semantic.ColorTree;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +30,7 @@ public record PaletteSheet() implements StatelessFunctionalObject {
      * @param css       the sheet
      * @param variables the variables defined, in the tree's order: {@code --fp-page}
      */
-    public record Written(String css, List<String> variables) implements ValueObject {
+    public record Written(String css, List<String> variables) implements Scalar {
         public Written { variables = List.copyOf(variables); }
     }
 
