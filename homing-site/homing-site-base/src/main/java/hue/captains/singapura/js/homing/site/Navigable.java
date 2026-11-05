@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.site;
 
 import hue.captains.singapura.js.homing.server.HtmlPageContent;
+import hue.captains.singapura.tao.ontology.FunctionalObject;
 
 /**
  * RFC 0066 Episode 3 — a destination. The whole public contract of one:
@@ -22,7 +23,7 @@ import hue.captains.singapura.js.homing.server.HtmlPageContent;
  * did not consume.</p>
  */
 @FunctionalInterface
-public interface Navigable {
+public interface Navigable extends FunctionalObject {
 
     /** The page for this query. Never null: a navigable with nothing to show is not one. */
     HtmlPageContent html(Query query);

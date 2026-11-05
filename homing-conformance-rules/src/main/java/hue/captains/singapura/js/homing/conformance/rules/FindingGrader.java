@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.conformance.rules;
 
+import hue.captains.singapura.tao.ontology.FunctionalObject;
+
 import java.util.List;
 
 /**
@@ -30,7 +32,7 @@ import java.util.List;
  * @param baseline         recorded pre-existing violations
  * @param allowPreExisting whether a baselined finding is a WARNING (true) or an ERROR (false)
  */
-public record FindingGrader(List<Allowance> allowlist, Baseline baseline, boolean allowPreExisting) {
+public record FindingGrader(List<Allowance> allowlist, Baseline baseline, boolean allowPreExisting) implements FunctionalObject {
 
     /** The strictest possible grader: no allowances, no baseline — every finding fails. */
     public static final FindingGrader STRICT = new FindingGrader(List.of(), Baseline.EMPTY, false);

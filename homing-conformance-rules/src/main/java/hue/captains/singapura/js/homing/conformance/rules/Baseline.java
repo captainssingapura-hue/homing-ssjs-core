@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.conformance.rules;
 
+import hue.captains.singapura.tao.ontology.Scalar;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -18,7 +20,7 @@ import java.util.TreeSet;
  * committed as a reviewable ledger. Regenerate it deliberately — never to
  * silence a fresh violation.</p>
  */
-public record Baseline(Set<String> fingerprints) {
+public record Baseline(Set<String> fingerprints) implements Scalar {
 
     public static final Baseline EMPTY = new Baseline(Set.of());
 

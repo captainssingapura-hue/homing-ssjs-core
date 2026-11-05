@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.conformance.rules;
 
 import hue.captains.singapura.js.homing.core.JsModuleType;
+import hue.captains.singapura.tao.ontology.Immutable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +16,7 @@ import java.util.Objects;
  * @param title human-readable title, for the studio
  * @param rules the rules, in order
  */
-public record JsRuleSet(RuleSetId id, String title, List<JsRule> rules) {
+public record JsRuleSet(RuleSetId id, String title, List<JsRule> rules) implements Immutable {
 
     /** The empty rule set — nothing to check (e.g. a bundled external). */
     public static JsRuleSet empty(RuleSetId id, String title) {

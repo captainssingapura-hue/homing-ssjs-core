@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.design.color;
 
+import hue.captains.singapura.tao.ontology.Scalar;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +14,7 @@ import java.util.Objects;
  * own, kept out of the stack. Checked when made, from its numbers or from its written form; equal by its numbers, and
  * written one way whatever it was read from.
  */
-public sealed interface ConcreteColor permits ConcreteColor.Srgb, ConcreteColor.Oklch {
+public sealed interface ConcreteColor extends Scalar permits ConcreteColor.Srgb, ConcreteColor.Oklch {
 
     /** As a sheet writes it. */
     String css();

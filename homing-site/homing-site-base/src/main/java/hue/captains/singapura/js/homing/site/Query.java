@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.site;
 
 import hue.captains.singapura.js.homing.core.QueryString;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -21,7 +22,7 @@ import java.util.Optional;
  *
  * @param all every key with every value it was given, in address order
  */
-public record Query(Map<String, List<String>> all) {
+public record Query(Map<String, List<String>> all) implements Scalar {
 
     /** No parameters at all. */
     public static final Query NONE = new Query(Map.of());

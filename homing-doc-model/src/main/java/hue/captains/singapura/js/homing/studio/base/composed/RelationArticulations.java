@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.studio.base.composed;
 
+import hue.captains.singapura.tao.ontology.Scalar;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -18,7 +20,7 @@ import java.util.Objects;
  *
  * @param cells the articulated cells, in author order (sparse — most cells absent)
  */
-public record RelationArticulations(List<ArticulatedCell> cells) {
+public record RelationArticulations(List<ArticulatedCell> cells) implements Scalar {
 
     /** The empty side-car — a plain relation with no articulated cells. */
     public static final RelationArticulations NONE = new RelationArticulations(List.of());

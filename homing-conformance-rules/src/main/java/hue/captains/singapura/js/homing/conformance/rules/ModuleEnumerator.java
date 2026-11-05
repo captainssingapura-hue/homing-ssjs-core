@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.conformance.rules;
 
+import hue.captains.singapura.tao.ontology.FunctionalObject;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -31,7 +33,7 @@ import java.util.stream.Stream;
  *
  * @param packagePrefix only modules whose class name starts with this are kept
  */
-public record ModuleEnumerator(String packagePrefix) {
+public record ModuleEnumerator(String packagePrefix) implements FunctionalObject {
 
     /** Scans for modules under the homing package. */
     public static final ModuleEnumerator HOMING =

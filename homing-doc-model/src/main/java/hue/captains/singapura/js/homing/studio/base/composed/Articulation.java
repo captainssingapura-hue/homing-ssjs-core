@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.studio.base.composed;
 
 import hue.captains.singapura.js.homing.studio.base.table.TableData;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.Optional;
 
@@ -34,7 +35,7 @@ import java.util.Optional;
 public record Articulation(
         Optional<TableData.Badge> badge,
         Optional<TableData.Align> align,
-        Optional<Emphasis>        emphasis) {
+        Optional<Emphasis>        emphasis) implements Scalar {
 
     /** No marks at all: where a cell's articulation starts. */
     public static final Articulation NONE = new Articulation(Optional.empty(), Optional.empty(), Optional.empty());

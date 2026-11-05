@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.server;
 
 import hue.captains.singapura.js.homing.core.Theme;
+import hue.captains.singapura.tao.ontology.Immutable;
 
 import java.util.List;
 
@@ -14,7 +15,7 @@ import java.util.List;
  * <p>Each deployment provides its own implementation. The first theme listed
  * is the default a page is served under.</p>
  */
-public interface ThemeRegistry {
+public interface ThemeRegistry extends Immutable {
 
     /** All themes registered for this deployment; the first is the default. Every slug a page may wear, crosses included. */
     List<Theme> themes();

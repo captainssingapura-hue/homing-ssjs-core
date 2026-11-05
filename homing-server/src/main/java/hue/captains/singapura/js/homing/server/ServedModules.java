@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.server;
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.core.EsModule;
+import hue.captains.singapura.tao.ontology.Immutable;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
@@ -24,7 +25,7 @@ import java.util.Optional;
  * path and every CSS subgraph, so the two sides of the wire agree by
  * construction.</p>
  */
-public record ServedModules(Map<String, EsModule<?>> byName) {
+public record ServedModules(Map<String, EsModule<?>> byName) implements Immutable {
 
     public ServedModules { byName = Map.copyOf(byName); }
 

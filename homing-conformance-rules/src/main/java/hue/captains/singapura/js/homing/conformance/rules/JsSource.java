@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.conformance.rules;
 
+import hue.captains.singapura.tao.ontology.Scalar;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -10,7 +12,7 @@ import java.util.Objects;
  *
  * @param lines the segment's lines, in order (may be empty)
  */
-public record JsSource(List<String> lines) {
+public record JsSource(List<String> lines) implements Scalar {
 
     /** The empty segment (e.g. a consumer with no injected header, or no exports). */
     public static final JsSource EMPTY = new JsSource(List.of());

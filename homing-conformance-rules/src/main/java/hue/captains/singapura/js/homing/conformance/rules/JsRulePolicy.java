@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.conformance.rules;
 
 import hue.captains.singapura.js.homing.core.JsModuleType;
+import hue.captains.singapura.tao.ontology.FunctionalObject;
 
 /**
  * The polymorphism, as a value: which {@link JsRuleSet} applies to each {@link
@@ -12,7 +13,7 @@ import hue.captains.singapura.js.homing.core.JsModuleType;
  * with genuinely different needs authors its <i>own</i> policy from the same
  * constructs and runs it alongside — never a patch to the core one.</p>
  */
-public interface JsRulePolicy {
+public interface JsRulePolicy extends FunctionalObject {
 
     /**
      * The rule set a module of {@code type} is held to. Must be total — return a

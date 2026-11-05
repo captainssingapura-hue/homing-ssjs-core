@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.site;
 
+import hue.captains.singapura.tao.ontology.FunctionalObject;
+
 import java.util.Optional;
 
 /**
@@ -18,7 +20,7 @@ import java.util.Optional;
  * PathResolution.Miss} is that elaboration, made where it is needed.</p>
  */
 @FunctionalInterface
-public interface Router {
+public interface Router extends FunctionalObject {
 
     /** The navigable at {@code path}, or empty when the site has nothing there. */
     Optional<Navigable> resolve(Path path);

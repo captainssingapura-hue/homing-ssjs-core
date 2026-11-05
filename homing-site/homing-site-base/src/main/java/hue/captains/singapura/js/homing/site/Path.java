@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.site;
 
+import hue.captains.singapura.tao.ontology.Scalar;
+
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -23,7 +25,7 @@ import java.util.Optional;
  *
  * @param segments the decoded segments, in order; empty for the root
  */
-public record Path(List<String> segments) {
+public record Path(List<String> segments) implements Scalar {
 
     /** The site's front door: no segments at all. */
     public static final Path ROOT = new Path(List.of());
