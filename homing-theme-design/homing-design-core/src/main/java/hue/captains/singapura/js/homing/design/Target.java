@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.design;
 
+import hue.captains.singapura.tao.ontology.Stateless;
+
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -30,7 +32,7 @@ import java.util.Set;
  * style answers it in semantic colours, in cases each colour leaf offers, and never in declarations of its
  * own; every other branch is {@link Colorless}, answered in declarations that name no colour.</p>
  */
-public sealed interface Target permits Target.Color, Target.Colorless {
+public sealed interface Target extends Stateless permits Target.Color, Target.Colorless {
 
     /**
      * Every branch but colour: answered in declarations of its own properties, which name no colour - a

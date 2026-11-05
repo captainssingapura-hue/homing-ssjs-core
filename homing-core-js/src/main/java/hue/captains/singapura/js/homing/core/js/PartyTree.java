@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.core.js;
 
+import hue.captains.singapura.tao.ontology.Stateless;
+
 import java.util.List;
 
 /**
@@ -125,7 +127,7 @@ public record PartyTree(List<L1Branch> branches) {
     // -------------------------------------------------------------------------
 
     /** Whose activation token a branch carries. */
-    public sealed interface OwnerRef
+    public sealed interface OwnerRef extends Stateless
             permits OwnerRef.PartyChief, OwnerRef.ShellChief, OwnerRef.FreshWidgetChief {
 
         /** Framework-immortal sentinel, document-lifetime; chrome owner. */

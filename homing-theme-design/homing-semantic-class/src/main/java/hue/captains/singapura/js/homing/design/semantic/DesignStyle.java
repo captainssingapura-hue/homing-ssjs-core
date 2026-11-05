@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.design.semantic;
 
 import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import hue.captains.singapura.js.homing.tree.NodeName;
+import hue.captains.singapura.tao.ontology.Immutable;
 
 import java.util.List;
 
@@ -16,7 +17,7 @@ import java.util.List;
  *
  * @param <S> the colour scheme it requires
  */
-public interface DesignStyle<S extends ColorScheme> {
+public interface DesignStyle<S extends ColorScheme> extends Immutable {
 
     /** The scheme it requires: the scheme's one object, said by the style itself (D49) - nothing reads it off the style's type. */
     S scheme();

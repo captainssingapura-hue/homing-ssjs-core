@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import hue.captains.singapura.js.homing.design.color.ConcreteColor;
 import hue.captains.singapura.js.homing.design.color.Palettable;
 import hue.captains.singapura.js.homing.tree.NodeName;
+import hue.captains.singapura.tao.ontology.Immutable;
 
 import java.util.Optional;
 
@@ -20,7 +21,7 @@ import java.util.Optional;
  *
  * @param <S> the scheme it implements
  */
-public interface ColorPalette<S extends ColorScheme> {
+public interface ColorPalette<S extends ColorScheme> extends Immutable {
 
     /** The scheme it implements: the scheme's one object, said by the palette itself (D49) - nothing reads it off its type. */
     S scheme();

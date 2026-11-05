@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.site;
 
+import hue.captains.singapura.tao.ontology.Immutable;
+
 /**
  * RFC 0066 Episode 3 — a site: a {@link Router} with a name.
  *
@@ -9,7 +11,7 @@ package hue.captains.singapura.js.homing.site;
  * the base does not presuppose any of it, so the smallest site is a router
  * over a few pages of HTML and needs nothing else.</p>
  */
-public interface Site {
+public interface Site extends Immutable {
 
     /** The site's name, for the host's log line and whatever else wants one. */
     String name();

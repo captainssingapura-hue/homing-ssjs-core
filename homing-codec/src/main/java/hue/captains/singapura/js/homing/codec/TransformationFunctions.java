@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.codec;
 
+import hue.captains.singapura.tao.ontology.FunctionalObject;
+
 /**
  * Ontology object — the typed encode/decode pair for a single
  * {@link ObjectDefinition}.
@@ -27,7 +29,7 @@ package hue.captains.singapura.js.homing.codec;
  * @param <W> the wire form (e.g. {@link String} for textual, {@code byte[]} for binary)
  * @since homing-codec ontology
  */
-public interface TransformationFunctions<T, W> {
+public interface TransformationFunctions<T, W> extends FunctionalObject {
 
     /** Encode a typed value into its wire form. */
     W transformTo(T value);

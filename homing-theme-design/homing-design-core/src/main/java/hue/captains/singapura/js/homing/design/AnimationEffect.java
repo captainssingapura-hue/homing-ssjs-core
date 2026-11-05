@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.design;
 
+import hue.captains.singapura.tao.ontology.Immutable;
+
 import java.util.List;
 
 /**
@@ -24,7 +26,7 @@ import java.util.List;
  * Its declarations are the element's own - no class, no child - and read only the element's degrees and the
  * registered colours of the targets it is drawn in.
  */
-public interface AnimationEffect {
+public interface AnimationEffect extends Immutable {
 
     /** The effect's token, from its type: {@code marching-ants}. */
     default String token() { return Trees.kebab(getClass().getSimpleName()); }

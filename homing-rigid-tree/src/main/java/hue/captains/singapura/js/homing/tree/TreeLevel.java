@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.tree;
 
+import hue.captains.singapura.tao.ontology.Stateless;
+
 import java.util.Optional;
 
 /**
@@ -22,7 +24,7 @@ import java.util.Optional;
  *
  * @since homing-tree-views v1; capped at L18 in homing-rigid-tree (RFC 0040)
  */
-public sealed interface TreeLevel
+public sealed interface TreeLevel extends Stateless
         permits TreeLevel.L0, TreeLevel.L1, TreeLevel.L2,  TreeLevel.L3,
                 TreeLevel.L4, TreeLevel.L5, TreeLevel.L6,  TreeLevel.L7,
                 TreeLevel.L8, TreeLevel.L9, TreeLevel.L10, TreeLevel.L11,
