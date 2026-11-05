@@ -13,7 +13,7 @@ class LeafTest {
 
     @Test
     void aPageOpensInPlace_unlessItsAppSaysOtherwise() {
-        var leaf = Leaf.of(GraftTest.NotesCatalogue.INSTANCE, "Board", "", PAGE);
+        var leaf = new Leaf<>(GraftTest.NotesCatalogue.INSTANCE, "Board", "", PAGE);
         assertEquals(Leaf.Opening.IN_PLACE, leaf.opens());
         var beside = leaf.opens(Leaf.Opening.NEW_TAB);
         assertEquals(Leaf.Opening.NEW_TAB, beside.opens());

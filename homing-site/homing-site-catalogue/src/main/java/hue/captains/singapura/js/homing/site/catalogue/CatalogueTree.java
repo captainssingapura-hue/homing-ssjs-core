@@ -64,19 +64,15 @@ public final class CatalogueTree {
     private final Map<Class<?>, List<Leaf<?>>> leaves = new LinkedHashMap<>();
     private final Mpa mpa;
 
-    private CatalogueTree(L0_Catalogue<?> root, Mpa mpa) {
-        this.root = Objects.requireNonNull(root, "CatalogueTree.root");
-        this.mpa = Objects.requireNonNull(mpa, "CatalogueTree.mpa");
-        walk(root, Path.ROOT);
-    }
-
     /**
      * Reads and checks the tree under {@code root}, its pages made with the site's
      * {@code mpa} - every catalogue's {@link Catalogue#leaves(Mpa)} handed it - so every
      * page of the site wears one chrome, whichever tree placed it.
      */
-    public static CatalogueTree of(L0_Catalogue<?> root, Mpa mpa) {
-        return new CatalogueTree(root, mpa);
+    public CatalogueTree(L0_Catalogue<?> root, Mpa mpa) {
+        this.root = Objects.requireNonNull(root, "CatalogueTree.root");
+        this.mpa = Objects.requireNonNull(mpa, "CatalogueTree.mpa");
+        walk(root, Path.ROOT);
     }
 
     /**
@@ -84,8 +80,8 @@ public final class CatalogueTree {
      * that need no site. A catalogue that makes its pages with the site's MPA is
      * refused, and told to be read with one.
      */
-    public static CatalogueTree of(L0_Catalogue<?> root) {
-        return new CatalogueTree(root, NoMpa.INSTANCE);
+    public CatalogueTree(L0_Catalogue<?> root) {
+        this(root, NoMpa.INSTANCE);
     }
 
     private void walk(Catalogue<?> vertex, Path at) {

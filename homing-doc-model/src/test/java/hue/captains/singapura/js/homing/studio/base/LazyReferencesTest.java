@@ -20,13 +20,13 @@ class LazyReferencesTest {
     static final class First {
         static final ComposedDoc INSTANCE = new ComposedDoc(UUID.fromString("7a0c1d6e-0000-4000-8000-000000000011"), "First", "", "DOC",
                 List.of(new MarkdownSegment("See [the second](#ref:second).")),
-                LazyReferences.of(() -> List.of(new DocReference("second", Second.INSTANCE))));
+                new LazyReferences(() -> List.of(new DocReference("second", Second.INSTANCE))));
     }
 
     static final class Second {
         static final ComposedDoc INSTANCE = new ComposedDoc(UUID.fromString("7a0c1d6e-0000-4000-8000-000000000012"), "Second", "", "DOC",
                 List.of(new MarkdownSegment("See [the first](#ref:first).")),
-                LazyReferences.of(() -> List.of(new DocReference("first", First.INSTANCE))));
+                new LazyReferences(() -> List.of(new DocReference("first", First.INSTANCE))));
     }
 
     @Test

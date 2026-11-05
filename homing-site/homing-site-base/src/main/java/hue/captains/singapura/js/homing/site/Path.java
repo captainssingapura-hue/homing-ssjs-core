@@ -38,9 +38,9 @@ public record Path(List<String> segments) {
         segments = List.copyOf(segments);
     }
 
-    /** {@code Path.of("a", "b")} is {@code /a/b}. */
-    public static Path of(String... segments) {
-        return new Path(List.of(segments));
+    /** {@code new Path("a", "b")} is {@code /a/b}. */
+    public Path(String... segments) {
+        this(List.of(segments));
     }
 
     /**

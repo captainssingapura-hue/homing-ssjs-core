@@ -54,7 +54,7 @@ class MarkdownSourceTest {
     @Test
     void aDocWhoseDataIsStructureIsNotOne() {
         List<Doc> structured = List.of(
-                ComposedDoc.of(ID, "Composed", "", "DOC", List.of(new TextSegment("words"))),
+                new ComposedDoc(ID, "Composed", "", "DOC", List.of(new TextSegment("words"))),
                 RigidDoc.root(ID, "Rigid", "", "DOC").l1("One").text("words").l1build().build(),
                 new TableDoc(ID, "Table", "", TableData.fromCsv("a,b\n1,2")));
         for (Doc d : structured) assertFalse(d instanceof MarkdownSource, d.getClass().getSimpleName());

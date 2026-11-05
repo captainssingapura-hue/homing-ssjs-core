@@ -66,7 +66,7 @@ public final class CoreConformance {
             try (var r = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
                 for (String line; (line = r.readLine()) != null; ) lines.add(line);
             }
-            return Baseline.of(lines);
+            return new Baseline(lines);
         } catch (IOException e) {
             throw new UncheckedIOException("core's conformance baseline could not be read", e);
         }

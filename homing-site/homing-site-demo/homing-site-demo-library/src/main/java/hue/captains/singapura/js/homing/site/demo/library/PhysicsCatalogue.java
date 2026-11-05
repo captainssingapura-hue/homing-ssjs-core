@@ -21,6 +21,6 @@ public record PhysicsCatalogue() implements L2_Catalogue<ScienceCatalogue, Physi
 
     @Override
     public List<Leaf<PhysicsCatalogue>> leaves() {
-        return List.of(Leaf.of(this, "QED", FEYNMAN.author() + ", " + FEYNMAN.year(), FEYNMAN).badge("BOOK"));
+        return List.of(new Leaf<>(this, "QED", FEYNMAN.author() + ", " + FEYNMAN.year(), FEYNMAN).badge("BOOK"));
     }
 }

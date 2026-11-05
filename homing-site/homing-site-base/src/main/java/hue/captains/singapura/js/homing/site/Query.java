@@ -40,8 +40,8 @@ public record Query(Map<String, List<String>> all) {
     }
 
     /** A one-key query, for tests and links. */
-    public static Query of(String key, String value) {
-        return new Query(QueryString.of(key, value));
+    public Query(String key, String value) {
+        this(QueryString.of(key, value));
     }
 
     /** Whether the page was reached with no parameters. */

@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class NoDomRulesTest {
 
     private static ServedModule served(String cls, JsModuleType type, String... lines) {
-        return new ServedModule(cls, type, JsSource.of(lines));
+        return new ServedModule(cls, type, new JsSource(lines));
     }
 
     @Test

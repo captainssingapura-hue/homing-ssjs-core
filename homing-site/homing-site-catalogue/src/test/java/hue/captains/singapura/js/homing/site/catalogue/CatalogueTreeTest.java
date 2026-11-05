@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CatalogueTreeTest {
 
-    private static final CatalogueTree TREE = CatalogueTree.of(RootCatalogue.INSTANCE);
+    private static final CatalogueTree TREE = new CatalogueTree(RootCatalogue.INSTANCE);
 
     @Test
     void readsPreOrderWithParents() {
@@ -30,13 +30,13 @@ class CatalogueTreeTest {
     @Test
     void everyVertexAndPageHasOnePath() {
         assertEquals(Path.ROOT,             TREE.pathOf(RootCatalogue.INSTANCE));
-        assertEquals(Path.of("alpha"),      TREE.pathOf(AlphaCatalogue.INSTANCE));
-        assertEquals(Path.of("alpha", "deep"), TREE.pathOf(DeepCatalogue.INSTANCE));
-        assertEquals(Path.of("b"),          TREE.pathOf(BetaCatalogue.INSTANCE));   // slug overridden
-        assertEquals(Optional.of(Path.of("about")),             TREE.pathOf(P_ABOUT));
-        assertEquals(Optional.of(Path.of("alpha", "one")),      TREE.pathOf(P_ONE));
-        assertEquals(Optional.of(Path.of("alpha", "plain-page")), TREE.pathOf(P_PLAIN));
-        assertEquals(Optional.of(Path.of("alpha", "deep", "two")), TREE.pathOf(P_TWO));
+        assertEquals(new Path("alpha"),      TREE.pathOf(AlphaCatalogue.INSTANCE));
+        assertEquals(new Path("alpha", "deep"), TREE.pathOf(DeepCatalogue.INSTANCE));
+        assertEquals(new Path("b"),          TREE.pathOf(BetaCatalogue.INSTANCE));   // slug overridden
+        assertEquals(Optional.of(new Path("about")),             TREE.pathOf(P_ABOUT));
+        assertEquals(Optional.of(new Path("alpha", "one")),      TREE.pathOf(P_ONE));
+        assertEquals(Optional.of(new Path("alpha", "plain-page")), TREE.pathOf(P_PLAIN));
+        assertEquals(Optional.of(new Path("alpha", "deep", "two")), TREE.pathOf(P_TWO));
         assertEquals(Optional.empty(), TREE.pathOf(q -> null));
     }
 
@@ -46,19 +46,19 @@ class CatalogueTreeTest {
             var r = assertInstanceOf(Resolution.AtCatalogue.class, TREE.resolve(TREE.pathOf(c)));
             assertSame(c, r.catalogue());
         }
-        var leaf = assertInstanceOf(Resolution.AtLeaf.class, TREE.resolve(Path.of("alpha", "deep", "two")));
+        var leaf = assertInstanceOf(Resolution.AtLeaf.class, TREE.resolve(new Path("alpha", "deep", "two")));
         assertSame(DeepCatalogue.INSTANCE, leaf.parent());
         assertSame(P_TWO, leaf.leaf().page());
     }
 
     @Test
     void missesSayWhere() {
-        var m1 = assertInstanceOf(Resolution.Miss.class, TREE.resolve(Path.of("alpha", "nope")));
+        var m1 = assertInstanceOf(Resolution.Miss.class, TREE.resolve(new Path("alpha", "nope")));
         assertEquals(1, m1.failedAt());
         assertEquals("nope", m1.at());
         assertEquals(Resolution.Reason.NO_SUCH_CHILD, m1.reason());
 
-        var m2 = assertInstanceOf(Resolution.Miss.class, TREE.resolve(Path.of("about", "more")));
+        var m2 = assertInstanceOf(Resolution.Miss.class, TREE.resolve(new Path("about", "more")));
         assertEquals(1, m2.failedAt());
         assertEquals(Resolution.Reason.PAST_A_LEAF, m2.reason());
         assertTrue(!m2.isHit());
@@ -73,25 +73,25 @@ class CatalogueTreeTest {
 
     @Test
     void refusesADisagreeingEdge() {
-        var ex = assertThrows(IllegalArgumentException.class, () -> CatalogueTree.of(new DisagreeRoot()));
+        var ex = assertThrows(IllegalArgumentException.class, () -> new CatalogueTree(new DisagreeRoot()));
         assertTrue(ex.getMessage().contains("must agree"), ex.getMessage());
     }
 
     @Test
     void refusesTwoLeavesWithOneSlug() {
-        var ex = assertThrows(IllegalArgumentException.class, () -> CatalogueTree.of(new SlugClashRoot()));
+        var ex = assertThrows(IllegalArgumentException.class, () -> new CatalogueTree(new SlugClashRoot()));
         assertTrue(ex.getMessage().contains("Slug 'x'"), ex.getMessage());
     }
 
     @Test
     void refusesACatalogueAndALeafWithOneSlug() {
-        var ex = assertThrows(IllegalArgumentException.class, () -> CatalogueTree.of(new MixedClashRoot()));
+        var ex = assertThrows(IllegalArgumentException.class, () -> new CatalogueTree(new MixedClashRoot()));
         assertTrue(ex.getMessage().contains("Slug 'shadowed'"), ex.getMessage());
     }
 
     @Test
     void refusesOnePagePlacedTwice() {
-        var ex = assertThrows(IllegalArgumentException.class, () -> CatalogueTree.of(new TwicePlacedRoot()));
+        var ex = assertThrows(IllegalArgumentException.class, () -> new CatalogueTree(new TwicePlacedRoot()));
         assertTrue(ex.getMessage().contains("placed twice"), ex.getMessage());
     }
 

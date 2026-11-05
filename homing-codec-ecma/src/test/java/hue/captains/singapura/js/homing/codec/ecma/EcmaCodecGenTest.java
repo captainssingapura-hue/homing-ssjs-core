@@ -24,7 +24,7 @@ class EcmaCodecGenTest {
     @Test
     void definitionEmitsClassWithConstructorAndFreeze() {
         String js = EcmaDefinitionCodeGen.INSTANCE.generate(
-                ObjectDefinition.of(SimpleId.class));
+                new ObjectDefinition<>(SimpleId.class));
         assertTrue(js.contains("class SimpleId"),    "class header present");
         assertTrue(js.contains("constructor(value)"), "constructor params from components");
         assertTrue(js.contains("this.value = value"), "field assignment");
@@ -34,7 +34,7 @@ class EcmaCodecGenTest {
     @Test
     void functionsEmitsCodecWithRoundTripMethods() {
         String js = EcmaFunctionsCodeGen.INSTANCE.generate(
-                ObjectDefinition.of(SimpleId.class));
+                new ObjectDefinition<>(SimpleId.class));
         assertTrue(js.contains("class SimpleIdCodec"),                "codec class header");
         assertTrue(js.contains("static KIND = 'SimpleId'"),           "kind discriminator");
         assertTrue(js.contains("static transformTo(typed)"),          "encode method");
@@ -46,7 +46,7 @@ class EcmaCodecGenTest {
     @Test
     void multiComponentRecordEnumeratesAllComponentsInOrder() {
         String js = EcmaFunctionsCodeGen.INSTANCE.generate(
-                ObjectDefinition.of(SimplePoint.class));
+                new ObjectDefinition<>(SimplePoint.class));
         // The order must follow the record's component order — x, y, visible.
         int xIdx = js.indexOf("x: typed.x");
         int yIdx = js.indexOf("y: typed.y");
@@ -59,7 +59,7 @@ class EcmaCodecGenTest {
 
     @Test
     void nonRecordTypeIsRejectedByBothCodegens() {
-        var def = ObjectDefinition.of(String.class);
+        var def = new ObjectDefinition<>(String.class);
         assertThrows(IllegalArgumentException.class,
                 () -> EcmaDefinitionCodeGen.INSTANCE.generate(def));
         assertThrows(IllegalArgumentException.class,
@@ -71,7 +71,7 @@ class EcmaCodecGenTest {
 
     @Test
     void enumDefinitionEmitsFrozenStringMap() {
-        String js = EcmaDefinitionCodeGen.INSTANCE.generate(ObjectDefinition.of(Color.class));
+        String js = EcmaDefinitionCodeGen.INSTANCE.generate(new ObjectDefinition<>(Color.class));
         assertTrue(js.contains("const Color = Object.freeze({"), "frozen-object form");
         assertTrue(js.contains("RED: 'RED'"),   "constant emitted as string-keyed identity");
         assertTrue(js.contains("GREEN: 'GREEN'"));
@@ -80,7 +80,7 @@ class EcmaCodecGenTest {
 
     @Test
     void enumCodecEmitsValidatingTransformFrom() {
-        String js = EcmaFunctionsCodeGen.INSTANCE.generate(ObjectDefinition.of(Color.class));
+        String js = EcmaFunctionsCodeGen.INSTANCE.generate(new ObjectDefinition<>(Color.class));
         assertTrue(js.contains("class ColorCodec"),                  "codec header");
         assertTrue(js.contains("static KIND = 'Color'"),             "kind discriminator");
         assertTrue(js.contains("static VALUES = Object.freeze(["),   "allowed-values set");
@@ -93,7 +93,7 @@ class EcmaCodecGenTest {
     @Test
     void generatorsAreStateless() {
         // Two independent calls produce identical strings.
-        var def = ObjectDefinition.of(SimpleId.class);
+        var def = new ObjectDefinition<>(SimpleId.class);
         assertEquals(
                 EcmaFunctionsCodeGen.INSTANCE.generate(def),
                 new EcmaFunctionsCodeGen().generate(def),

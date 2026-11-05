@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class KeysThroughThePartyRuleTest {
 
     private static ServedModule mod(String... lines) {
-        return new ServedModule("demo.M", StandardJsModuleType.CONSUMER, JsSource.of(lines));
+        return new ServedModule("demo.M", StandardJsModuleType.CONSUMER, new JsSource(lines));
     }
 
     private static List<String> kinds(List<Finding> findings) {
@@ -73,7 +73,7 @@ class KeysThroughThePartyRuleTest {
 
     @Test
     void theStewardIsExemptByName() {
-        var steward = new ServedModule("hue.captains.singapura.js.homing.component.keyboard.KeyboardStewardModule", StandardJsModuleType.PRIMITIVE, JsSource.of(
+        var steward = new ServedModule("hue.captains.singapura.js.homing.component.keyboard.KeyboardStewardModule", StandardJsModuleType.PRIMITIVE, new JsSource(
                 "document[f](\"keydown\", this._onDown, false);",
                 "document[f](\"keyup\", this._onUp, false);",
                 "export {KeyboardSteward};"));

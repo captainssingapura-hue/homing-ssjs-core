@@ -27,14 +27,18 @@ public record Baseline(Set<String> fingerprints) {
     }
 
     /** Parse a baseline from its line form (fingerprint per line; blanks / {@code #} comments skipped). */
-    public static Baseline of(Collection<String> lines) {
+    public Baseline(List<String> lines) {
+        this(fingerprintsIn(lines));
+    }
+
+    private static Set<String> fingerprintsIn(List<String> lines) {
         var out = new TreeSet<String>();
         for (String raw : lines) {
             String line = raw.strip();
             if (line.isEmpty() || line.startsWith("#")) continue;
             out.add(line);
         }
-        return new Baseline(out);
+        return out;
     }
 
     /** True iff this exact violation (module + rule + offending code) was recorded. */

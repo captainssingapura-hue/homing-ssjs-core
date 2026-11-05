@@ -125,7 +125,7 @@ public final class ConformanceEngine {
                 var findings = new ArrayList<FindingReport>();
                 int mErr = 0;
                 for (GradedFinding g : grader.grade(set.checkAll(served))) {
-                    findings.add(FindingReport.of(g));
+                    findings.add(new FindingReport(g));
                     if (g.isError()) mErr++; else cWarn++;
                 }
                 cErr += mErr;

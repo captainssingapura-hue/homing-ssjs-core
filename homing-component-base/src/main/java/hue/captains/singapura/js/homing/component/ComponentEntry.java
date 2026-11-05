@@ -17,10 +17,8 @@ public sealed interface ComponentEntry<C extends ComponentCatalogue<C>> {
     /** A component declared by its module, listed here. */
     record OfComponent<C extends ComponentCatalogue<C>, M extends DomModule<M>>(UiComponent<M> component) implements ComponentEntry<C> {
         public OfComponent { Objects.requireNonNull(component, "ComponentEntry.OfComponent.component"); }
-    }
 
-    /** {@code host} is a type witness for inference, as the catalogue's {@code Entry.of} takes it; discarded. */
-    static <C extends ComponentCatalogue<C>, M extends DomModule<M>> ComponentEntry<C> of(C host, UiComponent<M> component) {
-        return new OfComponent<>(component);
+        /** {@code host} is a type witness for inference, as the catalogue's {@code Entry.of} takes it; discarded. */
+        public OfComponent(C host, UiComponent<M> component) { this(component); }
     }
 }

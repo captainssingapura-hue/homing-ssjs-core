@@ -21,10 +21,10 @@ public final class ReportCodecManifest {
     private ReportCodecManifest() {}
 
     public static final List<ObjectDefinition<?>> ENTRIES = List.of(
-            ObjectDefinition.of(FindingReport.class),
-            ObjectDefinition.of(CrateReport.class),
-            ObjectDefinition.of(ModuleResult.class),
-            ObjectDefinition.of(RuleReport.class),
-            ObjectDefinition.of(RuleSetReport.class),
-            ObjectDefinition.of(ConformanceReport.class));
+            new ObjectDefinition<>(FindingReport.class),
+            new ObjectDefinition<>(CrateReport.class),
+            new ObjectDefinition<>(ModuleResult.class),
+            new ObjectDefinition<>(RuleReport.class),
+            new ObjectDefinition<>(RuleSetReport.class),
+            new ObjectDefinition<>(ConformanceReport.class));
 }

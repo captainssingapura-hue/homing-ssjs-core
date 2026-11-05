@@ -42,8 +42,8 @@ public record RigidNodeContent(Optional<Line.Plain> caption, List<RigidSegment> 
     }
 
     /** Convenience — no caption, from varargs. */
-    public static RigidNodeContent of(RigidSegment... segments) {
-        return new RigidNodeContent(List.of(segments));
+    public RigidNodeContent(RigidSegment... segments) {
+        this(List.of(segments));
     }
 
     /** Convenience — with a caption (blank/null → none), from varargs. */

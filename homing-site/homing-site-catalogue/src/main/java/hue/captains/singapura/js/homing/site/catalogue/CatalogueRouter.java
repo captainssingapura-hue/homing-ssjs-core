@@ -41,7 +41,7 @@ public final class CatalogueRouter implements Router {
 
     /** The tree under {@code root}, served at {@code mount}, vertices shown by {@link HtmlListing}. */
     public static CatalogueRouter at(Path mount, L0_Catalogue<?> root) {
-        return new CatalogueRouter(CatalogueTree.of(root), mount, HtmlListing.INSTANCE);
+        return new CatalogueRouter(new CatalogueTree(root), mount, HtmlListing.INSTANCE);
     }
 
     /**
@@ -49,7 +49,7 @@ public final class CatalogueRouter implements Router {
      * {@code mount}: every page wears the site's one chrome, whichever tree placed it.
      */
     public static CatalogueRouter at(Path mount, L0_Catalogue<?> root, Mpa mpa) {
-        return new CatalogueRouter(CatalogueTree.of(root, mpa), mount, HtmlListing.INSTANCE);
+        return new CatalogueRouter(new CatalogueTree(root, mpa), mount, HtmlListing.INSTANCE);
     }
 
     /** An already-read tree, served at {@code mount}. */

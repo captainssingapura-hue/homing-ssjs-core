@@ -56,14 +56,13 @@ public record Leaf<C extends Catalogue<C>>(
      * named only to type the leaf to it — pass {@code this} from inside the
      * catalogue's {@code leaves()}.
      */
-    public static <C extends Catalogue<C>> Leaf<C> of(C host, String name, String summary, Navigable page) {
-        return new Leaf<>(NodeName.conciseSlug(name), name, summary, null, null, null, page);
+    public Leaf(C host, String name, String summary, Navigable page) {
+        this(NodeName.conciseSlug(name), name, summary, null, null, null, page);
     }
 
     /** A leaf in {@code host} with the slug stated. */
-    public static <C extends Catalogue<C>> Leaf<C> of(C host, NodeName slug, String name, String summary,
-                                                      Navigable page) {
-        return new Leaf<>(slug, name, summary, null, null, null, page);
+    public Leaf(C host, NodeName slug, String name, String summary, Navigable page) {
+        this(slug, name, summary, null, null, null, page);
     }
 
     /** This leaf, shown with this badge. */

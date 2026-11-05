@@ -57,8 +57,8 @@ public record RelationSegment(
 
     /**
      * Typed column definition. The header label and the value extractor are
-     * declared together; the extractor is applied for each row item at
-     * {@link #of} / {@link #of(List, List, String)} call time.
+     * declared together; the extractor is applied for each row item when
+     * the relation is made from its columns.
      *
      * @param <T>       the row data type
      * @param header    column header label (may contain inline markdown)
@@ -128,23 +128,24 @@ public record RelationSegment(
     }
 
     /** Convenience — no caption. */
-    public static <T> RelationSegment of(List<Column<T>> columns, List<T> data) {
-        return build(columns, data, Optional.empty());
+    public <T> RelationSegment(List<Column<T>> columns, List<T> data) {
+        this(headersOf(columns), rowsOf(columns, data), Optional.empty());
     }
 
     /** Convenience — with caption (contributes to TOC; blank becomes no caption). */
-    public static <T> RelationSegment of(List<Column<T>> columns, List<T> data, String caption) {
-        return build(columns, data, Line.optionalPlain(caption));
+    public <T> RelationSegment(List<Column<T>> columns, List<T> data, String caption) {
+        this(headersOf(columns), rowsOf(columns, data), Line.optionalPlain(caption));
     }
 
-    private static <T> RelationSegment build(
-            List<Column<T>> columns, List<T> data, Optional<Line.Plain> caption) {
-        Objects.requireNonNull(columns, "RelationSegment.of: columns");
-        Objects.requireNonNull(data,    "RelationSegment.of: data");
-        var headers = columns.stream().map(Column::header).toList();
-        var rows    = data.stream()
+    private static <T> List<String> headersOf(List<Column<T>> columns) {
+        Objects.requireNonNull(columns, "RelationSegment: columns");
+        return columns.stream().map(Column::header).toList();
+    }
+
+    private static <T> List<List<String>> rowsOf(List<Column<T>> columns, List<T> data) {
+        Objects.requireNonNull(data, "RelationSegment: data");
+        return data.stream()
                 .map(item -> columns.stream().map(col -> col.extract(item)).toList())
                 .toList();
-        return new RelationSegment(headers, rows, caption);
     }
 }

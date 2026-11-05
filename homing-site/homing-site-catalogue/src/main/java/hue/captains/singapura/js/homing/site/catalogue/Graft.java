@@ -37,8 +37,8 @@ public record Graft<C extends Catalogue<C>>(L0_Catalogue<?> root, String name, S
      * itself. The host is named only to type the graft to it - pass
      * {@code this} from inside the catalogue's {@code grafts()}.
      */
-    public static <C extends Catalogue<C>> Graft<C> of(C host, L0_Catalogue<?> root) {
-        return new Graft<>(root, null, null, null, null);
+    public Graft(C host, L0_Catalogue<?> root) {
+        this(root, null, null, null, null);
     }
 
     /** This graft, shown here under another name and summary. */

@@ -28,7 +28,7 @@ class RigidNodeNormalizerTest {
 
     /** The one content provider: an empty body is a structural node, else a paragraph. */
     private static final Function<String, RigidNodeContent> CONTENT =
-            body -> body.isEmpty() ? RigidNodeContent.of() : RigidNodeContent.of(ParagraphSegment.of(body));
+            body -> body.isEmpty() ? new RigidNodeContent() : new RigidNodeContent(new ParagraphSegment(body));
 
     private static RigidNode<String> root(String name, String title) {
         return RigidNode.root("", new NodeName(name), new Title(title));   // structural root

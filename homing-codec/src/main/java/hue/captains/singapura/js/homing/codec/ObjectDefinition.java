@@ -37,11 +37,6 @@ public record ObjectDefinition<T>(Class<T> type) {
         Objects.requireNonNull(type, "ObjectDefinition.type");
     }
 
-    /** Convenience constructor. */
-    public static <T> ObjectDefinition<T> of(Class<T> type) {
-        return new ObjectDefinition<>(type);
-    }
-
     /** Convenience — the human-readable name of the underlying type. */
     public String simpleName() {
         return type.getSimpleName();

@@ -45,8 +45,12 @@ public record ParagraphSegment(List<Line.Plain> lines) implements Listable {
      * {@link Line.Plain} lines at the {@value Line#MAX_CHARS}-char cap. Whitespace
      * runs collapse to single spaces; an over-long single word is hard-split.
      */
-    public static ParagraphSegment of(String text) {
-        Objects.requireNonNull(text, "ParagraphSegment.of: text");
+    public ParagraphSegment(String text) {
+        this(wrapped(text));
+    }
+
+    private static List<Line.Plain> wrapped(String text) {
+        Objects.requireNonNull(text, "ParagraphSegment: text");
         var lines = new ArrayList<Line.Plain>();
         var cur = new StringBuilder();
         for (String w : text.trim().split("\\s+")) {
@@ -66,6 +70,6 @@ public record ParagraphSegment(List<Line.Plain> lines) implements Listable {
         }
         if (cur.length() > 0) lines.add(new Line.Plain(cur.toString()));
         if (lines.isEmpty()) lines.add(new Line.Plain(""));   // empty input → one empty line
-        return new ParagraphSegment(lines);
+        return lines;
     }
 }

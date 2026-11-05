@@ -38,6 +38,6 @@ public final class ServedModuleRenderer {
     /** Render with an already-decided type — the crate path, where the entry's declared role wins. */
     public ServedModule render(EsModule<?> module, JsModuleType type) {
         String served = serving.render(module);
-        return ServedModule.of(module.getClass().getName(), type, served);
+        return new ServedModule(module.getClass().getName(), type, served);
     }
 }

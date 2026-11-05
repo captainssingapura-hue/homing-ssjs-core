@@ -28,11 +28,11 @@ class NoOwnContentTest {
     @Test
     void aDocWhoseDataIsStructureHasNoContentOfItsOwn() {
         List<Doc> structured = List.of(
-                ComposedDoc.of(ID, "Composed", "", "DOC", List.of(new TextSegment("words"))),
+                new ComposedDoc(ID, "Composed", "", "DOC", List.of(new TextSegment("words"))),
                 RigidDoc.root(ID, "Rigid", "", "DOC").l1("One").text("words").l1build().build(),
                 new RigidDocV2(ID, "Rigid v2", "", "DOC", () -> { throw new AssertionError("the tree is never built for this"); }),
                 new TableDoc(ID, "Table", "", TableData.fromCsv("a,b\n1,2")),
-                ImageDoc.of("nowhere.png", "image/png", "An image"));
+                new ImageDoc("nowhere.png", "image/png", "An image"));
         for (Doc d : structured) {
             var e = assertThrows(NoOwnContentException.class, d::contents, d.getClass().getSimpleName());
             assertTrue(e.getMessage().contains("Function<Doc, Content>"), e.getMessage());
@@ -57,7 +57,7 @@ class NoOwnContentTest {
     void contentIsMadeFromADoc_byAFunction() {
         java.util.function.Function<Doc, Content> outline = d -> new Content(d.title(), "text/plain; charset=utf-8");
         assertEquals(new Content("Composed", "text/plain; charset=utf-8"),
-                outline.apply(ComposedDoc.of(ID, "Composed", "", "DOC", List.of())));
+                outline.apply(new ComposedDoc(ID, "Composed", "", "DOC", List.of())));
         assertThrows(NullPointerException.class, () -> new Content(null, "text/plain"));
     }
 }

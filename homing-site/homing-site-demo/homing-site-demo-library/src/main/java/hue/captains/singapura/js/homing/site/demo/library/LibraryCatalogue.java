@@ -38,7 +38,7 @@ public record LibraryCatalogue() implements L0_Catalogue<LibraryCatalogue> {
 
     @Override
     public List<Leaf<LibraryCatalogue>> leaves() {
-        return List.of(Leaf.of(this, "About this library", "What this site is and how it is routed.", ABOUT)
+        return List.of(new Leaf<>(this, "About this library", "What this site is and how it is routed.", ABOUT)
                            .badge("PLAIN"));
     }
 }

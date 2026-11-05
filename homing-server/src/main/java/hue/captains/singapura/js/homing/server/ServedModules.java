@@ -34,7 +34,11 @@ public record ServedModules(Map<String, EsModule<?>> byName) {
     /**
      * The modules of {@code roots} and of every crate they require, by canonical name; the first declared keeps a name.
      */
-    public static ServedModules of(Collection<? extends Crate> roots) {
+    public ServedModules(Collection<? extends Crate> roots) {
+        this(byNameOf(roots));
+    }
+
+    private static Map<String, EsModule<?>> byNameOf(Collection<? extends Crate> roots) {
         var byName = new LinkedHashMap<String, EsModule<?>>();
         var seen = new LinkedHashMap<String, Crate>();
         Deque<Crate> queue = new ArrayDeque<>(roots);
@@ -44,7 +48,7 @@ public record ServedModules(Map<String, EsModule<?>> byName) {
             for (CrateEntry e : c.entries()) byName.putIfAbsent(e.module().getClass().getCanonicalName(), e.module());
             queue.addAll(c.requires());
         }
-        return new ServedModules(byName);
+        return byName;
     }
 
     /** The module of this canonical name, if a crate declared it. */

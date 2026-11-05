@@ -272,14 +272,14 @@ public record ComposedDoc(
     }
 
     /** Build a ComposedDoc with no references — common case. */
-    public static ComposedDoc of(UUID uuid, String title, String summary, String category, List<Segment> segments) {
-        return new ComposedDoc(uuid, title, summary, summary, category, segments, List.of());
+    public ComposedDoc(UUID uuid, String title, String summary, String category, List<Segment> segments) {
+        this(uuid, title, summary, summary, category, segments, List.of());
     }
 
     /** Build a ComposedDoc with a separate abstract and no references. */
-    public static ComposedDoc of(UUID uuid, String title, String summary, String abstractText,
-                                 String category, List<Segment> segments) {
-        return new ComposedDoc(uuid, title, summary, abstractText, category, segments, List.of());
+    public ComposedDoc(UUID uuid, String title, String summary, String abstractText,
+                       String category, List<Segment> segments) {
+        this(uuid, title, summary, abstractText, category, segments, List.of());
     }
 
 }

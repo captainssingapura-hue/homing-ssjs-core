@@ -36,7 +36,7 @@ class SiteGetActionTest {
     @Test
     void aHitRendersWithTheQuery() throws Exception {
         var page = ACTION.execute(
-                new SiteGetAction.Request(Path.ROOT, Query.of("say", "<hi>")),
+                new SiteGetAction.Request(Path.ROOT, new Query("say", "<hi>")),
                 new EmptyParam.NoHeaders()).get();
         assertEquals("<p>&lt;hi&gt;</p>", page.body());
     }
@@ -52,7 +52,7 @@ class SiteGetActionTest {
     @Test
     void aMissIsNotFoundNamingThePath() {
         var future = ACTION.execute(
-                new SiteGetAction.Request(Path.of("no", "such page"), Query.NONE),
+                new SiteGetAction.Request(new Path("no", "such page"), Query.NONE),
                 new EmptyParam.NoHeaders());
         var ex = assertThrows(ExecutionException.class, future::get);
         var nf = assertInstanceOf(ResourceNotFound.class, ex.getCause());
@@ -62,7 +62,7 @@ class SiteGetActionTest {
     @Test
     void aThrowingNavigableFailsTheFuture() {
         var future = ACTION.execute(
-                new SiteGetAction.Request(Path.of("broken"), Query.NONE),
+                new SiteGetAction.Request(new Path("broken"), Query.NONE),
                 new EmptyParam.NoHeaders());
         var ex = assertThrows(ExecutionException.class, future::get);
         assertInstanceOf(IllegalStateException.class, ex.getCause());

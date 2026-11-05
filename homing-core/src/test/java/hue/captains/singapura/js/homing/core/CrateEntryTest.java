@@ -33,12 +33,12 @@ class CrateEntryTest {
 
     @Test
     void undeclaredAndDomainRolesPack() {
-        assertNull(CrateEntry.of(Plain.INSTANCE).declaredType());
+        assertNull(new CrateEntry(Plain.INSTANCE).declaredType());
         for (var role : List.of(StandardJsModuleType.PRIMITIVE, StandardJsModuleType.SECRETARY,
                 StandardJsModuleType.PURE_LOGIC, StandardJsModuleType.CONSUMER)) {
-            assertEquals(role, CrateEntry.of(Plain.INSTANCE, role).declaredType());
+            assertEquals(role, new CrateEntry(Plain.INSTANCE, role).declaredType());
         }
-        assertEquals(LibType.GAME_LOOP, CrateEntry.of(Plain.INSTANCE, LibType.GAME_LOOP).declaredType());
+        assertEquals(LibType.GAME_LOOP, new CrateEntry(Plain.INSTANCE, LibType.GAME_LOOP).declaredType());
     }
 
     @Test
@@ -46,7 +46,7 @@ class CrateEntryTest {
         for (var mechanical : List.of(StandardJsModuleType.BUNDLED_EXTERNAL,
                 StandardJsModuleType.MANAGER_INJECTOR, StandardJsModuleType.GENERATED_CSS)) {
             var ex = assertThrows(IllegalArgumentException.class,
-                    () -> CrateEntry.of(Plain.INSTANCE, mechanical), mechanical.name());
+                    () -> new CrateEntry(Plain.INSTANCE, mechanical), mechanical.name());
             assertTrue(ex.getMessage().contains("mechanical type " + mechanical), ex.getMessage());
         }
     }

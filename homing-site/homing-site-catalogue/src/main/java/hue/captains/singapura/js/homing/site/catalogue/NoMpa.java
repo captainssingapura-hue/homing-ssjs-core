@@ -24,7 +24,7 @@ final class NoMpa implements Mpa {
 
     private static IllegalStateException refused() {
         return new IllegalStateException("A catalogue made its pages with the site's MPA, but this tree was read without one:"
-                + " read it with CatalogueTree.of(root, mpa) - or CatalogueRouter.at(mount, root, mpa)");
+                + " read it with new CatalogueTree(root, mpa) - or CatalogueRouter.at(mount, root, mpa)");
     }
 
     @Override public Brand brand() { throw refused(); }

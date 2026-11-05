@@ -21,8 +21,8 @@ public record FindingReport(String rule, String message, int line, Severity seve
                             Disposition disposition, String note) {
 
     /** Flatten a {@link GradedFinding} into its report form. */
-    public static FindingReport of(GradedFinding g) {
-        return new FindingReport(
+    public FindingReport(GradedFinding g) {
+        this(
                 g.finding().rule().value(),
                 g.finding().message(),
                 g.finding().line(),

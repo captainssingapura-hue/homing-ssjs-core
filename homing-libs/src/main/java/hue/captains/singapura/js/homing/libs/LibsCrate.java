@@ -27,8 +27,8 @@ public final class LibsCrate implements Crate {
     @Override
     public List<CrateEntry> entries() {
         var entries = new ArrayList<CrateEntry>();
-        HomingLibsRegistry.ALL.forEach(m -> entries.add(CrateEntry.of(m)));
-        entries.add(CrateEntry.of(MermaidProxyModule.INSTANCE));
+        HomingLibsRegistry.ALL.forEach(m -> entries.add(new CrateEntry(m)));
+        entries.add(new CrateEntry(MermaidProxyModule.INSTANCE));
         return List.copyOf(entries);
     }
 }

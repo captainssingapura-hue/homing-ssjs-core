@@ -63,9 +63,9 @@ class CssGroupResolverTest {
 
     @Test
     void groupDependencies_areDerivedFromClasses_selfExcluded_firstMentionOrder() {
-        assertEquals(List.of(), CssImportsFor.of(Base.INSTANCE).imports());
-        assertEquals(List.of(Base.INSTANCE), CssImportsFor.of(Left.INSTANCE).imports());
-        assertEquals(List.of(Left.INSTANCE, Right.INSTANCE, Base.INSTANCE), CssImportsFor.of(Root.INSTANCE).imports());
+        assertEquals(List.of(), new CssImportsFor<>(Base.INSTANCE).imports());
+        assertEquals(List.of(Base.INSTANCE), new CssImportsFor<>(Left.INSTANCE).imports());
+        assertEquals(List.of(Left.INSTANCE, Right.INSTANCE, Base.INSTANCE), new CssImportsFor<>(Root.INSTANCE).imports());
     }
 
     @Test

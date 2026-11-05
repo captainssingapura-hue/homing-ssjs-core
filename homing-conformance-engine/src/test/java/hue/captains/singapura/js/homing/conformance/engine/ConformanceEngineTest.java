@@ -74,7 +74,7 @@ class ConformanceEngineTest {
         @Override public String name() { return "test-crate"; }
         @Override public List<Crate> requires() { return List.of(); }
         @Override public List<CrateEntry> entries() {
-            return List.of(CrateEntry.of(CleanModule.INSTANCE), CrateEntry.of(CdnModule.INSTANCE));
+            return List.of(new CrateEntry(CleanModule.INSTANCE), new CrateEntry(CdnModule.INSTANCE));
         }
     }
 

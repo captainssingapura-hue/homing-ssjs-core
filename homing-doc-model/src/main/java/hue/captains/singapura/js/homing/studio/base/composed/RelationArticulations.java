@@ -32,7 +32,7 @@ public record RelationArticulations(List<ArticulatedCell> cells) {
     public boolean isEmpty() { return cells.isEmpty(); }
 
     /** Build a side-car from a varargs list of articulated cells. */
-    public static RelationArticulations of(ArticulatedCell... cells) {
-        return new RelationArticulations(List.of(cells));
+    public RelationArticulations(ArticulatedCell... cells) {
+        this(List.of(cells));
     }
 }

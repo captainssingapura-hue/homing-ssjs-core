@@ -363,7 +363,7 @@ class ImplementationsTest {
     }
 
     private record Shipped(String name, List<EsModule<?>> modules) implements Crate {
-        @Override public List<CrateEntry> entries() { return modules.stream().map(CrateEntry::of).toList(); }
+        @Override public List<CrateEntry> entries() { return modules.stream().map(CrateEntry::new).toList(); }
     }
 
     private static List<String> check(EsModule<?>... modules) {

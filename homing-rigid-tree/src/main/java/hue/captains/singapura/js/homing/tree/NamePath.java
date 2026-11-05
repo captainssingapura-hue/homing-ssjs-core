@@ -43,8 +43,8 @@ public record NamePath(List<NodeName> segments) implements Scalar {
     }
 
     /** The path of these segments, root first. */
-    public static NamePath of(NodeName... segments) {
-        return new NamePath(List.of(segments));
+    public NamePath(NodeName... segments) {
+        this(List.of(segments));
     }
 
     /**

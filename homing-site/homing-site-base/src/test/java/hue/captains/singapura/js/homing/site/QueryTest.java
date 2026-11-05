@@ -33,7 +33,7 @@ class QueryTest {
 
     @Test
     void isImmutable() {
-        var q = Query.of("k", "v");
+        var q = new Query("k", "v");
         assertThrows(UnsupportedOperationException.class, () -> q.all().put("x", List.of()));
         assertThrows(UnsupportedOperationException.class, () -> q.all().get("k").add("w"));
     }
@@ -41,6 +41,6 @@ class QueryTest {
     @Test
     void addressFormIsTheCoreEncoding() {
         assertEquals("", Query.NONE.toString());
-        assertEquals("name=Ada+Lovelace", Query.of("name", "Ada Lovelace").toString());
+        assertEquals("name=Ada+Lovelace", new Query("name", "Ada Lovelace").toString());
     }
 }

@@ -63,7 +63,7 @@ public class HomingActionRegistry implements ActionRegistry<RoutingContext> {
         if (themeRegistry == null) themeRegistry = ThemeRegistry.EMPTY;
         if (meta == null) meta = AppMeta.DEFAULT;
         this.appAction = new AppHtmlGetAction(nameResolver, appResolver, themeRegistry, meta);
-        ServedModules served = crates == null ? ServedModules.NONE : ServedModules.of(crates);
+        ServedModules served = crates == null ? ServedModules.NONE : new ServedModules(crates);
         // What varies with the theme is a derived sheet, by its type: a provided group is
         // served once, without a theme, and left alone by a switch (RFC 0064, D25). A
         // sheet that renders itself is asked first: it is nobody else's.

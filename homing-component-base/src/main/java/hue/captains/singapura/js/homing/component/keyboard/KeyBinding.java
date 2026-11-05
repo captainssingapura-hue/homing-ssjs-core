@@ -25,15 +25,13 @@ public record KeyBinding(Key key, Set<Modifier> modifiers, String meaning) {
     }
 
     /** A key pressed alone, and what the component does with it. */
-    public static KeyBinding of(Key key, String meaning) { return new KeyBinding(key, Set.of(), meaning); }
+    public KeyBinding(Key key, String meaning) { this(key, Set.of(), meaning); }
     /** A key pressed with one modifier held, and what the component does with it. */
-    public static KeyBinding of(Key key, Modifier modifier, String meaning) { return new KeyBinding(key, EnumSet.of(modifier), meaning); }
-    /** A key pressed with these modifiers held, and what the component does with it. */
-    public static KeyBinding of(Key key, Set<Modifier> modifiers, String meaning) { return new KeyBinding(key, modifiers, meaning); }
+    public KeyBinding(Key key, Modifier modifier, String meaning) { this(key, EnumSet.of(modifier), meaning); }
 
     /** Several keys, one meaning: {@code ArrowRight} and {@code ArrowUp} both a step up. */
     public static List<KeyBinding> each(String meaning, Key... keys) {
-        return Arrays.stream(keys).map(k -> of(k, meaning)).toList();
+        return Arrays.stream(keys).map(k -> new KeyBinding(k, meaning)).toList();
     }
 
     /** The chord, as a person reads it: {@code Shift+ArrowUp}; modifiers in a fixed order. */

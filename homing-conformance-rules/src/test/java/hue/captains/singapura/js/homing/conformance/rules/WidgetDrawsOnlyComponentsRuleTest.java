@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class WidgetDrawsOnlyComponentsRuleTest {
 
     private static ServedModule served(String... lines) {
-        return new ServedModule("demo.Board", StandardJsModuleType.WIDGET, JsSource.of(lines));
+        return new ServedModule("demo.Board", StandardJsModuleType.WIDGET, new JsSource(lines));
     }
 
     private static List<Finding> check(String... lines) { return WidgetDrawsOnlyComponentsRule.INSTANCE.check(served(lines)); }

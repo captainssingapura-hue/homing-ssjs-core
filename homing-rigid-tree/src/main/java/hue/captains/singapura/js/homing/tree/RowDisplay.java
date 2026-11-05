@@ -47,7 +47,7 @@ public record RowDisplay(String label, String badge, String note, String kind)
     }
 
     /** A row that only has something to say about itself. */
-    public static RowDisplay of(String label) {
-        return new RowDisplay(label, "", "", "");
+    public RowDisplay(String label) {
+        this(label, "", "", "");
     }
 }

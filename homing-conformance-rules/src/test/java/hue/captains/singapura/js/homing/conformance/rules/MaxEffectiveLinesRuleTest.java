@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class MaxEffectiveLinesRuleTest {
 
     private static ServedModule mod(List<String> lines) {
-        return new ServedModule("demo.M", StandardJsModuleType.CONSUMER, JsSource.of(lines.toArray(String[]::new)));
+        return new ServedModule("demo.M", StandardJsModuleType.CONSUMER, new JsSource(lines.toArray(String[]::new)));
     }
 
     private static List<String> repeat(String line, int n) {

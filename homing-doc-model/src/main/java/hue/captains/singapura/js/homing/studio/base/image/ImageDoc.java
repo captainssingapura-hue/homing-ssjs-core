@@ -76,14 +76,13 @@ public record ImageDoc(
     }
 
     /** Convenience — no caption, no intrinsic dimensions. */
-    public static ImageDoc of(String resourcePath, String mimeType, String alt) {
-        return new ImageDoc(resourcePath, mimeType, alt, "", Optional.empty(), Optional.empty());
+    public ImageDoc(String resourcePath, String mimeType, String alt) {
+        this(resourcePath, mimeType, alt, "", Optional.empty(), Optional.empty());
     }
 
     /** Convenience — with caption, no intrinsic dimensions. */
-    public static ImageDoc of(String resourcePath, String mimeType, String alt, String caption) {
-        return new ImageDoc(resourcePath, mimeType, alt, caption,
-                Optional.empty(), Optional.empty());
+    public ImageDoc(String resourcePath, String mimeType, String alt, String caption) {
+        this(resourcePath, mimeType, alt, caption, Optional.empty(), Optional.empty());
     }
 
     @Override public UUID uuid() {

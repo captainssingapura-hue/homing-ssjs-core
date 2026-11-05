@@ -13,7 +13,7 @@ import java.util.TreeSet;
  * RFC 0044 — a build/dev-time authoring aid for the Crate rollout (NOT part of
  * conformance itself). Given any class in a Maven module, it prints paste-ready
  * {@code entries()} for that module's crate: the {@code import} lines and one
- * {@code CrateEntry.of(Xxx.INSTANCE)} per served module (falling back to
+ * {@code new CrateEntry(Xxx.INSTANCE)} per served module (falling back to
  * {@code new Xxx()} where a module has no {@code INSTANCE} field). The
  * OrphanCheck still guards completeness — this only removes the tedium of
  * hand-transcribing a large module's module list.
@@ -38,7 +38,7 @@ public final class CrateSeed {
             String ref = referenceExpression(fqcn, loader); // e.g. "TreeRendererModule.INSTANCE" or "new Foo()"
             String simple = topLevelSimpleName(fqcn);
             imports.add("import " + topLevelName(fqcn) + ";");
-            lines.add("                CrateEntry.of(" + ref + "),");
+            lines.add("                new CrateEntry(" + ref + "),");
         }
         if (!lines.isEmpty()) {
             String last = lines.get(lines.size() - 1);

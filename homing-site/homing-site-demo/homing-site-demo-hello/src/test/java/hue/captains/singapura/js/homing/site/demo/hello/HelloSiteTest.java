@@ -17,28 +17,28 @@ class HelloSiteTest {
     @Test
     void theThreeArms() {
         assertSame(HomePage.INSTANCE,  ROUTER.resolve(Path.ROOT).orElseThrow());
-        assertSame(AboutPage.INSTANCE, ROUTER.resolve(Path.of("about")).orElseThrow());
-        assertSame(GreetPage.FROM_QUERY, ROUTER.resolve(Path.of("greet")).orElseThrow());
-        assertEquals(GreetPage.bound("Grace"), ROUTER.resolve(Path.of("greet", "Grace")).orElseThrow());
+        assertSame(AboutPage.INSTANCE, ROUTER.resolve(new Path("about")).orElseThrow());
+        assertSame(GreetPage.FROM_QUERY, ROUTER.resolve(new Path("greet")).orElseThrow());
+        assertEquals(GreetPage.bound("Grace"), ROUTER.resolve(new Path("greet", "Grace")).orElseThrow());
     }
 
     @Test
     void theMisses() {
-        assertTrue(ROUTER.resolve(Path.of("nowhere")).isEmpty());
-        assertTrue(ROUTER.resolve(Path.of("about", "more")).isEmpty());
-        assertTrue(ROUTER.resolve(Path.of("greet", "a", "b")).isEmpty());
+        assertTrue(ROUTER.resolve(new Path("nowhere")).isEmpty());
+        assertTrue(ROUTER.resolve(new Path("about", "more")).isEmpty());
+        assertTrue(ROUTER.resolve(new Path("greet", "a", "b")).isEmpty());
     }
 
     @Test
     void aNameFromTheQuery() {
-        var body = GreetPage.FROM_QUERY.html(Query.of("name", "Ada")).body();
+        var body = GreetPage.FROM_QUERY.html(new Query("name", "Ada")).body();
         assertTrue(body.contains("<h1>Hello, Ada.</h1>"), body);
         assertTrue(body.contains("read from the query"), body);
     }
 
     @Test
     void aNameBoundOffThePathWinsOverTheQuery() {
-        var body = GreetPage.bound("Grace").html(Query.of("name", "Ada")).body();
+        var body = GreetPage.bound("Grace").html(new Query("name", "Ada")).body();
         assertTrue(body.contains("<h1>Hello, Grace.</h1>"), body);
         assertTrue(body.contains("bound off the path"), body);
     }
@@ -51,7 +51,7 @@ class HelloSiteTest {
 
     @Test
     void aNameIsEscapedOnTheWayIntoThePage() {
-        var body = GreetPage.FROM_QUERY.html(Query.of("name", "<b>x</b>")).body();
+        var body = GreetPage.FROM_QUERY.html(new Query("name", "<b>x</b>")).body();
         assertTrue(body.contains("Hello, &lt;b&gt;x&lt;/b&gt;."), body);
         assertTrue(!body.contains("<b>x</b>"), body);
     }

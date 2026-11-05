@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class RuleModelTest {
 
     private static ServedModule served(String cls, JsModuleType type, String... lines) {
-        return new ServedModule(cls, type, JsSource.of(lines));
+        return new ServedModule(cls, type, new JsSource(lines));
     }
 
     @Test
@@ -74,9 +74,9 @@ class RuleModelTest {
 
     @Test
     void servedModuleCarriesTheCompleteText() {
-        var m = ServedModule.of("demo.X", StandardJsModuleType.CONSUMER, "line1\nline2\nline3");
+        var m = new ServedModule("demo.X", StandardJsModuleType.CONSUMER, "line1\nline2\nline3");
         assertEquals("line1\nline2\nline3", m.text());
         assertEquals(3, m.lines().size());
-        assertSame(JsSource.EMPTY, new ServedModule("demo.Y", StandardJsModuleType.CONSUMER, null).content());
+        assertSame(JsSource.EMPTY, new ServedModule("demo.Y", StandardJsModuleType.CONSUMER, (JsSource) null).content());
     }
 }

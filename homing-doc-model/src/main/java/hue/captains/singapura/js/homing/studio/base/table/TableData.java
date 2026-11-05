@@ -68,8 +68,8 @@ public record TableData(List<Cell> headers, List<List<Cell>> rows) implements Sc
         }
 
         /** Convenience — plain cell with default colspan/rowspan and no styling. */
-        public static Cell of(String text) {
-            return new Cell(text, 1, 1, null, null);
+        public Cell(String text) {
+            this(text, 1, 1, null, null);
         }
 
         /** Convenience — cell with the given badge. */
@@ -98,12 +98,12 @@ public record TableData(List<Cell> headers, List<List<Cell>> rows) implements Sc
         if (lines.length == 0 || (lines.length == 1 && lines[0].isBlank())) {
             return new TableData(List.of(), List.of());
         }
-        var headers = parseCsvLine(lines[0]).stream().map(Cell::of).toList();
+        var headers = parseCsvLine(lines[0]).stream().map(Cell::new).toList();
         var rows = new ArrayList<List<Cell>>(lines.length - 1);
         for (int i = 1; i < lines.length; i++) {
             String line = lines[i];
             if (line.isBlank()) continue;
-            rows.add(parseCsvLine(line).stream().map(Cell::of).toList());
+            rows.add(parseCsvLine(line).stream().map(Cell::new).toList());
         }
         return new TableData(headers, rows);
     }

@@ -9,7 +9,7 @@ import java.util.List;
  *
  * <pre>{@code
  * public record Slider() implements BranchComponent<SliderModule>, NeedKeyboard {
- *     @Override public List<KeyBinding> keys() { return List.of(KeyBinding.of(Key.ARROW_UP, "a step up"), ...); }
+ *     @Override public List<KeyBinding> keys() { return List.of(new KeyBinding(Key.ARROW_UP, "a step up"), ...); }
  * }
  * }</pre>
  *

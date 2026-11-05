@@ -64,7 +64,7 @@ class DeclaredDebtsTest {
 
     @Test
     void aDebtIsOwedExactly_neverMore_andLoweredAsItIsPaid() {
-        var crates = List.of(new OneEntry(CrateEntry.of(IndebtedModule.INSTANCE)));
+        var crates = List.of(new OneEntry(new CrateEntry(IndebtedModule.INSTANCE)));
         var widget = finding(WidgetDrawsOnlyComponentsRule.INSTANCE);
         var inline = finding(NoInlineStyleRule.INSTANCE);
         assertEquals(List.of(), DeclaredDebts.INSTANCE.unbalanced(crates, List.of(inline, widget, widget)), "as declared");

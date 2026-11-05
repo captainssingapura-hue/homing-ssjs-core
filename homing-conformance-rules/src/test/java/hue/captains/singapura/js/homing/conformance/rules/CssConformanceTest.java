@@ -28,7 +28,7 @@ class CssConformanceTest {
     record BaseCrate() implements Crate {
         static final BaseCrate INSTANCE = new BaseCrate();
         @Override public String name() { return "base"; }
-        @Override public List<CrateEntry> entries() { return List.of(CrateEntry.of(Base.INSTANCE)); }
+        @Override public List<CrateEntry> entries() { return List.of(new CrateEntry(Base.INSTANCE)); }
     }
 
     record Good() implements CssGroup<Good> {
@@ -47,7 +47,7 @@ class CssConformanceTest {
         static final GoodCrate INSTANCE = new GoodCrate();
         @Override public String name() { return "good"; }
         @Override public List<Crate> requires() { return List.of(BaseCrate.INSTANCE); }
-        @Override public List<CrateEntry> entries() { return List.of(CrateEntry.of(Good.INSTANCE)); }
+        @Override public List<CrateEntry> entries() { return List.of(new CrateEntry(Good.INSTANCE)); }
     }
 
     record Bad() implements CssGroup<Bad> {
@@ -61,7 +61,7 @@ class CssConformanceTest {
     record BadCrate() implements Crate {
         static final BadCrate INSTANCE = new BadCrate();
         @Override public String name() { return "bad"; }
-        @Override public List<CrateEntry> entries() { return List.of(CrateEntry.of(Bad.INSTANCE)); }
+        @Override public List<CrateEntry> entries() { return List.of(new CrateEntry(Bad.INSTANCE)); }
     }
 
     static List<Finding> of(RuleId rule, List<Finding> all) { return all.stream().filter(f -> f.rule().equals(rule)).toList(); }
@@ -92,7 +92,7 @@ class CssConformanceTest {
     void crateReach_refusesDependingOnAGroupOfACrateNotRequired() {
         record Loose() implements Crate {
             @Override public String name() { return "loose"; }
-            @Override public List<CrateEntry> entries() { return List.of(CrateEntry.of(Good.INSTANCE)); }
+            @Override public List<CrateEntry> entries() { return List.of(new CrateEntry(Good.INSTANCE)); }
         }
         var findings = of(CssConformance.CRATE_REACH, CssConformance.check(List.of(BaseCrate.INSTANCE, new Loose())));
         assertEquals(1, findings.size(), findings.toString());

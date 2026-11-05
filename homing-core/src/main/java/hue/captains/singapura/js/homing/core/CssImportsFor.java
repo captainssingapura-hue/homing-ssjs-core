@@ -27,7 +27,11 @@ public record CssImportsFor<C extends CssGroup<C>>(
 ) {
 
     /** The derivation. One group per dependency class's enclosing group, deduplicated by class. */
-    public static <C extends CssGroup<C>> CssImportsFor<C> of(C group) {
+    public CssImportsFor(C group) {
+        this(group, dependencies(group));
+    }
+
+    private static <C extends CssGroup<C>> List<CssGroup<?>> dependencies(C group) {
         List<CssGroup<?>> groups = new ArrayList<>();
         for (CssClass<C> cls : group.cssClasses()) {
             var depGroups = new ArrayList<CssGroup<?>>();
@@ -39,12 +43,12 @@ public record CssImportsFor<C extends CssGroup<C>>(
                 if (!seen) groups.add(g);
             }
         }
-        return new CssImportsFor<>(group, List.copyOf(groups));
+        return List.copyOf(groups);
     }
 
     /** The derivation for a group whose self-type is not in hand. */
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static List<CssGroup<?>> dependenciesOf(CssGroup<?> group) {
-        return of((CssGroup) group).imports();
+        return dependencies((CssGroup) group);
     }
 }

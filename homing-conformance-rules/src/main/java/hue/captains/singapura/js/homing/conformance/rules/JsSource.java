@@ -27,8 +27,8 @@ public record JsSource(List<String> lines) {
     }
 
     /** A segment from explicit lines. */
-    public static JsSource of(String... lines) {
-        return new JsSource(List.of(lines));
+    public JsSource(String... lines) {
+        this(List.of(lines));
     }
 
     /** The segment as a single string, lines rejoined with {@code '\n'}. */

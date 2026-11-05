@@ -75,7 +75,7 @@ public sealed interface Catalogue<Self extends Catalogue<Self>>
      * {@code mpa.page(app, params)} - so that every page of a site, whichever
      * tree placed it, wears the site's one chrome, themes and preferences. A
      * catalogue stays a stateless singleton that knows no site: the site reads
-     * its tree with its MPA ({@link CatalogueTree#of(L0_Catalogue, Mpa)}) and
+     * its tree with its MPA ({@link CatalogueTree#CatalogueTree(L0_Catalogue, Mpa)}) and
      * the MPA is handed in here. Unless overridden, the pages that need no
      * site: {@link #leaves()}.
      */

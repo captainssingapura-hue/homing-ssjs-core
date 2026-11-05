@@ -14,5 +14,5 @@ public record Brand(String label, String home) {
     }
 
     /** A brand with this label, linking to {@code /}. */
-    public static Brand of(String label) { return new Brand(label, "/"); }
+    public Brand(String label) { this(label, "/"); }
 }

@@ -48,8 +48,8 @@ public final class StyleFamilies {
     }
 
     /** A styling's family files as this process reads them: dev mode by {@code homing.devRoot}, else the classpath's. */
-    public static StyleFamilies of(Styling styling) {
-        return new StyleFamilies(styling, ResourceReader.fromSystemProperty(), StyleFamilies.class.getClassLoader());
+    public StyleFamilies(Styling styling) {
+        this(styling, ResourceReader.fromSystemProperty(), StyleFamilies.class.getClassLoader());
     }
 
     /** Whether each file is made afresh from the file system. */
