@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.conformance.engine;
 
 import hue.captains.singapura.js.homing.conformance.rules.ServedModule;
+import hue.captains.singapura.js.homing.core.DesignRenderer;
 import hue.captains.singapura.js.homing.core.EsModule;
 import hue.captains.singapura.js.homing.core.JsModuleType;
 import hue.captains.singapura.js.homing.server.EsModuleGetAction;
@@ -24,6 +25,11 @@ public final class ServedModuleRenderer {
 
     public ServedModuleRenderer() {
         this(new EsModuleGetAction(new QueryParamResolver()));
+    }
+
+    /** Renders what a design makes too, as a site given this design serves it. */
+    public ServedModuleRenderer(DesignRenderer design) {
+        this(new EsModuleGetAction(new QueryParamResolver(), design));
     }
 
     public ServedModuleRenderer(EsModuleGetAction serving) {

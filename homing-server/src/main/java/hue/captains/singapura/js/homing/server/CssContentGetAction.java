@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.server;
 import hue.captains.singapura.js.homing.core.Component;
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
+import hue.captains.singapura.js.homing.core.CssRenderer;
 import hue.captains.singapura.js.homing.core.DerivedCss;
 import hue.captains.singapura.js.homing.core.Layer;
 import hue.captains.singapura.js.homing.core.Layers;
@@ -25,9 +26,9 @@ import java.util.concurrent.CompletableFuture;
  * {@code selector { body }} in its {@code @layer}: the same in every theme, so a
  * theme on the request is ignored and none is needed. A derived sheet is its
  * renderer's, under the slug asked for by the name of what it varies with - the
- * theme, the style or the palette, the others ignored - else its own fallback,
- * else, for one varying with the theme, the default theme (RFC 0064, D25; RFC
- * 0067, appendix Two Classes per Leaf).</p>
+ * theme, the style or the palette, the others ignored - else the fallback a
+ * renderer says, else its own, else, for one varying with the theme, the default
+ * theme (RFC 0064, D25; RFC 0067, appendix Two Classes per Leaf).</p>
  *
  * <p>Hard cut: unknown {@code class} or {@code theme} returns 404. No
  * file-based fallback (RFC 0002 §3.6).</p>
@@ -73,6 +74,15 @@ public class CssContentGetAction
         return ctx -> new EmptyParam.NoHeaders();
     }
 
+    /** The slug a sheet is served under when the request names none: the first a renderer says, else its own, else none. */
+    private String fallback(DerivedCss<?> sheet) {
+        for (CssRenderer r : renderers) {
+            var said = r.fallback(sheet);
+            if (said.isPresent()) return said.get();
+        }
+        return sheet.fallback().orElse(null);
+    }
+
     @Override
     public CompletableFuture<CssContent> execute(CssQuery query, EmptyParam.NoHeaders headers) {
         if (query.className() == null || query.className().isBlank()) {
@@ -91,7 +101,7 @@ public class CssContentGetAction
 
             DerivedCss.VariesWith varies = sheet.variesWith();
             String slug = query.slugFor(varies);
-            if (slug == null) slug = sheet.fallback().orElse(null);
+            if (slug == null) slug = fallback(sheet);
             if (slug == null && varies == DerivedCss.VariesWith.THEME && defaultTheme != null) slug = defaultTheme.slug();
             if (slug == null) {
                 return CompletableFuture.failedFuture(ResourceNotFound.forClass(

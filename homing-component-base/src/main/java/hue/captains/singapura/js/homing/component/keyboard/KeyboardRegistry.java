@@ -8,6 +8,7 @@ import hue.captains.singapura.js.homing.core.CssGroup;
 import hue.captains.singapura.js.homing.core.DerivedCss;
 import hue.captains.singapura.js.homing.core.DomModule;
 import hue.captains.singapura.js.homing.core.EsModule;
+import hue.captains.singapura.js.homing.core.MadeByDesign;
 import hue.captains.singapura.js.homing.core.SelfContent;
 import hue.captains.singapura.js.homing.core.util.ReadContentFromResources;
 
@@ -125,12 +126,12 @@ public record KeyboardRegistry(Map<UiComponent<?>, List<KeyBinding>> byComponent
         return List.copyOf(out);
     }
 
-    /** Whether the module's own JS adds a key listener; a self-content or CSS module has none, and the steward, the party's one face to the document, is the exception by definition. */
+    /** Whether the module's own JS adds a key listener; a self-content, design-made or CSS module has none, and the steward, the party's one face to the document, is the exception by definition. */
     static boolean listensToKeys(EsModule<?> m) { return !keyListenerLines(m).isEmpty(); }
 
-    /** The lines of the module's own JS that register a key listener, in any form; none for the steward, a self-content or a CSS module. */
+    /** The lines of the module's own JS that register a key listener, in any form; none for the steward, a self-content, design-made or CSS module. */
     static List<String> keyListenerLines(EsModule<?> m) {
-        if (m instanceof SelfContent || m instanceof CssGroup<?> || m instanceof DerivedCss<?> || m instanceof KeyboardStewardModule) return List.of();
+        if (m instanceof SelfContent || m instanceof MadeByDesign || m instanceof CssGroup<?> || m instanceof DerivedCss<?> || m instanceof KeyboardStewardModule) return List.of();
         try {
             var out = new ArrayList<String>();
             for (String line : new ReadContentFromResources<>(m).content()) if (OWN_KEYS.matcher(line).find()) out.add(line);

@@ -1,6 +1,4 @@
-package hue.captains.singapura.js.homing.server;
-
-import hue.captains.singapura.js.homing.core.DerivedCss;
+package hue.captains.singapura.js.homing.core;
 
 import java.util.Optional;
 
@@ -12,7 +10,7 @@ import java.util.Optional;
  * never learns what a design is — a renderer does, on the design side, and
  * hands back CSS.
  *
- * <p>A sheet that renders itself is its own renderer ({@link SelfRenderedCssRenderer}).</p>
+ * <p>A sheet that renders itself is its own renderer ({@code SelfRenderedCssRenderer}).</p>
  */
 public interface CssRenderer {
 
@@ -21,4 +19,7 @@ public interface CssRenderer {
 
     /** Whether this renderer derives the sheet at all. */
     boolean owns(DerivedCss<?> sheet);
+
+    /** What this renderer serves the sheet under when nothing names a slug, if it says; none unless it does. */
+    default Optional<String> fallback(DerivedCss<?> sheet) { return Optional.empty(); }
 }

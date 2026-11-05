@@ -3,6 +3,9 @@ package hue.captains.singapura.js.homing.server;
 import hue.captains.singapura.js.homing.core.ModuleNameResolver;
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CssGroup;
+import hue.captains.singapura.js.homing.core.CssRenderer;
+import hue.captains.singapura.js.homing.core.DesignRenderer;
+import hue.captains.singapura.js.homing.core.NoDesign;
 import hue.captains.singapura.js.homing.core.SimpleAppResolver;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.util.ResourceReader;
@@ -60,6 +63,13 @@ public class HomingActionRegistry implements ActionRegistry<RoutingContext> {
     public HomingActionRegistry(ModuleNameResolver nameResolver, SimpleAppResolver appResolver,
                                 ResourceReader resourceReader, ThemeRegistry themeRegistry,
                                 AppMeta meta, java.util.Collection<? extends Crate> crates) {
+        this(nameResolver, appResolver, resourceReader, themeRegistry, meta, crates, NoDesign.INSTANCE);
+    }
+
+    /** As with {@code crates}, with what the site's design makes, for {@code /module} and {@code /css-content} to ask. */
+    public HomingActionRegistry(ModuleNameResolver nameResolver, SimpleAppResolver appResolver,
+                                ResourceReader resourceReader, ThemeRegistry themeRegistry,
+                                AppMeta meta, java.util.Collection<? extends Crate> crates, DesignRenderer design) {
         if (themeRegistry == null) themeRegistry = ThemeRegistry.EMPTY;
         if (meta == null) meta = AppMeta.DEFAULT;
         this.appAction = new AppHtmlGetAction(nameResolver, appResolver, themeRegistry, meta);
@@ -69,13 +79,14 @@ public class HomingActionRegistry implements ActionRegistry<RoutingContext> {
         // sheet that renders itself is asked first: it is nobody else's.
         var renderers = new java.util.ArrayList<CssRenderer>();
         renderers.add(SelfRenderedCssRenderer.INSTANCE);
+        renderers.add(design);
         // The first theme listed is the default: what a derived sheet requested
         // without ?theme= is rendered under, and what each module that loads one
         // hands the theme's owner as its fallback. RFC 0002 §3.6 still holds: no
         // file-based fallback.
         Theme defaultTheme = themeRegistry.themes().isEmpty() ? null : themeRegistry.themes().get(0);
         this.moduleAction = new EsModuleGetAction(nameResolver, resourceReader, served,
-                defaultTheme == null ? null : defaultTheme.slug());
+                defaultTheme == null ? null : defaultTheme.slug(), design);
         // A provided group renders from its inline bodies; a derived sheet is the
         // renderers'.
         this.cssContentAction = new CssContentGetAction(defaultTheme, served, renderers);

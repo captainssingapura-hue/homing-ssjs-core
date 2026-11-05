@@ -17,6 +17,7 @@ public record ModuleForms() implements StatelessFunctionalObject, StatelessSingl
         if (module instanceof SvgGroup<?>)              return ModuleForm.SVG_GROUP;
         if (module instanceof CssGroup<?>)              return ModuleForm.CSS_GROUP;
         if (module instanceof DerivedCss<?>)            return ModuleForm.DERIVED_CSS;
+        if (module instanceof MadeByDesign)             return ModuleForm.SELF_CONTENT;
         if (module instanceof SelfContent)              return ModuleForm.SELF_CONTENT;
         return ModuleForm.RESOURCE_BACKED;
     }

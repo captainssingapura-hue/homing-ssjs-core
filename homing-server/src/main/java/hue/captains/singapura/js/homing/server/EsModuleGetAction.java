@@ -11,6 +11,7 @@ import io.vertx.ext.web.RoutingContext;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 public class EsModuleGetAction
@@ -32,12 +33,20 @@ public class EsModuleGetAction
     /** The deployment's default theme slug, written into each module that loads a derived sheet as the theme owner's fallback; null when there is none. */
     private final String defaultTheme;
 
+    /** What the site's design makes: the modules made from it, and what its sheets fall back to. */
+    private final DesignRenderer design;
+
     public EsModuleGetAction(ModuleNameResolver nameResolver) {
         this(nameResolver, ResourceReader.CLASSPATH);
     }
 
     public EsModuleGetAction(ModuleNameResolver nameResolver, ResourceReader resourceReader) {
         this(nameResolver, resourceReader, ServedModules.NONE);
+    }
+
+    /** For rendering in-process, with what is made from a design. */
+    public EsModuleGetAction(ModuleNameResolver nameResolver, DesignRenderer design) {
+        this(nameResolver, ResourceReader.CLASSPATH, ServedModules.NONE, null, design);
     }
 
     /** With the modules a deployment serves, pre-registered by canonical name from its crates. */
@@ -48,10 +57,17 @@ public class EsModuleGetAction
     /** @param defaultTheme the deployment's default theme slug, the theme owner's fallback; null when there is none */
     public EsModuleGetAction(ModuleNameResolver nameResolver, ResourceReader resourceReader,
                              ServedModules served, String defaultTheme) {
+        this(nameResolver, resourceReader, served, defaultTheme, NoDesign.INSTANCE);
+    }
+
+    /** @param design what the site's design makes */
+    public EsModuleGetAction(ModuleNameResolver nameResolver, ResourceReader resourceReader,
+                             ServedModules served, String defaultTheme, DesignRenderer design) {
         this.nameResolver = nameResolver;
         this.resourceReader = resourceReader;
         this.served = served == null ? ServedModules.NONE : served;
         this.defaultTheme = defaultTheme;
+        this.design = Objects.requireNonNull(design, "EsModuleGetAction.design");
     }
 
     @Override
@@ -131,7 +147,12 @@ public class EsModuleGetAction
         } else if (module instanceof DerivedCss) {
             @SuppressWarnings("rawtypes")
             DerivedCss derived = (DerivedCss) module;
-            contentProvider = (ContentProvider<M>) new DerivedCssContentProvider<>(derived, defaultTheme, nameResolver);
+            contentProvider = (ContentProvider<M>) new DerivedCssContentProvider<>(derived, defaultTheme, nameResolver, design);
+        } else if (module instanceof MadeByDesign) {
+            // What a design makes is the design's: a server given none has nothing to serve, and no file to read it from.
+            var made = design.script(module).orElseThrow(() -> new IllegalStateException(
+                    module.getClass().getName() + " is made from a site's design, and this server was given none"));
+            contentProvider = () -> made;
         } else if (module instanceof SelfContent self) {
             // Generic self-providing module: the type emits its own JS body.
             // Used by DocGroup (in homing-studio-base) and any future self-contained types

@@ -23,7 +23,7 @@ public enum ModuleForm {
     CSS_GROUP,
     /** Java-emitted derived sheet (no {@code .js} resource): rendered for each theme. */
     DERIVED_CSS,
-    /** Java-emitted module content via {@link SelfContent} (no {@code .js} resource). */
+    /** Java-emitted module content via {@link SelfContent}, or a design's via {@link MadeByDesign} (no {@code .js} resource). */
     SELF_CONTENT,
     /** Content read from a {@code homing/js/<fqcn>.js} classpath resource. */
     RESOURCE_BACKED
