@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.ssjs.test;
 
+import hue.captains.singapura.tao.ontology.Mutable;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
@@ -73,8 +74,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  *     }
  * }
  * }</pre>
+ *
+ * <p>Mutable by design: a test's JS context is made, replaced and closed while the test runs, so this base, and every
+ * test built on it, says so.</p>
  */
-public abstract class JsModuleTestBase {
+public abstract class JsModuleTestBase implements Mutable {
 
     /** The live JS context for the current test — null between tests. */
     protected Context js;
