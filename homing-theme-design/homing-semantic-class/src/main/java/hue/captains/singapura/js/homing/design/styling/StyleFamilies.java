@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * ({@link StyleManager#family}). Read as the modules' scripts are: in dev mode - {@code homing.devRoot} naming the
  * source folders ({@link ResourceReader}) - made afresh on every read from the casting files as they are on the file
  * system; deployed, the files the instance's jar was built with ({@link WriteStyleFamilies}), from the classpath -
- * refused when the styling installed is not the one they were made from.
+ * refused when this styling is not the one they were made from.
  */
 public final class StyleFamilies {
 
@@ -101,7 +101,7 @@ public final class StyleFamilies {
         Optional<String> built = classpath(INDEX);
         if (built.isEmpty()) return "no family files are on the classpath (" + INDEX + "): the instance's jar writes them when it is "
                 + "built (WriteStyleFamilies), or a site reads them made afresh in dev mode, homing.devRoot naming its source folders";
-        if (!built.get().equals(index())) return "the family files on the classpath were made from another styling than the one installed: "
+        if (!built.get().equals(index())) return "the family files on the classpath were made from another styling than this one: "
                 + "the instance's jar wrote them for its own; read them in dev mode, or build the jar of this instance";
         return "";
     }
