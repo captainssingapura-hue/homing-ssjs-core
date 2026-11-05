@@ -30,13 +30,15 @@ public record NoRawCssRule() implements JsRule {
 
     public static final NoRawCssRule INSTANCE = new NoRawCssRule();
 
-    private static final List<Pattern> RAW_CSS = List.of(
+    private List<Pattern> rawCss() {
+        return List.of(
             Pattern.compile("\\.className\\s*="),
             Pattern.compile("\\.classList\\s*\\.\\s*add\\s*\\("),
             Pattern.compile("\\.classList\\s*\\.\\s*remove\\s*\\("),
             Pattern.compile("\\.classList\\s*\\.\\s*toggle\\s*\\("),
             Pattern.compile("\\.classList\\s*\\.\\s*replace\\s*\\("),
             Pattern.compile("\\.classList\\s*\\.\\s*contains\\s*\\("));
+    }
 
     // A <style> element minted from JS — raw (document.createElement('style'))
     // or branch-minted (branch.createElement(name, 'style')). Either way the
@@ -53,6 +55,7 @@ public record NoRawCssRule() implements JsRule {
         var findings = new ArrayList<Finding>();
         List<String> raw = module.lines();
         List<String> stripped = JsText.stripComments(raw);
+        List<Pattern> rawCss = rawCss();
         for (int i = 0; i < stripped.size(); i++) {
             String line = stripped.get(i);
             if (STYLE_ELEMENT.matcher(line).find()) {
@@ -61,7 +64,7 @@ public record NoRawCssRule() implements JsRule {
                                 + raw.get(i).trim(), i));
                 continue;
             }
-            for (Pattern p : RAW_CSS) {
+            for (Pattern p : rawCss) {
                 if (p.matcher(line).find()) {
                     findings.add(new Finding(module.moduleClass(), id(),
                             "raw CSS operation (use css.* API): " + raw.get(i).trim(), i));

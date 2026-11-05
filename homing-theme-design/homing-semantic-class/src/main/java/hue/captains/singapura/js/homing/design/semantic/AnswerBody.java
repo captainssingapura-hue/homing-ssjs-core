@@ -46,11 +46,11 @@ public record AnswerBody() implements StatelessFunctionalObject {
     private static final Pattern WORD = Pattern.compile("[a-zA-Z][a-zA-Z0-9-]*");
     private static final Pattern FRAME = Pattern.compile("from|to|\\d+(\\.\\d+)?%");
 
-    /** The numbers an element sets on itself, which any body may read. */
-    private static final Set<String> DEGREES = Set.of(Extent.VAR, Growth.SIZE.var(), Growth.ASPECT.var());
-
-    /** CSS's named colours: a colour said by name is said all the same. */
-    private static final Set<String> NAMED = Set.of(("aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue "
+    private enum Words {
+        /** The numbers an element sets on itself, which any body may read. */
+        DEGREES(Set.of(Extent.VAR, Growth.SIZE.var(), Growth.ASPECT.var())),
+        /** CSS's named colours: a colour said by name is said all the same. */
+        NAMED(Set.of(("aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue "
             + "blueviolet brown burlywood cadetblue chartreuse chocolate coral cornflowerblue cornsilk crimson cyan darkblue darkcyan "
             + "darkgoldenrod darkgray darkgreen darkgrey darkkhaki darkmagenta darkolivegreen darkorange darkorchid darkred darksalmon "
             + "darkseagreen darkslateblue darkslategray darkslategrey darkturquoise darkviolet deeppink deepskyblue dimgray dimgrey "
@@ -63,7 +63,13 @@ public record AnswerBody() implements StatelessFunctionalObject {
             + "orchid palegoldenrod palegreen paleturquoise palevioletred papayawhip peachpuff peru pink plum powderblue purple "
             + "rebeccapurple red rosybrown royalblue saddlebrown salmon sandybrown seagreen seashell sienna silver skyblue "
             + "slateblue slategray slategrey snow springgreen steelblue tan teal thistle tomato turquoise violet wheat white "
-            + "whitesmoke yellow yellowgreen").split(" "));
+            + "whitesmoke yellow yellowgreen").split(" ")));
+
+        private final Set<String> all;
+
+        Words(Set<String> all) { this.all = all; }
+    }
+
 
     /**
      * Who may say what: a name for the messages, the properties it may declare - null for any but an animation's
@@ -170,7 +176,7 @@ public record AnswerBody() implements StatelessFunctionalObject {
         Matcher m = VAR.matcher(value);
         while (m.find()) {
             String name = m.group(1);
-            if (DEGREES.contains(name) || (target.owns() != null && target.owns().contains(name))) continue;
+            if (Words.DEGREES.all.contains(name) || (target.owns() != null && target.owns().contains(name))) continue;
             if (target.colouredBy().stream().anyMatch(c -> c.properties().contains(name))) continue;
             throw new IllegalArgumentException(target.who() + " reads " + name + ": it reads its degrees"
                     + (target.colouredBy().isEmpty() ? "" : " and " + String.join(", ", target.colouredBy().stream().map(Target::token).toList()) + "'s colours")
@@ -188,7 +194,7 @@ public record AnswerBody() implements StatelessFunctionalObject {
         else if (fn.find()) found = fn.group() + "...)";
         else {
             Matcher w = WORD.matcher(bare);
-            while (w.find()) if (NAMED.contains(w.group().toLowerCase(Locale.ROOT))) { found = w.group(); break; }
+            while (w.find()) if (Words.NAMED.all.contains(w.group().toLowerCase(Locale.ROOT))) { found = w.group(); break; }
         }
         if (found != null)
             throw new IllegalArgumentException(target.who() + " names a colour, " + found + ": colour is painted, never written"

@@ -61,7 +61,7 @@ public final class LibDownloader {
         Path cacheDir = Path.of(args[1]);
         Files.createDirectories(cacheDir);
 
-        List<BundledExternalModule<?>> libs = HomingLibsRegistry.ALL;
+        List<BundledExternalModule<?>> libs = HomingLibsRegistry.INSTANCE.all();
         if (libs.isEmpty()) {
             System.out.println("[homing-libs] no bundled libraries registered — nothing to download.");
             return;

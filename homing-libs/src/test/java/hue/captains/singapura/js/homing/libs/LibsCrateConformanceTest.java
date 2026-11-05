@@ -14,7 +14,7 @@ class LibsCrateConformanceTest {
     @Test
     void everyServedModuleIsCrated() {
         assertEquals(List.of(), OrphanCheck.check(LibsCrate.INSTANCE),
-                "every bundled module must be declared (via HomingLibsRegistry.ALL)");
+                "every bundled module must be declared (via HomingLibsRegistry.INSTANCE.all())");
     }
 
     @Test

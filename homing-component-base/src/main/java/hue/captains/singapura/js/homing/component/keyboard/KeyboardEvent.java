@@ -1,5 +1,8 @@
 package hue.captains.singapura.js.homing.component.keyboard;
 
+import hue.captains.singapura.js.homing.base.lang.StatelessSingleton;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
+
 import java.util.Objects;
 
 /**
@@ -54,10 +57,18 @@ public sealed interface KeyboardEvent {
      * member, and nothing is routed.
      */
     record Marked(String id, String state) implements KeyboardEvent {
-        public static final java.util.List<String> STATES = java.util.List.of("held", "lent", "away");
+        /** The states a mark says. */
+        public record States() implements StatelessFunctionalObject, StatelessSingleton {
+            public static final States INSTANCE = new States();
+
+            /** Every state, as the JS side says it. */
+            public java.util.List<String> all() { return java.util.List.of("held", "lent", "away"); }
+        }
+
         public Marked {
             requireId(id, "Marked.id");
-            if (!STATES.contains(state)) throw new IllegalArgumentException("Marked.state must be one of " + STATES + ": " + state);
+            var states = States.INSTANCE.all();
+            if (!states.contains(state)) throw new IllegalArgumentException("Marked.state must be one of " + states + ": " + state);
         }
     }
 }

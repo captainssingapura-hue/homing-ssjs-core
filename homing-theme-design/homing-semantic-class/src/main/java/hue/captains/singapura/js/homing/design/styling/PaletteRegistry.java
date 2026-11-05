@@ -14,7 +14,7 @@ import java.util.Objects;
  * its declaration ({@link PaletteDeclaration}) - registered at bootstrap, the default palette the first jar's first,
  * over the instance's schemes ({@link SchemeRegistry}). It stands apart from the styles: neither a style nor a scheme
  * knows a palette, and a palette of a scheme no style requires may be registered - nothing wears it. A pure record of
- * its jars and the schemes: made only when every rule it is held to finds nothing ({@link PaletteRule#RULES}, each
+ * its jars and the schemes: made only when every rule it is held to finds nothing ({@link PaletteRule}, each
  * applied apart), refused otherwise with every problem at once. What is worked out of it - its palettes, one by its
  * token, the tree each is written over - is {@link RegisteredPalettes}'.
  *
@@ -27,7 +27,8 @@ public record PaletteRegistry(List<PaletteDeclaration> jars, SchemeRegistry sche
         jars = List.copyOf(jars);
         Objects.requireNonNull(schemes, "PaletteRegistry.schemes");
         final List<PaletteDeclaration> registered = jars;
-        Validation found = Validations.INSTANCE.all(PaletteRule.RULES, rule -> rule.check(registered, schemes));
+        Validation found = Validations.INSTANCE.all(List.<PaletteRule>of(new PaletteRule.RegistersSome(), new PaletteRule.NoJarTwice(), new PaletteRule.OneTokenEach(), new PaletteRule.EachSaysItsScheme(),
+            new PaletteRule.OfARegisteredScheme(), new PaletteRule.WholeOverItsScheme(), new PaletteRule.SittingOnRegistered()), rule -> rule.check(registered, schemes));
         if (found instanceof Validation.Invalid invalid)
             throw new IllegalArgumentException("the instance's palettes are refused:\n  " + String.join("\n  ", invalid.problems()));
     }

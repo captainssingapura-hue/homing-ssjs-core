@@ -43,13 +43,17 @@ public record DefaultJsRulePolicy() implements JsRulePolicy, StatelessFunctional
      * The <b>global</b> layer — rules every non-exempt module is held to, whatever
      * its type. This is the shared root every type's rule set is composed from.
      */
-    public static final List<JsRule> GLOBAL = List.of(
+    public List<JsRule> global() {
+        return List.of(
             NoCdnImportRule.INSTANCE,
             MaxEffectiveLinesRule.INSTANCE);
+    }
 
     /** DOM owners: global + may-not-wipe branch-owned DOM. */
-    private static final List<JsRule> DOM_DISCIPLINE = concat(GLOBAL,
+    private List<JsRule> domDiscipline() {
+        return concat(global(),
             NoDomDestructionRule.INSTANCE);
+    }
 
     /**
      * The full <b>DOM-owner</b> discipline, shared by {@code CONSUMER} and
@@ -65,7 +69,8 @@ public record DefaultJsRulePolicy() implements JsRulePolicy, StatelessFunctional
      * — is about runtime behaviour, not a pattern a line scan can validate, so it
      * is doctrine rather than a rule.</p>
      */
-    public static final List<JsRule> DOM_OWNER_DISCIPLINE = concat(DOM_DISCIPLINE,
+    public List<JsRule> domOwnerDiscipline() {
+        return concat(domDiscipline(),
             ExportsAreClassesRule.INSTANCE,
             NoRawCssRule.INSTANCE,
             NoInlineStyleRule.INSTANCE,
@@ -76,17 +81,22 @@ public record DefaultJsRulePolicy() implements JsRulePolicy, StatelessFunctional
             NoManagerRedeclarationRule.INSTANCE,
             ViewDoctrineRule.INSTANCE,
             KeysThroughThePartyRule.INSTANCE);
+    }
 
     /**
      * A widget: the DOM-owner discipline, and it draws nothing but components - it makes, holds and
      * touches no element of its own (Designed by construction, in the widget doctrine).
      */
-    public static final List<JsRule> WIDGET_DISCIPLINE = concat(DOM_OWNER_DISCIPLINE,
+    public List<JsRule> widgetDiscipline() {
+        return concat(domOwnerDiscipline(),
             WidgetDrawsOnlyComponentsRule.INSTANCE);
+    }
 
     /** No-DOM modules: global + may-not-touch-the-DOM-at-all — the <b>headless lane</b>. */
-    public static final List<JsRule> NO_DOM = concat(GLOBAL,
+    public List<JsRule> noDom() {
+        return concat(global(),
             NoDomAccessRule.INSTANCE);
+    }
 
     /**
      * Pure logic that is not a secretary: headless, and its exports are classes
@@ -94,23 +104,25 @@ public record DefaultJsRulePolicy() implements JsRulePolicy, StatelessFunctional
      * secretary is the one headless module whose export is a function by
      * doctrine (a reducer body), so it keeps the headless lane alone.
      */
-    public static final List<JsRule> PURE_LOGIC_DISCIPLINE = concat(NO_DOM,
+    public List<JsRule> pureLogicDiscipline() {
+        return concat(noDom(),
             ExportsAreClassesRule.INSTANCE);
+    }
 
     private static final JsRuleSet CONSUMER =
-            new JsRuleSet(new RuleSetId("consumer"), "Consumer", DOM_OWNER_DISCIPLINE);
+            new JsRuleSet(new RuleSetId("consumer"), "Consumer", INSTANCE.domOwnerDiscipline());
     private static final JsRuleSet PRIMITIVE =
-            new JsRuleSet(new RuleSetId("primitive"), "Primitive", DOM_OWNER_DISCIPLINE);
+            new JsRuleSet(new RuleSetId("primitive"), "Primitive", INSTANCE.domOwnerDiscipline());
     private static final JsRuleSet SECRETARY =
-            new JsRuleSet(new RuleSetId("secretary"), "Secretary", NO_DOM);
+            new JsRuleSet(new RuleSetId("secretary"), "Secretary", INSTANCE.noDom());
     private static final JsRuleSet PURE_LOGIC =
-            new JsRuleSet(new RuleSetId("pure-logic"), "Pure logic", PURE_LOGIC_DISCIPLINE);
+            new JsRuleSet(new RuleSetId("pure-logic"), "Pure logic", INSTANCE.pureLogicDiscipline());
     private static final JsRuleSet MANAGER_INJECTOR =
-            new JsRuleSet(new RuleSetId("manager-injector"), "ManagerInjector", GLOBAL);
+            new JsRuleSet(new RuleSetId("manager-injector"), "ManagerInjector", INSTANCE.global());
     private static final JsRuleSet GENERATED_CSS =
-            new JsRuleSet(new RuleSetId("generated-css"), "Generated CSS", GLOBAL);
+            new JsRuleSet(new RuleSetId("generated-css"), "Generated CSS", INSTANCE.global());
     private static final JsRuleSet WIDGET =
-            new JsRuleSet(new RuleSetId("widget"), "Widget", WIDGET_DISCIPLINE);
+            new JsRuleSet(new RuleSetId("widget"), "Widget", INSTANCE.widgetDiscipline());
     private static final JsRuleSet BUNDLED_EXTERNAL =
             JsRuleSet.empty(new RuleSetId("bundled-external"), "Bundled external");
 
@@ -150,7 +162,7 @@ public record DefaultJsRulePolicy() implements JsRulePolicy, StatelessFunctional
      * takes when its modules build or style DOM (a game loop, a chart kit).
      */
     public static JsRuleSet domOwnerLane(RuleSetId id, String title, JsRule... own) {
-        return new JsRuleSet(id, title, concat(DOM_OWNER_DISCIPLINE, own));
+        return new JsRuleSet(id, title, concat(INSTANCE.domOwnerDiscipline(), own));
     }
 
     /**
@@ -159,7 +171,7 @@ public record DefaultJsRulePolicy() implements JsRulePolicy, StatelessFunctional
      * takes when its modules must never touch the DOM (a risk model, a codec).
      */
     public static JsRuleSet headlessLane(RuleSetId id, String title, JsRule... own) {
-        return new JsRuleSet(id, title, concat(NO_DOM, own));
+        return new JsRuleSet(id, title, concat(INSTANCE.noDom(), own));
     }
 
     private static List<JsRule> concat(List<JsRule> base, JsRule... extra) {

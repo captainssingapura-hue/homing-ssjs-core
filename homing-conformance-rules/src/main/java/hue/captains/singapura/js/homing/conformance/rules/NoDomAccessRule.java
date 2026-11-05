@@ -29,7 +29,8 @@ public record NoDomAccessRule() implements JsRule {
     public static final NoDomAccessRule INSTANCE = new NoDomAccessRule();
 
     /** Each entry: a short token name and the pattern that spots it. */
-    private static final List<Pattern> DOM_SIGNALS = List.of(
+    private List<Pattern> domSignals() {
+        return List.of(
             Pattern.compile("\\bdocument\\b"),
             Pattern.compile("\\.innerHTML\\b"),
             Pattern.compile("\\.outerHTML\\b"),
@@ -49,6 +50,7 @@ public record NoDomAccessRule() implements JsRule {
             Pattern.compile("\\.setAttribute\\b"),
             Pattern.compile("\\.getAttribute\\b"),
             Pattern.compile("\\.style\\."));
+    }
 
     @Override public RuleId      id()     { return new RuleId("no-dom-access"); }
     @Override public String      intent() { return "A no-DOM module (secretary / pure logic) must not reference the DOM at all."; }
@@ -59,8 +61,9 @@ public record NoDomAccessRule() implements JsRule {
         var findings = new ArrayList<Finding>();
         List<String> raw = module.lines();
         List<String> stripped = JsText.stripComments(raw);
+        List<Pattern> domSignals = domSignals();
         for (int i = 0; i < stripped.size(); i++) {
-            for (Pattern p : DOM_SIGNALS) {
+            for (Pattern p : domSignals) {
                 Matcher m = p.matcher(stripped.get(i));
                 if (m.find()) {
                     findings.add(new Finding(module.moduleClass(), id(),

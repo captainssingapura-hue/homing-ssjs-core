@@ -117,18 +117,18 @@ public class CssContentGetAction
 
         // Defect 0003 — cascade-layer declaration goes first so the browser
         // honours the ladder regardless of bundle load order.
-        sb.append(Layers.declaration()).append("\n\n");
+        sb.append(Layers.INSTANCE.declaration()).append("\n\n");
 
         // Per-class rules — grouped by the cascade tier each CssClass opts into
         // via InLayer<L>. Classes without an InLayer marker fall into
         // @layer component (the implicit default — see Layers.ofImplementor).
         Map<Class<? extends Layer>, List<String>> byLayer = new LinkedHashMap<>();
-        for (Class<? extends Layer> layer : Layers.ASCENDING) {
+        for (Class<? extends Layer> layer : Layers.INSTANCE.ascending()) {
             byLayer.put(layer, new ArrayList<>());
         }
 
         for (CssClass<?> cssClass : group.cssClasses()) {
-            Class<? extends Layer> layer = Layers.ofImplementor(cssClass);
+            Class<? extends Layer> layer = Layers.INSTANCE.ofImplementor(cssClass);
             List<String> bucket = byLayer.get(layer);
             String baseKebab = CssClassName.toCssName(cssClass.getClass());
             String selector = cssClass.selector();
@@ -163,10 +163,10 @@ public class CssContentGetAction
         // Emit each non-empty layer in ASCENDING order, wrapped in
         // `@layer X { … }`. The declaration at the top fixes cascade order
         // regardless of how these blocks interleave with other bundles.
-        for (Class<? extends Layer> layer : Layers.ASCENDING) {
+        for (Class<? extends Layer> layer : Layers.INSTANCE.ascending()) {
             List<String> rules = byLayer.get(layer);
             if (rules.isEmpty()) continue;
-            sb.append("@layer ").append(Layers.CSS_NAME.get(layer)).append(" {\n");
+            sb.append("@layer ").append(Layers.INSTANCE.cssName().get(layer)).append(" {\n");
             for (String rule : rules) {
                 sb.append(rule.indent(4));
             }

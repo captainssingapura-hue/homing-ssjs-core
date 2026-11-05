@@ -96,7 +96,7 @@ class PolicyExtensionTest {
     void bothLanesAreAccepted() {
         // DOM-owner lane: the full discipline + the library's rule.
         assertTrue(CompositeJsRulePolicy.inLane(GAME_RULES));
-        assertTrue(GAME_RULES.rules().containsAll(DefaultJsRulePolicy.DOM_OWNER_DISCIPLINE));
+        assertTrue(GAME_RULES.rules().containsAll(DefaultJsRulePolicy.INSTANCE.domOwnerDiscipline()));
         assertTrue(GAME_RULES.rules().contains(FrameRateRule.INSTANCE));
 
         // Headless lane: globals + no-DOM + the library's rule — hand-built or by factory.

@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.conformance.self;
 
+import hue.captains.singapura.js.homing.base.lang.StatelessSingleton;
 import hue.captains.singapura.js.homing.conformance.rules.Allowance;
 import hue.captains.singapura.js.homing.conformance.rules.Baseline;
 import hue.captains.singapura.js.homing.conformance.rules.CrateClosure;
@@ -8,6 +9,7 @@ import hue.captains.singapura.js.homing.conformance.rules.RuleId;
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.js.CoreJsCrate;
 import hue.captains.singapura.js.homing.server.ServerCrate;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -26,17 +28,20 @@ import java.util.List;
  * CoreSelfConformanceTest}), the export ({@link CoreConformanceExport}) and the studio downstream
  * that browses these crates grade identically.
  */
-public final class CoreConformance {
+public record CoreConformance() implements StatelessFunctionalObject, StatelessSingleton {
 
-    private CoreConformance() {}
+    public static final CoreConformance INSTANCE = new CoreConformance();
 
     /** The crates graded, reported and browsed. */
-    public static final List<Crate> TOP_LEVEL = List.of(
+    public List<Crate> topLevel() {
+        return List.of(
             CoreJsCrate.INSTANCE,
             ServerCrate.INSTANCE);
+    }
 
     /** What core lets pass on purpose: the managers are where the typed paths end. */
-    public static final List<Allowance> ALLOWANCES = List.of(
+    public List<Allowance> allowances() {
+        return List.of(
             new Allowance(
                     "hue.captains.singapura.js.homing.server.HrefManager",
                     new RuleId("no-raw-href"),
@@ -54,12 +59,13 @@ public final class CoreConformance {
                     "CssClassManager IS the css-manager implementation - its classList calls are "
                             + "the css.* API the rule redirects DOM owners to. The one module that "
                             + "may touch classList raw, because it is where the typed path ends."));
+    }
 
     /** Core's top-level crates and every crate they require. */
-    public static Collection<Crate> closure() { return CrateClosure.INSTANCE.of(TOP_LEVEL); }
+    public Collection<Crate> closure() { return CrateClosure.INSTANCE.of(topLevel()); }
 
     /** The debt core keeps, for these crates: {@code core-conformance-baseline.txt}. */
-    public static Baseline baseline() {
+    public Baseline baseline() {
         try (InputStream in = CoreConformance.class.getResourceAsStream("/core-conformance-baseline.txt")) {
             if (in == null) return Baseline.EMPTY;
             var lines = new ArrayList<String>();
@@ -76,7 +82,7 @@ public final class CoreConformance {
      * Core's grader: the strict one, with core's allowances and baseline. With {@code allowPreExisting}, a baselined
      * finding is a warning rather than an error.
      */
-    public static FindingGrader grader(boolean allowPreExisting) {
-        return FindingGrader.STRICT.withAllowlist(ALLOWANCES).withBaseline(baseline()).allowingPreExisting(allowPreExisting);
+    public FindingGrader grader(boolean allowPreExisting) {
+        return FindingGrader.STRICT.withAllowlist(allowances()).withBaseline(baseline()).allowingPreExisting(allowPreExisting);
     }
 }

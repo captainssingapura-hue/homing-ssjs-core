@@ -41,7 +41,7 @@ public record ExportsAreClassesRule() implements JsRule {
      * components: {@code appMain}, a page's, by the scaffold; {@code construct},
      * an on-demand widget's, by the loader that imported its module.
      */
-    public static final Set<String> ENTRY_POINTS = Set.of("appMain", "construct");
+    public Set<String> entryPoints() { return Set.of("appMain", "construct"); }
 
     private static final Pattern EXPORT_LINE = Pattern.compile("^\\s*export\\s*\\{([^}]*)\\}\\s*;?\\s*$");
 
@@ -61,7 +61,7 @@ public record ExportsAreClassesRule() implements JsRule {
                 String n = name.trim();
                 if (n.isEmpty()) continue;
                 if (n.contains(" as ")) n = n.substring(0, n.indexOf(" as ")).trim();
-                if (ENTRY_POINTS.contains(n)) continue;
+                if (entryPoints().contains(n)) continue;
                 int at = declarationOf(code, n);
                 if (at >= 0 && isFunction(code.get(at), n)) {
                     findings.add(new Finding(module.moduleClass(), id(),

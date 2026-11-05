@@ -2,7 +2,6 @@ package hue.captains.singapura.js.homing.studio.base.composed;
 
 import hue.captains.singapura.tao.ontology.Scalar;
 
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -91,10 +90,6 @@ public sealed interface CodeLanguage extends Scalar {
     CodeLanguage CSV        = new Known("csv");
     /** Verbatim output — console transcripts, file trees, fixtures. */
     CodeLanguage TEXT       = new Known("text");
-
-    /** Every named language, in the order the vocabulary declares them. */
-    List<CodeLanguage> ALL = List.of(
-            NONE, JAVA, JAVASCRIPT, MERMAID, BASH, CSS, HTML, XML, JSON, MARKDOWN, SVG, CSV, TEXT);
 
     /** A language this vocabulary does not name. Debt — see the class note. */
     static CodeLanguage other(String tag) { return new Other(tag); }

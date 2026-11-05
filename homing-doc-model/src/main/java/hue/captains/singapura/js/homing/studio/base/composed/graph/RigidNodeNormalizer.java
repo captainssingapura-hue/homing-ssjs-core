@@ -63,10 +63,11 @@ public final class RigidNodeNormalizer implements StatelessFunctionalObject {
     private RigidNodeNormalizer() {}
 
     /** Explicit {@code order} ascending; nodes without one sort last, alphabetically by name. */
-    private static final Comparator<RigidNode<?>> SIBLING_ORDER =
-            Comparator.<RigidNode<?>>comparingInt(
+    private Comparator<RigidNode<?>> siblingOrder() {
+        return Comparator.<RigidNode<?>>comparingInt(
                             n -> n.order().isPresent() ? n.order().getAsInt() : Integer.MAX_VALUE)
                     .thenComparing(n -> n.name().value());
+    }
 
     /**
      * Assemble + validate the nodes into a name-path {@link DocTreeV2}. The single
@@ -132,7 +133,7 @@ public final class RigidNodeNormalizer implements StatelessFunctionalObject {
 
         // Children: ordered, and sibling-name-unique (the name-path must be unambiguous).
         List<RigidNode<T>> kids = new ArrayList<>(childrenOf.getOrDefault(node, List.of()));
-        kids.sort(SIBLING_ORDER);
+        kids.sort(siblingOrder());
         Set<String> seenNames = new HashSet<>();
         List<NormalizedNode> kidNodes = new ArrayList<>();
         for (RigidNode<T> kid : kids) {

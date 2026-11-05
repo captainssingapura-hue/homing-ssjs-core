@@ -8,7 +8,7 @@ import java.util.List;
 
 /**
  * RFC 0044 — the {@link Crate} for {@code homing-libs}: its bundled third-party
- * modules ({@link HomingLibsRegistry#ALL}) plus {@link MermaidProxyModule} (an
+ * modules ({@link HomingLibsRegistry#all()}) plus {@link MermaidProxyModule} (an
  * external CDN proxy the registry doesn't list). The orphan check surfaced the
  * proxy — a good demonstration that the crate is the complete inventory, not
  * just the bundled-externals registry. A leaf crate: all import nothing.
@@ -27,7 +27,7 @@ public final class LibsCrate implements Crate {
     @Override
     public List<CrateEntry> entries() {
         var entries = new ArrayList<CrateEntry>();
-        HomingLibsRegistry.ALL.forEach(m -> entries.add(new CrateEntry(m)));
+        HomingLibsRegistry.INSTANCE.all().forEach(m -> entries.add(new CrateEntry(m)));
         entries.add(new CrateEntry(MermaidProxyModule.INSTANCE));
         return List.copyOf(entries);
     }

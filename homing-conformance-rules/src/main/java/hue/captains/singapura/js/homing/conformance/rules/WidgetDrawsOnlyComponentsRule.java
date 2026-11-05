@@ -27,7 +27,8 @@ public record WidgetDrawsOnlyComponentsRule() implements JsRule {
     /** What a widget may not do, each with what it says when it is done. */
     private record Signal(Pattern pattern, String says) {}
 
-    private static final List<Signal> SIGNALS = List.of(
+    private List<Signal> signals() {
+        return List.of(
             new Signal(Pattern.compile("\\bcreateElement(?:NS)?\\b"), "makes an element"),
             new Signal(Pattern.compile("\\b[A-Z][A-Za-z0-9]*Factory\\.create\\b"), "makes an element by a companion: hand the component its maker"),
             new Signal(Pattern.compile("\\bcreate(?:TextNode|DocumentFragment)\\b"), "makes a node"),
@@ -41,6 +42,7 @@ public record WidgetDrawsOnlyComponentsRule() implements JsRule {
             new Signal(Pattern.compile("\\.style\\b"), "writes a style"),
             new Signal(Pattern.compile("\\.(?:textContent|innerText)\\b"), "writes text of its own: words go in text components"),
             new Signal(Pattern.compile("\\.el\\b"), "touches a component's element"));
+    }
 
     @Override public RuleId      id()     { return new RuleId("widget-draws-only-components"); }
     @Override public String      intent() { return "A widget draws nothing but components: it makes, holds and touches no element, and wears no class and writes no style or text of its own."; }
@@ -51,8 +53,9 @@ public record WidgetDrawsOnlyComponentsRule() implements JsRule {
         var findings = new ArrayList<Finding>();
         List<String> raw = module.lines();
         List<String> stripped = JsText.stripComments(raw);
+        List<Signal> signals = signals();
         for (int i = 0; i < stripped.size(); i++) {
-            for (Signal s : SIGNALS) {
+            for (Signal s : signals) {
                 Matcher m = s.pattern().matcher(stripped.get(i));
                 if (m.find()) {
                     findings.add(new Finding(module.moduleClass(), id(),

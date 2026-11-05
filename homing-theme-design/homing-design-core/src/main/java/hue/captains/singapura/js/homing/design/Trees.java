@@ -3,8 +3,6 @@ package hue.captains.singapura.js.homing.design;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The walks and the guards over the tree of targets, derived from types alone: its leaves in
@@ -15,8 +13,6 @@ public final class Trees {
 
     private Trees() {}
 
-    private static final Map<Class<?>, Target> TARGETS = new ConcurrentHashMap<>();
-
     /** Refuses {@code t} unless it is a leaf of the target tree: a record that is a {@link Target}. */
     public static void requireTargetLeaf(Class<?> t) {
         if (!Target.class.isAssignableFrom(t) || !t.isRecord())
@@ -25,10 +21,8 @@ public final class Trees {
 
     /** The singleton of a target leaf — every leaf declares {@code INSTANCE}. */
     public static Target targetInstance(Class<?> leaf) {
-        return TARGETS.computeIfAbsent(leaf, l -> {
-            try { return (Target) l.getField("INSTANCE").get(null); }
-            catch (ReflectiveOperationException e) { throw new IllegalStateException(l.getName() + " has no INSTANCE", e); }
-        });
+        try { return (Target) leaf.getField("INSTANCE").get(null); }
+        catch (ReflectiveOperationException e) { throw new IllegalStateException(leaf.getName() + " has no INSTANCE", e); }
     }
 
     /** {@code branch-leaf}: {@code color-background}. */

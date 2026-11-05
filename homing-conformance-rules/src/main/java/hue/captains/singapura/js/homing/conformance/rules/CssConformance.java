@@ -50,8 +50,6 @@ public final class CssConformance {
     public static final RuleId NESTED_DECLARED   = new RuleId("css-nested-reference-declared");
     public static final RuleId CRATE_REACH       = new RuleId("css-crate-reach");
 
-    public static final List<RuleId> ALL = List.of(TOKEN_DECLARED, NESTED_DECLARED, CRATE_REACH);
-
     private CssConformance() {}
 
     /** Every finding of every rule, over the closure. */

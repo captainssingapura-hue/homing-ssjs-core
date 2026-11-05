@@ -19,6 +19,7 @@ import hue.captains.singapura.js.homing.design.semantic.DesignStyle;
 import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -38,15 +39,45 @@ import java.util.regex.Pattern;
  */
 final class CastingRule {
 
-    /** The pseudo-elements a casting's rule may draw, each by name (D29): parts of its own element the browser makes. */
-    static final List<String> PSEUDO_ELEMENTS = List.of("::before", "::after", "::placeholder", "::marker", "::selection",
+    private enum Words {
+        /** The pseudo-elements a casting's rule may draw, each by name (D29): parts of its own element the browser makes. */
+        PSEUDO_ELEMENTS(List.of("::before", "::after", "::placeholder", "::marker", "::selection",
             "::backdrop", "::file-selector-button", "::picker(select)", "::picker-icon", "::checkmark",
             "::-webkit-slider-thumb", "::-webkit-slider-runnable-track", "::-moz-range-thumb", "::-moz-range-track",
-            "::-moz-range-progress");
+            "::-moz-range-progress")),
+        /** The reader's settings a casting's rule may answer by an {@code @media} nested in it (D29). */
+        READER_SETTINGS(List.of("(prefers-reduced-motion: reduce)", "(prefers-reduced-transparency: reduce)",
+            "(prefers-contrast: more)", "(prefers-contrast: less)", "(forced-colors: active)")),
+        NAMED(Set.of(
+            "aliceblue", "antiquewhite", "aqua", "aquamarine", "azure", "beige", "bisque", "black", "blanchedalmond", "blue",
+            "blueviolet", "brown", "burlywood", "cadetblue", "chartreuse", "chocolate", "coral", "cornflowerblue", "cornsilk",
+            "crimson", "cyan", "darkblue", "darkcyan", "darkgoldenrod", "darkgray", "darkgreen", "darkgrey", "darkkhaki",
+            "darkmagenta", "darkolivegreen", "darkorange", "darkorchid", "darkred", "darksalmon", "darkseagreen",
+            "darkslateblue", "darkslategray", "darkslategrey", "darkturquoise", "darkviolet", "deeppink", "deepskyblue",
+            "dimgray", "dimgrey", "dodgerblue", "firebrick", "floralwhite", "forestgreen", "fuchsia", "gainsboro",
+            "ghostwhite", "gold", "goldenrod", "gray", "green", "greenyellow", "grey", "honeydew", "hotpink", "indianred",
+            "indigo", "ivory", "khaki", "lavender", "lavenderblush", "lawngreen", "lemonchiffon", "lightblue", "lightcoral",
+            "lightcyan", "lightgoldenrodyellow", "lightgray", "lightgreen", "lightgrey", "lightpink", "lightsalmon",
+            "lightseagreen", "lightskyblue", "lightslategray", "lightslategrey", "lightsteelblue", "lightyellow", "lime",
+            "limegreen", "linen", "magenta", "maroon", "mediumaquamarine", "mediumblue", "mediumorchid", "mediumpurple",
+            "mediumseagreen", "mediumslateblue", "mediumspringgreen", "mediumturquoise", "mediumvioletred", "midnightblue",
+            "mintcream", "mistyrose", "moccasin", "navajowhite", "navy", "oldlace", "olive", "olivedrab", "orange",
+            "orangered", "orchid", "palegoldenrod", "palegreen", "paleturquoise", "palevioletred", "papayawhip", "peachpuff",
+            "peru", "pink", "plum", "powderblue", "purple", "rebeccapurple", "red", "rosybrown", "royalblue", "saddlebrown",
+            "salmon", "sandybrown", "seagreen", "seashell", "sienna", "silver", "skyblue", "slateblue", "slategray",
+            "slategrey", "snow", "springgreen", "steelblue", "tan", "teal", "thistle", "tomato", "turquoise", "violet",
+            "wheat", "white", "whitesmoke", "yellow", "yellowgreen")),
+        SYSTEM(Set.of(
+            "accentcolor", "accentcolortext", "activetext", "buttonborder", "buttonface", "buttontext", "canvas", "canvastext",
+            "field", "fieldtext", "graytext", "highlight", "highlighttext", "linktext", "mark", "marktext", "selecteditem",
+            "selecteditemtext", "visitedtext")),
+        LOCAL(Set.of("--fixed-", "--it-", "--along-", "--current-"));
 
-    /** The reader's settings a casting's rule may answer by an {@code @media} nested in it (D29). */
-    static final List<String> READER_SETTINGS = List.of("(prefers-reduced-motion: reduce)", "(prefers-reduced-transparency: reduce)",
-            "(prefers-contrast: more)", "(prefers-contrast: less)", "(forced-colors: active)");
+        private final Collection<String> all;
+
+        Words(Collection<String> all) { this.all = all; }
+    }
+
 
     static final Pattern KEYFRAME = Pattern.compile("(from|to|\\d+(\\.\\d+)?%)(\\s*,\\s*(from|to|\\d+(\\.\\d+)?%))*");
 
@@ -68,30 +99,7 @@ final class CastingRule {
         return s.trim().replaceAll("\\s+", " ").replaceAll(" ?([(),]) ?", "$1").toLowerCase(Locale.ROOT);
     }
 
-    static final Set<String> NAMED = Set.of(
-            "aliceblue", "antiquewhite", "aqua", "aquamarine", "azure", "beige", "bisque", "black", "blanchedalmond", "blue",
-            "blueviolet", "brown", "burlywood", "cadetblue", "chartreuse", "chocolate", "coral", "cornflowerblue", "cornsilk",
-            "crimson", "cyan", "darkblue", "darkcyan", "darkgoldenrod", "darkgray", "darkgreen", "darkgrey", "darkkhaki",
-            "darkmagenta", "darkolivegreen", "darkorange", "darkorchid", "darkred", "darksalmon", "darkseagreen",
-            "darkslateblue", "darkslategray", "darkslategrey", "darkturquoise", "darkviolet", "deeppink", "deepskyblue",
-            "dimgray", "dimgrey", "dodgerblue", "firebrick", "floralwhite", "forestgreen", "fuchsia", "gainsboro",
-            "ghostwhite", "gold", "goldenrod", "gray", "green", "greenyellow", "grey", "honeydew", "hotpink", "indianred",
-            "indigo", "ivory", "khaki", "lavender", "lavenderblush", "lawngreen", "lemonchiffon", "lightblue", "lightcoral",
-            "lightcyan", "lightgoldenrodyellow", "lightgray", "lightgreen", "lightgrey", "lightpink", "lightsalmon",
-            "lightseagreen", "lightskyblue", "lightslategray", "lightslategrey", "lightsteelblue", "lightyellow", "lime",
-            "limegreen", "linen", "magenta", "maroon", "mediumaquamarine", "mediumblue", "mediumorchid", "mediumpurple",
-            "mediumseagreen", "mediumslateblue", "mediumspringgreen", "mediumturquoise", "mediumvioletred", "midnightblue",
-            "mintcream", "mistyrose", "moccasin", "navajowhite", "navy", "oldlace", "olive", "olivedrab", "orange",
-            "orangered", "orchid", "palegoldenrod", "palegreen", "paleturquoise", "palevioletred", "papayawhip", "peachpuff",
-            "peru", "pink", "plum", "powderblue", "purple", "rebeccapurple", "red", "rosybrown", "royalblue", "saddlebrown",
-            "salmon", "sandybrown", "seagreen", "seashell", "sienna", "silver", "skyblue", "slateblue", "slategray",
-            "slategrey", "snow", "springgreen", "steelblue", "tan", "teal", "thistle", "tomato", "turquoise", "violet",
-            "wheat", "white", "whitesmoke", "yellow", "yellowgreen");
 
-    static final Set<String> SYSTEM = Set.of(
-            "accentcolor", "accentcolortext", "activetext", "buttonborder", "buttonface", "buttontext", "canvas", "canvastext",
-            "field", "fieldtext", "graytext", "highlight", "highlighttext", "linktext", "mark", "marktext", "selecteditem",
-            "selecteditemtext", "visitedtext");
     private static final Pattern VAR = Pattern.compile("var\\(\\s*(--[A-Za-z0-9_-]+)\\s*(,)?");
     private static final Pattern HEX = Pattern.compile("(?<![\\w-])#[0-9a-fA-F]{3,8}(?![\\w-])");
     private static final Pattern FUNCTION = Pattern.compile(
@@ -99,7 +107,6 @@ final class CastingRule {
     private static final Pattern WORD = Pattern.compile("(?<![\\w#.-])[A-Za-z][\\w-]*");
     private static final Pattern STRING = Pattern.compile("\"(?:[^\"\\\\]|\\\\.)*\"|'(?:[^'\\\\]|\\\\.)*'");
     private static final Pattern URL = Pattern.compile("(?i)url\\([^)]*\\)");
-    private static final Set<String> LOCAL = Set.of("--fixed-", "--it-", "--along-", "--current-");
 
     private final Taxonomy taxonomy;
     private final ColorTree tree;
@@ -194,9 +201,9 @@ final class CastingRule {
                         continue;
                     }
                     String setting = prelude.substring("media".length()).replace(" ", "");
-                    String allowed = READER_SETTINGS.stream().filter(s -> s.replace(" ", "").equals(setting)).findFirst().orElse(null);
+                    String allowed = Words.READER_SETTINGS.all.stream().filter(s -> s.replace(" ", "").equals(setting)).findFirst().orElse(null);
                     if (media != null) at(a, "@" + a.prelude() + " inside @media " + media + ": a reader's setting is answered in the casting's rule");
-                    else if (allowed == null) at(a, "@" + a.prelude() + " is no reader's setting the check allows: " + String.join(", ", READER_SETTINGS) + " (D29)");
+                    else if (allowed == null) at(a, "@" + a.prelude() + " is no reader's setting the check allows: " + String.join(", ", Words.READER_SETTINGS.all) + " (D29)");
                     else if (!answered.add(allowed)) at(a, "@media " + allowed + " is answered twice");
                     else body(a.body() == null ? List.of() : a.body(), listing, allowed);
                 }
@@ -211,9 +218,9 @@ final class CastingRule {
                     Integer rank = byDrawn.get(by);
                     String combined = byDrawn.keySet().stream().filter(s -> by.startsWith(s) && by.length() > s.length()).findFirst().orElse(null);
                     if (by.startsWith("::")) {
-                        if (!PSEUDO_ELEMENTS.contains(by))
+                        if (!Words.PSEUDO_ELEMENTS.all.contains(by))
                             at(r, r.selector() + " draws " + by + ", a pseudo-element the check does not allow by name: "
-                                    + String.join(", ", PSEUDO_ELEMENTS) + " (D29)");
+                                    + String.join(", ", Words.PSEUDO_ELEMENTS.all) + " (D29)");
                         else if (!drawn.add(by)) at(r, r.selector() + " is drawn twice");
                         else for (ReadCss.Item inner : r.body()) {
                             switch (inner) {
@@ -266,7 +273,7 @@ final class CastingRule {
         boolean local = false;
         if (property.startsWith("--fp-"))
             at(d, property + " is the palette's, defined by its sheet: a casting's rule names it, var(" + property + "), and never assigns it (D5)");
-        else if (LOCAL.stream().anyMatch(property::startsWith)) {
+        else if (Words.LOCAL.all.stream().anyMatch(property::startsWith)) {
             local = true;
             if (where != null) at(d, property + " is assigned in " + where + ": a colour of the leaf's own is assigned in the leaf's own rule (D13, D14)");
             if (!assigned.add(property)) at(d, property + " is assigned twice");
@@ -316,7 +323,7 @@ final class CastingRule {
         Matcher m = VAR.matcher(d.value());
         while (m.find()) {
             String variable = m.group(1);
-            boolean colour = variable.startsWith("--fp-") || LOCAL.stream().anyMatch(variable::startsWith);
+            boolean colour = variable.startsWith("--fp-") || Words.LOCAL.all.stream().anyMatch(variable::startsWith);
             if (colour && m.group(2) != null)
                 at(d, "var(" + variable + ", ...) falls back: a palette's sheet is complete and a local colour assigned, so no colour ever does (D5)");
             if (variable.startsWith("--fp-")) {
@@ -330,7 +337,7 @@ final class CastingRule {
                 if (node instanceof Palettable<?, ?> && !local) uses.putIfAbsent(token, name + ":" + d.line());
             } else if (colour) {
                 used.putIfAbsent(variable, d.line());
-                String prefix = LOCAL.stream().filter(variable::startsWith).findFirst().orElseThrow();
+                String prefix = Words.LOCAL.all.stream().filter(variable::startsWith).findFirst().orElseThrow();
                 String token = variable.substring(prefix.length());
                 if (!local && (nodes.containsKey(token) || spectra.containsKey(token))) uses.putIfAbsent(token, name + ":" + d.line());
             }
@@ -348,8 +355,8 @@ final class CastingRule {
                     : m.group() + " writes a literal colour" + why);
         for (Matcher m = WORD.matcher(value); m.find(); ) {
             String word = m.group().toLowerCase(Locale.ROOT);
-            if (NAMED.contains(word)) at(d, m.group() + " is a named colour" + why);
-            else if (SYSTEM.contains(word)) at(d, m.group() + " is a system colour" + why);
+            if (Words.NAMED.all.contains(word)) at(d, m.group() + " is a named colour" + why);
+            else if (Words.SYSTEM.all.contains(word)) at(d, m.group() + " is a system colour" + why);
         }
     }
 

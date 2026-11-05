@@ -10,8 +10,8 @@ import java.util.function.Predicate;
 /** Core's gate: its crates on the new stack, by {@link CoreConformance}, every module of their closure. */
 class CoreSelfConformanceTest extends SelfGate {
 
-    @Override Collection<Crate> closure() { return CoreConformance.closure(); }
-    @Override FindingGrader grader() { return CoreConformance.grader(ALLOW_PRE_EXISTING); }
+    @Override Collection<Crate> closure() { return CoreConformance.INSTANCE.closure(); }
+    @Override FindingGrader grader() { return CoreConformance.INSTANCE.grader(ALLOW_PRE_EXISTING); }
     @Override Predicate<String> owns() { return m -> true; }
     @Override String baselineFile() { return "core-conformance-baseline.txt"; }
 }

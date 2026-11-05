@@ -82,7 +82,7 @@ class KeysThroughThePartyRuleTest {
 
     @Test
     void itIsInTheDomOwnerDiscipline() {
-        assertTrue(DefaultJsRulePolicy.DOM_OWNER_DISCIPLINE.contains(KeysThroughThePartyRule.INSTANCE));
+        assertTrue(DefaultJsRulePolicy.INSTANCE.domOwnerDiscipline().contains(KeysThroughThePartyRule.INSTANCE));
         assertTrue(DefaultJsRulePolicy.INSTANCE.rulesFor(StandardJsModuleType.PRIMITIVE).rules().contains(KeysThroughThePartyRule.INSTANCE));
         assertTrue(!DefaultJsRulePolicy.INSTANCE.rulesFor(StandardJsModuleType.SECRETARY).rules().contains(KeysThroughThePartyRule.INSTANCE), "a secretary touches no DOM at all: the headless rule covers it");
     }

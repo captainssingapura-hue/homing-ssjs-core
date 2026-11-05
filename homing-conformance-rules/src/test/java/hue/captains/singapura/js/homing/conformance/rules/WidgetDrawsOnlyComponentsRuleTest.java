@@ -61,7 +61,7 @@ class WidgetDrawsOnlyComponentsRuleTest {
     void thePolicyHoldsWidgets_andOnlyWidgets_toIt() {
         var policy = DefaultJsRulePolicy.INSTANCE;
         assertTrue(policy.rulesFor(StandardJsModuleType.WIDGET).rules().contains(WidgetDrawsOnlyComponentsRule.INSTANCE));
-        assertTrue(policy.rulesFor(StandardJsModuleType.WIDGET).rules().containsAll(DefaultJsRulePolicy.DOM_OWNER_DISCIPLINE),
+        assertTrue(policy.rulesFor(StandardJsModuleType.WIDGET).rules().containsAll(DefaultJsRulePolicy.INSTANCE.domOwnerDiscipline()),
                 "a widget owes everything a DOM owner does, and more");
         for (JsModuleType t : List.of(StandardJsModuleType.CONSUMER, StandardJsModuleType.PRIMITIVE))
             assertTrue(!policy.rulesFor(t).rules().contains(WidgetDrawsOnlyComponentsRule.INSTANCE), t + " is not held to it");

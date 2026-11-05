@@ -20,7 +20,7 @@ public final class CoreConformanceExport {
     public static void main(String[] args) throws IOException {
         if (args.length != 1) throw new IllegalArgumentException("Usage: CoreConformanceExport <output-directory>");
         Path dir = Paths.get(args[0]);
-        ConformanceRun run = new ConformanceEngine().assemble(CoreConformance.closure(), CoreConformance.grader(true));
+        ConformanceRun run = new ConformanceEngine().assemble(CoreConformance.INSTANCE.closure(), CoreConformance.INSTANCE.grader(true));
         new ConformanceReportWriter().write(dir, run);
         System.out.println("[CoreConformanceExport] wrote report to " + dir + " (" + run.modules().size() + " modules, "
                 + run.summary().errorCount() + " errors, " + run.summary().warningCount() + " warnings)");
