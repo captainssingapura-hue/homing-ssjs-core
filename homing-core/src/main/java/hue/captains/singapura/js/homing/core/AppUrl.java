@@ -29,7 +29,7 @@ public final class AppUrl {
      * the codec-taking overloads, which cannot emit args the app will not read.
      */
     public static String flat(String appName, java.util.Map<String, java.util.List<String>> args) {
-        String query = QueryString.encode(args);
+        String query = QueryString.INSTANCE.encode(args);
         String head = "/app?app=" + appName;
         return query.isEmpty() ? head : head + "&" + query;
     }

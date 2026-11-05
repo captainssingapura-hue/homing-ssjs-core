@@ -23,7 +23,7 @@ class AppByNameTest {
 
     @Test
     void byItsClassName_notFound_sayingByItsSimpleName() {
-        var q = new AppQuery(null, null, null, QueryString.parse("class=" + AppHtmlStampTest.PlainApp.class.getName()));
+        var q = new AppQuery(null, null, null, QueryString.INSTANCE.parse("class=" + AppHtmlStampTest.PlainApp.class.getName()));
         var failed = assertThrows(ExecutionException.class, () -> action.execute(q, new EmptyParam.NoHeaders()).get());
         var notFound = assertInstanceOf(ResourceNotFound.class, failed.getCause());
         assertEquals(404, notFound.statusCode());
@@ -32,7 +32,7 @@ class AppByNameTest {
 
     @Test
     void bySimpleName_asBefore() throws Exception {
-        var q = new AppQuery("plain", null, null, QueryString.parse("app=plain"));
+        var q = new AppQuery("plain", null, null, QueryString.INSTANCE.parse("app=plain"));
         assertTrue(action.execute(q, new EmptyParam.NoHeaders()).get().body().contains("<!DOCTYPE html>"));
     }
 }

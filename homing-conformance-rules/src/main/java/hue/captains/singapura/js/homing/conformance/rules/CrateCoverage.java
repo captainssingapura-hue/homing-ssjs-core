@@ -36,7 +36,7 @@ public final class CrateCoverage {
 
     /**
      * @param closure    the crate closure whose union of entries counts as "crated"
-     *                   (typically {@code CrateClosure.of(topLevelCrates)})
+     *                   (typically {@code CrateClosure.INSTANCE.of(topLevelCrates)})
      * @param appAnchors one class per app‑owned Maven module; each module's build
      *                   output is scanned for served modules
      * @return one finding per served module that is in no crate of the closure;

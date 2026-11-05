@@ -32,14 +32,14 @@ class AppHtmlStampTest {
         @Override public ParamCodec<Coded> paramCodec() {
             return new ParamCodec<>() {
                 @Override public Decoded<Coded> from(Map<String, List<String>> q) {
-                    String id = QueryString.first(q, "id");
+                    String id = QueryString.INSTANCE.first(q, "id");
                     if (id == null) return Decoded.missing("id");
-                    return Decoded.ok(new Coded(id, QueryString.first(q, "path")));
+                    return Decoded.ok(new Coded(id, QueryString.INSTANCE.first(q, "path")));
                 }
                 @Override public Map<String, List<String>> to(Coded p) {
-                    var out = QueryString.params();
-                    QueryString.put(out, "id", p.id());
-                    QueryString.put(out, "path", p.path());
+                    var out = QueryString.INSTANCE.params();
+                    QueryString.INSTANCE.put(out, "id", p.id());
+                    QueryString.INSTANCE.put(out, "path", p.path());
                     return out;
                 }
             };
@@ -72,7 +72,7 @@ class AppHtmlStampTest {
 
     @Test
     void codedAppGetsItsParamsStamped() throws Exception {
-        String html = render("coded", QueryString.parse("id=animals&path=cute/otter"));
+        String html = render("coded", QueryString.INSTANCE.parse("id=animals&path=cute/otter"));
         assertTrue(html.contains("const params = Object.freeze({"), html);
         assertTrue(html.contains("\"id\":\"animals\""), html);
         assertTrue(html.contains("appMain(document.getElementById(\"app\"), params)"), html);
@@ -82,7 +82,7 @@ class AppHtmlStampTest {
     void keysTheAppDoesNotClaimAreNotStamped() throws Exception {
         // theme belongs to the action, not to the app: params go through the
         // codec both ways, so the page sees the app's params and nothing else.
-        String html = render("coded", QueryString.parse("id=animals&theme=forest&junk=1"));
+        String html = render("coded", QueryString.INSTANCE.parse("id=animals&theme=forest&junk=1"));
         assertFalse(html.contains("\"junk\""), html);
         assertFalse(html.contains("\"theme\":\"forest\""), html);
     }
@@ -91,7 +91,7 @@ class AppHtmlStampTest {
     void uncodedAppIsUntouched() throws Exception {
         // The migration is per-app: an app without a codec keeps today's
         // one-argument call and its own client-side params const.
-        String html = render("plain", QueryString.parse("anything=1"));
+        String html = render("plain", QueryString.INSTANCE.parse("anything=1"));
         assertFalse(html.contains("const params ="), html);
         assertTrue(html.contains("appMain(document.getElementById(\"app\"))"), html);
     }
@@ -100,13 +100,13 @@ class AppHtmlStampTest {
     void undecodableParamsLeaveThePageAsItWas() throws Exception {
         // id is required and absent — stamping nothing is today's behaviour;
         // turning this into a 400 belongs with the route work.
-        String html = render("coded", QueryString.parse("path=orphan"));
+        String html = render("coded", QueryString.INSTANCE.parse("path=orphan"));
         assertFalse(html.contains("const params ="), html);
     }
 
     @Test
     void aHostileParamCannotBreakOutOfTheScript() throws Exception {
-        String html = render("coded", QueryString.parse("id=" +
+        String html = render("coded", QueryString.INSTANCE.parse("id=" +
                 java.net.URLEncoder.encode("</script><script>alert(1)</script>",
                         java.nio.charset.StandardCharsets.UTF_8)));
         assertFalse(html.contains("</script><script>alert(1)"), html);

@@ -51,7 +51,7 @@ public final class ParamCodecLaw {
 
             // And again through the wire, which is where a codec that forgot
             // to encode a separator or a space quietly stops round-tripping.
-            String encoded = QueryString.encode(written);
+            String encoded = QueryString.INSTANCE.encode(written);
             check(codecName, sample, codec.fromQueryString(encoded),
                   "via the query string '" + encoded + "'", failures);
         }

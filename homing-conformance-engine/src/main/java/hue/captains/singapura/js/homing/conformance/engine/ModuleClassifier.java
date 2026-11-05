@@ -9,6 +9,7 @@ import hue.captains.singapura.js.homing.core.JsModuleType;
 import hue.captains.singapura.js.homing.core.StandardJsModuleType;
 import hue.captains.singapura.js.homing.core.ManagerInjector;
 import hue.captains.singapura.js.homing.core.ModuleForm;
+import hue.captains.singapura.js.homing.core.ModuleForms;
 
 /**
  * RFC 0044 Phase 6/7 — classifies a module into the {@link JsModuleType} the
@@ -52,7 +53,7 @@ public final class ModuleClassifier {
         if (exportsAWidget(module)) {
             return StandardJsModuleType.WIDGET;
         }
-        return switch (ModuleForm.of(module)) {
+        return switch (ModuleForms.INSTANCE.of(module)) {
             case CSS_GROUP, DERIVED_CSS -> StandardJsModuleType.GENERATED_CSS;
             case SVG_GROUP, SELF_CONTENT, RESOURCE_BACKED -> StandardJsModuleType.CONSUMER;
             case BUNDLED_EXTERNAL -> StandardJsModuleType.BUNDLED_EXTERNAL; // (already handled above)

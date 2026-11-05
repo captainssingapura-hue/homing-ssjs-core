@@ -1,6 +1,8 @@
 package hue.captains.singapura.js.homing.conformance.rules;
 
+import hue.captains.singapura.js.homing.base.lang.StatelessSingleton;
 import hue.captains.singapura.js.homing.core.Crate;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
@@ -15,12 +17,12 @@ import java.util.Map;
  * is how a studio turns its top-level (owned) crates into the full dependency
  * graph — including external (required-but-not-owned) crates.
  */
-public final class CrateClosure {
+public record CrateClosure() implements StatelessFunctionalObject, StatelessSingleton {
 
-    private CrateClosure() {}
+    public static final CrateClosure INSTANCE = new CrateClosure();
 
     /** All crates reachable from {@code roots} via {@link Crate#requires()} (roots included). */
-    public static List<Crate> of(Collection<? extends Crate> roots) {
+    public List<Crate> of(Collection<? extends Crate> roots) {
         Map<String, Crate> byName = new LinkedHashMap<>();
         Deque<Crate> queue = new ArrayDeque<>(roots);
         while (!queue.isEmpty()) {

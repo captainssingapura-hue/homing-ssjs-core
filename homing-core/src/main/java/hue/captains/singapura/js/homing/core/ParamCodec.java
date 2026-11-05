@@ -50,12 +50,12 @@ public interface ParamCodec<P extends AppModule._Param> {
     /** Convenience: the encoded query string for these params, without a
      *  leading {@code ?}. */
     default String toQueryString(P params) {
-        return QueryString.encode(to(params));
+        return QueryString.INSTANCE.encode(to(params));
     }
 
     /** Convenience: decode straight from a raw query string or URL. */
     default Decoded<P> fromQueryString(String query) {
-        return from(QueryString.parse(query));
+        return from(QueryString.INSTANCE.parse(query));
     }
 
     /**
@@ -186,12 +186,12 @@ public interface ParamCodec<P extends AppModule._Param> {
 
         return new ParamCodec<>() {
             @Override public Decoded<P> from(Map<String, List<String>> query) {
-                String value = QueryString.first(query, key);
+                String value = QueryString.INSTANCE.first(query, key);
                 if (value == null || value.isBlank()) return Decoded.missing(key);
                 return Decoded.ok(read.apply(value));
             }
             @Override public Map<String, List<String>> to(P params) {
-                return QueryString.of(key, write.apply(params));
+                return QueryString.INSTANCE.of(key, write.apply(params));
             }
         };
     }

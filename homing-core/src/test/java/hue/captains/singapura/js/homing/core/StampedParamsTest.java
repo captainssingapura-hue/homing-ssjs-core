@@ -66,10 +66,10 @@ class StampedParamsTest {
 
     @Test
     void objectIsFrozenAndKeepsCardinality() {
-        var p = QueryString.params();
-        QueryString.put(p, "id", "animals");
-        QueryString.put(p, "tag", "one");
-        QueryString.put(p, "tag", "two");
+        var p = QueryString.INSTANCE.params();
+        QueryString.INSTANCE.put(p, "id", "animals");
+        QueryString.INSTANCE.put(p, "tag", "one");
+        QueryString.INSTANCE.put(p, "tag", "two");
         String js = StampedParams.jsObject(p);
         assertTrue(js.startsWith("Object.freeze({"), js);
         assertTrue(js.contains("\"id\":\"animals\""), js);
@@ -79,14 +79,14 @@ class StampedParamsTest {
 
     @Test
     void emptyParamsAreStillAnObject() {
-        assertEquals("Object.freeze({})", StampedParams.jsObject(QueryString.params()));
+        assertEquals("Object.freeze({})", StampedParams.jsObject(QueryString.INSTANCE.params()));
     }
 
     @Test
     void aHostileParamCannotEscapeTheScriptBlock() {
         // The end-to-end shape: whatever arrives, the stamped text contains no
         // sequence that could terminate or reopen the element.
-        var p = QueryString.of("path", "</script><img src=x onerror=alert(1)>");
+        var p = QueryString.INSTANCE.of("path", "</script><img src=x onerror=alert(1)>");
         String js = StampedParams.jsObject(p);
         assertFalse(js.contains("</script"), js);
         assertFalse(js.contains("<img"), js);

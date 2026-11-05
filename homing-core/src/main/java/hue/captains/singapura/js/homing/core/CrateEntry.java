@@ -51,12 +51,12 @@ public record CrateEntry(EsModule<?> module, ModuleForm form, JsModuleType decla
 
     /** Pack a module, inferring its {@link ModuleForm}, domain role undeclared — the normal call. */
     public CrateEntry(EsModule<?> module) {
-        this(module, ModuleForm.of(module), null);
+        this(module, ModuleForms.INSTANCE.of(module), null);
     }
 
     /** Pack a module with its declared domain {@link JsModuleType} — for the non-{@code CONSUMER} roles. */
     public CrateEntry(EsModule<?> module, JsModuleType declaredType) {
-        this(module, ModuleForm.of(module), Objects.requireNonNull(declaredType, "declaredType"));
+        this(module, ModuleForms.INSTANCE.of(module), Objects.requireNonNull(declaredType, "declaredType"));
     }
 
     /** The module's fully-qualified class name — its stable served identity. */

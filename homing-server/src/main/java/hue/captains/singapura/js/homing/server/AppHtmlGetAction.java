@@ -70,7 +70,7 @@ public class AppHtmlGetAction
                 ctx.request().getParam("locale"),
                 // RFC 0051 — the app's own params travel as the raw map; the
                 // resolved app's codec is what turns them into a typed value.
-                hue.captains.singapura.js.homing.core.QueryString.parse(ctx.request().query())
+                hue.captains.singapura.js.homing.core.QueryString.INSTANCE.parse(ctx.request().query())
         );
     }
 

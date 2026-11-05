@@ -1,5 +1,8 @@
 package hue.captains.singapura.js.homing.core;
 
+import hue.captains.singapura.js.homing.base.lang.StatelessSingleton;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
+
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -23,24 +26,24 @@ import java.util.Objects;
  * question. A URL that round-trips is not a property five implementations can
  * be relied on to share.</p>
  */
-public final class QueryString {
+public record QueryString() implements StatelessFunctionalObject, StatelessSingleton {
 
-    private QueryString() {}
+    public static final QueryString INSTANCE = new QueryString();
 
     /** The uniform wire shape: every key maps to one or more raw values. */
-    public static Map<String, List<String>> params() {
+    public Map<String, List<String>> params() {
         return new LinkedHashMap<>();
     }
 
     /** A single-valued map, the common case, in declaration order. */
-    public static Map<String, List<String>> of(String key, String value) {
+    public Map<String, List<String>> of(String key, String value) {
         var m = params();
         put(m, key, value);
         return m;
     }
 
     /** Append one value under {@code key}, creating the list if needed. */
-    public static void put(Map<String, List<String>> params, String key, String value) {
+    public void put(Map<String, List<String>> params, String key, String value) {
         Objects.requireNonNull(params, "params");
         Objects.requireNonNull(key, "key");
         if (value == null) return;   // an absent value is an absent key, not "null"
@@ -52,7 +55,7 @@ public final class QueryString {
      * Most codecs want exactly this; the ones that accept repeats read the
      * list directly.
      */
-    public static String first(Map<String, List<String>> params, String key) {
+    public String first(Map<String, List<String>> params, String key) {
         List<String> values = params == null ? null : params.get(key);
         return (values == null || values.isEmpty()) ? null : values.get(0);
     }
@@ -66,7 +69,7 @@ public final class QueryString {
      * comparable and caches stop being able to tell one address from
      * another.</p>
      */
-    public static String encode(Map<String, List<String>> params) {
+    public String encode(Map<String, List<String>> params) {
         if (params == null || params.isEmpty()) return "";
         var sb = new StringBuilder();
         for (var e : params.entrySet()) {
@@ -80,7 +83,7 @@ public final class QueryString {
 
     /** Encode and prefix with {@code ?}, or the empty string when there is
      *  nothing to say — so callers can append unconditionally. */
-    public static String encodeSuffix(Map<String, List<String>> params) {
+    public String encodeSuffix(Map<String, List<String>> params) {
         String s = encode(params);
         return s.isEmpty() ? "" : "?" + s;
     }
@@ -96,7 +99,7 @@ public final class QueryString {
      * what the value is supposed to mean, and raising here would turn every
      * odd URL into a 500 before anything could answer it properly.</p>
      */
-    public static Map<String, List<String>> parse(String query) {
+    public Map<String, List<String>> parse(String query) {
         var out = params();
         if (query == null) return out;
         String s = query;
@@ -117,11 +120,11 @@ public final class QueryString {
         return out;
     }
 
-    private static String enc(String s) {
+    private String enc(String s) {
         return URLEncoder.encode(s, StandardCharsets.UTF_8);
     }
 
-    private static String dec(String s) {
+    private String dec(String s) {
         try {
             return URLDecoder.decode(s, StandardCharsets.UTF_8);
         } catch (IllegalArgumentException badEscape) {

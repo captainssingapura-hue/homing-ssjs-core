@@ -36,12 +36,12 @@ public record Query(Map<String, List<String>> all) {
     /** Reads the part after the {@code ?}; null and blank are {@link #NONE}. */
     public static Query parse(String rawQuery) {
         if (rawQuery == null || rawQuery.isBlank()) return NONE;
-        return new Query(QueryString.parse(rawQuery));
+        return new Query(QueryString.INSTANCE.parse(rawQuery));
     }
 
     /** A one-key query, for tests and links. */
     public Query(String key, String value) {
-        this(QueryString.of(key, value));
+        this(QueryString.INSTANCE.of(key, value));
     }
 
     /** Whether the page was reached with no parameters. */
@@ -61,6 +61,6 @@ public record Query(Map<String, List<String>> all) {
     /** The address form, without the leading {@code ?}; empty for {@link #NONE}. */
     @Override
     public String toString() {
-        return QueryString.encode(all);
+        return QueryString.INSTANCE.encode(all);
     }
 }
