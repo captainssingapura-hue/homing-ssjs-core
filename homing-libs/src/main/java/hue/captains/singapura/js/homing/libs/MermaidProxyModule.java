@@ -28,10 +28,11 @@ import java.util.List;
  * it at a mirror or a bundled copy.</p>
  *
  * <h2>Configuring the URL</h2>
- * <p>The default is {@link #DEFAULT_URL}. Override it once at boot via
- * {@link ExternalModuleUrlRegistry}:</p>
+ * <p>The default is {@link #DEFAULT_URL}. A deployment that cannot reach it - a blocked CDN, a
+ * corporate proxy, an air-gapped network, a pinned internal mirror - says so where it builds its
+ * site, and the {@link ModuleNameResolver} the site serves with answers for the proxy:</p>
  * <pre>{@code
- * ExternalModuleUrlRegistry.INSTANCE.override(
+ * new StandardMpa(brand, styling, crates).withLibraryAt(
  *         MermaidProxyModule.class,
  *         "https://my-mirror.internal/mermaid@11/mermaid.esm.min.mjs");
  * }</pre>
@@ -64,7 +65,7 @@ public record MermaidProxyModule() implements ExternalModule<MermaidProxyModule>
 
     @Override
     public List<String> selfContent(ModuleNameResolver nameResolver) {
-        String url = ExternalModuleUrlRegistry.INSTANCE.resolve(MermaidProxyModule.class, DEFAULT_URL);
+        String url = nameResolver.libraryUrl(MermaidProxyModule.class, DEFAULT_URL);
         return List.of(
                 "// Runtime-CDN proxy (see MermaidProxyModule.java). URL is deployment-overridable.",
                 "import mermaidLib from \"" + url + "\";",
