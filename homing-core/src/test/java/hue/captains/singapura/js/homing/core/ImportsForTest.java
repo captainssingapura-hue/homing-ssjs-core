@@ -69,6 +69,36 @@ class ImportsForTest {
     }
 
     @Test
+    void theOrder_isByTheSourcesClassName() {
+        var imports = ImportsFor.builder()
+                .add(new ModuleImports<>(List.of(new ModB.Y()), ModB.INSTANCE))
+                .add(new ModuleImports<>(List.of(new ModA.X()), ModA.INSTANCE))
+                .build();
+
+        assertEquals(List.of(ModA.INSTANCE, ModB.INSTANCE), List.copyOf(imports.getAllImports().keySet()));
+    }
+
+    @Test
+    void theOrder_followsFromWhatIsImported_notHowTheListIsWritten() {
+        var one = ImportsFor.builder()
+                .add(new ModuleImports<>(List.of(new ModA.X()), ModA.INSTANCE))
+                .add(new ModuleImports<>(List.of(new ModB.Y()), ModB.INSTANCE))
+                .build();
+        var other = ImportsFor.builder()
+                .add(new ModuleImports<>(List.of(new ModB.Y()), ModB.INSTANCE))
+                .add(new ModuleImports<>(List.of(new ModA.X()), ModA.INSTANCE))
+                .build();
+
+        assertEquals(List.copyOf(one.getAllImports().keySet()), List.copyOf(other.getAllImports().keySet()));
+    }
+
+    @Test
+    void aSourceIsNeeded() {
+        var builder = ImportsFor.builder();
+        assertThrows(NullPointerException.class, () -> builder.add(new ModuleImports<>(List.of(), (ModA) null)));
+    }
+
+    @Test
     void builder_resultIsImmutable() {
         var imports = ImportsFor.builder()
                 .add(new ModuleImports<>(List.of(new ModA.X()), ModA.INSTANCE))

@@ -41,6 +41,24 @@ class EsModuleWriterTest {
         @Override public ExportsOf<NoExports> exports() { return new ExportsOf<>(INSTANCE, List.of()); }
     }
 
+    record Early() implements EsModule<Early> {
+        static final Early INSTANCE = new Early();
+        record One() implements Exportable._Constant<Early> {}
+        @Override public ImportsFor<Early> imports() { return ImportsFor.noImports(); }
+        @Override public ExportsOf<Early> exports() { return new ExportsOf<>(INSTANCE, List.of(new One())); }
+    }
+
+    record Writer() implements EsModule<Writer> {
+        static final Writer INSTANCE = new Writer();
+        @Override public ImportsFor<Writer> imports() {
+            return ImportsFor.<Writer>builder()
+                    .add(new ModuleImports<>(List.of(new Source.Greet()), Source.INSTANCE))
+                    .add(new ModuleImports<>(List.of(new Early.One()), Early.INSTANCE))
+                    .build();
+        }
+        @Override public ExportsOf<Writer> exports() { return new ExportsOf<>(INSTANCE, List.of()); }
+    }
+
     private final ModuleNameResolver resolver = m -> new PartialModulePath("/mod?class=" + m.getClass().getCanonicalName());
     private final SimpleImportsWriterResolver importsResolver = new SimpleImportsWriterResolver(resolver);
 
@@ -64,6 +82,15 @@ class EsModuleWriterTest {
         assertTrue(lines.get(0).startsWith("import {Greet} from"));
         assertEquals("const main = () => Greet;", lines.get(1));
         assertEquals("export {main};", lines.get(2));
+    }
+
+    @Test
+    void theImportLines_areInImportOrder_notTheListsOrder() {
+        ContentProvider<Writer> content = List::of;
+        var lines = new EsModuleWriter<>(Writer.INSTANCE, content, resolver, ExportWriter.INSTANCE, importsResolver).writeModule();
+
+        assertTrue(lines.get(0).startsWith("import {One} from"), lines.get(0));
+        assertTrue(lines.get(1).startsWith("import {Greet} from"), lines.get(1));
     }
 
     @Test
