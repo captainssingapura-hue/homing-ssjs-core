@@ -19,7 +19,7 @@ import java.util.stream.Stream;
 public record SvgGroupContentProvider<G extends SvgGroup<G>>(G group, ResourceReader resourceReader) implements ContentProvider<G> {
 
     public SvgGroupContentProvider(G group) {
-        this(group, ResourceReader.INSTANCE);
+        this(group, ResourceReader.CLASSPATH);
     }
 
     @Override

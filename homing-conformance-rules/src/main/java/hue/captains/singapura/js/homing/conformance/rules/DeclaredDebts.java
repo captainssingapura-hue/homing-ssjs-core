@@ -1,7 +1,9 @@
 package hue.captains.singapura.js.homing.conformance.rules;
 
+import hue.captains.singapura.js.homing.base.lang.StatelessSingleton;
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,7 +19,7 @@ import java.util.stream.Collectors;
  * a module owes exactly the findings it declares, so a debt never grows, and shrinks only as it is
  * declared to.
  */
-public record DeclaredDebts() {
+public record DeclaredDebts() implements StatelessFunctionalObject, StatelessSingleton {
 
     public static final DeclaredDebts INSTANCE = new DeclaredDebts();
 

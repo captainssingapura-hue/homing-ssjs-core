@@ -39,7 +39,7 @@ public final class WriteStyleFamilies {
         if (Files.exists(root)) try (Stream<Path> old = Files.walk(root)) {
             for (Path p : old.sorted(Comparator.reverseOrder()).toList()) Files.delete(p);
         }
-        Map<String, String> files = new StyleFamilies(styling, ResourceReader.INSTANCE,
+        Map<String, String> files = new StyleFamilies(styling, ResourceReader.CLASSPATH,
                 WriteStyleFamilies.class.getClassLoader()).files();
         for (var e : files.entrySet()) {
             Path file = classes.resolve(e.getKey());

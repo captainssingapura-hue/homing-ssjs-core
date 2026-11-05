@@ -1,7 +1,9 @@
 package hue.captains.singapura.js.homing.conformance.rules;
 
+import hue.captains.singapura.js.homing.base.lang.StatelessSingleton;
 import hue.captains.singapura.js.homing.core.JsModuleType;
 import hue.captains.singapura.js.homing.core.StandardJsModuleType;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.util.List;
 import java.util.Map;
@@ -33,7 +35,7 @@ import java.util.Map;
  * dispatching through this switch, downstream types through a dictionary lookup
  * ({@link CompositeJsRulePolicy}). Functional Object: one {@code INSTANCE}.</p>
  */
-public record DefaultJsRulePolicy() implements JsRulePolicy {
+public record DefaultJsRulePolicy() implements JsRulePolicy, StatelessFunctionalObject, StatelessSingleton {
 
     public static final DefaultJsRulePolicy INSTANCE = new DefaultJsRulePolicy();
 

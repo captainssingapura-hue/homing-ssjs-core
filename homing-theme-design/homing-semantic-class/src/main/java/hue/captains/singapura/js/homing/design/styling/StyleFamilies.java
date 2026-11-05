@@ -82,7 +82,7 @@ public final class StyleFamilies {
         var out = new LinkedHashMap<String, String>();
         out.put(INDEX, index());
         for (DesignStyle<?> s : styling.manager().styles())
-            styling.manager().families(s, ResourceReader.INSTANCE).forEach((family, css) -> out.put(path(s.token(), family), css));
+            styling.manager().families(s, ResourceReader.CLASSPATH).forEach((family, css) -> out.put(path(s.token(), family), css));
         return out;
     }
 

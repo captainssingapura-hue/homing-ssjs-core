@@ -47,7 +47,7 @@ public record SvgRef<G extends SvgGroup<G>>(G group, SvgBeing<G> being) implemen
     public Optional<String> resolve() {
         try {
             return Optional.of(String.join("\n",
-                    ResourceReader.INSTANCE.getStringsFromResource(resourcePath())));
+                    ResourceReader.CLASSPATH.getStringsFromResource(resourcePath())));
         } catch (RuntimeException e) {
             return Optional.empty();
         }

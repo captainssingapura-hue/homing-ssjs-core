@@ -1,5 +1,8 @@
 package hue.captains.singapura.js.homing.core;
 
+import hue.captains.singapura.js.homing.base.lang.StatelessSingleton;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
+
 import java.util.List;
 import java.util.Map;
 
@@ -121,7 +124,7 @@ public interface ParamCodec<P extends AppModule._Param> {
      * the action layer owns the reserved keys — and an app has no business
      * refusing a query it was never asked to read.</p>
      */
-    final class None implements ParamCodec<AppModule._None> {
+    final class None implements ParamCodec<AppModule._None>, StatelessFunctionalObject, StatelessSingleton {
 
         public static final None INSTANCE = new None();
 

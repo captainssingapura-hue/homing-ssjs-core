@@ -1,7 +1,9 @@
 package hue.captains.singapura.js.homing.server;
 
+import hue.captains.singapura.js.homing.base.lang.StatelessSingleton;
 import hue.captains.singapura.js.homing.core.DerivedCss;
 import hue.captains.singapura.js.homing.core.SelfRenderedCss;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.util.Optional;
 
@@ -10,7 +12,7 @@ import java.util.Optional;
  * its own answer for the slug. Asked before the design side's renderers, since a sheet that renders
  * itself is nobody else's.
  */
-public record SelfRenderedCssRenderer() implements CssRenderer {
+public record SelfRenderedCssRenderer() implements CssRenderer, StatelessFunctionalObject, StatelessSingleton {
 
     public static final SelfRenderedCssRenderer INSTANCE = new SelfRenderedCssRenderer();
 

@@ -10,6 +10,7 @@ import hue.captains.singapura.js.homing.tree.NormalizedNode;
 import hue.captains.singapura.js.homing.studio.base.DocNodeIdentity;
 import hue.captains.singapura.js.homing.tree.TreeLevel;
 import hue.captains.singapura.js.homing.tree.dims.NameValue;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -34,7 +35,7 @@ import java.util.UUID;
  *
  * @since homing-studio-base — RFC 0042 leveled tree-builder
  */
-public final class RigidDocNormalizer {
+public final class RigidDocNormalizer implements StatelessFunctionalObject {
 
     public static final RigidDocNormalizer INSTANCE = new RigidDocNormalizer();
 

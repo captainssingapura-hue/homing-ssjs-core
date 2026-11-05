@@ -14,6 +14,7 @@ import hue.captains.singapura.js.homing.tree.NodeKey;
 import hue.captains.singapura.js.homing.tree.NormalizedNode;
 import hue.captains.singapura.js.homing.tree.TreeLevel;
 import hue.captains.singapura.js.homing.tree.dims.NameValue;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -55,7 +56,7 @@ import java.util.function.Function;
  *
  * @since homing-studio-base — RFC 0039 name-path doc (RigidDocV2)
  */
-public final class RigidNodeNormalizer {
+public final class RigidNodeNormalizer implements StatelessFunctionalObject {
 
     public static final RigidNodeNormalizer INSTANCE = new RigidNodeNormalizer();
 

@@ -1,11 +1,13 @@
 package hue.captains.singapura.js.homing.site.demo.hello;
 
+import hue.captains.singapura.js.homing.base.lang.StatelessSingleton;
 import hue.captains.singapura.js.homing.server.HtmlPageContent;
 import hue.captains.singapura.js.homing.site.Navigable;
 import hue.captains.singapura.js.homing.site.Query;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 /** {@code /} — says what the site is and where its pages are. Ignores its query. */
-final class HomePage implements Navigable {
+final class HomePage implements Navigable, StatelessFunctionalObject, StatelessSingleton {
 
     static final HomePage INSTANCE = new HomePage();
 

@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.core.util;
 
+import hue.captains.singapura.tao.ontology.FunctionalObject;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -22,8 +24,9 @@ import java.util.regex.Pattern;
  * path separator ({@code ;} on Windows, {@code :} elsewhere) when a site's resources live in several modules, e.g.:
  * <pre>-Dhoming.devRoot=homing-demo/src/main/resources</pre>
  */
-public record ResourceReader(List<Path> sourceRoots) {
-    public static final ResourceReader INSTANCE = new ResourceReader(List.of());
+public record ResourceReader(List<Path> sourceRoots) implements FunctionalObject {
+    /** The reader with no source roots: every path from the classpath. */
+    public static final ResourceReader CLASSPATH = new ResourceReader(List.of());
 
     public ResourceReader {
         sourceRoots = List.copyOf(sourceRoots);
@@ -34,10 +37,10 @@ public record ResourceReader(List<Path> sourceRoots) {
         this(sourceRoot == null ? List.of() : List.of(sourceRoot));
     }
 
-    /** A reader over the roots {@code homing.devRoot} names, or {@link #INSTANCE} when it names none. */
+    /** A reader over the roots {@code homing.devRoot} names, or {@link #CLASSPATH} when it names none. */
     public static ResourceReader fromSystemProperty() {
         String devRoot = System.getProperty("homing.devRoot");
-        if (devRoot == null || devRoot.isBlank()) return INSTANCE;
+        if (devRoot == null || devRoot.isBlank()) return CLASSPATH;
         return new ResourceReader(Arrays.stream(devRoot.split(Pattern.quote(File.pathSeparator)))
                 .map(String::trim).filter(s -> !s.isEmpty()).map(Path::of).toList());
     }

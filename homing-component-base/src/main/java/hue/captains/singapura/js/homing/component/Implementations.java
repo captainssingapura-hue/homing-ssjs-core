@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.component;
 
+import hue.captains.singapura.js.homing.base.lang.StatelessSingleton;
 import hue.captains.singapura.js.homing.component.taxonomy.Component;
 import hue.captains.singapura.js.homing.component.taxonomy.ComponentBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.Impl;
@@ -13,6 +14,7 @@ import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.core.EsModule;
 import hue.captains.singapura.js.homing.core.Exportable;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -55,7 +57,7 @@ import java.util.Set;
  *       so the leaves it imports are theirs.</li>
  * </ul>
  */
-public record Implementations() {
+public record Implementations() implements StatelessFunctionalObject, StatelessSingleton {
 
     public static final Implementations INSTANCE = new Implementations();
 

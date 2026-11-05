@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.design.color;
 
+import hue.captains.singapura.js.homing.base.lang.StatelessSingleton;
+
 /**
  * A branch of the colour tree: it groups, and is no colour. It is in one scheme, at one level, under one parent its
  * scheme can see - one whose scheme is its own or one below it - so a scheme's branches graft under the base's, and the
@@ -13,7 +15,7 @@ public sealed interface ColorBranch<S extends ColorScheme, P> extends ColorNode<
         permits L1_ColorBranch, L2_ColorBranch, L3_ColorBranch {
 
     /** The parent of a branch at the top of the tree: none. */
-    final class Top {
+    final class Top implements StatelessSingleton {
         /** The one top. */
         public static final Top INSTANCE = new Top();
         private Top() {}

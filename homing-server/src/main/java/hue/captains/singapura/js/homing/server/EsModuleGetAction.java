@@ -33,7 +33,7 @@ public class EsModuleGetAction
     private final String defaultTheme;
 
     public EsModuleGetAction(ModuleNameResolver nameResolver) {
-        this(nameResolver, ResourceReader.INSTANCE);
+        this(nameResolver, ResourceReader.CLASSPATH);
     }
 
     public EsModuleGetAction(ModuleNameResolver nameResolver, ResourceReader resourceReader) {

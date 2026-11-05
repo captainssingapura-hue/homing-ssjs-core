@@ -1,10 +1,12 @@
 package hue.captains.singapura.js.homing.site.catalogue;
 
+import hue.captains.singapura.js.homing.base.lang.StatelessSingleton;
 import hue.captains.singapura.js.homing.site.Placed;
 import hue.captains.singapura.js.homing.site.Trail;
 import hue.captains.singapura.js.homing.server.HtmlPageContent;
 import hue.captains.singapura.js.homing.site.Html;
 import hue.captains.singapura.js.homing.site.Query;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 /**
  * The listing a vertex gets unless the site says otherwise: one document,
@@ -15,7 +17,7 @@ import hue.captains.singapura.js.homing.site.Query;
  * no theme to be a site, and it is what a visitor sees at every vertex until
  * a site gives its vertices a look of their own.</p>
  */
-public final class HtmlListing implements Listing {
+public final class HtmlListing implements Listing, StatelessFunctionalObject, StatelessSingleton {
 
     public static final HtmlListing INSTANCE = new HtmlListing();
 

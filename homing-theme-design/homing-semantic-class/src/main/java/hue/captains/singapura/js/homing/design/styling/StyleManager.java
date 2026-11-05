@@ -63,7 +63,7 @@ public interface StyleManager {
     String rule(DesignStyle<?> style, Casting casting, ResourceReader reader);
 
     /** A casting's rule as a style serves it, from the classpath. */
-    default String rule(DesignStyle<?> style, Casting casting) { return rule(style, casting, ResourceReader.INSTANCE); }
+    default String rule(DesignStyle<?> style, Casting casting) { return rule(style, casting, ResourceReader.CLASSPATH); }
 
     /** A style's sheet: one class for every casting of the taxonomy, in the taxonomy's order. */
     String sheet(DesignStyle<?> style);
@@ -72,7 +72,7 @@ public interface StyleManager {
     Map<String, String> families(DesignStyle<?> style, ResourceReader reader);
 
     /** A style's family files, from the classpath. */
-    default Map<String, String> families(DesignStyle<?> style) { return families(style, ResourceReader.INSTANCE); }
+    default Map<String, String> families(DesignStyle<?> style) { return families(style, ResourceReader.CLASSPATH); }
 
     /** A style's file of one family, for reading only. */
     String family(DesignStyle<?> style, ComponentBranch head, ResourceReader reader);
