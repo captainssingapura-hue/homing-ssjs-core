@@ -76,7 +76,7 @@ class StyleFamiliesTest {
         try (var jar = new URLClassLoader(new URL[] { classes.toUri().toURL() }, null)) {
             var families = new StyleFamilies(STYLING, ResourceReader.CLASSPATH, jar);
             assertFalse(families.dev());
-            assertEquals(written.get(StyleFamilies.path("loudly", "gauge")), families.read("loudly", "gauge"), "the built file, as written");
+            assertEquals(written.get(families.path("loudly", "gauge")), families.read("loudly", "gauge"), "the built file, as written");
         }
         Files.writeString(classes.resolve(StyleFamilies.INDEX), "# another styling's\n", StandardCharsets.UTF_8);
         try (var jar = new URLClassLoader(new URL[] { classes.toUri().toURL() }, null)) {

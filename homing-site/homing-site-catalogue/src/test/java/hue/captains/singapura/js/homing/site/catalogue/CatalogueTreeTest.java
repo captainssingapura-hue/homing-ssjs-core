@@ -66,9 +66,9 @@ class CatalogueTreeTest {
 
     @Test
     void levels() {
-        assertEquals(0, CatalogueTree.levelOf(RootCatalogue.INSTANCE));
-        assertEquals(1, CatalogueTree.levelOf(BetaCatalogue.INSTANCE));
-        assertEquals(2, CatalogueTree.levelOf(DeepCatalogue.INSTANCE));
+        assertEquals(0, CatalogueLevels.INSTANCE.levelOf(RootCatalogue.INSTANCE));
+        assertEquals(1, CatalogueLevels.INSTANCE.levelOf(BetaCatalogue.INSTANCE));
+        assertEquals(2, CatalogueLevels.INSTANCE.levelOf(DeepCatalogue.INSTANCE));
     }
 
     @Test

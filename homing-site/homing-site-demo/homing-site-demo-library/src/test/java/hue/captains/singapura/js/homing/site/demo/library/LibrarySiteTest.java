@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.site.demo.library;
 
 import hue.captains.singapura.js.homing.site.Path;
 import hue.captains.singapura.js.homing.site.Query;
+import hue.captains.singapura.js.homing.site.catalogue.CatalogueLevels;
 import hue.captains.singapura.js.homing.site.catalogue.CatalogueTree;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +22,7 @@ class LibrarySiteTest {
     void fourCataloguesOverThreeLevels() {
         assertEquals(List.of(LibraryCatalogue.INSTANCE, FictionCatalogue.INSTANCE,
                              ScienceCatalogue.INSTANCE, PhysicsCatalogue.INSTANCE), TREE.all());
-        assertEquals(2, CatalogueTree.levelOf(PhysicsCatalogue.INSTANCE));
+        assertEquals(2, CatalogueLevels.INSTANCE.levelOf(PhysicsCatalogue.INSTANCE));
     }
 
     @Test

@@ -76,7 +76,7 @@ public record AnswerBody() implements StatelessFunctionalObject {
      * own - and the colour targets whose registered colours it may read.
      */
     record Rights(String who, Set<String> owns, List<Target.Color> colouredBy) {
-        static Rights of(Target t) { return new Rights(t.token(), t.properties(), t.colouredBy()); }
+        Rights(Target t) { this(t.token(), t.properties(), t.colouredBy()); }
     }
 
     /** Refuses a body its target cannot say; says nothing of an empty one. */
@@ -85,7 +85,7 @@ public record AnswerBody() implements StatelessFunctionalObject {
         if (target.carrier() != Carrier.CSS) throw new IllegalArgumentException(target.token() + " is no CSS target: an answer for it says nothing here");
         if (target instanceof Target.Animation)
             throw new IllegalArgumentException(target.token() + " is answered with an animation effect, never with a body: name the effect");
-        block(Rights.of(target), stripComments(body), 0);
+        block(new Rights(target), stripComments(body), 0);
     }
 
     /** The properties flat declarations declare - no block in them - refused where the rights do not reach. */

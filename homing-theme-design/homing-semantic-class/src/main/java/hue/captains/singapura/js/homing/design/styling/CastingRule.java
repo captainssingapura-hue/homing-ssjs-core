@@ -94,11 +94,6 @@ final class CastingRule {
         public boolean passes() { return problems.isEmpty(); }
     }
 
-    /** Spaces gathered to one, and none beside a bracket or a comma; lower case. */
-    static String squeeze(String s) {
-        return s.trim().replaceAll("\\s+", " ").replaceAll(" ?([(),]) ?", "$1").toLowerCase(Locale.ROOT);
-    }
-
 
     private static final Pattern VAR = Pattern.compile("var\\(\\s*(--[A-Za-z0-9_-]+)\\s*(,)?");
     private static final Pattern HEX = Pattern.compile("(?<![\\w-])#[0-9a-fA-F]{3,8}(?![\\w-])");
@@ -153,7 +148,7 @@ final class CastingRule {
         if (scheme == null) return;
         for (ReadCss.Item item : k.body() == null ? List.<ReadCss.Item>of() : k.body()) {
             switch (item) {
-                case ReadCss.Rule r when KEYFRAME.matcher(squeeze(r.selector())).matches() -> {
+                case ReadCss.Rule r when KEYFRAME.matcher(ReadCss.INSTANCE.squeeze(r.selector())).matches() -> {
                     for (ReadCss.Item inner : r.body()) {
                         switch (inner) {
                             case ReadCss.Declaration d -> declaration(d, "a keyframe");
@@ -195,7 +190,7 @@ final class CastingRule {
             switch (item) {
                 case ReadCss.Declaration d -> declaration(d, media == null ? null : "an @media of it");
                 case ReadCss.AtRule a -> {
-                    String prelude = squeeze(a.prelude());
+                    String prelude = ReadCss.INSTANCE.squeeze(a.prelude());
                     if (!prelude.matches("media\\b.*")) {
                         at(a, "@" + a.prelude() + ": a casting's rule holds no at-rule but an @media for a reader's setting (D29)");
                         continue;
@@ -208,7 +203,7 @@ final class CastingRule {
                     else body(a.body() == null ? List.of() : a.body(), listing, allowed);
                 }
                 case ReadCss.Rule r -> {
-                    String selector = squeeze(r.selector());
+                    String selector = ReadCss.INSTANCE.squeeze(r.selector());
                     if (!selector.startsWith("&")) {
                         at(r, r.selector() + " inside " + listing.styled() + " is no state of it: a state is drawn on the leaf's own element, "
                                 + "&.<state class> or &:<pseudo-class>");
@@ -311,7 +306,7 @@ final class CastingRule {
         }
         if (kind.equals("--along-") && !taxonomy.extents(leaf.cast()).contains(ExtentAxis.COLOUR))
             at(d, property + " moves a colour by the element's degree, and " + leaf.token() + " has no colour axis: only a leaf with it may (D14)");
-        if (!squeeze(d.value()).equals(squeeze(expected)))
+        if (!ReadCss.INSTANCE.squeeze(d.value()).equals(ReadCss.INSTANCE.squeeze(expected)))
             at(d, property + " is " + expected + (own ? " by its own spectrum" : " by the tree") + ", not " + d.value());
     }
 

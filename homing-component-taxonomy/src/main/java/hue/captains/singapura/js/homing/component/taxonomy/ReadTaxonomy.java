@@ -196,7 +196,7 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
         problems.addAll(familyHeads(branchList, componentList));
         problems.addAll(wornByTheDocument(componentList, read));
         problems.addAll(castings(read, componentList));
-        problems.addAll(TreeChecks.INSTANCE.clashes("states", StateTree.nodes(stateBranchList, stateList), StateNode::name));
+        problems.addAll(TreeChecks.INSTANCE.clashes("states", StateNodes.INSTANCE.of(stateBranchList, stateList), StateNode::name));
         problems.addAll(TreeChecks.INSTANCE.badValues(stateList));
         problems.addAll(TreeChecks.INSTANCE.wordsTwice(stateList));
         problems.addAll(TreeChecks.INSTANCE.levels(stateList));

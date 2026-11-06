@@ -19,19 +19,10 @@ public record StateTree(List<StateBranch> branches, List<StateType<?>> types) im
     public StateTree {
         branches = List.copyOf(branches);
         types = List.copyOf(types);
-        var problems = new ArrayList<>(TreeChecks.INSTANCE.clashes("states", nodes(branches, types), StateNode::name));
+        var problems = new ArrayList<>(TreeChecks.INSTANCE.clashes("states", StateNodes.INSTANCE.of(branches, types), StateNode::name));
         problems.addAll(TreeChecks.INSTANCE.badValues(types));
         problems.addAll(TreeChecks.INSTANCE.wordsTwice(types));
         if (!problems.isEmpty()) throw new RefusedTaxonomy(problems);
-    }
-
-    /** Every node: the root, the branches, the types. */
-    static List<StateNode> nodes(List<? extends StateBranch> branches, List<? extends StateType<?>> types) {
-        var out = new ArrayList<StateNode>();
-        out.add(StateRoot.INSTANCE);
-        out.addAll(branches);
-        out.addAll(types);
-        return out;
     }
 
     /** The branch a node is filed under; none for the root. */

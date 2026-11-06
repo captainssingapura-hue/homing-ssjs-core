@@ -16,7 +16,7 @@ public record LibrarySite() implements Site {
     public static final LibrarySite INSTANCE = new LibrarySite();
 
     /** Read once: the tree is checked when the site is made, not when a request arrives. */
-    public static final CatalogueRouter ROUTER = CatalogueRouter.at(Path.ROOT, LibraryCatalogue.INSTANCE);
+    public static final CatalogueRouter ROUTER = new CatalogueRouter(Path.ROOT, LibraryCatalogue.INSTANCE);
 
     @Override public String name()   { return "library"; }
     @Override public Router router() { return ROUTER; }

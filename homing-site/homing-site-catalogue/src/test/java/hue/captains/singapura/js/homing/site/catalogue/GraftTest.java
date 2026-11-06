@@ -103,7 +103,7 @@ class GraftTest {
     void aGraftedRootsParentIsItsHost_itsLevelItsOwn_itsDepthTheSites() {
         assertEquals(Optional.of(DeskCatalogue.INSTANCE), TREE.parentOf(NotesCatalogue.INSTANCE));
         assertEquals(List.of(DeskCatalogue.INSTANCE, NotesCatalogue.INSTANCE, JournalCatalogue.INSTANCE), TREE.lineageOf(JournalCatalogue.INSTANCE));
-        assertEquals(0, CatalogueTree.levelOf(NotesCatalogue.INSTANCE));
+        assertEquals(0, CatalogueLevels.INSTANCE.levelOf(NotesCatalogue.INSTANCE));
         assertEquals(1, TREE.depthOf(NotesCatalogue.INSTANCE));
         assertEquals(2, TREE.depthOf(JournalCatalogue.INSTANCE));
         assertTrue(TREE.graftOf(RecipesCatalogue.INSTANCE).isPresent());
@@ -120,7 +120,7 @@ class GraftTest {
 
     @Test
     void theRouterServesTheComposedTree_theTrailReadOffThePath() {
-        var router = CatalogueRouter.at(Path.ROOT, TREE);
+        var router = new CatalogueRouter(Path.ROOT, TREE);
         assertEquals("laksa|Desk>/ Kitchen>/recipes Soups>/recipes/soups Laksa>/recipes/soups/laksa",
                 router.resolve(new Path("recipes", "soups", "laksa")).orElseThrow().html(Query.NONE).body());
         assertEquals(Optional.of("/notes/journal/monday"), router.hrefOf(MONDAY));

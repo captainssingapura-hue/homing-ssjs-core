@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.conformance.rules;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * RFC 0044 Phase 7 — served-JS text helpers shared by the pattern-scanning
@@ -48,5 +49,11 @@ public record JsText() implements StatelessFunctionalObject {
             out.add(sb.toString());
         }
         return out;
+    }
+
+    /** A segment from raw text, split on newlines. */
+    public JsSource source(String text) {
+        Objects.requireNonNull(text, "text");
+        return text.isEmpty() ? JsSource.EMPTY : new JsSource(List.of(text.split("\n", -1)));
     }
 }

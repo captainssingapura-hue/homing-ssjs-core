@@ -15,8 +15,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CatalogueRouterTest {
 
-    private static final CatalogueRouter AT_ROOT = CatalogueRouter.at(Path.ROOT, RootCatalogue.INSTANCE);
-    private static final CatalogueRouter AT_CAT  = CatalogueRouter.at(new Path("cat"), RootCatalogue.INSTANCE);
+    private static final CatalogueRouter AT_ROOT = new CatalogueRouter(Path.ROOT, RootCatalogue.INSTANCE);
+    private static final CatalogueRouter AT_CAT  = new CatalogueRouter(new Path("cat"), RootCatalogue.INSTANCE);
 
     @Test
     void mintsAddressesFromTheMount() {

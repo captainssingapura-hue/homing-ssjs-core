@@ -2,10 +2,8 @@ package hue.captains.singapura.js.homing.conformance.rules;
 
 import hue.captains.singapura.tao.ontology.Scalar;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 
 /**
  * RFC 0044 Phase 7 — the set of <b>pre-existing</b> violations, grandfathered so
@@ -30,17 +28,7 @@ public record Baseline(Set<String> fingerprints) implements Scalar {
 
     /** Parse a baseline from its line form (fingerprint per line; blanks / {@code #} comments skipped). */
     public Baseline(List<String> lines) {
-        this(fingerprintsIn(lines));
-    }
-
-    private static Set<String> fingerprintsIn(List<String> lines) {
-        var out = new TreeSet<String>();
-        for (String raw : lines) {
-            String line = raw.strip();
-            if (line.isEmpty() || line.startsWith("#")) continue;
-            out.add(line);
-        }
-        return out;
+        this(lines.stream().map(String::strip).filter(line -> !line.isEmpty() && !line.startsWith("#")).collect(java.util.stream.Collectors.toSet()));
     }
 
     /** True iff this exact violation (module + rule + offending code) was recorded. */
@@ -52,11 +40,4 @@ public record Baseline(Set<String> fingerprints) implements Scalar {
     public boolean isEmpty() { return fingerprints.isEmpty(); }
     /** How many findings are grandfathered. */
     public int size()        { return fingerprints.size(); }
-
-    /** The sorted line form of a set of findings — the content to record as a baseline file. */
-    public static List<String> record(Collection<Finding> findings) {
-        var out = new TreeSet<String>();
-        for (Finding f : findings) out.add(f.fingerprint());
-        return List.copyOf(out);
-    }
 }

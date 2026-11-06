@@ -1,9 +1,9 @@
 package hue.captains.singapura.js.homing.component.keyboard;
 
 import hue.captains.singapura.js.homing.base.lang.StatelessSingleton;
+import hue.captains.singapura.js.homing.component.EventFields;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
-import java.util.Objects;
 
 /**
  * What the keyboard party says on its sink: one event per change of holder,
@@ -18,36 +18,30 @@ public sealed interface KeyboardEvent {
     /** The kind: the record's simple name, the JS object's {@code kind}. */
     default String kind() { return getClass().getSimpleName(); }
 
-    private static String requireId(String id, String what) {
-        Objects.requireNonNull(id, what);
-        if (id.isEmpty()) throw new IllegalArgumentException(what + ": must not be empty");
-        return id;
-    }
-
     /** A member holds the keyboard now: by a claim, by a yield that reached it, by a member that left, or by the browser's focus arriving in it ({@code claim}, {@code yield}, {@code left}, {@code native}). */
     record Granted(String id, String by) implements KeyboardEvent {
-        public Granted { requireId(id, "Granted.id"); requireId(by, "Granted.by"); }
+        public Granted { EventFields.INSTANCE.id(id, "Granted.id"); EventFields.INSTANCE.id(by, "Granted.by"); }
         public Granted(String id) { this(id, "claim"); }
     }
 
     /** A member lost the keyboard: evicted by {@code by}, or, when {@code by} is null, released or gone. */
     record Taken(String id, String by) implements KeyboardEvent {
-        public Taken { requireId(id, "Taken.id"); if (by != null) requireId(by, "Taken.by"); }
+        public Taken { EventFields.INSTANCE.id(id, "Taken.id"); if (by != null) EventFields.INSTANCE.id(by, "Taken.by"); }
     }
 
     /** A member gave the keyboard up, or left the party while holding it. */
     record Released(String id) implements KeyboardEvent {
-        public Released { requireId(id, "Released.id"); }
+        public Released { EventFields.INSTANCE.id(id, "Released.id"); }
     }
 
     /** The keys are offered to a member: the walk's cursor rests on it, and a confirming key would give it the keys. Never the holder. */
     record Offered(String id) implements KeyboardEvent {
-        public Offered { requireId(id, "Offered.id"); }
+        public Offered { EventFields.INSTANCE.id(id, "Offered.id"); }
     }
 
     /** The offer is withdrawn: the walk moved on, was confirmed, was called off, or something else took the keys. */
     record Withdrawn(String id) implements KeyboardEvent {
-        public Withdrawn { requireId(id, "Withdrawn.id"); }
+        public Withdrawn { EventFields.INSTANCE.id(id, "Withdrawn.id"); }
     }
 
     /**
@@ -66,7 +60,7 @@ public sealed interface KeyboardEvent {
         }
 
         public Marked {
-            requireId(id, "Marked.id");
+            EventFields.INSTANCE.id(id, "Marked.id");
             var states = States.INSTANCE.all();
             if (!states.contains(state)) throw new IllegalArgumentException("Marked.state must be one of " + states + ": " + state);
         }

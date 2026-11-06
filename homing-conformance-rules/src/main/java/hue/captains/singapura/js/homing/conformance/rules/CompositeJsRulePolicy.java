@@ -33,7 +33,7 @@ public record CompositeJsRulePolicy(JsRulePolicy base, Map<JsModuleType, JsRuleS
 
     public CompositeJsRulePolicy {
         extensions = Map.copyOf(extensions);
-        extensions.forEach(CompositeJsRulePolicy::requireLane);
+        extensions.forEach((type, set) -> set.requireLane(type));
     }
 
     @Override
@@ -48,24 +48,5 @@ public record CompositeJsRulePolicy(JsRulePolicy base, Map<JsModuleType, JsRuleS
                             + "' — add it to the extensions map passed to extendedWith(...).");
         }
         return set;
-    }
-
-    /** True iff {@code set} sits in a lane: global rules + (DOM-owner discipline | no-DOM). */
-    public static boolean inLane(JsRuleSet set) {
-        List<JsRule> rules = set.rules();
-        if (!rules.containsAll(DefaultJsRulePolicy.INSTANCE.global())) return false;
-        return rules.containsAll(DefaultJsRulePolicy.INSTANCE.domOwnerDiscipline())
-                || rules.contains(NoDomAccessRule.INSTANCE);
-    }
-
-    private static void requireLane(JsModuleType type, JsRuleSet set) {
-        if (inLane(set)) return;
-        throw new IllegalArgumentException(
-                "extension rule set '" + set.id().value() + "' for type '" + type.slug()
-                        + "' sits in no lane. An extension type extends the framework's discipline, it does"
-                        + " not opt out of it: carry the global rules plus either the full DOM-owner discipline"
-                        + " (DefaultJsRulePolicy.INSTANCE.domOwnerDiscipline() — the module builds or styles DOM) or"
-                        + " NoDomAccessRule (the module is headless). DefaultJsRulePolicy.domOwnerLane(...) /"
-                        + " headlessLane(...) build one.");
     }
 }

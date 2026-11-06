@@ -16,7 +16,8 @@ public sealed interface ComponentDetails extends Scalar {
     RowDisplay row();
 
     /** {@code n} and the noun, with an {@code s} unless {@code n} is one: {@code 3 widgets}. */
-    static String plural(int n, String noun) { return n + " " + noun + (n == 1 ? "" : "s"); }
+    /** {@code n} and the noun, in the plural unless it is one. */
+    default String plural(int n, String noun) { return n + " " + noun + (n == 1 ? "" : "s"); }
 
     /** The composition's root: every vehicle, counted. */
     record OfComposition(String name, int vehicleCount, int componentCount) implements ComponentDetails {

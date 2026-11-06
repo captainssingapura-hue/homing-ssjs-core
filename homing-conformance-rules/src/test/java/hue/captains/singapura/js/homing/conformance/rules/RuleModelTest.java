@@ -61,7 +61,7 @@ class RuleModelTest {
     @Test
     void policyDispatchesByModuleType() {
         var consumerSet = new JsRuleSet(new RuleSetId("consumer"), "Consumer", List.of(NoCdnImportRule.INSTANCE));
-        var exempt      = JsRuleSet.empty(new RuleSetId("bundled-external"), "Bundled external");
+        var exempt      = new JsRuleSet(new RuleSetId("bundled-external"), "Bundled external");
         JsRulePolicy policy = type -> type == StandardJsModuleType.BUNDLED_EXTERNAL ? exempt : consumerSet;
 
         assertSame(consumerSet, policy.rulesFor(StandardJsModuleType.CONSUMER));

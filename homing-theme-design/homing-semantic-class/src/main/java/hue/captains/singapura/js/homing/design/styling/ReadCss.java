@@ -217,4 +217,9 @@ public record ReadCss() implements StatelessFunctionalObject {
         for (int i = 0; i < Math.min(index, text.length()); i++) if (text.charAt(i) == '\n') line++;
         return line;
     }
+
+    /** Spaces gathered to one, and none beside a bracket or a comma; lower case. */
+    public String squeeze(String s) {
+        return s.trim().replaceAll("\\s+", " ").replaceAll(" ?([(),]) ?", "$1").toLowerCase(java.util.Locale.ROOT);
+    }
 }

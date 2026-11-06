@@ -22,12 +22,6 @@ public record JsSource(List<String> lines) implements Scalar {
         lines = List.copyOf(lines);
     }
 
-    /** A segment from raw text, split on newlines. */
-    public static JsSource ofText(String text) {
-        Objects.requireNonNull(text, "text");
-        return text.isEmpty() ? EMPTY : new JsSource(List.of(text.split("\n", -1)));
-    }
-
     /** A segment from explicit lines. */
     public JsSource(String... lines) {
         this(List.of(lines));

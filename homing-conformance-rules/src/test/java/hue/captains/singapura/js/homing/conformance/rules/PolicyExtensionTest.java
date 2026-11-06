@@ -77,14 +77,14 @@ class PolicyExtensionTest {
         // a DOM-building module declared this type would escape every DOM rule.
         JsRuleSet noLane = new JsRuleSet(new RuleSetId("game-loop"), "Game loop",
                 List.of(NoCdnImportRule.INSTANCE, MaxEffectiveLinesRule.INSTANCE, FrameRateRule.INSTANCE));
-        assertFalse(CompositeJsRulePolicy.inLane(noLane));
+        assertFalse(noLane.inLane());
         var ex = assertThrows(IllegalArgumentException.class,
                 () -> DefaultJsRulePolicy.INSTANCE.extendedWith(Map.of(LibType.GAME_LOOP, noLane)));
         assertTrue(ex.getMessage().contains("sits in no lane"), ex.getMessage());
 
         // The empty set — the bundled-external shape — is likewise not a downstream's to grant.
         assertThrows(IllegalArgumentException.class, () -> DefaultJsRulePolicy.INSTANCE.extendedWith(
-                Map.of(LibType.GAME_LOOP, JsRuleSet.empty(new RuleSetId("free"), "Free"))));
+                Map.of(LibType.GAME_LOOP, new JsRuleSet(new RuleSetId("free"), "Free"))));
 
         // The no-DOM rule alone is not a lane without the globals.
         assertThrows(IllegalArgumentException.class, () -> DefaultJsRulePolicy.INSTANCE.extendedWith(
@@ -95,7 +95,7 @@ class PolicyExtensionTest {
     @Test
     void bothLanesAreAccepted() {
         // DOM-owner lane: the full discipline + the library's rule.
-        assertTrue(CompositeJsRulePolicy.inLane(GAME_RULES));
+        assertTrue(GAME_RULES.inLane());
         assertTrue(GAME_RULES.rules().containsAll(DefaultJsRulePolicy.INSTANCE.domOwnerDiscipline()));
         assertTrue(GAME_RULES.rules().contains(FrameRateRule.INSTANCE));
 
@@ -103,8 +103,8 @@ class PolicyExtensionTest {
         JsRuleSet pricer = DefaultJsRulePolicy.INSTANCE.headlessLane(new RuleSetId("pricer"), "Pricer", FrameRateRule.INSTANCE);
         JsRuleSet handBuilt = new JsRuleSet(new RuleSetId("pricer"), "Pricer",
                 List.of(NoCdnImportRule.INSTANCE, MaxEffectiveLinesRule.INSTANCE, NoDomAccessRule.INSTANCE));
-        assertTrue(CompositeJsRulePolicy.inLane(pricer));
-        assertTrue(CompositeJsRulePolicy.inLane(handBuilt));
+        assertTrue(pricer.inLane());
+        assertTrue(handBuilt.inLane());
         JsRulePolicy policy = DefaultJsRulePolicy.INSTANCE.extendedWith(
                 Map.of(LibType.GAME_LOOP, GAME_RULES, LibType.PRICER, pricer));
         assertSame(pricer, policy.rulesFor(LibType.PRICER));

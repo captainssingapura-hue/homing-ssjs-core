@@ -69,7 +69,7 @@ class SiteMpaTest {
 
     @Test
     void everyPageOfASiteIsMadeWithItsMpa_whicheverTreePlacedIt() {
-        var router = CatalogueRouter.at(Path.ROOT, DeskCatalogue.INSTANCE, DESK);
+        var router = new CatalogueRouter(Path.ROOT, DeskCatalogue.INSTANCE, DESK);
         assertEquals("[Desk site] home", router.resolve(new Path("home")).orElseThrow().html(Query.NONE).body());
         assertEquals("[Desk site] now", router.resolve(new Path("clock", "now")).orElseThrow().html(Query.NONE).body());
         assertSame(DESK, router.tree().mpa().orElseThrow());
@@ -77,7 +77,7 @@ class SiteMpaTest {
 
     @Test
     void theSameTreeReadByAnotherSite_wearsThatSitesChrome() {
-        var lab = CatalogueRouter.at(new Path("lab"), ClockCatalogue.INSTANCE, LAB);
+        var lab = new CatalogueRouter(new Path("lab"), ClockCatalogue.INSTANCE, LAB);
         assertEquals("[Lab site] now", lab.resolve(new Path("lab", "now")).orElseThrow().html(Query.NONE).body());
     }
 
@@ -86,7 +86,7 @@ class SiteMpaTest {
         var tree = new CatalogueTree(DeskCatalogue.INSTANCE, DESK);
         assertEquals(List.of(new SitePage("Desk site", "now")), tree.leavesOf(ClockCatalogue.INSTANCE).stream().map(Leaf::page).toList());
         assertEquals(Optional.of(new Path("clock", "now")), tree.pathOf(new SitePage("Desk site", "now")));
-        String listing = CatalogueRouter.at(Path.ROOT, tree).resolve(new Path("clock")).orElseThrow().html(Query.NONE).body();
+        String listing = new CatalogueRouter(Path.ROOT, tree).resolve(new Path("clock")).orElseThrow().html(Query.NONE).body();
         assertTrue(listing.contains("href=\"/clock/now\""), listing);
     }
 

@@ -29,7 +29,7 @@ public sealed interface FixedValue extends Scalar
     /** A whole number, none below 0: a measure, a count. */
     record Whole(String name, Integer byDefault, boolean orNone) implements FixedValue {
         public Whole {
-            named(name, "Whole");
+            FixedValueNames.INSTANCE.check(name, "Whole");
             if (byDefault == null && !orNone) throw new IllegalArgumentException("Whole " + name + ": its default is none, and it may not be none");
             if (byDefault != null && byDefault < 0) throw new IllegalArgumentException("Whole " + name + ": its default is a whole number, none below 0, not " + byDefault);
         }
@@ -38,7 +38,7 @@ public sealed interface FixedValue extends Scalar
     /** Yes or no. */
     record YesNo(String name, Boolean byDefault, boolean orNone) implements FixedValue {
         public YesNo {
-            named(name, "YesNo");
+            FixedValueNames.INSTANCE.check(name, "YesNo");
             if (byDefault == null && !orNone) throw new IllegalArgumentException("YesNo " + name + ": its default is none, and it may not be none");
         }
     }
@@ -46,7 +46,7 @@ public sealed interface FixedValue extends Scalar
     /** A text: any, the empty one among them. */
     record Text(String name, String byDefault, boolean orNone) implements FixedValue {
         public Text {
-            named(name, "Text");
+            FixedValueNames.INSTANCE.check(name, "Text");
             if (byDefault == null && !orNone) throw new IllegalArgumentException("Text " + name + ": its default is none, and it may not be none");
         }
     }
@@ -55,7 +55,7 @@ public sealed interface FixedValue extends Scalar
     record OneOf(String name, List<String> names, String byDefault, boolean orNone) implements FixedValue {
         private static final Pattern WORDS = Pattern.compile("[a-z][a-z0-9]*(-[a-z0-9]+)*");
         public OneOf {
-            named(name, "OneOf");
+            FixedValueNames.INSTANCE.check(name, "OneOf");
             names = List.copyOf(Objects.requireNonNull(names, "OneOf.names"));
             if (names.isEmpty()) throw new IllegalArgumentException("OneOf " + name + ": one of no names");
             if (!names.stream().allMatch(n -> WORDS.matcher(n).matches())) throw new IllegalArgumentException("OneOf " + name + ": its names are lower-case words joined by hyphens: " + names);
@@ -66,24 +66,19 @@ public sealed interface FixedValue extends Scalar
 
     /** An element of the page, given by its caller - where what it makes is drawn: none by default, always. */
     record Element(String name) implements FixedValue {
-        public Element { named(name, "Element"); }
+        public Element { FixedValueNames.INSTANCE.check(name, "Element"); }
         @Override public boolean orNone() { return true; }
     }
 
     /** A group of values, each named once: never none - a value it is not given is its default. */
     record Group(String name, List<FixedValue> values) implements FixedValue {
         public Group {
-            named(name, "Group");
+            FixedValueNames.INSTANCE.check(name, "Group");
             values = List.copyOf(Objects.requireNonNull(values, "Group.values"));
             if (values.isEmpty()) throw new IllegalArgumentException("Group " + name + ": a group of no values");
             var seen = new HashSet<String>();
             for (FixedValue v : values) if (!seen.add(v.name())) throw new IllegalArgumentException("Group " + name + ": names its value " + v.name() + " twice");
         }
         @Override public boolean orNone() { return false; }
-    }
-
-    private static void named(String name, String kind) {
-        Objects.requireNonNull(name, kind + ".name");
-        if (!name.matches("[a-z][A-Za-z0-9]*")) throw new IllegalArgumentException(kind + ": '" + name + "' is no value's name - a lower-case letter, then letters and digits");
     }
 }

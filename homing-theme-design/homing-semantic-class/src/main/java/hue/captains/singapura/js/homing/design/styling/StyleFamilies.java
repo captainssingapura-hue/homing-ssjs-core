@@ -63,7 +63,7 @@ public final class StyleFamilies {
     public List<String> families() { return styling.taxonomy().heads().stream().map(ComponentBranch::token).toList(); }
 
     /** Where a style's file of a family is, in a jar. */
-    public static String path(String style, String family) { return ROOT + style + "/" + family + ".css"; }
+    public String path(String style, String family) { return ROOT + style + "/" + family + ".css"; }
 
     /** A style's file of a family: made now from the file system in dev mode, deployed the one built into the jar. */
     public String read(String style, String family) {

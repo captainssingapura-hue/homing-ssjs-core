@@ -1,6 +1,5 @@
 package hue.captains.singapura.js.homing.component.keyboard;
 
-import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
@@ -28,11 +27,6 @@ public record KeyBinding(Key key, Set<Modifier> modifiers, String meaning) {
     public KeyBinding(Key key, String meaning) { this(key, Set.of(), meaning); }
     /** A key pressed with one modifier held, and what the component does with it. */
     public KeyBinding(Key key, Modifier modifier, String meaning) { this(key, EnumSet.of(modifier), meaning); }
-
-    /** Several keys, one meaning: {@code ArrowRight} and {@code ArrowUp} both a step up. */
-    public static List<KeyBinding> each(String meaning, Key... keys) {
-        return Arrays.stream(keys).map(k -> new KeyBinding(k, meaning)).toList();
-    }
 
     /** The chord, as a person reads it: {@code Shift+ArrowUp}; modifiers in a fixed order. */
     public String chord() {

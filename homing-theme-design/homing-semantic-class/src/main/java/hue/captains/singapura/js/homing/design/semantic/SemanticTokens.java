@@ -12,6 +12,7 @@ import hue.captains.singapura.js.homing.design.AnimationEffect;
 import hue.captains.singapura.js.homing.design.Carrier;
 import hue.captains.singapura.js.homing.design.State;
 import hue.captains.singapura.js.homing.design.Target;
+import hue.captains.singapura.js.homing.design.Trees;
 import hue.captains.singapura.js.homing.design.local.LocalStyle;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
@@ -120,7 +121,7 @@ public record SemanticTokens() implements StatelessFunctionalObject {
     }
 
     /** The target leaves the semantic classes answer, in the tree's order: every leaf. */
-    public List<Target> leaves() { return Target.leaves(); }
+    public List<Target> leaves() { return Trees.INSTANCE.targetLeaves(); }
 
     /** Of those, the ones a sheet carries: every CSS leaf. */
     public List<Target> cssLeaves() { return leaves().stream().filter(t -> t.carrier() == Carrier.CSS).toList(); }

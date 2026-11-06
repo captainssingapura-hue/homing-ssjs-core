@@ -68,7 +68,7 @@ public record MeaningsCheck() implements StatelessFunctionalObject {
         if (!t.roles().isEmpty()) out.add(RoleRoot.INSTANCE);
         out.addAll(t.roleBranches());
         out.addAll(t.roles());
-        if (!t.states().types().isEmpty()) out.addAll(StateTree.nodes(t.states().branches(), t.states().types()));
+        if (!t.states().types().isEmpty()) out.addAll(StateNodes.INSTANCE.of(t.states().branches(), t.states().types()));
         return out;
     }
 

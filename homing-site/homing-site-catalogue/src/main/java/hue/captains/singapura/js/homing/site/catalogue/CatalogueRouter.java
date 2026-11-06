@@ -40,21 +40,21 @@ public final class CatalogueRouter implements Router {
     }
 
     /** The tree under {@code root}, served at {@code mount}, vertices shown by {@link HtmlListing}. */
-    public static CatalogueRouter at(Path mount, L0_Catalogue<?> root) {
-        return new CatalogueRouter(new CatalogueTree(root), mount, HtmlListing.INSTANCE);
+    public CatalogueRouter(Path mount, L0_Catalogue<?> root) {
+        this(new CatalogueTree(root), mount, HtmlListing.INSTANCE);
     }
 
     /**
      * The tree under {@code root}, its pages made with the site's {@code mpa}, served at
      * {@code mount}: every page wears the site's one chrome, whichever tree placed it.
      */
-    public static CatalogueRouter at(Path mount, L0_Catalogue<?> root, Mpa mpa) {
-        return new CatalogueRouter(new CatalogueTree(root, mpa), mount, HtmlListing.INSTANCE);
+    public CatalogueRouter(Path mount, L0_Catalogue<?> root, Mpa mpa) {
+        this(new CatalogueTree(root, mpa), mount, HtmlListing.INSTANCE);
     }
 
     /** An already-read tree, served at {@code mount}. */
-    public static CatalogueRouter at(Path mount, CatalogueTree tree) {
-        return new CatalogueRouter(tree, mount, HtmlListing.INSTANCE);
+    public CatalogueRouter(Path mount, CatalogueTree tree) {
+        this(tree, mount, HtmlListing.INSTANCE);
     }
 
     /** This router with its vertices shown by {@code listing}. */

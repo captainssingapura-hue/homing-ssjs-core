@@ -96,7 +96,7 @@ public final class Dressed {
                 throw new IllegalArgumentException(style.token() + " is written over " + b.token() + ", whose scheme it cannot see");
             base = layerOf(b, seen);
         }
-        return Layer.index(style, base);
+        return new Layer(style, base);
     }
 
     @Override public boolean equals(Object o) {

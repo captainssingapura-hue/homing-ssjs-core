@@ -56,7 +56,7 @@ public record CssConformance() implements StatelessFunctionalObject {
 
     /** Every finding of every rule, over the closure. */
     public List<Finding> check(Collection<? extends Crate> closure) {
-        var graph = Graph.of(closure);
+        var graph = new Graph(closure);
         var out = new ArrayList<Finding>();
         out.addAll(tokenDeclared(graph));
         out.addAll(nestedDeclared(graph));
@@ -71,16 +71,14 @@ public record CssConformance() implements StatelessFunctionalObject {
         final Map<CssGroup<?>, Crate> crateOf = new LinkedHashMap<>();
         final Map<DerivedCss<?>, Crate> derivedCrateOf = new LinkedHashMap<>();
 
-        static Graph of(Collection<? extends Crate> closure) {
-            var g = new Graph();
+        Graph(Collection<? extends Crate> closure) {
             for (Crate c : closure) {
                 for (CrateEntry e : c.entries()) {
                     EsModule<?> m = e.module();
-                    if (m instanceof CssGroup<?> group) g.crateOf.put(group, c);
-                    if (m instanceof DerivedCss<?> sheet) g.derivedCrateOf.put(sheet, c);
+                    if (m instanceof CssGroup<?> group) crateOf.put(group, c);
+                    if (m instanceof DerivedCss<?> sheet) derivedCrateOf.put(sheet, c);
                 }
             }
-            return g;
         }
 
         /** The groups to check: everything crated. */

@@ -429,7 +429,4 @@ public sealed interface Target extends Stateless permits Target.Color, Target.Co
             @Override public Carrier carrier() { return Carrier.ASSET; }
         }
     }
-
-    /** Every leaf of the tree, in declaration order — the one place the tree is walked. */
-    static List<Target> leaves() { return Trees.INSTANCE.targetLeaves(); }
 }

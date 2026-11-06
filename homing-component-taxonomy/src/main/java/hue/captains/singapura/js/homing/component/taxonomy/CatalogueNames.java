@@ -28,12 +28,12 @@ public record CatalogueNames() implements StatelessFunctionalObject {
         byName.forEach((name, same) -> {
             if (same.size() > 1)
                 out.add(new TaxonomyProblem(Rule.CATALOGUE_NAME_TWICE, "'" + name + "' names " + same.size()
-                        + " nodes of the role catalogue: " + String.join(" and ", same.stream().map(CatalogueNames::said).toList())));
+                        + " nodes of the role catalogue: " + String.join(" and ", same.stream().map(this::said).toList())));
         });
         return List.copyOf(out);
     }
 
-    private static String said(RoleNode n) {
+    private String said(RoleNode n) {
         return (n instanceof Role<?> ? "the role " : "the branch ") + Names.INSTANCE.qualified(n);
     }
 }

@@ -19,7 +19,7 @@ class TreesTest {
 
     @Test
     void everyLeafHasAnInstance_andRestAmongItsStates_andNoCrossLeafShorthand() {
-        List<Target> leaves = Target.leaves();
+        List<Target> leaves = Trees.INSTANCE.targetLeaves();
         assertEquals(36, leaves.size(), "the tree's leaves");
         var tokens = new HashSet<String>();
         for (Target t : leaves) {

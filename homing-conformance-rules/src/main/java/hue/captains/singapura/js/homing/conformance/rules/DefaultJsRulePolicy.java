@@ -124,7 +124,7 @@ public record DefaultJsRulePolicy() implements JsRulePolicy, StatelessFunctional
     private static final JsRuleSet WIDGET =
             new JsRuleSet(new RuleSetId("widget"), "Widget", INSTANCE.widgetDiscipline());
     private static final JsRuleSet BUNDLED_EXTERNAL =
-            JsRuleSet.empty(new RuleSetId("bundled-external"), "Bundled external");
+            new JsRuleSet(new RuleSetId("bundled-external"), "Bundled external");
 
     @Override
     public JsRuleSet rulesFor(JsModuleType type) {
