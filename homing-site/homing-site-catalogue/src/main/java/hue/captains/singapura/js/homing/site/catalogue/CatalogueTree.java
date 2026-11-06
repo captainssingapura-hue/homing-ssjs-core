@@ -157,7 +157,7 @@ public final class CatalogueTree {
         for (Graft<?> graft : grafted) walk(graft.root(), at.child(graft.root().slug().value()));
     }
 
-    private static void claim(Map<String, Slot> slots, String slug, Slot slot, Catalogue<?> under) {
+    private void claim(Map<String, Slot> slots, String slug, Slot slot, Catalogue<?> under) {
         Slot prior = slots.putIfAbsent(slug, slot);
         if (prior != null) {
             throw new IllegalArgumentException(
@@ -166,7 +166,7 @@ public final class CatalogueTree {
         }
     }
 
-    private static String describe(Slot s) {
+    private String describe(Slot s) {
         return switch (s) {
             case Slot.Vertex v -> "catalogue " + v.catalogue().getClass().getName();
             case Slot.Page p   -> "leaf '" + p.leaf().name() + "'";

@@ -46,7 +46,7 @@ public final class ConformanceReportSource {
         return Optional.of(ModuleResultCodec.INSTANCE.transformFrom(read(file)));
     }
 
-    private static String read(Path file) {
+    private String read(Path file) {
         try {
             return Files.readString(file, StandardCharsets.UTF_8);
         } catch (IOException e) {

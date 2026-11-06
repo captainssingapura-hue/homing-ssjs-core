@@ -94,7 +94,7 @@ public final class NavWriter {
     }
 
     /** Escape a string for safe inclusion in a JS double-quoted literal. */
-    private static String jsString(String s) {
+    private String jsString(String s) {
         StringBuilder out = new StringBuilder(s.length() + 4);
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);

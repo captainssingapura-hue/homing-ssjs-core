@@ -110,7 +110,7 @@ public final class ColorTree implements Immutable {
         if (!problems.isEmpty()) throw new IllegalArgumentException(String.join("; ", problems));
     }
 
-    private static List<String> chainProblems(ColorPalette<?> palette) {
+    private List<String> chainProblems(ColorPalette<?> palette) {
         var schemes = Schemes.INSTANCE;
         var out = new ArrayList<String>();
         ColorPalette<?> next = palette;

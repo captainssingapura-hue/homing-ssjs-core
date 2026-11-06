@@ -85,7 +85,7 @@ public final class Dressed {
         return List.copyOf(out);
     }
 
-    private static Layer layerOf(DesignStyle<?> style, Set<Class<?>> seen) {
+    private Layer layerOf(DesignStyle<?> style, Set<Class<?>> seen) {
         if (!seen.add(style.getClass()))
             throw new IllegalArgumentException("the base chain of " + seen.iterator().next().getSimpleName() + " comes back to " + style.token());
         Layer base = null;

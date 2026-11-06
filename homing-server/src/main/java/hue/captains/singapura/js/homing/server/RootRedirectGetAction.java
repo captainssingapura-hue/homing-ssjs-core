@@ -95,7 +95,7 @@ public class RootRedirectGetAction
         return CompletableFuture.completedFuture(new HtmlPageContent(html));
     }
 
-    private static String appendIfMissing(String url, String key, String value) {
+    private String appendIfMissing(String url, String key, String value) {
         if (value == null || value.isEmpty()) return url;
         // Caller already set the key on the target — caller wins.
         if (url.contains("?" + key + "=") || url.contains("&" + key + "=")) return url;
@@ -103,11 +103,11 @@ public class RootRedirectGetAction
         return url + sep + key + "=" + URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 
-    private static String htmlAttrEscape(String s) {
+    private String htmlAttrEscape(String s) {
         return s.replace("&", "&amp;").replace("\"", "&quot;");
     }
 
-    private static String jsStringEscape(String s) {
+    private String jsStringEscape(String s) {
         return s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 }

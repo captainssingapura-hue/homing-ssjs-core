@@ -42,7 +42,7 @@ public record CrateEntry(EsModule<?> module, ModuleForm form, JsModuleType decla
     }
 
     /** The types the classifier infers from a module's form — not an author's to assert. */
-    private static boolean isMechanical(StandardJsModuleType t) {
+    private boolean isMechanical(StandardJsModuleType t) {
         return switch (t) {
             case MANAGER_INJECTOR, GENERATED_CSS, BUNDLED_EXTERNAL, WIDGET -> true;
             case CONSUMER, PRIMITIVE, SECRETARY, PURE_LOGIC -> false;

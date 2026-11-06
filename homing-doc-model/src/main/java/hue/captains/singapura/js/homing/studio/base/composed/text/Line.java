@@ -88,7 +88,7 @@ public sealed interface Line extends Scalar
          * Until then this counts the raw length — the effective cap is a lower
          * bound on the true visible allowance, so nothing over-long slips through.</p>
          */
-        private static int effectiveLengthOf(String raw) {
+        private int effectiveLengthOf(String raw) {
             return raw.length();
         }
     }

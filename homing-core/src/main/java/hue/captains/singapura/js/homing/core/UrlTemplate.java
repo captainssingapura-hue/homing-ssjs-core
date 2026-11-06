@@ -112,7 +112,7 @@ public final class UrlTemplate {
         }
     }
 
-    private static String encode(String v) {
+    private String encode(String v) {
         return URLEncoder.encode(v, StandardCharsets.UTF_8);
     }
 
@@ -162,7 +162,7 @@ public final class UrlTemplate {
     }
 
     /** Escape a string literal for safe inclusion in a JS double-quoted string. */
-    private static String jsEscape(String s) {
+    private String jsEscape(String s) {
         StringBuilder out = new StringBuilder(s.length() + 4);
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);

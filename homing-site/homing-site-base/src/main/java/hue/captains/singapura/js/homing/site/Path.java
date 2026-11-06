@@ -112,7 +112,7 @@ public record Path(List<String> segments) implements Scalar {
         return sb.toString();
     }
 
-    private static String encode(String s) {
+    private String encode(String s) {
         // URLEncoder is a form encoder: a space becomes a plus, which a path
         // reader takes literally. Put the space back as %20, which is what a
         // path means by it.

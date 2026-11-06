@@ -113,7 +113,7 @@ public final class CatalogueRouter implements Router {
     }
 
     /** The page bound to its trail, as the site contract sees it. */
-    private static Navigable placed(Placed page, Trail trail) {
+    private Navigable placed(Placed page, Trail trail) {
         return query -> page.html(trail, query);
     }
 }

@@ -142,7 +142,7 @@ record StyleRegistry(Taxonomy taxonomy, DesignStyle<?> base, List<BaseModule<?, 
     @Override public Optional<DesignStyle<?>> baseLayer(DesignStyle<?> style) { return Bundles.INSTANCE.baseLayer(style); }
 
     /** The token of an implementation's style, read off its type. */
-    private static String styleOf(CastingStyle<?, ?, ?, ?> implementation) {
+    private String styleOf(CastingStyle<?, ?, ?, ?> implementation) {
         Class<?> style = TypeArguments.INSTANCE.at(implementation.getClass(), CastingStyle.class, 1);
         return style == null ? "?" : NodeName.ofType(style, "").value();
     }

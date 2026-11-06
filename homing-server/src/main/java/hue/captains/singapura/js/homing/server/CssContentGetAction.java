@@ -122,7 +122,7 @@ public class CssContentGetAction
     // ---- helpers --------------------------------------------------------
 
 
-    private static String renderCss(CssGroup<?> group) {
+    private String renderCss(CssGroup<?> group) {
         StringBuilder sb = new StringBuilder();
 
         // Defect 0003 — cascade-layer declaration goes first so the browser

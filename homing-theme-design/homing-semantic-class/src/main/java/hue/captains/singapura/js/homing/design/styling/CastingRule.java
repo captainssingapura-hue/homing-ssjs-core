@@ -362,7 +362,7 @@ final class CastingRule {
 
     private void at(ReadCss.Item item, String says) { problems.add(name + ":" + item.line() + ": " + says); }
 
-    private static String kindOf(ColorNode<?, ?, ?> node) {
+    private String kindOf(ColorNode<?, ?, ?> node) {
         return switch (node) {
             case Palettable<?, ?> p -> "a palettable colour, var(--fp-" + p.token() + ")";
             case Fixed<?, ?> f -> "a fixed colour, --fixed-" + f.token();

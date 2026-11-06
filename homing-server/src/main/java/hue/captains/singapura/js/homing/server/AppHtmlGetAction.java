@@ -241,12 +241,12 @@ public class AppHtmlGetAction
         return CompletableFuture.completedFuture(new HtmlPageContent(html));
     }
 
-    private static String htmlEscape(String s) {
+    private String htmlEscape(String s) {
         if (s == null) return "";
         return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
     }
 
-    private static ResourceNotFound notFound(String resource, String reason) {
+    private ResourceNotFound notFound(String resource, String reason) {
         return new ResourceNotFound(
                 new ResourceNotFound._InternalError(null, reason + ": " + resource),
                 new ResourceNotFound._ExternalError(resource, reason)

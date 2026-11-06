@@ -65,7 +65,7 @@ public sealed interface ConcreteColor extends Scalar permits ConcreteColor.Srgb,
             return v;
         }
 
-        private static int channel(String name, int v) {
+        private int channel(String name, int v) {
             if (v < 0 || v > 255) throw new IllegalArgumentException("an sRGB " + name + " channel is from 0 to 255, not " + v);
             return v;
         }

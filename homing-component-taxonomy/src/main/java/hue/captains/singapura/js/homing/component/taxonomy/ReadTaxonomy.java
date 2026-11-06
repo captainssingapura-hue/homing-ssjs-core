@@ -208,7 +208,7 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
     }
 
     /** An axis declared twice by one node, or declared by a node and a branch above it: each pair named. */
-    private static List<TaxonomyProblem> extentsTwice(List<ComponentBranch> branches, List<Component<?>> components) {
+    private List<TaxonomyProblem> extentsTwice(List<ComponentBranch> branches, List<Component<?>> components) {
         var nodes = new ArrayList<Taxon>();
         nodes.addAll(branches);
         nodes.addAll(components);
@@ -227,7 +227,7 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
     }
 
     /** A family head under another, each pair named; a component that says it heads a family. */
-    private static List<TaxonomyProblem> familyHeads(List<ComponentBranch> branches, List<Component<?>> components) {
+    private List<TaxonomyProblem> familyHeads(List<ComponentBranch> branches, List<Component<?>> components) {
         var out = new ArrayList<TaxonomyProblem>();
         for (ComponentBranch b : branches) {
             if (!(b instanceof FamilyHead)) continue;
@@ -247,7 +247,7 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
      * A leaf the document wears ({@link WornByTheDocument}) with anything an element's leaf has - its one problem naming
      * each; one that plays a part, each part named; and a component that says the document wears it, which only a branch says.
      */
-    private static List<TaxonomyProblem> wornByTheDocument(List<Component<?>> components, List<Part<?, ?>> parts) {
+    private List<TaxonomyProblem> wornByTheDocument(List<Component<?>> components, List<Part<?, ?>> parts) {
         var out = new ArrayList<TaxonomyProblem>();
         for (Component<?> c : components) {
             if (c instanceof WornByTheDocument)
@@ -274,21 +274,21 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
     }
 
     /** Whether a branch above a node says the document wears its leaves. */
-    private static boolean underTheDocument(Taxon t) {
+    private boolean underTheDocument(Taxon t) {
         for (ComponentBranch b = Levels.INSTANCE.parentOf(t); b != null; b = Levels.INSTANCE.parentOf(b))
             if (b instanceof WornByTheDocument) return true;
         return false;
     }
 
-    private static <T> List<T> orNone(List<T> list) { return list == null ? List.of() : list; }
+    private <T> List<T> orNone(List<T> list) { return list == null ? List.of() : list; }
 
-    private static List<ExtentAxis> axes(Taxon t) {
+    private List<ExtentAxis> axes(Taxon t) {
         List<ExtentAxis> a = t.extents();
         return a == null ? List.of() : a;
     }
 
     /** A leaf declares no parts, a composite at least one, and no component says it is both (D53). */
-    private static void kind(Component<?> c, List<Slot<?>> slots, List<TaxonomyProblem> problems) {
+    private void kind(Component<?> c, List<Slot<?>> slots, List<TaxonomyProblem> problems) {
         boolean leaf = c instanceof Leaf<?>, composite = c instanceof Composite<?>;
         if (leaf && composite) problems.add(new TaxonomyProblem(Rule.KIND_BADLY, Names.INSTANCE.of(c) + " says it is a leaf and a composite: a component is one"));
         else if (leaf && !slots.isEmpty()) problems.add(new TaxonomyProblem(Rule.KIND_BADLY, Names.INSTANCE.of(c) + " is a leaf, and declares parts: a component with parts is a composite"));
@@ -296,21 +296,21 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
     }
 
     /** A component's rooms, each named once. */
-    private static void rooms(Component<?> c, List<TaxonomyProblem> problems) {
+    private void rooms(Component<?> c, List<TaxonomyProblem> problems) {
         var named = new HashSet<String>();
         for (Room room : c.rooms())
             if (!named.add(room.name())) problems.add(new TaxonomyProblem(Rule.ROOMS_BADLY, Names.INSTANCE.of(c) + " names its room " + room.name() + " twice"));
     }
 
     /** A component's values, each named once (a group's own are checked as it is made). */
-    private static void values(Component<?> c, List<TaxonomyProblem> problems) {
+    private void values(Component<?> c, List<TaxonomyProblem> problems) {
         var named = new HashSet<String>();
         for (FixedValue value : orNone(c.fixedValues()))
             if (!named.add(value.name())) problems.add(new TaxonomyProblem(Rule.VALUES_BADLY, Names.INSTANCE.of(c) + " names its value " + value.name() + " twice"));
     }
 
     /** A component's slots; a count that is no cardinality is a problem of the component that said it. */
-    private static List<Slot<?>> slotsOf(Component<?> c, List<TaxonomyProblem> problems) {
+    private List<Slot<?>> slotsOf(Component<?> c, List<TaxonomyProblem> problems) {
         try {
             List<Slot<?>> slots = c.parts();
             return slots == null ? List.of() : slots;
@@ -321,7 +321,7 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
     }
 
     /** The branches above a component, nearest first, the root left out; a missing parent is a problem, and ends the walk. */
-    private static List<ComponentBranch> lineage(Component<?> c, List<TaxonomyProblem> problems) {
+    private List<ComponentBranch> lineage(Component<?> c, List<TaxonomyProblem> problems) {
         var out = new ArrayList<ComponentBranch>();
         Taxon at = c;
         for (ComponentBranch b = Levels.INSTANCE.parentOf(at); !(b instanceof L0_ComponentBranch); b = Levels.INSTANCE.parentOf(at)) {
@@ -336,7 +336,7 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
     }
 
     /** The branches above a role, nearest first, the root left out; a missing parent is a problem, and ends the walk. */
-    private static List<RoleBranch> filing(Role<?> r, List<TaxonomyProblem> problems) {
+    private List<RoleBranch> filing(Role<?> r, List<TaxonomyProblem> problems) {
         var out = new ArrayList<RoleBranch>();
         RoleNode at = r;
         for (RoleBranch b = Levels.INSTANCE.parentOf(at); !(b instanceof L0_RoleBranch); b = Levels.INSTANCE.parentOf(at)) {
@@ -351,12 +351,12 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
     }
 
     /** By level, root-most first, each level in the order first reached - so every parent comes before its children. */
-    private static <B> List<B> byLevel(Set<B> branches, java.util.function.ToIntFunction<B> level) {
+    private <B> List<B> byLevel(Set<B> branches, java.util.function.ToIntFunction<B> level) {
         return branches.stream().sorted(Comparator.comparingInt(level)).toList();
     }
 
     /** Every cycle of "plays a part in", each once, by the components it passes through. */
-    private static List<TaxonomyProblem> compositionCycles(Map<Component<?>, List<Component<?>>> plays) {
+    private List<TaxonomyProblem> compositionCycles(Map<Component<?>, List<Component<?>>> plays) {
         var out = new ArrayList<TaxonomyProblem>();
         var reported = new HashSet<Set<Component<?>>>();
         for (Component<?> start : plays.keySet()) {
@@ -367,7 +367,7 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
         return out;
     }
 
-    private static void walk(Component<?> at, Map<Component<?>, List<Component<?>>> plays, List<Component<?>> path,
+    private void walk(Component<?> at, Map<Component<?>, List<Component<?>>> plays, List<Component<?>> path,
                              Set<Set<Component<?>>> reported, List<TaxonomyProblem> out) {
         for (Component<?> next : plays.getOrDefault(at, List.of())) {
             int i = path.indexOf(next);
@@ -388,7 +388,7 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
     }
 
     /** Two nodes, one token: each pair named. */
-    private static List<TaxonomyProblem> tokensTwice(List<ComponentBranch> branches, List<Component<?>> components, List<Part<?, ?>> parts) {
+    private List<TaxonomyProblem> tokensTwice(List<ComponentBranch> branches, List<Component<?>> components, List<Part<?, ?>> parts) {
         var nodes = new ArrayList<ComponentNode>();
         nodes.add(Root.INSTANCE);
         nodes.addAll(branches);
@@ -406,7 +406,7 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
     }
 
     /** A role that shares a name with a branch or a component says what plays a part, not what it does. */
-    private static List<TaxonomyProblem> roleNamesANode(List<ComponentBranch> branches, List<Component<?>> components, List<Role<?>> roles) {
+    private List<TaxonomyProblem> roleNamesANode(List<ComponentBranch> branches, List<Component<?>> components, List<Role<?>> roles) {
         var nodes = new LinkedHashMap<String, Taxon>();
         nodes.put(Root.INSTANCE.name().value(), Root.INSTANCE);
         for (ComponentBranch b : branches) nodes.putIfAbsent(b.name().value(), b);
@@ -427,7 +427,7 @@ public record ReadTaxonomy() implements StatelessFunctionalObject {
      * own, and never an owner's to add - and each role set well made: some roles, each once, none that only places a
      * part.
      */
-    private static List<TaxonomyProblem> castings(List<Part<?, ?>> parts, List<Component<?>> components) {
+    private List<TaxonomyProblem> castings(List<Part<?, ?>> parts, List<Component<?>> components) {
         var out = new ArrayList<TaxonomyProblem>();
         for (Component<?> c : components) {
             if (!(c instanceof WithRoles<?> w)) continue;

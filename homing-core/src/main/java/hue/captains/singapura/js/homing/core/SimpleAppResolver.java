@@ -138,7 +138,7 @@ public final class SimpleAppResolver {
         }
     }
 
-    private static <L extends Linkable> Map<String, L> indexByName(
+    private <L extends Linkable> Map<String, L> indexByName(
             Collection<L> linkables, String kind) {
         var byName = new LinkedHashMap<String, L>();
         for (var l : linkables) {

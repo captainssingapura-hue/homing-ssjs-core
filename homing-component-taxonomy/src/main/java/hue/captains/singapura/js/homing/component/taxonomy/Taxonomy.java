@@ -79,7 +79,7 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
     }
 
     /** What a part is answered as: the one that plays it, or the branch its players share, the nearest - the root at the least. */
-    private static Taxon played(Part<?, ?> p) {
+    private Taxon played(Part<?, ?> p) {
         if (!p.alternatives()) return p.bases().get(0);
         List<Taxon> common = null;
         for (Component<?> c : p.bases()) {

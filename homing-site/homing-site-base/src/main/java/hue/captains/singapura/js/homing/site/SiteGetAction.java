@@ -63,7 +63,7 @@ public final class SiteGetAction
         }
     }
 
-    private static ResourceNotFound notFound(Path path) {
+    private ResourceNotFound notFound(Path path) {
         String where = path.toString();
         return new ResourceNotFound(
                 new ResourceNotFound._InternalError(null, "No navigable at " + where),

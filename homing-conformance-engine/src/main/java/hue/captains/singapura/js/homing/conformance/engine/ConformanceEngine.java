@@ -147,7 +147,7 @@ public final class ConformanceEngine {
     }
 
     /** A rule set in exportable form — its id, title, and its rules' id + intent. */
-    private static RuleSetReport ruleSetReport(JsRuleSet set) {
+    private RuleSetReport ruleSetReport(JsRuleSet set) {
         var rules = new ArrayList<RuleReport>();
         set.rules().forEach(r -> rules.add(new RuleReport(r.id().value(), r.intent())));
         return new RuleSetReport(set.id().value(), set.title(), rules);

@@ -196,11 +196,11 @@ public final class StyleRegistryBuilder<Sc extends ColorScheme, B extends Design
         return held;
     }
 
-    private static String name(Object module) {
+    private String name(Object module) {
         return module instanceof BaseModule<?, ?> b ? b.components().getClass().getSimpleName() : module.getClass().getSimpleName();
     }
 
-    private static void refuse(List<String> problems) {
+    private void refuse(List<String> problems) {
         throw new IllegalArgumentException("the instance's styles are refused:\n  " + String.join("\n  ", problems));
     }
 }
