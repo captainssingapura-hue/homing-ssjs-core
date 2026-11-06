@@ -33,8 +33,8 @@ class AppHtmlStampTest {
             return new ParamCodec<>() {
                 @Override public Decoded<Coded> from(Map<String, List<String>> q) {
                     String id = QueryString.INSTANCE.first(q, "id");
-                    if (id == null) return Decoded.missing("id");
-                    return Decoded.ok(new Coded(id, QueryString.INSTANCE.first(q, "path")));
+                    if (id == null) return new Decoded.Missing<>("id");
+                    return new Decoded.Ok<>(new Coded(id, QueryString.INSTANCE.first(q, "path")));
                 }
                 @Override public Map<String, List<String>> to(Coded p) {
                     var out = QueryString.INSTANCE.params();
@@ -44,7 +44,7 @@ class AppHtmlStampTest {
                 }
             };
         }
-        @Override public ImportsFor<CodedApp> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<CodedApp> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<CodedApp> exports() {
             return new ExportsOf<>(this, List.<Exportable<CodedApp>>of(new appMain()));
         }
@@ -56,7 +56,7 @@ class AppHtmlStampTest {
         private PlainApp() {}
         @Override public String simpleName() { return "plain"; }
         @Override public String title()      { return "Plain"; }
-        @Override public ImportsFor<PlainApp> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<PlainApp> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<PlainApp> exports() {
             return new ExportsOf<>(this, List.<Exportable<PlainApp>>of(new appMain()));
         }

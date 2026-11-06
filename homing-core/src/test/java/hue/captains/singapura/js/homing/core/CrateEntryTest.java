@@ -19,7 +19,7 @@ class CrateEntryTest {
 
     record Plain() implements DomModule<Plain>, SelfContent {
         static final Plain INSTANCE = new Plain();
-        @Override public ImportsFor<Plain> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<Plain> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<Plain> exports() { return new ExportsOf<>(INSTANCE, List.of()); }
         @Override public List<String> selfContent(ModuleNameResolver r) { return List.of("export const x = 1;"); }
     }

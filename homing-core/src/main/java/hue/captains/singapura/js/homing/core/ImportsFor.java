@@ -24,19 +24,29 @@ public final class ImportsFor<M extends EsModule>{
         this.allImports = allImports;
     }
 
-    /** A builder with nothing added yet. */
-    public static <M extends EsModule> _Builder<M> builder(){
-        return new _Builder<>();
-    }
-
     /** The imports of a module that imports nothing. */
-    public static <M extends EsModule> ImportsFor<M> noImports(){
-        return new ImportsFor<>(Map.of());
+    public ImportsFor() {
+        this(Map.of());
     }
 
     /** What is imported from each source, by source, in {@link ImportOrder}. */
     public Map<Importable, ModuleImports<?>> getAllImports() {
         return allImports;
+    }
+
+    /** Whether any import is a link to an app. */
+    public boolean importsAnyAppLink() {
+        return allImports.values().stream()
+                .anyMatch(mi -> mi.allImports().stream().anyMatch(e -> e instanceof AppLink<?>));
+    }
+
+    /** The distinct managers its imports inject. */
+    public java.util.List<ManagerInjector> managerInjectors() {
+        return allImports.keySet().stream()
+                .filter(target -> target instanceof ManagerInjector)
+                .map(target -> (ManagerInjector) target)
+                .distinct()
+                .toList();
     }
 
     /**

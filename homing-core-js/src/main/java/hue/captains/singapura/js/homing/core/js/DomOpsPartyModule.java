@@ -92,7 +92,7 @@ public record DomOpsPartyModule() implements DomModule<DomOpsPartyModule> {
 
     @Override
     public ImportsFor<DomOpsPartyModule> imports() {
-        return ImportsFor.<DomOpsPartyModule>builder()
+        return new ImportsFor._Builder<DomOpsPartyModule>()
                 .add(new ModuleImports<>(
                         List.of(new DomOpsPartyBaseModule._DomOpsPartyBase()),
                         DomOpsPartyBaseModule.INSTANCE))

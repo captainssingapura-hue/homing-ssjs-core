@@ -13,7 +13,7 @@ class ExportWriterTest {
         record Foo() implements Exportable._Constant<TestModule> {}
         record Bar() implements Exportable._Class<TestModule> {}
 
-        @Override public ImportsFor<TestModule> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<TestModule> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<TestModule> exports() {
             return new ExportsOf<>(INSTANCE, List.of(new Foo(), new Bar()));
         }

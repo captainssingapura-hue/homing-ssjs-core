@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
+import hue.captains.singapura.js.homing.core.CssGroupDependencies;
 import hue.captains.singapura.js.homing.core.DerivedCss;
 import hue.captains.singapura.js.homing.core.CssImportsFor;
 import hue.captains.singapura.js.homing.core.CssVar;
@@ -170,7 +171,7 @@ public record CssConformance() implements StatelessFunctionalObject {
             var required = new HashSet<String>();
             required.add(mine.name());
             for (Crate r : mine.requires()) required.add(r.name());
-            for (CssGroup<?> dep : CssImportsFor.dependenciesOf(group)) {
+            for (CssGroup<?> dep : CssGroupDependencies.INSTANCE.of(group)) {
                 Crate theirs = g.crateOf(dep);
                 if (theirs == null || required.contains(theirs.name())) continue;
                 out.add(new Finding(id(group), CRATE_REACH, "depends on " + id(dep) + " in crate '" + theirs.name()

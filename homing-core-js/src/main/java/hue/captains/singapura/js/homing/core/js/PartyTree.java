@@ -94,8 +94,8 @@ public record PartyTree(List<L1Branch> branches) {
         }
 
         /** Convenience: a flat framework branch (no nested children). */
-        public static FrameworkBranch flat(String name, OwnerRef owner, List<ElementDecl> elements) {
-            return new FrameworkBranch(name, owner, elements, List.of());
+        public FrameworkBranch(String name, OwnerRef owner, List<ElementDecl> elements) {
+            this(name, owner, elements, List.of());
         }
     }
 

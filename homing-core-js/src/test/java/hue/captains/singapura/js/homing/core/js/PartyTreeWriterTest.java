@@ -19,7 +19,7 @@ final class PartyTreeWriterTest {
     @Test
     void flat_chrome_plus_widget_slot() {
         var tree = new PartyTree(List.of(
-                PartyTree.FrameworkBranch.flat(
+                new PartyTree.FrameworkBranch(
                         "header",
                         PartyTree.OwnerRef.PartyChief.INSTANCE,
                         List.of(
@@ -63,7 +63,7 @@ final class PartyTreeWriterTest {
                         "header",
                         PartyTree.OwnerRef.PartyChief.INSTANCE,
                         List.of(new PartyTree.ElementDecl("brand", "div")),
-                        List.of(PartyTree.FrameworkBranch.flat(
+                        List.of(new PartyTree.FrameworkBranch(
                                 "subnav",
                                 PartyTree.OwnerRef.PartyChief.INSTANCE,
                                 List.of(new PartyTree.ElementDecl("home", "a"))

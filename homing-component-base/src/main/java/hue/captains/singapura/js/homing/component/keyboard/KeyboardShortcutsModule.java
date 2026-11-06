@@ -21,7 +21,7 @@ public record KeyboardShortcutsModule() implements EsModule<KeyboardShortcutsMod
 
     public static final KeyboardShortcutsModule INSTANCE = new KeyboardShortcutsModule();
 
-    @Override public ImportsFor<KeyboardShortcutsModule> imports() { return ImportsFor.noImports(); }
+    @Override public ImportsFor<KeyboardShortcutsModule> imports() { return new ImportsFor<>(); }
 
     @Override
     public ExportsOf<KeyboardShortcutsModule> exports() {

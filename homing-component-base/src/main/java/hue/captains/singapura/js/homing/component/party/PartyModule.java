@@ -64,7 +64,7 @@ public record PartyModule() implements DomModule<PartyModule> {
     public ImportsFor<PartyModule> imports() {
         // No CSS, no other modules — Party is a pure JS runtime that
         // touches no DOM, holds no theming, has no dependencies.
-        return ImportsFor.<PartyModule>builder().build();
+        return new ImportsFor._Builder<PartyModule>().build();
     }
 
     @Override

@@ -42,7 +42,7 @@ public final class SiteGetAction
     public ParamMarshaller._QueryString<RoutingContext, Request> queryStrMarshaller() {
         // normalizedPath: dot-segments resolved, so "/about/../secret" asks the
         // router for /secret and nothing the router did not mean to answer.
-        return ctx -> new Request(Path.parse(ctx.normalizedPath()), Query.parse(ctx.request().query()));
+        return ctx -> new Request(PathParser.INSTANCE.parse(ctx.normalizedPath()), new Query(ctx.request().query()));
     }
 
     @Override

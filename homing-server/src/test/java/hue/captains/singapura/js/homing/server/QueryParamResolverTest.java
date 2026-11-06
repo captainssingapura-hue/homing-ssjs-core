@@ -15,7 +15,7 @@ class QueryParamResolverTest {
 
         @Override
         public ImportsFor<TestModule> imports() {
-            return ImportsFor.<TestModule>builder().build();
+            return new ImportsFor._Builder<TestModule>().build();
         }
 
         @Override

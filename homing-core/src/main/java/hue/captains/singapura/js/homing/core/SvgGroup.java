@@ -14,7 +14,7 @@ public interface SvgGroup<G extends SvgGroup<G>> extends EsModule<G> {
      */
     @Override
     default ImportsFor<G> imports() {
-        return ImportsFor.noImports();
+        return new ImportsFor<>();
     }
 
     /** The SVG resources of the group, each an export of its module. */

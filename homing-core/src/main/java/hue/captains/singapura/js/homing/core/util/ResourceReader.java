@@ -3,17 +3,14 @@ package hue.captains.singapura.js.homing.core.util;
 import hue.captains.singapura.tao.ontology.FunctionalObject;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 /**
  * Reads resource files from classpath or filesystem.
@@ -35,14 +32,6 @@ public record ResourceReader(List<Path> sourceRoots) implements FunctionalObject
     /** One source root, or none for {@code null}. */
     public ResourceReader(Path sourceRoot) {
         this(sourceRoot == null ? List.of() : List.of(sourceRoot));
-    }
-
-    /** A reader over the roots {@code homing.devRoot} names, or {@link #CLASSPATH} when it names none. */
-    public static ResourceReader fromSystemProperty() {
-        String devRoot = System.getProperty("homing.devRoot");
-        if (devRoot == null || devRoot.isBlank()) return CLASSPATH;
-        return new ResourceReader(Arrays.stream(devRoot.split(Pattern.quote(File.pathSeparator)))
-                .map(String::trim).filter(s -> !s.isEmpty()).map(Path::of).toList());
     }
 
     /** Whether it reads from source roots first: dev mode. */

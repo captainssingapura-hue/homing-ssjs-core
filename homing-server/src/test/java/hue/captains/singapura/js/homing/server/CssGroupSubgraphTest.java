@@ -46,7 +46,7 @@ class CssGroupSubgraphTest {
 
     @Test
     void theSubgraphIsTheClosure_dependenciesFirst() {
-        String js = CssGroupContentProvider.subgraphJs(Root.INSTANCE);
+        String js = CssSubgraph.INSTANCE.js(Root.INSTANCE);
         assertEquals("{ \"" + fq(Dep.class) + "\": { deps: [] }, \"" + fq(Root.class) + "\": { deps: [\"" + fq(Dep.class) + "\"] } }", js);
     }
 

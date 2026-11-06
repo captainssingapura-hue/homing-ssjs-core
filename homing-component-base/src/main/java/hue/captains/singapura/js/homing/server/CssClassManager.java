@@ -26,7 +26,7 @@ public record CssClassManager() implements EsModule<CssClassManager> {
 
     @Override
     public ImportsFor<CssClassManager> imports() {
-        return ImportsFor.<CssClassManager>builder()
+        return new ImportsFor._Builder<CssClassManager>()
                 .add(new ModuleImports<>(List.of(new CssHandles.CssClass(), new CssHandles.CssUtility()),
                         CssHandles.INSTANCE))
                 .add(new ModuleImports<>(List.of(new CssDependencyGraph.createCssDependencyGraph()),

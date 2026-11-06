@@ -103,7 +103,7 @@ public class AppHtmlGetAction
                         "No app registered with this simple name"));
             }
         } catch (Exception e) {
-            return CompletableFuture.failedFuture(ResourceNotFound.forClass(query.simpleName(), e));
+            return CompletableFuture.failedFuture(ResourceNotFounds.INSTANCE.forClass(query.simpleName(), e));
         }
 
         return dispatch(app, query);
@@ -268,7 +268,7 @@ public class AppHtmlGetAction
      * Decoded ADT exists for, but it changes the response for every app at
      * once; that belongs with the route work, not with adding a stamp.</p>
      */
-    private static <P extends hue.captains.singapura.js.homing.core.AppModule._Param>
+    private <P extends hue.captains.singapura.js.homing.core.AppModule._Param>
             String stampParams(hue.captains.singapura.js.homing.core.AppModule<P, ?> app, P params) {
         var codec = app.paramCodec();
         if (codec == hue.captains.singapura.js.homing.core.ParamCodec.None.INSTANCE) return null;

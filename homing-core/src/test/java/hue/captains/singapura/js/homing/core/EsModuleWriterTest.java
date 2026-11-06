@@ -14,7 +14,7 @@ class EsModuleWriterTest {
         static final Source INSTANCE = new Source();
         record Greet() implements Exportable._Constant<Source> {}
 
-        @Override public ImportsFor<Source> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<Source> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<Source> exports() {
             return new ExportsOf<>(INSTANCE, List.of(new Greet()));
         }
@@ -25,7 +25,7 @@ class EsModuleWriterTest {
         record main() implements Exportable._Constant<Consumer> {}
 
         @Override public ImportsFor<Consumer> imports() {
-            return ImportsFor.<Consumer>builder()
+            return new ImportsFor._Builder<Consumer>()
                     .add(new ModuleImports<>(List.of(new Source.Greet()), Source.INSTANCE))
                     .build();
         }
@@ -37,21 +37,21 @@ class EsModuleWriterTest {
 
     record NoExports() implements EsModule<NoExports> {
         static final NoExports INSTANCE = new NoExports();
-        @Override public ImportsFor<NoExports> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<NoExports> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<NoExports> exports() { return new ExportsOf<>(INSTANCE, List.of()); }
     }
 
     record Early() implements EsModule<Early> {
         static final Early INSTANCE = new Early();
         record One() implements Exportable._Constant<Early> {}
-        @Override public ImportsFor<Early> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<Early> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<Early> exports() { return new ExportsOf<>(INSTANCE, List.of(new One())); }
     }
 
     record Writer() implements EsModule<Writer> {
         static final Writer INSTANCE = new Writer();
         @Override public ImportsFor<Writer> imports() {
-            return ImportsFor.<Writer>builder()
+            return new ImportsFor._Builder<Writer>()
                     .add(new ModuleImports<>(List.of(new Source.Greet()), Source.INSTANCE))
                     .add(new ModuleImports<>(List.of(new Early.One()), Early.INSTANCE))
                     .build();
@@ -132,14 +132,14 @@ class EsModuleWriterTest {
         @Override public ParamCodec<Coded> paramCodec() {
             return new ParamCodec<>() {
                 @Override public Decoded<Coded> from(java.util.Map<String, List<String>> q) {
-                    return Decoded.ok(new Coded(QueryString.INSTANCE.first(q, "id")));
+                    return new Decoded.Ok<>(new Coded(QueryString.INSTANCE.first(q, "id")));
                 }
                 @Override public java.util.Map<String, List<String>> to(Coded p) {
                     return QueryString.INSTANCE.of("id", p.id());
                 }
             };
         }
-        @Override public ImportsFor<CodedApp> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<CodedApp> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<CodedApp> exports() {
             return new ExportsOf<>(INSTANCE, List.<Exportable<CodedApp>>of(new appMain()));
         }
@@ -152,7 +152,7 @@ class EsModuleWriterTest {
         @Override public String simpleName() { return "uncoded"; }
         @Override public String title()      { return "Uncoded"; }
         @Override public Class<Coded> paramsType() { return Coded.class; }
-        @Override public ImportsFor<UncodedApp> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<UncodedApp> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<UncodedApp> exports() {
             return new ExportsOf<>(INSTANCE, List.<Exportable<UncodedApp>>of(new appMain()));
         }

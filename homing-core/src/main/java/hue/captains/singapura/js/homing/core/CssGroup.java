@@ -27,7 +27,7 @@ public interface CssGroup<C extends CssGroup<C>> extends EsModule<C> {
 
     @Override
     default ImportsFor<C> imports() {
-        return ImportsFor.noImports();
+        return new ImportsFor<>();
     }
 
     @SuppressWarnings("unchecked")

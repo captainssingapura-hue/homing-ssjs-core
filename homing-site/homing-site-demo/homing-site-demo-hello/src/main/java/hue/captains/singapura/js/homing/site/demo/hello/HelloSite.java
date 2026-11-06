@@ -39,7 +39,7 @@ public record HelloSite() implements Site {
     private Optional<Navigable> greet(Path rest) {
         return switch (rest.depth()) {
             case 0  -> Optional.of(GreetPage.FROM_QUERY);
-            case 1  -> Optional.of(GreetPage.bound(rest.head().orElseThrow()));
+            case 1  -> Optional.of(new GreetPage(rest.head().orElseThrow()));
             default -> Optional.empty();
         };
     }

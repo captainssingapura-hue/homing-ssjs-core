@@ -30,7 +30,7 @@ public record NodeContentModule() implements DomModule<NodeContentModule> {
 
     @Override
     public ImportsFor<NodeContentModule> imports() {
-        return ImportsFor.<NodeContentModule>builder().build();
+        return new ImportsFor._Builder<NodeContentModule>().build();
     }
 
     @Override

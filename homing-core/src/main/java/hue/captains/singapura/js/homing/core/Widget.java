@@ -89,7 +89,7 @@ public interface Widget<P extends Widget._Param, W extends Widget<P, W>>
      * independently of the Java class name.
      */
     default String simpleName() {
-        return Linkable.defaultSimpleName(this.getClass());
+        return SimpleNames.INSTANCE.of(this.getClass());
     }
 
     /**

@@ -46,6 +46,20 @@ public final class UrlTemplate {
     private final Class<?> paramsType;
     private final List<Segment> segments;
 
+    /**
+     * A template, compiled against the given Params record class.
+     *
+     * @param template   the template string
+     * @param paramsType the record class describing valid params, or {@code Void.class}
+     *                   for templates with no interpolation
+     * @throws IllegalStateException if the template is malformed, references an
+     *         unknown param, mis-uses optional/required, or includes
+     *         interpolation when {@code paramsType == Void.class}
+     */
+    public UrlTemplate(String template, Class<?> paramsType) {
+        this(template, paramsType, UrlTemplateParser.INSTANCE.segments(template, paramsType));
+    }
+
     private UrlTemplate(String source, Class<?> paramsType, List<Segment> segments) {
         this.source = source;
         this.paramsType = paramsType;
@@ -184,151 +198,4 @@ public final class UrlTemplate {
         return out.toString();
     }
 
-    // -----------------------------------------------------------------------
-    // Compilation
-    // -----------------------------------------------------------------------
-
-    /**
-     * Compile a template against the given Params record class.
-     *
-     * @param template   the template string
-     * @param paramsType the record class describing valid params, or {@code Void.class}
-     *                   for templates with no interpolation
-     * @throws IllegalStateException if the template is malformed, references an
-     *         unknown param, mis-uses optional/required, or includes
-     *         interpolation when {@code paramsType == Void.class}
-     */
-    public static UrlTemplate compile(String template, Class<?> paramsType) {
-        if (template == null) {
-            throw new IllegalStateException("URL template is null");
-        }
-
-        Map<String, RecordComponent> components = describeParams(paramsType);
-
-        List<Segment> segments = new ArrayList<>();
-        StringBuilder literal = new StringBuilder();
-
-        int i = 0;
-        int n = template.length();
-        while (i < n) {
-            char c = template.charAt(i);
-            if (c == '{') {
-                int end = template.indexOf('}', i + 1);
-                if (end < 0) {
-                    throw new IllegalStateException(
-                            "Unclosed '{' in template: " + template + " (at index " + i + ")");
-                }
-                if (literal.length() > 0) {
-                    segments.add(new Segment.Literal(literal.toString()));
-                    literal.setLength(0);
-                }
-                String inside = template.substring(i + 1, end);
-                segments.add(parseSlot(inside, template, components));
-                i = end + 1;
-            } else if (c == '}') {
-                throw new IllegalStateException(
-                        "Unmatched '}' in template: " + template + " (at index " + i + ")");
-            } else {
-                literal.append(c);
-                i++;
-            }
-        }
-        if (literal.length() > 0) {
-            segments.add(new Segment.Literal(literal.toString()));
-        }
-
-        return new UrlTemplate(template, paramsType, segments);
-    }
-
-    private static Segment.Param parseSlot(
-            String inside, String template, Map<String, RecordComponent> components) {
-
-        if (inside.isEmpty()) {
-            throw new IllegalStateException("Empty '{}' slot in template: " + template);
-        }
-
-        // Parse: name [? [: default]]
-        String name;
-        boolean optional;
-        String defaultValue = null;
-
-        int q = inside.indexOf('?');
-        if (q < 0) {
-            name = inside;
-            optional = false;
-        } else {
-            name = inside.substring(0, q);
-            optional = true;
-            String tail = inside.substring(q + 1);
-            if (!tail.isEmpty()) {
-                if (!tail.startsWith(":")) {
-                    throw new IllegalStateException(
-                            "Bad slot syntax '{" + inside + "}' in template: " + template
-                          + " — after '?' expected ':default' or end");
-                }
-                defaultValue = tail.substring(1);
-            }
-        }
-
-        if (name.isEmpty() || !isValidName(name)) {
-            throw new IllegalStateException(
-                    "Bad param name '" + name + "' in template slot '{" + inside + "}': " + template);
-        }
-
-        if (components.isEmpty()) {
-            throw new IllegalStateException(
-                    "Template '" + template + "' uses interpolation slot '{" + inside + "}' "
-                  + "but paramsType is Void.class — declare a Params record to use slots");
-        }
-
-        RecordComponent comp = components.get(name);
-        if (comp == null) {
-            throw new IllegalStateException(
-                    "Template slot '{" + inside + "}' references unknown param '" + name
-                  + "'. Known params: " + components.keySet());
-        }
-
-        boolean componentIsOptional = comp.getType() == Optional.class;
-        if (optional && !componentIsOptional) {
-            throw new IllegalStateException(
-                    "Template slot '{" + inside + "}' is optional ('?') but Params component '"
-                  + name + "' is required (" + comp.getType().getSimpleName()
-                  + "). Either drop the '?' or change the component to Optional.");
-        }
-        if (!optional && componentIsOptional) {
-            throw new IllegalStateException(
-                    "Template slot '{" + inside + "}' is required but Params component '"
-                  + name + "' is Optional. Use '{" + name + "?}' for optional interpolation.");
-        }
-
-        return new Segment.Param(name, optional, defaultValue, comp.getAccessor());
-    }
-
-    private static boolean isValidName(String s) {
-        if (s.isEmpty()) return false;
-        if (!Character.isJavaIdentifierStart(s.charAt(0))) return false;
-        for (int i = 1; i < s.length(); i++) {
-            if (!Character.isJavaIdentifierPart(s.charAt(i))) return false;
-        }
-        return true;
-    }
-
-    private static Map<String, RecordComponent> describeParams(Class<?> paramsType) {
-        if (paramsType == null
-                || paramsType == Void.class
-                || paramsType == void.class
-                || paramsType == AppModule._None.class) {
-            return Map.of();
-        }
-        if (!paramsType.isRecord()) {
-            throw new IllegalStateException(
-                    "paramsType must be a record class, AppModule._None.class, or Void.class, got: "
-                            + paramsType.getName());
-        }
-        Map<String, RecordComponent> out = new LinkedHashMap<>();
-        for (var rc : paramsType.getRecordComponents()) {
-            out.put(rc.getName(), rc);
-        }
-        return out;
-    }
 }

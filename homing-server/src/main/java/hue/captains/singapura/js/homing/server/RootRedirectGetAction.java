@@ -37,24 +37,13 @@ public class RootRedirectGetAction
     private final String targetUrl;
 
     /**
-     * Backward-compat: build a redirect to the named app's flat address.
-     * Use {@link #toUrl(String)} for a redirect to an arbitrary URL (e.g. one carrying
-     * query params like {@code /app?app=catalogue&id=<fqn>} per RFC 0005).
+     * A redirect to the named app's flat address.
      *
      * <p>RFC 0051 (D8) — minted through {@link AppUrl} rather than concatenated,
      * so this is not a seventh spelling of the flat address.</p>
      */
     public RootRedirectGetAction(String rootSimpleName) {
         this.targetUrl = AppUrl.INSTANCE.flat(rootSimpleName, java.util.Map.of());
-    }
-
-    /** Build a redirect to an arbitrary URL. */
-    public static RootRedirectGetAction toUrl(String targetUrl) {
-        return new RootRedirectGetAction(targetUrl, true);
-    }
-
-    private RootRedirectGetAction(String url, boolean isFullUrl) {
-        this.targetUrl = url;
     }
 
     @Override

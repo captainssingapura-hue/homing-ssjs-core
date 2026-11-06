@@ -31,7 +31,7 @@ class ModuleClassifierTest {
         record Board() implements BranchComponent<BoardModule> {
             @Override public Shape shape() { return Shape.WIDGET; }
         }
-        @Override public ImportsFor<BoardModule> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<BoardModule> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<BoardModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new Board())); }
         @Override public List<String> selfContent(ModuleNameResolver resolver) {
             return List.of("class Board { constructor(branch) { this.root = branch.createElement('root', 'div'); } }");
@@ -42,7 +42,7 @@ class ModuleClassifierTest {
     record TrayModule() implements DomModule<TrayModule>, SelfContent {
         static final TrayModule INSTANCE = new TrayModule();
         record Tray() implements BranchComponent<TrayModule> {}
-        @Override public ImportsFor<TrayModule> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<TrayModule> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<TrayModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new Tray())); }
         @Override public List<String> selfContent(ModuleNameResolver resolver) { return List.of("class Tray {}"); }
     }

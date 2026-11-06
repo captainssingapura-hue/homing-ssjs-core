@@ -24,7 +24,7 @@ class HrefManagerTest {
         public record link() implements AppLink<Target> {}
         static final Target INSTANCE = new Target();
         @Override public String title() { return "T"; }
-        @Override public ImportsFor<Target> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<Target> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<Target> exports() { return new ExportsOf<>(this, List.of()); }
     }
 
@@ -33,7 +33,7 @@ class HrefManagerTest {
         static final AppWithLink INSTANCE = new AppWithLink();
         @Override public String title() { return "Has Link"; }
         @Override public ImportsFor<AppWithLink> imports() {
-            return ImportsFor.<AppWithLink>builder()
+            return new ImportsFor._Builder<AppWithLink>()
                     .add(new ModuleImports<>(List.of(new Target.link()), Target.INSTANCE))
                     .build();
         }
@@ -43,7 +43,7 @@ class HrefManagerTest {
     record AppNoLink() implements AppModule<AppModule._None, AppNoLink> {
         static final AppNoLink INSTANCE = new AppNoLink();
         @Override public String title() { return "No Link"; }
-        @Override public ImportsFor<AppNoLink> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<AppNoLink> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<AppNoLink> exports() { return new ExportsOf<>(this, List.of()); }
     }
 
@@ -57,7 +57,7 @@ class HrefManagerTest {
         static final AppOnlyCss INSTANCE = new AppOnlyCss();
         @Override public String title() { return "Only CSS"; }
         @Override public ImportsFor<AppOnlyCss> imports() {
-            return ImportsFor.<AppOnlyCss>builder()
+            return new ImportsFor._Builder<AppOnlyCss>()
                     .add(new ModuleImports<>(List.of(new SomeStyles.btn()), SomeStyles.INSTANCE))
                     .build();
         }
@@ -110,24 +110,24 @@ class HrefManagerTest {
     @Test
     @DisplayName("importsAnyAppLink → true when module imports an AppLink")
     void detection_trueForAppLinkImporter() {
-        assertTrue(EsModuleGetAction.importsAnyAppLink(AppWithLink.INSTANCE));
+        assertTrue(AppWithLink.INSTANCE.imports().importsAnyAppLink());
     }
 
     @Test
     @DisplayName("importsAnyAppLink → false when module has no imports")
     void detection_falseWhenNoImports() {
-        assertFalse(EsModuleGetAction.importsAnyAppLink(AppNoLink.INSTANCE));
+        assertFalse(AppNoLink.INSTANCE.imports().importsAnyAppLink());
     }
 
     @Test
     @DisplayName("importsAnyAppLink → false when only CSS imports (no AppLink)")
     void detection_falseForOnlyCss() {
-        assertFalse(EsModuleGetAction.importsAnyAppLink(AppOnlyCss.INSTANCE));
+        assertFalse(AppOnlyCss.INSTANCE.imports().importsAnyAppLink());
     }
 
     @Test
     @DisplayName("HrefManager itself does not need href injection (no AppLink imports)")
     void detection_falseForHrefManagerItself() {
-        assertFalse(EsModuleGetAction.importsAnyAppLink(HrefManager.INSTANCE));
+        assertFalse(HrefManager.INSTANCE.imports().importsAnyAppLink());
     }
 }

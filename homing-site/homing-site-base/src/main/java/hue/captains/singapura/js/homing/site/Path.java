@@ -2,7 +2,6 @@ package hue.captains.singapura.js.homing.site;
 
 import hue.captains.singapura.tao.ontology.Scalar;
 
-import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -43,23 +42,6 @@ public record Path(List<String> segments) implements Scalar {
     /** {@code new Path("a", "b")} is {@code /a/b}. */
     public Path(String... segments) {
         this(List.of(segments));
-    }
-
-    /**
-     * Reads a request path. Leading, trailing and doubled slashes contribute
-     * nothing, so {@code /}, {@code ""} and {@code //} are all {@link #ROOT}
-     * and {@code /about/} is {@code /about}. Each segment is percent-decoded;
-     * a {@code +} is a plus, not a space — that convention belongs to query
-     * strings, which {@link Query#parse} honours.
-     */
-    public static Path parse(String raw) {
-        if (raw == null) return ROOT;
-        var out = new ArrayList<String>();
-        for (String s : raw.split("/")) {
-            if (s.isEmpty()) continue;
-            out.add(decode(s));
-        }
-        return out.isEmpty() ? ROOT : new Path(out);
     }
 
     /** Whether this is the root: no segments. */
@@ -119,13 +101,4 @@ public record Path(List<String> segments) implements Scalar {
         return URLEncoder.encode(s, StandardCharsets.UTF_8).replace("+", "%20");
     }
 
-    private static String decode(String s) {
-        // And the inverse: shield a literal plus from the form decoder, which
-        // would otherwise turn it into a space.
-        try {
-            return URLDecoder.decode(s.replace("+", "%2B"), StandardCharsets.UTF_8);
-        } catch (IllegalArgumentException badEscape) {
-            return s;
-        }
-    }
 }

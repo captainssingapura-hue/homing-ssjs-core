@@ -35,9 +35,8 @@ public record Query(Map<String, List<String>> all) implements Scalar {
     }
 
     /** Reads the part after the {@code ?}; null and blank are {@link #NONE}. */
-    public static Query parse(String rawQuery) {
-        if (rawQuery == null || rawQuery.isBlank()) return NONE;
-        return new Query(QueryString.INSTANCE.parse(rawQuery));
+    public Query(String rawQuery) {
+        this(rawQuery == null || rawQuery.isBlank() ? Map.of() : QueryString.INSTANCE.parse(rawQuery));
     }
 
     /** A one-key query, for tests and links. */

@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.core;
 
 import hue.captains.singapura.js.homing.core.util.ResourceReader;
 
+import hue.captains.singapura.js.homing.core.util.ResourceReaders;
 import java.util.List;
 
 /**
@@ -77,9 +78,9 @@ public interface BundledExternalModule<M extends BundledExternalModule<M>> exten
      * development), falling back to the runtime classpath.
      */
     default List<String> content() {
-        return ResourceReader.fromSystemProperty().getStringsFromResource(resourcePath());
+        return ResourceReaders.INSTANCE.fromSystemProperty().getStringsFromResource(resourcePath());
     }
 
     /** No imports — bundled files are self-contained. */
-    @Override default ImportsFor<M> imports() { return ImportsFor.noImports(); }
+    @Override default ImportsFor<M> imports() { return new ImportsFor<>(); }
 }

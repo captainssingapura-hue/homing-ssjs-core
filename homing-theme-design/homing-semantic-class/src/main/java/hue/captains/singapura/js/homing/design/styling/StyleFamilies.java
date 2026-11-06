@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.design.styling;
 import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.component.taxonomy.ComponentBranch;
 import hue.captains.singapura.js.homing.core.util.ResourceReader;
+import hue.captains.singapura.js.homing.core.util.ResourceReaders;
 import hue.captains.singapura.js.homing.design.semantic.DesignStyle;
 
 import java.io.IOException;
@@ -49,7 +50,7 @@ public final class StyleFamilies {
 
     /** A styling's family files as this process reads them: dev mode by {@code homing.devRoot}, else the classpath's. */
     public StyleFamilies(Styling styling) {
-        this(styling, ResourceReader.fromSystemProperty(), StyleFamilies.class.getClassLoader());
+        this(styling, ResourceReaders.INSTANCE.fromSystemProperty(), StyleFamilies.class.getClassLoader());
     }
 
     /** Whether each file is made afresh from the file system. */

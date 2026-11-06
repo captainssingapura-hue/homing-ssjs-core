@@ -19,7 +19,7 @@ class HelloSiteTest {
         assertSame(HomePage.INSTANCE,  ROUTER.resolve(Path.ROOT).orElseThrow());
         assertSame(AboutPage.INSTANCE, ROUTER.resolve(new Path("about")).orElseThrow());
         assertSame(GreetPage.FROM_QUERY, ROUTER.resolve(new Path("greet")).orElseThrow());
-        assertEquals(GreetPage.bound("Grace"), ROUTER.resolve(new Path("greet", "Grace")).orElseThrow());
+        assertEquals(new GreetPage("Grace"), ROUTER.resolve(new Path("greet", "Grace")).orElseThrow());
     }
 
     @Test
@@ -38,7 +38,7 @@ class HelloSiteTest {
 
     @Test
     void aNameBoundOffThePathWinsOverTheQuery() {
-        var body = GreetPage.bound("Grace").html(new Query("name", "Ada")).body();
+        var body = new GreetPage("Grace").html(new Query("name", "Ada")).body();
         assertTrue(body.contains("<h1>Hello, Grace.</h1>"), body);
         assertTrue(body.contains("bound off the path"), body);
     }

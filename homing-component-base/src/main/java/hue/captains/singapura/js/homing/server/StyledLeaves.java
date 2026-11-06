@@ -24,7 +24,7 @@ public record StyledLeaves() implements EsModule<StyledLeaves> {
     /** Every class through the css manager, the leaf's names minted as its handles - no class touched raw. */
     @Override
     public ImportsFor<StyledLeaves> imports() {
-        return ImportsFor.<StyledLeaves>builder()
+        return new ImportsFor._Builder<StyledLeaves>()
                 .add(new ModuleImports<>(List.of(new CssClassManager.CssClassManagerInstance()), CssClassManager.INSTANCE))
                 .build();
     }

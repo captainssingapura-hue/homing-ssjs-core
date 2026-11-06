@@ -35,7 +35,7 @@ public record WidgetSlotModule() implements EsModule<WidgetSlotModule> {
 
     public static final WidgetSlotModule INSTANCE = new WidgetSlotModule();
 
-    @Override public ImportsFor<WidgetSlotModule> imports() { return ImportsFor.noImports(); }
+    @Override public ImportsFor<WidgetSlotModule> imports() { return new ImportsFor<>(); }
 
     @Override
     public ExportsOf<WidgetSlotModule> exports() {

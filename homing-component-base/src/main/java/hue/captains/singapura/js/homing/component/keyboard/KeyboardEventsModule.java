@@ -15,7 +15,7 @@ public record KeyboardEventsModule() implements EsModule<KeyboardEventsModule> {
 
     public static final KeyboardEventsModule INSTANCE = new KeyboardEventsModule();
 
-    @Override public ImportsFor<KeyboardEventsModule> imports() { return ImportsFor.noImports(); }
+    @Override public ImportsFor<KeyboardEventsModule> imports() { return new ImportsFor<>(); }
 
     @Override
     public ExportsOf<KeyboardEventsModule> exports() {

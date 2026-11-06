@@ -23,7 +23,7 @@ record GreetPage(Optional<String> bound) implements Navigable {
 
     static final GreetPage FROM_QUERY = new GreetPage(Optional.empty());
 
-    static GreetPage bound(String name) { return new GreetPage(Optional.of(name)); }
+    GreetPage(String name) { this(Optional.of(name)); }
 
     @Override
     public HtmlPageContent html(Query query) {

@@ -42,6 +42,12 @@ public record QueryString() implements StatelessFunctionalObject, StatelessSingl
         return m;
     }
 
+    /** Every value {@code query} holds for {@code key}; none for a key it does not hold. */
+    public List<String> values(Map<String, List<String>> query, String key) {
+        List<String> v = query == null ? null : query.get(key);
+        return v == null ? List.of() : v;
+    }
+
     /** Append one value under {@code key}, creating the list if needed. */
     public void put(Map<String, List<String>> params, String key, String value) {
         Objects.requireNonNull(params, "params");

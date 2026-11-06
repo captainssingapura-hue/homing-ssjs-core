@@ -31,7 +31,7 @@ class DesignRendererTest {
     record Made() implements EsModule<Made>, MadeByDesign {
         static final Made INSTANCE = new Made();
         record MADE() implements Exportable._Constant<Made> {}
-        @Override public ImportsFor<Made> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<Made> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<Made> exports() { return new ExportsOf<>(INSTANCE, List.of(new MADE())); }
     }
 

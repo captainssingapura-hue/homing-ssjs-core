@@ -45,7 +45,7 @@ public record CssGroupContentProvider<C extends CssGroup<C>>(
         // client's CSS manager can load a lazily mounted widget's whole tree
         // — missing dependencies included, by name. Not ES imports: a
         // dependency's CSS is needed, its handles are not.
-        lines.add("await _css.loadCss(\"" + groupName + "\", " + subgraphJs(cssGroup) + ");");
+        lines.add("await _css.loadCss(\"" + groupName + "\", " + CssSubgraph.INSTANCE.js(cssGroup) + ");");
 
         for (CssClass<C> cls : cssGroup.cssClasses()) {
             String recordName = cls.getClass().getSimpleName();
@@ -69,29 +69,5 @@ public record CssGroupContentProvider<C extends CssGroup<C>>(
             }
         }
         return lines;
-    }
-
-    /**
-     * {@code { "<fqcn>": { deps: ["<fqcn>", …] }, … }} for the group and
-     * everything it transitively depends on, in dependency order. Class names
-     * need no escaping; the resolver refuses cycles.
-     */
-
-    static String subgraphJs(CssGroup<?> root) {
-        StringBuilder sb = new StringBuilder("{ ");
-        boolean first = true;
-        for (CssGroup<?> g : CssGroupResolver.INSTANCE.resolve(List.of(root))) {
-            if (!first) sb.append(", ");
-            first = false;
-            sb.append('"').append(g.getClass().getCanonicalName()).append("\": { deps: [");
-            boolean firstDep = true;
-            for (CssGroup<?> dep : CssImportsFor.dependenciesOf(g)) {
-                if (!firstDep) sb.append(", ");
-                firstDep = false;
-                sb.append('"').append(dep.getClass().getCanonicalName()).append('"');
-            }
-            sb.append("] }");
-        }
-        return sb.append(" }").toString();
     }
 }

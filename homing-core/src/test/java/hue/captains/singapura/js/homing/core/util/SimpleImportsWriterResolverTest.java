@@ -12,7 +12,7 @@ class SimpleImportsWriterResolverTest {
     record Dep() implements EsModule<Dep> {
         static final Dep INSTANCE = new Dep();
         record Val() implements Exportable._Constant<Dep> {}
-        @Override public ImportsFor<Dep> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<Dep> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<Dep> exports() { return new ExportsOf<>(INSTANCE, List.of(new Val())); }
     }
 

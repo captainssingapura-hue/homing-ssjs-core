@@ -23,7 +23,7 @@ public record ThemeSheets() implements EsModule<ThemeSheets> {
 
     @Override
     public ImportsFor<ThemeSheets> imports() {
-        return ImportsFor.<ThemeSheets>builder()
+        return new ImportsFor._Builder<ThemeSheets>()
                 .add(new ModuleImports<>(List.of(new CssDependencyGraph.createCssDependencyGraph()), CssDependencyGraph.INSTANCE))
                 .add(new ModuleImports<>(List.of(new CssLoadProcedure.createCssLoadProcedure()), CssLoadProcedure.INSTANCE))
                 .add(new ModuleImports<>(List.of(new CssLinks.CssLink()), CssLinks.INSTANCE))

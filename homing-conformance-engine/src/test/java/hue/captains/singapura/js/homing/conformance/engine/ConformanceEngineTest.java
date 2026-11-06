@@ -82,7 +82,7 @@ class ConformanceEngineTest {
     record CleanModule() implements DomModule<CleanModule>, SelfContent {
         static final CleanModule INSTANCE = new CleanModule();
 
-        @Override public ImportsFor<CleanModule> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<CleanModule> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<CleanModule> exports() { return new ExportsOf<>(INSTANCE, List.of()); }
 
         @Override
@@ -107,7 +107,7 @@ class ConformanceEngineTest {
     record CdnModule() implements DomModule<CdnModule>, SelfContent {
         static final CdnModule INSTANCE = new CdnModule();
 
-        @Override public ImportsFor<CdnModule> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<CdnModule> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<CdnModule> exports() { return new ExportsOf<>(INSTANCE, List.of()); }
 
         @Override

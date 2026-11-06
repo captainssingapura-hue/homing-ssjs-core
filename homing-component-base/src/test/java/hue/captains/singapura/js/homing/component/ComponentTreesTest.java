@@ -31,7 +31,7 @@ class ComponentTreesTest {
             @Override public String tag() { return "button"; }
         }
         public record BoxEvents() implements Exportable._Constant<BoxModule> {}
-        @Override public ImportsFor<BoxModule> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<BoxModule> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<BoxModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new Box(), new Knob(), new BoxEvents())); }
     }
 
@@ -101,7 +101,7 @@ class ComponentTreesTest {
     public record LoneModule() implements DomModule<LoneModule> {
         public static final LoneModule INSTANCE = new LoneModule();
         public record Lone() implements BranchComponent<LoneModule> {}
-        @Override public ImportsFor<LoneModule> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<LoneModule> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<LoneModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new Lone())); }
     }
     /** Exports a component but ships no catalogue. */
@@ -172,7 +172,7 @@ class ComponentTreesTest {
     /** A second module that exports the box, as the box module's: a crate that ships both gives the box two. */
     public record TwinModule() implements DomModule<BoxModule> {
         public static final TwinModule INSTANCE = new TwinModule();
-        @Override public ImportsFor<BoxModule> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<BoxModule> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<BoxModule> exports() { return new ExportsOf<>(BoxModule.INSTANCE, List.of(new BoxModule.Box())); }
     }
     public record TwinComponents() implements C0_Components<TwinComponents> {

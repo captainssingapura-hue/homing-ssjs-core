@@ -38,13 +38,13 @@ class StylingRendererTest {
     /** Says the styling's default style. */
     record Tokens() implements EsModule<Tokens>, StyledModule {
         static final Tokens INSTANCE = new Tokens();
-        @Override public ImportsFor<Tokens> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<Tokens> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<Tokens> exports() { return new ExportsOf<>(INSTANCE, List.of()); }
         @Override public List<String> selfContent(Styling styling) { return List.of(styling.defaultStyle().token()); }
     }
 
     record Plainly() implements EsModule<Plainly> {
-        @Override public ImportsFor<Plainly> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<Plainly> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<Plainly> exports() { return new ExportsOf<>(this, List.of()); }
     }
 

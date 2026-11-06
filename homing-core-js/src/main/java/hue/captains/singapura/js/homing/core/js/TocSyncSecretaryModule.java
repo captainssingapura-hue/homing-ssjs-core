@@ -69,7 +69,7 @@ public record TocSyncSecretaryModule() implements DomModule<TocSyncSecretaryModu
 
     @Override
     public ImportsFor<TocSyncSecretaryModule> imports() {
-        return ImportsFor.<TocSyncSecretaryModule>builder().build();
+        return new ImportsFor._Builder<TocSyncSecretaryModule>().build();
     }
 
     @Override

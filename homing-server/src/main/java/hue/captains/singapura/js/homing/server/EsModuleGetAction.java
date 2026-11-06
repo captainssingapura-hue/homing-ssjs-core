@@ -87,12 +87,12 @@ public class EsModuleGetAction
     @Override
     public CompletableFuture<JsModuleContent> execute(ModuleQuery query, EmptyParam.NoHeaders headers) {
         if (query.className() == null || query.className().isBlank()) {
-            return CompletableFuture.failedFuture(ResourceNotFound.missingClass());
+            return CompletableFuture.failedFuture(ResourceNotFounds.INSTANCE.missingClass());
         }
         var found = served.find(query.className());
         if (found.isEmpty()) {
             // Registered-crate enforcement: a name no crate declared is not served, and is never looked up by reflection.
-            return CompletableFuture.failedFuture(ResourceNotFound.forClass(query.className(),
+            return CompletableFuture.failedFuture(ResourceNotFounds.INSTANCE.forClass(query.className(),
                     new IllegalStateException("module '" + query.className()
                             + "' is not declared in any registered crate — refusing to serve"
                             + " (a served module must be crated, so conformance cannot be bypassed)")));
@@ -102,7 +102,7 @@ public class EsModuleGetAction
             return CompletableFuture.completedFuture(
                     new JsModuleContent(render(module)));
         } catch (Exception e) {
-            return CompletableFuture.failedFuture(ResourceNotFound.forClass(query.className(), e));
+            return CompletableFuture.failedFuture(ResourceNotFounds.INSTANCE.forClass(query.className(), e));
         }
     }
 
@@ -170,7 +170,7 @@ public class EsModuleGetAction
 
         // RFC 0001 Step 09: auto-inject the href manager when the module
         // imports any AppLink — same scoping rule as CSS injection.
-        if (importsAnyAppLink(module)) {
+        if (module.imports().importsAnyAppLink()) {
             contentProvider = withHrefManager(contentProvider);
         }
 
@@ -178,27 +178,12 @@ public class EsModuleGetAction
         // module imports gets `import { <export> as <bind> } from "<manager>"`
         // prepended to the consumer's body. Supports DocGroup (studio-base)
         // and any future opt-in source — no homing-server-side knowledge of which.
-        for (ManagerInjector mi : collectManagerInjectors(module)) {
+        for (ManagerInjector mi : module.imports().managerInjectors()) {
             contentProvider = withManager(contentProvider, mi);
         }
 
         return new EsModuleWriter<>(module, contentProvider, nameResolver,
                 ExportWriter.INSTANCE, new SimpleImportsWriterResolver(nameResolver));
-    }
-
-    /** Package-private for testing — returns true iff the module has at least one AppLink import. */
-    static boolean importsAnyAppLink(EsModule<?> module) {
-        return module.imports().getAllImports().values().stream()
-                .anyMatch(mi -> mi.allImports().stream().anyMatch(e -> e instanceof AppLink<?>));
-    }
-
-    /** Public for cross-module testing — distinct {@link ManagerInjector}s reachable through this module's imports. */
-    public static List<ManagerInjector> collectManagerInjectors(EsModule<?> module) {
-        return module.imports().getAllImports().keySet().stream()
-                .filter(target -> target instanceof ManagerInjector)
-                .map(target -> (ManagerInjector) target)
-                .distinct()
-                .toList();
     }
 
     private <M extends EsModule<M>> ContentProvider<M> withCssManager(ContentProvider<M> delegate) {

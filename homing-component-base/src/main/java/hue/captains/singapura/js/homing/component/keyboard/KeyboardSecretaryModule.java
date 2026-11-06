@@ -20,7 +20,7 @@ public record KeyboardSecretaryModule() implements EsModule<KeyboardSecretaryMod
 
     public static final KeyboardSecretaryModule INSTANCE = new KeyboardSecretaryModule();
 
-    @Override public ImportsFor<KeyboardSecretaryModule> imports() { return ImportsFor.noImports(); }
+    @Override public ImportsFor<KeyboardSecretaryModule> imports() { return new ImportsFor<>(); }
 
     @Override
     public ExportsOf<KeyboardSecretaryModule> exports() {

@@ -27,7 +27,7 @@ class DeclaredDebtsTest {
     @ConformanceDebt(rule = WidgetDrawsOnlyComponentsRule.class, findings = 2, reason = "It makes its own elements until the containers exist")
     record IndebtedModule() implements DomModule<IndebtedModule>, SelfContent {
         static final IndebtedModule INSTANCE = new IndebtedModule();
-        @Override public ImportsFor<IndebtedModule> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<IndebtedModule> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<IndebtedModule> exports() { return new ExportsOf<>(INSTANCE, List.of()); }
         @Override public List<String> selfContent(ModuleNameResolver resolver) { return List.of(); }
     }

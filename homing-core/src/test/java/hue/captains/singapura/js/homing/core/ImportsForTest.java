@@ -11,27 +11,27 @@ class ImportsForTest {
     record ModA() implements EsModule<ModA> {
         static final ModA INSTANCE = new ModA();
         record X() implements Exportable._Constant<ModA> {}
-        @Override public ImportsFor<ModA> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<ModA> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<ModA> exports() { return new ExportsOf<>(INSTANCE, List.of(new X())); }
     }
 
     record ModB() implements EsModule<ModB> {
         static final ModB INSTANCE = new ModB();
         record Y() implements Exportable._Class<ModB> {}
-        @Override public ImportsFor<ModB> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<ModB> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<ModB> exports() { return new ExportsOf<>(INSTANCE, List.of(new Y())); }
     }
 
     @Test
     void noImports_isEmpty() {
-        var imports = ImportsFor.noImports();
+        var imports = new ImportsFor<>();
         assertTrue(imports.getAllImports().isEmpty());
     }
 
     @Test
     void builder_singleModule() {
         var moduleImports = new ModuleImports<>(List.of(new ModA.X()), ModA.INSTANCE);
-        var imports = ImportsFor.builder()
+        var imports = new ImportsFor._Builder<>()
                 .add(moduleImports)
                 .build();
 
@@ -44,7 +44,7 @@ class ImportsForTest {
         var importsA = new ModuleImports<>(List.of(new ModA.X()), ModA.INSTANCE);
         var importsB = new ModuleImports<>(List.of(new ModB.Y()), ModB.INSTANCE);
 
-        var imports = ImportsFor.builder()
+        var imports = new ImportsFor._Builder<>()
                 .add(importsA)
                 .add(importsB)
                 .build();
@@ -59,7 +59,7 @@ class ImportsForTest {
         var first = new ModuleImports<>(List.of(new ModA.X()), ModA.INSTANCE);
         var second = new ModuleImports<>(List.of(new ModA.X()), ModA.INSTANCE);
 
-        var imports = ImportsFor.builder()
+        var imports = new ImportsFor._Builder<>()
                 .add(first)
                 .add(second)
                 .build();
@@ -70,7 +70,7 @@ class ImportsForTest {
 
     @Test
     void theOrder_isByTheSourcesClassName() {
-        var imports = ImportsFor.builder()
+        var imports = new ImportsFor._Builder<>()
                 .add(new ModuleImports<>(List.of(new ModB.Y()), ModB.INSTANCE))
                 .add(new ModuleImports<>(List.of(new ModA.X()), ModA.INSTANCE))
                 .build();
@@ -80,11 +80,11 @@ class ImportsForTest {
 
     @Test
     void theOrder_followsFromWhatIsImported_notHowTheListIsWritten() {
-        var one = ImportsFor.builder()
+        var one = new ImportsFor._Builder<>()
                 .add(new ModuleImports<>(List.of(new ModA.X()), ModA.INSTANCE))
                 .add(new ModuleImports<>(List.of(new ModB.Y()), ModB.INSTANCE))
                 .build();
-        var other = ImportsFor.builder()
+        var other = new ImportsFor._Builder<>()
                 .add(new ModuleImports<>(List.of(new ModB.Y()), ModB.INSTANCE))
                 .add(new ModuleImports<>(List.of(new ModA.X()), ModA.INSTANCE))
                 .build();
@@ -94,13 +94,13 @@ class ImportsForTest {
 
     @Test
     void aSourceIsNeeded() {
-        var builder = ImportsFor.builder();
+        var builder = new ImportsFor._Builder<>();
         assertThrows(NullPointerException.class, () -> builder.add(new ModuleImports<>(List.of(), (ModA) null)));
     }
 
     @Test
     void builder_resultIsImmutable() {
-        var imports = ImportsFor.builder()
+        var imports = new ImportsFor._Builder<>()
                 .add(new ModuleImports<>(List.of(new ModA.X()), ModA.INSTANCE))
                 .build();
 

@@ -30,7 +30,7 @@ public record KeyboardChordsModule() implements EsModule<KeyboardChordsModule> {
 
     @Override
     public ImportsFor<KeyboardChordsModule> imports() {
-        return ImportsFor.<KeyboardChordsModule>builder()
+        return new ImportsFor._Builder<KeyboardChordsModule>()
                 .add(new hue.captains.singapura.js.homing.core.ModuleImports<>(
                         java.util.List.of(new KeyboardShortcutsModule.KeyboardShortcuts()), KeyboardShortcutsModule.INSTANCE))
                 .build();

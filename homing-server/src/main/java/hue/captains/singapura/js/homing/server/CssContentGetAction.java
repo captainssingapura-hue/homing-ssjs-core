@@ -86,17 +86,17 @@ public class CssContentGetAction
     @Override
     public CompletableFuture<CssContent> execute(CssQuery query, EmptyParam.NoHeaders headers) {
         if (query.className() == null || query.className().isBlank()) {
-            return CompletableFuture.failedFuture(ResourceNotFound.missingClass());
+            return CompletableFuture.failedFuture(ResourceNotFounds.INSTANCE.missingClass());
         }
         try {
             var found = served.find(query.className());
             if (found.isEmpty()) {
-                return CompletableFuture.failedFuture(ResourceNotFound.forClass(query.className(),
+                return CompletableFuture.failedFuture(ResourceNotFounds.INSTANCE.forClass(query.className(),
                         new IllegalStateException("group '" + query.className() + "' is not declared in any registered crate")));
             }
             if (found.get() instanceof CssGroup<?> group) return CompletableFuture.completedFuture(new CssContent(renderCss(group)));
             if (!(found.get() instanceof DerivedCss<?> sheet)) {
-                return CompletableFuture.failedFuture(ResourceNotFound.wrongType(query.className(), "CssGroup or DerivedCss"));
+                return CompletableFuture.failedFuture(ResourceNotFounds.INSTANCE.wrongType(query.className(), "CssGroup or DerivedCss"));
             }
 
             DerivedCss.VariesWith varies = sheet.variesWith();
@@ -104,7 +104,7 @@ public class CssContentGetAction
             if (slug == null) slug = fallback(sheet);
             if (slug == null && varies == DerivedCss.VariesWith.THEME && defaultTheme != null) slug = defaultTheme.slug();
             if (slug == null) {
-                return CompletableFuture.failedFuture(ResourceNotFound.forClass(
+                return CompletableFuture.failedFuture(ResourceNotFounds.INSTANCE.forClass(
                         query.className(),
                         new IllegalStateException("No " + varies.param() + " specified, and the sheet names no fallback"
                                 + (varies == DerivedCss.VariesWith.THEME ? " and no default theme is configured" : ""))));
@@ -115,7 +115,7 @@ public class CssContentGetAction
             }
             return CompletableFuture.completedFuture(new CssContent("/* no renderer derives " + query.className() + " */\n"));
         } catch (Exception e) {
-            return CompletableFuture.failedFuture(ResourceNotFound.forClass(query.className(), e));
+            return CompletableFuture.failedFuture(ResourceNotFounds.INSTANCE.forClass(query.className(), e));
         }
     }
 

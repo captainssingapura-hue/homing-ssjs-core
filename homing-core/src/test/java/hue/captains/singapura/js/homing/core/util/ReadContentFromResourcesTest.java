@@ -17,7 +17,7 @@ class ReadContentFromResourcesTest {
         static final TestMod INSTANCE = new TestMod();
         record x() implements Exportable._Constant<TestMod> {}
 
-        @Override public ImportsFor<TestMod> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<TestMod> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<TestMod> exports() {
             return new ExportsOf<>(INSTANCE, List.of(new x()));
         }

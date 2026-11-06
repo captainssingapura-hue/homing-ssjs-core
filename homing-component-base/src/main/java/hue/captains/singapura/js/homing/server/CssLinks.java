@@ -21,7 +21,7 @@ public record CssLinks() implements EsModule<CssLinks> {
 
     @Override
     public ImportsFor<CssLinks> imports() {
-        return ImportsFor.noImports();
+        return new ImportsFor<>();
     }
 
     @Override

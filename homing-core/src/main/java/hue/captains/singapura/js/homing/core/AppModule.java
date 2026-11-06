@@ -52,7 +52,7 @@ public non-sealed interface AppModule<P extends AppModule._Param, M extends AppM
      */
     @Override
     default String simpleName() {
-        return Linkable.defaultSimpleName(this.getClass());
+        return SimpleNames.INSTANCE.of(this.getClass());
     }
 
     /**

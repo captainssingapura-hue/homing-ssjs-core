@@ -18,7 +18,7 @@ class SimpleAppResolverTest {
         public record link() implements AppLink<Standalone> {}
         static final Standalone INSTANCE = new Standalone();
         @Override public String title() { return "Standalone"; }
-        @Override public ImportsFor<Standalone> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<Standalone> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<Standalone> exports() { return new ExportsOf<>(this, List.of()); }
     }
 
@@ -28,7 +28,7 @@ class SimpleAppResolverTest {
         static final Hub INSTANCE = new Hub();
         @Override public String title() { return "Hub"; }
         @Override public ImportsFor<Hub> imports() {
-            return ImportsFor.<Hub>builder()
+            return new ImportsFor._Builder<Hub>()
                     .add(new ModuleImports<>(List.of(new Standalone.link()), Standalone.INSTANCE))
                     .build();
         }
@@ -40,7 +40,7 @@ class SimpleAppResolverTest {
         public record link() implements AppLink<Leaf> {}
         static final Leaf INSTANCE = new Leaf();
         @Override public String title() { return "Leaf"; }
-        @Override public ImportsFor<Leaf> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<Leaf> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<Leaf> exports() { return new ExportsOf<>(this, List.of()); }
     }
 
@@ -49,7 +49,7 @@ class SimpleAppResolverTest {
         static final MidA INSTANCE = new MidA();
         @Override public String title() { return "MidA"; }
         @Override public ImportsFor<MidA> imports() {
-            return ImportsFor.<MidA>builder()
+            return new ImportsFor._Builder<MidA>()
                     .add(new ModuleImports<>(List.of(new Leaf.link()), Leaf.INSTANCE))
                     .build();
         }
@@ -61,7 +61,7 @@ class SimpleAppResolverTest {
         static final MidB INSTANCE = new MidB();
         @Override public String title() { return "MidB"; }
         @Override public ImportsFor<MidB> imports() {
-            return ImportsFor.<MidB>builder()
+            return new ImportsFor._Builder<MidB>()
                     .add(new ModuleImports<>(List.of(new Leaf.link()), Leaf.INSTANCE))
                     .build();
         }
@@ -74,7 +74,7 @@ class SimpleAppResolverTest {
         static final Root INSTANCE = new Root();
         @Override public String title() { return "Root"; }
         @Override public ImportsFor<Root> imports() {
-            return ImportsFor.<Root>builder()
+            return new ImportsFor._Builder<Root>()
                     .add(new ModuleImports<>(List.of(new MidA.link()), MidA.INSTANCE))
                     .add(new ModuleImports<>(List.of(new MidB.link()), MidB.INSTANCE))
                     .build();
@@ -88,7 +88,7 @@ class SimpleAppResolverTest {
         static final CycleA INSTANCE = new CycleA();
         @Override public String title() { return "CycleA"; }
         @Override public ImportsFor<CycleA> imports() {
-            return ImportsFor.<CycleA>builder()
+            return new ImportsFor._Builder<CycleA>()
                     .add(new ModuleImports<>(List.of(new CycleB.link()), CycleB.INSTANCE))
                     .build();
         }
@@ -100,7 +100,7 @@ class SimpleAppResolverTest {
         static final CycleB INSTANCE = new CycleB();
         @Override public String title() { return "CycleB"; }
         @Override public ImportsFor<CycleB> imports() {
-            return ImportsFor.<CycleB>builder()
+            return new ImportsFor._Builder<CycleB>()
                     .add(new ModuleImports<>(List.of(new CycleA.link()), CycleA.INSTANCE))
                     .build();
         }
@@ -113,7 +113,7 @@ class SimpleAppResolverTest {
         static final Foo INSTANCE = new Foo();
         @Override public String simpleName() { return "shared"; }
         @Override public String title() { return "Foo"; }
-        @Override public ImportsFor<Foo> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<Foo> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<Foo> exports() { return new ExportsOf<>(this, List.of()); }
     }
 
@@ -122,7 +122,7 @@ class SimpleAppResolverTest {
         static final Bar INSTANCE = new Bar();
         @Override public String simpleName() { return "shared"; }
         @Override public String title() { return "Bar"; }
-        @Override public ImportsFor<Bar> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<Bar> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<Bar> exports() { return new ExportsOf<>(this, List.of()); }
     }
 
@@ -138,7 +138,7 @@ class SimpleAppResolverTest {
         static final OnlyCss INSTANCE = new OnlyCss();
         @Override public String title() { return "OnlyCss"; }
         @Override public ImportsFor<OnlyCss> imports() {
-            return ImportsFor.<OnlyCss>builder()
+            return new ImportsFor._Builder<OnlyCss>()
                     .add(new ModuleImports<>(List.of(new Styles.btn()), Styles.INSTANCE))
                     .build();
         }
@@ -166,7 +166,7 @@ class SimpleAppResolverTest {
         static final WithProxies INSTANCE = new WithProxies();
         @Override public String title() { return "WithProxies"; }
         @Override public ImportsFor<WithProxies> imports() {
-            return ImportsFor.<WithProxies>builder()
+            return new ImportsFor._Builder<WithProxies>()
                     .add(new ModuleImports<>(List.of(new GitHubProxy.link()), GitHubProxy.INSTANCE))
                     .add(new ModuleImports<>(List.of(new DocsProxy.link()), DocsProxy.INSTANCE))
                     .build();
@@ -181,7 +181,7 @@ class SimpleAppResolverTest {
         @Override public String simpleName() { return "clash"; }
         @Override public String title() { return "ClashApp"; }
         @Override public ImportsFor<ClashApp> imports() {
-            return ImportsFor.<ClashApp>builder()
+            return new ImportsFor._Builder<ClashApp>()
                     .add(new ModuleImports<>(List.of(new ClashProxy.link()), ClashProxy.INSTANCE))
                     .build();
         }

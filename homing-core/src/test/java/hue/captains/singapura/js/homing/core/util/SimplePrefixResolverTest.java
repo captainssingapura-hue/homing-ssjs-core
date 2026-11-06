@@ -12,7 +12,7 @@ class SimplePrefixResolverTest {
     record DummyModule() implements EsModule<DummyModule> {
         @Override
         public ImportsFor<DummyModule> imports() {
-            return ImportsFor.<DummyModule>builder().build();
+            return new ImportsFor._Builder<DummyModule>().build();
         }
 
         @Override

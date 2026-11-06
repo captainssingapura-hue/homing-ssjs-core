@@ -43,7 +43,7 @@ public record CssGroupResolver() implements StatelessFunctionalObject {
             names.add(current.getClass().getSimpleName());
             throw new IllegalStateException("CSS dependency cycle: " + String.join(" -> ", names));
         }
-        List<CssGroup<?>> deps = CssImportsFor.dependenciesOf(current);
+        List<CssGroup<?>> deps = CssGroupDependencies.INSTANCE.of(current);
         path.push(current.getClass());
         for (CssGroup<?> dep : deps) {
             walk(dep, resolved, path);

@@ -31,7 +31,7 @@ public record KeyboardStewardModule() implements DomModule<KeyboardStewardModule
 
     @Override
     public ImportsFor<KeyboardStewardModule> imports() {
-        return ImportsFor.<KeyboardStewardModule>builder()
+        return new ImportsFor._Builder<KeyboardStewardModule>()
                 .add(new ModuleImports<>(List.of(new PartyModule.Party()), PartyModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new KeyboardSecretaryModule.KeyboardSecretary()), KeyboardSecretaryModule.INSTANCE))
                 .add(new ModuleImports<>(List.of(new KeyboardEventsModule.KeyboardEvents()), KeyboardEventsModule.INSTANCE))

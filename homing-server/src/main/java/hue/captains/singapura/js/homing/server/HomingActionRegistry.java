@@ -9,6 +9,7 @@ import hue.captains.singapura.js.homing.core.NoDesign;
 import hue.captains.singapura.js.homing.core.SimpleAppResolver;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.util.ResourceReader;
+import hue.captains.singapura.js.homing.core.util.ResourceReaders;
 import hue.captains.singapura.tao.http.action.ActionRegistry;
 import hue.captains.singapura.tao.http.action.GetAction;
 import hue.captains.singapura.tao.http.action.PostAction;
@@ -25,7 +26,7 @@ public class HomingActionRegistry implements ActionRegistry<RoutingContext> {
 
     /** Legacy constructor — only the {@code ?class=} contract is supported. */
     public HomingActionRegistry(ModuleNameResolver nameResolver) {
-        this(nameResolver, null, ResourceReader.fromSystemProperty());
+        this(nameResolver, null, ResourceReaders.INSTANCE.fromSystemProperty());
     }
 
     /**
@@ -34,7 +35,7 @@ public class HomingActionRegistry implements ActionRegistry<RoutingContext> {
      * contracts on {@code /app}. Other endpoints retain {@code ?class=}.
      */
     public HomingActionRegistry(ModuleNameResolver nameResolver, SimpleAppResolver appResolver) {
-        this(nameResolver, appResolver, ResourceReader.fromSystemProperty());
+        this(nameResolver, appResolver, ResourceReaders.INSTANCE.fromSystemProperty());
     }
 
     public HomingActionRegistry(ModuleNameResolver nameResolver, SimpleAppResolver appResolver, ResourceReader resourceReader) {

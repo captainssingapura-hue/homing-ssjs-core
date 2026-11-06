@@ -33,7 +33,7 @@ public record KeyboardMarkModule() implements DomModule<KeyboardMarkModule> {
     public static final KeyboardMarkModule INSTANCE = new KeyboardMarkModule();
 
     @Override public ImportsFor<KeyboardMarkModule> imports() {
-        return ImportsFor.<KeyboardMarkModule>builder()
+        return new ImportsFor._Builder<KeyboardMarkModule>()
                 .add(new ModuleImports<>(List.of(new KeyboardEventsModule.KeyboardEvents()), KeyboardEventsModule.INSTANCE))
                 .build();
     }

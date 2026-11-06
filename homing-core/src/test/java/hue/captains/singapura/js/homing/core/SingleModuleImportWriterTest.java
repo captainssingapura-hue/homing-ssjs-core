@@ -17,7 +17,7 @@ class SingleModuleImportWriterTest {
 
         @Override
         public ImportsFor<TestModule> imports() {
-            return ImportsFor.<TestModule>builder().build();
+            return new ImportsFor._Builder<TestModule>().build();
         }
 
         @Override
@@ -30,7 +30,7 @@ class SingleModuleImportWriterTest {
         public record link() implements AppLink<AppA> {}
         static final AppA INSTANCE = new AppA();
         @Override public String title() { return "A"; }
-        @Override public ImportsFor<AppA> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<AppA> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<AppA> exports() { return new ExportsOf<>(this, List.of()); }
     }
 
@@ -68,7 +68,7 @@ class SingleModuleImportWriterTest {
         record MixedSource() implements EsModule<MixedSource> {
             record helper() implements Exportable._Constant<MixedSource> {}
             static final MixedSource INSTANCE = new MixedSource();
-            @Override public ImportsFor<MixedSource> imports() { return ImportsFor.noImports(); }
+            @Override public ImportsFor<MixedSource> imports() { return new ImportsFor<>(); }
             @Override public ExportsOf<MixedSource> exports() {
                 return new ExportsOf<>(INSTANCE, List.of(new helper()));
             }

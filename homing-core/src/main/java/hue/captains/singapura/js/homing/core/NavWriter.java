@@ -79,7 +79,7 @@ public final class NavWriter {
                           + jsString(target.simpleName()) + "\", p); }" + comma);
                 }
                 case ProxyApp<?, ?> proxy -> {
-                    var tpl = UrlTemplate.compile(proxy.urlTemplate(), proxy.paramsType());
+                    var tpl = new UrlTemplate(proxy.urlTemplate(), proxy.paramsType());
                     String body = tpl.toJsExpression("p");
                     out.add("    " + identifier
                           + ": function(p) { return " + body + "; }" + comma);
