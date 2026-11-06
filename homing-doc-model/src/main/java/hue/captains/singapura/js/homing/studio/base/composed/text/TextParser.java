@@ -280,13 +280,19 @@ public final class TextParser {
     // -----------------------------------------------------------------------
 
     public static final class ParseException extends RuntimeException {
-        public final int line;
-        public final int column;
+        private final int line;
+        private final int column;
 
         public ParseException(int line, int column, String message) {
             super("TextSegment parse error at line " + line + ", col " + column + ": " + message);
             this.line = line;
             this.column = column;
         }
+
+        /** The line the error is on. */
+        public int line() { return line; }
+
+        /** The column the error is at. */
+        public int column() { return column; }
     }
 }
