@@ -25,17 +25,17 @@ class NamePathTest {
 
     @Test
     void nullAndBlankWireFormsAreTheRoot() {
-        assertEquals(NamePath.ROOT, NamePath.parse(null));
-        assertEquals(NamePath.ROOT, NamePath.parse(""));
-        assertEquals(NamePath.ROOT, NamePath.parse("   "));
-        assertEquals(NamePath.ROOT, NamePath.parse("/"));
+        assertEquals(NamePath.ROOT, NamePathReader.INSTANCE.parse(null));
+        assertEquals(NamePath.ROOT, NamePathReader.INSTANCE.parse(""));
+        assertEquals(NamePath.ROOT, NamePathReader.INSTANCE.parse("   "));
+        assertEquals(NamePath.ROOT, NamePathReader.INSTANCE.parse("/"));
     }
 
     // ── Round trip ─────────────────────────────────────────────────────────
 
     @Test
     void parseAndWireRoundTrip() {
-        NamePath p = NamePath.parse("animals/turtle");
+        NamePath p = NamePathReader.INSTANCE.parse("animals/turtle");
         assertEquals(List.of(n("animals"), n("turtle")), p.segments());
         assertEquals("animals/turtle", p.wire());
         assertEquals(2, p.depth());
@@ -43,7 +43,7 @@ class NamePathTest {
 
     @Test
     void leadingAndTrailingSeparatorsAreTolerated() {
-        assertEquals(new NamePath(n("animals"), n("turtle")), NamePath.parse("/animals/turtle/"));
+        assertEquals(new NamePath(n("animals"), n("turtle")), NamePathReader.INSTANCE.parse("/animals/turtle/"));
     }
 
     // ── All-or-nothing parsing: the property this type exists for ──────────
@@ -56,21 +56,21 @@ class NamePathTest {
      */
     @Test
     void oneIllegalSegmentRefusesTheWholePath() {
-        assertNull(NamePath.parse("animals/../turtle"));
-        assertNull(NamePath.parse("animals/./turtle"));
-        assertNull(NamePath.parse("animals/has space/turtle"));
-        assertNull(NamePath.parse("animals/" + "x".repeat(NodeName.MAX_CHARS + 1) + "/turtle"));
+        assertNull(NamePathReader.INSTANCE.parse("animals/../turtle"));
+        assertNull(NamePathReader.INSTANCE.parse("animals/./turtle"));
+        assertNull(NamePathReader.INSTANCE.parse("animals/has space/turtle"));
+        assertNull(NamePathReader.INSTANCE.parse("animals/" + "x".repeat(NodeName.MAX_CHARS + 1) + "/turtle"));
     }
 
     @Test
     void aDoubledSeparatorIsRefusedRatherThanCollapsed() {
-        assertNull(NamePath.parse("animals//turtle"));
+        assertNull(NamePathReader.INSTANCE.parse("animals//turtle"));
     }
 
     @Test
     void aTrailingIllegalSegmentDoesNotSilentlyTruncate() {
         // The other half of the same failure: truncating leaves a VALID ancestor.
-        assertNull(NamePath.parse("animals/turtle/.."));
+        assertNull(NamePathReader.INSTANCE.parse("animals/turtle/.."));
     }
 
     // ── Construction ───────────────────────────────────────────────────────
@@ -122,7 +122,7 @@ class NamePathTest {
 
     @Test
     void equalPathsAreEqualAndHashAlike() {
-        NamePath a = NamePath.parse("animals/turtle");
+        NamePath a = NamePathReader.INSTANCE.parse("animals/turtle");
         NamePath b = new NamePath(n("animals"), n("turtle"));
         assertEquals(a, b);
         assertEquals(a.hashCode(), b.hashCode());

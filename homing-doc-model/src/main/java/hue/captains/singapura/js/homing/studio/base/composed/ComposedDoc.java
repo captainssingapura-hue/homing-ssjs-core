@@ -7,6 +7,7 @@ import hue.captains.singapura.js.homing.studio.base.LazyReferences;
 import hue.captains.singapura.js.homing.studio.base.Reference;
 import hue.captains.singapura.js.homing.studio.base.NoOwnContentException;
 
+import hue.captains.singapura.js.homing.tree.NodeNames;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -78,7 +79,7 @@ public record ComposedDoc(
         // "composed". The title is the only per-instance datum available by
         // default; an author who wants a segment that survives re-wording
         // supplies one through withSlug.
-        if (slug         == null) slug         = NodeName.conciseSlug(title);
+        if (slug         == null) slug         = NodeNames.INSTANCE.conciseSlug(title);
         segments   = List.copyOf(segments);
         // lazily declared references stay lazy: reading them now would read docs still being made
         references = references instanceof LazyReferences ? references : List.copyOf(references);
@@ -265,11 +266,6 @@ public record ComposedDoc(
     // -----------------------------------------------------------------------
     // Convenience factories
     // -----------------------------------------------------------------------
-
-    /** Deterministic UUID derivation for code-defined ComposedDocs. */
-    public static UUID deterministicUuid(String seed) {
-        return UUID.nameUUIDFromBytes(("composed:" + seed).getBytes(StandardCharsets.UTF_8));
-    }
 
     /** Build a ComposedDoc with no references — common case. */
     public ComposedDoc(UUID uuid, String title, String summary, String category, List<Segment> segments) {

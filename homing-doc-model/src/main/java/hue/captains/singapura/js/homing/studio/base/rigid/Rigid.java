@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.studio.base.rigid;
 import hue.captains.singapura.js.homing.studio.base.SvgSource;
 import hue.captains.singapura.js.homing.studio.base.composed.CodeLanguage;
 import hue.captains.singapura.js.homing.studio.base.composed.CodeSegment;
+import hue.captains.singapura.js.homing.studio.base.composed.RelationSegments;
 import hue.captains.singapura.js.homing.studio.base.composed.TypedCodeSegment;
 import hue.captains.singapura.js.homing.studio.base.composed.ImageSegment;
 import hue.captains.singapura.js.homing.studio.base.composed.MarkdownSegment;
@@ -12,6 +13,7 @@ import hue.captains.singapura.js.homing.studio.base.composed.RigidSegment;
 import hue.captains.singapura.js.homing.studio.base.composed.SvgSegment;
 import hue.captains.singapura.js.homing.studio.base.composed.TextSegment;
 import hue.captains.singapura.js.homing.studio.base.composed.text.Line;
+import hue.captains.singapura.js.homing.studio.base.composed.text.Lines;
 import hue.captains.singapura.js.homing.studio.base.composed.text.Title;
 import hue.captains.singapura.js.homing.studio.base.image.ImageDoc;
 
@@ -106,7 +108,7 @@ public final class Rigid {
 
         /** Attach a typed table (header row + body rows + optional caption). */
         public SELF relation(List<String> headers, List<List<String>> rows, String caption) {
-            content.add(new RelationSegment(headers, rows, Line.optionalPlain(caption)));
+            content.add(new RelationSegment(headers, rows, Lines.INSTANCE.optionalPlain(caption)));
             return self();
         }
 
@@ -121,7 +123,7 @@ public final class Rigid {
          */
         public SELF articulatedRelation(List<RelationCell> headers,
                                         List<List<RelationCell>> rows, String caption) {
-            content.add(RelationSegment.articulated(headers, rows, Line.optionalPlain(caption)));
+            content.add(RelationSegments.INSTANCE.articulated(headers, rows, Lines.INSTANCE.optionalPlain(caption)));
             return self();
         }
 
@@ -150,7 +152,7 @@ public final class Rigid {
         private final UUID   uuid;
         private final String summary;
         private final String category;
-        L0(UUID uuid, String title, String summary, String category) {
+        public L0(UUID uuid, String title, String summary, String category) {
             super(title);
             this.uuid     = Objects.requireNonNull(uuid, "RigidDoc.uuid");
             this.summary  = (summary  == null) ? "" : summary;

@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.composed.graph;
 
+import hue.captains.singapura.js.homing.studio.base.composed.text.Titles;
 import hue.captains.singapura.js.homing.tree.NodeName;
 import hue.captains.singapura.js.homing.studio.base.composed.text.Title;
 
@@ -64,13 +65,13 @@ public final class RigidNode<T> {
     }
 
     /** A root node — level {@code 0}, no parent — wrapping {@code source}. */
-    public static <T> RigidNode<T> root(T source, NodeName name, Title title) {
-        return new RigidNode<>(null, 0, name, title, source, OptionalInt.empty());
+    public RigidNode(T source, NodeName name, Title title) {
+        this(null, 0, name, title, source, OptionalInt.empty());
     }
 
     /** A root whose heading defaults to the {@linkplain Title#humanizing(NodeName) humanized name}. */
-    public static <T> RigidNode<T> root(T source, NodeName name) {
-        return root(source, name, Title.humanizing(name));
+    public RigidNode(T source, NodeName name) {
+        this(source, name, Titles.INSTANCE.humanizing(name));
     }
 
     /** A child of this node — level {@code this.level + 1}, parent {@code this} — wrapping {@code source}. */
@@ -85,12 +86,12 @@ public final class RigidNode<T> {
 
     /** A child whose heading defaults to the {@linkplain Title#humanizing(NodeName) humanized name}. */
     public RigidNode<T> child(T source, NodeName name) {
-        return child(source, name, Title.humanizing(name));
+        return child(source, name, Titles.INSTANCE.humanizing(name));
     }
 
     /** A child with a default heading and an explicit sibling ordinal. */
     public RigidNode<T> child(T source, NodeName name, int order) {
-        return child(source, name, Title.humanizing(name), order);
+        return child(source, name, Titles.INSTANCE.humanizing(name), order);
     }
 
     /** The node above this one; null for a root. */

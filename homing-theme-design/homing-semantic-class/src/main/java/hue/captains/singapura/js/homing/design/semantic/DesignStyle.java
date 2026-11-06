@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.design.semantic;
 
 import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import hue.captains.singapura.js.homing.tree.NodeName;
+import hue.captains.singapura.js.homing.tree.NodeNames;
 import hue.captains.singapura.tao.ontology.Immutable;
 
 import java.util.List;
@@ -23,7 +24,7 @@ public interface DesignStyle<S extends ColorScheme> extends Immutable {
     S scheme();
 
     /** The style's token, from its type: {@code neo-brutalism}. */
-    default String token() { return NodeName.ofType(getClass(), "").value(); }
+    default String token() { return NodeNames.INSTANCE.ofType(getClass(), "").value(); }
 
     /** What a picker calls it: its token's words, capitalised - {@code Neo-Brutalism} - unless it says otherwise. */
     default String label() { return Labels.INSTANCE.of(token()); }

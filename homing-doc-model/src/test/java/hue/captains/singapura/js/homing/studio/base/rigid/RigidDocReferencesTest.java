@@ -19,13 +19,13 @@ class RigidDocReferencesTest {
 
     /** Two docs' constants, each naming the other: whichever class is made first, neither holds null. */
     static final class First {
-        static final RigidDoc INSTANCE = RigidDoc.root(UUID.fromString("7a0c1d6e-0000-4000-8000-000000000001"), "First", "", "DOC")
+        static final RigidDoc INSTANCE = new Rigid.L0(UUID.fromString("7a0c1d6e-0000-4000-8000-000000000001"), "First", "", "DOC")
                 .text("Names the second.").build()
                 .withReferences(() -> List.of(new DocReference("second", Second.INSTANCE)));
     }
 
     static final class Second {
-        static final RigidDoc INSTANCE = RigidDoc.root(UUID.fromString("7a0c1d6e-0000-4000-8000-000000000002"), "Second", "", "DOC")
+        static final RigidDoc INSTANCE = new Rigid.L0(UUID.fromString("7a0c1d6e-0000-4000-8000-000000000002"), "Second", "", "DOC")
                 .text("Names the first.").build()
                 .withReferences(() -> List.of(new DocReference("first", First.INSTANCE)));
     }
@@ -38,7 +38,7 @@ class RigidDocReferencesTest {
 
     @Test
     void aRigidDoc_declaresNone_unlessItDeclaresSome_andKeepsThemWithItsSlug() {
-        var plain = RigidDoc.root(UUID.fromString("7a0c1d6e-0000-4000-8000-000000000003"), "Plain", "", "DOC").text("x").build();
+        var plain = new Rigid.L0(UUID.fromString("7a0c1d6e-0000-4000-8000-000000000003"), "Plain", "", "DOC").text("x").build();
         assertTrue(plain.references().isEmpty());
         var named = First.INSTANCE.withSlug(new NodeName("first-one"));
         assertEquals("first-one", named.authoredSlug().value());

@@ -24,7 +24,7 @@ class RigidDocV2TreeTest {
 
     private static DocTreeV2 aTree() {
         return RigidNodeNormalizer.INSTANCE.toDocTree(ID,
-                List.of(RigidNode.root("", new NodeName("root"), new Title("Root"))),
+                List.of(new RigidNode<>("", new NodeName("root"), new Title("Root"))),
                 body -> new RigidNodeContent());
     }
 

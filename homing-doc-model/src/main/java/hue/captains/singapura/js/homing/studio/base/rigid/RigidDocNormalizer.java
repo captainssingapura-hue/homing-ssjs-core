@@ -6,6 +6,7 @@ import hue.captains.singapura.js.homing.studio.base.composed.DocTree;
 import hue.captains.singapura.js.homing.tree.DimensionKey;
 import hue.captains.singapura.js.homing.tree.DimensionValue;
 import hue.captains.singapura.js.homing.tree.DisplayLabel;
+import hue.captains.singapura.js.homing.tree.NodeNames;
 import hue.captains.singapura.js.homing.tree.NormalizedNode;
 import hue.captains.singapura.js.homing.studio.base.DocNodeIdentity;
 import hue.captains.singapura.js.homing.tree.TreeLevel;
@@ -68,7 +69,7 @@ public final class RigidDocNormalizer implements StatelessFunctionalObject {
                 kids.add(build(doc, children.get(i), childLevel, append(path, i), providers));
             }
         }
-        return new NormalizedNode(level, DocNodeIdentity.indexSegment(path), DocNodeIdentity.byIndex(doc, path), labelDims(node.title().text()), kids);
+        return new NormalizedNode(level, NodeNames.INSTANCE.indexSegment(path), new DocNodeIdentity(doc, path), labelDims(node.title().text()), kids);
     }
 
     private List<Integer> append(List<Integer> prefix, int idx) {

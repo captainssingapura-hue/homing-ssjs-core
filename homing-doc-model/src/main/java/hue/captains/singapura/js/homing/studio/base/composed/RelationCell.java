@@ -34,7 +34,7 @@ public record RelationCell(String text, Articulation articulation) {
     }
 
     /** A cell carrying {@code text}; add marks by chaining. */
-    public static RelationCell cell(String text) { return new RelationCell(text, Articulation.NONE); }
+    public RelationCell(String text) { this(text, Articulation.NONE); }
 
     // ── Status badge (inline pill) ──────────────────────────────────────────
     /** This cell with this badge. */

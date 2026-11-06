@@ -32,8 +32,8 @@ class RigidTreesTest {
 
     @Test
     void levelArithmetic() {
-        assertEquals(8, TreeLevel.atDepth(5).shifted(3).depth());
-        assertEquals(TreeLevel.L18.INSTANCE, TreeLevel.atDepth(18));
+        assertEquals(8, TreeLevels.INSTANCE.atDepth(5).shifted(3).depth());
+        assertEquals(TreeLevel.L18.INSTANCE, TreeLevels.INSTANCE.atDepth(18));
         assertTrue(TreeLevel.L18.INSTANCE.below().isEmpty(), "L18 is the cap");
         assertTrue(TreeLevel.L0.INSTANCE.above().isEmpty(),  "L0 is the root");
         assertEquals(TreeLevel.L3.INSTANCE, TreeLevel.L4.INSTANCE.above().orElseThrow());
@@ -42,8 +42,8 @@ class RigidTreesTest {
 
     @Test
     void atDepthAndShiftRejectOutOfRange() {
-        assertThrows(IllegalArgumentException.class, () -> TreeLevel.atDepth(19));
-        assertThrows(IllegalArgumentException.class, () -> TreeLevel.atDepth(-1));
+        assertThrows(IllegalArgumentException.class, () -> TreeLevels.INSTANCE.atDepth(19));
+        assertThrows(IllegalArgumentException.class, () -> TreeLevels.INSTANCE.atDepth(-1));
         assertThrows(IllegalArgumentException.class, () -> TreeLevel.L18.INSTANCE.shifted(1));
     }
 

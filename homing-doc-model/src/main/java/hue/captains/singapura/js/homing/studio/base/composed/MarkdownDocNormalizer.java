@@ -7,6 +7,7 @@ import hue.captains.singapura.js.homing.tree.DisplayLabel;
 import hue.captains.singapura.js.homing.tree.NamePath;
 import hue.captains.singapura.js.homing.tree.NodeKey;
 import hue.captains.singapura.js.homing.tree.NodeName;
+import hue.captains.singapura.js.homing.tree.NodeNames;
 import hue.captains.singapura.js.homing.tree.NormalizedNode;
 import hue.captains.singapura.js.homing.tree.TreeLevel;
 import hue.captains.singapura.js.homing.tree.TreeNormalizer;
@@ -332,8 +333,8 @@ public final class MarkdownDocNormalizer implements TreeNormalizer<Doc> {
                 kids.add(toNode(doc, s.kids.get(i), childLevel, List.copyOf(childPath), providers));
             }
         }
-        return new NormalizedNode(level, DocNodeIdentity.indexSegment(path),
-                                  DocNodeIdentity.byIndex(doc, path), dims, kids);
+        return new NormalizedNode(level, NodeNames.INSTANCE.indexSegment(path),
+                                  new DocNodeIdentity(doc, path), dims, kids);
     }
 
     /**

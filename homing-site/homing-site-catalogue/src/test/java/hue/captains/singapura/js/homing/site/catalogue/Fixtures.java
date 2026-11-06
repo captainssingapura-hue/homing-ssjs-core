@@ -6,6 +6,7 @@ import hue.captains.singapura.js.homing.server.HtmlPageContent;
 import hue.captains.singapura.js.homing.site.Navigable;
 import hue.captains.singapura.js.homing.tree.NodeName;
 
+import hue.captains.singapura.js.homing.tree.NodeNames;
 import java.util.List;
 
 /**
@@ -49,7 +50,7 @@ final class Fixtures {
             return List.of(DeepCatalogue.INSTANCE);
         }
         @Override public List<Leaf<AlphaCatalogue>> leaves() {
-            return List.of(new Leaf<>(this, NodeName.slug("one"), "One", "", P_ONE),
+            return List.of(new Leaf<>(this, NodeNames.INSTANCE.slug("one"), "One", "", P_ONE),
                            new Leaf<>(this, "Plain page", "", P_PLAIN));
         }
     }
@@ -88,8 +89,8 @@ final class Fixtures {
     record SlugClashRoot() implements L0_Catalogue<SlugClashRoot> {
         @Override public String name() { return "Clash"; }
         @Override public List<Leaf<SlugClashRoot>> leaves() {
-            return List.of(new Leaf<>(this, NodeName.slug("x"), "X one", "", P_ONE),
-                           new Leaf<>(this, NodeName.slug("x"), "X two", "", P_TWO));
+            return List.of(new Leaf<>(this, NodeNames.INSTANCE.slug("x"), "X one", "", P_ONE),
+                           new Leaf<>(this, NodeNames.INSTANCE.slug("x"), "X two", "", P_TWO));
         }
     }
 
@@ -100,7 +101,7 @@ final class Fixtures {
             return List.of(new Shadowed());
         }
         @Override public List<Leaf<MixedClashRoot>> leaves() {
-            return List.of(new Leaf<>(this, NodeName.slug("shadowed"), "Shadowed page", "", P_ONE));
+            return List.of(new Leaf<>(this, NodeNames.INSTANCE.slug("shadowed"), "Shadowed page", "", P_ONE));
         }
     }
     record Shadowed() implements L1_Catalogue<MixedClashRoot, Shadowed> {

@@ -3,7 +3,6 @@ package hue.captains.singapura.js.homing.studio.base.composed.text;
 import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * A single line of text — the smallest typed building block above a raw
@@ -40,16 +39,6 @@ public sealed interface Line extends Scalar
 
     /** The length that counts against {@link #MAX_CHARS}. */
     int effectiveLength();
-
-    /**
-     * Wrap a caption/title string as an optional {@link Plain} line — a
-     * {@code null} or blank string becomes {@link Optional#empty()}. The single
-     * place the String-authoring boundary (DSL, convenience constructors)
-     * crosses into the typed line.
-     */
-    static Optional<Plain> optionalPlain(String s) {
-        return (s == null || s.isBlank()) ? Optional.empty() : Optional.of(new Plain(s));
-    }
 
     /** A plain single line — literal text, no articulation. Cap applies to the raw string. */
     record Plain(String raw) implements Line {

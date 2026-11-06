@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.studio.base.composed;
 
 import hue.captains.singapura.js.homing.studio.base.composed.text.Line;
+import hue.captains.singapura.js.homing.studio.base.composed.text.Lines;
 import hue.captains.singapura.js.homing.studio.base.table.TableDoc;
 
 import java.util.Objects;
@@ -39,7 +40,7 @@ public record TableSegment(TableDoc doc, Optional<Line.Plain> captionOverride) i
 
     /** Convenience — caption from a raw string (blank becomes no override). */
     public TableSegment(TableDoc doc, String caption) {
-        this(doc, Line.optionalPlain(caption));
+        this(doc, Lines.INSTANCE.optionalPlain(caption));
     }
 
     /** The caption to render — explicit override, or doc.title() when blank. */

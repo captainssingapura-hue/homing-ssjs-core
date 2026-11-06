@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.studio.base.composed.ComposedLeaf;
 import hue.captains.singapura.js.homing.studio.base.composed.ContentProvider;
 import hue.captains.singapura.js.homing.studio.base.composed.DocTreeV2;
 import hue.captains.singapura.js.homing.studio.base.composed.RigidNodeContent;
+import hue.captains.singapura.js.homing.tree.NamePathReader;
 import hue.captains.singapura.js.homing.tree.NodeName;
 import hue.captains.singapura.js.homing.tree.DimensionKey;
 import hue.captains.singapura.js.homing.tree.DimensionValue;
@@ -13,6 +14,7 @@ import hue.captains.singapura.js.homing.tree.NamePath;
 import hue.captains.singapura.js.homing.tree.NodeKey;
 import hue.captains.singapura.js.homing.tree.NormalizedNode;
 import hue.captains.singapura.js.homing.tree.TreeLevel;
+import hue.captains.singapura.js.homing.tree.TreeLevels;
 import hue.captains.singapura.js.homing.tree.dims.NameValue;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
@@ -67,6 +69,15 @@ public final class RigidNodeNormalizer implements StatelessFunctionalObject {
         return Comparator.<RigidNode<?>>comparingInt(
                             n -> n.order().isPresent() ? n.order().getAsInt() : Integer.MAX_VALUE)
                     .thenComparing(n -> n.name().value());
+    }
+
+    /** The doc tree of these nodes, read only when it is asked for; refuses a missing source now. */
+    public <T> java.util.function.Supplier<DocTreeV2> docTreeOf(java.util.UUID id,
+            java.util.function.Supplier<java.util.List<RigidNode<T>>> nodes,
+            java.util.function.Function<T, RigidNodeContent> content) {
+        java.util.Objects.requireNonNull(nodes, "nodes");
+        java.util.Objects.requireNonNull(content, "content provider");
+        return () -> toDocTree(id, nodes.get(), content);
     }
 
     /**
@@ -148,12 +159,12 @@ public final class RigidNodeNormalizer implements StatelessFunctionalObject {
 
         TreeLevel level;
         try {
-            level = TreeLevel.atDepth(node.level());
+            level = TreeLevels.INSTANCE.atDepth(node.level());
         } catch (IllegalArgumentException ex) {
             throw new MalformedTreeException("depth exceeds the rigid cap at '"
                     + node.name().value() + "': " + ex.getMessage());
         }
-        return new NormalizedNode(level, node.name(), new DocNodeIdentity(doc, NamePath.parse(pathKey)), labelDims(node), kidNodes);
+        return new NormalizedNode(level, node.name(), new DocNodeIdentity(doc, NamePathReader.INSTANCE.parse(pathKey)), labelDims(node), kidNodes);
     }
 
     /** The two per-node dimensions: the human heading, then the machine identity. */

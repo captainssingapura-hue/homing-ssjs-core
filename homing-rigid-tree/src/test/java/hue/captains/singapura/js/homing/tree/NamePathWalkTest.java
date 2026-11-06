@@ -34,7 +34,7 @@ class NamePathWalkTest {
     @Test
     void anEmptyPathNamesTheRootItself() {
         var found = assertInstanceOf(NamePathWalk.Found.class,
-                NamePathWalk.from(studio(), NamePath.ROOT));
+                NamePathWalker.INSTANCE.walk(studio(), NamePath.ROOT));
         assertEquals(new Id("studio"), found.identity());
         assertEquals(NamePath.ROOT, found.path());
     }
@@ -42,7 +42,7 @@ class NamePathWalkTest {
     @Test
     void aPathAdvancesOneLevelPerSegment() {
         var found = assertInstanceOf(NamePathWalk.Found.class,
-                NamePathWalk.from(studio(), NamePath.parse("meta/ontology")));
+                NamePathWalker.INSTANCE.walk(studio(), NamePathReader.INSTANCE.parse("meta/ontology")));
         assertEquals(new Id("ontology"), found.identity());
         assertEquals("meta/ontology", found.path().wire());
     }
@@ -50,7 +50,7 @@ class NamePathWalkTest {
     @Test
     void itWalksAllTheWayToALeaf() {
         var found = assertInstanceOf(NamePathWalk.Found.class,
-                NamePathWalk.from(studio(), NamePath.parse("meta/ontology/doc-ontology")));
+                NamePathWalker.INSTANCE.walk(studio(), NamePathReader.INSTANCE.parse("meta/ontology/doc-ontology")));
         assertEquals(new Id("doc-ontology"), found.identity());
     }
 
@@ -62,7 +62,7 @@ class NamePathWalkTest {
     @Test
     void theRootsOwnSegmentIsNotPartOfThePath() {
         var missing = assertInstanceOf(NamePathWalk.Missing.class,
-                NamePathWalk.from(studio(), NamePath.parse("studio/meta")));
+                NamePathWalker.INSTANCE.walk(studio(), NamePathReader.INSTANCE.parse("studio/meta")));
         assertEquals(n("studio"), missing.wanted());
         assertEquals(0, missing.depth());
     }
@@ -72,7 +72,7 @@ class NamePathWalkTest {
     @Test
     void noSuchChildReportsTheSegmentsThatDoExist() {
         var miss = assertInstanceOf(NamePathWalk.NoSuchChild.class,
-                NamePathWalk.from(studio(), NamePath.parse("meta/nope/deeper")));
+                NamePathWalker.INSTANCE.walk(studio(), NamePathReader.INSTANCE.parse("meta/nope/deeper")));
 
         assertEquals("meta", miss.matched().wire(), "the partial path that did resolve");
         assertEquals(n("nope"), miss.wanted());
@@ -85,7 +85,7 @@ class NamePathWalkTest {
     void theMissIsAtTheFIRSTLevelThatFails() {
         // Both 'nope' and 'alsoNope' are absent; the walk stops at the first.
         var miss = assertInstanceOf(NamePathWalk.NoSuchChild.class,
-                NamePathWalk.from(studio(), NamePath.parse("nope/alsoNope")));
+                NamePathWalker.INSTANCE.walk(studio(), NamePathReader.INSTANCE.parse("nope/alsoNope")));
         assertEquals(NamePath.ROOT, miss.matched());
         assertEquals(n("nope"), miss.wanted());
         assertTrue(miss.available().containsAll(List.of(n("meta"), n("rfcs"))));
@@ -94,7 +94,7 @@ class NamePathWalkTest {
     @Test
     void availableIsAnImmutableCopy() {
         var miss = assertInstanceOf(NamePathWalk.NoSuchChild.class,
-                NamePathWalk.from(studio(), NamePath.parse("absent")));
+                NamePathWalker.INSTANCE.walk(studio(), NamePathReader.INSTANCE.parse("absent")));
         var available = miss.available();
         assertEquals(2, available.size());
         org.junit.jupiter.api.Assertions.assertThrows(UnsupportedOperationException.class,
@@ -112,7 +112,7 @@ class NamePathWalkTest {
     @Test
     void pastALeafCarriesTheLeafItselfAndTheUnconsumedTail() {
         var miss = assertInstanceOf(NamePathWalk.PastALeaf.class,
-                NamePathWalk.from(studio(), NamePath.parse("meta/ontology/doc-ontology/extra/more")));
+                NamePathWalker.INSTANCE.walk(studio(), NamePathReader.INSTANCE.parse("meta/ontology/doc-ontology/extra/more")));
 
         assertEquals("meta/ontology/doc-ontology", miss.matched().wire(),
                 "where a caller would redirect");
@@ -125,7 +125,7 @@ class NamePathWalkTest {
     @Test
     void aBranchMissingAChildIsNotPastALeaf() {
         assertInstanceOf(NamePathWalk.NoSuchChild.class,
-                NamePathWalk.from(studio(), NamePath.parse("meta/absent")));
+                NamePathWalker.INSTANCE.walk(studio(), NamePathReader.INSTANCE.parse("meta/absent")));
     }
 
     /** Both failures group, so a caller may handle them uniformly. */
@@ -133,7 +133,7 @@ class NamePathWalkTest {
     void bothFailuresAreMissingAndCarryHowFarTheyGot() {
         for (String path : List.of("meta/absent", "meta/ontology/doc-ontology/extra")) {
             var missing = assertInstanceOf(NamePathWalk.Missing.class,
-                    NamePathWalk.from(studio(), NamePath.parse(path)), path);
+                    NamePathWalker.INSTANCE.walk(studio(), NamePathReader.INSTANCE.parse(path)), path);
             assertEquals("meta", missing.matched().wire().split("/")[0], path);
         }
     }
@@ -146,10 +146,10 @@ class NamePathWalkTest {
      */
     @Test
     void theWalkHandsAnIdentityStraightToTheResolver() {
-        NodeResolver resolver = NodeResolver.forKind(Id.class, id -> "content for " + id.name());
+        NodeResolver resolver = new NodeResolver.ForKind<>(Id.class, id -> "content for " + id.name());
 
         var found = assertInstanceOf(NamePathWalk.Found.class,
-                NamePathWalk.from(studio(), NamePath.parse("meta/ontology")));
+                NamePathWalker.INSTANCE.walk(studio(), NamePathReader.INSTANCE.parse("meta/ontology")));
 
         assertEquals(Optional.of("content for ontology"), resolver.resolve(found.identity()));
     }
@@ -157,10 +157,10 @@ class NamePathWalkTest {
     /** ...and a past-a-leaf miss can still resolve the leaf it overshot. */
     @Test
     void aPastALeafMissCanStillResolveTheLeafContent() {
-        NodeResolver resolver = NodeResolver.forKind(Id.class, id -> "content for " + id.name());
+        NodeResolver resolver = new NodeResolver.ForKind<>(Id.class, id -> "content for " + id.name());
 
         var miss = assertInstanceOf(NamePathWalk.PastALeaf.class,
-                NamePathWalk.from(studio(), NamePath.parse("meta/ontology/doc-ontology/extra")));
+                NamePathWalker.INSTANCE.walk(studio(), NamePathReader.INSTANCE.parse("meta/ontology/doc-ontology/extra")));
 
         assertEquals(Optional.of("content for doc-ontology"), resolver.resolve(miss.leaf()));
     }
@@ -175,7 +175,7 @@ class NamePathWalkTest {
                 RigidTrees.INSTANCE.graftUnder(source, TreeLevel.L0.INSTANCE));
 
         var found = assertInstanceOf(NamePathWalk.Found.class,
-                NamePathWalk.from(host, NamePath.parse("animals/turtle")));
+                NamePathWalker.INSTANCE.walk(host, NamePathReader.INSTANCE.parse("animals/turtle")));
         assertEquals(new Id("turtle"), found.identity());
     }
 }

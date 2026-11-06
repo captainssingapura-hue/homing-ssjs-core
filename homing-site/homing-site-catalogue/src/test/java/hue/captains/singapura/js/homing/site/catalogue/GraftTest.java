@@ -6,6 +6,7 @@ import hue.captains.singapura.js.homing.site.Placed;
 import hue.captains.singapura.js.homing.site.Query;
 import hue.captains.singapura.js.homing.site.Trail;
 import hue.captains.singapura.js.homing.tree.NodeName;
+import hue.captains.singapura.js.homing.tree.NodeNames;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -167,7 +168,7 @@ class GraftTest {
     record ClashRoot() implements L0_Catalogue<ClashRoot> {
         @Override public String name() { return "Clash"; }
         @Override public List<Graft<ClashRoot>> grafts() { return List.of(new Graft<>(this, NotesCatalogue.INSTANCE)); }
-        @Override public List<Leaf<ClashRoot>> leaves() { return List.of(new Leaf<>(this, NodeName.slug("notes"), "My notes", "", HOME)); }
+        @Override public List<Leaf<ClashRoot>> leaves() { return List.of(new Leaf<>(this, NodeNames.INSTANCE.slug("notes"), "My notes", "", HOME)); }
     }
 
     @Test

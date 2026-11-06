@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
 
-import static hue.captains.singapura.js.homing.studio.base.composed.RelationCell.cell;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -14,12 +13,12 @@ class RelationCellTest {
 
     @Test
     void aCellWithNoMarksArticulatesNothing() {
-        assertTrue(cell("plain").articulation().isEmpty());
+        assertTrue(new RelationCell("plain").articulation().isEmpty());
     }
 
     @Test
     void aMarkLeavesTheCellItWasGivenAlone() {
-        var plain = cell("94%");
+        var plain = new RelationCell("94%");
         var marked = plain.right();
         assertTrue(plain.articulation().isEmpty());
         assertEquals(Optional.of(TableData.Align.RIGHT), marked.articulation().align());
@@ -27,7 +26,7 @@ class RelationCellTest {
 
     @Test
     void twoCellsMarkedFromOneShareNothing() {
-        var shared = cell("x");
+        var shared = new RelationCell("x");
         var good = shared.success();
         var bad = shared.error();
         assertEquals(Optional.of(TableData.Badge.SUCCESS), good.articulation().badge());
@@ -36,8 +35,8 @@ class RelationCellTest {
 
     @Test
     void marksOfDifferentKindsAddUpInAnyOrder() {
-        assertEquals(cell("x").right().muted().warning(), cell("x").warning().muted().right());
-        var articulation = cell("x").right().muted().warning().articulation();
+        assertEquals(new RelationCell("x").right().muted().warning(), new RelationCell("x").warning().muted().right());
+        var articulation = new RelationCell("x").right().muted().warning().articulation();
         assertEquals(Optional.of(TableData.Badge.WARNING), articulation.badge());
         assertEquals(Optional.of(TableData.Align.RIGHT), articulation.align());
         assertEquals(Optional.of(Articulation.Emphasis.MUTED), articulation.emphasis());
@@ -45,11 +44,11 @@ class RelationCellTest {
 
     @Test
     void aLaterMarkOfTheSameKindReplacesTheEarlierOne() {
-        assertEquals(cell("x").muted(), cell("x").strong().muted());
+        assertEquals(new RelationCell("x").muted(), new RelationCell("x").strong().muted());
     }
 
     @Test
     void aNullMarkTakesTheMarkOff() {
-        assertEquals(cell("x"), cell("x").success().badge(null));
+        assertEquals(new RelationCell("x"), new RelationCell("x").success().badge(null));
     }
 }

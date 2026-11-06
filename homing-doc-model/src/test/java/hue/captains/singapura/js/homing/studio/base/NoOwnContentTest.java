@@ -3,8 +3,10 @@ package hue.captains.singapura.js.homing.studio.base;
 import hue.captains.singapura.js.homing.studio.base.composed.ComposedDoc;
 import hue.captains.singapura.js.homing.studio.base.composed.TextSegment;
 import hue.captains.singapura.js.homing.studio.base.image.ImageDoc;
+import hue.captains.singapura.js.homing.studio.base.rigid.Rigid;
 import hue.captains.singapura.js.homing.studio.base.rigid.RigidDoc;
 import hue.captains.singapura.js.homing.studio.base.rigid.RigidDocV2;
+import hue.captains.singapura.js.homing.studio.base.table.TableCsv;
 import hue.captains.singapura.js.homing.studio.base.table.TableData;
 import hue.captains.singapura.js.homing.studio.base.table.TableDoc;
 import org.junit.jupiter.api.Test;
@@ -29,9 +31,9 @@ class NoOwnContentTest {
     void aDocWhoseDataIsStructureHasNoContentOfItsOwn() {
         List<Doc> structured = List.of(
                 new ComposedDoc(ID, "Composed", "", "DOC", List.of(new TextSegment("words"))),
-                RigidDoc.root(ID, "Rigid", "", "DOC").l1("One").text("words").l1build().build(),
+                new Rigid.L0(ID, "Rigid", "", "DOC").l1("One").text("words").l1build().build(),
                 new RigidDocV2(ID, "Rigid v2", "", "DOC", () -> { throw new AssertionError("the tree is never built for this"); }),
-                new TableDoc(ID, "Table", "", TableData.fromCsv("a,b\n1,2")),
+                new TableDoc(ID, "Table", "", TableCsv.INSTANCE.read("a,b\n1,2")),
                 new ImageDoc("nowhere.png", "image/png", "An image"));
         for (Doc d : structured) {
             var e = assertThrows(NoOwnContentException.class, d::contents, d.getClass().getSimpleName());

@@ -90,7 +90,4 @@ public sealed interface CodeLanguage extends Scalar {
     CodeLanguage CSV        = new Known("csv");
     /** Verbatim output — console transcripts, file trees, fixtures. */
     CodeLanguage TEXT       = new Known("text");
-
-    /** A language this vocabulary does not name. Debt — see the class note. */
-    static CodeLanguage other(String tag) { return new Other(tag); }
 }

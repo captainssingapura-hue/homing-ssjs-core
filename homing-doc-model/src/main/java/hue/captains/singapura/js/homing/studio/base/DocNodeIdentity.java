@@ -38,16 +38,9 @@ public record DocNodeIdentity(UUID doc, NamePath within) implements NodeIdentity
     }
 
     /** The identity of the document's own root node. */
-    public static DocNodeIdentity root(UUID doc) {
-        return new DocNodeIdentity(doc, NamePath.ROOT);
+    public DocNodeIdentity(UUID doc) {
+        this(doc, NamePath.ROOT);
     }
-
-    /** This identity's node, one segment deeper. */
-    public DocNodeIdentity child(NodeName segment) {
-        return new DocNodeIdentity(doc, within.then(segment));
-    }
-
-    // ── The legacy index-addressed shape ───────────────────────────────────
 
     /**
      * The identity of a node addressed by its <b>index</b> path within the doc,
@@ -66,16 +59,14 @@ public record DocNodeIdentity(UUID doc, NamePath within) implements NodeIdentity
      * <p>When that migration lands, these two factories are the whole of the
      * change: one grep names every site still on ordinals.</p>
      */
-    public static DocNodeIdentity byIndex(UUID doc, List<Integer> path) {
-        var segments = new java.util.ArrayList<NodeName>(path.size());
-        for (Integer i : path) segments.add(new NodeName(String.valueOf(i)));
-        return new DocNodeIdentity(doc, new NamePath(segments));
+    public DocNodeIdentity(UUID doc, java.util.List<Integer> path) {
+        this(doc, new NamePath(path.stream().map(i -> new NodeName(String.valueOf(i))).toList()));
     }
 
-    /** The segment of an index-addressed node: its ordinal, or {@code doc} at the root. */
-    public static NodeName indexSegment(List<Integer> path) {
-        return path.isEmpty()
-                ? new NodeName("doc")
-                : new NodeName(String.valueOf(path.get(path.size() - 1)));
+    /** This identity's node, one segment deeper. */
+    public DocNodeIdentity child(NodeName segment) {
+        return new DocNodeIdentity(doc, within.then(segment));
     }
+
+    // ── The legacy index-addressed shape ───────────────────────────────────
 }

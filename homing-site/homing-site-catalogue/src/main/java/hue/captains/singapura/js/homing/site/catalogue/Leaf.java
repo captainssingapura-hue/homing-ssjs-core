@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.site.catalogue;
 import hue.captains.singapura.js.homing.site.Navigable;
 import hue.captains.singapura.js.homing.tree.NodeName;
 
+import hue.captains.singapura.js.homing.tree.NodeNames;
 import java.util.Objects;
 
 /**
@@ -57,7 +58,7 @@ public record Leaf<C extends Catalogue<C>>(
      * catalogue's {@code leaves()}.
      */
     public Leaf(C host, String name, String summary, Navigable page) {
-        this(NodeName.conciseSlug(name), name, summary, null, null, null, page);
+        this(NodeNames.INSTANCE.conciseSlug(name), name, summary, null, null, null, page);
     }
 
     /** A leaf in {@code host} with the slug stated. */

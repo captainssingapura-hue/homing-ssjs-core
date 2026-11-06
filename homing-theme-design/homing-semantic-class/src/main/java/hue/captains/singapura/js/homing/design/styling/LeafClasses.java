@@ -7,6 +7,7 @@ import hue.captains.singapura.js.homing.component.taxonomy.Classed;
 import hue.captains.singapura.js.homing.component.taxonomy.StateValue;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.tree.NodeName;
+import hue.captains.singapura.js.homing.tree.NodeNames;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import hue.captains.singapura.tao.ontology.Scalar;
 
@@ -55,7 +56,7 @@ public record LeafClasses() implements StatelessFunctionalObject {
         var importances = Importances.INSTANCE;
         var drawn = new ArrayList<Drawn>();
         for (Classed<?> s : taxonomy.precedence(leaf.cast())) {
-            String level = importances.levelFor(leaf.cast(), s).map(l -> NodeName.ofType(l, "").value()).orElse("unranked");
+            String level = importances.levelFor(leaf.cast(), s).map(l -> NodeNames.INSTANCE.ofType(l, "").value()).orElse("unranked");
             List<StateValue> values = s.values();
             for (StateValue v : values.subList(1, values.size()))
                 drawn.add(new Drawn(s, v, s instanceof Pseudo p ? p.pseudoClass() : "." + state(leaf, s, v), level));

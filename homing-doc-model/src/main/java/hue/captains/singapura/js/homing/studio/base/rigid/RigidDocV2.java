@@ -56,13 +56,10 @@ public final class RigidDocV2 implements Doc, DocTreeV2Source {
      * its {@code source}. The normalizer assembles + validates the flat node list at
      * first request; the {@code <T>} source type is captured here and never escapes.
      */
-    public static <T> RigidDocV2 fromNodes(UUID id, String title, String summary, String category,
-                                           Supplier<List<RigidNode<T>>> nodes,
-                                           Function<T, RigidNodeContent> content) {
-        Objects.requireNonNull(nodes, "nodes");
-        Objects.requireNonNull(content, "content provider");
-        return new RigidDocV2(id, title, summary, category,
-                () -> RigidNodeNormalizer.INSTANCE.toDocTree(id, nodes.get(), content));
+    public <T> RigidDocV2(UUID id, String title, String summary, String category,
+                          Supplier<List<RigidNode<T>>> nodes,
+                          Function<T, RigidNodeContent> content) {
+        this(id, title, summary, category, RigidNodeNormalizer.INSTANCE.docTreeOf(id, nodes, content));
     }
 
     @Override

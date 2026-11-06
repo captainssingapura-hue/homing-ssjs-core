@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.site.catalogue;
 
 import hue.captains.singapura.js.homing.site.mpa.Mpa;
 import hue.captains.singapura.js.homing.tree.NodeName;
+import hue.captains.singapura.js.homing.tree.NodeNames;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.util.List;
@@ -44,7 +45,7 @@ public sealed interface Catalogue<Self extends Catalogue<Self>>
 
     /** The path segment; from the class name minus {@code Catalogue} unless overridden. */
     default NodeName slug() {
-        return NodeName.ofType(getClass(), "Catalogue");
+        return NodeNames.INSTANCE.ofType(getClass(), "Catalogue");
     }
 
     /** What a listing says of this catalogue; nothing by default. */

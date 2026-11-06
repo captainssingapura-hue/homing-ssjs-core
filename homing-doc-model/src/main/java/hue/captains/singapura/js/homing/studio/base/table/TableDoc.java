@@ -57,9 +57,4 @@ public record TableDoc(UUID uuid, String title, String summary, TableData data) 
     @Override public String fileExtension() { return ""; }
 
     @Override public String contents()      { throw new NoOwnContentException(this); }
-
-    /** Deterministic UUID derivation for code-defined TableDocs. */
-    public static UUID deterministicUuid(String seed) {
-        return UUID.nameUUIDFromBytes(("table:" + seed).getBytes(StandardCharsets.UTF_8));
-    }
 }
