@@ -131,7 +131,7 @@ public record Implementations() implements StatelessFunctionalObject, StatelessS
     }
 
     /** The leaves and branches implemented over the closure, each once: a branch's base, and a branch realized whole, apart. */
-    private static void index(EsModule<?> m, Map<Component<?>, EsModule<?>> leaves, Map<ComponentBranch, EsModule<?>> branches,
+    private void index(EsModule<?> m, Map<Component<?>, EsModule<?>> leaves, Map<ComponentBranch, EsModule<?>> branches,
                               Map<ComponentBranch, EsModule<?>> whole, List<String> problems) {
         if (!(m instanceof Impl impl)) return;
         Taxon anchor;
@@ -145,13 +145,13 @@ public record Implementations() implements StatelessFunctionalObject, StatelessS
     }
 
     @SuppressWarnings("unchecked")
-    private static <T extends Taxon> T anchor(Impl impl, String name, List<String> problems) {
+    private <T extends Taxon> T anchor(Impl impl, String name, List<String> problems) {
         try { return (T) impl.anchor(); }
         catch (IllegalStateException e) { problems.add(name + ": " + e.getMessage()); return null; }
     }
 
     /** The leaves a leaf's module imports against those its parts call for, and the bases it imports against its lineage. */
-    private static void composition(Taxonomy taxonomy, EsModule<?> m, Component<?> leaf,
+    private void composition(Taxonomy taxonomy, EsModule<?> m, Component<?> leaf,
                                     Map<Component<?>, EsModule<?>> leaves, Map<ComponentBranch, EsModule<?>> whole, List<String> problems) {
         String who = m.getClass().getSimpleName() + " (" + simple(leaf) + ")";
         var expected = new LinkedHashMap<Component<?>, String>();   // a leaf → the part that calls for it
@@ -195,7 +195,7 @@ public record Implementations() implements StatelessFunctionalObject, StatelessS
      * The leaves a module that implements nothing imports, and the branches realized whole, through any such modules it
      * imports in turn: its importer's, since it is the importer's code.
      */
-    private static void helped(EsModule<?> helper, EsModule<?> via, Set<EsModule<?>> seen, Map<Component<?>, String> out,
+    private void helped(EsModule<?> helper, EsModule<?> via, Set<EsModule<?>> seen, Map<Component<?>, String> out,
                                Map<ComponentBranch, String> wholes) {
         for (var key : helper.imports().getAllImports().keySet()) {
             if (!(key instanceof EsModule<?> dep) || !seen.add(dep)) continue;
@@ -209,14 +209,14 @@ public record Implementations() implements StatelessFunctionalObject, StatelessS
     }
 
     /** Every leaf a component's parts hold, at any depth, realized or not. */
-    private static void held(Taxonomy taxonomy, Component<?> owner, Set<Component<?>> seen, Set<Component<?>> out) {
+    private void held(Taxonomy taxonomy, Component<?> owner, Set<Component<?>> seen, Set<Component<?>> out) {
         for (Part<?, ?> p : taxonomy.partsOf(owner))
             for (Component<?> base : p.bases())
                 if (seen.add(base)) { out.add(base); held(taxonomy, base, seen, out); }
     }
 
     /** The leaves a component's parts call for, each implemented by a module of the closure; a part nothing implements, a problem. */
-    private static void expect(Taxonomy taxonomy, Component<?> owner, String who, Map<Component<?>, EsModule<?>> leaves,
+    private void expect(Taxonomy taxonomy, Component<?> owner, String who, Map<Component<?>, EsModule<?>> leaves,
                                Map<ComponentBranch, EsModule<?>> whole, Map<Component<?>, String> out, List<String> problems) {
         for (Part<?, ?> p : taxonomy.partsOf(owner)) {
             String said = p.role().name().value();
@@ -229,7 +229,7 @@ public record Implementations() implements StatelessFunctionalObject, StatelessS
     }
 
     /** The module whose one class realizes every leaf of a branch the leaf is under, or null. */
-    private static EsModule<?> wholeOf(Taxonomy taxonomy, Component<?> leaf, Map<ComponentBranch, EsModule<?>> whole) {
+    private EsModule<?> wholeOf(Taxonomy taxonomy, Component<?> leaf, Map<ComponentBranch, EsModule<?>> whole) {
         for (var t : taxonomy.fallback(leaf))
             if (t instanceof ComponentBranch b && whole.containsKey(b)) return whole.get(b);
         return null;
@@ -240,16 +240,16 @@ public record Implementations() implements StatelessFunctionalObject, StatelessS
      * element it is realized on, exported beside it as a constant named for it -
      * {@code PlainButtonFactory} for {@code PlainButton}.
      */
-    private static boolean asItsLeafSays(List<? extends Exportable<?>> exports, Component<?> leaf) {
+    private boolean asItsLeafSays(List<? extends Exportable<?>> exports, Component<?> leaf) {
         if (exports.isEmpty() || exports.size() > 2) return false;
         if (!(exports.get(0) instanceof UiComponent<?>) || !simple(exports.get(0)).equals(simple(leaf))) return false;
         return exports.size() == 1
                 || exports.get(1) instanceof Exportable._Constant<?> && simple(exports.get(1)).equals(simple(leaf) + "Factory");
     }
 
-    private static String simple(Object o) { return o.getClass().getSimpleName(); }
+    private String simple(Object o) { return o.getClass().getSimpleName(); }
 
-    private static String said(List<? extends Exportable<?>> exports) {
-        return exports.isEmpty() ? "nothing" : String.join(", ", exports.stream().map(Implementations::simple).toList());
+    private String said(List<? extends Exportable<?>> exports) {
+        return exports.isEmpty() ? "nothing" : String.join(", ", exports.stream().map(this::simple).toList());
     }
 }

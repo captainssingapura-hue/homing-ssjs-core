@@ -142,19 +142,19 @@ public final class ComposedDocNormalizer implements TreeNormalizer<ComposedDoc> 
 
     // ── helpers ───────────────────────────────────────────────────────────
 
-    private static List<Integer> append(List<Integer> prefix, int idx) {
+    private List<Integer> append(List<Integer> prefix, int idx) {
         var out = new ArrayList<Integer>(prefix.size() + 1);
         out.addAll(prefix);
         out.add(idx);
         return List.copyOf(out);
     }
 
-    private static Map<DimensionKey, DimensionValue> labelDims(String label) {
+    private Map<DimensionKey, DimensionValue> labelDims(String label) {
         return Map.of(DisplayLabel.INSTANCE, new NameValue(label == null ? "" : label));
     }
 
     /** A node label: the segment's title/caption, falling back to its kind. */
-    private static String labelFor(Segment s) {
+    private String labelFor(Segment s) {
         String l = switch (s) {
             case MarkdownSegment m -> m.title().orElse("");
             case TextSegment t     -> t.title().orElse("");
@@ -172,7 +172,7 @@ public final class ComposedDocNormalizer implements TreeNormalizer<ComposedDoc> 
         return (l == null || l.isBlank()) ? kindOf(s) : l;
     }
 
-    private static String kindOf(Segment s) {
+    private String kindOf(Segment s) {
         return switch (s) {
             case MarkdownSegment m -> "markdown";
             case TextSegment t     -> "text";

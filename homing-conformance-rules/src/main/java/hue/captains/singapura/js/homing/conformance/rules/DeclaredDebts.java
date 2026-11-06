@@ -71,7 +71,7 @@ public record DeclaredDebts() implements StatelessFunctionalObject, StatelessSin
     }
 
     /** A rule's id, from its one instance. */
-    private static RuleId idOf(Class<? extends JsRule> rule) {
+    private RuleId idOf(Class<? extends JsRule> rule) {
         try {
             return ((JsRule) rule.getField("INSTANCE").get(null)).id();
         } catch (ReflectiveOperationException | ClassCastException e) {
@@ -83,7 +83,7 @@ public record DeclaredDebts() implements StatelessFunctionalObject, StatelessSin
         }
     }
 
-    private static Class<?> load(String name) {
+    private Class<?> load(String name) {
         for (ClassLoader l : List.of(Thread.currentThread().getContextClassLoader(), DeclaredDebts.class.getClassLoader())) {
             try {
                 return Class.forName(name, false, l);

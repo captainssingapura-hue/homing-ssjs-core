@@ -91,22 +91,22 @@ public record FlattenSheet() implements StatelessFunctionalObject {
     }
 
     /** A rule for the class worn, saying where its body came from unless the style worn answered it itself. */
-    private static String rule(String worn, Resolution.Answered from, String own, String body) {
+    private String rule(String worn, Resolution.Answered from, String own, String body) {
         boolean itself = worn.equals(from.className()) && own.equals(from.layer());
         return (itself ? "" : "/* from " + from.layer() + ": " + from.className() + " */\n") + "." + worn + " {\n" + indent(body) + "\n}\n";
     }
 
     /** A body where its target draws: on the element, or nested on the pseudo-element the target paints on - a glyph on {@code ::before}. */
-    private static String drawn(Target t, String body) {
+    private String drawn(Target t, String body) {
         return t.pseudo() == null ? body : "&" + t.pseudo() + " {\n" + indent(body) + "\n}";
     }
 
     /** A body as written, each line its own, without the indent it was written at. */
-    private static String normal(String body) {
+    private String normal(String body) {
         return String.join("\n", body.strip().lines().map(String::strip).filter(l -> !l.isEmpty()).toList());
     }
 
-    private static String indent(String text) {
+    private String indent(String text) {
         return String.join("\n", text.lines().map(l -> "    " + l).toList());
     }
 }

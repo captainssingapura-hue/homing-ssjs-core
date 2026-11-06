@@ -103,7 +103,7 @@ public record LocalStyleObject() implements StatelessFunctionalObject {
     }
 
     /** The name a sheet is imported by: the one constant it exports. */
-    private static String imported(DerivedCss<?> sheet) {
+    private String imported(DerivedCss<?> sheet) {
         List<? extends Exportable<?>> exports = sheet.exports().exports();
         if (exports.size() != 1 || !(exports.get(0) instanceof Exportable._Constant<?>))
             throw new IllegalArgumentException(sheet.getClass().getSimpleName() + " exports " + exports.size()
@@ -111,8 +111,8 @@ public record LocalStyleObject() implements StatelessFunctionalObject {
         return exports.get(0).getClass().getSimpleName();
     }
 
-    private static String quoted(String s) { return "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\""; }
+    private String quoted(String s) { return "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\""; }
 
     /** A class's handle, made once by the css manager, as a generated group of CSS classes makes its own. */
-    private static String handle(String className) { return "css.cls(" + quoted(className) + ")"; }
+    private String handle(String className) { return "css.cls(" + quoted(className) + ")"; }
 }

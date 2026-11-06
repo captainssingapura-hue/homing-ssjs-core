@@ -70,14 +70,14 @@ public record ResolveSemanticClass() implements StatelessFunctionalObject {
     }
 
     /** The nodes asked for a casting in a state, most precise first. */
-    private static List<Casting> path(Taxonomy taxonomy, Casting c, State state) {
+    private List<Casting> path(Taxonomy taxonomy, Casting c, State state) {
         if (state == State.REST) return c.lineage(taxonomy);
         var walk = new ArrayList<Casting>();
         for (ComponentNode n : taxonomy.fallback(c.component())) walk.add(new Casting((Taxon) n));
         return walk;
     }
 
-    private static Resolution.Outcome walk(Taxonomy taxonomy, Dressed theme, Casting query, Layer top, Layer layer, List<Casting> path, State state, Target target,
+    private Resolution.Outcome walk(Taxonomy taxonomy, Dressed theme, Casting query, Layer top, Layer layer, List<Casting> path, State state, Target target,
                                            List<Resolution.Step> steps, Set<Casting> passed) {
         var tokens = SemanticTokens.INSTANCE;
         for (int i = 0; i < path.size(); i++) {
@@ -138,7 +138,7 @@ public record ResolveSemanticClass() implements StatelessFunctionalObject {
     }
 
     /** Whether a casting is one the taxonomy has: on its own, or a role some slot casts its component in. */
-    private static boolean castable(Taxonomy taxonomy, Casting c) {
+    private boolean castable(Taxonomy taxonomy, Casting c) {
         if (c.standalone()) return true;
         for (Part<?, ?> p : taxonomy.parts()) if (p.bases().contains(c.component()) && p.role().equals(c.role())) return true;
         return false;

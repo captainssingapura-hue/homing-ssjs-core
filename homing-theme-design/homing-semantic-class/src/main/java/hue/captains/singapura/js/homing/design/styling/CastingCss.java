@@ -156,7 +156,7 @@ public record CastingCss() implements StatelessFunctionalObject {
     }
 
     /** Inside the casting's rule: each nested selector a state's mark, the browser's own, or a pseudo-element's - no class, no other $. */
-    private static void inside(String name, List<ReadCss.Item> body, Set<String> states, List<String> problems) {
+    private void inside(String name, List<ReadCss.Item> body, Set<String> states, List<String> problems) {
         for (ReadCss.Item item : body) {
             switch (item) {
                 case ReadCss.Rule r -> {
@@ -178,7 +178,7 @@ public record CastingCss() implements StatelessFunctionalObject {
     }
 
     /** Every $ in a value: a use of a keyframes the file writes. */
-    private static void values(String name, ReadCss.Item item, Set<String> keyframes, List<String> problems) {
+    private void values(String name, ReadCss.Item item, Set<String> keyframes, List<String> problems) {
         switch (item) {
             case ReadCss.Declaration d -> {
                 for (Matcher m = USE.matcher(d.value()); m.find(); )

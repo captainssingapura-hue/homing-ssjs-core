@@ -49,7 +49,7 @@ public record Bundles() implements StatelessFunctionalObject {
         return out;
     }
 
-    private static void walk(Taxonomy taxonomy, Component<?> at, Collection<? extends Component<?>> topLevel, Set<Casting> out, Set<Component<?>> passed) {
+    private void walk(Taxonomy taxonomy, Component<?> at, Collection<? extends Component<?>> topLevel, Set<Casting> out, Set<Component<?>> passed) {
         if (!passed.add(at)) return;
         for (Part<?, ?> p : taxonomy.partsOf(at))
             for (Component<?> base : p.bases()) {

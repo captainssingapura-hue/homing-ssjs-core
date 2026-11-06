@@ -280,7 +280,7 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
     }
 
     /** A delegation: no CSS of its own; its chain to CSS, never round, of the same component; its colours the delegating scheme's. */
-    private static void delegation(Class<?> type, DesignStyle<?> style, Casting casting, StylingRes.Delegation<?, ?> delegation, ColorScheme scheme,
+    private void delegation(Class<?> type, DesignStyle<?> style, Casting casting, StylingRes.Delegation<?, ?> delegation, ColorScheme scheme,
                                    ColorTree tree, List<String> problems) {
         if (CastingCss.INSTANCE.read(type).isPresent())
             problems.add("delegates, and its jar has " + CastingCss.INSTANCE.resource(type) + ": a delegation has no CSS of its own");
@@ -323,7 +323,7 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
     public static String packageOf(DesignStyle<?> style) { return ROOT + style.token().replace("-", "") + "/"; }
 
     /** Whatever of the jar its declaration leaves out, in its styles' packages: an implementation's class, a CSS file. */
-    private static List<String> leftOut(Class<?> declaration, Set<Class<?>> declared, Set<String> packages) {
+    private List<String> leftOut(Class<?> declaration, Set<Class<?>> declared, Set<String> packages) {
         var problems = new ArrayList<String>();
         var cssDeclared = new HashMap<String, Class<?>>();
         for (Class<?> c : declared) cssDeclared.put(CastingCss.INSTANCE.resource(c), c);
@@ -346,7 +346,7 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
     }
 
     /** Every entry of the jar - or classes' directory - a class was loaded from, as a path under its root. */
-    private static List<String> entries(Class<?> of) {
+    private List<String> entries(Class<?> of) {
         var out = new ArrayList<String>();
         var source = of.getProtectionDomain() == null ? null : of.getProtectionDomain().getCodeSource();
         if (source == null || source.getLocation() == null) return out;

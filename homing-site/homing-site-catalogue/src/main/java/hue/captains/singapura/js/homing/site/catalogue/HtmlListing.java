@@ -28,7 +28,7 @@ public final class HtmlListing implements Listing, StatelessFunctionalObject, St
         return (trail, query) -> render(c, router, trail);
     }
 
-    private static HtmlPageContent render(Catalogue<?> c, CatalogueRouter router, Trail trail) {
+    private HtmlPageContent render(Catalogue<?> c, CatalogueRouter router, Trail trail) {
         var tree = router.tree();
         var shown = tree.shownAs(c);
         var body = new StringBuilder();
@@ -82,7 +82,7 @@ public final class HtmlListing implements Listing, StatelessFunctionalObject, St
                 """.formatted(Html.escape(shown.name()), body));
     }
 
-    private static String crumbs(Trail trail) {
+    private String crumbs(Trail trail) {
         if (trail.depth() < 2) return "";
         var sb = new StringBuilder("<nav class=\"trail\">");
         var crumbs = trail.crumbs();
@@ -99,11 +99,11 @@ public final class HtmlListing implements Listing, StatelessFunctionalObject, St
         return sb.append("</nav>\n").toString();
     }
 
-    private static String iconAndName(String icon, String name) {
+    private String iconAndName(String icon, String name) {
         return (icon.isBlank() ? "" : Html.escape(icon) + " ") + Html.escape(name);
     }
 
-    private static String entry(String href, String icon, String name, String badge, String summary) {
+    private String entry(String href, String icon, String name, String badge, String summary) {
         return "<li><a href=\"" + Html.escape(href) + "\">" + iconAndName(icon, name) + "</a>"
              + "<span class=\"badge\">" + Html.escape(badge) + "</span>"
              + (summary.isBlank() ? "" : "<span class=\"sum\">" + Html.escape(summary) + "</span>")

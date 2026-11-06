@@ -100,7 +100,7 @@ public record ResolveCli() implements StatelessFunctionalObject {
     }
 
     /** One row per state and target: the class worn, the node that answered, how far up. */
-    private static int table(Taxonomy taxonomy, Dressed theme, Casting node, List<State> states, List<Target> targets, PrintStream out) {
+    private int table(Taxonomy taxonomy, Dressed theme, Casting node, List<State> states, List<Target> targets, PrintStream out) {
         var tokens = SemanticTokens.INSTANCE;
         int unanswered = 0;
         out.println("node     " + tokens.casting(node) + "  (" + node + ")");
@@ -121,7 +121,7 @@ public record ResolveCli() implements StatelessFunctionalObject {
         return unanswered > 0 ? 1 : 0;
     }
 
-    private static int list(Taxonomy taxonomy, String what, PrintStream out, PrintStream err) {
+    private int list(Taxonomy taxonomy, String what, PrintStream out, PrintStream err) {
         var tokens = SemanticTokens.INSTANCE;
         switch (what) {
             case "nodes" -> {
@@ -140,7 +140,7 @@ public record ResolveCli() implements StatelessFunctionalObject {
     }
 
     /** The theme's sheet, flattened, to the file named or the output; what is in it, and every look nothing answers. */
-    private static int flatten(Taxonomy taxonomy, Dressed theme, String outFile, PrintStream out, PrintStream err) {
+    private int flatten(Taxonomy taxonomy, Dressed theme, String outFile, PrintStream out, PrintStream err) {
         var flat = FlattenSheet.INSTANCE.flatten(taxonomy, theme, theme.toString());
         PrintStream said = outFile == null ? err : out;   // the sheet on the output, what is in it beside
         if (outFile == null) out.print(flat.css());
@@ -159,7 +159,7 @@ public record ResolveCli() implements StatelessFunctionalObject {
     }
 
     /** The {@code INSTANCE} of the class named, as the kind asked for. */
-    private static <K> K instance(String className, Class<K> kind) {
+    private <K> K instance(String className, Class<K> kind) {
         try {
             Object found = Class.forName(className).getField("INSTANCE").get(null);
             if (!kind.isInstance(found)) throw new IllegalArgumentException(className + " is no " + kind.getSimpleName());
@@ -170,13 +170,13 @@ public record ResolveCli() implements StatelessFunctionalObject {
     }
 
     /** The taxonomy of the component modules named, each by its class: their components, their parts with them. */
-    private static Taxonomy taxonomy(String classNames) {
+    private Taxonomy taxonomy(String classNames) {
         var modules = new ArrayList<ComponentModule>();
         for (String c : classNames.split(",")) modules.add(instance(c.strip(), ComponentModule.class));
         return ComponentModules.INSTANCE.read(modules, List.of(), List.of());
     }
 
-    private static int usage(PrintStream err, String why) {
+    private int usage(PrintStream err, String why) {
         err.println("resolve: " + why);
         err.println(USAGE);
         return 2;

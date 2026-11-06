@@ -72,7 +72,7 @@ public record ViewDoctrineRule() implements JsRule {
         return List.copyOf(findings);
     }
 
-    private static boolean matchesAny(String line, List<Pattern> patterns) {
+    private boolean matchesAny(String line, List<Pattern> patterns) {
         for (Pattern p : patterns) if (p.matcher(line).find()) return true;
         return false;
     }

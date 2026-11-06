@@ -71,14 +71,14 @@ public final class RigidDocNormalizer implements StatelessFunctionalObject {
         return new NormalizedNode(level, DocNodeIdentity.indexSegment(path), DocNodeIdentity.byIndex(doc, path), labelDims(node.title().text()), kids);
     }
 
-    private static List<Integer> append(List<Integer> prefix, int idx) {
+    private List<Integer> append(List<Integer> prefix, int idx) {
         var out = new ArrayList<Integer>(prefix.size() + 1);
         out.addAll(prefix);
         out.add(idx);
         return List.copyOf(out);
     }
 
-    private static Map<DimensionKey, DimensionValue> labelDims(String label) {
+    private Map<DimensionKey, DimensionValue> labelDims(String label) {
         return Map.of(DisplayLabel.INSTANCE, new NameValue(label == null ? "" : label));
     }
 }

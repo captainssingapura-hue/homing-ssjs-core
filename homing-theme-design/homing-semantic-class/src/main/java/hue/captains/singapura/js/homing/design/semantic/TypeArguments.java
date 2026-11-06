@@ -37,7 +37,7 @@ public record TypeArguments() implements StatelessFunctionalObject {
         return index < args.size() ? args.get(index) : null;
     }
 
-    private static Type[] find(Type type, Class<?> generic, Map<TypeVariable<?>, Type> bindings) {
+    private Type[] find(Type type, Class<?> generic, Map<TypeVariable<?>, Type> bindings) {
         Class<?> raw;
         Type[] args;
         if (type instanceof ParameterizedType p) {

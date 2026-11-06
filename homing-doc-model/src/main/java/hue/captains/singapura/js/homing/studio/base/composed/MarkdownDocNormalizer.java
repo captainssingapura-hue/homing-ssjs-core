@@ -109,7 +109,7 @@ public final class MarkdownDocNormalizer implements TreeNormalizer<Doc> {
 
     // ── Parse markdown into a heading tree (root = the doc) ──────────────────
 
-    private static Section parseDoc(Doc doc) {
+    private Section parseDoc(Doc doc) {
         if (doc == null) throw new IllegalArgumentException("doc");
         String title = doc.title() == null ? "" : doc.title();
         String body  = doc.contents() == null ? "" : doc.contents();
@@ -119,7 +119,7 @@ public final class MarkdownDocNormalizer implements TreeNormalizer<Doc> {
         return root;
     }
 
-    private static void parse(String body, String title, Section root) {
+    private void parse(String body, String title, Section root) {
         Deque<Section> stack = new ArrayDeque<>();   // open ancestors, deepest on top
         Deque<Integer> levels = new ArrayDeque<>();  // their markdown heading levels
         stack.push(root);
@@ -186,7 +186,7 @@ public final class MarkdownDocNormalizer implements TreeNormalizer<Doc> {
     }
 
     /** The fence's info string, lower-cased and first word only ({@code ```js title=x}). */
-    private static String fenceInfo(String trimmedLine) {
+    private String fenceInfo(String trimmedLine) {
         int i = 0;
         while (i < trimmedLine.length()
                && (trimmedLine.charAt(i) == '`' || trimmedLine.charAt(i) == '~')) i++;
@@ -197,7 +197,7 @@ public final class MarkdownDocNormalizer implements TreeNormalizer<Doc> {
     }
 
     /** ATX heading level (1–6), or 0 if the line is not a heading. */
-    private static int headingLevel(String line) {
+    private int headingLevel(String line) {
         int i = 0;
         while (i < line.length() && line.charAt(i) == ' ' && i < 3) i++;   // up to 3 lead spaces
         int hashes = 0;
@@ -208,7 +208,7 @@ public final class MarkdownDocNormalizer implements TreeNormalizer<Doc> {
     }
 
     /** The heading's display text — the #s, the gap, and any closing #s removed. */
-    private static String headingText(String line) {
+    private String headingText(String line) {
         int i = 0;
         while (i < line.length() && (line.charAt(i) == ' ' || line.charAt(i) == '#')) i++;
         return line.substring(i).replaceAll("\\s*#+\\s*$", "").strip();
@@ -251,11 +251,11 @@ public final class MarkdownDocNormalizer implements TreeNormalizer<Doc> {
      */
     public static List<String> overlongHeadings(Doc doc) {
         var out = new ArrayList<String>();
-        collectOverlong(parseDoc(doc), out);
+        INSTANCE.collectOverlong(INSTANCE.parseDoc(doc), out);
         return List.copyOf(out);
     }
 
-    private static void collectOverlong(Section s, List<String> out) {
+    private void collectOverlong(Section s, List<String> out) {
         for (Section kid : s.kids) {
             if (kid.rawSlug.length() > MAX_SLUG) out.add(kid.title);
             collectOverlong(kid, out);
@@ -275,7 +275,7 @@ public final class MarkdownDocNormalizer implements TreeNormalizer<Doc> {
      * which a positional counter would. And it is deliberately conspicuous: every
      * {@code _a3f9c1} in an anchor is a heading someone should shorten.</p>
      */
-    private static String fit(String slug) {
+    private String fit(String slug) {
         if (slug.isEmpty()) return "section";
         if (slug.length() <= MAX_SLUG) return slug;
         String head = slug.substring(0, KEEP).replaceAll("-+$", "");
@@ -288,7 +288,7 @@ public final class MarkdownDocNormalizer implements TreeNormalizer<Doc> {
      * that people paste: it should not collide by accident, and it should be the
      * same on every machine that ever renders this doc.
      */
-    private static String digest(String s) {
+    private String digest(String s) {
         try {
             byte[] h = java.security.MessageDigest.getInstance("SHA-256")
                     .digest(s.getBytes(java.nio.charset.StandardCharsets.UTF_8));
@@ -313,7 +313,7 @@ public final class MarkdownDocNormalizer implements TreeNormalizer<Doc> {
 
     // ── Builder tree → NormalizedNode + keyed providers ──────────────────────
 
-    private static NormalizedNode toNode(UUID doc, Section s, TreeLevel level, List<Integer> path,
+    private NormalizedNode toNode(UUID doc, Section s, TreeLevel level, List<Integer> path,
                                          Map<List<Integer>, ContentProvider> providers) {
         Map<DimensionKey, DimensionValue> dims = new LinkedHashMap<>();
         dims.put(DisplayLabel.INSTANCE, new NameValue(s.title));
@@ -342,7 +342,7 @@ public final class MarkdownDocNormalizer implements TreeNormalizer<Doc> {
      * walking, and the provider key is that chain — {@code ""} at the root, since
      * the root's own name is not part of its descendants' addresses.
      */
-    private static NormalizedNode toNodeV2(UUID doc, Section s, TreeLevel level,
+    private NormalizedNode toNodeV2(UUID doc, Section s, TreeLevel level,
                                            NamePath path, String key,
                                            Map<String, ContentProvider> providers) {
         Map<DimensionKey, DimensionValue> dims = new LinkedHashMap<>();
@@ -405,7 +405,7 @@ public final class MarkdownDocNormalizer implements TreeNormalizer<Doc> {
          * a second truncation of wording that {@link #fit} already settled.
          */
         String uniqueChildSlug(String headingText) {
-            String base = fit(slugify(headingText));
+            String base = INSTANCE.fit(slugify(headingText));
             String candidate = base;
             int n = 2;
             while (!childSlugs.add(candidate)) { candidate = base + "-" + n; n++; }

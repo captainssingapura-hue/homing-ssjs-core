@@ -95,7 +95,7 @@ record RenderColor() implements StatelessFunctionalObject {
     }
 
     /** Refused when the colour tree has the colour not. */
-    private static void in(ColorTree colours, SemanticColor<?> color) {
+    private void in(ColorTree colours, SemanticColor<?> color) {
         ColorNode<?, ?, ?> node = switch (color) {
             case Palettable<?, ?> p -> p;
             case Fixed<?, ?> f -> f;
@@ -106,7 +106,7 @@ record RenderColor() implements StatelessFunctionalObject {
     }
 
     /** CSS's currentColor at a share, the rest clear. */
-    private static String current(CurrentColor<?, ?> k) {
+    private String current(CurrentColor<?, ?> k) {
         return k.share() == 1 ? "currentColor" : "color-mix(in oklab, currentColor " + percent(k.share()) + ", transparent)";
     }
 
@@ -143,18 +143,18 @@ record RenderColor() implements StatelessFunctionalObject {
     }
 
     /** A ground and nothing drawn on it: a ramp's stops and a pattern's marks clear. */
-    private static String ground(String colour) {
+    private String ground(String colour) {
         return String.join("\n", "background-color: " + colour + ";", "--background-ramp-from: " + CLEAR + ";",
                 "--background-ramp-via: " + CLEAR + ";", "--background-ramp-to: " + CLEAR + ";", "--background-mark: " + CLEAR + ";");
     }
 
-    private static String shadow(String cast, String lit, String glow) {
+    private String shadow(String cast, String lit, String glow) {
         return String.join("\n", "--box-shadow-cast: " + cast + ";", "--box-shadow-lit: " + lit + ";", "--box-shadow-glow: " + glow + ";");
     }
 
-    private static String percent(double share) {
+    private String percent(double share) {
         return BigDecimal.valueOf(share * 100).setScale(2, RoundingMode.HALF_EVEN).stripTrailingZeros().toPlainString() + "%";
     }
 
-    private static String plain(double d) { return BigDecimal.valueOf(d).stripTrailingZeros().toPlainString(); }
+    private String plain(double d) { return BigDecimal.valueOf(d).stripTrailingZeros().toPlainString(); }
 }

@@ -96,16 +96,16 @@ public record FlattenLocalStyle() implements StatelessFunctionalObject {
     }
 
     /** A body where its target draws: on the element, or nested on the pseudo-element the target paints on. */
-    private static String drawnOn(Target t, String body) {
+    private String drawnOn(Target t, String body) {
         return t.pseudo() == null ? body : "&" + t.pseudo() + " {\n" + indent(body) + "\n}";
     }
 
     /** A body as written, each line its own, without the indent it was written at. */
-    private static String normal(String body) {
+    private String normal(String body) {
         return String.join("\n", body.strip().lines().map(String::strip).filter(l -> !l.isEmpty()).toList());
     }
 
-    private static String indent(String text) {
+    private String indent(String text) {
         return String.join("\n", text.lines().map(l -> "    " + l).toList());
     }
 }

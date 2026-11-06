@@ -157,7 +157,7 @@ public final class RigidNodeNormalizer implements StatelessFunctionalObject {
     }
 
     /** The two per-node dimensions: the human heading, then the machine identity. */
-    private static Map<DimensionKey, DimensionValue> labelDims(RigidNode<?> node) {
+    private Map<DimensionKey, DimensionValue> labelDims(RigidNode<?> node) {
         var dims = new LinkedHashMap<DimensionKey, DimensionValue>();
         dims.put(DisplayLabel.INSTANCE, new NameValue(node.title().text()));
         dims.put(NodeKey.INSTANCE, new NameValue(node.name().value()));

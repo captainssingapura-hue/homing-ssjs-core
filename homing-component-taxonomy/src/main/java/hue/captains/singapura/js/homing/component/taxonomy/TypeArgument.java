@@ -30,7 +30,7 @@ record TypeArgument() implements StatelessFunctionalObject {
         }
     }
 
-    private static Class<?> argument(Class<?> type, Class<?> marker) {
+    private Class<?> argument(Class<?> type, Class<?> marker) {
         for (Type t : type.getGenericInterfaces()) {
             Class<?> found = argument(t, marker);
             if (found != null) return found;
@@ -39,7 +39,7 @@ record TypeArgument() implements StatelessFunctionalObject {
         return sup == null ? null : argument(sup, marker);
     }
 
-    private static Class<?> argument(Type t, Class<?> marker) {
+    private Class<?> argument(Type t, Class<?> marker) {
         if (t instanceof ParameterizedType p && p.getRawType() == marker)
             return p.getActualTypeArguments()[0] instanceof Class<?> c ? c : null;
         Class<?> raw = t instanceof ParameterizedType p ? (Class<?>) p.getRawType() : t instanceof Class<?> c ? c : null;

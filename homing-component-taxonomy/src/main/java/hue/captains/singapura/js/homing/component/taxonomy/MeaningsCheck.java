@@ -31,7 +31,7 @@ public record MeaningsCheck() implements StatelessFunctionalObject {
         var said = new LinkedHashMap<String, List<Object>>();
         for (Object node : nodes(taxonomy)) {
             Class<?> top = Meanings.outermost(node.getClass());
-            files.computeIfAbsent(top, MeaningsCheck::own).add(Meanings.heading(node.getClass()));
+            files.computeIfAbsent(top, this::own).add(Meanings.heading(node.getClass()));
             var meaning = Meanings.INSTANCE.of(node);
             if (meaning.isEmpty()) {
                 out.add(new TaxonomyProblem(Rule.NO_MEANING, Names.qualified(node) + " means nothing: no section '## "
@@ -60,7 +60,7 @@ public record MeaningsCheck() implements StatelessFunctionalObject {
     }
 
     /** Every node a taxonomy holds that must mean something: each tree's root when anything of the tree is held, its branches, its leaves. */
-    private static List<Object> nodes(Taxonomy t) {
+    private List<Object> nodes(Taxonomy t) {
         var out = new ArrayList<Object>();
         if (!t.components().isEmpty()) out.add(Root.INSTANCE);
         out.addAll(t.branches());
@@ -73,7 +73,7 @@ public record MeaningsCheck() implements StatelessFunctionalObject {
     }
 
     /** The headings a file has whatever is held: the class's own name, when the class is itself a node. */
-    private static Set<String> own(Class<?> top) {
+    private Set<String> own(Class<?> top) {
         var out = new HashSet<String>();
         if (Taxon.class.isAssignableFrom(top) || RoleNode.class.isAssignableFrom(top) || StateNode.class.isAssignableFrom(top))
             out.add(top.getSimpleName());

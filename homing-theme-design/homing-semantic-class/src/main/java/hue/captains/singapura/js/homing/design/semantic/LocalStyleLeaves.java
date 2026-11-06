@@ -44,7 +44,7 @@ public record LocalStyleLeaves() implements StatelessFunctionalObject {
                 "const " + name(branch) + " = Object.freeze({\n" + String.join(",\n", leaves) + "\n});");
     }
 
-    private static String constant(String token) { return token.toUpperCase(Locale.ROOT).replace('-', '_'); }
+    private String constant(String token) { return token.toUpperCase(Locale.ROOT).replace('-', '_'); }
 
-    private static String quoted(String s) { return "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\""; }
+    private String quoted(String s) { return "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\""; }
 }

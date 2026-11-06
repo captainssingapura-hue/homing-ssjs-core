@@ -88,7 +88,7 @@ public record ReadCss() implements StatelessFunctionalObject {
     }
 
     /** Comments blanked, their line breaks kept, so every line is where it was. */
-    private static String withoutComments(String css, List<String> problems) {
+    private String withoutComments(String css, List<String> problems) {
         var out = new StringBuilder(css.length());
         int i = 0;
         char quote = 0;
@@ -120,7 +120,7 @@ public record ReadCss() implements StatelessFunctionalObject {
     }
 
     /** A block's items, up to its closing brace - or the end, at the top. */
-    private static List<Item> block(String text, int[] at, List<String> problems, boolean top) {
+    private List<Item> block(String text, int[] at, List<String> problems, boolean top) {
         var items = new ArrayList<Item>();
         while (true) {
             skipSpace(text, at);
@@ -143,7 +143,7 @@ public record ReadCss() implements StatelessFunctionalObject {
     }
 
     /** The item that starts where it is: a rule or an at-rule with its block, or a statement; none for an empty one at the end. */
-    private static Item item(String text, int[] at, List<String> problems) {
+    private Item item(String text, int[] at, List<String> problems) {
         int start = at[0];
         char ended = chunk(text, at);
         String said = text.substring(start, at[0]).trim();
@@ -164,7 +164,7 @@ public record ReadCss() implements StatelessFunctionalObject {
         }
     }
 
-    private static Item statement(String said, int line, List<String> problems) {
+    private Item statement(String said, int line, List<String> problems) {
         if (said.startsWith("@")) return new AtRule(said.substring(1), line, null);
         int colon = colon(said);
         if (colon < 0) {
@@ -175,7 +175,7 @@ public record ReadCss() implements StatelessFunctionalObject {
     }
 
     /** To the next {@code ;}, {@code {} or {@code }} outside brackets and strings; the one it stopped at, or 0 at the end. */
-    private static char chunk(String text, int[] at) {
+    private char chunk(String text, int[] at) {
         int depth = 0;
         char quote = 0;
         for (; at[0] < text.length(); at[0]++) {
@@ -192,7 +192,7 @@ public record ReadCss() implements StatelessFunctionalObject {
     }
 
     /** The first colon outside brackets and strings. */
-    private static int colon(String said) {
+    private int colon(String said) {
         int depth = 0;
         char quote = 0;
         for (int i = 0; i < said.length(); i++) {
@@ -208,11 +208,11 @@ public record ReadCss() implements StatelessFunctionalObject {
         return -1;
     }
 
-    private static void skipSpace(String text, int[] at) {
+    private void skipSpace(String text, int[] at) {
         while (at[0] < text.length() && Character.isWhitespace(text.charAt(at[0]))) at[0]++;
     }
 
-    private static int line(String text, int index) {
+    private int line(String text, int index) {
         int line = 1;
         for (int i = 0; i < Math.min(index, text.length()); i++) if (text.charAt(i) == '\n') line++;
         return line;

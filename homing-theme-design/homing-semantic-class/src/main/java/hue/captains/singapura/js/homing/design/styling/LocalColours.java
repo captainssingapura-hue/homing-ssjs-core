@@ -76,12 +76,12 @@ public record LocalColours() implements StatelessFunctionalObject {
         return scale.knots().stream().map(k -> ColorVariables.INSTANCE.of((SemanticColor<?>) k.color())).toList();
     }
 
-    private static String knot(ColorScale.Knot<?> knot) { return "var(" + ColorVariables.INSTANCE.of((SemanticColor<?>) knot.color()) + ")"; }
+    private String knot(ColorScale.Knot<?> knot) { return "var(" + ColorVariables.INSTANCE.of((SemanticColor<?>) knot.color()) + ")"; }
 
-    private static String percent(double share) {
+    private String percent(double share) {
         return BigDecimal.valueOf(share * 100).setScale(2, RoundingMode.HALF_EVEN).stripTrailingZeros().toPlainString() + "%";
     }
 
     /** A degree or a span, written plain - to six places, so 0.6 - 0.4 is 0.2 and not its double's tail. */
-    private static String plain(double d) { return BigDecimal.valueOf(d).setScale(6, RoundingMode.HALF_EVEN).stripTrailingZeros().toPlainString(); }
+    private String plain(double d) { return BigDecimal.valueOf(d).setScale(6, RoundingMode.HALF_EVEN).stripTrailingZeros().toPlainString(); }
 }

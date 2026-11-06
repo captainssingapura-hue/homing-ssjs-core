@@ -98,7 +98,7 @@ public record LeafClasses() implements StatelessFunctionalObject {
         return "Object.freeze({\n" + String.join(",\n", leaves) + "\n})";
     }
 
-    private static String quoted(String s) { return "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\""; }
+    private String quoted(String s) { return "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\""; }
 
     /** The listing, a line a class or a pseudo state: {@code plain-button  .styled-plain-button}, then each state indented. */
     public List<String> lines(Taxonomy taxonomy) {

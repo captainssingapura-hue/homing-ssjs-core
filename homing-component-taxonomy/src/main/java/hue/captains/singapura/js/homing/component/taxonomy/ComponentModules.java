@@ -65,5 +65,5 @@ public record ComponentModules() implements StatelessFunctionalObject {
         return out;
     }
 
-    private static String name(ComponentModule m) { return m.getClass().getSimpleName(); }
+    private String name(ComponentModule m) { return m.getClass().getSimpleName(); }
 }

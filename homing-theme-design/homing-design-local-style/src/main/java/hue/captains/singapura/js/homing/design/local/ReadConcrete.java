@@ -31,7 +31,7 @@ record ReadConcrete() implements StatelessFunctionalObject {
         return (LocalStyle<?, ?>) instance(concrete, 2, "local style", "name a local style record in the leaf's Concrete<YourLocalStyle>, not a raw Concrete");
     }
 
-    private static Object instance(Class<?> concrete, int at, String what, String how) {
+    private Object instance(Class<?> concrete, int at, String what, String how) {
         Class<?> named = argument(concrete, new HashMap<>(), at);
         if (named == null)
             throw new IllegalStateException(concrete.getName() + " names no " + what + " to ConcreteComponent as a class: " + how);
@@ -48,7 +48,7 @@ record ReadConcrete() implements StatelessFunctionalObject {
      * The class {@code ConcreteComponent}'s argument at a place resolves to, walking a type's supertypes
      * with what each one's type variables are bound to on the way; null where it is left unbound.
      */
-    private static Class<?> argument(Type type, Map<TypeVariable<?>, Type> bound, int at) {
+    private Class<?> argument(Type type, Map<TypeVariable<?>, Type> bound, int at) {
         Class<?> raw;
         Map<TypeVariable<?>, Type> here = new HashMap<>();
         if (type instanceof ParameterizedType p) {

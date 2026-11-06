@@ -92,7 +92,7 @@ public record ReadLocalStyles() implements StatelessFunctionalObject {
     }
 
     /** A local style as it lists itself: its concrete leaves in its branch's order - or null, where it cannot be read so. */
-    private static LocalStyleRead listed(Taxonomy taxonomy, LocalStyle<?, ?> ls, List<LocalStyleProblem> problems) {
+    private LocalStyleRead listed(Taxonomy taxonomy, LocalStyle<?, ?> ls, List<LocalStyleProblem> problems) {
         List<? extends ConcreteComponent<?, ?, ?>> listed = ls.concretes();
         if (listed == null || listed.isEmpty()) {
             problems.add(new LocalStyleProblem(Rule.LEAF_MISSING, ls.token() + " lists no concrete leaf: a local style draws every leaf of its branch"));
@@ -144,7 +144,7 @@ public record ReadLocalStyles() implements StatelessFunctionalObject {
     }
 
     /** A concrete leaf's drawings in a style: every target its leaf owns drawn once, nothing else, each redirect landing. */
-    private static void drawnIn(Taxonomy taxonomy, ConcreteComponent<?, ?, ?> c, List<Target> owned, InStyle style, List<LocalStyleProblem> problems) {
+    private void drawnIn(Taxonomy taxonomy, ConcreteComponent<?, ?, ?> c, List<Target> owned, InStyle style, List<LocalStyleProblem> problems) {
         if (!(c instanceof Drawn drawn)) return;   // refused above
         List<Drawing<?>> drawings;
         try {
@@ -180,7 +180,7 @@ public record ReadLocalStyles() implements StatelessFunctionalObject {
     }
 
     /** An effect takes what it needs: a property another target the leaf owns writes is refused, by name. */
-    private static void takesOwned(ConcreteComponent<?, ?, ?> c, AnimationEffect effect, List<Target> owned, InStyle style, List<LocalStyleProblem> problems) {
+    private void takesOwned(ConcreteComponent<?, ?, ?> c, AnimationEffect effect, List<Target> owned, InStyle style, List<LocalStyleProblem> problems) {
         var takes = Effects.INSTANCE.takes(effect);
         for (Target other : owned) {
             if (other instanceof Target.Animation) continue;
@@ -193,14 +193,14 @@ public record ReadLocalStyles() implements StatelessFunctionalObject {
     }
 
     /** The leaves of a local-style branch, in the taxonomy's order. */
-    private static List<VirtualComponent<?>> leaves(Taxonomy taxonomy, ComponentBranch branch) {
+    private List<VirtualComponent<?>> leaves(Taxonomy taxonomy, ComponentBranch branch) {
         var out = new ArrayList<VirtualComponent<?>>();
         for (var n : taxonomy.children(branch)) if (n instanceof VirtualComponent<?> v) out.add(v);
         return List.copyOf(out);
     }
 
     /** What a leaf owns, held to the rules: a target at least, each once, each one a sheet carries. */
-    private static List<Target> owns(LocalStyleRead read, VirtualComponent<?> leaf, List<LocalStyleProblem> problems) {
+    private List<Target> owns(LocalStyleRead read, VirtualComponent<?> leaf, List<LocalStyleProblem> problems) {
         List<Target> targets = read.owns(leaf);
         if (targets.isEmpty()) {
             problems.add(new LocalStyleProblem(Rule.OWNS_BADLY, leaf.token() + " owns no target: a virtual leaf says what its concrete leaves answer, with Owns"));

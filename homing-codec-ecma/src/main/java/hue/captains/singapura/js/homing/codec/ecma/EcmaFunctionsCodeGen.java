@@ -134,7 +134,7 @@ public record EcmaFunctionsCodeGen() implements FunctionsCodeGen, StatelessFunct
     }
 
     /** Emit a JS single-quoted string literal, escaping backslashes and quotes. */
-    private static String jsString(String s) {
+    private String jsString(String s) {
         return "'" + s.replace("\\", "\\\\").replace("'", "\\'") + "'";
     }
 }

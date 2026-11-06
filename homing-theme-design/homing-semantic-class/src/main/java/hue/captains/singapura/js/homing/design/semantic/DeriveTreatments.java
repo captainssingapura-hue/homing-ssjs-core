@@ -91,7 +91,7 @@ public record DeriveTreatments() implements StatelessFunctionalObject {
         return sorted(taxonomy, treated);
     }
 
-    private static List<Treatment> sorted(Taxonomy taxonomy, Collection<Treatment> treatments) {
+    private List<Treatment> sorted(Taxonomy taxonomy, Collection<Treatment> treatments) {
         var component = new HashMap<Component<?>, Integer>();
         for (Component<?> c : taxonomy.components()) component.put(c, component.size());
         var target = new HashMap<Target, Integer>();

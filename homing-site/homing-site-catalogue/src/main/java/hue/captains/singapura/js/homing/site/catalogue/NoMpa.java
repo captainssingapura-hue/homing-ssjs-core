@@ -24,7 +24,7 @@ final class NoMpa implements Mpa, StatelessFunctionalObject, StatelessSingleton 
 
     private NoMpa() {}
 
-    private static IllegalStateException refused() {
+    private IllegalStateException refused() {
         return new IllegalStateException("A catalogue made its pages with the site's MPA, but this tree was read without one:"
                 + " read it with new CatalogueTree(root, mpa) - or CatalogueRouter.at(mount, root, mpa)");
     }

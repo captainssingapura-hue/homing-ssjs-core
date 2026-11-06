@@ -162,7 +162,7 @@ public record DefaultJsRulePolicy() implements JsRulePolicy, StatelessFunctional
      * takes when its modules build or style DOM (a game loop, a chart kit).
      */
     public static JsRuleSet domOwnerLane(RuleSetId id, String title, JsRule... own) {
-        return new JsRuleSet(id, title, concat(INSTANCE.domOwnerDiscipline(), own));
+        return new JsRuleSet(id, title, INSTANCE.concat(INSTANCE.domOwnerDiscipline(), own));
     }
 
     /**
@@ -171,10 +171,10 @@ public record DefaultJsRulePolicy() implements JsRulePolicy, StatelessFunctional
      * takes when its modules must never touch the DOM (a risk model, a codec).
      */
     public static JsRuleSet headlessLane(RuleSetId id, String title, JsRule... own) {
-        return new JsRuleSet(id, title, concat(INSTANCE.noDom(), own));
+        return new JsRuleSet(id, title, INSTANCE.concat(INSTANCE.noDom(), own));
     }
 
-    private static List<JsRule> concat(List<JsRule> base, JsRule... extra) {
+    private List<JsRule> concat(List<JsRule> base, JsRule... extra) {
         var out = new java.util.ArrayList<JsRule>(base);
         java.util.Collections.addAll(out, extra);
         return List.copyOf(out);

@@ -119,7 +119,7 @@ public record AnswerBody() implements StatelessFunctionalObject {
     }
 
     /** The properties a block declares; its nested blocks checked as it goes. */
-    private static Set<String> block(Rights target, String text, int depth) {
+    private Set<String> block(Rights target, String text, int depth) {
         var declared = new HashSet<String>();
         var buf = new StringBuilder();
         int i = 0;
@@ -143,7 +143,7 @@ public record AnswerBody() implements StatelessFunctionalObject {
         return declared;
     }
 
-    private static void nested(Rights target, String selector, String inner, int depth) {
+    private void nested(Rights target, String selector, String inner, int depth) {
         if (depth > 3) throw new IllegalArgumentException("nested too deep");
         if (selector.startsWith("@media") || selector.startsWith("@supports")) { block(target, inner, depth + 1); return; }
         for (String part : selector.split(",")) {
@@ -154,7 +154,7 @@ public record AnswerBody() implements StatelessFunctionalObject {
         block(target, inner, depth + 1);
     }
 
-    private static void declare(Rights target, String text, Set<String> declared) {
+    private void declare(Rights target, String text, Set<String> declared) {
         String d = text.strip();
         if (d.isEmpty()) return;
         int colon = d.indexOf(':');
@@ -172,7 +172,7 @@ public record AnswerBody() implements StatelessFunctionalObject {
     }
 
     /** The variables a value reads: the element's degrees, and the colours of the leaf that colours this one. */
-    private static void reads(Rights target, String value) {
+    private void reads(Rights target, String value) {
         Matcher m = VAR.matcher(value);
         while (m.find()) {
             String name = m.group(1);
@@ -185,7 +185,7 @@ public record AnswerBody() implements StatelessFunctionalObject {
     }
 
     /** A value names no colour: colours are painted, in semantic colours, and read here only through the registered colours. */
-    private static void namesNoColour(Rights target, String value) {
+    private void namesNoColour(Rights target, String value) {
         String bare = value.replaceAll("\"[^\"]*\"|'[^']*'", " ");
         String found = null;
         Matcher hex = HEX.matcher(bare);
@@ -202,7 +202,7 @@ public record AnswerBody() implements StatelessFunctionalObject {
                        : "; it is drawn in " + String.join(", ", target.colouredBy().stream().map(Target::token).toList()) + "'s"));
     }
 
-    private static int closing(String text, int open) {
+    private int closing(String text, int open) {
         char q = text.charAt(open);
         for (int i = open + 1; i < text.length(); i++) {
             if (text.charAt(i) == '\\') { i++; continue; }
@@ -211,7 +211,7 @@ public record AnswerBody() implements StatelessFunctionalObject {
         throw new IllegalArgumentException("a string is never closed");
     }
 
-    private static int matching(String text, int open, char o, char c) {
+    private int matching(String text, int open, char o, char c) {
         int depth = 0;
         for (int i = open; i < text.length(); i++) {
             char ch = text.charAt(i);
@@ -222,5 +222,5 @@ public record AnswerBody() implements StatelessFunctionalObject {
         throw new IllegalArgumentException("a '" + o + "' is never closed");
     }
 
-    private static String stripComments(String text) { return text.replaceAll("(?s)/\\*.*?\\*/", " "); }
+    private String stripComments(String text) { return text.replaceAll("(?s)/\\*.*?\\*/", " "); }
 }

@@ -147,7 +147,7 @@ public record JavaFunctionsCodeGen() implements FunctionsCodeGen, StatelessFunct
 
     private enum Kind { STRING, INT, LONG, BOOLEAN, DOUBLE, ENUM, RECORD, LIST_STRING, LIST_ENUM, LIST_RECORD }
 
-    private static Kind kind(RecordComponent c) {
+    private Kind kind(RecordComponent c) {
         Class<?> raw = c.getType();
         if (raw == String.class)  return Kind.STRING;
         if (raw == int.class     || raw == Integer.class) return Kind.INT;
@@ -166,14 +166,14 @@ public record JavaFunctionsCodeGen() implements FunctionsCodeGen, StatelessFunct
         throw new IllegalArgumentException("Unsupported record component " + raw + " on " + c);
     }
 
-    private static Class<?> listElem(RecordComponent c) {
+    private Class<?> listElem(RecordComponent c) {
         Type g = c.getGenericType();
         if (g instanceof ParameterizedType p && p.getActualTypeArguments()[0] instanceof Class<?> k) return k;
         throw new IllegalArgumentException("List component must have a concrete element type: " + c);
     }
 
     /** The simple-name codec class for a nested record type (same generated package). */
-    private static String codecOf(Class<?> recordType) {
+    private String codecOf(Class<?> recordType) {
         return recordType.getSimpleName() + "Codec";
     }
 }

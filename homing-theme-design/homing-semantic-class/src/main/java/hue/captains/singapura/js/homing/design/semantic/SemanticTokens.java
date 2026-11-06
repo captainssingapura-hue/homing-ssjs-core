@@ -125,14 +125,14 @@ public record SemanticTokens() implements StatelessFunctionalObject {
     /** Of those, the ones a sheet carries: every CSS leaf. */
     public List<Target> cssLeaves() { return leaves().stream().filter(t -> t.carrier() == Carrier.CSS).toList(); }
 
-    private static Taxon componentOf(Taxonomy taxonomy, String token) {
+    private Taxon componentOf(Taxonomy taxonomy, String token) {
         if (Root.INSTANCE.token().equals(token)) return Root.INSTANCE;
         for (ComponentNode n : taxonomy.nodes())
             if (n instanceof Taxon t && t.token().equals(token)) return t;
         throw new IllegalArgumentException("'" + token + "' is no component or branch of the taxonomy");
     }
 
-    private static RoleNode roleOf(Taxonomy taxonomy, String token) {
+    private RoleNode roleOf(Taxonomy taxonomy, String token) {
         for (RoleNode n : taxonomy.roleBranches()) if (n.name().value().equals(token)) return n;
         for (RoleNode n : taxonomy.roles()) if (n.name().value().equals(token)) return n;
         throw new IllegalArgumentException("'" + token + "' is no role or branch of the role catalogue");
