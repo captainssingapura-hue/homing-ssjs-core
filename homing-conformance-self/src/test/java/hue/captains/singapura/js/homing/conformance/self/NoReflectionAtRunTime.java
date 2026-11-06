@@ -97,7 +97,7 @@ record NoReflectionAtRunTime() implements StatelessFunctionalObject {
                     "a command line, run by hand: resolves the class it is given"),
             new Classified(SEMANTIC_CLASS, "CheckScheme.java", "instance-field", Verdict.ALLOWED,
                     "a scheme jar's own test calls it, and nothing at run time: it holds a scheme's INSTANCE to its type"),
-            new Classified(SEMANTIC_CLASS, "CheckDeclaration.java", "class-by-name", Verdict.ALLOWED,
+            new Classified(SEMANTIC_CLASS, "CheckLeftOut.java", "class-by-name", Verdict.ALLOWED,
                     "the style jar's own check, at build (check, then leftOut): the classes of the jar's own entries"),
             new Classified("homing-theme-design/homing-design-core", "Trees.java", "instance-field", Verdict.REPORTED,
                     "targetInstance(): each leaf of the sealed tree of targets by its INSTANCE, through Target.leaves() "
