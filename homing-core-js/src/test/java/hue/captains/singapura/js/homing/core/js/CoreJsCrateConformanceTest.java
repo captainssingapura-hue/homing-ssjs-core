@@ -18,13 +18,13 @@ class CoreJsCrateConformanceTest {
 
     @Test
     void everyServedModuleIsCrated() {
-        assertEquals(List.of(), OrphanCheck.check(CoreJsCrate.INSTANCE),
+        assertEquals(List.of(), OrphanCheck.INSTANCE.check(CoreJsCrate.INSTANCE),
                 "every served JS module in this Maven module must be declared in its crate");
     }
 
     @Test
     void importsRespectCrateBoundaries() {
-        assertEquals(List.of(), CrateDependencyRule.check(CoreJsCrate.INSTANCE),
+        assertEquals(List.of(), CrateDependencyRule.INSTANCE.check(CoreJsCrate.INSTANCE),
                 "every JS import must resolve to the importer's own crate or one it directly requires");
     }
 }

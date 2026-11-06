@@ -52,7 +52,7 @@ public record ExportsAreClassesRule() implements JsRule {
     @Override
     public List<Finding> check(ServedModule module) {
         List<String> raw = module.lines();
-        List<String> code = JsText.stripComments(raw);
+        List<String> code = JsText.INSTANCE.stripComments(raw);
         var findings = new ArrayList<Finding>();
         for (int i = 0; i < code.size(); i++) {
             Matcher m = EXPORT_LINE.matcher(code.get(i));
@@ -73,14 +73,14 @@ public record ExportsAreClassesRule() implements JsRule {
     }
 
     /** The line that declares the name at the top level, or -1. */
-    static int declarationOf(List<String> code, String name) {
+    int declarationOf(List<String> code, String name) {
         Pattern p = Pattern.compile("^(?:async\\s+)?(?:function\\s*\\*?\\s*|class\\s+|(?:var|let|const)\\s+)" + Pattern.quote(name) + "\\b");
         for (int i = 0; i < code.size(); i++) if (p.matcher(code.get(i)).find()) return i;
         return -1;
     }
 
     /** A function declaration, a function expression, or an arrow bound to the name. A class, or any other value, is not. */
-    static boolean isFunction(String line, String name) {
+    boolean isFunction(String line, String name) {
         String q = Pattern.quote(name);
         if (Pattern.compile("^(?:async\\s+)?function\\s*\\*?\\s*" + q + "\\b").matcher(line).find()) return true;
         Matcher m = Pattern.compile("^(?:var|let|const)\\s+" + q + "\\s*=\\s*(.*)$").matcher(line);

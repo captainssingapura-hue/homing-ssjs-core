@@ -45,7 +45,7 @@ public class RootRedirectGetAction
      * so this is not a seventh spelling of the flat address.</p>
      */
     public RootRedirectGetAction(String rootSimpleName) {
-        this.targetUrl = AppUrl.flat(rootSimpleName, java.util.Map.of());
+        this.targetUrl = AppUrl.INSTANCE.flat(rootSimpleName, java.util.Map.of());
     }
 
     /** Build a redirect to an arbitrary URL. */

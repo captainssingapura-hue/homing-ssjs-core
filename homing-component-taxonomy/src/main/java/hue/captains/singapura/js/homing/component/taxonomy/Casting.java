@@ -53,7 +53,7 @@ public record Casting(Taxon component, RoleNode role) implements Scalar {
      * {@link RoleBranch#functional() functional}.
      */
     public boolean functional() {
-        for (RoleNode n = role; n != null; n = Levels.parentOf(n))
+        for (RoleNode n = role; n != null; n = Levels.INSTANCE.parentOf(n))
             if (n instanceof RoleBranch b && b.functional()) return true;
         return false;
     }
@@ -76,7 +76,7 @@ public record Casting(Taxon component, RoleNode role) implements Scalar {
     /** Its role, then each branch the role is filed under, ending at the root. */
     public List<RoleNode> roleLineage() {
         var out = new ArrayList<RoleNode>();
-        for (RoleNode n = role; n != null; n = Levels.parentOf(n)) out.add(n);
+        for (RoleNode n = role; n != null; n = Levels.INSTANCE.parentOf(n)) out.add(n);
         return List.copyOf(out);
     }
 

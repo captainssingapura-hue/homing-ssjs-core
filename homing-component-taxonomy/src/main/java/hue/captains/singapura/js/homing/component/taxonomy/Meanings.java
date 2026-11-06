@@ -34,29 +34,29 @@ record Meanings() implements StatelessFunctionalObject {
      * refused here too, when it is asked for.
      */
     Meaning meant(Object node) {
-        return of(node).orElseThrow(() -> new IllegalStateException(Names.qualified(node) + " means nothing: no section '## "
+        return of(node).orElseThrow(() -> new IllegalStateException(Names.INSTANCE.qualified(node) + " means nothing: no section '## "
                 + heading(node.getClass()) + "' in " + path(outermost(node.getClass()))));
     }
 
     // ── where ───────────────────────────────────────────────────────────────
 
     /** The class a node is declared in, outermost: its file. */
-    static Class<?> outermost(Class<?> c) {
+    Class<?> outermost(Class<?> c) {
         Class<?> top = c;
         while (top.getEnclosingClass() != null) top = top.getEnclosingClass();
         return top;
     }
 
     /** {@code meanings/com/example/House.md}. */
-    static String path(Class<?> top) { return "meanings/" + top.getName().replace('.', '/') + ".md"; }
+    String path(Class<?> top) { return "meanings/" + top.getName().replace('.', '/') + ".md"; }
 
     /** The node's name within its file: {@code Card} for {@code House.Card}, {@code Here.Badge} two deep, its own name for the class itself. */
-    static String heading(Class<?> c) {
+    String heading(Class<?> c) {
         Class<?> top = outermost(c);
         return c == top ? c.getSimpleName() : c.getName().substring(top.getName().length() + 1).replace('$', '.');
     }
 
-    static Optional<String> read(Class<?> top) {
+    Optional<String> read(Class<?> top) {
         try (InputStream in = top.getClassLoader().getResourceAsStream(path(top))) {
             return in == null ? Optional.empty() : Optional.of(new String(in.readAllBytes(), StandardCharsets.UTF_8));
         } catch (IOException e) {
@@ -74,7 +74,7 @@ record Meanings() implements StatelessFunctionalObject {
      * are never headings - and what is astray: a heading twice, and anything before the first
      * section but a {@code # } title.
      */
-    static Read sections(String text) {
+    Read sections(String text) {
         var sections = new LinkedHashMap<String, String>();
         var astray = new ArrayList<String>();
         String at = null;
@@ -98,5 +98,5 @@ record Meanings() implements StatelessFunctionalObject {
     }
 
     /** A meaning's words alone, so two that say the same are seen to. */
-    static String normalized(String markdown) { return markdown.strip().replaceAll("\\s+", " "); }
+    String normalized(String markdown) { return markdown.strip().replaceAll("\\s+", " "); }
 }

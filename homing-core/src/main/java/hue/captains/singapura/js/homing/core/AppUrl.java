@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.core;
 
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
+
 /**
  * RFC 0051 (D8) — the one place a flat {@code /app?app=…&…} address is minted.
  *
@@ -19,23 +21,23 @@ package hue.captains.singapura.js.homing.core;
  *
  * @since RFC 0051 Phase 3
  */
-public final class AppUrl {
+public record AppUrl() implements StatelessFunctionalObject {
 
-    private AppUrl() {}
+    public static final AppUrl INSTANCE = new AppUrl();
 
     /**
      * The flat address for an app name plus already-encoded args — the form
      * {@link AppAddress#flat()} uses. Kept package-visible in spirit: prefer
      * the codec-taking overloads, which cannot emit args the app will not read.
      */
-    public static String flat(String appName, java.util.Map<String, java.util.List<String>> args) {
+    public String flat(String appName, java.util.Map<String, java.util.List<String>> args) {
         String query = QueryString.INSTANCE.encode(args);
         String head = "/app?app=" + appName;
         return query.isEmpty() ? head : head + "&" + query;
     }
 
     /** The flat address for {@code app} carrying {@code params}. */
-    public static <P extends AppModule._Param> String flat(AppModule<P, ?> app, P params) {
+    public <P extends AppModule._Param> String flat(AppModule<P, ?> app, P params) {
         return flat(app.simpleName(), app.paramCodec(), params);
     }
 
@@ -44,7 +46,7 @@ public final class AppUrl {
      * {@code codec}. Use this form where the AppModule instance would drag an
      * import cycle in — a Doc kind naming its viewer, for instance.
      */
-    public static <P extends AppModule._Param> String flat(
+    public <P extends AppModule._Param> String flat(
             String appName, ParamCodec<P> codec, P params) {
 
         String query = codec.toQueryString(params);

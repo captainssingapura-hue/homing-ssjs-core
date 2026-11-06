@@ -79,13 +79,13 @@ record ResolveDrawing() implements StatelessFunctionalObject {
     }
 
     /** {@code ClassicCursorBorder (minesweeper-classic)}. */
-    static String name(ConcreteComponent<?, ?, ?> c) {
+    String name(ConcreteComponent<?, ?, ?> c) {
         String localStyle;
         try { localStyle = c.localStyle().token(); } catch (RuntimeException e) { localStyle = "?"; }
         return c.getClass().getSimpleName() + " (" + localStyle + ")";
     }
 
     private String names(List<ConcreteComponent<?, ?, ?>> path) {
-        return String.join(" -> ", path.stream().map(ResolveDrawing::name).toList());
+        return String.join(" -> ", path.stream().map(this::name).toList());
     }
 }

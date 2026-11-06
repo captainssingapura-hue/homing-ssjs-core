@@ -91,7 +91,7 @@ public record CastingCss() implements StatelessFunctionalObject {
     }
 
     /** Where a class was loaded from - its jar or its classes' directory - as the URL text its resources start with. */
-    static String home(Class<?> c) {
+    String home(Class<?> c) {
         CodeSource source = c.getProtectionDomain() == null ? null : c.getProtectionDomain().getCodeSource();
         if (source == null || source.getLocation() == null) return null;
         String at = source.getLocation().toString();
@@ -228,5 +228,5 @@ public record CastingCss() implements StatelessFunctionalObject {
     }
 
     /** Whether a word is one a mark may carry. */
-    static boolean word(String w) { return NAME.matcher(w).matches(); }
+    boolean word(String w) { return NAME.matcher(w).matches(); }
 }

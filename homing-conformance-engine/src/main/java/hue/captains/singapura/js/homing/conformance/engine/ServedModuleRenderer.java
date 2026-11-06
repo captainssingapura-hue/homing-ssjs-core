@@ -38,7 +38,7 @@ public final class ServedModuleRenderer {
 
     /** Render + structurally classify — the standalone path (no crate context). */
     public ServedModule render(EsModule<?> module) {
-        return render(module, ModuleClassifier.classify(module));
+        return render(module, ModuleClassifier.INSTANCE.classify(module));
     }
 
     /** Render with an already-decided type — the crate path, where the entry's declared role wins. */

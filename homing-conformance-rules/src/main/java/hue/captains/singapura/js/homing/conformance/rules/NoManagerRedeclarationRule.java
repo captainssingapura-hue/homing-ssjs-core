@@ -36,7 +36,7 @@ public record NoManagerRedeclarationRule() implements JsRule {
     @Override
     public List<Finding> check(ServedModule module) {
         List<String> raw = module.lines();
-        List<String> stripped = JsText.stripComments(raw);
+        List<String> stripped = JsText.INSTANCE.stripComments(raw);
 
         Set<String> binds = new LinkedHashSet<>();
         Matcher alias = ALIAS.matcher(String.join("\n", stripped));

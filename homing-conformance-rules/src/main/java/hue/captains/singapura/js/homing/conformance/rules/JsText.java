@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.conformance.rules;
 
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,12 +13,12 @@ import java.util.List;
  * with full fidelity — if a real code line trips a rule because of one, that
  * module is allowlisted with a justification.
  */
-public final class JsText {
+public record JsText() implements StatelessFunctionalObject {
 
-    private JsText() {}
+    public static final JsText INSTANCE = new JsText();
 
     /** The lines with their line and block comments blanked to spaces, so every position stays where it was. */
-    public static List<String> stripComments(List<String> lines) {
+    public List<String> stripComments(List<String> lines) {
         var out = new ArrayList<String>(lines.size());
         boolean inBlock = false;
         for (String raw : lines) {

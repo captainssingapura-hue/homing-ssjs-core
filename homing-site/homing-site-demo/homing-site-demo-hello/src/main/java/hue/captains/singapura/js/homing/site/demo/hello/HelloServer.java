@@ -20,7 +20,7 @@ public final class HelloServer {
 
     /** Serves the site on its port; exits with status 1 when it cannot start. */
     public static void main(String[] args) {
-        SiteHost.start(HelloSite.INSTANCE, PORT)
+        SiteHost.INSTANCE.start(HelloSite.INSTANCE, PORT)
                 .onFailure(err -> System.exit(1));
     }
 }

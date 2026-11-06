@@ -27,7 +27,7 @@ public record SemanticClass<T extends Target, C extends ComponentNode>(T target,
     public SemanticClass {
         Objects.requireNonNull(target, "SemanticClass.target");
         Objects.requireNonNull(component, "SemanticClass.component");
-        Trees.requireTargetLeaf(target.getClass());
+        Trees.INSTANCE.requireTargetLeaf(target.getClass());
     }
 
     /** The node's token and the target's: {@code confirmation-confirm-color-surface}. */

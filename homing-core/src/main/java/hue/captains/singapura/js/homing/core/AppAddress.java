@@ -40,6 +40,6 @@ public record AppAddress(String app, Map<String, List<String>> args) {
 
     /** The flat {@code /app?app=…&…} rendering. */
     public String flat() {
-        return AppUrl.flat(app, args);
+        return AppUrl.INSTANCE.flat(app, args);
     }
 }

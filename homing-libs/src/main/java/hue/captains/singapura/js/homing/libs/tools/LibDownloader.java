@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.libs.tools;
 import hue.captains.singapura.js.homing.core.BundledExternalModule;
 import hue.captains.singapura.js.homing.libs.HomingLibsRegistry;
 
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -46,7 +47,9 @@ import java.util.List;
  * into the Java declaration. This is the deliberate bootstrap workflow when adding
  * a new library — exactly once per library.</p>
  */
-public final class LibDownloader {
+public record LibDownloader() implements StatelessFunctionalObject {
+
+    public static final LibDownloader INSTANCE = new LibDownloader();
 
     private static final Duration TIMEOUT = Duration.ofSeconds(60);
     private static final String SHA_TODO_SENTINEL = "TODO";
@@ -83,7 +86,7 @@ public final class LibDownloader {
             // Fast path: target already exists and matches pinned hash → skip
             if (Files.exists(target) && pinnedSha != null && !pinnedSha.isBlank()
                     && !SHA_TODO_SENTINEL.equals(pinnedSha)) {
-                String have = sha512Hex(target);
+                String have = INSTANCE.sha512Hex(target);
                 if (have.equalsIgnoreCase(pinnedSha)) {
                     System.out.printf("[homing-libs] cached on classpath: %s%n", resourcePath);
                     continue;
@@ -95,16 +98,16 @@ public final class LibDownloader {
                     ? cacheDir.resolve(pinnedSha + ".bin") : null;
 
             byte[] bytes;
-            if (cached != null && Files.exists(cached) && sha512Hex(cached).equalsIgnoreCase(pinnedSha)) {
+            if (cached != null && Files.exists(cached) && INSTANCE.sha512Hex(cached).equalsIgnoreCase(pinnedSha)) {
                 System.out.printf("[homing-libs] cache hit: %s (sha %s…)%n", resourcePath, pinnedSha.substring(0, 16));
                 bytes = Files.readAllBytes(cached);
             } else {
                 System.out.printf("[homing-libs] downloading: %s%n", url);
-                bytes = httpGet(http, url);
-                bytes = followEsmShReexportIfPresent(http, url, bytes);
+                bytes = INSTANCE.httpGet(http, url);
+                bytes = INSTANCE.followEsmShReexportIfPresent(http, url, bytes);
             }
 
-            String actualSha = sha512Hex(bytes);
+            String actualSha = INSTANCE.sha512Hex(bytes);
 
             // Bootstrap mode — sha is empty or sentinel
             if (pinnedSha == null || pinnedSha.isBlank() || SHA_TODO_SENTINEL.equals(pinnedSha)) {
@@ -155,7 +158,7 @@ public final class LibDownloader {
     private static final Pattern ESM_SH_REEXPORT = Pattern.compile(
             "(?s)\\A\\s*/\\* esm\\.sh[^*]*\\*/\\s*export \\* from \"([^\"]+)\";\\s*\\z");
 
-    private static byte[] followEsmShReexportIfPresent(HttpClient http, String originalUrl, byte[] bytes)
+    private byte[] followEsmShReexportIfPresent(HttpClient http, String originalUrl, byte[] bytes)
             throws IOException, InterruptedException {
         if (bytes.length > 1024) return bytes;   // bundles are big; wrappers are tiny
         String text = new String(bytes, StandardCharsets.UTF_8);
@@ -168,7 +171,7 @@ public final class LibDownloader {
         return httpGet(http, inner.toString());
     }
 
-    private static byte[] httpGet(HttpClient http, String url) throws IOException, InterruptedException {
+    private byte[] httpGet(HttpClient http, String url) throws IOException, InterruptedException {
         HttpResponse<byte[]> resp = http.send(
                 HttpRequest.newBuilder(URI.create(url)).timeout(TIMEOUT).GET().build(),
                 HttpResponse.BodyHandlers.ofByteArray());
@@ -178,13 +181,13 @@ public final class LibDownloader {
         return resp.body();
     }
 
-    private static String sha512Hex(Path file) throws IOException {
+    private String sha512Hex(Path file) throws IOException {
         try (InputStream in = Files.newInputStream(file)) {
             return sha512Hex(in.readAllBytes());
         }
     }
 
-    private static String sha512Hex(byte[] bytes) {
+    private String sha512Hex(byte[] bytes) {
         try {
             return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-512").digest(bytes));
         } catch (NoSuchAlgorithmException e) {
@@ -192,5 +195,4 @@ public final class LibDownloader {
         }
     }
 
-    private LibDownloader() {}
 }

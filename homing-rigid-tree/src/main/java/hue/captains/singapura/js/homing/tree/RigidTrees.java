@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.tree;
 
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
+
 /**
  * Graft — the one shared operation on the normalized layer (RFC 0040): a pure
  * recursive level shift. A sub-tree is normalized once as a standalone tree
@@ -15,12 +17,12 @@ package hue.captains.singapura.js.homing.tree;
  *
  * @since homing-rigid-tree (RFC 0040)
  */
-public final class RigidTrees {
+public record RigidTrees() implements StatelessFunctionalObject {
 
-    private RigidTrees() {}
+    public static final RigidTrees INSTANCE = new RigidTrees();
 
     /** Re-level a whole subtree by {@code by} steps (negative shifts shallower). */
-    public static NormalizedNode shift(NormalizedNode node, int by) {
+    public NormalizedNode shift(NormalizedNode node, int by) {
         if (by == 0) return node;
         return new NormalizedNode(
                 node.level().shifted(by),               // hard error if outside 0..18
@@ -31,7 +33,7 @@ public final class RigidTrees {
     }
 
     /** Re-level a subtree so its root sits at {@code target}. */
-    public static NormalizedNode shiftedTo(NormalizedNode node, TreeLevel target) {
+    public NormalizedNode shiftedTo(NormalizedNode node, TreeLevel target) {
         return shift(node, target.depth() - node.level().depth());
     }
 
@@ -40,7 +42,7 @@ public final class RigidTrees {
      * one level below {@code hostLevel}. Throws if the host is already at the
      * {@code L18} cap (no room for a child).
      */
-    public static NormalizedNode graftUnder(NormalizedNode subtree, TreeLevel hostLevel) {
+    public NormalizedNode graftUnder(NormalizedNode subtree, TreeLevel hostLevel) {
         TreeLevel childLevel = hostLevel.below().orElseThrow(() ->
                 new IllegalArgumentException(
                         "cannot graft under " + hostLevel.tag()

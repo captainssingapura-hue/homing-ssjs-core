@@ -15,7 +15,7 @@ final class AboutPage implements Navigable, StatelessFunctionalObject, Stateless
 
     @Override
     public HtmlPageContent html(Query query) {
-        return Shell.page("About", """
+        return Shell.INSTANCE.page("About", """
                 <h1>About</h1>
                 <p>Four types make the base. <code>Path</code> is the segments a request came
                    in on. <code>Query</code> is what followed the question mark, possibly nothing.

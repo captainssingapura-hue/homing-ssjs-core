@@ -51,13 +51,13 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
     /** The branches and components directly under a branch - the root's included - branches first, each in reading order. */
     public List<Taxon> children(ComponentBranch branch) {
         var out = new ArrayList<Taxon>();
-        for (ComponentBranch b : branches) if (branch.equals(Levels.parentOf(b))) out.add(b);
+        for (ComponentBranch b : branches) if (branch.equals(Levels.INSTANCE.parentOf(b))) out.add(b);
         for (Component<?> c : components) if (branch.equals(c.parent())) out.add(c);
         return List.copyOf(out);
     }
 
     /** The branch a node sits under, read off its level; none for the root. */
-    public ComponentBranch parent(Taxon node) { return Levels.parentOf(node); }
+    public ComponentBranch parent(Taxon node) { return Levels.INSTANCE.parentOf(node); }
 
     /** The parts a component declares, in its slots' order. */
     public List<Part<?, ?>> partsOf(Component<?> owner) {
@@ -74,7 +74,7 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
         out.add(node);
         Taxon t = node instanceof Part<?, ?> p ? played(p) : (Taxon) node;
         if (node instanceof Part<?, ?>) out.add(t);
-        for (ComponentBranch b = Levels.parentOf(t); b != null; b = Levels.parentOf(b)) out.add(b);
+        for (ComponentBranch b = Levels.INSTANCE.parentOf(t); b != null; b = Levels.INSTANCE.parentOf(b)) out.add(b);
         return List.copyOf(out);
     }
 
@@ -84,7 +84,7 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
         List<Taxon> common = null;
         for (Component<?> c : p.bases()) {
             var lineage = new ArrayList<Taxon>();
-            for (ComponentBranch b = Levels.parentOf(c); b != null; b = Levels.parentOf(b)) lineage.add(b);
+            for (ComponentBranch b = Levels.INSTANCE.parentOf(c); b != null; b = Levels.INSTANCE.parentOf(b)) lineage.add(b);
             if (common == null) common = lineage;
             else common.retainAll(lineage);
         }
@@ -101,7 +101,7 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
     public List<ExtentAxis> extents(ComponentNode node) {
         Taxon t = node instanceof Part<?, ?> p ? played(p) : (Taxon) node;
         var lineage = new ArrayList<Taxon>();
-        for (Taxon at = t; at != null; at = Levels.parentOf(at)) lineage.add(0, at);
+        for (Taxon at = t; at != null; at = Levels.INSTANCE.parentOf(at)) lineage.add(0, at);
         var out = new LinkedHashSet<ExtentAxis>();
         for (Taxon at : lineage) out.addAll(at.extents());
         return List.copyOf(out);
@@ -159,14 +159,14 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
      * style's rule on the document's root, and no module, element or class is its.
      */
     public boolean wornByTheDocument(Component<?> component) {
-        for (ComponentBranch b = Levels.parentOf(component); b != null; b = Levels.parentOf(b))
+        for (ComponentBranch b = Levels.INSTANCE.parentOf(component); b != null; b = Levels.INSTANCE.parentOf(b))
             if (b instanceof WornByTheDocument) return true;
         return false;
     }
 
     /** The head of a component's family: the one branch above it that heads one - the reader refuses two - or none. */
     public Optional<ComponentBranch> head(Component<?> component) {
-        for (ComponentBranch b = Levels.parentOf(component); b != null; b = Levels.parentOf(b))
+        for (ComponentBranch b = Levels.INSTANCE.parentOf(component); b != null; b = Levels.INSTANCE.parentOf(b))
             if (b instanceof FamilyHead) return Optional.of(b);
         return Optional.empty();
     }
@@ -198,20 +198,20 @@ public record Taxonomy(List<ComponentBranch> branches, List<Component<?>> compon
         for (Component<?> c : components) {
             var own = partsOf(c);
             if (!own.isEmpty() && own.stream().allMatch(p -> p.cardinality().least() == 0))
-                out.add(new TaxonomyFinding(Sign.ALL_OPTIONAL, Names.of(c) + ": every part is optional - a branch missing its plain leaf?"));
+                out.add(new TaxonomyFinding(Sign.ALL_OPTIONAL, Names.INSTANCE.of(c) + ": every part is optional - a branch missing its plain leaf?"));
         }
         for (Role<?> r : roles()) {
             var uses = partsNaming(r);
             if (uses.isEmpty()) {
-                out.add(new TaxonomyFinding(Sign.ROLE_UNNAMED, Names.of(r) + " is named by no component"));
+                out.add(new TaxonomyFinding(Sign.ROLE_UNNAMED, Names.INSTANCE.of(r) + " is named by no component"));
                 continue;
             }
             var bases = new LinkedHashSet<Component<?>>();
             for (Part<?, ?> p : uses) bases.addAll(p.bases());
             if (bases.size() > 1)
-                out.add(new TaxonomyFinding(Sign.ROLE_PLAYED_VARIOUSLY, Names.of(r) + " is played by "
-                        + String.join(", ", bases.stream().map(b -> Names.of(b) + " in "
-                                + String.join(" and ", uses.stream().filter(p -> p.bases().contains(b)).map(p -> Names.of(p.owner())).toList()))
+                out.add(new TaxonomyFinding(Sign.ROLE_PLAYED_VARIOUSLY, Names.INSTANCE.of(r) + " is played by "
+                        + String.join(", ", bases.stream().map(b -> Names.INSTANCE.of(b) + " in "
+                                + String.join(" and ", uses.stream().filter(p -> p.bases().contains(b)).map(p -> Names.INSTANCE.of(p.owner())).toList()))
                         .toList())));
         }
         return List.copyOf(out);

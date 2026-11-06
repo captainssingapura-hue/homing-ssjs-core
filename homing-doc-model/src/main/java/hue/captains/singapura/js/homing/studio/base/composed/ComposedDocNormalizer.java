@@ -135,7 +135,7 @@ public final class ComposedDocNormalizer implements TreeNormalizer<ComposedDoc> 
         // restarts at empty: the embedded doc owns its nodes' identities.
         NormalizedNode subRoot = build(embedded, TreeLevel.L0.INSTANCE, childPath, List.of(),
                 visiting, providers);
-        NormalizedNode grafted = RigidTrees.graftUnder(subRoot, hostLevel);
+        NormalizedNode grafted = RigidTrees.INSTANCE.graftUnder(subRoot, hostLevel);
         if (id != null) visiting.remove(id);
         return grafted;
     }

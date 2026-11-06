@@ -249,7 +249,7 @@ public final class MarkdownDocNormalizer implements TreeNormalizer<Doc> {
      * <p>Reported by heading TEXT rather than by slug, because the author has to
      * find the line and shorten it, and the slug is not what they wrote.</p>
      */
-    public static List<String> overlongHeadings(Doc doc) {
+    public List<String> overlongHeadings(Doc doc) {
         var out = new ArrayList<String>();
         INSTANCE.collectOverlong(INSTANCE.parseDoc(doc), out);
         return List.copyOf(out);
@@ -302,7 +302,7 @@ public final class MarkdownDocNormalizer implements TreeNormalizer<Doc> {
         }
     }
 
-    static String slugify(String text) {
+    String slugify(String text) {
         String s = (text == null ? "" : text).toLowerCase()
                 .replaceAll("[^a-z0-9_\\s-]", "")
                 .replaceAll("\\s+", "-")
@@ -405,7 +405,7 @@ public final class MarkdownDocNormalizer implements TreeNormalizer<Doc> {
          * a second truncation of wording that {@link #fit} already settled.
          */
         String uniqueChildSlug(String headingText) {
-            String base = INSTANCE.fit(slugify(headingText));
+            String base = INSTANCE.fit(INSTANCE.slugify(headingText));
             String candidate = base;
             int n = 2;
             while (!childSlugs.add(candidate)) { candidate = base + "-" + n; n++; }

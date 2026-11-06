@@ -49,7 +49,7 @@ public record KeysThroughThePartyRule() implements JsRule {
     public List<Finding> check(ServedModule module) {
         if (stewards().contains(module.moduleClass())) return List.of();
         List<String> raw = module.lines();
-        List<String> code = JsText.stripComments(raw);
+        List<String> code = JsText.INSTANCE.stripComments(raw);
         var findings = new ArrayList<Finding>();
         for (int i = 0; i < code.size(); i++) {
             String line = code.get(i);

@@ -23,12 +23,12 @@ public record RoleCatalogue(List<RoleBranch> branches, List<Role<?>> roles) impl
     }
 
     /** The branch a node is filed under, read off its level; none for the root. */
-    public RoleBranch parent(RoleNode node) { return Levels.parentOf(node); }
+    public RoleBranch parent(RoleNode node) { return Levels.INSTANCE.parentOf(node); }
 
     /** The branches and roles directly under a branch - the root's included - branches first. */
     public List<RoleNode> children(RoleBranch branch) {
         var out = new ArrayList<RoleNode>();
-        for (RoleBranch b : branches) if (branch.equals(Levels.parentOf(b))) out.add(b);
+        for (RoleBranch b : branches) if (branch.equals(Levels.INSTANCE.parentOf(b))) out.add(b);
         for (Role<?> r : roles) if (branch.equals(r.parent())) out.add(r);
         return List.copyOf(out);
     }

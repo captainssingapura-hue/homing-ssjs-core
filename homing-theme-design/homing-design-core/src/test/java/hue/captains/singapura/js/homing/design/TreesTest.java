@@ -14,7 +14,7 @@ class TreesTest {
 
     @Test
     void everyBranchPartitionsItsProperties() {
-        assertEquals(List.of(), Trees.propertyCollisions());
+        assertEquals(List.of(), Trees.INSTANCE.propertyCollisions());
     }
 
     @Test
@@ -57,8 +57,8 @@ class TreesTest {
 
     @Test
     void aTargetIsALeafOfTheSealedTree() {
-        assertThrows(IllegalArgumentException.class, () -> Trees.requireTargetLeaf(Target.Color.class));
-        Trees.requireTargetLeaf(Target.Color.Text.class);
-        assertEquals("on-danger", Trees.kebab("OnDanger"));
+        assertThrows(IllegalArgumentException.class, () -> Trees.INSTANCE.requireTargetLeaf(Target.Color.class));
+        Trees.INSTANCE.requireTargetLeaf(Target.Color.Text.class);
+        assertEquals("on-danger", Trees.INSTANCE.kebab("OnDanger"));
     }
 }

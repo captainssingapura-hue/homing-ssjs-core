@@ -61,7 +61,7 @@ abstract class SelfGate {
     @Test
     void everyBaselineFingerprintNamesLiveDebt() {
         var live = new ConformanceEngine().checkCrates(closure()).stream().map(Finding::fingerprint).collect(Collectors.toSet());
-        live.addAll(CssConformance.check(closure()).stream().map(Finding::fingerprint).toList());
+        live.addAll(CssConformance.INSTANCE.check(closure()).stream().map(Finding::fingerprint).toList());
         List<String> stale = grader().baseline().fingerprints().stream().filter(fp -> !live.contains(fp)).sorted().toList();
         assertEquals(List.of(), stale, () -> "stale baseline fingerprints (" + stale.size()
                 + ") - no current finding matches; remove them from " + baselineFile() + ":\n" + String.join("\n", stale));
@@ -74,7 +74,7 @@ abstract class SelfGate {
      */
     @Test
     void theCssGraphKeepsItsLaws() {
-        List<GradedFinding> graded = grader().grade(own(CssConformance.check(closure())));
+        List<GradedFinding> graded = grader().grade(own(CssConformance.INSTANCE.check(closure())));
         List<GradedFinding> errors = graded.stream().filter(GradedFinding::isError).toList();
         assertEquals(List.of(), errors, () -> "css graph errors (" + errors.size() + "):\n"
                 + errors.stream().map(SelfGate::describe).collect(Collectors.joining("\n")));

@@ -43,7 +43,7 @@ class PolicyExtensionTest {
         @Override public List<Finding> check(ServedModule m) { return List.of(); }
     }
 
-    private static final JsRuleSet GAME_RULES = DefaultJsRulePolicy.domOwnerLane(
+    private static final JsRuleSet GAME_RULES = DefaultJsRulePolicy.INSTANCE.domOwnerLane(
             new RuleSetId("game-loop"), "Game loop", FrameRateRule.INSTANCE);
 
     @Test
@@ -100,7 +100,7 @@ class PolicyExtensionTest {
         assertTrue(GAME_RULES.rules().contains(FrameRateRule.INSTANCE));
 
         // Headless lane: globals + no-DOM + the library's rule — hand-built or by factory.
-        JsRuleSet pricer = DefaultJsRulePolicy.headlessLane(new RuleSetId("pricer"), "Pricer", FrameRateRule.INSTANCE);
+        JsRuleSet pricer = DefaultJsRulePolicy.INSTANCE.headlessLane(new RuleSetId("pricer"), "Pricer", FrameRateRule.INSTANCE);
         JsRuleSet handBuilt = new JsRuleSet(new RuleSetId("pricer"), "Pricer",
                 List.of(NoCdnImportRule.INSTANCE, MaxEffectiveLinesRule.INSTANCE, NoDomAccessRule.INSTANCE));
         assertTrue(CompositeJsRulePolicy.inLane(pricer));

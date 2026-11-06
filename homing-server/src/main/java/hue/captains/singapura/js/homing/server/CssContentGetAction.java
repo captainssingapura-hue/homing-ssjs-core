@@ -140,7 +140,7 @@ public class CssContentGetAction
         for (CssClass<?> cssClass : group.cssClasses()) {
             Class<? extends Layer> layer = Layers.INSTANCE.ofImplementor(cssClass);
             List<String> bucket = byLayer.get(layer);
-            String baseKebab = CssClassName.toCssName(cssClass.getClass());
+            String baseKebab = CssClassName.INSTANCE.toCssName(cssClass.getClass());
             String selector = cssClass.selector();
             if (selector == null) {
                 selector = "." + baseKebab;

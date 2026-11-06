@@ -1,11 +1,13 @@
 package hue.captains.singapura.js.homing.design.semantic;
 
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
+
 /** A token's words, as a picker shows them: each capitalised, the hyphens kept - {@code neo-brutalism} gives {@code Neo-Brutalism}. */
-final class Labels {
+record Labels() implements StatelessFunctionalObject {
 
-    private Labels() {}
+    static final Labels INSTANCE = new Labels();
 
-    static String of(String token) {
+    String of(String token) {
         var sb = new StringBuilder(token.length());
         boolean start = true;
         for (char c : token.toCharArray()) {

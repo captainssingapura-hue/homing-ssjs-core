@@ -29,7 +29,7 @@ import java.util.List;
 public interface AnimationEffect extends Immutable {
 
     /** The effect's token, from its type: {@code marching-ants}. */
-    default String token() { return Trees.kebab(getClass().getSimpleName()); }
+    default String token() { return Trees.INSTANCE.kebab(getClass().getSimpleName()); }
 
     /** What a reader sees: {@code a dashed line whose dashes travel along it}. */
     String meaning();

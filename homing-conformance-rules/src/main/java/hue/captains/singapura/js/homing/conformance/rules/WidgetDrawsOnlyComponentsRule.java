@@ -52,7 +52,7 @@ public record WidgetDrawsOnlyComponentsRule() implements JsRule {
     public List<Finding> check(ServedModule module) {
         var findings = new ArrayList<Finding>();
         List<String> raw = module.lines();
-        List<String> stripped = JsText.stripComments(raw);
+        List<String> stripped = JsText.INSTANCE.stripComments(raw);
         List<Signal> signals = signals();
         for (int i = 0; i < stripped.size(); i++) {
             for (Signal s : signals) {

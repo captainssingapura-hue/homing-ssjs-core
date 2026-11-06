@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class SiteGetActionTest {
 
     private static final Navigable ECHO = q ->
-            new HtmlPageContent("<p>" + Html.escape(q.first("say").orElse("nothing")) + "</p>");
+            new HtmlPageContent("<p>" + Html.INSTANCE.escape(q.first("say").orElse("nothing")) + "</p>");
     private static final Navigable BROKEN = q -> { throw new IllegalStateException("boom"); };
 
     private static final Router ROUTER = path -> switch (path.toString()) {
@@ -74,7 +74,7 @@ class SiteGetActionTest {
             @Override public String name()   { return "t"; }
             @Override public Router router() { return ROUTER; }
         };
-        var registry = SiteHost.registry(site);
+        var registry = SiteHost.INSTANCE.registry(site);
         assertEquals(1, registry.getActions().size());
         assertInstanceOf(SiteGetAction.class, registry.getActions().get("/*"));
         assertEquals(Map.of(), registry.postActions());

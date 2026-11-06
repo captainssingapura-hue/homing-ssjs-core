@@ -71,7 +71,7 @@ class StyleFamiliesTest {
                 () -> new StyleFamilies(STYLING, ResourceReader.CLASSPATH, getClass().getClassLoader()).read("ink", "control")).getMessage();
         assertTrue(none.contains("no family files are on the classpath"), none);
 
-        Map<String, String> written = WriteStyleFamilies.write(classes, STYLING);
+        Map<String, String> written = WriteStyleFamilies.INSTANCE.write(classes, STYLING);
         assertEquals(1 + 3 * 2, written.size(), "the index, and each of three styles' two families");
         try (var jar = new URLClassLoader(new URL[] { classes.toUri().toURL() }, null)) {
             var families = new StyleFamilies(STYLING, ResourceReader.CLASSPATH, jar);
@@ -85,7 +85,7 @@ class StyleFamiliesTest {
             assertTrue(another.contains("made from another styling"), another);
         }
         Files.writeString(classes.resolve(StyleFamilies.ROOT + "stale.css"), "stale");
-        WriteStyleFamilies.write(classes, STYLING);
+        WriteStyleFamilies.INSTANCE.write(classes, STYLING);
         assertFalse(Files.exists(classes.resolve(StyleFamilies.ROOT + "stale.css")), "what was there before is cleared");
     }
 }

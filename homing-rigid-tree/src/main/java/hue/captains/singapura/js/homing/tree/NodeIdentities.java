@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.tree;
 
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -26,12 +27,12 @@ import java.util.Map;
  *
  * @since RFC 0053
  */
-public final class NodeIdentities {
+public record NodeIdentities() implements StatelessFunctionalObject {
 
-    private NodeIdentities() {}
+    public static final NodeIdentities INSTANCE = new NodeIdentities();
 
     /** Every vertex's identity, in pre-order — duplicates included. */
-    public static List<NodeIdentity> allIn(NormalizedNode root) {
+    public List<NodeIdentity> allIn(NormalizedNode root) {
         var out = new ArrayList<NodeIdentity>();
         collect(root, out);
         return List.copyOf(out);
@@ -41,7 +42,7 @@ public final class NodeIdentities {
      * Identities carried by more than one vertex, mapped to how many vertices
      * carry them, in first-seen order. Empty is the conforming answer.
      */
-    public static Map<NodeIdentity, Integer> duplicatesIn(NormalizedNode root) {
+    public Map<NodeIdentity, Integer> duplicatesIn(NormalizedNode root) {
         var counts = new LinkedHashMap<NodeIdentity, Integer>();
         for (NodeIdentity id : allIn(root)) {
             counts.merge(id, 1, Integer::sum);
@@ -54,11 +55,11 @@ public final class NodeIdentities {
     }
 
     /** True when every vertex in the tree carries a distinct identity. */
-    public static boolean disjoint(NormalizedNode root) {
+    public boolean disjoint(NormalizedNode root) {
         return duplicatesIn(root).isEmpty();
     }
 
-    private static void collect(NormalizedNode node, List<NodeIdentity> out) {
+    private void collect(NormalizedNode node, List<NodeIdentity> out) {
         out.add(node.identity());
         for (NormalizedNode kid : node.children()) collect(kid, out);
     }

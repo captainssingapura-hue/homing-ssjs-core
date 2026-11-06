@@ -161,7 +161,7 @@ public record DefaultJsRulePolicy() implements JsRulePolicy, StatelessFunctional
      * discipline plus the library's own rules. The shape an extension type
      * takes when its modules build or style DOM (a game loop, a chart kit).
      */
-    public static JsRuleSet domOwnerLane(RuleSetId id, String title, JsRule... own) {
+    public JsRuleSet domOwnerLane(RuleSetId id, String title, JsRule... own) {
         return new JsRuleSet(id, title, INSTANCE.concat(INSTANCE.domOwnerDiscipline(), own));
     }
 
@@ -170,7 +170,7 @@ public record DefaultJsRulePolicy() implements JsRulePolicy, StatelessFunctional
      * strict no-DOM rule, plus the library's own. The shape an extension type
      * takes when its modules must never touch the DOM (a risk model, a codec).
      */
-    public static JsRuleSet headlessLane(RuleSetId id, String title, JsRule... own) {
+    public JsRuleSet headlessLane(RuleSetId id, String title, JsRule... own) {
         return new JsRuleSet(id, title, INSTANCE.concat(INSTANCE.noDom(), own));
     }
 

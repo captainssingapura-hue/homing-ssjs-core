@@ -97,7 +97,7 @@ public record ComponentTrees() implements StatelessFunctionalObject, StatelessSi
         int components = 0;
         for (Crate crate : vehicles(topLevel)) {
             NormalizedNode standalone = normalize(crate, details);
-            kids.add(RigidTrees.graftUnder(standalone, TreeLevel.L0.INSTANCE));
+            kids.add(RigidTrees.INSTANCE.graftUnder(standalone, TreeLevel.L0.INSTANCE));
             components += countComponents(standalone);
         }
         var id = new ComponentNodeIdentity.OfRoot(rootName);
@@ -196,7 +196,7 @@ public record ComponentTrees() implements StatelessFunctionalObject, StatelessSi
             }
         }
         var composed = compose("check", topLevel).root();
-        NodeIdentities.duplicatesIn(composed).forEach((id, n) -> problems.add("identity carried by " + n + " vertices: " + id));
+        NodeIdentities.INSTANCE.duplicatesIn(composed).forEach((id, n) -> problems.add("identity carried by " + n + " vertices: " + id));
         return List.copyOf(problems);
     }
 

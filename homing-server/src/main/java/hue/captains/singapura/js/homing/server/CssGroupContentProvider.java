@@ -49,7 +49,7 @@ public record CssGroupContentProvider<C extends CssGroup<C>>(
 
         for (CssClass<C> cls : cssGroup.cssClasses()) {
             String recordName = cls.getClass().getSimpleName();
-            String cssName = CssClassName.toCssName(cls.getClass());
+            String cssName = CssClassName.INSTANCE.toCssName(cls.getClass());
             var variants = cls.variants();
             if (variants.isEmpty()) {
                 lines.add("const " + recordName + " = _css.cls(\"" + cssName + "\");");
@@ -80,7 +80,7 @@ public record CssGroupContentProvider<C extends CssGroup<C>>(
     static String subgraphJs(CssGroup<?> root) {
         StringBuilder sb = new StringBuilder("{ ");
         boolean first = true;
-        for (CssGroup<?> g : CssGroupResolver.resolve(List.of(root))) {
+        for (CssGroup<?> g : CssGroupResolver.INSTANCE.resolve(List.of(root))) {
             if (!first) sb.append(", ");
             first = false;
             sb.append('"').append(g.getClass().getCanonicalName()).append("\": { deps: [");

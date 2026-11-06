@@ -28,7 +28,7 @@ public final class ConformanceReportWriter {
         Path modulesDir = dir.resolve(ConformanceReportFiles.MODULES_DIR);
         Files.createDirectories(modulesDir);
         for (ModuleResult m : run.modules()) {
-            Files.writeString(modulesDir.resolve(ConformanceReportFiles.moduleFile(m.moduleClass())),
+            Files.writeString(modulesDir.resolve(ConformanceReportFiles.INSTANCE.moduleFile(m.moduleClass())),
                     ModuleResultCodec.INSTANCE.transformTo(m), StandardCharsets.UTF_8);
         }
     }

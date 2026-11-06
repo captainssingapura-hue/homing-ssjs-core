@@ -23,7 +23,7 @@ class StampedParamsTest {
     @Test
     void closingScriptTagCannotSurvive() {
         // </script ends the element wherever it appears, string literal or not.
-        String js = StampedParams.jsString("</script><script>alert(1)</script>");
+        String js = StampedParams.INSTANCE.jsString("</script><script>alert(1)</script>");
         assertFalse(js.contains("</script"), js);
         assertFalse(js.contains("<script"), js);
     }
@@ -31,7 +31,7 @@ class StampedParamsTest {
     @Test
     void htmlCommentOpenerCannotSurvive() {
         // <!-- opens a comment that legacy script parsing still honours.
-        String js = StampedParams.jsString("<!--");
+        String js = StampedParams.INSTANCE.jsString("<!--");
         assertFalse(js.contains("<!--"), js);
     }
 
@@ -39,7 +39,7 @@ class StampedParamsTest {
     void ecmascriptLineTerminatorsAreEscaped() {
         // U+2028/9 are line terminators in JS but not in JSON: a value with
         // one parses fine as JSON and then breaks the surrounding script.
-        String js = StampedParams.jsString("a" + LINE_SEP + "b" + PARA_SEP + "c");
+        String js = StampedParams.INSTANCE.jsString("a" + LINE_SEP + "b" + PARA_SEP + "c");
         assertFalse(js.contains(LINE_SEP), "raw U+2028 survived: " + js);
         assertFalse(js.contains(PARA_SEP), "raw U+2029 survived: " + js);
         assertTrue(js.contains("\\u2028"), js);
@@ -48,20 +48,20 @@ class StampedParamsTest {
 
     @Test
     void quotesAndBackslashesAreEscaped() {
-        assertEquals("\"a\\\\b\"", StampedParams.jsString("a\\b"));
-        assertEquals("\"a\\\"b\"", StampedParams.jsString("a\"b"));
+        assertEquals("\"a\\\\b\"", StampedParams.INSTANCE.jsString("a\\b"));
+        assertEquals("\"a\\\"b\"", StampedParams.INSTANCE.jsString("a\"b"));
     }
 
     @Test
     void controlCharactersAreEscaped() {
-        String js = StampedParams.jsString("a" + SOH + "b");
+        String js = StampedParams.INSTANCE.jsString("a" + SOH + "b");
         assertFalse(js.contains(SOH), js);
         assertTrue(js.contains("\\u0001"), js);
     }
 
     @Test
     void nullIsTheJsNullNotTheStringNull() {
-        assertEquals("null", StampedParams.jsString(null));
+        assertEquals("null", StampedParams.INSTANCE.jsString(null));
     }
 
     @Test
@@ -70,7 +70,7 @@ class StampedParamsTest {
         QueryString.INSTANCE.put(p, "id", "animals");
         QueryString.INSTANCE.put(p, "tag", "one");
         QueryString.INSTANCE.put(p, "tag", "two");
-        String js = StampedParams.jsObject(p);
+        String js = StampedParams.INSTANCE.jsObject(p);
         assertTrue(js.startsWith("Object.freeze({"), js);
         assertTrue(js.contains("\"id\":\"animals\""), js);
         // A repeated key stays repeated — the page sees what the URL carried.
@@ -79,7 +79,7 @@ class StampedParamsTest {
 
     @Test
     void emptyParamsAreStillAnObject() {
-        assertEquals("Object.freeze({})", StampedParams.jsObject(QueryString.INSTANCE.params()));
+        assertEquals("Object.freeze({})", StampedParams.INSTANCE.jsObject(QueryString.INSTANCE.params()));
     }
 
     @Test
@@ -87,7 +87,7 @@ class StampedParamsTest {
         // The end-to-end shape: whatever arrives, the stamped text contains no
         // sequence that could terminate or reopen the element.
         var p = QueryString.INSTANCE.of("path", "</script><img src=x onerror=alert(1)>");
-        String js = StampedParams.jsObject(p);
+        String js = StampedParams.INSTANCE.jsObject(p);
         assertFalse(js.contains("</script"), js);
         assertFalse(js.contains("<img"), js);
     }

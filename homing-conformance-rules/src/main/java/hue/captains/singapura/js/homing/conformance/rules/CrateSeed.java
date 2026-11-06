@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.conformance.rules;
 
 import hue.captains.singapura.js.homing.core.EsModule;
 
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -21,15 +22,15 @@ import java.util.TreeSet;
  * <p>Run it from a throwaway test/main in the target module, e.g.
  * {@code System.out.println(CrateSeed.suggest(SomeClassInThatModule.class))}.</p>
  */
-public final class CrateSeed {
+public record CrateSeed() implements StatelessFunctionalObject {
 
-    private CrateSeed() {}
+    public static final CrateSeed INSTANCE = new CrateSeed();
 
     /**
      * Paste-ready imports and {@code entries()} body for the crate of the Maven module {@code anchorInModule} is in.
      */
-    public static String suggest(Class<?> anchorInModule) {
-        Set<String> fqcns = OrphanCheck.servedModuleClassesInModuleOf(anchorInModule);
+    public String suggest(Class<?> anchorInModule) {
+        Set<String> fqcns = OrphanCheck.INSTANCE.servedModuleClassesInModuleOf(anchorInModule);
         var imports = new TreeSet<String>();
         var lines = new ArrayList<String>();
         ClassLoader loader = anchorInModule.getClassLoader();
@@ -56,7 +57,7 @@ public final class CrateSeed {
     }
 
     /** {@code Simple.INSTANCE} if a public static INSTANCE field of the module's type exists, else {@code new Simple()}. */
-    private static String referenceExpression(String fqcn, ClassLoader loader) {
+    private String referenceExpression(String fqcn, ClassLoader loader) {
         String simple = topLevelSimpleName(fqcn);
         try {
             Class<?> c = Class.forName(fqcn, false, loader);
@@ -74,12 +75,12 @@ public final class CrateSeed {
     }
 
     /** The top-level (outer) class name — nested modules are referenced via their outer's import. */
-    private static String topLevelName(String fqcn) {
+    private String topLevelName(String fqcn) {
         int dollar = fqcn.indexOf('$');
         return dollar < 0 ? fqcn : fqcn.substring(0, dollar);
     }
 
-    private static String topLevelSimpleName(String fqcn) {
+    private String topLevelSimpleName(String fqcn) {
         String top = topLevelName(fqcn);
         int dot = top.lastIndexOf('.');
         return dot < 0 ? top : top.substring(dot + 1);

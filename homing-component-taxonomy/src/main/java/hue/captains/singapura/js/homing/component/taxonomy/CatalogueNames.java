@@ -34,6 +34,6 @@ public record CatalogueNames() implements StatelessFunctionalObject {
     }
 
     private static String said(RoleNode n) {
-        return (n instanceof Role<?> ? "the role " : "the branch ") + Names.qualified(n);
+        return (n instanceof Role<?> ? "the role " : "the branch ") + Names.INSTANCE.qualified(n);
     }
 }

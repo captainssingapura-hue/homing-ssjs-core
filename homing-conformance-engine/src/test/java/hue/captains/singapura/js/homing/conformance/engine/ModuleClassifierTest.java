@@ -56,13 +56,13 @@ class ModuleClassifierTest {
 
     @Test
     void aWidget_undeclared_isAWidget() {
-        assertEquals(StandardJsModuleType.WIDGET, ModuleClassifier.classify(new CrateEntry(BoardModule.INSTANCE)));
+        assertEquals(StandardJsModuleType.WIDGET, ModuleClassifier.INSTANCE.classify(new CrateEntry(BoardModule.INSTANCE)));
     }
 
     @Test
     void aWidgetDeclaredOtherwise_keepsItsType_butIsHeldToTheWidgetRule() {
         var declared = new CrateEntry(BoardModule.INSTANCE, StandardJsModuleType.PRIMITIVE);
-        assertEquals(StandardJsModuleType.PRIMITIVE, ModuleClassifier.classify(declared), "the declaration is honoured");
+        assertEquals(StandardJsModuleType.PRIMITIVE, ModuleClassifier.INSTANCE.classify(declared), "the declaration is honoured");
         var rules = new ConformanceEngine().checkCrates(List.of(new OneEntry(declared))).stream().map(f -> f.rule().value()).toList();
         assertTrue(rules.contains("widget-draws-only-components"), "and still the widget rule: " + rules);
         var tray = new ConformanceEngine().checkCrates(List.of(new OneEntry(new CrateEntry(TrayModule.INSTANCE)))).stream().map(f -> f.rule().value()).toList();
@@ -71,8 +71,8 @@ class ModuleClassifierTest {
 
     @Test
     void aComposedComponent_isNoWidget() {
-        assertEquals(StandardJsModuleType.CONSUMER, ModuleClassifier.classify(new CrateEntry(TrayModule.INSTANCE)));
-        assertEquals(StandardJsModuleType.PRIMITIVE, ModuleClassifier.classify(new CrateEntry(TrayModule.INSTANCE, StandardJsModuleType.PRIMITIVE)));
+        assertEquals(StandardJsModuleType.CONSUMER, ModuleClassifier.INSTANCE.classify(new CrateEntry(TrayModule.INSTANCE)));
+        assertEquals(StandardJsModuleType.PRIMITIVE, ModuleClassifier.INSTANCE.classify(new CrateEntry(TrayModule.INSTANCE, StandardJsModuleType.PRIMITIVE)));
     }
 
     @Test

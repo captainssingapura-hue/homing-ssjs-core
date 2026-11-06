@@ -40,7 +40,7 @@ public record NoRawHrefRule() implements JsRule {
     public List<Finding> check(ServedModule module) {
         var findings = new ArrayList<Finding>();
         List<String> raw = module.lines();
-        List<String> stripped = JsText.stripComments(raw);
+        List<String> stripped = JsText.INSTANCE.stripComments(raw);
         List<Pattern> forbidden = forbidden();
         for (int i = 0; i < stripped.size(); i++) {
             for (Pattern p : forbidden) {

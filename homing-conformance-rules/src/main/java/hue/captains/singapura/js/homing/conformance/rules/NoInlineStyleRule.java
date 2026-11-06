@@ -52,7 +52,7 @@ public record NoInlineStyleRule() implements JsRule {
         var findings = new ArrayList<Finding>();
         // Strip comments (positions preserved) so a comment mentioning .style
         // doesn't false-positive; only real writes count.
-        List<String> lines = JsText.stripComments(module.lines());
+        List<String> lines = JsText.INSTANCE.stripComments(module.lines());
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i);
             if (STYLE_ASSIGN.matcher(line).find()

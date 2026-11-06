@@ -54,7 +54,7 @@ public record ViewDoctrineRule() implements JsRule {
     public List<Finding> check(ServedModule module) {
         var findings = new ArrayList<Finding>();
         List<String> raw = module.lines();
-        List<String> stripped = JsText.stripComments(raw);
+        List<String> stripped = JsText.INSTANCE.stripComments(raw);
         List<Pattern> htmlLiteral = htmlLiteral();
         List<Pattern> htmlWrite = htmlWrite();
         List<Pattern> lookup = lookup();

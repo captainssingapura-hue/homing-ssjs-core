@@ -40,7 +40,7 @@ public record NoPresentationAttributeRule() implements JsRule {
     @Override
     public List<Finding> check(ServedModule module) {
         var findings = new ArrayList<Finding>();
-        List<String> lines = JsText.stripComments(module.lines());
+        List<String> lines = JsText.INSTANCE.stripComments(module.lines());
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i);
             if (PRESENTATION_ATTR.matcher(line).find()) {

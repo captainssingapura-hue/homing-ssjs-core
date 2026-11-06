@@ -13,6 +13,6 @@ import java.util.List;
 public record OrderedListSegment(List<Listable> items) implements RigidSegment {
 
     public OrderedListSegment {
-        items = ListItems.homogeneous(items, "OrderedListSegment");
+        items = ListItems.INSTANCE.homogeneous(items, "OrderedListSegment");
     }
 }

@@ -106,7 +106,7 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
 
     /** A declaration held: each implementation, then the jar. */
     public Checked check(StyleDeclaration declaration, Taxonomy taxonomy, ColorTree tree) {
-        String jar = CastingCss.home(declaration.getClass());
+        String jar = CastingCss.INSTANCE.home(declaration.getClass());
         var implementations = new ArrayList<Implementation>();
         var problems = new ArrayList<String>();
         var byKey = new LinkedHashMap<String, String>();
@@ -143,7 +143,7 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
         var problems = new ArrayList<String>();
         if (!type.isRecord() || type.getRecordComponents().length > 0)
             problems.add("is no stateless record: an implementation is a functional object, a record of no components");
-        if (jar != null && !jar.equals(CastingCss.home(type)))
+        if (jar != null && !jar.equals(CastingCss.INSTANCE.home(type)))
             problems.add("is not of the declaring jar: a jar declares its own implementations alone");
         String home = packageOf(style);
         if (!type.getName().replace('.', '/').startsWith(home) || type.getName().substring(home.length()).contains("."))
@@ -313,14 +313,14 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
     }
 
     /** An implementation's key: its style, component and role, by their classes. */
-    static Optional<String> key(Class<?> type) {
+    Optional<String> key(Class<?> type) {
         List<Class<?>> args = TypeArguments.INSTANCE.of(type, CastingStyle.class);
         if (args.size() != 4 || args.contains(null)) return Optional.empty();
         return Optional.of(args.get(1).getName() + "|" + args.get(2).getName() + "|" + args.get(3).getName());
     }
 
     /** A style's package, as a path: design.styles and its token, its dashes dropped - {@code design/styles/neobrutalism/}. */
-    public static String packageOf(DesignStyle<?> style) { return ROOT + style.token().replace("-", "") + "/"; }
+    public String packageOf(DesignStyle<?> style) { return ROOT + style.token().replace("-", "") + "/"; }
 
     /** Whatever of the jar its declaration leaves out, in its styles' packages: an implementation's class, a CSS file. */
     private List<String> leftOut(Class<?> declaration, Set<Class<?>> declared, Set<String> packages) {

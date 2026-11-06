@@ -15,7 +15,7 @@ final class HomePage implements Navigable, StatelessFunctionalObject, StatelessS
 
     @Override
     public HtmlPageContent html(Query query) {
-        return Shell.page("Home", """
+        return Shell.INSTANCE.page("Home", """
                 <h1>hello</h1>
                 <p>The smallest site on <code>homing-site-base</code>: a router of three arms
                    over three pages. Each page is a <code>Navigable</code> — given the query

@@ -273,7 +273,7 @@ public class AppHtmlGetAction
         var codec = app.paramCodec();
         if (codec == hue.captains.singapura.js.homing.core.ParamCodec.None.INSTANCE) return null;
         if (params == null) return null;   // malformed on the way in; stamp nothing (D5 deferral)
-        return hue.captains.singapura.js.homing.core.StampedParams.jsObject(codec.to(params));
+        return hue.captains.singapura.js.homing.core.StampedParams.INSTANCE.jsObject(codec.to(params));
     }
 
     /**
@@ -294,9 +294,9 @@ public class AppHtmlGetAction
             if (!first) sb.append(',');
             first = false;
             sb.append("Object.freeze({text:")
-              .append(hue.captains.singapura.js.homing.core.StampedParams.jsString(c.getKey()))
+              .append(hue.captains.singapura.js.homing.core.StampedParams.INSTANCE.jsString(c.getKey()))
               .append(",href:")
-              .append(hue.captains.singapura.js.homing.core.StampedParams.jsString(c.getValue()))
+              .append(hue.captains.singapura.js.homing.core.StampedParams.INSTANCE.jsString(c.getValue()))
               .append("})");
         }
         return sb.append("])").toString();

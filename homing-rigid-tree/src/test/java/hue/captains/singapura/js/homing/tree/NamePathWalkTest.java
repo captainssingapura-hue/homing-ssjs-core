@@ -172,7 +172,7 @@ class NamePathWalkTest {
         NormalizedNode source = node(TreeLevel.L0.INSTANCE, "animals",
                 node(TreeLevel.L1.INSTANCE, "turtle"));
         NormalizedNode host = node(TreeLevel.L0.INSTANCE, "demo",
-                RigidTrees.graftUnder(source, TreeLevel.L0.INSTANCE));
+                RigidTrees.INSTANCE.graftUnder(source, TreeLevel.L0.INSTANCE));
 
         var found = assertInstanceOf(NamePathWalk.Found.class,
                 NamePathWalk.from(host, NamePath.parse("animals/turtle")));

@@ -13,13 +13,13 @@ class ServerCrateConformanceTest {
 
     @Test
     void everyServedModuleIsCrated() {
-        assertEquals(List.of(), OrphanCheck.check(ServerCrate.INSTANCE),
+        assertEquals(List.of(), OrphanCheck.INSTANCE.check(ServerCrate.INSTANCE),
                 "every served JS module in homing-server must be declared in its crate");
     }
 
     @Test
     void importsRespectCrateBoundaries() {
-        assertEquals(List.of(), CrateDependencyRule.check(ServerCrate.INSTANCE),
+        assertEquals(List.of(), CrateDependencyRule.INSTANCE.check(ServerCrate.INSTANCE),
                 "every JS import must resolve to the importer's own crate or one it directly requires");
     }
 }

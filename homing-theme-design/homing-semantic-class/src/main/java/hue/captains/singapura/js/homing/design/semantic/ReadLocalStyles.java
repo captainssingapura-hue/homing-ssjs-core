@@ -111,15 +111,15 @@ public record ReadLocalStyles() implements StatelessFunctionalObject {
                 continue;
             }
             if (names.getClass() != ls.getClass())
-                problems.add(new LocalStyleProblem(Rule.NAMES_ANOTHER, ls.token() + " lists " + ResolveDrawing.name(c) + ", a concrete leaf of "
+                problems.add(new LocalStyleProblem(Rule.NAMES_ANOTHER, ls.token() + " lists " + ResolveDrawing.INSTANCE.name(c) + ", a concrete leaf of "
                         + names.token() + ": a local style lists its own"));
             if (!(c instanceof Drawn))
-                problems.add(new LocalStyleProblem(Rule.NOT_DRAWN, ResolveDrawing.name(c) + " says nothing of how it is drawn: it implements Drawn"));
+                problems.add(new LocalStyleProblem(Rule.NOT_DRAWN, ResolveDrawing.INSTANCE.name(c) + " says nothing of how it is drawn: it implements Drawn"));
             if (branch == null) branch = leaf.parent();   // one branch for all: the types hold it
             ConcreteComponent<?, ?, ?> before = byLeaf.putIfAbsent(leaf, c);
             if (before != null)
                 problems.add(new LocalStyleProblem(Rule.LEAF_TWICE, ls.token() + " draws " + leaf.token() + " twice: "
-                        + ResolveDrawing.name(before) + " and " + ResolveDrawing.name(c)));
+                        + ResolveDrawing.INSTANCE.name(before) + " and " + ResolveDrawing.INSTANCE.name(c)));
         }
         if (branch == null) return null;   // no concrete leaf could be read: refused above
         if (!taxonomy.nodes().contains(branch)) {
@@ -150,21 +150,21 @@ public record ReadLocalStyles() implements StatelessFunctionalObject {
         try {
             drawings = drawn.drawings(style.style());
         } catch (RuntimeException e) {
-            problems.add(new LocalStyleProblem(Rule.DRAWING_REFUSED, ResolveDrawing.name(c) + " in " + style + ": " + e.getMessage()));
+            problems.add(new LocalStyleProblem(Rule.DRAWING_REFUSED, ResolveDrawing.INSTANCE.name(c) + " in " + style + ": " + e.getMessage()));
             return;
         }
         var seen = new HashSet<Target>();
         for (Drawing<?> dr : drawings) {
             if (!owned.contains(dr.target()))
-                problems.add(new LocalStyleProblem(Rule.NOT_OWNED, ResolveDrawing.name(c) + " in " + style + " draws "
+                problems.add(new LocalStyleProblem(Rule.NOT_OWNED, ResolveDrawing.INSTANCE.name(c) + " in " + style + " draws "
                         + dr.target().token() + ", which " + c.virtual().token() + " does not own"));
             else if (!seen.add(dr.target()))
-                problems.add(new LocalStyleProblem(Rule.DRAWN_TWICE, ResolveDrawing.name(c) + " in " + style + " draws "
+                problems.add(new LocalStyleProblem(Rule.DRAWN_TWICE, ResolveDrawing.INSTANCE.name(c) + " in " + style + " draws "
                         + dr.target().token() + " twice"));
         }
         for (Target t : owned) {
             if (!seen.contains(t)) {
-                problems.add(new LocalStyleProblem(Rule.UNDRAWN, ResolveDrawing.name(c) + " in " + style + " leaves "
+                problems.add(new LocalStyleProblem(Rule.UNDRAWN, ResolveDrawing.INSTANCE.name(c) + " in " + style + " leaves "
                         + t.token() + " undrawn: draw it, say none, or take another's"));
                 continue;
             }
@@ -186,7 +186,7 @@ public record ReadLocalStyles() implements StatelessFunctionalObject {
             if (other instanceof Target.Animation) continue;
             for (String p : other.properties())
                 if (takes.contains(p))
-                    problems.add(new LocalStyleProblem(Rule.EFFECT_TAKES_OWNED, ResolveDrawing.name(c) + " in " + style + " wears "
+                    problems.add(new LocalStyleProblem(Rule.EFFECT_TAKES_OWNED, ResolveDrawing.INSTANCE.name(c) + " in " + style + " wears "
                             + effect.token() + ", which takes " + p + " - and " + c.virtual().token() + " owns " + other.token()
                             + ", which writes it: what an effect takes, nothing else there may write"));
         }

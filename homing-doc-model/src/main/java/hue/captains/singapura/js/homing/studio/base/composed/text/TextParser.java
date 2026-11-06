@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.composed.text;
 
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,12 +48,12 @@ import java.util.List;
  *
  * @since RFC 0018 Phase 4
  */
-public final class TextParser {
+public record TextParser() implements StatelessFunctionalObject {
 
-    private TextParser() {}
+    public static final TextParser INSTANCE = new TextParser();
 
     /** Parse the body. Throws {@link ParseException} on any malformed input. */
-    public static List<Block> parse(String body) {
+    public List<Block> parse(String body) {
         if (body == null) throw new ParseException(1, 1, "body is null");
         // Normalize line endings; strip leading/trailing blank lines but keep blanks within.
         String norm = body.replace("\r\n", "\n").replace('\r', '\n');
@@ -93,7 +94,7 @@ public final class TextParser {
     // [i] cursor (passed as a single-element array for in/out semantics).
     // -----------------------------------------------------------------------
 
-    private static Block parsePara(String[] lines, int[] cursor) {
+    private Block parsePara(String[] lines, int[] cursor) {
         int i = cursor[0];
         var buf = new StringBuilder();
         while (i < lines.length && !lines[i].isBlank()
@@ -108,7 +109,7 @@ public final class TextParser {
         return new Block.Para(parseInlines(buf.toString(), startLineNumberOf(cursor[0], i)));
     }
 
-    private static Block parseBullets(String[] lines, int[] cursor) {
+    private Block parseBullets(String[] lines, int[] cursor) {
         int i = cursor[0];
         var items = new ArrayList<List<Inline>>();
         while (i < lines.length && lines[i].startsWith("- ")) {
@@ -120,7 +121,7 @@ public final class TextParser {
         return new Block.Bullets(items);
     }
 
-    private static Block parseNumbered(String[] lines, int[] cursor) {
+    private Block parseNumbered(String[] lines, int[] cursor) {
         int i = cursor[0];
         var items = new ArrayList<List<Inline>>();
         while (i < lines.length && matchesOrderedStart(lines[i])) {
@@ -134,7 +135,7 @@ public final class TextParser {
         return new Block.Numbered(items);
     }
 
-    private static Block parseQuote(String[] lines, int[] cursor) {
+    private Block parseQuote(String[] lines, int[] cursor) {
         int i = cursor[0];
         var buf = new StringBuilder();
         while (i < lines.length && (lines[i].startsWith("> ") || lines[i].equals(">"))) {
@@ -151,14 +152,14 @@ public final class TextParser {
     // Inline tokenizer — single-pass; bold/italic/code/ref/text.
     // -----------------------------------------------------------------------
 
-    private static List<Inline> parseInlines(String s, int lineNumber) {
+    private List<Inline> parseInlines(String s, int lineNumber) {
         return parseInlinesImpl(s, lineNumber, true /* allow bold/italic */);
     }
 
     /** Inner — when {@code allowEmph} is false, {@code *} and {@code **}
      *  are taken as literal characters (used inside a bold/italic span to
      *  forbid nesting). */
-    private static List<Inline> parseInlinesImpl(String s, int lineNumber, boolean allowEmph) {
+    private List<Inline> parseInlinesImpl(String s, int lineNumber, boolean allowEmph) {
         var out = new ArrayList<Inline>();
         var text = new StringBuilder();
         int i = 0;
@@ -255,14 +256,14 @@ public final class TextParser {
         return out;
     }
 
-    private static void flushText(List<Inline> out, StringBuilder text) {
+    private void flushText(List<Inline> out, StringBuilder text) {
         if (text.length() > 0) {
             out.add(new Inline.Text(text.toString()));
             text.setLength(0);
         }
     }
 
-    private static boolean matchesOrderedStart(String line) {
+    private boolean matchesOrderedStart(String line) {
         // Accept any-digit-count followed by ". ".
         int j = 0;
         while (j < line.length() && Character.isDigit(line.charAt(j))) j++;
@@ -270,7 +271,7 @@ public final class TextParser {
                 && line.charAt(j) == '.' && line.charAt(j + 1) == ' ';
     }
 
-    private static int startLineNumberOf(int oldCursor, int newCursor) {
+    private int startLineNumberOf(int oldCursor, int newCursor) {
         return oldCursor + 1; // 1-based for error messages
     }
 

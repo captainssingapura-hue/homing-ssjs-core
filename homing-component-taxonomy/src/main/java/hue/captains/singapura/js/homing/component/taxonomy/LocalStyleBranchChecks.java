@@ -19,23 +19,23 @@ record LocalStyleBranchChecks() implements StatelessFunctionalObject {
     List<TaxonomyProblem> problems(List<ComponentBranch> branches, List<Component<?>> components, List<Part<?, ?>> parts) {
         var out = new ArrayList<TaxonomyProblem>();
         for (ComponentBranch b : branches)
-            if (Levels.parentOf(b) instanceof LocalStyleBranch above)
-                out.add(new TaxonomyProblem(Rule.BRANCH_IN_LOCAL_STYLE_BRANCH, Names.of(b) + " is a branch under the local-style branch "
-                        + Names.of(above) + ", which holds virtual leaves only"));
+            if (Levels.INSTANCE.parentOf(b) instanceof LocalStyleBranch above)
+                out.add(new TaxonomyProblem(Rule.BRANCH_IN_LOCAL_STYLE_BRANCH, Names.INSTANCE.of(b) + " is a branch under the local-style branch "
+                        + Names.INSTANCE.of(above) + ", which holds virtual leaves only"));
         for (Component<?> c : components) {
             boolean virtual = c instanceof VirtualComponent<?>;
             if (!virtual && c.parent() instanceof LocalStyleBranch branch)
-                out.add(new TaxonomyProblem(Rule.NOT_VIRTUAL, Names.of(c) + " sits under the local-style branch " + Names.of(branch)
+                out.add(new TaxonomyProblem(Rule.NOT_VIRTUAL, Names.INSTANCE.of(c) + " sits under the local-style branch " + Names.INSTANCE.of(branch)
                         + " and is not virtual: a local style could never be complete over it"));
             if (virtual && !c.parts().isEmpty())
-                out.add(new TaxonomyProblem(Rule.VIRTUAL_PARTS, Names.of(c) + " is virtual and declares parts: a virtual leaf has none,"
+                out.add(new TaxonomyProblem(Rule.VIRTUAL_PARTS, Names.INSTANCE.of(c) + " is virtual and declares parts: a virtual leaf has none,"
                         + " and its concrete leaves add none"));
         }
         for (Part<?, ?> p : parts)
             for (Component<?> base : p.bases())
                 if (base instanceof VirtualComponent<?>)
-                    out.add(new TaxonomyProblem(Rule.VIRTUAL_PLAYS_A_PART, Names.of(p.owner()) + "." + Names.of(p.role()) + " is played by the virtual leaf "
-                            + Names.of(base) + ": a part is cast, and a virtual leaf never is"));
+                    out.add(new TaxonomyProblem(Rule.VIRTUAL_PLAYS_A_PART, Names.INSTANCE.of(p.owner()) + "." + Names.INSTANCE.of(p.role()) + " is played by the virtual leaf "
+                            + Names.INSTANCE.of(base) + ": a part is cast, and a virtual leaf never is"));
         return List.copyOf(out);
     }
 }

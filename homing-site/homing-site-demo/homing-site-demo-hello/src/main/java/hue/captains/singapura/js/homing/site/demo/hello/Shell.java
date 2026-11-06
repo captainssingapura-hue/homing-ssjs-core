@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.site.demo.hello;
 
 import hue.captains.singapura.js.homing.server.HtmlPageContent;
 import hue.captains.singapura.js.homing.site.Html;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 /**
  * The demo's page shell: a document with a title, the same three links on
@@ -9,11 +10,11 @@ import hue.captains.singapura.js.homing.site.Html;
  * what a page looks like — this is the site's own furniture, kept in one
  * place so the three pages are only their bodies.
  */
-final class Shell {
+record Shell() implements StatelessFunctionalObject {
 
-    private Shell() {}
+    static final Shell INSTANCE = new Shell();
 
-    static HtmlPageContent page(String title, String body) {
+    HtmlPageContent page(String title, String body) {
         return new HtmlPageContent("""
                 <!DOCTYPE html>
                 <html lang="en">
@@ -31,6 +32,6 @@ final class Shell {
                     %s
                 </body>
                 </html>
-                """.formatted(Html.escape(title), body));
+                """.formatted(Html.INSTANCE.escape(title), body));
     }
 }

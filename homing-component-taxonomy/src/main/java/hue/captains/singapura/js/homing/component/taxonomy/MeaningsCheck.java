@@ -30,30 +30,30 @@ public record MeaningsCheck() implements StatelessFunctionalObject {
         var files = new LinkedHashMap<Class<?>, Set<String>>();   // each file, by its class: the headings its nodes would have
         var said = new LinkedHashMap<String, List<Object>>();
         for (Object node : nodes(taxonomy)) {
-            Class<?> top = Meanings.outermost(node.getClass());
-            files.computeIfAbsent(top, this::own).add(Meanings.heading(node.getClass()));
+            Class<?> top = Meanings.INSTANCE.outermost(node.getClass());
+            files.computeIfAbsent(top, this::own).add(Meanings.INSTANCE.heading(node.getClass()));
             var meaning = Meanings.INSTANCE.of(node);
             if (meaning.isEmpty()) {
-                out.add(new TaxonomyProblem(Rule.NO_MEANING, Names.qualified(node) + " means nothing: no section '## "
-                        + Meanings.heading(node.getClass()) + "' with words in it, in " + Meanings.path(top)));
+                out.add(new TaxonomyProblem(Rule.NO_MEANING, Names.INSTANCE.qualified(node) + " means nothing: no section '## "
+                        + Meanings.INSTANCE.heading(node.getClass()) + "' with words in it, in " + Meanings.INSTANCE.path(top)));
                 continue;
             }
-            said.computeIfAbsent(Meanings.normalized(meaning.get().markdown()), x -> new ArrayList<>()).add(node);
+            said.computeIfAbsent(Meanings.INSTANCE.normalized(meaning.get().markdown()), x -> new ArrayList<>()).add(node);
         }
         files.forEach((top, headings) -> {
-            var text = Meanings.read(top);
+            var text = Meanings.INSTANCE.read(top);
             if (text.isEmpty()) return;
-            var read = Meanings.sections(text.get());
+            var read = Meanings.INSTANCE.sections(text.get());
             for (String astray : read.astray())
-                out.add(new TaxonomyProblem(Rule.MEANING_ASTRAY, Meanings.path(top) + ": " + astray));
+                out.add(new TaxonomyProblem(Rule.MEANING_ASTRAY, Meanings.INSTANCE.path(top) + ": " + astray));
             for (String heading : read.sections().keySet())
                 if (!headings.contains(heading))
-                    out.add(new TaxonomyProblem(Rule.MEANING_ASTRAY, Meanings.path(top) + ": '## " + heading
+                    out.add(new TaxonomyProblem(Rule.MEANING_ASTRAY, Meanings.INSTANCE.path(top) + ": '## " + heading
                             + "' names no node " + top.getSimpleName() + " declares"));
         });
         said.values().forEach(same -> {
             if (same.size() > 1)
-                out.add(new TaxonomyProblem(Rule.MEANING_TWICE, String.join(" and ", same.stream().map(Names::qualified).toList())
+                out.add(new TaxonomyProblem(Rule.MEANING_TWICE, String.join(" and ", same.stream().map(Names.INSTANCE::qualified).toList())
                         + " mean the same: one node, or two meanings"));
         });
         return out;

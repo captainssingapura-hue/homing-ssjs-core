@@ -34,8 +34,8 @@ public final class HtmlListing implements Listing, StatelessFunctionalObject, St
         var body = new StringBuilder();
         body.append(crumbs(trail));
         body.append("<h1>").append(iconAndName(shown.icon(), shown.name()))
-            .append(" <small>").append(Html.escape(shown.badge())).append("</small></h1>\n");
-        if (!shown.summary().isBlank()) body.append("<p class=\"summary\">").append(Html.escape(shown.summary())).append("</p>\n");
+            .append(" <small>").append(Html.INSTANCE.escape(shown.badge())).append("</small></h1>\n");
+        if (!shown.summary().isBlank()) body.append("<p class=\"summary\">").append(Html.INSTANCE.escape(shown.summary())).append("</p>\n");
 
         // sub-catalogues, then grafted trees - each as it is shown here
         var subs = tree.childrenOf(c);
@@ -79,7 +79,7 @@ public final class HtmlListing implements Listing, StatelessFunctionalObject, St
                 <body>
                 %s</body>
                 </html>
-                """.formatted(Html.escape(shown.name()), body));
+                """.formatted(Html.INSTANCE.escape(shown.name()), body));
     }
 
     private String crumbs(Trail trail) {
@@ -90,23 +90,23 @@ public final class HtmlListing implements Listing, StatelessFunctionalObject, St
             var crumb = crumbs.get(i);
             if (i > 0) sb.append("<span>/</span>");
             if (i < crumbs.size() - 1) {
-                sb.append("<a href=\"").append(Html.escape(crumb.href())).append("\">")
-                  .append(Html.escape(crumb.text())).append("</a>");
+                sb.append("<a href=\"").append(Html.INSTANCE.escape(crumb.href())).append("\">")
+                  .append(Html.INSTANCE.escape(crumb.text())).append("</a>");
             } else {
-                sb.append(Html.escape(crumb.text()));
+                sb.append(Html.INSTANCE.escape(crumb.text()));
             }
         }
         return sb.append("</nav>\n").toString();
     }
 
     private String iconAndName(String icon, String name) {
-        return (icon.isBlank() ? "" : Html.escape(icon) + " ") + Html.escape(name);
+        return (icon.isBlank() ? "" : Html.INSTANCE.escape(icon) + " ") + Html.INSTANCE.escape(name);
     }
 
     private String entry(String href, String icon, String name, String badge, String summary) {
-        return "<li><a href=\"" + Html.escape(href) + "\">" + iconAndName(icon, name) + "</a>"
-             + "<span class=\"badge\">" + Html.escape(badge) + "</span>"
-             + (summary.isBlank() ? "" : "<span class=\"sum\">" + Html.escape(summary) + "</span>")
+        return "<li><a href=\"" + Html.INSTANCE.escape(href) + "\">" + iconAndName(icon, name) + "</a>"
+             + "<span class=\"badge\">" + Html.INSTANCE.escape(badge) + "</span>"
+             + (summary.isBlank() ? "" : "<span class=\"sum\">" + Html.INSTANCE.escape(summary) + "</span>")
              + "</li>\n";
     }
 }

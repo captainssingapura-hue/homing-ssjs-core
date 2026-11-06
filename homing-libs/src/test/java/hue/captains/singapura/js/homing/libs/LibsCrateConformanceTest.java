@@ -13,13 +13,13 @@ class LibsCrateConformanceTest {
 
     @Test
     void everyServedModuleIsCrated() {
-        assertEquals(List.of(), OrphanCheck.check(LibsCrate.INSTANCE),
+        assertEquals(List.of(), OrphanCheck.INSTANCE.check(LibsCrate.INSTANCE),
                 "every bundled module must be declared (via HomingLibsRegistry.INSTANCE.all())");
     }
 
     @Test
     void importsRespectCrateBoundaries() {
-        assertEquals(List.of(), CrateDependencyRule.check(LibsCrate.INSTANCE),
+        assertEquals(List.of(), CrateDependencyRule.INSTANCE.check(LibsCrate.INSTANCE),
                 "bundled externals import nothing — no cross-crate edges");
     }
 }

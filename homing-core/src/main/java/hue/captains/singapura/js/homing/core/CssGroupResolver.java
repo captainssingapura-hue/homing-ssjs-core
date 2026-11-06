@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.core;
 
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -15,14 +16,14 @@ import java.util.SequencedSet;
  * error, and this resolver runs when a group module is served, so it fails
  * loudly on first use rather than recursing forever.</p>
  */
-public final class CssGroupResolver {
+public record CssGroupResolver() implements StatelessFunctionalObject {
 
-    private CssGroupResolver() {}
+    public static final CssGroupResolver INSTANCE = new CssGroupResolver();
 
     /**
      * The groups {@code roots} depend on and the roots themselves, dependencies first and none twice; refuses a cycle.
      */
-    public static List<CssGroup<?>> resolve(List<CssGroup<?>> roots) {
+    public List<CssGroup<?>> resolve(List<CssGroup<?>> roots) {
         SequencedSet<CssGroup<?>> resolved = new LinkedHashSet<>();
         Deque<Class<?>> path = new ArrayDeque<>();
         for (CssGroup<?> root : roots) {
@@ -31,7 +32,7 @@ public final class CssGroupResolver {
         return new ArrayList<>(resolved);
     }
 
-    private static void walk(CssGroup<?> current, SequencedSet<CssGroup<?>> resolved, Deque<Class<?>> path) {
+    private void walk(CssGroup<?> current, SequencedSet<CssGroup<?>> resolved, Deque<Class<?>> path) {
         if (contains(resolved, current)) {
             return;
         }
@@ -52,7 +53,7 @@ public final class CssGroupResolver {
     }
 
     /** Groups are singletons per class; two instances of one class are the same node. */
-    private static boolean contains(SequencedSet<CssGroup<?>> set, CssGroup<?> g) {
+    private boolean contains(SequencedSet<CssGroup<?>> set, CssGroup<?> g) {
         for (CssGroup<?> have : set) if (have.getClass() == g.getClass()) return true;
         return false;
     }

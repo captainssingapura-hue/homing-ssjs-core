@@ -151,9 +151,9 @@ class NodeResolverTest {
                         node(TreeLevel.L2.INSTANCE, "doc", new DocId("u-1"))),
                 node(TreeLevel.L1.INSTANCE, "b", new CatId("b")));
 
-        assertTrue(NodeIdentities.disjoint(root));
-        assertEquals(Map.of(), NodeIdentities.duplicatesIn(root));
-        assertEquals(4, NodeIdentities.allIn(root).size());
+        assertTrue(NodeIdentities.INSTANCE.disjoint(root));
+        assertEquals(Map.of(), NodeIdentities.INSTANCE.duplicatesIn(root));
+        assertEquals(4, NodeIdentities.INSTANCE.allIn(root).size());
     }
 
     /**
@@ -170,8 +170,8 @@ class NodeResolverTest {
                 node(TreeLevel.L1.INSTANCE, "b", new CatId("b"),
                         node(TreeLevel.L2.INSTANCE, "doc", shared)));
 
-        assertFalse(NodeIdentities.disjoint(root));
-        assertEquals(Map.of(shared, 2), NodeIdentities.duplicatesIn(root));
+        assertFalse(NodeIdentities.INSTANCE.disjoint(root));
+        assertEquals(Map.of(shared, 2), NodeIdentities.INSTANCE.duplicatesIn(root));
     }
 
     @Test
@@ -183,10 +183,10 @@ class NodeResolverTest {
                 node(TreeLevel.L1.INSTANCE, "doc", new DocId("u-1")));
 
         NormalizedNode host = node(TreeLevel.L0.INSTANCE, "host", new CatId("host"),
-                RigidTrees.graftUnder(source, TreeLevel.L0.INSTANCE),
-                RigidTrees.graftUnder(source, TreeLevel.L0.INSTANCE));
+                RigidTrees.INSTANCE.graftUnder(source, TreeLevel.L0.INSTANCE),
+                RigidTrees.INSTANCE.graftUnder(source, TreeLevel.L0.INSTANCE));
 
-        var dupes = NodeIdentities.duplicatesIn(host);
+        var dupes = NodeIdentities.INSTANCE.duplicatesIn(host);
         assertEquals(2, dupes.size(), "both the source root and its doc collide: " + dupes);
         assertEquals(2, dupes.get(new CatId("src")));
         assertEquals(2, dupes.get(new DocId("u-1")));
@@ -199,7 +199,7 @@ class NodeResolverTest {
         NodeResolver<String> r = docs(Map.of("u-1", "the doc"));
         NormalizedNode source = node(TreeLevel.L0.INSTANCE, "src", new CatId("src"),
                 node(TreeLevel.L1.INSTANCE, "doc", new DocId("u-1")));
-        NormalizedNode grafted = RigidTrees.graftUnder(source, TreeLevel.L3.INSTANCE);
+        NormalizedNode grafted = RigidTrees.INSTANCE.graftUnder(source, TreeLevel.L3.INSTANCE);
 
         NodeIdentity beforeId = source.children().get(0).identity();
         NodeIdentity afterId  = grafted.children().get(0).identity();

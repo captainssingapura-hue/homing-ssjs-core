@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.core.EsModule;
 
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.reflect.Modifier;
@@ -34,12 +35,12 @@ import java.util.stream.Stream;
  * module's build output ({@code target/classes} in a test run, or its jar), so
  * the scan never leaks into dependencies.</p>
  */
-public final class OrphanCheck {
+public record OrphanCheck() implements StatelessFunctionalObject {
 
-    private OrphanCheck() {}
+    public static final OrphanCheck INSTANCE = new OrphanCheck();
 
     /** Findings: orphan (found but undeclared) and stale (declared but absent) modules. Empty = compliant. */
-    public static List<String> check(Crate crate) {
+    public List<String> check(Crate crate) {
         Set<String> declared = crate.entries().stream()
                 .map(CrateEntry::moduleClass)
                 .collect(Collectors.toCollection(TreeSet::new));
@@ -62,7 +63,7 @@ public final class OrphanCheck {
     }
 
     /** Fully-qualified names of concrete {@link EsModule} classes in the crate's own build output. */
-    static Set<String> concreteEsModulesIn(Crate crate) {
+    Set<String> concreteEsModulesIn(Crate crate) {
         return servedModuleClassesInModuleOf(crate.getClass());
     }
 
@@ -71,7 +72,7 @@ public final class OrphanCheck {
      * Maven-module build output that {@code anchorInModule} lives in. Shared by
      * the check and the {@code CrateSeed} authoring aid.
      */
-    public static Set<String> servedModuleClassesInModuleOf(Class<?> anchorInModule) {
+    public Set<String> servedModuleClassesInModuleOf(Class<?> anchorInModule) {
         Path root = codeSourceRoot(anchorInModule);
         var names = new TreeSet<String>();
         ClassLoader loader = anchorInModule.getClassLoader();
@@ -81,7 +82,7 @@ public final class OrphanCheck {
         return names;
     }
 
-    private static Path codeSourceRoot(Class<?> anchor) {
+    private Path codeSourceRoot(Class<?> anchor) {
         try {
             var cs = anchor.getProtectionDomain().getCodeSource();
             if (cs == null || cs.getLocation() == null) {
@@ -93,7 +94,7 @@ public final class OrphanCheck {
         }
     }
 
-    private static Set<String> classNamesUnder(Path root) {
+    private Set<String> classNamesUnder(Path root) {
         var names = new LinkedHashSet<String>();
         if (Files.isDirectory(root)) {
             try (Stream<Path> walk = Files.walk(root)) {
@@ -122,7 +123,7 @@ public final class OrphanCheck {
         return names;
     }
 
-    private static boolean isConcreteEsModule(String fqcn, ClassLoader loader) {
+    private boolean isConcreteEsModule(String fqcn, ClassLoader loader) {
         // Load without initializing — only real modules get initialized (via INSTANCE, elsewhere).
         Class<?> c;
         try {

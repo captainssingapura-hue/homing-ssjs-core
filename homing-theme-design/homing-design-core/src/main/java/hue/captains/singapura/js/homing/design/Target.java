@@ -59,7 +59,7 @@ public sealed interface Target extends Stateless permits Target.Color, Target.Co
     default String pseudo() { return null; }
 
     /** {@code branch-leaf}, from the type. */
-    default String token() { return Trees.targetToken(getClass()); }
+    default String token() { return Trees.INSTANCE.targetToken(getClass()); }
 
     /**
      * The colour leaves whose registered colours a body on this leaf may read: a box's shadow is
@@ -431,5 +431,5 @@ public sealed interface Target extends Stateless permits Target.Color, Target.Co
     }
 
     /** Every leaf of the tree, in declaration order — the one place the tree is walked. */
-    static List<Target> leaves() { return Trees.targetLeaves(); }
+    static List<Target> leaves() { return Trees.INSTANCE.targetLeaves(); }
 }

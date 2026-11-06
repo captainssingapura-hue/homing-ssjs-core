@@ -27,7 +27,7 @@ public record MaxEffectiveLinesRule() implements JsRule {
     @Override
     public List<Finding> check(ServedModule module) {
         int effective = 0;
-        for (String line : JsText.stripComments(module.lines())) {
+        for (String line : JsText.INSTANCE.stripComments(module.lines())) {
             if (!line.isBlank()) effective++;
         }
         if (effective > LIMIT) {

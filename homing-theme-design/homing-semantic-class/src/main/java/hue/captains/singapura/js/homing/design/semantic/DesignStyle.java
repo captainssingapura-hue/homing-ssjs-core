@@ -26,7 +26,7 @@ public interface DesignStyle<S extends ColorScheme> extends Immutable {
     default String token() { return NodeName.ofType(getClass(), "").value(); }
 
     /** What a picker calls it: its token's words, capitalised - {@code Neo-Brutalism} - unless it says otherwise. */
-    default String label() { return Labels.of(token()); }
+    default String label() { return Labels.INSTANCE.of(token()); }
 
     /** One line on what it is trying to be, shown beside its name in a picker; none unless it says. */
     default String inspiration() { return ""; }
