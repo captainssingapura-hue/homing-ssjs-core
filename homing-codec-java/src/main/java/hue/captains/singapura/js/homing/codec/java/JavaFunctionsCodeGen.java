@@ -64,14 +64,16 @@ public record JavaFunctionsCodeGen() implements FunctionsCodeGen, StatelessFunct
         sb.append("    public static final ").append(codec).append(" INSTANCE = new ").append(codec).append("();\n\n");
 
         // ---- toJson ----
-        sb.append("    public static ").append(JSON_OBJECT).append(" toJson(").append(fqn).append(" t) {\n");
+        sb.append("    /** The record as JSON. */\n");
+        sb.append("    public ").append(JSON_OBJECT).append(" toJson(").append(fqn).append(" t) {\n");
         sb.append("        ").append(JSON_OBJECT).append(" o = new ").append(JSON_OBJECT).append("();\n");
         for (RecordComponent c : cs) emitToJson(sb, c);
         sb.append("        return o;\n");
         sb.append("    }\n\n");
 
         // ---- fromJson ----
-        sb.append("    public static ").append(fqn).append(" fromJson(").append(JSON_OBJECT).append(" o) {\n");
+        sb.append("    /** The record its JSON holds. */\n");
+        sb.append("    public ").append(fqn).append(" fromJson(").append(JSON_OBJECT).append(" o) {\n");
         var args = new ArrayList<String>();
         for (RecordComponent c : cs) args.add(emitFromJson(sb, c));
         sb.append("        return new ").append(fqn).append("(").append(String.join(", ", args)).append(");\n");
@@ -95,7 +97,7 @@ public record JavaFunctionsCodeGen() implements FunctionsCodeGen, StatelessFunct
                     sb.append("        o.put(\"").append(n).append("\", ").append(get).append(".name());\n");
             case RECORD ->
                     sb.append("        o.put(\"").append(n).append("\", ").append(codecOf(c.getType()))
-                      .append(".toJson(").append(get).append("));\n");
+                      .append(".INSTANCE.toJson(").append(get).append("));\n");
             case LIST_STRING -> {
                 sb.append("        ").append(JSON_ARRAY).append(" _").append(n).append(" = new ").append(JSON_ARRAY).append("();\n");
                 sb.append("        for (String e : ").append(get).append(") _").append(n).append(".add(e);\n");
@@ -110,7 +112,7 @@ public record JavaFunctionsCodeGen() implements FunctionsCodeGen, StatelessFunct
             case LIST_RECORD -> {
                 sb.append("        ").append(JSON_ARRAY).append(" _").append(n).append(" = new ").append(JSON_ARRAY).append("();\n");
                 sb.append("        for (").append(listElem(c).getCanonicalName()).append(" e : ").append(get)
-                  .append(") _").append(n).append(".add(").append(codecOf(listElem(c))).append(".toJson(e));\n");
+                  .append(") _").append(n).append(".add(").append(codecOf(listElem(c))).append(".INSTANCE.toJson(e));\n");
                 sb.append("        o.put(\"").append(n).append("\", _").append(n).append(");\n");
             }
         }
@@ -127,12 +129,12 @@ public record JavaFunctionsCodeGen() implements FunctionsCodeGen, StatelessFunct
             case BOOLEAN -> "o.getBoolean(" + key + ")";
             case DOUBLE  -> "o.getDouble("  + key + ")";
             case ENUM    -> c.getType().getCanonicalName() + ".valueOf(o.getString(" + key + "))";
-            case RECORD  -> codecOf(c.getType()) + ".fromJson(o.getJsonObject(" + key + "))";
+            case RECORD  -> codecOf(c.getType()) + ".INSTANCE.fromJson(o.getJsonObject(" + key + "))";
             case LIST_STRING -> emitListDecode(sb, n, key, "String", "a.getString(i)");
             case LIST_ENUM   -> emitListDecode(sb, n, key, listElem(c).getCanonicalName(),
                     listElem(c).getCanonicalName() + ".valueOf(a.getString(i))");
             case LIST_RECORD -> emitListDecode(sb, n, key, listElem(c).getCanonicalName(),
-                    codecOf(listElem(c)) + ".fromJson(a.getJsonObject(i))");
+                    codecOf(listElem(c)) + ".INSTANCE.fromJson(a.getJsonObject(i))");
         };
     }
 
