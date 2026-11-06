@@ -180,6 +180,43 @@ public class AppHtmlGetAction
         String html = """
                 <!DOCTYPE html>
                 <html lang="en">
+                %s<body>
+                    <div id="app"></div>
+                    <script type="module">
+                        // RFC 0064: the page is served with no theme and no locale. The
+                        // client resolves both through the preference steward (an ?override
+                        // for this page, else the stored pick, else the default) and puts
+                        // them on the resources that vary by them - the sheets. A module
+                        // varies by neither, so its URL is its class alone: every import
+                        // of it, static or dynamic, is the same instance.
+                        const moduleUrl = "%s";
+                        %s
+                        %s
+                        const { appMain } = await import(moduleUrl);
+                        appMain(document.getElementById("app")%s);
+                    </script>
+                </body>
+                </html>
+                """.formatted(head(htmlEscape(app.title() + " · " + meta.label())),
+                              baseModuleUrl,
+                              stampedParams == null ? "" : "const params = " + stampedParams + ";",
+                              stampedCrumbs == null ? "" : "const chrome = Object.freeze({crumbs: "
+                                                          + stampedCrumbs + "});",
+                              // A third argument, so an app that wants only
+                              // params is unaffected and one that wants the
+                              // chrome can take it. Passed whenever either is
+                              // present, since JS ignores extra arguments but
+                              // cannot skip a middle one.
+                              (stampedParams == null && stampedCrumbs == null) ? ""
+                                      : (stampedParams == null ? ", undefined" : ", params")
+                                        + (stampedCrumbs == null ? "" : ", chrome"));
+
+        return CompletableFuture.completedFuture(new HtmlPageContent(html));
+    }
+
+    /** The page's head: its title, and a favicon the brand's logo upgrades when it has one. */
+    private String head(String title) {
+        return """
                 <head>
                     <meta charset="UTF-8">
                     <title>%s</title>
@@ -207,38 +244,7 @@ public class AppHtmlGetAction
                             .catch(function () { /* fetch failed — keep the default */ });
                     </script>
                 </head>
-                <body>
-                    <div id="app"></div>
-                    <script type="module">
-                        // RFC 0064: the page is served with no theme and no locale. The
-                        // client resolves both through the preference steward (an ?override
-                        // for this page, else the stored pick, else the default) and puts
-                        // them on the resources that vary by them - the sheets. A module
-                        // varies by neither, so its URL is its class alone: every import
-                        // of it, static or dynamic, is the same instance.
-                        const moduleUrl = "%s";
-                        %s
-                        %s
-                        const { appMain } = await import(moduleUrl);
-                        appMain(document.getElementById("app")%s);
-                    </script>
-                </body>
-                </html>
-                """.formatted(htmlEscape(app.title() + " · " + meta.label()),
-                              baseModuleUrl,
-                              stampedParams == null ? "" : "const params = " + stampedParams + ";",
-                              stampedCrumbs == null ? "" : "const chrome = Object.freeze({crumbs: "
-                                                          + stampedCrumbs + "});",
-                              // A third argument, so an app that wants only
-                              // params is unaffected and one that wants the
-                              // chrome can take it. Passed whenever either is
-                              // present, since JS ignores extra arguments but
-                              // cannot skip a middle one.
-                              (stampedParams == null && stampedCrumbs == null) ? ""
-                                      : (stampedParams == null ? ", undefined" : ", params")
-                                        + (stampedCrumbs == null ? "" : ", chrome"));
-
-        return CompletableFuture.completedFuture(new HtmlPageContent(html));
+                """.formatted(title);
     }
 
     private String htmlEscape(String s) {

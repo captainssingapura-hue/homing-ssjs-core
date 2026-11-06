@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Reads local styles (RFC 0067, appendix Local Styles): each as the module that registers it lists it - a concrete
@@ -98,30 +99,9 @@ public record ReadLocalStyles() implements StatelessFunctionalObject {
             problems.add(new LocalStyleProblem(Rule.LEAF_MISSING, ls.token() + " lists no concrete leaf: a local style draws every leaf of its branch"));
             return null;
         }
-        var byLeaf = new LinkedHashMap<VirtualComponent<?>, ConcreteComponent<?, ?, ?>>();
-        ComponentBranch branch = null;
-        for (ConcreteComponent<?, ?, ?> c : listed) {
-            VirtualComponent<?> leaf;
-            LocalStyle<?, ?> names;
-            try {
-                leaf = c.virtual();
-                names = c.localStyle();
-            } catch (IllegalStateException e) {
-                problems.add(new LocalStyleProblem(Rule.UNREADABLE, ls.token() + " lists " + e.getMessage()));
-                continue;
-            }
-            if (names.getClass() != ls.getClass())
-                problems.add(new LocalStyleProblem(Rule.NAMES_ANOTHER, ls.token() + " lists " + ResolveDrawing.INSTANCE.name(c) + ", a concrete leaf of "
-                        + names.token() + ": a local style lists its own"));
-            if (!(c instanceof Drawn))
-                problems.add(new LocalStyleProblem(Rule.NOT_DRAWN, ResolveDrawing.INSTANCE.name(c) + " says nothing of how it is drawn: it implements Drawn"));
-            if (branch == null) branch = leaf.parent();   // one branch for all: the types hold it
-            ConcreteComponent<?, ?, ?> before = byLeaf.putIfAbsent(leaf, c);
-            if (before != null)
-                problems.add(new LocalStyleProblem(Rule.LEAF_TWICE, ls.token() + " draws " + leaf.token() + " twice: "
-                        + ResolveDrawing.INSTANCE.name(before) + " and " + ResolveDrawing.INSTANCE.name(c)));
-        }
-        if (branch == null) return null;   // no concrete leaf could be read: refused above
+        Map<VirtualComponent<?>, ConcreteComponent<?, ?, ?>> byLeaf = byLeaf(ls, listed, problems);
+        if (byLeaf.isEmpty()) return null;   // no concrete leaf could be read: refused above
+        ComponentBranch branch = byLeaf.keySet().iterator().next().parent();   // one branch for all: the types hold it
         if (!taxonomy.nodes().contains(branch)) {
             problems.add(new LocalStyleProblem(Rule.NOT_IN_TAXONOMY, ls.token() + " styles " + branch.token()
                     + ", which the taxonomy has not: the module that registers a local style brings its branch"));
@@ -141,6 +121,33 @@ public record ReadLocalStyles() implements StatelessFunctionalObject {
             else ordered.add(c);
         }
         return new LocalStyleRead(ls, branch, ordered, taxonomy);
+    }
+
+    /** The concrete leaves a local style lists, by leaf, each held to what can be read off it: those that cannot are left out. */
+    private Map<VirtualComponent<?>, ConcreteComponent<?, ?, ?>> byLeaf(LocalStyle<?, ?> ls, List<? extends ConcreteComponent<?, ?, ?>> listed,
+                                                                        List<LocalStyleProblem> problems) {
+        var byLeaf = new LinkedHashMap<VirtualComponent<?>, ConcreteComponent<?, ?, ?>>();
+        for (ConcreteComponent<?, ?, ?> c : listed) {
+            VirtualComponent<?> leaf;
+            LocalStyle<?, ?> names;
+            try {
+                leaf = c.virtual();
+                names = c.localStyle();
+            } catch (IllegalStateException e) {
+                problems.add(new LocalStyleProblem(Rule.UNREADABLE, ls.token() + " lists " + e.getMessage()));
+                continue;
+            }
+            if (names.getClass() != ls.getClass())
+                problems.add(new LocalStyleProblem(Rule.NAMES_ANOTHER, ls.token() + " lists " + ResolveDrawing.INSTANCE.name(c) + ", a concrete leaf of "
+                        + names.token() + ": a local style lists its own"));
+            if (!(c instanceof Drawn))
+                problems.add(new LocalStyleProblem(Rule.NOT_DRAWN, ResolveDrawing.INSTANCE.name(c) + " says nothing of how it is drawn: it implements Drawn"));
+            ConcreteComponent<?, ?, ?> before = byLeaf.putIfAbsent(leaf, c);
+            if (before != null)
+                problems.add(new LocalStyleProblem(Rule.LEAF_TWICE, ls.token() + " draws " + leaf.token() + " twice: "
+                        + ResolveDrawing.INSTANCE.name(before) + " and " + ResolveDrawing.INSTANCE.name(c)));
+        }
+        return byLeaf;
     }
 
     /** A concrete leaf's drawings in a style: every target its leaf owns drawn once, nothing else, each redirect landing. */

@@ -68,33 +68,34 @@ public record UrlTemplateParser() implements StatelessFunctionalObject {
             throw new IllegalStateException("Empty '{}' slot in template: " + template);
         }
 
-        // Parse: name [? [: default]]
-        String name;
-        boolean optional;
-        String defaultValue = null;
+        Slot slot = slotOf(inside, template);
+        if (slot.name().isEmpty() || !isValidName(slot.name())) {
+            throw new IllegalStateException(
+                    "Bad param name '" + slot.name() + "' in template slot '{" + inside + "}': " + template);
+        }
 
+        RecordComponent comp = componentOf(slot, inside, template, components);
+        return new Segment.Param(slot.name(), slot.optional(), slot.defaultValue(), comp.getAccessor());
+    }
+
+    /** What a slot says: name [? [: default]]. */
+    private Slot slotOf(String inside, String template) {
         int q = inside.indexOf('?');
         if (q < 0) {
-            name = inside;
-            optional = false;
-        } else {
-            name = inside.substring(0, q);
-            optional = true;
-            String tail = inside.substring(q + 1);
-            if (!tail.isEmpty()) {
-                if (!tail.startsWith(":")) {
-                    throw new IllegalStateException(
-                            "Bad slot syntax '{" + inside + "}' in template: " + template
-                          + " — after '?' expected ':default' or end");
-                }
-                defaultValue = tail.substring(1);
-            }
+            return new Slot(inside, false, null);
         }
-
-        if (name.isEmpty() || !isValidName(name)) {
+        String tail = inside.substring(q + 1);
+        if (!tail.isEmpty() && !tail.startsWith(":")) {
             throw new IllegalStateException(
-                    "Bad param name '" + name + "' in template slot '{" + inside + "}': " + template);
+                    "Bad slot syntax '{" + inside + "}' in template: " + template
+                  + " — after '?' expected ':default' or end");
         }
+        return new Slot(inside.substring(0, q), true, tail.isEmpty() ? null : tail.substring(1));
+    }
+
+    /** The params component a slot names, as required or as optional as the slot says. */
+    private RecordComponent componentOf(
+            Slot slot, String inside, String template, Map<String, RecordComponent> components) {
 
         if (components.isEmpty()) {
             throw new IllegalStateException(
@@ -102,6 +103,7 @@ public record UrlTemplateParser() implements StatelessFunctionalObject {
                   + "but paramsType is Void.class — declare a Params record to use slots");
         }
 
+        String name = slot.name();
         RecordComponent comp = components.get(name);
         if (comp == null) {
             throw new IllegalStateException(
@@ -110,19 +112,18 @@ public record UrlTemplateParser() implements StatelessFunctionalObject {
         }
 
         boolean componentIsOptional = comp.getType() == Optional.class;
-        if (optional && !componentIsOptional) {
+        if (slot.optional() && !componentIsOptional) {
             throw new IllegalStateException(
                     "Template slot '{" + inside + "}' is optional ('?') but Params component '"
                   + name + "' is required (" + comp.getType().getSimpleName()
                   + "). Either drop the '?' or change the component to Optional.");
         }
-        if (!optional && componentIsOptional) {
+        if (!slot.optional() && componentIsOptional) {
             throw new IllegalStateException(
                     "Template slot '{" + inside + "}' is required but Params component '"
                   + name + "' is Optional. Use '{" + name + "?}' for optional interpolation.");
         }
-
-        return new Segment.Param(name, optional, defaultValue, comp.getAccessor());
+        return comp;
     }
 
     private boolean isValidName(String s) {
@@ -152,4 +153,7 @@ public record UrlTemplateParser() implements StatelessFunctionalObject {
         }
         return out;
     }
+
+    /** A slot as written: its name, whether it is optional, and its default or null. */
+    private record Slot(String name, boolean optional, String defaultValue) {}
 }

@@ -100,8 +100,19 @@ public final class CatalogueTree {
         preOrder.add(vertex);
 
         var slots = new LinkedHashMap<String, Slot>();
-        int level = CatalogueLevels.INSTANCE.levelOf(vertex);
+        List<? extends Catalogue<?>> subs = subCataloguesIn(vertex, slots);
+        List<? extends Graft<?>> grafted = graftsIn(vertex, at, slots);
+        pagesIn(vertex, at, slots);
+        children.put(cls, Collections.unmodifiableMap(slots));
 
+        for (Catalogue<?> sub : subs) walk(sub, at.child(sub.slug().value()));
+        for (Graft<?> graft : grafted) walk(graft.root(), at.child(graft.root().slug().value()));
+    }
+
+    /** A vertex's sub-catalogues into its slots: each edge declared both ways, one level down. */
+    private List<? extends Catalogue<?>> subCataloguesIn(Catalogue<?> vertex, Map<String, Slot> slots) {
+        Class<?> cls = vertex.getClass();
+        int level = CatalogueLevels.INSTANCE.levelOf(vertex);
         List<? extends Catalogue<?>> subs = vertex.subCatalogues();
         if (subs == null) throw new IllegalArgumentException(cls.getName() + " has null subCatalogues()");
         for (Catalogue<?> sub : subs) {
@@ -120,8 +131,12 @@ public final class CatalogueTree {
             claim(slots, sub.slug().value(), new Slot.Vertex(sub), vertex);
             parents.put(sub.getClass(), vertex);
         }
+        return subs;
+    }
 
-        // A graft's root is a root: it names no parent, so there is no second declaration to agree with.
+    /** A vertex's grafts into its slots. A graft's root is a root: it names no parent, so there is no second declaration to agree with. */
+    private List<? extends Graft<?>> graftsIn(Catalogue<?> vertex, Path at, Map<String, Slot> slots) {
+        Class<?> cls = vertex.getClass();
         List<? extends Graft<?>> grafted = vertex.grafts();
         if (grafted == null) throw new IllegalArgumentException(cls.getName() + " has null grafts()");
         for (Graft<?> graft : grafted) {
@@ -135,8 +150,12 @@ public final class CatalogueTree {
             }
             parents.put(r.getClass(), vertex);
         }
+        return grafted;
+    }
 
-        // the pages, made with the site's MPA - read once, and kept, so a listing shows the very pages the paths name
+    /** A vertex's pages into its slots, made with the site's MPA - read once, and kept, so a listing shows the very pages the paths name. */
+    private void pagesIn(Catalogue<?> vertex, Path at, Map<String, Slot> slots) {
+        Class<?> cls = vertex.getClass();
         List<? extends Leaf<?>> leaves = vertex.leaves(mpa);
         if (leaves == null) throw new IllegalArgumentException(cls.getName() + " has null leaves()");
         this.leaves.put(cls, List.copyOf(leaves));
@@ -151,10 +170,6 @@ public final class CatalogueTree {
                         + ". A page has one path");
             }
         }
-        children.put(cls, Collections.unmodifiableMap(slots));
-
-        for (Catalogue<?> sub : subs) walk(sub, at.child(sub.slug().value()));
-        for (Graft<?> graft : grafted) walk(graft.root(), at.child(graft.root().slug().value()));
     }
 
     private void claim(Map<String, Slot> slots, String slug, Slot slot, Catalogue<?> under) {

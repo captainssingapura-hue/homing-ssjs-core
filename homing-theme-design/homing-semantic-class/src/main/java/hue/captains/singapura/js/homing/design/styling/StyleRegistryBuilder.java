@@ -83,32 +83,8 @@ public final class StyleRegistryBuilder<Sc extends ColorScheme, B extends Design
         var top = new LinkedHashSet<Component<?>>();
         for (BaseModule<Sc, B> m : baseModules) top.addAll(m.components().components());
         var given = new LinkedHashMap<Casting, CastingStyle<?, ?, ?, ?>>();
-        for (BaseModule<Sc, B> m : baseModules) {
-            List<? extends Component<?>> listed = m.components().components();
-            var bundled = new HashSet<Component<?>>();
-            for (StyleBundle<Sc, B> bundle : m.bundles()) {
-                if (!listed.contains(bundle.component()))
-                    problems.add(name(m) + " bundles " + bundle.component().token() + ", which it does not list: a module bundles its own components");
-                if (!bundled.add(bundle.component())) problems.add(name(m) + " bundles " + bundle.component().token() + " twice");
-                Set<Casting> design = Bundles.INSTANCE.design(t, bundle.component(), top);
-                Set<Casting> held = looks(bundle, b, design, given, problems);
-                var missing = new ArrayList<String>();
-                for (Casting c : design) if (!held.contains(c)) missing.add(c.token());
-                if (!missing.isEmpty())
-                    problems.add(bundle.component().token() + "'s bundle in the base has no look of " + String.join(", ", missing)
-                            + ": the base gives every casting of a component's design");
-            }
-            for (Component<?> c : listed)
-                if (!bundled.contains(c) && !Bundles.INSTANCE.design(t, c, top).isEmpty())
-                    problems.add(name(m) + " gives " + c.token() + " no look in the base: every component needs one");
-        }
-        var localStyles = new ArrayList<LocalStyle<?, ?>>();
-        for (BaseModule<Sc, B> m : baseModules) localStyles.addAll(m.localStyles());
-        try {
-            ReadLocalStyles.INSTANCE.read(t, List.of(), localStyles);
-        } catch (RefusedLocalStyles e) {
-            for (LocalStyleProblem p : e.problems()) problems.add(p.toString());
-        }
+        for (BaseModule<Sc, B> m : baseModules) baseLooks(m, b, t, top, given, problems);
+        localStyles(baseModules, t, problems);
         if (!problems.isEmpty()) refuse(problems);
         this.taxonomy = t;
         this.base = b;
@@ -118,6 +94,39 @@ public final class StyleRegistryBuilder<Sc extends ColorScheme, B extends Design
         var all = new LinkedHashMap<Class<?>, Map<Casting, CastingStyle<?, ?, ?, ?>>>();
         all.put(b.getClass(), given);
         this.looks = all;
+    }
+
+    /** A base module's looks into what is given: each of its bundles its own, once and whole, and every component it lists bundled. */
+    private void baseLooks(BaseModule<Sc, B> m, B b, Taxonomy t, Set<Component<?>> top, Map<Casting, CastingStyle<?, ?, ?, ?>> given,
+                           List<String> problems) {
+        List<? extends Component<?>> listed = m.components().components();
+        var bundled = new HashSet<Component<?>>();
+        for (StyleBundle<Sc, B> bundle : m.bundles()) {
+            if (!listed.contains(bundle.component()))
+                problems.add(name(m) + " bundles " + bundle.component().token() + ", which it does not list: a module bundles its own components");
+            if (!bundled.add(bundle.component())) problems.add(name(m) + " bundles " + bundle.component().token() + " twice");
+            Set<Casting> design = Bundles.INSTANCE.design(t, bundle.component(), top);
+            Set<Casting> held = looks(bundle, b, design, given, problems);
+            var missing = new ArrayList<String>();
+            for (Casting c : design) if (!held.contains(c)) missing.add(c.token());
+            if (!missing.isEmpty())
+                problems.add(bundle.component().token() + "'s bundle in the base has no look of " + String.join(", ", missing)
+                        + ": the base gives every casting of a component's design");
+        }
+        for (Component<?> c : listed)
+            if (!bundled.contains(c) && !Bundles.INSTANCE.design(t, c, top).isEmpty())
+                problems.add(name(m) + " gives " + c.token() + " no look in the base: every component needs one");
+    }
+
+    /** The local styles the base modules register, read over the components. */
+    private void localStyles(List<? extends BaseModule<Sc, B>> baseModules, Taxonomy t, List<String> problems) {
+        var localStyles = new ArrayList<LocalStyle<?, ?>>();
+        for (BaseModule<Sc, B> m : baseModules) localStyles.addAll(m.localStyles());
+        try {
+            ReadLocalStyles.INSTANCE.read(t, List.of(), localStyles);
+        } catch (RefusedLocalStyles e) {
+            for (LocalStyleProblem p : e.problems()) problems.add(p.toString());
+        }
     }
 
     private StyleRegistryBuilder(StyleRegistryBuilder<Sc, B> before, DesignStyle<?> style, List<StyleModule<?, ?>> modules,

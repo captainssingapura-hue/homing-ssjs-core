@@ -6,6 +6,8 @@ import hue.captains.singapura.js.homing.site.Trail;
 import hue.captains.singapura.js.homing.server.HtmlPageContent;
 import hue.captains.singapura.js.homing.site.Html;
 import hue.captains.singapura.js.homing.site.Query;
+
+import java.util.List;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 /**
@@ -39,23 +41,9 @@ public final class HtmlListing implements Listing, StatelessFunctionalObject, St
 
         // sub-catalogues, then grafted trees - each as it is shown here
         var subs = tree.childrenOf(c);
-        if (!subs.isEmpty()) {
-            body.append("<h2>Catalogues</h2>\n<ul class=\"entries\">\n");
-            for (Catalogue<?> sub : subs) {
-                var s = tree.shownAs(sub);
-                body.append(entry(router.hrefOf(sub), s.icon(), s.name(), s.badge(), s.summary()));
-            }
-            body.append("</ul>\n");
-        }
+        if (!subs.isEmpty()) body.append(catalogues(subs, router));
         var leaves = tree.leavesOf(c);
-        if (!leaves.isEmpty()) {
-            body.append("<h2>Pages</h2>\n<ul class=\"entries\">\n");
-            for (Leaf<?> leaf : leaves) {
-                String href = router.hrefOf(leaf.page()).orElse("#");
-                body.append(entry(href, leaf.icon(), leaf.name(), leaf.badge(), leaf.summary()));
-            }
-            body.append("</ul>\n");
-        }
+        if (!leaves.isEmpty()) body.append(pages(leaves, router));
         if (subs.isEmpty() && leaves.isEmpty()) body.append("<p class=\"summary\">Nothing here yet.</p>\n");
 
         return new HtmlPageContent("""
@@ -80,6 +68,26 @@ public final class HtmlListing implements Listing, StatelessFunctionalObject, St
                 %s</body>
                 </html>
                 """.formatted(Html.INSTANCE.escape(shown.name()), body));
+    }
+
+    /** A vertex's sub-catalogues, each as it is shown here. */
+    private String catalogues(List<Catalogue<?>> subs, CatalogueRouter router) {
+        var section = new StringBuilder("<h2>Catalogues</h2>\n<ul class=\"entries\">\n");
+        for (Catalogue<?> sub : subs) {
+            var s = router.tree().shownAs(sub);
+            section.append(entry(router.hrefOf(sub), s.icon(), s.name(), s.badge(), s.summary()));
+        }
+        return section.append("</ul>\n").toString();
+    }
+
+    /** A vertex's pages. */
+    private String pages(List<Leaf<?>> leaves, CatalogueRouter router) {
+        var section = new StringBuilder("<h2>Pages</h2>\n<ul class=\"entries\">\n");
+        for (Leaf<?> leaf : leaves) {
+            String href = router.hrefOf(leaf.page()).orElse("#");
+            section.append(entry(href, leaf.icon(), leaf.name(), leaf.badge(), leaf.summary()));
+        }
+        return section.append("</ul>\n").toString();
     }
 
     private String crumbs(Trail trail) {

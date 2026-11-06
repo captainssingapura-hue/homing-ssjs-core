@@ -78,63 +78,7 @@ public record LibDownloader() implements StatelessFunctionalObject {
         boolean anyBootstrapNeeded = false;
 
         for (BundledExternalModule<?> lib : libs) {
-            String url = lib.sourceUrl();
-            String resourcePath = lib.resourcePath();
-            String pinnedSha = lib.sha512();
-            Path target = outputDir.resolve(resourcePath);
-
-            // Fast path: target already exists and matches pinned hash → skip
-            if (Files.exists(target) && pinnedSha != null && !pinnedSha.isBlank()
-                    && !SHA_TODO_SENTINEL.equals(pinnedSha)) {
-                String have = INSTANCE.sha512Hex(target);
-                if (have.equalsIgnoreCase(pinnedSha)) {
-                    System.out.printf("[homing-libs] cached on classpath: %s%n", resourcePath);
-                    continue;
-                }
-            }
-
-            // Cache lookup by hash
-            Path cached = (pinnedSha != null && !pinnedSha.isBlank() && !SHA_TODO_SENTINEL.equals(pinnedSha))
-                    ? cacheDir.resolve(pinnedSha + ".bin") : null;
-
-            byte[] bytes;
-            if (cached != null && Files.exists(cached) && INSTANCE.sha512Hex(cached).equalsIgnoreCase(pinnedSha)) {
-                System.out.printf("[homing-libs] cache hit: %s (sha %s…)%n", resourcePath, pinnedSha.substring(0, 16));
-                bytes = Files.readAllBytes(cached);
-            } else {
-                System.out.printf("[homing-libs] downloading: %s%n", url);
-                bytes = INSTANCE.httpGet(http, url);
-                bytes = INSTANCE.followEsmShReexportIfPresent(http, url, bytes);
-            }
-
-            String actualSha = INSTANCE.sha512Hex(bytes);
-
-            // Bootstrap mode — sha is empty or sentinel
-            if (pinnedSha == null || pinnedSha.isBlank() || SHA_TODO_SENTINEL.equals(pinnedSha)) {
-                anyBootstrapNeeded = true;
-                System.out.printf("%n[homing-libs] BOOTSTRAP — paste the following hash into %s.sha512():%n",
-                        lib.getClass().getSimpleName());
-                System.out.printf("    return \"%s\";%n", actualSha);
-                System.out.printf("    (size: %d bytes, source: %s)%n%n", bytes.length, url);
-                continue;
-            }
-
-            // Pinned mode — verify
-            if (!actualSha.equalsIgnoreCase(pinnedSha)) {
-                throw new IOException(String.format(
-                        "SHA-512 mismatch for %s%n  expected: %s%n  actual:   %s%n  source:   %s%n" +
-                        "  → If the upstream content has legitimately changed, update sha512() in the Java class. " +
-                        "Otherwise this is a security signal — investigate.",
-                        lib.getClass().getSimpleName(), pinnedSha, actualSha, url));
-            }
-
-            // Persist to cache + target
-            if (cached != null) {
-                Files.write(cached, bytes);
-            }
-            Files.createDirectories(target.getParent());
-            Files.write(target, bytes);
-            System.out.printf("[homing-libs] OK: %s (%d bytes) ← %s%n", resourcePath, bytes.length, url);
+            anyBootstrapNeeded |= INSTANCE.fetch(lib, outputDir, cacheDir, http);
         }
 
         if (anyBootstrapNeeded) {
@@ -143,6 +87,69 @@ public record LibDownloader() implements StatelessFunctionalObject {
                     "See the printed hashes above; paste each into the corresponding Java class and rebuild. " +
                     "Failing the build is intentional — pinned hashes are mandatory for production.");
         }
+    }
+
+    /** One library onto the classpath, verified and cached; whether it is in bootstrap mode, and only printed its hash. */
+    private boolean fetch(BundledExternalModule<?> lib, Path outputDir, Path cacheDir, HttpClient http)
+            throws IOException, InterruptedException {
+        String url = lib.sourceUrl();
+        String resourcePath = lib.resourcePath();
+        String pinnedSha = lib.sha512();
+        boolean pinned = pinnedSha != null && !pinnedSha.isBlank() && !SHA_TODO_SENTINEL.equals(pinnedSha);
+        Path target = outputDir.resolve(resourcePath);
+
+        // Fast path: target already exists and matches pinned hash → skip
+        if (Files.exists(target) && pinned) {
+            String have = sha512Hex(target);
+            if (have.equalsIgnoreCase(pinnedSha)) {
+                System.out.printf("[homing-libs] cached on classpath: %s%n", resourcePath);
+                return false;
+            }
+        }
+
+        // Cache lookup by hash
+        Path cached = pinned ? cacheDir.resolve(pinnedSha + ".bin") : null;
+        byte[] bytes = bytesOf(lib, cached, http);
+        String actualSha = sha512Hex(bytes);
+
+        // Bootstrap mode — sha is empty or sentinel
+        if (!pinned) {
+            System.out.printf("%n[homing-libs] BOOTSTRAP — paste the following hash into %s.sha512():%n",
+                    lib.getClass().getSimpleName());
+            System.out.printf("    return \"%s\";%n", actualSha);
+            System.out.printf("    (size: %d bytes, source: %s)%n%n", bytes.length, url);
+            return true;
+        }
+
+        // Pinned mode — verify
+        if (!actualSha.equalsIgnoreCase(pinnedSha)) {
+            throw new IOException(String.format(
+                    "SHA-512 mismatch for %s%n  expected: %s%n  actual:   %s%n  source:   %s%n" +
+                    "  → If the upstream content has legitimately changed, update sha512() in the Java class. " +
+                    "Otherwise this is a security signal — investigate.",
+                    lib.getClass().getSimpleName(), pinnedSha, actualSha, url));
+        }
+
+        // Persist to cache + target
+        if (cached != null) {
+            Files.write(cached, bytes);
+        }
+        Files.createDirectories(target.getParent());
+        Files.write(target, bytes);
+        System.out.printf("[homing-libs] OK: %s (%d bytes) ← %s%n", resourcePath, bytes.length, url);
+        return false;
+    }
+
+    /** A library's bytes: from the cache when it holds them unchanged, else downloaded. */
+    private byte[] bytesOf(BundledExternalModule<?> lib, Path cached, HttpClient http) throws IOException, InterruptedException {
+        String url = lib.sourceUrl();
+        String pinnedSha = lib.sha512();
+        if (cached != null && Files.exists(cached) && sha512Hex(cached).equalsIgnoreCase(pinnedSha)) {
+            System.out.printf("[homing-libs] cache hit: %s (sha %s…)%n", lib.resourcePath(), pinnedSha.substring(0, 16));
+            return Files.readAllBytes(cached);
+        }
+        System.out.printf("[homing-libs] downloading: %s%n", url);
+        return followEsmShReexportIfPresent(http, url, httpGet(http, url));
     }
 
     /**
