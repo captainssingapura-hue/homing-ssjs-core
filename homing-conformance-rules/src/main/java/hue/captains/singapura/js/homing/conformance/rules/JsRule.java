@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.conformance.rules;
 
+import hue.captains.singapura.tao.ontology.FunctionalObject;
+
 import java.util.List;
 
 /**
@@ -12,7 +14,7 @@ import java.util.List;
  * <p>Implementations are Functional Objects — a stateless singleton (a {@code
  * record} with an {@code INSTANCE}), never holding per-run state.</p>
  */
-public interface JsRule {
+public interface JsRule extends FunctionalObject {
 
     /** Stable typed identity — keys findings back to this rule; addresses it in the studio. */
     RuleId id();

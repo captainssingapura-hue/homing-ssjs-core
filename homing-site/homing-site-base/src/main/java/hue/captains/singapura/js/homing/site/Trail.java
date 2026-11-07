@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.site;
 
+import hue.captains.singapura.tao.ontology.Scalar;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -17,7 +19,7 @@ import java.util.Objects;
  *
  * @param crumbs root first, the page last; empty when the page has no known position
  */
-public record Trail(List<Crumb> crumbs) {
+public record Trail(List<Crumb> crumbs) implements Scalar {
 
     /** The address said nothing about position. */
     public static final Trail NONE = new Trail(List.of());
@@ -35,7 +37,9 @@ public record Trail(List<Crumb> crumbs) {
         crumbs = List.copyOf(crumbs);
     }
 
+    /** Whether the trail has no crumbs. */
     public boolean isEmpty() { return crumbs.isEmpty(); }
+    /** How many crumbs it has. */
     public int     depth()   { return crumbs.size(); }
 
     /** This trail one crumb longer. */

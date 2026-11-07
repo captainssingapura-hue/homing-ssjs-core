@@ -3,7 +3,7 @@ package hue.captains.singapura.js.homing.design.semantic;
 import hue.captains.singapura.js.homing.component.taxonomy.Component;
 import hue.captains.singapura.js.homing.design.State;
 import hue.captains.singapura.js.homing.design.Target;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.Objects;
 
@@ -15,7 +15,7 @@ import java.util.Objects;
  * @param state     the state, never rest
  * @param target    the target
  */
-public record Treatment(Component<?> component, State state, Target target) implements ValueObject {
+public record Treatment(Component<?> component, State state, Target target) implements Scalar {
 
     public Treatment {
         Objects.requireNonNull(component, "Treatment.component");

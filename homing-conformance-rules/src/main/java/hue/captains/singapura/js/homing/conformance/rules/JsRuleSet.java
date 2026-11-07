@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.conformance.rules;
 
 import hue.captains.singapura.js.homing.core.JsModuleType;
+import hue.captains.singapura.tao.ontology.Immutable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,11 +16,11 @@ import java.util.Objects;
  * @param title human-readable title, for the studio
  * @param rules the rules, in order
  */
-public record JsRuleSet(RuleSetId id, String title, List<JsRule> rules) {
+public record JsRuleSet(RuleSetId id, String title, List<JsRule> rules) implements Immutable {
 
     /** The empty rule set — nothing to check (e.g. a bundled external). */
-    public static JsRuleSet empty(RuleSetId id, String title) {
-        return new JsRuleSet(id, title, List.of());
+    public JsRuleSet(RuleSetId id, String title) {
+        this(id, title, List.of());
     }
 
     public JsRuleSet {
@@ -36,5 +37,24 @@ public record JsRuleSet(RuleSetId id, String title, List<JsRule> rules) {
             all.addAll(rule.check(module));
         }
         return List.copyOf(all);
+    }
+
+    /** True iff {@code set} sits in a lane: global rules + (DOM-owner discipline | no-DOM). */
+    public boolean inLane() {
+                if (!rules.containsAll(DefaultJsRulePolicy.INSTANCE.global())) return false;
+        return rules.containsAll(DefaultJsRulePolicy.INSTANCE.domOwnerDiscipline())
+                || rules.contains(NoDomAccessRule.INSTANCE);
+    }
+
+    /** Refuses a set that sits in no lane, as an extension for {@code type}. */
+    void requireLane(JsModuleType type) {
+        if (inLane()) return;
+        throw new IllegalArgumentException(
+                "extension rule set '" + id.value() + "' for type '" + type.slug()
+                        + "' sits in no lane. An extension type extends the framework's discipline, it does"
+                        + " not opt out of it: carry the global rules plus either the full DOM-owner discipline"
+                        + " (DefaultJsRulePolicy.INSTANCE.domOwnerDiscipline() — the module builds or styles DOM) or"
+                        + " NoDomAccessRule (the module is headless). DefaultJsRulePolicy.domOwnerLane(...) /"
+                        + " headlessLane(...) build one.");
     }
 }

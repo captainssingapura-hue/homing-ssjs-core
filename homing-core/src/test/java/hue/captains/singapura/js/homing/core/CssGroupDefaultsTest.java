@@ -45,7 +45,7 @@ class CssGroupDefaultsTest {
 
     @Test
     void aGroupWhoseClassesDependOnNothing_hasNoImports() {
-        var cssImports = CssImportsFor.of(TestCss.INSTANCE);
+        var cssImports = new CssImportsFor<>(TestCss.INSTANCE);
         assertSame(TestCss.INSTANCE, cssImports.cssGroup());
         assertTrue(cssImports.imports().isEmpty());
     }

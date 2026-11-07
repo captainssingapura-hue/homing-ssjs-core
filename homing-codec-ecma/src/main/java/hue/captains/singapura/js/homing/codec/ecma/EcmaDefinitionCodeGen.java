@@ -105,7 +105,7 @@ public record EcmaDefinitionCodeGen() implements DefinitionCodeGen, StatelessFun
         return sb.toString();
     }
 
-    private static String jsString(String s) {
+    private String jsString(String s) {
         return "'" + s.replace("\\", "\\\\").replace("'", "\\'") + "'";
     }
 }

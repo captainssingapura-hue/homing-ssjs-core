@@ -15,6 +15,6 @@ public record ServerComponents() implements C0_Components<ServerComponents> {
     @Override public String summary() { return "What every page has: the keyboard party's steward, one per page, on a branch of the page's own."; }
 
     @Override public List<ComponentEntry<ServerComponents>> leaves() {
-        return List.of(ComponentEntry.of(this, new KeyboardStewardModule.KeyboardSteward()));
+        return List.of(new ComponentEntry.OfComponent<>(this, new KeyboardStewardModule.KeyboardSteward()));
     }
 }

@@ -17,10 +17,12 @@ public record NoDomDestructionRule() implements JsRule {
 
     public static final NoDomDestructionRule INSTANCE = new NoDomDestructionRule();
 
-    private static final List<Pattern> WIPES = List.of(
+    private List<Pattern> wipes() {
+        return List.of(
             Pattern.compile("\\.innerHTML\\s*=\\s*([\"'`])\\s*\\1"),
             Pattern.compile("\\.textContent\\s*=\\s*([\"'`])\\s*\\1"),
             Pattern.compile("\\.replaceChildren\\s*\\(\\s*\\)"));
+    }
 
     @Override public RuleId      id()     { return new RuleId("no-dom-destruction"); }
     @Override public String      intent() { return "Branch-owned DOM must never be detached via a wholesale wipe (innerHTML=\"\", textContent=\"\", replaceChildren())."; }
@@ -30,9 +32,10 @@ public record NoDomDestructionRule() implements JsRule {
     public List<Finding> check(ServedModule module) {
         var findings = new ArrayList<Finding>();
         List<String> raw = module.lines();
-        List<String> stripped = JsText.stripComments(raw);
+        List<String> stripped = JsText.INSTANCE.stripComments(raw);
+        List<Pattern> wipes = wipes();
         for (int i = 0; i < stripped.size(); i++) {
-            for (Pattern p : WIPES) {
+            for (Pattern p : wipes) {
                 if (p.matcher(stripped.get(i)).find()) {
                     findings.add(new Finding(module.moduleClass(), id(),
                             "wholesale DOM wipe: " + raw.get(i).trim(), i));

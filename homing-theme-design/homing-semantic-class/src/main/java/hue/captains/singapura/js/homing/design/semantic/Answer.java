@@ -7,7 +7,7 @@ import hue.captains.singapura.js.homing.design.State;
 import hue.captains.singapura.js.homing.design.Target;
 import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import hue.captains.singapura.js.homing.design.color.Paint;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.Collections;
 import java.util.EnumMap;
@@ -32,7 +32,7 @@ import java.util.Set;
  *
  * @param <T> the target leaf: the root the class grows on
  */
-public sealed interface Answer<T extends Target> extends ValueObject
+public sealed interface Answer<T extends Target> extends Scalar
         permits Answer.Own, Answer.Painted, Answer.Redirect, Answer.FromBase, Answer.Animated {
 
     /**

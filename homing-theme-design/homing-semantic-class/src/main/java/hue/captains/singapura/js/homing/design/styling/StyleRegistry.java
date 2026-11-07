@@ -14,6 +14,7 @@ import hue.captains.singapura.js.homing.design.styles.CastingStyle;
 import hue.captains.singapura.js.homing.design.styles.StylingRes;
 import hue.captains.singapura.js.homing.tree.NodeName;
 
+import hue.captains.singapura.js.homing.tree.NodeNames;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -142,8 +143,8 @@ record StyleRegistry(Taxonomy taxonomy, DesignStyle<?> base, List<BaseModule<?, 
     @Override public Optional<DesignStyle<?>> baseLayer(DesignStyle<?> style) { return Bundles.INSTANCE.baseLayer(style); }
 
     /** The token of an implementation's style, read off its type. */
-    private static String styleOf(CastingStyle<?, ?, ?, ?> implementation) {
+    private String styleOf(CastingStyle<?, ?, ?, ?> implementation) {
         Class<?> style = TypeArguments.INSTANCE.at(implementation.getClass(), CastingStyle.class, 1);
-        return style == null ? "?" : NodeName.ofType(style, "").value();
+        return style == null ? "?" : NodeNames.INSTANCE.ofType(style, "").value();
     }
 }

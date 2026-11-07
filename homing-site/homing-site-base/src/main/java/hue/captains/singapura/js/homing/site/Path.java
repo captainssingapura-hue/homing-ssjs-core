@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.site;
 
-import java.net.URLDecoder;
+import hue.captains.singapura.tao.ontology.Scalar;
+
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -23,7 +24,7 @@ import java.util.Optional;
  *
  * @param segments the decoded segments, in order; empty for the root
  */
-public record Path(List<String> segments) {
+public record Path(List<String> segments) implements Scalar {
 
     /** The site's front door: no segments at all. */
     public static final Path ROOT = new Path(List.of());
@@ -38,29 +39,14 @@ public record Path(List<String> segments) {
         segments = List.copyOf(segments);
     }
 
-    /** {@code Path.of("a", "b")} is {@code /a/b}. */
-    public static Path of(String... segments) {
-        return new Path(List.of(segments));
+    /** {@code new Path("a", "b")} is {@code /a/b}. */
+    public Path(String... segments) {
+        this(List.of(segments));
     }
 
-    /**
-     * Reads a request path. Leading, trailing and doubled slashes contribute
-     * nothing, so {@code /}, {@code ""} and {@code //} are all {@link #ROOT}
-     * and {@code /about/} is {@code /about}. Each segment is percent-decoded;
-     * a {@code +} is a plus, not a space — that convention belongs to query
-     * strings, which {@link Query#parse} honours.
-     */
-    public static Path parse(String raw) {
-        if (raw == null) return ROOT;
-        var out = new ArrayList<String>();
-        for (String s : raw.split("/")) {
-            if (s.isEmpty()) continue;
-            out.add(decode(s));
-        }
-        return out.isEmpty() ? ROOT : new Path(out);
-    }
-
+    /** Whether this is the root: no segments. */
     public boolean isRoot() { return segments.isEmpty(); }
+    /** How many segments it has. */
     public int     depth()  { return segments.size(); }
 
     /** The first segment, when there is one. */
@@ -108,20 +94,11 @@ public record Path(List<String> segments) {
         return sb.toString();
     }
 
-    private static String encode(String s) {
+    private String encode(String s) {
         // URLEncoder is a form encoder: a space becomes a plus, which a path
         // reader takes literally. Put the space back as %20, which is what a
         // path means by it.
         return URLEncoder.encode(s, StandardCharsets.UTF_8).replace("+", "%20");
     }
 
-    private static String decode(String s) {
-        // And the inverse: shield a literal plus from the form decoder, which
-        // would otherwise turn it into a space.
-        try {
-            return URLDecoder.decode(s.replace("+", "%2B"), StandardCharsets.UTF_8);
-        } catch (IllegalArgumentException badEscape) {
-            return s;
-        }
-    }
 }

@@ -97,17 +97,17 @@ public record CollectModules() implements StatelessFunctionalObject {
         return out;
     }
 
-    private static Taxonomy taxonomy(List<? extends ComponentModule> definitions) {
+    private Taxonomy taxonomy(List<? extends ComponentModule> definitions) {
         return ComponentModules.INSTANCE.read(definitions, List.of(), List.of());
     }
 
-    private static Set<Component<?>> top(List<? extends ComponentModule> definitions) {
+    private Set<Component<?>> top(List<? extends ComponentModule> definitions) {
         var out = new LinkedHashSet<Component<?>>();
         for (ComponentModule m : definitions) out.addAll(m.components());
         return out;
     }
 
-    private static void refuseOutside(DesignStyle<?> style, List<String> outside) {
+    private void refuseOutside(DesignStyle<?> style, List<String> outside) {
         if (!outside.isEmpty())
             throw new IllegalArgumentException(style.token() + "'s looks cannot be collected:\n  " + String.join("\n  ", outside));
     }

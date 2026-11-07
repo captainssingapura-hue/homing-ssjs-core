@@ -6,7 +6,7 @@ import hue.captains.singapura.js.homing.component.taxonomy.Cardinality.Fixed;
 import hue.captains.singapura.js.homing.component.taxonomy.Cardinality.Unbounded;
 import hue.captains.singapura.js.homing.component.taxonomy.Cardinality.Varying;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 /**
  * The language a component declares its parts in - a stateless functional object, kept apart from
@@ -77,7 +77,7 @@ public record ComponentPartDSL() implements StatelessFunctionalObject {
      * @param players who plays it
      * @param <E>     what plays it, as the DSL was told
      */
-    public record NeedsRole<E extends Component<?>>(Players players) implements ValueObject {
+    public record NeedsRole<E extends Component<?>>(Players players) implements Scalar {
 
         /** The role it plays - none is refused when the taxonomy is read. Not yet a slot: it needs a count. */
         public NeedsCount<E> as(Role<?> role) { return new NeedsCount<>(players, role); }
@@ -91,7 +91,7 @@ public record ComponentPartDSL() implements StatelessFunctionalObject {
      * @param role the role it plays
      * @param <E>  the component that plays it
      */
-    public record NeedsCount<E extends Component<?>>(Players players, Role<?> role) implements ValueObject {
+    public record NeedsCount<E extends Component<?>>(Players players, Role<?> role) implements Scalar {
 
         /** Exactly one, static: made with its owner, kept for its life. */
         public Slot<E> one() { return exactly(1); }

@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.tracker;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 /**
  * Before/after measurement captured at phase completion. Surfaced as one row
@@ -17,4 +17,4 @@ import hue.captains.singapura.tao.ontology.ValueObject;
  * <p>Designed for cleanup / refactor / migration / hardening plans where the
  * payoff is hard to argue without numbers.</p>
  */
-public record Metric(String label, String before, String after, String delta) implements ValueObject {}
+public record Metric(String label, String before, String after, String delta) implements Scalar {}

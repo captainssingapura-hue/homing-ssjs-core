@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.component.taxonomy;
 
 import hue.captains.singapura.js.homing.base.lang.StatelessSingleton;
 import hue.captains.singapura.js.homing.tree.NodeName;
+import hue.captains.singapura.js.homing.tree.NodeNames;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 /**
@@ -14,5 +15,5 @@ import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 public sealed interface RoleNode extends StatelessFunctionalObject, StatelessSingleton permits RoleBranch, Role {
 
     /** {@code ZoomIn} gives {@code zoom-in}. */
-    default NodeName name() { return NodeName.ofType(getClass(), ""); }
+    default NodeName name() { return NodeNames.INSTANCE.ofType(getClass(), ""); }
 }

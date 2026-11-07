@@ -5,6 +5,7 @@ import hue.captains.singapura.tao.http.action.GetAction;
 import hue.captains.singapura.tao.http.action.PostAction;
 import hue.captains.singapura.tao.http.config.HostConfig;
 import hue.captains.singapura.tao.http.vertx.VertxActionHost;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpServer;
 import io.vertx.ext.web.RoutingContext;
@@ -23,12 +24,12 @@ import java.util.Objects;
  * that larger composition for one particular site; this is the floor it
  * will stand on.</p>
  */
-public final class SiteHost {
+public record SiteHost() implements StatelessFunctionalObject {
 
-    private SiteHost() {}
+    public static final SiteHost INSTANCE = new SiteHost();
 
     /** The site as an action registry: one GET route, {@link SiteGetAction#ROUTE}. */
-    public static ActionRegistry<RoutingContext> registry(Site site) {
+    public ActionRegistry<RoutingContext> registry(Site site) {
         Objects.requireNonNull(site, "SiteHost.site");
         var action = new SiteGetAction(site.router());
         return new ActionRegistry<>() {
@@ -46,7 +47,7 @@ public final class SiteHost {
      * came up on. The future is the server, for a caller that wants to stop
      * it or to know that it is up; a {@code main} may ignore it.
      */
-    public static Future<HttpServer> start(Site site, int port) {
+    public Future<HttpServer> start(Site site, int port) {
         var host = new VertxActionHost(registry(site), HostConfig.http(port));
         return host.start()
                 .onSuccess(server -> System.out.println(

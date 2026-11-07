@@ -22,7 +22,7 @@ public record KeyboardHomeModule() implements EsModule<KeyboardHomeModule> {
 
     public static final KeyboardHomeModule INSTANCE = new KeyboardHomeModule();
 
-    @Override public ImportsFor<KeyboardHomeModule> imports() { return ImportsFor.noImports(); }
+    @Override public ImportsFor<KeyboardHomeModule> imports() { return new ImportsFor<>(); }
 
     @Override
     public ExportsOf<KeyboardHomeModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new KeyboardHome())); }

@@ -22,7 +22,7 @@ public record CssLoadProcedure() implements EsModule<CssLoadProcedure> {
 
     @Override
     public ImportsFor<CssLoadProcedure> imports() {
-        return ImportsFor.noImports();
+        return new ImportsFor<>();
     }
 
     @Override

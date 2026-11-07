@@ -25,7 +25,7 @@ public record CssDependencyGraph() implements EsModule<CssDependencyGraph> {
 
     @Override
     public ImportsFor<CssDependencyGraph> imports() {
-        return ImportsFor.noImports();
+        return new ImportsFor<>();
     }
 
     @Override

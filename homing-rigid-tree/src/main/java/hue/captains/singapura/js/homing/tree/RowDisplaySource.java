@@ -19,5 +19,7 @@ public interface RowDisplaySource {
     RowDisplay displayOf(TreeNode<?> node);
 
     /** Nothing to add: every node speaks for itself. */
-    static RowDisplaySource none() { return node -> null; }
+    record None() implements RowDisplaySource {
+        @Override public RowDisplay displayOf(TreeNode<?> node) { return null; }
+    }
 }

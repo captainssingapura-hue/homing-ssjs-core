@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.conformance.report.gen;
 
+import hue.captains.singapura.js.homing.base.lang.StatelessSingleton;
 import hue.captains.singapura.js.homing.codec.ObjectDefinition;
 import hue.captains.singapura.js.homing.conformance.rules.report.ConformanceReport;
 import hue.captains.singapura.js.homing.conformance.rules.report.CrateReport;
@@ -7,6 +8,7 @@ import hue.captains.singapura.js.homing.conformance.rules.report.FindingReport;
 import hue.captains.singapura.js.homing.conformance.rules.report.ModuleResult;
 import hue.captains.singapura.js.homing.conformance.rules.report.RuleReport;
 import hue.captains.singapura.js.homing.conformance.rules.report.RuleSetReport;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.util.List;
 
@@ -16,15 +18,18 @@ import java.util.List;
  * land in one package, compiled together), so order is immaterial; it is kept
  * leaf-first for readability.
  */
-public final class ReportCodecManifest {
+public record ReportCodecManifest() implements StatelessFunctionalObject, StatelessSingleton {
 
-    private ReportCodecManifest() {}
+    public static final ReportCodecManifest INSTANCE = new ReportCodecManifest();
 
-    public static final List<ObjectDefinition<?>> ENTRIES = List.of(
-            ObjectDefinition.of(FindingReport.class),
-            ObjectDefinition.of(CrateReport.class),
-            ObjectDefinition.of(ModuleResult.class),
-            ObjectDefinition.of(RuleReport.class),
-            ObjectDefinition.of(RuleSetReport.class),
-            ObjectDefinition.of(ConformanceReport.class));
+    /** The records the report's codecs are generated for. */
+    public List<ObjectDefinition<?>> entries() {
+        return List.of(
+            new ObjectDefinition<>(FindingReport.class),
+            new ObjectDefinition<>(CrateReport.class),
+            new ObjectDefinition<>(ModuleResult.class),
+            new ObjectDefinition<>(RuleReport.class),
+            new ObjectDefinition<>(RuleSetReport.class),
+            new ObjectDefinition<>(ConformanceReport.class));
+    }
 }

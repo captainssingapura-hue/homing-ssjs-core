@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.site.catalogue;
 
 import hue.captains.singapura.js.homing.site.mpa.Mpa;
 import hue.captains.singapura.js.homing.tree.NodeName;
+import hue.captains.singapura.js.homing.tree.NodeNames;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.util.List;
@@ -44,9 +45,10 @@ public sealed interface Catalogue<Self extends Catalogue<Self>>
 
     /** The path segment; from the class name minus {@code Catalogue} unless overridden. */
     default NodeName slug() {
-        return NodeName.ofType(getClass(), "Catalogue");
+        return NodeNames.INSTANCE.ofType(getClass(), "Catalogue");
     }
 
+    /** What a listing says of this catalogue; nothing by default. */
     default String summary() { return ""; }
 
     /** A short upper-case tag for a listing to show; {@code CATALOGUE} by default. */
@@ -74,7 +76,7 @@ public sealed interface Catalogue<Self extends Catalogue<Self>>
      * {@code mpa.page(app, params)} - so that every page of a site, whichever
      * tree placed it, wears the site's one chrome, themes and preferences. A
      * catalogue stays a stateless singleton that knows no site: the site reads
-     * its tree with its MPA ({@link CatalogueTree#of(L0_Catalogue, Mpa)}) and
+     * its tree with its MPA ({@link CatalogueTree#CatalogueTree(L0_Catalogue, Mpa)}) and
      * the MPA is handed in here. Unless overridden, the pages that need no
      * site: {@link #leaves()}.
      */

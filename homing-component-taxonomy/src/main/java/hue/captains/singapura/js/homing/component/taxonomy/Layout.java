@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.component.taxonomy;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
  * @param when         static, the author's arrangement; or dynamic, the user's
  * @param subContainer the container at each of its positions: one kind for every position
  */
-public record Layout(String token, Cardinality.StaticOrDynamic when, Component<?> subContainer) implements ValueObject {
+public record Layout(String token, Cardinality.StaticOrDynamic when, Component<?> subContainer) implements Scalar {
 
     private static final Pattern TOKEN = Pattern.compile("[a-z][a-z0-9]*(-[a-z0-9]+)*");
 

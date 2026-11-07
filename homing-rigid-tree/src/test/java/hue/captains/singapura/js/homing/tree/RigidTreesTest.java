@@ -32,8 +32,8 @@ class RigidTreesTest {
 
     @Test
     void levelArithmetic() {
-        assertEquals(8, TreeLevel.atDepth(5).shifted(3).depth());
-        assertEquals(TreeLevel.L18.INSTANCE, TreeLevel.atDepth(18));
+        assertEquals(8, TreeLevels.INSTANCE.atDepth(5).shifted(3).depth());
+        assertEquals(TreeLevel.L18.INSTANCE, TreeLevels.INSTANCE.atDepth(18));
         assertTrue(TreeLevel.L18.INSTANCE.below().isEmpty(), "L18 is the cap");
         assertTrue(TreeLevel.L0.INSTANCE.above().isEmpty(),  "L0 is the root");
         assertEquals(TreeLevel.L3.INSTANCE, TreeLevel.L4.INSTANCE.above().orElseThrow());
@@ -42,8 +42,8 @@ class RigidTreesTest {
 
     @Test
     void atDepthAndShiftRejectOutOfRange() {
-        assertThrows(IllegalArgumentException.class, () -> TreeLevel.atDepth(19));
-        assertThrows(IllegalArgumentException.class, () -> TreeLevel.atDepth(-1));
+        assertThrows(IllegalArgumentException.class, () -> TreeLevels.INSTANCE.atDepth(19));
+        assertThrows(IllegalArgumentException.class, () -> TreeLevels.INSTANCE.atDepth(-1));
         assertThrows(IllegalArgumentException.class, () -> TreeLevel.L18.INSTANCE.shifted(1));
     }
 
@@ -51,7 +51,7 @@ class RigidTreesTest {
 
     @Test
     void shiftReLevelsEveryNodeByTheDelta() {
-        NormalizedNode shifted = RigidTrees.shift(threeDeep(), 2);
+        NormalizedNode shifted = RigidTrees.INSTANCE.shift(threeDeep(), 2);
         assertEquals(2, shifted.level().depth());
         assertEquals(3, shifted.children().get(0).level().depth());
         assertEquals(4, shifted.children().get(0).children().get(0).level().depth());
@@ -60,12 +60,12 @@ class RigidTreesTest {
     @Test
     void shiftByZeroIsIdentity() {
         NormalizedNode n = threeDeep();
-        assertSame(n, RigidTrees.shift(n, 0));
+        assertSame(n, RigidTrees.INSTANCE.shift(n, 0));
     }
 
     @Test
     void shiftedToReRootsAtTarget() {
-        NormalizedNode shifted = RigidTrees.shiftedTo(threeDeep(), TreeLevel.L5.INSTANCE);
+        NormalizedNode shifted = RigidTrees.INSTANCE.shiftedTo(threeDeep(), TreeLevel.L5.INSTANCE);
         assertEquals(5, shifted.level().depth());
         assertEquals(7, shifted.children().get(0).children().get(0).level().depth());
     }
@@ -73,7 +73,7 @@ class RigidTreesTest {
     @Test
     void graftUnderLandsOneBelowTheHost() {
         // host at L2 → grafted sub-tree root at L3, descendants L4, L5.
-        NormalizedNode grafted = RigidTrees.graftUnder(threeDeep(), TreeLevel.L2.INSTANCE);
+        NormalizedNode grafted = RigidTrees.INSTANCE.graftUnder(threeDeep(), TreeLevel.L2.INSTANCE);
         assertEquals(3, grafted.level().depth());
         assertEquals(5, grafted.children().get(0).children().get(0).level().depth());
     }
@@ -81,12 +81,12 @@ class RigidTreesTest {
     @Test
     void graftUnderTheCapIsAHardError() {
         assertThrows(IllegalArgumentException.class,
-                () -> RigidTrees.graftUnder(threeDeep(), TreeLevel.L18.INSTANCE));
+                () -> RigidTrees.INSTANCE.graftUnder(threeDeep(), TreeLevel.L18.INSTANCE));
     }
 
     @Test
     void shiftPreservesDimensions() {
-        NormalizedNode shifted = RigidTrees.shift(threeDeep(), 4);
+        NormalizedNode shifted = RigidTrees.INSTANCE.shift(threeDeep(), 4);
         assertEquals("root", ((NameValue) shifted.dimensions().get(DisplayLabel.INSTANCE)).text());
     }
 
@@ -100,7 +100,7 @@ class RigidTreesTest {
     @Test
     void shiftCarriesSegmentAndIdentityThroughUnchanged() {
         NormalizedNode before = threeDeep();
-        NormalizedNode after  = RigidTrees.shift(before, 3);
+        NormalizedNode after  = RigidTrees.INSTANCE.shift(before, 3);
 
         assertEquals(before.segment(),  after.segment());
         assertEquals(before.identity(), after.identity());

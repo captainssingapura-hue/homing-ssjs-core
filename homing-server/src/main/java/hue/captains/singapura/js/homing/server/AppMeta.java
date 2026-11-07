@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.server;
 
+import hue.captains.singapura.tao.ontology.Scalar;
+
 /**
  * Downstream-supplied metadata that {@link AppHtmlGetAction} threads into the
  * served HTML envelope — currently the brand label that follows each app's
@@ -13,7 +15,7 @@ package hue.captains.singapura.js.homing.server;
  * @param label brand label shown in the browser tab. Never {@code null} —
  *              an empty studio constructs {@link #DEFAULT}.
  */
-public record AppMeta(String label) {
+public record AppMeta(String label) implements Scalar {
 
     /** Sentinel default for studios that don't register a brand. */
     public static final AppMeta DEFAULT = new AppMeta("Homing");

@@ -23,7 +23,7 @@ class UrlTemplateTest {
     @Test
     @DisplayName("pure-literal template renders unchanged")
     void pureLiteral() {
-        var t = UrlTemplate.compile("https://example.com/static", Void.class);
+        var t = new UrlTemplate("https://example.com/static", Void.class);
         assertEquals("https://example.com/static", t.render(null));
         assertEquals(List.of(), t.paramNames());
     }
@@ -31,7 +31,7 @@ class UrlTemplateTest {
     @Test
     @DisplayName("pure-literal template with no Params record is fine")
     void pureLiteralVoidParams() {
-        var t = UrlTemplate.compile("/health", Void.class);
+        var t = new UrlTemplate("/health", Void.class);
         assertEquals("/health", t.render(null));
     }
 
@@ -40,14 +40,14 @@ class UrlTemplateTest {
     @Test
     @DisplayName("required {name} renders the param value, URL-encoded")
     void requiredInterpolation() {
-        var t = UrlTemplate.compile("https://github.com/{repo}", GitHub.class);
+        var t = new UrlTemplate("https://github.com/{repo}", GitHub.class);
         assertEquals("https://github.com/acme%2Fproj", t.render(new GitHub("acme/proj", Optional.empty())));
     }
 
     @Test
     @DisplayName("two required slots render in order")
     void twoRequired() {
-        var t = UrlTemplate.compile("https://github.com/{org}/{repo}", TwoRequired.class);
+        var t = new UrlTemplate("https://github.com/{org}/{repo}", TwoRequired.class);
         assertEquals("https://github.com/acme/proj", t.render(new TwoRequired("acme", "proj")));
     }
 
@@ -56,14 +56,14 @@ class UrlTemplateTest {
     @Test
     @DisplayName("optional {name?} substitutes empty string when absent")
     void optionalAbsent() {
-        var t = UrlTemplate.compile("https://github.com/{repo}/{path?}", GitHub.class);
+        var t = new UrlTemplate("https://github.com/{repo}/{path?}", GitHub.class);
         assertEquals("https://github.com/acme%2Fproj/", t.render(new GitHub("acme/proj", Optional.empty())));
     }
 
     @Test
     @DisplayName("optional {name?} substitutes the value when present")
     void optionalPresent() {
-        var t = UrlTemplate.compile("https://github.com/{repo}/{path?}", GitHub.class);
+        var t = new UrlTemplate("https://github.com/{repo}/{path?}", GitHub.class);
         assertEquals("https://github.com/acme%2Fproj/README.md",
                 t.render(new GitHub("acme/proj", Optional.of("README.md"))));
     }
@@ -71,7 +71,7 @@ class UrlTemplateTest {
     @Test
     @DisplayName("optional {name?:default} uses default when absent")
     void optionalDefault() {
-        var t = UrlTemplate.compile("https://docs.example.com/{section}#{anchor?:top}", DocsRef.class);
+        var t = new UrlTemplate("https://docs.example.com/{section}#{anchor?:top}", DocsRef.class);
         assertEquals("https://docs.example.com/api#top",
                 t.render(new DocsRef("api", Optional.empty())));
     }
@@ -79,7 +79,7 @@ class UrlTemplateTest {
     @Test
     @DisplayName("optional {name?:default} uses present value, not default")
     void optionalDefaultIgnoredWhenPresent() {
-        var t = UrlTemplate.compile("https://docs.example.com/{section}#{anchor?:top}", DocsRef.class);
+        var t = new UrlTemplate("https://docs.example.com/{section}#{anchor?:top}", DocsRef.class);
         assertEquals("https://docs.example.com/api#install",
                 t.render(new DocsRef("api", Optional.of("install"))));
     }
@@ -89,7 +89,7 @@ class UrlTemplateTest {
     @Test
     @DisplayName("paramNames lists each interpolation by first appearance")
     void paramNamesInOrder() {
-        var t = UrlTemplate.compile("https://x.test/{org}/{repo}/{org}", TwoRequired.class);
+        var t = new UrlTemplate("https://x.test/{org}/{repo}/{org}", TwoRequired.class);
         assertEquals(List.of("org", "repo"), t.paramNames());
     }
 
@@ -99,7 +99,7 @@ class UrlTemplateTest {
     @DisplayName("required {name} on an Optional component is rejected at compile time")
     void requiredSlotOnOptionalComponent() {
         var ex = assertThrows(IllegalStateException.class,
-                () -> UrlTemplate.compile("/p/{q}", OneOptional.class));
+                () -> new UrlTemplate("/p/{q}", OneOptional.class));
         assertTrue(ex.getMessage().contains("required"), ex.getMessage());
         assertTrue(ex.getMessage().contains("Optional"), ex.getMessage());
     }
@@ -108,7 +108,7 @@ class UrlTemplateTest {
     @DisplayName("optional {name?} on a required component is rejected at compile time")
     void optionalSlotOnRequiredComponent() {
         var ex = assertThrows(IllegalStateException.class,
-                () -> UrlTemplate.compile("/p/{tab?}", OneRequired.class));
+                () -> new UrlTemplate("/p/{tab?}", OneRequired.class));
         assertTrue(ex.getMessage().contains("optional"), ex.getMessage());
     }
 
@@ -116,7 +116,7 @@ class UrlTemplateTest {
     @DisplayName("unknown param name is rejected at compile time")
     void unknownParam() {
         var ex = assertThrows(IllegalStateException.class,
-                () -> UrlTemplate.compile("/p/{nope}", OneRequired.class));
+                () -> new UrlTemplate("/p/{nope}", OneRequired.class));
         assertTrue(ex.getMessage().contains("unknown"), ex.getMessage());
     }
 
@@ -124,7 +124,7 @@ class UrlTemplateTest {
     @DisplayName("interpolation against Void.class params is rejected")
     void slotWithVoidParams() {
         var ex = assertThrows(IllegalStateException.class,
-                () -> UrlTemplate.compile("/p/{x}", Void.class));
+                () -> new UrlTemplate("/p/{x}", Void.class));
         assertTrue(ex.getMessage().contains("Void.class"), ex.getMessage());
     }
 
@@ -132,7 +132,7 @@ class UrlTemplateTest {
     @DisplayName("malformed slot — unclosed brace — is rejected")
     void unclosedBrace() {
         var ex = assertThrows(IllegalStateException.class,
-                () -> UrlTemplate.compile("/p/{repo", GitHub.class));
+                () -> new UrlTemplate("/p/{repo", GitHub.class));
         assertTrue(ex.getMessage().contains("Unclosed"), ex.getMessage());
     }
 
@@ -140,7 +140,7 @@ class UrlTemplateTest {
     @DisplayName("malformed slot — stray close brace — is rejected")
     void strayCloseBrace() {
         var ex = assertThrows(IllegalStateException.class,
-                () -> UrlTemplate.compile("/p/repo}", GitHub.class));
+                () -> new UrlTemplate("/p/repo}", GitHub.class));
         assertTrue(ex.getMessage().contains("Unmatched"), ex.getMessage());
     }
 
@@ -148,7 +148,7 @@ class UrlTemplateTest {
     @DisplayName("empty {} slot is rejected")
     void emptySlot() {
         var ex = assertThrows(IllegalStateException.class,
-                () -> UrlTemplate.compile("/p/{}", GitHub.class));
+                () -> new UrlTemplate("/p/{}", GitHub.class));
         assertTrue(ex.getMessage().contains("Empty"), ex.getMessage());
     }
 
@@ -156,7 +156,7 @@ class UrlTemplateTest {
     @DisplayName("non-record paramsType is rejected")
     void nonRecordParamsType() {
         var ex = assertThrows(IllegalStateException.class,
-                () -> UrlTemplate.compile("/p/{x}", String.class));
+                () -> new UrlTemplate("/p/{x}", String.class));
         assertTrue(ex.getMessage().contains("record"), ex.getMessage());
     }
 
@@ -164,7 +164,7 @@ class UrlTemplateTest {
     @DisplayName("'?' followed by non-':' is rejected")
     void badOptionalSyntax() {
         var ex = assertThrows(IllegalStateException.class,
-                () -> UrlTemplate.compile("/p/{path?bad}", GitHub.class));
+                () -> new UrlTemplate("/p/{path?bad}", GitHub.class));
         assertTrue(ex.getMessage().contains("default"), ex.getMessage());
     }
 
@@ -181,7 +181,7 @@ class UrlTemplateTest {
     @DisplayName("ProxyApp template compiles and renders correctly")
     void proxyAppEndToEnd() {
         var proxy = new GitHubProxy();
-        var t = UrlTemplate.compile(proxy.urlTemplate(), proxy.paramsType());
+        var t = new UrlTemplate(proxy.urlTemplate(), proxy.paramsType());
         assertEquals("https://github.com/acme%2Fproj/README.md",
                 t.render(new GitHub("acme/proj", Optional.of("README.md"))));
         assertEquals("github", proxy.simpleName());

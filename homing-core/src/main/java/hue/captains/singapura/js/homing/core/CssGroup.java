@@ -19,14 +19,15 @@ import java.util.List;
 public interface CssGroup<C extends CssGroup<C>> extends EsModule<C> {
 
     // RFC 0064 — a group's dependencies are not declared here. They are
-    // derived from its classes' dependsOn() by CssImportsFor.of(group), and
+    // derived from its classes' dependsOn() by new CssImportsFor<>(group), and
     // there is deliberately no method to override: see CssImportsFor.
 
+    /** The classes of the group, each an export of its module. */
     List<CssClass<C>> cssClasses();
 
     @Override
     default ImportsFor<C> imports() {
-        return ImportsFor.noImports();
+        return new ImportsFor<>();
     }
 
     @SuppressWarnings("unchecked")

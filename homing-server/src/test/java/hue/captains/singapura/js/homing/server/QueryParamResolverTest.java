@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.core.*;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -14,13 +15,40 @@ class QueryParamResolverTest {
 
         @Override
         public ImportsFor<TestModule> imports() {
-            return ImportsFor.<TestModule>builder().build();
+            return new ImportsFor._Builder<TestModule>().build();
         }
 
         @Override
         public ExportsOf<TestModule> exports() {
             return new ExportsOf<>(INSTANCE, List.of());
         }
+    }
+
+    record TestProxy() implements ExternalModule<TestProxy> {
+        static final TestProxy INSTANCE = new TestProxy();
+
+        @Override
+        public ExportsOf<TestProxy> exports() {
+            return new ExportsOf<>(INSTANCE, List.of());
+        }
+    }
+
+    @Test
+    void libraryUrl_isTheProxysOwnUnlessTheDeploymentSays() {
+        assertEquals("https://default.example/lib.mjs",
+                new QueryParamResolver().libraryUrl(TestProxy.class, "https://default.example/lib.mjs"));
+    }
+
+    @Test
+    void libraryUrl_isWhereTheDeploymentPointsIt() {
+        var resolver = new QueryParamResolver("/module", Map.of(TestProxy.class, "https://mirror.internal/lib.mjs"));
+        assertEquals("https://mirror.internal/lib.mjs", resolver.libraryUrl(TestProxy.class, "https://default.example/lib.mjs"));
+    }
+
+    @Test
+    void libraryUrl_blank_isRefusedNamingTheProxy() {
+        var e = assertThrows(IllegalArgumentException.class, () -> new QueryParamResolver("/module", Map.of(TestProxy.class, " ")));
+        assertTrue(e.getMessage().contains(TestProxy.class.getName()), e.getMessage());
     }
 
     @Test

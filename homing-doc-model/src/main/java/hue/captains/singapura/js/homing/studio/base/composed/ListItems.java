@@ -1,18 +1,19 @@
 package hue.captains.singapura.js.homing.studio.base.composed;
 
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import java.util.List;
 import java.util.Objects;
 
 /** Shared validation for {@link UnorderedListSegment} / {@link OrderedListSegment}. */
-final class ListItems {
+record ListItems() implements StatelessFunctionalObject {
 
-    private ListItems() {}
+    static final ListItems INSTANCE = new ListItems();
 
     /**
      * Defensive-copy {@code items}, and enforce: non-null, non-empty, and every
      * item the <b>same concrete class</b> (homogeneity). Returns the copied list.
      */
-    static List<Listable> homogeneous(List<Listable> items, String owner) {
+    List<Listable> homogeneous(List<Listable> items, String owner) {
         Objects.requireNonNull(items, owner + ".items");
         List<Listable> copy = List.copyOf(items);
         if (copy.isEmpty()) {

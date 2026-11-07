@@ -63,32 +63,32 @@ class CssGroupResolverTest {
 
     @Test
     void groupDependencies_areDerivedFromClasses_selfExcluded_firstMentionOrder() {
-        assertEquals(List.of(), CssImportsFor.of(Base.INSTANCE).imports());
-        assertEquals(List.of(Base.INSTANCE), CssImportsFor.of(Left.INSTANCE).imports());
-        assertEquals(List.of(Left.INSTANCE, Right.INSTANCE, Base.INSTANCE), CssImportsFor.of(Root.INSTANCE).imports());
+        assertEquals(List.of(), new CssImportsFor<>(Base.INSTANCE).imports());
+        assertEquals(List.of(Base.INSTANCE), new CssImportsFor<>(Left.INSTANCE).imports());
+        assertEquals(List.of(Left.INSTANCE, Right.INSTANCE, Base.INSTANCE), new CssImportsFor<>(Root.INSTANCE).imports());
     }
 
     @Test
     void aCycle_isRefusedWithItsNames() {
-        var e = assertThrows(IllegalStateException.class, () -> CssGroupResolver.resolve(List.of(CycA.INSTANCE)));
+        var e = assertThrows(IllegalStateException.class, () -> CssGroupResolver.INSTANCE.resolve(List.of(CycA.INSTANCE)));
         assertTrue(e.getMessage().contains("CycA -> CycB -> CycA"), e.getMessage());
     }
 
     @Test
     void resolve_emptyList() {
-        var result = CssGroupResolver.resolve(List.of());
+        var result = CssGroupResolver.INSTANCE.resolve(List.of());
         assertTrue(result.isEmpty());
     }
 
     @Test
     void resolve_singleNoDeps() {
-        var result = CssGroupResolver.resolve(List.of(Base.INSTANCE));
+        var result = CssGroupResolver.INSTANCE.resolve(List.of(Base.INSTANCE));
         assertEquals(List.of(Base.INSTANCE), result);
     }
 
     @Test
     void resolve_transitiveDeps_dependenciesFirst() {
-        var result = CssGroupResolver.resolve(List.of(Root.INSTANCE));
+        var result = CssGroupResolver.INSTANCE.resolve(List.of(Root.INSTANCE));
 
         assertEquals(4, result.size());
         // Base must come before Left and Right; Root must be last
@@ -102,14 +102,14 @@ class CssGroupResolverTest {
     @Test
     void resolve_diamondDedup() {
         // Base appears in both Left and Right's imports — should only appear once
-        var result = CssGroupResolver.resolve(List.of(Root.INSTANCE));
+        var result = CssGroupResolver.INSTANCE.resolve(List.of(Root.INSTANCE));
         long baseCount = result.stream().filter(c -> c instanceof Base).count();
         assertEquals(1, baseCount);
     }
 
     @Test
     void resolve_multipleRoots_dedup() {
-        var result = CssGroupResolver.resolve(List.of(Left.INSTANCE, Right.INSTANCE));
+        var result = CssGroupResolver.INSTANCE.resolve(List.of(Left.INSTANCE, Right.INSTANCE));
 
         // Base, Left, Right — Base shared but only appears once
         assertEquals(3, result.size());

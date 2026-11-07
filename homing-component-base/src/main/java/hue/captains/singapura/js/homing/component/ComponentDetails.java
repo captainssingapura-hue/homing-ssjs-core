@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.component;
 
 import hue.captains.singapura.js.homing.tree.RowDisplay;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.List;
 
@@ -10,12 +10,14 @@ import java.util.List;
  * answer, the way the crate tree has {@code CrateDetails}: typed, with the
  * one place strings are rendered in {@link #row()}.
  */
-public sealed interface ComponentDetails extends ValueObject {
+public sealed interface ComponentDetails extends Scalar {
 
     /** Narrowed to what a tree row draws. */
     RowDisplay row();
 
-    static String plural(int n, String noun) { return n + " " + noun + (n == 1 ? "" : "s"); }
+    /** {@code n} and the noun, with an {@code s} unless {@code n} is one: {@code 3 widgets}. */
+    /** {@code n} and the noun, in the plural unless it is one. */
+    default String plural(int n, String noun) { return n + " " + noun + (n == 1 ? "" : "s"); }
 
     /** The composition's root: every vehicle, counted. */
     record OfComposition(String name, int vehicleCount, int componentCount) implements ComponentDetails {

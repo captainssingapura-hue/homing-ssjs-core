@@ -27,8 +27,8 @@ public record ServedModule(String moduleClass, JsModuleType type, JsSource conte
     }
 
     /** Build from the complete served JS text. */
-    public static ServedModule of(String moduleClass, JsModuleType type, String servedText) {
-        return new ServedModule(moduleClass, type, JsSource.ofText(servedText));
+    public ServedModule(String moduleClass, JsModuleType type, String servedText) {
+        this(moduleClass, type, JsText.INSTANCE.source(servedText));
     }
 
     /** The complete served text. */

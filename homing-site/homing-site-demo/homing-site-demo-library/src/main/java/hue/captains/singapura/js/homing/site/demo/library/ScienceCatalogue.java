@@ -27,6 +27,6 @@ public record ScienceCatalogue() implements L1_Catalogue<LibraryCatalogue, Scien
 
     @Override
     public List<Leaf<ScienceCatalogue>> leaves() {
-        return List.of(Leaf.of(this, ORIGIN.title(), ORIGIN.author() + ", " + ORIGIN.year(), ORIGIN).badge("BOOK"));
+        return List.of(new Leaf<>(this, ORIGIN.title(), ORIGIN.author() + ", " + ORIGIN.year(), ORIGIN).badge("BOOK"));
     }
 }

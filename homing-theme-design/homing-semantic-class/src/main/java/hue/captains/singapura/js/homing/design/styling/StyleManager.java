@@ -7,7 +7,7 @@ import hue.captains.singapura.js.homing.core.util.ResourceReader;
 import hue.captains.singapura.js.homing.design.local.LocalStyle;
 import hue.captains.singapura.js.homing.design.semantic.DesignStyle;
 import hue.captains.singapura.js.homing.design.styles.CastingStyle;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.List;
 import java.util.Map;
@@ -54,7 +54,7 @@ public interface StyleManager {
      * @param css            the implementation of CSS it reaches, following delegations
      * @param says           whose it is, as the sheet says it
      */
-    record Resolved(CastingStyle<?, ?, ?, ?> implementation, CastingStyle<?, ?, ?, ?> css, String says) implements ValueObject {}
+    record Resolved(CastingStyle<?, ?, ?, ?> implementation, CastingStyle<?, ?, ?, ?> css, String says) implements Scalar {}
 
     /** How a style draws a casting: its own implementation, else its base layer's; a delegation followed to CSS. */
     Resolved resolve(DesignStyle<?> style, Casting casting);
@@ -63,7 +63,7 @@ public interface StyleManager {
     String rule(DesignStyle<?> style, Casting casting, ResourceReader reader);
 
     /** A casting's rule as a style serves it, from the classpath. */
-    default String rule(DesignStyle<?> style, Casting casting) { return rule(style, casting, ResourceReader.INSTANCE); }
+    default String rule(DesignStyle<?> style, Casting casting) { return rule(style, casting, ResourceReader.CLASSPATH); }
 
     /** A style's sheet: one class for every casting of the taxonomy, in the taxonomy's order. */
     String sheet(DesignStyle<?> style);
@@ -72,7 +72,7 @@ public interface StyleManager {
     Map<String, String> families(DesignStyle<?> style, ResourceReader reader);
 
     /** A style's family files, from the classpath. */
-    default Map<String, String> families(DesignStyle<?> style) { return families(style, ResourceReader.INSTANCE); }
+    default Map<String, String> families(DesignStyle<?> style) { return families(style, ResourceReader.CLASSPATH); }
 
     /** A style's file of one family, for reading only. */
     String family(DesignStyle<?> style, ComponentBranch head, ResourceReader reader);

@@ -25,20 +25,26 @@ public record ViewDoctrineRule() implements JsRule {
 
     public static final ViewDoctrineRule INSTANCE = new ViewDoctrineRule();
 
-    private static final List<Pattern> HTML_LITERAL = List.of(
+    private List<Pattern> htmlLiteral() {
+        return List.of(
             Pattern.compile("['\"]<[a-zA-Z!]"));
+    }
 
     // Possessive quantifiers (\s*+) so the whitespace can't back-track and leave
     // the empty-string lookahead evaluating at a space — `innerHTML = ""` (the
     // permitted clear, governed by the no-destruction rule) must NOT match.
-    private static final List<Pattern> HTML_WRITE = List.of(
+    private List<Pattern> htmlWrite() {
+        return List.of(
             Pattern.compile("\\.innerHTML\\s*+=\\s*+(?![\"']\\s*+[\"'])"),
             Pattern.compile("\\.outerHTML\\s*+=\\s*+(?![\"']\\s*+[\"'])"));
+    }
 
-    private static final List<Pattern> LOOKUP = List.of(
+    private List<Pattern> lookup() {
+        return List.of(
             Pattern.compile("document\\s*\\.\\s*getElementById\\s*\\("),
             Pattern.compile("\\.querySelector\\s*\\("),
             Pattern.compile("\\.querySelectorAll\\s*\\("));
+    }
 
     @Override public RuleId      id()     { return new RuleId("view-doctrine"); }
     @Override public String      intent() { return "Consumer views must be pure (no HTML literals, no innerHTML/outerHTML writes) and use owned references (no DOM lookups)."; }
@@ -48,13 +54,16 @@ public record ViewDoctrineRule() implements JsRule {
     public List<Finding> check(ServedModule module) {
         var findings = new ArrayList<Finding>();
         List<String> raw = module.lines();
-        List<String> stripped = JsText.stripComments(raw);
+        List<String> stripped = JsText.INSTANCE.stripComments(raw);
+        List<Pattern> htmlLiteral = htmlLiteral();
+        List<Pattern> htmlWrite = htmlWrite();
+        List<Pattern> lookup = lookup();
         for (int i = 0; i < stripped.size(); i++) {
             String line = stripped.get(i);
             String reason = null;
-            if (matchesAny(line, HTML_LITERAL))    reason = "HTML tag literal (Pure-Component Views)";
-            else if (matchesAny(line, HTML_WRITE)) reason = "innerHTML/outerHTML write (Pure-Component Views)";
-            else if (matchesAny(line, LOOKUP))     reason = "DOM lookup (Owned References)";
+            if (matchesAny(line, htmlLiteral))    reason = "HTML tag literal (Pure-Component Views)";
+            else if (matchesAny(line, htmlWrite)) reason = "innerHTML/outerHTML write (Pure-Component Views)";
+            else if (matchesAny(line, lookup))     reason = "DOM lookup (Owned References)";
             if (reason != null) {
                 findings.add(new Finding(module.moduleClass(), id(),
                         reason + ": " + raw.get(i).trim(), i));
@@ -63,7 +72,7 @@ public record ViewDoctrineRule() implements JsRule {
         return List.copyOf(findings);
     }
 
-    private static boolean matchesAny(String line, List<Pattern> patterns) {
+    private boolean matchesAny(String line, List<Pattern> patterns) {
         for (Pattern p : patterns) if (p.matcher(line).find()) return true;
         return false;
     }

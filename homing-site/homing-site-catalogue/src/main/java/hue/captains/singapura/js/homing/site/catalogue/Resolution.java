@@ -31,7 +31,9 @@ public sealed interface Resolution {
         PAST_A_LEAF
     }
 
+    /** The path that was walked. */
     Path path();
 
+    /** Whether the path led to a vertex or a leaf. */
     default boolean isHit() { return !(this instanceof Miss); }
 }

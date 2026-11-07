@@ -1,9 +1,9 @@
 package hue.captains.singapura.js.homing.conformance.rules;
 
-import java.util.Collection;
+import hue.captains.singapura.tao.ontology.Scalar;
+
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 
 /**
  * RFC 0044 Phase 7 — the set of <b>pre-existing</b> violations, grandfathered so
@@ -18,7 +18,7 @@ import java.util.TreeSet;
  * committed as a reviewable ledger. Regenerate it deliberately — never to
  * silence a fresh violation.</p>
  */
-public record Baseline(Set<String> fingerprints) {
+public record Baseline(Set<String> fingerprints) implements Scalar {
 
     public static final Baseline EMPTY = new Baseline(Set.of());
 
@@ -27,14 +27,8 @@ public record Baseline(Set<String> fingerprints) {
     }
 
     /** Parse a baseline from its line form (fingerprint per line; blanks / {@code #} comments skipped). */
-    public static Baseline of(Collection<String> lines) {
-        var out = new TreeSet<String>();
-        for (String raw : lines) {
-            String line = raw.strip();
-            if (line.isEmpty() || line.startsWith("#")) continue;
-            out.add(line);
-        }
-        return new Baseline(out);
+    public Baseline(List<String> lines) {
+        this(lines.stream().map(String::strip).filter(line -> !line.isEmpty() && !line.startsWith("#")).collect(java.util.stream.Collectors.toSet()));
     }
 
     /** True iff this exact violation (module + rule + offending code) was recorded. */
@@ -42,13 +36,8 @@ public record Baseline(Set<String> fingerprints) {
         return fingerprints.contains(finding.fingerprint());
     }
 
+    /** Whether nothing is grandfathered. */
     public boolean isEmpty() { return fingerprints.isEmpty(); }
+    /** How many findings are grandfathered. */
     public int size()        { return fingerprints.size(); }
-
-    /** The sorted line form of a set of findings — the content to record as a baseline file. */
-    public static List<String> record(Collection<Finding> findings) {
-        var out = new TreeSet<String>();
-        for (Finding f : findings) out.add(f.fingerprint());
-        return List.copyOf(out);
-    }
 }

@@ -54,7 +54,7 @@ public record Importances() implements StatelessFunctionalObject {
         return List.copyOf(states);
     }
 
-    private static List<Class<?>> superinterfaces(Class<?> c) {
+    private List<Class<?>> superinterfaces(Class<?> c) {
         var out = new LinkedHashSet<Class<?>>();
         var todo = new ArrayList<Class<?>>(List.of(c.getInterfaces()));
         while (!todo.isEmpty()) {

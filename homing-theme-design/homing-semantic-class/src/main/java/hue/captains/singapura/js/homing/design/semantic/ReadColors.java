@@ -96,7 +96,7 @@ public record ReadColors() implements StatelessFunctionalObject {
      * A node into the tree, in a layer's scheme: the branches above it first, from the top down, each the tree has not
      * yet coming in with it, each under the parent it says; a node listed twice, or a name naming two, refused.
      */
-    private static void add(ColorNode<?, ?, ?> node, ColorScheme scheme, Map<Class<?>, ColorTree.Read> read,
+    private void add(ColorNode<?, ?, ?> node, ColorScheme scheme, Map<Class<?>, ColorTree.Read> read,
                             Map<String, ColorNode<?, ?, ?>> byName, List<ColorProblem> problems) {
         var chain = new ArrayList<ColorNode<?, ?, ?>>();
         for (ColorNode<?, ?, ?> at = node; at != null; ) {
@@ -128,7 +128,7 @@ public record ReadColors() implements StatelessFunctionalObject {
     }
 
     /** Each leaf whole - a scale's knots, an interpolated colour's scale and degree, a share, a fixed colour's colour - or refused. */
-    private static ColorTree whole(Map<Class<?>, ColorTree.Read> read, List<ColorProblem> problems) {
+    private ColorTree whole(Map<Class<?>, ColorTree.Read> read, List<ColorProblem> problems) {
         for (ColorTree.Read r : read.values()) {
             switch (r.node()) {
                 case ColorScale<?, ?> s -> scale(s, read, problems);
@@ -158,7 +158,7 @@ public record ReadColors() implements StatelessFunctionalObject {
         return new ColorTree(read);
     }
 
-    private static void scale(ColorScale<?, ?> s, Map<Class<?>, ColorTree.Read> read, List<ColorProblem> problems) {
+    private void scale(ColorScale<?, ?> s, Map<Class<?>, ColorTree.Read> read, List<ColorProblem> problems) {
         List<? extends ColorScale.Knot<?>> knots;
         try { knots = s.knots(); } catch (RuntimeException e) {
             problems.add(new ColorProblem(Rule.SCALE_BADLY, s.token() + "'s knots cannot be made: " + e.getMessage()));

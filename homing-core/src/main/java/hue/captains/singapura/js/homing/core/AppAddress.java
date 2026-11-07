@@ -34,13 +34,12 @@ public record AppAddress(String app, Map<String, List<String>> args) {
     }
 
     /** Build from an app's typed params through its own codec — the normal call. */
-    public static <P extends AppModule._Param> AppAddress of(
-            String appName, ParamCodec<P> codec, P params) {
-        return new AppAddress(appName, codec.to(params));
+    public <P extends AppModule._Param> AppAddress(String appName, ParamCodec<P> codec, P params) {
+        this(appName, codec.to(params));
     }
 
     /** The flat {@code /app?app=…&…} rendering. */
     public String flat() {
-        return AppUrl.flat(app, args);
+        return AppUrl.INSTANCE.flat(app, args);
     }
 }

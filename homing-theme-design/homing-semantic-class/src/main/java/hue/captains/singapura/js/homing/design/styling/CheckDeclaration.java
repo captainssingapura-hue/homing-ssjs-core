@@ -15,24 +15,14 @@ import hue.captains.singapura.js.homing.design.styles.CastingStyle;
 import hue.captains.singapura.js.homing.design.styles.StyleDeclaration;
 import hue.captains.singapura.js.homing.design.styles.StylingRes;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.util.stream.Stream;
 
 /**
  * One jar's declaration held alone (RFC 0067, appendix The Style Jars): every implementation it lists, each by itself,
@@ -67,9 +57,10 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
      * @param casting  the casting it implements, by its token - or what its types name, when they name none
      * @param problems what refuses it
      */
-    public record Implementation(Class<?> type, String style, String casting, List<String> problems) implements ValueObject {
+    public record Implementation(Class<?> type, String style, String casting, List<String> problems) implements Scalar {
         public Implementation { problems = List.copyOf(problems); }
 
+        /** Whether nothing refuses the implementation. */
         public boolean passes() { return problems.isEmpty(); }
 
         /** How a test names it: its style's token, then its class's simple name. */
@@ -82,9 +73,10 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
      * @param implementations each implementation the declaration lists, held alone
      * @param problems        the jar's: two of one casting, something of it left out
      */
-    public record Checked(List<Implementation> implementations, List<String> problems) implements ValueObject {
+    public record Checked(List<Implementation> implementations, List<String> problems) implements Scalar {
         public Checked { implementations = List.copyOf(implementations); problems = List.copyOf(problems); }
 
+        /** Whether nothing refuses the jar or any of its implementations. */
         public boolean passes() { return problems.isEmpty() && implementations.stream().allMatch(Implementation::passes); }
 
         /** Every problem, the jar's then each implementation's, named. */
@@ -104,7 +96,7 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
 
     /** A declaration held: each implementation, then the jar. */
     public Checked check(StyleDeclaration declaration, Taxonomy taxonomy, ColorTree tree) {
-        String jar = CastingCss.home(declaration.getClass());
+        String jar = CastingCss.INSTANCE.home(declaration.getClass());
         var implementations = new ArrayList<Implementation>();
         var problems = new ArrayList<String>();
         var byKey = new LinkedHashMap<String, String>();
@@ -131,7 +123,7 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
         }
         var packages = new LinkedHashSet<String>();
         for (StyleDeclaration.Provided<?, ?> provided : declaration.provided()) packages.add(packageOf(provided.style()));
-        problems.addAll(leftOut(declaration.getClass(), declared, packages));
+        problems.addAll(CheckLeftOut.INSTANCE.problems(declaration.getClass(), declared, packages));
         return new Checked(implementations, problems);
     }
 
@@ -141,7 +133,7 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
         var problems = new ArrayList<String>();
         if (!type.isRecord() || type.getRecordComponents().length > 0)
             problems.add("is no stateless record: an implementation is a functional object, a record of no components");
-        if (jar != null && !jar.equals(CastingCss.home(type)))
+        if (jar != null && !jar.equals(CastingCss.INSTANCE.home(type)))
             problems.add("is not of the declaring jar: a jar declares its own implementations alone");
         String home = packageOf(style);
         if (!type.getName().replace('.', '/').startsWith(home) || type.getName().substring(home.length()).contains("."))
@@ -278,7 +270,7 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
     }
 
     /** A delegation: no CSS of its own; its chain to CSS, never round, of the same component; its colours the delegating scheme's. */
-    private static void delegation(Class<?> type, DesignStyle<?> style, Casting casting, StylingRes.Delegation<?, ?> delegation, ColorScheme scheme,
+    private void delegation(Class<?> type, DesignStyle<?> style, Casting casting, StylingRes.Delegation<?, ?> delegation, ColorScheme scheme,
                                    ColorTree tree, List<String> problems) {
         if (CastingCss.INSTANCE.read(type).isPresent())
             problems.add("delegates, and its jar has " + CastingCss.INSTANCE.resource(type) + ": a delegation has no CSS of its own");
@@ -311,60 +303,12 @@ public record CheckDeclaration() implements StatelessFunctionalObject {
     }
 
     /** An implementation's key: its style, component and role, by their classes. */
-    static Optional<String> key(Class<?> type) {
+    Optional<String> key(Class<?> type) {
         List<Class<?>> args = TypeArguments.INSTANCE.of(type, CastingStyle.class);
         if (args.size() != 4 || args.contains(null)) return Optional.empty();
         return Optional.of(args.get(1).getName() + "|" + args.get(2).getName() + "|" + args.get(3).getName());
     }
 
     /** A style's package, as a path: design.styles and its token, its dashes dropped - {@code design/styles/neobrutalism/}. */
-    public static String packageOf(DesignStyle<?> style) { return ROOT + style.token().replace("-", "") + "/"; }
-
-    /** Whatever of the jar its declaration leaves out, in its styles' packages: an implementation's class, a CSS file. */
-    private static List<String> leftOut(Class<?> declaration, Set<Class<?>> declared, Set<String> packages) {
-        var problems = new ArrayList<String>();
-        var cssDeclared = new HashMap<String, Class<?>>();
-        for (Class<?> c : declared) cssDeclared.put(CastingCss.INSTANCE.resource(c), c);
-        for (String entry : entries(declaration)) {
-            if (packages.stream().noneMatch(entry::startsWith) || entry.substring(entry.lastIndexOf('/') + 1).isEmpty()) continue;
-            if (packages.stream().noneMatch(p -> entry.lastIndexOf('/') == p.length() - 1)) continue;   // its own package, not one below
-            if (entry.endsWith(".css")) {
-                if (!cssDeclared.containsKey(entry))
-                    problems.add(entry + " is no CSS of an implementation the declaration lists: a jar's CSS is its declared implementations'");
-            } else if (entry.endsWith(".class") && !entry.contains("$")) {
-                String name = entry.substring(0, entry.length() - ".class".length()).replace('/', '.');
-                try {
-                    Class<?> c = Class.forName(name, false, declaration.getClassLoader());
-                    if (CastingStyle.class.isAssignableFrom(c) && !c.isInterface() && !declared.contains(c))
-                        problems.add(name + " implements a casting, and the declaration does not list it: a jar declares every implementation it holds");
-                } catch (ClassNotFoundException | LinkageError ignored) { }
-            }
-        }
-        return problems;
-    }
-
-    /** Every entry of the jar - or classes' directory - a class was loaded from, as a path under its root. */
-    private static List<String> entries(Class<?> of) {
-        var out = new ArrayList<String>();
-        var source = of.getProtectionDomain() == null ? null : of.getProtectionDomain().getCodeSource();
-        if (source == null || source.getLocation() == null) return out;
-        try {
-            Path at = Path.of(source.getLocation().toURI());
-            if (Files.isDirectory(at)) {
-                try (Stream<Path> walk = Files.walk(at)) {
-                    walk.filter(Files::isRegularFile).forEach(p -> out.add(at.relativize(p).toString().replace('\\', '/')));
-                }
-            } else {
-                try (JarFile jar = new JarFile(at.toFile())) {
-                    for (Enumeration<JarEntry> e = jar.entries(); e.hasMoreElements(); ) {
-                        JarEntry entry = e.nextElement();
-                        if (!entry.isDirectory()) out.add(entry.getName());
-                    }
-                }
-            }
-        } catch (IOException | URISyntaxException | IllegalArgumentException e) {
-            out.clear();
-        }
-        return out;
-    }
+    public String packageOf(DesignStyle<?> style) { return ROOT + style.token().replace("-", "") + "/"; }
 }

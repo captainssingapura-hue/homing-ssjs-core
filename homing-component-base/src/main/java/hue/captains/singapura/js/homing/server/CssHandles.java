@@ -30,7 +30,7 @@ public record CssHandles() implements EsModule<CssHandles> {
 
     @Override
     public ImportsFor<CssHandles> imports() {
-        return ImportsFor.noImports();
+        return new ImportsFor<>();
     }
 
     @Override

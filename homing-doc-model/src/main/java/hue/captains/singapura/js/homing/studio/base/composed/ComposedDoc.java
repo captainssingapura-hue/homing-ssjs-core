@@ -7,6 +7,7 @@ import hue.captains.singapura.js.homing.studio.base.LazyReferences;
 import hue.captains.singapura.js.homing.studio.base.Reference;
 import hue.captains.singapura.js.homing.studio.base.NoOwnContentException;
 
+import hue.captains.singapura.js.homing.tree.NodeNames;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -78,7 +79,7 @@ public record ComposedDoc(
         // "composed". The title is the only per-instance datum available by
         // default; an author who wants a segment that survives re-wording
         // supplies one through withSlug.
-        if (slug         == null) slug         = NodeName.conciseSlug(title);
+        if (slug         == null) slug         = NodeNames.INSTANCE.conciseSlug(title);
         segments   = List.copyOf(segments);
         // lazily declared references stay lazy: reading them now would read docs still being made
         references = references instanceof LazyReferences ? references : List.copyOf(references);
@@ -185,101 +186,74 @@ public record ComposedDoc(
     public List<TocEntry> toc() {
         var out = new ArrayList<TocEntry>();
         int segIndex = 0;
-        for (Segment s : segments) {
-            String anchor = "seg-" + segIndex;
-            switch (s) {
-                case TextSegment tx -> {
-                    // T0..T4 grammar has no headings inside body; title is
-                    // the only TOC contribution.
-                    tx.title().ifPresent(t -> out.add(new TocEntry(2, t, anchor)));
-                }
-                case CodeSegment cs -> {
-                    // Code body is opaque; only the optional title contributes
-                    // to the TOC.
-                    cs.title().ifPresent(t -> out.add(new TocEntry(2, t, anchor)));
-                }
-                case TypedCodeSegment tc -> {
-                    tc.title().ifPresent(t -> out.add(new TocEntry(2, t, anchor)));
-                }
-                case MarkdownSegment m -> {
-                    m.title().ifPresent(t -> out.add(new TocEntry(2, t, anchor)));
-                    // Heading extraction from the markdown body.
-                    int headingIdx = 0;
-                    for (String line : m.body().split("\n", -1)) {
-                        Matcher mh = HEADING.matcher(line);
-                        if (mh.matches()) {
-                            int level = mh.group(1).length();
-                            String text = mh.group(2).trim();
-                            String hAnchor = anchor + "-h" + headingIdx++;
-                            out.add(new TocEntry(level, text, hAnchor));
-                        }
-                    }
-                }
-                case SvgSegment v -> {
-                    String cap = v.resolvedCaption();
-                    if (!cap.isBlank()) {
-                        out.add(new TocEntry(2, cap, anchor));
-                    }
-                }
-                case TableSegment t -> {
-                    String cap = t.resolvedCaption();
-                    if (!cap.isBlank()) {
-                        out.add(new TocEntry(2, cap, anchor));
-                    }
-                }
-                case ImageSegment im -> {
-                    String cap = im.resolvedCaption();
-                    if (!cap.isBlank()) {
-                        out.add(new TocEntry(2, cap, anchor));
-                    }
-                }
-                case UnorderedListSegment ul -> { /* list body — no TOC contribution */ }
-                case OrderedListSegment ol -> { /* list body — no TOC contribution */ }
-                case ParagraphSegment p -> {
-                    // A plain paragraph is body only — no title, no TOC contribution.
-                }
-                case ComposedSegment cd -> {
-                    // RFC 0024 P1c — recursive composed segment. TOC entry uses
-                    // the resolved caption (the segment's caption-override
-                    // takes precedence over the embedded doc's title).
-                    String cap = cd.resolvedCaption();
-                    if (!cap.isBlank()) {
-                        out.add(new TocEntry(2, cap, anchor));
-                    }
-                    // Note: we do NOT recursively expand the embedded doc's
-                    // TOC into the parent's TOC. Each ComposedDoc owns its
-                    // own TOC; the embedded doc renders its TOC inside its
-                    // own sub-tree when mounted. Flattening would
-                    // structurally conflict with the recursive mount model
-                    // (each level's TOC sidebar lives next to its own body).
-                }
-                case RelationSegment rs -> {
-                    rs.caption().ifPresent(cap -> out.add(new TocEntry(2, cap.raw(), anchor)));
-                }
+        for (Segment s : segments) out.addAll(tocOf(s, "seg-" + segIndex++));
+        return out;
+    }
+
+    /** One segment's entries, under its anchor. */
+    private List<TocEntry> tocOf(Segment s, String anchor) {
+        return switch (s) {
+            // T0..T4 grammar has no headings inside body; title is the only TOC contribution.
+            case TextSegment tx -> titled(tx.title(), anchor);
+            // Code body is opaque; only the optional title contributes to the TOC.
+            case CodeSegment cs -> titled(cs.title(), anchor);
+            case TypedCodeSegment tc -> titled(tc.title(), anchor);
+            case MarkdownSegment m -> headed(m, anchor);
+            case SvgSegment v -> captioned(v.resolvedCaption(), anchor);
+            case TableSegment t -> captioned(t.resolvedCaption(), anchor);
+            case ImageSegment im -> captioned(im.resolvedCaption(), anchor);
+            case UnorderedListSegment ul -> List.of();   // list body — no TOC contribution
+            case OrderedListSegment ol -> List.of();     // list body — no TOC contribution
+            case ParagraphSegment p -> List.of();        // a plain paragraph is body only — no title, no TOC contribution
+            // RFC 0024 P1c — recursive composed segment. TOC entry uses the resolved caption (the segment's
+            // caption-override takes precedence over the embedded doc's title).
+            // Note: we do NOT recursively expand the embedded doc's TOC into the parent's TOC. Each ComposedDoc owns
+            // its own TOC; the embedded doc renders its TOC inside its own sub-tree when mounted. Flattening would
+            // structurally conflict with the recursive mount model (each level's TOC sidebar lives next to its own body).
+            case ComposedSegment cd -> captioned(cd.resolvedCaption(), anchor);
+            case RelationSegment rs -> titled(rs.caption().map(cap -> cap.raw()), anchor);
+        };
+    }
+
+    /** A markdown segment's entries: its title, if present, then the ATX headings of its body. */
+    private List<TocEntry> headed(MarkdownSegment m, String anchor) {
+        var out = new ArrayList<>(titled(m.title(), anchor));
+        int headingIdx = 0;
+        for (String line : m.body().split("\n", -1)) {
+            Matcher mh = HEADING.matcher(line);
+            if (mh.matches()) {
+                int level = mh.group(1).length();
+                String text = mh.group(2).trim();
+                String hAnchor = anchor + "-h" + headingIdx++;
+                out.add(new TocEntry(level, text, hAnchor));
             }
-            segIndex++;
         }
         return out;
+    }
+
+    /** A level-2 entry from a title, if there is one. */
+    private List<TocEntry> titled(Optional<String> title, String anchor) {
+        return title.map(t -> List.of(new TocEntry(2, t, anchor))).orElse(List.of());
+    }
+
+    /** A level-2 entry from a caption, unless it is blank. */
+    private List<TocEntry> captioned(String caption, String anchor) {
+        return caption.isBlank() ? List.of() : List.of(new TocEntry(2, caption, anchor));
     }
 
     // -----------------------------------------------------------------------
     // Convenience factories
     // -----------------------------------------------------------------------
 
-    /** Deterministic UUID derivation for code-defined ComposedDocs. */
-    public static UUID deterministicUuid(String seed) {
-        return UUID.nameUUIDFromBytes(("composed:" + seed).getBytes(StandardCharsets.UTF_8));
-    }
-
     /** Build a ComposedDoc with no references — common case. */
-    public static ComposedDoc of(UUID uuid, String title, String summary, String category, List<Segment> segments) {
-        return new ComposedDoc(uuid, title, summary, summary, category, segments, List.of());
+    public ComposedDoc(UUID uuid, String title, String summary, String category, List<Segment> segments) {
+        this(uuid, title, summary, summary, category, segments, List.of());
     }
 
     /** Build a ComposedDoc with a separate abstract and no references. */
-    public static ComposedDoc of(UUID uuid, String title, String summary, String abstractText,
-                                 String category, List<Segment> segments) {
-        return new ComposedDoc(uuid, title, summary, abstractText, category, segments, List.of());
+    public ComposedDoc(UUID uuid, String title, String summary, String abstractText,
+                       String category, List<Segment> segments) {
+        this(uuid, title, summary, abstractText, category, segments, List.of());
     }
 
 }

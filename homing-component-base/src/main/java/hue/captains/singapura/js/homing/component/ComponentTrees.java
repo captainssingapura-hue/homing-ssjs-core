@@ -11,6 +11,7 @@ import hue.captains.singapura.js.homing.tree.DimensionValue;
 import hue.captains.singapura.js.homing.tree.NodeIdentities;
 import hue.captains.singapura.js.homing.tree.NodeIdentity;
 import hue.captains.singapura.js.homing.tree.NodeName;
+import hue.captains.singapura.js.homing.tree.NodeNames;
 import hue.captains.singapura.js.homing.tree.NormalizedNode;
 import hue.captains.singapura.js.homing.tree.RigidTrees;
 import hue.captains.singapura.js.homing.tree.TreeLevel;
@@ -55,6 +56,7 @@ public record ComponentTrees() implements StatelessFunctionalObject, StatelessSi
             Objects.requireNonNull(root, "root");
             details = Map.copyOf(details);
         }
+        /** What the vertex {@code id} is; null when the tree has no such vertex. */
         public ComponentDetails detailsOf(NodeIdentity id) { return details.get(id); }
     }
 
@@ -96,12 +98,12 @@ public record ComponentTrees() implements StatelessFunctionalObject, StatelessSi
         int components = 0;
         for (Crate crate : vehicles(topLevel)) {
             NormalizedNode standalone = normalize(crate, details);
-            kids.add(RigidTrees.graftUnder(standalone, TreeLevel.L0.INSTANCE));
+            kids.add(RigidTrees.INSTANCE.graftUnder(standalone, TreeLevel.L0.INSTANCE));
             components += countComponents(standalone);
         }
         var id = new ComponentNodeIdentity.OfRoot(rootName);
         details.put(id, new ComponentDetails.OfComposition(rootName, kids.size(), components));
-        return new Composition(new NormalizedNode(TreeLevel.L0.INSTANCE, NodeName.slug(rootName), id, label(rootName), kids), details);
+        return new Composition(new NormalizedNode(TreeLevel.L0.INSTANCE, NodeNames.INSTANCE.slug(rootName), id, label(rootName), kids), details);
     }
 
     /** A vehicle's catalogue as a standalone tree rooted at L0, its details recorded. */
@@ -142,7 +144,7 @@ public record ComponentTrees() implements StatelessFunctionalObject, StatelessSi
         List<EsModule<?>> by = exporters.getOrDefault(c.getClass(), List.of());
         details.put(id, new ComponentDetails.OfComponent(c.label(), c.shape(), c instanceof ElementComponent<?> el ? el.tag() : "",
                 c.summary(), by.size() == 1 ? by.get(0).getClass().getName() : "?", crate.name(), List.copyOf(words)));
-        return NormalizedNode.leaf(at, c.segment(), id, label(c.label()));
+        return new NormalizedNode(at, c.segment(), id, label(c.label()));
     }
 
     /**
@@ -195,7 +197,7 @@ public record ComponentTrees() implements StatelessFunctionalObject, StatelessSi
             }
         }
         var composed = compose("check", topLevel).root();
-        NodeIdentities.duplicatesIn(composed).forEach((id, n) -> problems.add("identity carried by " + n + " vertices: " + id));
+        NodeIdentities.INSTANCE.duplicatesIn(composed).forEach((id, n) -> problems.add("identity carried by " + n + " vertices: " + id));
         return List.copyOf(problems);
     }
 

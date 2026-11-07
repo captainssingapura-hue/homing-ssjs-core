@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.conformance.rules;
 
+import hue.captains.singapura.tao.ontology.Scalar;
+
 import java.util.Objects;
 
 /**
@@ -9,7 +11,7 @@ import java.util.Objects;
  *
  * @param value a non-blank kebab-case slug, e.g. {@code "no-cdn-import"}
  */
-public record RuleId(String value) {
+public record RuleId(String value) implements Scalar {
     public RuleId {
         Objects.requireNonNull(value, "RuleId.value");
         if (value.isBlank()) throw new IllegalArgumentException("RuleId.value must be non-blank");

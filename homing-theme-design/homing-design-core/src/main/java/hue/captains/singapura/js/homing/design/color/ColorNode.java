@@ -18,7 +18,7 @@ import hue.captains.singapura.js.homing.design.Trees;
 public sealed interface ColorNode<S extends ColorScheme, P, K extends ColorNode.Kind> permits ColorBranch, ColorLeaf {
 
     /** {@code accent-edge}, from its type. */
-    default String token() { return Trees.kebab(getClass().getSimpleName()); }
+    default String token() { return Trees.INSTANCE.kebab(getClass().getSimpleName()); }
 
     /**
      * Its parent, said by the node itself as a component says its branch (D49): the branch it hangs under, or

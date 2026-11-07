@@ -24,6 +24,11 @@ record Layer(String token, Map<Key, Answer<?>> answers, Layer base) {
 
     Layer { answers = Collections.unmodifiableMap(new LinkedHashMap<>(answers)); }
 
+    /** A style's answers, indexed - its implementations, then its colorings: refused when a class is answered twice, or asks a base there is none of. */
+    Layer(DesignStyle<?> style, Layer base) {
+        this(style.token(), LayerAnswers.INSTANCE.of(style, base), base);
+    }
+
     /** What this layer says for a node on a target, or null. */
     Answer<?> answer(Casting node, Target target) { return answers.get(new Key(node, target)); }
 
@@ -32,19 +37,5 @@ record Layer(String token, Map<Key, Answer<?>> answers, Layer base) {
         var out = new ArrayList<Layer>();
         for (Layer l = this; l != null; l = l.base()) out.add(l);
         return List.copyOf(out);
-    }
-
-    /** A style's answers, indexed - its implementations, then its colorings: refused when a class is answered twice, or asks a base there is none of. */
-    static Layer index(DesignStyle<?> style, Layer base) {
-        var out = new LinkedHashMap<Key, Answer<?>>();
-        for (Implementation<?> i : style.implementations()) put(style, out, i.node(), i.target(), i.answer(), base);
-        for (Coloring<?, ?> c : style.colorings()) put(style, out, c.node(), c.target(), c.answer(), base);
-        return new Layer(style.token(), out, base);
-    }
-
-    private static void put(DesignStyle<?> style, Map<Key, Answer<?>> out, Casting node, Target target, Answer<?> answer, Layer base) {
-        String where = style.token() + ": " + SemanticTokens.INSTANCE.casting(node) + " " + target.token();
-        if (answer instanceof Answer.FromBase<?> && base == null) throw new IllegalArgumentException(where + " asks its base, and " + style.token() + " has none");
-        if (out.putIfAbsent(new Key(node, target), answer) != null) throw new IllegalArgumentException(where + " is answered twice");
     }
 }

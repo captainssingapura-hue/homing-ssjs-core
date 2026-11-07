@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.tree;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 /**
  * What a vertex <b>is</b>, as opposed to where it sits — the link from a
@@ -50,5 +50,5 @@ import hue.captains.singapura.tao.ontology.ValueObject;
  *
  * @since RFC 0053
  */
-public interface NodeIdentity extends ValueObject {
+public interface NodeIdentity extends Scalar {
 }

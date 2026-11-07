@@ -19,7 +19,7 @@ class DomModuleTest {
         static final OtherModule INSTANCE = new OtherModule();
         record helper() implements Exportable._Constant<OtherModule> {}
 
-        @Override public ImportsFor<OtherModule> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<OtherModule> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<OtherModule> exports() {
             return new ExportsOf<>(INSTANCE, List.of(new helper()));
         }
@@ -31,7 +31,7 @@ class DomModuleTest {
 
         @Override
         public ImportsFor<MyDom> imports() {
-            return ImportsFor.<MyDom>builder()
+            return new ImportsFor._Builder<MyDom>()
                     .add(new ModuleImports<>(List.of(new Styles.btn()), Styles.INSTANCE))
                     .add(new ModuleImports<>(List.of(new OtherModule.helper()), OtherModule.INSTANCE))
                     .build();
@@ -49,7 +49,7 @@ class DomModuleTest {
 
         @Override
         public ImportsFor<PureDom> imports() {
-            return ImportsFor.<PureDom>builder()
+            return new ImportsFor._Builder<PureDom>()
                     .add(new ModuleImports<>(List.of(new OtherModule.helper()), OtherModule.INSTANCE))
                     .build();
         }

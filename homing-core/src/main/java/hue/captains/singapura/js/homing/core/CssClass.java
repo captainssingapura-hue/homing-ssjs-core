@@ -100,11 +100,11 @@ public interface CssClass<C extends CssGroup<C>> extends Exportable._Constant<C>
      * one object of that class. Used to derive group dependencies from class
      * dependencies.
      */
-    static CssGroup<?> groupOf(CssClass<?> cls) {
-        Class<?> enclosing = cls.getClass().getEnclosingClass();
+    default CssGroup<?> group() {
+        Class<?> enclosing = getClass().getEnclosingClass();
         if (enclosing == null || !CssGroup.class.isAssignableFrom(enclosing)) {
             throw new IllegalStateException(
-                    "CssClass " + cls.getClass().getName() + " is not nested in a CssGroup");
+                    "CssClass " + getClass().getName() + " is not nested in a CssGroup");
         }
         try {
             var field = enclosing.getDeclaredField("INSTANCE");

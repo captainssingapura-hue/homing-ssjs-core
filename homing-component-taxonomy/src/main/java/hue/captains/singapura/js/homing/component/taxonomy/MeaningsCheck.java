@@ -30,37 +30,37 @@ public record MeaningsCheck() implements StatelessFunctionalObject {
         var files = new LinkedHashMap<Class<?>, Set<String>>();   // each file, by its class: the headings its nodes would have
         var said = new LinkedHashMap<String, List<Object>>();
         for (Object node : nodes(taxonomy)) {
-            Class<?> top = Meanings.outermost(node.getClass());
-            files.computeIfAbsent(top, MeaningsCheck::own).add(Meanings.heading(node.getClass()));
+            Class<?> top = Meanings.INSTANCE.outermost(node.getClass());
+            files.computeIfAbsent(top, this::own).add(Meanings.INSTANCE.heading(node.getClass()));
             var meaning = Meanings.INSTANCE.of(node);
             if (meaning.isEmpty()) {
-                out.add(new TaxonomyProblem(Rule.NO_MEANING, Names.qualified(node) + " means nothing: no section '## "
-                        + Meanings.heading(node.getClass()) + "' with words in it, in " + Meanings.path(top)));
+                out.add(new TaxonomyProblem(Rule.NO_MEANING, Names.INSTANCE.qualified(node) + " means nothing: no section '## "
+                        + Meanings.INSTANCE.heading(node.getClass()) + "' with words in it, in " + Meanings.INSTANCE.path(top)));
                 continue;
             }
-            said.computeIfAbsent(Meanings.normalized(meaning.get().markdown()), x -> new ArrayList<>()).add(node);
+            said.computeIfAbsent(Meanings.INSTANCE.normalized(meaning.get().markdown()), x -> new ArrayList<>()).add(node);
         }
         files.forEach((top, headings) -> {
-            var text = Meanings.read(top);
+            var text = Meanings.INSTANCE.read(top);
             if (text.isEmpty()) return;
-            var read = Meanings.sections(text.get());
+            var read = Meanings.INSTANCE.sections(text.get());
             for (String astray : read.astray())
-                out.add(new TaxonomyProblem(Rule.MEANING_ASTRAY, Meanings.path(top) + ": " + astray));
+                out.add(new TaxonomyProblem(Rule.MEANING_ASTRAY, Meanings.INSTANCE.path(top) + ": " + astray));
             for (String heading : read.sections().keySet())
                 if (!headings.contains(heading))
-                    out.add(new TaxonomyProblem(Rule.MEANING_ASTRAY, Meanings.path(top) + ": '## " + heading
+                    out.add(new TaxonomyProblem(Rule.MEANING_ASTRAY, Meanings.INSTANCE.path(top) + ": '## " + heading
                             + "' names no node " + top.getSimpleName() + " declares"));
         });
         said.values().forEach(same -> {
             if (same.size() > 1)
-                out.add(new TaxonomyProblem(Rule.MEANING_TWICE, String.join(" and ", same.stream().map(Names::qualified).toList())
+                out.add(new TaxonomyProblem(Rule.MEANING_TWICE, String.join(" and ", same.stream().map(Names.INSTANCE::qualified).toList())
                         + " mean the same: one node, or two meanings"));
         });
         return out;
     }
 
     /** Every node a taxonomy holds that must mean something: each tree's root when anything of the tree is held, its branches, its leaves. */
-    private static List<Object> nodes(Taxonomy t) {
+    private List<Object> nodes(Taxonomy t) {
         var out = new ArrayList<Object>();
         if (!t.components().isEmpty()) out.add(Root.INSTANCE);
         out.addAll(t.branches());
@@ -68,12 +68,12 @@ public record MeaningsCheck() implements StatelessFunctionalObject {
         if (!t.roles().isEmpty()) out.add(RoleRoot.INSTANCE);
         out.addAll(t.roleBranches());
         out.addAll(t.roles());
-        if (!t.states().types().isEmpty()) out.addAll(StateTree.nodes(t.states().branches(), t.states().types()));
+        if (!t.states().types().isEmpty()) out.addAll(StateNodes.INSTANCE.of(t.states().branches(), t.states().types()));
         return out;
     }
 
     /** The headings a file has whatever is held: the class's own name, when the class is itself a node. */
-    private static Set<String> own(Class<?> top) {
+    private Set<String> own(Class<?> top) {
         var out = new HashSet<String>();
         if (Taxon.class.isAssignableFrom(top) || RoleNode.class.isAssignableFrom(top) || StateNode.class.isAssignableFrom(top))
             out.add(top.getSimpleName());

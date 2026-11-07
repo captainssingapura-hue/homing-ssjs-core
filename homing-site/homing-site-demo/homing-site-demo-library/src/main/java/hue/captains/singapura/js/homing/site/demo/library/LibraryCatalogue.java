@@ -16,7 +16,7 @@ public record LibraryCatalogue() implements L0_Catalogue<LibraryCatalogue> {
 
     public static final LibraryCatalogue INSTANCE = new LibraryCatalogue();
 
-    static final Navigable ABOUT = q -> Shell.page("About", """
+    static final Navigable ABOUT = q -> Shell.INSTANCE.page("About", """
             <h1>About this library</h1>
             <p>A site whose whole router is a catalogue tree. The root is at <code>/</code>,
                each shelf at its slug, each book under its shelf, and every address on the
@@ -38,7 +38,7 @@ public record LibraryCatalogue() implements L0_Catalogue<LibraryCatalogue> {
 
     @Override
     public List<Leaf<LibraryCatalogue>> leaves() {
-        return List.of(Leaf.of(this, "About this library", "What this site is and how it is routed.", ABOUT)
+        return List.of(new Leaf<>(this, "About this library", "What this site is and how it is routed.", ABOUT)
                            .badge("PLAIN"));
     }
 }

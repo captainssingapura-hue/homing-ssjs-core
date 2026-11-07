@@ -22,13 +22,15 @@ public record NoRawHrefRule() implements JsRule {
 
     public static final NoRawHrefRule INSTANCE = new NoRawHrefRule();
 
-    private static final List<Pattern> FORBIDDEN = List.of(
+    private List<Pattern> forbidden() {
+        return List.of(
             Pattern.compile("\\bhref\\s*="),
             Pattern.compile("\\.href\\b"),
             Pattern.compile("[\"']href[\"']"),
             Pattern.compile("\\bwindow\\.location\\b"),
             Pattern.compile("\\bwindow\\.open\\s*\\("),
             Pattern.compile("setAttribute\\s*\\(\\s*[\"']href"));
+    }
 
     @Override public RuleId      id()     { return new RuleId("no-raw-href"); }
     @Override public String      intent() { return "The literal 'href' may appear only as the injected manager identifier; raw href authoring is forbidden (use href.*)."; }
@@ -38,9 +40,10 @@ public record NoRawHrefRule() implements JsRule {
     public List<Finding> check(ServedModule module) {
         var findings = new ArrayList<Finding>();
         List<String> raw = module.lines();
-        List<String> stripped = JsText.stripComments(raw);
+        List<String> stripped = JsText.INSTANCE.stripComments(raw);
+        List<Pattern> forbidden = forbidden();
         for (int i = 0; i < stripped.size(); i++) {
-            for (Pattern p : FORBIDDEN) {
+            for (Pattern p : forbidden) {
                 if (p.matcher(stripped.get(i)).find()) {
                     findings.add(new Finding(module.moduleClass(), id(),
                             "raw href operation (use href.* API): " + raw.get(i).trim(), i));

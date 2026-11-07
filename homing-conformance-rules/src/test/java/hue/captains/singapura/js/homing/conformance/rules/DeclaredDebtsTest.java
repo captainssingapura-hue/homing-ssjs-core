@@ -27,7 +27,7 @@ class DeclaredDebtsTest {
     @ConformanceDebt(rule = WidgetDrawsOnlyComponentsRule.class, findings = 2, reason = "It makes its own elements until the containers exist")
     record IndebtedModule() implements DomModule<IndebtedModule>, SelfContent {
         static final IndebtedModule INSTANCE = new IndebtedModule();
-        @Override public ImportsFor<IndebtedModule> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<IndebtedModule> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<IndebtedModule> exports() { return new ExportsOf<>(INSTANCE, List.of()); }
         @Override public List<String> selfContent(ModuleNameResolver resolver) { return List.of(); }
     }
@@ -64,7 +64,7 @@ class DeclaredDebtsTest {
 
     @Test
     void aDebtIsOwedExactly_neverMore_andLoweredAsItIsPaid() {
-        var crates = List.of(new OneEntry(CrateEntry.of(IndebtedModule.INSTANCE)));
+        var crates = List.of(new OneEntry(new CrateEntry(IndebtedModule.INSTANCE)));
         var widget = finding(WidgetDrawsOnlyComponentsRule.INSTANCE);
         var inline = finding(NoInlineStyleRule.INSTANCE);
         assertEquals(List.of(), DeclaredDebts.INSTANCE.unbalanced(crates, List.of(inline, widget, widget)), "as declared");

@@ -5,6 +5,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 public record EsModuleWriter<M extends EsModule<M>>(M module, ContentProvider<M> contentProvider, ModuleNameResolver nameResolver, ExportWriter exportWriter, ImportsWriterResolver importsWriterResolver) {
+    /** The module's JS, line by line: its imports, its {@code nav} const, its content, then its export statement. */
     public List<String> writeModule(){
         var allImports = module.imports().getAllImports();
         // RFC 0051 — NO params const is generated. An app is HANDED its params

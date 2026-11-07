@@ -19,10 +19,6 @@ public interface SchemeRule extends StatelessFunctionalObject {
     /** What the rule finds of the declarations registered. */
     Validation check(List<SchemeDeclaration<?>> declarations);
 
-    /** The rules a registry of schemes is held to, applied each apart. */
-    List<SchemeRule> RULES = List.of(new RegistersSome(), new EachSaysItsScheme(), new OnePerScheme(), new SchemesBelowRegistered(),
-            new EveryTreeReads());
-
     /** It registers a scheme. */
     record RegistersSome() implements SchemeRule {
         @Override public Validation check(List<SchemeDeclaration<?>> declarations) {

@@ -24,6 +24,8 @@ public enum Disposition {
         this.slug  = slug;
     }
 
+    /** The disposition's name as a person reads it: {@code Pre-existing}. */
     public String label() { return label; }
+    /** The disposition's name in lower case, with no spaces: {@code pre-existing}. */
     public String slug()  { return slug; }
 }

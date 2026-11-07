@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.composed.text;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.List;
 import java.util.Objects;
@@ -28,7 +28,7 @@ import java.util.Objects;
  *
  * @since RFC 0018 Phase 4
  */
-public sealed interface Inline extends ValueObject
+public sealed interface Inline extends Scalar
         permits Inline.Text, Inline.Bold, Inline.Italic, Inline.Code, Inline.Ref {
 
     /** Literal text run. */

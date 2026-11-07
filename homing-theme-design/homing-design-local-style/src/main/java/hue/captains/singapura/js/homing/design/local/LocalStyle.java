@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.component.taxonomy.ComponentBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.LocalStyleBranch;
 import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import hue.captains.singapura.js.homing.tree.NodeName;
+import hue.captains.singapura.js.homing.tree.NodeNames;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.util.List;
@@ -39,5 +40,5 @@ public interface LocalStyle<S extends ColorScheme, N extends ComponentBranch & L
     List<? extends ConcreteComponent<?, N, ?>> concretes();
 
     /** Its name, from its type: {@code MinesweeperVista} gives {@code minesweeper-vista}. */
-    default String token() { return NodeName.ofType(getClass(), "").value(); }
+    default String token() { return NodeNames.INSTANCE.ofType(getClass(), "").value(); }
 }

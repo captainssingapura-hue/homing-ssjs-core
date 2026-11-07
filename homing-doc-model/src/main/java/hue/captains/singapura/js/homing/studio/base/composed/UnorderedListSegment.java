@@ -16,6 +16,6 @@ import java.util.List;
 public record UnorderedListSegment(List<Listable> items) implements RigidSegment {
 
     public UnorderedListSegment {
-        items = ListItems.homogeneous(items, "UnorderedListSegment");
+        items = ListItems.INSTANCE.homogeneous(items, "UnorderedListSegment");
     }
 }

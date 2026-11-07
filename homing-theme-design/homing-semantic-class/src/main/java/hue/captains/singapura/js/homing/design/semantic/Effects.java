@@ -112,7 +112,7 @@ public record Effects() implements StatelessFunctionalObject {
     }
 
     /** Flat declarations, one to a line, each closed by its semicolon. */
-    private static List<String> declarations(String text) {
+    private List<String> declarations(String text) {
         var out = new ArrayList<String>();
         var buf = new StringBuilder();
         int depth = 0;
@@ -130,18 +130,18 @@ public record Effects() implements StatelessFunctionalObject {
         return out;
     }
 
-    private static void add(List<String> out, StringBuilder buf) {
+    private void add(List<String> out, StringBuilder buf) {
         String d = buf.toString().strip().replaceAll("\\s+", " ");
         buf.setLength(0);
         if (!d.isEmpty()) out.add(d + ";");
     }
 
     /** The properties flat declarations declare. */
-    private static Set<String> properties(String text) {
+    private Set<String> properties(String text) {
         var out = new LinkedHashSet<String>();
         for (String d : declarations(text)) out.add(d.substring(0, d.indexOf(':')).strip().toLowerCase(java.util.Locale.ROOT));
         return out;
     }
 
-    private static String oneLine(String text) { return text.strip().replaceAll("\\s+", " "); }
+    private String oneLine(String text) { return text.strip().replaceAll("\\s+", " "); }
 }

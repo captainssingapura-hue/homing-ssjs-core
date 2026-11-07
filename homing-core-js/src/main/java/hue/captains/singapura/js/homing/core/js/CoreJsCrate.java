@@ -28,10 +28,10 @@ public final class CoreJsCrate implements Crate {
     @Override
     public List<CrateEntry> entries() {
         return List.of(
-                CrateEntry.of(TreeRendererModule.INSTANCE),
-                CrateEntry.of(DomOpsPartyModule.INSTANCE),
-                CrateEntry.of(DomOpsPartyBaseModule.INSTANCE),
-                CrateEntry.of(NodeContentModule.INSTANCE),
-                CrateEntry.of(TocSyncSecretaryModule.INSTANCE));
+                new CrateEntry(TreeRendererModule.INSTANCE),
+                new CrateEntry(DomOpsPartyModule.INSTANCE),
+                new CrateEntry(DomOpsPartyBaseModule.INSTANCE),
+                new CrateEntry(NodeContentModule.INSTANCE),
+                new CrateEntry(TocSyncSecretaryModule.INSTANCE));
     }
 }

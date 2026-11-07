@@ -47,7 +47,7 @@ public interface DerivedCss<D extends DerivedCss<D>> extends EsModule<D> {
 
     @Override
     default ImportsFor<D> imports() {
-        return ImportsFor.noImports();
+        return new ImportsFor<>();
     }
 
     @SuppressWarnings("unchecked")

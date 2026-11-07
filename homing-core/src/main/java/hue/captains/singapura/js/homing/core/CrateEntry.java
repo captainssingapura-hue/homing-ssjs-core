@@ -7,12 +7,12 @@ import java.util.Objects;
  * Crate model). Two axes:
  * <ul>
  *   <li><b>Mechanical</b> — the inferred {@link ModuleForm}, decidable from the
- *       module's type with zero author ceremony ({@link #of(EsModule)}).</li>
+ *       module's type with zero author ceremony ({@link #CrateEntry(EsModule)}).</li>
  *   <li><b>Domain</b> — an optional <em>declared</em> {@link JsModuleType}: the
  *       author's assertion of a module's role (a primitive, a secretary, a
  *       headless {@link JsModuleType#PURE_LOGIC} module …). Unlike the form it
  *       carries no mechanical marker, so the crate declares it explicitly via
- *       {@link #of(EsModule, JsModuleType)}. A {@code null} here means
+ *       {@link #CrateEntry(EsModule, JsModuleType)}. A {@code null} here means
  *       undeclared — the conformance engine treats that as the full-discipline
  *       {@link JsModuleType#CONSUMER} baseline.</li>
  * </ul>
@@ -42,7 +42,7 @@ public record CrateEntry(EsModule<?> module, ModuleForm form, JsModuleType decla
     }
 
     /** The types the classifier infers from a module's form — not an author's to assert. */
-    private static boolean isMechanical(StandardJsModuleType t) {
+    private boolean isMechanical(StandardJsModuleType t) {
         return switch (t) {
             case MANAGER_INJECTOR, GENERATED_CSS, BUNDLED_EXTERNAL, WIDGET -> true;
             case CONSUMER, PRIMITIVE, SECRETARY, PURE_LOGIC -> false;
@@ -50,14 +50,13 @@ public record CrateEntry(EsModule<?> module, ModuleForm form, JsModuleType decla
     }
 
     /** Pack a module, inferring its {@link ModuleForm}, domain role undeclared — the normal call. */
-    public static CrateEntry of(EsModule<?> module) {
-        return new CrateEntry(module, ModuleForm.of(module), null);
+    public CrateEntry(EsModule<?> module) {
+        this(module, ModuleForms.INSTANCE.of(module), null);
     }
 
     /** Pack a module with its declared domain {@link JsModuleType} — for the non-{@code CONSUMER} roles. */
-    public static CrateEntry of(EsModule<?> module, JsModuleType declaredType) {
-        return new CrateEntry(module, ModuleForm.of(module),
-                Objects.requireNonNull(declaredType, "declaredType"));
+    public CrateEntry(EsModule<?> module, JsModuleType declaredType) {
+        this(module, ModuleForms.INSTANCE.of(module), Objects.requireNonNull(declaredType, "declaredType"));
     }
 
     /** The module's fully-qualified class name — its stable served identity. */

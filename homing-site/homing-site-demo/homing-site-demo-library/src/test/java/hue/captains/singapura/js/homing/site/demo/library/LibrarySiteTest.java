@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.site.demo.library;
 
 import hue.captains.singapura.js.homing.site.Path;
 import hue.captains.singapura.js.homing.site.Query;
+import hue.captains.singapura.js.homing.site.catalogue.CatalogueLevels;
 import hue.captains.singapura.js.homing.site.catalogue.CatalogueTree;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +22,7 @@ class LibrarySiteTest {
     void fourCataloguesOverThreeLevels() {
         assertEquals(List.of(LibraryCatalogue.INSTANCE, FictionCatalogue.INSTANCE,
                              ScienceCatalogue.INSTANCE, PhysicsCatalogue.INSTANCE), TREE.all());
-        assertEquals(2, CatalogueTree.levelOf(PhysicsCatalogue.INSTANCE));
+        assertEquals(2, CatalogueLevels.INSTANCE.levelOf(PhysicsCatalogue.INSTANCE));
     }
 
     @Test
@@ -36,7 +37,7 @@ class LibrarySiteTest {
 
     @Test
     void aBookKnowsWhereItIs() {
-        var body = LibrarySite.ROUTER.resolve(Path.of("science", "physics", "qed")).orElseThrow().html(Query.NONE).body();
+        var body = LibrarySite.ROUTER.resolve(new Path("science", "physics", "qed")).orElseThrow().html(Query.NONE).body();
         assertTrue(body.contains("<nav class=\"trail\"><a href=\"/\">Library</a><span>/</span><a href=\"/science\">Science</a>"
                                + "<span>/</span><a href=\"/science/physics\">Physics</a><span>/</span>QED</nav>"), body);
         assertTrue(body.contains("4 crumbs deep"), body);
@@ -45,14 +46,14 @@ class LibrarySiteTest {
 
     @Test
     void aBookReadsItsOwnQuery() {
-        var body = LibrarySite.ROUTER.resolve(Path.of("fiction", "solaris")).orElseThrow().html(Query.of("format", "brief")).body();
+        var body = LibrarySite.ROUTER.resolve(new Path("fiction", "solaris")).orElseThrow().html(new Query("format", "brief")).body();
         assertTrue(!body.contains("ocean that thinks"), body);
         assertTrue(body.contains("href=\"?format=full\""), body);
     }
 
     @Test
     void thePlainPageIsServedAsItIs() {
-        assertSame(LibraryCatalogue.ABOUT, LibrarySite.ROUTER.resolve(Path.of("about-this-library")).orElseThrow());
+        assertSame(LibraryCatalogue.ABOUT, LibrarySite.ROUTER.resolve(new Path("about-this-library")).orElseThrow());
     }
 
     @Test
@@ -66,7 +67,7 @@ class LibrarySiteTest {
 
     @Test
     void misses() {
-        assertTrue(LibrarySite.ROUTER.resolve(Path.of("history")).isEmpty());
-        assertTrue(LibrarySite.ROUTER.resolve(Path.of("fiction", "solaris", "chapter-1")).isEmpty());
+        assertTrue(LibrarySite.ROUTER.resolve(new Path("history")).isEmpty());
+        assertTrue(LibrarySite.ROUTER.resolve(new Path("fiction", "solaris", "chapter-1")).isEmpty());
     }
 }

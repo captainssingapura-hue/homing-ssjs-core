@@ -22,7 +22,7 @@ public sealed interface Linkable extends Importable permits AppModule, ProxyApp 
     /**
      * The public URL identifier for this linkable. Used as the value of the
      * {@code ?app=} query parameter. Defaults — when not overridden — to the
-     * kebab-case derivation of the simple class name (see {@link #defaultSimpleName(Class)}).
+     * kebab-case derivation of the simple class name (see {@link SimpleNames#of(Class)}).
      *
      * <p>Override to lock the URL contract independently of the Java class
      * name (e.g., to keep a stable URL through future class renames).</p>
@@ -39,64 +39,4 @@ public sealed interface Linkable extends Importable permits AppModule, ProxyApp 
      */
     Class<?> paramsType();
 
-    /**
-     * Default simple-name derivation. Splits the class's simple name on
-     * uppercase boundaries, lowercases each piece, joins with {@code -}.
-     *
-     * <p>Examples:</p>
-     * <ul>
-     *   <li>{@code PitchDeck.class}     → {@code "pitch-deck"}</li>
-     *   <li>{@code WonderlandDemo.class} → {@code "wonderland-demo"}</li>
-     *   <li>{@code HTTPHandler.class}   → {@code "http-handler"}</li>
-     *   <li>{@code A.class}             → {@code "a"}</li>
-     * </ul>
-     *
-     * <p>For an acronym followed by a normal word ({@code HTTPHandler}), the
-     * acronym is treated as a single segment.</p>
-     */
-    static String defaultSimpleName(Class<?> cls) {
-        String simple = cls.getSimpleName();
-        if (simple.isEmpty()) {
-            throw new IllegalArgumentException("Cannot derive simple name from empty class name");
-        }
-
-        StringBuilder out = new StringBuilder(simple.length() + 4);
-        int i = 0;
-        int n = simple.length();
-        while (i < n) {
-            char c = simple.charAt(i);
-            if (Character.isUpperCase(c)) {
-                // Walk a run of uppercase chars (handles acronyms like HTTP).
-                int start = i;
-                while (i < n && Character.isUpperCase(simple.charAt(i))) {
-                    i++;
-                }
-                int runEnd = i; // exclusive
-
-                // If a non-upper follows, the LAST upper of the run starts the next word.
-                // E.g., "HTTPHandler" → run [HTTP], then "Handler" — the H of Handler
-                // belongs to the next word, not the acronym.
-                int acronymEnd = (i < n && Character.isLowerCase(simple.charAt(i)) && (runEnd - start) > 1)
-                        ? runEnd - 1
-                        : runEnd;
-
-                if (acronymEnd > start) {
-                    if (out.length() > 0) out.append('-');
-                    for (int k = start; k < acronymEnd; k++) {
-                        out.append(Character.toLowerCase(simple.charAt(k)));
-                    }
-                }
-                if (acronymEnd < runEnd) {
-                    // The leftover upper char starts the next word.
-                    if (out.length() > 0) out.append('-');
-                    out.append(Character.toLowerCase(simple.charAt(acronymEnd)));
-                }
-            } else {
-                // Continue the current word.
-                out.append(c);
-                i++;
-            }
-        }
-        return out.toString();
-    }
 }

@@ -29,7 +29,7 @@ record TreeChecks() implements StatelessFunctionalObject {
         byName.forEach((name, same) -> {
             if (same.size() > 1)
                 out.add(new TaxonomyProblem(Rule.TREE_NAME_TWICE, "'" + name + "' names " + same.size() + " nodes of the tree of "
-                        + tree + ": " + String.join(" and ", same.stream().map(Names::qualified).toList())));
+                        + tree + ": " + String.join(" and ", same.stream().map(Names.INSTANCE::qualified).toList())));
         });
         return List.copyOf(out);
     }
@@ -41,22 +41,22 @@ record TreeChecks() implements StatelessFunctionalObject {
             if (!(s instanceof Classed<?> t)) continue;
             List<StateValue> values = t.values();
             if (values == null || values.size() < 2) {
-                out.add(new TaxonomyProblem(Rule.BAD_STATE_VALUES, Names.qualified(t) + " has "
+                out.add(new TaxonomyProblem(Rule.BAD_STATE_VALUES, Names.INSTANCE.qualified(t) + " has "
                         + (values == null ? "no values" : values.size() + " value" + (values.size() == 1 ? "" : "s"))
                         + ": a type of state is one way or another, so two values at least"));
                 continue;
             }
             var seen = new HashSet<StateValue>();
             for (StateValue v : values)
-                if (v == null) out.add(new TaxonomyProblem(Rule.BAD_STATE_VALUES, Names.qualified(t) + " has a value that is nothing"));
-                else if (!seen.add(v)) out.add(new TaxonomyProblem(Rule.BAD_STATE_VALUES, Names.qualified(t) + " has the value " + v + " twice"));
+                if (v == null) out.add(new TaxonomyProblem(Rule.BAD_STATE_VALUES, Names.INSTANCE.qualified(t) + " has a value that is nothing"));
+                else if (!seen.add(v)) out.add(new TaxonomyProblem(Rule.BAD_STATE_VALUES, Names.INSTANCE.qualified(t) + " has the value " + v + " twice"));
             Map<StateValue, String> words = t.words() == null ? Map.of() : t.words();
             words.forEach((v, w) -> {
                 if (!values.contains(v) || v.equals(values.get(0)))
-                    out.add(new TaxonomyProblem(Rule.BAD_STATE_VALUES, Names.qualified(t) + " gives a design word to " + v
+                    out.add(new TaxonomyProblem(Rule.BAD_STATE_VALUES, Names.INSTANCE.qualified(t) + " gives a design word to " + v
                             + (values.contains(v) ? ", its rest - a look, not a word" : ", which is none of its values")));
                 else if (w == null || !w.matches("[a-z][a-z0-9]*(-[a-z0-9]+)*"))
-                    out.add(new TaxonomyProblem(Rule.BAD_STATE_VALUES, Names.qualified(t) + "'s " + v + " has the design word '" + w
+                    out.add(new TaxonomyProblem(Rule.BAD_STATE_VALUES, Names.INSTANCE.qualified(t) + "'s " + v + " has the design word '" + w
                             + "': lower case, its words joined by hyphens"));
             });
         }
@@ -71,19 +71,19 @@ record TreeChecks() implements StatelessFunctionalObject {
         var out = new ArrayList<TaxonomyProblem>();
         for (StateType<?> s : types) {
             if (s instanceof Pseudo && !(s instanceof Classed<?>))
-                out.add(new TaxonomyProblem(Rule.PSEUDO_BADLY, Names.qualified(s) + " is a pseudo state that is not classed: a pseudo state is a flag"));
+                out.add(new TaxonomyProblem(Rule.PSEUDO_BADLY, Names.INSTANCE.qualified(s) + " is a pseudo state that is not classed: a pseudo state is a flag"));
             if (!(s instanceof Classed<?> t)) continue;
             if (Importances.INSTANCE.levelOf(t).isEmpty())
-                out.add(new TaxonomyProblem(Rule.STATE_UNRANKED, Names.qualified(t) + " has no level of importance: every state "
+                out.add(new TaxonomyProblem(Rule.STATE_UNRANKED, Names.INSTANCE.qualified(t) + " has no level of importance: every state "
                         + "implements one, Importance.Primary to Importance.Senary"));
             if (t instanceof Pseudo p) {
                 List<StateValue> values = t.values();
                 if (values != null && values.size() != 2)
-                    out.add(new TaxonomyProblem(Rule.PSEUDO_BADLY, Names.qualified(t) + " is a pseudo state with " + values.size()
+                    out.add(new TaxonomyProblem(Rule.PSEUDO_BADLY, Names.INSTANCE.qualified(t) + " is a pseudo state with " + values.size()
                             + " values: a pseudo state is a flag, its one value beside its rest the one its pseudo-class shows"));
                 String pc = p.pseudoClass();
                 if (pc == null || !pc.matches(":[a-z][a-z-]*"))
-                    out.add(new TaxonomyProblem(Rule.PSEUDO_BADLY, Names.qualified(t) + "'s pseudo-class '" + pc + "' is none: ':hover', "
+                    out.add(new TaxonomyProblem(Rule.PSEUDO_BADLY, Names.INSTANCE.qualified(t) + "'s pseudo-class '" + pc + "' is none: ':hover', "
                             + "':focus-visible'"));
             }
         }
@@ -101,7 +101,7 @@ record TreeChecks() implements StatelessFunctionalObject {
             var listed = new HashSet<StateType<?>>();
             for (StateType<?> s : leaf.states() == null ? List.<StateType<?>>of() : leaf.states()) {
                 if (s == null) out.add(new TaxonomyProblem(Rule.STATES_LISTED_BADLY, who + " lists a state that is nothing"));
-                else if (!listed.add(s)) out.add(new TaxonomyProblem(Rule.STATES_LISTED_BADLY, who + " lists " + Names.of(s) + " twice"));
+                else if (!listed.add(s)) out.add(new TaxonomyProblem(Rule.STATES_LISTED_BADLY, who + " lists " + Names.INSTANCE.of(s) + " twice"));
             }
             var overridden = new HashSet<StateType<?>>();
             for (ImportanceOverride<?> o : leaf.importance() == null ? List.<ImportanceOverride<?>>of() : leaf.importance()) {
@@ -110,10 +110,10 @@ record TreeChecks() implements StatelessFunctionalObject {
                     continue;
                 }
                 if (!listed.contains(o.state()))
-                    out.add(new TaxonomyProblem(Rule.STATES_LISTED_BADLY, who + " overrides the level of " + Names.of(o.state())
+                    out.add(new TaxonomyProblem(Rule.STATES_LISTED_BADLY, who + " overrides the level of " + Names.INSTANCE.of(o.state())
                             + ", which it does not list"));
                 if (!overridden.add(o.state()))
-                    out.add(new TaxonomyProblem(Rule.STATES_LISTED_BADLY, who + " overrides the level of " + Names.of(o.state()) + " twice"));
+                    out.add(new TaxonomyProblem(Rule.STATES_LISTED_BADLY, who + " overrides the level of " + Names.INSTANCE.of(o.state()) + " twice"));
             }
         }
         return List.copyOf(out);
@@ -130,28 +130,28 @@ record TreeChecks() implements StatelessFunctionalObject {
             StateDomain domain;
             try { domain = t.domain(); }
             catch (RuntimeException e) {
-                if (!(t instanceof Classed<?>)) out.add(new TaxonomyProblem(Rule.BAD_STATE_DOMAIN, Names.qualified(t) + "'s domain is not to be made: " + e.getMessage()));
+                if (!(t instanceof Classed<?>)) out.add(new TaxonomyProblem(Rule.BAD_STATE_DOMAIN, Names.INSTANCE.qualified(t) + "'s domain is not to be made: " + e.getMessage()));
                 continue;   // a classed type's values are held by badValues
             }
-            if (domain == null) { out.add(new TaxonomyProblem(Rule.BAD_STATE_DOMAIN, Names.qualified(t) + " has no domain: what its values may be")); continue; }
+            if (domain == null) { out.add(new TaxonomyProblem(Rule.BAD_STATE_DOMAIN, Names.INSTANCE.qualified(t) + " has no domain: what its values may be")); continue; }
             if (t instanceof Classed<?> && !(domain instanceof StateDomain.Ranges r && !r.continuous()))
-                out.add(new TaxonomyProblem(Rule.BAD_STATE_DOMAIN, Names.qualified(t) + " is classed and its domain is no set of named values: a class is for a named value"));
+                out.add(new TaxonomyProblem(Rule.BAD_STATE_DOMAIN, Names.INSTANCE.qualified(t) + " is classed and its domain is no set of named values: a class is for a named value"));
             List<NamedChange> changes = t.changes();
-            if (changes == null) { out.add(new TaxonomyProblem(Rule.BAD_STATE_CHANGE, Names.qualified(t) + " names its changes as nothing: none is an empty list")); continue; }
+            if (changes == null) { out.add(new TaxonomyProblem(Rule.BAD_STATE_CHANGE, Names.INSTANCE.qualified(t) + " names its changes as nothing: none is an empty list")); continue; }
             var named = new HashSet<String>();
             for (NamedChange c : changes) {
-                if (c == null) { out.add(new TaxonomyProblem(Rule.BAD_STATE_CHANGE, Names.qualified(t) + " names a change that is nothing")); continue; }
-                if (!named.add(c.name())) out.add(new TaxonomyProblem(Rule.BAD_STATE_CHANGE, Names.qualified(t) + " names the change '" + c.name() + "' twice"));
+                if (c == null) { out.add(new TaxonomyProblem(Rule.BAD_STATE_CHANGE, Names.INSTANCE.qualified(t) + " names a change that is nothing")); continue; }
+                if (!named.add(c.name())) out.add(new TaxonomyProblem(Rule.BAD_STATE_CHANGE, Names.INSTANCE.qualified(t) + " names the change '" + c.name() + "' twice"));
                 switch (c.transition()) {
                     case NamedChange.Between b -> {
                         if (!(domain.allows(new StateDomain.Named(b.from())) && domain.allows(new StateDomain.Named(b.to()))))
-                            out.add(new TaxonomyProblem(Rule.BAD_STATE_CHANGE, Names.qualified(t) + "'s change '" + c.name() + "' is from " + b.from() + " to " + b.to()
+                            out.add(new TaxonomyProblem(Rule.BAD_STATE_CHANGE, Names.INSTANCE.qualified(t) + "'s change '" + c.name() + "' is from " + b.from() + " to " + b.to()
                                     + ", and it names no such values"));
                     }
                     case NamedChange.Rises r -> { if (!(domain instanceof StateDomain.Ranges x && x.continuous()))
-                        out.add(new TaxonomyProblem(Rule.BAD_STATE_CHANGE, Names.qualified(t) + "'s change '" + c.name() + "' is a rise, and it has no span of numbers")); }
+                        out.add(new TaxonomyProblem(Rule.BAD_STATE_CHANGE, Names.INSTANCE.qualified(t) + "'s change '" + c.name() + "' is a rise, and it has no span of numbers")); }
                     case NamedChange.Falls f -> { if (!(domain instanceof StateDomain.Ranges x && x.continuous()))
-                        out.add(new TaxonomyProblem(Rule.BAD_STATE_CHANGE, Names.qualified(t) + "'s change '" + c.name() + "' is a fall, and it has no span of numbers")); }
+                        out.add(new TaxonomyProblem(Rule.BAD_STATE_CHANGE, Names.INSTANCE.qualified(t) + "'s change '" + c.name() + "' is a fall, and it has no span of numbers")); }
                 }
             }
         }
@@ -168,7 +168,7 @@ record TreeChecks() implements StatelessFunctionalObject {
             for (StateValue v : values.subList(1, values.size())) {
                 String w;
                 try { w = t.word(v); } catch (IllegalArgumentException e) { continue; }
-                byWord.computeIfAbsent(w, x -> new ArrayList<>()).add(Names.qualified(t) + "(" + v + ")");
+                byWord.computeIfAbsent(w, x -> new ArrayList<>()).add(Names.INSTANCE.qualified(t) + "(" + v + ")");
             }
         }
         var out = new ArrayList<TaxonomyProblem>();

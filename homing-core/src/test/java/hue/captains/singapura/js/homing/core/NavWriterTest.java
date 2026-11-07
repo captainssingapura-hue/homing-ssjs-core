@@ -16,7 +16,7 @@ class NavWriterTest {
         public record link() implements AppLink<TargetA> {}
         static final TargetA INSTANCE = new TargetA();
         @Override public String title() { return "A"; }
-        @Override public ImportsFor<TargetA> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<TargetA> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<TargetA> exports() { return new ExportsOf<>(this, List.of()); }
     }
 
@@ -25,7 +25,7 @@ class NavWriterTest {
         static final TargetB INSTANCE = new TargetB();
         @Override public String simpleName() { return "custom-b"; }
         @Override public String title() { return "B"; }
-        @Override public ImportsFor<TargetB> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<TargetB> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<TargetB> exports() { return new ExportsOf<>(this, List.of()); }
     }
 
@@ -63,7 +63,7 @@ class NavWriterTest {
     @Test
     @DisplayName("CSS-only imports → no nav block")
     void onlyCss_noNav() {
-        var imports = ImportsFor.<TargetA>builder()
+        var imports = new ImportsFor._Builder<TargetA>()
                 .add(new ModuleImports<>(List.of(new OnlyCss.btn()), OnlyCss.INSTANCE))
                 .build();
         var writer = new NavWriter(imports.getAllImports());
@@ -73,7 +73,7 @@ class NavWriterTest {
     @Test
     @DisplayName("AppModule target → entry calls _homingBuildAppUrl with simpleName")
     void appModuleTarget() {
-        var imports = ImportsFor.<TargetA>builder()
+        var imports = new ImportsFor._Builder<TargetA>()
                 .add(new ModuleImports<>(List.of(new TargetA.link()), TargetA.INSTANCE))
                 .build();
         var lines = new NavWriter(imports.getAllImports()).write();
@@ -89,7 +89,7 @@ class NavWriterTest {
     @Test
     @DisplayName("AppModule with overridden simpleName uses the override")
     void appModuleWithOverriddenName() {
-        var imports = ImportsFor.<TargetA>builder()
+        var imports = new ImportsFor._Builder<TargetA>()
                 .add(new ModuleImports<>(List.of(new TargetB.link()), TargetB.INSTANCE))
                 .build();
         var joined = String.join("\n", new NavWriter(imports.getAllImports()).write());
@@ -99,7 +99,7 @@ class NavWriterTest {
     @Test
     @DisplayName("ProxyApp target with template params → emits interpolating function")
     void proxyAppWithParams() {
-        var imports = ImportsFor.<TargetA>builder()
+        var imports = new ImportsFor._Builder<TargetA>()
                 .add(new ModuleImports<>(List.of(new GitHubProxy.link()), GitHubProxy.INSTANCE))
                 .build();
         var joined = String.join("\n", new NavWriter(imports.getAllImports()).write());
@@ -116,7 +116,7 @@ class NavWriterTest {
     @Test
     @DisplayName("ProxyApp with no params → emits literal-only expression")
     void proxyAppLiteralOnly() {
-        var imports = ImportsFor.<TargetA>builder()
+        var imports = new ImportsFor._Builder<TargetA>()
                 .add(new ModuleImports<>(List.of(new StaticProxy.link()), StaticProxy.INSTANCE))
                 .build();
         var joined = String.join("\n", new NavWriter(imports.getAllImports()).write());
@@ -127,7 +127,7 @@ class NavWriterTest {
     @Test
     @DisplayName("multiple targets → multiple entries in insertion order")
     void multipleTargetsInOrder() {
-        var imports = ImportsFor.<TargetA>builder()
+        var imports = new ImportsFor._Builder<TargetA>()
                 .add(new ModuleImports<>(List.of(new TargetA.link()), TargetA.INSTANCE))
                 .add(new ModuleImports<>(List.of(new GitHubProxy.link()), GitHubProxy.INSTANCE))
                 .add(new ModuleImports<>(List.of(new TargetB.link()), TargetB.INSTANCE))
@@ -148,7 +148,7 @@ class NavWriterTest {
     @Test
     @DisplayName("the helper writes what the caller passed and stamps nothing (RFC 0064 D20)")
     void stampsNothing() {
-        var imports = ImportsFor.<TargetA>builder()
+        var imports = new ImportsFor._Builder<TargetA>()
                 .add(new ModuleImports<>(List.of(new TargetA.link()), TargetA.INSTANCE))
                 .build();
         var joined = String.join("\n", new NavWriter(imports.getAllImports()).write());
@@ -160,7 +160,7 @@ class NavWriterTest {
     @Test
     @DisplayName("nav object is wrapped in Object.freeze")
     void navIsFrozen() {
-        var imports = ImportsFor.<TargetA>builder()
+        var imports = new ImportsFor._Builder<TargetA>()
                 .add(new ModuleImports<>(List.of(new TargetA.link()), TargetA.INSTANCE))
                 .build();
         var joined = String.join("\n", new NavWriter(imports.getAllImports()).write());
@@ -170,7 +170,7 @@ class NavWriterTest {
     @Test
     @DisplayName("URL contract uses ?app=<simpleName>, not ?class=")
     void urlContractIsApp() {
-        var imports = ImportsFor.<TargetA>builder()
+        var imports = new ImportsFor._Builder<TargetA>()
                 .add(new ModuleImports<>(List.of(new TargetA.link()), TargetA.INSTANCE))
                 .build();
         var joined = String.join("\n", new NavWriter(imports.getAllImports()).write());
@@ -182,7 +182,7 @@ class NavWriterTest {
     @DisplayName("UrlTemplate.toJsExpression emits required-only expression")
     void toJsExpressionRequired() {
         record TwoP(String a, String b) {}
-        var t = UrlTemplate.compile("https://x.test/{a}/{b}", TwoP.class);
+        var t = new UrlTemplate("https://x.test/{a}/{b}", TwoP.class);
         assertEquals(
                 "\"https:\\/\\/x.test\\/\" + encodeURIComponent(p.a) + \"\\/\" + encodeURIComponent(p.b)",
                 t.toJsExpression("p"));
@@ -192,7 +192,7 @@ class NavWriterTest {
     @DisplayName("UrlTemplate.toJsExpression emits optional with default")
     void toJsExpressionOptionalDefault() {
         record P(Optional<String> q) {}
-        var t = UrlTemplate.compile("/x?q={q?:none}", P.class);
+        var t = new UrlTemplate("/x?q={q?:none}", P.class);
         var js = t.toJsExpression("p");
         assertTrue(js.contains("p.q != null ? encodeURIComponent(p.q) : encodeURIComponent(\"none\")"), js);
     }
@@ -201,7 +201,7 @@ class NavWriterTest {
     @DisplayName("UrlTemplate.toJsExpression emits optional without default")
     void toJsExpressionOptionalEmpty() {
         record P(Optional<String> q) {}
-        var t = UrlTemplate.compile("/x/{q?}", P.class);
+        var t = new UrlTemplate("/x/{q?}", P.class);
         var js = t.toJsExpression("p");
         assertTrue(js.contains("p.q != null ? encodeURIComponent(p.q) : \"\""), js);
     }
@@ -209,7 +209,7 @@ class NavWriterTest {
     @Test
     @DisplayName("a literal-only template → JS expression is just a quoted string")
     void toJsExpressionLiteralOnly() {
-        var t = UrlTemplate.compile("/health", Void.class);
+        var t = new UrlTemplate("/health", Void.class);
         assertEquals("\"\\/health\"", t.toJsExpression("p"));
     }
 }

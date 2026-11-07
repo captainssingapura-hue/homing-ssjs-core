@@ -46,11 +46,11 @@ public record AnswerBody() implements StatelessFunctionalObject {
     private static final Pattern WORD = Pattern.compile("[a-zA-Z][a-zA-Z0-9-]*");
     private static final Pattern FRAME = Pattern.compile("from|to|\\d+(\\.\\d+)?%");
 
-    /** The numbers an element sets on itself, which any body may read. */
-    private static final Set<String> DEGREES = Set.of(Extent.VAR, Growth.SIZE.var(), Growth.ASPECT.var());
-
-    /** CSS's named colours: a colour said by name is said all the same. */
-    private static final Set<String> NAMED = Set.of(("aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue "
+    private enum Words {
+        /** The numbers an element sets on itself, which any body may read. */
+        DEGREES(Set.of(Extent.VAR, Growth.SIZE.var(), Growth.ASPECT.var())),
+        /** CSS's named colours: a colour said by name is said all the same. */
+        NAMED(Set.of(("aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue "
             + "blueviolet brown burlywood cadetblue chartreuse chocolate coral cornflowerblue cornsilk crimson cyan darkblue darkcyan "
             + "darkgoldenrod darkgray darkgreen darkgrey darkkhaki darkmagenta darkolivegreen darkorange darkorchid darkred darksalmon "
             + "darkseagreen darkslateblue darkslategray darkslategrey darkturquoise darkviolet deeppink deepskyblue dimgray dimgrey "
@@ -63,14 +63,20 @@ public record AnswerBody() implements StatelessFunctionalObject {
             + "orchid palegoldenrod palegreen paleturquoise palevioletred papayawhip peachpuff peru pink plum powderblue purple "
             + "rebeccapurple red rosybrown royalblue saddlebrown salmon sandybrown seagreen seashell sienna silver skyblue "
             + "slateblue slategray slategrey snow springgreen steelblue tan teal thistle tomato turquoise violet wheat white "
-            + "whitesmoke yellow yellowgreen").split(" "));
+            + "whitesmoke yellow yellowgreen").split(" ")));
+
+        private final Set<String> all;
+
+        Words(Set<String> all) { this.all = all; }
+    }
+
 
     /**
      * Who may say what: a name for the messages, the properties it may declare - null for any but an animation's
      * own - and the colour targets whose registered colours it may read.
      */
     record Rights(String who, Set<String> owns, List<Target.Color> colouredBy) {
-        static Rights of(Target t) { return new Rights(t.token(), t.properties(), t.colouredBy()); }
+        Rights(Target t) { this(t.token(), t.properties(), t.colouredBy()); }
     }
 
     /** Refuses a body its target cannot say; says nothing of an empty one. */
@@ -79,7 +85,7 @@ public record AnswerBody() implements StatelessFunctionalObject {
         if (target.carrier() != Carrier.CSS) throw new IllegalArgumentException(target.token() + " is no CSS target: an answer for it says nothing here");
         if (target instanceof Target.Animation)
             throw new IllegalArgumentException(target.token() + " is answered with an animation effect, never with a body: name the effect");
-        block(Rights.of(target), stripComments(body), 0);
+        block(new Rights(target), stripComments(body), 0);
     }
 
     /** The properties flat declarations declare - no block in them - refused where the rights do not reach. */
@@ -113,7 +119,7 @@ public record AnswerBody() implements StatelessFunctionalObject {
     }
 
     /** The properties a block declares; its nested blocks checked as it goes. */
-    private static Set<String> block(Rights target, String text, int depth) {
+    private Set<String> block(Rights target, String text, int depth) {
         var declared = new HashSet<String>();
         var buf = new StringBuilder();
         int i = 0;
@@ -137,7 +143,7 @@ public record AnswerBody() implements StatelessFunctionalObject {
         return declared;
     }
 
-    private static void nested(Rights target, String selector, String inner, int depth) {
+    private void nested(Rights target, String selector, String inner, int depth) {
         if (depth > 3) throw new IllegalArgumentException("nested too deep");
         if (selector.startsWith("@media") || selector.startsWith("@supports")) { block(target, inner, depth + 1); return; }
         for (String part : selector.split(",")) {
@@ -148,7 +154,7 @@ public record AnswerBody() implements StatelessFunctionalObject {
         block(target, inner, depth + 1);
     }
 
-    private static void declare(Rights target, String text, Set<String> declared) {
+    private void declare(Rights target, String text, Set<String> declared) {
         String d = text.strip();
         if (d.isEmpty()) return;
         int colon = d.indexOf(':');
@@ -166,11 +172,11 @@ public record AnswerBody() implements StatelessFunctionalObject {
     }
 
     /** The variables a value reads: the element's degrees, and the colours of the leaf that colours this one. */
-    private static void reads(Rights target, String value) {
+    private void reads(Rights target, String value) {
         Matcher m = VAR.matcher(value);
         while (m.find()) {
             String name = m.group(1);
-            if (DEGREES.contains(name) || (target.owns() != null && target.owns().contains(name))) continue;
+            if (Words.DEGREES.all.contains(name) || (target.owns() != null && target.owns().contains(name))) continue;
             if (target.colouredBy().stream().anyMatch(c -> c.properties().contains(name))) continue;
             throw new IllegalArgumentException(target.who() + " reads " + name + ": it reads its degrees"
                     + (target.colouredBy().isEmpty() ? "" : " and " + String.join(", ", target.colouredBy().stream().map(Target::token).toList()) + "'s colours")
@@ -179,7 +185,7 @@ public record AnswerBody() implements StatelessFunctionalObject {
     }
 
     /** A value names no colour: colours are painted, in semantic colours, and read here only through the registered colours. */
-    private static void namesNoColour(Rights target, String value) {
+    private void namesNoColour(Rights target, String value) {
         String bare = value.replaceAll("\"[^\"]*\"|'[^']*'", " ");
         String found = null;
         Matcher hex = HEX.matcher(bare);
@@ -188,7 +194,7 @@ public record AnswerBody() implements StatelessFunctionalObject {
         else if (fn.find()) found = fn.group() + "...)";
         else {
             Matcher w = WORD.matcher(bare);
-            while (w.find()) if (NAMED.contains(w.group().toLowerCase(Locale.ROOT))) { found = w.group(); break; }
+            while (w.find()) if (Words.NAMED.all.contains(w.group().toLowerCase(Locale.ROOT))) { found = w.group(); break; }
         }
         if (found != null)
             throw new IllegalArgumentException(target.who() + " names a colour, " + found + ": colour is painted, never written"
@@ -196,7 +202,7 @@ public record AnswerBody() implements StatelessFunctionalObject {
                        : "; it is drawn in " + String.join(", ", target.colouredBy().stream().map(Target::token).toList()) + "'s"));
     }
 
-    private static int closing(String text, int open) {
+    private int closing(String text, int open) {
         char q = text.charAt(open);
         for (int i = open + 1; i < text.length(); i++) {
             if (text.charAt(i) == '\\') { i++; continue; }
@@ -205,7 +211,7 @@ public record AnswerBody() implements StatelessFunctionalObject {
         throw new IllegalArgumentException("a string is never closed");
     }
 
-    private static int matching(String text, int open, char o, char c) {
+    private int matching(String text, int open, char o, char c) {
         int depth = 0;
         for (int i = open; i < text.length(); i++) {
             char ch = text.charAt(i);
@@ -216,5 +222,5 @@ public record AnswerBody() implements StatelessFunctionalObject {
         throw new IllegalArgumentException("a '" + o + "' is never closed");
     }
 
-    private static String stripComments(String text) { return text.replaceAll("(?s)/\\*.*?\\*/", " "); }
+    private String stripComments(String text) { return text.replaceAll("(?s)/\\*.*?\\*/", " "); }
 }

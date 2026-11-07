@@ -137,7 +137,7 @@ public record PartyTreeWriter(PartyTree tree) {
     }
 
     /** Resolves an OwnerRef to its JS-variable name. */
-    private static String ownerJs(PartyTree.OwnerRef owner) {
+    private String ownerJs(PartyTree.OwnerRef owner) {
         return switch (owner) {
             case PartyTree.OwnerRef.PartyChief p -> "partyChief";
             case PartyTree.OwnerRef.ShellChief s -> "shellChief";

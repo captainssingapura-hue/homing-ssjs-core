@@ -42,35 +42,35 @@ public final class ServerCrate implements Crate, ComponentVehicle {
     @Override
     public List<CrateEntry> entries() {
         return List.of(
-                CrateEntry.of(CssClassManager.INSTANCE),
-                CrateEntry.of(HrefManager.INSTANCE),
-                CrateEntry.of(PreferenceSteward.INSTANCE),
-                CrateEntry.of(CssDependencyGraph.INSTANCE),
-                CrateEntry.of(CssHandles.INSTANCE),
-                CrateEntry.of(CssLoadProcedure.INSTANCE),
-                CrateEntry.of(CssLinks.INSTANCE),
-                CrateEntry.of(ThemeSheets.INSTANCE),
+                new CrateEntry(CssClassManager.INSTANCE),
+                new CrateEntry(HrefManager.INSTANCE),
+                new CrateEntry(PreferenceSteward.INSTANCE),
+                new CrateEntry(CssDependencyGraph.INSTANCE),
+                new CrateEntry(CssHandles.INSTANCE),
+                new CrateEntry(CssLoadProcedure.INSTANCE),
+                new CrateEntry(CssLinks.INSTANCE),
+                new CrateEntry(ThemeSheets.INSTANCE),
                 // RFC 0067, Two Classes per Leaf - an element wears its leaf's style-aware classes.
-                CrateEntry.of(StyledLeaves.INSTANCE),
+                new CrateEntry(StyledLeaves.INSTANCE),
                 // RFC 0066 E3 - the component base's own: the widget slot, a
                 // primitive that places and removes a root and mints nothing.
                 // Declared here because a Maven module has one crate, and this
                 // crate is the base's until the rename sweep.
-                CrateEntry.of(WidgetSlotModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
+                new CrateEntry(WidgetSlotModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
                 // RFC 0066 E3 - the Party primitive (RFC 0028), lifted from the workspace: headless.
-                CrateEntry.of(PartyModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
+                new CrateEntry(PartyModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
                 // RFC 0066 E3 - the keyboard party: its secretary, its steward (the DOM face,
                 // one per page), the walk over the focus tree, the claiming convention, and
                 // its events as data.
-                CrateEntry.of(FocusPartyModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
-                CrateEntry.of(KeyboardSecretaryModule.INSTANCE, StandardJsModuleType.SECRETARY),
-                CrateEntry.of(KeyboardStewardModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
-                CrateEntry.of(KeysModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
-                CrateEntry.of(KeyboardEventsModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
-                CrateEntry.of(KeyboardWalkModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
-                CrateEntry.of(KeyboardHomeModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
-                CrateEntry.of(KeyboardMarkModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
-                CrateEntry.of(KeyboardShortcutsModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
-                CrateEntry.of(KeyboardChordsModule.INSTANCE, StandardJsModuleType.PURE_LOGIC));
+                new CrateEntry(FocusPartyModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
+                new CrateEntry(KeyboardSecretaryModule.INSTANCE, StandardJsModuleType.SECRETARY),
+                new CrateEntry(KeyboardStewardModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
+                new CrateEntry(KeysModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
+                new CrateEntry(KeyboardEventsModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
+                new CrateEntry(KeyboardWalkModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
+                new CrateEntry(KeyboardHomeModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
+                new CrateEntry(KeyboardMarkModule.INSTANCE, StandardJsModuleType.PRIMITIVE),
+                new CrateEntry(KeyboardShortcutsModule.INSTANCE, StandardJsModuleType.PURE_LOGIC),
+                new CrateEntry(KeyboardChordsModule.INSTANCE, StandardJsModuleType.PURE_LOGIC));
     }
 }

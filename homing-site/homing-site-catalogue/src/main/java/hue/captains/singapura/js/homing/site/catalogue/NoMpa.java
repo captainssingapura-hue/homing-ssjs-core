@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.site.catalogue;
 
+import hue.captains.singapura.js.homing.base.lang.StatelessSingleton;
 import hue.captains.singapura.js.homing.core.AppModule;
 import hue.captains.singapura.js.homing.core.EsModule;
 import hue.captains.singapura.js.homing.server.ThemeRegistry;
@@ -8,6 +9,7 @@ import hue.captains.singapura.js.homing.site.Site;
 import hue.captains.singapura.js.homing.site.mpa.Brand;
 import hue.captains.singapura.js.homing.site.mpa.Mpa;
 import hue.captains.singapura.tao.http.action.ActionRegistry;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import io.vertx.ext.web.RoutingContext;
 
 /**
@@ -16,15 +18,15 @@ import io.vertx.ext.web.RoutingContext;
  * site's MPA was read into a tree that has none. A tree of pages that need no
  * site never asks it anything.
  */
-final class NoMpa implements Mpa {
+final class NoMpa implements Mpa, StatelessFunctionalObject, StatelessSingleton {
 
     static final NoMpa INSTANCE = new NoMpa();
 
     private NoMpa() {}
 
-    private static IllegalStateException refused() {
+    private IllegalStateException refused() {
         return new IllegalStateException("A catalogue made its pages with the site's MPA, but this tree was read without one:"
-                + " read it with CatalogueTree.of(root, mpa) - or CatalogueRouter.at(mount, root, mpa)");
+                + " read it with new CatalogueTree(root, mpa) - or CatalogueRouter.at(mount, root, mpa)");
     }
 
     @Override public Brand brand() { throw refused(); }

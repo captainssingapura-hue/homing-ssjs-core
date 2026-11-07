@@ -28,10 +28,10 @@ class RigidNodeNormalizerTest {
 
     /** The one content provider: an empty body is a structural node, else a paragraph. */
     private static final Function<String, RigidNodeContent> CONTENT =
-            body -> body.isEmpty() ? RigidNodeContent.of() : RigidNodeContent.of(ParagraphSegment.of(body));
+            body -> body.isEmpty() ? new RigidNodeContent() : new RigidNodeContent(new ParagraphSegment(body));
 
     private static RigidNode<String> root(String name, String title) {
-        return RigidNode.root("", new NodeName(name), new Title(title));   // structural root
+        return new RigidNode<>("", new NodeName(name), new Title(title));   // structural root
     }
 
     private static RigidNode<String> child(RigidNode<String> p, String name, String title, String body) {
@@ -91,7 +91,7 @@ class RigidNodeNormalizerTest {
 
     @Test
     void derivesTitleFromNodeNameWhenOmitted() {
-        var r = RigidNode.root("", new NodeName("root"));            // title defaults
+        var r = new RigidNode<>("", new NodeName("root"));            // title defaults
         var a = r.child("body", new NodeName("dancing-animals"));    // title defaults
         NormalizedNode structRoot = build(List.of(r, a)).structure();
 

@@ -4,12 +4,14 @@ import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
+import hue.captains.singapura.js.homing.core.CssGroupDependencies;
 import hue.captains.singapura.js.homing.core.DerivedCss;
 import hue.captains.singapura.js.homing.core.CssImportsFor;
 import hue.captains.singapura.js.homing.core.CssVar;
 import hue.captains.singapura.js.homing.core.EsModule;
 import hue.captains.singapura.js.homing.core.util.CssClassName;
 
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -44,19 +46,17 @@ import java.util.regex.Pattern;
  *       <td>a group depending on another crate's group from a crate that does not require it</td></tr>
  * </table>
  */
-public final class CssConformance {
+public record CssConformance() implements StatelessFunctionalObject {
+
+    public static final CssConformance INSTANCE = new CssConformance();
 
     public static final RuleId TOKEN_DECLARED    = new RuleId("css-token-declared");
     public static final RuleId NESTED_DECLARED   = new RuleId("css-nested-reference-declared");
     public static final RuleId CRATE_REACH       = new RuleId("css-crate-reach");
 
-    public static final List<RuleId> ALL = List.of(TOKEN_DECLARED, NESTED_DECLARED, CRATE_REACH);
-
-    private CssConformance() {}
-
     /** Every finding of every rule, over the closure. */
-    public static List<Finding> check(Collection<? extends Crate> closure) {
-        var graph = Graph.of(closure);
+    public List<Finding> check(Collection<? extends Crate> closure) {
+        var graph = new Graph(closure);
         var out = new ArrayList<Finding>();
         out.addAll(tokenDeclared(graph));
         out.addAll(nestedDeclared(graph));
@@ -71,16 +71,14 @@ public final class CssConformance {
         final Map<CssGroup<?>, Crate> crateOf = new LinkedHashMap<>();
         final Map<DerivedCss<?>, Crate> derivedCrateOf = new LinkedHashMap<>();
 
-        static Graph of(Collection<? extends Crate> closure) {
-            var g = new Graph();
+        Graph(Collection<? extends Crate> closure) {
             for (Crate c : closure) {
                 for (CrateEntry e : c.entries()) {
                     EsModule<?> m = e.module();
-                    if (m instanceof CssGroup<?> group) g.crateOf.put(group, c);
-                    if (m instanceof DerivedCss<?> sheet) g.derivedCrateOf.put(sheet, c);
+                    if (m instanceof CssGroup<?> group) crateOf.put(group, c);
+                    if (m instanceof DerivedCss<?> sheet) derivedCrateOf.put(sheet, c);
                 }
             }
-            return g;
         }
 
         /** The groups to check: everything crated. */
@@ -97,15 +95,15 @@ public final class CssConformance {
         }
     }
 
-    private static String id(CssGroup<?> g) { return g.getClass().getCanonicalName(); }
-    private static String cls(CssClass<?> c) { return c.getClass().getSimpleName(); }
+    private String id(CssGroup<?> g) { return g.getClass().getCanonicalName(); }
+    private String cls(CssClass<?> c) { return c.getClass().getSimpleName(); }
 
     // ── Rules over the graph ─────────────────────────────────────────────────
 
     /** {@code var(--name} — the variable a body reads. */
     static final Pattern TOKEN_READ = Pattern.compile("var\\(\\s*(--[A-Za-z0-9_-]+)");
 
-    static List<Finding> tokenDeclared(Graph g) {
+    List<Finding> tokenDeclared(Graph g) {
         var out = new ArrayList<Finding>();
         for (CssGroup<?> group : g.groups()) {
             for (CssClass<?> c : group.cssClasses()) {
@@ -130,16 +128,16 @@ public final class CssConformance {
     /** A class name inside a body: a nested selector naming another class. */
     static final Pattern CLASS_REF = Pattern.compile("(?<![\\w-])\\.([a-z][a-z0-9]*(?:-[a-z0-9]+)*)(?![\\w-])");
 
-    static List<Finding> nestedDeclared(Graph g) {
+    List<Finding> nestedDeclared(Graph g) {
         var out = new ArrayList<Finding>();
         for (CssGroup<?> group : g.groups()) {
             var own = new HashSet<String>();
-            for (CssClass<?> c : group.cssClasses()) own.add(CssClassName.toCssName(c.getClass()));
+            for (CssClass<?> c : group.cssClasses()) own.add(CssClassName.INSTANCE.toCssName(c.getClass()));
             for (CssClass<?> c : group.cssClasses()) {
                 String body = c.body();
                 if (body == null) continue;
                 var declared = new HashSet<String>();
-                for (CssClass<?> d : c.dependsOn()) declared.add(CssClassName.toCssName(d.getClass()));
+                for (CssClass<?> d : c.dependsOn()) declared.add(CssClassName.INSTANCE.toCssName(d.getClass()));
                 var undeclared = new TreeSet<String>();
                 Matcher m = CLASS_REF.matcher(stripValues(body));
                 while (m.find()) {
@@ -157,13 +155,13 @@ public final class CssConformance {
     }
 
     /** Drop declaration VALUES (after the colon, to the semicolon) and url()/strings, leaving selectors. */
-    static String stripValues(String body) {
+    String stripValues(String body) {
         return body.replaceAll("\"[^\"]*\"|'[^']*'", "\"\"")
                    .replaceAll("url\\([^)]*\\)", "url()")
                    .replaceAll(":[^;{}]*;", ";");
     }
 
-    static List<Finding> crateReach(Graph g) {
+    List<Finding> crateReach(Graph g) {
         var out = new ArrayList<Finding>();
         for (CssGroup<?> group : g.groups()) {
             Crate mine = g.crateOf(group);
@@ -171,7 +169,7 @@ public final class CssConformance {
             var required = new HashSet<String>();
             required.add(mine.name());
             for (Crate r : mine.requires()) required.add(r.name());
-            for (CssGroup<?> dep : CssImportsFor.dependenciesOf(group)) {
+            for (CssGroup<?> dep : CssGroupDependencies.INSTANCE.of(group)) {
                 Crate theirs = g.crateOf(dep);
                 if (theirs == null || required.contains(theirs.name())) continue;
                 out.add(new Finding(id(group), CRATE_REACH, "depends on " + id(dep) + " in crate '" + theirs.name()

@@ -3,7 +3,7 @@ package hue.captains.singapura.js.homing.design.styling;
 import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.core.util.ResourceReader;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -91,7 +91,7 @@ public record CastingCss() implements StatelessFunctionalObject {
     }
 
     /** Where a class was loaded from - its jar or its classes' directory - as the URL text its resources start with. */
-    static String home(Class<?> c) {
+    String home(Class<?> c) {
         CodeSource source = c.getProtectionDomain() == null ? null : c.getProtectionDomain().getCodeSource();
         if (source == null || source.getLocation() == null) return null;
         String at = source.getLocation().toString();
@@ -107,9 +107,10 @@ public record CastingCss() implements StatelessFunctionalObject {
      * @param keyframes the names of its keyframes
      * @param rooms     the names of the rooms it rules
      */
-    public record Marked(List<String> problems, Set<String> states, Set<String> keyframes, Set<String> rooms) implements ValueObject {
+    public record Marked(List<String> problems, Set<String> states, Set<String> keyframes, Set<String> rooms) implements Scalar {
         public Marked { problems = List.copyOf(problems); states = Set.copyOf(states); keyframes = Set.copyOf(keyframes); rooms = Set.copyOf(rooms); }
 
+        /** Whether no problem was found in the file's marks. */
         public boolean passes() { return problems.isEmpty(); }
     }
 
@@ -124,7 +125,7 @@ public record CastingCss() implements StatelessFunctionalObject {
         int rules = 0;
         for (ReadCss.Item item : read.items()) {
             switch (item) {
-                case ReadCss.Rule r when CastingRule.squeeze(r.selector()).equals(CASTING) -> {
+                case ReadCss.Rule r when ReadCss.INSTANCE.squeeze(r.selector()).equals(CASTING) -> {
                     rules++;
                     if (rules > 1) problems.add(name + ":" + r.line() + ": $casting is ruled twice: an implementation's CSS holds its casting's one rule");
                     else inside(name, r.body(), states, problems);
@@ -155,7 +156,7 @@ public record CastingCss() implements StatelessFunctionalObject {
     }
 
     /** Inside the casting's rule: each nested selector a state's mark, the browser's own, or a pseudo-element's - no class, no other $. */
-    private static void inside(String name, List<ReadCss.Item> body, Set<String> states, List<String> problems) {
+    private void inside(String name, List<ReadCss.Item> body, Set<String> states, List<String> problems) {
         for (ReadCss.Item item : body) {
             switch (item) {
                 case ReadCss.Rule r -> {
@@ -177,7 +178,7 @@ public record CastingCss() implements StatelessFunctionalObject {
     }
 
     /** Every $ in a value: a use of a keyframes the file writes. */
-    private static void values(String name, ReadCss.Item item, Set<String> keyframes, List<String> problems) {
+    private void values(String name, ReadCss.Item item, Set<String> keyframes, List<String> problems) {
         switch (item) {
             case ReadCss.Declaration d -> {
                 for (Matcher m = USE.matcher(d.value()); m.find(); )
@@ -227,5 +228,5 @@ public record CastingCss() implements StatelessFunctionalObject {
     }
 
     /** Whether a word is one a mark may carry. */
-    static boolean word(String w) { return NAME.matcher(w).matches(); }
+    boolean word(String w) { return NAME.matcher(w).matches(); }
 }

@@ -160,20 +160,20 @@ class ImplementationsTest {
     public record ButtonModule() implements DomModule<ButtonModule>, ImplForBranch<ImplementationsTest.Button> {
         public static final ButtonModule INSTANCE = new ButtonModule();
         public record Button() implements Exportable._Class<ButtonModule> {}
-        @Override public ImportsFor<ButtonModule> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<ButtonModule> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<ButtonModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new Button())); }
     }
     public record PlainButtonModule() implements DomModule<PlainButtonModule>, ImplFor<ImplementationsTest.PlainButton> {
         public static final PlainButtonModule INSTANCE = new PlainButtonModule();
         public record PlainButton() implements ElementComponent<PlainButtonModule> { @Override public String tag() { return "button"; } }
         public record PlainButtonFactory() implements Exportable._Constant<PlainButtonModule> {}
-        @Override public ImportsFor<PlainButtonModule> imports() { return ImportsFor.<PlainButtonModule>builder().add(new ModuleImports<>(List.of(new ButtonModule.Button()), ButtonModule.INSTANCE)).build(); }
+        @Override public ImportsFor<PlainButtonModule> imports() { return new ImportsFor._Builder<PlainButtonModule>().add(new ModuleImports<>(List.of(new ButtonModule.Button()), ButtonModule.INSTANCE)).build(); }
         @Override public ExportsOf<PlainButtonModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new PlainButton(), new PlainButtonFactory())); }
     }
     public record IconModule() implements DomModule<IconModule>, ImplFor<ImplementationsTest.Icon> {
         public static final IconModule INSTANCE = new IconModule();
         public record Icon() implements ElementComponent<IconModule> { @Override public String tag() { return "span"; } }
-        @Override public ImportsFor<IconModule> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<IconModule> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<IconModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new Icon())); }
     }
     /** The bar: its own module, importing the buttons it holds. */
@@ -181,7 +181,7 @@ class ImplementationsTest {
         public static final BarModule INSTANCE = new BarModule();
         public record Bar() implements BranchComponent<BarModule> {}
         @Override public ImportsFor<BarModule> imports() {
-            return ImportsFor.<BarModule>builder().add(new ModuleImports<>(List.of(new PlainButtonModule.PlainButton()), PlainButtonModule.INSTANCE)).build();
+            return new ImportsFor._Builder<BarModule>().add(new ModuleImports<>(List.of(new PlainButtonModule.PlainButton()), PlainButtonModule.INSTANCE)).build();
         }
         @Override public ExportsOf<BarModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new Bar())); }
     }
@@ -189,7 +189,7 @@ class ImplementationsTest {
         public static final DialogModule INSTANCE = new DialogModule();
         public record Dialog() implements BranchComponent<DialogModule> {}
         @Override public ImportsFor<DialogModule> imports() {
-            return ImportsFor.<DialogModule>builder()
+            return new ImportsFor._Builder<DialogModule>()
                     .add(new ModuleImports<>(List.of(new BarModule.Bar()), BarModule.INSTANCE))
                     .add(new ModuleImports<>(List.of(new IconModule.Icon()), IconModule.INSTANCE))
                     .build();
@@ -201,7 +201,7 @@ class ImplementationsTest {
         public static final IconButtonModule INSTANCE = new IconButtonModule();
         public record IconButton() implements ElementComponent<IconButtonModule> { @Override public String tag() { return "button"; } }
         @Override public ImportsFor<IconButtonModule> imports() {
-            return ImportsFor.<IconButtonModule>builder()
+            return new ImportsFor._Builder<IconButtonModule>()
                     .add(new ModuleImports<>(List.of(new ButtonModule.Button()), ButtonModule.INSTANCE))
                     .add(new ModuleImports<>(List.of(new IconModule.Icon()), IconModule.INSTANCE))
                     .build();
@@ -213,7 +213,7 @@ class ImplementationsTest {
         public static final StripModule INSTANCE = new StripModule();
         public record Strip() implements BranchComponent<StripModule> {}
         @Override public ImportsFor<StripModule> imports() {
-            return ImportsFor.<StripModule>builder()
+            return new ImportsFor._Builder<StripModule>()
                     .add(new ModuleImports<>(List.of(new IconButtonModule.IconButton()), IconButtonModule.INSTANCE))
                     .add(new ModuleImports<>(List.of(new IconModule.Icon()), IconModule.INSTANCE))
                     .build();
@@ -224,7 +224,7 @@ class ImplementationsTest {
     public record BarHelperModule() implements DomModule<BarHelperModule> {
         public static final BarHelperModule INSTANCE = new BarHelperModule();
         public record BarHelper() implements Exportable._Class<BarHelperModule> {}
-        @Override public ImportsFor<BarHelperModule> imports() { return ImportsFor.<BarHelperModule>builder().add(new ModuleImports<>(List.of(new BarModule.Bar()), BarModule.INSTANCE)).build(); }
+        @Override public ImportsFor<BarHelperModule> imports() { return new ImportsFor._Builder<BarHelperModule>().add(new ModuleImports<>(List.of(new BarModule.Bar()), BarModule.INSTANCE)).build(); }
         @Override public ExportsOf<BarHelperModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new BarHelper())); }
     }
     /** The dialog that makes its bar through the helper. */
@@ -232,7 +232,7 @@ class ImplementationsTest {
         public static final HelpedDialogModule INSTANCE = new HelpedDialogModule();
         public record Dialog() implements BranchComponent<HelpedDialogModule> {}
         @Override public ImportsFor<HelpedDialogModule> imports() {
-            return ImportsFor.<HelpedDialogModule>builder()
+            return new ImportsFor._Builder<HelpedDialogModule>()
                     .add(new ModuleImports<>(List.of(new BarHelperModule.BarHelper()), BarHelperModule.INSTANCE))
                     .add(new ModuleImports<>(List.of(new IconModule.Icon()), IconModule.INSTANCE))
                     .build();
@@ -246,7 +246,7 @@ class ImplementationsTest {
         public static final LooseDialogModule INSTANCE = new LooseDialogModule();
         public record Dialog() implements BranchComponent<LooseDialogModule> {}
         @Override public ImportsFor<LooseDialogModule> imports() {
-            return ImportsFor.<LooseDialogModule>builder()
+            return new ImportsFor._Builder<LooseDialogModule>()
                     .add(new ModuleImports<>(List.of(new PlainButtonModule.PlainButton()), PlainButtonModule.INSTANCE))
                     .add(new ModuleImports<>(List.of(new DangerButtonModule.DangerButton()), DangerButtonModule.INSTANCE))
                     .build();
@@ -258,39 +258,39 @@ class ImplementationsTest {
         public static final DangerButtonModule INSTANCE = new DangerButtonModule();
         public record DangerButton() implements ElementComponent<DangerButtonModule> { @Override public String tag() { return "button"; } }
         public record DangerButtonBuilder() implements Exportable._Constant<DangerButtonModule> {}
-        @Override public ImportsFor<DangerButtonModule> imports() { return ImportsFor.<DangerButtonModule>builder().add(new ModuleImports<>(List.of(new ButtonModule.Button()), ButtonModule.INSTANCE)).build(); }
+        @Override public ImportsFor<DangerButtonModule> imports() { return new ImportsFor._Builder<DangerButtonModule>().add(new ModuleImports<>(List.of(new ButtonModule.Button()), ButtonModule.INSTANCE)).build(); }
         @Override public ExportsOf<DangerButtonModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new DangerButton(), new DangerButtonBuilder())); }
     }
     public record OddIconModule() implements DomModule<OddIconModule>, ImplFor<ImplementationsTest.Icon> {
         public static final OddIconModule INSTANCE = new OddIconModule();
         public record Glyph() implements ElementComponent<OddIconModule> { @Override public String tag() { return "span"; } }
-        @Override public ImportsFor<OddIconModule> imports() { return ImportsFor.<OddIconModule>builder().add(new ModuleImports<>(List.of(new ButtonModule.Button()), ButtonModule.INSTANCE)).build(); }
+        @Override public ImportsFor<OddIconModule> imports() { return new ImportsFor._Builder<OddIconModule>().add(new ModuleImports<>(List.of(new ButtonModule.Button()), ButtonModule.INSTANCE)).build(); }
         @Override public ExportsOf<OddIconModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new Glyph())); }
     }
     public record AdriftModule() implements DomModule<AdriftModule> {
         public static final AdriftModule INSTANCE = new AdriftModule();
         public record Adrift() implements BranchComponent<AdriftModule> {}
-        @Override public ImportsFor<AdriftModule> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<AdriftModule> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<AdriftModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new Adrift())); }
     }
     public record StrayModule() implements DomModule<StrayModule>, ImplFor<ImplementationsTest.Stray> {
         public static final StrayModule INSTANCE = new StrayModule();
         public record Stray() implements ElementComponent<StrayModule> { @Override public String tag() { return "span"; } }
-        @Override public ImportsFor<StrayModule> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<StrayModule> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<StrayModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new Stray())); }
     }
     /** A module for a leaf the document wears: refused, whatever it exports. */
     public record BackdropModule() implements DomModule<BackdropModule>, ImplFor<ImplementationsTest.Backdrop> {
         public static final BackdropModule INSTANCE = new BackdropModule();
         public record Backdrop() implements ElementComponent<BackdropModule> { @Override public String tag() { return "html"; } }
-        @Override public ImportsFor<BackdropModule> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<BackdropModule> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<BackdropModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new Backdrop())); }
     }
 
     public record MarkModule() implements DomModule<MarkModule>, ImplForLeavesOf<ImplementationsTest.Mark> {
         public static final MarkModule INSTANCE = new MarkModule();
         public record Mark() implements ElementComponent<MarkModule> { @Override public String tag() { return "span"; } }
-        @Override public ImportsFor<MarkModule> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<MarkModule> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<MarkModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new Mark())); }
     }
 
@@ -298,7 +298,7 @@ class ImplementationsTest {
     private record BadgeModule() implements DomModule<BadgeModule>, ImplFor<ImplementationsTest.Badge> {
         public record Badge() implements BranchComponent<BadgeModule> {}
         @Override public ImportsFor<BadgeModule> imports() {
-            return ImportsFor.<BadgeModule>builder().add(new ModuleImports<>(List.of(new MarkModule.Mark()), MarkModule.INSTANCE)).build();
+            return new ImportsFor._Builder<BadgeModule>().add(new ModuleImports<>(List.of(new MarkModule.Mark()), MarkModule.INSTANCE)).build();
         }
         @Override public ExportsOf<BadgeModule> exports() { return new ExportsOf<>(this, List.of(new Badge())); }
     }
@@ -306,7 +306,7 @@ class ImplementationsTest {
     private record PickerModule() implements DomModule<PickerModule>, ImplFor<ImplementationsTest.Picker> {
         public record Picker() implements BranchComponent<PickerModule> {}
         @Override public ImportsFor<PickerModule> imports() {
-            return ImportsFor.<PickerModule>builder().add(new ModuleImports<>(List.of(new MarkModule.Mark()), MarkModule.INSTANCE)).build();
+            return new ImportsFor._Builder<PickerModule>().add(new ModuleImports<>(List.of(new MarkModule.Mark()), MarkModule.INSTANCE)).build();
         }
         @Override public ExportsOf<PickerModule> exports() { return new ExportsOf<>(this, List.of(new Picker())); }
     }
@@ -314,14 +314,14 @@ class ImplementationsTest {
     /** The badge without the marks' class; the icon with it, though it holds no mark. */
     private record BareBadge() implements DomModule<BareBadge>, ImplFor<ImplementationsTest.Badge> {
         public record Badge() implements BranchComponent<BareBadge> {}
-        @Override public ImportsFor<BareBadge> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<BareBadge> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<BareBadge> exports() { return new ExportsOf<>(this, List.of(new Badge())); }
     }
 
     private record MarkedIcon() implements DomModule<MarkedIcon>, ImplFor<ImplementationsTest.Icon> {
         public record Icon() implements ElementComponent<MarkedIcon> { @Override public String tag() { return "span"; } }
         @Override public ImportsFor<MarkedIcon> imports() {
-            return ImportsFor.<MarkedIcon>builder().add(new ModuleImports<>(List.of(new MarkModule.Mark()), MarkModule.INSTANCE)).build();
+            return new ImportsFor._Builder<MarkedIcon>().add(new ModuleImports<>(List.of(new MarkModule.Mark()), MarkModule.INSTANCE)).build();
         }
         @Override public ExportsOf<MarkedIcon> exports() { return new ExportsOf<>(this, List.of(new Icon())); }
     }
@@ -331,7 +331,7 @@ class ImplementationsTest {
         public static final MarkRoomModule INSTANCE = new MarkRoomModule();
         public record MarkRoom() implements Exportable._Class<MarkRoomModule> {}
         @Override public ImportsFor<MarkRoomModule> imports() {
-            return ImportsFor.<MarkRoomModule>builder().add(new ModuleImports<>(List.of(new MarkModule.Mark()), MarkModule.INSTANCE)).build();
+            return new ImportsFor._Builder<MarkRoomModule>().add(new ModuleImports<>(List.of(new MarkModule.Mark()), MarkModule.INSTANCE)).build();
         }
         @Override public ExportsOf<MarkRoomModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new MarkRoom())); }
     }
@@ -339,31 +339,31 @@ class ImplementationsTest {
     private record RoomPicker() implements DomModule<RoomPicker>, ImplFor<ImplementationsTest.Picker> {
         public record Picker() implements BranchComponent<RoomPicker> {}
         @Override public ImportsFor<RoomPicker> imports() {
-            return ImportsFor.<RoomPicker>builder().add(new ModuleImports<>(List.of(new MarkRoomModule.MarkRoom()), MarkRoomModule.INSTANCE)).build();
+            return new ImportsFor._Builder<RoomPicker>().add(new ModuleImports<>(List.of(new MarkRoomModule.MarkRoom()), MarkRoomModule.INSTANCE)).build();
         }
         @Override public ExportsOf<RoomPicker> exports() { return new ExportsOf<>(this, List.of(new Picker())); }
     }
 
     private record StarModule() implements DomModule<StarModule>, ImplFor<ImplementationsTest.Star> {
         public record Star() implements ElementComponent<StarModule> { @Override public String tag() { return "span"; } }
-        @Override public ImportsFor<StarModule> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<StarModule> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<StarModule> exports() { return new ExportsOf<>(this, List.of(new Star())); }
     }
 
     private record GlyphsModule() implements DomModule<GlyphsModule>, ImplForLeavesOf<ImplementationsTest.Mark> {
         public record Glyph() implements ElementComponent<GlyphsModule> { @Override public String tag() { return "span"; } }
-        @Override public ImportsFor<GlyphsModule> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<GlyphsModule> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<GlyphsModule> exports() { return new ExportsOf<>(this, List.of(new Glyph())); }
     }
 
     private record SealModule() implements DomModule<SealModule>, ImplForLeavesOf<ImplementationsTest.Seal> {
         public record Seal() implements ElementComponent<SealModule> { @Override public String tag() { return "span"; } }
-        @Override public ImportsFor<SealModule> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<SealModule> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<SealModule> exports() { return new ExportsOf<>(this, List.of(new Seal())); }
     }
 
     private record Shipped(String name, List<EsModule<?>> modules) implements Crate {
-        @Override public List<CrateEntry> entries() { return modules.stream().map(CrateEntry::of).toList(); }
+        @Override public List<CrateEntry> entries() { return modules.stream().map(CrateEntry::new).toList(); }
     }
 
     private static List<String> check(EsModule<?>... modules) {
@@ -397,7 +397,7 @@ class ImplementationsTest {
     private record InlineDialog() implements DomModule<InlineDialog>, ImplFor<ImplementationsTest.Dialog> {
         public record Dialog() implements BranchComponent<InlineDialog> {}
         @Override public ImportsFor<InlineDialog> imports() {
-            return ImportsFor.<InlineDialog>builder()
+            return new ImportsFor._Builder<InlineDialog>()
                     .add(new ModuleImports<>(List.of(new PlainButtonModule.PlainButton()), PlainButtonModule.INSTANCE))
                     .add(new ModuleImports<>(List.of(new IconModule.Icon()), IconModule.INSTANCE))
                     .build();
@@ -419,7 +419,7 @@ class ImplementationsTest {
     private record GreedyStrip() implements DomModule<GreedyStrip>, ImplFor<ImplementationsTest.Strip> {
         public record Strip() implements BranchComponent<GreedyStrip> {}
         @Override public ImportsFor<GreedyStrip> imports() {
-            return ImportsFor.<GreedyStrip>builder()
+            return new ImportsFor._Builder<GreedyStrip>()
                     .add(new ModuleImports<>(List.of(new IconButtonModule.IconButton()), IconButtonModule.INSTANCE))
                     .add(new ModuleImports<>(List.of(new DangerButtonModule.DangerButton()), DangerButtonModule.INSTANCE))
                     .build();
@@ -443,7 +443,7 @@ class ImplementationsTest {
     private record WrongCompanion() implements DomModule<WrongCompanion>, ImplFor<ImplementationsTest.Icon> {
         public record Icon() implements ElementComponent<WrongCompanion> { @Override public String tag() { return "span"; } }
         public record Maker() implements Exportable._Constant<WrongCompanion> {}
-        @Override public ImportsFor<WrongCompanion> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<WrongCompanion> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<WrongCompanion> exports() { return new ExportsOf<>(this, List.of(new Icon(), new Maker())); }
     }
 
@@ -470,7 +470,7 @@ class ImplementationsTest {
         public static final LooseWidgetModule INSTANCE = new LooseWidgetModule();
         public record LooseWidget() implements Widget._Class<Widget._None, LooseWidgetModule> {}
         @Override public String title() { return "Loose"; }
-        @Override public ImportsFor<LooseWidgetModule> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<LooseWidgetModule> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<LooseWidgetModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new LooseWidget())); }
     }
 
@@ -483,7 +483,7 @@ class ImplementationsTest {
     public record RowLayoutModule() implements DomModule<RowLayoutModule> {
         public static final RowLayoutModule INSTANCE = new RowLayoutModule();
         public record RowLayout() implements BranchComponent<RowLayoutModule> { @Override public Shape shape() { return Shape.LAYOUT; } }
-        @Override public ImportsFor<RowLayoutModule> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<RowLayoutModule> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<RowLayoutModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new RowLayout())); }
     }
 

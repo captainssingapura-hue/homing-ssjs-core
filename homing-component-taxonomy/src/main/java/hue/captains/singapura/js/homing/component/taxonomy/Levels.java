@@ -1,15 +1,17 @@
 package hue.captains.singapura.js.homing.component.taxonomy;
 
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
+
 /**
  * A node's parent, read off its level - one exhaustive switch over the sealed levels of each tree,
  * so a level added without its case does not compile. None for a root.
  */
-final class Levels {
+record Levels() implements StatelessFunctionalObject {
 
-    private Levels() {}
+    static final Levels INSTANCE = new Levels();
 
     /** The branch a node of the taxonomy sits under; none for the root. */
-    static ComponentBranch parentOf(Taxon t) {
+    ComponentBranch parentOf(Taxon t) {
         return switch (t) {
             case Component<?> c          -> c.parent();
             case L0_ComponentBranch root -> null;
@@ -25,7 +27,7 @@ final class Levels {
     }
 
     /** The branch a node of the role catalogue is filed under; none for the root. */
-    static RoleBranch parentOf(RoleNode n) {
+    RoleBranch parentOf(RoleNode n) {
         return switch (n) {
             case Role<?> r          -> r.parent();
             case L0_RoleBranch root -> null;

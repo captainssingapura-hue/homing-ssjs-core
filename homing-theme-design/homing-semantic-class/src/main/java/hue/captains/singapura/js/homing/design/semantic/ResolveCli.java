@@ -39,6 +39,7 @@ public record ResolveCli() implements StatelessFunctionalObject {
 
     public static final ResolveCli INSTANCE = new ResolveCli();
 
+    /** Runs the command line and exits with its status. */
     public static void main(String[] args) {
         System.exit(INSTANCE.run(List.of(args), System.out, System.err));
     }
@@ -51,6 +52,28 @@ public record ResolveCli() implements StatelessFunctionalObject {
 
     /** Runs a command; the exit code. */
     public int run(List<String> args, PrintStream out, PrintStream err) {
+        Options o = options(args);
+        if (o.modules() == null) return usage(err, "no --modules");
+        try {
+            Taxonomy taxonomy = taxonomy(o.modules());
+            if (o.list() != null) return list(taxonomy, o.list(), out, err);
+            if (o.colors() == null || o.style() == null || o.palette() == null) return usage(err, "no --colors, no --style or no --palette");
+            Dressed theme = theme(o);
+            if (o.flatten()) return flatten(taxonomy, theme, o.outFile(), out, err);
+            if (o.rest().size() != 3) return usage(err, "a node, a state and a target");
+            return resolved(taxonomy, theme, o.rest(), out);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            err.println("resolve: " + e.getMessage());
+            return 2;
+        }
+    }
+
+    /** What a command line says: a flag's value or null, whether to flatten, and the words left over. */
+    private record Options(String modules, String colors, String style, String palette, String list, String outFile,
+                           boolean flatten, List<String> rest) {}
+
+    /** Reads a command line. */
+    private Options options(List<String> args) {
         String modulesClasses = null, colorsClass = null, styleClass = null, paletteClass = null, list = null, outFile = null;
         boolean flatten = false;
         var rest = new ArrayList<String>();
@@ -67,39 +90,36 @@ public record ResolveCli() implements StatelessFunctionalObject {
                 default -> rest.add(a);
             }
         }
-        if (modulesClasses == null) return usage(err, "no --modules");
-        try {
-            Taxonomy taxonomy = taxonomy(modulesClasses);
-            if (list != null) return list(taxonomy, list, out, err);
-            if (colorsClass == null || styleClass == null || paletteClass == null) return usage(err, "no --colors, no --style or no --palette");
-            var declarations = new ArrayList<SchemeDeclaration<?>>();
-            for (String c : colorsClass.split(",")) declarations.add(instance(c.strip(), SchemeDeclaration.class));
-            DesignStyle<?> style = instance(styleClass, DesignStyle.class);
-            ColorTree colors = SchemeTrees.INSTANCE.tree(new SchemeRegistry(declarations), style.scheme());
-            ColorPalette<?> palette = instance(paletteClass, ColorPalette.class);
-            Dressed theme = Wear.INSTANCE.of(colors, style, palette).orElseThrow(() -> new IllegalArgumentException(
-                    style.token() + " and " + palette.token() + " are of different schemes: a style is worn only in a palette of its own"));
-            if (flatten) return flatten(taxonomy, theme, outFile, out, err);
-            if (rest.size() != 3) return usage(err, "a node, a state and a target");
-            var tokens = SemanticTokens.INSTANCE;
-            Casting node = tokens.castingOf(taxonomy, rest.get(0));
-            List<State> states = "*".equals(rest.get(1)) ? List.of(State.values()) : List.of(tokens.stateOf(rest.get(1)));
-            List<Target> targets = "*".equals(rest.get(2)) ? tokens.leaves() : List.of(tokens.targetOf(rest.get(2)));
-            var resolver = ResolveSemanticClass.INSTANCE;
-            if (states.size() == 1 && targets.size() == 1) {
-                Resolution r = resolver.resolve(taxonomy, theme, node, states.get(0), targets.get(0));
-                r.explain().forEach(out::println);
-                return r.outcome() instanceof Resolution.Unanswered ? 1 : 0;
-            }
-            return table(taxonomy, theme, node, states, targets, out);
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            err.println("resolve: " + e.getMessage());
-            return 2;
+        return new Options(modulesClasses, colorsClass, styleClass, paletteClass, list, outFile, flatten, rest);
+    }
+
+    /** The theme a command names: its style worn in its palette, over its scheme's colours. */
+    private Dressed theme(Options o) {
+        var declarations = new ArrayList<SchemeDeclaration<?>>();
+        for (String c : o.colors().split(",")) declarations.add(instance(c.strip(), SchemeDeclaration.class));
+        DesignStyle<?> style = instance(o.style(), DesignStyle.class);
+        ColorTree colors = SchemeTrees.INSTANCE.tree(new SchemeRegistry(declarations), style.scheme());
+        ColorPalette<?> palette = instance(o.palette(), ColorPalette.class);
+        return Wear.INSTANCE.of(colors, style, palette).orElseThrow(() -> new IllegalArgumentException(
+                style.token() + " and " + palette.token() + " are of different schemes: a style is worn only in a palette of its own"));
+    }
+
+    /** A node, a state and a target: the walk, step by step, or a table where a state or a target is every one. */
+    private int resolved(Taxonomy taxonomy, Dressed theme, List<String> rest, PrintStream out) {
+        var tokens = SemanticTokens.INSTANCE;
+        Casting node = tokens.castingOf(taxonomy, rest.get(0));
+        List<State> states = "*".equals(rest.get(1)) ? List.of(State.values()) : List.of(tokens.stateOf(rest.get(1)));
+        List<Target> targets = "*".equals(rest.get(2)) ? tokens.leaves() : List.of(tokens.targetOf(rest.get(2)));
+        if (states.size() == 1 && targets.size() == 1) {
+            Resolution r = ResolveSemanticClass.INSTANCE.resolve(taxonomy, theme, node, states.get(0), targets.get(0));
+            r.explain().forEach(out::println);
+            return r.outcome() instanceof Resolution.Unanswered ? 1 : 0;
         }
+        return table(taxonomy, theme, node, states, targets, out);
     }
 
     /** One row per state and target: the class worn, the node that answered, how far up. */
-    private static int table(Taxonomy taxonomy, Dressed theme, Casting node, List<State> states, List<Target> targets, PrintStream out) {
+    private int table(Taxonomy taxonomy, Dressed theme, Casting node, List<State> states, List<Target> targets, PrintStream out) {
         var tokens = SemanticTokens.INSTANCE;
         int unanswered = 0;
         out.println("node     " + tokens.casting(node) + "  (" + node + ")");
@@ -120,7 +140,7 @@ public record ResolveCli() implements StatelessFunctionalObject {
         return unanswered > 0 ? 1 : 0;
     }
 
-    private static int list(Taxonomy taxonomy, String what, PrintStream out, PrintStream err) {
+    private int list(Taxonomy taxonomy, String what, PrintStream out, PrintStream err) {
         var tokens = SemanticTokens.INSTANCE;
         switch (what) {
             case "nodes" -> {
@@ -139,7 +159,7 @@ public record ResolveCli() implements StatelessFunctionalObject {
     }
 
     /** The theme's sheet, flattened, to the file named or the output; what is in it, and every look nothing answers. */
-    private static int flatten(Taxonomy taxonomy, Dressed theme, String outFile, PrintStream out, PrintStream err) {
+    private int flatten(Taxonomy taxonomy, Dressed theme, String outFile, PrintStream out, PrintStream err) {
         var flat = FlattenSheet.INSTANCE.flatten(taxonomy, theme, theme.toString());
         PrintStream said = outFile == null ? err : out;   // the sheet on the output, what is in it beside
         if (outFile == null) out.print(flat.css());
@@ -158,7 +178,7 @@ public record ResolveCli() implements StatelessFunctionalObject {
     }
 
     /** The {@code INSTANCE} of the class named, as the kind asked for. */
-    private static <K> K instance(String className, Class<K> kind) {
+    private <K> K instance(String className, Class<K> kind) {
         try {
             Object found = Class.forName(className).getField("INSTANCE").get(null);
             if (!kind.isInstance(found)) throw new IllegalArgumentException(className + " is no " + kind.getSimpleName());
@@ -169,13 +189,13 @@ public record ResolveCli() implements StatelessFunctionalObject {
     }
 
     /** The taxonomy of the component modules named, each by its class: their components, their parts with them. */
-    private static Taxonomy taxonomy(String classNames) {
+    private Taxonomy taxonomy(String classNames) {
         var modules = new ArrayList<ComponentModule>();
         for (String c : classNames.split(",")) modules.add(instance(c.strip(), ComponentModule.class));
         return ComponentModules.INSTANCE.read(modules, List.of(), List.of());
     }
 
-    private static int usage(PrintStream err, String why) {
+    private int usage(PrintStream err, String why) {
         err.println("resolve: " + why);
         err.println(USAGE);
         return 2;

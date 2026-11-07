@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.component;
 import hue.captains.singapura.js.homing.core.DomModule;
 import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.tree.NodeName;
+import hue.captains.singapura.js.homing.tree.NodeNames;
 
 /**
  * A component, declared — not merely exported. The module system manages
@@ -46,9 +47,11 @@ public sealed interface UiComponent<M extends DomModule<M>> extends Exportable._
         LAYOUT("layout");
         private final String tag;
         Shape(String tag) { this.tag = tag; }
+        /** The shape as a word, as a component's row in a tree shows it. */
         public String tag() { return tag; }
     }
 
+    /** Which shape this component is. */
     Shape shape();
 
     /** The class's name, which is the JS class's. */
@@ -58,5 +61,5 @@ public sealed interface UiComponent<M extends DomModule<M>> extends Exportable._
     default String summary() { return ""; }
 
     /** The segment under its catalogue: the class name in kebab. */
-    default NodeName segment() { return NodeName.ofType(getClass(), ""); }
+    default NodeName segment() { return NodeNames.INSTANCE.ofType(getClass(), ""); }
 }

@@ -36,10 +36,10 @@ public record HelloSite() implements Site {
     }
 
     /** {@code /greet} reads the name from the query; {@code /greet/<name>} binds it from the path. */
-    private static Optional<Navigable> greet(Path rest) {
+    private Optional<Navigable> greet(Path rest) {
         return switch (rest.depth()) {
             case 0  -> Optional.of(GreetPage.FROM_QUERY);
-            case 1  -> Optional.of(GreetPage.bound(rest.head().orElseThrow()));
+            case 1  -> Optional.of(new GreetPage(rest.head().orElseThrow()));
             default -> Optional.empty();
         };
     }

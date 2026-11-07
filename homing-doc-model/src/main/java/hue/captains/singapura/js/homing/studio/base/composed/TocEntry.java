@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.composed;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.Objects;
 
@@ -19,7 +19,7 @@ import java.util.Objects;
  *
  * @since RFC 0019 Phase 1
  */
-public record TocEntry(int level, String text, String anchor) implements ValueObject {
+public record TocEntry(int level, String text, String anchor) implements Scalar {
     public TocEntry {
         Objects.requireNonNull(text,   "TocEntry.text");
         Objects.requireNonNull(anchor, "TocEntry.anchor");

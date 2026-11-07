@@ -1,5 +1,8 @@
 package hue.captains.singapura.js.homing.design;
 
+import hue.captains.singapura.tao.ontology.Stateless;
+
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -30,7 +33,7 @@ import java.util.Set;
  * style answers it in semantic colours, in cases each colour leaf offers, and never in declarations of its
  * own; every other branch is {@link Colorless}, answered in declarations that name no colour.</p>
  */
-public sealed interface Target permits Target.Color, Target.Colorless {
+public sealed interface Target extends Stateless permits Target.Color, Target.Colorless {
 
     /**
      * Every branch but colour: answered in declarations of its own properties, which name no colour - a
@@ -45,6 +48,7 @@ public sealed interface Target permits Target.Color, Target.Colorless {
     /** The states the template offers a slot for; always contains {@link State#REST}. */
     Set<State> states();
 
+    /** The medium that carries the leaf's answer: CSS, unless the leaf says otherwise. */
     default Carrier carrier() { return Carrier.CSS; }
 
     /**
@@ -55,7 +59,7 @@ public sealed interface Target permits Target.Color, Target.Colorless {
     default String pseudo() { return null; }
 
     /** {@code branch-leaf}, from the type. */
-    default String token() { return Trees.targetToken(getClass()); }
+    default String token() { return Trees.INSTANCE.targetToken(getClass()); }
 
     /**
      * The colour leaves whose registered colours a body on this leaf may read: a box's shadow is
@@ -68,16 +72,23 @@ public sealed interface Target permits Target.Color, Target.Colorless {
     default List<String> registrations() { return List.of(); }
 
     // ── helpers for the leaves ────────────────────────────────────────────
-    Set<State> REST_ONLY    = EnumSet.of(State.REST);
-    Set<State> INTERACTIVE  = EnumSet.of(State.REST, State.HOVER, State.ACTIVE, State.FOCUS, State.DISABLED,
+    /** The sets of states the leaves are drawn in: fixed, each a set no reader can change. */
+    enum StateSet {
+        REST_ONLY(Collections.unmodifiableSet(EnumSet.of(State.REST))),
+        INTERACTIVE(Collections.unmodifiableSet(EnumSet.of(State.REST, State.HOVER, State.ACTIVE, State.FOCUS, State.DISABLED,
                                          State.SELECTED, State.CURRENT, State.CHECKED, State.PRESSED, State.INVALID, State.EXPANDED, State.HIGHLIGHTED,
                                          State.CANDIDATE, State.LENT, State.HELD, State.DRAGGING,
                                          // the physical register: a design answers depth in whatever plane it honestly
                                          // uses for it - the shadow usually, a lit rim, a step of tone - or in none
-                                         State.ELEVATED, State.SUNKEN);
-    Set<State> POINTER      = EnumSet.of(State.REST, State.HOVER, State.ACTIVE, State.FOCUS, State.DISABLED);
-    /** At rest, and stood up: a size or a corner that differs for a thing laid vertically - a fader's cap - and by nothing else. */
-    Set<State> STOOD_UP     = EnumSet.of(State.REST, State.VERTICAL);
+                                         State.ELEVATED, State.SUNKEN))),
+        POINTER(Collections.unmodifiableSet(EnumSet.of(State.REST, State.HOVER, State.ACTIVE, State.FOCUS, State.DISABLED))),
+        /** At rest, and stood up: a size or a corner that differs for a thing laid vertically - a fader's cap - and by nothing else. */
+        STOOD_UP(Collections.unmodifiableSet(EnumSet.of(State.REST, State.VERTICAL)));
+
+        private final Set<State> all;
+
+        StateSet(Set<State> all) { this.all = all; }
+    }
 
     // ═════════════════════════════════════════════════════════════════════
     //  Color — what is painted with colour
@@ -120,25 +131,25 @@ public sealed interface Target permits Target.Color, Target.Colorless {
         record Text() implements Color, Single, Inheritable, Scalable {
             public static final Text INSTANCE = new Text();
             @Override public Set<String> properties() { return Set.of("color"); }
-            @Override public Set<State> states() { return INTERACTIVE; }
+            @Override public Set<State> states() { return StateSet.INTERACTIVE.all; }
         }
         /** SVG fill. */
         record Fill() implements Color, Single, Inheritable, Omissible, Typographic {
             public static final Fill INSTANCE = new Fill();
             @Override public Set<String> properties() { return Set.of("fill"); }
-            @Override public Set<State> states() { return INTERACTIVE; }
+            @Override public Set<State> states() { return StateSet.INTERACTIVE.all; }
         }
         /** SVG stroke colour. */
         record Stroke() implements Color, Single, Inheritable, Omissible {
             public static final Stroke INSTANCE = new Stroke();
             @Override public Set<String> properties() { return Set.of("stroke"); }
-            @Override public Set<State> states() { return INTERACTIVE; }
+            @Override public Set<State> states() { return StateSet.INTERACTIVE.all; }
         }
         /** The scrollbar's two colours. */
         record Scrollbar() implements Color, Inheritable {
             public static final Scrollbar INSTANCE = new Scrollbar();
             @Override public Set<String> properties() { return Set.of("scrollbar-color"); }
-            @Override public Set<State> states() { return REST_ONLY; }
+            @Override public Set<State> states() { return StateSet.REST_ONLY.all; }
         }
         /**
          * A box's background: the ground, and every colour a gradient or a pattern is drawn in on it
@@ -150,25 +161,25 @@ public sealed interface Target permits Target.Color, Target.Colorless {
             @Override public Set<String> properties() {
                 return Set.of("background-color", "--background-ramp-from", "--background-ramp-via", "--background-ramp-to", "--background-mark");
             }
-            @Override public Set<State> states() { return INTERACTIVE; }
+            @Override public Set<State> states() { return StateSet.INTERACTIVE.all; }
         }
         /** The box's line: its border. */
         record Border() implements Color, Single, Typographic {
             public static final Border INSTANCE = new Border();
             @Override public Set<String> properties() { return Set.of("border-color"); }
-            @Override public Set<State> states() { return INTERACTIVE; }
+            @Override public Set<State> states() { return StateSet.INTERACTIVE.all; }
         }
         /** The ring drawn around a box for attention: on focus, and the keys' marks. */
         record Outline() implements Color, Single, Typographic {
             public static final Outline INSTANCE = new Outline();
             @Override public Set<String> properties() { return Set.of("outline-color"); }
-            @Override public Set<State> states() { return INTERACTIVE; }
+            @Override public Set<State> states() { return StateSet.INTERACTIVE.all; }
         }
         /** The rules drawn between a box's columns. */
         record ColumnRule() implements Color, Single, Typographic {
             public static final ColumnRule INSTANCE = new ColumnRule();
             @Override public Set<String> properties() { return Set.of("column-rule-color"); }
-            @Override public Set<State> states() { return INTERACTIVE; }
+            @Override public Set<State> states() { return StateSet.INTERACTIVE.all; }
         }
         /**
          * A box's shadow: the dark it casts, the light on its own lit side or rim, the light it
@@ -178,7 +189,7 @@ public sealed interface Target permits Target.Color, Target.Colorless {
         record BoxShadow() implements Color {
             public static final BoxShadow INSTANCE = new BoxShadow();
             @Override public Set<String> properties() { return Set.of("--box-shadow-cast", "--box-shadow-lit", "--box-shadow-glow"); }
-            @Override public Set<State> states() { return INTERACTIVE; }
+            @Override public Set<State> states() { return StateSet.INTERACTIVE.all; }
         }
     }
 
@@ -190,26 +201,26 @@ public sealed interface Target permits Target.Color, Target.Colorless {
         record Corner() implements Shape {
             public static final Corner INSTANCE = new Corner();
             @Override public Set<String> properties() { return Set.of("border-radius"); }
-            @Override public Set<State> states() { return STOOD_UP; }
+            @Override public Set<State> states() { return StateSet.STOOD_UP.all; }
         }
         /** A box's shadow, drawn in {@link Color.BoxShadow}'s colours: its offsets, blurs, spreads and insets. */
         record Shadow() implements Shape {
             public static final Shadow INSTANCE = new Shadow();
             @Override public Set<String> properties() { return Set.of("box-shadow"); }
-            @Override public Set<State> states() { return INTERACTIVE; }   // depth is a state too: a selected or highlighted thing lifts
+            @Override public Set<State> states() { return StateSet.INTERACTIVE.all; }   // depth is a state too: a selected or highlighted thing lifts
             @Override public List<Color> colouredBy() { return List.of(Color.BoxShadow.INSTANCE); }
         }
         /** The box's line: its border's width and style. */
         record Border() implements Shape {
             public static final Border INSTANCE = new Border();
             @Override public Set<String> properties() { return Set.of("border-width", "border-style"); }
-            @Override public Set<State> states() { return INTERACTIVE; }
+            @Override public Set<State> states() { return StateSet.INTERACTIVE.all; }
         }
         /** The ring drawn around a box for attention: its width, style and offset. */
         record Outline() implements Shape {
             public static final Outline INSTANCE = new Outline();
             @Override public Set<String> properties() { return Set.of("outline-width", "outline-style", "outline-offset"); }
-            @Override public Set<State> states() { return INTERACTIVE; }
+            @Override public Set<State> states() { return StateSet.INTERACTIVE.all; }
         }
         /**
          * What is drawn over a box's ground: a gradient or a pattern, drawn in {@link Color.Background}'s
@@ -218,13 +229,13 @@ public sealed interface Target permits Target.Color, Target.Colorless {
         record Background() implements Shape {
             public static final Background INSTANCE = new Background();
             @Override public Set<String> properties() { return Set.of("background-image", "background-size", "background-repeat", "background-position"); }
-            @Override public Set<State> states() { return INTERACTIVE; }
+            @Override public Set<State> states() { return StateSet.INTERACTIVE.all; }
             @Override public List<Color> colouredBy() { return List.of(Color.Background.INSTANCE); }
         }
         record Clip() implements Shape {
             public static final Clip INSTANCE = new Clip();
             @Override public Set<String> properties() { return Set.of("clip-path"); }
-            @Override public Set<State> states() { return REST_ONLY; }
+            @Override public Set<State> states() { return StateSet.REST_ONLY.all; }
         }
     }
 
@@ -236,12 +247,12 @@ public sealed interface Target permits Target.Color, Target.Colorless {
         record Inset() implements Size {
             public static final Inset INSTANCE = new Inset();
             @Override public Set<String> properties() { return Set.of("padding-block", "padding-inline"); }
-            @Override public Set<State> states() { return REST_ONLY; }
+            @Override public Set<State> states() { return StateSet.REST_ONLY.all; }
         }
         record Gap() implements Size {
             public static final Gap INSTANCE = new Gap();
             @Override public Set<String> properties() { return Set.of("gap"); }
-            @Override public Set<State> states() { return REST_ONLY; }
+            @Override public Set<State> states() { return StateSet.REST_ONLY.all; }
         }
         /**
          * The extent of a box: the least a control or a row must be to be
@@ -252,7 +263,7 @@ public sealed interface Target permits Target.Color, Target.Colorless {
         record Extent() implements Size {
             public static final Extent INSTANCE = new Extent();
             @Override public Set<String> properties() { return Set.of("min-height", "min-width", "inline-size", "block-size"); }
-            @Override public Set<State> states() { return STOOD_UP; }
+            @Override public Set<State> states() { return StateSet.STOOD_UP.all; }
         }
         /**
          * The proportion of a box whose measure is its own, not its content's
@@ -263,7 +274,7 @@ public sealed interface Target permits Target.Color, Target.Colorless {
         record Proportion() implements Size {
             public static final Proportion INSTANCE = new Proportion();
             @Override public Set<String> properties() { return Set.of("aspect-ratio"); }
-            @Override public Set<State> states() { return REST_ONLY; }
+            @Override public Set<State> states() { return StateSet.REST_ONLY.all; }
         }
     }
 
@@ -274,7 +285,7 @@ public sealed interface Target permits Target.Color, Target.Colorless {
         record Face() implements Type {
             public static final Face INSTANCE = new Face();
             @Override public Set<String> properties() { return Set.of("font-family"); }
-            @Override public Set<State> states() { return REST_ONLY; }
+            @Override public Set<State> states() { return StateSet.REST_ONLY.all; }
         }
         record Weight() implements Type {
             public static final Weight INSTANCE = new Weight();
@@ -284,19 +295,19 @@ public sealed interface Target permits Target.Color, Target.Colorless {
         record Scale() implements Type {
             public static final Scale INSTANCE = new Scale();
             @Override public Set<String> properties() { return Set.of("font-size", "line-height"); }
-            @Override public Set<State> states() { return REST_ONLY; }
+            @Override public Set<State> states() { return StateSet.REST_ONLY.all; }
         }
         /** Spacing, case, style and features — everything about the setting that is not face, weight or size. */
         record Treatment() implements Type {
             public static final Treatment INSTANCE = new Treatment();
             @Override public Set<String> properties() { return Set.of("letter-spacing", "word-spacing", "text-transform", "font-style",
                     "font-variant-caps", "font-variant-numeric", "font-feature-settings"); }
-            @Override public Set<State> states() { return REST_ONLY; }
+            @Override public Set<State> states() { return StateSet.REST_ONLY.all; }
         }
         record Decoration() implements Type {
             public static final Decoration INSTANCE = new Decoration();
             @Override public Set<String> properties() { return Set.of("text-decoration-line", "text-decoration-style", "text-decoration-thickness", "text-underline-offset", "text-shadow"); }   // a glow or a relief is a decoration of the letters too
-            @Override public Set<State> states() { return POINTER; }
+            @Override public Set<State> states() { return StateSet.POINTER.all; }
         }
         /**
          * The glyph a mark shows for a meaning — an {@link Icon} word's
@@ -307,7 +318,7 @@ public sealed interface Target permits Target.Color, Target.Colorless {
         record Glyph() implements Type {
             public static final Glyph INSTANCE = new Glyph();
             @Override public Set<String> properties() { return Set.of("content"); }
-            @Override public Set<State> states() { return INTERACTIVE; }
+            @Override public Set<State> states() { return StateSet.INTERACTIVE.all; }
             @Override public String pseudo() { return "::before"; }
         }
     }
@@ -320,13 +331,13 @@ public sealed interface Target permits Target.Color, Target.Colorless {
         record Ease() implements Motion {
             public static final Ease INSTANCE = new Ease();
             @Override public Set<String> properties() { return Set.of("transition"); }
-            @Override public Set<State> states() { return REST_ONLY; }
+            @Override public Set<State> states() { return StateSet.REST_ONLY.all; }
         }
         /** Where the element goes per state — the press, the lift, the nudge. */
         record Transform() implements Motion {
             public static final Transform INSTANCE = new Transform();
             @Override public Set<String> properties() { return Set.of("transform"); }
-            @Override public Set<State> states() { return INTERACTIVE; }
+            @Override public Set<State> states() { return StateSet.INTERACTIVE.all; }
         }
     }
 
@@ -348,7 +359,7 @@ public sealed interface Target permits Target.Color, Target.Colorless {
         record Effect() implements Animation {
             public static final Effect INSTANCE = new Effect();
             @Override public Set<String> properties() { return Set.of("animation"); }
-            @Override public Set<State> states() { return REST_ONLY; }
+            @Override public Set<State> states() { return StateSet.REST_ONLY.all; }
         }
     }
 
@@ -359,17 +370,17 @@ public sealed interface Target permits Target.Color, Target.Colorless {
         record Opacity() implements Effect {
             public static final Opacity INSTANCE = new Opacity();
             @Override public Set<String> properties() { return Set.of("opacity"); }
-            @Override public Set<State> states() { return POINTER; }
+            @Override public Set<State> states() { return StateSet.POINTER.all; }
         }
         record Filter() implements Effect {
             public static final Filter INSTANCE = new Filter();
             @Override public Set<String> properties() { return Set.of("filter", "backdrop-filter"); }
-            @Override public Set<State> states() { return INTERACTIVE; }   // a lift a table row can show — filter paints where box-shadow does not
+            @Override public Set<State> states() { return StateSet.INTERACTIVE.all; }   // a lift a table row can show — filter paints where box-shadow does not
         }
         record Blend() implements Effect {
             public static final Blend INSTANCE = new Blend();
             @Override public Set<String> properties() { return Set.of("mix-blend-mode"); }
-            @Override public Set<State> states() { return REST_ONLY; }
+            @Override public Set<State> states() { return StateSet.REST_ONLY.all; }
         }
     }
 
@@ -385,7 +396,7 @@ public sealed interface Target permits Target.Color, Target.Colorless {
         record Select() implements Affordance {
             public static final Select INSTANCE = new Select();
             @Override public Set<String> properties() { return Set.of("user-select"); }
-            @Override public Set<State> states() { return REST_ONLY; }
+            @Override public Set<State> states() { return StateSet.REST_ONLY.all; }
         }
     }
 
@@ -408,17 +419,14 @@ public sealed interface Target permits Target.Color, Target.Colorless {
         record Icon() implements Asset {
             public static final Icon INSTANCE = new Icon();
             @Override public Set<String> properties() { return Set.of(); }
-            @Override public Set<State> states() { return REST_ONLY; }
+            @Override public Set<State> states() { return StateSet.REST_ONLY.all; }
             @Override public Carrier carrier() { return Carrier.ASSET; }
         }
         record Illustration() implements Asset {
             public static final Illustration INSTANCE = new Illustration();
             @Override public Set<String> properties() { return Set.of(); }
-            @Override public Set<State> states() { return REST_ONLY; }
+            @Override public Set<State> states() { return StateSet.REST_ONLY.all; }
             @Override public Carrier carrier() { return Carrier.ASSET; }
         }
     }
-
-    /** Every leaf of the tree, in declaration order — the one place the tree is walked. */
-    static List<Target> leaves() { return Trees.targetLeaves(); }
 }

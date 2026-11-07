@@ -33,7 +33,7 @@ public record FocusPartyModule() implements EsModule<FocusPartyModule> {
 
     public static final FocusPartyModule INSTANCE = new FocusPartyModule();
 
-    @Override public ImportsFor<FocusPartyModule> imports() { return ImportsFor.noImports(); }
+    @Override public ImportsFor<FocusPartyModule> imports() { return new ImportsFor<>(); }
 
     @Override
     public ExportsOf<FocusPartyModule> exports() {

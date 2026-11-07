@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ScannerRulesTest {
 
     private static ServedModule served(String... lines) {
-        return new ServedModule("demo.Widget", StandardJsModuleType.CONSUMER, JsSource.of(lines));
+        return new ServedModule("demo.Widget", StandardJsModuleType.CONSUMER, new JsSource(lines));
     }
 
     @Test

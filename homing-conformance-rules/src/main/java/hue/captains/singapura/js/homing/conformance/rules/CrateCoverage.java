@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.conformance.rules;
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
 
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -30,19 +31,19 @@ import java.util.TreeSet;
  * code‑source scan {@link OrphanCheck} uses — no whole‑classpath crawl, so
  * framework jars are never mis‑flagged.</p>
  */
-public final class CrateCoverage {
+public record CrateCoverage() implements StatelessFunctionalObject {
 
-    private CrateCoverage() {}
+    public static final CrateCoverage INSTANCE = new CrateCoverage();
 
     /**
      * @param closure    the crate closure whose union of entries counts as "crated"
-     *                   (typically {@code CrateClosure.of(topLevelCrates)})
+     *                   (typically {@code CrateClosure.INSTANCE.of(topLevelCrates)})
      * @param appAnchors one class per app‑owned Maven module; each module's build
      *                   output is scanned for served modules
      * @return one finding per served module that is in no crate of the closure;
      *         empty means full coverage (nothing can serve uncrated)
      */
-    public static List<String> check(Collection<? extends Crate> closure, Collection<Class<?>> appAnchors) {
+    public List<String> check(Collection<? extends Crate> closure, Collection<Class<?>> appAnchors) {
         Set<String> crated = new HashSet<>();
         for (Crate c : closure) {
             for (CrateEntry e : c.entries()) crated.add(e.moduleClass());
@@ -50,7 +51,7 @@ public final class CrateCoverage {
         var findings = new ArrayList<String>();
         var seen = new TreeSet<String>();
         for (Class<?> anchor : appAnchors) {
-            for (String fqcn : OrphanCheck.servedModuleClassesInModuleOf(anchor)) {
+            for (String fqcn : OrphanCheck.INSTANCE.servedModuleClassesInModuleOf(anchor)) {
                 if (seen.add(fqcn) && !crated.contains(fqcn)) {
                     findings.add("uncrated served module: " + fqcn + " is served (found in the build output of "
                             + anchor.getName() + "'s Maven module) but is declared in no crate of the closure"

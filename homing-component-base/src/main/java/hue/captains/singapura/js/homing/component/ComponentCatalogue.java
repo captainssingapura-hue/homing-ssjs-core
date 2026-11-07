@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.component;
 
 import hue.captains.singapura.js.homing.tree.NodeName;
+import hue.captains.singapura.js.homing.tree.NodeNames;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.util.List;
@@ -34,7 +35,7 @@ public sealed interface ComponentCatalogue<Self extends ComponentCatalogue<Self>
     default String summary() { return ""; }
 
     /** The segment under the parent: the class without {@code Components}, in kebab; sibling-unique. */
-    default NodeName segment() { return NodeName.ofType(getClass(), "Components"); }
+    default NodeName segment() { return NodeNames.INSTANCE.ofType(getClass(), "Components"); }
 
     /** Sub-catalogues, typed to the next level by each level's interface. */
     default List<? extends ComponentCatalogue<?>> subCatalogues() { return List.of(); }

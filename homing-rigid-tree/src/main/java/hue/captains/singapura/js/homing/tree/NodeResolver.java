@@ -67,11 +67,6 @@ public interface NodeResolver<D> {
      */
     Optional<D> resolve(NodeIdentity identity);
 
-    /** Owns nothing. The identity element of {@link #union(List)}. */
-    static <D> NodeResolver<D> none() {
-        return identity -> Optional.empty();
-    }
-
     /** This resolver, then {@code next} — first match wins. */
     default NodeResolver<D> or(NodeResolver<D> next) {
         java.util.Objects.requireNonNull(next, "next");
@@ -81,6 +76,11 @@ public interface NodeResolver<D> {
         };
     }
 
+    /** Owns nothing. The identity element of {@link #union(List)}. */
+    record None<D>() implements NodeResolver<D> {
+        @Override public Optional<D> resolve(NodeIdentity identity) { return Optional.empty(); }
+    }
+
     /**
      * The union of many resolvers — asked in order, first match wins.
      *
@@ -88,16 +88,17 @@ public interface NodeResolver<D> {
      * compose to any depth: a subtree hands up one resolver whether it is a leaf
      * subtree or a union of a dozen.</p>
      */
-    static <D> NodeResolver<D> union(List<? extends NodeResolver<D>> parts) {
-        java.util.Objects.requireNonNull(parts, "parts");
-        List<? extends NodeResolver<D>> copy = List.copyOf(parts);
-        return identity -> {
-            for (NodeResolver<D> part : copy) {
+    record Union<D>(List<? extends NodeResolver<D>> parts) implements NodeResolver<D> {
+        public Union {
+            parts = List.copyOf(java.util.Objects.requireNonNull(parts, "parts"));
+        }
+        @Override public Optional<D> resolve(NodeIdentity identity) {
+            for (NodeResolver<D> part : parts) {
                 Optional<D> hit = part.resolve(identity);
                 if (hit.isPresent()) return hit;
             }
             return Optional.empty();
-        };
+        }
     }
 
     /**
@@ -108,11 +109,13 @@ public interface NodeResolver<D> {
      * {@code NavKey} in hand and no cast anywhere; the union sees only a
      * {@code NodeResolver}. A {@code null} from the lookup is a miss.</p>
      */
-    static <I extends NodeIdentity, D> NodeResolver<D> forKind(Class<I> kind, Function<I, D> lookup) {
-        java.util.Objects.requireNonNull(kind, "kind");
-        java.util.Objects.requireNonNull(lookup, "lookup");
-        return identity -> kind.isInstance(identity)
-                ? Optional.ofNullable(lookup.apply(kind.cast(identity)))
-                : Optional.empty();
+    record ForKind<I extends NodeIdentity, D>(Class<I> kind, Function<I, D> lookup) implements NodeResolver<D> {
+        public ForKind {
+            java.util.Objects.requireNonNull(kind, "kind");
+            java.util.Objects.requireNonNull(lookup, "lookup");
+        }
+        @Override public Optional<D> resolve(NodeIdentity identity) {
+            return kind.isInstance(identity) ? Optional.ofNullable(lookup.apply(kind.cast(identity))) : Optional.empty();
+        }
     }
 }

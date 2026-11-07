@@ -4,7 +4,7 @@ import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxon;
 import hue.captains.singapura.js.homing.design.State;
 import hue.captains.singapura.js.homing.design.Target;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.Objects;
 
@@ -22,7 +22,7 @@ import java.util.Objects;
  * @param answer what is said for them
  * @param <T>    the target leaf
  */
-public record Implementation<T extends Target.Colorless>(Casting node, T target, Answer<T> answer) implements ValueObject {
+public record Implementation<T extends Target.Colorless>(Casting node, T target, Answer<T> answer) implements Scalar {
 
     public Implementation {
         Objects.requireNonNull(node, "Implementation.node");

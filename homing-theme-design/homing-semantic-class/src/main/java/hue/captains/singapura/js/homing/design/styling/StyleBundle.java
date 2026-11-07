@@ -4,7 +4,7 @@ import hue.captains.singapura.js.homing.component.taxonomy.Component;
 import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import hue.captains.singapura.js.homing.design.semantic.DesignStyle;
 import hue.captains.singapura.js.homing.design.styles.CastingStyle;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.List;
 import java.util.Objects;
@@ -22,7 +22,7 @@ import java.util.Objects;
  * @param looks     its looks in the style: the style's implementations of castings of its design
  */
 public record StyleBundle<Sc extends ColorScheme, S extends DesignStyle<Sc>>(Component<?> component, List<? extends CastingStyle<Sc, S, ?, ?>> looks)
-        implements ValueObject {
+        implements Scalar {
 
     public StyleBundle {
         Objects.requireNonNull(component, "StyleBundle.component");

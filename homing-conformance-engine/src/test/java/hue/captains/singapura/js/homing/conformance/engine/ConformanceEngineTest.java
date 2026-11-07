@@ -36,12 +36,12 @@ class ConformanceEngineTest {
     void realModuleRendersAndPassesEndToEnd() {
         // A clean consumer renders through the real server path and validates
         // with zero findings — render → classify(CONSUMER) → run → collect.
-        assertEquals(StandardJsModuleType.CONSUMER, ModuleClassifier.classify(CleanModule.INSTANCE));
+        assertEquals(StandardJsModuleType.CONSUMER, ModuleClassifier.INSTANCE.classify(CleanModule.INSTANCE));
         List<Finding> findings = engine.check(CleanModule.INSTANCE);
         assertEquals(List.of(), findings,
                 () -> "a clean consumer must render + validate clean, got: " + findings);
         // classify(EsModule) is the structural fallback — no crate declaration in view here.
-        assertEquals(StandardJsModuleType.CONSUMER, ModuleClassifier.classify(HrefManager.INSTANCE));
+        assertEquals(StandardJsModuleType.CONSUMER, ModuleClassifier.INSTANCE.classify(HrefManager.INSTANCE));
     }
 
     @Test
@@ -74,7 +74,7 @@ class ConformanceEngineTest {
         @Override public String name() { return "test-crate"; }
         @Override public List<Crate> requires() { return List.of(); }
         @Override public List<CrateEntry> entries() {
-            return List.of(CrateEntry.of(CleanModule.INSTANCE), CrateEntry.of(CdnModule.INSTANCE));
+            return List.of(new CrateEntry(CleanModule.INSTANCE), new CrateEntry(CdnModule.INSTANCE));
         }
     }
 
@@ -82,7 +82,7 @@ class ConformanceEngineTest {
     record CleanModule() implements DomModule<CleanModule>, SelfContent {
         static final CleanModule INSTANCE = new CleanModule();
 
-        @Override public ImportsFor<CleanModule> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<CleanModule> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<CleanModule> exports() { return new ExportsOf<>(INSTANCE, List.of()); }
 
         @Override
@@ -96,7 +96,7 @@ class ConformanceEngineTest {
     void seededCdnImportFailsThroughTheFullEnginePath() {
         // The engine renders CdnModule's SelfContent (a CDN import) and the
         // NoCdnImportRule flags it — render → classify(CONSUMER) → run → collect.
-        assertEquals(StandardJsModuleType.CONSUMER, ModuleClassifier.classify(CdnModule.INSTANCE));
+        assertEquals(StandardJsModuleType.CONSUMER, ModuleClassifier.INSTANCE.classify(CdnModule.INSTANCE));
         List<Finding> findings = engine.check(CdnModule.INSTANCE);
         assertFalse(findings.isEmpty(), "a served CDN import must be flagged by the engine");
         assertTrue(findings.stream().anyMatch(f -> f.rule().value().equals("no-cdn-import")),
@@ -107,7 +107,7 @@ class ConformanceEngineTest {
     record CdnModule() implements DomModule<CdnModule>, SelfContent {
         static final CdnModule INSTANCE = new CdnModule();
 
-        @Override public ImportsFor<CdnModule> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<CdnModule> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<CdnModule> exports() { return new ExportsOf<>(INSTANCE, List.of()); }
 
         @Override

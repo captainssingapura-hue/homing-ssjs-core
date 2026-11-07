@@ -4,6 +4,8 @@ import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import hue.captains.singapura.js.homing.design.color.ConcreteColor;
 import hue.captains.singapura.js.homing.design.color.Palettable;
 import hue.captains.singapura.js.homing.tree.NodeName;
+import hue.captains.singapura.js.homing.tree.NodeNames;
+import hue.captains.singapura.tao.ontology.Immutable;
 
 import java.util.Optional;
 
@@ -20,16 +22,16 @@ import java.util.Optional;
  *
  * @param <S> the scheme it implements
  */
-public interface ColorPalette<S extends ColorScheme> {
+public interface ColorPalette<S extends ColorScheme> extends Immutable {
 
     /** The scheme it implements: the scheme's one object, said by the palette itself (D49) - nothing reads it off its type. */
     S scheme();
 
     /** The palette's token, from its type: {@code harbour}. */
-    default String token() { return NodeName.ofType(getClass(), "").value(); }
+    default String token() { return NodeNames.INSTANCE.ofType(getClass(), "").value(); }
 
     /** What a picker calls it: its token's words, capitalised - {@code Neo-Brutalism} - unless it says otherwise. */
-    default String label() { return Labels.of(token()); }
+    default String label() { return Labels.INSTANCE.of(token()); }
 
     /** One line on what it is trying to be, shown beside its name in a picker; none unless it says. */
     default String inspiration() { return ""; }

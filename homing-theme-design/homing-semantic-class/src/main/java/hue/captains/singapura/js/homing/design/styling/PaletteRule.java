@@ -25,10 +25,6 @@ public interface PaletteRule extends StatelessFunctionalObject {
     /** What the rule finds of the jars registered, over the instance's schemes. */
     Validation check(List<PaletteDeclaration> jars, SchemeRegistry schemes);
 
-    /** The rules a registry of palettes is held to, applied each apart. */
-    List<PaletteRule> RULES = List.of(new RegistersSome(), new NoJarTwice(), new OneTokenEach(), new EachSaysItsScheme(),
-            new OfARegisteredScheme(), new WholeOverItsScheme(), new SittingOnRegistered());
-
     /** It registers a palette. */
     record RegistersSome() implements PaletteRule {
         @Override public Validation check(List<PaletteDeclaration> jars, SchemeRegistry schemes) {

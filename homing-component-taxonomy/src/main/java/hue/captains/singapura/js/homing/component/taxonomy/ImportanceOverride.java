@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.component.taxonomy;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.Objects;
 
@@ -13,7 +13,7 @@ import java.util.Objects;
  * @param level its level for this leaf
  * @param <L>   the level
  */
-public record ImportanceOverride<L extends Importance<L>>(StateType<?> state, Class<L> level) implements ValueObject {
+public record ImportanceOverride<L extends Importance<L>>(StateType<?> state, Class<L> level) implements Scalar {
 
     public ImportanceOverride {
         Objects.requireNonNull(state, "ImportanceOverride.state");

@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.studio.base.composed;
 
 import hue.captains.singapura.js.homing.studio.base.composed.text.Line;
 
+import hue.captains.singapura.js.homing.studio.base.composed.text.Lines;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -42,12 +43,12 @@ public record RigidNodeContent(Optional<Line.Plain> caption, List<RigidSegment> 
     }
 
     /** Convenience — no caption, from varargs. */
-    public static RigidNodeContent of(RigidSegment... segments) {
-        return new RigidNodeContent(List.of(segments));
+    public RigidNodeContent(RigidSegment... segments) {
+        this(List.of(segments));
     }
 
     /** Convenience — with a caption (blank/null → none), from varargs. */
-    public static RigidNodeContent captioned(String caption, RigidSegment... segments) {
-        return new RigidNodeContent(Line.optionalPlain(caption), List.of(segments));
+    public RigidNodeContent(String caption, RigidSegment... segments) {
+        this(Lines.INSTANCE.optionalPlain(caption), List.of(segments));
     }
 }

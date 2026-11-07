@@ -91,12 +91,12 @@ public final class ThemesGetAction
         return sb.append("]}").toString();
     }
 
-    private static String identity(Theme t) {
+    private String identity(Theme t) {
         return "\"slug\":" + jstr(t.slug()) + ",\"label\":" + jstr(t.label())
              + ",\"group\":" + jstr(t.group()) + ",\"inspiration\":" + jstr(t.inspiration());
     }
 
-    private static String jstr(String s) {
+    private String jstr(String s) {
         if (s == null) return "null";
         return "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
     }

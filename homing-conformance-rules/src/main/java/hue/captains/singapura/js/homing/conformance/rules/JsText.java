@@ -1,7 +1,9 @@
 package hue.captains.singapura.js.homing.conformance.rules;
 
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * RFC 0044 Phase 7 — served-JS text helpers shared by the pattern-scanning
@@ -12,11 +14,12 @@ import java.util.List;
  * with full fidelity — if a real code line trips a rule because of one, that
  * module is allowlisted with a justification.
  */
-public final class JsText {
+public record JsText() implements StatelessFunctionalObject {
 
-    private JsText() {}
+    public static final JsText INSTANCE = new JsText();
 
-    public static List<String> stripComments(List<String> lines) {
+    /** The lines with their line and block comments blanked to spaces, so every position stays where it was. */
+    public List<String> stripComments(List<String> lines) {
         var out = new ArrayList<String>(lines.size());
         boolean inBlock = false;
         for (String raw : lines) {
@@ -46,5 +49,11 @@ public final class JsText {
             out.add(sb.toString());
         }
         return out;
+    }
+
+    /** A segment from raw text, split on newlines. */
+    public JsSource source(String text) {
+        Objects.requireNonNull(text, "text");
+        return text.isEmpty() ? JsSource.EMPTY : new JsSource(List.of(text.split("\n", -1)));
     }
 }

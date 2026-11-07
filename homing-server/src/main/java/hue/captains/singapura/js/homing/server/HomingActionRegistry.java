@@ -3,9 +3,13 @@ package hue.captains.singapura.js.homing.server;
 import hue.captains.singapura.js.homing.core.ModuleNameResolver;
 import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CssGroup;
+import hue.captains.singapura.js.homing.core.CssRenderer;
+import hue.captains.singapura.js.homing.core.DesignRenderer;
+import hue.captains.singapura.js.homing.core.NoDesign;
 import hue.captains.singapura.js.homing.core.SimpleAppResolver;
 import hue.captains.singapura.js.homing.core.Theme;
 import hue.captains.singapura.js.homing.core.util.ResourceReader;
+import hue.captains.singapura.js.homing.core.util.ResourceReaders;
 import hue.captains.singapura.tao.http.action.ActionRegistry;
 import hue.captains.singapura.tao.http.action.GetAction;
 import hue.captains.singapura.tao.http.action.PostAction;
@@ -22,7 +26,7 @@ public class HomingActionRegistry implements ActionRegistry<RoutingContext> {
 
     /** Legacy constructor — only the {@code ?class=} contract is supported. */
     public HomingActionRegistry(ModuleNameResolver nameResolver) {
-        this(nameResolver, null, ResourceReader.fromSystemProperty());
+        this(nameResolver, null, ResourceReaders.INSTANCE.fromSystemProperty());
     }
 
     /**
@@ -31,7 +35,7 @@ public class HomingActionRegistry implements ActionRegistry<RoutingContext> {
      * contracts on {@code /app}. Other endpoints retain {@code ?class=}.
      */
     public HomingActionRegistry(ModuleNameResolver nameResolver, SimpleAppResolver appResolver) {
-        this(nameResolver, appResolver, ResourceReader.fromSystemProperty());
+        this(nameResolver, appResolver, ResourceReaders.INSTANCE.fromSystemProperty());
     }
 
     public HomingActionRegistry(ModuleNameResolver nameResolver, SimpleAppResolver appResolver, ResourceReader resourceReader) {
@@ -60,22 +64,30 @@ public class HomingActionRegistry implements ActionRegistry<RoutingContext> {
     public HomingActionRegistry(ModuleNameResolver nameResolver, SimpleAppResolver appResolver,
                                 ResourceReader resourceReader, ThemeRegistry themeRegistry,
                                 AppMeta meta, java.util.Collection<? extends Crate> crates) {
+        this(nameResolver, appResolver, resourceReader, themeRegistry, meta, crates, NoDesign.INSTANCE);
+    }
+
+    /** As with {@code crates}, with what the site's design makes, for {@code /module} and {@code /css-content} to ask. */
+    public HomingActionRegistry(ModuleNameResolver nameResolver, SimpleAppResolver appResolver,
+                                ResourceReader resourceReader, ThemeRegistry themeRegistry,
+                                AppMeta meta, java.util.Collection<? extends Crate> crates, DesignRenderer design) {
         if (themeRegistry == null) themeRegistry = ThemeRegistry.EMPTY;
         if (meta == null) meta = AppMeta.DEFAULT;
         this.appAction = new AppHtmlGetAction(nameResolver, appResolver, themeRegistry, meta);
-        ServedModules served = crates == null ? ServedModules.NONE : ServedModules.of(crates);
+        ServedModules served = crates == null ? ServedModules.NONE : new ServedModules(crates);
         // What varies with the theme is a derived sheet, by its type: a provided group is
         // served once, without a theme, and left alone by a switch (RFC 0064, D25). A
         // sheet that renders itself is asked first: it is nobody else's.
         var renderers = new java.util.ArrayList<CssRenderer>();
         renderers.add(SelfRenderedCssRenderer.INSTANCE);
+        renderers.add(design);
         // The first theme listed is the default: what a derived sheet requested
         // without ?theme= is rendered under, and what each module that loads one
         // hands the theme's owner as its fallback. RFC 0002 §3.6 still holds: no
         // file-based fallback.
         Theme defaultTheme = themeRegistry.themes().isEmpty() ? null : themeRegistry.themes().get(0);
         this.moduleAction = new EsModuleGetAction(nameResolver, resourceReader, served,
-                defaultTheme == null ? null : defaultTheme.slug());
+                defaultTheme == null ? null : defaultTheme.slug(), design);
         // A provided group renders from its inline bodies; a derived sheet is the
         // renderers'.
         this.cssContentAction = new CssContentGetAction(defaultTheme, served, renderers);

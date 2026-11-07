@@ -1,9 +1,8 @@
 package hue.captains.singapura.js.homing.studio.base.composed.text;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * A single line of text — the smallest typed building block above a raw
@@ -29,7 +28,7 @@ import java.util.Optional;
  * ({@code Articulated}'s length helper) and the cap starts biting on visible
  * text only.</p>
  */
-public sealed interface Line extends ValueObject
+public sealed interface Line extends Scalar
         permits Line.Plain, Line.Articulated {
 
     /** The hard cap on a single line's effective length, in chars. */
@@ -40,16 +39,6 @@ public sealed interface Line extends ValueObject
 
     /** The length that counts against {@link #MAX_CHARS}. */
     int effectiveLength();
-
-    /**
-     * Wrap a caption/title string as an optional {@link Plain} line — a
-     * {@code null} or blank string becomes {@link Optional#empty()}. The single
-     * place the String-authoring boundary (DSL, convenience constructors)
-     * crosses into the typed line.
-     */
-    static Optional<Plain> optionalPlain(String s) {
-        return (s == null || s.isBlank()) ? Optional.empty() : Optional.of(new Plain(s));
-    }
 
     /** A plain single line — literal text, no articulation. Cap applies to the raw string. */
     record Plain(String raw) implements Line {
@@ -88,7 +77,7 @@ public sealed interface Line extends ValueObject
          * Until then this counts the raw length — the effective cap is a lower
          * bound on the true visible allowance, so nothing over-long slips through.</p>
          */
-        private static int effectiveLengthOf(String raw) {
+        private int effectiveLengthOf(String raw) {
             return raw.length();
         }
     }

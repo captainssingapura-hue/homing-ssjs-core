@@ -11,7 +11,7 @@ import java.util.Objects;
  * each cell sits — the author never tracks {@code (row, col)} indices; the
  * position in the headers/rows lists <i>is</i> the coordinate.
  *
- * <p>Fluent and terse — chain any subset of marks:</p>
+ * <p>Fluent and terse — chain any subset of marks, each giving a new cell:</p>
  * <pre>{@code
  * cell("homing-core").strong()
  * cell("passing").success()
@@ -22,42 +22,45 @@ import java.util.Objects;
  * <p>This is purely an authoring convenience over the underlying data model
  * ({@link RelationSegment} + {@link RelationArticulations}); it holds no
  * coordinate itself. Static-import {@link #cell(String)} for the terse form.</p>
+ *
+ * @param text         the plain cell text (goes into the relation's {@code rows})
+ * @param articulation the cell's marks — {@link Articulation#isEmpty() empty} when none was set
  */
-public final class RelationCell {
+public record RelationCell(String text, Articulation articulation) {
 
-    private final String text;
-    private TableData.Badge      badge;
-    private TableData.Align      align;
-    private Articulation.Emphasis emphasis;
-
-    private RelationCell(String text) {
-        this.text = Objects.requireNonNull(text, "RelationCell.text (use \"\" for empty)");
+    public RelationCell {
+        Objects.requireNonNull(text, "RelationCell.text (use \"\" for empty)");
+        Objects.requireNonNull(articulation, "RelationCell.articulation");
     }
 
     /** A cell carrying {@code text}; add marks by chaining. */
-    public static RelationCell cell(String text) { return new RelationCell(text); }
+    public RelationCell(String text) { this(text, Articulation.NONE); }
 
     // ── Status badge (inline pill) ──────────────────────────────────────────
-    public RelationCell badge(TableData.Badge b) { this.badge = b; return this; }
-    public RelationCell success() { this.badge = TableData.Badge.SUCCESS; return this; }
-    public RelationCell warning() { this.badge = TableData.Badge.WARNING; return this; }
-    public RelationCell error()   { this.badge = TableData.Badge.ERROR;   return this; }
+    /** This cell with this badge. */
+    public RelationCell badge(TableData.Badge b) { return new RelationCell(text, articulation.withBadge(b)); }
+    /** This cell with the success badge. */
+    public RelationCell success() { return badge(TableData.Badge.SUCCESS); }
+    /** This cell with the warning badge. */
+    public RelationCell warning() { return badge(TableData.Badge.WARNING); }
+    /** This cell with the error badge. */
+    public RelationCell error()   { return badge(TableData.Badge.ERROR); }
 
     // ── Horizontal alignment ────────────────────────────────────────────────
-    public RelationCell align(TableData.Align a) { this.align = a; return this; }
-    public RelationCell left()   { this.align = TableData.Align.LEFT;   return this; }
-    public RelationCell center() { this.align = TableData.Align.CENTER; return this; }
-    public RelationCell right()  { this.align = TableData.Align.RIGHT;  return this; }
+    /** This cell aligned this way. */
+    public RelationCell align(TableData.Align a) { return new RelationCell(text, articulation.withAlign(a)); }
+    /** This cell aligned to the left. */
+    public RelationCell left()   { return align(TableData.Align.LEFT); }
+    /** This cell centred. */
+    public RelationCell center() { return align(TableData.Align.CENTER); }
+    /** This cell aligned to the right. */
+    public RelationCell right()  { return align(TableData.Align.RIGHT); }
 
     // ── Emphasis ────────────────────────────────────────────────────────────
-    public RelationCell strong() { this.emphasis = Articulation.Emphasis.STRONG; return this; }
-    public RelationCell muted()  { this.emphasis = Articulation.Emphasis.MUTED;  return this; }
+    /** This cell with strong emphasis. */
+    public RelationCell strong() { return emphasis(Articulation.Emphasis.STRONG); }
+    /** This cell with muted emphasis. */
+    public RelationCell muted()  { return emphasis(Articulation.Emphasis.MUTED); }
 
-    /** The plain cell text (goes into the relation's {@code rows}). */
-    public String text() { return text; }
-
-    /** The cell's articulation — {@link Articulation#isEmpty() empty} when no mark was set. */
-    public Articulation articulation() {
-        return Articulation.of().badge(badge).align(align).emphasis(emphasis).build();
-    }
+    private RelationCell emphasis(Articulation.Emphasis e) { return new RelationCell(text, articulation.withEmphasis(e)); }
 }

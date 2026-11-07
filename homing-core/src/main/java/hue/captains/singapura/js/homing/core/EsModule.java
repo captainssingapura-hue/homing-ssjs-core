@@ -11,6 +11,8 @@ import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
  * {@link Linkable} sources (specifically {@link ProxyApp}).</p>
  */
 public non-sealed interface EsModule<M extends EsModule<M>> extends Importable, StatelessFunctionalObject {
+    /** What the module imports, and from where. */
     ImportsFor<M> imports();
+    /** What the module exports. */
     ExportsOf<M> exports();
 }

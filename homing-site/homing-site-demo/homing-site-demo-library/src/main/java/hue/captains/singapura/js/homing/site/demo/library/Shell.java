@@ -3,13 +3,14 @@ package hue.captains.singapura.js.homing.site.demo.library;
 import hue.captains.singapura.js.homing.server.HtmlPageContent;
 import hue.captains.singapura.js.homing.site.Html;
 import hue.captains.singapura.js.homing.site.Trail;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 /** The demo's page shell and its crumb bar, for the pages that are not listings. */
-final class Shell {
+record Shell() implements StatelessFunctionalObject {
 
-    private Shell() {}
+    static final Shell INSTANCE = new Shell();
 
-    static HtmlPageContent page(String title, String body) {
+    HtmlPageContent page(String title, String body) {
         return new HtmlPageContent("""
                 <!DOCTYPE html>
                 <html lang="en">
@@ -26,10 +27,10 @@ final class Shell {
                 <body>
                 %s</body>
                 </html>
-                """.formatted(Html.escape(title), body));
+                """.formatted(Html.INSTANCE.escape(title), body));
     }
 
-    static String crumbs(Trail trail) {
+    String crumbs(Trail trail) {
         if (trail.isEmpty()) return "";
         var sb = new StringBuilder("<nav class=\"trail\">");
         var crumbs = trail.crumbs();
@@ -37,10 +38,10 @@ final class Shell {
             var crumb = crumbs.get(i);
             if (i > 0) sb.append("<span>/</span>");
             if (i < crumbs.size() - 1) {
-                sb.append("<a href=\"").append(Html.escape(crumb.href())).append("\">")
-                  .append(Html.escape(crumb.text())).append("</a>");
+                sb.append("<a href=\"").append(Html.INSTANCE.escape(crumb.href())).append("\">")
+                  .append(Html.INSTANCE.escape(crumb.text())).append("</a>");
             } else {
-                sb.append(Html.escape(crumb.text()));
+                sb.append(Html.INSTANCE.escape(crumb.text()));
             }
         }
         return sb.append("</nav>\n").toString();

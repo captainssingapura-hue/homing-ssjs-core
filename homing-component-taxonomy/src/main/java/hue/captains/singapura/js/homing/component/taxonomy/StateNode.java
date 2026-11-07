@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.component.taxonomy;
 
 import hue.captains.singapura.js.homing.tree.NodeName;
+import hue.captains.singapura.js.homing.tree.NodeNames;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 /**
@@ -13,5 +14,5 @@ import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 public sealed interface StateNode extends StatelessFunctionalObject permits StateBranch, StateType {
 
     /** {@code Enabled} gives {@code enabled}. */
-    default NodeName name() { return NodeName.ofType(getClass(), ""); }
+    default NodeName name() { return NodeNames.INSTANCE.ofType(getClass(), ""); }
 }

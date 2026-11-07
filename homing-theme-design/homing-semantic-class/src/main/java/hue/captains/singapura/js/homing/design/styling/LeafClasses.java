@@ -7,8 +7,9 @@ import hue.captains.singapura.js.homing.component.taxonomy.Classed;
 import hue.captains.singapura.js.homing.component.taxonomy.StateValue;
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.js.homing.tree.NodeName;
+import hue.captains.singapura.js.homing.tree.NodeNames;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,13 +41,13 @@ public record LeafClasses() implements StatelessFunctionalObject {
      * @param drawnBy  the class worn while it holds - {@code .styled-tab--selected} - or the pseudo-class - {@code :hover}
      * @param level    the level the leaf gives it: {@code tertiary}
      */
-    public record Drawn(Classed<?> state, StateValue value, String drawnBy, String level) implements ValueObject {
+    public record Drawn(Classed<?> state, StateValue value, String drawnBy, String level) implements Scalar {
         /** Whether it is a pseudo state, drawn by its pseudo-class. */
         public boolean pseudo() { return drawnBy.startsWith(":"); }
     }
 
     /** What a leaf wears: its class, and its states, in its precedence. */
-    public record Listing(Casting leaf, String styled, List<Drawn> states) implements ValueObject {
+    public record Listing(Casting leaf, String styled, List<Drawn> states) implements Scalar {
         public Listing { states = List.copyOf(states); }
     }
 
@@ -55,7 +56,7 @@ public record LeafClasses() implements StatelessFunctionalObject {
         var importances = Importances.INSTANCE;
         var drawn = new ArrayList<Drawn>();
         for (Classed<?> s : taxonomy.precedence(leaf.cast())) {
-            String level = importances.levelFor(leaf.cast(), s).map(l -> NodeName.ofType(l, "").value()).orElse("unranked");
+            String level = importances.levelFor(leaf.cast(), s).map(l -> NodeNames.INSTANCE.ofType(l, "").value()).orElse("unranked");
             List<StateValue> values = s.values();
             for (StateValue v : values.subList(1, values.size()))
                 drawn.add(new Drawn(s, v, s instanceof Pseudo p ? p.pseudoClass() : "." + state(leaf, s, v), level));
@@ -98,7 +99,7 @@ public record LeafClasses() implements StatelessFunctionalObject {
         return "Object.freeze({\n" + String.join(",\n", leaves) + "\n})";
     }
 
-    private static String quoted(String s) { return "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\""; }
+    private String quoted(String s) { return "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\""; }
 
     /** The listing, a line a class or a pseudo state: {@code plain-button  .styled-plain-button}, then each state indented. */
     public List<String> lines(Taxonomy taxonomy) {

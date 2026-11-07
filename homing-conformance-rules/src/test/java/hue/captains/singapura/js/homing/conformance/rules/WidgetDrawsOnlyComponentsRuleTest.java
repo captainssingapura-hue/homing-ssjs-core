@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class WidgetDrawsOnlyComponentsRuleTest {
 
     private static ServedModule served(String... lines) {
-        return new ServedModule("demo.Board", StandardJsModuleType.WIDGET, JsSource.of(lines));
+        return new ServedModule("demo.Board", StandardJsModuleType.WIDGET, new JsSource(lines));
     }
 
     private static List<Finding> check(String... lines) { return WidgetDrawsOnlyComponentsRule.INSTANCE.check(served(lines)); }
@@ -61,7 +61,7 @@ class WidgetDrawsOnlyComponentsRuleTest {
     void thePolicyHoldsWidgets_andOnlyWidgets_toIt() {
         var policy = DefaultJsRulePolicy.INSTANCE;
         assertTrue(policy.rulesFor(StandardJsModuleType.WIDGET).rules().contains(WidgetDrawsOnlyComponentsRule.INSTANCE));
-        assertTrue(policy.rulesFor(StandardJsModuleType.WIDGET).rules().containsAll(DefaultJsRulePolicy.DOM_OWNER_DISCIPLINE),
+        assertTrue(policy.rulesFor(StandardJsModuleType.WIDGET).rules().containsAll(DefaultJsRulePolicy.INSTANCE.domOwnerDiscipline()),
                 "a widget owes everything a DOM owner does, and more");
         for (JsModuleType t : List.of(StandardJsModuleType.CONSUMER, StandardJsModuleType.PRIMITIVE))
             assertTrue(!policy.rulesFor(t).rules().contains(WidgetDrawsOnlyComponentsRule.INSTANCE), t + " is not held to it");

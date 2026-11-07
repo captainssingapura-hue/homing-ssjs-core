@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.conformance.rules;
 
+import hue.captains.singapura.tao.ontology.FunctionalObject;
+
 import java.util.List;
 
 /**
@@ -30,7 +32,7 @@ import java.util.List;
  * @param baseline         recorded pre-existing violations
  * @param allowPreExisting whether a baselined finding is a WARNING (true) or an ERROR (false)
  */
-public record FindingGrader(List<Allowance> allowlist, Baseline baseline, boolean allowPreExisting) {
+public record FindingGrader(List<Allowance> allowlist, Baseline baseline, boolean allowPreExisting) implements FunctionalObject {
 
     /** The strictest possible grader: no allowances, no baseline — every finding fails. */
     public static final FindingGrader STRICT = new FindingGrader(List.of(), Baseline.EMPTY, false);
@@ -56,6 +58,7 @@ public record FindingGrader(List<Allowance> allowlist, Baseline baseline, boolea
         return new FindingGrader(allowlist, baseline, allow);
     }
 
+    /** Grades one finding by the first that applies to it: allowed, owed as a debt, baselined, or else new. */
     public GradedFinding grade(Finding finding) {
         for (Allowance a : allowlist) {
             if (a.matches(finding)) return new GradedFinding(finding, Severity.WARNING, Disposition.ALLOWED, a.reason());
@@ -70,6 +73,7 @@ public record FindingGrader(List<Allowance> allowlist, Baseline baseline, boolea
         return new GradedFinding(finding, Severity.ERROR, Disposition.NEW, "new violation");
     }
 
+    /** Grades each finding, in the order given. */
     public List<GradedFinding> grade(List<Finding> findings) {
         return findings.stream().map(this::grade).toList();
     }

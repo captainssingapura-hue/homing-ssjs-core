@@ -41,6 +41,7 @@ public final class NavWriter {
         this.allImports = allImports;
     }
 
+    /** The lines of the {@code nav} const and the helper it needs; no lines when no app is linked. */
     public List<String> write() {
         // Collect AppLink targets, deduplicated, in insertion order.
         Map<Linkable, Boolean> targets = new LinkedHashMap<>();
@@ -78,7 +79,7 @@ public final class NavWriter {
                           + jsString(target.simpleName()) + "\", p); }" + comma);
                 }
                 case ProxyApp<?, ?> proxy -> {
-                    var tpl = UrlTemplate.compile(proxy.urlTemplate(), proxy.paramsType());
+                    var tpl = new UrlTemplate(proxy.urlTemplate(), proxy.paramsType());
                     String body = tpl.toJsExpression("p");
                     out.add("    " + identifier
                           + ": function(p) { return " + body + "; }" + comma);
@@ -93,7 +94,7 @@ public final class NavWriter {
     }
 
     /** Escape a string for safe inclusion in a JS double-quoted literal. */
-    private static String jsString(String s) {
+    private String jsString(String s) {
         StringBuilder out = new StringBuilder(s.length() + 4);
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);

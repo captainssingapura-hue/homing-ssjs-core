@@ -9,7 +9,7 @@ import java.util.List;
 public record ReadContentFromResources<M extends EsModule>(M module, ResourceReader resourceReader) implements ContentProvider<M> {
 
     public ReadContentFromResources(M module) {
-        this(module, ResourceReader.INSTANCE);
+        this(module, ResourceReader.CLASSPATH);
     }
 
     @Override

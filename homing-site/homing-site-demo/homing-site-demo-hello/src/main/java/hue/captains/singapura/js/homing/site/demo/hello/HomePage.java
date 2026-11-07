@@ -1,11 +1,13 @@
 package hue.captains.singapura.js.homing.site.demo.hello;
 
+import hue.captains.singapura.js.homing.base.lang.StatelessSingleton;
 import hue.captains.singapura.js.homing.server.HtmlPageContent;
 import hue.captains.singapura.js.homing.site.Navigable;
 import hue.captains.singapura.js.homing.site.Query;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 /** {@code /} — says what the site is and where its pages are. Ignores its query. */
-final class HomePage implements Navigable {
+final class HomePage implements Navigable, StatelessFunctionalObject, StatelessSingleton {
 
     static final HomePage INSTANCE = new HomePage();
 
@@ -13,7 +15,7 @@ final class HomePage implements Navigable {
 
     @Override
     public HtmlPageContent html(Query query) {
-        return Shell.page("Home", """
+        return Shell.INSTANCE.page("Home", """
                 <h1>hello</h1>
                 <p>The smallest site on <code>homing-site-base</code>: a router of three arms
                    over three pages. Each page is a <code>Navigable</code> — given the query

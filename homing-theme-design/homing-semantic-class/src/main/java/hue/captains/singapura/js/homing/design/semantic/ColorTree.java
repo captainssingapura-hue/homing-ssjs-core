@@ -6,6 +6,7 @@ import hue.captains.singapura.js.homing.design.color.ColorNode;
 import hue.captains.singapura.js.homing.design.color.ConcreteColor;
 import hue.captains.singapura.js.homing.design.color.Palettable;
 import hue.captains.singapura.js.homing.tree.NodeName;
+import hue.captains.singapura.tao.ontology.Immutable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,7 +21,7 @@ import java.util.Optional;
  * resolved by the selected palette, then down the palettes it sits on, the first answer winning. Made by
  * {@link ReadColors}, which refuses a tree that cannot be read.
  */
-public final class ColorTree {
+public final class ColorTree implements Immutable {
 
     /** A node as read: its scheme, and its parent - none at the top. */
     record Read(ColorNode<?, ?, ?> node, ColorScheme scheme, ColorNode<?, ?, ?> parent) {}
@@ -109,7 +110,7 @@ public final class ColorTree {
         if (!problems.isEmpty()) throw new IllegalArgumentException(String.join("; ", problems));
     }
 
-    private static List<String> chainProblems(ColorPalette<?> palette) {
+    private List<String> chainProblems(ColorPalette<?> palette) {
         var schemes = Schemes.INSTANCE;
         var out = new ArrayList<String>();
         ColorPalette<?> next = palette;

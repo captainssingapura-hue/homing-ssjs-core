@@ -33,7 +33,7 @@ public record KeysThroughThePartyRule() implements JsRule {
     public static final KeysThroughThePartyRule INSTANCE = new KeysThroughThePartyRule();
 
     /** The keyboard steward: the one module that listens to the document, by definition. */
-    public static final Set<String> STEWARDS = Set.of("hue.captains.singapura.js.homing.component.keyboard.KeyboardStewardModule");
+    public Set<String> stewards() { return Set.of("hue.captains.singapura.js.homing.component.keyboard.KeyboardStewardModule"); }
 
     /** A key listener registered in any form: the event name as a string argument, or the {@code onkey…} property assigned. */
     private static final Pattern LISTENER = Pattern.compile("[\"'](?:keydown|keyup|keypress)[\"']\\s*,|\\.onkey(?:down|up|press)\\s*=[^=]");
@@ -47,9 +47,9 @@ public record KeysThroughThePartyRule() implements JsRule {
 
     @Override
     public List<Finding> check(ServedModule module) {
-        if (STEWARDS.contains(module.moduleClass())) return List.of();
+        if (stewards().contains(module.moduleClass())) return List.of();
         List<String> raw = module.lines();
-        List<String> code = JsText.stripComments(raw);
+        List<String> code = JsText.INSTANCE.stripComments(raw);
         var findings = new ArrayList<Finding>();
         for (int i = 0; i < code.size(); i++) {
             String line = code.get(i);

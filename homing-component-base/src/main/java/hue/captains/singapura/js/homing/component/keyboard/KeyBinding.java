@@ -1,6 +1,5 @@
 package hue.captains.singapura.js.homing.component.keyboard;
 
-import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
@@ -24,14 +23,10 @@ public record KeyBinding(Key key, Set<Modifier> modifiers, String meaning) {
         if (meaning.isBlank()) throw new IllegalArgumentException("KeyBinding.meaning: must not be blank");
     }
 
-    public static KeyBinding of(Key key, String meaning) { return new KeyBinding(key, Set.of(), meaning); }
-    public static KeyBinding of(Key key, Modifier modifier, String meaning) { return new KeyBinding(key, EnumSet.of(modifier), meaning); }
-    public static KeyBinding of(Key key, Set<Modifier> modifiers, String meaning) { return new KeyBinding(key, modifiers, meaning); }
-
-    /** Several keys, one meaning: {@code ArrowRight} and {@code ArrowUp} both a step up. */
-    public static List<KeyBinding> each(String meaning, Key... keys) {
-        return Arrays.stream(keys).map(k -> of(k, meaning)).toList();
-    }
+    /** A key pressed alone, and what the component does with it. */
+    public KeyBinding(Key key, String meaning) { this(key, Set.of(), meaning); }
+    /** A key pressed with one modifier held, and what the component does with it. */
+    public KeyBinding(Key key, Modifier modifier, String meaning) { this(key, EnumSet.of(modifier), meaning); }
 
     /** The chord, as a person reads it: {@code Shift+ArrowUp}; modifiers in a fixed order. */
     public String chord() {

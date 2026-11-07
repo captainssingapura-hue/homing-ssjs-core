@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.core;
 
+import hue.captains.singapura.tao.ontology.Immutable;
+
 import java.util.List;
 
 /**
@@ -31,7 +33,7 @@ import java.util.List;
  * javac} guarantees {@code requires ⊆ Maven dependencies}; there is nothing to
  * validate there.</p>
  */
-public interface Crate {
+public interface Crate extends Immutable {
 
     /** Stable crate id — conventionally the Maven module's artifactId. */
     String name();

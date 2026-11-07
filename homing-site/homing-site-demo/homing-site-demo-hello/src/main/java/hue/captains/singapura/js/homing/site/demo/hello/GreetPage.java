@@ -23,7 +23,7 @@ record GreetPage(Optional<String> bound) implements Navigable {
 
     static final GreetPage FROM_QUERY = new GreetPage(Optional.empty());
 
-    static GreetPage bound(String name) { return new GreetPage(Optional.of(name)); }
+    GreetPage(String name) { this(Optional.of(name)); }
 
     @Override
     public HtmlPageContent html(Query query) {
@@ -31,13 +31,13 @@ record GreetPage(Optional<String> bound) implements Navigable {
         String where = bound.isPresent() ? "bound off the path by the router"
                      : query.first("name").isPresent() ? "read from the query"
                      : "nobody said — the query had no <code>name</code>";
-        return Shell.page("Hello, " + name, """
+        return Shell.INSTANCE.page("Hello, " + name, """
                 <h1>Hello, %s.</h1>
                 <p>Your name was %s.</p>
                 <p>Try <a href="/greet?name=Ada">/greet?name=Ada</a>,
                    <a href="/greet/Grace">/greet/Grace</a>,
                    <a href="/greet/Grace?name=Ada">/greet/Grace?name=Ada</a>
                    or <a href="/greet">/greet</a>.</p>
-                """.formatted(Html.escape(name), where));
+                """.formatted(Html.INSTANCE.escape(name), where));
     }
 }

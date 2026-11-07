@@ -48,6 +48,10 @@ public record ResolveSemanticClass() implements StatelessFunctionalObject {
 
     public static final ResolveSemanticClass INSTANCE = new ResolveSemanticClass();
 
+    /**
+     * Walks the tree for {@code query} in {@code state} on {@code target}, in {@code theme}: the class worn or why
+     * there is none, with every step and note.
+     */
     public Resolution resolve(Taxonomy taxonomy, Dressed theme, Casting query, State state, Target target) {
         var notes = new ArrayList<String>();
         if (state == State.REST && query.functional())
@@ -61,80 +65,108 @@ public record ResolveSemanticClass() implements StatelessFunctionalObject {
         var steps = new ArrayList<Resolution.Step>();
         var passed = new LinkedHashSet<Casting>();
         passed.add(query);
-        Resolution.Outcome outcome = walk(taxonomy, theme, query, top, top, path(taxonomy, query, state), state, target, steps, passed);
+        var walk = new Walk(taxonomy, theme, query, top, state, target, steps, passed);
+        Resolution.Outcome outcome = walk(walk, top, path(taxonomy, query, state));
         return new Resolution(theme.toString(), query, state, target, notes, steps, outcome);
     }
 
     /** The nodes asked for a casting in a state, most precise first. */
-    private static List<Casting> path(Taxonomy taxonomy, Casting c, State state) {
+    private List<Casting> path(Taxonomy taxonomy, Casting c, State state) {
         if (state == State.REST) return c.lineage(taxonomy);
         var walk = new ArrayList<Casting>();
         for (ComponentNode n : taxonomy.fallback(c.component())) walk.add(new Casting((Taxon) n));
         return walk;
     }
 
-    private static Resolution.Outcome walk(Taxonomy taxonomy, Dressed theme, Casting query, Layer top, Layer layer, List<Casting> path, State state, Target target,
-                                           List<Resolution.Step> steps, Set<Casting> passed) {
-        var tokens = SemanticTokens.INSTANCE;
+    /** One walk: what it asks, and what it has done so far. */
+    private record Walk(Taxonomy taxonomy, Dressed theme, Casting query, Layer top, State state, Target target,
+                        List<Resolution.Step> steps, Set<Casting> passed) {
+
+        /** A step of the walk: what a layer said at a node. */
+        void step(Layer layer, Casting node, String said) { steps.add(new Resolution.Step(layer.token(), node, said)); }
+    }
+
+    /** The path asked of a layer: the outcome where a node answers, else its base's, else nothing. */
+    private Resolution.Outcome walk(Walk walk, Layer layer, List<Casting> path) {
         for (int i = 0; i < path.size(); i++) {
-            Casting node = path.get(i);
-            switch (layer.answer(node, target)) {
-                case null -> steps.add(new Resolution.Step(layer.token(), node, "-"));
-                case Answer.Own<?> own -> {
-                    String body = own.bodies().get(state);
-                    if (body == null) {
-                        steps.add(new Resolution.Step(layer.token(), node, "answers it, not " + tokens.state(state)));
-                        continue;
-                    }
-                    steps.add(new Resolution.Step(layer.token(), node, "answered"));
+            Resolution.Outcome outcome = ask(walk, layer, path, i);
+            if (outcome != null) return outcome;
+        }
+        if (layer.base() != null) return walk(walk, layer.base(), path);
+        return walk.state() == State.REST ? new Resolution.Unanswered() : new Resolution.Silent();
+    }
+
+    /** What a layer says of one node of the path: where the walk ends, or null when it goes on. */
+    private Resolution.Outcome ask(Walk walk, Layer layer, List<Casting> path, int i) {
+        var tokens = SemanticTokens.INSTANCE;
+        Casting node = path.get(i);
+        State state = walk.state();
+        Target target = walk.target();
+        String notThis = "answers it, not " + tokens.state(state);
+        switch (layer.answer(node, target)) {
+            case null -> walk.step(layer, node, "-");
+            case Answer.Own<?> own -> {
+                String body = own.bodies().get(state);
+                if (body != null) {
+                    walk.step(layer, node, "answered");
                     return new Resolution.Answered(layer.token(), node, tokens.className(node, state, target), body);
                 }
-                case Answer.Painted<?, ?> painted -> {
-                    Paint<?, ?> paint = painted.paints().get(state);
-                    if (paint == null) {
-                        steps.add(new Resolution.Step(layer.token(), node, "answers it, not " + tokens.state(state)));
-                        continue;
-                    }
-                    if (paint instanceof Paint.Along<?, ?> a && !taxonomy.extents(query.component()).contains(ExtentAxis.COLOUR))
-                        throw new IllegalStateException(tokens.casting(query) + " " + target.token() + " is answered along " + a.scale().token()
-                                + " at " + tokens.casting(node) + " by " + layer.token() + ", and " + query.component().name().value()
-                                + " declares no COLOUR axis: only a casting that varies its colour by degree moves along a scale");
-                    steps.add(new Resolution.Step(layer.token(), node, "answered"));
-                    return new Resolution.Answered(layer.token(), node, tokens.className(node, state, target),
-                            RenderColor.INSTANCE.body(theme, (Target.Color) target, paint));
-                }
-                case Answer.Redirect<?> r -> {
-                    steps.add(new Resolution.Step(layer.token(), node, "redirected to " + tokens.casting(r.to())));
-                    if (!passed.add(r.to()))
-                        throw new IllegalStateException("a redirect comes back to " + tokens.casting(r.to()) + " on " + target.token() + ": "
-                                + String.join(" > ", passed.stream().map(tokens::casting).toList()) + " > " + tokens.casting(r.to()));
-                    return walk(taxonomy, theme, query, top, top, path(taxonomy, state == State.REST ? r.to() : r.to().alone(), state), state, target, steps, passed);
-                }
-                case Answer.Animated a -> {
-                    if (state != State.REST) {
-                        steps.add(new Resolution.Step(layer.token(), node, "answers it, not " + tokens.state(state)));
-                        continue;
-                    }
-                    steps.add(new Resolution.Step(layer.token(), node, "answered: " + a.effect().token()));
+                walk.step(layer, node, notThis);
+            }
+            case Answer.Painted<?, ?> painted -> {
+                Paint<?, ?> paint = painted.paints().get(state);
+                if (paint != null) return painted(walk, layer, node, paint);
+                walk.step(layer, node, notThis);
+            }
+            case Answer.Redirect<?> r -> {
+                return redirected(walk, layer, node, r);
+            }
+            case Answer.Animated a -> {
+                if (state == State.REST) {
+                    walk.step(layer, node, "answered: " + a.effect().token());
                     return new Resolution.Answered(layer.token(), node, tokens.className(node, state, target),
                             Effects.INSTANCE.moving(a.effect()), a.effect());
                 }
-                case Answer.FromBase<?> f -> {
-                    if (!f.asks(state)) {
-                        steps.add(new Resolution.Step(layer.token(), node, "its base's, not " + tokens.state(state)));
-                        continue;
-                    }
-                    steps.add(new Resolution.Step(layer.token(), node, "its base's, from here"));
-                    return walk(taxonomy, theme, query, top, layer.base(), path.subList(i, path.size()), state, target, steps, passed);
+                walk.step(layer, node, notThis);
+            }
+            case Answer.FromBase<?> f -> {
+                if (f.asks(state)) {
+                    walk.step(layer, node, "its base's, from here");
+                    return walk(walk, layer.base(), path.subList(i, path.size()));
                 }
+                walk.step(layer, node, "its base's, not " + tokens.state(state));
             }
         }
-        if (layer.base() != null) return walk(taxonomy, theme, query, top, layer.base(), path, state, target, steps, passed);
-        return state == State.REST ? new Resolution.Unanswered() : new Resolution.Silent();
+        return null;
+    }
+
+    /** A painted colour, written in the theme's colours; along a scale only for a casting that declares the COLOUR axis. */
+    private Resolution.Outcome painted(Walk walk, Layer layer, Casting node, Paint<?, ?> paint) {
+        var tokens = SemanticTokens.INSTANCE;
+        Casting query = walk.query();
+        Target target = walk.target();
+        if (paint instanceof Paint.Along<?, ?> a && !walk.taxonomy().extents(query.component()).contains(ExtentAxis.COLOUR))
+            throw new IllegalStateException(tokens.casting(query) + " " + target.token() + " is answered along " + a.scale().token()
+                    + " at " + tokens.casting(node) + " by " + layer.token() + ", and " + query.component().name().value()
+                    + " declares no COLOUR axis: only a casting that varies its colour by degree moves along a scale");
+        walk.step(layer, node, "answered");
+        return new Resolution.Answered(layer.token(), node, tokens.className(node, walk.state(), target),
+                RenderColor.INSTANCE.body(walk.theme(), (Target.Color) target, paint));
+    }
+
+    /** A redirect, resolved again from its node in the theme worn; one that comes back to a node it has passed through is refused. */
+    private Resolution.Outcome redirected(Walk walk, Layer layer, Casting node, Answer.Redirect<?> r) {
+        var tokens = SemanticTokens.INSTANCE;
+        State state = walk.state();
+        walk.step(layer, node, "redirected to " + tokens.casting(r.to()));
+        if (!walk.passed().add(r.to()))
+            throw new IllegalStateException("a redirect comes back to " + tokens.casting(r.to()) + " on " + walk.target().token() + ": "
+                    + String.join(" > ", walk.passed().stream().map(tokens::casting).toList()) + " > " + tokens.casting(r.to()));
+        return walk(walk, walk.top(), path(walk.taxonomy(), state == State.REST ? r.to() : r.to().alone(), state));
     }
 
     /** Whether a casting is one the taxonomy has: on its own, or a role some slot casts its component in. */
-    private static boolean castable(Taxonomy taxonomy, Casting c) {
+    private boolean castable(Taxonomy taxonomy, Casting c) {
         if (c.standalone()) return true;
         for (Part<?, ?> p : taxonomy.parts()) if (p.bases().contains(c.component()) && p.role().equals(c.role())) return true;
         return false;

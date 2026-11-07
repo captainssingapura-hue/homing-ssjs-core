@@ -64,19 +64,15 @@ public final class CatalogueTree {
     private final Map<Class<?>, List<Leaf<?>>> leaves = new LinkedHashMap<>();
     private final Mpa mpa;
 
-    private CatalogueTree(L0_Catalogue<?> root, Mpa mpa) {
-        this.root = Objects.requireNonNull(root, "CatalogueTree.root");
-        this.mpa = Objects.requireNonNull(mpa, "CatalogueTree.mpa");
-        walk(root, Path.ROOT);
-    }
-
     /**
      * Reads and checks the tree under {@code root}, its pages made with the site's
      * {@code mpa} - every catalogue's {@link Catalogue#leaves(Mpa)} handed it - so every
      * page of the site wears one chrome, whichever tree placed it.
      */
-    public static CatalogueTree of(L0_Catalogue<?> root, Mpa mpa) {
-        return new CatalogueTree(root, mpa);
+    public CatalogueTree(L0_Catalogue<?> root, Mpa mpa) {
+        this.root = Objects.requireNonNull(root, "CatalogueTree.root");
+        this.mpa = Objects.requireNonNull(mpa, "CatalogueTree.mpa");
+        walk(root, Path.ROOT);
     }
 
     /**
@@ -84,8 +80,8 @@ public final class CatalogueTree {
      * that need no site. A catalogue that makes its pages with the site's MPA is
      * refused, and told to be read with one.
      */
-    public static CatalogueTree of(L0_Catalogue<?> root) {
-        return new CatalogueTree(root, NoMpa.INSTANCE);
+    public CatalogueTree(L0_Catalogue<?> root) {
+        this(root, NoMpa.INSTANCE);
     }
 
     private void walk(Catalogue<?> vertex, Path at) {
@@ -104,28 +100,43 @@ public final class CatalogueTree {
         preOrder.add(vertex);
 
         var slots = new LinkedHashMap<String, Slot>();
-        int level = levelOf(vertex);
+        List<? extends Catalogue<?>> subs = subCataloguesIn(vertex, slots);
+        List<? extends Graft<?>> grafted = graftsIn(vertex, at, slots);
+        pagesIn(vertex, at, slots);
+        children.put(cls, Collections.unmodifiableMap(slots));
 
+        for (Catalogue<?> sub : subs) walk(sub, at.child(sub.slug().value()));
+        for (Graft<?> graft : grafted) walk(graft.root(), at.child(graft.root().slug().value()));
+    }
+
+    /** A vertex's sub-catalogues into its slots: each edge declared both ways, one level down. */
+    private List<? extends Catalogue<?>> subCataloguesIn(Catalogue<?> vertex, Map<String, Slot> slots) {
+        Class<?> cls = vertex.getClass();
+        int level = CatalogueLevels.INSTANCE.levelOf(vertex);
         List<? extends Catalogue<?>> subs = vertex.subCatalogues();
         if (subs == null) throw new IllegalArgumentException(cls.getName() + " has null subCatalogues()");
         for (Catalogue<?> sub : subs) {
             if (sub == null) throw new IllegalArgumentException(cls.getName() + " lists a null sub-catalogue");
-            var declared = declaredParentOf(sub).orElse(null);
+            var declared = CatalogueLevels.INSTANCE.declaredParentOf(sub).orElse(null);
             if (declared == null || declared.getClass() != cls) {
                 throw new IllegalArgumentException(
                         cls.getName() + " lists " + sub.getClass().getName() + " as a sub-catalogue, but its parent() is "
                         + (declared == null ? "none (it is a root)" : declared.getClass().getName())
                         + ". The two declarations of an edge must agree");
             }
-            if (levelOf(sub) != level + 1) {
+            if (CatalogueLevels.INSTANCE.levelOf(sub) != level + 1) {
                 throw new IllegalArgumentException(
-                        sub.getClass().getName() + " is level " + levelOf(sub) + " but sits under level " + level);
+                        sub.getClass().getName() + " is level " + CatalogueLevels.INSTANCE.levelOf(sub) + " but sits under level " + level);
             }
             claim(slots, sub.slug().value(), new Slot.Vertex(sub), vertex);
             parents.put(sub.getClass(), vertex);
         }
+        return subs;
+    }
 
-        // A graft's root is a root: it names no parent, so there is no second declaration to agree with.
+    /** A vertex's grafts into its slots. A graft's root is a root: it names no parent, so there is no second declaration to agree with. */
+    private List<? extends Graft<?>> graftsIn(Catalogue<?> vertex, Path at, Map<String, Slot> slots) {
+        Class<?> cls = vertex.getClass();
         List<? extends Graft<?>> grafted = vertex.grafts();
         if (grafted == null) throw new IllegalArgumentException(cls.getName() + " has null grafts()");
         for (Graft<?> graft : grafted) {
@@ -139,8 +150,12 @@ public final class CatalogueTree {
             }
             parents.put(r.getClass(), vertex);
         }
+        return grafted;
+    }
 
-        // the pages, made with the site's MPA - read once, and kept, so a listing shows the very pages the paths name
+    /** A vertex's pages into its slots, made with the site's MPA - read once, and kept, so a listing shows the very pages the paths name. */
+    private void pagesIn(Catalogue<?> vertex, Path at, Map<String, Slot> slots) {
+        Class<?> cls = vertex.getClass();
         List<? extends Leaf<?>> leaves = vertex.leaves(mpa);
         if (leaves == null) throw new IllegalArgumentException(cls.getName() + " has null leaves()");
         this.leaves.put(cls, List.copyOf(leaves));
@@ -155,13 +170,9 @@ public final class CatalogueTree {
                         + ". A page has one path");
             }
         }
-        children.put(cls, Collections.unmodifiableMap(slots));
-
-        for (Catalogue<?> sub : subs) walk(sub, at.child(sub.slug().value()));
-        for (Graft<?> graft : grafted) walk(graft.root(), at.child(graft.root().slug().value()));
     }
 
-    private static void claim(Map<String, Slot> slots, String slug, Slot slot, Catalogue<?> under) {
+    private void claim(Map<String, Slot> slots, String slug, Slot slot, Catalogue<?> under) {
         Slot prior = slots.putIfAbsent(slug, slot);
         if (prior != null) {
             throw new IllegalArgumentException(
@@ -170,7 +181,7 @@ public final class CatalogueTree {
         }
     }
 
-    private static String describe(Slot s) {
+    private String describe(Slot s) {
         return switch (s) {
             case Slot.Vertex v -> "catalogue " + v.catalogue().getClass().getName();
             case Slot.Page p   -> "leaf '" + p.leaf().name() + "'";
@@ -179,13 +190,16 @@ public final class CatalogueTree {
 
     // ── Reading ───────────────────────────────────────────────────────────────
 
+    /** The tree's root. */
     public L0_Catalogue<?> root() { return root; }
 
     /** Every vertex, root first, each parent before its children. */
     public List<Catalogue<?>> all() { return Collections.unmodifiableList(preOrder); }
 
+    /** How many vertices the tree has. */
     public int size() { return preOrder.size(); }
 
+    /** Whether {@code c} is a vertex of this tree. */
     public boolean contains(Catalogue<?> c) { return vertexPaths.containsKey(c.getClass()); }
 
     /** The vertex above {@code c} in the composed tree - a grafted root's is its host; empty for the tree's root. */
@@ -266,36 +280,6 @@ public final class CatalogueTree {
     }
 
     // ── Levels ────────────────────────────────────────────────────────────────
-
-    /** The level its type declares, within its own tree: 0 for a root - a grafted one too - up to 8. */
-    public static int levelOf(Catalogue<?> c) {
-        return switch (c) {
-            case L0_Catalogue<?> ignored    -> 0;
-            case L1_Catalogue<?, ?> ignored -> 1;
-            case L2_Catalogue<?, ?> ignored -> 2;
-            case L3_Catalogue<?, ?> ignored -> 3;
-            case L4_Catalogue<?, ?> ignored -> 4;
-            case L5_Catalogue<?, ?> ignored -> 5;
-            case L6_Catalogue<?, ?> ignored -> 6;
-            case L7_Catalogue<?, ?> ignored -> 7;
-            case L8_Catalogue<?, ?> ignored -> 8;
-        };
-    }
-
-    /** The parent a catalogue declares for itself; empty for a root. */
-    public static Optional<Catalogue<?>> declaredParentOf(Catalogue<?> c) {
-        return switch (c) {
-            case L0_Catalogue<?> ignored -> Optional.empty();
-            case L1_Catalogue<?, ?> l    -> Optional.ofNullable(l.parent());
-            case L2_Catalogue<?, ?> l    -> Optional.ofNullable(l.parent());
-            case L3_Catalogue<?, ?> l    -> Optional.ofNullable(l.parent());
-            case L4_Catalogue<?, ?> l    -> Optional.ofNullable(l.parent());
-            case L5_Catalogue<?, ?> l    -> Optional.ofNullable(l.parent());
-            case L6_Catalogue<?, ?> l    -> Optional.ofNullable(l.parent());
-            case L7_Catalogue<?, ?> l    -> Optional.ofNullable(l.parent());
-            case L8_Catalogue<?, ?> l    -> Optional.ofNullable(l.parent());
-        };
-    }
 
     private void requireIn(Catalogue<?> c) {
         Objects.requireNonNull(c, "catalogue");

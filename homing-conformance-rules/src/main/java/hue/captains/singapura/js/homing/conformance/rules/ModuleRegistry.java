@@ -24,13 +24,13 @@ public record ModuleRegistry(List<ModuleRef> modules) {
     }
 
     /** Build from raw class names. */
-    public static ModuleRegistry ofClassNames(Iterable<String> classNames) {
-        var refs = new TreeSet<ModuleRef>();
-        for (String cn : classNames) refs.add(new ModuleRef(cn));
-        return new ModuleRegistry(List.copyOf(refs));
+    public ModuleRegistry(Iterable<String> classNames) {
+        this(java.util.stream.StreamSupport.stream(classNames.spliterator(), false).map(ModuleRef::new).sorted().distinct().toList());
     }
 
+    /** How many modules it holds. */
     public int size() { return modules.size(); }
+    /** Whether it holds no module. */
     public boolean isEmpty() { return modules.isEmpty(); }
 
     /** The modules grouped by package name, packages in sorted order. */

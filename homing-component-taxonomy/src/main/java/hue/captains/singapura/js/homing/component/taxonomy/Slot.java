@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.component.taxonomy;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.Objects;
 
@@ -15,7 +15,7 @@ import java.util.Objects;
  * @param cardinality how many it holds at once, whichever plays
  * @param <E>         what plays it, as the DSL was told
  */
-public record Slot<E extends Component<?>>(Role<?> role, Players players, Cardinality cardinality) implements ValueObject {
+public record Slot<E extends Component<?>>(Role<?> role, Players players, Cardinality cardinality) implements Scalar {
 
     public Slot {
         Objects.requireNonNull(players, "Slot.players");

@@ -6,6 +6,7 @@ import hue.captains.singapura.js.homing.core.EsModule;
 import hue.captains.singapura.js.homing.core.Importable;
 import hue.captains.singapura.js.homing.core.ModuleImports;
 
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -27,9 +28,9 @@ import java.util.Set;
  * but returns typed results instead of human strings so the studio can render
  * per-crate and per-module status.</p>
  */
-public final class CrateConformance {
+public record CrateConformance() implements StatelessFunctionalObject {
 
-    private CrateConformance() {}
+    public static final CrateConformance INSTANCE = new CrateConformance();
 
     public record Result(boolean ok,
                          Map<String, CrateResult> crates,
@@ -43,7 +44,11 @@ public final class CrateConformance {
     public record ModuleResult(String moduleClass, String crate, String form,
                                boolean ok, List<String> findings) {}
 
-    public static Result evaluate(List<Crate> closure) {
+    /**
+     * Each crate of {@code closure} and each of its modules, with what each fails on, and whether all of them are
+     * clean.
+     */
+    public Result evaluate(List<Crate> closure) {
         // moduleClass -> owning crate name
         Map<String, String> owner = new HashMap<>();
         for (Crate c : closure) {
@@ -59,7 +64,7 @@ public final class CrateConformance {
             allowed.add(c.name());
             for (Crate r : c.requires()) allowed.add(r.name());
 
-            List<String> orphans = OrphanCheck.check(c);
+            List<String> orphans = OrphanCheck.INSTANCE.check(c);
             List<String> crateIllegal = new ArrayList<>();
 
             for (CrateEntry entry : c.entries()) {
@@ -81,7 +86,7 @@ public final class CrateConformance {
     }
 
     /** One module's illegal (undeclared-crate) + un-crated imports. */
-    private static List<String> moduleFindings(
+    private List<String> moduleFindings(
             CrateEntry entry, String crateName, Set<String> allowed, Map<String, String> owner) {
         var findings = new ArrayList<String>();
         String importer = entry.moduleClass();

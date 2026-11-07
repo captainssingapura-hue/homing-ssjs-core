@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.design.semantic;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.Objects;
 
@@ -13,7 +13,7 @@ import java.util.Objects;
  * @param style   the style worn
  * @param colours its scheme's colour tree
  */
-public record InStyle(DesignStyle<?> style, ColorTree colours) implements ValueObject {
+public record InStyle(DesignStyle<?> style, ColorTree colours) implements Scalar {
 
     public InStyle {
         Objects.requireNonNull(style, "InStyle.style");

@@ -67,10 +67,10 @@ class FixturePageTest extends JsModuleTestBase {
 
     record Page() implements Crate {
         @Override public String name() { return "page"; }
-        @Override public List<CrateEntry> entries() { return List.of(CrateEntry.of(PageStyle.INSTANCE), CrateEntry.of(PagePalette.INSTANCE)); }
+        @Override public List<CrateEntry> entries() { return List.of(new CrateEntry(PageStyle.INSTANCE), new CrateEntry(PagePalette.INSTANCE)); }
     }
 
-    private static final CssContentGetAction SERVER = new CssContentGetAction(null, ServedModules.of(List.of(new Page())),
+    private static final CssContentGetAction SERVER = new CssContentGetAction(null, new ServedModules(List.of(new Page())),
             List.of(SelfRenderedCssRenderer.INSTANCE));
 
     private static final String SHIMS = """

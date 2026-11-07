@@ -24,15 +24,15 @@ class ModuleEnumeratorTest {
 
     @Test
     void mapsJsResourcePathToFqcn() {
-        assertEquals("a.b.C", ModuleEnumerator.fqcnFromJsResource("homing/js/a/b/C.js"));
+        assertEquals("a.b.C", JsResources.INSTANCE.fqcnOf("homing/js/a/b/C.js"));
         assertEquals("hue.captains.x.WidgetModule",
-                ModuleEnumerator.fqcnFromJsResource("homing/js/hue/captains/x/WidgetModule.js"));
+                JsResources.INSTANCE.fqcnOf("homing/js/hue/captains/x/WidgetModule.js"));
         // Windows-style separators tolerated.
-        assertEquals("a.b.C", ModuleEnumerator.fqcnFromJsResource("homing\\js\\a\\b\\C.js"));
+        assertEquals("a.b.C", JsResources.INSTANCE.fqcnOf("homing\\js\\a\\b\\C.js"));
         // Not a JS-module resource.
-        assertNull(ModuleEnumerator.fqcnFromJsResource("homing/svg/a/b/C.svg"));
-        assertNull(ModuleEnumerator.fqcnFromJsResource("META-INF/MANIFEST.MF"));
-        assertNull(ModuleEnumerator.fqcnFromJsResource("homing/js/.js"));
+        assertNull(JsResources.INSTANCE.fqcnOf("homing/svg/a/b/C.svg"));
+        assertNull(JsResources.INSTANCE.fqcnOf("META-INF/MANIFEST.MF"));
+        assertNull(JsResources.INSTANCE.fqcnOf("homing/js/.js"));
     }
 
     @Test
@@ -53,7 +53,7 @@ class ModuleEnumeratorTest {
 
     @Test
     void buildsAStableSortedDeduplicatedRegistry() {
-        var reg = ModuleRegistry.ofClassNames(List.of("z.B", "a.A", "z.B", "a.C"));
+        var reg = new ModuleRegistry(List.of("z.B", "a.A", "z.B", "a.C"));
         assertEquals(3, reg.size());
         assertEquals(List.of("a.A", "a.C", "z.B"),
                 reg.modules().stream().map(ModuleRef::moduleClass).toList());

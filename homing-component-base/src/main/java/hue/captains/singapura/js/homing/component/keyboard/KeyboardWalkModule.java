@@ -23,7 +23,7 @@ public record KeyboardWalkModule() implements EsModule<KeyboardWalkModule> {
 
     public static final KeyboardWalkModule INSTANCE = new KeyboardWalkModule();
 
-    @Override public ImportsFor<KeyboardWalkModule> imports() { return ImportsFor.noImports(); }
+    @Override public ImportsFor<KeyboardWalkModule> imports() { return new ImportsFor<>(); }
 
     @Override
     public ExportsOf<KeyboardWalkModule> exports() {

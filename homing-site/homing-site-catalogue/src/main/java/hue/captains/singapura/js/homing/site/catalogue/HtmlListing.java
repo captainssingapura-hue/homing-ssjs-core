@@ -1,10 +1,14 @@
 package hue.captains.singapura.js.homing.site.catalogue;
 
+import hue.captains.singapura.js.homing.base.lang.StatelessSingleton;
 import hue.captains.singapura.js.homing.site.Placed;
 import hue.captains.singapura.js.homing.site.Trail;
 import hue.captains.singapura.js.homing.server.HtmlPageContent;
 import hue.captains.singapura.js.homing.site.Html;
 import hue.captains.singapura.js.homing.site.Query;
+
+import java.util.List;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 /**
  * The listing a vertex gets unless the site says otherwise: one document,
@@ -15,7 +19,7 @@ import hue.captains.singapura.js.homing.site.Query;
  * no theme to be a site, and it is what a visitor sees at every vertex until
  * a site gives its vertices a look of their own.</p>
  */
-public final class HtmlListing implements Listing {
+public final class HtmlListing implements Listing, StatelessFunctionalObject, StatelessSingleton {
 
     public static final HtmlListing INSTANCE = new HtmlListing();
 
@@ -26,34 +30,20 @@ public final class HtmlListing implements Listing {
         return (trail, query) -> render(c, router, trail);
     }
 
-    private static HtmlPageContent render(Catalogue<?> c, CatalogueRouter router, Trail trail) {
+    private HtmlPageContent render(Catalogue<?> c, CatalogueRouter router, Trail trail) {
         var tree = router.tree();
         var shown = tree.shownAs(c);
         var body = new StringBuilder();
         body.append(crumbs(trail));
         body.append("<h1>").append(iconAndName(shown.icon(), shown.name()))
-            .append(" <small>").append(Html.escape(shown.badge())).append("</small></h1>\n");
-        if (!shown.summary().isBlank()) body.append("<p class=\"summary\">").append(Html.escape(shown.summary())).append("</p>\n");
+            .append(" <small>").append(Html.INSTANCE.escape(shown.badge())).append("</small></h1>\n");
+        if (!shown.summary().isBlank()) body.append("<p class=\"summary\">").append(Html.INSTANCE.escape(shown.summary())).append("</p>\n");
 
         // sub-catalogues, then grafted trees - each as it is shown here
         var subs = tree.childrenOf(c);
-        if (!subs.isEmpty()) {
-            body.append("<h2>Catalogues</h2>\n<ul class=\"entries\">\n");
-            for (Catalogue<?> sub : subs) {
-                var s = tree.shownAs(sub);
-                body.append(entry(router.hrefOf(sub), s.icon(), s.name(), s.badge(), s.summary()));
-            }
-            body.append("</ul>\n");
-        }
+        if (!subs.isEmpty()) body.append(catalogues(subs, router));
         var leaves = tree.leavesOf(c);
-        if (!leaves.isEmpty()) {
-            body.append("<h2>Pages</h2>\n<ul class=\"entries\">\n");
-            for (Leaf<?> leaf : leaves) {
-                String href = router.hrefOf(leaf.page()).orElse("#");
-                body.append(entry(href, leaf.icon(), leaf.name(), leaf.badge(), leaf.summary()));
-            }
-            body.append("</ul>\n");
-        }
+        if (!leaves.isEmpty()) body.append(pages(leaves, router));
         if (subs.isEmpty() && leaves.isEmpty()) body.append("<p class=\"summary\">Nothing here yet.</p>\n");
 
         return new HtmlPageContent("""
@@ -77,10 +67,30 @@ public final class HtmlListing implements Listing {
                 <body>
                 %s</body>
                 </html>
-                """.formatted(Html.escape(shown.name()), body));
+                """.formatted(Html.INSTANCE.escape(shown.name()), body));
     }
 
-    private static String crumbs(Trail trail) {
+    /** A vertex's sub-catalogues, each as it is shown here. */
+    private String catalogues(List<Catalogue<?>> subs, CatalogueRouter router) {
+        var section = new StringBuilder("<h2>Catalogues</h2>\n<ul class=\"entries\">\n");
+        for (Catalogue<?> sub : subs) {
+            var s = router.tree().shownAs(sub);
+            section.append(entry(router.hrefOf(sub), s.icon(), s.name(), s.badge(), s.summary()));
+        }
+        return section.append("</ul>\n").toString();
+    }
+
+    /** A vertex's pages. */
+    private String pages(List<Leaf<?>> leaves, CatalogueRouter router) {
+        var section = new StringBuilder("<h2>Pages</h2>\n<ul class=\"entries\">\n");
+        for (Leaf<?> leaf : leaves) {
+            String href = router.hrefOf(leaf.page()).orElse("#");
+            section.append(entry(href, leaf.icon(), leaf.name(), leaf.badge(), leaf.summary()));
+        }
+        return section.append("</ul>\n").toString();
+    }
+
+    private String crumbs(Trail trail) {
         if (trail.depth() < 2) return "";
         var sb = new StringBuilder("<nav class=\"trail\">");
         var crumbs = trail.crumbs();
@@ -88,23 +98,23 @@ public final class HtmlListing implements Listing {
             var crumb = crumbs.get(i);
             if (i > 0) sb.append("<span>/</span>");
             if (i < crumbs.size() - 1) {
-                sb.append("<a href=\"").append(Html.escape(crumb.href())).append("\">")
-                  .append(Html.escape(crumb.text())).append("</a>");
+                sb.append("<a href=\"").append(Html.INSTANCE.escape(crumb.href())).append("\">")
+                  .append(Html.INSTANCE.escape(crumb.text())).append("</a>");
             } else {
-                sb.append(Html.escape(crumb.text()));
+                sb.append(Html.INSTANCE.escape(crumb.text()));
             }
         }
         return sb.append("</nav>\n").toString();
     }
 
-    private static String iconAndName(String icon, String name) {
-        return (icon.isBlank() ? "" : Html.escape(icon) + " ") + Html.escape(name);
+    private String iconAndName(String icon, String name) {
+        return (icon.isBlank() ? "" : Html.INSTANCE.escape(icon) + " ") + Html.INSTANCE.escape(name);
     }
 
-    private static String entry(String href, String icon, String name, String badge, String summary) {
-        return "<li><a href=\"" + Html.escape(href) + "\">" + iconAndName(icon, name) + "</a>"
-             + "<span class=\"badge\">" + Html.escape(badge) + "</span>"
-             + (summary.isBlank() ? "" : "<span class=\"sum\">" + Html.escape(summary) + "</span>")
+    private String entry(String href, String icon, String name, String badge, String summary) {
+        return "<li><a href=\"" + Html.INSTANCE.escape(href) + "\">" + iconAndName(icon, name) + "</a>"
+             + "<span class=\"badge\">" + Html.INSTANCE.escape(badge) + "</span>"
+             + (summary.isBlank() ? "" : "<span class=\"sum\">" + Html.INSTANCE.escape(summary) + "</span>")
              + "</li>\n";
     }
 }

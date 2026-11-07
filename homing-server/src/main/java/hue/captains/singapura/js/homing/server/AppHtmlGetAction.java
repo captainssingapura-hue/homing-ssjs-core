@@ -70,7 +70,7 @@ public class AppHtmlGetAction
                 ctx.request().getParam("locale"),
                 // RFC 0051 — the app's own params travel as the raw map; the
                 // resolved app's codec is what turns them into a typed value.
-                hue.captains.singapura.js.homing.core.QueryString.parse(ctx.request().query())
+                hue.captains.singapura.js.homing.core.QueryString.INSTANCE.parse(ctx.request().query())
         );
     }
 
@@ -103,7 +103,7 @@ public class AppHtmlGetAction
                         "No app registered with this simple name"));
             }
         } catch (Exception e) {
-            return CompletableFuture.failedFuture(ResourceNotFound.forClass(query.simpleName(), e));
+            return CompletableFuture.failedFuture(ResourceNotFounds.INSTANCE.forClass(query.simpleName(), e));
         }
 
         return dispatch(app, query);
@@ -180,6 +180,43 @@ public class AppHtmlGetAction
         String html = """
                 <!DOCTYPE html>
                 <html lang="en">
+                %s<body>
+                    <div id="app"></div>
+                    <script type="module">
+                        // RFC 0064: the page is served with no theme and no locale. The
+                        // client resolves both through the preference steward (an ?override
+                        // for this page, else the stored pick, else the default) and puts
+                        // them on the resources that vary by them - the sheets. A module
+                        // varies by neither, so its URL is its class alone: every import
+                        // of it, static or dynamic, is the same instance.
+                        const moduleUrl = "%s";
+                        %s
+                        %s
+                        const { appMain } = await import(moduleUrl);
+                        appMain(document.getElementById("app")%s);
+                    </script>
+                </body>
+                </html>
+                """.formatted(head(htmlEscape(app.title() + " · " + meta.label())),
+                              baseModuleUrl,
+                              stampedParams == null ? "" : "const params = " + stampedParams + ";",
+                              stampedCrumbs == null ? "" : "const chrome = Object.freeze({crumbs: "
+                                                          + stampedCrumbs + "});",
+                              // A third argument, so an app that wants only
+                              // params is unaffected and one that wants the
+                              // chrome can take it. Passed whenever either is
+                              // present, since JS ignores extra arguments but
+                              // cannot skip a middle one.
+                              (stampedParams == null && stampedCrumbs == null) ? ""
+                                      : (stampedParams == null ? ", undefined" : ", params")
+                                        + (stampedCrumbs == null ? "" : ", chrome"));
+
+        return CompletableFuture.completedFuture(new HtmlPageContent(html));
+    }
+
+    /** The page's head: its title, and a favicon the brand's logo upgrades when it has one. */
+    private String head(String title) {
+        return """
                 <head>
                     <meta charset="UTF-8">
                     <title>%s</title>
@@ -207,46 +244,15 @@ public class AppHtmlGetAction
                             .catch(function () { /* fetch failed — keep the default */ });
                     </script>
                 </head>
-                <body>
-                    <div id="app"></div>
-                    <script type="module">
-                        // RFC 0064: the page is served with no theme and no locale. The
-                        // client resolves both through the preference steward (an ?override
-                        // for this page, else the stored pick, else the default) and puts
-                        // them on the resources that vary by them - the sheets. A module
-                        // varies by neither, so its URL is its class alone: every import
-                        // of it, static or dynamic, is the same instance.
-                        const moduleUrl = "%s";
-                        %s
-                        %s
-                        const { appMain } = await import(moduleUrl);
-                        appMain(document.getElementById("app")%s);
-                    </script>
-                </body>
-                </html>
-                """.formatted(htmlEscape(app.title() + " · " + meta.label()),
-                              baseModuleUrl,
-                              stampedParams == null ? "" : "const params = " + stampedParams + ";",
-                              stampedCrumbs == null ? "" : "const chrome = Object.freeze({crumbs: "
-                                                          + stampedCrumbs + "});",
-                              // A third argument, so an app that wants only
-                              // params is unaffected and one that wants the
-                              // chrome can take it. Passed whenever either is
-                              // present, since JS ignores extra arguments but
-                              // cannot skip a middle one.
-                              (stampedParams == null && stampedCrumbs == null) ? ""
-                                      : (stampedParams == null ? ", undefined" : ", params")
-                                        + (stampedCrumbs == null ? "" : ", chrome"));
-
-        return CompletableFuture.completedFuture(new HtmlPageContent(html));
+                """.formatted(title);
     }
 
-    private static String htmlEscape(String s) {
+    private String htmlEscape(String s) {
         if (s == null) return "";
         return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
     }
 
-    private static ResourceNotFound notFound(String resource, String reason) {
+    private ResourceNotFound notFound(String resource, String reason) {
         return new ResourceNotFound(
                 new ResourceNotFound._InternalError(null, reason + ": " + resource),
                 new ResourceNotFound._ExternalError(resource, reason)
@@ -268,12 +274,12 @@ public class AppHtmlGetAction
      * Decoded ADT exists for, but it changes the response for every app at
      * once; that belongs with the route work, not with adding a stamp.</p>
      */
-    private static <P extends hue.captains.singapura.js.homing.core.AppModule._Param>
+    private <P extends hue.captains.singapura.js.homing.core.AppModule._Param>
             String stampParams(hue.captains.singapura.js.homing.core.AppModule<P, ?> app, P params) {
         var codec = app.paramCodec();
         if (codec == hue.captains.singapura.js.homing.core.ParamCodec.None.INSTANCE) return null;
         if (params == null) return null;   // malformed on the way in; stamp nothing (D5 deferral)
-        return hue.captains.singapura.js.homing.core.StampedParams.jsObject(codec.to(params));
+        return hue.captains.singapura.js.homing.core.StampedParams.INSTANCE.jsObject(codec.to(params));
     }
 
     /**
@@ -294,9 +300,9 @@ public class AppHtmlGetAction
             if (!first) sb.append(',');
             first = false;
             sb.append("Object.freeze({text:")
-              .append(hue.captains.singapura.js.homing.core.StampedParams.jsString(c.getKey()))
+              .append(hue.captains.singapura.js.homing.core.StampedParams.INSTANCE.jsString(c.getKey()))
               .append(",href:")
-              .append(hue.captains.singapura.js.homing.core.StampedParams.jsString(c.getValue()))
+              .append(hue.captains.singapura.js.homing.core.StampedParams.INSTANCE.jsString(c.getValue()))
               .append("})");
         }
         return sb.append("])").toString();

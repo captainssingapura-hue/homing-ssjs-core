@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -33,7 +33,7 @@ import java.util.UUID;
  *
  * @since RFC 0015 Phase 2
  */
-public sealed interface DocId extends ValueObject {
+public sealed interface DocId extends Scalar {
 
     /** Identity-by-UUID. The variant used by all prose Docs. */
     record ByUuid(UUID id) implements DocId {

@@ -51,7 +51,7 @@ class SiteMpaTest {
         static final ClockCatalogue INSTANCE = new ClockCatalogue();
         @Override public String name() { return "Clock"; }
         @Override public List<Leaf<ClockCatalogue>> leaves(Mpa mpa) {
-            return List.of(Leaf.of(this, "Now", "", new SitePage(mpa.brand().label(), "now")));
+            return List.of(new Leaf<>(this, "Now", "", new SitePage(mpa.brand().label(), "now")));
         }
     }
 
@@ -59,9 +59,9 @@ class SiteMpaTest {
     record DeskCatalogue() implements L0_Catalogue<DeskCatalogue> {
         static final DeskCatalogue INSTANCE = new DeskCatalogue();
         @Override public String name() { return "Desk"; }
-        @Override public List<Graft<DeskCatalogue>> grafts() { return List.of(Graft.of(this, ClockCatalogue.INSTANCE)); }
+        @Override public List<Graft<DeskCatalogue>> grafts() { return List.of(new Graft<>(this, ClockCatalogue.INSTANCE)); }
         @Override public List<Leaf<DeskCatalogue>> leaves(Mpa mpa) {
-            return List.of(Leaf.of(this, "Home", "", new SitePage(mpa.brand().label(), "home")));
+            return List.of(new Leaf<>(this, "Home", "", new SitePage(mpa.brand().label(), "home")));
         }
     }
 
@@ -69,31 +69,31 @@ class SiteMpaTest {
 
     @Test
     void everyPageOfASiteIsMadeWithItsMpa_whicheverTreePlacedIt() {
-        var router = CatalogueRouter.at(Path.ROOT, DeskCatalogue.INSTANCE, DESK);
-        assertEquals("[Desk site] home", router.resolve(Path.of("home")).orElseThrow().html(Query.NONE).body());
-        assertEquals("[Desk site] now", router.resolve(Path.of("clock", "now")).orElseThrow().html(Query.NONE).body());
+        var router = new CatalogueRouter(Path.ROOT, DeskCatalogue.INSTANCE, DESK);
+        assertEquals("[Desk site] home", router.resolve(new Path("home")).orElseThrow().html(Query.NONE).body());
+        assertEquals("[Desk site] now", router.resolve(new Path("clock", "now")).orElseThrow().html(Query.NONE).body());
         assertSame(DESK, router.tree().mpa().orElseThrow());
     }
 
     @Test
     void theSameTreeReadByAnotherSite_wearsThatSitesChrome() {
-        var lab = CatalogueRouter.at(Path.of("lab"), ClockCatalogue.INSTANCE, LAB);
-        assertEquals("[Lab site] now", lab.resolve(Path.of("lab", "now")).orElseThrow().html(Query.NONE).body());
+        var lab = new CatalogueRouter(new Path("lab"), ClockCatalogue.INSTANCE, LAB);
+        assertEquals("[Lab site] now", lab.resolve(new Path("lab", "now")).orElseThrow().html(Query.NONE).body());
     }
 
     @Test
     void theListingShowsThePagesTheTreeRead_andLinksThem() {
-        var tree = CatalogueTree.of(DeskCatalogue.INSTANCE, DESK);
+        var tree = new CatalogueTree(DeskCatalogue.INSTANCE, DESK);
         assertEquals(List.of(new SitePage("Desk site", "now")), tree.leavesOf(ClockCatalogue.INSTANCE).stream().map(Leaf::page).toList());
-        assertEquals(Optional.of(Path.of("clock", "now")), tree.pathOf(new SitePage("Desk site", "now")));
-        String listing = CatalogueRouter.at(Path.ROOT, tree).resolve(Path.of("clock")).orElseThrow().html(Query.NONE).body();
+        assertEquals(Optional.of(new Path("clock", "now")), tree.pathOf(new SitePage("Desk site", "now")));
+        String listing = new CatalogueRouter(Path.ROOT, tree).resolve(new Path("clock")).orElseThrow().html(Query.NONE).body();
         assertTrue(listing.contains("href=\"/clock/now\""), listing);
     }
 
     @Test
     void aTreeReadWithNoMpa_refusesACatalogueThatNeedsOne_sayingWhy() {
-        var e = assertThrows(IllegalStateException.class, () -> CatalogueTree.of(DeskCatalogue.INSTANCE));
-        assertTrue(e.getMessage().contains("CatalogueTree.of(root, mpa)"), e.getMessage());
-        assertTrue(CatalogueTree.of(GraftTest.NotesCatalogue.INSTANCE).mpa().isEmpty(), "a tree of pages that need no site needs no MPA");
+        var e = assertThrows(IllegalStateException.class, () -> new CatalogueTree(DeskCatalogue.INSTANCE));
+        assertTrue(e.getMessage().contains("new CatalogueTree(root, mpa)"), e.getMessage());
+        assertTrue(new CatalogueTree(GraftTest.NotesCatalogue.INSTANCE).mpa().isEmpty(), "a tree of pages that need no site needs no MPA");
     }
 }

@@ -25,7 +25,7 @@ class BuiltInProxiesTest {
     @Test
     @DisplayName("Mailto template compiles cleanly")
     void mailtoCompiles() {
-        var t = UrlTemplate.compile(Mailto.INSTANCE.urlTemplate(), Mailto.INSTANCE.paramsType());
+        var t = new UrlTemplate(Mailto.INSTANCE.urlTemplate(), Mailto.INSTANCE.paramsType());
         assertNotNull(t);
         assertEquals(List.of("to", "subject", "body", "cc", "bcc"), t.paramNames());
     }
@@ -33,7 +33,7 @@ class BuiltInProxiesTest {
     @Test
     @DisplayName("Mailto with just `to` renders cleanly")
     void mailtoBasic() {
-        var t = UrlTemplate.compile(Mailto.INSTANCE.urlTemplate(), Mailto.INSTANCE.paramsType());
+        var t = new UrlTemplate(Mailto.INSTANCE.urlTemplate(), Mailto.INSTANCE.paramsType());
         var url = t.render(new Mailto.Params("user@example.com",
                 Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty()));
         // Optional fields render as empty: subject=&body=&cc=&bcc= (documented limitation).
@@ -43,7 +43,7 @@ class BuiltInProxiesTest {
     @Test
     @DisplayName("Mailto with subject and body renders both")
     void mailtoSubjectAndBody() {
-        var t = UrlTemplate.compile(Mailto.INSTANCE.urlTemplate(), Mailto.INSTANCE.paramsType());
+        var t = new UrlTemplate(Mailto.INSTANCE.urlTemplate(), Mailto.INSTANCE.paramsType());
         var url = t.render(new Mailto.Params("u@e.com",
                 Optional.of("Hi there"), Optional.of("How are you?"), Optional.empty(), Optional.empty()));
         assertTrue(url.startsWith("mailto:u%40e.com?subject="), url);
@@ -71,14 +71,14 @@ class BuiltInProxiesTest {
     @Test
     @DisplayName("Tel template compiles cleanly")
     void telCompiles() {
-        var t = UrlTemplate.compile(Tel.INSTANCE.urlTemplate(), Tel.INSTANCE.paramsType());
+        var t = new UrlTemplate(Tel.INSTANCE.urlTemplate(), Tel.INSTANCE.paramsType());
         assertEquals(List.of("number"), t.paramNames());
     }
 
     @Test
     @DisplayName("Tel renders international format with + encoded as %2B")
     void telInternationalFormat() {
-        var t = UrlTemplate.compile(Tel.INSTANCE.urlTemplate(), Tel.INSTANCE.paramsType());
+        var t = new UrlTemplate(Tel.INSTANCE.urlTemplate(), Tel.INSTANCE.paramsType());
         var url = t.render(new Tel.Params("+15555551234"));
         assertEquals("tel:%2B15555551234", url);
     }
@@ -96,14 +96,14 @@ class BuiltInProxiesTest {
     @Test
     @DisplayName("Sms template compiles cleanly")
     void smsCompiles() {
-        var t = UrlTemplate.compile(Sms.INSTANCE.urlTemplate(), Sms.INSTANCE.paramsType());
+        var t = new UrlTemplate(Sms.INSTANCE.urlTemplate(), Sms.INSTANCE.paramsType());
         assertEquals(List.of("number", "body"), t.paramNames());
     }
 
     @Test
     @DisplayName("Sms with just number renders with empty body key")
     void smsBasic() {
-        var t = UrlTemplate.compile(Sms.INSTANCE.urlTemplate(), Sms.INSTANCE.paramsType());
+        var t = new UrlTemplate(Sms.INSTANCE.urlTemplate(), Sms.INSTANCE.paramsType());
         var url = t.render(new Sms.Params("+15555551234", Optional.empty()));
         assertEquals("sms:%2B15555551234?body=", url);
     }
@@ -111,7 +111,7 @@ class BuiltInProxiesTest {
     @Test
     @DisplayName("Sms with body renders body")
     void smsWithBody() {
-        var t = UrlTemplate.compile(Sms.INSTANCE.urlTemplate(), Sms.INSTANCE.paramsType());
+        var t = new UrlTemplate(Sms.INSTANCE.urlTemplate(), Sms.INSTANCE.paramsType());
         var url = t.render(new Sms.Params("+15555551234", Optional.of("Hello!")));
         assertTrue(url.contains("body=Hello%21"), url);
     }
@@ -131,7 +131,7 @@ class BuiltInProxiesTest {
         static final AppWithBuiltIns INSTANCE = new AppWithBuiltIns();
         @Override public String title() { return "Sample"; }
         @Override public ImportsFor<AppWithBuiltIns> imports() {
-            return ImportsFor.<AppWithBuiltIns>builder()
+            return new ImportsFor._Builder<AppWithBuiltIns>()
                     .add(new ModuleImports<>(List.of(new Mailto.link()), Mailto.INSTANCE))
                     .add(new ModuleImports<>(List.of(new Tel.link()),    Tel.INSTANCE))
                     .add(new ModuleImports<>(List.of(new Sms.link()),    Sms.INSTANCE))

@@ -1,5 +1,8 @@
 package hue.captains.singapura.js.homing.core;
 
+import hue.captains.singapura.js.homing.base.lang.StatelessSingleton;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
+
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.List;
@@ -10,7 +13,7 @@ import java.util.stream.Collectors;
  * Layer ordering + helpers. Single source of truth for the cascade ladder
  * the framework's CSS bundles ride on.
  *
- * <p>The {@link #ASCENDING} list controls two things in lockstep:</p>
+ * <p>The {@link #ascending()} list controls two things in lockstep:</p>
  * <ol>
  *   <li>The serving order of CSS chunks — earlier layers' rules are emitted
  *       first, later layers' rules emitted last (so cascade resolves to
@@ -26,10 +29,13 @@ import java.util.stream.Collectors;
  * know about {@code @layer}; the {@code @layer} declaration protects
  * against future load-order shuffles the framework can't predict.</p>
  */
-public final class Layers {
+public record Layers() implements StatelessFunctionalObject, StatelessSingleton {
+
+    public static final Layers INSTANCE = new Layers();
 
     /** Layer ladder — earlier wins less, later wins more. */
-    public static final List<Class<? extends Layer>> ASCENDING = List.of(
+    public List<Class<? extends Layer>> ascending() {
+        return List.of(
             Reset.class,
             Layout.class,
             Component.class,
@@ -38,9 +44,11 @@ public final class Layers {
             MediaGated.class,
             ThemeOverlay.class
     );
+    }
 
     /** CSS @layer name (lowercase, used in {@code @layer X { … }} wrappers). */
-    public static final Map<Class<? extends Layer>, String> CSS_NAME = Map.of(
+    public Map<Class<? extends Layer>, String> cssName() {
+        return Map.of(
             Reset.class,        "reset",
             Layout.class,       "layout",
             Component.class,    "component",
@@ -49,15 +57,16 @@ public final class Layers {
             MediaGated.class,   "media",
             ThemeOverlay.class, "theme"
     );
+    }
 
     /**
      * Emit the {@code @layer …;} declaration that establishes the cascade
      * order at the top of a stylesheet bundle. Must appear before any
      * {@code @layer X { … }} wrapper.
      */
-    public static String declaration() {
-        String names = ASCENDING.stream()
-                .map(CSS_NAME::get)
+    public String declaration() {
+        String names = ascending().stream()
+                .map(cssName()::get)
                 .collect(Collectors.joining(", "));
         return "@layer " + names + ";";
     }
@@ -73,7 +82,7 @@ public final class Layers {
      * supertype info even after type erasure).</p>
      */
     @SuppressWarnings("unchecked")
-    public static Class<? extends Layer> ofImplementor(Object o) {
+    public Class<? extends Layer> ofImplementor(Object o) {
         Class<?> klass = o.getClass();
         while (klass != null && klass != Object.class) {
             for (Type t : klass.getGenericInterfaces()) {
@@ -88,6 +97,4 @@ public final class Layers {
         }
         return Component.class;
     }
-
-    private Layers() {}
 }

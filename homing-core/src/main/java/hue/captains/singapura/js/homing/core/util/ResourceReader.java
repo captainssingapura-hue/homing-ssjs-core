@@ -1,17 +1,16 @@
 package hue.captains.singapura.js.homing.core.util;
 
+import hue.captains.singapura.tao.ontology.FunctionalObject;
+
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 /**
  * Reads resource files from classpath or filesystem.
@@ -22,8 +21,9 @@ import java.util.regex.Pattern;
  * path separator ({@code ;} on Windows, {@code :} elsewhere) when a site's resources live in several modules, e.g.:
  * <pre>-Dhoming.devRoot=homing-demo/src/main/resources</pre>
  */
-public record ResourceReader(List<Path> sourceRoots) {
-    public static final ResourceReader INSTANCE = new ResourceReader(List.of());
+public record ResourceReader(List<Path> sourceRoots) implements FunctionalObject {
+    /** The reader with no source roots: every path from the classpath. */
+    public static final ResourceReader CLASSPATH = new ResourceReader(List.of());
 
     public ResourceReader {
         sourceRoots = List.copyOf(sourceRoots);
@@ -32,13 +32,6 @@ public record ResourceReader(List<Path> sourceRoots) {
     /** One source root, or none for {@code null}. */
     public ResourceReader(Path sourceRoot) {
         this(sourceRoot == null ? List.of() : List.of(sourceRoot));
-    }
-
-    public static ResourceReader fromSystemProperty() {
-        String devRoot = System.getProperty("homing.devRoot");
-        if (devRoot == null || devRoot.isBlank()) return INSTANCE;
-        return new ResourceReader(Arrays.stream(devRoot.split(Pattern.quote(File.pathSeparator)))
-                .map(String::trim).filter(s -> !s.isEmpty()).map(Path::of).toList());
     }
 
     /** Whether it reads from source roots first: dev mode. */
@@ -55,6 +48,9 @@ public record ResourceReader(List<Path> sourceRoots) {
         return Optional.empty();
     }
 
+    /**
+     * The lines of the resource at {@code path}: from the first source root that has it, or else from the classpath.
+     */
     public List<String> getStringsFromResource(String path) {
         Optional<Path> file = sourceFile(path);
         if (file.isPresent()) {

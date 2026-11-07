@@ -42,7 +42,14 @@ public final class RigidDoc implements Doc, hue.captains.singapura.js.homing.stu
     private final NodeName slug;
     private final Supplier<List<Reference>> references;
 
-    RigidDoc(UUID uuid, String summary, String category, DocNode root) {
+    /**
+     * Build a {@code RigidDoc} directly from a pre-assembled {@link DocNode} tree.
+     * The leveled DSL ({@link Rigid}) is a convenience over this; a caller that
+     * already has an arbitrary tree (e.g. transformed from another source) builds
+     * the {@link DocNode}s itself and wraps them here. The doc title is the root
+     * node's title.
+     */
+    public RigidDoc(UUID uuid, String summary, String category, DocNode root) {
         this(uuid, summary, category, root, null, List::of);
     }
 
@@ -75,22 +82,6 @@ public final class RigidDoc implements Doc, hue.captains.singapura.js.homing.stu
     public RigidDoc withReferences(Supplier<List<Reference>> references) {
         Objects.requireNonNull(references, "RigidDoc.withReferences(references)");
         return new RigidDoc(uuid, summary, category, root, slug, references);
-    }
-
-    /** Open the leveled builder at the document root (L0). */
-    public static Rigid.L0 root(UUID uuid, String title, String summary, String category) {
-        return new Rigid.L0(uuid, title, summary, category);
-    }
-
-    /**
-     * Build a {@code RigidDoc} directly from a pre-assembled {@link DocNode} tree.
-     * The leveled DSL ({@link Rigid}) is a convenience over this; a caller that
-     * already has an arbitrary tree (e.g. transformed from another source) builds
-     * the {@link DocNode}s itself and wraps them here. The doc title is the root
-     * node's title.
-     */
-    public static RigidDoc fromNode(UUID uuid, String summary, String category, DocNode root) {
-        return new RigidDoc(uuid, summary, category, root);
     }
 
     /** The root structure node (its title is the doc title). */

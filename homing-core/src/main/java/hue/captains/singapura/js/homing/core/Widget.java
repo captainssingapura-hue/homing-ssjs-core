@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.core;
 
+import hue.captains.singapura.js.homing.base.lang.StatelessSingleton;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 /**
@@ -75,7 +76,7 @@ public interface Widget<P extends Widget._Param, W extends Widget<P, W>>
     interface _Param {}
 
     /** Sentinel for paramless widgets. */
-    record _None() implements _Param {
+    record _None() implements _Param, StatelessSingleton {
         public static final _None INSTANCE = new _None();
     }
 
@@ -88,7 +89,7 @@ public interface Widget<P extends Widget._Param, W extends Widget<P, W>>
      * independently of the Java class name.
      */
     default String simpleName() {
-        return Linkable.defaultSimpleName(this.getClass());
+        return SimpleNames.INSTANCE.of(this.getClass());
     }
 
     /**

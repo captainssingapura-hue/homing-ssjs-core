@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.component.taxonomy;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.Objects;
 
@@ -13,7 +13,7 @@ import java.util.Objects;
  * @param name       its name: lower case, its words joined by hyphens
  * @param transition which change it is
  */
-public record NamedChange(String name, Transition transition) implements ValueObject {
+public record NamedChange(String name, Transition transition) implements Scalar {
 
     public NamedChange {
         Objects.requireNonNull(name, "NamedChange.name");
@@ -23,7 +23,7 @@ public record NamedChange(String name, Transition transition) implements ValueOb
     }
 
     /** Which change a named change is. */
-    public sealed interface Transition extends ValueObject permits Between, Rises, Falls {}
+    public sealed interface Transition extends Scalar permits Between, Rises, Falls {}
 
     /** From one named value to another. */
     public record Between(StateValue from, StateValue to) implements Transition {

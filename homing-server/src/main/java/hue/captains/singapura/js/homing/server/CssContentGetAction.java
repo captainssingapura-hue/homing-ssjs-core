@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.server;
 import hue.captains.singapura.js.homing.core.Component;
 import hue.captains.singapura.js.homing.core.CssClass;
 import hue.captains.singapura.js.homing.core.CssGroup;
+import hue.captains.singapura.js.homing.core.CssRenderer;
 import hue.captains.singapura.js.homing.core.DerivedCss;
 import hue.captains.singapura.js.homing.core.Layer;
 import hue.captains.singapura.js.homing.core.Layers;
@@ -25,9 +26,9 @@ import java.util.concurrent.CompletableFuture;
  * {@code selector { body }} in its {@code @layer}: the same in every theme, so a
  * theme on the request is ignored and none is needed. A derived sheet is its
  * renderer's, under the slug asked for by the name of what it varies with - the
- * theme, the style or the palette, the others ignored - else its own fallback,
- * else, for one varying with the theme, the default theme (RFC 0064, D25; RFC
- * 0067, appendix Two Classes per Leaf).</p>
+ * theme, the style or the palette, the others ignored - else the fallback a
+ * renderer says, else its own, else, for one varying with the theme, the default
+ * theme (RFC 0064, D25; RFC 0067, appendix Two Classes per Leaf).</p>
  *
  * <p>Hard cut: unknown {@code class} or {@code theme} returns 404. No
  * file-based fallback (RFC 0002 §3.6).</p>
@@ -73,28 +74,37 @@ public class CssContentGetAction
         return ctx -> new EmptyParam.NoHeaders();
     }
 
+    /** The slug a sheet is served under when the request names none: the first a renderer says, else its own, else none. */
+    private String fallback(DerivedCss<?> sheet) {
+        for (CssRenderer r : renderers) {
+            var said = r.fallback(sheet);
+            if (said.isPresent()) return said.get();
+        }
+        return sheet.fallback().orElse(null);
+    }
+
     @Override
     public CompletableFuture<CssContent> execute(CssQuery query, EmptyParam.NoHeaders headers) {
         if (query.className() == null || query.className().isBlank()) {
-            return CompletableFuture.failedFuture(ResourceNotFound.missingClass());
+            return CompletableFuture.failedFuture(ResourceNotFounds.INSTANCE.missingClass());
         }
         try {
             var found = served.find(query.className());
             if (found.isEmpty()) {
-                return CompletableFuture.failedFuture(ResourceNotFound.forClass(query.className(),
+                return CompletableFuture.failedFuture(ResourceNotFounds.INSTANCE.forClass(query.className(),
                         new IllegalStateException("group '" + query.className() + "' is not declared in any registered crate")));
             }
             if (found.get() instanceof CssGroup<?> group) return CompletableFuture.completedFuture(new CssContent(renderCss(group)));
             if (!(found.get() instanceof DerivedCss<?> sheet)) {
-                return CompletableFuture.failedFuture(ResourceNotFound.wrongType(query.className(), "CssGroup or DerivedCss"));
+                return CompletableFuture.failedFuture(ResourceNotFounds.INSTANCE.wrongType(query.className(), "CssGroup or DerivedCss"));
             }
 
             DerivedCss.VariesWith varies = sheet.variesWith();
             String slug = query.slugFor(varies);
-            if (slug == null) slug = sheet.fallback().orElse(null);
+            if (slug == null) slug = fallback(sheet);
             if (slug == null && varies == DerivedCss.VariesWith.THEME && defaultTheme != null) slug = defaultTheme.slug();
             if (slug == null) {
-                return CompletableFuture.failedFuture(ResourceNotFound.forClass(
+                return CompletableFuture.failedFuture(ResourceNotFounds.INSTANCE.forClass(
                         query.className(),
                         new IllegalStateException("No " + varies.param() + " specified, and the sheet names no fallback"
                                 + (varies == DerivedCss.VariesWith.THEME ? " and no default theme is configured" : ""))));
@@ -105,32 +115,32 @@ public class CssContentGetAction
             }
             return CompletableFuture.completedFuture(new CssContent("/* no renderer derives " + query.className() + " */\n"));
         } catch (Exception e) {
-            return CompletableFuture.failedFuture(ResourceNotFound.forClass(query.className(), e));
+            return CompletableFuture.failedFuture(ResourceNotFounds.INSTANCE.forClass(query.className(), e));
         }
     }
 
     // ---- helpers --------------------------------------------------------
 
 
-    private static String renderCss(CssGroup<?> group) {
+    private String renderCss(CssGroup<?> group) {
         StringBuilder sb = new StringBuilder();
 
         // Defect 0003 — cascade-layer declaration goes first so the browser
         // honours the ladder regardless of bundle load order.
-        sb.append(Layers.declaration()).append("\n\n");
+        sb.append(Layers.INSTANCE.declaration()).append("\n\n");
 
         // Per-class rules — grouped by the cascade tier each CssClass opts into
         // via InLayer<L>. Classes without an InLayer marker fall into
         // @layer component (the implicit default — see Layers.ofImplementor).
         Map<Class<? extends Layer>, List<String>> byLayer = new LinkedHashMap<>();
-        for (Class<? extends Layer> layer : Layers.ASCENDING) {
+        for (Class<? extends Layer> layer : Layers.INSTANCE.ascending()) {
             byLayer.put(layer, new ArrayList<>());
         }
 
         for (CssClass<?> cssClass : group.cssClasses()) {
-            Class<? extends Layer> layer = Layers.ofImplementor(cssClass);
+            Class<? extends Layer> layer = Layers.INSTANCE.ofImplementor(cssClass);
             List<String> bucket = byLayer.get(layer);
-            String baseKebab = CssClassName.toCssName(cssClass.getClass());
+            String baseKebab = CssClassName.INSTANCE.toCssName(cssClass.getClass());
             String selector = cssClass.selector();
             if (selector == null) {
                 selector = "." + baseKebab;
@@ -163,10 +173,10 @@ public class CssContentGetAction
         // Emit each non-empty layer in ASCENDING order, wrapped in
         // `@layer X { … }`. The declaration at the top fixes cascade order
         // regardless of how these blocks interleave with other bundles.
-        for (Class<? extends Layer> layer : Layers.ASCENDING) {
+        for (Class<? extends Layer> layer : Layers.INSTANCE.ascending()) {
             List<String> rules = byLayer.get(layer);
             if (rules.isEmpty()) continue;
-            sb.append("@layer ").append(Layers.CSS_NAME.get(layer)).append(" {\n");
+            sb.append("@layer ").append(Layers.INSTANCE.cssName().get(layer)).append(" {\n");
             for (String rule : rules) {
                 sb.append(rule.indent(4));
             }

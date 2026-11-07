@@ -44,7 +44,7 @@ public record DomOpsPartyBaseModule() implements DomModule<DomOpsPartyBaseModule
 
     @Override
     public ImportsFor<DomOpsPartyBaseModule> imports() {
-        return ImportsFor.noImports();
+        return new ImportsFor<>();
     }
 
     @Override

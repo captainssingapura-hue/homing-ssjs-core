@@ -28,7 +28,7 @@ public record KeysModule() implements DomModule<KeysModule> {
     public static final KeysModule INSTANCE = new KeysModule();
 
     @Override public ImportsFor<KeysModule> imports() {
-        return ImportsFor.<KeysModule>builder()
+        return new ImportsFor._Builder<KeysModule>()
                 .add(new ModuleImports<>(List.of(new KeyboardStewardModule.KeyboardStewardInstance()), KeyboardStewardModule.INSTANCE))
                 .build();
     }

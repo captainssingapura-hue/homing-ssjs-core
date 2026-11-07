@@ -2,7 +2,7 @@ package hue.captains.singapura.js.homing.design.semantic;
 
 import hue.captains.singapura.js.homing.component.taxonomy.Taxonomy;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,14 +30,16 @@ public record ResolutionCases() implements StatelessFunctionalObject {
 
     /** A resolver as the cases ask it: by tokens, in the theme named, the outcome's words. */
     public interface Resolver {
+        /** The outcome of one query, in the words a case writes it. */
         String resolve(String theme, String node, String state, String target);
     }
 
     /** How many cases ran, and every one whose outcome was not the one written. */
-    public record Report(int cases, List<String> failures) implements ValueObject {
+    public record Report(int cases, List<String> failures) implements Scalar {
         public Report { failures = List.copyOf(failures); }
     }
 
+    /** Runs the cases in {@code lines} against {@code resolver}: how many ran, and every one that failed. */
     public Report run(List<String> lines, Resolver resolver) {
         String theme = null;
         int cases = 0;

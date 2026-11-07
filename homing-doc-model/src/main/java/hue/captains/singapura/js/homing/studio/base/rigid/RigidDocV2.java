@@ -12,6 +12,7 @@ import hue.captains.singapura.js.homing.studio.base.composed.graph.RigidNodeNorm
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -38,8 +39,7 @@ public final class RigidDocV2 implements Doc, DocTreeV2Source {
     private final String summary;
     private final String category;
     private final Supplier<DocTreeV2> builder;
-
-    private volatile DocTreeV2 cached;
+    private final AtomicReference<DocTreeV2> tree = new AtomicReference<>();
 
     public RigidDocV2(UUID id, String title, String summary, String category,
                       Supplier<DocTreeV2> builder) {
@@ -56,23 +56,15 @@ public final class RigidDocV2 implements Doc, DocTreeV2Source {
      * its {@code source}. The normalizer assembles + validates the flat node list at
      * first request; the {@code <T>} source type is captured here and never escapes.
      */
-    public static <T> RigidDocV2 fromNodes(UUID id, String title, String summary, String category,
-                                           Supplier<List<RigidNode<T>>> nodes,
-                                           Function<T, RigidNodeContent> content) {
-        Objects.requireNonNull(nodes, "nodes");
-        Objects.requireNonNull(content, "content provider");
-        return new RigidDocV2(id, title, summary, category,
-                () -> RigidNodeNormalizer.INSTANCE.toDocTree(id, nodes.get(), content));
+    public <T> RigidDocV2(UUID id, String title, String summary, String category,
+                          Supplier<List<RigidNode<T>>> nodes,
+                          Function<T, RigidNodeContent> content) {
+        this(id, title, summary, category, RigidNodeNormalizer.INSTANCE.docTreeOf(id, nodes, content));
     }
 
     @Override
     public DocTreeV2 toDocTreeV2() {
-        DocTreeV2 t = cached;
-        if (t == null) {
-            t = builder.get();
-            cached = t;
-        }
-        return t;
+        return tree.updateAndGet(kept -> kept != null ? kept : builder.get());
     }
 
     // ── Doc protocol ──────────────────────────────────────────────────────────

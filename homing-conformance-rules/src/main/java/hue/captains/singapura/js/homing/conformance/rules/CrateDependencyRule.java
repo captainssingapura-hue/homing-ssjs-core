@@ -6,6 +6,7 @@ import hue.captains.singapura.js.homing.core.EsModule;
 import hue.captains.singapura.js.homing.core.Importable;
 import hue.captains.singapura.js.homing.core.ModuleImports;
 
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -29,12 +30,12 @@ import java.util.Set;
  * closure of {@code requires()} from the passed-in root, so a single app crate
  * validates every crate it ships.</p>
  */
-public final class CrateDependencyRule {
+public record CrateDependencyRule() implements StatelessFunctionalObject {
 
-    private CrateDependencyRule() {}
+    public static final CrateDependencyRule INSTANCE = new CrateDependencyRule();
 
     /** Findings: illegal (undeclared-crate) and un-crated imports across the closure. Empty = compliant. */
-    public static List<String> check(Crate root) {
+    public List<String> check(Crate root) {
         List<Crate> closure = closureOf(root);
 
         // Reverse index: module FQCN -> owning crate name.
@@ -70,7 +71,7 @@ public final class CrateDependencyRule {
     }
 
     /** The imported modules of one entry, as FQCNs — only EsModule sources (JS imports), not nav-only links. */
-    private static List<String> importedEsModuleClasses(CrateEntry entry) {
+    private List<String> importedEsModuleClasses(CrateEntry entry) {
         var out = new ArrayList<String>();
         Map<Importable, ModuleImports<?>> all = entry.module().imports().getAllImports();
         for (ModuleImports<?> mi : all.values()) {
@@ -81,7 +82,7 @@ public final class CrateDependencyRule {
     }
 
     /** Transitive closure of {@code requires()} from the root (dedup by crate name). */
-    private static List<Crate> closureOf(Crate root) {
+    private List<Crate> closureOf(Crate root) {
         var byName = new LinkedHashMap<String, Crate>();
         Deque<Crate> queue = new ArrayDeque<>();
         queue.add(root);

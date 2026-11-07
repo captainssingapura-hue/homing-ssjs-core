@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.studio.base.composed;
 
 import hue.captains.singapura.js.homing.studio.base.table.TableData;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.Optional;
 
@@ -22,7 +23,7 @@ import java.util.Optional;
  * </ul>
  *
  * <p><b>Extending.</b> Adding a new kind of articulation is a three-step change:
- * add an {@code Optional} field here (+ a {@link Builder} setter), emit its key
+ * add an {@code Optional} field here (+ its {@code with} method), emit its key
  * in {@code SegmentJson}'s {@code relation} arm, and map it to a CSS class in
  * {@code RelationSegmentRenderer.js}. Existing data stays valid — an absent mark
  * is the default — so the vocabulary grows without a migration.</p>
@@ -34,7 +35,10 @@ import java.util.Optional;
 public record Articulation(
         Optional<TableData.Badge> badge,
         Optional<TableData.Align> align,
-        Optional<Emphasis>        emphasis) {
+        Optional<Emphasis>        emphasis) implements Scalar {
+
+    /** No marks at all: where a cell's articulation starts. */
+    public static final Articulation NONE = new Articulation(Optional.empty(), Optional.empty(), Optional.empty());
 
     /** Text weight/tone marks. Absence = normal body text. */
     public enum Emphasis { STRONG, MUTED }
@@ -50,25 +54,18 @@ public record Articulation(
         return badge.isEmpty() && align.isEmpty() && emphasis.isEmpty();
     }
 
-    /** Start a fluent articulation; set any subset of marks, then {@link Builder#build()}. */
-    public static Builder of() { return new Builder(); }
+    /** These marks with this badge in place of any other; {@code null} takes the badge off. */
+    public Articulation withBadge(TableData.Badge b) {
+        return new Articulation(Optional.ofNullable(b), align, emphasis);
+    }
 
-    /** Fluent builder — orthogonal setters, chainable in any order. */
-    public static final class Builder {
-        private TableData.Badge badge;
-        private TableData.Align align;
-        private Emphasis        emphasis;
+    /** These marks with this alignment in place of any other; {@code null} takes the alignment off. */
+    public Articulation withAlign(TableData.Align a) {
+        return new Articulation(badge, Optional.ofNullable(a), emphasis);
+    }
 
-        public Builder badge(TableData.Badge b) { this.badge = b; return this; }
-        public Builder align(TableData.Align a) { this.align = a; return this; }
-        public Builder emphasis(Emphasis e)     { this.emphasis = e; return this; }
-        public Builder strong()                 { this.emphasis = Emphasis.STRONG; return this; }
-        public Builder muted()                  { this.emphasis = Emphasis.MUTED; return this; }
-
-        public Articulation build() {
-            return new Articulation(Optional.ofNullable(badge),
-                                    Optional.ofNullable(align),
-                                    Optional.ofNullable(emphasis));
-        }
+    /** These marks with this emphasis in place of any other; {@code null} takes the emphasis off. */
+    public Articulation withEmphasis(Emphasis e) {
+        return new Articulation(badge, align, Optional.ofNullable(e));
     }
 }

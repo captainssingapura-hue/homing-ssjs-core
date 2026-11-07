@@ -1,6 +1,5 @@
 package hue.captains.singapura.js.homing.core;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -27,24 +26,7 @@ public record CssImportsFor<C extends CssGroup<C>>(
 ) {
 
     /** The derivation. One group per dependency class's enclosing group, deduplicated by class. */
-    public static <C extends CssGroup<C>> CssImportsFor<C> of(C group) {
-        List<CssGroup<?>> groups = new ArrayList<>();
-        for (CssClass<C> cls : group.cssClasses()) {
-            var depGroups = new ArrayList<CssGroup<?>>();
-            for (CssClass<?> dep : cls.dependsOn()) depGroups.add(CssClass.groupOf(dep));
-            for (CssGroup<?> g : depGroups) {
-                if (g.getClass() == group.getClass()) continue;
-                boolean seen = false;
-                for (CssGroup<?> have : groups) if (have.getClass() == g.getClass()) { seen = true; break; }
-                if (!seen) groups.add(g);
-            }
-        }
-        return new CssImportsFor<>(group, List.copyOf(groups));
-    }
-
-    /** The derivation for a group whose self-type is not in hand. */
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public static List<CssGroup<?>> dependenciesOf(CssGroup<?> group) {
-        return of((CssGroup) group).imports();
+    public CssImportsFor(C group) {
+        this(group, CssGroupDependencies.INSTANCE.of(group));
     }
 }

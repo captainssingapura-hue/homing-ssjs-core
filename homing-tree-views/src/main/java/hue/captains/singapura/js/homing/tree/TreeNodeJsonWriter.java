@@ -32,7 +32,7 @@ public final class TreeNodeJsonWriter {
 
     /** Render a node and its subtree to compact JSON. */
     public String write(TreeNode<?> root) {
-        return write(root, RowDisplaySource.none());
+        return write(root, new RowDisplaySource.None());
     }
 
     /**

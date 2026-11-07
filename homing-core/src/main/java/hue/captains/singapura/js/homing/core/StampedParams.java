@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.core;
 
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import java.util.List;
 import java.util.Map;
 
@@ -25,9 +26,9 @@ import java.util.Map;
  * with that writer deleted there is nothing left to unify with, so a typed
  * stamp would now be a new generator rather than a merge of two.</p>
  */
-public final class StampedParams {
+public record StampedParams() implements StatelessFunctionalObject {
 
-    private StampedParams() {}
+    public static final StampedParams INSTANCE = new StampedParams();
 
     private static final String BACKSLASH = String.valueOf((char) 92);
 
@@ -38,7 +39,7 @@ public final class StampedParams {
      * <p>Cardinality is preserved rather than flattened, so a page reading a
      * repeated key sees what the URL actually carried.</p>
      */
-    public static String jsObject(Map<String, List<String>> params) {
+    public String jsObject(Map<String, List<String>> params) {
         if (params == null || params.isEmpty()) return "Object.freeze({})";
         var sb = new StringBuilder("Object.freeze({");
         boolean first = true;
@@ -81,7 +82,7 @@ public final class StampedParams {
      * string — so this is the boundary between a parameter and executable
      * page content, and it is a law with a test rather than a habit.</p>
      */
-    public static String jsString(String value) {
+    public String jsString(String value) {
         if (value == null) return "null";
         var sb = new StringBuilder(value.length() + 2).append('"');
         for (int i = 0; i < value.length(); i++) {

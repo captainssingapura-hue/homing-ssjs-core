@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.core;
 
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import java.util.List;
 import java.util.Map;
 
@@ -18,9 +19,9 @@ import java.util.Map;
  * are interesting (empty strings, a repeated key, a value with an {@code &}
  * in it) far better than any generator could guess.</p>
  */
-public final class ParamCodecLaw {
+public record ParamCodecLaw() implements StatelessFunctionalObject {
 
-    private ParamCodecLaw() {}
+    public static final ParamCodecLaw INSTANCE = new ParamCodecLaw();
 
     /**
      * Assert {@code from(to(p)) == p} for each sample, and that the encoded
@@ -28,7 +29,7 @@ public final class ParamCodecLaw {
      *
      * @throws AssertionError naming every sample that failed, and how
      */
-    public static <P extends AppModule._Param> void assertRoundTrips(
+    public <P extends AppModule._Param> void assertRoundTrips(
             String codecName, ParamCodec<P> codec, List<P> samples) {
 
         if (samples == null || samples.isEmpty()) {
@@ -51,7 +52,7 @@ public final class ParamCodecLaw {
 
             // And again through the wire, which is where a codec that forgot
             // to encode a separator or a space quietly stops round-tripping.
-            String encoded = QueryString.encode(written);
+            String encoded = QueryString.INSTANCE.encode(written);
             check(codecName, sample, codec.fromQueryString(encoded),
                   "via the query string '" + encoded + "'", failures);
         }
@@ -61,7 +62,7 @@ public final class ParamCodecLaw {
         }
     }
 
-    private static <P extends AppModule._Param> void check(
+    private <P extends AppModule._Param> void check(
             String codecName, P sample, ParamCodec.Decoded<P> decoded,
             String how, List<String> failures) {
 

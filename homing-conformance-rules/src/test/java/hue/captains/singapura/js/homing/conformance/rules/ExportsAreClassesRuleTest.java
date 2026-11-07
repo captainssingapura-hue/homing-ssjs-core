@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ExportsAreClassesRuleTest {
 
     private static ServedModule mod(String... lines) {
-        return new ServedModule("demo.M", StandardJsModuleType.CONSUMER, JsSource.of(lines));
+        return new ServedModule("demo.M", StandardJsModuleType.CONSUMER, new JsSource(lines));
     }
 
     private static List<String> names(List<Finding> findings) {

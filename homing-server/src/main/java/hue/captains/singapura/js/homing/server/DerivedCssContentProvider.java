@@ -1,9 +1,11 @@
 package hue.captains.singapura.js.homing.server;
 
 import hue.captains.singapura.js.homing.core.ContentProvider;
+import hue.captains.singapura.js.homing.core.CssRenderer;
 import hue.captains.singapura.js.homing.core.DerivedCss;
 import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.ModuleNameResolver;
+import hue.captains.singapura.js.homing.core.NoDesign;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,13 +18,18 @@ import java.util.List;
  * thing the sheet exports, so that a module may import it and have it load, is bound to the sheet's
  * name.
  *
- * <p>The owner's fallback, until the address or the stored pick says otherwise, is the sheet's own;
- * for a sheet varying with the theme that names none, {@code defaultTheme}, the deployment's - null
- * where the deployment has none.</p>
+ * <p>The owner's fallback, until the address or the stored pick says otherwise, is what the design
+ * says of the sheet, else the sheet's own; for a sheet varying with the theme that names none,
+ * {@code defaultTheme}, the deployment's - null where the deployment has none.</p>
  */
 public record DerivedCssContentProvider<D extends DerivedCss<D>>(
-        D sheet, String defaultTheme, ModuleNameResolver nameResolver
+        D sheet, String defaultTheme, ModuleNameResolver nameResolver, CssRenderer design
 ) implements ContentProvider<D> {
+
+    /** With no design: the sheet's own fallback, else the deployment's. */
+    public DerivedCssContentProvider(D sheet, String defaultTheme, ModuleNameResolver nameResolver) {
+        this(sheet, defaultTheme, nameResolver, NoDesign.INSTANCE);
+    }
 
     @Override
     public List<String> content() {
@@ -30,7 +37,7 @@ public record DerivedCssContentProvider<D extends DerivedCss<D>>(
         var lines = new ArrayList<String>();
         lines.add("import { ThemeSheetsInstance as _themes } from \"" + nameResolver.resolve(ThemeSheets.INSTANCE).basePath() + "\";");
         DerivedCss.VariesWith varies = sheet.variesWith();
-        String fallback = sheet.fallback().orElse(varies == DerivedCss.VariesWith.THEME ? defaultTheme : null);
+        String fallback = design.fallback(sheet).or(sheet::fallback).orElse(varies == DerivedCss.VariesWith.THEME ? defaultTheme : null);
         lines.add("await _themes.load([\"" + name + "\"], " + (fallback != null ? "\"" + fallback + "\"" : "null")
                 + ", \"" + varies.param() + "\");");
         for (Exportable<?> e : sheet.exports().exports())

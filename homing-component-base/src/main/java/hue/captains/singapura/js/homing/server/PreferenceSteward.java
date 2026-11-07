@@ -28,7 +28,7 @@ public record PreferenceSteward() implements EsModule<PreferenceSteward> {
 
     @Override
     public ImportsFor<PreferenceSteward> imports() {
-        return ImportsFor.<PreferenceSteward>builder()
+        return new ImportsFor._Builder<PreferenceSteward>()
                 .add(new ModuleImports<>(List.of(new HrefManager.HrefManagerInstance()),
                         HrefManager.INSTANCE))
                 .build();

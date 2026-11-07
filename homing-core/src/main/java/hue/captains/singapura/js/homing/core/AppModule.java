@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.core;
 
+import hue.captains.singapura.js.homing.base.lang.StatelessSingleton;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 /**
@@ -33,7 +34,7 @@ public non-sealed interface AppModule<P extends AppModule._Param, M extends AppM
 
     /** Sentinel for paramless apps. Use as the {@code P} type argument and
      *  pass {@link #INSTANCE} where a params value is needed. */
-    record _None() implements _Param {
+    record _None() implements _Param, StatelessSingleton {
         public static final _None INSTANCE = new _None();
     }
 
@@ -51,7 +52,7 @@ public non-sealed interface AppModule<P extends AppModule._Param, M extends AppM
      */
     @Override
     default String simpleName() {
-        return Linkable.defaultSimpleName(this.getClass());
+        return SimpleNames.INSTANCE.of(this.getClass());
     }
 
     /**

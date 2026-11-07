@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.design.styling;
 import hue.captains.singapura.js.homing.component.taxonomy.Casting;
 import hue.captains.singapura.js.homing.component.taxonomy.ComponentBranch;
 import hue.captains.singapura.js.homing.core.util.ResourceReader;
+import hue.captains.singapura.js.homing.core.util.ResourceReaders;
 import hue.captains.singapura.js.homing.design.semantic.DesignStyle;
 
 import java.io.IOException;
@@ -21,7 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * ({@link StyleManager#family}). Read as the modules' scripts are: in dev mode - {@code homing.devRoot} naming the
  * source folders ({@link ResourceReader}) - made afresh on every read from the casting files as they are on the file
  * system; deployed, the files the instance's jar was built with ({@link WriteStyleFamilies}), from the classpath -
- * refused when the styling installed is not the one they were made from.
+ * refused when this styling is not the one they were made from.
  */
 public final class StyleFamilies {
 
@@ -48,8 +49,8 @@ public final class StyleFamilies {
     }
 
     /** A styling's family files as this process reads them: dev mode by {@code homing.devRoot}, else the classpath's. */
-    public static StyleFamilies of(Styling styling) {
-        return new StyleFamilies(styling, ResourceReader.fromSystemProperty(), StyleFamilies.class.getClassLoader());
+    public StyleFamilies(Styling styling) {
+        this(styling, ResourceReaders.INSTANCE.fromSystemProperty(), StyleFamilies.class.getClassLoader());
     }
 
     /** Whether each file is made afresh from the file system. */
@@ -62,7 +63,7 @@ public final class StyleFamilies {
     public List<String> families() { return styling.taxonomy().heads().stream().map(ComponentBranch::token).toList(); }
 
     /** Where a style's file of a family is, in a jar. */
-    public static String path(String style, String family) { return ROOT + style + "/" + family + ".css"; }
+    public String path(String style, String family) { return ROOT + style + "/" + family + ".css"; }
 
     /** A style's file of a family: made now from the file system in dev mode, deployed the one built into the jar. */
     public String read(String style, String family) {
@@ -82,7 +83,7 @@ public final class StyleFamilies {
         var out = new LinkedHashMap<String, String>();
         out.put(INDEX, index());
         for (DesignStyle<?> s : styling.manager().styles())
-            styling.manager().families(s, ResourceReader.INSTANCE).forEach((family, css) -> out.put(path(s.token(), family), css));
+            styling.manager().families(s, ResourceReader.CLASSPATH).forEach((family, css) -> out.put(path(s.token(), family), css));
         return out;
     }
 
@@ -101,7 +102,7 @@ public final class StyleFamilies {
         Optional<String> built = classpath(INDEX);
         if (built.isEmpty()) return "no family files are on the classpath (" + INDEX + "): the instance's jar writes them when it is "
                 + "built (WriteStyleFamilies), or a site reads them made afresh in dev mode, homing.devRoot naming its source folders";
-        if (!built.get().equals(index())) return "the family files on the classpath were made from another styling than the one installed: "
+        if (!built.get().equals(index())) return "the family files on the classpath were made from another styling than this one: "
                 + "the instance's jar wrote them for its own; read them in dev mode, or build the jar of this instance";
         return "";
     }

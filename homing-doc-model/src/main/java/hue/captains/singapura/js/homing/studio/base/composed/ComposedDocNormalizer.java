@@ -3,6 +3,7 @@ package hue.captains.singapura.js.homing.studio.base.composed;
 import hue.captains.singapura.js.homing.tree.DimensionKey;
 import hue.captains.singapura.js.homing.tree.DimensionValue;
 import hue.captains.singapura.js.homing.tree.DisplayLabel;
+import hue.captains.singapura.js.homing.tree.NodeNames;
 import hue.captains.singapura.js.homing.tree.NormalizedNode;
 import hue.captains.singapura.js.homing.tree.RigidTrees;
 import hue.captains.singapura.js.homing.tree.TreeLevel;
@@ -96,9 +97,9 @@ public final class ComposedDocNormalizer implements TreeNormalizer<ComposedDoc> 
                 } else {
                     // Content node: a leaf whose provider yields this one segment
                     // as a singleton ComposedLeaf bundle (RFC 0041).
-                    kids.add(NormalizedNode.leaf(childLevel,
-                            DocNodeIdentity.indexSegment(childWithin),
-                            DocNodeIdentity.byIndex(doc.uuid(), childWithin),
+                    kids.add(new NormalizedNode(childLevel,
+                            NodeNames.INSTANCE.indexSegment(childWithin),
+                            new DocNodeIdentity(doc.uuid(), childWithin),
                             labelDims(labelFor(seg))));
                     final ComposedLeaf content = new ComposedLeaf(List.of(seg));
                     providers.put(childPath, () -> content);
@@ -107,8 +108,8 @@ public final class ComposedDocNormalizer implements TreeNormalizer<ComposedDoc> 
             }
         }
         return new NormalizedNode(level,
-                DocNodeIdentity.indexSegment(withinDoc),
-                DocNodeIdentity.byIndex(doc.uuid(), withinDoc),
+                NodeNames.INSTANCE.indexSegment(withinDoc),
+                new DocNodeIdentity(doc.uuid(), withinDoc),
                 labelDims(doc.title()), kids);
     }
 
@@ -123,9 +124,9 @@ public final class ComposedDocNormalizer implements TreeNormalizer<ComposedDoc> 
         if (id != null && visiting.contains(id)) {
             // Cycle — truncate; emit a leaf marking the cut (no content). The cut
             // stands in for the embedded doc's ROOT, so that is what it is named by.
-            return NormalizedNode.leaf(childLevel,
-                    DocNodeIdentity.indexSegment(childWithin),
-                    DocNodeIdentity.root(id),
+            return new NormalizedNode(childLevel,
+                    NodeNames.INSTANCE.indexSegment(childWithin),
+                    new DocNodeIdentity(id),
                     labelDims("↻ " + cs.resolvedCaption()));
         }
         if (id != null) visiting.add(id);
@@ -135,26 +136,26 @@ public final class ComposedDocNormalizer implements TreeNormalizer<ComposedDoc> 
         // restarts at empty: the embedded doc owns its nodes' identities.
         NormalizedNode subRoot = build(embedded, TreeLevel.L0.INSTANCE, childPath, List.of(),
                 visiting, providers);
-        NormalizedNode grafted = RigidTrees.graftUnder(subRoot, hostLevel);
+        NormalizedNode grafted = RigidTrees.INSTANCE.graftUnder(subRoot, hostLevel);
         if (id != null) visiting.remove(id);
         return grafted;
     }
 
     // ── helpers ───────────────────────────────────────────────────────────
 
-    private static List<Integer> append(List<Integer> prefix, int idx) {
+    private List<Integer> append(List<Integer> prefix, int idx) {
         var out = new ArrayList<Integer>(prefix.size() + 1);
         out.addAll(prefix);
         out.add(idx);
         return List.copyOf(out);
     }
 
-    private static Map<DimensionKey, DimensionValue> labelDims(String label) {
+    private Map<DimensionKey, DimensionValue> labelDims(String label) {
         return Map.of(DisplayLabel.INSTANCE, new NameValue(label == null ? "" : label));
     }
 
     /** A node label: the segment's title/caption, falling back to its kind. */
-    private static String labelFor(Segment s) {
+    private String labelFor(Segment s) {
         String l = switch (s) {
             case MarkdownSegment m -> m.title().orElse("");
             case TextSegment t     -> t.title().orElse("");
@@ -172,7 +173,7 @@ public final class ComposedDocNormalizer implements TreeNormalizer<ComposedDoc> 
         return (l == null || l.isBlank()) ? kindOf(s) : l;
     }
 
-    private static String kindOf(Segment s) {
+    private String kindOf(Segment s) {
         return switch (s) {
             case MarkdownSegment m -> "markdown";
             case TextSegment t     -> "text";

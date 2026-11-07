@@ -2,7 +2,7 @@ package hue.captains.singapura.js.homing.studio.base.composed;
 
 import hue.captains.singapura.js.homing.studio.base.composed.text.Line;
 
-import java.util.ArrayList;
+import hue.captains.singapura.js.homing.studio.base.composed.text.Lines;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -57,8 +57,8 @@ public record RelationSegment(
 
     /**
      * Typed column definition. The header label and the value extractor are
-     * declared together; the extractor is applied for each row item at
-     * {@link #of} / {@link #of(List, List, String)} call time.
+     * declared together; the extractor is applied for each row item when
+     * the relation is made from its columns.
      *
      * @param <T>       the row data type
      * @param header    column header label (may contain inline markdown)
@@ -89,62 +89,13 @@ public record RelationSegment(
         this(headers, rows, caption, RelationArticulations.NONE);
     }
 
-    /**
-     * Build an articulated relation from authoring {@link RelationCell}s — the
-     * cells carry their marks <i>in place</i>, and the sparse
-     * {@link RelationArticulations} side-car is derived from each cell's position:
-     * column index for {@code col}, body-row index for {@code row}, and
-     * {@link ArticulatedCell#HEADER} ({@code -1}) for the header row. Callers never
-     * track coordinates by hand — position <i>is</i> the coordinate. The rigid DSL
-     * {@code .articulatedRelation(...)} is sugar over this factory.
-     */
-    public static RelationSegment articulated(List<RelationCell> headers,
-                                              List<List<RelationCell>> rows,
-                                              Optional<Line.Plain> caption) {
-        Objects.requireNonNull(headers, "RelationSegment.articulated: headers");
-        Objects.requireNonNull(rows,    "RelationSegment.articulated: rows");
-        var headerText = new ArrayList<String>(headers.size());
-        var articulations = new ArrayList<ArticulatedCell>();
-        for (int c = 0; c < headers.size(); c++) {
-            RelationCell hc = headers.get(c);
-            headerText.add(hc.text());
-            Articulation a = hc.articulation();
-            if (!a.isEmpty()) articulations.add(ArticulatedCell.header(c, a));
-        }
-        var rowText = new ArrayList<List<String>>(rows.size());
-        for (int r = 0; r < rows.size(); r++) {
-            List<RelationCell> row = rows.get(r);
-            var cells = new ArrayList<String>(row.size());
-            for (int c = 0; c < row.size(); c++) {
-                RelationCell rc = row.get(c);
-                cells.add(rc.text());
-                Articulation a = rc.articulation();
-                if (!a.isEmpty()) articulations.add(ArticulatedCell.at(r, c, a));
-            }
-            rowText.add(cells);
-        }
-        return new RelationSegment(headerText, rowText, caption,
-                new RelationArticulations(articulations));
-    }
-
     /** Convenience — no caption. */
-    public static <T> RelationSegment of(List<Column<T>> columns, List<T> data) {
-        return build(columns, data, Optional.empty());
+    public <T> RelationSegment(List<Column<T>> columns, List<T> data) {
+        this(RelationSegments.INSTANCE.headersOf(columns), RelationSegments.INSTANCE.rowsOf(columns, data), Optional.empty());
     }
 
     /** Convenience — with caption (contributes to TOC; blank becomes no caption). */
-    public static <T> RelationSegment of(List<Column<T>> columns, List<T> data, String caption) {
-        return build(columns, data, Line.optionalPlain(caption));
-    }
-
-    private static <T> RelationSegment build(
-            List<Column<T>> columns, List<T> data, Optional<Line.Plain> caption) {
-        Objects.requireNonNull(columns, "RelationSegment.of: columns");
-        Objects.requireNonNull(data,    "RelationSegment.of: data");
-        var headers = columns.stream().map(Column::header).toList();
-        var rows    = data.stream()
-                .map(item -> columns.stream().map(col -> col.extract(item)).toList())
-                .toList();
-        return new RelationSegment(headers, rows, caption);
+    public <T> RelationSegment(List<Column<T>> columns, List<T> data, String caption) {
+        this(RelationSegments.INSTANCE.headersOf(columns), RelationSegments.INSTANCE.rowsOf(columns, data), Lines.INSTANCE.optionalPlain(caption));
     }
 }

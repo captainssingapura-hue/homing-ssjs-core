@@ -48,8 +48,11 @@ public final class Dressed {
         this.layer = layerOf(style, new LinkedHashSet<>());
     }
 
+    /** The colour tree the theme is worn over. */
     public ColorTree colors() { return colors; }
+    /** The style worn. */
     public DesignStyle<?> style() { return style; }
+    /** The palette it is worn in. */
     public ColorPalette<?> palette() { return palette; }
 
     /** The worn style's layer, over its base chain: what every target is asked of. */
@@ -82,7 +85,7 @@ public final class Dressed {
         return List.copyOf(out);
     }
 
-    private static Layer layerOf(DesignStyle<?> style, Set<Class<?>> seen) {
+    private Layer layerOf(DesignStyle<?> style, Set<Class<?>> seen) {
         if (!seen.add(style.getClass()))
             throw new IllegalArgumentException("the base chain of " + seen.iterator().next().getSimpleName() + " comes back to " + style.token());
         Layer base = null;
@@ -93,7 +96,7 @@ public final class Dressed {
                 throw new IllegalArgumentException(style.token() + " is written over " + b.token() + ", whose scheme it cannot see");
             base = layerOf(b, seen);
         }
-        return Layer.index(style, base);
+        return new Layer(style, base);
     }
 
     @Override public boolean equals(Object o) {

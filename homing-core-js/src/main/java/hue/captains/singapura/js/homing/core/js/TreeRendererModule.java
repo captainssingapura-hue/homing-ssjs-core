@@ -37,7 +37,7 @@ public record TreeRendererModule() implements DomModule<TreeRendererModule> {
 
     @Override
     public ImportsFor<TreeRendererModule> imports() {
-        return ImportsFor.noImports();
+        return new ImportsFor<>();
     }
 
     @Override

@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.site;
 
 import hue.captains.singapura.js.homing.core.QueryString;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -21,7 +22,7 @@ import java.util.Optional;
  *
  * @param all every key with every value it was given, in address order
  */
-public record Query(Map<String, List<String>> all) {
+public record Query(Map<String, List<String>> all) implements Scalar {
 
     /** No parameters at all. */
     public static final Query NONE = new Query(Map.of());
@@ -34,16 +35,16 @@ public record Query(Map<String, List<String>> all) {
     }
 
     /** Reads the part after the {@code ?}; null and blank are {@link #NONE}. */
-    public static Query parse(String rawQuery) {
-        if (rawQuery == null || rawQuery.isBlank()) return NONE;
-        return new Query(QueryString.parse(rawQuery));
+    public Query(String rawQuery) {
+        this(rawQuery == null || rawQuery.isBlank() ? Map.of() : QueryString.INSTANCE.parse(rawQuery));
     }
 
     /** A one-key query, for tests and links. */
-    public static Query of(String key, String value) {
-        return new Query(QueryString.of(key, value));
+    public Query(String key, String value) {
+        this(QueryString.INSTANCE.of(key, value));
     }
 
+    /** Whether the page was reached with no parameters. */
     public boolean isEmpty() { return all.isEmpty(); }
 
     /** The first value under {@code key}, when the key was given at all. */
@@ -60,6 +61,6 @@ public record Query(Map<String, List<String>> all) {
     /** The address form, without the leading {@code ?}; empty for {@link #NONE}. */
     @Override
     public String toString() {
-        return QueryString.encode(all);
+        return QueryString.INSTANCE.encode(all);
     }
 }

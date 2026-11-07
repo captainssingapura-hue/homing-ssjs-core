@@ -4,6 +4,7 @@ import hue.captains.singapura.js.homing.studio.base.composed.ComposedLeaf;
 import hue.captains.singapura.js.homing.studio.base.composed.ContentProvider;
 import hue.captains.singapura.js.homing.studio.base.composed.DocTreeV2;
 import hue.captains.singapura.js.homing.studio.base.composed.RigidNodeContent;
+import hue.captains.singapura.js.homing.tree.NamePathReader;
 import hue.captains.singapura.js.homing.tree.NodeName;
 import hue.captains.singapura.js.homing.tree.DimensionKey;
 import hue.captains.singapura.js.homing.tree.DimensionValue;
@@ -13,7 +14,9 @@ import hue.captains.singapura.js.homing.tree.NamePath;
 import hue.captains.singapura.js.homing.tree.NodeKey;
 import hue.captains.singapura.js.homing.tree.NormalizedNode;
 import hue.captains.singapura.js.homing.tree.TreeLevel;
+import hue.captains.singapura.js.homing.tree.TreeLevels;
 import hue.captains.singapura.js.homing.tree.dims.NameValue;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -55,17 +58,27 @@ import java.util.function.Function;
  *
  * @since homing-studio-base — RFC 0039 name-path doc (RigidDocV2)
  */
-public final class RigidNodeNormalizer {
+public final class RigidNodeNormalizer implements StatelessFunctionalObject {
 
     public static final RigidNodeNormalizer INSTANCE = new RigidNodeNormalizer();
 
     private RigidNodeNormalizer() {}
 
     /** Explicit {@code order} ascending; nodes without one sort last, alphabetically by name. */
-    private static final Comparator<RigidNode<?>> SIBLING_ORDER =
-            Comparator.<RigidNode<?>>comparingInt(
+    private Comparator<RigidNode<?>> siblingOrder() {
+        return Comparator.<RigidNode<?>>comparingInt(
                             n -> n.order().isPresent() ? n.order().getAsInt() : Integer.MAX_VALUE)
                     .thenComparing(n -> n.name().value());
+    }
+
+    /** The doc tree of these nodes, read only when it is asked for; refuses a missing source now. */
+    public <T> java.util.function.Supplier<DocTreeV2> docTreeOf(java.util.UUID id,
+            java.util.function.Supplier<java.util.List<RigidNode<T>>> nodes,
+            java.util.function.Function<T, RigidNodeContent> content) {
+        java.util.Objects.requireNonNull(nodes, "nodes");
+        java.util.Objects.requireNonNull(content, "content provider");
+        return () -> toDocTree(id, nodes.get(), content);
+    }
 
     /**
      * Assemble + validate the nodes into a name-path {@link DocTreeV2}. The single
@@ -131,7 +144,7 @@ public final class RigidNodeNormalizer {
 
         // Children: ordered, and sibling-name-unique (the name-path must be unambiguous).
         List<RigidNode<T>> kids = new ArrayList<>(childrenOf.getOrDefault(node, List.of()));
-        kids.sort(SIBLING_ORDER);
+        kids.sort(siblingOrder());
         Set<String> seenNames = new HashSet<>();
         List<NormalizedNode> kidNodes = new ArrayList<>();
         for (RigidNode<T> kid : kids) {
@@ -146,16 +159,16 @@ public final class RigidNodeNormalizer {
 
         TreeLevel level;
         try {
-            level = TreeLevel.atDepth(node.level());
+            level = TreeLevels.INSTANCE.atDepth(node.level());
         } catch (IllegalArgumentException ex) {
             throw new MalformedTreeException("depth exceeds the rigid cap at '"
                     + node.name().value() + "': " + ex.getMessage());
         }
-        return new NormalizedNode(level, node.name(), new DocNodeIdentity(doc, NamePath.parse(pathKey)), labelDims(node), kidNodes);
+        return new NormalizedNode(level, node.name(), new DocNodeIdentity(doc, NamePathReader.INSTANCE.parse(pathKey)), labelDims(node), kidNodes);
     }
 
     /** The two per-node dimensions: the human heading, then the machine identity. */
-    private static Map<DimensionKey, DimensionValue> labelDims(RigidNode<?> node) {
+    private Map<DimensionKey, DimensionValue> labelDims(RigidNode<?> node) {
         var dims = new LinkedHashMap<DimensionKey, DimensionValue>();
         dims.put(DisplayLabel.INSTANCE, new NameValue(node.title().text()));
         dims.put(NodeKey.INSTANCE, new NameValue(node.name().value()));

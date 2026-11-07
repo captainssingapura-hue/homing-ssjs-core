@@ -13,5 +13,6 @@ public final class RefusedLocalStyles extends RuntimeException {
         this.problems = List.copyOf(problems);
     }
 
+    /** Every problem found in the local styles. */
     public List<LocalStyleProblem> problems() { return problems; }
 }

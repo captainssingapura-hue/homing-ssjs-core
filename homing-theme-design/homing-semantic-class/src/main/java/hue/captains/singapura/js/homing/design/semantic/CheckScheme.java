@@ -98,7 +98,7 @@ public record CheckScheme() implements StatelessFunctionalObject {
     /** What refuses a local style's say of its scheme: the scheme it says, against the one its type names. */
     public List<String> says(LocalStyle<?, ?> localStyle) { return says(localStyle.token(), localStyle.scheme(), localStyle.getClass(), LocalStyle.class); }
 
-    private static List<String> says(String token, ColorScheme scheme, Class<?> declared, Class<?> generic) {
+    private List<String> says(String token, ColorScheme scheme, Class<?> declared, Class<?> generic) {
         Class<?> typed = TypeArguments.INSTANCE.at(declared, generic, 0);
         if (scheme == null) return List.of(token + " says no scheme");
         if (typed != scheme.getClass())
@@ -107,7 +107,7 @@ public record CheckScheme() implements StatelessFunctionalObject {
     }
 
     /** Where a class was loaded from: its jar, or its classes' directory. */
-    private static String home(Class<?> c) {
+    private String home(Class<?> c) {
         CodeSource source = c.getProtectionDomain() == null ? null : c.getProtectionDomain().getCodeSource();
         return source == null || source.getLocation() == null ? null : source.getLocation().toString();
     }

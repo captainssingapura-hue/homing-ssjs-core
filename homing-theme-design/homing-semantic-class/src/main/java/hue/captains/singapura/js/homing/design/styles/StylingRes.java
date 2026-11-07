@@ -3,7 +3,7 @@ package hue.captains.singapura.js.homing.design.styles;
 import hue.captains.singapura.js.homing.component.taxonomy.Component;
 import hue.captains.singapura.js.homing.design.color.ColorLeaf;
 import hue.captains.singapura.js.homing.design.color.ColorScheme;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.HashSet;
 import java.util.List;
@@ -22,7 +22,7 @@ import java.util.Objects;
  * @param <Sc> the scheme of the style answering
  * @param <C>  the component cast
  */
-public sealed interface StylingRes<Sc extends ColorScheme, C extends Component<?>> extends ValueObject
+public sealed interface StylingRes<Sc extends ColorScheme, C extends Component<?>> extends Scalar
         permits StylingRes.CssContent, StylingRes.Delegation {
 
     /**

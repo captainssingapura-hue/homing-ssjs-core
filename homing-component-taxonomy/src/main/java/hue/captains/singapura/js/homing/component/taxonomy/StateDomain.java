@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.component.taxonomy;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,7 +26,7 @@ import java.util.TreeSet;
  * Each has its rest: the value it is when nothing has changed it. A domain is held whole as it is made: no one is made
  * that is not.
  */
-public sealed interface StateDomain extends ValueObject permits StateDomain.Ranges, StateDomain.Valued {
+public sealed interface StateDomain extends Scalar permits StateDomain.Ranges, StateDomain.Valued {
 
     /** Whether a value is one this domain allows. */
     boolean allows(Value value);
@@ -35,7 +35,7 @@ public sealed interface StateDomain extends ValueObject permits StateDomain.Rang
     Value rest();
 
     /** One value of a type of state: a named one, a number, a text, an order of names, or a count for each name. */
-    sealed interface Value extends ValueObject permits Named, Number, Text, Names, Counts {}
+    sealed interface Value extends Scalar permits Named, Number, Text, Names, Counts {}
 
     /** A named value: {@code true}, {@code sunken}. */
     record Named(StateValue value) implements Value {
@@ -99,7 +99,8 @@ public sealed interface StateDomain extends ValueObject permits StateDomain.Rang
     }
 
     /** One range of a type of state's values: a named value, or a span of numbers. */
-    sealed interface Range extends ValueObject permits Point, Span {
+    sealed interface Range extends Scalar permits Point, Span {
+        /** Whether {@code value} is in this range. */
         boolean holds(Value value);
     }
 

@@ -25,7 +25,7 @@ public record HrefManager() implements EsModule<HrefManager> {
 
     @Override
     public ImportsFor<HrefManager> imports() {
-        return ImportsFor.noImports();
+        return new ImportsFor<>();
     }
 
     @Override

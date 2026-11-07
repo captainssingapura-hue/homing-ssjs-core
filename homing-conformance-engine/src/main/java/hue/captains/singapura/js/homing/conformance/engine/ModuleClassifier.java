@@ -9,6 +9,8 @@ import hue.captains.singapura.js.homing.core.JsModuleType;
 import hue.captains.singapura.js.homing.core.StandardJsModuleType;
 import hue.captains.singapura.js.homing.core.ManagerInjector;
 import hue.captains.singapura.js.homing.core.ModuleForm;
+import hue.captains.singapura.js.homing.core.ModuleForms;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 /**
  * RFC 0044 Phase 6/7 — classifies a module into the {@link JsModuleType} the
@@ -28,17 +30,21 @@ import hue.captains.singapura.js.homing.core.ModuleForm;
  *       the full-discipline baseline.</li>
  * </ul>
  */
-public final class ModuleClassifier {
+public record ModuleClassifier() implements StatelessFunctionalObject {
 
-    private ModuleClassifier() {}
+    public static final ModuleClassifier INSTANCE = new ModuleClassifier();
 
     /** The entry's declared domain type if any, else the structural classification of its module. */
-    public static JsModuleType classify(CrateEntry entry) {
+    public JsModuleType classify(CrateEntry entry) {
         JsModuleType declared = entry.declaredType();
         return declared != null ? declared : classify(entry.module());
     }
 
-    public static JsModuleType classify(EsModule<?> module) {
+    /**
+     * The type of a module with none declared, derived from what it is: an external module, a manager injector or a
+     * widget first, then by its {@link ModuleForm}.
+     */
+    public JsModuleType classify(EsModule<?> module) {
         if (module instanceof BundledExternalModule<?> || module instanceof ExternalModule<?>) {
             return StandardJsModuleType.BUNDLED_EXTERNAL;
         }
@@ -48,7 +54,7 @@ public final class ModuleClassifier {
         if (exportsAWidget(module)) {
             return StandardJsModuleType.WIDGET;
         }
-        return switch (ModuleForm.of(module)) {
+        return switch (ModuleForms.INSTANCE.of(module)) {
             case CSS_GROUP, DERIVED_CSS -> StandardJsModuleType.GENERATED_CSS;
             case SVG_GROUP, SELF_CONTENT, RESOURCE_BACKED -> StandardJsModuleType.CONSUMER;
             case BUNDLED_EXTERNAL -> StandardJsModuleType.BUNDLED_EXTERNAL; // (already handled above)
@@ -56,7 +62,7 @@ public final class ModuleClassifier {
     }
 
     /** Whether a module exports a widget: a component whose shape is a widget's. */
-    static boolean exportsAWidget(EsModule<?> module) {
+    boolean exportsAWidget(EsModule<?> module) {
         return module.exports().exports().stream()
                 .anyMatch(x -> x instanceof UiComponent<?> c && c.shape() == UiComponent.Shape.WIDGET);
     }

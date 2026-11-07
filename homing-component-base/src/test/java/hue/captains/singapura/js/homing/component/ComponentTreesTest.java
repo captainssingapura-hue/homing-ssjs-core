@@ -31,7 +31,7 @@ class ComponentTreesTest {
             @Override public String tag() { return "button"; }
         }
         public record BoxEvents() implements Exportable._Constant<BoxModule> {}
-        @Override public ImportsFor<BoxModule> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<BoxModule> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<BoxModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new Box(), new Knob(), new BoxEvents())); }
     }
 
@@ -40,18 +40,18 @@ class ComponentTreesTest {
         public static final BoxComponents INSTANCE = new BoxComponents();
         @Override public String name() { return "Boxes"; }
         @Override public List<? extends C1_Components<BoxComponents, ?>> subCatalogues() { return List.of(ControlsComponents.INSTANCE); }
-        @Override public List<ComponentEntry<BoxComponents>> leaves() { return List.of(ComponentEntry.of(this, new BoxModule.Box())); }
+        @Override public List<ComponentEntry<BoxComponents>> leaves() { return List.of(new ComponentEntry.OfComponent<>(this, new BoxModule.Box())); }
     }
     public record ControlsComponents() implements C1_Components<BoxComponents, ControlsComponents> {
         public static final ControlsComponents INSTANCE = new ControlsComponents();
         @Override public BoxComponents parent() { return BoxComponents.INSTANCE; }
         @Override public String name() { return "Controls"; }
-        @Override public List<ComponentEntry<ControlsComponents>> leaves() { return List.of(ComponentEntry.of(this, new BoxModule.Knob())); }
+        @Override public List<ComponentEntry<ControlsComponents>> leaves() { return List.of(new ComponentEntry.OfComponent<>(this, new BoxModule.Knob())); }
     }
     static final class BoxCrate implements Crate, ComponentVehicle {
         static final BoxCrate INSTANCE = new BoxCrate();
         @Override public String name() { return "boxes"; }
-        @Override public List<CrateEntry> entries() { return List.of(CrateEntry.of(BoxModule.INSTANCE)); }
+        @Override public List<CrateEntry> entries() { return List.of(new CrateEntry(BoxModule.INSTANCE)); }
         @Override public C0_Components<?> components() { return BoxComponents.INSTANCE; }
     }
     /** A site crate that ships nothing of its own and requires the vehicle. */
@@ -101,20 +101,20 @@ class ComponentTreesTest {
     public record LoneModule() implements DomModule<LoneModule> {
         public static final LoneModule INSTANCE = new LoneModule();
         public record Lone() implements BranchComponent<LoneModule> {}
-        @Override public ImportsFor<LoneModule> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<LoneModule> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<LoneModule> exports() { return new ExportsOf<>(INSTANCE, List.of(new Lone())); }
     }
     /** Exports a component but ships no catalogue. */
     static final class LoneCrate implements Crate {
         static final LoneCrate INSTANCE = new LoneCrate();
         @Override public String name() { return "lone"; }
-        @Override public List<CrateEntry> entries() { return List.of(CrateEntry.of(LoneModule.INSTANCE)); }
+        @Override public List<CrateEntry> entries() { return List.of(new CrateEntry(LoneModule.INSTANCE)); }
     }
     /** Lists a component of a module it does not ship, and lists the box a second time. */
     public record BorrowedComponents() implements C0_Components<BorrowedComponents> {
         public static final BorrowedComponents INSTANCE = new BorrowedComponents();
         @Override public String name() { return "Borrowed"; }
-        @Override public List<ComponentEntry<BorrowedComponents>> leaves() { return List.of(ComponentEntry.of(this, new BoxModule.Box()), ComponentEntry.of(this, new BoxModule.Box())); }
+        @Override public List<ComponentEntry<BorrowedComponents>> leaves() { return List.of(new ComponentEntry.OfComponent<>(this, new BoxModule.Box()), new ComponentEntry.OfComponent<>(this, new BoxModule.Box())); }
     }
     static final class BorrowingCrate implements Crate, ComponentVehicle {
         static final BorrowingCrate INSTANCE = new BorrowingCrate();
@@ -161,7 +161,7 @@ class ComponentTreesTest {
     public record StrandedComponents() implements C0_Components<StrandedComponents> {
         public static final StrandedComponents INSTANCE = new StrandedComponents();
         @Override public String name() { return "Stranded"; }
-        @Override public List<ComponentEntry<StrandedComponents>> leaves() { return List.of(ComponentEntry.of(this, new LoneModule.Lone())); }
+        @Override public List<ComponentEntry<StrandedComponents>> leaves() { return List.of(new ComponentEntry.OfComponent<>(this, new LoneModule.Lone())); }
     }
     static final class StrandedCrate implements Crate, ComponentVehicle {
         static final StrandedCrate INSTANCE = new StrandedCrate();
@@ -172,18 +172,18 @@ class ComponentTreesTest {
     /** A second module that exports the box, as the box module's: a crate that ships both gives the box two. */
     public record TwinModule() implements DomModule<BoxModule> {
         public static final TwinModule INSTANCE = new TwinModule();
-        @Override public ImportsFor<BoxModule> imports() { return ImportsFor.noImports(); }
+        @Override public ImportsFor<BoxModule> imports() { return new ImportsFor<>(); }
         @Override public ExportsOf<BoxModule> exports() { return new ExportsOf<>(BoxModule.INSTANCE, List.of(new BoxModule.Box())); }
     }
     public record TwinComponents() implements C0_Components<TwinComponents> {
         public static final TwinComponents INSTANCE = new TwinComponents();
         @Override public String name() { return "Twin"; }
-        @Override public List<ComponentEntry<TwinComponents>> leaves() { return List.of(ComponentEntry.of(this, new BoxModule.Box()), ComponentEntry.of(this, new BoxModule.Knob())); }
+        @Override public List<ComponentEntry<TwinComponents>> leaves() { return List.of(new ComponentEntry.OfComponent<>(this, new BoxModule.Box()), new ComponentEntry.OfComponent<>(this, new BoxModule.Knob())); }
     }
     static final class TwinCrate implements Crate, ComponentVehicle {
         static final TwinCrate INSTANCE = new TwinCrate();
         @Override public String name() { return "twin"; }
-        @Override public List<CrateEntry> entries() { return List.of(CrateEntry.of(BoxModule.INSTANCE), CrateEntry.of(TwinModule.INSTANCE)); }
+        @Override public List<CrateEntry> entries() { return List.of(new CrateEntry(BoxModule.INSTANCE), new CrateEntry(TwinModule.INSTANCE)); }
         @Override public C0_Components<?> components() { return TwinComponents.INSTANCE; }
     }
 

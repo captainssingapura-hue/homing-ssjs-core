@@ -1,8 +1,10 @@
 package hue.captains.singapura.js.homing.component;
 
+import hue.captains.singapura.js.homing.base.lang.StatelessSingleton;
 import hue.captains.singapura.js.homing.core.DomModule;
 import hue.captains.singapura.js.homing.core.Exportable;
 import hue.captains.singapura.js.homing.core.Linkable;
+import hue.captains.singapura.js.homing.core.SimpleNames;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 /**
@@ -69,7 +71,7 @@ public interface Widget<P extends Widget._Param, W extends Widget<P, W>>
     interface _Param {}
 
     /** The params of a widget that takes none. */
-    record _None() implements _Param {
+    record _None() implements _Param, StatelessSingleton {
         public static final _None INSTANCE = new _None();
     }
 
@@ -83,7 +85,7 @@ public interface Widget<P extends Widget._Param, W extends Widget<P, W>>
 
     /** The widget's name for a host that keeps widgets by name; kebab-case of the class by default. */
     default String simpleName() {
-        return Linkable.defaultSimpleName(this.getClass());
+        return SimpleNames.INSTANCE.of(this.getClass());
     }
 
     /** What a host may show for it. */

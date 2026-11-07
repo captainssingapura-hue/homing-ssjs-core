@@ -55,10 +55,10 @@ public record NormalizedNode(TreeLevel level,
     }
 
     /** A leaf node — no children. */
-    public static NormalizedNode leaf(TreeLevel level,
-                                      NodeName segment,
-                                      NodeIdentity identity,
-                                      Map<DimensionKey, DimensionValue> dimensions) {
-        return new NormalizedNode(level, segment, identity, dimensions, List.of());
+    public NormalizedNode(TreeLevel level,
+                          NodeName segment,
+                          NodeIdentity identity,
+                          Map<DimensionKey, DimensionValue> dimensions) {
+        this(level, segment, identity, dimensions, List.of());
     }
 }

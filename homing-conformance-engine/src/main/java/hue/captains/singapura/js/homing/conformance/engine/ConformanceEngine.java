@@ -65,7 +65,7 @@ public final class ConformanceEngine {
      */
     private JsRuleSet rulesFor(JsModuleType type, EsModule<?> module) {
         JsRuleSet set = policy.rulesFor(type);
-        if (!ModuleClassifier.exportsAWidget(module) || set.rules().contains(WidgetDrawsOnlyComponentsRule.INSTANCE)) return set;
+        if (!ModuleClassifier.INSTANCE.exportsAWidget(module) || set.rules().contains(WidgetDrawsOnlyComponentsRule.INSTANCE)) return set;
         var rules = new ArrayList<>(set.rules());
         rules.add(WidgetDrawsOnlyComponentsRule.INSTANCE);
         return new JsRuleSet(new RuleSetId(set.id().value() + "+widget"), set.title() + ", a widget", List.copyOf(rules));
@@ -89,7 +89,7 @@ public final class ConformanceEngine {
         var all = new ArrayList<Finding>();
         for (Crate c : crates) {
             for (CrateEntry e : c.entries()) {
-                var type = ModuleClassifier.classify(e);
+                var type = ModuleClassifier.INSTANCE.classify(e);
                 ServedModule served = renderer.render(e.module(), type);
                 all.addAll(rulesFor(type, e.module()).checkAll(served));
             }
@@ -117,7 +117,7 @@ public final class ConformanceEngine {
             var memberIds = new ArrayList<String>();
             int cErr = 0, cWarn = 0;
             for (CrateEntry e : c.entries()) {
-                JsModuleType type = ModuleClassifier.classify(e);
+                JsModuleType type = ModuleClassifier.INSTANCE.classify(e);
                 ServedModule served = renderer.render(e.module(), type);
                 JsRuleSet set = rulesFor(type, e.module());
                 ruleSets.computeIfAbsent(set.id().value(), k -> ruleSetReport(set));
@@ -125,7 +125,7 @@ public final class ConformanceEngine {
                 var findings = new ArrayList<FindingReport>();
                 int mErr = 0;
                 for (GradedFinding g : grader.grade(set.checkAll(served))) {
-                    findings.add(FindingReport.of(g));
+                    findings.add(new FindingReport(g));
                     if (g.isError()) mErr++; else cWarn++;
                 }
                 cErr += mErr;
@@ -147,7 +147,7 @@ public final class ConformanceEngine {
     }
 
     /** A rule set in exportable form — its id, title, and its rules' id + intent. */
-    private static RuleSetReport ruleSetReport(JsRuleSet set) {
+    private RuleSetReport ruleSetReport(JsRuleSet set) {
         var rules = new ArrayList<RuleReport>();
         set.rules().forEach(r -> rules.add(new RuleReport(r.id().value(), r.intent())));
         return new RuleSetReport(set.id().value(), set.title(), rules);

@@ -61,7 +61,7 @@ public record TextSegment(String body, Optional<String> title) implements Listab
         Objects.requireNonNull(title, "TextSegment.title (use Optional.empty)");
         // Validate at construction — fail fast on bad bodies. The thrown
         // ParseException carries line + column.
-        TextParser.parse(body);
+        TextParser.INSTANCE.parse(body);
     }
 
     /** Convenience — no title. */
@@ -71,6 +71,6 @@ public record TextSegment(String body, Optional<String> title) implements Listab
 
     /** The parsed AST. Re-parses on each call (cheap for these sizes). */
     public List<Block> parsed() {
-        return TextParser.parse(body);
+        return TextParser.INSTANCE.parse(body);
     }
 }

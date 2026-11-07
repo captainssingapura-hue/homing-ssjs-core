@@ -3,7 +3,7 @@ package hue.captains.singapura.js.homing.design.styles;
 import hue.captains.singapura.js.homing.design.color.ColorScheme;
 import hue.captains.singapura.js.homing.design.semantic.DesignStyle;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.List;
 import java.util.Objects;
@@ -27,7 +27,7 @@ public interface StyleDeclaration extends StatelessFunctionalObject {
      * @param castings  every implementation of it the jar holds
      */
     record Provided<Sc extends ColorScheme, S extends DesignStyle<Sc>>(S style, List<? extends CastingStyle<Sc, S, ?, ?>> castings)
-            implements ValueObject {
+            implements Scalar {
         public Provided {
             Objects.requireNonNull(style, "Provided.style");
             castings = List.copyOf(Objects.requireNonNull(castings, "Provided.castings"));

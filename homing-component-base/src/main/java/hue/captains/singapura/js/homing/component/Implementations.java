@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.component;
 
+import hue.captains.singapura.js.homing.base.lang.StatelessSingleton;
 import hue.captains.singapura.js.homing.component.taxonomy.Component;
 import hue.captains.singapura.js.homing.component.taxonomy.ComponentBranch;
 import hue.captains.singapura.js.homing.component.taxonomy.Impl;
@@ -13,6 +14,7 @@ import hue.captains.singapura.js.homing.core.Crate;
 import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.core.EsModule;
 import hue.captains.singapura.js.homing.core.Exportable;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -55,7 +57,7 @@ import java.util.Set;
  *       so the leaves it imports are theirs.</li>
  * </ul>
  */
-public record Implementations() {
+public record Implementations() implements StatelessFunctionalObject, StatelessSingleton {
 
     public static final Implementations INSTANCE = new Implementations();
 
@@ -74,62 +76,79 @@ public record Implementations() {
                 problems.add(simple(e.getKey()) + " is implemented twice: by " + all.getClass().getSimpleName() + ", every leaf of its branch, and " + e.getValue().getClass().getSimpleName());
         }
 
-        var own = new ArrayList<EsModule<?>>();
-        for (Crate crate : topLevel) for (CrateEntry e : crate.entries()) own.add(e.module());
-        var components = Set.copyOf(taxonomy.components());
-        var tree = Set.copyOf(taxonomy.branches());
-        for (EsModule<?> m : own) {
-            String name = m.getClass().getSimpleName();
-            List<? extends Exportable<?>> exports = m.exports().exports();
-            // a widget is no component (owner, 20 Oct), nor a layout (21 Oct): neither is anchored at a leaf
-            boolean exportsComponent = exports.stream().anyMatch(x -> x instanceof UiComponent<?> c && c.shape() != UiComponent.Shape.WIDGET && c.shape() != UiComponent.Shape.LAYOUT);
-            switch (m) {
-                case ImplFor<?> impl -> {
-                    Component<?> leaf = anchor(impl, name, problems);
-                    if (leaf == null) continue;
-                    if (!components.contains(leaf)) { problems.add(name + " implements " + simple(leaf) + ", which the taxonomy does not declare"); continue; }
-                    if (taxonomy.wornByTheDocument(leaf)) {
-                        problems.add(name + " implements " + simple(leaf) + ", which the document wears: its look is a style's rule on the document's root, and no module's");
-                        continue;
-                    }
-                    if (!asItsLeafSays(exports, leaf))
-                        problems.add(name + " implements " + simple(leaf) + " but exports " + said(exports)
-                                + ": one module, one class - the component, named as its leaf - and at most its companion, named for it");
-                    composition(taxonomy, m, leaf, leaves, whole, problems);
-                }
-                case ImplForBranch<?> impl -> {
-                    ComponentBranch branch = anchor(impl, name, problems);
-                    if (branch == null) continue;
-                    if (!tree.contains(branch)) { problems.add(name + " implements the branch " + simple(branch) + ", which the taxonomy does not declare"); continue; }
-                    if (exportsComponent)
-                        problems.add(name + " implements the branch " + simple(branch) + " but exports a component: a branch is never realized, only its leaves are");
-                    else if (exports.size() != 1 || !(exports.get(0) instanceof Exportable._Class<?>) || !simple(exports.get(0)).equals(simple(branch)))
-                        problems.add(name + " implements the branch " + simple(branch) + " but exports " + said(exports) + ": one module, one class - the base, named as its branch");
-                }
-                case ImplForLeavesOf<?> impl -> {
-                    ComponentBranch branch = anchor(impl, name, problems);
-                    if (branch == null) continue;
-                    if (!tree.contains(branch)) { problems.add(name + " implements every leaf of " + simple(branch) + ", a branch the taxonomy does not declare"); continue; }
-                    if (exports.size() != 1 || !(exports.get(0) instanceof UiComponent<?>) || !simple(exports.get(0)).equals(simple(branch)))
-                        problems.add(name + " implements every leaf of " + simple(branch) + " but exports " + said(exports)
-                                + ": one module, one class - the component, named as the branch, made with the leaf it realizes");
-                    for (Component<?> c : taxonomy.components())
-                        if (taxonomy.fallback(c).contains(branch) && !taxonomy.partsOf(c).isEmpty())
-                            problems.add(name + " implements every leaf of " + simple(branch) + ", but " + simple(c)
-                                    + " holds parts: the leaves of one class are alike but for their look");
-                }
-                default -> {
-                    if (exportsComponent)
-                        problems.add(name + " exports the component " + said(exports.stream().filter(x -> x instanceof UiComponent<?>).toList())
-                                + " but is anchored nowhere: a component's module implements its leaf (ImplFor)");
-                }
-            }
-        }
+        for (Crate crate : topLevel)
+            for (CrateEntry e : crate.entries())
+                graded(taxonomy, e.module(), leaves, whole, problems);
         return List.copyOf(problems);
     }
 
+    /** One of the top level's modules, by what it is anchored at. */
+    private void graded(Taxonomy taxonomy, EsModule<?> m, Map<Component<?>, EsModule<?>> leaves,
+                        Map<ComponentBranch, EsModule<?>> whole, List<String> problems) {
+        String name = m.getClass().getSimpleName();
+        List<? extends Exportable<?>> exports = m.exports().exports();
+        switch (m) {
+            case ImplFor<?> impl -> leaf(taxonomy, m, impl, leaves, whole, problems);
+            case ImplForBranch<?> impl -> base(taxonomy, impl, name, exports, problems);
+            case ImplForLeavesOf<?> impl -> everyLeaf(taxonomy, impl, name, exports, problems);
+            default -> {
+                if (exportsComponent(exports))
+                    problems.add(name + " exports the component " + said(exports.stream().filter(x -> x instanceof UiComponent<?>).toList())
+                            + " but is anchored nowhere: a component's module implements its leaf (ImplFor)");
+            }
+        }
+    }
+
+    /** A leaf's module: the taxonomy's leaf, an element's, its one class named as the leaf, and composed as declared. */
+    private void leaf(Taxonomy taxonomy, EsModule<?> m, ImplFor<?> impl, Map<Component<?>, EsModule<?>> leaves,
+                      Map<ComponentBranch, EsModule<?>> whole, List<String> problems) {
+        String name = m.getClass().getSimpleName();
+        List<? extends Exportable<?>> exports = m.exports().exports();
+        Component<?> leaf = anchor(impl, name, problems);
+        if (leaf == null) return;
+        if (!taxonomy.components().contains(leaf)) { problems.add(name + " implements " + simple(leaf) + ", which the taxonomy does not declare"); return; }
+        if (taxonomy.wornByTheDocument(leaf)) {
+            problems.add(name + " implements " + simple(leaf) + ", which the document wears: its look is a style's rule on the document's root, and no module's");
+            return;
+        }
+        if (!asItsLeafSays(exports, leaf))
+            problems.add(name + " implements " + simple(leaf) + " but exports " + said(exports)
+                    + ": one module, one class - the component, named as its leaf - and at most its companion, named for it");
+        composition(taxonomy, m, leaf, leaves, whole, problems);
+    }
+
+    /** A branch's base: the taxonomy's branch, its one class named as the branch, no component. */
+    private void base(Taxonomy taxonomy, ImplForBranch<?> impl, String name, List<? extends Exportable<?>> exports, List<String> problems) {
+        ComponentBranch branch = anchor(impl, name, problems);
+        if (branch == null) return;
+        if (!taxonomy.branches().contains(branch)) { problems.add(name + " implements the branch " + simple(branch) + ", which the taxonomy does not declare"); return; }
+        if (exportsComponent(exports))
+            problems.add(name + " implements the branch " + simple(branch) + " but exports a component: a branch is never realized, only its leaves are");
+        else if (exports.size() != 1 || !(exports.get(0) instanceof Exportable._Class<?>) || !simple(exports.get(0)).equals(simple(branch)))
+            problems.add(name + " implements the branch " + simple(branch) + " but exports " + said(exports) + ": one module, one class - the base, named as its branch");
+    }
+
+    /** A branch realized whole: the taxonomy's branch, one component named as the branch, its leaves alike but for their look. */
+    private void everyLeaf(Taxonomy taxonomy, ImplForLeavesOf<?> impl, String name, List<? extends Exportable<?>> exports, List<String> problems) {
+        ComponentBranch branch = anchor(impl, name, problems);
+        if (branch == null) return;
+        if (!taxonomy.branches().contains(branch)) { problems.add(name + " implements every leaf of " + simple(branch) + ", a branch the taxonomy does not declare"); return; }
+        if (exports.size() != 1 || !(exports.get(0) instanceof UiComponent<?>) || !simple(exports.get(0)).equals(simple(branch)))
+            problems.add(name + " implements every leaf of " + simple(branch) + " but exports " + said(exports)
+                    + ": one module, one class - the component, named as the branch, made with the leaf it realizes");
+        for (Component<?> c : taxonomy.components())
+            if (taxonomy.fallback(c).contains(branch) && !taxonomy.partsOf(c).isEmpty())
+                problems.add(name + " implements every leaf of " + simple(branch) + ", but " + simple(c)
+                        + " holds parts: the leaves of one class are alike but for their look");
+    }
+
+    /** Whether a module exports a component: a widget is no component (owner, 20 Oct), nor a layout (21 Oct), and neither is anchored at a leaf. */
+    private boolean exportsComponent(List<? extends Exportable<?>> exports) {
+        return exports.stream().anyMatch(x -> x instanceof UiComponent<?> c && c.shape() != UiComponent.Shape.WIDGET && c.shape() != UiComponent.Shape.LAYOUT);
+    }
+
     /** The leaves and branches implemented over the closure, each once: a branch's base, and a branch realized whole, apart. */
-    private static void index(EsModule<?> m, Map<Component<?>, EsModule<?>> leaves, Map<ComponentBranch, EsModule<?>> branches,
+    private void index(EsModule<?> m, Map<Component<?>, EsModule<?>> leaves, Map<ComponentBranch, EsModule<?>> branches,
                               Map<ComponentBranch, EsModule<?>> whole, List<String> problems) {
         if (!(m instanceof Impl impl)) return;
         Taxon anchor;
@@ -143,13 +162,13 @@ public record Implementations() {
     }
 
     @SuppressWarnings("unchecked")
-    private static <T extends Taxon> T anchor(Impl impl, String name, List<String> problems) {
+    private <T extends Taxon> T anchor(Impl impl, String name, List<String> problems) {
         try { return (T) impl.anchor(); }
         catch (IllegalStateException e) { problems.add(name + ": " + e.getMessage()); return null; }
     }
 
     /** The leaves a leaf's module imports against those its parts call for, and the bases it imports against its lineage. */
-    private static void composition(Taxonomy taxonomy, EsModule<?> m, Component<?> leaf,
+    private void composition(Taxonomy taxonomy, EsModule<?> m, Component<?> leaf,
                                     Map<Component<?>, EsModule<?>> leaves, Map<ComponentBranch, EsModule<?>> whole, List<String> problems) {
         String who = m.getClass().getSimpleName() + " (" + simple(leaf) + ")";
         var expected = new LinkedHashMap<Component<?>, String>();   // a leaf → the part that calls for it
@@ -193,7 +212,7 @@ public record Implementations() {
      * The leaves a module that implements nothing imports, and the branches realized whole, through any such modules it
      * imports in turn: its importer's, since it is the importer's code.
      */
-    private static void helped(EsModule<?> helper, EsModule<?> via, Set<EsModule<?>> seen, Map<Component<?>, String> out,
+    private void helped(EsModule<?> helper, EsModule<?> via, Set<EsModule<?>> seen, Map<Component<?>, String> out,
                                Map<ComponentBranch, String> wholes) {
         for (var key : helper.imports().getAllImports().keySet()) {
             if (!(key instanceof EsModule<?> dep) || !seen.add(dep)) continue;
@@ -207,14 +226,14 @@ public record Implementations() {
     }
 
     /** Every leaf a component's parts hold, at any depth, realized or not. */
-    private static void held(Taxonomy taxonomy, Component<?> owner, Set<Component<?>> seen, Set<Component<?>> out) {
+    private void held(Taxonomy taxonomy, Component<?> owner, Set<Component<?>> seen, Set<Component<?>> out) {
         for (Part<?, ?> p : taxonomy.partsOf(owner))
             for (Component<?> base : p.bases())
                 if (seen.add(base)) { out.add(base); held(taxonomy, base, seen, out); }
     }
 
     /** The leaves a component's parts call for, each implemented by a module of the closure; a part nothing implements, a problem. */
-    private static void expect(Taxonomy taxonomy, Component<?> owner, String who, Map<Component<?>, EsModule<?>> leaves,
+    private void expect(Taxonomy taxonomy, Component<?> owner, String who, Map<Component<?>, EsModule<?>> leaves,
                                Map<ComponentBranch, EsModule<?>> whole, Map<Component<?>, String> out, List<String> problems) {
         for (Part<?, ?> p : taxonomy.partsOf(owner)) {
             String said = p.role().name().value();
@@ -227,7 +246,7 @@ public record Implementations() {
     }
 
     /** The module whose one class realizes every leaf of a branch the leaf is under, or null. */
-    private static EsModule<?> wholeOf(Taxonomy taxonomy, Component<?> leaf, Map<ComponentBranch, EsModule<?>> whole) {
+    private EsModule<?> wholeOf(Taxonomy taxonomy, Component<?> leaf, Map<ComponentBranch, EsModule<?>> whole) {
         for (var t : taxonomy.fallback(leaf))
             if (t instanceof ComponentBranch b && whole.containsKey(b)) return whole.get(b);
         return null;
@@ -238,16 +257,16 @@ public record Implementations() {
      * element it is realized on, exported beside it as a constant named for it -
      * {@code PlainButtonFactory} for {@code PlainButton}.
      */
-    private static boolean asItsLeafSays(List<? extends Exportable<?>> exports, Component<?> leaf) {
+    private boolean asItsLeafSays(List<? extends Exportable<?>> exports, Component<?> leaf) {
         if (exports.isEmpty() || exports.size() > 2) return false;
         if (!(exports.get(0) instanceof UiComponent<?>) || !simple(exports.get(0)).equals(simple(leaf))) return false;
         return exports.size() == 1
                 || exports.get(1) instanceof Exportable._Constant<?> && simple(exports.get(1)).equals(simple(leaf) + "Factory");
     }
 
-    private static String simple(Object o) { return o.getClass().getSimpleName(); }
+    private String simple(Object o) { return o.getClass().getSimpleName(); }
 
-    private static String said(List<? extends Exportable<?>> exports) {
-        return exports.isEmpty() ? "nothing" : String.join(", ", exports.stream().map(Implementations::simple).toList());
+    private String said(List<? extends Exportable<?>> exports) {
+        return exports.isEmpty() ? "nothing" : String.join(", ", exports.stream().map(this::simple).toList());
     }
 }

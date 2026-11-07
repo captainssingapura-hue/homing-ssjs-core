@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.tree;
 
+import hue.captains.singapura.tao.ontology.Stateless;
+
 /**
  * Typed identifier for a node dimension — one of the substrate's grouping
  * axes. Sealed: the key vocabulary is the small, closed, universal set of
@@ -36,7 +38,7 @@ package hue.captains.singapura.js.homing.tree;
  *
  * @since homing-tree-views v1
  */
-public sealed interface DimensionKey
+public sealed interface DimensionKey extends Stateless
         permits DisplayLabel, NodeKey {
 
     /** Stable wire tag for JSON serialisation (also the key name in JS). */

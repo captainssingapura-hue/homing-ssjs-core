@@ -1,7 +1,7 @@
 package hue.captains.singapura.js.homing.design.styling;
 
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,15 +23,15 @@ public record ReadCss() implements StatelessFunctionalObject {
     }
 
     /** A rule: its selector as written, trimmed, and what its block holds. */
-    public record Rule(String selector, int line, List<Item> body) implements Item, ValueObject {
+    public record Rule(String selector, int line, List<Item> body) implements Item, Scalar {
         public Rule { body = List.copyOf(body); }
     }
 
     /** A declaration: its property and its value, each trimmed. */
-    public record Declaration(String property, String value, int line) implements Item, ValueObject {}
+    public record Declaration(String property, String value, int line) implements Item, Scalar {}
 
     /** An at-rule: what it says after the {@code @}, and its block - none for a statement. */
-    public record AtRule(String prelude, int line, List<Item> body) implements Item, ValueObject {
+    public record AtRule(String prelude, int line, List<Item> body) implements Item, Scalar {
         public AtRule { body = body == null ? null : List.copyOf(body); }
     }
 
@@ -41,12 +41,12 @@ public record ReadCss() implements StatelessFunctionalObject {
      * @param items    what it holds at the top
      * @param problems what could not be read, each with its line
      */
-    public record Read(List<Item> items, List<String> problems) implements ValueObject {
+    public record Read(List<Item> items, List<String> problems) implements Scalar {
         public Read { items = List.copyOf(items); problems = List.copyOf(problems); }
     }
 
     /** A top-level item of a file, and its text as written: from where it starts to where it ends, no comment before it. */
-    public record Piece(Item item, String text) implements ValueObject {}
+    public record Piece(Item item, String text) implements Scalar {}
 
     /**
      * A file split into its top-level items, each with its text - a family's file into its castings' rules.
@@ -54,10 +54,11 @@ public record ReadCss() implements StatelessFunctionalObject {
      * @param pieces   each top-level item, in the file's order
      * @param problems what could not be read, each with its line
      */
-    public record Split(List<Piece> pieces, List<String> problems) implements ValueObject {
+    public record Split(List<Piece> pieces, List<String> problems) implements Scalar {
         public Split { pieces = List.copyOf(pieces); problems = List.copyOf(problems); }
     }
 
+    /** Reads a file into its items, and says what could not be read. */
     public Read read(String css) {
         var problems = new ArrayList<String>();
         String text = withoutComments(css, problems);
@@ -66,6 +67,7 @@ public record ReadCss() implements StatelessFunctionalObject {
         return new Read(items, problems);
     }
 
+    /** Splits a file into its top-level items, each with its text as written, and says what could not be read. */
     public Split split(String css) {
         var problems = new ArrayList<String>();
         String text = withoutComments(css, problems);
@@ -86,7 +88,7 @@ public record ReadCss() implements StatelessFunctionalObject {
     }
 
     /** Comments blanked, their line breaks kept, so every line is where it was. */
-    private static String withoutComments(String css, List<String> problems) {
+    private String withoutComments(String css, List<String> problems) {
         var out = new StringBuilder(css.length());
         int i = 0;
         char quote = 0;
@@ -118,7 +120,7 @@ public record ReadCss() implements StatelessFunctionalObject {
     }
 
     /** A block's items, up to its closing brace - or the end, at the top. */
-    private static List<Item> block(String text, int[] at, List<String> problems, boolean top) {
+    private List<Item> block(String text, int[] at, List<String> problems, boolean top) {
         var items = new ArrayList<Item>();
         while (true) {
             skipSpace(text, at);
@@ -141,7 +143,7 @@ public record ReadCss() implements StatelessFunctionalObject {
     }
 
     /** The item that starts where it is: a rule or an at-rule with its block, or a statement; none for an empty one at the end. */
-    private static Item item(String text, int[] at, List<String> problems) {
+    private Item item(String text, int[] at, List<String> problems) {
         int start = at[0];
         char ended = chunk(text, at);
         String said = text.substring(start, at[0]).trim();
@@ -162,7 +164,7 @@ public record ReadCss() implements StatelessFunctionalObject {
         }
     }
 
-    private static Item statement(String said, int line, List<String> problems) {
+    private Item statement(String said, int line, List<String> problems) {
         if (said.startsWith("@")) return new AtRule(said.substring(1), line, null);
         int colon = colon(said);
         if (colon < 0) {
@@ -173,7 +175,7 @@ public record ReadCss() implements StatelessFunctionalObject {
     }
 
     /** To the next {@code ;}, {@code {} or {@code }} outside brackets and strings; the one it stopped at, or 0 at the end. */
-    private static char chunk(String text, int[] at) {
+    private char chunk(String text, int[] at) {
         int depth = 0;
         char quote = 0;
         for (; at[0] < text.length(); at[0]++) {
@@ -190,7 +192,7 @@ public record ReadCss() implements StatelessFunctionalObject {
     }
 
     /** The first colon outside brackets and strings. */
-    private static int colon(String said) {
+    private int colon(String said) {
         int depth = 0;
         char quote = 0;
         for (int i = 0; i < said.length(); i++) {
@@ -206,13 +208,18 @@ public record ReadCss() implements StatelessFunctionalObject {
         return -1;
     }
 
-    private static void skipSpace(String text, int[] at) {
+    private void skipSpace(String text, int[] at) {
         while (at[0] < text.length() && Character.isWhitespace(text.charAt(at[0]))) at[0]++;
     }
 
-    private static int line(String text, int index) {
+    private int line(String text, int index) {
         int line = 1;
         for (int i = 0; i < Math.min(index, text.length()); i++) if (text.charAt(i) == '\n') line++;
         return line;
+    }
+
+    /** Spaces gathered to one, and none beside a bracket or a comma; lower case. */
+    public String squeeze(String s) {
+        return s.trim().replaceAll("\\s+", " ").replaceAll(" ?([(),]) ?", "$1").toLowerCase(java.util.Locale.ROOT);
     }
 }

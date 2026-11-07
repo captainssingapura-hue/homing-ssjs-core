@@ -10,5 +10,5 @@ package hue.captains.singapura.js.homing.core;
  * </ul>
  */
 public interface ExternalModule<M extends ExternalModule<M>> extends EsModule<M> {
-    @Override default ImportsFor<M> imports() { return ImportsFor.noImports(); }
+    @Override default ImportsFor<M> imports() { return new ImportsFor<>(); }
 }

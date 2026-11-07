@@ -23,21 +23,21 @@ class CssClassNameTest {
 
     @Test
     void toCssName_multipleUnderscores() {
-        assertEquals("pg-theme-btn", CssClassName.toCssName(TestCss.pg_theme_btn.class));
+        assertEquals("pg-theme-btn", CssClassName.INSTANCE.toCssName(TestCss.pg_theme_btn.class));
     }
 
     @Test
     void toCssName_singleUnderscore() {
-        assertEquals("subway-cell", CssClassName.toCssName(TestCss.subway_cell.class));
+        assertEquals("subway-cell", CssClassName.INSTANCE.toCssName(TestCss.subway_cell.class));
     }
 
     @Test
     void toCssName_noUnderscore() {
-        assertEquals("active", CssClassName.toCssName(TestCss.active.class));
+        assertEquals("active", CssClassName.INSTANCE.toCssName(TestCss.active.class));
     }
 
     @Test
     void toCssName_manyUnderscores() {
-        assertEquals("very-long-class-name", CssClassName.toCssName(TestCss.very_long_class_name.class));
+        assertEquals("very-long-class-name", CssClassName.INSTANCE.toCssName(TestCss.very_long_class_name.class));
     }
 }

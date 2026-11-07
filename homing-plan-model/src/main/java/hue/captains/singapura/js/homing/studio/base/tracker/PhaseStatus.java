@@ -7,7 +7,13 @@ public enum PhaseStatus {
     BLOCKED    ("Blocked",     "blocked"),
     DONE       ("Done",        "done");
 
-    public final String label;
-    public final String slug;
+    private final String label;
+    private final String slug;
     PhaseStatus(String label, String slug) { this.label = label; this.slug = slug; }
+
+    /** Its name, as a reader sees it. */
+    public String label() { return label; }
+
+    /** Its name in a class or an address: the renderer paints its badge by it. */
+    public String slug() { return slug; }
 }

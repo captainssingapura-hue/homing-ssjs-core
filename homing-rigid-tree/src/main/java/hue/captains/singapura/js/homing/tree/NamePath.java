@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.tree;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +29,7 @@ import java.util.Objects;
  * @param segments the chain from the root, root-first; empty is the root itself
  * @since RFC 0053
  */
-public record NamePath(List<NodeName> segments) implements ValueObject {
+public record NamePath(List<NodeName> segments) implements Scalar {
 
     /** The root — an empty chain. Its wire form is the empty string. */
     public static final NamePath ROOT = new NamePath(List.of());
@@ -42,34 +42,9 @@ public record NamePath(List<NodeName> segments) implements ValueObject {
         segments = List.copyOf(segments);
     }
 
-    public static NamePath of(NodeName... segments) {
-        return new NamePath(List.of(segments));
-    }
-
-    /**
-     * Read a name-path from its {@code '/'}-joined wire form. Empty or {@code null}
-     * input is the {@link #ROOT}; a leading or trailing {@code '/'} is tolerated.
-     *
-     * @return the path, or {@code null} if any segment is not a legal
-     *         {@link NodeName} — including an empty one from a doubled separator
-     */
-    public static NamePath parse(String wire) {
-        if (wire == null) return ROOT;
-        String s = wire.trim();
-        while (s.startsWith("/")) s = s.substring(1);
-        while (s.endsWith("/"))   s = s.substring(0, s.length() - 1);
-        if (s.isEmpty()) return ROOT;
-
-        var out = new ArrayList<NodeName>();
-        for (String part : s.split(String.valueOf(NodeName.SEPARATOR))) {
-            if (part.isEmpty()) return null;              // "//" — not a path we mint
-            try {
-                out.add(new NodeName(part));
-            } catch (IllegalArgumentException notASegment) {
-                return null;                              // ".." and friends land here
-            }
-        }
-        return new NamePath(out);
+    /** The path of these segments, root first. */
+    public NamePath(NodeName... segments) {
+        this(List.of(segments));
     }
 
     /** This path with one more segment on the end. */
@@ -97,7 +72,9 @@ public record NamePath(List<NodeName> segments) implements ValueObject {
         return new NamePath(out);
     }
 
+    /** Whether this is the root: no segments. */
     public boolean isEmpty() { return segments.isEmpty(); }
+    /** How many segments it has. */
     public int     depth()   { return segments.size(); }
 
     /** The {@code '/'}-joined wire form; {@code ""} for the root. */

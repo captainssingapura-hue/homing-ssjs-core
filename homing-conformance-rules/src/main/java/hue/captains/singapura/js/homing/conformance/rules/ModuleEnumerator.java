@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.conformance.rules;
 
+import hue.captains.singapura.tao.ontology.FunctionalObject;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -31,14 +33,14 @@ import java.util.stream.Stream;
  *
  * @param packagePrefix only modules whose class name starts with this are kept
  */
-public record ModuleEnumerator(String packagePrefix) {
+public record ModuleEnumerator(String packagePrefix) implements FunctionalObject {
 
     /** Scans for modules under the homing package. */
     public static final ModuleEnumerator HOMING =
             new ModuleEnumerator("hue.captains.singapura.js.homing");
 
-    private static final String JS_ROOT = "homing/js/";
-    private static final String JS_EXT  = ".js";
+    static final String JS_ROOT = "homing/js/";
+    static final String JS_EXT  = ".js";
 
     /** Enumerate the current process classpath into a {@link ModuleRegistry}. */
     public ModuleRegistry fromClasspath() {
@@ -47,7 +49,7 @@ public record ModuleEnumerator(String packagePrefix) {
         for (String entry : cp.split(File.pathSeparator)) {
             if (!entry.isBlank()) scanEntry(Path.of(entry), fqcns::add);
         }
-        return ModuleRegistry.ofClassNames(fqcns);
+        return new ModuleRegistry(fqcns);
     }
 
     /** Scan one classpath entry (a directory or a jar). Package-visible for testing. */
@@ -83,19 +85,7 @@ public record ModuleEnumerator(String packagePrefix) {
     }
 
     private void accept(String resourcePath, Consumer<String> sink) {
-        String fqcn = fqcnFromJsResource(resourcePath);
+        String fqcn = JsResources.INSTANCE.fqcnOf(resourcePath);
         if (fqcn != null && fqcn.startsWith(packagePrefix)) sink.accept(fqcn);
-    }
-
-    /**
-     * Reverse {@code homing/js/a/b/C.js} → {@code a.b.C}; {@code null} if the
-     * path is not a JS-module resource.
-     */
-    static String fqcnFromJsResource(String resourcePath) {
-        String p = resourcePath.replace('\\', '/');
-        if (!p.startsWith(JS_ROOT) || !p.endsWith(JS_EXT)) return null;
-        String mid = p.substring(JS_ROOT.length(), p.length() - JS_EXT.length());
-        if (mid.isBlank()) return null;
-        return mid.replace('/', '.');
     }
 }

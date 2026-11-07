@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.design.styling;
 
 import hue.captains.singapura.js.homing.core.util.ResourceReader;
 
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -17,25 +18,29 @@ import java.util.stream.Stream;
  *
  * <pre>WriteStyleFamilies &lt;the build's classes&gt; &lt;the instance's class: a static INSTANCE, a StylingInstance&gt;</pre>
  */
-public final class WriteStyleFamilies {
+public record WriteStyleFamilies() implements StatelessFunctionalObject {
 
-    private WriteStyleFamilies() {}
+    public static final WriteStyleFamilies INSTANCE = new WriteStyleFamilies();
 
+    /**
+     * Writes the family files of the instance named by {@code args[1]} into the classes folder {@code args[0]}; refuses
+     * any other number of arguments.
+     */
     public static void main(String[] args) throws Exception {
         if (args.length != 2) throw new IllegalArgumentException("usage: WriteStyleFamilies <the build's classes> <the instance's class>");
         Object instance = Class.forName(args[1]).getField("INSTANCE").get(null);
         if (!(instance instanceof StylingInstance s)) throw new IllegalArgumentException(args[1] + ".INSTANCE is no StylingInstance");
-        Map<String, String> files = write(Path.of(args[0]), s.styling());
+        Map<String, String> files = INSTANCE.write(Path.of(args[0]), s.styling());
         System.out.println("[WriteStyleFamilies] " + files.size() + " files under " + Path.of(args[0]).resolve(StyleFamilies.ROOT));
     }
 
     /** The styling's files, written under the classes' {@link StyleFamilies#ROOT}, cleared first; what was written. */
-    public static Map<String, String> write(Path classes, Styling styling) throws IOException {
+    public Map<String, String> write(Path classes, Styling styling) throws IOException {
         Path root = classes.resolve(StyleFamilies.ROOT);
         if (Files.exists(root)) try (Stream<Path> old = Files.walk(root)) {
             for (Path p : old.sorted(Comparator.reverseOrder()).toList()) Files.delete(p);
         }
-        Map<String, String> files = new StyleFamilies(styling, ResourceReader.INSTANCE,
+        Map<String, String> files = new StyleFamilies(styling, ResourceReader.CLASSPATH,
                 WriteStyleFamilies.class.getClassLoader()).files();
         for (var e : files.entrySet()) {
             Path file = classes.resolve(e.getKey());

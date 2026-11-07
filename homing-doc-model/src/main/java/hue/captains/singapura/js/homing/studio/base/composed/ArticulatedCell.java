@@ -35,13 +35,8 @@ public record ArticulatedCell(int row, int col, Articulation articulation) {
         Objects.requireNonNull(articulation, "ArticulatedCell.articulation");
     }
 
-    /** Articulate the body cell at {@code (row, col)}. */
-    public static ArticulatedCell at(int row, int col, Articulation articulation) {
-        return new ArticulatedCell(row, col, articulation);
-    }
-
     /** Articulate the header cell of column {@code col}. */
-    public static ArticulatedCell header(int col, Articulation articulation) {
-        return new ArticulatedCell(HEADER, col, articulation);
+    public ArticulatedCell(int col, Articulation articulation) {
+        this(HEADER, col, articulation);
     }
 }

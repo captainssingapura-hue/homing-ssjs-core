@@ -7,7 +7,7 @@ package hue.captains.singapura.js.homing.core;
  * Decision 1: mechanical facts are fixed + inferred; domain classification is
  * carried separately as extensible metadata).
  *
- * <p>The ladder in {@link #of(EsModule)} mirrors the {@code instanceof} order
+ * <p>The ladder in {@link ModuleForms#of(EsModule)} mirrors the {@code instanceof} order
  * the serving path ({@code EsModuleGetAction}) already uses to pick a content
  * provider — the single source of truth for "what kind of module is this,
  * mechanically." {@code ManagerInjector} is deliberately absent: it is a
@@ -23,21 +23,8 @@ public enum ModuleForm {
     CSS_GROUP,
     /** Java-emitted derived sheet (no {@code .js} resource): rendered for each theme. */
     DERIVED_CSS,
-    /** Java-emitted module content via {@link SelfContent} (no {@code .js} resource). */
+    /** Java-emitted module content via {@link SelfContent}, or a design's via {@link MadeByDesign} (no {@code .js} resource). */
     SELF_CONTENT,
     /** Content read from a {@code homing/js/<fqcn>.js} classpath resource. */
-    RESOURCE_BACKED;
-
-    /**
-     * Infer the form from the module's type, in the same priority order the
-     * serving path resolves its content provider.
-     */
-    public static ModuleForm of(EsModule<?> module) {
-        if (module instanceof BundledExternalModule<?>) return BUNDLED_EXTERNAL;
-        if (module instanceof SvgGroup<?>)              return SVG_GROUP;
-        if (module instanceof CssGroup<?>)              return CSS_GROUP;
-        if (module instanceof DerivedCss<?>)            return DERIVED_CSS;
-        if (module instanceof SelfContent)              return SELF_CONTENT;
-        return RESOURCE_BACKED;
-    }
+    RESOURCE_BACKED
 }

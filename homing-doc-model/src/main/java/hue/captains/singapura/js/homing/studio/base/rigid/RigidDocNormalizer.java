@@ -6,10 +6,12 @@ import hue.captains.singapura.js.homing.studio.base.composed.DocTree;
 import hue.captains.singapura.js.homing.tree.DimensionKey;
 import hue.captains.singapura.js.homing.tree.DimensionValue;
 import hue.captains.singapura.js.homing.tree.DisplayLabel;
+import hue.captains.singapura.js.homing.tree.NodeNames;
 import hue.captains.singapura.js.homing.tree.NormalizedNode;
 import hue.captains.singapura.js.homing.studio.base.DocNodeIdentity;
 import hue.captains.singapura.js.homing.tree.TreeLevel;
 import hue.captains.singapura.js.homing.tree.dims.NameValue;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -34,7 +36,7 @@ import java.util.UUID;
  *
  * @since homing-studio-base — RFC 0042 leveled tree-builder
  */
-public final class RigidDocNormalizer {
+public final class RigidDocNormalizer implements StatelessFunctionalObject {
 
     public static final RigidDocNormalizer INSTANCE = new RigidDocNormalizer();
 
@@ -67,17 +69,17 @@ public final class RigidDocNormalizer {
                 kids.add(build(doc, children.get(i), childLevel, append(path, i), providers));
             }
         }
-        return new NormalizedNode(level, DocNodeIdentity.indexSegment(path), DocNodeIdentity.byIndex(doc, path), labelDims(node.title().text()), kids);
+        return new NormalizedNode(level, NodeNames.INSTANCE.indexSegment(path), new DocNodeIdentity(doc, path), labelDims(node.title().text()), kids);
     }
 
-    private static List<Integer> append(List<Integer> prefix, int idx) {
+    private List<Integer> append(List<Integer> prefix, int idx) {
         var out = new ArrayList<Integer>(prefix.size() + 1);
         out.addAll(prefix);
         out.add(idx);
         return List.copyOf(out);
     }
 
-    private static Map<DimensionKey, DimensionValue> labelDims(String label) {
+    private Map<DimensionKey, DimensionValue> labelDims(String label) {
         return Map.of(DisplayLabel.INSTANCE, new NameValue(label == null ? "" : label));
     }
 }

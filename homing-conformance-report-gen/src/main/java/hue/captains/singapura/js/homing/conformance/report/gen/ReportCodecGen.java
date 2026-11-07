@@ -23,6 +23,10 @@ public final class ReportCodecGen {
 
     private ReportCodecGen() {}
 
+    /**
+     * Generates each codec of the manifest into the source folder {@code args[0]}; refuses any other number of
+     * arguments.
+     */
     public static void main(String[] args) throws IOException {
         if (args.length != 1) {
             throw new IllegalArgumentException("Usage: ReportCodecGen <output-source-directory>");
@@ -30,13 +34,13 @@ public final class ReportCodecGen {
         Path pkgDir = Paths.get(args[0]).resolve(JavaFunctionsCodeGen.CODEC_PACKAGE.replace('.', '/'));
         Files.createDirectories(pkgDir);
 
-        for (ObjectDefinition<?> def : ReportCodecManifest.ENTRIES) {
+        for (ObjectDefinition<?> def : ReportCodecManifest.INSTANCE.entries()) {
             String source = JavaFunctionsCodeGen.INSTANCE.generate(def);
             Path file = pkgDir.resolve(def.type().getSimpleName() + "Codec.java");
             Files.writeString(file, source, StandardCharsets.UTF_8);
         }
 
-        System.out.println("[ReportCodecGen] wrote " + ReportCodecManifest.ENTRIES.size()
+        System.out.println("[ReportCodecGen] wrote " + ReportCodecManifest.INSTANCE.entries().size()
                 + " codec(s) to " + pkgDir);
     }
 }

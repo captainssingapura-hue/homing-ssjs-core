@@ -94,7 +94,7 @@ class KeyboardEventsTest extends JsModuleTestBase {
     @Test
     void theMarkerIsHeldLentOrAway_onBothSides() {
         assertEquals("a|lent", eval("var m = KeyboardEvents.Marked('a', 'lent'); [m.id, m.state].join('|')").asString());
-        assertEquals(KeyboardEvent.Marked.STATES.toString(), eval("'[' + KeyboardEvents.STATES.join(', ') + ']'").asString());
+        assertEquals(KeyboardEvent.Marked.States.INSTANCE.all().toString(), eval("'[' + KeyboardEvents.STATES.join(', ') + ']'").asString());
         for (String bad : List.of("KeyboardEvents.Marked('a', 'focused')", "KeyboardEvents.Marked('a')", "KeyboardEvents.Marked('', 'held')")) {
             var ex = assertThrows(PolyglotException.class, () -> eval(bad), bad);
             assertTrue(ex.getMessage().startsWith("Error: [KeyboardEvents] "), bad + " -> " + ex.getMessage());

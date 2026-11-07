@@ -67,7 +67,7 @@ record ResolveDrawing() implements StatelessFunctionalObject {
     }
 
     /** A painted drawing's bodies, its colours as the style writes them; along a scale only on a leaf with the COLOUR axis. */
-    private static Map<State, String> painted(Taxonomy taxonomy, VirtualComponent<?> leaf, Drawing.Painted<?> painted, InStyle style, String who) {
+    private Map<State, String> painted(Taxonomy taxonomy, VirtualComponent<?> leaf, Drawing.Painted<?> painted, InStyle style, String who) {
         var bodies = new EnumMap<State, String>(State.class);
         painted.answer().paints().forEach((state, paint) -> {
             if (paint instanceof Paint.Along<?, ?> a && !taxonomy.extents(leaf).contains(ExtentAxis.COLOUR))
@@ -79,13 +79,13 @@ record ResolveDrawing() implements StatelessFunctionalObject {
     }
 
     /** {@code ClassicCursorBorder (minesweeper-classic)}. */
-    static String name(ConcreteComponent<?, ?, ?> c) {
+    String name(ConcreteComponent<?, ?, ?> c) {
         String localStyle;
         try { localStyle = c.localStyle().token(); } catch (RuntimeException e) { localStyle = "?"; }
         return c.getClass().getSimpleName() + " (" + localStyle + ")";
     }
 
-    private static String names(List<ConcreteComponent<?, ?, ?>> path) {
-        return String.join(" -> ", path.stream().map(ResolveDrawing::name).toList());
+    private String names(List<ConcreteComponent<?, ?, ?>> path) {
+        return String.join(" -> ", path.stream().map(this::name).toList());
     }
 }

@@ -62,7 +62,7 @@ public non-sealed interface ProxyApp<P extends AppModule._Param, M extends Proxy
      */
     @Override
     default String simpleName() {
-        return Linkable.defaultSimpleName(this.getClass());
+        return SimpleNames.INSTANCE.of(this.getClass());
     }
 
     /**

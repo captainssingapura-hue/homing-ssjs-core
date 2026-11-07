@@ -4,6 +4,10 @@ import java.util.stream.Collectors;
 
 public record SingleModuleImportWriter<M extends EsModule<M>>(M module, ModuleNameResolver resolver) {
 
+    /**
+     * The import statement for {@code imports}, with aliases applied and app links left out; empty when nothing is left
+     * to import.
+     */
     public String writeImports(ModuleImports<M> imports) {
         // RFC 0001 Step 11 fix: AppLink<?> entries are pure Java metadata for
         // nav generation — they don't correspond to JS-side exports. Multiple

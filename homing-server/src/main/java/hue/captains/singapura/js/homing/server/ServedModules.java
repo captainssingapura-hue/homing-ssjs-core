@@ -1,13 +1,10 @@
 package hue.captains.singapura.js.homing.server;
 
 import hue.captains.singapura.js.homing.core.Crate;
-import hue.captains.singapura.js.homing.core.CrateEntry;
 import hue.captains.singapura.js.homing.core.EsModule;
+import hue.captains.singapura.tao.ontology.Immutable;
 
-import java.util.ArrayDeque;
 import java.util.Collection;
-import java.util.Deque;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -24,29 +21,25 @@ import java.util.Optional;
  * path and every CSS subgraph, so the two sides of the wire agree by
  * construction.</p>
  */
-public record ServedModules(Map<String, EsModule<?>> byName) {
+public record ServedModules(Map<String, EsModule<?>> byName) implements Immutable {
 
     public ServedModules { byName = Map.copyOf(byName); }
 
     /** Serves nothing by name. {@code render(module)} still works on an instance. */
     public static final ServedModules NONE = new ServedModules(Map.of());
 
-    public static ServedModules of(Collection<? extends Crate> roots) {
-        var byName = new LinkedHashMap<String, EsModule<?>>();
-        var seen = new LinkedHashMap<String, Crate>();
-        Deque<Crate> queue = new ArrayDeque<>(roots);
-        while (!queue.isEmpty()) {
-            Crate c = queue.removeFirst();
-            if (seen.putIfAbsent(c.name(), c) != null) continue;
-            for (CrateEntry e : c.entries()) byName.putIfAbsent(e.module().getClass().getCanonicalName(), e.module());
-            queue.addAll(c.requires());
-        }
-        return new ServedModules(byName);
+    /**
+     * The modules of {@code roots} and of every crate they require, by canonical name; the first declared keeps a name.
+     */
+    public ServedModules(Collection<? extends Crate> roots) {
+        this(CrateModules.INSTANCE.byName(roots));
     }
 
+    /** The module of this canonical name, if a crate declared it. */
     public Optional<EsModule<?>> find(String canonicalName) {
         return Optional.ofNullable(byName.get(canonicalName));
     }
 
+    /** How many modules are served. */
     public int size() { return byName.size(); }
 }

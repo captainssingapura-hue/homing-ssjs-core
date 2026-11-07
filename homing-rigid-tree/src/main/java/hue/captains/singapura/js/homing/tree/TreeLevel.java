@@ -1,5 +1,7 @@
 package hue.captains.singapura.js.homing.tree;
 
+import hue.captains.singapura.tao.ontology.Stateless;
+
 import java.util.Optional;
 
 /**
@@ -11,7 +13,7 @@ import java.util.Optional;
  *
  * <p>RFC 0040: the ladder runs {@code L0..L18} — capped at 18, following
  * DomOpsParty, as a deliberate rigid bound. The cap is load-bearing: a
- * {@link #shifted(int)} or {@link #atDepth(int)} that would fall outside
+ * {@link #shifted(int)} or {@link TreeLevels#atDepth(int)} that would fall outside
  * {@code 0..18} is a hard error (Make It Impossible, not a silent clamp).
  * A tree may start at any level; grafting a sub-tree re-levels it by a pure
  * shift over this sealed set.</p>
@@ -22,7 +24,7 @@ import java.util.Optional;
  *
  * @since homing-tree-views v1; capped at L18 in homing-rigid-tree (RFC 0040)
  */
-public sealed interface TreeLevel
+public sealed interface TreeLevel extends Stateless
         permits TreeLevel.L0, TreeLevel.L1, TreeLevel.L2,  TreeLevel.L3,
                 TreeLevel.L4, TreeLevel.L5, TreeLevel.L6,  TreeLevel.L7,
                 TreeLevel.L8, TreeLevel.L9, TreeLevel.L10, TreeLevel.L11,
@@ -40,12 +42,12 @@ public sealed interface TreeLevel
 
     /** The level immediately below this one, or empty at the {@code L18} cap. */
     default Optional<TreeLevel> below() {
-        return depth() < MAX_DEPTH ? Optional.of(atDepth(depth() + 1)) : Optional.empty();
+        return depth() < MAX_DEPTH ? Optional.of(TreeLevels.INSTANCE.atDepth(depth() + 1)) : Optional.empty();
     }
 
     /** The level immediately above this one, or empty at the {@code L0} root. */
     default Optional<TreeLevel> above() {
-        return depth() > 0 ? Optional.of(atDepth(depth() - 1)) : Optional.empty();
+        return depth() > 0 ? Optional.of(TreeLevels.INSTANCE.atDepth(depth() - 1)) : Optional.empty();
     }
 
     /**
@@ -54,26 +56,7 @@ public sealed interface TreeLevel
      * a shift past the cap is a hard error (the rigid bound).
      */
     default TreeLevel shifted(int by) {
-        return atDepth(depth() + by);
-    }
-
-    /**
-     * The level singleton at the given depth. {@code d} must be in
-     * {@code 0..18}; anything else throws (the rigid cap is not silently
-     * clamped). This is the single place depth maps to a typed level.
-     */
-    static TreeLevel atDepth(int d) {
-        return switch (d) {
-            case 0  -> L0.INSTANCE;   case 1  -> L1.INSTANCE;   case 2  -> L2.INSTANCE;
-            case 3  -> L3.INSTANCE;   case 4  -> L4.INSTANCE;   case 5  -> L5.INSTANCE;
-            case 6  -> L6.INSTANCE;   case 7  -> L7.INSTANCE;   case 8  -> L8.INSTANCE;
-            case 9  -> L9.INSTANCE;   case 10 -> L10.INSTANCE;  case 11 -> L11.INSTANCE;
-            case 12 -> L12.INSTANCE;  case 13 -> L13.INSTANCE;  case 14 -> L14.INSTANCE;
-            case 15 -> L15.INSTANCE;  case 16 -> L16.INSTANCE;  case 17 -> L17.INSTANCE;
-            case 18 -> L18.INSTANCE;
-            default -> throw new IllegalArgumentException(
-                    "TreeLevel depth " + d + " is outside the rigid range 0.." + MAX_DEPTH);
-        };
+        return TreeLevels.INSTANCE.atDepth(depth() + by);
     }
 
     record L0()  implements TreeLevel { public static final L0  INSTANCE = new L0();  @Override public int depth() { return 0; }  @Override public String tag() { return "L0"; } }

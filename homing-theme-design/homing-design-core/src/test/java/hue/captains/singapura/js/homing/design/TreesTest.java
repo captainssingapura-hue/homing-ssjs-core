@@ -14,12 +14,12 @@ class TreesTest {
 
     @Test
     void everyBranchPartitionsItsProperties() {
-        assertEquals(List.of(), Trees.propertyCollisions());
+        assertEquals(List.of(), Trees.INSTANCE.propertyCollisions());
     }
 
     @Test
     void everyLeafHasAnInstance_andRestAmongItsStates_andNoCrossLeafShorthand() {
-        List<Target> leaves = Target.leaves();
+        List<Target> leaves = Trees.INSTANCE.targetLeaves();
         assertEquals(36, leaves.size(), "the tree's leaves");
         var tokens = new HashSet<String>();
         for (Target t : leaves) {
@@ -57,8 +57,8 @@ class TreesTest {
 
     @Test
     void aTargetIsALeafOfTheSealedTree() {
-        assertThrows(IllegalArgumentException.class, () -> Trees.requireTargetLeaf(Target.Color.class));
-        Trees.requireTargetLeaf(Target.Color.Text.class);
-        assertEquals("on-danger", Trees.kebab("OnDanger"));
+        assertThrows(IllegalArgumentException.class, () -> Trees.INSTANCE.requireTargetLeaf(Target.Color.class));
+        Trees.INSTANCE.requireTargetLeaf(Target.Color.Text.class);
+        assertEquals("on-danger", Trees.INSTANCE.kebab("OnDanger"));
     }
 }

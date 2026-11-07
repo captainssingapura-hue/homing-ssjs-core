@@ -1,5 +1,6 @@
 package hue.captains.singapura.js.homing.studio.base.composed.text;
 
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,12 +48,12 @@ import java.util.List;
  *
  * @since RFC 0018 Phase 4
  */
-public final class TextParser {
+public record TextParser() implements StatelessFunctionalObject {
 
-    private TextParser() {}
+    public static final TextParser INSTANCE = new TextParser();
 
     /** Parse the body. Throws {@link ParseException} on any malformed input. */
-    public static List<Block> parse(String body) {
+    public List<Block> parse(String body) {
         if (body == null) throw new ParseException(1, 1, "body is null");
         // Normalize line endings; strip leading/trailing blank lines but keep blanks within.
         String norm = body.replace("\r\n", "\n").replace('\r', '\n');
@@ -93,7 +94,7 @@ public final class TextParser {
     // [i] cursor (passed as a single-element array for in/out semantics).
     // -----------------------------------------------------------------------
 
-    private static Block parsePara(String[] lines, int[] cursor) {
+    private Block parsePara(String[] lines, int[] cursor) {
         int i = cursor[0];
         var buf = new StringBuilder();
         while (i < lines.length && !lines[i].isBlank()
@@ -108,7 +109,7 @@ public final class TextParser {
         return new Block.Para(parseInlines(buf.toString(), startLineNumberOf(cursor[0], i)));
     }
 
-    private static Block parseBullets(String[] lines, int[] cursor) {
+    private Block parseBullets(String[] lines, int[] cursor) {
         int i = cursor[0];
         var items = new ArrayList<List<Inline>>();
         while (i < lines.length && lines[i].startsWith("- ")) {
@@ -120,7 +121,7 @@ public final class TextParser {
         return new Block.Bullets(items);
     }
 
-    private static Block parseNumbered(String[] lines, int[] cursor) {
+    private Block parseNumbered(String[] lines, int[] cursor) {
         int i = cursor[0];
         var items = new ArrayList<List<Inline>>();
         while (i < lines.length && matchesOrderedStart(lines[i])) {
@@ -134,7 +135,7 @@ public final class TextParser {
         return new Block.Numbered(items);
     }
 
-    private static Block parseQuote(String[] lines, int[] cursor) {
+    private Block parseQuote(String[] lines, int[] cursor) {
         int i = cursor[0];
         var buf = new StringBuilder();
         while (i < lines.length && (lines[i].startsWith("> ") || lines[i].equals(">"))) {
@@ -151,118 +152,129 @@ public final class TextParser {
     // Inline tokenizer — single-pass; bold/italic/code/ref/text.
     // -----------------------------------------------------------------------
 
-    private static List<Inline> parseInlines(String s, int lineNumber) {
+    private List<Inline> parseInlines(String s, int lineNumber) {
         return parseInlinesImpl(s, lineNumber, true /* allow bold/italic */);
     }
 
     /** Inner — when {@code allowEmph} is false, {@code *} and {@code **}
      *  are taken as literal characters (used inside a bold/italic span to
      *  forbid nesting). */
-    private static List<Inline> parseInlinesImpl(String s, int lineNumber, boolean allowEmph) {
+    private List<Inline> parseInlinesImpl(String s, int lineNumber, boolean allowEmph) {
         var out = new ArrayList<Inline>();
         var text = new StringBuilder();
         int i = 0;
         while (i < s.length()) {
-            char c = s.charAt(i);
-            // ---- bold ----
-            if (c == '*' && i + 1 < s.length() && s.charAt(i + 1) == '*') {
-                if (!allowEmph) {
-                    throw new ParseException(lineNumber, i + 1,
-                            "'**' (bold) cannot nest inside bold or italic — "
-                                    + "the grammar forbids emphasis nesting to keep the '***' "
-                                    + "ambiguity from surfacing");
-                }
-                int end = s.indexOf("**", i + 2);
-                if (end < 0) {
-                    throw new ParseException(lineNumber, i + 1,
-                            "unclosed bold marker '**' starting here");
-                }
-                flushText(out, text);
-                String inner = s.substring(i + 2, end);
-                out.add(new Inline.Bold(parseInlinesImpl(inner, lineNumber, false)));
-                i = end + 2;
+            Span span = spanAt(s, i, lineNumber, allowEmph);
+            if (span == null) {
+                // ---- literal text ----
+                text.append(s.charAt(i));
+                i++;
                 continue;
             }
-            // ---- italic ----
-            if (c == '*') {
-                if (!allowEmph) {
-                    throw new ParseException(lineNumber, i + 1,
-                            "'*' (italic) cannot nest inside bold or italic — "
-                                    + "the grammar forbids emphasis nesting");
-                }
-                int end = s.indexOf('*', i + 1);
-                if (end < 0) {
-                    throw new ParseException(lineNumber, i + 1,
-                            "unclosed italic marker '*' starting here");
-                }
-                flushText(out, text);
-                String inner = s.substring(i + 1, end);
-                out.add(new Inline.Italic(parseInlinesImpl(inner, lineNumber, false)));
-                i = end + 1;
-                continue;
-            }
-            // ---- inline code ----
-            if (c == '`') {
-                int end = s.indexOf('`', i + 1);
-                if (end < 0) {
-                    throw new ParseException(lineNumber, i + 1,
-                            "unclosed inline-code marker '`' starting here");
-                }
-                if (end == i + 1) {
-                    throw new ParseException(lineNumber, i + 1,
-                            "empty inline-code span '``' is not permitted — "
-                                    + "and triple-backtick code fences are not part of the "
-                                    + "grammar; promote code blocks to a future CodeSegment kind");
-                }
-                flushText(out, text);
-                out.add(new Inline.Code(s.substring(i + 1, end)));
-                i = end + 1;
-                continue;
-            }
-            // ---- reference link ----
-            if (c == '[') {
-                int closeBr = s.indexOf(']', i + 1);
-                if (closeBr < 0 || closeBr + 1 >= s.length() || s.charAt(closeBr + 1) != '(') {
-                    throw new ParseException(lineNumber, i + 1,
-                            "malformed reference link — expected '[label](#ref:name)'");
-                }
-                int closePa = s.indexOf(')', closeBr + 2);
-                if (closePa < 0) {
-                    throw new ParseException(lineNumber, i + 1,
-                            "unclosed reference link target — expected ')'");
-                }
-                String label  = s.substring(i + 1, closeBr);
-                String target = s.substring(closeBr + 2, closePa);
-                if (!target.startsWith("#ref:")) {
-                    throw new ParseException(lineNumber, closeBr + 3,
-                            "reference link target must start with '#ref:'; got '" + target + "'");
-                }
-                String anchor = target.substring("#ref:".length());
-                if (anchor.isBlank()) {
-                    throw new ParseException(lineNumber, closeBr + 3,
-                            "reference link target '#ref:' has empty name");
-                }
-                flushText(out, text);
-                out.add(new Inline.Ref(label, anchor));
-                i = closePa + 1;
-                continue;
-            }
-            // ---- literal text ----
-            text.append(c);
-            i++;
+            flushText(out, text);
+            out.add(span.inline());
+            i = span.end();
         }
         flushText(out, text);
         return out;
     }
 
-    private static void flushText(List<Inline> out, StringBuilder text) {
+    /** An inline, and the index just past it. */
+    private record Span(Inline inline, int end) {}
+
+    /** The span that opens at {@code i}, or null where the text there is literal. */
+    private Span spanAt(String s, int i, int lineNumber, boolean allowEmph) {
+        char c = s.charAt(i);
+        if (c == '*' && i + 1 < s.length() && s.charAt(i + 1) == '*') return boldAt(s, i, lineNumber, allowEmph);
+        if (c == '*') return italicAt(s, i, lineNumber, allowEmph);
+        if (c == '`') return codeAt(s, i, lineNumber);
+        if (c == '[') return referenceAt(s, i, lineNumber);
+        return null;
+    }
+
+    /** ---- bold ---- */
+    private Span boldAt(String s, int i, int lineNumber, boolean allowEmph) {
+        if (!allowEmph) {
+            throw new ParseException(lineNumber, i + 1,
+                    "'**' (bold) cannot nest inside bold or italic — "
+                            + "the grammar forbids emphasis nesting to keep the '***' "
+                            + "ambiguity from surfacing");
+        }
+        int end = s.indexOf("**", i + 2);
+        if (end < 0) {
+            throw new ParseException(lineNumber, i + 1,
+                    "unclosed bold marker '**' starting here");
+        }
+        String inner = s.substring(i + 2, end);
+        return new Span(new Inline.Bold(parseInlinesImpl(inner, lineNumber, false)), end + 2);
+    }
+
+    /** ---- italic ---- */
+    private Span italicAt(String s, int i, int lineNumber, boolean allowEmph) {
+        if (!allowEmph) {
+            throw new ParseException(lineNumber, i + 1,
+                    "'*' (italic) cannot nest inside bold or italic — "
+                            + "the grammar forbids emphasis nesting");
+        }
+        int end = s.indexOf('*', i + 1);
+        if (end < 0) {
+            throw new ParseException(lineNumber, i + 1,
+                    "unclosed italic marker '*' starting here");
+        }
+        String inner = s.substring(i + 1, end);
+        return new Span(new Inline.Italic(parseInlinesImpl(inner, lineNumber, false)), end + 1);
+    }
+
+    /** ---- inline code ---- */
+    private Span codeAt(String s, int i, int lineNumber) {
+        int end = s.indexOf('`', i + 1);
+        if (end < 0) {
+            throw new ParseException(lineNumber, i + 1,
+                    "unclosed inline-code marker '`' starting here");
+        }
+        if (end == i + 1) {
+            throw new ParseException(lineNumber, i + 1,
+                    "empty inline-code span '``' is not permitted — "
+                            + "and triple-backtick code fences are not part of the "
+                            + "grammar; promote code blocks to a future CodeSegment kind");
+        }
+        return new Span(new Inline.Code(s.substring(i + 1, end)), end + 1);
+    }
+
+    /** ---- reference link ---- */
+    private Span referenceAt(String s, int i, int lineNumber) {
+        int closeBr = s.indexOf(']', i + 1);
+        if (closeBr < 0 || closeBr + 1 >= s.length() || s.charAt(closeBr + 1) != '(') {
+            throw new ParseException(lineNumber, i + 1,
+                    "malformed reference link — expected '[label](#ref:name)'");
+        }
+        int closePa = s.indexOf(')', closeBr + 2);
+        if (closePa < 0) {
+            throw new ParseException(lineNumber, i + 1,
+                    "unclosed reference link target — expected ')'");
+        }
+        String label  = s.substring(i + 1, closeBr);
+        String target = s.substring(closeBr + 2, closePa);
+        if (!target.startsWith("#ref:")) {
+            throw new ParseException(lineNumber, closeBr + 3,
+                    "reference link target must start with '#ref:'; got '" + target + "'");
+        }
+        String anchor = target.substring("#ref:".length());
+        if (anchor.isBlank()) {
+            throw new ParseException(lineNumber, closeBr + 3,
+                    "reference link target '#ref:' has empty name");
+        }
+        return new Span(new Inline.Ref(label, anchor), closePa + 1);
+    }
+
+    private void flushText(List<Inline> out, StringBuilder text) {
         if (text.length() > 0) {
             out.add(new Inline.Text(text.toString()));
             text.setLength(0);
         }
     }
 
-    private static boolean matchesOrderedStart(String line) {
+    private boolean matchesOrderedStart(String line) {
         // Accept any-digit-count followed by ". ".
         int j = 0;
         while (j < line.length() && Character.isDigit(line.charAt(j))) j++;
@@ -270,7 +282,7 @@ public final class TextParser {
                 && line.charAt(j) == '.' && line.charAt(j + 1) == ' ';
     }
 
-    private static int startLineNumberOf(int oldCursor, int newCursor) {
+    private int startLineNumberOf(int oldCursor, int newCursor) {
         return oldCursor + 1; // 1-based for error messages
     }
 
@@ -280,13 +292,19 @@ public final class TextParser {
     // -----------------------------------------------------------------------
 
     public static final class ParseException extends RuntimeException {
-        public final int line;
-        public final int column;
+        private final int line;
+        private final int column;
 
         public ParseException(int line, int column, String message) {
             super("TextSegment parse error at line " + line + ", col " + column + ": " + message);
             this.line = line;
             this.column = column;
         }
+
+        /** The line the error is on. */
+        public int line() { return line; }
+
+        /** The column the error is at. */
+        public int column() { return column; }
     }
 }

@@ -13,5 +13,6 @@ public record Brand(String label, String home) {
         if (home == null || home.isBlank()) home = "/";
     }
 
-    public static Brand of(String label) { return new Brand(label, "/"); }
+    /** A brand with this label, linking to {@code /}. */
+    public Brand(String label) { this(label, "/"); }
 }

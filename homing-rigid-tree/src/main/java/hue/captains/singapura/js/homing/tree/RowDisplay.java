@@ -1,6 +1,6 @@
 package hue.captains.singapura.js.homing.tree;
 
-import hue.captains.singapura.tao.ontology.ValueObject;
+import hue.captains.singapura.tao.ontology.Scalar;
 
 import java.util.Objects;
 
@@ -37,7 +37,7 @@ import java.util.Objects;
  * @since RFC 0053
  */
 public record RowDisplay(String label, String badge, String note, String kind)
-        implements ValueObject {
+        implements Scalar {
 
     public RowDisplay {
         Objects.requireNonNull(label, "RowDisplay.label");
@@ -47,7 +47,7 @@ public record RowDisplay(String label, String badge, String note, String kind)
     }
 
     /** A row that only has something to say about itself. */
-    public static RowDisplay of(String label) {
-        return new RowDisplay(label, "", "", "");
+    public RowDisplay(String label) {
+        this(label, "", "", "");
     }
 }

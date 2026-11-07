@@ -53,7 +53,7 @@ class ResourceReaderTest {
         String prev = System.getProperty("homing.devRoot");
         try {
             System.clearProperty("homing.devRoot");
-            var reader = ResourceReader.fromSystemProperty();
+            var reader = ResourceReaders.INSTANCE.fromSystemProperty();
             assertEquals(java.util.List.of(), reader.sourceRoots());
             assertFalse(reader.dev());
         } finally {
@@ -70,7 +70,7 @@ class ResourceReaderTest {
         String prev = System.getProperty("homing.devRoot");
         try {
             System.setProperty("homing.devRoot", one + java.io.File.pathSeparator + " " + two + java.io.File.pathSeparator);
-            var reader = ResourceReader.fromSystemProperty();
+            var reader = ResourceReaders.INSTANCE.fromSystemProperty();
             assertEquals(java.util.List.of(one, two), reader.sourceRoots(), "each root, trimmed, none empty");
             assertTrue(reader.dev());
             assertEquals("from-two", reader.getStringsFromResource("only-two.txt").getFirst());

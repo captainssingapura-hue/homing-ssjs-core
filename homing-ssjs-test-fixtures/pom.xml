@@ -51,6 +51,14 @@
     </properties>
 
     <dependencies>
+        <!-- The base classes say they are Mutable, so a test built on
+             them needs the marker on its compile classpath too. -->
+        <dependency>
+            <groupId>io.github.captainssingapura-hue.lang.ontology</groupId>
+            <artifactId>core</artifactId>
+            <version>0.1.0</version>
+        </dependency>
+
         <!-- JUnit Jupiter at compile scope: the base classes implement
              lifecycle hooks (@AfterEach) and assertion calls, so consumers
              need the API on their compile classpath. They'll already have

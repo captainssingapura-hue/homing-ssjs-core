@@ -24,7 +24,7 @@ public record FictionCatalogue() implements L1_Catalogue<LibraryCatalogue, Ficti
     @Override
     public List<Leaf<FictionCatalogue>> leaves() {
         return List.of(
-                Leaf.of(this, MIDDLEMARCH.title(), MIDDLEMARCH.author() + ", " + MIDDLEMARCH.year(), MIDDLEMARCH).badge("BOOK"),
-                Leaf.of(this, SOLARIS.title(),     SOLARIS.author()     + ", " + SOLARIS.year(),     SOLARIS).badge("BOOK"));
+                new Leaf<>(this, MIDDLEMARCH.title(), MIDDLEMARCH.author() + ", " + MIDDLEMARCH.year(), MIDDLEMARCH).badge("BOOK"),
+                new Leaf<>(this, SOLARIS.title(),     SOLARIS.author()     + ", " + SOLARIS.year(),     SOLARIS).badge("BOOK"));
     }
 }

@@ -41,12 +41,12 @@ public final class ConformanceReportSource {
     /** One module's full result by class id, or empty if it was not exported. */
     public Optional<ModuleResult> module(String moduleClass) {
         Path file = dir.resolve(ConformanceReportFiles.MODULES_DIR)
-                .resolve(ConformanceReportFiles.moduleFile(moduleClass));
+                .resolve(ConformanceReportFiles.INSTANCE.moduleFile(moduleClass));
         if (!Files.exists(file)) return Optional.empty();
         return Optional.of(ModuleResultCodec.INSTANCE.transformFrom(read(file)));
     }
 
-    private static String read(Path file) {
+    private String read(Path file) {
         try {
             return Files.readString(file, StandardCharsets.UTF_8);
         } catch (IOException e) {

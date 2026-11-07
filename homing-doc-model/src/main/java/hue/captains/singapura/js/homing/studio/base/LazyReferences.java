@@ -16,7 +16,7 @@ import java.util.function.Supplier;
  * which may name it back.</p>
  *
  * <pre>{@code
- * List<Reference> references = LazyReferences.of(() -> List.of(
+ * List<Reference> references = new LazyReferences(() -> List.of(
  *         new DocReference("rfc-30", Rfc0030Doc.INSTANCE)));
  * }</pre>
  */
@@ -24,12 +24,10 @@ public final class LazyReferences extends AbstractList<Reference> {
 
     private final Supplier<List<Reference>> references;
 
-    private LazyReferences(Supplier<List<Reference>> references) {
+    /** References read from the supplier when they are asked for. */
+    public LazyReferences(Supplier<List<Reference>> references) {
         this.references = Objects.requireNonNull(references, "LazyReferences.references");
     }
-
-    /** References read from the supplier when they are asked for. */
-    public static List<Reference> of(Supplier<List<Reference>> references) { return new LazyReferences(references); }
 
     @Override public Reference get(int index) { return references.get().get(index); }
     @Override public int size() { return references.get().size(); }

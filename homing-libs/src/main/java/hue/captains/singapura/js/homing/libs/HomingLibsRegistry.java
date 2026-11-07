@@ -1,6 +1,8 @@
 package hue.captains.singapura.js.homing.libs;
 
+import hue.captains.singapura.js.homing.base.lang.StatelessSingleton;
 import hue.captains.singapura.js.homing.core.BundledExternalModule;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.util.List;
 
@@ -51,20 +53,22 @@ import java.util.List;
  * <h2>How the LibDownloader uses it</h2>
  *
  * <p>{@link hue.captains.singapura.js.homing.libs.tools.LibDownloader} reads
- * {@link #ALL} via reflection at build time, fetches each entry's
+ * {@link #all()} via reflection at build time, fetches each entry's
  * {@link BundledExternalModule#sourceUrl()}, verifies against
  * {@link BundledExternalModule#sha512()}, and writes the bytes to
  * {@link BundledExternalModule#resourcePath()} under {@code target/classes/}.</p>
  */
-public final class HomingLibsRegistry {
+public record HomingLibsRegistry() implements StatelessFunctionalObject, StatelessSingleton {
+
+    public static final HomingLibsRegistry INSTANCE = new HomingLibsRegistry();
 
     /** Every bundled library shipped by homing-libs. Add new entries here. */
-    public static final List<BundledExternalModule<?>> ALL = List.of(
+    public List<BundledExternalModule<?>> all() {
+        return List.of(
             MarkedJs.INSTANCE,
             ThreeJs.INSTANCE,
             ThreeJsSvgLoader.INSTANCE,
             ToneJs.INSTANCE
     );
-
-    private HomingLibsRegistry() {}
+    }
 }

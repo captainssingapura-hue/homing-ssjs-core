@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class SiteGetActionTest {
 
     private static final Navigable ECHO = q ->
-            new HtmlPageContent("<p>" + Html.escape(q.first("say").orElse("nothing")) + "</p>");
+            new HtmlPageContent("<p>" + Html.INSTANCE.escape(q.first("say").orElse("nothing")) + "</p>");
     private static final Navigable BROKEN = q -> { throw new IllegalStateException("boom"); };
 
     private static final Router ROUTER = path -> switch (path.toString()) {
@@ -36,7 +36,7 @@ class SiteGetActionTest {
     @Test
     void aHitRendersWithTheQuery() throws Exception {
         var page = ACTION.execute(
-                new SiteGetAction.Request(Path.ROOT, Query.of("say", "<hi>")),
+                new SiteGetAction.Request(Path.ROOT, new Query("say", "<hi>")),
                 new EmptyParam.NoHeaders()).get();
         assertEquals("<p>&lt;hi&gt;</p>", page.body());
     }
@@ -52,7 +52,7 @@ class SiteGetActionTest {
     @Test
     void aMissIsNotFoundNamingThePath() {
         var future = ACTION.execute(
-                new SiteGetAction.Request(Path.of("no", "such page"), Query.NONE),
+                new SiteGetAction.Request(new Path("no", "such page"), Query.NONE),
                 new EmptyParam.NoHeaders());
         var ex = assertThrows(ExecutionException.class, future::get);
         var nf = assertInstanceOf(ResourceNotFound.class, ex.getCause());
@@ -62,7 +62,7 @@ class SiteGetActionTest {
     @Test
     void aThrowingNavigableFailsTheFuture() {
         var future = ACTION.execute(
-                new SiteGetAction.Request(Path.of("broken"), Query.NONE),
+                new SiteGetAction.Request(new Path("broken"), Query.NONE),
                 new EmptyParam.NoHeaders());
         var ex = assertThrows(ExecutionException.class, future::get);
         assertInstanceOf(IllegalStateException.class, ex.getCause());
@@ -74,7 +74,7 @@ class SiteGetActionTest {
             @Override public String name()   { return "t"; }
             @Override public Router router() { return ROUTER; }
         };
-        var registry = SiteHost.registry(site);
+        var registry = SiteHost.INSTANCE.registry(site);
         assertEquals(1, registry.getActions().size());
         assertInstanceOf(SiteGetAction.class, registry.getActions().get("/*"));
         assertEquals(Map.of(), registry.postActions());

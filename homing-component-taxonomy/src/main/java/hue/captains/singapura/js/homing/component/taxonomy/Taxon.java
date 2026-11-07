@@ -2,6 +2,7 @@ package hue.captains.singapura.js.homing.component.taxonomy;
 
 import hue.captains.singapura.js.homing.base.lang.StatelessSingleton;
 import hue.captains.singapura.js.homing.tree.NodeName;
+import hue.captains.singapura.js.homing.tree.NodeNames;
 import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 import java.util.List;
@@ -15,7 +16,7 @@ import java.util.List;
 public sealed interface Taxon extends ComponentNode, StatelessFunctionalObject, StatelessSingleton permits ComponentBranch, Component {
 
     /** {@code PlainButton} gives {@code plain-button}. */
-    @Override default NodeName name() { return NodeName.ofType(getClass(), ""); }
+    @Override default NodeName name() { return NodeNames.INSTANCE.ofType(getClass(), ""); }
 
     /**
      * The axes this node adds, along which it varies by degree; none by default. Every node under

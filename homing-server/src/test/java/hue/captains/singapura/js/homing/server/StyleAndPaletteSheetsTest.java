@@ -49,14 +49,14 @@ class StyleAndPaletteSheetsTest {
 
     record Fixture() implements Crate {
         @Override public String name() { return "fixture"; }
-        @Override public List<CrateEntry> entries() { return List.of(CrateEntry.of(Styled.INSTANCE), CrateEntry.of(Painted.INSTANCE)); }
+        @Override public List<CrateEntry> entries() { return List.of(new CrateEntry(Styled.INSTANCE), new CrateEntry(Painted.INSTANCE)); }
     }
 
     record Default() implements Theme {
         @Override public String slug() { return "default"; }
     }
 
-    private final CssContentGetAction action = new CssContentGetAction(new Default(), ServedModules.of(List.of(new Fixture())),
+    private final CssContentGetAction action = new CssContentGetAction(new Default(), new ServedModules(List.of(new Fixture())),
             List.of(SelfRenderedCssRenderer.INSTANCE));
 
     private String served(Class<?> sheet, String theme, String style, String palette) throws Exception {

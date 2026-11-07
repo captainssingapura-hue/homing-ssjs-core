@@ -42,7 +42,7 @@ public record UseDomOpsPartyRule() implements JsRule {
         var findings = new ArrayList<Finding>();
         // Strip comments (positions preserved) so a comment mentioning the token
         // doesn't false-positive; only real calls count.
-        List<String> lines = JsText.stripComments(module.lines());
+        List<String> lines = JsText.INSTANCE.stripComments(module.lines());
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i);
             if (RAW_FACTORY.matcher(line).find()) {

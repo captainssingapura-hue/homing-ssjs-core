@@ -1,5 +1,8 @@
 package hue.captains.singapura.js.homing.core;
 
+import hue.captains.singapura.js.homing.base.lang.StatelessSingleton;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
+
 import java.util.List;
 import java.util.Map;
 
@@ -50,12 +53,12 @@ public interface ParamCodec<P extends AppModule._Param> {
     /** Convenience: the encoded query string for these params, without a
      *  leading {@code ?}. */
     default String toQueryString(P params) {
-        return QueryString.encode(to(params));
+        return QueryString.INSTANCE.encode(to(params));
     }
 
     /** Convenience: decode straight from a raw query string or URL. */
     default Decoded<P> fromQueryString(String query) {
-        return from(QueryString.parse(query));
+        return from(QueryString.INSTANCE.parse(query));
     }
 
     /**
@@ -97,16 +100,11 @@ public interface ParamCodec<P extends AppModule._Param> {
         /** The params when this decoded successfully, else null. */
         default P orNull() { return this instanceof Ok<P>(P p) ? p : null; }
 
+        /** Whether the params were decoded. */
         default boolean isOk() { return this instanceof Ok; }
 
         /** A one-line explanation suitable for a 400 response body. */
         default String describe() { return "ok"; }
-
-        static <P extends AppModule._Param> Decoded<P> ok(P params) { return new Ok<>(params); }
-        static <P extends AppModule._Param> Decoded<P> missing(String key) { return new Missing<>(key); }
-        static <P extends AppModule._Param> Decoded<P> malformed(String key, String value, String expected) {
-            return new Malformed<>(key, value, expected);
-        }
     }
 
     /**
@@ -117,14 +115,14 @@ public interface ParamCodec<P extends AppModule._Param> {
      * the action layer owns the reserved keys — and an app has no business
      * refusing a query it was never asked to read.</p>
      */
-    final class None implements ParamCodec<AppModule._None> {
+    final class None implements ParamCodec<AppModule._None>, StatelessFunctionalObject, StatelessSingleton {
 
         public static final None INSTANCE = new None();
 
         private None() {}
 
         @Override public Decoded<AppModule._None> from(Map<String, List<String>> query) {
-            return Decoded.ok(AppModule._None.INSTANCE);
+            return new Decoded.Ok<>(AppModule._None.INSTANCE);
         }
 
         @Override public Map<String, List<String>> to(AppModule._None params) {
@@ -132,10 +130,27 @@ public interface ParamCodec<P extends AppModule._Param> {
         }
     }
 
-    /** Shorthand used by codecs that read a single required key. */
-    static List<String> values(Map<String, List<String>> query, String key) {
-        List<String> v = query == null ? null : query.get(key);
-        return v == null ? List.of() : v;
+    /**
+     * The codec for an app whose {@code Params} record has no components —
+     * reads anything into the one value that record can hold, writes nothing.
+     *
+     * <p>RFC 0051 — distinct from {@link None}, which is typed to
+     * {@link AppModule._None} and throws on any other Params. An app with an
+     * empty record of its own is genuinely paramless but cannot use
+     * {@code None}, so before this it had no codec at all: its address was
+     * minted by reflection and its identity could not be constructed from a
+     * request. That is the whole of what kept five demo apps on the reflected
+     * fallback.</p>
+     *
+     * @param only the single value the empty record denotes, e.g. {@code Params::new}
+     */
+    record Empty<P extends AppModule._Param>(java.util.function.Supplier<P> only) implements ParamCodec<P> {
+        @Override public Decoded<P> from(Map<String, List<String>> query) {
+            return new Decoded.Ok<>(only.get());
+        }
+        @Override public Map<String, List<String>> to(P params) {
+            return Map.of();
+        }
     }
 
     /**
@@ -151,44 +166,15 @@ public interface ParamCodec<P extends AppModule._Param> {
      * @param read   builds the record from the key's value
      * @param write  reads the value back out of the record
      */
-    /**
-     * The codec for an app whose {@code Params} record has no components —
-     * reads anything into the one value that record can hold, writes nothing.
-     *
-     * <p>RFC 0051 — distinct from {@link None}, which is typed to
-     * {@link AppModule._None} and throws on any other Params. An app with an
-     * empty record of its own is genuinely paramless but cannot use
-     * {@code None}, so before this it had no codec at all: its address was
-     * minted by reflection and its identity could not be constructed from a
-     * request. That is the whole of what kept five demo apps on the reflected
-     * fallback.</p>
-     *
-     * @param only the single value the empty record denotes, e.g. {@code Params::new}
-     */
-    static <P extends AppModule._Param> ParamCodec<P> ofEmpty(java.util.function.Supplier<P> only) {
-        return new ParamCodec<>() {
-            @Override public Decoded<P> from(Map<String, List<String>> query) {
-                return Decoded.ok(only.get());
-            }
-            @Override public Map<String, List<String>> to(P params) {
-                return Map.of();
-            }
-        };
-    }
-
-    static <P extends AppModule._Param> ParamCodec<P> ofSingle(
-            String key, java.util.function.Function<String, P> read,
-            java.util.function.Function<P, String> write) {
-
-        return new ParamCodec<>() {
-            @Override public Decoded<P> from(Map<String, List<String>> query) {
-                String value = QueryString.first(query, key);
-                if (value == null || value.isBlank()) return Decoded.missing(key);
-                return Decoded.ok(read.apply(value));
-            }
-            @Override public Map<String, List<String>> to(P params) {
-                return QueryString.of(key, write.apply(params));
-            }
-        };
+    record Single<P extends AppModule._Param>(String key, java.util.function.Function<String, P> read,
+                                              java.util.function.Function<P, String> write) implements ParamCodec<P> {
+        @Override public Decoded<P> from(Map<String, List<String>> query) {
+            String value = QueryString.INSTANCE.first(query, key);
+            if (value == null || value.isBlank()) return new Decoded.Missing<>(key);
+            return new Decoded.Ok<>(read.apply(value));
+        }
+        @Override public Map<String, List<String>> to(P params) {
+            return QueryString.INSTANCE.of(key, write.apply(params));
+        }
     }
 }

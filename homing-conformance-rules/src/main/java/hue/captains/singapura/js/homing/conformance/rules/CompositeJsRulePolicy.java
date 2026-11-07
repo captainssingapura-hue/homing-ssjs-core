@@ -17,7 +17,7 @@ import java.util.Map;
  *
  * <p><b>Extension is not exemption.</b> An extension rule set must sit in one of
  * the framework's two <b>lanes</b>: the DOM-owner lane (it carries every rule of
- * {@link DefaultJsRulePolicy#DOM_OWNER_DISCIPLINE}) or the headless lane (it
+ * {@link DefaultJsRulePolicy#domOwnerDiscipline()}) or the headless lane (it
  * carries {@link NoDomAccessRule}); either way it carries the global rules. A
  * set that does neither — a "game loop" type held only to a frame-rate rule
  * while its modules build and style DOM — is refused at construction. The
@@ -33,7 +33,7 @@ public record CompositeJsRulePolicy(JsRulePolicy base, Map<JsModuleType, JsRuleS
 
     public CompositeJsRulePolicy {
         extensions = Map.copyOf(extensions);
-        extensions.forEach(CompositeJsRulePolicy::requireLane);
+        extensions.forEach((type, set) -> set.requireLane(type));
     }
 
     @Override
@@ -48,24 +48,5 @@ public record CompositeJsRulePolicy(JsRulePolicy base, Map<JsModuleType, JsRuleS
                             + "' — add it to the extensions map passed to extendedWith(...).");
         }
         return set;
-    }
-
-    /** True iff {@code set} sits in a lane: global rules + (DOM-owner discipline | no-DOM). */
-    public static boolean inLane(JsRuleSet set) {
-        List<JsRule> rules = set.rules();
-        if (!rules.containsAll(DefaultJsRulePolicy.GLOBAL)) return false;
-        return rules.containsAll(DefaultJsRulePolicy.DOM_OWNER_DISCIPLINE)
-                || rules.contains(NoDomAccessRule.INSTANCE);
-    }
-
-    private static void requireLane(JsModuleType type, JsRuleSet set) {
-        if (inLane(set)) return;
-        throw new IllegalArgumentException(
-                "extension rule set '" + set.id().value() + "' for type '" + type.slug()
-                        + "' sits in no lane. An extension type extends the framework's discipline, it does"
-                        + " not opt out of it: carry the global rules plus either the full DOM-owner discipline"
-                        + " (DefaultJsRulePolicy.DOM_OWNER_DISCIPLINE — the module builds or styles DOM) or"
-                        + " NoDomAccessRule (the module is headless). DefaultJsRulePolicy.domOwnerLane(...) /"
-                        + " headlessLane(...) build one.");
     }
 }

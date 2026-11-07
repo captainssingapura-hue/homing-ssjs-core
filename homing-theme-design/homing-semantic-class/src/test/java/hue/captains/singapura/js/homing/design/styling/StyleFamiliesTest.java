@@ -39,10 +39,10 @@ class StyleFamiliesTest {
 
     @Test
     void aFamilysFile_eachCastingAsTheStyleServesIt_aDelegationOneLine() {
-        var families = new StyleFamilies(STYLING, ResourceReader.INSTANCE, getClass().getClassLoader());
+        var families = new StyleFamilies(STYLING, ResourceReader.CLASSPATH, getClass().getClassLoader());
         assertEquals(List.of("plain", "ink", "loudly"), families.styles(), "every style registered, the base layer among them");
         assertEquals(List.of("control", "gauge"), families.families());
-        String control = MANAGER.family(StyledStyles.Ink.INSTANCE, MANAGER.taxonomy().heads().get(0), ResourceReader.INSTANCE);
+        String control = MANAGER.family(StyledStyles.Ink.INSTANCE, MANAGER.taxonomy().heads().get(0), ResourceReader.CLASSPATH);
         assertTrue(control.startsWith("/* ink - the control family"), control);
         assertTrue(control.contains("/* tab: ink's own */\n.styled-tab {"), control);
         assertTrue(control.contains("/* tab_lead: plain's, ink answering absence, as plain's Tab - its rule tab's, under .styled-tab_lead */\n"),
@@ -68,24 +68,24 @@ class StyleFamiliesTest {
     @Test
     void deployed_theFilesItsJarWasBuiltWith_refusedForAnotherStyling(@TempDir Path classes) throws IOException {
         String none = assertThrows(IllegalStateException.class,
-                () -> new StyleFamilies(STYLING, ResourceReader.INSTANCE, getClass().getClassLoader()).read("ink", "control")).getMessage();
+                () -> new StyleFamilies(STYLING, ResourceReader.CLASSPATH, getClass().getClassLoader()).read("ink", "control")).getMessage();
         assertTrue(none.contains("no family files are on the classpath"), none);
 
-        Map<String, String> written = WriteStyleFamilies.write(classes, STYLING);
+        Map<String, String> written = WriteStyleFamilies.INSTANCE.write(classes, STYLING);
         assertEquals(1 + 3 * 2, written.size(), "the index, and each of three styles' two families");
         try (var jar = new URLClassLoader(new URL[] { classes.toUri().toURL() }, null)) {
-            var families = new StyleFamilies(STYLING, ResourceReader.INSTANCE, jar);
+            var families = new StyleFamilies(STYLING, ResourceReader.CLASSPATH, jar);
             assertFalse(families.dev());
-            assertEquals(written.get(StyleFamilies.path("loudly", "gauge")), families.read("loudly", "gauge"), "the built file, as written");
+            assertEquals(written.get(families.path("loudly", "gauge")), families.read("loudly", "gauge"), "the built file, as written");
         }
         Files.writeString(classes.resolve(StyleFamilies.INDEX), "# another styling's\n", StandardCharsets.UTF_8);
         try (var jar = new URLClassLoader(new URL[] { classes.toUri().toURL() }, null)) {
             String another = assertThrows(IllegalStateException.class,
-                    () -> new StyleFamilies(STYLING, ResourceReader.INSTANCE, jar).read("ink", "control")).getMessage();
+                    () -> new StyleFamilies(STYLING, ResourceReader.CLASSPATH, jar).read("ink", "control")).getMessage();
             assertTrue(another.contains("made from another styling"), another);
         }
         Files.writeString(classes.resolve(StyleFamilies.ROOT + "stale.css"), "stale");
-        WriteStyleFamilies.write(classes, STYLING);
+        WriteStyleFamilies.INSTANCE.write(classes, STYLING);
         assertFalse(Files.exists(classes.resolve(StyleFamilies.ROOT + "stale.css")), "what was there before is cleared");
     }
 }

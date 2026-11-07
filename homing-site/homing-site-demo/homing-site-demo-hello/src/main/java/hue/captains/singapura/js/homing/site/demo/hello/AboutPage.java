@@ -1,11 +1,13 @@
 package hue.captains.singapura.js.homing.site.demo.hello;
 
+import hue.captains.singapura.js.homing.base.lang.StatelessSingleton;
 import hue.captains.singapura.js.homing.server.HtmlPageContent;
 import hue.captains.singapura.js.homing.site.Navigable;
 import hue.captains.singapura.js.homing.site.Query;
+import hue.captains.singapura.tao.ontology.StatelessFunctionalObject;
 
 /** {@code /about} — the same page every time; the query is not consulted. */
-final class AboutPage implements Navigable {
+final class AboutPage implements Navigable, StatelessFunctionalObject, StatelessSingleton {
 
     static final AboutPage INSTANCE = new AboutPage();
 
@@ -13,7 +15,7 @@ final class AboutPage implements Navigable {
 
     @Override
     public HtmlPageContent html(Query query) {
-        return Shell.page("About", """
+        return Shell.INSTANCE.page("About", """
                 <h1>About</h1>
                 <p>Four types make the base. <code>Path</code> is the segments a request came
                    in on. <code>Query</code> is what followed the question mark, possibly nothing.

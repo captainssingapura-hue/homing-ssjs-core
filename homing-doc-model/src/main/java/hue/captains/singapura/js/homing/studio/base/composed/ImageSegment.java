@@ -1,6 +1,7 @@
 package hue.captains.singapura.js.homing.studio.base.composed;
 
 import hue.captains.singapura.js.homing.studio.base.composed.text.Line;
+import hue.captains.singapura.js.homing.studio.base.composed.text.Lines;
 import hue.captains.singapura.js.homing.studio.base.image.ImageDoc;
 
 import java.util.Objects;
@@ -42,7 +43,7 @@ public record ImageSegment(ImageDoc doc, Optional<Line.Plain> captionOverride) i
 
     /** Convenience — caption from a raw string (blank becomes no override). */
     public ImageSegment(ImageDoc doc, String caption) {
-        this(doc, Line.optionalPlain(caption));
+        this(doc, Lines.INSTANCE.optionalPlain(caption));
     }
 
     /** The caption to render — explicit override, or doc.summary() (its caption), or alt. */
